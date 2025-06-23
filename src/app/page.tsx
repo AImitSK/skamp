@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase/client-init';
+import Link from 'next/link';
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -45,13 +46,22 @@ export default function HomePage() {
           skamp
         </h1>
         {user ? (
-          <div className="text-center">
-            <p className="text-green-600">Willkommen, {user.email}!</p>
-            <button onClick={handleLogout} className="mt-4 w-full px-4 py-2 text-white bg-red-600 rounded-md hover:bg-red-700">
-              Logout
-            </button>
-          </div>
-        ) : (
+  <div className="text-center space-y-4">
+    <p className="text-green-600">Willkommen, {user.email}!</p>
+    <Link 
+      href="/dashboard" 
+      className="block w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
+    >
+      Zum Dashboard
+    </Link>
+    <button
+      onClick={handleLogout}
+      className="w-full px-4 py-2 text-white bg-red-600 rounded-md hover:bg-red-700"
+    >
+      Logout
+    </button>
+  </div>
+) : (
           <div className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">E-Mail</label>
