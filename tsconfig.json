@@ -17,6 +17,7 @@
         "name": "next"
       }
     ],
+    "baseUrl": ".", // <-- DIESE ENTSCHEIDENDE ZEILE FEHLTE
     "paths": {
       "@/*": ["./src/*"]
     }

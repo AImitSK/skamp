@@ -7,19 +7,30 @@ import { useAuth } from '@/context/AuthContext';
 
 // Diese Komponente umwickelt geschützte Inhalte.
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    // Wenn der Benutzer-Status geladen ist und kein Benutzer vorhanden ist,
-    // leite zur Startseite (Login) weiter.
-    if (user === null) {
+    // Nur weiterleiten, wenn der Ladezustand abgeschlossen ist und kein Benutzer vorhanden ist
+    if (!loading && user === null) {
       router.push('/');
     }
-  }, [user, router]);
+  }, [user, loading, router]);
 
-  // Wenn ein Benutzer vorhanden ist, zeige den geschützten Inhalt an.
-  // Wenn der Benutzer-Status noch lädt (user ist anfangs null), zeige nichts,
-  // um ein kurzes Flackern des Inhalts zu vermeiden.
-  return user ? <>{children}</> : null;
+  // Während des Ladens einen Ladeindikator anzeigen
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-zinc-500">Lade...</div>
+      </div>
+    );
+  }
+
+  // Wenn kein Benutzer vorhanden ist, nichts anzeigen (Weiterleitung erfolgt im useEffect)
+  if (!user) {
+    return null;
+  }
+
+  // Wenn ein Benutzer vorhanden ist, zeige den geschützten Inhalt an
+  return <>{children}</>;
 }

@@ -1,65 +1,237 @@
-# skamp - Marketing Tool Suite
+# SKAMP - Marketing Tool Suite
 
-Willkommen bei skamp, einer umfassenden All-in-One Marketing-Tool-Suite, die als moderne Webanwendung entwickelt wird.
+Eine moderne All-in-One Marketing-Tool-Suite, entwickelt als Web-Anwendung mit Next.js und Firebase.
 
-## Projektbeschreibung
+## 🚀 Projektstatus
 
-Das Ziel dieses Projekts ist die Schaffung einer zentralen Plattform für Marketing-Aktivitäten. Die Anwendung wird modular aufgebaut sein und schrittweise um neue Funktionen erweitert.
+### ✅ Implementiert
+- **Authentifizierung**: Login/Registrierung mit Firebase Auth
+- **Dashboard**: Responsive Layout mit Sidebar-Navigation
+- **CRM Basisversion**:
+  - Firmenverwaltung (CRUD-Operationen)
+  - Kontaktverwaltung (CRUD-Operationen)
+  - Verknüpfung von Personen zu Firmen
+  - Suchfunktion
+  - Tab-Navigation
 
-Die erste und grundlegende Kernfunktion ist eine robuste **Kontaktverwaltung (CRM)**. Auf dieser Basis werden zukünftige Tools wie Kampagnen-Management, E-Mail-Marketing und Analysen aufbauen.
+### 🔄 In Arbeit
+- Modal-Dialoge für Firmen/Kontakte
+- Firestore-Indizes
 
-Die Architektur trennt klar zwischen einem öffentlichen Bereich (zur Vorstellung und zum Verkauf der Software) und einem geschützten Mitgliederbereich, in dem die eigentlichen Tools zur Verfügung stehen.
+### 📋 Geplante Features
+- **Phase 2**: Tags, Kategorien, Import/Export, erweiterte Filter
+- **Phase 3**: Aktivitätenverfolgung, Aufgaben, Dokumente
+- **Phase 4**: Pipeline/Deals, Team-Features, Dashboards
 
-## Technologie-Stack
+## 🛠 Technologie-Stack
 
-Dieses Projekt wird mit einem modernen und skalierbaren Technologie-Stack umgesetzt:
+- **Framework**: [Next.js 14+](https://nextjs.org/) (App Router)
+- **Sprache**: [TypeScript](https://www.typescriptlang.org/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **UI-Komponenten**: [Catalyst UI Kit](https://tailwindcss.com/plus/ui-kit)
+- **Icons**: [Heroicons](https://heroicons.com/)
+- **Backend**: [Firebase](https://firebase.google.com/)
+  - Authentication
+  - Cloud Firestore
+- **Deployment**: Vercel (geplant)
 
--   **Framework:** [Next.js](https://nextjs.org/) (mit React 18)
--   **Sprache:** [TypeScript](https://www.typescriptlang.org/)
--   **Styling:** [Tailwind CSS](https://tailwindcss.com/)
--   **Backend-as-a-Service (BaaS):** [Google Firebase](https://firebase.google.com/) für Authentifizierung, Datenbank (Firestore) und weitere Dienste.
--   **UI-Komponenten (geplant):** [Catalyst UI Kit](https://catalyst.tailwindui.com/) für den geschützten Anwendungsbereich.
+## 📁 Projektstruktur
 
-## Projektstruktur
+```
+skamp/
+├── src/
+│   ├── app/
+│   │   ├── page.tsx                    # Login/Registrierung
+│   │   ├── layout.tsx                  # Root-Layout
+│   │   └── dashboard/
+│   │       ├── layout.tsx              # Dashboard-Layout mit Sidebar
+│   │       ├── page.tsx                # Dashboard-Startseite
+│   │       ├── contacts/
+│   │       │   ├── page.tsx            # CRM Hauptseite
+│   │       │   ├── CompanyModal.tsx    # Modal für Firmen
+│   │       │   └── ContactModal.tsx    # Modal für Kontakte
+│   │       └── profile/
+│   │           └── page.tsx            # Profil-Seite
+│   ├── components/                     # Catalyst UI Komponenten
+│   │   ├── ProtectedRoute.tsx         # Auth-Guard
+│   │   └── ... (weitere UI-Komponenten)
+│   ├── context/
+│   │   └── AuthContext.tsx            # Globaler Auth-State
+│   ├── lib/
+│   │   └── firebase/
+│   │       ├── client-init.ts         # Firebase-Initialisierung
+│   │       ├── config.ts              # Firebase-Konfiguration
+│   │       └── crm-service.ts         # CRM CRUD-Operationen
+│   └── types/
+│       └── crm.ts                     # TypeScript Types für CRM
+└── .env.local                         # Umgebungsvariablen (nicht im Git!)
+```
 
-Das Projekt verwendet den Next.js App Router und ist wie folgt strukturiert:
+## 🔧 Installation & Setup
 
--   **`src/app/`**: Das Herzstück der Anwendung. Jeder Ordner hier definiert eine Route.
-    -   `page.tsx`: Die öffentliche Start- und Login-Seite.
-    -   `layout.tsx`: Das Hauptlayout der gesamten Anwendung.
--   **`src/context/`**: Beinhaltet React Context-Provider.
-    -   `AuthContext.tsx`: Stellt den globalen Anmeldestatus des Benutzers in der gesamten App zur Verfügung.
--   **`src/lib/firebase/`**: Kapselt die Firebase-Logik.
-    -   `config.ts`: Liest die geheimen Schlüssel aus der `.env.local`-Datei.
-    -   `client-init.ts`: Initialisiert Firebase sicher für die Verwendung im Browser.
+### 1. Repository klonen
+```bash
+git clone https://github.com/AImitSK/skamp.git
+cd skamp
+```
 
-## Installation und Lokaler Start
+### 2. Abhängigkeiten installieren
+```bash
+npm install
+```
 
-Um das Projekt lokal auszuführen, folgen Sie diesen Schritten:
+### 3. Firebase-Projekt einrichten
+1. Erstelle ein neues Firebase-Projekt auf [console.firebase.google.com](https://console.firebase.google.com)
+2. Aktiviere **Authentication** (E-Mail/Passwort)
+3. Aktiviere **Cloud Firestore**
+4. Kopiere die Konfiguration
 
-1.  **Repository klonen:**
-    ```bash
-    git clone [https://github.com/AImitSK/skamp.git](https://github.com/AImitSK/skamp.git)
-    cd skamp
-    ```
+### 4. Umgebungsvariablen
+Erstelle eine `.env.local` Datei im Root-Verzeichnis:
+```env
+NEXT_PUBLIC_FIREBASE_API_KEY=dein-api-key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=dein-auth-domain
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=dein-project-id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=dein-storage-bucket
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=dein-sender-id
+NEXT_PUBLIC_FIREBASE_APP_ID=dein-app-id
+```
 
-2.  **Abhängigkeiten installieren:**
-    ```bash
-    npm install
-    ```
+### 5. Firestore Security Rules
+Füge diese Rules in der Firebase Console ein:
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /companies/{companyId} {
+      allow read, write: if request.auth != null 
+        && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null 
+        && request.auth.uid == request.resource.data.userId;
+    }
+    
+    match /contacts/{contactId} {
+      allow read, write: if request.auth != null 
+        && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null 
+        && request.auth.uid == request.resource.data.userId;
+    }
+  }
+}
+```
 
-3.  **Umgebungsvariablen einrichten:**
-    -   Erstellen Sie im Hauptverzeichnis eine Datei namens `.env.local`.
-    -   Fügen Sie Ihre Firebase-Projekt-Schlüssel in diese Datei ein. Eine Vorlage finden Sie in der Dokumentation oder nach dem Anlegen eines neuen Firebase-Projekts.
-    ```env
-    NEXT_PUBLIC_FIREBASE_API_KEY="IHR_WERT"
-    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="IHR_WERT"
-    # ... und so weiter für alle benötigten Schlüssel
-    ```
+### 6. Firestore Indizes
+Erstelle folgende zusammengesetzte Indizes:
 
-4.  **Entwicklungsserver starten:**
-    ```bash
-    npm run dev
-    ```
+**contacts:**
+- userId (ASC) + lastName (ASC) + firstName (ASC)
+- companyId (ASC) + lastName (ASC) + firstName (ASC)
 
-Die Anwendung ist nun unter `http://localhost:3000` erreichbar.
+**companies:**
+- userId (ASC) + name (ASC)
+
+### 7. Entwicklungsserver starten
+```bash
+npm run dev
+```
+
+Die Anwendung läuft unter `http://localhost:3000`
+
+## 📝 Datenmodell
+
+### Company
+```typescript
+interface Company {
+  id?: string;
+  name: string;
+  website?: string;
+  industry?: string;
+  type: 'customer' | 'supplier' | 'partner' | 'other';
+  address?: {
+    street?: string;
+    city?: string;
+    zip?: string;
+    country?: string;
+  };
+  phone?: string;
+  notes?: string;
+  userId: string;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
+}
+```
+
+### Contact
+```typescript
+interface Contact {
+  id?: string;
+  firstName: string;
+  lastName: string;
+  email?: string;
+  phone?: string;
+  position?: string;
+  companyId?: string;
+  companyName?: string;
+  notes?: string;
+  userId: string;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
+}
+```
+
+## 🚦 Verwendung
+
+### Login/Registrierung
+1. Öffne die Startseite
+2. Registriere dich mit E-Mail und Passwort
+3. Nach dem Login wirst du zum Dashboard weitergeleitet
+
+### CRM nutzen
+1. Navigiere zu "Kontakte" in der Sidebar
+2. Wechsle zwischen "Firmen" und "Personen" Tabs
+3. Nutze die "Hinzufügen" Buttons zum Erstellen
+4. Klicke auf "Bearbeiten" zum Ändern
+5. Nutze die Suchleiste zum Filtern
+
+## 🐛 Bekannte Probleme
+
+- Firestore-Indizes müssen manuell erstellt werden (Links in der Konsole)
+- Modal-Komponenten müssen manuell aus den Artifacts kopiert werden
+
+## 🔮 Nächste Schritte
+
+1. **Kurzfristig**:
+   - E-Mail-Verifizierung implementieren
+   - Passwort-Reset Funktion
+   - Bessere Fehlerbehandlung
+
+2. **Mittelfristig**:
+   - CSV Import/Export
+   - Tags und Kategorien
+   - Erweiterte Filteroptionen
+   - Aktivitätenverfolgung
+
+3. **Langfristig**:
+   - E-Mail-Integration
+   - Kalender-Synchronisation
+   - Reporting & Analytics
+   - Multi-User Support
+
+## 👥 Mitwirken
+
+Pull Requests sind willkommen! Für größere Änderungen bitte erst ein Issue erstellen.
+
+## 📄 Lizenz
+
+[MIT](https://choosealicense.com/licenses/mit/)
+
+## 🤝 Support
+
+Bei Fragen oder Problemen:
+- Issue auf GitHub erstellen
+- E-Mail an: support@skamp.de (noch nicht aktiv)
+
+---
+
+**Version**: 1.0.0-beta  
+**Stand**: Juni 2025
