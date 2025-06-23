@@ -1,9 +1,8 @@
 // src/app/layout.tsx
-import type { Metadata } from "next";
 import { AuthContextProvider } from "@/context/AuthContext";
 import "./globals.css";
 
-export const metadata: Metadata = {
+export const metadata = {
   title: "skamp",
   description: "skamp Marketing Suite",
 };

@@ -1,12 +1,9 @@
 // src/app/dashboard/page.tsx
-
-export default function DashboardPage() {
+export default function DashboardHomePage() {
   return (
     <div>
-      <h1 className="text-3xl font-bold">Dashboard</h1>
-      <p className="mt-4">
-        Willkommen im geschützten Bereich Ihrer Marketing Suite.
-      </p>
+      <h1 className="text-2xl font-semibold">Willkommen im Dashboard</h1>
+      <p className="mt-2">Wählen Sie einen Punkt in der Navigation, um zu beginnen.</p>
     </div>
   );
 }

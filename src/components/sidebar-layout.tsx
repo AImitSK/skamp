@@ -1,3 +1,4 @@
+// src/components/sidebar-layout.tsx
 'use client'
 
 import * as Headless from '@headlessui/react'
@@ -6,7 +7,7 @@ import { NavbarItem } from './navbar'
 
 function OpenMenuIcon() {
   return (
-    <svg data-slot="icon" viewBox="0 0 20 20" aria-hidden="true">
+    <svg data-slot="icon" viewBox="0 0 20 20" aria-hidden="true" className="fill-zinc-600 dark:fill-zinc-400">
       <path d="M2 6.75C2 6.33579 2.33579 6 2.75 6H17.25C17.6642 6 18 6.33579 18 6.75C18 7.16421 17.6642 7.5 17.25 7.5H2.75C2.33579 7.5 2 7.16421 2 6.75ZM2 13.25C2 12.8358 2.33579 12.5 2.75 12.5H17.25C17.6642 12.5 18 12.8358 18 13.25C18 13.6642 17.6642 14 17.25 14H2.75C2.33579 14 2 13.6642 2 13.25Z" />
     </svg>
   )
@@ -22,7 +23,8 @@ function CloseMenuIcon() {
 
 function MobileSidebar({ open, close, children }: React.PropsWithChildren<{ open: boolean; close: () => void }>) {
   return (
-    <Headless.Dialog open={open} onClose={close} className="lg:hidden">
+    // HIER IST DIE KORREKTUR: Wir fügen z-50 hinzu.
+    <Headless.Dialog open={open} onClose={close} className="relative z-50 lg:hidden">
       <Headless.DialogBackdrop
         transition
         className="fixed inset-0 bg-black/30 transition data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"
@@ -73,7 +75,7 @@ export function SidebarLayout({
 
       {/* Content */}
       <main className="flex flex-1 flex-col pb-2 lg:min-w-0 lg:pt-2 lg:pr-2 lg:pl-64">
-        <div className="grow p-6 lg:rounded-lg lg:bg-white lg:p-10 lg:shadow-xs lg:ring-1 lg:ring-zinc-950/5 dark:lg:bg-zinc-900 dark:lg:ring-white/10">
+        <div className="grow p-6 lg:rounded-lg lg:bg-white lg:p-10 lg:shadow-xs lg-ring-1 lg:ring-zinc-950/5 dark:lg:bg-zinc-900 dark:lg:ring-white/10">
           <div className="mx-auto max-w-6xl">{children}</div>
         </div>
       </main>
