@@ -15,8 +15,10 @@ import { companiesService, contactsService, tagsService } from "@/lib/firebase/c
 import { Company, Contact, Tag, companyTypeLabels, CompanyType } from "@/types/crm";
 import CompanyModal from "./CompanyModal";
 import ContactModal from "./ContactModal";
+import ImportModal from "./ImportModal";
 import clsx from "clsx";
 import { MultiSelectDropdown } from "@/components/MultiSelectDropdown";
+import Papa from 'papaparse';
 
 type TabType = 'companies' | 'contacts';
 
@@ -34,6 +36,7 @@ export default function ContactsPage() {
   
   const [showCompanyModal, setShowCompanyModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
 
@@ -95,21 +98,16 @@ export default function ContactsPage() {
   const filteredCompanies = useMemo(() => {
     return companies
       .filter(company => {
-        const searchMatch =
-          company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          company.industry?.toLowerCase().includes(searchTerm.toLowerCase());
+        const searchMatch = company.name.toLowerCase().includes(searchTerm.toLowerCase()) || company.industry?.toLowerCase().includes(searchTerm.toLowerCase());
         if (!searchMatch) return false;
         
-        const typeMatch =
-          selectedTypes.length === 0 || selectedTypes.includes(company.type);
+        const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(company.type);
         if (!typeMatch) return false;
 
-        const industryMatch =
-          selectedIndustries.length === 0 || (company.industry && selectedIndustries.includes(company.industry));
+        const industryMatch = selectedIndustries.length === 0 || (company.industry && selectedIndustries.includes(company.industry));
         if (!industryMatch) return false;
           
-        const tagMatch =
-          selectedCompanyTagIds.length === 0 || company.tagIds?.some(tagId => selectedCompanyTagIds.includes(tagId));
+        const tagMatch = selectedCompanyTagIds.length === 0 || company.tagIds?.some(tagId => selectedCompanyTagIds.includes(tagId));
         if (!tagMatch) return false;
 
         return true;
@@ -118,22 +116,16 @@ export default function ContactsPage() {
 
   const filteredContacts = useMemo(() => {
     return contacts.filter(contact => {
-      const searchMatch = 
-        `${contact.firstName} ${contact.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        contact.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        contact.companyName?.toLowerCase().includes(searchTerm.toLowerCase());
+      const searchMatch = `${contact.firstName} ${contact.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) || contact.email?.toLowerCase().includes(searchTerm.toLowerCase()) || contact.companyName?.toLowerCase().includes(searchTerm.toLowerCase());
       if (!searchMatch) return false;
 
-      const companyMatch = 
-        selectedContactCompanyIds.length === 0 || (contact.companyId && selectedContactCompanyIds.includes(contact.companyId));
+      const companyMatch = selectedContactCompanyIds.length === 0 || (contact.companyId && selectedContactCompanyIds.includes(contact.companyId));
       if (!companyMatch) return false;
       
-      const positionMatch = 
-        selectedContactPositions.length === 0 || (contact.position && selectedContactPositions.includes(contact.position));
+      const positionMatch = selectedContactPositions.length === 0 || (contact.position && selectedContactPositions.includes(contact.position));
       if (!positionMatch) return false;
         
-      const tagMatch = 
-        selectedContactTagIds.length === 0 || contact.tagIds?.some(tagId => selectedContactTagIds.includes(tagId));
+      const tagMatch = selectedContactTagIds.length === 0 || contact.tagIds?.some(tagId => selectedContactTagIds.includes(tagId));
       if (!tagMatch) return false;
 
       return true;
@@ -237,17 +229,64 @@ export default function ContactsPage() {
 
   const renderTags = (tagIds?: string[]) => {
     if (!tagIds || tagIds.length === 0) return null;
-    
     const entityTags = tags.filter(tag => tagIds.includes(tag.id!));
     return (
       <div className="flex flex-wrap gap-1">
         {entityTags.map(tag => (
-          <Badge key={tag.id} color={tag.color as any} className="text-xs">
-            {tag.name}
-          </Badge>
+          <Badge key={tag.id} color={tag.color as any} className="text-xs">{tag.name}</Badge>
         ))}
       </div>
     );
+  };
+  
+  const handleExport = () => {
+    const isCompanies = activeTab === 'companies';
+    const data = isCompanies ? filteredCompanies : filteredContacts;
+    const filename = isCompanies ? 'firmen-export.csv' : 'kontakte-export.csv';
+
+    if (data.length === 0) {
+      alert("Keine Daten zum Exportieren in der aktuellen Ansicht.");
+      return;
+    }
+
+    let csv;
+    if (isCompanies) {
+      const companyData = (data as Company[]).map(company => ({
+        "Firmenname": company.name,
+        "Typ": companyTypeLabels[company.type],
+        "Branche": company.industry || '',
+        "Website": company.website || '',
+        "Telefon": company.phone || '',
+        "Strasse": company.address?.street || '',
+        "Adresszeile 2": company.address?.street2 || '',
+        "PLZ": company.address?.zip || '',
+        "Stadt": company.address?.city || '',
+        "Land": company.address?.country || '',
+        "Notizen": company.notes || '',
+        "Tags": (company.tagIds || []).map(tagId => tags.find(t => t.id === tagId)?.name).filter(Boolean).join(', '),
+      }));
+      csv = Papa.unparse(companyData);
+    } else {
+      const contactData = (data as Contact[]).map(contact => ({
+        "Vorname": contact.firstName,
+        "Nachname": contact.lastName,
+        "Firma": contact.companyName || '',
+        "Position": contact.position || '',
+        "E-Mail": contact.email || '',
+        "Telefon": contact.phone || '',
+        "Notizen": contact.notes || '',
+        "Tags": (contact.tagIds || []).map(tagId => tags.find(t => t.id === tagId)?.name).filter(Boolean).join(', '),
+      }));
+      csv = Papa.unparse(contactData);
+    }
+    
+    const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -255,26 +294,21 @@ export default function ContactsPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <Heading>Kontakte</Heading>
-          <Text className="mt-1">
-            Verwalte deine Firmen und Ansprechpartner
-          </Text>
+          <Text className="mt-1">Verwalte deine Firmen und Ansprechpartner</Text>
         </div>
-        <button
-          type="button"
-          onClick={handleAddNew}
-          className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-        >
-          <PlusIcon className="size-4" />
-          {activeTab === 'companies' ? 'Firma hinzufügen' : 'Person hinzufügen'}
-        </button>
+        <div className="flex items-center gap-x-2">
+          <Button plain onClick={() => setShowImportModal(true)}>Importieren</Button>
+          <Button plain onClick={handleExport}>Exportieren</Button>
+          <Button onClick={handleAddNew}>
+            <PlusIcon className="size-4 mr-2" />
+            {activeTab === 'companies' ? 'Firma hinzufügen' : 'Person hinzufügen'}
+          </Button>
+        </div>
       </div>
 
       <div className="flex gap-4 border-b border-zinc-200 dark:border-zinc-800 mb-6">
         <button
-          onClick={() => {
-            setActiveTab('companies');
-            setSearchTerm('');
-          }}
+          onClick={() => { setActiveTab('companies'); setSearchTerm(''); }}
           className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'companies'
               ? 'border-indigo-600 text-indigo-600'
@@ -284,10 +318,7 @@ export default function ContactsPage() {
           Firmen ({companies.length})
         </button>
         <button
-          onClick={() => {
-            setActiveTab('contacts');
-            setSearchTerm('');
-          }}
+          onClick={() => { setActiveTab('contacts'); setSearchTerm(''); }}
           className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'contacts'
               ? 'border-indigo-600 text-indigo-600'
@@ -311,88 +342,31 @@ export default function ContactsPage() {
       
       {activeTab === 'companies' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 p-4 border rounded-lg bg-zinc-50">
-          <MultiSelectDropdown
-            label="Typ"
-            placeholder="Nach Typ filtern..."
-            options={Object.entries(companyTypeLabels).map(([value, label]) => ({ value, label }))}
-            selectedValues={selectedTypes}
-            onChange={(values) => setSelectedTypes(values as CompanyType[])}
-          />
-          <MultiSelectDropdown
-            label="Branche"
-            placeholder="Nach Branche filtern..."
-            options={industryOptions.map(industry => ({ value: industry, label: industry }))}
-            selectedValues={selectedIndustries}
-            onChange={(values) => setSelectedIndustries(values)}
-          />
-          <MultiSelectDropdown
-            label="Tags"
-            placeholder="Nach Tags filtern..."
-            options={tagOptions.map(tag => ({ value: tag.id!, label: tag.name }))}
-            selectedValues={selectedCompanyTagIds}
-            onChange={(values) => setSelectedCompanyTagIds(values)}
-          />
+          <MultiSelectDropdown label="Typ" placeholder="Nach Typ filtern..." options={Object.entries(companyTypeLabels).map(([value, label]) => ({ value, label }))} selectedValues={selectedTypes} onChange={(values) => setSelectedTypes(values as CompanyType[])}/>
+          <MultiSelectDropdown label="Branche" placeholder="Nach Branche filtern..." options={industryOptions.map(industry => ({ value: industry, label: industry }))} selectedValues={selectedIndustries} onChange={(values) => setSelectedIndustries(values)}/>
+          <MultiSelectDropdown label="Tags" placeholder="Nach Tags filtern..." options={tagOptions.map(tag => ({ value: tag.id!, label: tag.name }))} selectedValues={selectedCompanyTagIds} onChange={(values) => setSelectedCompanyTagIds(values)}/>
         </div>
       )}
 
       {activeTab === 'contacts' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 p-4 border rounded-lg bg-zinc-50">
-          <MultiSelectDropdown
-            label="Firma"
-            placeholder="Nach Firma filtern..."
-            options={companyOptions}
-            selectedValues={selectedContactCompanyIds}
-            onChange={(values) => setSelectedContactCompanyIds(values)}
-          />
-          <MultiSelectDropdown
-            label="Position"
-            placeholder="Nach Position filtern..."
-            options={positionOptions.map(pos => ({ value: pos, label: pos }))}
-            selectedValues={selectedContactPositions}
-            onChange={(values) => setSelectedContactPositions(values)}
-          />
-          <MultiSelectDropdown
-            label="Tags"
-            placeholder="Nach Tags filtern..."
-            options={tagOptions.map(tag => ({ value: tag.id!, label: tag.name }))}
-            selectedValues={selectedContactTagIds}
-            onChange={(values) => setSelectedContactTagIds(values)}
-          />
+          <MultiSelectDropdown label="Firma" placeholder="Nach Firma filtern..." options={companyOptions} selectedValues={selectedContactCompanyIds} onChange={(values) => setSelectedContactCompanyIds(values)}/>
+          <MultiSelectDropdown label="Position" placeholder="Nach Position filtern..." options={positionOptions.map(pos => ({ value: pos, label: pos }))} selectedValues={selectedContactPositions} onChange={(values) => setSelectedContactPositions(values)}/>
+          <MultiSelectDropdown label="Tags" placeholder="Nach Tags filtern..." options={tagOptions.map(tag => ({ value: tag.id!, label: tag.name }))} selectedValues={selectedContactTagIds} onChange={(values) => setSelectedContactTagIds(values)}/>
         </div>
       )}
 
       <div className="mb-4 flex items-center justify-between h-9">
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          {activeTab === 'companies' 
-            ? `${filteredCompanies.length} von ${companies.length} Firmen`
-            : `${filteredContacts.length} von ${contacts.length} Kontakten`}
+            {activeTab === 'companies' ? `${filteredCompanies.length} von ${companies.length} Firmen` : `${filteredContacts.length} von ${contacts.length} Kontakten`}
         </p>
-        
-        <div className={clsx(
-          "flex items-center gap-4 transition-opacity",
-          ((activeTab === 'companies' && selectedCompanyIds.size > 0) || 
-           (activeTab === 'contacts' && selectedContactIds.size > 0))
-            ? "opacity-100"
-            : "opacity-0 pointer-events-none"
-        )}>
-          <span className="text-sm text-zinc-600">
-            {activeTab === 'companies' 
-              ? `${selectedCompanyIds.size} ausgewählt`
-              : `${selectedContactIds.size} ausgewählt`}
-          </span>
-          <button
-            onClick={handleBulkDelete}
-            className="inline-flex items-center gap-2 rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-500"
-          >
-            <TrashIcon className="size-4" />
-            Löschen
-          </button>
+        <div className={clsx("flex items-center gap-4 transition-opacity", (((activeTab === 'companies' && selectedCompanyIds.size > 0) || (activeTab === 'contacts' && selectedContactIds.size > 0)) ? "opacity-100" : "opacity-0 pointer-events-none"))}>
+          <span className="text-sm text-zinc-600">{activeTab === 'companies' ? `${selectedCompanyIds.size} ausgewählt` : `${selectedContactIds.size} ausgewählt`}</span>
+          <button onClick={handleBulkDelete} className="inline-flex items-center gap-2 rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-500"><TrashIcon className="size-4" /> Löschen</button>
         </div>
       </div>
 
-      {loading ? (
-        <div className="text-center py-12 text-zinc-500">Lade Daten...</div>
-      ) : (
+      {loading ? ( <div className="text-center py-12 text-zinc-500">Lade Daten...</div> ) : (
         <>
           {activeTab === 'companies' && (
             <Table>
@@ -417,44 +391,16 @@ export default function ContactsPage() {
               <TableBody>
                 {filteredCompanies.map((company) => (
                     <TableRow key={company.id}>
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedCompanyIds.has(company.id!)}
-                          onChange={(checked) => handleSelectCompany(company.id!, checked)}
-                        />
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        <button
-                          onClick={() => handleEditCompany(company)}
-                          className="text-indigo-600 hover:text-indigo-500 hover:underline"
-                        >
-                          {company.name}
-                        </button>
-                      </TableCell>
-                      <TableCell>
-                        <Badge color="zinc">
-                          {companyTypeLabels[company.type]}
-                        </Badge>
-                      </TableCell>
+                      <TableCell><Checkbox checked={selectedCompanyIds.has(company.id!)} onChange={(checked) => handleSelectCompany(company.id!, checked)}/></TableCell>
+                      <TableCell className="font-medium"><button onClick={() => handleEditCompany(company)} className="text-indigo-600 hover:text-indigo-500 hover:underline">{company.name}</button></TableCell>
+                      <TableCell><Badge color="zinc">{companyTypeLabels[company.type]}</Badge></TableCell>
                       <TableCell>{renderTags(company.tagIds)}</TableCell>
                       <TableCell>{company.industry || '-'}</TableCell>
                       <TableCell>{company.website || '-'}</TableCell>
                       <TableCell>{company.phone || '-'}</TableCell>
                       <TableCell className="text-right space-x-2">
-                        <button
-                          type="button"
-                          onClick={() => handleEditCompany(company)}
-                          className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
-                        >
-                          Bearbeiten
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteCompany(company.id!)}
-                          className="text-sm font-medium text-red-600 hover:text-red-500"
-                        >
-                          Löschen
-                        </button>
+                        <button type="button" onClick={() => handleEditCompany(company)} className="text-sm font-medium text-indigo-600 hover:text-indigo-500">Bearbeiten</button>
+                        <button type="button" onClick={() => handleDeleteCompany(company.id!)} className="text-sm font-medium text-red-600 hover:text-red-500">Löschen</button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -464,88 +410,43 @@ export default function ContactsPage() {
 
           {activeTab === 'contacts' && (
              <Table>
-              <TableHead>
-                <TableRow>
-                  <TableHeader className="w-12">
-                    <Checkbox
-                      checked={filteredContacts.length > 0 && selectedContactIds.size === filteredContacts.length}
-                      indeterminate={selectedContactIds.size > 0 && selectedContactIds.size < filteredContacts.length}
-                      onChange={(checked) => handleSelectAllContacts(checked)}
-                    />
-                  </TableHeader>
-                  <TableHeader>Name</TableHeader>
-                  <TableHeader>Firma</TableHeader>
-                  <TableHeader>Tags</TableHeader>
-                  <TableHeader>Position</TableHeader>
-                  <TableHeader>E-Mail</TableHeader>
-                  <TableHeader>Telefon</TableHeader>
-                  <TableHeader className="text-right">Aktionen</TableHeader>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredContacts.map((contact) => (
-                    <TableRow key={contact.id}>
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedContactIds.has(contact.id!)}
-                          onChange={(checked) => handleSelectContact(contact.id!, checked)}
-                        />
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        <button
-                          onClick={() => handleEditContact(contact)}
-                          className="text-indigo-600 hover:text-indigo-500 hover:underline"
-                        >
-                          {contact.firstName} {contact.lastName}
-                        </button>
-                      </TableCell>
-                      <TableCell>{contact.companyName || '-'}</TableCell>
-                      <TableCell>{renderTags(contact.tagIds)}</TableCell>
-                      <TableCell>{contact.position || '-'}</TableCell>
-                      <TableCell>{contact.email || '-'}</TableCell>
-                      <TableCell>{contact.phone || '-'}</TableCell>
-                      <TableCell className="text-right space-x-2">
-                        <button
-                          type="button"
-                          onClick={() => handleEditContact(contact)}
-                          className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
-                        >
-                          Bearbeiten
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteContact(contact.id!)}
-                          className="text-sm font-medium text-red-600 hover:text-red-500"
-                        >
-                          Löschen
-                        </button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
+               <TableHead>
+                 <TableRow>
+                   <TableHeader className="w-12"><Checkbox checked={filteredContacts.length > 0 && selectedContactIds.size === filteredContacts.length} indeterminate={selectedContactIds.size > 0 && selectedContactIds.size < filteredContacts.length} onChange={(checked) => handleSelectAllContacts(checked)}/></TableHeader>
+                   <TableHeader>Name</TableHeader>
+                   <TableHeader>Firma</TableHeader>
+                   <TableHeader>Tags</TableHeader>
+                   <TableHeader>Position</TableHeader>
+                   <TableHeader>E-Mail</TableHeader>
+                   <TableHeader>Telefon</TableHeader>
+                   <TableHeader className="text-right">Aktionen</TableHeader>
+                 </TableRow>
+               </TableHead>
+               <TableBody>
+                 {filteredContacts.map((contact) => (
+                     <TableRow key={contact.id}>
+                       <TableCell><Checkbox checked={selectedContactIds.has(contact.id!)} onChange={(checked) => handleSelectContact(contact.id!, checked)}/></TableCell>
+                       <TableCell className="font-medium"><button onClick={() => handleEditContact(contact)} className="text-indigo-600 hover:text-indigo-500 hover:underline">{contact.firstName} {contact.lastName}</button></TableCell>
+                       <TableCell>{contact.companyName || '-'}</TableCell>
+                       <TableCell>{renderTags(contact.tagIds)}</TableCell>
+                       <TableCell>{contact.position || '-'}</TableCell>
+                       <TableCell>{contact.email || '-'}</TableCell>
+                       <TableCell>{contact.phone || '-'}</TableCell>
+                       <TableCell className="text-right space-x-2">
+                        <button type="button" onClick={() => handleEditContact(contact)} className="text-sm font-medium text-indigo-600 hover:text-indigo-500">Bearbeiten</button>
+                        <button type="button" onClick={() => handleDeleteContact(contact.id!)} className="text-sm font-medium text-red-600 hover:text-red-500">Löschen</button>
+                       </TableCell>
+                     </TableRow>
+                   ))}
+               </TableBody>
+             </Table>
           )}
         </>
       )}
 
-      {showCompanyModal && (
-        <CompanyModal
-          company={selectedCompany}
-          onClose={() => setShowCompanyModal(false)}
-          onSave={loadData}
-          userId={user?.uid || ''}
-        />
-      )}
-
-      {showContactModal && (
-        <ContactModal
-          contact={selectedContact}
-          companies={companies}
-          onClose={() => setShowContactModal(false)}
-          onSave={loadData}
-          userId={user?.uid || ''}
-        />
-      )}
+      {showCompanyModal && <CompanyModal company={selectedCompany} onClose={() => setShowCompanyModal(false)} onSave={loadData} userId={user?.uid || ''}/>}
+      {showContactModal && <ContactModal contact={selectedContact} companies={companies} onClose={() => setShowContactModal(false)} onSave={loadData} userId={user?.uid || ''}/>}
+      {showImportModal && <ImportModal activeTab={activeTab} onClose={() => setShowImportModal(false)} onImportSuccess={() => { setShowImportModal(false); loadData(); }}/>}
     </div>
   );
 }

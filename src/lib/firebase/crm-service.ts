@@ -10,14 +10,13 @@ import {
   query,
   where,
   orderBy,
-  limit,
-  Timestamp,
   serverTimestamp,
+  writeBatch, // WICHTIG: Korrekter Import
 } from 'firebase/firestore';
 import { db } from './client-init';
 import { Company, Contact, Tag } from '@/types/crm';
 
-// Companies CRUD
+// --- Service für Firmen ---
 export const companiesService = {
   async getAll(userId: string): Promise<Company[]> {
     const q = query(
@@ -50,6 +49,20 @@ export const companiesService = {
     return docRef.id;
   },
 
+  // KORRIGIERT: Funktion für den Massen-Import von Firmen
+  async createMany(companies: Omit<Company, 'id' | 'createdAt' | 'updatedAt'>[]): Promise<void> {
+    const batch = writeBatch(db);
+    companies.forEach(companyData => {
+      const docRef = doc(collection(db, 'companies'));
+      batch.set(docRef, {
+        ...companyData,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+    });
+    await batch.commit();
+  },
+
   async update(id: string, company: Partial<Company>): Promise<void> {
     const docRef = doc(db, 'companies', id);
     await updateDoc(docRef, {
@@ -63,7 +76,6 @@ export const companiesService = {
   },
 
   async search(userId: string, searchTerm: string): Promise<Company[]> {
-    // Firestore doesn't support full-text search, so we get all and filter
     const allCompanies = await this.getAll(userId);
     const term = searchTerm.toLowerCase();
     return allCompanies.filter(company => 
@@ -74,7 +86,7 @@ export const companiesService = {
   }
 };
 
-// Tags CRUD
+// --- Service für Tags ---
 export const tagsService = {
   async getAll(userId: string): Promise<Tag[]> {
     const q = query(
@@ -106,67 +118,40 @@ export const tagsService = {
     await deleteDoc(doc(db, 'tags', id));
   },
 
-  // Hilfsfunktion: Tags nach IDs laden
   async getByIds(ids: string[]): Promise<Tag[]> {
     if (ids.length === 0) return [];
     const tags = await Promise.all(
       ids.map(async (id) => {
         const docRef = doc(db, 'tags', id);
         const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          return { id: docSnap.id, ...docSnap.data() } as Tag;
-        }
-        return null;
+        return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } as Tag : null;
       })
     );
     return tags.filter(Boolean) as Tag[];
   }
 };
 
-// Contacts CRUD
+// --- Service für Kontakte ---
 export const contactsService = {
   async getAll(userId: string): Promise<Contact[]> {
-    const q = query(
-      collection(db, 'contacts'),
-      where('userId', '==', userId)
-      // Sortierung temporär entfernt - nach Index-Erstellung wieder aktivieren:
-      // orderBy('lastName'),
-      // orderBy('firstName')
-    );
+    const q = query(collection(db, 'contacts'), where('userId', '==', userId));
     const snapshot = await getDocs(q);
-    const contacts = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as Contact));
+    const contacts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Contact));
 
-    // Firmen-Namen laden für die Anzeige
     const companyIds = Array.from(new Set(contacts.map(c => c.companyId).filter(Boolean)));
+    if (companyIds.length === 0) return contacts;
+
     const companies = await Promise.all(
       companyIds.map(id => companiesService.getById(id!))
     );
-    const companyMap = Object.fromEntries(
+    const companyMap = new Map(
       companies.filter(Boolean).map(c => [c!.id, c!.name])
     );
 
     return contacts.map(contact => ({
       ...contact,
-      companyName: contact.companyId ? companyMap[contact.companyId] : undefined
+      companyName: contact.companyId ? companyMap.get(contact.companyId) : undefined
     }));
-  },
-
-  async getByCompany(companyId: string): Promise<Contact[]> {
-    const q = query(
-      collection(db, 'contacts'),
-      where('companyId', '==', companyId)
-      // Sortierung temporär entfernt - nach Index-Erstellung wieder aktivieren:
-      // orderBy('lastName'),
-      // orderBy('firstName')
-    );
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as Contact));
   },
 
   async getById(id: string): Promise<Contact | null> {
@@ -174,7 +159,6 @@ export const contactsService = {
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
       const contact = { id: docSnap.id, ...docSnap.data() } as Contact;
-      // Firmenname laden
       if (contact.companyId) {
         const company = await companiesService.getById(contact.companyId);
         contact.companyName = company?.name;
@@ -191,6 +175,20 @@ export const contactsService = {
       updatedAt: serverTimestamp(),
     });
     return docRef.id;
+  },
+  
+  // NEU: Funktion für den Massen-Import von Kontakten
+  async createMany(contacts: Omit<Contact, 'id' | 'createdAt' | 'updatedAt'>[]): Promise<void> {
+    const batch = writeBatch(db);
+    contacts.forEach(contactData => {
+        const docRef = doc(collection(db, 'contacts'));
+        batch.set(docRef, {
+            ...contactData,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+        });
+    });
+    await batch.commit();
   },
 
   async update(id: string, contact: Partial<Contact>): Promise<void> {
@@ -209,10 +207,9 @@ export const contactsService = {
     const allContacts = await this.getAll(userId);
     const term = searchTerm.toLowerCase();
     return allContacts.filter(contact => 
-      contact.firstName.toLowerCase().includes(term) ||
-      contact.lastName.toLowerCase().includes(term) ||
+      `${contact.firstName} ${contact.lastName}`.toLowerCase().includes(term) ||
       contact.email?.toLowerCase().includes(term) ||
       contact.companyName?.toLowerCase().includes(term)
     );
-  }
+  },
 };
