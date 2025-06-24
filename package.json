@@ -11,6 +11,9 @@
   "dependencies": {
     "@headlessui/react": "^2.2.4",
     "@heroicons/react": "^2.2.0",
+    "@tiptap/pm": "^2.22.3",
+    "@tiptap/react": "^2.22.3",
+    "@tiptap/starter-kit": "^2.22.3",
     "clsx": "^2.1.1",
     "firebase": "^11.9.1",
     "framer-motion": "^12.18.1",
