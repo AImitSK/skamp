@@ -1,7 +1,7 @@
 // src/app/dashboard/contacts/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
@@ -12,10 +12,11 @@ import { Badge } from "@/components/badge";
 import { Checkbox } from "@/components/checkbox";
 import { PlusIcon, MagnifyingGlassIcon, TrashIcon } from "@heroicons/react/20/solid";
 import { companiesService, contactsService, tagsService } from "@/lib/firebase/crm-service";
-import { Company, Contact, Tag, companyTypeLabels } from "@/types/crm";
+import { Company, Contact, Tag, companyTypeLabels, CompanyType } from "@/types/crm";
 import CompanyModal from "./CompanyModal";
 import ContactModal from "./ContactModal";
 import clsx from "clsx";
+import { MultiSelectDropdown } from "@/components/MultiSelectDropdown";
 
 type TabType = 'companies' | 'contacts';
 
@@ -28,7 +29,6 @@ export default function ContactsPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   
-  // Auswahl-States
   const [selectedCompanyIds, setSelectedCompanyIds] = useState<Set<string>>(new Set());
   const [selectedContactIds, setSelectedContactIds] = useState<Set<string>>(new Set());
   
@@ -36,6 +36,16 @@ export default function ContactsPage() {
   const [showContactModal, setShowContactModal] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+
+  // Filter-States für Firmen
+  const [selectedTypes, setSelectedTypes] = useState<CompanyType[]>([]);
+  const [selectedCompanyTagIds, setSelectedCompanyTagIds] = useState<string[]>([]);
+  const [selectedIndustries, setSelectedIndustries] = useState<string[]>([]);
+  
+  // Filter-States für Kontakte
+  const [selectedContactCompanyIds, setSelectedContactCompanyIds] = useState<string[]>([]);
+  const [selectedContactTagIds, setSelectedContactTagIds] = useState<string[]>([]);
+  const [selectedContactPositions, setSelectedContactPositions] = useState<string[]>([]);
 
   useEffect(() => {
     if (user) {
@@ -62,18 +72,75 @@ export default function ContactsPage() {
     }
   };
 
-  const filteredCompanies = companies.filter(company =>
-    company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    company.industry?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const industryOptions = useMemo(() => {
+    const industries = companies.map(c => c.industry).filter(Boolean) as string[];
+    return Array.from(new Set(industries)).sort();
+  }, [companies]);
 
-  const filteredContacts = contacts.filter(contact =>
-    `${contact.firstName} ${contact.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    contact.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    contact.companyName?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const tagOptions = useMemo(() => {
+    return tags.sort((a, b) => a.name.localeCompare(b.name));
+  }, [tags]);
 
-  // Auswahl-Handler
+  const positionOptions = useMemo(() => {
+    const positions = contacts.map(c => c.position).filter(Boolean) as string[];
+    return Array.from(new Set(positions)).sort();
+  }, [contacts]);
+  
+  const companyOptions = useMemo(() => {
+    return companies
+      .map(c => ({ value: c.id!, label: c.name }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [companies]);
+
+  const filteredCompanies = useMemo(() => {
+    return companies
+      .filter(company => {
+        const searchMatch =
+          company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          company.industry?.toLowerCase().includes(searchTerm.toLowerCase());
+        if (!searchMatch) return false;
+        
+        const typeMatch =
+          selectedTypes.length === 0 || selectedTypes.includes(company.type);
+        if (!typeMatch) return false;
+
+        const industryMatch =
+          selectedIndustries.length === 0 || (company.industry && selectedIndustries.includes(company.industry));
+        if (!industryMatch) return false;
+          
+        const tagMatch =
+          selectedCompanyTagIds.length === 0 || company.tagIds?.some(tagId => selectedCompanyTagIds.includes(tagId));
+        if (!tagMatch) return false;
+
+        return true;
+      });
+  }, [companies, searchTerm, selectedTypes, selectedIndustries, selectedCompanyTagIds]);
+
+  const filteredContacts = useMemo(() => {
+    return contacts.filter(contact => {
+      const searchMatch = 
+        `${contact.firstName} ${contact.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        contact.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        contact.companyName?.toLowerCase().includes(searchTerm.toLowerCase());
+      if (!searchMatch) return false;
+
+      const companyMatch = 
+        selectedContactCompanyIds.length === 0 || (contact.companyId && selectedContactCompanyIds.includes(contact.companyId));
+      if (!companyMatch) return false;
+      
+      const positionMatch = 
+        selectedContactPositions.length === 0 || (contact.position && selectedContactPositions.includes(contact.position));
+      if (!positionMatch) return false;
+        
+      const tagMatch = 
+        selectedContactTagIds.length === 0 || contact.tagIds?.some(tagId => selectedContactTagIds.includes(tagId));
+      if (!tagMatch) return false;
+
+      return true;
+    });
+  }, [contacts, searchTerm, selectedContactCompanyIds, selectedContactPositions, selectedContactTagIds]);
+
+
   const handleSelectAllCompanies = (checked: boolean) => {
     if (checked) {
       setSelectedCompanyIds(new Set(filteredCompanies.map(c => c.id!)));
@@ -110,12 +177,12 @@ export default function ContactsPage() {
     setSelectedContactIds(newSelection);
   };
 
-  // Bulk-Delete
   const handleBulkDelete = async () => {
     const count = activeTab === 'companies' ? selectedCompanyIds.size : selectedContactIds.size;
+    if (count === 0) return;
     const type = activeTab === 'companies' ? 'Firmen' : 'Kontakte';
     
-    if (confirm(`Möchten Sie wirklich ${count} ${type} löschen?`)) {
+    if (confirm(`Möchten Sie wirklich ${count} ausgewählte ${type} löschen?`)) {
       const ids = activeTab === 'companies' ? Array.from(selectedCompanyIds) : Array.from(selectedContactIds);
       const service = activeTab === 'companies' ? companiesService : contactsService;
       
@@ -168,7 +235,6 @@ export default function ContactsPage() {
     }
   };
 
-  // Helper: Tags für eine Entity rendern
   const renderTags = (tagIds?: string[]) => {
     if (!tagIds || tagIds.length === 0) return null;
     
@@ -205,7 +271,10 @@ export default function ContactsPage() {
 
       <div className="flex gap-4 border-b border-zinc-200 dark:border-zinc-800 mb-6">
         <button
-          onClick={() => setActiveTab('companies')}
+          onClick={() => {
+            setActiveTab('companies');
+            setSearchTerm('');
+          }}
           className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'companies'
               ? 'border-indigo-600 text-indigo-600'
@@ -215,7 +284,10 @@ export default function ContactsPage() {
           Firmen ({companies.length})
         </button>
         <button
-          onClick={() => setActiveTab('contacts')}
+          onClick={() => {
+            setActiveTab('contacts');
+            setSearchTerm('');
+          }}
           className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'contacts'
               ? 'border-indigo-600 text-indigo-600'
@@ -236,8 +308,59 @@ export default function ContactsPage() {
           className="w-full rounded-md border border-zinc-300 py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
       </div>
+      
+      {activeTab === 'companies' && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 p-4 border rounded-lg bg-zinc-50">
+          <MultiSelectDropdown
+            label="Typ"
+            placeholder="Nach Typ filtern..."
+            options={Object.entries(companyTypeLabels).map(([value, label]) => ({ value, label }))}
+            selectedValues={selectedTypes}
+            onChange={(values) => setSelectedTypes(values as CompanyType[])}
+          />
+          <MultiSelectDropdown
+            label="Branche"
+            placeholder="Nach Branche filtern..."
+            options={industryOptions.map(industry => ({ value: industry, label: industry }))}
+            selectedValues={selectedIndustries}
+            onChange={(values) => setSelectedIndustries(values)}
+          />
+          <MultiSelectDropdown
+            label="Tags"
+            placeholder="Nach Tags filtern..."
+            options={tagOptions.map(tag => ({ value: tag.id!, label: tag.name }))}
+            selectedValues={selectedCompanyTagIds}
+            onChange={(values) => setSelectedCompanyTagIds(values)}
+          />
+        </div>
+      )}
 
-      {/* Anzahl-Anzeige mit festem Höhen-Container */}
+      {activeTab === 'contacts' && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 p-4 border rounded-lg bg-zinc-50">
+          <MultiSelectDropdown
+            label="Firma"
+            placeholder="Nach Firma filtern..."
+            options={companyOptions}
+            selectedValues={selectedContactCompanyIds}
+            onChange={(values) => setSelectedContactCompanyIds(values)}
+          />
+          <MultiSelectDropdown
+            label="Position"
+            placeholder="Nach Position filtern..."
+            options={positionOptions.map(pos => ({ value: pos, label: pos }))}
+            selectedValues={selectedContactPositions}
+            onChange={(values) => setSelectedContactPositions(values)}
+          />
+          <MultiSelectDropdown
+            label="Tags"
+            placeholder="Nach Tags filtern..."
+            options={tagOptions.map(tag => ({ value: tag.id!, label: tag.name }))}
+            selectedValues={selectedContactTagIds}
+            onChange={(values) => setSelectedContactTagIds(values)}
+          />
+        </div>
+      )}
+
       <div className="mb-4 flex items-center justify-between h-9">
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
           {activeTab === 'companies' 
@@ -245,7 +368,6 @@ export default function ContactsPage() {
             : `${filteredContacts.length} von ${contacts.length} Kontakten`}
         </p>
         
-        {/* Bulk-Actions Container - immer vorhanden aber unsichtbar wenn nichts ausgewählt */}
         <div className={clsx(
           "flex items-center gap-4 transition-opacity",
           ((activeTab === 'companies' && selectedCompanyIds.size > 0) || 
@@ -278,7 +400,7 @@ export default function ContactsPage() {
                 <TableRow>
                   <TableHeader className="w-12">
                     <Checkbox
-                      checked={filteredCompanies.length > 0 && filteredCompanies.every(c => selectedCompanyIds.has(c.id!))}
+                      checked={filteredCompanies.length > 0 && selectedCompanyIds.size === filteredCompanies.length}
                       indeterminate={selectedCompanyIds.size > 0 && selectedCompanyIds.size < filteredCompanies.length}
                       onChange={(checked) => handleSelectAllCompanies(checked)}
                     />
@@ -346,7 +468,7 @@ export default function ContactsPage() {
                 <TableRow>
                   <TableHeader className="w-12">
                     <Checkbox
-                      checked={filteredContacts.length > 0 && filteredContacts.every(c => selectedContactIds.has(c.id!))}
+                      checked={filteredContacts.length > 0 && selectedContactIds.size === filteredContacts.length}
                       indeterminate={selectedContactIds.size > 0 && selectedContactIds.size < filteredContacts.length}
                       onChange={(checked) => handleSelectAllContacts(checked)}
                     />

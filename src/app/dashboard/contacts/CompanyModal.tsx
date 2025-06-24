@@ -141,6 +141,7 @@ export default function CompanyModal({ company, onClose, onSave, userId }: Compa
                   <option value="customer">Kunde</option>
                   <option value="supplier">Lieferant</option>
                   <option value="partner">Partner</option>
+                  <option value="customer">Verlag</option>
                   <option value="other">Sonstiges</option>
                 </Select>
               </Field>
