@@ -1,4 +1,4 @@
-// src/app/dashboard/layout.tsx
+// src/app/dashboard/layout.tsx - VOLLSTÄNDIGE KORRIGIERTE VERSION
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
@@ -23,7 +23,13 @@ import {
   DropdownLabel,
 } from "@/components/dropdown";
 import { Avatar } from "@/components/avatar";
-import { HomeIcon, UsersIcon, UserIcon, ArrowRightOnRectangleIcon } from "@heroicons/react/20/solid";
+import { 
+  HomeIcon, 
+  UsersIcon, 
+  UserIcon, 
+  ArrowRightOnRectangleIcon,
+  QueueListIcon        // NEU: Icon für Listen
+} from "@heroicons/react/20/solid";
 import { usePathname } from "next/navigation";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -45,9 +51,11 @@ export default function DashboardLayout({
     }
   };
 
+  // ERWEITERTE NAVIGATION mit Listen-Bereich
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
     { name: "Kontakte", href: "/dashboard/contacts", icon: UsersIcon },
+    { name: "Listen", href: "/dashboard/listen", icon: QueueListIcon }, // NEU
   ];
 
   const sidebarContent = (
@@ -62,7 +70,7 @@ export default function DashboardLayout({
               SKAMP
             </span>
             <span className="text-xs text-zinc-500 dark:text-zinc-400">
-              v1.0
+              Marketing Suite
             </span>
           </div>
         </div>
@@ -76,7 +84,7 @@ export default function DashboardLayout({
               <SidebarItem
                 key={item.name}
                 href={item.href}
-                current={pathname === item.href}
+                current={pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))}
               >
                 <Icon className="size-5" data-slot="icon" />
                 <SidebarLabel>{item.name}</SidebarLabel>
