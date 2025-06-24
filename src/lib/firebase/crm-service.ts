@@ -11,7 +11,7 @@ import {
   where,
   orderBy,
   serverTimestamp,
-  writeBatch, // WICHTIG: Korrekter Import
+  writeBatch,
 } from 'firebase/firestore';
 import { db } from './client-init';
 import { Company, Contact, Tag } from '@/types/crm';
@@ -49,7 +49,6 @@ export const companiesService = {
     return docRef.id;
   },
 
-  // KORRIGIERT: Funktion für den Massen-Import von Firmen
   async createMany(companies: Omit<Company, 'id' | 'createdAt' | 'updatedAt'>[]): Promise<void> {
     const batch = writeBatch(db);
     companies.forEach(companyData => {
@@ -154,6 +153,20 @@ export const contactsService = {
     }));
   },
 
+  // NEU: Funktion, um alle Kontakte für eine bestimmte Firma zu laden
+  async getByCompanyId(companyId: string): Promise<Contact[]> {
+    const q = query(
+      collection(db, 'contacts'),
+      where('companyId', '==', companyId),
+      orderBy('lastName') // Sortieren nach Nachname für eine konsistente Liste
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as Contact));
+  },
+
   async getById(id: string): Promise<Contact | null> {
     const docRef = doc(db, 'contacts', id);
     const docSnap = await getDoc(docRef);
@@ -177,7 +190,6 @@ export const contactsService = {
     return docRef.id;
   },
   
-  // NEU: Funktion für den Massen-Import von Kontakten
   async createMany(contacts: Omit<Contact, 'id' | 'createdAt' | 'updatedAt'>[]): Promise<void> {
     const batch = writeBatch(db);
     contacts.forEach(contactData => {

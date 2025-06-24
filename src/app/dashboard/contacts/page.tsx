@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import Link from 'next/link'; // NEU: Import für die Verlinkung
 import { useAuth } from "@/context/AuthContext";
 import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
@@ -372,13 +373,7 @@ export default function ContactsPage() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableHeader className="w-12">
-                    <Checkbox
-                      checked={filteredCompanies.length > 0 && selectedCompanyIds.size === filteredCompanies.length}
-                      indeterminate={selectedCompanyIds.size > 0 && selectedCompanyIds.size < filteredCompanies.length}
-                      onChange={(checked) => handleSelectAllCompanies(checked)}
-                    />
-                  </TableHeader>
+                  <TableHeader className="w-12"><Checkbox checked={filteredCompanies.length > 0 && selectedCompanyIds.size === filteredCompanies.length} indeterminate={selectedCompanyIds.size > 0 && selectedCompanyIds.size < filteredCompanies.length} onChange={(checked) => handleSelectAllCompanies(checked)}/></TableHeader>
                   <TableHeader>Name</TableHeader>
                   <TableHeader>Typ</TableHeader>
                   <TableHeader>Tags</TableHeader>
@@ -392,7 +387,9 @@ export default function ContactsPage() {
                 {filteredCompanies.map((company) => (
                     <TableRow key={company.id}>
                       <TableCell><Checkbox checked={selectedCompanyIds.has(company.id!)} onChange={(checked) => handleSelectCompany(company.id!, checked)}/></TableCell>
-                      <TableCell className="font-medium"><button onClick={() => handleEditCompany(company)} className="text-indigo-600 hover:text-indigo-500 hover:underline">{company.name}</button></TableCell>
+                      <TableCell className="font-medium">
+                        <Link href={`/dashboard/contacts/companies/${company.id}`} className="text-indigo-600 hover:text-indigo-500 hover:underline">{company.name}</Link>
+                      </TableCell>
                       <TableCell><Badge color="zinc">{companyTypeLabels[company.type]}</Badge></TableCell>
                       <TableCell>{renderTags(company.tagIds)}</TableCell>
                       <TableCell>{company.industry || '-'}</TableCell>
@@ -426,7 +423,9 @@ export default function ContactsPage() {
                  {filteredContacts.map((contact) => (
                      <TableRow key={contact.id}>
                        <TableCell><Checkbox checked={selectedContactIds.has(contact.id!)} onChange={(checked) => handleSelectContact(contact.id!, checked)}/></TableCell>
-                       <TableCell className="font-medium"><button onClick={() => handleEditContact(contact)} className="text-indigo-600 hover:text-indigo-500 hover:underline">{contact.firstName} {contact.lastName}</button></TableCell>
+                       <TableCell className="font-medium">
+                        <Link href={`/dashboard/contacts/contacts/${contact.id}`} className="text-indigo-600 hover:text-indigo-500 hover:underline">{contact.firstName} {contact.lastName}</Link>
+                       </TableCell>
                        <TableCell>{contact.companyName || '-'}</TableCell>
                        <TableCell>{renderTags(contact.tagIds)}</TableCell>
                        <TableCell>{contact.position || '-'}</TableCell>
