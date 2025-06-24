@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import Link from 'next/link';
 import { useAuth } from "@/context/AuthContext";
 import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
@@ -38,7 +39,6 @@ export default function ListsPage() {
       const listsData = await listsService.getAll(user.uid);
       setLists(listsData);
 
-      // Metriken für alle Listen laden
       const metricsMap = new Map<string, ListMetrics>();
       for (const list of listsData) {
         if (list.id) {
@@ -118,7 +118,7 @@ export default function ListsPage() {
   }, [lists, searchTerm, selectedCategory]);
 
   const getCategoryLabel = (category: string) => {
-    const labels = {
+    const labels: { [key: string]: string } = {
       press: 'Presse',
       customers: 'Kunden',
       partners: 'Partner',
@@ -126,18 +126,18 @@ export default function ListsPage() {
       custom: 'Benutzerdefiniert',
       all: 'Alle'
     };
-    return labels[category as keyof typeof labels] || category;
+    return labels[category] || category;
   };
 
   const getCategoryColor = (category?: string) => {
-    const colors = {
+    const colors: { [key: string]: string } = {
       press: 'blue',
       customers: 'green',
       partners: 'purple',
       leads: 'orange',
       custom: 'zinc'
     };
-    return colors[category as keyof typeof colors] || 'zinc';
+    return colors[category || ''] || 'zinc';
   };
 
   const formatDate = (timestamp: any) => {
@@ -159,7 +159,6 @@ export default function ListsPage() {
 
   return (
     <div>
-      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <Heading>Verteilerlisten</Heading>
@@ -173,7 +172,6 @@ export default function ListsPage() {
         </Button>
       </div>
 
-      {/* Statistiken */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-white p-4 rounded-lg border">
           <div className="flex items-center">
@@ -202,7 +200,7 @@ export default function ListsPage() {
             <div className="ml-3">
               <p className="text-sm font-medium text-gray-500">Gesamt Kontakte</p>
               <p className="text-2xl font-semibold text-gray-900">
-                {lists.reduce((sum, list) => sum + list.contactCount, 0)}
+                {lists.reduce((sum, list) => sum + (list.contactCount || 0), 0)}
               </p>
             </div>
           </div>
@@ -222,7 +220,6 @@ export default function ListsPage() {
         </div>
       </div>
 
-      {/* Filter und Suche */}
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <div className="relative flex-1">
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-zinc-400 pointer-events-none" />
@@ -264,7 +261,6 @@ export default function ListsPage() {
         </div>
       </div>
 
-      {/* Listen-Tabelle */}
       {filteredLists.length === 0 ? (
         <div className="text-center py-12">
           <UsersIcon className="mx-auto h-12 w-12 text-gray-400" />
@@ -315,12 +311,12 @@ export default function ListsPage() {
                       )} />
                       <div>
                         <div className="font-medium text-gray-900">
-                          <button
-                            onClick={() => {/* Navigate to detail page */}}
+                          <Link
+                            href={`/dashboard/listen/${list.id}`}
                             className="hover:text-blue-600 hover:underline"
                           >
                             {list.name}
-                          </button>
+                          </Link>
                         </div>
                         <div className="flex items-center gap-2 mt-1">
                           <Badge color={getCategoryColor(list.category) as any} className="text-xs">
@@ -344,7 +340,7 @@ export default function ListsPage() {
                   
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">{list.contactCount.toLocaleString()}</span>
+                      <span className="font-medium">{(list.contactCount || 0).toLocaleString()}</span>
                       {list.type === 'dynamic' && (
                         <button
                           onClick={() => handleRefreshList(list.id!)}
@@ -379,21 +375,19 @@ export default function ListsPage() {
                       <Button
                         plain
                         onClick={() => window.open(`/dashboard/listen/${list.id}`, '_blank')}
-                        className="text-xs"
                       >
                         Anzeigen
                       </Button>
                       <Button
                         plain
                         onClick={() => setEditingList(list)}
-                        className="text-xs"
                       >
                         Bearbeiten
                       </Button>
                       <Button
                         plain
                         onClick={() => handleDeleteList(list.id!)}
-                        className="text-xs text-red-600 hover:text-red-500"
+                        className="text-red-600 hover:text-red-500"
                       >
                         Löschen
                       </Button>
@@ -406,7 +400,6 @@ export default function ListsPage() {
         </Table>
       )}
 
-      {/* Schnellzugriff-Karten für häufige Aktionen */}
       {lists.length > 0 && (
         <div className="mt-8 border-t pt-6">
           <h3 className="text-lg font-medium mb-4">Schnellaktionen</h3>
@@ -433,7 +426,6 @@ export default function ListsPage() {
             </div>
 
             <div className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer" onClick={() => {
-              // Hier könnte später ein Export-Dialog geöffnet werden
               alert("Export-Funktion kommt bald!");
             }}>
               <svg className="h-8 w-8 text-purple-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -446,7 +438,6 @@ export default function ListsPage() {
         </div>
       )}
 
-      {/* Modals */}
       {showCreateModal && (
         <ListModal
           onClose={() => setShowCreateModal(false)}

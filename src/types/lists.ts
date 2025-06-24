@@ -1,5 +1,6 @@
 // src/types/lists.ts
 import { Timestamp } from 'firebase/firestore';
+// KORRIGIERT: CompanyType wird jetzt aus der crm-Typdatei importiert
 import { CompanyType, TagColor } from './crm';
 
 // Erweiterte Company-Types für Medien
@@ -10,7 +11,7 @@ export interface ListFilters {
   // Firmen-Filter
   companyTypes?: ExtendedCompanyType[];
   industries?: string[];
-  countries?: string[];
+  countries?:string[];
   
   // Kontakt-Filter
   tagIds?: string[];

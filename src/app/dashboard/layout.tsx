@@ -1,7 +1,8 @@
-// src/app/dashboard/layout.tsx - VOLLSTÄNDIGE KORRIGIERTE VERSION
+// src/app/dashboard/layout.tsx
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
+import { CrmDataProvider } from "@/context/CrmDataContext"; // NEU: Import des Daten-Providers
 import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase/client-init";
@@ -28,7 +29,7 @@ import {
   UsersIcon, 
   UserIcon, 
   ArrowRightOnRectangleIcon,
-  QueueListIcon        // NEU: Icon für Listen
+  QueueListIcon
 } from "@heroicons/react/20/solid";
 import { usePathname } from "next/navigation";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -51,11 +52,10 @@ export default function DashboardLayout({
     }
   };
 
-  // ERWEITERTE NAVIGATION mit Listen-Bereich
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
     { name: "Kontakte", href: "/dashboard/contacts", icon: UsersIcon },
-    { name: "Listen", href: "/dashboard/listen", icon: QueueListIcon }, // NEU
+    { name: "Listen", href: "/dashboard/listen", icon: QueueListIcon },
   ];
 
   const sidebarContent = (
@@ -75,7 +75,6 @@ export default function DashboardLayout({
           </div>
         </div>
       </SidebarHeader>
-
       <SidebarBody>
         <nav className="flex flex-col gap-1">
           {navigation.map((item) => {
@@ -93,19 +92,14 @@ export default function DashboardLayout({
           })}
         </nav>
       </SidebarBody>
-
       <SidebarFooter>
         <Dropdown>
           <DropdownButton as={SidebarItem}>
             <Avatar
-              src={user?.photoURL}
+              src={user?.photoURL || undefined}
               initials={
                 user?.displayName
-                  ? user.displayName
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .toUpperCase()
+                  ? user.displayName.split(" ").map((n) => n[0]).join("").toUpperCase()
                   : user?.email?.[0].toUpperCase()
               }
               className="size-8"
@@ -139,18 +133,21 @@ export default function DashboardLayout({
 
   return (
     <ProtectedRoute>
-      <SidebarLayout 
-        navbar={
-          <div className="flex items-center justify-between px-4">
-            <h1 className="text-base font-semibold text-zinc-950 dark:text-white">
-              SKAMP Marketing Suite
-            </h1>
-          </div>
-        }
-        sidebar={sidebarContent}
-      >
-        {children}
-      </SidebarLayout>
+      {/* KORRIGIERT: Der CrmDataProvider umschließt jetzt das gesamte Layout */}
+      <CrmDataProvider>
+        <SidebarLayout 
+          navbar={
+            <div className="flex items-center justify-between px-4">
+              <h1 className="text-base font-semibold text-zinc-950 dark:text-white">
+                SKAMP Marketing Suite
+              </h1>
+            </div>
+          }
+          sidebar={sidebarContent}
+        >
+          {children}
+        </SidebarLayout>
+      </CrmDataProvider>
     </ProtectedRoute>
   );
 }
