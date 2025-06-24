@@ -15,7 +15,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { db } from './client-init';
-import { Company, Contact } from '@/types/crm';
+import { Company, Contact, Tag } from '@/types/crm';
 
 // Companies CRUD
 export const companiesService = {
@@ -74,14 +74,64 @@ export const companiesService = {
   }
 };
 
+// Tags CRUD
+export const tagsService = {
+  async getAll(userId: string): Promise<Tag[]> {
+    const q = query(
+      collection(db, 'tags'),
+      where('userId', '==', userId),
+      orderBy('name')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as Tag));
+  },
+
+  async create(tag: Omit<Tag, 'id' | 'createdAt'>): Promise<string> {
+    const docRef = await addDoc(collection(db, 'tags'), {
+      ...tag,
+      createdAt: serverTimestamp(),
+    });
+    return docRef.id;
+  },
+
+  async update(id: string, tag: Partial<Tag>): Promise<void> {
+    const docRef = doc(db, 'tags', id);
+    await updateDoc(docRef, tag);
+  },
+
+  async delete(id: string): Promise<void> {
+    await deleteDoc(doc(db, 'tags', id));
+  },
+
+  // Hilfsfunktion: Tags nach IDs laden
+  async getByIds(ids: string[]): Promise<Tag[]> {
+    if (ids.length === 0) return [];
+    const tags = await Promise.all(
+      ids.map(async (id) => {
+        const docRef = doc(db, 'tags', id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          return { id: docSnap.id, ...docSnap.data() } as Tag;
+        }
+        return null;
+      })
+    );
+    return tags.filter(Boolean) as Tag[];
+  }
+};
+
 // Contacts CRUD
 export const contactsService = {
   async getAll(userId: string): Promise<Contact[]> {
     const q = query(
       collection(db, 'contacts'),
-      where('userId', '==', userId),
-      orderBy('lastName'),
-      orderBy('firstName')
+      where('userId', '==', userId)
+      // Sortierung temporär entfernt - nach Index-Erstellung wieder aktivieren:
+      // orderBy('lastName'),
+      // orderBy('firstName')
     );
     const snapshot = await getDocs(q);
     const contacts = snapshot.docs.map(doc => ({
@@ -107,9 +157,10 @@ export const contactsService = {
   async getByCompany(companyId: string): Promise<Contact[]> {
     const q = query(
       collection(db, 'contacts'),
-      where('companyId', '==', companyId),
-      orderBy('lastName'),
-      orderBy('firstName')
+      where('companyId', '==', companyId)
+      // Sortierung temporär entfernt - nach Index-Erstellung wieder aktivieren:
+      // orderBy('lastName'),
+      // orderBy('firstName')
     );
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({

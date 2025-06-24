@@ -3,14 +3,15 @@
 
 import { useState, useEffect } from "react";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
-import { Field, FieldGroup } from "@/components/fieldset";
+import { Field, Label, FieldGroup } from "@/components/fieldset";
 import { Input } from "@/components/input";
 import { Textarea } from "@/components/textarea";
 import { Select } from "@/components/select";
-import { Label } from "@/components/label"; // <-- Importiere die neue Label-Komponente
 import { Button } from "@/components/button";
-import { contactsService } from "@/lib/firebase/crm-service";
-import { Contact, Company } from "@/types/crm";
+import { contactsService, tagsService } from "@/lib/firebase/crm-service"; // tagsService importiert
+import { Contact, Company, Tag, TagColor } from "@/types/crm"; // Tag und TagColor importiert
+import { TagInput } from "@/components/tag-input"; // TagInput importiert
+
 
 interface ContactModalProps {
   contact: Contact | null;
@@ -28,15 +29,35 @@ export default function ContactModal({ contact, companies, onClose, onSave, user
     phone: '',
     position: '',
     companyId: '',
-    notes: ''
+    notes: '',
+    tagIds: []
   });
   const [loading, setLoading] = useState(false);
+  const [tags, setTags] = useState<Tag[]>([]);
 
   useEffect(() => {
     if (contact) {
-      setFormData(contact);
+      // Stelle sicher, dass tagIds immer ein Array ist
+      setFormData({ ...contact, tagIds: contact.tagIds || [] });
     }
+    loadTags();
   }, [contact]);
+
+  const loadTags = async () => {
+    if (!userId) return;
+    try {
+      const userTags = await tagsService.getAll(userId);
+      setTags(userTags);
+    } catch (error) {
+      console.error("Fehler beim Laden der Tags:", error);
+    }
+  };
+
+  const handleCreateTag = async (name: string, color: TagColor): Promise<string> => {
+    const tagId = await tagsService.create({ name, color, userId });
+    await loadTags();
+    return tagId;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,13 +65,18 @@ export default function ContactModal({ contact, companies, onClose, onSave, user
 
     setLoading(true);
     try {
+      const dataToSave = { ...formData };
+      if (!dataToSave.tagIds) {
+        dataToSave.tagIds = [];
+      }
+
       if (contact?.id) {
         // Update
-        await contactsService.update(contact.id, formData);
+        await contactsService.update(contact.id, dataToSave);
       } else {
         // Create
         await contactsService.create({
-          ...formData as Omit<Contact, 'id'>,
+          ...dataToSave as Omit<Contact, 'id'>,
           userId
         });
       }
@@ -144,6 +170,16 @@ export default function ContactModal({ contact, companies, onClose, onSave, user
             </div>
 
             <Field>
+              <Label>Tags</Label>
+              <TagInput
+                selectedTagIds={formData.tagIds || []}
+                availableTags={tags}
+                onChange={(tagIds) => setFormData({ ...formData, tagIds })}
+                onCreateTag={handleCreateTag}
+              />
+            </Field>
+
+            <Field>
               <Label>Notizen</Label>
               <Textarea
                 value={formData.notes || ''}
@@ -155,23 +191,13 @@ export default function ContactModal({ contact, companies, onClose, onSave, user
           </FieldGroup>
         </DialogBody>
 
-{/* KORREKTUR: Wir fügen dem Container Flexbox-Eigenschaften hinzu 
-            und geben den Buttons explizite Klassen für ein garantiertes Aussehen. */}
-        <DialogActions className="flex justify-end gap-4 p-6">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-          >
+        <DialogActions className="p-6">
+          <Button plain onClick={onClose}>
             Abbrechen
-          </button>
-          <button
-            type="submit"
-            disabled={loading}
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-50"
-          >
+          </Button>
+          <Button color="indigo" type="submit" disabled={loading}>
             {loading ? 'Speichern...' : 'Speichern'}
-          </button>
+          </Button>
         </DialogActions>
       </form>
     </Dialog>

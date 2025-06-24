@@ -11,8 +11,8 @@ import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@
 import { Badge } from "@/components/badge";
 import { Checkbox } from "@/components/checkbox";
 import { PlusIcon, MagnifyingGlassIcon, TrashIcon } from "@heroicons/react/20/solid";
-import { companiesService, contactsService } from "@/lib/firebase/crm-service";
-import { Company, Contact, companyTypeLabels } from "@/types/crm";
+import { companiesService, contactsService, tagsService } from "@/lib/firebase/crm-service";
+import { Company, Contact, Tag, companyTypeLabels } from "@/types/crm";
 import CompanyModal from "./CompanyModal";
 import ContactModal from "./ContactModal";
 import clsx from "clsx";
@@ -24,6 +24,7 @@ export default function ContactsPage() {
   const [activeTab, setActiveTab] = useState<TabType>('companies');
   const [companies, setCompanies] = useState<Company[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   
@@ -46,12 +47,14 @@ export default function ContactsPage() {
     if (!user) return;
     setLoading(true);
     try {
-      const [companiesData, contactsData] = await Promise.all([
+      const [companiesData, contactsData, tagsData] = await Promise.all([
         companiesService.getAll(user.uid),
-        contactsService.getAll(user.uid)
+        contactsService.getAll(user.uid),
+        tagsService.getAll(user.uid)
       ]);
       setCompanies(companiesData);
       setContacts(contactsData);
+      setTags(tagsData);
     } catch (error) {
       console.error("Fehler beim Laden der Daten:", error);
     } finally {
@@ -165,6 +168,22 @@ export default function ContactsPage() {
     }
   };
 
+  // Helper: Tags für eine Entity rendern
+  const renderTags = (tagIds?: string[]) => {
+    if (!tagIds || tagIds.length === 0) return null;
+    
+    const entityTags = tags.filter(tag => tagIds.includes(tag.id!));
+    return (
+      <div className="flex flex-wrap gap-1">
+        {entityTags.map(tag => (
+          <Badge key={tag.id} color={tag.color as any} className="text-xs">
+            {tag.name}
+          </Badge>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -266,6 +285,7 @@ export default function ContactsPage() {
                   </TableHeader>
                   <TableHeader>Name</TableHeader>
                   <TableHeader>Typ</TableHeader>
+                  <TableHeader>Tags</TableHeader>
                   <TableHeader>Branche</TableHeader>
                   <TableHeader>Website</TableHeader>
                   <TableHeader>Telefon</TableHeader>
@@ -294,6 +314,7 @@ export default function ContactsPage() {
                           {companyTypeLabels[company.type]}
                         </Badge>
                       </TableCell>
+                      <TableCell>{renderTags(company.tagIds)}</TableCell>
                       <TableCell>{company.industry || '-'}</TableCell>
                       <TableCell>{company.website || '-'}</TableCell>
                       <TableCell>{company.phone || '-'}</TableCell>
@@ -332,6 +353,7 @@ export default function ContactsPage() {
                   </TableHeader>
                   <TableHeader>Name</TableHeader>
                   <TableHeader>Firma</TableHeader>
+                  <TableHeader>Tags</TableHeader>
                   <TableHeader>Position</TableHeader>
                   <TableHeader>E-Mail</TableHeader>
                   <TableHeader>Telefon</TableHeader>
@@ -356,6 +378,7 @@ export default function ContactsPage() {
                         </button>
                       </TableCell>
                       <TableCell>{contact.companyName || '-'}</TableCell>
+                      <TableCell>{renderTags(contact.tagIds)}</TableCell>
                       <TableCell>{contact.position || '-'}</TableCell>
                       <TableCell>{contact.email || '-'}</TableCell>
                       <TableCell>{contact.phone || '-'}</TableCell>

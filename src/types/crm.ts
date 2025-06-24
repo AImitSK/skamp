@@ -1,5 +1,46 @@
-// src/types/crm.ts
 import { Timestamp } from 'firebase/firestore';
+
+// Mögliche Typen für eine Firma
+export type CompanyType = 'customer' | 'supplier' | 'partner' | 'other';
+
+// Labels für die Firmentypen zur Anzeige
+export const companyTypeLabels: Record<CompanyType, string> = {
+  customer: 'Kunde',
+  supplier: 'Lieferant',
+  partner: 'Partner',
+  other: 'Sonstiges'
+};
+
+// Farben für Tags
+export type TagColor = 'blue' | 'green' | 'yellow' | 'red' | 'purple' | 'pink' | 'orange' | 'zinc';
+
+// NEU: Mögliche Plattformen für Social Media
+export type SocialPlatform = 'linkedin' | 'xing' | 'facebook' | 'instagram' | 'website' | 'other';
+
+// NEU: Labels für die Social-Media-Plattformen
+export const socialPlatformLabels: Record<SocialPlatform, string> = {
+  linkedin: 'LinkedIn',
+  xing: 'Xing',
+  facebook: 'Facebook',
+  instagram: 'Instagram',
+  website: 'Website',
+  other: 'Sonstiges'
+};
+
+// NEU: Datenstruktur für ein Social-Media-Profil
+export interface SocialMediaProfile {
+  platform: SocialPlatform;
+  url: string;
+}
+
+// Datenstruktur für ein Tag
+export interface Tag {
+  id?: string;
+  name: string;
+  color: TagColor;
+  userId: string;
+  createdAt?: Timestamp;
+}
 
 // Datenstruktur für eine Firma
 export interface Company {
@@ -10,6 +51,7 @@ export interface Company {
   type: CompanyType;
   address?: {
     street?: string;
+    street2?: string; // NEU: Zweite Adresszeile
     city?: string;
     state?: string;
     zip?: string;
@@ -17,6 +59,8 @@ export interface Company {
   };
   phone?: string;
   notes?: string;
+  tagIds?: string[];
+  socialMedia?: SocialMediaProfile[]; // NEU: Array für Social-Media-Profile
   userId: string;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
@@ -31,23 +75,13 @@ export interface Contact {
   phone?: string;
   position?: string;
   companyId?: string;
-  companyName?: string; // Denormalisiert für einfache Anzeige
+  companyName?: string;
   notes?: string;
+  tagIds?: string[];
   userId: string;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }
-
-// Mögliche Typen für eine Firma
-export type CompanyType = 'customer' | 'supplier' | 'partner' | 'other';
-
-// Labels für die Firmentypen zur Anzeige
-export const companyTypeLabels: Record<CompanyType, string> = {
-  customer: 'Kunde',
-  supplier: 'Lieferant',
-  partner: 'Partner',
-  other: 'Sonstiges'
-};
 
 // Props für das CompanyModal
 export interface CompanyModalProps {
