@@ -69,7 +69,7 @@ export interface Company {
   tagIds?: string[];
   socialMedia?: SocialMediaProfile[];
   
-  // NEU: Medien-spezifische Felder
+  // --- NEU: Medien-spezifische Felder ---
   mediaInfo?: {
     circulation?: number;        // Auflage bei Print
     reach?: number;             // Reichweite online
@@ -96,7 +96,7 @@ export interface Contact {
   notes?: string;
   tagIds?: string[];
   
-  // NEU: Journalisten-spezifische Felder
+  // --- NEU: Journalisten-spezifische Felder ---
   mediaInfo?: {
     beat?: string;              // Ressort (Tech, Politik, Wirtschaft, etc.)
     expertise?: string[];       // Expertise-Bereiche

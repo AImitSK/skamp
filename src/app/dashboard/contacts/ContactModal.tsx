@@ -3,15 +3,14 @@
 
 import { useState, useEffect } from "react";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
-import { Field, Label, FieldGroup } from "@/components/fieldset";
+import { Field, Label, FieldGroup, Description } from "@/components/fieldset";
 import { Input } from "@/components/input";
 import { Textarea } from "@/components/textarea";
 import { Select } from "@/components/select";
 import { Button } from "@/components/button";
-import { contactsService, tagsService } from "@/lib/firebase/crm-service"; // tagsService importiert
-import { Contact, Company, Tag, TagColor } from "@/types/crm"; // Tag und TagColor importiert
-import { TagInput } from "@/components/tag-input"; // TagInput importiert
-
+import { contactsService, tagsService } from "@/lib/firebase/crm-service";
+import { Contact, Company, Tag, TagColor, STANDARD_BEATS } from "@/types/crm";
+import { TagInput } from "@/components/tag-input";
 
 interface ContactModalProps {
   contact: Contact | null;
@@ -30,15 +29,42 @@ export default function ContactModal({ contact, companies, onClose, onSave, user
     position: '',
     companyId: '',
     notes: '',
-    tagIds: []
+    tagIds: [],
+    mediaInfo: {
+        beat: '',
+        expertise: [],
+        preferredContactTime: '',
+        deadlines: '',
+        languagePreferences: [],
+        socialHandles: {
+            twitter: '',
+            linkedin: '',
+            mastodon: ''
+        }
+    }
   });
   const [loading, setLoading] = useState(false);
   const [tags, setTags] = useState<Tag[]>([]);
 
   useEffect(() => {
     if (contact) {
-      // Stelle sicher, dass tagIds immer ein Array ist
-      setFormData({ ...contact, tagIds: contact.tagIds || [] });
+      setFormData({ 
+          ...contact, 
+          tagIds: contact.tagIds || [],
+          mediaInfo: {
+            beat: '',
+            expertise: [],
+            preferredContactTime: '',
+            deadlines: '',
+            languagePreferences: [],
+            socialHandles: {
+                twitter: '',
+                linkedin: '',
+                mastodon: ''
+            },
+            ...(contact.mediaInfo || {})
+          }
+    });
     }
     loadTags();
   }, [contact]);
@@ -59,6 +85,29 @@ export default function ContactModal({ contact, companies, onClose, onSave, user
     return tagId;
   };
 
+  const handleMediaInfoChange = (field: keyof NonNullable<Contact['mediaInfo']>, value: any) => {
+    setFormData(prev => ({
+        ...prev,
+        mediaInfo: {
+            ...prev.mediaInfo,
+            [field]: value,
+        }
+    }));
+  }
+  
+    const handleSocialHandleChange = (platform: 'twitter' | 'linkedin' | 'mastodon', value: string) => {
+        setFormData(prev => ({
+            ...prev,
+            mediaInfo: {
+                ...prev.mediaInfo,
+                socialHandles: {
+                    ...prev.mediaInfo?.socialHandles,
+                    [platform]: value,
+                }
+            }
+        }));
+    }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.firstName || !formData.lastName) return;
@@ -71,10 +120,8 @@ export default function ContactModal({ contact, companies, onClose, onSave, user
       }
 
       if (contact?.id) {
-        // Update
         await contactsService.update(contact.id, dataToSave);
       } else {
-        // Create
         await contactsService.create({
           ...dataToSave as Omit<Contact, 'id'>,
           userId
@@ -90,8 +137,10 @@ export default function ContactModal({ contact, companies, onClose, onSave, user
     }
   };
 
+  const isMediaContact = formData.tagIds?.some(tagId => tags.find(t => t.id === tagId)?.name.toLowerCase().includes('presse')) || false;
+
   return (
-    <Dialog open={true} onClose={onClose}>
+    <Dialog open={true} onClose={onClose} size="3xl">
       <form onSubmit={handleSubmit}>
         <DialogTitle className="p-6">
           {contact ? 'Person bearbeiten' : 'Neue Person hinzufügen'}
@@ -178,7 +227,43 @@ export default function ContactModal({ contact, companies, onClose, onSave, user
                 onCreateTag={handleCreateTag}
               />
             </Field>
-
+            
+            {isMediaContact && (
+                 <div className="space-y-4 rounded-md border p-4 bg-zinc-50/50">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">Journalisten-Informationen</p>
+                    <Field>
+                        <Label>Ressort / Beat</Label>
+                        <Select value={formData.mediaInfo?.beat} onChange={(e) => handleMediaInfoChange('beat', e.target.value)}>
+                            <option value="">Kein Ressort</option>
+                            {STANDARD_BEATS.map(beat => <option key={beat} value={beat}>{beat}</option>)}
+                        </Select>
+                    </Field>
+                    <Field>
+                        <Label>Expertise-Bereiche</Label>
+                        <Input value={formData.mediaInfo?.expertise?.join(', ') || ''} onChange={e => handleMediaInfoChange('expertise', e.target.value.split(',').map(s => s.trim()))} placeholder="z.B. KI, SaaS, B2B"/>
+                        <Description>Mehrere Bereiche mit Komma trennen.</Description>
+                    </Field>
+                     <div className="grid grid-cols-2 gap-4">
+                        <Field>
+                            <Label>Bevorzugte Kontaktzeit</Label>
+                            <Input value={formData.mediaInfo?.preferredContactTime} onChange={e => handleMediaInfoChange('preferredContactTime', e.target.value)} placeholder="z.B. Vormittags"/>
+                        </Field>
+                         <Field>
+                            <Label>Redaktionsschluss</Label>
+                            <Input value={formData.mediaInfo?.deadlines} onChange={e => handleMediaInfoChange('deadlines', e.target.value)} placeholder="z.B. Montags 14:00"/>
+                        </Field>
+                    </div>
+                     <Field>
+                        <Label>Social Media Handles</Label>
+                        <div className="grid grid-cols-3 gap-2">
+                             <Input value={formData.mediaInfo?.socialHandles?.twitter} onChange={e => handleSocialHandleChange('twitter', e.target.value)} placeholder="Twitter / X"/>
+                             <Input value={formData.mediaInfo?.socialHandles?.linkedin} onChange={e => handleSocialHandleChange('linkedin', e.target.value)} placeholder="LinkedIn"/>
+                             <Input value={formData.mediaInfo?.socialHandles?.mastodon} onChange={e => handleSocialHandleChange('mastodon', e.target.value)} placeholder="Mastodon"/>
+                        </div>
+                    </Field>
+                </div>
+            )}
+            
             <Field>
               <Label>Notizen</Label>
               <Textarea

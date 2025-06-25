@@ -231,9 +231,7 @@ export default function CompanyModal({ company, onClose, onSave, userId }: Compa
             )}
             
             <div className="space-y-2 rounded-md border p-4">
-              {/* === KORREKTUR HIER === */}
-              <p className="text-sm font-medium text-gray-900 dark:text-white">Adresse</p>
-              {/* ======================= */}
+              <Label className="text-sm font-medium text-gray-900 dark:text-white">Adresse</Label>
               <Field>
                 <Label className="sr-only">Straße und Hausnummer</Label>
                 <Input value={formData.address?.street || ''} onChange={(e) => setFormData({ ...formData, address: { ...(formData.address || {}), street: e.target.value }})} placeholder="Straße und Hausnummer" />
@@ -263,7 +261,7 @@ export default function CompanyModal({ company, onClose, onSave, userId }: Compa
             </div>
 
             <div className="space-y-4 rounded-md border p-4">
-               <p className="text-sm font-medium text-gray-900 dark:text-white">Social Media Profile</p>
+               <Label className="text-sm font-medium text-gray-900 dark:text-white">Social Media Profile</Label>
               {(formData.socialMedia || []).map((profile, index) => (
                 <div key={index} className="grid grid-cols-12 gap-2 items-center">
                   <div className="col-span-5">

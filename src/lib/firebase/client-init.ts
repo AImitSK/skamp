@@ -4,10 +4,12 @@
 import { initializeApp, getApp, getApps } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage"; // 1. Import hinzufügen
 import { firebaseConfig } from "./config";
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app); // 2. Storage initialisieren
 
-export { app, auth, db };
+export { app, auth, db, storage }; // 3. Storage exportieren

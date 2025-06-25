@@ -31,7 +31,8 @@ import {
   ArrowRightOnRectangleIcon,
   QueueListIcon,
   Cog6ToothIcon,
-  MegaphoneIcon
+  MegaphoneIcon,
+  PhotoIcon
 } from "@heroicons/react/20/solid";
 import { usePathname } from "next/navigation";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -59,6 +60,7 @@ export default function DashboardLayout({
     { name: "Kontakte", href: "/dashboard/contacts", icon: UsersIcon },
     { name: "Listen", href: "/dashboard/listen", icon: QueueListIcon },
     { name: "PR-Tools", href: "/dashboard/pr", icon: MegaphoneIcon },
+    { name: "Mediathek", href: "/dashboard/mediathek", icon: PhotoIcon },
     { name: "Einstellungen", href: "/dashboard/settings/boilerplates", icon: Cog6ToothIcon },
   ];
 
