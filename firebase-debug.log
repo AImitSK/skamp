@@ -1,52 +1,57 @@
-[debug] [2025-06-25T12:29:29.502Z] ----------------------------------------------------------------------
-[debug] [2025-06-25T12:29:29.505Z] Command:       C:\Program Files\nodejs\node.exe C:\Program Files\nodejs\node_modules\firebase-tools\lib\bin\firebase.js deploy --only functions
-[debug] [2025-06-25T12:29:29.505Z] CLI Version:   14.8.0
-[debug] [2025-06-25T12:29:29.505Z] Platform:      win32
-[debug] [2025-06-25T12:29:29.505Z] Node Version:  v22.11.0
-[debug] [2025-06-25T12:29:29.506Z] Time:          Wed Jun 25 2025 14:29:29 GMT+0200 (Mitteleuropäische Sommerzeit)
-[debug] [2025-06-25T12:29:29.506Z] ----------------------------------------------------------------------
+[debug] [2025-06-25T13:04:24.573Z] ----------------------------------------------------------------------
+[debug] [2025-06-25T13:04:24.576Z] Command:       C:\Program Files\nodejs\node.exe C:\Program Files\nodejs\node_modules\firebase-tools\lib\bin\firebase.js deploy --only functions
+[debug] [2025-06-25T13:04:24.577Z] CLI Version:   14.8.0
+[debug] [2025-06-25T13:04:24.577Z] Platform:      win32
+[debug] [2025-06-25T13:04:24.577Z] Node Version:  v22.11.0
+[debug] [2025-06-25T13:04:24.577Z] Time:          Wed Jun 25 2025 15:04:24 GMT+0200 (Mitteleuropäische Sommerzeit)
+[debug] [2025-06-25T13:04:24.577Z] ----------------------------------------------------------------------
 [debug] 
-[debug] [2025-06-25T12:29:29.697Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2025-06-25T12:29:29.698Z] > authorizing via signed-in user (s.kuehne@sk-online-marketing.de)
-[debug] [2025-06-25T12:29:29.698Z] [iam] checking project skamp-prod for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]
-[debug] [2025-06-25T12:29:29.699Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:29.699Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:29.700Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod:testIamPermissions [none]
-[debug] [2025-06-25T12:29:29.700Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod:testIamPermissions x-goog-quota-user=projects/skamp-prod
-[debug] [2025-06-25T12:29:29.700Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
-[debug] [2025-06-25T12:29:30.019Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod:testIamPermissions 200
-[debug] [2025-06-25T12:29:30.019Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
-[debug] [2025-06-25T12:29:30.020Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:30.020Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:30.020Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/skamp-prod/serviceAccounts/skamp-prod@appspot.gserviceaccount.com:testIamPermissions [none]
-[debug] [2025-06-25T12:29:30.020Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/skamp-prod/serviceAccounts/skamp-prod@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
-[debug] [2025-06-25T12:29:30.732Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/skamp-prod/serviceAccounts/skamp-prod@appspot.gserviceaccount.com:testIamPermissions 200
-[debug] [2025-06-25T12:29:30.733Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/skamp-prod/serviceAccounts/skamp-prod@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2025-06-25T13:04:24.766Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-25T13:04:24.766Z] > authorizing via signed-in user (s.kuehne@sk-online-marketing.de)
+[debug] [2025-06-25T13:04:24.766Z] [iam] checking project skamp-prod for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]
+[debug] [2025-06-25T13:04:24.767Z] Checked if tokens are valid: false, expires at: 1750855919748
+[debug] [2025-06-25T13:04:24.767Z] Checked if tokens are valid: false, expires at: 1750855919748
+[debug] [2025-06-25T13:04:24.768Z] > refreshing access token with scopes: []
+[debug] [2025-06-25T13:04:24.769Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-06-25T13:04:24.769Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-06-25T13:04:24.997Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-06-25T13:04:24.998Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-06-25T13:04:25.008Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod:testIamPermissions [none]
+[debug] [2025-06-25T13:04:25.008Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod:testIamPermissions x-goog-quota-user=projects/skamp-prod
+[debug] [2025-06-25T13:04:25.008Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2025-06-25T13:04:25.232Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod:testIamPermissions 200
+[debug] [2025-06-25T13:04:25.232Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2025-06-25T13:04:25.232Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:04:25.233Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:04:25.233Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/skamp-prod/serviceAccounts/skamp-prod@appspot.gserviceaccount.com:testIamPermissions [none]
+[debug] [2025-06-25T13:04:25.233Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/skamp-prod/serviceAccounts/skamp-prod@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2025-06-25T13:04:26.025Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/skamp-prod/serviceAccounts/skamp-prod@appspot.gserviceaccount.com:testIamPermissions 200
+[debug] [2025-06-25T13:04:26.026Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/skamp-prod/serviceAccounts/skamp-prod@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
 [info] 
 [info] === Deploying to 'skamp-prod'...
 [info] 
 [info] i  deploying functions 
-[debug] [2025-06-25T12:29:30.736Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:30.736Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:30.736Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod [none]
-[debug] [2025-06-25T12:29:30.964Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod 200
-[debug] [2025-06-25T12:29:30.964Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod {"projectNumber":"184547460574","projectId":"skamp-prod","lifecycleState":"ACTIVE","name":"skamp-prod","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-06-23T06:38:52.139184Z","parent":{"type":"organization","id":"1020316406005"}}
+[debug] [2025-06-25T13:04:26.030Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:04:26.030Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:04:26.030Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod [none]
+[debug] [2025-06-25T13:04:26.241Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod 200
+[debug] [2025-06-25T13:04:26.241Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod {"projectNumber":"184547460574","projectId":"skamp-prod","lifecycleState":"ACTIVE","name":"skamp-prod","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-06-23T06:38:52.139184Z","parent":{"type":"organization","id":"1020316406005"}}
 [info] i  functions: preparing codebase default for deployment 
 [info] i  functions: ensuring required API cloudfunctions.googleapis.com is enabled... 
 [info] i  functions: ensuring required API cloudbuild.googleapis.com is enabled... 
 [info] i  artifactregistry: ensuring required API artifactregistry.googleapis.com is enabled... 
-[debug] [2025-06-25T12:29:30.967Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:30.967Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:30.967Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/skamp-prod/adminSdkConfig [none]
-[debug] [2025-06-25T12:29:31.381Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/skamp-prod/adminSdkConfig 200
-[debug] [2025-06-25T12:29:31.381Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/skamp-prod/adminSdkConfig {"projectId":"skamp-prod","storageBucket":"skamp-prod.firebasestorage.app"}
-[debug] [2025-06-25T12:29:31.382Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:31.382Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:31.382Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/skamp-prod/configs [none]
-[debug] [2025-06-25T12:29:31.672Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/skamp-prod/configs 200
-[debug] [2025-06-25T12:29:31.672Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/skamp-prod/configs {}
-[debug] [2025-06-25T12:29:31.674Z] Validating nodejs source
-[debug] [2025-06-25T12:29:32.460Z] > [functions] package.json contents: {
+[debug] [2025-06-25T13:04:26.244Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:04:26.244Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:04:26.244Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/skamp-prod/adminSdkConfig [none]
+[debug] [2025-06-25T13:04:26.594Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/skamp-prod/adminSdkConfig 200
+[debug] [2025-06-25T13:04:26.594Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/skamp-prod/adminSdkConfig {"projectId":"skamp-prod","storageBucket":"skamp-prod.firebasestorage.app"}
+[debug] [2025-06-25T13:04:26.594Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:04:26.594Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:04:26.594Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/skamp-prod/configs [none]
+[debug] [2025-06-25T13:04:26.955Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/skamp-prod/configs 200
+[debug] [2025-06-25T13:04:26.955Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/skamp-prod/configs {}
+[debug] [2025-06-25T13:04:26.957Z] Validating nodejs source
+[debug] [2025-06-25T13:04:27.895Z] > [functions] package.json contents: {
   "name": "functions",
   "scripts": {
     "lint": "eslint --ext .js,.ts .",
@@ -77,199 +82,302 @@
   },
   "private": true
 }
-[debug] [2025-06-25T12:29:32.461Z] Building nodejs source
+[debug] [2025-06-25T13:04:27.896Z] Building nodejs source
 [info] i  functions: Loading and analyzing source code for codebase default to determine what to deploy 
-[debug] [2025-06-25T12:29:32.462Z] Could not find functions.yaml. Must use http discovery
-[debug] [2025-06-25T12:29:32.472Z] Found firebase-functions binary at 'C:\Users\skuehne\Desktop\Projekt\skamp\functions\node_modules\.bin\firebase-functions'
-[info] Serving at port 8955
+[debug] [2025-06-25T13:04:27.897Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-06-25T13:04:27.907Z] Found firebase-functions binary at 'C:\Users\skuehne\Desktop\Projekt\skamp\functions\node_modules\.bin\firebase-functions'
+[info] Serving at port 8860
 
-[error] (node:16040) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+[error] (node:15844) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
 (Use `node --trace-deprecation ...` to show where the warning was created)
 
-[debug] [2025-06-25T12:29:33.177Z] Got response from /__/functions.yaml {"endpoints":{"generatePressRelease":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","region":["europe-west1"],"labels":{},"callableTrigger":{},"entryPoint":"generatePressRelease"}},"specVersion":"v1alpha1","requiredAPIs":[],"extensions":{}}
+[debug] [2025-06-25T13:04:28.500Z] Got response from /__/functions.yaml {"endpoints":{"generatePressRelease":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","region":["europe-west1"],"labels":{},"callableTrigger":{},"entryPoint":"generatePressRelease"}},"specVersion":"v1alpha1","requiredAPIs":[],"extensions":{}}
 [info] i  extensions: ensuring required API firebaseextensions.googleapis.com is enabled... 
-[debug] [2025-06-25T12:29:37.223Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2025-06-25T12:29:37.223Z] > authorizing via signed-in user (s.kuehne@sk-online-marketing.de)
-[debug] [2025-06-25T12:29:37.223Z] [iam] checking project skamp-prod for permissions ["firebase.projects.get","firebaseextensions.instances.list"]
-[debug] [2025-06-25T12:29:37.223Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:37.223Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:37.223Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod:testIamPermissions [none]
-[debug] [2025-06-25T12:29:37.223Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod:testIamPermissions x-goog-quota-user=projects/skamp-prod
-[debug] [2025-06-25T12:29:37.223Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod:testIamPermissions {"permissions":["firebase.projects.get","firebaseextensions.instances.list"]}
-[debug] [2025-06-25T12:29:37.940Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod:testIamPermissions 200
-[debug] [2025-06-25T12:29:37.940Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod:testIamPermissions {"permissions":["firebase.projects.get","firebaseextensions.instances.list"]}
-[debug] [2025-06-25T12:29:37.940Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:37.940Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:37.941Z] >>> [apiv2][query] GET https://firebaseextensions.googleapis.com/v1beta/projects/skamp-prod/instances pageSize=100&pageToken=
-[debug] [2025-06-25T12:29:38.868Z] <<< [apiv2][status] GET https://firebaseextensions.googleapis.com/v1beta/projects/skamp-prod/instances 200
-[debug] [2025-06-25T12:29:38.868Z] <<< [apiv2][body] GET https://firebaseextensions.googleapis.com/v1beta/projects/skamp-prod/instances {}
+[debug] [2025-06-25T13:04:32.533Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-25T13:04:32.533Z] > authorizing via signed-in user (s.kuehne@sk-online-marketing.de)
+[debug] [2025-06-25T13:04:32.533Z] [iam] checking project skamp-prod for permissions ["firebase.projects.get","firebaseextensions.instances.list"]
+[debug] [2025-06-25T13:04:32.533Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:04:32.533Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:04:32.533Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod:testIamPermissions [none]
+[debug] [2025-06-25T13:04:32.533Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod:testIamPermissions x-goog-quota-user=projects/skamp-prod
+[debug] [2025-06-25T13:04:32.534Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod:testIamPermissions {"permissions":["firebase.projects.get","firebaseextensions.instances.list"]}
+[debug] [2025-06-25T13:04:32.751Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod:testIamPermissions 200
+[debug] [2025-06-25T13:04:32.752Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod:testIamPermissions {"permissions":["firebase.projects.get","firebaseextensions.instances.list"]}
+[debug] [2025-06-25T13:04:32.752Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:04:32.752Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:04:32.752Z] >>> [apiv2][query] GET https://firebaseextensions.googleapis.com/v1beta/projects/skamp-prod/instances pageSize=100&pageToken=
+[debug] [2025-06-25T13:04:33.648Z] <<< [apiv2][status] GET https://firebaseextensions.googleapis.com/v1beta/projects/skamp-prod/instances 200
+[debug] [2025-06-25T13:04:33.648Z] <<< [apiv2][body] GET https://firebaseextensions.googleapis.com/v1beta/projects/skamp-prod/instances {}
 [info] i  functions: preparing functions directory for uploading... 
 [info] i  functions: packaged C:\Users\skuehne\Desktop\Projekt\skamp\functions (96.48 KB) for uploading 
-[debug] [2025-06-25T12:29:38.909Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:38.909Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:38.909Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/projects/skamp-prod/locations/-/functions [none]
-[debug] [2025-06-25T12:29:39.565Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/projects/skamp-prod/locations/-/functions 200
-[debug] [2025-06-25T12:29:39.565Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/projects/skamp-prod/locations/-/functions {}
-[debug] [2025-06-25T12:29:39.565Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:39.566Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:39.566Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/-/functions filter=environment%3D%22GEN_2%22
-[debug] [2025-06-25T12:29:40.591Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/-/functions 200
-[debug] [2025-06-25T12:29:40.591Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/-/functions {}
+[debug] [2025-06-25T13:04:33.691Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:04:33.691Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:04:33.691Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/projects/skamp-prod/locations/-/functions [none]
+[debug] [2025-06-25T13:04:34.487Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/projects/skamp-prod/locations/-/functions 200
+[debug] [2025-06-25T13:04:34.487Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/projects/skamp-prod/locations/-/functions {}
+[debug] [2025-06-25T13:04:34.488Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:04:34.488Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:04:34.488Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/-/functions filter=environment%3D%22GEN_2%22
+[debug] [2025-06-25T13:04:35.530Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/-/functions 200
+[debug] [2025-06-25T13:04:35.530Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/-/functions {"functions":[{"name":"projects/skamp-prod/locations/europe-west1/functions/generatePressRelease","buildConfig":{"build":"projects/184547460574/locations/europe-west1/builds/1d7800f5-67a0-428b-8ec2-0e9b1ea2b628","runtime":"nodejs22","entryPoint":"generatePressRelease","source":{"storageSource":{"bucket":"gcf-v2-sources-184547460574-europe-west1","object":"generatePressRelease/function-source.zip","generation":"1750854569014064"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/skamp-prod/locations/europe-west1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-184547460574-europe-west1","object":"generatePressRelease/function-source.zip","generation":"1750854569014064"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/skamp-prod/serviceAccounts/184547460574-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"state":"FAILED","updateTime":"2025-06-25T12:29:44.127003955Z","labels":{"firebase-functions-hash":"aba0bd25887dfc1dd32ae098320697e44a3382e8","deployment-tool":"cli-firebase","deployment-callable":"true"},"stateMessages":[{"severity":"ERROR","type":"CloudRunServiceNotFound","message":"Cloud Run service projects/skamp-prod/locations/europe-west1/services/generatepressrelease for the function was not found. The function will not work correctly. Please redeploy."}],"environment":"GEN_2","url":"https://europe-west1-skamp-prod.cloudfunctions.net/generatePressRelease","createTime":"2025-06-25T12:29:29.377600619Z","satisfiesPzi":true}]}
 [info] i  functions: ensuring required API run.googleapis.com is enabled... 
 [info] i  functions: ensuring required API eventarc.googleapis.com is enabled... 
 [info] i  functions: ensuring required API pubsub.googleapis.com is enabled... 
 [info] i  functions: ensuring required API storage.googleapis.com is enabled... 
 [info] i  functions: generating the service identity for pubsub.googleapis.com... 
-[debug] [2025-06-25T12:29:40.595Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:40.595Z] Checked if tokens are valid: true, expires at: 1750855919748
+[debug] [2025-06-25T13:04:35.535Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:04:35.535Z] Checked if tokens are valid: true, expires at: 1750860263998
 [info] i  functions: generating the service identity for eventarc.googleapis.com... 
-[debug] [2025-06-25T12:29:40.595Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:40.595Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:40.595Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1beta1/projects/184547460574/services/pubsub.googleapis.com:generateServiceIdentity [none]
-[debug] [2025-06-25T12:29:40.595Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1beta1/projects/184547460574/services/pubsub.googleapis.com:generateServiceIdentity x-goog-quota-user=projects/184547460574
-[debug] [2025-06-25T12:29:40.595Z] >>> [apiv2][body] POST https://serviceusage.googleapis.com/v1beta1/projects/184547460574/services/pubsub.googleapis.com:generateServiceIdentity {}
-[debug] [2025-06-25T12:29:40.596Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1beta1/projects/184547460574/services/eventarc.googleapis.com:generateServiceIdentity [none]
-[debug] [2025-06-25T12:29:40.597Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1beta1/projects/184547460574/services/eventarc.googleapis.com:generateServiceIdentity x-goog-quota-user=projects/184547460574
-[debug] [2025-06-25T12:29:40.597Z] >>> [apiv2][body] POST https://serviceusage.googleapis.com/v1beta1/projects/184547460574/services/eventarc.googleapis.com:generateServiceIdentity {}
-[debug] [2025-06-25T12:29:41.612Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1beta1/projects/184547460574/services/eventarc.googleapis.com:generateServiceIdentity 200
-[debug] [2025-06-25T12:29:41.612Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1beta1/projects/184547460574/services/eventarc.googleapis.com:generateServiceIdentity {"name":"operations/finished.DONE_OPERATION","done":true,"response":{"@type":"type.googleapis.com/google.api.serviceusage.v1beta1.ServiceIdentity","email":"service-184547460574@gcp-sa-eventarc.iam.gserviceaccount.com","uniqueId":"114497705350654491339"}}
-[debug] [2025-06-25T12:29:41.651Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1beta1/projects/184547460574/services/pubsub.googleapis.com:generateServiceIdentity 200
-[debug] [2025-06-25T12:29:41.651Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1beta1/projects/184547460574/services/pubsub.googleapis.com:generateServiceIdentity {"name":"operations/finished.DONE_OPERATION","done":true,"response":{"@type":"type.googleapis.com/google.api.serviceusage.v1beta1.ServiceIdentity","email":"service-184547460574@gcp-sa-pubsub.iam.gserviceaccount.com","uniqueId":"102327190410562335997"}}
-[debug] [2025-06-25T12:29:41.653Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:41.653Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:41.653Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod [none]
-[debug] [2025-06-25T12:29:41.843Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod 200
-[debug] [2025-06-25T12:29:41.843Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod {"projectNumber":"184547460574","projectId":"skamp-prod","lifecycleState":"ACTIVE","name":"skamp-prod","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-06-23T06:38:52.139184Z","parent":{"type":"organization","id":"1020316406005"}}
-[debug] [2025-06-25T12:29:41.843Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:41.843Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:41.843Z] >>> [apiv2][query] GET https://compute.googleapis.com/compute/v1/projects/184547460574 [none]
-[debug] [2025-06-25T12:29:42.103Z] <<< [apiv2][status] GET https://compute.googleapis.com/compute/v1/projects/184547460574 403
-[debug] [2025-06-25T12:29:42.103Z] <<< [apiv2][body] GET https://compute.googleapis.com/compute/v1/projects/184547460574 {"error":{"code":403,"message":"Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","errors":[{"message":"Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","domain":"usageLimits","reason":"accessNotConfigured","extendedHelp":"https://console.developers.google.com"}],"status":"PERMISSION_DENIED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"SERVICE_DISABLED","domain":"googleapis.com","metadata":{"containerInfo":"184547460574","service":"compute.googleapis.com","consumer":"projects/184547460574","serviceTitle":"Compute Engine API","activationUrl":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574"}},{"@type":"type.googleapis.com/google.rpc.LocalizedMessage","locale":"en-US","message":"Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry."},{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Google developers console API activation","url":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574"}]}]}}
-[debug] [2025-06-25T12:29:42.103Z] unable to look up default compute service account. Falling back to 184547460574-compute@developer.gserviceaccount.com. Error: {"name":"FirebaseError","children":[],"context":{"body":{"error":{"code":403,"message":"Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","errors":[{"message":"Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","domain":"usageLimits","reason":"accessNotConfigured","extendedHelp":"https://console.developers.google.com"}],"status":"PERMISSION_DENIED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"SERVICE_DISABLED","domain":"googleapis.com","metadata":{"containerInfo":"184547460574","service":"compute.googleapis.com","consumer":"projects/184547460574","serviceTitle":"Compute Engine API","activationUrl":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574"}},{"@type":"type.googleapis.com/google.rpc.LocalizedMessage","locale":"en-US","message":"Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry."},{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Google developers console API activation","url":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574"}]}]}},"response":{"statusCode":403}},"exit":1,"message":"Request to https://compute.googleapis.com/compute/v1/projects/184547460574 had HTTP Error: 403, Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","status":403}
-[debug] [2025-06-25T12:29:42.104Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:42.104Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:42.104Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/skamp-prod/billingInfo [none]
-[debug] [2025-06-25T12:29:42.486Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/skamp-prod/billingInfo 200
-[debug] [2025-06-25T12:29:42.486Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/skamp-prod/billingInfo {"name":"projects/skamp-prod/billingInfo","projectId":"skamp-prod","billingAccountName":"billingAccounts/019F68-F7C6F0-AD8E4B","billingEnabled":true}
-[debug] [2025-06-25T12:29:42.487Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:42.487Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:42.487Z] >>> [apiv2][query] POST https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/europe-west1/functions:generateUploadUrl [none]
-[debug] [2025-06-25T12:29:42.706Z] <<< [apiv2][status] POST https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/europe-west1/functions:generateUploadUrl 200
-[debug] [2025-06-25T12:29:42.706Z] <<< [apiv2][body] POST https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/europe-west1/functions:generateUploadUrl {"uploadUrl":"https://storage.googleapis.com/gcf-v2-uploads-184547460574.europe-west1.cloudfunctions.appspot.com/7b9316ed-8aec-49df-a18c-b141d5a74739.zip?GoogleAccessId=service-184547460574@gcf-admin-robot.iam.gserviceaccount.com&Expires=1750856368&Signature=a3qrivinmZRfvhRr7Cr%2B42D16ym%2FL8puR790eftWvTjbuNQkol4Ar%2B9rknAiaZR18kry38S%2F%2FrkjFzHVP2YkQXeknPkCJTZ%2BnHfZ9GEiadp3khnA0Wg%2F2yi%2B%2BLJq4rmHeUHQqVyn21q%2FyY7W2vb2mNyN9Py5bATy%2BpM7gpldGgfPzNHK2xjlc%2BiHo8z%2FEEjDPJAW%2FKfKYO%2FpVBJO%2BkJ%2B9w9A4YmMSZ6A0G%2Fa9HTc0JvYOL0sPKRFZjZAqPcVMqURt9KWNg%2B0X492rlWe75qHXg30mQfXbdcGtwipIDUnm%2FrLytNkMhynfOkgyphXQwvskX5HgdNILIyp9Fr311Rkag%3D%3D","storageSource":{"bucket":"gcf-v2-uploads-184547460574.europe-west1.cloudfunctions.appspot.com","object":"7b9316ed-8aec-49df-a18c-b141d5a74739.zip"}}
-[debug] [2025-06-25T12:29:42.706Z] >>> [apiv2][query] PUT https://storage.googleapis.com/gcf-v2-uploads-184547460574.europe-west1.cloudfunctions.appspot.com/7b9316ed-8aec-49df-a18c-b141d5a74739.zip GoogleAccessId=service-184547460574%40gcf-admin-robot.iam.gserviceaccount.com&Expires=1750856368&Signature=a3qrivinmZRfvhRr7Cr%2B42D16ym%2FL8puR790eftWvTjbuNQkol4Ar%2B9rknAiaZR18kry38S%2F%2FrkjFzHVP2YkQXeknPkCJTZ%2BnHfZ9GEiadp3khnA0Wg%2F2yi%2B%2BLJq4rmHeUHQqVyn21q%2FyY7W2vb2mNyN9Py5bATy%2BpM7gpldGgfPzNHK2xjlc%2BiHo8z%2FEEjDPJAW%2FKfKYO%2FpVBJO%2BkJ%2B9w9A4YmMSZ6A0G%2Fa9HTc0JvYOL0sPKRFZjZAqPcVMqURt9KWNg%2B0X492rlWe75qHXg30mQfXbdcGtwipIDUnm%2FrLytNkMhynfOkgyphXQwvskX5HgdNILIyp9Fr311Rkag%3D%3D
-[debug] [2025-06-25T12:29:42.706Z] >>> [apiv2][body] PUT https://storage.googleapis.com/gcf-v2-uploads-184547460574.europe-west1.cloudfunctions.appspot.com/7b9316ed-8aec-49df-a18c-b141d5a74739.zip [stream]
-[debug] [2025-06-25T12:29:43.059Z] <<< [apiv2][status] PUT https://storage.googleapis.com/gcf-v2-uploads-184547460574.europe-west1.cloudfunctions.appspot.com/7b9316ed-8aec-49df-a18c-b141d5a74739.zip 200
-[debug] [2025-06-25T12:29:43.059Z] <<< [apiv2][body] PUT https://storage.googleapis.com/gcf-v2-uploads-184547460574.europe-west1.cloudfunctions.appspot.com/7b9316ed-8aec-49df-a18c-b141d5a74739.zip [omitted]
-[info] +  functions: functions folder uploaded successfully 
-[info] i  functions: creating Node.js 22 (2nd Gen) function generatePressRelease(europe-west1)... 
-[debug] [2025-06-25T12:29:43.063Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:43.063Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:43.063Z] >>> [apiv2][query] POST https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/europe-west1/functions functionId=generatePressRelease
-[debug] [2025-06-25T12:29:43.063Z] >>> [apiv2][body] POST https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/europe-west1/functions {"name":"projects/skamp-prod/locations/europe-west1/functions/generatePressRelease","buildConfig":{"runtime":"nodejs22","entryPoint":"generatePressRelease","source":{"storageSource":{"bucket":"gcf-v2-uploads-184547460574.europe-west1.cloudfunctions.appspot.com","object":"7b9316ed-8aec-49df-a18c-b141d5a74739.zip"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""}},"serviceConfig":{"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"skamp-prod\",\"storageBucket\":\"skamp-prod.firebasestorage.app\"}","GCLOUD_PROJECT":"skamp-prod","EVENTARC_CLOUD_EVENT_SOURCE":"projects/skamp-prod/locations/europe-west1/services/generatePressRelease","FUNCTION_TARGET":"generatePressRelease","LOG_EXECUTION_ID":"true"},"ingressSettings":null,"timeoutSeconds":null,"serviceAccountEmail":null,"availableMemory":"256Mi","minInstanceCount":null,"maxInstanceCount":null,"maxInstanceRequestConcurrency":80,"availableCpu":"1","vpcConnector":null,"vpcConnectorEgressSettings":null},"labels":{"deployment-tool":"cli-firebase","deployment-callable":"true","firebase-functions-hash":"aba0bd25887dfc1dd32ae098320697e44a3382e8"}}
-[debug] [2025-06-25T12:29:43.834Z] <<< [apiv2][status] POST https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/europe-west1/functions 200
-[debug] [2025-06-25T12:29:43.834Z] <<< [apiv2][body] POST https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/europe-west1/functions {"name":"projects/skamp-prod/locations/europe-west1/operations/operation-1750854568766-63864989fedc8-708336ed-d09ea041","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v2.OperationMetadata","createTime":"2025-06-25T12:29:29.381317698Z","target":"projects/skamp-prod/locations/europe-west1/functions/generatePressRelease","verb":"create","cancelRequested":false,"apiVersion":"v2"},"done":false}
-[debug] [2025-06-25T12:29:43.834Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:43.834Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:43.835Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/europe-west1/operations/operation-1750854568766-63864989fedc8-708336ed-d09ea041 [none]
-[debug] [2025-06-25T12:29:43.960Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/europe-west1/operations/operation-1750854568766-63864989fedc8-708336ed-d09ea041 200
-[debug] [2025-06-25T12:29:43.961Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/europe-west1/operations/operation-1750854568766-63864989fedc8-708336ed-d09ea041 {"name":"projects/skamp-prod/locations/europe-west1/operations/operation-1750854568766-63864989fedc8-708336ed-d09ea041","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v2.OperationMetadata","createTime":"2025-06-25T12:29:29.381317698Z","target":"projects/skamp-prod/locations/europe-west1/functions/generatePressRelease","verb":"create","cancelRequested":false,"apiVersion":"v2"},"done":false}
-[debug] [2025-06-25T12:29:44.470Z] [create-default-europe-west1-generatePressRelease] Retrying task index 0
-[debug] [2025-06-25T12:29:44.471Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:44.471Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:44.471Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/europe-west1/operations/operation-1750854568766-63864989fedc8-708336ed-d09ea041 [none]
-[debug] [2025-06-25T12:29:44.595Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/europe-west1/operations/operation-1750854568766-63864989fedc8-708336ed-d09ea041 200
-[debug] [2025-06-25T12:29:44.595Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/europe-west1/operations/operation-1750854568766-63864989fedc8-708336ed-d09ea041 {"name":"projects/skamp-prod/locations/europe-west1/operations/operation-1750854568766-63864989fedc8-708336ed-d09ea041","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v2.OperationMetadata","createTime":"2025-06-25T12:29:29.381317698Z","target":"projects/skamp-prod/locations/europe-west1/functions/generatePressRelease","verb":"create","cancelRequested":false,"apiVersion":"v2","requestResource":{"@type":"type.googleapis.com/google.cloud.functions.v2.Function","name":"projects/skamp-prod/locations/europe-west1/functions/generatePressRelease","buildConfig":{"runtime":"nodejs22","entryPoint":"generatePressRelease","source":{"storageSource":{"bucket":"gcf-v2-sources-184547460574-europe-west1","object":"generatePressRelease/function-source.zip","generation":"1750854569014064"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"serviceAccount":"projects/skamp-prod/serviceAccounts/184547460574-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/skamp-prod/locations/europe-west1/services/generatepressrelease","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"skamp-prod\",\"storageBucket\":\"skamp-prod.firebasestorage.app\"}","GCLOUD_PROJECT":"skamp-prod","EVENTARC_CLOUD_EVENT_SOURCE":"projects/skamp-prod/locations/europe-west1/services/generatePressRelease","FUNCTION_TARGET":"generatePressRelease","LOG_EXECUTION_ID":"true"},"ingressSettings":"ALLOW_ALL","serviceAccountEmail":"184547460574-compute@developer.gserviceaccount.com","availableMemory":"256Mi","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"labels":{"deployment-tool":"cli-firebase","deployment-callable":"true","firebase-functions-hash":"aba0bd25887dfc1dd32ae098320697e44a3382e8"},"environment":"GEN_2"},"stages":[{"name":"BUILD","state":"NOT_STARTED"},{"name":"SERVICE","state":"NOT_STARTED"}],"operationType":"CREATE_FUNCTION"},"done":false}
-[debug] [2025-06-25T12:29:45.602Z] [create-default-europe-west1-generatePressRelease] Retrying task index 0
-[debug] [2025-06-25T12:29:45.602Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:45.602Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:45.602Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/europe-west1/operations/operation-1750854568766-63864989fedc8-708336ed-d09ea041 [none]
-[debug] [2025-06-25T12:29:45.734Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/europe-west1/operations/operation-1750854568766-63864989fedc8-708336ed-d09ea041 200
-[debug] [2025-06-25T12:29:45.734Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/europe-west1/operations/operation-1750854568766-63864989fedc8-708336ed-d09ea041 {"name":"projects/skamp-prod/locations/europe-west1/operations/operation-1750854568766-63864989fedc8-708336ed-d09ea041","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v2.OperationMetadata","createTime":"2025-06-25T12:29:29.381317698Z","target":"projects/skamp-prod/locations/europe-west1/functions/generatePressRelease","verb":"create","cancelRequested":false,"apiVersion":"v2","requestResource":{"@type":"type.googleapis.com/google.cloud.functions.v2.Function","name":"projects/skamp-prod/locations/europe-west1/functions/generatePressRelease","buildConfig":{"runtime":"nodejs22","entryPoint":"generatePressRelease","source":{"storageSource":{"bucket":"gcf-v2-sources-184547460574-europe-west1","object":"generatePressRelease/function-source.zip","generation":"1750854569014064"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"serviceAccount":"projects/skamp-prod/serviceAccounts/184547460574-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/skamp-prod/locations/europe-west1/services/generatepressrelease","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"skamp-prod\",\"storageBucket\":\"skamp-prod.firebasestorage.app\"}","GCLOUD_PROJECT":"skamp-prod","EVENTARC_CLOUD_EVENT_SOURCE":"projects/skamp-prod/locations/europe-west1/services/generatePressRelease","FUNCTION_TARGET":"generatePressRelease","LOG_EXECUTION_ID":"true"},"ingressSettings":"ALLOW_ALL","serviceAccountEmail":"184547460574-compute@developer.gserviceaccount.com","availableMemory":"256Mi","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"labels":{"deployment-tool":"cli-firebase","deployment-callable":"true","firebase-functions-hash":"aba0bd25887dfc1dd32ae098320697e44a3382e8"},"environment":"GEN_2"},"stages":[{"name":"BUILD","message":"Build in progress","state":"IN_PROGRESS","resource":"projects/184547460574/locations/europe-west1/builds/1d7800f5-67a0-428b-8ec2-0e9b1ea2b628","resourceUri":"https://console.cloud.google.com/cloud-build/builds;region=europe-west1/1d7800f5-67a0-428b-8ec2-0e9b1ea2b628?project=184547460574"},{"name":"SERVICE","state":"NOT_STARTED"}],"operationType":"CREATE_FUNCTION","buildName":"projects/184547460574/locations/europe-west1/builds/1d7800f5-67a0-428b-8ec2-0e9b1ea2b628"},"done":false}
-[debug] [2025-06-25T12:29:47.746Z] [create-default-europe-west1-generatePressRelease] Retrying task index 0
-[debug] [2025-06-25T12:29:47.746Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:47.747Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:47.747Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/europe-west1/operations/operation-1750854568766-63864989fedc8-708336ed-d09ea041 [none]
-[debug] [2025-06-25T12:29:47.845Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/europe-west1/operations/operation-1750854568766-63864989fedc8-708336ed-d09ea041 200
-[debug] [2025-06-25T12:29:47.846Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/europe-west1/operations/operation-1750854568766-63864989fedc8-708336ed-d09ea041 {"name":"projects/skamp-prod/locations/europe-west1/operations/operation-1750854568766-63864989fedc8-708336ed-d09ea041","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v2.OperationMetadata","createTime":"2025-06-25T12:29:29.381317698Z","target":"projects/skamp-prod/locations/europe-west1/functions/generatePressRelease","verb":"create","cancelRequested":false,"apiVersion":"v2","requestResource":{"@type":"type.googleapis.com/google.cloud.functions.v2.Function","name":"projects/skamp-prod/locations/europe-west1/functions/generatePressRelease","buildConfig":{"runtime":"nodejs22","entryPoint":"generatePressRelease","source":{"storageSource":{"bucket":"gcf-v2-sources-184547460574-europe-west1","object":"generatePressRelease/function-source.zip","generation":"1750854569014064"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"serviceAccount":"projects/skamp-prod/serviceAccounts/184547460574-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/skamp-prod/locations/europe-west1/services/generatepressrelease","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"skamp-prod\",\"storageBucket\":\"skamp-prod.firebasestorage.app\"}","GCLOUD_PROJECT":"skamp-prod","EVENTARC_CLOUD_EVENT_SOURCE":"projects/skamp-prod/locations/europe-west1/services/generatePressRelease","FUNCTION_TARGET":"generatePressRelease","LOG_EXECUTION_ID":"true"},"ingressSettings":"ALLOW_ALL","serviceAccountEmail":"184547460574-compute@developer.gserviceaccount.com","availableMemory":"256Mi","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"labels":{"deployment-tool":"cli-firebase","deployment-callable":"true","firebase-functions-hash":"aba0bd25887dfc1dd32ae098320697e44a3382e8"},"environment":"GEN_2"},"stages":[{"name":"BUILD","message":"Build in progress","state":"IN_PROGRESS","resource":"projects/184547460574/locations/europe-west1/builds/1d7800f5-67a0-428b-8ec2-0e9b1ea2b628","resourceUri":"https://console.cloud.google.com/cloud-build/builds;region=europe-west1/1d7800f5-67a0-428b-8ec2-0e9b1ea2b628?project=184547460574"},{"name":"SERVICE","state":"NOT_STARTED"}],"operationType":"CREATE_FUNCTION","buildName":"projects/184547460574/locations/europe-west1/builds/1d7800f5-67a0-428b-8ec2-0e9b1ea2b628"},"done":false}
-[debug] [2025-06-25T12:29:51.861Z] [create-default-europe-west1-generatePressRelease] Retrying task index 0
-[debug] [2025-06-25T12:29:51.862Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:51.862Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:51.862Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/europe-west1/operations/operation-1750854568766-63864989fedc8-708336ed-d09ea041 [none]
-[debug] [2025-06-25T12:29:51.964Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/europe-west1/operations/operation-1750854568766-63864989fedc8-708336ed-d09ea041 200
-[debug] [2025-06-25T12:29:51.964Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/europe-west1/operations/operation-1750854568766-63864989fedc8-708336ed-d09ea041 {"name":"projects/skamp-prod/locations/europe-west1/operations/operation-1750854568766-63864989fedc8-708336ed-d09ea041","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v2.OperationMetadata","createTime":"2025-06-25T12:29:29.381317698Z","target":"projects/skamp-prod/locations/europe-west1/functions/generatePressRelease","verb":"create","cancelRequested":false,"apiVersion":"v2","requestResource":{"@type":"type.googleapis.com/google.cloud.functions.v2.Function","name":"projects/skamp-prod/locations/europe-west1/functions/generatePressRelease","buildConfig":{"runtime":"nodejs22","entryPoint":"generatePressRelease","source":{"storageSource":{"bucket":"gcf-v2-sources-184547460574-europe-west1","object":"generatePressRelease/function-source.zip","generation":"1750854569014064"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"serviceAccount":"projects/skamp-prod/serviceAccounts/184547460574-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/skamp-prod/locations/europe-west1/services/generatepressrelease","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"skamp-prod\",\"storageBucket\":\"skamp-prod.firebasestorage.app\"}","GCLOUD_PROJECT":"skamp-prod","EVENTARC_CLOUD_EVENT_SOURCE":"projects/skamp-prod/locations/europe-west1/services/generatePressRelease","FUNCTION_TARGET":"generatePressRelease","LOG_EXECUTION_ID":"true"},"ingressSettings":"ALLOW_ALL","serviceAccountEmail":"184547460574-compute@developer.gserviceaccount.com","availableMemory":"256Mi","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"labels":{"deployment-tool":"cli-firebase","deployment-callable":"true","firebase-functions-hash":"aba0bd25887dfc1dd32ae098320697e44a3382e8"},"environment":"GEN_2"},"stages":[{"name":"BUILD","message":"Build in progress","state":"IN_PROGRESS","resource":"projects/184547460574/locations/europe-west1/builds/1d7800f5-67a0-428b-8ec2-0e9b1ea2b628","resourceUri":"https://console.cloud.google.com/cloud-build/builds;region=europe-west1/1d7800f5-67a0-428b-8ec2-0e9b1ea2b628?project=184547460574"},{"name":"SERVICE","state":"NOT_STARTED"}],"operationType":"CREATE_FUNCTION","buildName":"projects/184547460574/locations/europe-west1/builds/1d7800f5-67a0-428b-8ec2-0e9b1ea2b628"},"done":false}
-[debug] [2025-06-25T12:29:59.974Z] [create-default-europe-west1-generatePressRelease] Retrying task index 0
-[debug] [2025-06-25T12:29:59.974Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:59.974Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:29:59.974Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/europe-west1/operations/operation-1750854568766-63864989fedc8-708336ed-d09ea041 [none]
-[debug] [2025-06-25T12:30:00.119Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/europe-west1/operations/operation-1750854568766-63864989fedc8-708336ed-d09ea041 200
-[debug] [2025-06-25T12:30:00.119Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/europe-west1/operations/operation-1750854568766-63864989fedc8-708336ed-d09ea041 {"name":"projects/skamp-prod/locations/europe-west1/operations/operation-1750854568766-63864989fedc8-708336ed-d09ea041","metadata":{"@type":"type.googleapis.com/google.cloud.functions.v2.OperationMetadata","createTime":"2025-06-25T12:29:29.381317698Z","endTime":"2025-06-25T12:29:44.118535553Z","target":"projects/skamp-prod/locations/europe-west1/functions/generatePressRelease","verb":"create","cancelRequested":false,"apiVersion":"v2","requestResource":{"@type":"type.googleapis.com/google.cloud.functions.v2.Function","name":"projects/skamp-prod/locations/europe-west1/functions/generatePressRelease","buildConfig":{"runtime":"nodejs22","entryPoint":"generatePressRelease","source":{"storageSource":{"bucket":"gcf-v2-sources-184547460574-europe-west1","object":"generatePressRelease/function-source.zip","generation":"1750854569014064"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"serviceAccount":"projects/skamp-prod/serviceAccounts/184547460574-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"serviceConfig":{"service":"projects/skamp-prod/locations/europe-west1/services/generatepressrelease","timeoutSeconds":60,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"skamp-prod\",\"storageBucket\":\"skamp-prod.firebasestorage.app\"}","GCLOUD_PROJECT":"skamp-prod","EVENTARC_CLOUD_EVENT_SOURCE":"projects/skamp-prod/locations/europe-west1/services/generatePressRelease","FUNCTION_TARGET":"generatePressRelease","LOG_EXECUTION_ID":"true"},"ingressSettings":"ALLOW_ALL","serviceAccountEmail":"184547460574-compute@developer.gserviceaccount.com","availableMemory":"256Mi","maxInstanceRequestConcurrency":80,"availableCpu":"1"},"labels":{"deployment-tool":"cli-firebase","deployment-callable":"true","firebase-functions-hash":"aba0bd25887dfc1dd32ae098320697e44a3382e8"},"environment":"GEN_2"},"stages":[{"name":"ARTIFACT_REGISTRY","message":"Deleting function artifacts in Artifact Registry","state":"COMPLETE"},{"name":"SERVICE","message":"Deleting Cloud Run service","state":"COMPLETE","resource":"projects/skamp-prod/locations/europe-west1/services/generatepressrelease"}],"operationType":"CREATE_FUNCTION"},"done":true,"error":{"code":3,"message":"Build failed with status: FAILURE. Could not build the function due to a missing permission on the build service account. If you didn't revoke that permission explicitly, this could be caused by a change in the organization policies. Please refer to the following documentation for more details and resolution: https://cloud.google.com/functions/docs/troubleshooting#build-service-account\n You can also view the logs at https://console.cloud.google.com/cloud-build/builds;region=europe-west1/1d7800f5-67a0-428b-8ec2-0e9b1ea2b628?project=184547460574.\n"}}
-[debug] [2025-06-25T12:30:00.119Z] Got source token undefined for region europe-west1
-[error] Build failed with status: FAILURE. Could not build the function due to a missing permission on the build service account. If you didn't revoke that permission explicitly, this could be caused by a change in the organization policies. Please refer to the following documentation for more details and resolution: https://cloud.google.com/functions/docs/troubleshooting#build-service-account
- You can also view the logs at https://console.cloud.google.com/cloud-build/builds;region=europe-west1/1d7800f5-67a0-428b-8ec2-0e9b1ea2b628?project=184547460574.
-
-[debug] [2025-06-25T12:30:00.124Z] Total Function Deployment time: 17058
-[debug] [2025-06-25T12:30:00.124Z] 1 Functions Deployed
-[debug] [2025-06-25T12:30:00.124Z] 1 Functions Errored
-[debug] [2025-06-25T12:30:00.124Z] 0 Function Deployments Aborted
-[debug] [2025-06-25T12:30:00.124Z] Average Function Deployment time: 17057
+[debug] [2025-06-25T13:04:35.535Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:04:35.536Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:04:35.536Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1beta1/projects/184547460574/services/pubsub.googleapis.com:generateServiceIdentity [none]
+[debug] [2025-06-25T13:04:35.536Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1beta1/projects/184547460574/services/pubsub.googleapis.com:generateServiceIdentity x-goog-quota-user=projects/184547460574
+[debug] [2025-06-25T13:04:35.536Z] >>> [apiv2][body] POST https://serviceusage.googleapis.com/v1beta1/projects/184547460574/services/pubsub.googleapis.com:generateServiceIdentity {}
+[debug] [2025-06-25T13:04:35.537Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1beta1/projects/184547460574/services/eventarc.googleapis.com:generateServiceIdentity [none]
+[debug] [2025-06-25T13:04:35.537Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1beta1/projects/184547460574/services/eventarc.googleapis.com:generateServiceIdentity x-goog-quota-user=projects/184547460574
+[debug] [2025-06-25T13:04:35.537Z] >>> [apiv2][body] POST https://serviceusage.googleapis.com/v1beta1/projects/184547460574/services/eventarc.googleapis.com:generateServiceIdentity {}
+[debug] [2025-06-25T13:04:36.513Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1beta1/projects/184547460574/services/eventarc.googleapis.com:generateServiceIdentity 200
+[debug] [2025-06-25T13:04:36.513Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1beta1/projects/184547460574/services/eventarc.googleapis.com:generateServiceIdentity {"name":"operations/finished.DONE_OPERATION","done":true,"response":{"@type":"type.googleapis.com/google.api.serviceusage.v1beta1.ServiceIdentity","email":"service-184547460574@gcp-sa-eventarc.iam.gserviceaccount.com","uniqueId":"114497705350654491339"}}
+[debug] [2025-06-25T13:04:36.552Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1beta1/projects/184547460574/services/pubsub.googleapis.com:generateServiceIdentity 200
+[debug] [2025-06-25T13:04:36.552Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1beta1/projects/184547460574/services/pubsub.googleapis.com:generateServiceIdentity {"name":"operations/finished.DONE_OPERATION","done":true,"response":{"@type":"type.googleapis.com/google.api.serviceusage.v1beta1.ServiceIdentity","email":"service-184547460574@gcp-sa-pubsub.iam.gserviceaccount.com","uniqueId":"102327190410562335997"}}
+[debug] [2025-06-25T13:04:36.553Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:04:36.554Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:04:36.554Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod [none]
+[debug] [2025-06-25T13:04:36.760Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod 200
+[debug] [2025-06-25T13:04:36.760Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod {"projectNumber":"184547460574","projectId":"skamp-prod","lifecycleState":"ACTIVE","name":"skamp-prod","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-06-23T06:38:52.139184Z","parent":{"type":"organization","id":"1020316406005"}}
+[debug] [2025-06-25T13:04:36.760Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:04:36.760Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:04:36.760Z] >>> [apiv2][query] GET https://compute.googleapis.com/compute/v1/projects/184547460574 [none]
+[debug] [2025-06-25T13:04:37.044Z] <<< [apiv2][status] GET https://compute.googleapis.com/compute/v1/projects/184547460574 403
+[debug] [2025-06-25T13:04:37.044Z] <<< [apiv2][body] GET https://compute.googleapis.com/compute/v1/projects/184547460574 {"error":{"code":403,"message":"Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","errors":[{"message":"Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","domain":"usageLimits","reason":"accessNotConfigured","extendedHelp":"https://console.developers.google.com"}],"status":"PERMISSION_DENIED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"SERVICE_DISABLED","domain":"googleapis.com","metadata":{"containerInfo":"184547460574","consumer":"projects/184547460574","activationUrl":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574","service":"compute.googleapis.com","serviceTitle":"Compute Engine API"}},{"@type":"type.googleapis.com/google.rpc.LocalizedMessage","locale":"en-US","message":"Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry."},{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Google developers console API activation","url":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574"}]}]}}
+[debug] [2025-06-25T13:04:37.045Z] unable to look up default compute service account. Falling back to 184547460574-compute@developer.gserviceaccount.com. Error: {"name":"FirebaseError","children":[],"context":{"body":{"error":{"code":403,"message":"Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","errors":[{"message":"Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","domain":"usageLimits","reason":"accessNotConfigured","extendedHelp":"https://console.developers.google.com"}],"status":"PERMISSION_DENIED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"SERVICE_DISABLED","domain":"googleapis.com","metadata":{"containerInfo":"184547460574","consumer":"projects/184547460574","activationUrl":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574","service":"compute.googleapis.com","serviceTitle":"Compute Engine API"}},{"@type":"type.googleapis.com/google.rpc.LocalizedMessage","locale":"en-US","message":"Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry."},{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Google developers console API activation","url":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574"}]}]}},"response":{"statusCode":403}},"exit":1,"message":"Request to https://compute.googleapis.com/compute/v1/projects/184547460574 had HTTP Error: 403, Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","status":403}
+[debug] [2025-06-25T13:04:37.045Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:04:37.045Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:04:37.045Z] >>> [apiv2][query] GET https://compute.googleapis.com/compute/v1/projects/184547460574 [none]
+[debug] [2025-06-25T13:04:37.205Z] <<< [apiv2][status] GET https://compute.googleapis.com/compute/v1/projects/184547460574 403
+[debug] [2025-06-25T13:04:37.205Z] <<< [apiv2][body] GET https://compute.googleapis.com/compute/v1/projects/184547460574 {"error":{"code":403,"message":"Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","errors":[{"message":"Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","domain":"usageLimits","reason":"accessNotConfigured","extendedHelp":"https://console.developers.google.com"}],"status":"PERMISSION_DENIED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"SERVICE_DISABLED","domain":"googleapis.com","metadata":{"service":"compute.googleapis.com","serviceTitle":"Compute Engine API","consumer":"projects/184547460574","containerInfo":"184547460574","activationUrl":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574"}},{"@type":"type.googleapis.com/google.rpc.LocalizedMessage","locale":"en-US","message":"Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry."},{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Google developers console API activation","url":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574"}]}]}}
+[debug] [2025-06-25T13:04:37.205Z] unable to look up default compute service account. Falling back to 184547460574-compute@developer.gserviceaccount.com. Error: {"name":"FirebaseError","children":[],"context":{"body":{"error":{"code":403,"message":"Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","errors":[{"message":"Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","domain":"usageLimits","reason":"accessNotConfigured","extendedHelp":"https://console.developers.google.com"}],"status":"PERMISSION_DENIED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"SERVICE_DISABLED","domain":"googleapis.com","metadata":{"service":"compute.googleapis.com","serviceTitle":"Compute Engine API","consumer":"projects/184547460574","containerInfo":"184547460574","activationUrl":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574"}},{"@type":"type.googleapis.com/google.rpc.LocalizedMessage","locale":"en-US","message":"Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry."},{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Google developers console API activation","url":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574"}]}]}},"response":{"statusCode":403}},"exit":1,"message":"Request to https://compute.googleapis.com/compute/v1/projects/184547460574 had HTTP Error: 403, Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","status":403}
+[debug] [2025-06-25T13:04:37.206Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:04:37.206Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:04:37.206Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/skamp-prod/billingInfo [none]
+[debug] [2025-06-25T13:04:37.562Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/skamp-prod/billingInfo 200
+[debug] [2025-06-25T13:04:37.563Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/skamp-prod/billingInfo {"name":"projects/skamp-prod/billingInfo","projectId":"skamp-prod","billingAccountName":"billingAccounts/019F68-F7C6F0-AD8E4B","billingEnabled":true}
+[info] i  functions: updating Node.js 22 (2nd Gen) function generatePressRelease(europe-west1)... 
+[debug] [2025-06-25T13:04:37.566Z] Precondition failed. Cannot update a GCFv2 function without storage
+[debug] [2025-06-25T13:04:37.571Z] Total Function Deployment time: 1
+[debug] [2025-06-25T13:04:37.571Z] 1 Functions Deployed
+[debug] [2025-06-25T13:04:37.571Z] 1 Functions Errored
+[debug] [2025-06-25T13:04:37.571Z] 0 Function Deployments Aborted
+[debug] [2025-06-25T13:04:37.571Z] Average Function Deployment time: 0
 [info] 
 [info] Functions deploy had errors with the following functions:
 	generatePressRelease(europe-west1)
-[debug] [2025-06-25T12:30:00.215Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:30:00.215Z] Checked if tokens are valid: true, expires at: 1750855919748
-[debug] [2025-06-25T12:30:00.215Z] >>> [apiv2][query] GET https://artifactregistry.googleapis.com/v1/projects/skamp-prod/locations/europe-west1/repositories/gcf-artifacts [none]
-[debug] [2025-06-25T12:30:00.469Z] <<< [apiv2][status] GET https://artifactregistry.googleapis.com/v1/projects/skamp-prod/locations/europe-west1/repositories/gcf-artifacts 200
-[debug] [2025-06-25T12:30:00.469Z] <<< [apiv2][body] GET https://artifactregistry.googleapis.com/v1/projects/skamp-prod/locations/europe-west1/repositories/gcf-artifacts {"name":"projects/skamp-prod/locations/europe-west1/repositories/gcf-artifacts","format":"DOCKER","description":"This repository is created and used by Cloud Functions for storing function docker images.","labels":{"goog-managed-by":"cloudfunctions"},"createTime":"2025-06-25T10:38:37.499392Z","updateTime":"2025-06-25T10:39:51.749094Z","mode":"STANDARD_REPOSITORY","cleanupPolicies":{"firebase-functions-cleanup":{"id":"firebase-functions-cleanup","action":"DELETE","condition":{"tagState":"ANY","olderThan":"86400s"}}},"vulnerabilityScanningConfig":{"lastEnableTime":"2025-06-25T10:38:20.760351287Z","enablementState":"SCANNING_DISABLED","enablementStateReason":"API containerscanning.googleapis.com is not enabled."},"satisfiesPzi":true,"registryUri":"europe-west1-docker.pkg.dev/skamp-prod/gcf-artifacts"}
-[debug] [2025-06-25T12:30:00.469Z] Functions deploy failed.
-[debug] [2025-06-25T12:30:00.469Z] {
-  "endpoint": {
-    "id": "generatePressRelease",
-    "project": "skamp-prod",
-    "region": "europe-west1",
-    "entryPoint": "generatePressRelease",
-    "platform": "gcfv2",
-    "runtime": "nodejs22",
-    "callableTrigger": {},
-    "labels": {
-      "deployment-tool": "cli-firebase"
-    },
-    "serviceAccount": null,
-    "ingressSettings": null,
-    "availableMemoryMb": null,
-    "timeoutSeconds": null,
-    "maxInstances": null,
-    "minInstances": null,
-    "concurrency": 80,
-    "vpc": null,
-    "environmentVariables": {
-      "FIREBASE_CONFIG": "{\"projectId\":\"skamp-prod\",\"storageBucket\":\"skamp-prod.firebasestorage.app\"}",
-      "GCLOUD_PROJECT": "skamp-prod",
-      "EVENTARC_CLOUD_EVENT_SOURCE": "projects/skamp-prod/locations/europe-west1/services/generatePressRelease"
-    },
-    "codebase": "default",
-    "cpu": 1,
-    "targetedByOnly": false,
-    "hash": "aba0bd25887dfc1dd32ae098320697e44a3382e8"
-  },
-  "op": "create",
-  "original": {
-    "name": "FirebaseError",
-    "children": [],
-    "exit": 1,
-    "message": "Build failed with status: FAILURE. Could not build the function due to a missing permission on the build service account. If you didn't revoke that permission explicitly, this could be caused by a change in the organization policies. Please refer to the following documentation for more details and resolution: https://cloud.google.com/functions/docs/troubleshooting#build-service-account\n You can also view the logs at https://console.cloud.google.com/cloud-build/builds;region=europe-west1/1d7800f5-67a0-428b-8ec2-0e9b1ea2b628?project=184547460574.\n",
-    "original": {
-      "code": 3,
-      "message": "Build failed with status: FAILURE. Could not build the function due to a missing permission on the build service account. If you didn't revoke that permission explicitly, this could be caused by a change in the organization policies. Please refer to the following documentation for more details and resolution: https://cloud.google.com/functions/docs/troubleshooting#build-service-account\n You can also view the logs at https://console.cloud.google.com/cloud-build/builds;region=europe-west1/1d7800f5-67a0-428b-8ec2-0e9b1ea2b628?project=184547460574.\n"
-    },
-    "status": 3,
-    "code": 3
-  }
-}
-[debug] [2025-06-25T12:30:00.498Z] Error: Failed to create function generatePressRelease in region europe-west1
-    at C:\Users\skuehne\AppData\Roaming\nvm\v22.11.0\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:294:27
+[debug] [2025-06-25T13:04:37.659Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:04:37.660Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:04:37.660Z] >>> [apiv2][query] GET https://artifactregistry.googleapis.com/v1/projects/skamp-prod/locations/europe-west1/repositories/gcf-artifacts [none]
+[debug] [2025-06-25T13:04:37.927Z] <<< [apiv2][status] GET https://artifactregistry.googleapis.com/v1/projects/skamp-prod/locations/europe-west1/repositories/gcf-artifacts 200
+[debug] [2025-06-25T13:04:37.927Z] <<< [apiv2][body] GET https://artifactregistry.googleapis.com/v1/projects/skamp-prod/locations/europe-west1/repositories/gcf-artifacts {"name":"projects/skamp-prod/locations/europe-west1/repositories/gcf-artifacts","format":"DOCKER","description":"This repository is created and used by Cloud Functions for storing function docker images.","labels":{"goog-managed-by":"cloudfunctions"},"createTime":"2025-06-25T10:38:37.499392Z","updateTime":"2025-06-25T10:39:51.749094Z","mode":"STANDARD_REPOSITORY","cleanupPolicies":{"firebase-functions-cleanup":{"id":"firebase-functions-cleanup","action":"DELETE","condition":{"tagState":"ANY","olderThan":"86400s"}}},"vulnerabilityScanningConfig":{"lastEnableTime":"2025-06-25T10:38:20.760351287Z","enablementState":"SCANNING_DISABLED","enablementStateReason":"API containerscanning.googleapis.com is not enabled."},"satisfiesPzi":true,"registryUri":"europe-west1-docker.pkg.dev/skamp-prod/gcf-artifacts"}
+[debug] [2025-06-25T13:04:37.927Z] Functions deploy failed.
+[debug] [2025-06-25T13:04:37.927Z] {}
+[debug] [2025-06-25T13:04:37.957Z] Error: Precondition failed
+    at Fabricator.updateV2Function (C:\Users\skuehne\AppData\Roaming\nvm\v22.11.0\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:382:19)
+    at Fabricator.updateEndpoint (C:\Users\skuehne\AppData\Roaming\nvm\v22.11.0\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:155:24)
+    at C:\Users\skuehne\AppData\Roaming\nvm\v22.11.0\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:110:71
+    at handle (C:\Users\skuehne\AppData\Roaming\nvm\v22.11.0\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:89:23)
+    at Fabricator.applyChangeset (C:\Users\skuehne\AppData\Roaming\nvm\v22.11.0\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:110:26)
+    at C:\Users\skuehne\AppData\Roaming\nvm\v22.11.0\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:69:40
+    at Array.map (<anonymous>)
+    at Fabricator.applyPlan (C:\Users\skuehne\AppData\Roaming\nvm\v22.11.0\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:68:54)
+    at release (C:\Users\skuehne\AppData\Roaming\nvm\v22.11.0\node_modules\firebase-tools\lib\deploy\functions\release\index.js:76:31)
     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at async Fabricator.createV2Function (C:\Users\skuehne\AppData\Roaming\nvm\v22.11.0\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:278:30)
-    at async Fabricator.createEndpoint (C:\Users\skuehne\AppData\Roaming\nvm\v22.11.0\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:137:13)
-    at async handle (C:\Users\skuehne\AppData\Roaming\nvm\v22.11.0\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:89:17)
+[error] 
+[error] Error: There was an error deploying functions
+[debug] [2025-06-25T13:06:32.376Z] ----------------------------------------------------------------------
+[debug] [2025-06-25T13:06:32.379Z] Command:       C:\Program Files\nodejs\node.exe C:\Program Files\nodejs\node_modules\firebase-tools\lib\bin\firebase.js deploy --only functions --debug
+[debug] [2025-06-25T13:06:32.380Z] CLI Version:   14.8.0
+[debug] [2025-06-25T13:06:32.380Z] Platform:      win32
+[debug] [2025-06-25T13:06:32.380Z] Node Version:  v22.11.0
+[debug] [2025-06-25T13:06:32.380Z] Time:          Wed Jun 25 2025 15:06:32 GMT+0200 (Mitteleuropäische Sommerzeit)
+[debug] [2025-06-25T13:06:32.380Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-06-25T13:06:32.582Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-25T13:06:32.582Z] > authorizing via signed-in user (s.kuehne@sk-online-marketing.de)
+[debug] [2025-06-25T13:06:32.583Z] [iam] checking project skamp-prod for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]
+[debug] [2025-06-25T13:06:32.584Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:06:32.584Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:06:32.586Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod:testIamPermissions [none]
+[debug] [2025-06-25T13:06:32.586Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod:testIamPermissions x-goog-quota-user=projects/skamp-prod
+[debug] [2025-06-25T13:06:32.586Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2025-06-25T13:06:32.882Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod:testIamPermissions 200
+[debug] [2025-06-25T13:06:32.883Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2025-06-25T13:06:32.885Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:06:32.885Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:06:32.885Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/skamp-prod/serviceAccounts/skamp-prod@appspot.gserviceaccount.com:testIamPermissions [none]
+[debug] [2025-06-25T13:06:32.886Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/skamp-prod/serviceAccounts/skamp-prod@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2025-06-25T13:06:33.128Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/skamp-prod/serviceAccounts/skamp-prod@appspot.gserviceaccount.com:testIamPermissions 200
+[debug] [2025-06-25T13:06:33.128Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/skamp-prod/serviceAccounts/skamp-prod@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[info] 
+[info] === Deploying to 'skamp-prod'...
+[info] 
+[info] i  deploying functions 
+[debug] [2025-06-25T13:06:33.133Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:06:33.133Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:06:33.134Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod [none]
+[debug] [2025-06-25T13:06:33.402Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod 200
+[debug] [2025-06-25T13:06:33.402Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod {"projectNumber":"184547460574","projectId":"skamp-prod","lifecycleState":"ACTIVE","name":"skamp-prod","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-06-23T06:38:52.139184Z","parent":{"type":"organization","id":"1020316406005"}}
+[info] i  functions: preparing codebase default for deployment 
+[info] i  functions: ensuring required API cloudfunctions.googleapis.com is enabled... 
+[info] i  functions: ensuring required API cloudbuild.googleapis.com is enabled... 
+[info] i  artifactregistry: ensuring required API artifactregistry.googleapis.com is enabled... 
+[debug] [2025-06-25T13:06:33.406Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:06:33.406Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:06:33.406Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/skamp-prod/adminSdkConfig [none]
+[debug] [2025-06-25T13:06:33.719Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/skamp-prod/adminSdkConfig 200
+[debug] [2025-06-25T13:06:33.719Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/skamp-prod/adminSdkConfig {"projectId":"skamp-prod","storageBucket":"skamp-prod.firebasestorage.app"}
+[debug] [2025-06-25T13:06:33.720Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:06:33.721Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:06:33.721Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/skamp-prod/configs [none]
+[debug] [2025-06-25T13:06:34.003Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/skamp-prod/configs 200
+[debug] [2025-06-25T13:06:34.003Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/skamp-prod/configs {}
+[debug] [2025-06-25T13:06:34.005Z] Validating nodejs source
+[debug] [2025-06-25T13:06:34.776Z] > [functions] package.json contents: {
+  "name": "functions",
+  "scripts": {
+    "lint": "eslint --ext .js,.ts .",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "22"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^6.0.1"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.12.0",
+    "@typescript-eslint/parser": "^5.12.0",
+    "eslint": "^8.9.0",
+    "eslint-config-google": "^0.14.0",
+    "eslint-plugin-import": "^2.25.4",
+    "firebase-functions-test": "^3.1.0",
+    "typescript": "^5.7.3"
+  },
+  "private": true
+}
+[debug] [2025-06-25T13:06:34.777Z] Building nodejs source
+[info] i  functions: Loading and analyzing source code for codebase default to determine what to deploy 
+[debug] [2025-06-25T13:06:34.780Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-06-25T13:06:34.790Z] Found firebase-functions binary at 'C:\Users\skuehne\Desktop\Projekt\skamp\functions\node_modules\.bin\firebase-functions'
+[info] Serving at port 8485
+
+[error] (node:21608) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[debug] [2025-06-25T13:06:35.373Z] Got response from /__/functions.yaml {"endpoints":{"generatePressRelease":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","region":["europe-west1"],"labels":{},"callableTrigger":{},"entryPoint":"generatePressRelease"}},"specVersion":"v1alpha1","requiredAPIs":[],"extensions":{}}
+[info] i  extensions: ensuring required API firebaseextensions.googleapis.com is enabled... 
+[debug] [2025-06-25T13:06:39.408Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-25T13:06:39.409Z] > authorizing via signed-in user (s.kuehne@sk-online-marketing.de)
+[debug] [2025-06-25T13:06:39.409Z] [iam] checking project skamp-prod for permissions ["firebase.projects.get","firebaseextensions.instances.list"]
+[debug] [2025-06-25T13:06:39.409Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:06:39.410Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:06:39.410Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod:testIamPermissions [none]
+[debug] [2025-06-25T13:06:39.410Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod:testIamPermissions x-goog-quota-user=projects/skamp-prod
+[debug] [2025-06-25T13:06:39.411Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod:testIamPermissions {"permissions":["firebase.projects.get","firebaseextensions.instances.list"]}
+[debug] [2025-06-25T13:06:40.136Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod:testIamPermissions 200
+[debug] [2025-06-25T13:06:55.316Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod:testIamPermissions {"permissions":["firebase.projects.get","firebaseextensions.instances.list"]}
+[debug] [2025-06-25T13:06:55.318Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:06:55.318Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:06:55.319Z] >>> [apiv2][query] GET https://firebaseextensions.googleapis.com/v1beta/projects/skamp-prod/instances pageSize=100&pageToken=
+[debug] [2025-06-25T13:06:56.155Z] <<< [apiv2][status] GET https://firebaseextensions.googleapis.com/v1beta/projects/skamp-prod/instances 200
+[debug] [2025-06-25T13:06:56.156Z] <<< [apiv2][body] GET https://firebaseextensions.googleapis.com/v1beta/projects/skamp-prod/instances {}
+[info] i  functions: preparing functions directory for uploading... 
+[info] i  functions: packaged C:\Users\skuehne\Desktop\Projekt\skamp\functions (96.48 KB) for uploading 
+[debug] [2025-06-25T13:06:56.197Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:06:56.197Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:06:56.197Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/projects/skamp-prod/locations/-/functions [none]
+[debug] [2025-06-25T13:06:56.798Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/projects/skamp-prod/locations/-/functions 200
+[debug] [2025-06-25T13:06:56.799Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/projects/skamp-prod/locations/-/functions {}
+[debug] [2025-06-25T13:06:56.799Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:06:56.800Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:06:56.801Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/-/functions filter=environment%3D%22GEN_2%22
+[debug] [2025-06-25T13:06:57.849Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/-/functions 200
+[debug] [2025-06-25T13:06:57.849Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/skamp-prod/locations/-/functions {"functions":[{"name":"projects/skamp-prod/locations/europe-west1/functions/generatePressRelease","buildConfig":{"build":"projects/184547460574/locations/europe-west1/builds/1d7800f5-67a0-428b-8ec2-0e9b1ea2b628","runtime":"nodejs22","entryPoint":"generatePressRelease","source":{"storageSource":{"bucket":"gcf-v2-sources-184547460574-europe-west1","object":"generatePressRelease/function-source.zip","generation":"1750854569014064"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/skamp-prod/locations/europe-west1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-184547460574-europe-west1","object":"generatePressRelease/function-source.zip","generation":"1750854569014064"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/skamp-prod/serviceAccounts/184547460574-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"state":"FAILED","updateTime":"2025-06-25T12:29:44.127003955Z","labels":{"firebase-functions-hash":"aba0bd25887dfc1dd32ae098320697e44a3382e8","deployment-tool":"cli-firebase","deployment-callable":"true"},"stateMessages":[{"severity":"ERROR","type":"CloudRunServiceNotFound","message":"Cloud Run service projects/skamp-prod/locations/europe-west1/services/generatepressrelease for the function was not found. The function will not work correctly. Please redeploy."}],"environment":"GEN_2","url":"https://europe-west1-skamp-prod.cloudfunctions.net/generatePressRelease","createTime":"2025-06-25T12:29:29.377600619Z","satisfiesPzi":true}]}
+[info] i  functions: ensuring required API run.googleapis.com is enabled... 
+[info] i  functions: ensuring required API eventarc.googleapis.com is enabled... 
+[info] i  functions: ensuring required API pubsub.googleapis.com is enabled... 
+[info] i  functions: ensuring required API storage.googleapis.com is enabled... 
+[info] i  functions: generating the service identity for pubsub.googleapis.com... 
+[debug] [2025-06-25T13:06:57.858Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:06:57.859Z] Checked if tokens are valid: true, expires at: 1750860263998
+[info] i  functions: generating the service identity for eventarc.googleapis.com... 
+[debug] [2025-06-25T13:06:57.860Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:06:57.861Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:06:57.862Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1beta1/projects/184547460574/services/pubsub.googleapis.com:generateServiceIdentity [none]
+[debug] [2025-06-25T13:06:57.864Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1beta1/projects/184547460574/services/pubsub.googleapis.com:generateServiceIdentity x-goog-quota-user=projects/184547460574
+[debug] [2025-06-25T13:06:57.866Z] >>> [apiv2][body] POST https://serviceusage.googleapis.com/v1beta1/projects/184547460574/services/pubsub.googleapis.com:generateServiceIdentity {}
+[debug] [2025-06-25T13:06:57.868Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1beta1/projects/184547460574/services/eventarc.googleapis.com:generateServiceIdentity [none]
+[debug] [2025-06-25T13:06:57.868Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1beta1/projects/184547460574/services/eventarc.googleapis.com:generateServiceIdentity x-goog-quota-user=projects/184547460574
+[debug] [2025-06-25T13:06:57.868Z] >>> [apiv2][body] POST https://serviceusage.googleapis.com/v1beta1/projects/184547460574/services/eventarc.googleapis.com:generateServiceIdentity {}
+[debug] [2025-06-25T13:06:58.817Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1beta1/projects/184547460574/services/eventarc.googleapis.com:generateServiceIdentity 200
+[debug] [2025-06-25T13:06:58.817Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1beta1/projects/184547460574/services/eventarc.googleapis.com:generateServiceIdentity {"name":"operations/finished.DONE_OPERATION","done":true,"response":{"@type":"type.googleapis.com/google.api.serviceusage.v1beta1.ServiceIdentity","email":"service-184547460574@gcp-sa-eventarc.iam.gserviceaccount.com","uniqueId":"114497705350654491339"}}
+[debug] [2025-06-25T13:06:58.866Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1beta1/projects/184547460574/services/pubsub.googleapis.com:generateServiceIdentity 200
+[debug] [2025-06-25T13:06:58.867Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1beta1/projects/184547460574/services/pubsub.googleapis.com:generateServiceIdentity {"name":"operations/finished.DONE_OPERATION","done":true,"response":{"@type":"type.googleapis.com/google.api.serviceusage.v1beta1.ServiceIdentity","email":"service-184547460574@gcp-sa-pubsub.iam.gserviceaccount.com","uniqueId":"102327190410562335997"}}
+[debug] [2025-06-25T13:06:58.870Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:06:58.870Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:06:58.871Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod [none]
+[debug] [2025-06-25T13:06:59.145Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod 200
+[debug] [2025-06-25T13:06:59.146Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/skamp-prod {"projectNumber":"184547460574","projectId":"skamp-prod","lifecycleState":"ACTIVE","name":"skamp-prod","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-06-23T06:38:52.139184Z","parent":{"type":"organization","id":"1020316406005"}}
+[debug] [2025-06-25T13:06:59.147Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:06:59.149Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:06:59.150Z] >>> [apiv2][query] GET https://compute.googleapis.com/compute/v1/projects/184547460574 [none]
+[debug] [2025-06-25T13:06:59.364Z] <<< [apiv2][status] GET https://compute.googleapis.com/compute/v1/projects/184547460574 403
+[debug] [2025-06-25T13:06:59.364Z] <<< [apiv2][body] GET https://compute.googleapis.com/compute/v1/projects/184547460574 {"error":{"code":403,"message":"Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","errors":[{"message":"Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","domain":"usageLimits","reason":"accessNotConfigured","extendedHelp":"https://console.developers.google.com"}],"status":"PERMISSION_DENIED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"SERVICE_DISABLED","domain":"googleapis.com","metadata":{"serviceTitle":"Compute Engine API","service":"compute.googleapis.com","activationUrl":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574","containerInfo":"184547460574","consumer":"projects/184547460574"}},{"@type":"type.googleapis.com/google.rpc.LocalizedMessage","locale":"en-US","message":"Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry."},{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Google developers console API activation","url":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574"}]}]}}
+[debug] [2025-06-25T13:06:59.366Z] unable to look up default compute service account. Falling back to 184547460574-compute@developer.gserviceaccount.com. Error: {"name":"FirebaseError","children":[],"context":{"body":{"error":{"code":403,"message":"Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","errors":[{"message":"Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","domain":"usageLimits","reason":"accessNotConfigured","extendedHelp":"https://console.developers.google.com"}],"status":"PERMISSION_DENIED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"SERVICE_DISABLED","domain":"googleapis.com","metadata":{"serviceTitle":"Compute Engine API","service":"compute.googleapis.com","activationUrl":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574","containerInfo":"184547460574","consumer":"projects/184547460574"}},{"@type":"type.googleapis.com/google.rpc.LocalizedMessage","locale":"en-US","message":"Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry."},{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Google developers console API activation","url":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574"}]}]}},"response":{"statusCode":403}},"exit":1,"message":"Request to https://compute.googleapis.com/compute/v1/projects/184547460574 had HTTP Error: 403, Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","status":403}
+[debug] [2025-06-25T13:06:59.368Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:06:59.368Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:06:59.369Z] >>> [apiv2][query] GET https://compute.googleapis.com/compute/v1/projects/184547460574 [none]
+[debug] [2025-06-25T13:06:59.527Z] <<< [apiv2][status] GET https://compute.googleapis.com/compute/v1/projects/184547460574 403
+[debug] [2025-06-25T13:06:59.528Z] <<< [apiv2][body] GET https://compute.googleapis.com/compute/v1/projects/184547460574 {"error":{"code":403,"message":"Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","errors":[{"message":"Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","domain":"usageLimits","reason":"accessNotConfigured","extendedHelp":"https://console.developers.google.com"}],"status":"PERMISSION_DENIED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"SERVICE_DISABLED","domain":"googleapis.com","metadata":{"containerInfo":"184547460574","serviceTitle":"Compute Engine API","consumer":"projects/184547460574","activationUrl":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574","service":"compute.googleapis.com"}},{"@type":"type.googleapis.com/google.rpc.LocalizedMessage","locale":"en-US","message":"Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry."},{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Google developers console API activation","url":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574"}]}]}}
+[debug] [2025-06-25T13:06:59.529Z] unable to look up default compute service account. Falling back to 184547460574-compute@developer.gserviceaccount.com. Error: {"name":"FirebaseError","children":[],"context":{"body":{"error":{"code":403,"message":"Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","errors":[{"message":"Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","domain":"usageLimits","reason":"accessNotConfigured","extendedHelp":"https://console.developers.google.com"}],"status":"PERMISSION_DENIED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"SERVICE_DISABLED","domain":"googleapis.com","metadata":{"containerInfo":"184547460574","serviceTitle":"Compute Engine API","consumer":"projects/184547460574","activationUrl":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574","service":"compute.googleapis.com"}},{"@type":"type.googleapis.com/google.rpc.LocalizedMessage","locale":"en-US","message":"Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry."},{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Google developers console API activation","url":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574"}]}]}},"response":{"statusCode":403}},"exit":1,"message":"Request to https://compute.googleapis.com/compute/v1/projects/184547460574 had HTTP Error: 403, Compute Engine API has not been used in project 184547460574 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=184547460574 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","status":403}
+[debug] [2025-06-25T13:06:59.532Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:06:59.532Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:06:59.533Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/skamp-prod/billingInfo [none]
+[debug] [2025-06-25T13:06:59.812Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/skamp-prod/billingInfo 200
+[debug] [2025-06-25T13:06:59.812Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/skamp-prod/billingInfo {"name":"projects/skamp-prod/billingInfo","projectId":"skamp-prod","billingAccountName":"billingAccounts/019F68-F7C6F0-AD8E4B","billingEnabled":true}
+[info] i  functions: updating Node.js 22 (2nd Gen) function generatePressRelease(europe-west1)... 
+[debug] [2025-06-25T13:06:59.817Z] Precondition failed. Cannot update a GCFv2 function without storage
+[debug] [2025-06-25T13:06:59.821Z] Total Function Deployment time: 1
+[debug] [2025-06-25T13:06:59.821Z] 1 Functions Deployed
+[debug] [2025-06-25T13:06:59.822Z] 1 Functions Errored
+[debug] [2025-06-25T13:06:59.824Z] 0 Function Deployments Aborted
+[debug] [2025-06-25T13:06:59.824Z] Average Function Deployment time: 0
+[info] 
+[info] Functions deploy had errors with the following functions:
+	generatePressRelease(europe-west1)
+[debug] [2025-06-25T13:06:59.945Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:06:59.946Z] Checked if tokens are valid: true, expires at: 1750860263998
+[debug] [2025-06-25T13:06:59.947Z] >>> [apiv2][query] GET https://artifactregistry.googleapis.com/v1/projects/skamp-prod/locations/europe-west1/repositories/gcf-artifacts [none]
+[debug] [2025-06-25T13:07:00.156Z] <<< [apiv2][status] GET https://artifactregistry.googleapis.com/v1/projects/skamp-prod/locations/europe-west1/repositories/gcf-artifacts 200
+[debug] [2025-06-25T13:07:00.157Z] <<< [apiv2][body] GET https://artifactregistry.googleapis.com/v1/projects/skamp-prod/locations/europe-west1/repositories/gcf-artifacts {"name":"projects/skamp-prod/locations/europe-west1/repositories/gcf-artifacts","format":"DOCKER","description":"This repository is created and used by Cloud Functions for storing function docker images.","labels":{"goog-managed-by":"cloudfunctions"},"createTime":"2025-06-25T10:38:37.499392Z","updateTime":"2025-06-25T10:39:51.749094Z","mode":"STANDARD_REPOSITORY","cleanupPolicies":{"firebase-functions-cleanup":{"id":"firebase-functions-cleanup","action":"DELETE","condition":{"tagState":"ANY","olderThan":"86400s"}}},"vulnerabilityScanningConfig":{"lastEnableTime":"2025-06-25T10:38:20.760351287Z","enablementState":"SCANNING_DISABLED","enablementStateReason":"API containerscanning.googleapis.com is not enabled."},"satisfiesPzi":true,"registryUri":"europe-west1-docker.pkg.dev/skamp-prod/gcf-artifacts"}
+[debug] [2025-06-25T13:07:00.158Z] Functions deploy failed.
+[debug] [2025-06-25T13:07:00.160Z] {}
+[debug] [2025-06-25T13:07:00.192Z] Error: Precondition failed
+    at Fabricator.updateV2Function (C:\Users\skuehne\AppData\Roaming\nvm\v22.11.0\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:382:19)
+    at Fabricator.updateEndpoint (C:\Users\skuehne\AppData\Roaming\nvm\v22.11.0\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:155:24)
+    at C:\Users\skuehne\AppData\Roaming\nvm\v22.11.0\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:110:71
+    at handle (C:\Users\skuehne\AppData\Roaming\nvm\v22.11.0\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:89:23)
+    at Fabricator.applyChangeset (C:\Users\skuehne\AppData\Roaming\nvm\v22.11.0\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:110:26)
+    at C:\Users\skuehne\AppData\Roaming\nvm\v22.11.0\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:69:40
+    at Array.map (<anonymous>)
+    at Fabricator.applyPlan (C:\Users\skuehne\AppData\Roaming\nvm\v22.11.0\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:68:54)
+    at release (C:\Users\skuehne\AppData\Roaming\nvm\v22.11.0\node_modules\firebase-tools\lib\deploy\functions\release\index.js:76:31)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
 [error] 
 [error] Error: There was an error deploying functions
