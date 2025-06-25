@@ -1,4 +1,4 @@
-// src/lib/firebase/email-campaign-service.ts
+// src/lib/firebase/email-campaign-service.ts (VOLLSTÄNDIG KORRIGIERT)
 import {
   collection,
   doc,
@@ -12,13 +12,10 @@ import {
 } from 'firebase/firestore';
 import { db } from './client-init';
 import { listsService } from './lists-service';
-import { contactsService } from './crm-service';
-import { sendGridService } from '../email/sendgrid-service';
+import { emailService } from '../email/email-service';
 import { 
   EmailCampaignSend, 
-  EmailRecipient, 
-  PRCampaignEmail, 
-  TemplateVariables 
+  PRCampaignEmail
 } from '@/types/email';
 import { PRCampaign } from '@/types/pr';
 import { Contact } from '@/types/crm';
@@ -43,12 +40,15 @@ export const emailCampaignService = {
     console.log('🚀 Starting PR campaign send:', campaign.title);
     
     try {
-      // 1. Kontakte aus der Liste laden
-      const contacts = await listsService.getContacts({
-        id: campaign.distributionListId,
-        type: 'dynamic', // wird überschrieben durch echte Liste
-        userId: campaign.userId
-      } as any);
+      // 1. Vollständige Liste laden
+      const distributionList = await listsService.getById(campaign.distributionListId);
+      
+      if (!distributionList) {
+        throw new Error('Verteilerliste nicht gefunden');
+      }
+      
+      // 2. Kontakte aus der Liste laden
+      const contacts = await listsService.getContacts(distributionList);
       
       console.log('📋 Found', contacts.length, 'contacts in distribution list');
       
@@ -56,72 +56,43 @@ export const emailCampaignService = {
         throw new Error('Keine Kontakte in der Verteilerliste gefunden');
       }
 
-      // 2. Kontakte zu E-Mail-Empfängern konvertieren
-      const recipients: EmailRecipient[] = contacts
-        .filter(contact => contact.email) // Nur Kontakte mit E-Mail
-        .map(contact => ({
-          email: contact.email!,
-          name: `${contact.firstName} ${contact.lastName}`,
-          substitutions: this.createSubstitutions(contact, campaign, senderInfo)
-        }));
-
-      console.log('✉️ Prepared', recipients.length, 'email recipients');
-
-      if (recipients.length === 0) {
+      // 3. Nur Kontakte mit E-Mail-Adressen
+      const contactsWithEmail = contacts.filter(contact => contact.email);
+      
+      if (contactsWithEmail.length === 0) {
         throw new Error('Keine Kontakte mit E-Mail-Adressen gefunden');
       }
 
-      // 3. Template-Variablen vorbereiten
-      const baseVariables: TemplateVariables = {
-        firstName: '', // wird pro Empfänger ersetzt
-        lastName: '',
-        fullName: '',
-        companyName: '',
-        pressReleaseTitle: campaign.title,
-        campaignTitle: campaign.title,
-        senderName: senderInfo.name,
-        senderTitle: senderInfo.title,
-        senderCompany: senderInfo.company,
-        senderPhone: senderInfo.phone,
-        senderEmail: senderInfo.email,
-        currentDate: new Date().toLocaleDateString('de-DE', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric'
-        })
-      };
+      console.log('✉️ Prepared', contactsWithEmail.length, 'email recipients');
 
-      // 4. E-Mails über SendGrid versenden
-      console.log('📤 Sending emails via SendGrid...');
-      const sendResults = await sendGridService.sendPRCampaign(
-        recipients,
+      // 4. E-Mails über Email Service (API Route) versenden
+      console.log('📤 Sending emails via API...');
+      const sendResult = await emailService.sendPRCampaign(
+        campaign,
         emailContent,
-        baseVariables
+        senderInfo,
+        contactsWithEmail
       );
 
       // 5. Versand-Status in Datenbank speichern
-      await this.saveSendResults(campaign.id!, recipients, sendResults);
+      await this.saveSendResults(campaign.id!, contactsWithEmail, sendResult, campaign.userId);
 
       // 6. Kampagnen-Status aktualisieren
-      const totalSent = sendResults.reduce((sum, result) => sum + result.accepted.length, 0);
-      const totalFailed = sendResults.reduce((sum, result) => sum + result.rejected.length, 0);
-
-      if (totalSent > 0) {
-        // Kampagne als "sent" markieren
+      if (sendResult.summary.success > 0) {
         await updateDoc(doc(db, 'pr_campaigns', campaign.id!), {
           status: 'sent',
           sentAt: serverTimestamp(),
-          actualRecipientCount: totalSent,
+          actualRecipientCount: sendResult.summary.success,
           updatedAt: serverTimestamp()
         });
       }
 
-      console.log('✅ Campaign send completed:', { totalSent, totalFailed });
+      console.log('✅ Campaign send completed:', sendResult.summary);
 
       return {
-        success: totalSent,
-        failed: totalFailed,
-        messageIds: sendResults.map(r => r.messageId).filter(Boolean)
+        success: sendResult.summary.success,
+        failed: sendResult.summary.failed,
+        messageIds: sendResult.results.map(r => r.messageId).filter(Boolean) as string[]
       };
 
     } catch (error) {
@@ -152,141 +123,101 @@ export const emailCampaignService = {
       email?: string;
     },
     previewContactEmail?: string
-  ): Promise<{ html: string; text: string; subject: string; recipient: EmailRecipient }> {
+  ): Promise<{ html: string; text: string; subject: string; recipient: any }> {
     
-    // Kontakte laden
-    const contacts = await listsService.getContacts({
-      id: campaign.distributionListId,
-      type: 'dynamic',
-      userId: campaign.userId
-    } as any);
+    console.log('🔍 Generating preview for campaign:', campaign.title);
+    console.log('📋 Distribution list ID:', campaign.distributionListId);
+    
+    try {
+      // 1. Vollständige Liste laden
+      const distributionList = await listsService.getById(campaign.distributionListId);
+      
+      if (!distributionList) {
+        throw new Error(`Verteilerliste mit ID ${campaign.distributionListId} nicht gefunden`);
+      }
+      
+      console.log('📋 Found list:', distributionList.name, 'Type:', distributionList.type);
 
-    // Vorschau-Kontakt auswählen
-    let previewContact: Contact;
-    if (previewContactEmail) {
-      previewContact = contacts.find(c => c.email === previewContactEmail) || contacts[0];
-    } else {
-      previewContact = contacts[0];
+      // 2. Kontakte aus der Liste laden
+      const contacts = await listsService.getContacts(distributionList);
+      
+      console.log('👥 Found', contacts.length, 'contacts in list');
+      
+      if (contacts.length === 0) {
+        throw new Error('Die Verteilerliste enthält keine Kontakte');
+      }
+
+      // 3. Vorschau-Kontakt auswählen
+      let previewContact: Contact;
+      if (previewContactEmail) {
+        previewContact = contacts.find(c => c.email === previewContactEmail) || contacts[0];
+      } else {
+        previewContact = contacts[0];
+      }
+
+      if (!previewContact) {
+        throw new Error('Keine Kontakte für Vorschau verfügbar');
+      }
+      
+      console.log('👤 Using preview contact:', previewContact.firstName, previewContact.lastName);
+
+      // 4. Preview über Email Service generieren
+      const preview = emailService.generatePreview(previewContact, emailContent, senderInfo);
+      
+      console.log('✅ Preview generated successfully');
+      
+      return preview;
+      
+    } catch (error) {
+      console.error('❌ Error generating preview:', error);
+      throw error;
     }
-
-    if (!previewContact) {
-      throw new Error('Keine Kontakte für Vorschau verfügbar');
-    }
-
-    // Empfänger-Objekt erstellen
-    const recipient: EmailRecipient = {
-      email: previewContact.email || 'preview@example.com',
-      name: `${previewContact.firstName} ${previewContact.lastName}`,
-      substitutions: this.createSubstitutions(previewContact, campaign, senderInfo)
-    };
-
-    // Template-Variablen
-    const variables: TemplateVariables = {
-      firstName: previewContact.firstName,
-      lastName: previewContact.lastName,
-      fullName: `${previewContact.firstName} ${previewContact.lastName}`,
-      companyName: previewContact.companyName || '',
-      pressReleaseTitle: campaign.title,
-      campaignTitle: campaign.title,
-      senderName: senderInfo.name,
-      senderTitle: senderInfo.title,
-      senderCompany: senderInfo.company,
-      senderPhone: senderInfo.phone,
-      senderEmail: senderInfo.email,
-      currentDate: new Date().toLocaleDateString('de-DE', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-      })
-    };
-
-    // Preview generieren
-    const preview = sendGridService.generatePreview(recipient, emailContent, variables);
-
-    return {
-      ...preview,
-      recipient
-    };
   },
 
   /**
-   * Substitutions für einen Kontakt erstellen
-   */
-  createSubstitutions(
-    contact: Contact,
-    campaign: PRCampaign,
-    senderInfo: any
-  ): Record<string, string> {
-    return {
-      firstName: contact.firstName,
-      lastName: contact.lastName,
-      fullName: `${contact.firstName} ${contact.lastName}`,
-      companyName: contact.companyName || '',
-      outlet: contact.companyName || '',
-      title: contact.position || '',
-      pressReleaseTitle: campaign.title,
-      campaignTitle: campaign.title,
-      senderName: senderInfo.name,
-      senderTitle: senderInfo.title,
-      senderCompany: senderInfo.company,
-      currentDate: new Date().toLocaleDateString('de-DE', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-      })
-    };
-  },
-
-  /**
-   * Versand-Ergebnisse in der Datenbank speichern
+   * Versand-Ergebnisse in der Datenbank speichern (KORRIGIERT)
    */
   async saveSendResults(
     campaignId: string,
-    recipients: EmailRecipient[],
-    sendResults: any[]
+    contacts: Contact[],
+    sendResult: any,
+    userId: string
   ): Promise<void> {
     const batch = writeBatch(db);
     
-    let recipientIndex = 0;
+    // Mapping zwischen E-Mail und Kontakt erstellen
+    const contactMap = new Map(contacts.map(c => [c.email, c]));
     
-    for (const result of sendResults) {
-      // Erfolgreiche Sends
-      for (const acceptedEmail of result.accepted) {
-        const recipient = recipients.find(r => r.email === acceptedEmail);
-        if (recipient) {
-          const sendDoc = doc(collection(db, 'email_campaign_sends'));
-          const sendData: Omit<EmailCampaignSend, 'id'> = {
-            campaignId,
-            recipientEmail: recipient.email,
-            recipientName: recipient.name,
-            messageId: result.messageId,
-            status: 'sent',
-            sentAt: serverTimestamp(),
-            userId: '', // wird vom Campaign-Kontext gesetzt
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
-          };
-          batch.set(sendDoc, sendData);
+    for (const result of sendResult.results) {
+      const contact = contactMap.get(result.email);
+      if (contact) {
+        const sendDoc = doc(collection(db, 'email_campaign_sends'));
+        
+        // KORRIGIERT: Nur definierte Werte hinzufügen, undefined vermeiden
+        const sendData: any = {
+          campaignId,
+          recipientEmail: result.email,
+          recipientName: `${contact.firstName} ${contact.lastName}`,
+          status: result.status === 'sent' ? 'sent' : 'failed',
+          userId: userId, // Aus Campaign-Kontext
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        };
+
+        // Nur hinzufügen wenn definiert
+        if (result.messageId) {
+          sendData.messageId = result.messageId;
         }
-      }
-      
-      // Fehlgeschlagene Sends
-      for (const rejectedEmail of result.rejected) {
-        const recipient = recipients.find(r => r.email === rejectedEmail);
-        if (recipient) {
-          const sendDoc = doc(collection(db, 'email_campaign_sends'));
-          const sendData: Omit<EmailCampaignSend, 'id'> = {
-            campaignId,
-            recipientEmail: recipient.email,
-            recipientName: recipient.name,
-            status: 'failed',
-            errorMessage: result.error || 'Send failed',
-            userId: '',
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
-          };
-          batch.set(sendDoc, sendData);
+
+        if (result.status === 'sent') {
+          sendData.sentAt = serverTimestamp();
         }
+
+        if (result.error) {
+          sendData.errorMessage = result.error;
+        }
+
+        batch.set(sendDoc, sendData);
       }
     }
     
