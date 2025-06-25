@@ -1,4 +1,6 @@
-// src/types/email.ts
+// src/types/email.ts (ERWEITERT für Analytics)
+import { Timestamp } from 'firebase/firestore';
+
 export interface EmailTemplate {
   id?: string;
   name: string;
@@ -48,21 +50,48 @@ export interface EmailSendResult {
   error?: string;
 }
 
+// ERWEITERT: Zusätzliche Tracking-Felder für Analytics
 export interface EmailCampaignSend {
   id?: string;
   campaignId: string;
   recipientEmail: string;
   recipientName: string;
   messageId?: string;
+  
+  // Status-Tracking
   status: 'queued' | 'sent' | 'delivered' | 'opened' | 'clicked' | 'bounced' | 'failed';
-  sentAt?: any;
-  deliveredAt?: any;
-  openedAt?: any;
-  clickedAt?: any;
+  
+  // Zeitstempel für jeden Status
+  sentAt?: Timestamp;
+  deliveredAt?: Timestamp;
+  openedAt?: Timestamp;
+  clickedAt?: Timestamp;
+  bouncedAt?: Timestamp;
+  failedAt?: Timestamp;
+  
+  // Engagement-Metriken
+  openCount?: number;          // Wie oft geöffnet
+  clickCount?: number;         // Wie oft geklickt
+  lastOpenedAt?: Timestamp;    // Letztes Öffnen
+  lastClickedAt?: Timestamp;   // Letzter Klick
+  lastClickedUrl?: string;     // Letzter geklickter Link
+  
+  // Technical Information für Insights
+  lastUserAgent?: string;      // Browser/Gerät
+  lastIpAddress?: string;      // IP-Adresse
+  
+  // Error/Bounce Details
   errorMessage?: string;
+  bounceReason?: string;
+  deferredAt?: Timestamp;      // Temporäre Verzögerung
+  deferredReason?: string;
+  
+  // Event-Tracking
+  lastEventAt?: Timestamp;     // Letztes Event von SendGrid
+  
   userId: string;
-  createdAt?: any;
-  updatedAt?: any;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
 }
 
 // Für die Kampagnen-Integration
@@ -113,4 +142,36 @@ export interface EmailPreview {
   htmlContent: string;
   textContent: string;
   variables: TemplateVariables;
+}
+
+// NEU: Analytics-spezifische Types
+export interface EmailEngagementSummary {
+  totalSent: number;
+  delivered: number;
+  opened: number;
+  clicked: number;
+  bounced: number;
+  failed: number;
+  
+  deliveryRate: number;
+  openRate: number;
+  clickRate: number;
+  bounceRate: number;
+}
+
+export interface EmailEngagementTrend {
+  date: string;
+  sent: number;
+  delivered: number;
+  opened: number;
+  clicked: number;
+}
+
+export interface TopPerformingEmail {
+  campaignId: string;
+  campaignTitle: string;
+  recipientEmail: string;
+  openCount: number;
+  clickCount: number;
+  lastEngagement: Date;
 }
