@@ -1,4 +1,4 @@
-// src/app/dashboard/pr/page.tsx
+// src/app/dashboard/pr/page.tsx (VOLLSTÄNDIG mit Analytics Integration)
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -19,7 +19,8 @@ import {
   CalendarIcon,
   EnvelopeIcon,
   UsersIcon,
-  PaperAirplaneIcon
+  PaperAirplaneIcon,
+  ChartBarIcon  // Für Analytics
 } from "@heroicons/react/20/solid";
 import { prService } from "@/lib/firebase/pr-service";
 import { PRCampaign, PRCampaignStatus } from "@/types/pr";
@@ -408,6 +409,19 @@ export default function PRCampaignsPage() {
                 
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
+                    {/* NEU: Analytics Button nur für versendete Kampagnen */}
+                    {campaign.status === 'sent' && (
+                      <Link href={`/dashboard/pr/campaigns/${campaign.id}/analytics`}>
+                        <Button
+                          plain
+                          className="text-purple-600 hover:text-purple-500"
+                        >
+                          <ChartBarIcon className="size-4 mr-1" />
+                          Analytics
+                        </Button>
+                      </Link>
+                    )}
+                    
                     {campaign.status === 'draft' && (
                       <>
                         <Button
@@ -425,6 +439,7 @@ export default function PRCampaignsPage() {
                         </Link>
                       </>
                     )}
+                    
                     <Button
                       plain
                       onClick={() => handleDeleteCampaign(campaign.id!, campaign.title)}
@@ -465,11 +480,15 @@ export default function PRCampaignsPage() {
             </div>
 
             <div className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer" onClick={() => {
-              alert("Analytics kommen bald!");
+              // NEU: Weiterleitung zu Analytics-Übersicht
+              const sentCampaigns = campaigns.filter(c => c.status === 'sent');
+              if (sentCampaigns.length > 0) {
+                window.location.href = `/dashboard/pr/campaigns/${sentCampaigns[0].id}/analytics`;
+              } else {
+                alert("Noch keine Kampagnen versendet für Analytics.");
+              }
             }}>
-              <svg className="h-8 w-8 text-purple-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h2a2 2 0 012 2v4a2 2 0 01-2 2h2a2 2 0 012 2v6" />
-              </svg>
+              <ChartBarIcon className="h-8 w-8 text-purple-600 mb-2" />
               <h4 className="font-medium">Analytics</h4>
               <p className="text-sm text-gray-600">Kampagnen-Performance auswerten</p>
             </div>
