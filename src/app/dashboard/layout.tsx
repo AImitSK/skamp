@@ -30,6 +30,7 @@ import {
   UserIcon, 
   ArrowRightOnRectangleIcon,
   QueueListIcon,
+  Cog6ToothIcon,
   MegaphoneIcon
 } from "@heroicons/react/20/solid";
 import { usePathname } from "next/navigation";
@@ -58,6 +59,7 @@ export default function DashboardLayout({
     { name: "Kontakte", href: "/dashboard/contacts", icon: UsersIcon },
     { name: "Listen", href: "/dashboard/listen", icon: QueueListIcon },
     { name: "PR-Tools", href: "/dashboard/pr", icon: MegaphoneIcon },
+    { name: "Einstellungen", href: "/dashboard/settings/boilerplates", icon: Cog6ToothIcon },
   ];
 
   const sidebarContent = (

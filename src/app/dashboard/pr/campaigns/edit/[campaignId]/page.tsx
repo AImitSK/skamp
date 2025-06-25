@@ -16,6 +16,8 @@ import { Select } from '@/components/select';
 import { Input } from '@/components/input';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import Link from 'next/link';
+import { SparklesIcon } from "@heroicons/react/24/outline";
+import AiAssistantModal from "@/components/pr/AiAssistantModal";
 
 export default function EditPRCampaignPage() {
   const { user } = useAuth();
@@ -33,6 +35,9 @@ export default function EditPRCampaignPage() {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // State für die Sichtbarkeit des KI-Modals
+  const [showAiModal, setShowAiModal] = useState(false);
 
   const loadCampaignData = useCallback(async () => {
     if (!user || !campaignId) return;
@@ -121,17 +126,26 @@ export default function EditPRCampaignPage() {
         </Field>
 
         <div className="border-t pt-8">
-          <h3 className="text-base font-semibold">Schritt 2: Pressemitteilung verfassen</h3>
-          <div className="mt-4 space-y-4">
-            <Field>
-              <Label>Titel / Betreffzeile</Label>
-              <Input value={campaignTitle} onChange={(e) => setCampaignTitle(e.target.value)} />
-            </Field>
-            <Field>
-              <Label>Inhalt</Label>
-              <RichTextEditor content={pressReleaseContent} onChange={setPressReleaseContent} />
-            </Field>
-          </div>
+            <div className="flex justify-between items-center mb-2">
+                <div>
+                    <h3 className="text-base font-semibold">Schritt 2: Pressemitteilung verfassen</h3>
+                    <Text>Gib den Titel und den Inhalt deiner Mitteilung ein.</Text>
+                </div>
+                <Button plain onClick={() => setShowAiModal(true)}>
+                    <SparklesIcon className="w-5 h-5 mr-2 text-indigo-500"/>
+                    KI-Assistent verwenden
+                </Button>
+            </div>
+            <div className="mt-4 space-y-4">
+              <Field>
+                <Label>Titel / Betreffzeile</Label>
+                <Input value={campaignTitle} onChange={(e) => setCampaignTitle(e.target.value)} />
+              </Field>
+              <Field>
+                <Label>Inhalt</Label>
+                <RichTextEditor content={pressReleaseContent} onChange={setPressReleaseContent} />
+              </Field>
+            </div>
         </div>
         
         <div className="border-t pt-8">
@@ -148,6 +162,16 @@ export default function EditPRCampaignPage() {
           {isSaving ? 'Speichern...' : 'Änderungen speichern'}
         </Button>
       </div>
+
+      {showAiModal && (
+        <AiAssistantModal
+          onClose={() => setShowAiModal(false)}
+          onGenerate={(generatedText) => {
+            // Füge den von der KI generierten Text in den Editor ein
+            setPressReleaseContent(generatedText);
+          }}
+        />
+      )}
     </div>
   );
 }

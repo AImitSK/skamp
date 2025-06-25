@@ -214,3 +214,14 @@ export const getCompanyDescription = (company: Company): string => {
   }
   return parts.join(' • ');
 };
+
+// NEU: Datenstruktur für wiederverwendbare Textbausteine (Boilerplates)
+export interface Boilerplate {
+  id?: string;
+  name: string;        // z.B. "Unternehmensbeschreibung (Kurz)"
+  content: string;     // Der eigentliche Text des Bausteins
+  category?: string;   // z.B. "Über Uns", "Produkt-Info"
+  userId: string;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
+}
