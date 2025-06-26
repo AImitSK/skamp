@@ -1,15 +1,15 @@
-// src/app/dashboard/mediathek/page.tsx
+// src/app/dashboard/mediathek/page.tsx - Mit Drag & Drop
 "use client";
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { useCrmData } from "@/context/CrmDataContext"; // NEU: Für Firmen-Daten
+import { useCrmData } from "@/context/CrmDataContext";
 import { mediaService } from "@/lib/firebase/media-service";
 import { MediaAsset, MediaFolder, FolderBreadcrumb } from "@/types/media";
 import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
 import { Button } from "@/components/button";
-import { Badge } from "@/components/badge"; // NEU: Badge-Komponente
+import { Badge } from "@/components/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/table";
 import { 
   PlusIcon, 
@@ -30,13 +30,13 @@ import UploadModal from "./UploadModal";
 import FolderCard from "@/components/mediathek/FolderCard";
 import BreadcrumbNavigation from "@/components/mediathek/BreadcrumbNavigation";
 import FolderModal from "@/components/mediathek/FolderModal";
-import ShareModal from "@/components/mediathek/ShareModal"; // NEU: Share Modal
+import ShareModal from "@/components/mediathek/ShareModal";
 
 type ViewMode = 'grid' | 'list';
 
 export default function MediathekPage() {
   const { user } = useAuth();
-  const { companies } = useCrmData(); // NEU: Firmen-Daten für Badges
+  const { companies } = useCrmData();
   const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
   const [folders, setFolders] = useState<MediaFolder[]>([]);
   const [currentFolderId, setCurrentFolderId] = useState<string | undefined>(undefined);
@@ -47,9 +47,14 @@ export default function MediathekPage() {
   // Modal States
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showFolderModal, setShowFolderModal] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(false); // NEU: Share Modal
+  const [showShareModal, setShowShareModal] = useState(false);
   const [editingFolder, setEditingFolder] = useState<MediaFolder | undefined>(undefined);
-  const [sharingTarget, setSharingTarget] = useState<{target: MediaFolder | MediaAsset, type: 'folder' | 'file'} | null>(null); // NEU: Share Target
+  const [sharingTarget, setSharingTarget] = useState<{target: MediaFolder | MediaAsset, type: 'folder' | 'file'} | null>(null);
+
+  // 🆕 Drag & Drop States
+  const [draggedAsset, setDraggedAsset] = useState<MediaAsset | null>(null);
+  const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
+  const [moving, setMoving] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -61,7 +66,6 @@ export default function MediathekPage() {
     if (!user) return;
     setLoading(true);
     try {
-      // Lade Ordner und Dateien parallel
       const [foldersData, assetsData] = await Promise.all([
         mediaService.getFolders(user.uid, currentFolderId),
         mediaService.getMediaAssets(user.uid, currentFolderId)
@@ -70,7 +74,6 @@ export default function MediathekPage() {
       setFolders(foldersData);
       setMediaAssets(assetsData);
       
-      // Lade Breadcrumbs wenn wir nicht im Root sind
       if (currentFolderId) {
         const breadcrumbsData = await mediaService.getBreadcrumbs(currentFolderId);
         setBreadcrumbs(breadcrumbsData);
@@ -84,7 +87,95 @@ export default function MediathekPage() {
     }
   };
 
-  // Folder Operations
+  // 🆕 DRAG & DROP HANDLERS
+  
+  const handleAssetDragStart = (e: React.DragEvent, asset: MediaAsset) => {
+    console.log('Drag started for asset:', asset.fileName);
+    setDraggedAsset(asset);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', asset.id || '');
+  };
+
+  const handleAssetDragEnd = () => {
+    console.log('Drag ended');
+    setDraggedAsset(null);
+    setDragOverFolder(null);
+  };
+
+  const handleFolderDragOver = (e: React.DragEvent, folderId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverFolder(folderId);
+  };
+
+  const handleFolderDragLeave = () => {
+    setDragOverFolder(null);
+  };
+
+  const handleFolderDrop = async (e: React.DragEvent, targetFolder: MediaFolder) => {
+    e.preventDefault();
+    setDragOverFolder(null);
+
+    if (!draggedAsset || !draggedAsset.id) {
+      console.log('No asset being dragged');
+      return;
+    }
+
+    // Verhindere Drop auf aktuellen Ordner
+    if (draggedAsset.folderId === targetFolder.id) {
+      console.log('Asset is already in this folder');
+      return;
+    }
+
+    console.log(`Moving asset ${draggedAsset.fileName} to folder ${targetFolder.name}`);
+    
+    try {
+      setMoving(true);
+      await mediaService.moveAssetToFolder(draggedAsset.id, targetFolder.id);
+      
+      // Erfolgs-Feedback
+      console.log('✅ Asset successfully moved!');
+      
+      // Daten neu laden
+      await loadData();
+      
+    } catch (error) {
+      console.error('❌ Error moving asset:', error);
+      alert('Fehler beim Verschieben der Datei. Bitte versuchen Sie es erneut.');
+    } finally {
+      setMoving(false);
+      setDraggedAsset(null);
+    }
+  };
+
+  // 🆕 ROOT DROP HANDLER (für Dateien aus Ordnern ins Root)
+  const handleRootDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOverFolder(null);
+
+    if (!draggedAsset || !draggedAsset.id || !draggedAsset.folderId) {
+      return; // Nur Dateien die in Ordnern sind können ins Root verschoben werden
+    }
+
+    console.log(`Moving asset ${draggedAsset.fileName} to root folder`);
+    
+    try {
+      setMoving(true);
+      await mediaService.moveAssetToFolder(draggedAsset.id, undefined); // undefined = Root
+      
+      console.log('✅ Asset moved to root!');
+      await loadData();
+      
+    } catch (error) {
+      console.error('❌ Error moving asset to root:', error);
+      alert('Fehler beim Verschieben der Datei. Bitte versuchen Sie es erneut.');
+    } finally {
+      setMoving(false);
+      setDraggedAsset(null);
+    }
+  };
+
+  // Existing handlers (unchanged)
   const handleCreateFolder = () => {
     setEditingFolder(undefined);
     setShowFolderModal(true);
@@ -100,10 +191,8 @@ export default function MediathekPage() {
     
     try {
       if (editingFolder) {
-        // Update existing folder
         await mediaService.updateFolder(editingFolder.id!, folderData);
       } else {
-        // Create new folder
         await mediaService.createFolder({
           ...folderData,
           userId: user.uid,
@@ -137,7 +226,6 @@ export default function MediathekPage() {
     setCurrentFolderId(folderId);
   };
 
-  // Share Operations (NEU)
   const handleShareFolder = (folder: MediaFolder) => {
     setSharingTarget({ target: folder, type: 'folder' });
     setShowShareModal(true);
@@ -153,7 +241,6 @@ export default function MediathekPage() {
     setSharingTarget(null);
   };
 
-  // File Operations
   const handleDeleteAsset = async (asset: MediaAsset) => {
     if (window.confirm(`Möchten Sie die Datei "${asset.fileName}" wirklich löschen?`)) {
       try {
@@ -180,7 +267,6 @@ export default function MediathekPage() {
     if (breadcrumbs.length > 0) {
       return breadcrumbs[breadcrumbs.length - 1]?.name;
     }
-    // Fallback: Suche in aktuellen Ordnern
     const currentFolder = folders.find(f => f.id === currentFolderId);
     return currentFolder?.name;
   };
@@ -198,7 +284,13 @@ export default function MediathekPage() {
   };
 
   const renderGridView = () => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+    <div 
+      className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 ${
+        draggedAsset && !currentFolderId ? 'bg-blue-50 border-2 border-dashed border-blue-300 rounded-lg p-4' : ''
+      }`}
+      onDragOver={draggedAsset && !currentFolderId ? (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; } : undefined}
+      onDrop={draggedAsset && !currentFolderId ? handleRootDrop : undefined}
+    >
       {/* Render Folders First */}
       {folders.map((folder) => (
         <FolderCard
@@ -207,8 +299,13 @@ export default function MediathekPage() {
           onOpen={handleOpenFolder}
           onEdit={handleEditFolder}
           onDelete={handleDeleteFolder}
-          onShare={handleShareFolder} // NEU: Share-Handler
-          fileCount={0} // TODO: Implement file count
+          onShare={handleShareFolder}
+          fileCount={0}
+          // 🆕 Drag & Drop Props
+          isDragOver={dragOverFolder === folder.id}
+          onDragOver={(e) => handleFolderDragOver(e, folder.id!)}
+          onDragLeave={handleFolderDragLeave}
+          onDrop={(e) => handleFolderDrop(e, folder)}
         />
       ))}
       
@@ -219,7 +316,12 @@ export default function MediathekPage() {
         return (
           <div 
             key={asset.id} 
-            className="group relative bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
+            className={`group relative bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden ${
+              draggedAsset?.id === asset.id ? 'opacity-50 scale-95' : ''
+            }`}
+            draggable={true} // 🆕 Make draggable
+            onDragStart={(e) => handleAssetDragStart(e, asset)} // 🆕
+            onDragEnd={handleAssetDragEnd} // 🆕
           >
             {/* Preview */}
             <div className="aspect-square w-full bg-gray-50 flex items-center justify-center relative overflow-hidden">
@@ -276,6 +378,13 @@ export default function MediathekPage() {
           </div>
         );
       })}
+      
+      {/* 🆕 Drop Hint when dragging to root */}
+      {draggedAsset && !currentFolderId && (
+        <div className="col-span-full text-center py-8 text-blue-600 font-medium">
+          📁 Hier ablegen um in Root-Ordner zu verschieben
+        </div>
+      )}
     </div>
   );
 
@@ -303,7 +412,6 @@ export default function MediathekPage() {
                   <FolderIcon className="h-8 w-8" style={{ color: folder.color }} />
                   <div>
                     <div className="font-medium">{folder.name}</div>
-                    {/* NEU: Kunden-Badge in List-Ansicht */}
                     {associatedCompany && (
                       <div className="mt-1">
                         <Badge color="blue" className="text-xs">
@@ -368,11 +476,21 @@ export default function MediathekPage() {
 
   return (
     <div>
+      {/* Moving Indicator */}
+      {moving && (
+        <div className="fixed top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg z-50">
+          🔄 Datei wird verschoben...
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <Heading>Mediathek</Heading>
-          <Text className="mt-1">Verwalten Sie Ihre Bilder, Videos und Dokumente.</Text>
+          <Text className="mt-1">
+            Verwalten Sie Ihre Bilder, Videos und Dokumente. 
+            {draggedAsset && <span className="text-blue-600 font-medium"> 📁 Datei per Drag & Drop verschieben!</span>}
+          </Text>
         </div>
         
         <div className="flex items-center gap-3">
@@ -432,6 +550,7 @@ export default function MediathekPage() {
             </span>
             <span className="text-xs">
               Ansicht: {viewMode === 'grid' ? 'Kacheln' : 'Liste'}
+              {draggedAsset && ' • Datei wird bewegt'}
             </span>
           </div>
         </div>
@@ -498,7 +617,6 @@ export default function MediathekPage() {
         />
       )}
 
-      {/* NEU: Share Modal */}
       {showShareModal && sharingTarget && (
         <ShareModal
           target={sharingTarget.target}
