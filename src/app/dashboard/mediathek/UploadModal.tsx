@@ -8,14 +8,21 @@ import { Input } from "@/components/input";
 import { Button } from "@/components/button";
 import { useAuth } from "@/context/AuthContext";
 import { mediaService } from "@/lib/firebase/media-service";
-import { CloudArrowUpIcon, DocumentIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { CloudArrowUpIcon, DocumentIcon, XMarkIcon, FolderIcon } from "@heroicons/react/24/outline";
 
 interface UploadModalProps {
   onClose: () => void;
   onUploadSuccess: () => Promise<void>;
+  currentFolderId?: string; // NEU: Aktueller Ordner
+  folderName?: string; // NEU: Name des aktuellen Ordners für Display
 }
 
-export default function UploadModal({ onClose, onUploadSuccess }: UploadModalProps) {
+export default function UploadModal({ 
+  onClose, 
+  onUploadSuccess, 
+  currentFolderId,
+  folderName 
+}: UploadModalProps) {
   const { user } = useAuth();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -60,9 +67,11 @@ export default function UploadModal({ onClose, onUploadSuccess }: UploadModalPro
       const uploadPromises = selectedFiles.map(async (file, index) => {
         const fileKey = `${index}-${file.name}`;
         
+        // NEU: Übergebe currentFolderId an uploadMedia
         await mediaService.uploadMedia(
           file,
           user.uid,
+          currentFolderId, // Ordner-ID
           (progress) => {
             setUploadProgress(prev => ({
               ...prev,
@@ -93,6 +102,18 @@ export default function UploadModal({ onClose, onUploadSuccess }: UploadModalPro
       
       <DialogBody className="p-6">
         <FieldGroup>
+          {/* NEU: Zielordner anzeigen */}
+          {currentFolderId && folderName && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center space-x-2 text-sm">
+                <FolderIcon className="h-4 w-4 text-blue-600" />
+                <span className="text-blue-800">
+                  Dateien werden hochgeladen nach: <strong>{folderName}</strong>
+                </span>
+              </div>
+            </div>
+          )}
+          
           <Field>
             <Label>Dateien auswählen</Label>
             <Description>
