@@ -1,7 +1,7 @@
 // src/app/dashboard/mediathek/page.tsx - Mit Drag & Drop
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useCrmData } from "@/context/CrmDataContext";
 import { mediaService } from "@/lib/firebase/media-service";
@@ -56,6 +56,13 @@ export default function MediathekPage() {
   const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
   const [moving, setMoving] = useState(false);
 
+  // 🆕 Bulk Selection States
+  const [selectedAssets, setSelectedAssets] = useState<Set<string>>(new Set());
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+
+  // 🆕 Folder Drag States
+  const [draggedFolder, setDraggedFolder] = useState<MediaFolder | null>(null);
+
   useEffect(() => {
     if (user) {
       loadData();
@@ -87,11 +94,192 @@ export default function MediathekPage() {
     }
   };
 
+  // Helper function to check for circular dependencies
+  const wouldCreateCircularDependency = async (folderId: string, targetFolderId: string): Promise<boolean> => {
+    try {
+      // If target is the same as source, it's circular
+      if (folderId === targetFolderId) {
+        return true;
+      }
+
+      // Get all breadcrumbs for target folder to check parent chain
+      const targetBreadcrumbs = await mediaService.getBreadcrumbs(targetFolderId);
+      
+      // Check if the folder we're moving is anywhere in the target's parent chain
+      return targetBreadcrumbs.some(breadcrumb => breadcrumb.id === folderId);
+    } catch (error) {
+      console.error("Fehler beim Prüfen der zirkulären Abhängigkeit:", error);
+      // In case of error, assume it would be circular to be safe
+      return true;
+    }
+  };
+
+  // 🚨 FOLDER DRAG & DROP HANDLERS - EINFACHE STABILISIERTE VERSION
+  
+  const handleFolderMove = useCallback(async (folderId: string, targetFolderId: string) => {
+    console.log('🎯 handleFolderMove called with:', folderId, '->', targetFolderId);
+    
+    if (!user) return;
+    
+    try {
+      setMoving(true);
+      
+      console.log(`Moving folder ${folderId} to folder ${targetFolderId}`);
+      
+      // Update folder's parentFolderId
+      await mediaService.updateFolder(folderId, {
+        parentFolderId: targetFolderId
+      });
+      
+      // Reload data to reflect changes
+      await loadData();
+      
+      console.log('✅ Folder moved successfully!');
+      
+    } catch (error) {
+      console.error('❌ Error moving folder:', error);
+      alert('Fehler beim Verschieben des Ordners. Bitte versuchen Sie es erneut.');
+    } finally {
+      setMoving(false);
+      setDraggedFolder(null);
+    }
+  }, []); // 🚨 LEERE Dependencies - sollte stabil sein
+
+  // 🚨 DEBUG: Funktion existiert?
+  console.log('🔧 handleFolderMove type:', typeof handleFolderMove, 'value:', !!handleFolderMove);
+
+  // Enhanced folder drag handlers
+  const handleFolderDragStart = (folder: MediaFolder) => {
+    console.log('Started dragging folder:', folder.name);
+    setDraggedFolder(folder);
+  };
+
+  const handleFolderDragEnd = () => {
+    console.log('Folder drag ended');
+    setDraggedFolder(null);
+  };
+
+  // 🆕 BULK SELECTION HANDLERS
+  
+  const toggleAssetSelection = (assetId: string) => {
+    const newSelection = new Set(selectedAssets);
+    if (newSelection.has(assetId)) {
+      newSelection.delete(assetId);
+    } else {
+      newSelection.add(assetId);
+    }
+    setSelectedAssets(newSelection);
+    
+    // Auto-exit selection mode if no items selected
+    if (newSelection.size === 0) {
+      setIsSelectionMode(false);
+    }
+  };
+
+  const selectAllAssets = () => {
+    const allAssetIds = new Set(mediaAssets.map(asset => asset.id!));
+    setSelectedAssets(allAssetIds);
+    setIsSelectionMode(true);
+  };
+
+  const clearSelection = () => {
+    setSelectedAssets(new Set());
+    setIsSelectionMode(false);
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedAssets.size === 0) return;
+    
+    const count = selectedAssets.size;
+    if (!window.confirm(`Möchten Sie ${count} ${count === 1 ? 'Datei' : 'Dateien'} wirklich löschen?`)) {
+      return;
+    }
+
+    try {
+      setMoving(true);
+      const assetsToDelete = mediaAssets.filter(asset => selectedAssets.has(asset.id!));
+      
+      // Delete all selected assets
+      await Promise.all(
+        assetsToDelete.map(asset => mediaService.deleteMediaAsset(asset))
+      );
+      
+      clearSelection();
+      await loadData();
+    } catch (error) {
+      console.error('Fehler beim Bulk-Löschen:', error);
+      alert('Fehler beim Löschen der Dateien. Bitte versuchen Sie es erneut.');
+    } finally {
+      setMoving(false);
+    }
+  };
+
+  const handleBulkMove = async (targetFolderId?: string) => {
+    if (selectedAssets.size === 0) return;
+
+    try {
+      setMoving(true);
+      
+      // Move all selected assets
+      await Promise.all(
+        Array.from(selectedAssets).map(assetId => 
+          mediaService.moveAssetToFolder(assetId, targetFolderId)
+        )
+      );
+      
+      clearSelection();
+      await loadData();
+    } catch (error) {
+      console.error('Fehler beim Bulk-Verschieben:', error);
+      alert('Fehler beim Verschieben der Dateien. Bitte versuchen Sie es erneut.');
+    } finally {
+      setMoving(false);
+    }
+  };
+
+  // Enhanced keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+A: Select all
+      if (e.ctrlKey && e.key === 'a' && mediaAssets.length > 0) {
+        e.preventDefault();
+        selectAllAssets();
+      }
+      
+      // Escape: Clear selection
+      if (e.key === 'Escape' && selectedAssets.size > 0) {
+        clearSelection();
+      }
+      
+      // Delete: Delete selected
+      if (e.key === 'Delete' && selectedAssets.size > 0) {
+        e.preventDefault();
+        handleBulkDelete();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedAssets, mediaAssets]);
+
   // 🆕 DRAG & DROP HANDLERS
   
   const handleAssetDragStart = (e: React.DragEvent, asset: MediaAsset) => {
     console.log('Drag started for asset:', asset.fileName);
-    setDraggedAsset(asset);
+    
+    // If dragging a selected asset, drag all selected assets
+    if (selectedAssets.has(asset.id!) && selectedAssets.size > 1) {
+      console.log(`Dragging ${selectedAssets.size} selected assets`);
+      setDraggedAsset(null); // Use null to indicate multi-drag
+    } else {
+      // Single asset drag
+      setDraggedAsset(asset);
+      // If not in selection mode, clear any existing selection
+      if (!isSelectionMode) {
+        setSelectedAssets(new Set([asset.id!]));
+      }
+    }
+    
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', asset.id || '');
   };
@@ -116,32 +304,54 @@ export default function MediathekPage() {
     e.preventDefault();
     setDragOverFolder(null);
 
-    if (!draggedAsset || !draggedAsset.id) {
-      console.log('No asset being dragged');
+    const dragData = e.dataTransfer.getData('text/plain');
+    console.log('🏠 Main handleFolderDrop - dragData:', dragData);
+
+    // 🚨 WICHTIG: Prüfe erst ob es ein Folder-Drop ist - dann ignorieren!
+    if (dragData.startsWith('folder:')) {
+      console.log('🗂️ Folder drop detected in main handler - should be handled by FolderCard');
+      return; // FolderCard soll das handhaben
+    }
+
+    // Handle asset drops (existing functionality)
+    const assetsToMove = selectedAssets.size > 0 
+      ? Array.from(selectedAssets) 
+      : (draggedAsset?.id ? [draggedAsset.id] : []);
+
+    if (assetsToMove.length === 0) {
+      console.log('📁 No assets to move (this is normal for folder drops)');
       return;
     }
 
-    // Verhindere Drop auf aktuellen Ordner
-    if (draggedAsset.folderId === targetFolder.id) {
+    // Check if any assets are already in the target folder
+    const currentAssets = mediaAssets.filter(asset => assetsToMove.includes(asset.id!));
+    const alreadyInFolder = currentAssets.some(asset => asset.folderId === targetFolder.id);
+    
+    if (alreadyInFolder && assetsToMove.length === 1) {
       console.log('Asset is already in this folder');
       return;
     }
 
-    console.log(`Moving asset ${draggedAsset.fileName} to folder ${targetFolder.name}`);
+    const count = assetsToMove.length;
+    console.log(`Moving ${count} asset(s) to folder ${targetFolder.name}`);
     
     try {
       setMoving(true);
-      await mediaService.moveAssetToFolder(draggedAsset.id, targetFolder.id);
       
-      // Erfolgs-Feedback
-      console.log('✅ Asset successfully moved!');
+      if (count > 1) {
+        // Bulk move
+        await handleBulkMove(targetFolder.id);
+      } else {
+        // Single move
+        await mediaService.moveAssetToFolder(assetsToMove[0], targetFolder.id);
+        await loadData();
+      }
       
-      // Daten neu laden
-      await loadData();
+      console.log('✅ Assets successfully moved!');
       
     } catch (error) {
-      console.error('❌ Error moving asset:', error);
-      alert('Fehler beim Verschieben der Datei. Bitte versuchen Sie es erneut.');
+      console.error('❌ Error moving assets:', error);
+      alert('Fehler beim Verschieben der Dateien. Bitte versuchen Sie es erneut.');
     } finally {
       setMoving(false);
       setDraggedAsset(null);
@@ -153,22 +363,71 @@ export default function MediathekPage() {
     e.preventDefault();
     setDragOverFolder(null);
 
-    if (!draggedAsset || !draggedAsset.id || !draggedAsset.folderId) {
-      return; // Nur Dateien die in Ordnern sind können ins Root verschoben werden
+    const dragData = e.dataTransfer.getData('text/plain');
+    
+    // Handle folder drop to root
+    if (dragData.startsWith('folder:')) {
+      const folderId = dragData.replace('folder:', '');
+      console.log(`Moving folder ${folderId} to root`);
+      
+      try {
+        setMoving(true);
+        await mediaService.updateFolder(folderId, {
+          parentFolderId: undefined // Move to root
+        });
+        
+        console.log('✅ Folder moved to root!');
+        await loadData();
+        
+      } catch (error) {
+        console.error('❌ Error moving folder to root:', error);
+        alert('Fehler beim Verschieben des Ordners. Bitte versuchen Sie es erneut.');
+      } finally {
+        setMoving(false);
+        setDraggedFolder(null);
+      }
+      return;
     }
 
-    console.log(`Moving asset ${draggedAsset.fileName} to root folder`);
+    // Handle asset drop to root (existing functionality)
+    const assetsToMove = selectedAssets.size > 0 
+      ? Array.from(selectedAssets) 
+      : (draggedAsset?.id ? [draggedAsset.id] : []);
+
+    if (assetsToMove.length === 0) return;
+
+    // Only move assets that are currently in folders
+    const currentAssets = mediaAssets.filter(asset => 
+      assetsToMove.includes(asset.id!) && asset.folderId
+    );
+
+    if (currentAssets.length === 0) return;
+
+    const count = currentAssets.length;
+    console.log(`Moving ${count} asset(s) to root folder`);
     
     try {
       setMoving(true);
-      await mediaService.moveAssetToFolder(draggedAsset.id, undefined); // undefined = Root
       
-      console.log('✅ Asset moved to root!');
+      if (count > 1) {
+        // Bulk move to root
+        await Promise.all(
+          currentAssets.map(asset => 
+            mediaService.moveAssetToFolder(asset.id!, undefined)
+          )
+        );
+        clearSelection();
+      } else {
+        // Single move to root
+        await mediaService.moveAssetToFolder(currentAssets[0].id!, undefined);
+      }
+      
+      console.log('✅ Assets moved to root!');
       await loadData();
       
     } catch (error) {
-      console.error('❌ Error moving asset to root:', error);
-      alert('Fehler beim Verschieben der Datei. Bitte versuchen Sie es erneut.');
+      console.error('❌ Error moving assets to root:', error);
+      alert('Fehler beim Verschieben der Dateien. Bitte versuchen Sie es erneut.');
     } finally {
       setMoving(false);
       setDraggedAsset(null);
@@ -284,108 +543,198 @@ export default function MediathekPage() {
   };
 
   const renderGridView = () => (
-    <div 
-      className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 ${
-        draggedAsset && !currentFolderId ? 'bg-blue-50 border-2 border-dashed border-blue-300 rounded-lg p-4' : ''
-      }`}
-      onDragOver={draggedAsset && !currentFolderId ? (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; } : undefined}
-      onDrop={draggedAsset && !currentFolderId ? handleRootDrop : undefined}
-    >
-      {/* Render Folders First */}
-      {folders.map((folder) => (
-        <FolderCard
-          key={folder.id}
-          folder={folder}
-          onOpen={handleOpenFolder}
-          onEdit={handleEditFolder}
-          onDelete={handleDeleteFolder}
-          onShare={handleShareFolder}
-          fileCount={0}
-          // 🆕 Drag & Drop Props
-          isDragOver={dragOverFolder === folder.id}
-          onDragOver={(e) => handleFolderDragOver(e, folder.id!)}
-          onDragLeave={handleFolderDragLeave}
-          onDrop={(e) => handleFolderDrop(e, folder)}
-        />
-      ))}
-      
-      {/* Render Media Assets */}
-      {mediaAssets.map((asset) => {
-        const FileIcon = getFileIcon(asset.fileType);
+    <>
+      {/* 🆕 Bulk Actions Bar */}
+      {selectedAssets.size > 0 && (
+        <div className="mb-6 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <span className="text-sm font-medium text-indigo-900">
+                {selectedAssets.size} {selectedAssets.size === 1 ? 'Datei' : 'Dateien'} ausgewählt
+              </span>
+              <div className="flex items-center space-x-2">
+                <Button 
+                  plain 
+                  onClick={handleBulkDelete}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  <TrashIcon className="h-4 w-4 mr-1" />
+                  Löschen
+                </Button>
+                <Button 
+                  plain 
+                  onClick={() => handleBulkMove(undefined)}
+                  className="text-blue-600 hover:text-blue-700"
+                >
+                  📁 Zu Root verschieben
+                </Button>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button plain onClick={selectAllAssets} className="text-indigo-600">
+                Alle auswählen
+              </Button>
+              <Button plain onClick={clearSelection} className="text-gray-600">
+                Auswahl aufheben
+              </Button>
+            </div>
+          </div>
+          <div className="mt-2 text-xs text-indigo-700">
+            💡 Tipp: Ziehen Sie ausgewählte Dateien auf einen Ordner, um sie alle zu verschieben
+          </div>
+        </div>
+      )}
+
+      <div 
+        className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 ${
+          (draggedAsset || selectedAssets.size > 0 || draggedFolder) && !currentFolderId ? 'bg-blue-50 border-2 border-dashed border-blue-300 rounded-lg p-4' : ''
+        }`}
+        onDragOver={(draggedAsset || selectedAssets.size > 0 || draggedFolder) && !currentFolderId ? (e: React.DragEvent) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; } : undefined}
+        onDrop={(draggedAsset || selectedAssets.size > 0 || draggedFolder) && !currentFolderId ? handleRootDrop : undefined}
+      >
+        {/* Render Folders First */}
+        {folders.map((folder) => (
+          <FolderCard
+            key={folder.id}
+            folder={folder}
+            onOpen={handleOpenFolder}
+            onEdit={handleEditFolder}
+            onDelete={handleDeleteFolder}
+            onShare={handleShareFolder}
+            fileCount={0}
+            // Drag & Drop Props
+            isDragOver={dragOverFolder === folder.id}
+            onDragOver={(e: React.DragEvent) => handleFolderDragOver(e, folder.id!)}
+            onDragLeave={handleFolderDragLeave}
+            onDrop={(e: React.DragEvent) => handleFolderDrop(e, folder)}
+          />
+        ))}
         
-        return (
-          <div 
-            key={asset.id} 
-            className={`group relative bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden ${
-              draggedAsset?.id === asset.id ? 'opacity-50 scale-95' : ''
-            }`}
-            draggable={true} // 🆕 Make draggable
-            onDragStart={(e) => handleAssetDragStart(e, asset)} // 🆕
-            onDragEnd={handleAssetDragEnd} // 🆕
-          >
-            {/* Preview */}
-            <div className="aspect-square w-full bg-gray-50 flex items-center justify-center relative overflow-hidden">
-              {asset.fileType.startsWith('image/') ? (
-                <img 
-                  src={asset.downloadUrl} 
-                  alt={asset.fileName}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                />
-              ) : (
-                <FileIcon className="h-16 w-16 text-gray-400" />
+        {/* Render Media Assets */}
+        {mediaAssets.map((asset) => {
+          const FileIcon = getFileIcon(asset.fileType);
+          const isSelected = selectedAssets.has(asset.id!);
+          const isDragging = draggedAsset?.id === asset.id || (selectedAssets.has(asset.id!) && selectedAssets.size > 1);
+          
+          return (
+            <div 
+              key={asset.id} 
+              className={`group relative bg-white rounded-lg border shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden ${
+                isDragging ? 'opacity-50 scale-95' : ''
+              } ${
+                isSelected ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200'
+              }`}
+              draggable={true}
+              onDragStart={(e: React.DragEvent) => handleAssetDragStart(e, asset)}
+              onDragEnd={handleAssetDragEnd}
+              onClick={(e: React.MouseEvent) => {
+                // Handle selection on click if in selection mode or holding Ctrl
+                if (isSelectionMode || e.ctrlKey || e.metaKey) {
+                  e.preventDefault();
+                  toggleAssetSelection(asset.id!);
+                  if (!isSelectionMode) setIsSelectionMode(true);
+                }
+              }}
+            >
+              {/* 🆕 Selection Checkbox */}
+              <div className={`absolute top-2 left-2 z-10 transition-opacity ${
+                isSelectionMode || isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+              }`}>
+                <label className="cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      toggleAssetSelection(asset.id!);
+                      if (!isSelectionMode) setIsSelectionMode(true);
+                    }}
+                    className="w-4 h-4 text-indigo-600 bg-white border-gray-300 rounded focus:ring-indigo-500 focus:ring-2"
+                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                  />
+                </label>
+              </div>
+
+              {/* 🆕 Multi-Selection Badge */}
+              {selectedAssets.has(asset.id!) && selectedAssets.size > 1 && (
+                <div className="absolute top-2 right-2 bg-indigo-600 text-white text-xs px-2 py-1 rounded-full">
+                  {selectedAssets.size}
+                </div>
               )}
-              
-              {/* Hover Actions */}
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                <div className="flex gap-2">
-                  <Link href={asset.downloadUrl} target="_blank">
-                    <Button color="zinc" className="shadow-lg bg-white p-2">
-                      <EyeIcon className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                  <Button 
-                    color="zinc" 
-                    onClick={() => handleShareAsset(asset)}
-                    className="shadow-lg bg-blue-600 text-white hover:bg-blue-700 p-2"
-                  >
-                    <ShareIcon className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    color="zinc" 
-                    onClick={() => handleDeleteAsset(asset)}
-                    className="shadow-lg bg-red-600 text-white hover:bg-red-700 p-2"
-                  >
-                    <TrashIcon className="h-4 w-4" />
-                  </Button>
+
+              {/* Preview */}
+              <div className="aspect-square w-full bg-gray-50 flex items-center justify-center relative overflow-hidden">
+                {asset.fileType.startsWith('image/') ? (
+                  <img 
+                    src={asset.downloadUrl} 
+                    alt={asset.fileName}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                  />
+                ) : (
+                  <FileIcon className="h-16 w-16 text-gray-400" />
+                )}
+                
+                {/* Hover Actions (hidden if in selection mode) */}
+                {!isSelectionMode && (
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                    <div className="flex gap-2">
+                      <Link href={asset.downloadUrl} target="_blank">
+                        <Button color="zinc" className="shadow-lg bg-white p-2">
+                          <EyeIcon className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                      <Button 
+                        color="zinc" 
+                        onClick={(e: React.MouseEvent) => {
+                          e.stopPropagation();
+                          handleShareAsset(asset);
+                        }}
+                        className="shadow-lg bg-blue-600 text-white hover:bg-blue-700 p-2"
+                      >
+                        <ShareIcon className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        color="zinc" 
+                        onClick={(e: React.MouseEvent) => {
+                          e.stopPropagation();
+                          handleDeleteAsset(asset);
+                        }}
+                        className="shadow-lg bg-red-600 text-white hover:bg-red-700 p-2"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* File Info */}
+              <div className="p-4">
+                <h3 className="text-sm font-medium text-gray-900 truncate mb-1" title={asset.fileName}>
+                  {asset.fileName}
+                </h3>
+                <div className="space-y-1">
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">
+                    {asset.fileType.split('/')[1] || 'Datei'}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {asset.createdAt ? new Date(asset.createdAt.seconds * 1000).toLocaleDateString('de-DE') : '-'}
+                  </p>
                 </div>
               </div>
             </div>
-
-            {/* File Info */}
-            <div className="p-4">
-              <h3 className="text-sm font-medium text-gray-900 truncate mb-1" title={asset.fileName}>
-                {asset.fileName}
-              </h3>
-              <div className="space-y-1">
-                <p className="text-xs text-gray-500 uppercase tracking-wide">
-                  {asset.fileType.split('/')[1] || 'Datei'}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {asset.createdAt ? new Date(asset.createdAt.seconds * 1000).toLocaleDateString('de-DE') : '-'}
-                </p>
-              </div>
-            </div>
+          );
+        })}
+        
+        {/* Drop Hint when dragging to root */}
+        {(draggedAsset || selectedAssets.size > 0 || draggedFolder) && !currentFolderId && (
+          <div className="col-span-full text-center py-8 text-blue-600 font-medium">
+            📁 Hier ablegen um in Root-Ordner zu verschieben
+            {selectedAssets.size > 1 && <div className="text-sm mt-1">({selectedAssets.size} Dateien werden verschoben)</div>}
+            {draggedFolder && <div className="text-sm mt-1">(Ordner wird ins Root verschoben)</div>}
           </div>
-        );
-      })}
-      
-      {/* 🆕 Drop Hint when dragging to root */}
-      {draggedAsset && !currentFolderId && (
-        <div className="col-span-full text-center py-8 text-blue-600 font-medium">
-          📁 Hier ablegen um in Root-Ordner zu verschieben
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </>
   );
 
   const renderListView = () => (
@@ -479,7 +828,7 @@ export default function MediathekPage() {
       {/* Moving Indicator */}
       {moving && (
         <div className="fixed top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg z-50">
-          🔄 Datei wird verschoben...
+          🔄 {draggedFolder ? 'Ordner wird' : selectedAssets.size > 1 ? `${selectedAssets.size} Dateien werden` : 'Datei wird'} verschoben...
         </div>
       )}
 
@@ -488,9 +837,18 @@ export default function MediathekPage() {
         <div>
           <Heading>Mediathek</Heading>
           <Text className="mt-1">
-            Verwalten Sie Ihre Bilder, Videos und Dokumente. 
+            Verwalten Sie Ihre Bilder, Videos und Dokumente.
             {draggedAsset && <span className="text-blue-600 font-medium"> 📁 Datei per Drag & Drop verschieben!</span>}
+            {draggedFolder && <span className="text-purple-600 font-medium"> 📂 Ordner wird verschoben!</span>}
+            {selectedAssets.size > 0 && !draggedAsset && !draggedFolder && (
+              <span className="text-indigo-600 font-medium"> ✨ {selectedAssets.size} {selectedAssets.size === 1 ? 'Datei' : 'Dateien'} ausgewählt</span>
+            )}
           </Text>
+          {selectedAssets.size === 0 && !isSelectionMode && mediaAssets.length > 0 && !draggedFolder && (
+            <Text className="text-xs text-gray-500 mt-1">
+              💡 Tipp: Strg+Klick für Mehrfachauswahl, Strg+A für alle, Entf zum Löschen, Ordner sind per Drag & Drop verschiebbar
+            </Text>
+          )}
         </div>
         
         <div className="flex items-center gap-3">
@@ -519,14 +877,46 @@ export default function MediathekPage() {
           </div>
 
           {/* Action Buttons */}
-          <Button color="zinc" onClick={handleCreateFolder}>
-            <FolderPlusIcon className="size-4 mr-2" />
-            Ordner
-          </Button>
-          <Button onClick={() => setShowUploadModal(true)}>
-            <PlusIcon className="size-4 mr-2" />
-            Dateien
-          </Button>
+          {selectedAssets.size > 0 ? (
+            // Selection Mode Actions
+            <div className="flex items-center gap-3">
+              <div className="text-sm text-indigo-700 font-medium">
+                {selectedAssets.size} ausgewählt
+              </div>
+              <Button color="zinc" onClick={clearSelection}>
+                Auswahl aufheben
+              </Button>
+            </div>
+          ) : (
+            // Normal Actions
+            <>
+              <Button 
+                color="zinc" 
+                onClick={handleCreateFolder}
+                disabled={draggedFolder !== null}
+              >
+                <FolderPlusIcon className="size-4 mr-2" />
+                Ordner
+              </Button>
+              <Button 
+                onClick={() => setShowUploadModal(true)}
+                disabled={draggedFolder !== null}
+              >
+                <PlusIcon className="size-4 mr-2" />
+                Dateien
+              </Button>
+              {mediaAssets.length > 0 && (
+                <Button 
+                  plain 
+                  onClick={() => setIsSelectionMode(!isSelectionMode)}
+                  className={isSelectionMode ? 'text-indigo-600' : 'text-gray-600'}
+                  disabled={draggedFolder !== null}
+                >
+                  {isSelectionMode ? '✓ Auswahl-Modus' : '☐ Auswählen'}
+                </Button>
+              )}
+            </>
+          )}
         </div>
       </div>
 
@@ -542,15 +932,22 @@ export default function MediathekPage() {
 
       {/* Stats Bar */}
       {totalItems > 0 && (
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-          <div className="flex items-center justify-between text-sm text-gray-600">
-            <span>
+        <div className={`mb-6 p-4 rounded-lg ${selectedAssets.size > 0 ? 'bg-indigo-50 border border-indigo-200' : 'bg-gray-50'}`}>
+          <div className="flex items-center justify-between text-sm">
+            <span className={selectedAssets.size > 0 ? 'text-indigo-900' : 'text-gray-600'}>
               {folders.length} {folders.length === 1 ? 'Ordner' : 'Ordner'}, {' '}
               {mediaAssets.length} {mediaAssets.length === 1 ? 'Datei' : 'Dateien'}
+              {selectedAssets.size > 0 && (
+                <span className="ml-2 font-medium">
+                  • {selectedAssets.size} ausgewählt
+                </span>
+              )}
             </span>
-            <span className="text-xs">
+            <span className={`text-xs ${selectedAssets.size > 0 ? 'text-indigo-600' : 'text-gray-500'}`}>
               Ansicht: {viewMode === 'grid' ? 'Kacheln' : 'Liste'}
               {draggedAsset && ' • Datei wird bewegt'}
+              {draggedFolder && ' • Ordner wird bewegt'}
+              {selectedAssets.size > 0 && !draggedAsset && !draggedFolder && ' • Auswahl-Modus aktiv'}
             </span>
           </div>
         </div>

@@ -27,11 +27,18 @@ interface FolderCardProps {
   onShare?: (folder: MediaFolder) => void;
   fileCount?: number;
   
-  // 🆕 Drag & Drop Props
+  // Drag & Drop Props für Assets auf Ordner
   isDragOver?: boolean;
   onDragOver?: (e: React.DragEvent) => void;
   onDragLeave?: () => void;
-  onDrop?: (e: React.DragEvent) => void;
+  onDrop?: (e: React.DragEvent) => void; // 🔧 Wieder hinzugefügt für Assets
+  
+  // 🆕 Folder Drag & Drop Props
+  onFolderMove?: (folderId: string, targetFolderId: string) => Promise<void>;
+  isDraggedFolder?: boolean;
+  canAcceptFolder?: boolean;
+  onFolderDragStart?: (folder: MediaFolder) => void;
+  onFolderDragEnd?: () => void;
 }
 
 export default function FolderCard({ 
@@ -41,11 +48,17 @@ export default function FolderCard({
   onDelete, 
   onShare, 
   fileCount = 0,
-  // 🆕 Drag & Drop Props
+  // Drag & Drop Props für Assets
   isDragOver = false,
   onDragOver,
   onDragLeave,
-  onDrop
+  onDrop,
+  // 🆕 Folder Drag & Drop Props
+  onFolderMove,
+  isDraggedFolder = false,
+  canAcceptFolder = true,
+  onFolderDragStart,
+  onFolderDragEnd
 }: FolderCardProps) {
   
   const { companies } = useCrmData();
@@ -55,17 +68,127 @@ export default function FolderCard({
     ? companies.find(c => c.id === folder.clientId)
     : null;
 
+  // 🚨 EXTREME DEBUG: Was ist onFolderMove wirklich?
+  console.log(`🚨 FolderCard "${folder.name}" - onFolderMove DEBUG:`, {
+    exists: !!onFolderMove,
+    type: typeof onFolderMove,
+    value: onFolderMove,
+    stringified: String(onFolderMove),
+    isFunction: typeof onFolderMove === 'function'
+  });
+
+  // 🆕 Folder Drag Handlers
+  const handleFolderDragStart = (e: React.DragEvent) => {
+    console.log('Dragging folder:', folder.name);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', `folder:${folder.id}`);
+    e.stopPropagation(); // Prevent interference with asset drag
+    
+    // Notify parent component
+    if (onFolderDragStart) {
+      onFolderDragStart(folder);
+    }
+  };
+
+  const handleFolderDragEnd = () => {
+    console.log('Folder drag ended');
+    
+    // Notify parent component
+    if (onFolderDragEnd) {
+      onFolderDragEnd();
+    }
+  };
+
+  const handleFolderDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const data = e.dataTransfer.getData('text/plain');
+    console.log('🗂️ FolderCard Drop - received data:', data);
+    
+    // Check if it's a folder being dropped
+    if (data.startsWith('folder:')) {
+      console.log('🔧 This IS a folder drop');
+      
+      if (onFolderMove) {
+        console.log('🎯 onFolderMove exists, calling it!');
+        const draggedFolderId = data.replace('folder:', '');
+        
+        console.log(`🗂️ Folder-to-folder drop detected: ${draggedFolderId} -> ${folder.id}`);
+        
+        // Prevent dropping folder into itself
+        if (draggedFolderId === folder.id) {
+          console.log('❌ Cannot drop folder into itself');
+          return;
+        }
+        
+        console.log(`✅ Moving folder ${draggedFolderId} into ${folder.id}`);
+        
+        try {
+          await onFolderMove(draggedFolderId, folder.id!);
+          console.log('🎉 Folder move completed successfully!');
+        } catch (error) {
+          console.error('❌ Error moving folder:', error);
+        }
+        
+        return;
+      } else {
+        console.log('❌ onFolderMove is null/undefined!');
+      }
+    } 
+    
+    // If it's not a folder drop, call the asset drop handler
+    if (onDrop && !data.startsWith('folder:')) {
+      console.log('📁 Delegating to asset drop handler');
+      onDrop(e);
+    } else {
+      console.log('⚠️ No handler for drop type:', data);
+    }
+  };
+
+  const handleCombinedDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    
+    // Check what's being dragged based on dataTransfer types or current drag state
+    let dragType = 'asset'; // default
+    
+    // Try to peek at drag data (this might not work in all browsers during dragover)
+    try {
+      const types = Array.from(e.dataTransfer.types);
+      if (types.includes('text/plain')) {
+        // We can't read the actual data during dragover, so we assume asset unless we know it's a folder
+        // The actual check happens in onDrop
+      }
+    } catch (error) {
+      // Ignore - some browsers don't allow reading during dragover
+    }
+    
+    // Set appropriate drop effect
+    e.dataTransfer.dropEffect = 'move';
+    
+    // Call the asset drag over handler if provided
+    if (onDragOver) {
+      onDragOver(e);
+    }
+  };
+
   return (
     <div 
       className={`group relative bg-white rounded-lg border shadow-sm transition-all duration-200 overflow-hidden ${
         isDragOver 
-          ? 'border-blue-400 bg-blue-50 shadow-lg scale-105 border-2' // 🆕 Drag Over Styling
+          ? 'border-blue-400 bg-blue-50 shadow-lg scale-105 border-2' // Drag Over Styling
+          : isDraggedFolder
+          ? 'opacity-50 scale-95 border-gray-300' // 🆕 Being dragged
           : 'border-gray-200 hover:shadow-md'
       }`}
-      // 🆕 Drag & Drop Event Handlers
-      onDragOver={onDragOver}
+      // 🆕 Make folder draggable
+      draggable={true}
+      onDragStart={handleFolderDragStart}
+      onDragEnd={handleFolderDragEnd}
+      // Enhanced Drag & Drop Event Handlers
+      onDragOver={handleCombinedDragOver}
       onDragLeave={onDragLeave}
-      onDrop={onDrop}
+      onDrop={handleFolderDrop}
     >
       {/* Folder Preview */}
       <div 
@@ -83,13 +206,25 @@ export default function FolderCard({
           style={{ color: isDragOver ? '#2563eb' : folderColor }} // 🆕 Dynamic color
         />
         
-        {/* 🆕 Drop Hint */}
+        {/* 🆕 Enhanced Drop Hint */}
         {isDragOver && (
           <div className="absolute inset-0 flex items-center justify-center bg-blue-100 bg-opacity-90">
             <div className="text-center">
               <div className="text-2xl mb-1">📁</div>
               <div className="text-xs font-medium text-blue-800">
                 Hier ablegen
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* 🆕 Dragging Indicator */}
+        {isDraggedFolder && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-90">
+            <div className="text-center">
+              <div className="text-lg mb-1">↗️</div>
+              <div className="text-xs font-medium text-gray-700">
+                Wird bewegt...
               </div>
             </div>
           </div>
