@@ -12,6 +12,7 @@ import { Text } from "@/components/text";
 import { Button } from "@/components/button";
 import { Badge } from "@/components/badge";
 import CompanyModal from '@/app/dashboard/contacts/CompanyModal';
+import CompanyMediaSection from '@/components/crm/CompanyMediaSection'; // NEU: Media Section
 
 // Hilfsfunktion zum Formatieren des Datums
 function formatDate(timestamp: any) {
@@ -159,6 +160,12 @@ export default function CompanyDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* ✨ NEU: Media Section - Volle Breite unter dem Grid */}
+        <CompanyMediaSection 
+          companyId={companyId}
+          companyName={company.name}
+        />
       </div>
 
       {/* Das Bearbeiten-Modal wird nur bei Bedarf gerendert */}

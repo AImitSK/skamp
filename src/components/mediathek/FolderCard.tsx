@@ -3,11 +3,13 @@
 
 import { MediaFolder } from "@/types/media";
 import { Button } from "@/components/button";
+import { Badge } from "@/components/badge";
 import { 
   FolderIcon, 
   EllipsisVerticalIcon,
   TrashIcon,
-  PencilIcon
+  PencilIcon,
+  ShareIcon
 } from "@heroicons/react/24/solid";
 import { 
   Dropdown,
@@ -15,12 +17,14 @@ import {
   DropdownMenu,
   DropdownItem,
 } from "@/components/dropdown";
+import { useCrmData } from "@/context/CrmDataContext"; // NEU: Für Firmennamen
 
 interface FolderCardProps {
   folder: MediaFolder;
   onOpen: (folder: MediaFolder) => void;
   onEdit: (folder: MediaFolder) => void;
   onDelete: (folder: MediaFolder) => void;
+  onShare?: (folder: MediaFolder) => void; // NEU: Share-Funktion
   fileCount?: number;
 }
 
@@ -29,10 +33,17 @@ export default function FolderCard({
   onOpen, 
   onEdit, 
   onDelete, 
+  onShare, // NEU: Share-Handler
   fileCount = 0 
 }: FolderCardProps) {
   
+  const { companies } = useCrmData(); // NEU: Firmen-Daten laden
   const folderColor = folder.color || '#6366f1'; // Default Indigo
+  
+  // NEU: Firmennamen ermitteln
+  const associatedCompany = folder.clientId 
+    ? companies.find(c => c.id === folder.clientId)
+    : null;
 
   return (
     <div className="group relative bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
@@ -65,6 +76,12 @@ export default function FolderCard({
                 <PencilIcon className="h-4 w-4 mr-2" />
                 Bearbeiten
               </DropdownItem>
+              {onShare && (
+                <DropdownItem onClick={(e: React.MouseEvent) => { e.stopPropagation(); onShare(folder); }}>
+                  <ShareIcon className="h-4 w-4 mr-2" />
+                  Teilen
+                </DropdownItem>
+              )}
               <DropdownItem 
                 onClick={(e: React.MouseEvent) => { e.stopPropagation(); onDelete(folder); }}
                 className="text-red-600"
@@ -86,6 +103,16 @@ export default function FolderCard({
         >
           {folder.name}
         </h3>
+        
+        {/* NEU: Kunden-Badge */}
+        {associatedCompany && (
+          <div className="mb-2">
+            <Badge color="blue" className="text-xs">
+              {associatedCompany.name}
+            </Badge>
+          </div>
+        )}
+        
         <div className="space-y-1">
           <p className="text-xs text-gray-500">
             {fileCount} {fileCount === 1 ? 'Datei' : 'Dateien'}

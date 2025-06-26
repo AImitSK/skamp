@@ -19,9 +19,150 @@ import {
   deleteObject,
 } from 'firebase/storage';
 import { db, storage } from './client-init';
-import { MediaAsset, MediaFolder, FolderBreadcrumb } from '@/types/media';
+import { MediaAsset, MediaFolder, FolderBreadcrumb, ShareLink } from '@/types/media';
 
 export const mediaService = {
+  // === SHARE LINK OPERATIONS ===
+  
+  /**
+   * Erstellt einen Share-Link für Ordner oder Datei
+   */
+  async createShareLink(shareData: Omit<ShareLink, 'id' | 'shareId' | 'accessCount' | 'createdAt' | 'lastAccessedAt'>): Promise<ShareLink> {
+    try {
+      // Generiere eindeutige Share-ID (fallback für ältere Browser)
+      const shareId = self.crypto?.randomUUID?.() 
+        ? crypto.randomUUID().replace(/-/g, '').substring(0, 12)
+        : Math.random().toString(36).substring(2, 14);
+      
+      // Baue sauberes Objekt ohne undefined Werte
+      const linkData: any = {
+        userId: shareData.userId,
+        type: shareData.type,
+        targetId: shareData.targetId,
+        title: shareData.title,
+        isActive: shareData.isActive,
+        shareId,
+        accessCount: 0,
+        settings: {
+          downloadAllowed: shareData.settings.downloadAllowed,
+          showFileList: shareData.settings.showFileList || false,
+        },
+        createdAt: serverTimestamp(),
+      };
+
+      // Nur hinzufügen wenn definiert
+      if (shareData.description) {
+        linkData.description = shareData.description;
+      }
+
+      if (shareData.settings.passwordRequired) {
+        linkData.settings.passwordRequired = shareData.settings.passwordRequired;
+      }
+
+      if (shareData.settings.expiresAt) {
+        linkData.settings.expiresAt = shareData.settings.expiresAt;
+      }
+      
+      console.log('Creating share link with clean data:', linkData);
+      
+      const docRef = await addDoc(collection(db, 'media_shares'), linkData);
+      return { id: docRef.id, ...linkData } as ShareLink;
+    } catch (error) {
+      console.error("Fehler beim Erstellen des Share-Links:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Lädt alle Share-Links für einen Benutzer
+   */
+  async getShareLinks(userId: string): Promise<ShareLink[]> {
+    try {
+      const q = query(
+        collection(db, 'media_shares'),
+        where('userId', '==', userId),
+        orderBy('createdAt', 'desc')
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as ShareLink));
+    } catch (error) {
+      console.error("Fehler beim Laden der Share-Links:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Lädt einen Share-Link anhand der öffentlichen shareId
+   */
+  async getShareLinkByShareId(shareId: string): Promise<ShareLink | null> {
+    try {
+      const q = query(
+        collection(db, 'media_shares'),
+        where('shareId', '==', shareId),
+        where('isActive', '==', true)
+      );
+      const snapshot = await getDocs(q);
+      
+      if (snapshot.empty) return null;
+      
+      const doc = snapshot.docs[0];
+      const shareLink = { id: doc.id, ...doc.data() } as ShareLink;
+      
+      // Zugriffszähler erhöhen
+      await this.incrementShareAccess(doc.id);
+      
+      return shareLink;
+    } catch (error) {
+      console.error("Fehler beim Laden des Share-Links:", error);
+      return null;
+    }
+  },
+
+  /**
+   * Erhöht den Zugriffszähler eines Share-Links
+   */
+  async incrementShareAccess(shareLinkId: string): Promise<void> {
+    try {
+      const docRef = doc(db, 'media_shares', shareLinkId);
+      await updateDoc(docRef, {
+        accessCount: (await getDoc(docRef)).data()?.accessCount + 1 || 1,
+        lastAccessedAt: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error("Fehler beim Aktualisieren des Zugriffszählers:", error);
+    }
+  },
+
+  /**
+   * Deaktiviert einen Share-Link
+   */
+  async deactivateShareLink(shareLinkId: string): Promise<void> {
+    try {
+      const docRef = doc(db, 'media_shares', shareLinkId);
+      await updateDoc(docRef, {
+        isActive: false,
+      });
+    } catch (error) {
+      console.error("Fehler beim Deaktivieren des Share-Links:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Löscht einen Share-Link
+   */
+  async deleteShareLink(shareLinkId: string): Promise<void> {
+    try {
+      const docRef = doc(db, 'media_shares', shareLinkId);
+      await deleteDoc(docRef);
+    } catch (error) {
+      console.error("Fehler beim Löschen des Share-Links:", error);
+      throw error;
+    }
+  },
   // === FOLDER OPERATIONS ===
   
   /**
@@ -368,6 +509,136 @@ export const mediaService = {
     } catch (error) {
       console.error("Fehler beim Verschieben der Datei:", error);
       throw error;
+    }
+  },
+
+  /**
+   * Lädt einen spezifischen Asset (für Share-Links ohne userId-Filter)
+   */
+  async getMediaAssetById(assetId: string): Promise<MediaAsset | null> {
+    try {
+      const docRef = doc(db, 'media_assets', assetId);
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists()) {
+        return { id: docSnap.id, ...docSnap.data() } as MediaAsset;
+      }
+      return null;
+    } catch (error) {
+      console.error("Fehler beim Laden des Media Assets:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Lädt alle Assets in einem Ordner (für Share-Links ohne userId-Filter)
+   */
+  async getMediaAssetsInFolder(folderId: string): Promise<MediaAsset[]> {
+    try {
+      const q = query(
+        collection(db, 'media_assets'),
+        where('folderId', '==', folderId)
+      );
+      
+      const snapshot = await getDocs(q);
+      const assets = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as MediaAsset));
+      
+      // Client-side Sortierung nach Erstellungsdatum
+      return assets.sort((a, b) => {
+        const aTime = a.createdAt?.seconds || 0;
+        const bTime = b.createdAt?.seconds || 0;
+        return bTime - aTime;
+      });
+    } catch (error) {
+      console.error("Fehler beim Laden der Ordner-Assets:", error);
+      throw error;
+    }
+  },
+
+  // === CLIENT/CUSTOMER MEDIA OPERATIONS ===
+
+  /**
+   * Lädt alle Medien (Ordner + Assets) für einen spezifischen Kunden
+   */
+  async getMediaByClientId(userId: string, clientId: string): Promise<{folders: MediaFolder[], assets: MediaAsset[], totalCount: number}> {
+    try {
+      console.log('Loading media for client:', clientId);
+      
+      // Lade alle Ordner des Kunden
+      const foldersQuery = query(
+        collection(db, 'media_folders'),
+        where('userId', '==', userId),
+        where('clientId', '==', clientId)
+      );
+      
+      // Lade alle direkten Assets des Kunden (nicht in Ordnern)
+      const assetsQuery = query(
+        collection(db, 'media_assets'),
+        where('userId', '==', userId),
+        where('clientId', '==', clientId)
+      );
+
+      const [foldersSnapshot, assetsSnapshot] = await Promise.all([
+        getDocs(foldersQuery),
+        getDocs(assetsQuery)
+      ]);
+
+      const folders = foldersSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as MediaFolder));
+
+      const directAssets = assetsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as MediaAsset));
+
+      // Lade Assets aus allen Kunden-Ordnern
+      let folderAssets: MediaAsset[] = [];
+      for (const folder of folders) {
+        const assets = await this.getMediaAssetsInFolder(folder.id!);
+        folderAssets = [...folderAssets, ...assets];
+      }
+
+      const allAssets = [...directAssets, ...folderAssets];
+      
+      // Sortiere Assets nach Datum (neueste zuerst)
+      allAssets.sort((a, b) => {
+        const aTime = a.createdAt?.seconds || 0;
+        const bTime = b.createdAt?.seconds || 0;
+        return bTime - aTime;
+      });
+
+      console.log(`Found ${folders.length} folders and ${allAssets.length} assets for client`);
+
+      return {
+        folders: folders.sort((a, b) => a.name.localeCompare(b.name)),
+        assets: allAssets,
+        totalCount: folders.length + allAssets.length
+      };
+    } catch (error) {
+      console.error("Fehler beim Laden der Kunden-Medien:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Zählt die Anzahl der Dateien in einem Ordner
+   */
+  async getFolderFileCount(folderId: string): Promise<number> {
+    try {
+      const q = query(
+        collection(db, 'media_assets'),
+        where('folderId', '==', folderId)
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.size;
+    } catch (error) {
+      console.error("Fehler beim Zählen der Ordner-Dateien:", error);
+      return 0;
     }
   },
 

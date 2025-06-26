@@ -27,6 +27,27 @@ export interface MediaFolder {
   updatedAt?: Timestamp;
 }
 
+// NEU: Share-Link System
+export interface ShareLink {
+  id?: string;
+  userId: string; // Wer hat den Link erstellt
+  shareId: string; // Öffentliche UUID für URL
+  type: 'folder' | 'file'; // Was wird geteilt
+  targetId: string; // ID des Ordners oder der Datei
+  title: string; // Titel für die Share-Seite
+  description?: string; // Beschreibung für die Share-Seite
+  isActive: boolean; // Link an/aus
+  accessCount: number; // Wie oft aufgerufen
+  settings: {
+    passwordRequired?: string; // Optional: Passwort
+    expiresAt?: Timestamp; // Optional: Ablaufdatum
+    downloadAllowed: boolean; // Download erlauben
+    showFileList?: boolean; // Bei Ordnern: Dateiliste anzeigen
+  };
+  createdAt?: Timestamp;
+  lastAccessedAt?: Timestamp;
+}
+
 // Breadcrumb für Navigation
 export interface FolderBreadcrumb {
   id: string;

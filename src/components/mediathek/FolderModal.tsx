@@ -7,7 +7,9 @@ import { Field, Label, FieldGroup } from "@/components/fieldset";
 import { Input } from "@/components/input";
 import { Textarea } from "@/components/textarea";
 import { Button } from "@/components/button";
+import { Select } from "@/components/select";
 import { MediaFolder } from "@/types/media";
+import { useCrmData } from "@/context/CrmDataContext";
 
 interface FolderModalProps {
   folder?: MediaFolder; // Wenn gesetzt, Edit-Modus
@@ -33,9 +35,11 @@ export default function FolderModal({
   onClose, 
   onSave 
 }: FolderModalProps) {
+  const { companies } = useCrmData(); // NEU: Lade Firmen-Daten
   const [name, setName] = useState(folder?.name || '');
   const [description, setDescription] = useState(folder?.description || '');
   const [selectedColor, setSelectedColor] = useState(folder?.color || FOLDER_COLORS[0]);
+  const [selectedClientId, setSelectedClientId] = useState(folder?.clientId || ''); // NEU: Kunden-Auswahl
   const [saving, setSaving] = useState(false);
 
   const isEdit = !!folder;
@@ -52,6 +56,7 @@ export default function FolderModal({
         name: name.trim(),
         description: description.trim() || undefined,
         color: selectedColor,
+        clientId: selectedClientId || undefined, // NEU: Kunde zuordnen
         parentFolderId,
       });
       onClose();
@@ -91,6 +96,25 @@ export default function FolderModal({
               rows={3}
               className="mt-2"
             />
+          </Field>
+
+          {/* NEU: Kunden-Zuordnung */}
+          <Field>
+            <Label>Kunde zuordnen (optional)</Label>
+            <Select
+              value={selectedClientId}
+              onChange={(e) => setSelectedClientId(e.target.value)}
+              className="mt-2"
+            >
+              <option value="">-- Kein Kunde --</option>
+              {companies
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((company) => (
+                  <option key={company.id} value={company.id}>
+                    {company.name}
+                  </option>
+                ))}
+            </Select>
           </Field>
 
           <Field>

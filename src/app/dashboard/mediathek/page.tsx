@@ -3,11 +3,13 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useCrmData } from "@/context/CrmDataContext"; // NEU: Für Firmen-Daten
 import { mediaService } from "@/lib/firebase/media-service";
 import { MediaAsset, MediaFolder, FolderBreadcrumb } from "@/types/media";
 import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
 import { Button } from "@/components/button";
+import { Badge } from "@/components/badge"; // NEU: Badge-Komponente
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/table";
 import { 
   PlusIcon, 
@@ -19,7 +21,8 @@ import {
   DocumentIcon,
   VideoCameraIcon,
   DocumentTextIcon,
-  FolderPlusIcon
+  FolderPlusIcon,
+  ShareIcon
 } from "@heroicons/react/20/solid";
 import { FolderIcon } from "@heroicons/react/24/solid";
 import Link from 'next/link';
@@ -27,11 +30,13 @@ import UploadModal from "./UploadModal";
 import FolderCard from "@/components/mediathek/FolderCard";
 import BreadcrumbNavigation from "@/components/mediathek/BreadcrumbNavigation";
 import FolderModal from "@/components/mediathek/FolderModal";
+import ShareModal from "@/components/mediathek/ShareModal"; // NEU: Share Modal
 
 type ViewMode = 'grid' | 'list';
 
 export default function MediathekPage() {
   const { user } = useAuth();
+  const { companies } = useCrmData(); // NEU: Firmen-Daten für Badges
   const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
   const [folders, setFolders] = useState<MediaFolder[]>([]);
   const [currentFolderId, setCurrentFolderId] = useState<string | undefined>(undefined);
@@ -42,7 +47,9 @@ export default function MediathekPage() {
   // Modal States
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showFolderModal, setShowFolderModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false); // NEU: Share Modal
   const [editingFolder, setEditingFolder] = useState<MediaFolder | undefined>(undefined);
+  const [sharingTarget, setSharingTarget] = useState<{target: MediaFolder | MediaAsset, type: 'folder' | 'file'} | null>(null); // NEU: Share Target
 
   useEffect(() => {
     if (user) {
@@ -130,6 +137,22 @@ export default function MediathekPage() {
     setCurrentFolderId(folderId);
   };
 
+  // Share Operations (NEU)
+  const handleShareFolder = (folder: MediaFolder) => {
+    setSharingTarget({ target: folder, type: 'folder' });
+    setShowShareModal(true);
+  };
+
+  const handleShareAsset = (asset: MediaAsset) => {
+    setSharingTarget({ target: asset, type: 'file' });
+    setShowShareModal(true);
+  };
+
+  const handleCloseShareModal = () => {
+    setShowShareModal(false);
+    setSharingTarget(null);
+  };
+
   // File Operations
   const handleDeleteAsset = async (asset: MediaAsset) => {
     if (window.confirm(`Möchten Sie die Datei "${asset.fileName}" wirklich löschen?`)) {
@@ -184,6 +207,7 @@ export default function MediathekPage() {
           onOpen={handleOpenFolder}
           onEdit={handleEditFolder}
           onDelete={handleDeleteFolder}
+          onShare={handleShareFolder} // NEU: Share-Handler
           fileCount={0} // TODO: Implement file count
         />
       ))}
@@ -217,6 +241,13 @@ export default function MediathekPage() {
                       <EyeIcon className="h-4 w-4" />
                     </Button>
                   </Link>
+                  <Button 
+                    color="zinc" 
+                    onClick={() => handleShareAsset(asset)}
+                    className="shadow-lg bg-blue-600 text-white hover:bg-blue-700 p-2"
+                  >
+                    <ShareIcon className="h-4 w-4" />
+                  </Button>
                   <Button 
                     color="zinc" 
                     onClick={() => handleDeleteAsset(asset)}
@@ -260,33 +291,47 @@ export default function MediathekPage() {
       </TableHead>
       <TableBody>
         {/* Render Folders First */}
-        {folders.map((folder) => (
-          <TableRow key={`folder-${folder.id}`} className="cursor-pointer hover:bg-gray-50">
-            <TableCell onClick={() => handleOpenFolder(folder)}>
-              <div className="flex items-center space-x-3">
-                <FolderIcon className="h-8 w-8" style={{ color: folder.color }} />
-                <div>
-                  <div className="font-medium">{folder.name}</div>
-                  {folder.description && (
-                    <div className="text-sm text-gray-500">{folder.description}</div>
-                  )}
+        {folders.map((folder) => {
+          const associatedCompany = folder.clientId 
+            ? companies.find(c => c.id === folder.clientId)
+            : null;
+            
+          return (
+            <TableRow key={`folder-${folder.id}`} className="cursor-pointer hover:bg-gray-50">
+              <TableCell onClick={() => handleOpenFolder(folder)}>
+                <div className="flex items-center space-x-3">
+                  <FolderIcon className="h-8 w-8" style={{ color: folder.color }} />
+                  <div>
+                    <div className="font-medium">{folder.name}</div>
+                    {/* NEU: Kunden-Badge in List-Ansicht */}
+                    {associatedCompany && (
+                      <div className="mt-1">
+                        <Badge color="blue" className="text-xs">
+                          {associatedCompany.name}
+                        </Badge>
+                      </div>
+                    )}
+                    {folder.description && (
+                      <div className="text-sm text-gray-500">{folder.description}</div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </TableCell>
-            <TableCell>Ordner</TableCell>
-            <TableCell>
-              {folder.createdAt ? new Date(folder.createdAt.seconds * 1000).toLocaleDateString('de-DE') : '-'}
-            </TableCell>
-            <TableCell className="text-right space-x-2">
-              <Button plain onClick={() => handleEditFolder(folder)}>
-                Bearbeiten
-              </Button>
-              <Button plain className="text-red-600 hover:text-red-500" onClick={() => handleDeleteFolder(folder)}>
-                Löschen
-              </Button>
-            </TableCell>
-          </TableRow>
-        ))}
+              </TableCell>
+              <TableCell>Ordner</TableCell>
+              <TableCell>
+                {folder.createdAt ? new Date(folder.createdAt.seconds * 1000).toLocaleDateString('de-DE') : '-'}
+              </TableCell>
+              <TableCell className="text-right space-x-2">
+                <Button plain onClick={() => handleEditFolder(folder)}>
+                  Bearbeiten
+                </Button>
+                <Button plain className="text-red-600 hover:text-red-500" onClick={() => handleDeleteFolder(folder)}>
+                  Löschen
+                </Button>
+              </TableCell>
+            </TableRow>
+          );
+        })}
         
         {/* Render Media Assets */}
         {mediaAssets.map((asset) => (
@@ -450,6 +495,16 @@ export default function MediathekPage() {
             setEditingFolder(undefined);
           }}
           onSave={handleSaveFolder}
+        />
+      )}
+
+      {/* NEU: Share Modal */}
+      {showShareModal && sharingTarget && (
+        <ShareModal
+          target={sharingTarget.target}
+          type={sharingTarget.type}
+          onClose={handleCloseShareModal}
+          onSuccess={loadData}
         />
       )}
     </div>
