@@ -1,4 +1,4 @@
-// src/lib/firebase/media-service.ts
+// src/lib/firebase/media-service.ts - Mit updateAsset Methode
 import {
   collection,
   doc,
@@ -508,6 +508,31 @@ export const mediaService = {
       await updateDoc(docRef, updateData);
     } catch (error) {
       console.error("Fehler beim Verschieben der Datei:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * NEU: Aktualisiert ein Medien-Asset (für Details-Modal)
+   */
+  async updateAsset(assetId: string, updates: Partial<MediaAsset>): Promise<void> {
+    try {
+      const docRef = doc(db, 'media_assets', assetId);
+      
+      // Baue Update-Objekt ohne undefined Werte
+      const updateData: any = {};
+      
+      if (updates.fileName !== undefined) updateData.fileName = updates.fileName;
+      if (updates.description !== undefined) updateData.description = updates.description;
+      if (updates.tags !== undefined) updateData.tags = updates.tags;
+      if (updates.folderId !== undefined) updateData.folderId = updates.folderId;
+      if (updates.clientId !== undefined) updateData.clientId = updates.clientId;
+      
+      console.log('Updating asset with data:', updateData);
+      
+      await updateDoc(docRef, updateData);
+    } catch (error) {
+      console.error("Fehler beim Aktualisieren des Assets:", error);
       throw error;
     }
   },

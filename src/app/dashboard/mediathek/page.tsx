@@ -1,7 +1,8 @@
-// src/app/dashboard/mediathek/page.tsx - Mit Drag & Drop
+// src/app/dashboard/mediathek/page.tsx - Mit URL-Parameter Support
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams, useRouter } from "next/navigation"; // NEU: URL-Parameter
 import { useAuth } from "@/context/AuthContext";
 import { useCrmData } from "@/context/CrmDataContext";
 import { mediaService } from "@/lib/firebase/media-service";
@@ -22,21 +23,33 @@ import {
   VideoCameraIcon,
   DocumentTextIcon,
   FolderPlusIcon,
-  ShareIcon
+  ShareIcon,
+  EllipsisVerticalIcon,
+  PencilIcon
 } from "@heroicons/react/20/solid";
 import { FolderIcon } from "@heroicons/react/24/solid";
+import { 
+  Dropdown,
+  DropdownButton,
+  DropdownMenu,
+  DropdownItem,
+} from "@/components/dropdown";
 import Link from 'next/link';
 import UploadModal from "./UploadModal";
 import FolderCard from "@/components/mediathek/FolderCard";
 import BreadcrumbNavigation from "@/components/mediathek/BreadcrumbNavigation";
 import FolderModal from "@/components/mediathek/FolderModal";
 import ShareModal from "@/components/mediathek/ShareModal";
+import AssetDetailsModal from "@/components/mediathek/AssetDetailsModal"; // NEU
 
 type ViewMode = 'grid' | 'list';
 
 export default function MediathekPage() {
   const { user } = useAuth();
   const { companies } = useCrmData();
+  const searchParams = useSearchParams(); // NEU: URL-Parameter
+  const router = useRouter(); // NEU: Router für URL-Manipulation
+  
   const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
   const [folders, setFolders] = useState<MediaFolder[]>([]);
   const [currentFolderId, setCurrentFolderId] = useState<string | undefined>(undefined);
@@ -48,20 +61,54 @@ export default function MediathekPage() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showFolderModal, setShowFolderModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showAssetDetailsModal, setShowAssetDetailsModal] = useState(false); // NEU
   const [editingFolder, setEditingFolder] = useState<MediaFolder | undefined>(undefined);
+  const [editingAsset, setEditingAsset] = useState<MediaAsset | undefined>(undefined); // NEU
   const [sharingTarget, setSharingTarget] = useState<{target: MediaFolder | MediaAsset, type: 'folder' | 'file'} | null>(null);
 
-  // 🆕 Drag & Drop States
+  // NEU: Upload-spezifische States
+  const [preselectedClientId, setPreselectedClientId] = useState<string | undefined>(undefined);
+
+  // NEU: Get asset's folder (für AssetDetailsModal)
+  const getAssetFolder = (asset: MediaAsset): MediaFolder | undefined => {
+    if (!asset.folderId) return undefined;
+    // Suche in der erweiterten folders Liste (enthält auch aktuellen Ordner)
+    return folders.find(f => f.id === asset.folderId);
+  };
+
+  // Drag & Drop States
   const [draggedAsset, setDraggedAsset] = useState<MediaAsset | null>(null);
   const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
   const [moving, setMoving] = useState(false);
 
-  // 🆕 Bulk Selection States
+  // Bulk Selection States
   const [selectedAssets, setSelectedAssets] = useState<Set<string>>(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
 
-  // 🆕 Folder Drag States
+  // Folder Drag States
   const [draggedFolder, setDraggedFolder] = useState<MediaFolder | null>(null);
+
+  // NEU: URL-Parameter Handler
+  useEffect(() => {
+    const uploadFor = searchParams.get('uploadFor');
+    
+    if (uploadFor && companies.length > 0) {
+      // Prüfe ob Company existiert
+      const company = companies.find(c => c.id === uploadFor);
+      if (company) {
+        console.log('🎯 Auto-opening upload modal for company:', company.name);
+        setPreselectedClientId(uploadFor);
+        setShowUploadModal(true);
+        
+        // Entferne Parameter aus URL (optional - für saubere URL)
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('uploadFor');
+        router.replace(newUrl.pathname + newUrl.search, { scroll: false });
+      } else {
+        console.warn('⚠️ Company not found for uploadFor parameter:', uploadFor);
+      }
+    }
+  }, [searchParams, companies, router]);
 
   useEffect(() => {
     if (user) {
@@ -78,7 +125,18 @@ export default function MediathekPage() {
         mediaService.getMediaAssets(user.uid, currentFolderId)
       ]);
       
-      setFolders(foldersData);
+      let allFoldersWithParent = foldersData;
+      
+      // NEU: Lade auch den aktuellen Ordner (Parent) für Vererbung
+      if (currentFolderId) {
+        const currentFolder = await mediaService.getFolder(currentFolderId);
+        if (currentFolder) {
+          console.log('✅ Adding current folder to allFolders:', currentFolder.name);
+          allFoldersWithParent = [...foldersData, currentFolder];
+        }
+      }
+      
+      setFolders(allFoldersWithParent);
       setMediaAssets(assetsData);
       
       if (currentFolderId) {
@@ -114,7 +172,7 @@ export default function MediathekPage() {
     }
   };
 
-  // 🚨 FOLDER DRAG & DROP HANDLERS - EINFACHE STABILISIERTE VERSION
+  // FOLDER DRAG & DROP HANDLERS
   
   const handleFolderMove = useCallback(async (folderId: string, targetFolderId: string) => {
     console.log('🎯 handleFolderMove called with:', folderId, '->', targetFolderId);
@@ -143,10 +201,7 @@ export default function MediathekPage() {
       setMoving(false);
       setDraggedFolder(null);
     }
-  }, []); // 🚨 LEERE Dependencies - sollte stabil sein
-
-  // 🚨 DEBUG: Funktion existiert?
-  console.log('🔧 handleFolderMove type:', typeof handleFolderMove, 'value:', !!handleFolderMove);
+  }, []);
 
   // Enhanced folder drag handlers
   const handleFolderDragStart = (folder: MediaFolder) => {
@@ -159,7 +214,7 @@ export default function MediathekPage() {
     setDraggedFolder(null);
   };
 
-  // 🆕 BULK SELECTION HANDLERS
+  // BULK SELECTION HANDLERS
   
   const toggleAssetSelection = (assetId: string) => {
     const newSelection = new Set(selectedAssets);
@@ -262,7 +317,7 @@ export default function MediathekPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedAssets, mediaAssets]);
 
-  // 🆕 DRAG & DROP HANDLERS
+  // DRAG & DROP HANDLERS
   
   const handleAssetDragStart = (e: React.DragEvent, asset: MediaAsset) => {
     console.log('Drag started for asset:', asset.fileName);
@@ -307,7 +362,7 @@ export default function MediathekPage() {
     const dragData = e.dataTransfer.getData('text/plain');
     console.log('🏠 Main handleFolderDrop - dragData:', dragData);
 
-    // 🚨 WICHTIG: Prüfe erst ob es ein Folder-Drop ist - dann ignorieren!
+    // Check if it's a folder drop
     if (dragData.startsWith('folder:')) {
       console.log('🗂️ Folder drop detected in main handler - should be handled by FolderCard');
       return; // FolderCard soll das handhaben
@@ -358,7 +413,7 @@ export default function MediathekPage() {
     }
   };
 
-  // 🆕 ROOT DROP HANDLER (für Dateien aus Ordnern ins Root)
+  // ROOT DROP HANDLER (für Dateien aus Ordnern ins Root)
   const handleRootDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setDragOverFolder(null);
@@ -512,6 +567,28 @@ export default function MediathekPage() {
     }
   };
 
+  // NEU: Asset-Details Handlers
+  const handleEditAsset = (asset: MediaAsset) => {
+    setEditingAsset(asset);
+    setShowAssetDetailsModal(true);
+  };
+
+  const handleCloseAssetDetailsModal = () => {
+    setShowAssetDetailsModal(false);
+    setEditingAsset(undefined);
+  };
+
+  // NEU: Upload Modal Handlers mit Client-Support
+  const handleUploadModalOpen = () => {
+    setPreselectedClientId(undefined); // Reset preselection
+    setShowUploadModal(true);
+  };
+
+  const handleUploadModalClose = () => {
+    setShowUploadModal(false);
+    setPreselectedClientId(undefined); // Reset preselection
+  };
+
   // Helper Functions
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
@@ -542,9 +619,15 @@ export default function MediathekPage() {
     }
   };
 
+  // NEU: Get preselected company info
+  const getPreselectedCompany = () => {
+    if (!preselectedClientId) return null;
+    return companies.find(c => c.id === preselectedClientId);
+  };
+
   const renderGridView = () => (
     <>
-      {/* 🆕 Bulk Actions Bar */}
+      {/* Bulk Actions Bar */}
       {selectedAssets.size > 0 && (
         <div className="mb-6 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
           <div className="flex items-center justify-between">
@@ -607,6 +690,10 @@ export default function MediathekPage() {
             onDragOver={(e: React.DragEvent) => handleFolderDragOver(e, folder.id!)}
             onDragLeave={handleFolderDragLeave}
             onDrop={(e: React.DragEvent) => handleFolderDrop(e, folder)}
+            // Folder Move Props
+            onFolderMove={handleFolderMove}
+            onFolderDragStart={handleFolderDragStart}
+            onFolderDragEnd={handleFolderDragEnd}
           />
         ))}
         
@@ -636,7 +723,7 @@ export default function MediathekPage() {
                 }
               }}
             >
-              {/* 🆕 Selection Checkbox */}
+              {/* Selection Checkbox */}
               <div className={`absolute top-2 left-2 z-10 transition-opacity ${
                 isSelectionMode || isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
               }`}>
@@ -654,7 +741,7 @@ export default function MediathekPage() {
                 </label>
               </div>
 
-              {/* 🆕 Multi-Selection Badge */}
+              {/* Multi-Selection Badge */}
               {selectedAssets.has(asset.id!) && selectedAssets.size > 1 && (
                 <div className="absolute top-2 right-2 bg-indigo-600 text-white text-xs px-2 py-1 rounded-full">
                   {selectedAssets.size}
@@ -682,27 +769,40 @@ export default function MediathekPage() {
                           <EyeIcon className="h-4 w-4" />
                         </Button>
                       </Link>
-                      <Button 
-                        color="zinc" 
-                        onClick={(e: React.MouseEvent) => {
-                          e.stopPropagation();
-                          handleShareAsset(asset);
-                        }}
-                        className="shadow-lg bg-blue-600 text-white hover:bg-blue-700 p-2"
-                      >
-                        <ShareIcon className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        color="zinc" 
-                        onClick={(e: React.MouseEvent) => {
-                          e.stopPropagation();
-                          handleDeleteAsset(asset);
-                        }}
-                        className="shadow-lg bg-red-600 text-white hover:bg-red-700 p-2"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </Button>
                     </div>
+                  </div>
+                )}
+
+                {/* NEU: 3-Punkte-Menü (wie bei Ordnern) */}
+                {!isSelectionMode && (
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Dropdown>
+                      <DropdownButton 
+                        as={Button} 
+                        plain 
+                        className="bg-white/90 shadow-sm hover:bg-white p-2"
+                        onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                      >
+                        <EllipsisVerticalIcon className="h-4 w-4" />
+                      </DropdownButton>
+                      <DropdownMenu anchor="bottom end">
+                        <DropdownItem onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleEditAsset(asset); }}>
+                          <PencilIcon className="h-4 w-4 mr-2" />
+                          Details bearbeiten
+                        </DropdownItem>
+                        <DropdownItem onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleShareAsset(asset); }}>
+                          <ShareIcon className="h-4 w-4 mr-2" />
+                          Teilen
+                        </DropdownItem>
+                        <DropdownItem 
+                          onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleDeleteAsset(asset); }}
+                          className="text-red-600"
+                        >
+                          <TrashIcon className="h-4 w-4 mr-2" />
+                          Löschen
+                        </DropdownItem>
+                      </DropdownMenu>
+                    </Dropdown>
                   </div>
                 )}
               </div>
@@ -712,6 +812,16 @@ export default function MediathekPage() {
                 <h3 className="text-sm font-medium text-gray-900 truncate mb-1" title={asset.fileName}>
                   {asset.fileName}
                 </h3>
+                
+                {/* NEU: Client-Badge */}
+                {asset.clientId && (
+                  <div className="mb-2">
+                    <Badge color="blue" className="text-xs">
+                      {companies.find(c => c.id === asset.clientId)?.name || 'Unbekannter Kunde'}
+                    </Badge>
+                  </div>
+                )}
+                
                 <div className="space-y-1">
                   <p className="text-xs text-gray-500 uppercase tracking-wide">
                     {asset.fileType.split('/')[1] || 'Datei'}
@@ -791,32 +901,50 @@ export default function MediathekPage() {
         })}
         
         {/* Render Media Assets */}
-        {mediaAssets.map((asset) => (
-          <TableRow key={asset.id}>
-            <TableCell>
-              <div className="flex items-center space-x-3">
-                {asset.fileType.startsWith('image/') ? (
-                  <img src={asset.downloadUrl} alt={asset.fileName} className="h-10 w-10 object-cover rounded" />
-                ) : (
-                  <div className="h-10 w-10 rounded bg-gray-200 flex items-center justify-center">
-                    <PhotoIcon className="h-6 w-6 text-gray-500" />
+        {mediaAssets.map((asset) => {
+          const associatedCompany = asset.clientId 
+            ? companies.find(c => c.id === asset.clientId)
+            : null;
+            
+          return (
+            <TableRow key={asset.id}>
+              <TableCell>
+                <div className="flex items-center space-x-3">
+                  {asset.fileType.startsWith('image/') ? (
+                    <img src={asset.downloadUrl} alt={asset.fileName} className="h-10 w-10 object-cover rounded" />
+                  ) : (
+                    <div className="h-10 w-10 rounded bg-gray-200 flex items-center justify-center">
+                      <PhotoIcon className="h-6 w-6 text-gray-500" />
+                    </div>
+                  )}
+                  <div>
+                    <div className="font-medium">{asset.fileName}</div>
+                    {associatedCompany && (
+                      <div className="mt-1">
+                        <Badge color="blue" className="text-xs">
+                          {associatedCompany.name}
+                        </Badge>
+                      </div>
+                    )}
                   </div>
-                )}
-                <div className="font-medium">{asset.fileName}</div>
-              </div>
-            </TableCell>
-            <TableCell>{asset.fileType}</TableCell>
-            <TableCell>{asset.createdAt ? new Date(asset.createdAt.seconds * 1000).toLocaleDateString('de-DE') : '-'}</TableCell>
-            <TableCell className="text-right space-x-2">
-              <Link href={asset.downloadUrl} target="_blank" passHref>
-                <Button plain>Ansehen</Button>
-              </Link>
-              <Button plain className="text-red-600 hover:text-red-500" onClick={() => handleDeleteAsset(asset)}>
-                Löschen
-              </Button>
-            </TableCell>
-          </TableRow>
-        ))}
+                </div>
+              </TableCell>
+              <TableCell>{asset.fileType}</TableCell>
+              <TableCell>{asset.createdAt ? new Date(asset.createdAt.seconds * 1000).toLocaleDateString('de-DE') : '-'}</TableCell>
+              <TableCell className="text-right space-x-2">
+                <Link href={asset.downloadUrl} target="_blank" passHref>
+                  <Button plain>Ansehen</Button>
+                </Link>
+                <Button plain onClick={() => handleEditAsset(asset)}>
+                  Details
+                </Button>
+                <Button plain className="text-red-600 hover:text-red-500" onClick={() => handleDeleteAsset(asset)}>
+                  Löschen
+                </Button>
+              </TableCell>
+            </TableRow>
+          );
+        })}
       </TableBody>
     </Table>
   );
@@ -829,6 +957,17 @@ export default function MediathekPage() {
       {moving && (
         <div className="fixed top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg z-50">
           🔄 {draggedFolder ? 'Ordner wird' : selectedAssets.size > 1 ? `${selectedAssets.size} Dateien werden` : 'Datei wird'} verschoben...
+        </div>
+      )}
+
+      {/* NEU: Auto-Upload Notification */}
+      {preselectedClientId && (
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex items-center space-x-2 text-sm">
+            <span className="text-green-800">
+              📁 Upload-Modal für <strong>{getPreselectedCompany()?.name}</strong> wird geöffnet...
+            </span>
+          </div>
         </div>
       )}
 
@@ -899,7 +1038,7 @@ export default function MediathekPage() {
                 Ordner
               </Button>
               <Button 
-                onClick={() => setShowUploadModal(true)}
+                onClick={handleUploadModalOpen}
                 disabled={draggedFolder !== null}
               >
                 <PlusIcon className="size-4 mr-2" />
@@ -978,7 +1117,7 @@ export default function MediathekPage() {
               <FolderPlusIcon className="size-4 mr-2" />
               Ordner erstellen
             </Button>
-            <Button onClick={() => setShowUploadModal(true)}>
+            <Button onClick={handleUploadModalOpen}>
               <PlusIcon className="size-4 mr-2" />
               Dateien hochladen
             </Button>
@@ -995,10 +1134,11 @@ export default function MediathekPage() {
       {/* Modals */}
       {showUploadModal && (
         <UploadModal 
-          onClose={() => setShowUploadModal(false)}
+          onClose={handleUploadModalClose}
           onUploadSuccess={loadData}
           currentFolderId={currentFolderId}
           folderName={getCurrentFolderName()}
+          preselectedClientId={preselectedClientId} // NEU: Übergebe vorausgewählten Kunden
         />
       )}
       
@@ -1006,6 +1146,7 @@ export default function MediathekPage() {
         <FolderModal 
           folder={editingFolder}
           parentFolderId={currentFolderId}
+          allFolders={folders} // NEU: Enthält jetzt auch Parent-Ordner
           onClose={() => {
             setShowFolderModal(false);
             setEditingFolder(undefined);
@@ -1020,6 +1161,17 @@ export default function MediathekPage() {
           type={sharingTarget.type}
           onClose={handleCloseShareModal}
           onSuccess={loadData}
+        />
+      )}
+
+      {/* NEU: Asset Details Modal */}
+      {showAssetDetailsModal && editingAsset && (
+        <AssetDetailsModal
+          asset={editingAsset}
+          currentFolder={getAssetFolder(editingAsset)}
+          allFolders={folders}
+          onClose={handleCloseAssetDetailsModal}
+          onSave={loadData}
         />
       )}
     </div>

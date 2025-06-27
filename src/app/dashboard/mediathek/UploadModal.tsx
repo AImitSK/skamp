@@ -1,32 +1,48 @@
-// src/app/dashboard/mediathek/UploadModal.tsx
+// src/app/dashboard/mediathek/UploadModal.tsx - Mit Client-Support und Design-Fix
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
 import { Field, Label, FieldGroup, Description } from "@/components/fieldset";
 import { Input } from "@/components/input";
 import { Button } from "@/components/button";
+import { Select } from "@/components/select"; // NEU: Für Client-Auswahl
+import { Badge } from "@/components/badge"; // NEU: Für Client-Badge
 import { useAuth } from "@/context/AuthContext";
+import { useCrmData } from "@/context/CrmDataContext"; // NEU: Für Client-Daten
 import { mediaService } from "@/lib/firebase/media-service";
-import { CloudArrowUpIcon, DocumentIcon, XMarkIcon, FolderIcon } from "@heroicons/react/24/outline";
+import { CloudArrowUpIcon, DocumentIcon, XMarkIcon, FolderIcon, BuildingOfficeIcon } from "@heroicons/react/24/outline";
 
 interface UploadModalProps {
   onClose: () => void;
   onUploadSuccess: () => Promise<void>;
-  currentFolderId?: string; // NEU: Aktueller Ordner
-  folderName?: string; // NEU: Name des aktuellen Ordners für Display
+  currentFolderId?: string;
+  folderName?: string;
+  preselectedClientId?: string; // NEU: Vorausgewählter Kunde
 }
 
 export default function UploadModal({ 
   onClose, 
   onUploadSuccess, 
   currentFolderId,
-  folderName 
+  folderName,
+  preselectedClientId // NEU
 }: UploadModalProps) {
   const { user } = useAuth();
+  const { companies } = useCrmData(); // NEU: Lade Firmen-Daten
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
+  
+  // NEU: Client-Auswahl State
+  const [selectedClientId, setSelectedClientId] = useState<string>(preselectedClientId || '');
+
+  // NEU: Effect um preselectedClientId zu verarbeiten
+  useEffect(() => {
+    if (preselectedClientId) {
+      setSelectedClientId(preselectedClientId);
+    }
+  }, [preselectedClientId]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -67,11 +83,11 @@ export default function UploadModal({
       const uploadPromises = selectedFiles.map(async (file, index) => {
         const fileKey = `${index}-${file.name}`;
         
-        // NEU: Übergebe currentFolderId an uploadMedia
-        await mediaService.uploadMedia(
+        // Upload mit optionalem clientId
+        const uploadedAsset = await mediaService.uploadMedia(
           file,
           user.uid,
-          currentFolderId, // Ordner-ID
+          currentFolderId,
           (progress) => {
             setUploadProgress(prev => ({
               ...prev,
@@ -79,6 +95,15 @@ export default function UploadModal({
             }));
           }
         );
+
+        // NEU: Wenn Client ausgewählt, Asset mit Client verknüpfen
+        // TEMPORÄR: Direkte Firestore-Update bis updateAsset implementiert ist
+        if (selectedClientId && uploadedAsset.id) {
+          const { doc, updateDoc } = await import('firebase/firestore');
+          const { db } = await import('@/lib/firebase/client-init');
+          const assetRef = doc(db, 'media_assets', uploadedAsset.id);
+          await updateDoc(assetRef, { clientId: selectedClientId });
+        }
       });
 
       await Promise.all(uploadPromises);
@@ -93,6 +118,14 @@ export default function UploadModal({
       setUploading(false);
     }
   };
+
+  // NEU: Get selected company info
+  const getSelectedCompany = () => {
+    if (!selectedClientId) return null;
+    return companies.find(c => c.id === selectedClientId);
+  };
+
+  const selectedCompany = getSelectedCompany();
 
   return (
     <Dialog open={true} onClose={onClose} size="2xl">
@@ -113,6 +146,43 @@ export default function UploadModal({
               </div>
             </div>
           )}
+
+          {/* NEU: Vorausgewählter Kunde anzeigen */}
+          {preselectedClientId && selectedCompany && (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center space-x-2 text-sm">
+                <BuildingOfficeIcon className="h-4 w-4 text-green-600" />
+                <span className="text-green-800">
+                  Upload für Kunde: <strong>{selectedCompany.name}</strong>
+                </span>
+                <Badge color="green" className="text-xs">Vorausgewählt</Badge>
+              </div>
+            </div>
+          )}
+
+          {/* NEU: Client-Auswahl (falls nicht vorausgewählt) */}
+          {!preselectedClientId && (
+            <Field>
+              <Label>Kunde zuordnen (optional)</Label>
+              <Select
+                value={selectedClientId}
+                onChange={(e) => setSelectedClientId(e.target.value)}
+                className="mt-2"
+              >
+                <option value="">-- Kein Kunde --</option>
+                {companies
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map((company) => (
+                    <option key={company.id} value={company.id}>
+                      {company.name}
+                    </option>
+                  ))}
+              </Select>
+              <Description>
+                Dateien können später einem Kunden zugeordnet werden.
+              </Description>
+            </Field>
+          )}
           
           <Field>
             <Label>Dateien auswählen</Label>
@@ -120,33 +190,37 @@ export default function UploadModal({
               Unterstützte Formate: Bilder (JPG, PNG, GIF), Videos (MP4, MOV), Dokumente (PDF, DOCX)
             </Description>
             
-            {/* Drag & Drop Bereich */}
+            {/* KORRIGIERT: Sauberer Drag & Drop Bereich ohne Input-Probleme */}
             <div
-              className="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10"
+              className="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10 hover:border-gray-900/40 transition-colors"
               onDrop={handleDrop}
               onDragOver={handleDragOver}
             >
               <div className="text-center">
                 <CloudArrowUpIcon className="mx-auto h-12 w-12 text-gray-300" aria-hidden="true" />
-                <div className="mt-4 flex text-sm leading-6 text-gray-600">
-                  <label
-                    htmlFor="file-upload"
-                    className="relative cursor-pointer rounded-md bg-white font-semibold text-indigo-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-600 focus-within:ring-offset-2 hover:text-indigo-500"
+                <div className="mt-4">
+                  {/* KORRIGIERT: Einfacher Button-Ansatz statt komplexes Label/Input */}
+                  <button
+                    type="button"
+                    onClick={() => document.getElementById('file-upload')?.click()}
+                    className="rounded-md bg-white font-semibold text-indigo-600 hover:text-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
                   >
-                    <span>Dateien auswählen</span>
-                    <Input
-                      id="file-upload"
-                      name="file-upload"
-                      type="file"
-                      className="sr-only"
-                      multiple
-                      onChange={handleFileSelect}
-                      accept="image/*,video/*,.pdf,.doc,.docx"
-                    />
-                  </label>
-                  <p className="pl-1">oder per Drag & Drop</p>
+                    Dateien auswählen
+                  </button>
+                  <span className="text-sm leading-6 text-gray-600 ml-1">oder per Drag & Drop</span>
                 </div>
-                <p className="text-xs leading-5 text-gray-600">PNG, JPG, GIF, MP4, PDF bis 10MB</p>
+                <p className="text-xs leading-5 text-gray-600 mt-2">PNG, JPG, GIF, MP4, PDF bis 10MB</p>
+                
+                {/* KORRIGIERT: Input komplett versteckt */}
+                <input
+                  id="file-upload"
+                  name="file-upload"
+                  type="file"
+                  multiple
+                  onChange={handleFileSelect}
+                  accept="image/*,video/*,.pdf,.doc,.docx"
+                  className="hidden"
+                />
               </div>
             </div>
           </Field>
@@ -202,6 +276,19 @@ export default function UploadModal({
                   );
                 })}
               </div>
+            </div>
+          )}
+
+          {/* NEU: Upload-Summary */}
+          {selectedFiles.length > 0 && (
+            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+              <h4 className="text-sm font-medium text-gray-900 mb-2">Upload-Zusammenfassung:</h4>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li><strong>Dateien:</strong> {selectedFiles.length}</li>
+                <li><strong>Zielordner:</strong> {folderName || 'Root'}</li>
+                <li><strong>Kunde:</strong> {selectedCompany?.name || 'Nicht zugeordnet'}</li>
+                <li><strong>Gesamtgröße:</strong> {formatFileSize(selectedFiles.reduce((sum, file) => sum + file.size, 0))}</li>
+              </ul>
             </div>
           )}
         </FieldGroup>
