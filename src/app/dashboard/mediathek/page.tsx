@@ -156,12 +156,16 @@ export default function MediathekPage() {
     try {
       setMoving(true);
       
+      // 🔧 FIXED: Drag-State sofort zurücksetzen
+      setDragOverFolder(null);
+      setDraggedFolder(null);
+      
       // 1. Ordner verschieben
       await mediaService.updateFolder(folderId, {
         parentFolderId: targetFolderId
       });
       
-      // 2. 🆕 Automatische Firma-Vererbung für Ordner und alle Inhalte
+      // 2. Automatische Firma-Vererbung für Ordner und alle Inhalte
       console.log('🏢 Updating client inheritance for moved folder and contents...');
       await mediaService.updateFolderClientInheritance(folderId, user.uid);
       
@@ -175,7 +179,9 @@ export default function MediathekPage() {
       alert('Fehler beim Verschieben des Ordners. Bitte versuchen Sie es erneut.');
     } finally {
       setMoving(false);
+      // 🔧 FIXED: Zusätzliche State-Bereinigung
       setDraggedFolder(null);
+      setDragOverFolder(null);
     }
   }, [user]);
 
@@ -184,7 +190,10 @@ export default function MediathekPage() {
   };
 
   const handleFolderDragEnd = () => {
+    // 🔧 FIXED: Alle Drag-States zurücksetzen
     setDraggedFolder(null);
+    setDragOverFolder(null);
+    console.log('🔄 Folder drag ended - all states reset');
   };
 
   // BULK SELECTION HANDLERS
@@ -281,9 +290,24 @@ export default function MediathekPage() {
       }
     };
 
+    // 🆕 ADDED: Globaler Mouse-Up Handler für Drag-State-Reset
+    const handleGlobalMouseUp = () => {
+      // Reset aller Drag-States beim Loslassen der Maus (Sicherheits-Reset)
+      if (draggedFolder || dragOverFolder) {
+        console.log('🔄 Global mouse up - resetting folder drag states');
+        setDraggedFolder(null);
+        setDragOverFolder(null);
+      }
+    };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedAssets, mediaAssets]);
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [selectedAssets, mediaAssets, draggedFolder, dragOverFolder]);
 
   // DRAG & DROP HANDLERS
   
