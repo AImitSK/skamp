@@ -1,4 +1,4 @@
-// src/lib/firebase/media-service.ts - Mit updateAsset Methode
+// src/lib/firebase/media-service.ts - Mit automatischer Firma-Vererbung beim Verschieben
 import {
   collection,
   doc,
@@ -21,20 +21,18 @@ import {
 import { db, storage } from './client-init';
 import { MediaAsset, MediaFolder, FolderBreadcrumb, ShareLink } from '@/types/media';
 
+// 🆕 Import der Folder-Utils für Firma-Vererbung
+import { getRootFolderClientId } from '@/lib/utils/folder-utils';
+
 export const mediaService = {
-  // === SHARE LINK OPERATIONS ===
+  // === SHARE LINK OPERATIONS === (unverändert)
   
-  /**
-   * Erstellt einen Share-Link für Ordner oder Datei
-   */
   async createShareLink(shareData: Omit<ShareLink, 'id' | 'shareId' | 'accessCount' | 'createdAt' | 'lastAccessedAt'>): Promise<ShareLink> {
     try {
-      // Generiere eindeutige Share-ID (fallback für ältere Browser)
       const shareId = self.crypto?.randomUUID?.() 
         ? crypto.randomUUID().replace(/-/g, '').substring(0, 12)
         : Math.random().toString(36).substring(2, 14);
       
-      // Baue sauberes Objekt ohne undefined Werte
       const linkData: any = {
         userId: shareData.userId,
         type: shareData.type,
@@ -50,7 +48,6 @@ export const mediaService = {
         createdAt: serverTimestamp(),
       };
 
-      // Nur hinzufügen wenn definiert
       if (shareData.description) {
         linkData.description = shareData.description;
       }
@@ -73,9 +70,6 @@ export const mediaService = {
     }
   },
 
-  /**
-   * Lädt alle Share-Links für einen Benutzer
-   */
   async getShareLinks(userId: string): Promise<ShareLink[]> {
     try {
       const q = query(
@@ -94,9 +88,6 @@ export const mediaService = {
     }
   },
 
-  /**
-   * Lädt einen Share-Link anhand der öffentlichen shareId
-   */
   async getShareLinkByShareId(shareId: string): Promise<ShareLink | null> {
     try {
       const q = query(
@@ -111,7 +102,6 @@ export const mediaService = {
       const doc = snapshot.docs[0];
       const shareLink = { id: doc.id, ...doc.data() } as ShareLink;
       
-      // Zugriffszähler erhöhen
       await this.incrementShareAccess(doc.id);
       
       return shareLink;
@@ -121,9 +111,6 @@ export const mediaService = {
     }
   },
 
-  /**
-   * Erhöht den Zugriffszähler eines Share-Links
-   */
   async incrementShareAccess(shareLinkId: string): Promise<void> {
     try {
       const docRef = doc(db, 'media_shares', shareLinkId);
@@ -136,9 +123,6 @@ export const mediaService = {
     }
   },
 
-  /**
-   * Deaktiviert einen Share-Link
-   */
   async deactivateShareLink(shareLinkId: string): Promise<void> {
     try {
       const docRef = doc(db, 'media_shares', shareLinkId);
@@ -151,9 +135,6 @@ export const mediaService = {
     }
   },
 
-  /**
-   * Löscht einen Share-Link
-   */
   async deleteShareLink(shareLinkId: string): Promise<void> {
     try {
       const docRef = doc(db, 'media_shares', shareLinkId);
@@ -163,11 +144,9 @@ export const mediaService = {
       throw error;
     }
   },
-  // === FOLDER OPERATIONS ===
+
+  // === FOLDER OPERATIONS === (unverändert außer Hilfsmethoden)
   
-  /**
-   * Erstellt einen neuen Ordner
-   */
   async createFolder(folder: Omit<MediaFolder, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     try {
       const folderData: any = {
@@ -176,7 +155,7 @@ export const mediaService = {
         ...(folder.description && { description: folder.description }),
         ...(folder.color && { color: folder.color }),
         ...(folder.clientId && { clientId: folder.clientId }),
-        ...(folder.parentFolderId && { parentFolderId: folder.parentFolderId }), // NEU: Nur hinzufügen wenn definiert
+        ...(folder.parentFolderId && { parentFolderId: folder.parentFolderId }),
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
@@ -191,22 +170,17 @@ export const mediaService = {
     }
   },
 
-  /**
-   * Lädt alle Ordner für einen Benutzer
-   */
   async getFolders(userId: string, parentFolderId?: string): Promise<MediaFolder[]> {
     try {
       console.log('Loading folders for userId:', userId, 'parentFolderId:', parentFolderId);
       let q;
 
       if (parentFolderId === undefined) {
-        // Root-Ordner: Einfache Query ohne Index
         q = query(
           collection(db, 'media_folders'),
           where('userId', '==', userId)
         );
       } else {
-        // Unterordner: Einfache Query ohne Index
         q = query(
           collection(db, 'media_folders'),
           where('userId', '==', userId),
@@ -221,7 +195,6 @@ export const mediaService = {
         ...doc.data()
       } as MediaFolder));
       
-      // Client-side Sortierung (um Index zu vermeiden)
       const filteredFolders = folders
         .filter(folder => parentFolderId === undefined ? !folder.parentFolderId : folder.parentFolderId === parentFolderId)
         .sort((a, b) => a.name.localeCompare(b.name));
@@ -234,9 +207,6 @@ export const mediaService = {
     }
   },
 
-  /**
-   * Lädt einen spezifischen Ordner
-   */
   async getFolder(folderId: string): Promise<MediaFolder | null> {
     try {
       const docRef = doc(db, 'media_folders', folderId);
@@ -252,14 +222,28 @@ export const mediaService = {
     }
   },
 
-  /**
-   * Aktualisiert einen Ordner
-   */
+  // 🆕 Hilfsmethode: Lade alle Ordner für Vererbungs-Berechnung
+  async getAllFoldersForUser(userId: string): Promise<MediaFolder[]> {
+    try {
+      const q = query(
+        collection(db, 'media_folders'),
+        where('userId', '==', userId)
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as MediaFolder));
+    } catch (error) {
+      console.error("Fehler beim Laden aller Ordner:", error);
+      throw error;
+    }
+  },
+
   async updateFolder(folderId: string, updates: Partial<MediaFolder>): Promise<void> {
     try {
       const docRef = doc(db, 'media_folders', folderId);
       
-      // Baue Update-Objekt ohne undefined Werte
       const updateData: any = {
         updatedAt: serverTimestamp(),
       };
@@ -279,12 +263,8 @@ export const mediaService = {
     }
   },
 
-  /**
-   * Löscht einen Ordner (nur wenn leer)
-   */
   async deleteFolder(folderId: string): Promise<void> {
     try {
-      // Prüfe ob Ordner Dateien oder Unterordner enthält
       const hasFiles = await this.hasFilesInFolder(folderId);
       const hasSubfolders = await this.hasSubfolders(folderId);
       
@@ -300,9 +280,6 @@ export const mediaService = {
     }
   },
 
-  /**
-   * Prüft ob Ordner Dateien enthält
-   */
   async hasFilesInFolder(folderId: string): Promise<boolean> {
     try {
       const q = query(
@@ -317,9 +294,6 @@ export const mediaService = {
     }
   },
 
-  /**
-   * Prüft ob Ordner Unterordner enthält
-   */
   async hasSubfolders(folderId: string): Promise<boolean> {
     try {
       const q = query(
@@ -334,9 +308,6 @@ export const mediaService = {
     }
   },
 
-  /**
-   * Erstellt Breadcrumb-Navigation für einen Ordner
-   */
   async getBreadcrumbs(folderId: string): Promise<FolderBreadcrumb[]> {
     try {
       const breadcrumbs: FolderBreadcrumb[] = [];
@@ -363,11 +334,8 @@ export const mediaService = {
     }
   },
 
-  // === MEDIA OPERATIONS (erweitert) ===
+  // === MEDIA OPERATIONS (erweitert mit automatischer Firma-Vererbung) ===
 
-  /**
-   * Lädt eine Datei in den Firebase Storage hoch (mit Ordner-Support)
-   */
   async uploadMedia(
     file: File,
     userId: string,
@@ -413,7 +381,7 @@ export const mediaService = {
                 fileType: file.type,
                 storagePath,
                 downloadUrl,
-                ...(folderId && { folderId }), // NEU: Nur hinzufügen wenn folderId definiert ist
+                ...(folderId && { folderId }),
                 createdAt: serverTimestamp() as any,
               };
 
@@ -436,22 +404,17 @@ export const mediaService = {
     }
   },
 
-  /**
-   * Ruft alle Medien-Assets für einen bestimmten Benutzer ab (mit Ordner-Filter)
-   */
   async getMediaAssets(userId: string, folderId?: string): Promise<MediaAsset[]> {
     try {
       console.log('Loading media assets for userId:', userId, 'folderId:', folderId);
       let q;
       
       if (folderId === undefined) {
-        // Root-Dateien: Einfache Query
         q = query(
           collection(db, 'media_assets'),
           where('userId', '==', userId)
         );
       } else {
-        // Dateien in spezifischem Ordner: Einfache Query
         q = query(
           collection(db, 'media_assets'),
           where('userId', '==', userId),
@@ -466,17 +429,15 @@ export const mediaService = {
         ...doc.data()
       } as MediaAsset));
       
-      // Client-side Filterung und Sortierung (um Index zu vermeiden)
       const filteredAssets = assets
         .filter(asset => {
           if (folderId === undefined) {
-            return !asset.folderId; // Root-Dateien (ohne folderId)
+            return !asset.folderId;
           } else {
-            return asset.folderId === folderId; // Dateien im spezifischen Ordner
+            return asset.folderId === folderId;
           }
         })
         .sort((a, b) => {
-          // Sortierung nach createdAt (neueste zuerst)
           const aTime = a.createdAt?.seconds || 0;
           const bTime = b.createdAt?.seconds || 0;
           return bTime - aTime;
@@ -490,14 +451,15 @@ export const mediaService = {
     }
   },
 
-  /**
-   * Verschiebt eine Datei in einen anderen Ordner
-   */
-  async moveAssetToFolder(assetId: string, newFolderId?: string): Promise<void> {
+  // 🔧 FIXED: Verschiebt eine Datei UND passt automatisch die Firma-Vererbung an
+  async moveAssetToFolder(assetId: string, newFolderId?: string, userId?: string): Promise<void> {
     try {
+      console.log(`🔄 Moving asset ${assetId} to folder ${newFolderId || 'ROOT'}`);
+      
       const docRef = doc(db, 'media_assets', assetId);
       const updateData: any = {};
       
+      // 1. Folder-ID setzen/entfernen
       if (newFolderId) {
         updateData.folderId = newFolderId;
       } else {
@@ -505,21 +467,54 @@ export const mediaService = {
         updateData.folderId = null;
       }
       
+      // 2. 🆕 AUTOMATISCHE FIRMA-VERERBUNG
+      if (newFolderId && userId) {
+        try {
+          console.log('🏢 Calculating client inheritance...');
+          
+          // Lade Ziel-Ordner
+          const targetFolder = await this.getFolder(newFolderId);
+          if (targetFolder) {
+            // Lade alle Ordner für Vererbungs-Berechnung
+            const allFolders = await this.getAllFoldersForUser(userId);
+            
+            // Berechne vererbte Firma-ID
+            const inheritedClientId = await getRootFolderClientId(targetFolder, allFolders);
+            
+            if (inheritedClientId) {
+              console.log(`✅ Inheriting clientId: ${inheritedClientId}`);
+              updateData.clientId = inheritedClientId;
+            } else {
+              console.log('ℹ️ No client inheritance - keeping current clientId');
+              // Wenn Ordner keine Firma hat, clientId unverändert lassen
+            }
+          } else {
+            console.warn('⚠️ Target folder not found');
+          }
+        } catch (inheritanceError) {
+          console.error('❌ Error during client inheritance:', inheritanceError);
+          // Bei Fehler: Normal verschieben ohne Firma-Änderung
+        }
+      } else if (!newFolderId) {
+        // 3. Bei Root-Move: clientId unverändert lassen (Root-Assets haben editierbare Firma)
+        console.log('📁 Moving to root - keeping current clientId for manual editing');
+      }
+      
+      console.log('💾 Updating asset with data:', updateData);
       await updateDoc(docRef, updateData);
+      
+      console.log('✅ Asset moved successfully with automatic client inheritance!');
+      
     } catch (error) {
-      console.error("Fehler beim Verschieben der Datei:", error);
+      console.error("❌ Fehler beim Verschieben der Datei:", error);
       throw error;
     }
   },
 
-  /**
-   * NEU: Aktualisiert ein Medien-Asset (für Details-Modal)
-   */
   async updateAsset(assetId: string, updates: Partial<MediaAsset>): Promise<void> {
     try {
       const docRef = doc(db, 'media_assets', assetId);
       
-      // Baue Update-Objekt ohne undefined Werte
       const updateData: any = {};
       
       if (updates.fileName !== undefined) updateData.fileName = updates.fileName;
@@ -537,9 +532,6 @@ export const mediaService = {
     }
   },
 
-  /**
-   * Lädt einen spezifischen Asset (für Share-Links ohne userId-Filter)
-   */
   async getMediaAssetById(assetId: string): Promise<MediaAsset | null> {
     try {
       const docRef = doc(db, 'media_assets', assetId);
@@ -555,9 +547,6 @@ export const mediaService = {
     }
   },
 
-  /**
-   * Lädt alle Assets in einem Ordner (für Share-Links ohne userId-Filter)
-   */
   async getMediaAssetsInFolder(folderId: string): Promise<MediaAsset[]> {
     try {
       const q = query(
@@ -571,7 +560,6 @@ export const mediaService = {
         ...doc.data()
       } as MediaAsset));
       
-      // Client-side Sortierung nach Erstellungsdatum
       return assets.sort((a, b) => {
         const aTime = a.createdAt?.seconds || 0;
         const bTime = b.createdAt?.seconds || 0;
@@ -583,23 +571,18 @@ export const mediaService = {
     }
   },
 
-  // === CLIENT/CUSTOMER MEDIA OPERATIONS ===
+  // === CLIENT/CUSTOMER MEDIA OPERATIONS === (unverändert)
 
-  /**
-   * Lädt alle Medien (Ordner + Assets) für einen spezifischen Kunden
-   */
   async getMediaByClientId(userId: string, clientId: string): Promise<{folders: MediaFolder[], assets: MediaAsset[], totalCount: number}> {
     try {
       console.log('Loading media for client:', clientId);
       
-      // Lade alle Ordner des Kunden
       const foldersQuery = query(
         collection(db, 'media_folders'),
         where('userId', '==', userId),
         where('clientId', '==', clientId)
       );
       
-      // Lade alle direkten Assets des Kunden (nicht in Ordnern)
       const assetsQuery = query(
         collection(db, 'media_assets'),
         where('userId', '==', userId),
@@ -621,7 +604,6 @@ export const mediaService = {
         ...doc.data()
       } as MediaAsset));
 
-      // Lade Assets aus allen Kunden-Ordnern
       let folderAssets: MediaAsset[] = [];
       for (const folder of folders) {
         const assets = await this.getMediaAssetsInFolder(folder.id!);
@@ -630,7 +612,6 @@ export const mediaService = {
 
       const allAssets = [...directAssets, ...folderAssets];
       
-      // Sortiere Assets nach Datum (neueste zuerst)
       allAssets.sort((a, b) => {
         const aTime = a.createdAt?.seconds || 0;
         const bTime = b.createdAt?.seconds || 0;
@@ -650,9 +631,6 @@ export const mediaService = {
     }
   },
 
-  /**
-   * Zählt die Anzahl der Dateien in einem Ordner
-   */
   async getFolderFileCount(folderId: string): Promise<number> {
     try {
       const q = query(
@@ -667,16 +645,11 @@ export const mediaService = {
     }
   },
 
-  /**
-   * Löscht ein Medien-Asset aus Firebase Storage und Firestore
-   */
   async deleteMediaAsset(asset: MediaAsset): Promise<void> {
     try {
-      // 1. Datei aus Storage löschen
       const storageRef = ref(storage, asset.storagePath);
       await deleteObject(storageRef);
 
-      // 2. Dokument aus Firestore löschen
       const docRef = doc(db, 'media_assets', asset.id!);
       await deleteDoc(docRef);
     } catch (error) {

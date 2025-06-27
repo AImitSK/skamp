@@ -1,8 +1,8 @@
-// src/app/dashboard/mediathek/page.tsx - Mit URL-Parameter Support
+// src/app/dashboard/mediathek/page.tsx - Mit automatischer Firma-Vererbung und reduziertem Logging
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useSearchParams, useRouter } from "next/navigation"; // NEU: URL-Parameter
+import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useCrmData } from "@/context/CrmDataContext";
 import { mediaService } from "@/lib/firebase/media-service";
@@ -40,18 +40,19 @@ import FolderCard from "@/components/mediathek/FolderCard";
 import BreadcrumbNavigation from "@/components/mediathek/BreadcrumbNavigation";
 import FolderModal from "@/components/mediathek/FolderModal";
 import ShareModal from "@/components/mediathek/ShareModal";
-import AssetDetailsModal from "@/components/mediathek/AssetDetailsModal"; // NEU
+import AssetDetailsModal from "@/components/mediathek/AssetDetailsModal";
 
 type ViewMode = 'grid' | 'list';
 
 export default function MediathekPage() {
   const { user } = useAuth();
   const { companies } = useCrmData();
-  const searchParams = useSearchParams(); // NEU: URL-Parameter
-  const router = useRouter(); // NEU: Router für URL-Manipulation
+  const searchParams = useSearchParams();
+  const router = useRouter();
   
   const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
   const [folders, setFolders] = useState<MediaFolder[]>([]);
+  const [allFolders, setAllFolders] = useState<MediaFolder[]>([]); // Für Vererbungs-Berechnung
   const [currentFolderId, setCurrentFolderId] = useState<string | undefined>(undefined);
   const [breadcrumbs, setBreadcrumbs] = useState<FolderBreadcrumb[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,19 +62,18 @@ export default function MediathekPage() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showFolderModal, setShowFolderModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
-  const [showAssetDetailsModal, setShowAssetDetailsModal] = useState(false); // NEU
+  const [showAssetDetailsModal, setShowAssetDetailsModal] = useState(false);
   const [editingFolder, setEditingFolder] = useState<MediaFolder | undefined>(undefined);
-  const [editingAsset, setEditingAsset] = useState<MediaAsset | undefined>(undefined); // NEU
+  const [editingAsset, setEditingAsset] = useState<MediaAsset | undefined>(undefined);
   const [sharingTarget, setSharingTarget] = useState<{target: MediaFolder | MediaAsset, type: 'folder' | 'file'} | null>(null);
 
-  // NEU: Upload-spezifische States
+  // Upload-spezifische States
   const [preselectedClientId, setPreselectedClientId] = useState<string | undefined>(undefined);
 
-  // NEU: Get asset's folder (für AssetDetailsModal)
+  // Get asset's folder
   const getAssetFolder = (asset: MediaAsset): MediaFolder | undefined => {
     if (!asset.folderId) return undefined;
-    // Suche in der erweiterten folders Liste (enthält auch aktuellen Ordner)
-    return folders.find(f => f.id === asset.folderId);
+    return allFolders.find(f => f.id === asset.folderId); // Verwende allFolders für korrekte Vererbung
   };
 
   // Drag & Drop States
@@ -88,24 +88,20 @@ export default function MediathekPage() {
   // Folder Drag States
   const [draggedFolder, setDraggedFolder] = useState<MediaFolder | null>(null);
 
-  // NEU: URL-Parameter Handler
+  // URL-Parameter Handler
   useEffect(() => {
     const uploadFor = searchParams.get('uploadFor');
     
     if (uploadFor && companies.length > 0) {
-      // Prüfe ob Company existiert
       const company = companies.find(c => c.id === uploadFor);
       if (company) {
-        console.log('🎯 Auto-opening upload modal for company:', company.name);
         setPreselectedClientId(uploadFor);
         setShowUploadModal(true);
         
-        // Entferne Parameter aus URL (optional - für saubere URL)
+        // Entferne Parameter aus URL
         const newUrl = new URL(window.location.href);
         newUrl.searchParams.delete('uploadFor');
         router.replace(newUrl.pathname + newUrl.search, { scroll: false });
-      } else {
-        console.warn('⚠️ Company not found for uploadFor parameter:', uploadFor);
       }
     }
   }, [searchParams, companies, router]);
@@ -125,19 +121,19 @@ export default function MediathekPage() {
         mediaService.getMediaAssets(user.uid, currentFolderId)
       ]);
       
-      let allFoldersWithParent = foldersData;
+      // Für UI-Anzeige: Nur Unterordner
+      setFolders(foldersData);
+      setMediaAssets(assetsData);
       
-      // NEU: Lade auch den aktuellen Ordner (Parent) für Vererbung
+      // Für Vererbungs-Berechnung: Alle Ordner inklusive aktueller
+      let allFoldersWithParent = foldersData;
       if (currentFolderId) {
         const currentFolder = await mediaService.getFolder(currentFolderId);
         if (currentFolder) {
-          console.log('✅ Adding current folder to allFolders:', currentFolder.name);
           allFoldersWithParent = [...foldersData, currentFolder];
         }
       }
-      
-      setFolders(allFoldersWithParent);
-      setMediaAssets(assetsData);
+      setAllFolders(allFoldersWithParent);
       
       if (currentFolderId) {
         const breadcrumbsData = await mediaService.getBreadcrumbs(currentFolderId);
@@ -152,65 +148,31 @@ export default function MediathekPage() {
     }
   };
 
-  // Helper function to check for circular dependencies
-  const wouldCreateCircularDependency = async (folderId: string, targetFolderId: string): Promise<boolean> => {
-    try {
-      // If target is the same as source, it's circular
-      if (folderId === targetFolderId) {
-        return true;
-      }
-
-      // Get all breadcrumbs for target folder to check parent chain
-      const targetBreadcrumbs = await mediaService.getBreadcrumbs(targetFolderId);
-      
-      // Check if the folder we're moving is anywhere in the target's parent chain
-      return targetBreadcrumbs.some(breadcrumb => breadcrumb.id === folderId);
-    } catch (error) {
-      console.error("Fehler beim Prüfen der zirkulären Abhängigkeit:", error);
-      // In case of error, assume it would be circular to be safe
-      return true;
-    }
-  };
-
   // FOLDER DRAG & DROP HANDLERS
   
   const handleFolderMove = useCallback(async (folderId: string, targetFolderId: string) => {
-    console.log('🎯 handleFolderMove called with:', folderId, '->', targetFolderId);
-    
     if (!user) return;
     
     try {
       setMoving(true);
-      
-      console.log(`Moving folder ${folderId} to folder ${targetFolderId}`);
-      
-      // Update folder's parentFolderId
       await mediaService.updateFolder(folderId, {
         parentFolderId: targetFolderId
       });
-      
-      // Reload data to reflect changes
       await loadData();
-      
-      console.log('✅ Folder moved successfully!');
-      
     } catch (error) {
-      console.error('❌ Error moving folder:', error);
+      console.error('Error moving folder:', error);
       alert('Fehler beim Verschieben des Ordners. Bitte versuchen Sie es erneut.');
     } finally {
       setMoving(false);
       setDraggedFolder(null);
     }
-  }, []);
+  }, [user]);
 
-  // Enhanced folder drag handlers
   const handleFolderDragStart = (folder: MediaFolder) => {
-    console.log('Started dragging folder:', folder.name);
     setDraggedFolder(folder);
   };
 
   const handleFolderDragEnd = () => {
-    console.log('Folder drag ended');
     setDraggedFolder(null);
   };
 
@@ -225,7 +187,6 @@ export default function MediathekPage() {
     }
     setSelectedAssets(newSelection);
     
-    // Auto-exit selection mode if no items selected
     if (newSelection.size === 0) {
       setIsSelectionMode(false);
     }
@@ -254,7 +215,6 @@ export default function MediathekPage() {
       setMoving(true);
       const assetsToDelete = mediaAssets.filter(asset => selectedAssets.has(asset.id!));
       
-      // Delete all selected assets
       await Promise.all(
         assetsToDelete.map(asset => mediaService.deleteMediaAsset(asset))
       );
@@ -275,10 +235,10 @@ export default function MediathekPage() {
     try {
       setMoving(true);
       
-      // Move all selected assets
+      // 🔧 FIXED: userId hinzugefügt für automatische Firma-Vererbung
       await Promise.all(
         Array.from(selectedAssets).map(assetId => 
-          mediaService.moveAssetToFolder(assetId, targetFolderId)
+          mediaService.moveAssetToFolder(assetId, targetFolderId, user?.uid)
         )
       );
       
@@ -292,21 +252,18 @@ export default function MediathekPage() {
     }
   };
 
-  // Enhanced keyboard shortcuts
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl+A: Select all
       if (e.ctrlKey && e.key === 'a' && mediaAssets.length > 0) {
         e.preventDefault();
         selectAllAssets();
       }
       
-      // Escape: Clear selection
       if (e.key === 'Escape' && selectedAssets.size > 0) {
         clearSelection();
       }
       
-      // Delete: Delete selected
       if (e.key === 'Delete' && selectedAssets.size > 0) {
         e.preventDefault();
         handleBulkDelete();
@@ -320,19 +277,12 @@ export default function MediathekPage() {
   // DRAG & DROP HANDLERS
   
   const handleAssetDragStart = (e: React.DragEvent, asset: MediaAsset) => {
-    console.log('Drag started for asset:', asset.fileName);
-    
-    // If dragging a selected asset, drag all selected assets
     if (selectedAssets.has(asset.id!) && selectedAssets.size > 1) {
-      console.log(`Dragging ${selectedAssets.size} selected assets`);
-      setDraggedAsset(null); // Use null to indicate multi-drag
+      // Multi-drag: Verwende bestehende Selection
+      setDraggedAsset(null);
     } else {
-      // Single asset drag
+      // Single-drag: Nur draggedAsset setzen, KEINE Selection ändern
       setDraggedAsset(asset);
-      // If not in selection mode, clear any existing selection
-      if (!isSelectionMode) {
-        setSelectedAssets(new Set([asset.id!]));
-      }
     }
     
     e.dataTransfer.effectAllowed = 'move';
@@ -340,7 +290,6 @@ export default function MediathekPage() {
   };
 
   const handleAssetDragEnd = () => {
-    console.log('Drag ended');
     setDraggedAsset(null);
     setDragOverFolder(null);
   };
@@ -360,52 +309,45 @@ export default function MediathekPage() {
     setDragOverFolder(null);
 
     const dragData = e.dataTransfer.getData('text/plain');
-    console.log('🏠 Main handleFolderDrop - dragData:', dragData);
 
-    // Check if it's a folder drop
+    // Handle folder drops
     if (dragData.startsWith('folder:')) {
-      console.log('🗂️ Folder drop detected in main handler - should be handled by FolderCard');
-      return; // FolderCard soll das handhaben
+      return; // FolderCard handles this
     }
 
-    // Handle asset drops (existing functionality)
-    const assetsToMove = selectedAssets.size > 0 
-      ? Array.from(selectedAssets) 
-      : (draggedAsset?.id ? [draggedAsset.id] : []);
-
-    if (assetsToMove.length === 0) {
-      console.log('📁 No assets to move (this is normal for folder drops)');
-      return;
+    // Handle asset drops - FIXED: Bessere Logik für Single vs Bulk
+    let assetsToMove: string[] = [];
+    
+    if (selectedAssets.size > 0) {
+      // Bulk-Move: Verwende Selection
+      assetsToMove = Array.from(selectedAssets);
+    } else if (draggedAsset?.id) {
+      // Single-Move: Verwende draggedAsset
+      assetsToMove = [draggedAsset.id];
     }
 
-    // Check if any assets are already in the target folder
+    if (assetsToMove.length === 0) return;
+
     const currentAssets = mediaAssets.filter(asset => assetsToMove.includes(asset.id!));
     const alreadyInFolder = currentAssets.some(asset => asset.folderId === targetFolder.id);
     
-    if (alreadyInFolder && assetsToMove.length === 1) {
-      console.log('Asset is already in this folder');
-      return;
-    }
+    if (alreadyInFolder && assetsToMove.length === 1) return;
 
     const count = assetsToMove.length;
-    console.log(`Moving ${count} asset(s) to folder ${targetFolder.name}`);
     
     try {
       setMoving(true);
       
       if (count > 1) {
-        // Bulk move
         await handleBulkMove(targetFolder.id);
       } else {
-        // Single move
-        await mediaService.moveAssetToFolder(assetsToMove[0], targetFolder.id);
+        // Single move mit automatischer Firma-Vererbung
+        await mediaService.moveAssetToFolder(assetsToMove[0], targetFolder.id, user?.uid);
         await loadData();
       }
       
-      console.log('✅ Assets successfully moved!');
-      
     } catch (error) {
-      console.error('❌ Error moving assets:', error);
+      console.error('Error moving assets:', error);
       alert('Fehler beim Verschieben der Dateien. Bitte versuchen Sie es erneut.');
     } finally {
       setMoving(false);
@@ -413,7 +355,7 @@ export default function MediathekPage() {
     }
   };
 
-  // ROOT DROP HANDLER (für Dateien aus Ordnern ins Root)
+  // ROOT DROP HANDLER
   const handleRootDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setDragOverFolder(null);
@@ -423,19 +365,15 @@ export default function MediathekPage() {
     // Handle folder drop to root
     if (dragData.startsWith('folder:')) {
       const folderId = dragData.replace('folder:', '');
-      console.log(`Moving folder ${folderId} to root`);
       
       try {
         setMoving(true);
         await mediaService.updateFolder(folderId, {
-          parentFolderId: undefined // Move to root
+          parentFolderId: undefined
         });
-        
-        console.log('✅ Folder moved to root!');
         await loadData();
-        
       } catch (error) {
-        console.error('❌ Error moving folder to root:', error);
+        console.error('Error moving folder to root:', error);
         alert('Fehler beim Verschieben des Ordners. Bitte versuchen Sie es erneut.');
       } finally {
         setMoving(false);
@@ -444,14 +382,13 @@ export default function MediathekPage() {
       return;
     }
 
-    // Handle asset drop to root (existing functionality)
+    // Handle asset drop to root
     const assetsToMove = selectedAssets.size > 0 
       ? Array.from(selectedAssets) 
       : (draggedAsset?.id ? [draggedAsset.id] : []);
 
     if (assetsToMove.length === 0) return;
 
-    // Only move assets that are currently in folders
     const currentAssets = mediaAssets.filter(asset => 
       assetsToMove.includes(asset.id!) && asset.folderId
     );
@@ -459,29 +396,27 @@ export default function MediathekPage() {
     if (currentAssets.length === 0) return;
 
     const count = currentAssets.length;
-    console.log(`Moving ${count} asset(s) to root folder`);
     
     try {
       setMoving(true);
       
       if (count > 1) {
-        // Bulk move to root
         await Promise.all(
           currentAssets.map(asset => 
-            mediaService.moveAssetToFolder(asset.id!, undefined)
+            // 🔧 FIXED: userId hinzugefügt für automatische Firma-Vererbung
+            mediaService.moveAssetToFolder(asset.id!, undefined, user?.uid)
           )
         );
         clearSelection();
       } else {
-        // Single move to root
-        await mediaService.moveAssetToFolder(currentAssets[0].id!, undefined);
+        // 🔧 FIXED: userId hinzugefügt für automatische Firma-Vererbung
+        await mediaService.moveAssetToFolder(currentAssets[0].id!, undefined, user?.uid);
       }
       
-      console.log('✅ Assets moved to root!');
       await loadData();
       
     } catch (error) {
-      console.error('❌ Error moving assets to root:', error);
+      console.error('Error moving assets to root:', error);
       alert('Fehler beim Verschieben der Dateien. Bitte versuchen Sie es erneut.');
     } finally {
       setMoving(false);
@@ -489,7 +424,7 @@ export default function MediathekPage() {
     }
   };
 
-  // Existing handlers (unchanged)
+  // Existing handlers
   const handleCreateFolder = () => {
     setEditingFolder(undefined);
     setShowFolderModal(true);
@@ -567,7 +502,7 @@ export default function MediathekPage() {
     }
   };
 
-  // NEU: Asset-Details Handlers
+  // Asset-Details Handlers
   const handleEditAsset = (asset: MediaAsset) => {
     setEditingAsset(asset);
     setShowAssetDetailsModal(true);
@@ -578,15 +513,15 @@ export default function MediathekPage() {
     setEditingAsset(undefined);
   };
 
-  // NEU: Upload Modal Handlers mit Client-Support
+  // Upload Modal Handlers
   const handleUploadModalOpen = () => {
-    setPreselectedClientId(undefined); // Reset preselection
+    setPreselectedClientId(undefined);
     setShowUploadModal(true);
   };
 
   const handleUploadModalClose = () => {
     setShowUploadModal(false);
-    setPreselectedClientId(undefined); // Reset preselection
+    setPreselectedClientId(undefined);
   };
 
   // Helper Functions
@@ -619,7 +554,6 @@ export default function MediathekPage() {
     }
   };
 
-  // NEU: Get preselected company info
   const getPreselectedCompany = () => {
     if (!preselectedClientId) return null;
     return companies.find(c => c.id === preselectedClientId);
@@ -669,9 +603,7 @@ export default function MediathekPage() {
       )}
 
       <div 
-        className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 ${
-          (draggedAsset || selectedAssets.size > 0 || draggedFolder) && !currentFolderId ? 'bg-blue-50 border-2 border-dashed border-blue-300 rounded-lg p-4' : ''
-        }`}
+        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"
         onDragOver={(draggedAsset || selectedAssets.size > 0 || draggedFolder) && !currentFolderId ? (e: React.DragEvent) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; } : undefined}
         onDrop={(draggedAsset || selectedAssets.size > 0 || draggedFolder) && !currentFolderId ? handleRootDrop : undefined}
       >
@@ -685,12 +617,10 @@ export default function MediathekPage() {
             onDelete={handleDeleteFolder}
             onShare={handleShareFolder}
             fileCount={0}
-            // Drag & Drop Props
             isDragOver={dragOverFolder === folder.id}
             onDragOver={(e: React.DragEvent) => handleFolderDragOver(e, folder.id!)}
             onDragLeave={handleFolderDragLeave}
             onDrop={(e: React.DragEvent) => handleFolderDrop(e, folder)}
-            // Folder Move Props
             onFolderMove={handleFolderMove}
             onFolderDragStart={handleFolderDragStart}
             onFolderDragEnd={handleFolderDragEnd}
@@ -715,7 +645,6 @@ export default function MediathekPage() {
               onDragStart={(e: React.DragEvent) => handleAssetDragStart(e, asset)}
               onDragEnd={handleAssetDragEnd}
               onClick={(e: React.MouseEvent) => {
-                // Handle selection on click if in selection mode or holding Ctrl
                 if (isSelectionMode || e.ctrlKey || e.metaKey) {
                   e.preventDefault();
                   toggleAssetSelection(asset.id!);
@@ -760,7 +689,7 @@ export default function MediathekPage() {
                   <FileIcon className="h-16 w-16 text-gray-400" />
                 )}
                 
-                {/* Hover Actions (hidden if in selection mode) */}
+                {/* Hover Actions */}
                 {!isSelectionMode && (
                   <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
                     <div className="flex gap-2">
@@ -773,7 +702,7 @@ export default function MediathekPage() {
                   </div>
                 )}
 
-                {/* NEU: 3-Punkte-Menü (wie bei Ordnern) */}
+                {/* 3-Punkte-Menü */}
                 {!isSelectionMode && (
                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Dropdown>
@@ -813,7 +742,7 @@ export default function MediathekPage() {
                   {asset.fileName}
                 </h3>
                 
-                {/* NEU: Client-Badge */}
+                {/* Client-Badge */}
                 {asset.clientId && (
                   <div className="mb-2">
                     <Badge color="blue" className="text-xs">
@@ -834,15 +763,6 @@ export default function MediathekPage() {
             </div>
           );
         })}
-        
-        {/* Drop Hint when dragging to root */}
-        {(draggedAsset || selectedAssets.size > 0 || draggedFolder) && !currentFolderId && (
-          <div className="col-span-full text-center py-8 text-blue-600 font-medium">
-            📁 Hier ablegen um in Root-Ordner zu verschieben
-            {selectedAssets.size > 1 && <div className="text-sm mt-1">({selectedAssets.size} Dateien werden verschoben)</div>}
-            {draggedFolder && <div className="text-sm mt-1">(Ordner wird ins Root verschoben)</div>}
-          </div>
-        )}
       </div>
     </>
   );
@@ -960,7 +880,7 @@ export default function MediathekPage() {
         </div>
       )}
 
-      {/* NEU: Auto-Upload Notification */}
+      {/* Auto-Upload Notification */}
       {preselectedClientId && (
         <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
           <div className="flex items-center space-x-2 text-sm">
@@ -983,11 +903,7 @@ export default function MediathekPage() {
               <span className="text-indigo-600 font-medium"> ✨ {selectedAssets.size} {selectedAssets.size === 1 ? 'Datei' : 'Dateien'} ausgewählt</span>
             )}
           </Text>
-          {selectedAssets.size === 0 && !isSelectionMode && mediaAssets.length > 0 && !draggedFolder && (
-            <Text className="text-xs text-gray-500 mt-1">
-              💡 Tipp: Strg+Klick für Mehrfachauswahl, Strg+A für alle, Entf zum Löschen, Ordner sind per Drag & Drop verschiebbar
-            </Text>
-          )}
+
         </div>
         
         <div className="flex items-center gap-3">
@@ -1017,7 +933,6 @@ export default function MediathekPage() {
 
           {/* Action Buttons */}
           {selectedAssets.size > 0 ? (
-            // Selection Mode Actions
             <div className="flex items-center gap-3">
               <div className="text-sm text-indigo-700 font-medium">
                 {selectedAssets.size} ausgewählt
@@ -1027,7 +942,6 @@ export default function MediathekPage() {
               </Button>
             </div>
           ) : (
-            // Normal Actions
             <>
               <Button 
                 color="zinc" 
@@ -1044,16 +958,6 @@ export default function MediathekPage() {
                 <PlusIcon className="size-4 mr-2" />
                 Dateien
               </Button>
-              {mediaAssets.length > 0 && (
-                <Button 
-                  plain 
-                  onClick={() => setIsSelectionMode(!isSelectionMode)}
-                  className={isSelectionMode ? 'text-indigo-600' : 'text-gray-600'}
-                  disabled={draggedFolder !== null}
-                >
-                  {isSelectionMode ? '✓ Auswahl-Modus' : '☐ Auswählen'}
-                </Button>
-              )}
             </>
           )}
         </div>
@@ -1138,7 +1042,7 @@ export default function MediathekPage() {
           onUploadSuccess={loadData}
           currentFolderId={currentFolderId}
           folderName={getCurrentFolderName()}
-          preselectedClientId={preselectedClientId} // NEU: Übergebe vorausgewählten Kunden
+          preselectedClientId={preselectedClientId}
         />
       )}
       
@@ -1146,7 +1050,7 @@ export default function MediathekPage() {
         <FolderModal 
           folder={editingFolder}
           parentFolderId={currentFolderId}
-          allFolders={folders} // NEU: Enthält jetzt auch Parent-Ordner
+          allFolders={allFolders} // Verwende allFolders für Vererbungs-Berechnung
           onClose={() => {
             setShowFolderModal(false);
             setEditingFolder(undefined);
@@ -1164,12 +1068,11 @@ export default function MediathekPage() {
         />
       )}
 
-      {/* NEU: Asset Details Modal */}
       {showAssetDetailsModal && editingAsset && (
         <AssetDetailsModal
           asset={editingAsset}
           currentFolder={getAssetFolder(editingAsset)}
-          allFolders={folders}
+          allFolders={allFolders} // Verwende allFolders für Vererbungs-Berechnung
           onClose={handleCloseAssetDetailsModal}
           onSave={loadData}
         />

@@ -40,34 +40,30 @@ async function getInheritedClientId(
   folder: { parentFolderId?: string; clientId?: string }, 
   allFolders: MediaFolder[]
 ): Promise<string | undefined> {
-  console.log('🔍 getInheritedClientId called with:', { 
-    folder, 
-    allFoldersCount: allFolders.length,
-    allFolderIds: allFolders.map(f => ({ id: f.id, name: f.name, clientId: f.clientId }))
-  });
+  // console.log('🔍 getInheritedClientId called with:', { folder, allFoldersCount: allFolders.length, allFolderIds: allFolders.map(f => ({ id: f.id, name: f.name, clientId: f.clientId })) }); // DEBUG entfernt
   
   // Wenn Ordner selbst eine Firma hat, verwende diese
   if (folder.clientId) {
-    console.log('✅ Folder has own clientId:', folder.clientId);
+    // console.log('✅ Folder has own clientId:', folder.clientId); // DEBUG entfernt
     return folder.clientId;
   }
   
   // Wenn es ein Root-Ordner ist, keine Vererbung möglich
   if (!folder.parentFolderId) {
-    console.log('❌ Root folder, no inheritance possible');
+    // console.log('❌ Root folder, no inheritance possible'); // DEBUG entfernt
     return undefined;
   }
   
-  console.log('🔍 Looking for parent folder with ID:', folder.parentFolderId);
+  // console.log('🔍 Looking for parent folder with ID:', folder.parentFolderId); // DEBUG entfernt
   
   // Finde Parent-Ordner
   const parentFolder = allFolders.find(f => f.id === folder.parentFolderId);
   if (!parentFolder) {
-    console.log('❌ Parent folder not found in allFolders');
+    // console.log('❌ Parent folder not found in allFolders'); // DEBUG entfernt
     return undefined;
   }
   
-  console.log('✅ Found parent folder:', { id: parentFolder.id, name: parentFolder.name, clientId: parentFolder.clientId });
+  // console.log('✅ Found parent folder:', { id: parentFolder.id, name: parentFolder.name, clientId: parentFolder.clientId }); // DEBUG entfernt
   
   // Rekursiv nach oben gehen
   return await getInheritedClientId(parentFolder, allFolders);
@@ -98,11 +94,11 @@ export default function FolderModal({
   // NEU: Effect für Client-Vererbung
   useEffect(() => {
     async function checkClientInheritance() {
-      console.log('🔍 FolderModal: Checking inheritance...', { isRoot, allFoldersLength: allFolders.length });
+      // console.log('🔍 FolderModal: Checking inheritance...', { isRoot, allFoldersLength: allFolders.length }); // DEBUG entfernt
       
       if (isRoot) {
         // Root-Ordner: Client-Feld editierbar
-        console.log('✅ Root folder - keeping current clientId:', folder?.clientId);
+        // console.log('✅ Root folder - keeping current clientId:', folder?.clientId); // DEBUG entfernt
         setIsClientFieldDisabled(false);
         setInheritedClientId(undefined);
         // Behalte die originale Client-ID bei Edit
@@ -114,17 +110,17 @@ export default function FolderModal({
         setIsClientFieldDisabled(true);
         
         if (allFolders.length > 0) {
-          console.log('🔍 Checking inheritance for folder:', folderToCheck);
+          // console.log('🔍 Checking inheritance for folder:', folderToCheck); // DEBUG entfernt
           const inherited = await getInheritedClientId(folderToCheck, allFolders);
-          console.log('📋 Inherited clientId:', inherited);
+          // console.log('📋 Inherited clientId:', inherited); // DEBUG entfernt
           
           setInheritedClientId(inherited);
           if (inherited) {
             setSelectedClientId(inherited);
-            console.log('✅ Set selectedClientId to inherited:', inherited);
+            // console.log('✅ Set selectedClientId to inherited:', inherited); // DEBUG entfernt
           }
         } else {
-          console.log('⚠️ No folders available for inheritance check');
+          // console.log('⚠️ No folders available for inheritance check'); // DEBUG entfernt
         }
       }
     }

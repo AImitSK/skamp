@@ -1,14 +1,14 @@
 # SKAMP Marketing Suite - Vollständige Projektdokumentation
 
-Eine moderne, integrierte Marketing-Plattform mit CRM-System, Verteilerlisten, PR-Tools und Mediathek, entwickelt mit Next.js 14, Firebase und Tailwind CSS.
+Eine moderne, integrierte Marketing-Plattform mit CRM-System, Verteilerlisten, PR-Tools und Enterprise-DAM-System, entwickelt mit Next.js 14, Firebase und Tailwind CSS.
 
 ## 🎯 Projektübersicht
 
 **Status:** Production-Ready  
-**Version:** 2.0  
-**Letztes Update:** Juni 2025
+**Version:** 2.1  
+**Letztes Update:** Dezember 2024
 
-SKAMP ist eine vollständige Marketing-Suite, die von einem einfachen CRM zu einer umfassenden Marketing-Automatisierungsplattform gewachsen ist. Das System ist besonders für PR-Agenturen, Marketing-Teams und Medienunternehmen optimiert.
+SKAMP ist eine vollständige Marketing-Suite, die von einem einfachen CRM zu einer umfassenden Marketing-Automatisierungsplattform mit Enterprise-Level Digital Asset Management gewachsen ist. Das System ist besonders für PR-Agenturen, Marketing-Teams und Medienunternehmen optimiert.
 
 ## 🛠 Technologie-Stack
 
@@ -65,12 +65,16 @@ skamp/
 │   │   │   │   │   ├── edit/[id]/   # Kampagne bearbeiten
 │   │   │   │   │   └── [id]/analytics/ # Analytics
 │   │   │   │   └── page.tsx
-│   │   │   ├── mediathek/           # Datei-Management
+│   │   │   ├── mediathek/           # Enterprise DAM-System
 │   │   │   │   ├── UploadModal.tsx
 │   │   │   │   └── page.tsx
 │   │   │   ├── settings/            # Einstellungen
 │   │   │   │   └── boilerplates/   # Textbausteine
 │   │   │   └── layout.tsx           # Dashboard Layout
+│   │   ├── share/                   # 🆕 Öffentliche Share-Galerien
+│   │   │   ├── [shareId]/
+│   │   │   │   └── page.tsx
+│   │   │   └── layout.tsx
 │   │   ├── api/                     # API Routes
 │   │   │   └── sendgrid/           # E-Mail Integration
 │   │   ├── globals.css
@@ -79,6 +83,13 @@ skamp/
 │   ├── components/                  # Wiederverwendbare UI
 │   │   ├── ui/                     # Basis-UI-Komponenten
 │   │   ├── pr/                     # PR-spezifische Komponenten
+│   │   ├── mediathek/              # 🆕 DAM-System Komponenten
+│   │   │   ├── AssetDetailsModal.tsx
+│   │   │   ├── BreadcrumbNavigation.tsx
+│   │   │   ├── FolderCard.tsx
+│   │   │   ├── FolderModal.tsx
+│   │   │   ├── ShareModal.tsx
+│   │   │   └── MediaUploadLink.tsx
 │   │   ├── MultiSelectDropdown.tsx
 │   │   ├── RichTextEditor.tsx
 │   │   └── tag-input.tsx
@@ -92,17 +103,19 @@ skamp/
 │   │   │   ├── crm-service.ts     # CRM CRUD
 │   │   │   ├── lists-service.ts   # Listen-Management
 │   │   │   ├── pr-service.ts      # PR-Kampagnen
-│   │   │   ├── media-service.ts   # Mediathek
+│   │   │   ├── media-service.ts   # 🆕 Enterprise DAM Service
 │   │   │   ├── analytics-service.ts # E-Mail Analytics
 │   │   │   └── email-campaign-service.ts
-│   │   └── email/                 # E-Mail Services
-│   │       └── email-service.ts
+│   │   ├── email/                 # E-Mail Services
+│   │   │   └── email-service.ts
+│   │   └── utils/                 # 🆕 Utilities
+│   │       └── folder-utils.ts    # Firma-Vererbung Logic
 │   └── types/                     # TypeScript Definitionen
-│       ├── crm.ts                # CRM-Datentypen
+│       ├── crm.ts                # CRM-Datentypen (erweitert)
 │       ├── lists.ts              # Listen-System
 │       ├── pr.ts                 # PR-Kampagnen
 │       ├── email.ts              # E-Mail & Analytics
-│       └── media.ts              # Mediathek
+│       └── media.ts              # 🆕 DAM-System
 ├── functions/                     # Firebase Functions (optional)
 ├── .env.local                    # Environment Variables
 ├── firebase.json                 # Firebase Konfiguration
@@ -175,10 +188,21 @@ service cloud.firestore {
       allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }
     
-    // Mediathek
+    // 🆕 DAM-System
     match /media_assets/{assetId} {
       allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
       allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+    
+    match /media_folders/{folderId} {
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+    
+    // 🆕 Share-Links (öffentlich lesbar wenn aktiv)
+    match /media_shares/{shareId} {
+      allow read: if resource.data.isActive == true;
+      allow write: if request.auth != null && request.auth.uid == resource.data.userId;
     }
     
     // Textbausteine
@@ -216,6 +240,7 @@ npm run dev
 - **Import/Export:** CSV-basierter Datenimport und -export
 - **Detailansichten:** Verlinkte Firmen- und Kontaktdetailseiten
 - **Erweiterte Filter:** Multi-Select-Filter nach Typ, Branche, Tags
+- **🆕 Medien-Integration:** Direkter Zugriff auf Kunden-Medien
 
 ### ✅ Listen-System (listen/)
 - **Dynamische Listen:** Filter-basiert, aktualisieren sich automatisch
@@ -230,18 +255,32 @@ npm run dev
 - **E-Mail-Versand:** SendGrid-Integration mit Tracking
 - **Analytics:** Vollständige Öffnungs-, Klick- und Engagement-Statistiken
 - **Template-System:** Wiederverwendbare E-Mail-Templates
+- **🆕 Medien-Integration:** Bilder direkt aus DAM-System einbetten
 
-### ✅ Mediathek (mediathek/)
-- **Datei-Upload:** Drag & Drop Support für Bilder, Videos, Dokumente
-- **Cloud-Storage:** Firebase Storage Integration
-- **Vorschau-System:** Bildvorschauen und Metadaten-Management
-- **Sichere Zugriffe:** Benutzer-isolierte Dateispeicherung
+### ✅ Enterprise DAM-System (mediathek/) 🆕
+- **Hierarchische Ordnerstruktur:** Unbegrenzte Verschachtelung mit Drag & Drop
+- **Kunden-Integration:** Automatische Firma-Vererbung in Ordnern
+- **Share-System:** Öffentliche Galerien mit Passwort-Schutz
+- **Bulk-Operationen:** Mehrfachauswahl und -bearbeitung
+- **Asset-Details:** Metadaten-Management mit CRM-Verknüpfung
+- **Responsive UI:** Grid- und Listen-Ansicht
+- **URL-Parameter:** Direkte Upload-Links für Kunden
+- **Performance:** Optimiert für große Datenmengen
+
+### ✅ Share-Link System 🆕
+- **Öffentliche Galerien:** Professionelle Share-Seiten ohne Login
+- **Ordner & Einzeldateien:** Flexible Sharing-Optionen
+- **Passwort-Schutz:** Optional für sensible Inhalte
+- **Download-Kontrolle:** Granulare Berechtigungen
+- **Access-Tracking:** Automatische Nutzungsstatistiken
+- **UUID-basiert:** Sichere, eindeutige Share-URLs
 
 ### ✅ Analytics & Tracking
 - **E-Mail-Metriken:** Öffnungsraten, Klickraten, Bounce-Tracking
 - **Kampagnen-Performance:** Detaillierte Engagement-Statistiken
 - **Empfänger-Tracking:** Individuelle Interaktions-Historie
 - **Trend-Analyse:** Engagement über Zeit visualisiert
+- **🆕 Share-Analytics:** Zugriffe auf geteilte Inhalte
 
 ## 🏗 Architektur-Prinzipien
 
@@ -250,11 +289,11 @@ Das Listen-System ist das Herzstück der Anwendung. Alle Marketing-Tools (PR, Ne
 
 ### 2. Service-Layer Pattern
 ```typescript
-// Beispiel: CRM Service
-export const companiesService = {
-  async getAll(userId: string): Promise<Company[]>
-  async create(company: Omit<Company, 'id'>): Promise<string>
-  async update(id: string, updates: Partial<Company>): Promise<void>
+// Beispiel: Media Service
+export const mediaService = {
+  async createFolder(folder: Omit<MediaFolder, 'id'>): Promise<string>
+  async uploadMedia(file: File, userId: string, folderId?: string): Promise<MediaAsset>
+  async createShareLink(shareData: ShareLinkData): Promise<ShareLink>
   // ...
 }
 ```
@@ -262,11 +301,12 @@ export const companiesService = {
 ### 3. Type-First Development
 Alle Datenstrukturen sind vollständig typisiert mit TypeScript:
 ```typescript
-interface Company {
+interface MediaAsset {
   id?: string;
-  name: string;
-  type: CompanyType;
-  mediaInfo?: MediaInfo; // Für Medienunternehmen
+  fileName: string;
+  fileType: string;
+  folderId?: string;
+  clientId?: string; // CRM-Integration
   // ...
 }
 ```
@@ -277,11 +317,17 @@ interface Company {
 const { companies, contacts, tags } = useCrmData();
 ```
 
+### 5. 🆕 Firma-Vererbung in DAM
+```typescript
+// Ordner vererben Kunden-Zuordnung an Unterordner und Assets
+const inheritedClientId = await getRootFolderClientId(folder, allFolders);
+```
+
 ## 📊 Datenmodell
 
-### Core Entities
+### Core Entities (erweitert)
 
-#### Company (Firma)
+#### Company (Firma) - Erweitert
 ```typescript
 interface Company {
   id?: string;
@@ -290,7 +336,7 @@ interface Company {
   industry?: string;
   address?: Address;
   socialMedia?: SocialMediaProfile[];
-  mediaInfo?: {        // NEU: Für Medienunternehmen
+  mediaInfo?: {        // 🆕 Für Medienunternehmen
     circulation?: number;
     reach?: number;
     focusAreas?: string[];
@@ -301,7 +347,7 @@ interface Company {
 }
 ```
 
-#### Contact (Kontakt)
+#### Contact (Kontakt) - Erweitert
 ```typescript
 interface Contact {
   id?: string;
@@ -310,7 +356,7 @@ interface Contact {
   email?: string;
   position?: string;
   companyId?: string;
-  mediaInfo?: {        // NEU: Für Journalisten
+  mediaInfo?: {        // 🆕 Für Journalisten
     beat?: string;     // Ressort
     expertise?: string[];
     preferredContactTime?: string;
@@ -320,29 +366,56 @@ interface Contact {
 }
 ```
 
-#### DistributionList (Verteilerliste)
+#### 🆕 MediaFolder (DAM-Ordner)
 ```typescript
-interface DistributionList {
+interface MediaFolder {
   id?: string;
-  name: string;
-  type: 'dynamic' | 'static';
-  filters?: ListFilters;    // Für dynamische Listen
-  contactIds?: string[];    // Für statische Listen
-  contactCount: number;
   userId: string;
+  name: string;
+  parentFolderId?: string; // Hierarchie
+  clientId?: string; // CRM-Integration
+  color?: string; // Visuelle Unterscheidung
+  description?: string;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
 }
 ```
 
-#### PRCampaign (PR-Kampagne)
+#### 🆕 MediaAsset (DAM-Datei)
 ```typescript
-interface PRCampaign {
+interface MediaAsset {
   id?: string;
-  title: string;
-  contentHtml: string;
-  status: 'draft' | 'scheduled' | 'sending' | 'sent' | 'archived';
-  distributionListId: string;
-  recipientCount: number;
   userId: string;
+  fileName: string;
+  fileType: string;
+  storagePath: string;
+  downloadUrl: string;
+  description?: string;
+  tags?: string[];
+  folderId?: string; // Ordner-Zuordnung
+  clientId?: string; // CRM-Integration
+  createdAt?: Timestamp;
+}
+```
+
+#### 🆕 ShareLink (Öffentliche Freigaben)
+```typescript
+interface ShareLink {
+  id?: string;
+  userId: string;
+  shareId: string; // Öffentliche UUID
+  type: 'folder' | 'file';
+  targetId: string;
+  title: string;
+  description?: string;
+  isActive: boolean;
+  accessCount: number;
+  settings: {
+    passwordRequired?: string;
+    downloadAllowed: boolean;
+    showFileList?: boolean;
+  };
+  createdAt?: Timestamp;
 }
 ```
 
@@ -357,19 +430,23 @@ npm run lint         # Code Linting
 ```
 
 ### Code-Konventionen
-- **TypeScript:** Alle neuen Features sind vollständig typisiert
+- **TypeScript:** Alle Features sind vollständig typisiert
 - **Komponenten-Architektur:** Kleine, wiederverwendbare React-Komponenten
 - **Service-Pattern:** Business Logic in separaten Service-Dateien
 - **Firebase-First:** Alle Backend-Operationen über Firebase
 - **Mobile-First:** Responsive Design für alle Screens
+- **🆕 Drag & Drop:** Intuitive Bedienung im DAM-System
 
-### Testing
-```bash
-# Unit Tests (wenn implementiert)
-npm run test
+### 🆕 DAM-System Features
+```typescript
+// URL-Parameter für direkten Upload
+/dashboard/mediathek?uploadFor=COMPANY_ID
 
-# E2E Tests (wenn implementiert)  
-npm run test:e2e
+// Firma-Vererbung
+getRootFolderClientId(folder, allFolders)
+
+// Share-Links
+/share/abc123def456 (öffentlich zugänglich)
 ```
 
 ## 🚀 Deployment
@@ -401,19 +478,23 @@ firebase deploy
 - Alle Datenbank-Zugriffe sind benutzer-isoliert (`userId`-basiert)
 - Storage-Regeln verhindern Cross-User-Zugriffe
 - Authentication ist für alle geschützten Routen erforderlich
+- **🆕 Share-Links:** Öffentlich lesbar nur wenn `isActive: true`
 
 ### API-Sicherheit
 - SendGrid API-Keys sind server-seitig gespeichert
 - E-Mail-Versand läuft über Next.js API Routes
 - Keine sensiblen Daten im Client-Code
+- **🆕 Share-URLs:** UUID-basiert für Sicherheit
 
 ## 📈 Performance
 
 ### Optimierungen
 - **Code Splitting:** Automatisch durch Next.js
-- **Image Optimization:** Next.js Image-Komponente
-- **Database Queries:** Optimierte Firestore-Abfragen mit Indexing
+- **Image Optimization:** Next.js Image-Komponente + Firebase CDN
+- **Database Queries:** Optimierte Firestore-Abfragen mit Client-side Filterung
 - **Caching:** Static Generation wo möglich
+- **🆕 Lazy Loading:** Infinite Scroll für große Asset-Listen
+- **🆕 Drag & Drop Performance:** Optimiert für große Dateimengen
 
 ### Monitoring
 - Firebase Performance Monitoring ist aktiviert
@@ -422,7 +503,14 @@ firebase deploy
 
 ## 🛣 Roadmap
 
-### Nächste Features
+### Phase 3: Geplante Features
+1. **Erweiterte Suche:** Volltextsuche in Asset-Metadaten
+2. **Thumbnail-System:** Automatische Vorschaubilder
+3. **Versionierung:** Asset-Versionen verwalten
+4. **Duplikate-Erkennung:** Hash-basierte Erkennung
+5. **Bulk-Tags:** Massenbearbeitung von Metadaten
+
+### Zukünftige Features
 1. **KI-Integration:** ChatGPT für Pressemitteilungs-Generierung
 2. **Social Media Tools:** Instagram/LinkedIn-Integration
 3. **Event-Management:** Event-basierte Kampagnen
@@ -439,16 +527,19 @@ firebase deploy
 ### Wichtige Patterns
 ```typescript
 // 1. Service-Layer für alle Firebase-Operationen
-await companiesService.create(companyData);
+await mediaService.uploadMedia(file, userId, folderId);
 
 // 2. Context für geteilte Daten
 const { companies } = useCrmData();
 
 // 3. Modal-Pattern für CRUD-Operationen
-<CompanyModal company={editingCompany} onSave={handleSave} />
+<AssetDetailsModal asset={asset} onSave={handleSave} />
 
-// 4. List-based Architecture
-const contacts = await listsService.getContacts(distributionList);
+// 4. URL-Parameter für Integration
+const uploadFor = searchParams.get('uploadFor');
+
+// 5. 🆕 Firma-Vererbung
+const inheritedClientId = await getRootFolderClientId(folder, allFolders);
 ```
 
 ### Debug-Tipps
@@ -459,19 +550,22 @@ firebase emulators:start
 // Firestore Debug-Logs
 console.log('Firestore query:', query);
 
-// React Developer Tools für Context-Debugging
-// Browser Extension installieren
+// 🆕 DAM-System Debugging
+console.log('Folder hierarchy:', getFolderPath(folder, allFolders));
+console.log('Drag data:', e.dataTransfer.getData('text/plain'));
 ```
 
 ## 📞 Support & Wartung
 
 ### Logs & Monitoring
-- **Firebase Console:** Database und Storage Monitoring
+- **Firebase Console:** Database, Storage und Share-Analytics
 - **Vercel Dashboard:** Performance und Error Logs
 - **SendGrid Dashboard:** E-Mail Delivery Statistics
+- **🆕 Share-Tracking:** Zugriffe auf öffentliche Galerien
 
 ### Backup-Strategie
 - Firestore hat automatische Backups
+- Firebase Storage CDN für Verfügbarkeit
 - Code ist in Git versioniert
 - Environment Variables sind dokumentiert
 
@@ -479,10 +573,11 @@ console.log('Firestore query:', query);
 - Dependencies regelmäßig updaten (`npm audit`)
 - Firebase Security Rules reviewen
 - Performance-Metriken überwachen
+- **🆕 Share-Links:** Inaktive Links regelmäßig bereinigen
 
 ---
 
-**Entwickelt für professionelle Marketing-Teams und PR-Agenturen.**  
-**Von CRM zu vollständiger Marketing-Automatisierung.**
+**SKAMP Marketing Suite 2.1 - Enterprise Marketing Automation**  
+**Von CRM zu vollständiger Marketing-Automatisierung mit Enterprise DAM-System.**
 
-*Letztes Update: Juni 2025*
+*Letztes Update: 27.06.2025*
