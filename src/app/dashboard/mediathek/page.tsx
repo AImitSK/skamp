@@ -1,4 +1,4 @@
-// src/app/dashboard/mediathek/page.tsx - Mit automatischer Firma-Vererbung und reduziertem Logging
+// src/app/dashboard/mediathek/page.tsx - Cleanere UI ohne redundante Elemente
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -155,10 +155,21 @@ export default function MediathekPage() {
     
     try {
       setMoving(true);
+      
+      // 1. Ordner verschieben
       await mediaService.updateFolder(folderId, {
         parentFolderId: targetFolderId
       });
+      
+      // 2. 🆕 Automatische Firma-Vererbung für Ordner und alle Inhalte
+      console.log('🏢 Updating client inheritance for moved folder and contents...');
+      await mediaService.updateFolderClientInheritance(folderId, user.uid);
+      
+      // 3. Daten neu laden
       await loadData();
+      
+      console.log('✅ Folder moved successfully with automatic client inheritance!');
+      
     } catch (error) {
       console.error('Error moving folder:', error);
       alert('Fehler beim Verschieben des Ordners. Bitte versuchen Sie es erneut.');
@@ -235,7 +246,7 @@ export default function MediathekPage() {
     try {
       setMoving(true);
       
-      // 🔧 FIXED: userId hinzugefügt für automatische Firma-Vererbung
+      // userId hinzugefügt für automatische Firma-Vererbung
       await Promise.all(
         Array.from(selectedAssets).map(assetId => 
           mediaService.moveAssetToFolder(assetId, targetFolderId, user?.uid)
@@ -315,7 +326,7 @@ export default function MediathekPage() {
       return; // FolderCard handles this
     }
 
-    // Handle asset drops - FIXED: Bessere Logik für Single vs Bulk
+    // Handle asset drops - Bessere Logik für Single vs Bulk
     let assetsToMove: string[] = [];
     
     if (selectedAssets.size > 0) {
@@ -368,10 +379,19 @@ export default function MediathekPage() {
       
       try {
         setMoving(true);
+        
+        // 1. Ordner ins Root verschieben
         await mediaService.updateFolder(folderId, {
           parentFolderId: undefined
         });
+        
+        // 2. 🆕 Automatische Firma-Vererbung zurücksetzen (Root = editierbar)
+        console.log('🏢 Resetting client inheritance for folder moved to root...');
+        await mediaService.updateFolderClientInheritance(folderId, user!.uid);
+        
         await loadData();
+        console.log('✅ Folder moved to root with client inheritance reset!');
+        
       } catch (error) {
         console.error('Error moving folder to root:', error);
         alert('Fehler beim Verschieben des Ordners. Bitte versuchen Sie es erneut.');
@@ -382,13 +402,20 @@ export default function MediathekPage() {
       return;
     }
 
-    // Handle asset drop to root
-    const assetsToMove = selectedAssets.size > 0 
-      ? Array.from(selectedAssets) 
-      : (draggedAsset?.id ? [draggedAsset.id] : []);
+    // Handle asset drop to root - Bessere Logik für Single vs Bulk  
+    let assetsToMove: string[] = [];
+    
+    if (selectedAssets.size > 0) {
+      // Bulk-Move: Verwende Selection
+      assetsToMove = Array.from(selectedAssets);
+    } else if (draggedAsset?.id) {
+      // Single-Move: Verwende draggedAsset
+      assetsToMove = [draggedAsset.id];
+    }
 
     if (assetsToMove.length === 0) return;
 
+    // Only move assets that are currently in folders
     const currentAssets = mediaAssets.filter(asset => 
       assetsToMove.includes(asset.id!) && asset.folderId
     );
@@ -403,13 +430,13 @@ export default function MediathekPage() {
       if (count > 1) {
         await Promise.all(
           currentAssets.map(asset => 
-            // 🔧 FIXED: userId hinzugefügt für automatische Firma-Vererbung
+            // userId hinzugefügt für automatische Firma-Vererbung
             mediaService.moveAssetToFolder(asset.id!, undefined, user?.uid)
           )
         );
         clearSelection();
       } else {
-        // 🔧 FIXED: userId hinzugefügt für automatische Firma-Vererbung
+        // userId hinzugefügt für automatische Firma-Vererbung
         await mediaService.moveAssetToFolder(currentAssets[0].id!, undefined, user?.uid);
       }
       
@@ -560,211 +587,168 @@ export default function MediathekPage() {
   };
 
   const renderGridView = () => (
-    <>
-      {/* Bulk Actions Bar */}
-      {selectedAssets.size > 0 && (
-        <div className="mb-6 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <span className="text-sm font-medium text-indigo-900">
-                {selectedAssets.size} {selectedAssets.size === 1 ? 'Datei' : 'Dateien'} ausgewählt
-              </span>
-              <div className="flex items-center space-x-2">
-                <Button 
-                  plain 
-                  onClick={handleBulkDelete}
-                  className="text-red-600 hover:text-red-700"
-                >
-                  <TrashIcon className="h-4 w-4 mr-1" />
-                  Löschen
-                </Button>
-                <Button 
-                  plain 
-                  onClick={() => handleBulkMove(undefined)}
-                  className="text-blue-600 hover:text-blue-700"
-                >
-                  📁 Zu Root verschieben
-                </Button>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button plain onClick={selectAllAssets} className="text-indigo-600">
-                Alle auswählen
-              </Button>
-              <Button plain onClick={clearSelection} className="text-gray-600">
-                Auswahl aufheben
-              </Button>
-            </div>
-          </div>
-          <div className="mt-2 text-xs text-indigo-700">
-            💡 Tipp: Ziehen Sie ausgewählte Dateien auf einen Ordner, um sie alle zu verschieben
-          </div>
-        </div>
-      )}
-
-      <div 
-        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"
-        onDragOver={(draggedAsset || selectedAssets.size > 0 || draggedFolder) && !currentFolderId ? (e: React.DragEvent) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; } : undefined}
-        onDrop={(draggedAsset || selectedAssets.size > 0 || draggedFolder) && !currentFolderId ? handleRootDrop : undefined}
-      >
-        {/* Render Folders First */}
-        {folders.map((folder) => (
-          <FolderCard
-            key={folder.id}
-            folder={folder}
-            onOpen={handleOpenFolder}
-            onEdit={handleEditFolder}
-            onDelete={handleDeleteFolder}
-            onShare={handleShareFolder}
-            fileCount={0}
-            isDragOver={dragOverFolder === folder.id}
-            onDragOver={(e: React.DragEvent) => handleFolderDragOver(e, folder.id!)}
-            onDragLeave={handleFolderDragLeave}
-            onDrop={(e: React.DragEvent) => handleFolderDrop(e, folder)}
-            onFolderMove={handleFolderMove}
-            onFolderDragStart={handleFolderDragStart}
-            onFolderDragEnd={handleFolderDragEnd}
-          />
-        ))}
+    <div 
+      className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"
+      onDragOver={(draggedAsset || selectedAssets.size > 0 || draggedFolder) && !currentFolderId ? (e: React.DragEvent) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; } : undefined}
+      onDrop={(draggedAsset || selectedAssets.size > 0 || draggedFolder) && !currentFolderId ? handleRootDrop : undefined}
+    >
+      {/* Render Folders First */}
+      {folders.map((folder) => (
+        <FolderCard
+          key={folder.id}
+          folder={folder}
+          onOpen={handleOpenFolder}
+          onEdit={handleEditFolder}
+          onDelete={handleDeleteFolder}
+          onShare={handleShareFolder}
+          fileCount={0}
+          isDragOver={dragOverFolder === folder.id}
+          onDragOver={(e: React.DragEvent) => handleFolderDragOver(e, folder.id!)}
+          onDragLeave={handleFolderDragLeave}
+          onDrop={(e: React.DragEvent) => handleFolderDrop(e, folder)}
+          onFolderMove={handleFolderMove}
+          onFolderDragStart={handleFolderDragStart}
+          onFolderDragEnd={handleFolderDragEnd}
+        />
+      ))}
+      
+      {/* Render Media Assets */}
+      {mediaAssets.map((asset) => {
+        const FileIcon = getFileIcon(asset.fileType);
+        const isSelected = selectedAssets.has(asset.id!);
+        const isDragging = draggedAsset?.id === asset.id || (selectedAssets.has(asset.id!) && selectedAssets.size > 1);
         
-        {/* Render Media Assets */}
-        {mediaAssets.map((asset) => {
-          const FileIcon = getFileIcon(asset.fileType);
-          const isSelected = selectedAssets.has(asset.id!);
-          const isDragging = draggedAsset?.id === asset.id || (selectedAssets.has(asset.id!) && selectedAssets.size > 1);
-          
-          return (
-            <div 
-              key={asset.id} 
-              className={`group relative bg-white rounded-lg border shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden ${
-                isDragging ? 'opacity-50 scale-95' : ''
-              } ${
-                isSelected ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200'
-              }`}
-              draggable={true}
-              onDragStart={(e: React.DragEvent) => handleAssetDragStart(e, asset)}
-              onDragEnd={handleAssetDragEnd}
-              onClick={(e: React.MouseEvent) => {
-                if (isSelectionMode || e.ctrlKey || e.metaKey) {
-                  e.preventDefault();
-                  toggleAssetSelection(asset.id!);
-                  if (!isSelectionMode) setIsSelectionMode(true);
-                }
-              }}
-            >
-              {/* Selection Checkbox */}
-              <div className={`absolute top-2 left-2 z-10 transition-opacity ${
-                isSelectionMode || isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-              }`}>
-                <label className="cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      toggleAssetSelection(asset.id!);
-                      if (!isSelectionMode) setIsSelectionMode(true);
-                    }}
-                    className="w-4 h-4 text-indigo-600 bg-white border-gray-300 rounded focus:ring-indigo-500 focus:ring-2"
-                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                  />
-                </label>
-              </div>
+        return (
+          <div 
+            key={asset.id} 
+            className={`group relative bg-white rounded-lg border shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden ${
+              isDragging ? 'opacity-50 scale-95' : ''
+            } ${
+              isSelected ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200'
+            }`}
+            draggable={true}
+            onDragStart={(e: React.DragEvent) => handleAssetDragStart(e, asset)}
+            onDragEnd={handleAssetDragEnd}
+            onClick={(e: React.MouseEvent) => {
+              if (isSelectionMode || e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                toggleAssetSelection(asset.id!);
+                if (!isSelectionMode) setIsSelectionMode(true);
+              }
+            }}
+          >
+            {/* Selection Checkbox */}
+            <div className={`absolute top-2 left-2 z-10 transition-opacity ${
+              isSelectionMode || isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+            }`}>
+              <label className="cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    toggleAssetSelection(asset.id!);
+                    if (!isSelectionMode) setIsSelectionMode(true);
+                  }}
+                  className="w-4 h-4 text-indigo-600 bg-white border-gray-300 rounded focus:ring-indigo-500 focus:ring-2"
+                  onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                />
+              </label>
+            </div>
 
-              {/* Multi-Selection Badge */}
-              {selectedAssets.has(asset.id!) && selectedAssets.size > 1 && (
-                <div className="absolute top-2 right-2 bg-indigo-600 text-white text-xs px-2 py-1 rounded-full">
-                  {selectedAssets.size}
+            {/* Multi-Selection Badge */}
+            {selectedAssets.has(asset.id!) && selectedAssets.size > 1 && (
+              <div className="absolute top-2 right-2 bg-indigo-600 text-white text-xs px-2 py-1 rounded-full">
+                {selectedAssets.size}
+              </div>
+            )}
+
+            {/* Preview */}
+            <div className="aspect-square w-full bg-gray-50 flex items-center justify-center relative overflow-hidden">
+              {asset.fileType.startsWith('image/') ? (
+                <img 
+                  src={asset.downloadUrl} 
+                  alt={asset.fileName}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                />
+              ) : (
+                <FileIcon className="h-16 w-16 text-gray-400" />
+              )}
+              
+              {/* Hover Actions */}
+              {!isSelectionMode && (
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                  <div className="flex gap-2">
+                    <Link href={asset.downloadUrl} target="_blank">
+                      <Button color="zinc" className="shadow-lg bg-white p-2">
+                        <EyeIcon className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               )}
 
-              {/* Preview */}
-              <div className="aspect-square w-full bg-gray-50 flex items-center justify-center relative overflow-hidden">
-                {asset.fileType.startsWith('image/') ? (
-                  <img 
-                    src={asset.downloadUrl} 
-                    alt={asset.fileName}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                  />
-                ) : (
-                  <FileIcon className="h-16 w-16 text-gray-400" />
-                )}
-                
-                {/* Hover Actions */}
-                {!isSelectionMode && (
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <div className="flex gap-2">
-                      <Link href={asset.downloadUrl} target="_blank">
-                        <Button color="zinc" className="shadow-lg bg-white p-2">
-                          <EyeIcon className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                )}
-
-                {/* 3-Punkte-Menü */}
-                {!isSelectionMode && (
-                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Dropdown>
-                      <DropdownButton 
-                        as={Button} 
-                        plain 
-                        className="bg-white/90 shadow-sm hover:bg-white p-2"
-                        onClick={(e: React.MouseEvent) => e.stopPropagation()}
+              {/* 3-Punkte-Menü */}
+              {!isSelectionMode && (
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Dropdown>
+                    <DropdownButton 
+                      as={Button} 
+                      plain 
+                      className="bg-white/90 shadow-sm hover:bg-white p-2"
+                      onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                    >
+                      <EllipsisVerticalIcon className="h-4 w-4" />
+                    </DropdownButton>
+                    <DropdownMenu anchor="bottom end">
+                      <DropdownItem onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleEditAsset(asset); }}>
+                        <PencilIcon className="h-4 w-4 mr-2" />
+                        Details bearbeiten
+                      </DropdownItem>
+                      <DropdownItem onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleShareAsset(asset); }}>
+                        <ShareIcon className="h-4 w-4 mr-2" />
+                        Teilen
+                      </DropdownItem>
+                      <DropdownItem 
+                        onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleDeleteAsset(asset); }}
+                        className="text-red-600"
                       >
-                        <EllipsisVerticalIcon className="h-4 w-4" />
-                      </DropdownButton>
-                      <DropdownMenu anchor="bottom end">
-                        <DropdownItem onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleEditAsset(asset); }}>
-                          <PencilIcon className="h-4 w-4 mr-2" />
-                          Details bearbeiten
-                        </DropdownItem>
-                        <DropdownItem onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleShareAsset(asset); }}>
-                          <ShareIcon className="h-4 w-4 mr-2" />
-                          Teilen
-                        </DropdownItem>
-                        <DropdownItem 
-                          onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleDeleteAsset(asset); }}
-                          className="text-red-600"
-                        >
-                          <TrashIcon className="h-4 w-4 mr-2" />
-                          Löschen
-                        </DropdownItem>
-                      </DropdownMenu>
-                    </Dropdown>
-                  </div>
-                )}
-              </div>
-
-              {/* File Info */}
-              <div className="p-4">
-                <h3 className="text-sm font-medium text-gray-900 truncate mb-1" title={asset.fileName}>
-                  {asset.fileName}
-                </h3>
-                
-                {/* Client-Badge */}
-                {asset.clientId && (
-                  <div className="mb-2">
-                    <Badge color="blue" className="text-xs">
-                      {companies.find(c => c.id === asset.clientId)?.name || 'Unbekannter Kunde'}
-                    </Badge>
-                  </div>
-                )}
-                
-                <div className="space-y-1">
-                  <p className="text-xs text-gray-500 uppercase tracking-wide">
-                    {asset.fileType.split('/')[1] || 'Datei'}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {asset.createdAt ? new Date(asset.createdAt.seconds * 1000).toLocaleDateString('de-DE') : '-'}
-                  </p>
+                        <TrashIcon className="h-4 w-4 mr-2" />
+                        Löschen
+                      </DropdownItem>
+                    </DropdownMenu>
+                  </Dropdown>
                 </div>
+              )}
+            </div>
+
+            {/* File Info */}
+            <div className="p-4">
+              <h3 className="text-sm font-medium text-gray-900 truncate mb-1" title={asset.fileName}>
+                {asset.fileName}
+              </h3>
+              
+              {/* Client-Badge */}
+              {asset.clientId && (
+                <div className="mb-2">
+                  <Badge color="blue" className="text-xs">
+                    {companies.find(c => c.id === asset.clientId)?.name || 'Unbekannter Kunde'}
+                  </Badge>
+                </div>
+              )}
+              
+              <div className="space-y-1">
+                <p className="text-xs text-gray-500 uppercase tracking-wide">
+                  {asset.fileType.split('/')[1] || 'Datei'}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {asset.createdAt ? new Date(asset.createdAt.seconds * 1000).toLocaleDateString('de-DE') : '-'}
+                </p>
               </div>
             </div>
-          );
-        })}
-      </div>
-    </>
+          </div>
+        );
+      })}
+    </div>
   );
 
   const renderListView = () => (
@@ -899,83 +883,32 @@ export default function MediathekPage() {
             Verwalten Sie Ihre Bilder, Videos und Dokumente.
             {draggedAsset && <span className="text-blue-600 font-medium"> 📁 Datei per Drag & Drop verschieben!</span>}
             {draggedFolder && <span className="text-purple-600 font-medium"> 📂 Ordner wird verschoben!</span>}
-            {selectedAssets.size > 0 && !draggedAsset && !draggedFolder && (
-              <span className="text-indigo-600 font-medium"> ✨ {selectedAssets.size} {selectedAssets.size === 1 ? 'Datei' : 'Dateien'} ausgewählt</span>
-            )}
           </Text>
-
         </div>
         
         <div className="flex items-center gap-3">
-          {/* View Toggle */}
-          <div className="flex items-center bg-gray-100 rounded-lg p-1">
-            <Button
-              plain
-              onClick={() => setViewMode('grid')}
-              className={`p-2 rounded ${viewMode === 'grid' 
-                ? 'bg-white shadow-sm text-indigo-600' 
-                : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <Squares2X2Icon className="h-4 w-4" />
-            </Button>
-            <Button
-              plain
-              onClick={() => setViewMode('list')}
-              className={`p-2 rounded ${viewMode === 'list' 
-                ? 'bg-white shadow-sm text-indigo-600' 
-                : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <ListBulletIcon className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* Action Buttons */}
-          {selectedAssets.size > 0 ? (
-            <div className="flex items-center gap-3">
-              <div className="text-sm text-indigo-700 font-medium">
-                {selectedAssets.size} ausgewählt
-              </div>
-              <Button color="zinc" onClick={clearSelection}>
-                Auswahl aufheben
-              </Button>
-            </div>
-          ) : (
-            <>
-              <Button 
-                color="zinc" 
-                onClick={handleCreateFolder}
-                disabled={draggedFolder !== null}
-              >
-                <FolderPlusIcon className="size-4 mr-2" />
-                Ordner
-              </Button>
-              <Button 
-                onClick={handleUploadModalOpen}
-                disabled={draggedFolder !== null}
-              >
-                <PlusIcon className="size-4 mr-2" />
-                Dateien
-              </Button>
-            </>
-          )}
+          {/* Action Buttons - Immer sichtbar */}
+          <Button 
+            color="zinc" 
+            onClick={handleCreateFolder}
+            disabled={draggedFolder !== null}
+          >
+            <FolderPlusIcon className="size-4 mr-2" />
+            Ordner
+          </Button>
+          <Button 
+            onClick={handleUploadModalOpen}
+            disabled={draggedFolder !== null}
+          >
+            <PlusIcon className="size-4 mr-2" />
+            Dateien
+          </Button>
         </div>
       </div>
 
-      {/* Breadcrumb Navigation */}
-      {breadcrumbs.length > 0 && (
-        <div className="mb-6">
-          <BreadcrumbNavigation 
-            breadcrumbs={breadcrumbs}
-            onNavigate={handleNavigateToFolder}
-          />
-        </div>
-      )}
-
-      {/* Stats Bar */}
+      {/* Unified Stats & Controls Bar */}
       {totalItems > 0 && (
-        <div className={`mb-6 p-4 rounded-lg ${selectedAssets.size > 0 ? 'bg-indigo-50 border border-indigo-200' : 'bg-gray-50'}`}>
+        <div className={`mb-4 p-2 rounded-lg ${selectedAssets.size > 0 ? 'bg-indigo-50 border border-indigo-200' : 'bg-gray-50'}`}>
           <div className="flex items-center justify-between text-sm">
             <span className={selectedAssets.size > 0 ? 'text-indigo-900' : 'text-gray-600'}>
               {folders.length} {folders.length === 1 ? 'Ordner' : 'Ordner'}, {' '}
@@ -986,13 +919,70 @@ export default function MediathekPage() {
                 </span>
               )}
             </span>
-            <span className={`text-xs ${selectedAssets.size > 0 ? 'text-indigo-600' : 'text-gray-500'}`}>
-              Ansicht: {viewMode === 'grid' ? 'Kacheln' : 'Liste'}
-              {draggedAsset && ' • Datei wird bewegt'}
-              {draggedFolder && ' • Ordner wird bewegt'}
-              {selectedAssets.size > 0 && !draggedAsset && !draggedFolder && ' • Auswahl-Modus aktiv'}
-            </span>
+            
+            <div className="flex items-center gap-4">
+              {/* Bulk Actions (nur bei Selection) */}
+              {selectedAssets.size > 0 && (
+                <div className="flex items-center space-x-2">
+                  <Button plain onClick={selectAllAssets} className="text-indigo-600 text-xs">
+                    Alle
+                  </Button>
+                  <Button plain onClick={clearSelection} className="text-gray-600 text-xs">
+                    Aufheben
+                  </Button>
+                  <Button 
+                    plain 
+                    onClick={handleBulkDelete}
+                    className="text-red-600 hover:text-red-700 text-xs"
+                  >
+                    <TrashIcon className="h-3 w-3 mr-1" />
+                    Löschen
+                  </Button>
+                  <Button 
+                    plain 
+                    onClick={() => handleBulkMove(undefined)}
+                    className="text-blue-600 hover:text-blue-700 text-xs"
+                  >
+                    📁 Root
+                  </Button>
+                </div>
+              )}
+              
+              {/* View Toggle */}
+              <div className="flex items-center bg-gray-100 rounded-lg p-1">
+                <Button
+                  plain
+                  onClick={() => setViewMode('grid')}
+                  className={`p-1.5 rounded ${viewMode === 'grid' 
+                    ? 'bg-white shadow-sm text-indigo-600' 
+                    : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <Squares2X2Icon className="h-3 w-3" />
+                </Button>
+                <Button
+                  plain
+                  onClick={() => setViewMode('list')}
+                  className={`p-1.5 rounded ${viewMode === 'list' 
+                    ? 'bg-white shadow-sm text-indigo-600' 
+                    : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <ListBulletIcon className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
           </div>
+        </div>
+      )}
+
+      {/* Breadcrumb Navigation */}
+      {breadcrumbs.length > 0 && (
+        <div className="mb-6">
+          <BreadcrumbNavigation 
+            breadcrumbs={breadcrumbs}
+            onNavigate={handleNavigateToFolder}
+          />
         </div>
       )}
 

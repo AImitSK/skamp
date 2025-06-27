@@ -222,7 +222,68 @@ export const mediaService = {
     }
   },
 
-  // 🆕 Hilfsmethode: Lade alle Ordner für Vererbungs-Berechnung
+  // 🆕 NEUE METHODE: Rekursive Firma-Vererbung für Ordner-Inhalte
+  async updateFolderClientInheritance(folderId: string, userId: string): Promise<void> {
+    try {
+      console.log(`🔄 Updating client inheritance for folder ${folderId}`);
+      
+      // 1. Lade alle Ordner für Vererbungs-Berechnung
+      const allFolders = await this.getAllFoldersForUser(userId);
+      
+      // 2. Finde den Ordner und berechne seine neue vererbte clientId
+      const folder = await this.getFolder(folderId);
+      if (!folder) {
+        console.warn('⚠️ Folder not found for inheritance update');
+        return;
+      }
+      
+      // 3. Berechne vererbte clientId
+      const { getRootFolderClientId } = await import('@/lib/utils/folder-utils');
+      const inheritedClientId = await getRootFolderClientId(folder, allFolders);
+      
+      console.log(`📝 Inherited clientId for folder: ${inheritedClientId}`);
+      
+      // 4. Update den Ordner selbst
+      if (inheritedClientId !== folder.clientId) {
+        await this.updateFolder(folderId, { clientId: inheritedClientId });
+        console.log(`✅ Updated folder ${folder.name} clientId to: ${inheritedClientId}`);
+      }
+      
+      // 5. Update alle direkten Assets in diesem Ordner
+      const assets = await this.getMediaAssetsInFolder(folderId);
+      if (assets.length > 0) {
+        await Promise.all(
+          assets.map(asset => {
+            if (asset.clientId !== inheritedClientId) {
+              console.log(`📎 Updating asset ${asset.fileName} clientId to: ${inheritedClientId}`);
+              return this.updateAsset(asset.id!, { clientId: inheritedClientId });
+            }
+            return Promise.resolve();
+          })
+        );
+        console.log(`✅ Updated ${assets.length} assets in folder ${folder.name}`);
+      }
+      
+      // 6. Finde alle direkten Unterordner
+      const subfolders = allFolders.filter(f => f.parentFolderId === folderId);
+      
+      // 7. Rekursiv alle Unterordner updaten
+      if (subfolders.length > 0) {
+        await Promise.all(
+          subfolders.map(subfolder => 
+            this.updateFolderClientInheritance(subfolder.id!, userId)
+          )
+        );
+        console.log(`✅ Recursively updated ${subfolders.length} subfolders`);
+      }
+      
+      console.log(`🎉 Completed inheritance update for folder ${folder.name}`);
+      
+    } catch (error) {
+      console.error('❌ Error updating folder client inheritance:', error);
+      throw error;
+    }
+  },
   async getAllFoldersForUser(userId: string): Promise<MediaFolder[]> {
     try {
       const q = query(
