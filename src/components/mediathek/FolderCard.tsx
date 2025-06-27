@@ -1,4 +1,4 @@
-// src/components/mediathek/FolderCard.tsx - Mit Drag & Drop Support
+// src/components/mediathek/FolderCard.tsx - Cleaner Grid ohne Dateianzahl, Beschreibung als Tooltip
 "use client";
 
 import { MediaFolder } from "@/types/media";
@@ -31,9 +31,9 @@ interface FolderCardProps {
   isDragOver?: boolean;
   onDragOver?: (e: React.DragEvent) => void;
   onDragLeave?: () => void;
-  onDrop?: (e: React.DragEvent) => void; // 🔧 Wieder hinzugefügt für Assets
+  onDrop?: (e: React.DragEvent) => void;
   
-  // 🆕 Folder Drag & Drop Props
+  // Folder Drag & Drop Props
   onFolderMove?: (folderId: string, targetFolderId: string) => Promise<void>;
   isDraggedFolder?: boolean;
   canAcceptFolder?: boolean;
@@ -47,13 +47,13 @@ export default function FolderCard({
   onEdit, 
   onDelete, 
   onShare, 
-  fileCount = 0,
+  fileCount = 0, // Wird nicht mehr angezeigt, aber beibehalten für Kompatibilität
   // Drag & Drop Props für Assets
   isDragOver = false,
   onDragOver,
   onDragLeave,
   onDrop,
-  // 🆕 Folder Drag & Drop Props
+  // Folder Drag & Drop Props
   onFolderMove,
   isDraggedFolder = false,
   canAcceptFolder = true,
@@ -68,23 +68,13 @@ export default function FolderCard({
     ? companies.find(c => c.id === folder.clientId)
     : null;
 
-  // 🚨 EXTREME DEBUG: Was ist onFolderMove wirklich?
-  console.log(`🚨 FolderCard "${folder.name}" - onFolderMove DEBUG:`, {
-    exists: !!onFolderMove,
-    type: typeof onFolderMove,
-    value: onFolderMove,
-    stringified: String(onFolderMove),
-    isFunction: typeof onFolderMove === 'function'
-  });
-
-  // 🆕 Folder Drag Handlers
+  // Folder Drag Handlers
   const handleFolderDragStart = (e: React.DragEvent) => {
     console.log('Dragging folder:', folder.name);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', `folder:${folder.id}`);
-    e.stopPropagation(); // Prevent interference with asset drag
+    e.stopPropagation();
     
-    // Notify parent component
     if (onFolderDragStart) {
       onFolderDragStart(folder);
     }
@@ -93,7 +83,6 @@ export default function FolderCard({
   const handleFolderDragEnd = () => {
     console.log('Folder drag ended');
     
-    // Notify parent component
     if (onFolderDragEnd) {
       onFolderDragEnd();
     }
@@ -148,28 +137,23 @@ export default function FolderCard({
 
   const handleCombinedDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    
-    // Check what's being dragged based on dataTransfer types or current drag state
-    let dragType = 'asset'; // default
-    
-    // Try to peek at drag data (this might not work in all browsers during dragover)
-    try {
-      const types = Array.from(e.dataTransfer.types);
-      if (types.includes('text/plain')) {
-        // We can't read the actual data during dragover, so we assume asset unless we know it's a folder
-        // The actual check happens in onDrop
-      }
-    } catch (error) {
-      // Ignore - some browsers don't allow reading during dragover
-    }
-    
-    // Set appropriate drop effect
     e.dataTransfer.dropEffect = 'move';
     
-    // Call the asset drag over handler if provided
     if (onDragOver) {
       onDragOver(e);
     }
+  };
+
+  // 🆕 Tooltip-Text erstellen
+  const getTooltipText = () => {
+    let tooltip = folder.name;
+    if (folder.description) {
+      tooltip += `\n\nBeschreibung: ${folder.description}`;
+    }
+    if (associatedCompany) {
+      tooltip += `\nKunde: ${associatedCompany.name}`;
+    }
+    return tooltip;
   };
 
   return (
@@ -178,10 +162,10 @@ export default function FolderCard({
         isDragOver 
           ? 'border-blue-400 bg-blue-50 shadow-lg scale-105 border-2' // Drag Over Styling
           : isDraggedFolder
-          ? 'opacity-50 scale-95 border-gray-300' // 🆕 Being dragged
+          ? 'opacity-50 scale-95 border-gray-300' // Being dragged
           : 'border-gray-200 hover:shadow-md'
       }`}
-      // 🆕 Make folder draggable
+      // Make folder draggable
       draggable={true}
       onDragStart={handleFolderDragStart}
       onDragEnd={handleFolderDragEnd}
@@ -189,24 +173,26 @@ export default function FolderCard({
       onDragOver={handleCombinedDragOver}
       onDragLeave={onDragLeave}
       onDrop={handleFolderDrop}
+      // 🆕 Tooltip für den gesamten Container
+      title={getTooltipText()}
     >
       {/* Folder Preview */}
       <div 
         className={`aspect-square w-full bg-gray-50 flex items-center justify-center cursor-pointer relative ${
-          isDragOver ? 'bg-blue-100' : '' // 🆕 Additional styling when drag over
+          isDragOver ? 'bg-blue-100' : ''
         }`}
         onClick={() => onOpen(folder)}
       >
         <FolderIcon 
           className={`h-16 w-16 transition-all duration-200 ${
             isDragOver 
-              ? 'scale-110 text-blue-600' // 🆕 Scale up and change color when dragging over
+              ? 'scale-110 text-blue-600'
               : 'group-hover:scale-105'
           }`} 
-          style={{ color: isDragOver ? '#2563eb' : folderColor }} // 🆕 Dynamic color
+          style={{ color: isDragOver ? '#2563eb' : folderColor }}
         />
         
-        {/* 🆕 Enhanced Drop Hint */}
+        {/* Enhanced Drop Hint */}
         {isDragOver && (
           <div className="absolute inset-0 flex items-center justify-center bg-blue-100 bg-opacity-90">
             <div className="text-center">
@@ -218,7 +204,7 @@ export default function FolderCard({
           </div>
         )}
         
-        {/* 🆕 Dragging Indicator */}
+        {/* Dragging Indicator */}
         {isDraggedFolder && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-90">
             <div className="text-center">
@@ -271,42 +257,30 @@ export default function FolderCard({
         )}
       </div>
 
-      {/* Folder Information */}
+      {/* 🆕 CLEANER Folder Information - Nur Name und Client-Badge */}
       <div className={`p-4 ${isDragOver ? 'bg-blue-50' : ''}`}>
         <h3 
-          className={`text-sm font-medium truncate mb-1 cursor-pointer transition-colors ${
+          className={`text-sm font-medium truncate mb-2 cursor-pointer transition-colors ${
             isDragOver 
               ? 'text-blue-900' 
               : 'text-gray-900 hover:text-indigo-600'
           }`}
-          title={folder.name}
           onClick={() => onOpen(folder)}
         >
           {folder.name}
         </h3>
         
-        {/* Kunden-Badge */}
+        {/* Nur Client-Badge, falls vorhanden */}
         {associatedCompany && (
-          <div className="mb-2">
+          <div>
             <Badge color="blue" className="text-xs">
               {associatedCompany.name}
             </Badge>
           </div>
         )}
         
-        <div className="space-y-1">
-          <p className={`text-xs ${isDragOver ? 'text-blue-600' : 'text-gray-500'}`}>
-            {fileCount} {fileCount === 1 ? 'Datei' : 'Dateien'}
-          </p>
-          {folder.description && (
-            <p className={`text-xs truncate ${isDragOver ? 'text-blue-600' : 'text-gray-500'}`} title={folder.description}>
-              {folder.description}
-            </p>
-          )}
-          <p className={`text-xs ${isDragOver ? 'text-blue-600' : 'text-gray-500'}`}>
-            {folder.createdAt ? new Date(folder.createdAt.seconds * 1000).toLocaleDateString('de-DE') : '-'}
-          </p>
-        </div>
+        {/* 🚫 ENTFERNT: Dateianzahl, Beschreibung, Erstellungsdatum */}
+        {/* Alle diese Infos sind jetzt im Tooltip verfügbar */}
       </div>
     </div>
   );

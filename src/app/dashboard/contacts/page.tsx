@@ -1,8 +1,8 @@
-// src/app/dashboard/contacts/page.tsx
+// src/app/dashboard/contacts/page.tsx - CLEAN VERSION
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import Link from 'next/link'; // NEU: Import für die Verlinkung
+import Link from 'next/link';
 import { useAuth } from "@/context/AuthContext";
 import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
@@ -11,7 +11,18 @@ import { Input } from "@/components/input";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/table";
 import { Badge } from "@/components/badge";
 import { Checkbox } from "@/components/checkbox";
-import { PlusIcon, MagnifyingGlassIcon, TrashIcon } from "@heroicons/react/20/solid";
+import { 
+  PlusIcon, 
+  MagnifyingGlassIcon, 
+  TrashIcon,
+  PencilIcon,
+  ArrowTopRightOnSquareIcon,
+  ArrowDownTrayIcon,
+  ArrowUpTrayIcon,
+  BuildingOfficeIcon,
+  UserIcon,
+  EnvelopeIcon
+} from "@heroicons/react/20/solid";
 import { companiesService, contactsService, tagsService } from "@/lib/firebase/crm-service";
 import { Company, Contact, Tag, companyTypeLabels, CompanyType } from "@/types/crm";
 import CompanyModal from "./CompanyModal";
@@ -44,7 +55,6 @@ export default function ContactsPage() {
   // Filter-States für Firmen
   const [selectedTypes, setSelectedTypes] = useState<CompanyType[]>([]);
   const [selectedCompanyTagIds, setSelectedCompanyTagIds] = useState<string[]>([]);
-  const [selectedIndustries, setSelectedIndustries] = useState<string[]>([]);
   
   // Filter-States für Kontakte
   const [selectedContactCompanyIds, setSelectedContactCompanyIds] = useState<string[]>([]);
@@ -76,11 +86,6 @@ export default function ContactsPage() {
     }
   };
 
-  const industryOptions = useMemo(() => {
-    const industries = companies.map(c => c.industry).filter(Boolean) as string[];
-    return Array.from(new Set(industries)).sort();
-  }, [companies]);
-
   const tagOptions = useMemo(() => {
     return tags.sort((a, b) => a.name.localeCompare(b.name));
   }, [tags]);
@@ -104,16 +109,13 @@ export default function ContactsPage() {
         
         const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(company.type);
         if (!typeMatch) return false;
-
-        const industryMatch = selectedIndustries.length === 0 || (company.industry && selectedIndustries.includes(company.industry));
-        if (!industryMatch) return false;
           
         const tagMatch = selectedCompanyTagIds.length === 0 || company.tagIds?.some(tagId => selectedCompanyTagIds.includes(tagId));
         if (!tagMatch) return false;
 
         return true;
       });
-  }, [companies, searchTerm, selectedTypes, selectedIndustries, selectedCompanyTagIds]);
+  }, [companies, searchTerm, selectedTypes, selectedCompanyTagIds]);
 
   const filteredContacts = useMemo(() => {
     return contacts.filter(contact => {
@@ -292,14 +294,30 @@ export default function ContactsPage() {
 
   return (
     <div>
+      {/* 🆕 CLEAN Header mit Icons */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <Heading>Kontakte</Heading>
           <Text className="mt-1">Verwalte deine Firmen und Ansprechpartner</Text>
         </div>
         <div className="flex items-center gap-x-2">
-          <Button plain onClick={() => setShowImportModal(true)}>Importieren</Button>
-          <Button plain onClick={handleExport}>Exportieren</Button>
+          {/* 🆕 Icon-Buttons für Import/Export mit Text */}
+          <Button 
+            plain 
+            onClick={() => setShowImportModal(true)}
+            className="flex items-center gap-1"
+          >
+            <ArrowUpTrayIcon className="h-4 w-4" />
+            Import
+          </Button>
+          <Button 
+            plain 
+            onClick={handleExport}
+            className="flex items-center gap-1"
+          >
+            <ArrowDownTrayIcon className="h-4 w-4" />
+            Export
+          </Button>
           <Button onClick={handleAddNew}>
             <PlusIcon className="size-4 mr-2" />
             {activeTab === 'companies' ? 'Firma hinzufügen' : 'Person hinzufügen'}
@@ -307,53 +325,113 @@ export default function ContactsPage() {
         </div>
       </div>
 
-      <div className="flex gap-4 border-b border-zinc-200 dark:border-zinc-800 mb-6">
+      {/* 🆕 CLEAN Tabs mit Icons - ohne durchgehende Linie */}
+      <div className="flex gap-4 mb-6">
         <button
           onClick={() => { setActiveTab('companies'); setSearchTerm(''); }}
-          className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${
+          className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
             activeTab === 'companies'
               ? 'border-indigo-600 text-indigo-600'
               : 'border-transparent text-zinc-600 hover:text-zinc-900 dark:text-zinc-400'
           }`}
         >
+          <BuildingOfficeIcon className="h-4 w-4" />
           Firmen ({companies.length})
         </button>
         <button
           onClick={() => { setActiveTab('contacts'); setSearchTerm(''); }}
-          className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${
+          className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
             activeTab === 'contacts'
               ? 'border-indigo-600 text-indigo-600'
               : 'border-transparent text-zinc-600 hover:text-zinc-900 dark:text-zinc-400'
           }`}
         >
+          <UserIcon className="h-4 w-4" />
           Personen ({contacts.length})
         </button>
       </div>
-
-      <div className="relative mb-6">
-        <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-zinc-400 pointer-events-none" />
-        <input
-          type="search"
-          placeholder={activeTab === 'companies' ? 'Firmen suchen...' : 'Personen suchen...'}
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full rounded-md border border-zinc-300 py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        />
-      </div>
       
+      {/* 🆕 Filter + Suche in einer Box - 3-spaltig, alles nebeneinander */}
       {activeTab === 'companies' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 p-4 border rounded-lg bg-zinc-50">
-          <MultiSelectDropdown label="Typ" placeholder="Nach Typ filtern..." options={Object.entries(companyTypeLabels).map(([value, label]) => ({ value, label }))} selectedValues={selectedTypes} onChange={(values) => setSelectedTypes(values as CompanyType[])}/>
-          <MultiSelectDropdown label="Branche" placeholder="Nach Branche filtern..." options={industryOptions.map(industry => ({ value: industry, label: industry }))} selectedValues={selectedIndustries} onChange={(values) => setSelectedIndustries(values)}/>
-          <MultiSelectDropdown label="Tags" placeholder="Nach Tags filtern..." options={tagOptions.map(tag => ({ value: tag.id!, label: tag.name }))} selectedValues={selectedCompanyTagIds} onChange={(values) => setSelectedCompanyTagIds(values)}/>
+        <div className="grid grid-cols-3 gap-6 mb-6 p-4 border rounded-lg bg-zinc-50">
+          {/* Suche */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Suche</label>
+            <div className="relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-zinc-400 pointer-events-none" />
+              <input
+                type="search"
+                placeholder="Firmen suchen..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full rounded-md border border-zinc-300 py-2 pl-9 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+          
+          {/* Typ Filter */}
+          <MultiSelectDropdown 
+            label="Typ" 
+            placeholder="Nach Typ filtern..." 
+            options={Object.entries(companyTypeLabels).map(([value, label]) => ({ value, label }))} 
+            selectedValues={selectedTypes} 
+            onChange={(values) => setSelectedTypes(values as CompanyType[])}
+          />
+          
+          {/* Tags Filter */}
+          <MultiSelectDropdown 
+            label="Tags" 
+            placeholder="Nach Tags filtern..." 
+            options={tagOptions.map(tag => ({ value: tag.id!, label: tag.name }))} 
+            selectedValues={selectedCompanyTagIds} 
+            onChange={(values) => setSelectedCompanyTagIds(values)}
+          />
         </div>
       )}
 
       {activeTab === 'contacts' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 p-4 border rounded-lg bg-zinc-50">
-          <MultiSelectDropdown label="Firma" placeholder="Nach Firma filtern..." options={companyOptions} selectedValues={selectedContactCompanyIds} onChange={(values) => setSelectedContactCompanyIds(values)}/>
-          <MultiSelectDropdown label="Position" placeholder="Nach Position filtern..." options={positionOptions.map(pos => ({ value: pos, label: pos }))} selectedValues={selectedContactPositions} onChange={(values) => setSelectedContactPositions(values)}/>
-          <MultiSelectDropdown label="Tags" placeholder="Nach Tags filtern..." options={tagOptions.map(tag => ({ value: tag.id!, label: tag.name }))} selectedValues={selectedContactTagIds} onChange={(values) => setSelectedContactTagIds(values)}/>
+        <div className="grid grid-cols-4 gap-6 mb-6 p-4 border rounded-lg bg-zinc-50">
+          {/* Suche */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Suche</label>
+            <div className="relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-zinc-400 pointer-events-none" />
+              <input
+                type="search"
+                placeholder="Personen suchen..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full rounded-md border border-zinc-300 py-2 pl-9 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+          
+          {/* Firma Filter */}
+          <MultiSelectDropdown 
+            label="Firma" 
+            placeholder="Nach Firma filtern..." 
+            options={companyOptions} 
+            selectedValues={selectedContactCompanyIds} 
+            onChange={(values) => setSelectedContactCompanyIds(values)}
+          />
+          
+          {/* Position Filter */}
+          <MultiSelectDropdown 
+            label="Position" 
+            placeholder="Nach Position filtern..." 
+            options={positionOptions.map(pos => ({ value: pos, label: pos }))} 
+            selectedValues={selectedContactPositions} 
+            onChange={(values) => setSelectedContactPositions(values)}
+          />
+          
+          {/* Tags Filter */}
+          <MultiSelectDropdown 
+            label="Tags" 
+            placeholder="Nach Tags filtern..." 
+            options={tagOptions.map(tag => ({ value: tag.id!, label: tag.name }))} 
+            selectedValues={selectedContactTagIds} 
+            onChange={(values) => setSelectedContactTagIds(values)}
+          />
         </div>
       )}
 
@@ -369,6 +447,7 @@ export default function ContactsPage() {
 
       {loading ? ( <div className="text-center py-12 text-zinc-500">Lade Daten...</div> ) : (
         <>
+          {/* 🆕 CLEAN Companies Table - Website als Icon, Icon-Aktionen, kein "Branche" */}
           {activeTab === 'companies' && (
             <Table>
               <TableHead>
@@ -377,27 +456,57 @@ export default function ContactsPage() {
                   <TableHeader>Name</TableHeader>
                   <TableHeader>Typ</TableHeader>
                   <TableHeader>Tags</TableHeader>
-                  <TableHeader>Branche</TableHeader>
                   <TableHeader>Website</TableHeader>
                   <TableHeader>Telefon</TableHeader>
-                  <TableHeader className="text-right">Aktionen</TableHeader>
+                  <TableHeader className="text-right w-20">Aktionen</TableHeader>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {filteredCompanies.map((company) => (
-                    <TableRow key={company.id}>
+                    <TableRow key={company.id} className="hover:bg-gray-50 transition-colors duration-150">
                       <TableCell><Checkbox checked={selectedCompanyIds.has(company.id!)} onChange={(checked) => handleSelectCompany(company.id!, checked)}/></TableCell>
                       <TableCell className="font-medium">
                         <Link href={`/dashboard/contacts/companies/${company.id}`} className="text-indigo-600 hover:text-indigo-500 hover:underline">{company.name}</Link>
                       </TableCell>
                       <TableCell><Badge color="zinc">{companyTypeLabels[company.type]}</Badge></TableCell>
                       <TableCell>{renderTags(company.tagIds)}</TableCell>
-                      <TableCell>{company.industry || '-'}</TableCell>
-                      <TableCell>{company.website || '-'}</TableCell>
+                      <TableCell>
+                        {/* 🆕 Website als klickbares Icon - Link-Farbe */}
+                        {company.website ? (
+                          <a 
+                            href={company.website} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-indigo-600 hover:text-indigo-500"
+                            title={company.website}
+                          >
+                            <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+                          </a>
+                        ) : (
+                          '-'
+                        )}
+                      </TableCell>
                       <TableCell>{company.phone || '-'}</TableCell>
-                      <TableCell className="text-right space-x-2">
-                        <button type="button" onClick={() => handleEditCompany(company)} className="text-sm font-medium text-indigo-600 hover:text-indigo-500">Bearbeiten</button>
-                        <button type="button" onClick={() => handleDeleteCompany(company.id!)} className="text-sm font-medium text-red-600 hover:text-red-500">Löschen</button>
+                      <TableCell className="text-right">
+                        {/* 🆕 Aktionen nur als Icons - Link-Farbe */}
+                        <div className="flex items-center justify-end gap-1">
+                          <button 
+                            type="button" 
+                            onClick={() => handleEditCompany(company)} 
+                            className="p-1 text-indigo-600 hover:text-indigo-500"
+                            title="Bearbeiten"
+                          >
+                            <PencilIcon className="h-4 w-4" />
+                          </button>
+                          <button 
+                            type="button" 
+                            onClick={() => handleDeleteCompany(company.id!)} 
+                            className="p-1 text-indigo-600 hover:text-indigo-500"
+                            title="Löschen"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -405,6 +514,7 @@ export default function ContactsPage() {
             </Table>
           )}
 
+          {/* 🆕 CLEAN Contacts Table - Icon-Aktionen */}
           {activeTab === 'contacts' && (
              <Table>
                <TableHead>
@@ -416,12 +526,12 @@ export default function ContactsPage() {
                    <TableHeader>Position</TableHeader>
                    <TableHeader>E-Mail</TableHeader>
                    <TableHeader>Telefon</TableHeader>
-                   <TableHeader className="text-right">Aktionen</TableHeader>
+                   <TableHeader className="text-right w-20">Aktionen</TableHeader>
                  </TableRow>
                </TableHead>
                <TableBody>
                  {filteredContacts.map((contact) => (
-                     <TableRow key={contact.id}>
+                     <TableRow key={contact.id} className="hover:bg-gray-50 transition-colors duration-150">
                        <TableCell><Checkbox checked={selectedContactIds.has(contact.id!)} onChange={(checked) => handleSelectContact(contact.id!, checked)}/></TableCell>
                        <TableCell className="font-medium">
                         <Link href={`/dashboard/contacts/contacts/${contact.id}`} className="text-indigo-600 hover:text-indigo-500 hover:underline">{contact.firstName} {contact.lastName}</Link>
@@ -429,11 +539,41 @@ export default function ContactsPage() {
                        <TableCell>{contact.companyName || '-'}</TableCell>
                        <TableCell>{renderTags(contact.tagIds)}</TableCell>
                        <TableCell>{contact.position || '-'}</TableCell>
-                       <TableCell>{contact.email || '-'}</TableCell>
+                       <TableCell>
+                        {/* 🆕 E-Mail als klickbares Icon - wie Website */}
+                        {contact.email ? (
+                          <a 
+                            href={`mailto:${contact.email}`}
+                            className="text-indigo-600 hover:text-indigo-500"
+                            title={contact.email}
+                          >
+                            <EnvelopeIcon className="h-4 w-4" />
+                          </a>
+                        ) : (
+                          '-'
+                        )}
+                       </TableCell>
                        <TableCell>{contact.phone || '-'}</TableCell>
-                       <TableCell className="text-right space-x-2">
-                        <button type="button" onClick={() => handleEditContact(contact)} className="text-sm font-medium text-indigo-600 hover:text-indigo-500">Bearbeiten</button>
-                        <button type="button" onClick={() => handleDeleteContact(contact.id!)} className="text-sm font-medium text-red-600 hover:text-red-500">Löschen</button>
+                       <TableCell className="text-right">
+                        {/* 🆕 Aktionen nur als Icons - Link-Farbe */}
+                        <div className="flex items-center justify-end gap-1">
+                          <button 
+                            type="button" 
+                            onClick={() => handleEditContact(contact)} 
+                            className="p-1 text-indigo-600 hover:text-indigo-500"
+                            title="Bearbeiten"
+                          >
+                            <PencilIcon className="h-4 w-4" />
+                          </button>
+                          <button 
+                            type="button" 
+                            onClick={() => handleDeleteContact(contact.id!)} 
+                            className="p-1 text-indigo-600 hover:text-indigo-500"
+                            title="Löschen"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        </div>
                        </TableCell>
                      </TableRow>
                    ))}

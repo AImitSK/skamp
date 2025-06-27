@@ -610,6 +610,34 @@ export default function MediathekPage() {
     return companies.find(c => c.id === preselectedClientId);
   };
 
+  // 🆕 Helper für Asset-Tooltip
+  const getAssetTooltip = (asset: MediaAsset) => {
+    let tooltip = asset.fileName;
+    
+    // Dateityp hinzufügen
+    const fileExt = asset.fileType.split('/')[1]?.toUpperCase() || 'Datei';
+    tooltip += `\n\nTyp: ${fileExt}`;
+    
+    // Erstellungsdatum
+    if (asset.createdAt) {
+      const date = new Date(asset.createdAt.seconds * 1000).toLocaleDateString('de-DE');
+      tooltip += `\nErstellt: ${date}`;
+    }
+    
+    // Beschreibung (falls vorhanden)
+    if (asset.description) {
+      tooltip += `\n\nBeschreibung: ${asset.description}`;
+    }
+    
+    // Kunde (falls vorhanden)
+    const company = asset.clientId ? companies.find(c => c.id === asset.clientId) : null;
+    if (company) {
+      tooltip += `\nKunde: ${company.name}`;
+    }
+    
+    return tooltip;
+  };
+
   const renderGridView = () => (
     <div 
       className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"
@@ -636,7 +664,7 @@ export default function MediathekPage() {
         />
       ))}
       
-      {/* Render Media Assets */}
+      {/* Render Media Assets - 🆕 CLEANER VERSION */}
       {mediaAssets.map((asset) => {
         const FileIcon = getFileIcon(asset.fileType);
         const isSelected = selectedAssets.has(asset.id!);
@@ -660,6 +688,8 @@ export default function MediathekPage() {
                 if (!isSelectionMode) setIsSelectionMode(true);
               }
             }}
+            // 🆕 Tooltip für Asset
+            title={getAssetTooltip(asset)}
           >
             {/* Selection Checkbox */}
             <div className={`absolute top-2 left-2 z-10 transition-opacity ${
@@ -745,29 +775,23 @@ export default function MediathekPage() {
               )}
             </div>
 
-            {/* File Info */}
+            {/* 🆕 CLEANER File Info - Nur Name und Client-Badge */}
             <div className="p-4">
-              <h3 className="text-sm font-medium text-gray-900 truncate mb-1" title={asset.fileName}>
+              <h3 className="text-sm font-medium text-gray-900 truncate mb-2" title={asset.fileName}>
                 {asset.fileName}
               </h3>
               
-              {/* Client-Badge */}
+              {/* Nur Client-Badge, falls vorhanden */}
               {asset.clientId && (
-                <div className="mb-2">
+                <div>
                   <Badge color="blue" className="text-xs">
                     {companies.find(c => c.id === asset.clientId)?.name || 'Unbekannter Kunde'}
                   </Badge>
                 </div>
               )}
               
-              <div className="space-y-1">
-                <p className="text-xs text-gray-500 uppercase tracking-wide">
-                  {asset.fileType.split('/')[1] || 'Datei'}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {asset.createdAt ? new Date(asset.createdAt.seconds * 1000).toLocaleDateString('de-DE') : '-'}
-                </p>
-              </div>
+              {/* 🚫 ENTFERNT: Dateityp und Erstellungsdatum */}
+              {/* Diese Infos sind jetzt im Tooltip verfügbar */}
             </div>
           </div>
         );
