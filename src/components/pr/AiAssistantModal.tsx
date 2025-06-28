@@ -1,123 +1,345 @@
-// src/components/pr/AiAssistantModal.tsx (KORRIGIERT)
+// src/components/pr/AiAssistantModal.tsx - Komplett ohne Label-Fehler
 "use client";
 
-import { useState, useEffect } from "react";
-import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
-import { Field, Label, FieldGroup, Description } from "@/components/fieldset";
-import { Input } from "@/components/input"; // KORREKTUR: Fehlender Import hinzugefügt
-import { Textarea } from "@/components/textarea";
-import { Button } from "@/components/button";
-import { Select } from "@/components/select";
-import { useAuth } from "@/context/AuthContext";
-import { boilerplatesService } from "@/lib/firebase/boilerplate-service";
-import { Boilerplate } from "@/types/crm";
-import { SparklesIcon } from "@heroicons/react/24/outline";
-import { Timestamp } from "firebase/firestore"; // Import für Timestamp hinzugefügt
+import { useState, useEffect } from 'react';
+import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
+import { 
+  XMarkIcon, 
+  SparklesIcon, 
+  DocumentTextIcon,
+  ExclamationTriangleIcon,
+  InformationCircleIcon,
+  CheckCircleIcon
+} from '@heroicons/react/24/outline';
+import { Button } from '@/components/button';
+import { Field, Label } from '@/components/fieldset';
+import { Textarea } from '@/components/textarea';
+import { firebaseAIService } from '@/lib/ai/firebase-ai-service';
+import { useAuth } from '@/context/AuthContext';
 
 interface AiAssistantModalProps {
   onClose: () => void;
   onGenerate: (generatedText: string) => void;
+  existingContent?: string;
 }
 
-export default function AiAssistantModal({ onClose, onGenerate }: AiAssistantModalProps) {
-  const { user } = useAuth();
-  const [boilerplates, setBoilerplates] = useState<Boilerplate[]>([]);
-  const [loading, setLoading] = useState(false);
-  
-  const [keywords, setKeywords] = useState('');
-  const [targetAudience, setTargetAudience] = useState('');
-  const [tonality, setTonality] = useState('professionell');
-  const [selectedBoilerplateId, setSelectedBoilerplateId] = useState('');
+interface Template {
+  title: string;
+  prompt: string;
+}
 
+export default function AiAssistantModal({ 
+  onClose, 
+  onGenerate, 
+  existingContent 
+}: AiAssistantModalProps) {
+  const { user } = useAuth();
+  const [prompt, setPrompt] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedText, setGeneratedText] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<'generate' | 'improve'>(existingContent ? 'improve' : 'generate');
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [isHealthy, setIsHealthy] = useState(true);
+
+  // Service Health Check
   useEffect(() => {
+    const checkHealth = async () => {
+      try {
+        const healthy = await firebaseAIService.healthCheck();
+        setIsHealthy(healthy);
+      } catch (error) {
+        setIsHealthy(false);
+      }
+    };
+
     if (user) {
-      boilerplatesService.getAll(user.uid).then(setBoilerplates);
+      checkHealth();
     }
   }, [user]);
 
-  const handleGenerateClick = async () => {
-    if (!keywords) {
-        alert("Bitte geben Sie die wichtigsten Stichpunkte an.");
-        return;
-    }
-    setLoading(true);
-    
-    const selectedBoilerplate = boilerplates.find(b => b.id === selectedBoilerplateId);
-    const prompt = `
-      Erstelle eine Pressemitteilung mit folgenden Informationen:
-      - Stichpunkte: ${keywords}
-      - Zielgruppe: ${targetAudience || 'Allgemeine Öffentlichkeit'}
-      - Tonalität: ${tonality}
-      - Verwende folgenden Textbaustein als Unternehmensbeschreibung: ${selectedBoilerplate?.content || ''}
-    `;
+  // Templates laden
+  useEffect(() => {
+    const loadTemplates = async () => {
+      try {
+        const templateList = await firebaseAIService.getTemplates();
+        setTemplates(templateList);
+      } catch (error) {
+        console.warn('Templates konnten nicht geladen werden:', error);
+      }
+    };
 
-    console.log("Simulierter KI-Prompt:", prompt);
-    
-    setTimeout(() => {
-      const generatedText = `<h2>Titel basierend auf "${keywords.substring(0, 20)}..."</h2><p>Dies ist ein von der KI generierter Text basierend auf Ihren Eingaben. Der Text wurde im Ton <strong>${tonality}</strong> für die Zielgruppe <strong>${targetAudience || 'Allgemeine Öffentlichkeit'}</strong> verfasst.</p><p>Ihre Stichpunkte waren: ${keywords}.</p>${selectedBoilerplate ? `<h3>Über uns</h3><p>${selectedBoilerplate.content}</p>` : ''}`;
+    if (mode === 'generate' && user) {
+      loadTemplates();
+    }
+  }, [mode, user]);
+
+  const handleGenerate = async () => {
+    if (!prompt.trim()) {
+      setError('Bitte gib eine Beschreibung ein.');
+      return;
+    }
+
+    if (!user) {
+      setError('Du musst angemeldet sein, um den KI-Assistenten zu nutzen.');
+      return;
+    }
+
+    setIsGenerating(true);
+    setGeneratedText('');
+    setError(null);
+
+    try {
+      let result: string;
       
-      onGenerate(generatedText);
-      setLoading(false);
-      onClose();
-    }, 2000);
+      if (mode === 'improve' && existingContent) {
+        result = await firebaseAIService.improvePressRelease(existingContent, prompt);
+      } else {
+        result = await firebaseAIService.generatePressRelease(prompt);
+      }
+      
+      setGeneratedText(result);
+    } catch (error: any) {
+      console.error('AI Generation Error:', error);
+      setError(error.message || 'Ein unbekannter Fehler ist aufgetreten.');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
+  const handleUseGenerated = () => {
+    if (generatedText) {
+      onGenerate(generatedText);
+    }
+  };
+
+  const handleTemplateSelect = (template: Template) => {
+    setPrompt(template.prompt);
+    setError(null);
+  };
+
+  // Auth Check
+  if (!user) {
+    return (
+      <Dialog open={true} onClose={onClose} className="relative z-50">
+        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <DialogPanel className="mx-auto max-w-md bg-white rounded-lg shadow-xl p-6">
+            <div className="text-center">
+              <ExclamationTriangleIcon className="h-12 w-12 text-orange-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Anmeldung erforderlich</h3>
+              <p className="text-gray-600 mb-6">
+                Du musst angemeldet sein, um den KI-Assistenten zu nutzen.
+              </p>
+              <Button onClick={onClose} className="w-full">
+                Verstanden
+              </Button>
+            </div>
+          </DialogPanel>
+        </div>
+      </Dialog>
+    );
+  }
+
   return (
-    <Dialog open={true} onClose={onClose} size="2xl">
-      <DialogTitle className="p-6 flex items-center gap-2">
-        <SparklesIcon className="w-6 h-6 text-indigo-600" />
-        KI-Presse-Assistent
-      </DialogTitle>
-      <DialogBody className="p-6">
-        <FieldGroup>
-          <Field>
-            <Label>Wichtige Stichpunkte / Kernaussage *</Label>
-            <Description>Was ist die Nachricht? Gib die wichtigsten Informationen an (z.B. neues Produkt, Partnerschaft, Event).</Description>
-            <Textarea
-              value={keywords}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setKeywords(e.target.value)} // KORREKTUR: Typ hinzugefügt
-              rows={5}
-              required
-              placeholder="z.B. Markteinführung unseres neuen Produkts 'SuperTool' am 15. Juli. Features: ..."
-            />
-          </Field>
-          <div className="grid grid-cols-2 gap-4">
-            <Field>
-              <Label>Zielgruppe (optional)</Label>
-              <Input
-                value={targetAudience}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTargetAudience(e.target.value)} // KORREKTUR: Typ hinzugefügt
-                placeholder="z.B. Tech-Journalisten, Endkunden"
-              />
-            </Field>
-            <Field>
-              <Label>Tonalität</Label>
-              <Select value={tonality} onChange={(e) => setTonality(e.target.value)}>
-                <option>Professionell</option>
-                <option>Locker & Modern</option>
-                <option>Technisch & Detailliert</option>
-                <option>Enthusiastisch</option>
-              </Select>
-            </Field>
+    <Dialog open={true} onClose={onClose} className="relative z-50">
+      <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+      
+      <div className="fixed inset-0 flex items-center justify-center p-4">
+        <DialogPanel className="mx-auto max-w-5xl w-full bg-white rounded-lg shadow-xl max-h-[90vh] overflow-hidden flex flex-col">
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-indigo-50 to-purple-50">
+            <div className="flex items-center gap-3">
+              <SparklesIcon className="h-6 w-6 text-indigo-600" />
+              <DialogTitle className="text-lg font-semibold">
+                KI-Assistent powered by Google Gemini
+              </DialogTitle>
+              {isHealthy && (
+                <CheckCircleIcon className="h-5 w-5 text-green-500" title="Service läuft" />
+              )}
+            </div>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+              <XMarkIcon className="h-6 w-6" />
+            </button>
           </div>
-          <Field>
-            <Label>Textbaustein einfügen (optional)</Label>
-            <Description>Wähle einen vordefinierten Textbaustein (z.B. für die Unternehmensbeschreibung), der in den Text integriert werden soll.</Description>
-            <Select value={selectedBoilerplateId} onChange={(e) => setSelectedBoilerplateId(e.target.value)}>
-              <option value="">Keinen Textbaustein verwenden</option>
-              {boilerplates.map(bp => (
-                <option key={bp.id} value={bp.id!}>{bp.name} {bp.category && `(${bp.category})`}</option>
-              ))}
-            </Select>
-          </Field>
-        </FieldGroup>
-      </DialogBody>
-      <DialogActions className="p-6">
-        <Button plain onClick={onClose}>Abbrechen</Button>
-        <Button color="indigo" onClick={handleGenerateClick} disabled={loading}>
-          {loading ? 'Generiere...' : 'Text erstellen lassen'}
-        </Button>
-      </DialogActions>
+
+          <div className="flex-1 overflow-y-auto p-6">
+            {/* Service Status Warning */}
+            {!isHealthy && (
+              <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                <div className="flex items-start">
+                  <ExclamationTriangleIcon className="h-5 w-5 text-orange-600 mt-0.5 mr-3" />
+                  <div>
+                    <h3 className="text-sm font-medium text-orange-800">
+                      KI-Service nicht verfügbar
+                    </h3>
+                    <p className="mt-1 text-sm text-orange-700">
+                      Der KI-Assistent ist momentan nicht erreichbar. Bitte versuche es später erneut.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Mode Selection */}
+            {existingContent && (
+              <div className="mb-6">
+                <div className="flex gap-2">
+                  <Button
+                    plain
+                    className={mode === 'generate' ? 'bg-indigo-100 text-indigo-700' : ''}
+                    onClick={() => setMode('generate')}
+                  >
+                    Neu generieren
+                  </Button>
+                  <Button
+                    plain
+                    className={mode === 'improve' ? 'bg-indigo-100 text-indigo-700' : ''}
+                    onClick={() => setMode('improve')}
+                  >
+                    Bestehenden Text verbessern
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Input Seite */}
+              <div className="space-y-4">
+                <Field>
+                  <Label className="text-base font-medium">
+                    {mode === 'improve' ? 'Wie soll der Text verbessert werden?' : 'Was soll in der Pressemitteilung stehen?'}
+                  </Label>
+                  <Textarea
+                    rows={6}
+                    value={prompt}
+                    onChange={(e) => {
+                      setPrompt(e.target.value);
+                      setError(null);
+                    }}
+                    placeholder={
+                      mode === 'improve' 
+                        ? 'z.B. "Mache den Ton professioneller", "Füge mehr Details hinzu", "Kürze den Text auf 200 Wörter"'
+                        : 'Beschreibe dein Unternehmen, das Produkt, die Ankündigung oder das Ereignis. Je detaillierter, desto besser wird das Ergebnis...'
+                    }
+                    className={error ? 'border-red-300' : ''}
+                  />
+                  {error && (
+                    <p className="mt-1 text-sm text-red-600">{error}</p>
+                  )}
+                </Field>
+
+                {/* Template Prompts - OHNE Label, nur mit div */}
+                {mode === 'generate' && templates.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-2">Oder wähle eine Vorlage:</p>
+                    <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto">
+                      {templates.map((template, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handleTemplateSelect(template)}
+                          className="text-left p-3 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-indigo-300 transition-colors text-sm"
+                        >
+                          <div className="font-medium text-gray-900">{template.title}</div>
+                          <div className="text-gray-500 text-xs mt-1 line-clamp-2">
+                            {template.prompt}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <Button
+                  onClick={handleGenerate}
+                  disabled={!prompt.trim() || isGenerating || !isHealthy}
+                  className="w-full"
+                >
+                  {isGenerating ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Gemini arbeitet...
+                    </>
+                  ) : (
+                    <>
+                      <SparklesIcon className="h-4 w-4 mr-2" />
+                      {mode === 'improve' ? 'Mit Gemini verbessern' : 'Mit Gemini generieren'}
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* Output Seite - OHNE Label, nur mit div */}
+              <div className="space-y-4">
+                <p className="text-base font-medium text-gray-700">Generierter Text:</p>
+                <div className="border rounded-lg bg-gray-50 min-h-[400px] max-h-[500px] overflow-y-auto">
+                  {isGenerating ? (
+                    <div className="flex items-center justify-center h-32">
+                      <div className="text-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-2"></div>
+                        <p className="text-gray-600 text-sm">Google Gemini erstellt deine Pressemitteilung...</p>
+                      </div>
+                    </div>
+                  ) : generatedText ? (
+                    <div className="p-4">
+                      <div 
+                        className="prose prose-sm max-w-none text-gray-900"
+                        dangerouslySetInnerHTML={{ __html: generatedText }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="text-center text-gray-500 h-32 flex items-center justify-center">
+                      <div>
+                        <DocumentTextIcon className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                        <p>Der generierte Text wird hier angezeigt</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {generatedText && (
+                  <div className="flex gap-2">
+                    <Button onClick={handleUseGenerated} className="flex-1">
+                      Text verwenden
+                    </Button>
+                    <Button plain onClick={() => setGeneratedText('')}>
+                      Löschen
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Info Box */}
+            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-start">
+                <InformationCircleIcon className="h-5 w-5 text-blue-600 mt-0.5 mr-3" />
+                <div className="text-sm text-blue-700">
+                  <p className="font-medium">🤖 Powered by Google Gemini</p>
+                  <ul className="mt-1 list-disc list-inside space-y-1">
+                    <li>Hochmoderne KI für professionelle Pressemitteilungen</li>
+                    <li>Sichere Verarbeitung über Firebase Functions</li>
+                    <li>Optimiert für deutsche Texte und Journalismus</li>
+                    <li>Du kannst Texte mehrfach überarbeiten lassen</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="flex justify-end gap-3 p-6 border-t bg-gray-50">
+            <Button plain onClick={onClose}>
+              Abbrechen
+            </Button>
+            {generatedText && (
+              <Button onClick={handleUseGenerated}>
+                Text verwenden
+              </Button>
+            )}
+          </div>
+        </DialogPanel>
+      </div>
     </Dialog>
   );
 }

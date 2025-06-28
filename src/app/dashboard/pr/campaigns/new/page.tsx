@@ -1,13 +1,13 @@
-// src/app/dashboard/pr/campaigns/new/page.tsx
+// src/app/dashboard/pr/campaigns/new/page.tsx - Komplett korrigiert
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation'; // NEU
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { listsService } from '@/lib/firebase/lists-service';
-import { prService } from '@/lib/firebase/pr-service'; // NEU
+import { prService } from '@/lib/firebase/pr-service';
 import { DistributionList } from '@/types/lists';
-import { PRCampaign } from '@/types/pr'; // NEU
+import { PRCampaign } from '@/types/pr';
 import { Heading } from '@/components/heading';
 import { Text } from '@/components/text';
 import { Button } from '@/components/button';
@@ -15,33 +15,48 @@ import { Field, Label } from '@/components/fieldset';
 import { Select } from '@/components/select';
 import { Input } from '@/components/input';
 import { RichTextEditor } from '@/components/RichTextEditor';
+import { SparklesIcon } from "@heroicons/react/24/outline";
 import Link from 'next/link';
+
+// Dynamic import für das Modal um SSR-Probleme zu vermeiden
+import dynamic from 'next/dynamic';
+const AiAssistantModal = dynamic(() => import('@/components/pr/AiAssistantModal'), {
+  ssr: false
+});
 
 export default function NewPRCampaignPage() {
   const { user } = useAuth();
-  const router = useRouter(); // NEU
+  const router = useRouter();
+  
+  // Form State
   const [availableLists, setAvailableLists] = useState<DistributionList[]>([]);
   const [selectedListId, setSelectedListId] = useState<string>('');
   const [loading, setLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false); // NEU
-
+  const [isSaving, setIsSaving] = useState(false);
   const [campaignTitle, setCampaignTitle] = useState('');
   const [pressReleaseContent, setPressReleaseContent] = useState('');
+
+  // KI-Assistent State
+  const [showAiModal, setShowAiModal] = useState(false);
 
   useEffect(() => {
     if (user) {
       setLoading(true);
       listsService.getAll(user.uid)
         .then(setAvailableLists)
+        .catch((error) => {
+          console.error('Fehler beim Laden der Listen:', error);
+        })
         .finally(() => setLoading(false));
     }
   }, [user]);
 
   const selectedList = availableLists.find(list => list.id === selectedListId);
+  const isFormValid = !!selectedListId && 
+                     campaignTitle.trim() !== '' && 
+                     pressReleaseContent.trim() !== '' && 
+                     pressReleaseContent !== '<p></p>';
 
-  const isFormValid = !!selectedListId && campaignTitle.trim() !== '' && pressReleaseContent.trim() !== '' && pressReleaseContent !== '<p></p>';
-
-  // NEU: Funktion zum Speichern des Entwurfs
   const handleSaveDraft = async () => {
     if (!isFormValid || !user || !selectedList) return;
 
@@ -51,7 +66,7 @@ export default function NewPRCampaignPage() {
         userId: user.uid,
         title: campaignTitle,
         contentHtml: pressReleaseContent,
-        status: 'draft', // Wir speichern als Entwurf
+        status: 'draft',
         distributionListId: selectedList.id!,
         distributionListName: selectedList.name,
         recipientCount: selectedList.contactCount,
@@ -61,17 +76,31 @@ export default function NewPRCampaignPage() {
 
       const newCampaignId = await prService.create(campaignData);
       alert('Kampagnen-Entwurf gespeichert!');
-      // Leite den Benutzer zur (zukünftigen) Bearbeitungsseite der Kampagne weiter
       router.push(`/dashboard/pr/campaigns/edit/${newCampaignId}`);
 
     } catch (error) {
       console.error("Fehler beim Speichern der Kampagne:", error);
       alert("Ein Fehler ist aufgetreten.");
+    } finally {
       setIsSaving(false);
     }
   };
 
-return (
+  // KI-Content Handler
+  const handleAiGenerate = (generatedText: string) => {
+    setPressReleaseContent(generatedText);
+    setShowAiModal(false);
+  };
+
+  const handleCloseModal = () => {
+    setShowAiModal(false);
+  };
+
+  const handleOpenModal = () => {
+    setShowAiModal(true);
+  };
+
+  return (
     <div>
       <div className="mb-8">
         <Heading>Neue PR-Kampagne erstellen</Heading>
@@ -112,41 +141,52 @@ return (
           )}
         </Field>
 
-        {/* GEÄNDERT: Schritt 2 - <Label> wurde durch <div> und <h3> ersetzt */}
+        {/* Schritt 2: Pressemitteilung mit KI-Assistent */}
         <div className="border-t pt-8">
-            <h3 className="text-base font-semibold">Schritt 2: Pressemitteilung verfassen</h3>
-            <Text className="mb-2">Gib den Titel und den Inhalt deiner Mitteilung ein.</Text>
-            <div className="mt-4 space-y-4">
-              <Field>
-                <Label>Titel / Betreffzeile</Label>
-                <Input 
-                  value={campaignTitle}
-                  onChange={(e) => setCampaignTitle(e.target.value)}
-                  placeholder="Zukunftsweisende Partnerschaft bekannt gegeben..."
-                />
-              </Field>
-              <Field>
-                <Label>Inhalt</Label>
-                <RichTextEditor 
-                  content={pressReleaseContent}
-                  onChange={setPressReleaseContent}
-                />
-              </Field>
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-4">
+            <div>
+              <h3 className="text-base font-semibold">Schritt 2: Pressemitteilung verfassen</h3>
+              <Text>Gib den Titel und den Inhalt deiner Mitteilung ein oder nutze den KI-Assistenten.</Text>
             </div>
+            <Button 
+              onClick={handleOpenModal}
+              className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-4 py-2 rounded-lg self-start sm:self-auto"
+            >
+              <SparklesIcon className="w-5 h-5" />
+              KI-Assistent
+            </Button>
+          </div>
+          
+          <div className="mt-4 space-y-4">
+            <Field>
+              <Label>Titel / Betreffzeile</Label>
+              <Input 
+                value={campaignTitle}
+                onChange={(e) => setCampaignTitle(e.target.value)}
+                placeholder="Innovative Partnerschaft revolutioniert die Branche..."
+              />
+            </Field>
+            <Field>
+              <Label>Inhalt</Label>
+              <RichTextEditor 
+                content={pressReleaseContent}
+                onChange={setPressReleaseContent}
+              />
+            </Field>
+          </div>
         </div>
         
-        {/* GEÄNDERT: Schritt 3 - <Label> wurde durch <h3> ersetzt */}
+        {/* Schritt 3: Versand planen */}
         <div className="border-t pt-8">
-           <h3 className="text-base font-semibold text-zinc-400">Schritt 3: Versand planen (zukünftiges Feature)</h3>
-            <Text className="text-zinc-400">Hier wirst du den Versandzeitpunkt festlegen.</Text>
+          <h3 className="text-base font-semibold text-zinc-400">Schritt 3: Versand planen (zukünftiges Feature)</h3>
+          <Text className="text-zinc-400">Hier wirst du den Versandzeitpunkt festlegen.</Text>
         </div>
       </div>
       
-<div className="mt-8 flex justify-end gap-4">
+      <div className="mt-8 flex justify-end gap-4">
         <Link href="/dashboard/pr">
           <Button plain>Abbrechen</Button>
         </Link>
-        {/* GEÄNDERT: Button speichert jetzt den Entwurf */}
         <Button 
           color="indigo" 
           disabled={!isFormValid || isSaving}
@@ -155,6 +195,15 @@ return (
           {isSaving ? 'Speichern...' : 'Als Entwurf speichern'}
         </Button>
       </div>
+
+      {/* KI-Assistent Modal */}
+      {showAiModal && (
+        <AiAssistantModal
+          onClose={handleCloseModal}
+          onGenerate={handleAiGenerate}
+          existingContent={pressReleaseContent || ''}
+        />
+      )}
     </div>
   );
 }
