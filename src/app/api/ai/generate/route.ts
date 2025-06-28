@@ -1,4 +1,4 @@
-// src/app/api/ai/generate/route.ts
+// src/app/api/ai/generate/route.ts - OPTIMIERTE VERSION
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
@@ -13,6 +13,11 @@ interface GenerateRequest {
   prompt: string;
   mode: 'generate' | 'improve';
   existingContent?: string;
+  context?: {
+    industry?: string;
+    tone?: string;
+    audience?: string;
+  };
 }
 
 export async function POST(request: NextRequest) {
@@ -27,7 +32,7 @@ export async function POST(request: NextRequest) {
 
     // Request Body parsen
     const data: GenerateRequest = await request.json();
-    const { prompt, mode, existingContent } = data;
+    const { prompt, mode, existingContent, context } = data;
 
     // Validierung
     if (!prompt || prompt.trim() === '') {
@@ -39,7 +44,8 @@ export async function POST(request: NextRequest) {
 
     console.log('Generating press release with Gemini', { 
       mode, 
-      promptLength: prompt.length 
+      promptLength: prompt.length,
+      context: context 
     });
 
     // Gemini initialisieren
@@ -51,17 +57,32 @@ export async function POST(request: NextRequest) {
     let userPrompt: string;
 
     if (mode === 'improve' && existingContent) {
-      systemPrompt = `Du bist ein erfahrener PR-Experte und verbesserst bestehende deutsche Pressemitteilungen.
+      systemPrompt = `Du bist ein erfahrener Lektor für Pressemitteilungen mit 15+ Jahren Erfahrung bei führenden deutschen Medien.
 
-VERBESSERUNGS-GUIDELINES:
-- Behalte die grundlegende Struktur bei
-- Verbessere Klarheit und Verständlichkeit
-- Nutze journalistische Standards
-- Achte auf perfekte deutsche Rechtschreibung
-- Optimiere für die Zielgruppe
-- Behalte HTML-Formatierung bei
+AUFGABE: Verbessere die gegebene Pressemitteilung entsprechend der spezifischen Anfrage.
 
-Antworte NUR mit der verbesserten Pressemitteilung im HTML-Format.`;
+VERBESSERUNGS-BEREICHE:
+✓ Klarheit und Verständlichkeit
+✓ Journalistische Struktur optimieren
+✓ Sprachliche Qualität erhöhen
+✓ Faktenkonsistenz sicherstellen
+✓ Zielgruppen-Ansprache verbessern
+
+HÄUFIGE PROBLEME BEHEBEN:
+- Zu viele Adjektive → Konkrete Fakten
+- Passive Sprache → Aktive Formulierungen  
+- Unklare Statements → Präzise Aussagen
+- Fehlende W-Fragen → Vollständige Information
+- Schwache Headlines → Starke, faktische Schlagzeilen
+
+QUALITÄTS-STANDARDS:
+✓ Sachlich und objektiv, keine Werbesprache
+✓ Aktive Sprache, max. 15 Wörter pro Satz
+✓ Perfekte deutsche Rechtschreibung
+✓ Konkrete Fakten vor abstrakten Begriffen
+✓ Journalistische Standards (dpa-Stil)
+
+Behalte die HTML-Formatierung bei und antworte NUR mit der verbesserten Pressemitteilung.`;
 
       userPrompt = `Bestehende Pressemitteilung:
 ${existingContent}
@@ -71,27 +92,56 @@ Verbesserungsanfrage: ${prompt}
 Bitte verbessere die Pressemitteilung entsprechend der Anfrage:`;
 
     } else {
-      systemPrompt = `Du bist ein erfahrener PR-Experte und Journalist. Erstelle professionelle deutsche Pressemitteilungen.
+      // OPTIMIERTER HAUPT-PROMPT für Generierung
+      systemPrompt = `Du bist ein erfahrener PR-Experte und Journalist mit 15+ Jahren Erfahrung bei führenden deutschen Medienunternehmen (dpa, Reuters, Handelsblatt).
 
-STRUKTUR einer perfekten Pressemitteilung:
-1. **Headline**: Aussagekräftig, max. 80 Zeichen, fesselt Journalisten
-2. **Lead**: Beantwortet die 5 W-Fragen (Wer, Was, Wann, Wo, Warum)
-3. **Body**: Detaillierte Informationen, Hintergründe, Kontext
-4. **Zitate**: Authentische Statements (nutze Platzhalter wie "[CEO Name]")
-5. **Boilerplate**: Kurze Unternehmensbeschreibung
-6. **Kontakt**: Pressekontakt-Platzhalter
+AUFGABE: Erstelle eine professionelle deutsche Pressemitteilung mit folgender EXAKTER Struktur:
 
-STIL-GUIDELINES:
-- Sachlich und objektiv, keine Werbesprache
-- Kurze, prägnante Sätze (max. 20 Wörter)
-- Aktive Sprache, präsente Zeit
-- Journalistischer Stil, faktenfokussiert
-- Perfekte deutsche Rechtschreibung
-- HTML-Format mit <h1>, <p>, <blockquote> Tags
+<h1>Prägnante Schlagzeile (max. 80 Zeichen, aktive Sprache)</h1>
 
-Antworte NUR mit der fertigen Pressemitteilung im HTML-Format.`;
+<p><strong>Lead-Absatz mit 5 W-Fragen (Wer, Was, Wann, Wo, Warum) in 40-60 Wörtern</strong></p>
 
-      userPrompt = `Erstelle eine professionelle Pressemitteilung für: ${prompt}`;
+<p>Absatz 1: Hauptinformation ausführlich mit konkreten Details und Zahlen</p>
+
+<p>Absatz 2: Hintergrund, Kontext und Bedeutung für die Branche</p>
+
+<p>Absatz 3: Auswirkungen, Nutzen und Zukunftsperspektive</p>
+
+<blockquote>"Authentisches Zitat (20-35 Wörter) das die Kernbotschaft unterstützt", sagt [Name], [Position] bei [Unternehmen].</blockquote>
+
+<p><em>Über [Unternehmen]: [Kurze Unternehmensbeschreibung in 2-3 Sätzen als Platzhalter]</em></p>
+
+QUALITÄTS-STANDARDS:
+✓ Sachlich und objektiv, keine Werbesprache oder Superlative
+✓ Aktive Sprache, Präsens, max. 15 Wörter pro Satz
+✓ Perfekte deutsche Rechtschreibung und Grammatik
+✓ Journalistische Standards (dpa-Stil)
+✓ Konkrete Fakten und Zahlen vor abstrakten Begriffen
+✓ Zielgruppen-relevante Informationen
+✓ Newsworthy Hook in der Headline
+
+VERMEIDE unbedingt:
+- Werbesprache wie "revolutionär", "bahnbrechend", "einzigartig"
+- Passive Konstruktionen
+- Übertreibungen ohne Belege
+- Zu lange, verschachtelte Sätze
+- Fachbegriffe ohne Erklärung (außer für Fachmedien)
+
+Antworte AUSSCHLIESSLICH mit der strukturierten Pressemitteilung im HTML-Format. Keine Erklärungen oder Kommentare.`;
+
+      // Kontext-bewusster User-Prompt
+      let contextInfo = '';
+      if (context?.industry) {
+        contextInfo += `\nBRANCHE: ${context.industry}`;
+      }
+      if (context?.tone) {
+        contextInfo += `\nTONALITÄT: ${context.tone.toUpperCase()}`;
+      }
+      if (context?.audience) {
+        contextInfo += `\nZIELGRUPPE: ${context.audience}`;
+      }
+
+      userPrompt = `Erstelle eine professionelle Pressemitteilung für: ${prompt}${contextInfo}`;
     }
 
     // Gemini Anfrage
@@ -112,14 +162,17 @@ Antworte NUR mit der fertigen Pressemitteilung im HTML-Format.`;
 
     console.log('Press release generated successfully with Gemini', { 
       outputLength: generatedText.length,
-      model: "gemini-1.5-flash"
+      model: "gemini-1.5-flash",
+      mode: mode,
+      hasContext: !!context
     });
 
     return NextResponse.json({
       success: true,
       generatedText: generatedText,
       mode: mode,
-      aiProvider: 'gemini'
+      aiProvider: 'gemini',
+      timestamp: new Date().toISOString()
     });
 
   } catch (error: any) {
@@ -139,6 +192,11 @@ Antworte NUR mit der fertigen Pressemitteilung im HTML-Format.`;
     } else if (error.message?.includes('SAFETY')) {
       return NextResponse.json(
         { error: 'Content wurde von Gemini Safety-Filtern blockiert. Bitte formuliere anders.' },
+        { status: 400 }
+      );
+    } else if (error.message?.includes('RECITATION')) {
+      return NextResponse.json(
+        { error: 'Der generierte Inhalt war zu ähnlich zu bestehenden Texten. Bitte formuliere den Prompt anders.' },
         { status: 400 }
       );
     } else {
