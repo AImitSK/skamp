@@ -1,4 +1,4 @@
-// src/lib/ai/firebase-ai-service.ts - Mit neuen Cloud Run URLs
+// src/lib/ai/firebase-ai-service.ts - UPDATED für Next.js API Routes
 interface GenerateRequest {
   prompt: string;
   mode: 'generate' | 'improve';
@@ -23,10 +23,10 @@ interface TemplateResponse {
 }
 
 export class FirebaseAIService {
-  // Neue Cloud Run URLs
-  private readonly generateUrl = 'https://generatepressrelease-7b7vzequrq-uc.a.run.app';
-  private readonly templatesUrl = 'https://gettemplates-7b7vzequrq-uc.a.run.app';
-  private readonly healthUrl = 'https://healthcheck-7b7vzequrq-uc.a.run.app';
+  // NEU: Next.js API Routes statt Firebase Functions
+  private readonly generateUrl = '/api/ai/generate';
+  private readonly templatesUrl = '/api/ai/templates';
+  private readonly healthUrl = '/api/ai/health';
   
   async generatePressRelease(prompt: string): Promise<string> {
     try {
@@ -55,7 +55,7 @@ export class FirebaseAIService {
       return result.generatedText;
       
     } catch (error: any) {
-      console.error('Firebase AI Generation Error:', error);
+      console.error('AI Generation Error:', error);
       
       // Spezifische Fehlerbehandlung
       const message = error.message || 'Unbekannter Fehler';
@@ -65,8 +65,8 @@ export class FirebaseAIService {
         throw new Error('Dein Text wurde vom KI-Filter blockiert. Bitte formuliere anders und vermeide problematische Begriffe.');
       } else if (message.includes('Failed to fetch') || message.includes('NetworkError')) {
         throw new Error('Verbindung zum KI-Service fehlgeschlagen. Bitte prüfe deine Internetverbindung.');
-      } else if (message.includes('403') || message.includes('Forbidden')) {
-        throw new Error('KI-Service ist nicht öffentlich zugänglich. Bitte kontaktiere den Administrator.');
+      } else if (message.includes('nicht konfiguriert')) {
+        throw new Error('KI-Service ist nicht konfiguriert. Bitte setze GEMINI_API_KEY in den Umgebungsvariablen.');
       }
       
       throw new Error(`KI-Fehler: ${message}`);
@@ -101,13 +101,9 @@ export class FirebaseAIService {
       return result.generatedText;
       
     } catch (error: any) {
-      console.error('Firebase AI Improvement Error:', error);
+      console.error('AI Improvement Error:', error);
       
       const message = error.message || 'Unbekannter Fehler';
-      if (message.includes('403') || message.includes('Forbidden')) {
-        throw new Error('KI-Service ist nicht öffentlich zugänglich. Bitte kontaktiere den Administrator.');
-      }
-      
       throw new Error(`KI-Fehler: ${message}`);
     }
   }
@@ -134,7 +130,7 @@ export class FirebaseAIService {
       return result.templates;
       
     } catch (error: any) {
-      console.error('Firebase Templates Error:', error);
+      console.error('Templates Error:', error);
       
       // Fallback Templates bei Fehlern
       return [
