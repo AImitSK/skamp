@@ -1,4 +1,4 @@
-// src/lib/firebase/pr-service.ts - SAUBERE VERSION
+// src/lib/firebase/pr-service.ts - ERWEITERT mit Asset-Integration
 import {
   collection,
   doc,
@@ -12,9 +12,12 @@ import {
   orderBy,
   serverTimestamp,
   writeBatch,
+  Timestamp,
 } from 'firebase/firestore';
 import { db } from './client-init';
-import { PRCampaign } from '@/types/pr';
+import { PRCampaign, CampaignAssetAttachment } from '@/types/pr';
+import { mediaService } from './media-service';
+import { ShareLink } from '@/types/media';
 
 export const prService = {
   
@@ -97,16 +100,45 @@ export const prService = {
   },
 
   async delete(campaignId: string): Promise<void> {
+    // NEU: Lösche auch den Share-Link wenn vorhanden
+    const campaign = await this.getById(campaignId);
+    if (campaign?.assetShareLinkId) {
+      try {
+        await mediaService.deleteShareLink(campaign.assetShareLinkId);
+      } catch (error) {
+        console.warn('Fehler beim Löschen des Share-Links:', error);
+      }
+    }
+    
     await deleteDoc(doc(db, 'pr_campaigns', campaignId));
   },
 
   async deleteMany(campaignIds: string[]): Promise<void> {
     const batch = writeBatch(db);
-    campaignIds.forEach(id => {
+    
+    // NEU: Sammle Share-Links zum Löschen
+    const shareLinksToDelete: string[] = [];
+    
+    for (const id of campaignIds) {
+      const campaign = await this.getById(id);
+      if (campaign?.assetShareLinkId) {
+        shareLinksToDelete.push(campaign.assetShareLinkId);
+      }
+      
       const docRef = doc(db, 'pr_campaigns', id);
       batch.delete(docRef);
-    });
+    }
+    
     await batch.commit();
+    
+    // NEU: Lösche Share-Links nach dem Batch
+    for (const shareLinkId of shareLinksToDelete) {
+      try {
+        await mediaService.deleteShareLink(shareLinkId);
+      } catch (error) {
+        console.warn('Fehler beim Löschen des Share-Links:', error);
+      }
+    }
   },
 
   async updateStatus(campaignId: string, status: string): Promise<void> {
@@ -130,6 +162,7 @@ export const prService = {
     sent: number;
     archived: number;
     totalRecipients: number;
+    totalAssetsShared: number; // NEU
   }> {
     const campaigns = await this.getAll(userId);
     
@@ -137,6 +170,8 @@ export const prService = {
       acc.total++;
       acc[campaign.status as keyof typeof acc]++;
       acc.totalRecipients += campaign.recipientCount || 0;
+      // NEU: Zähle geteilte Assets
+      acc.totalAssetsShared += campaign.attachedAssets?.length || 0;
       return acc;
     }, {
       total: 0,
@@ -144,7 +179,8 @@ export const prService = {
       scheduled: 0,
       sent: 0,
       archived: 0,
-      totalRecipients: 0
+      totalRecipients: 0,
+      totalAssetsShared: 0
     });
   },
 
@@ -155,7 +191,234 @@ export const prService = {
     return allCampaigns.filter(campaign => 
       campaign.title.toLowerCase().includes(term) ||
       campaign.distributionListName.toLowerCase().includes(term) ||
-      campaign.contentHtml.toLowerCase().includes(term)
+      campaign.contentHtml.toLowerCase().includes(term) ||
+      campaign.clientName?.toLowerCase().includes(term) // NEU: Auch nach Kunde suchen
     );
+  },
+
+  // === NEU: ASSET-MANAGEMENT FUNKTIONEN ===
+
+  /**
+   * Fügt Assets zu einer Kampagne hinzu
+   */
+  async attachAssets(
+    campaignId: string, 
+    assets: CampaignAssetAttachment[]
+  ): Promise<void> {
+    const campaign = await this.getById(campaignId);
+    if (!campaign) {
+      throw new Error('Kampagne nicht gefunden');
+    }
+
+    // Merge mit bestehenden Assets
+    const existingAssets = campaign.attachedAssets || [];
+    const newAssetIds = new Set(assets.map(a => a.assetId || a.folderId));
+    
+    // Entferne Duplikate
+    const filteredExisting = existingAssets.filter(
+      a => !newAssetIds.has(a.assetId || a.folderId)
+    );
+
+    const updatedAssets = [...filteredExisting, ...assets];
+
+    await this.update(campaignId, {
+      attachedAssets: updatedAssets
+    });
+  },
+
+  /**
+   * Entfernt Assets von einer Kampagne
+   */
+  async removeAssets(
+    campaignId: string,
+    assetIds: string[]
+  ): Promise<void> {
+    const campaign = await this.getById(campaignId);
+    if (!campaign) {
+      throw new Error('Kampagne nicht gefunden');
+    }
+
+    const assetIdSet = new Set(assetIds);
+    const updatedAssets = (campaign.attachedAssets || []).filter(
+      attachment => !assetIdSet.has(attachment.assetId || attachment.folderId || '')
+    );
+
+    await this.update(campaignId, {
+      attachedAssets: updatedAssets
+    });
+  },
+
+  /**
+   * Erstellt einen Share-Link für alle Kampagnen-Assets
+   */
+  async createCampaignShareLink(
+    campaign: PRCampaign,
+    settings?: {
+      allowDownload?: boolean;
+      passwordProtected?: boolean;
+      password?: string;
+      expiresInDays?: number;
+      watermark?: boolean;
+    }
+  ): Promise<ShareLink> {
+    if (!campaign.attachedAssets || campaign.attachedAssets.length === 0) {
+      throw new Error('Keine Assets zum Teilen vorhanden');
+    }
+
+    // Sammle alle Asset- und Folder-IDs
+    const assetIds: string[] = [];
+    const folderIds: string[] = [];
+
+    campaign.attachedAssets.forEach(attachment => {
+      if (attachment.type === 'asset' && attachment.assetId) {
+        assetIds.push(attachment.assetId);
+      } else if (attachment.type === 'folder' && attachment.folderId) {
+        folderIds.push(attachment.folderId);
+      }
+    });
+
+    // Bestimme Share-Type
+    let shareType: 'file' | 'folder' | 'collection' = 'collection';
+    let primaryTargetId = '';
+
+    if (assetIds.length === 1 && folderIds.length === 0) {
+      shareType = 'file';
+      primaryTargetId = assetIds[0];
+    } else if (folderIds.length === 1 && assetIds.length === 0) {
+      shareType = 'folder';
+      primaryTargetId = folderIds[0];
+    } else {
+      // Collection: Verwende die Kampagnen-ID als Target
+      primaryTargetId = campaign.id!;
+    }
+
+    // Erstelle Share-Link
+    const shareData: Omit<ShareLink, 'id' | 'shareId' | 'accessCount' | 'createdAt' | 'lastAccessedAt'> = {
+      userId: campaign.userId,
+      type: shareType,
+      targetId: primaryTargetId,
+      targetIds: [...assetIds, ...folderIds],
+      assetCount: assetIds.length + folderIds.length,
+      title: `Pressematerial: ${campaign.title}`,
+      description: campaign.clientName 
+        ? `Medienmaterial für die Pressemitteilung von ${campaign.clientName}`
+        : 'Medienmaterial für die Pressemitteilung',
+      isActive: true,
+      
+      // Kampagnen-Kontext
+      context: {
+        type: 'pr_campaign',
+        campaignId: campaign.id!,
+        campaignTitle: campaign.title,
+        senderCompany: campaign.clientName
+      },
+      
+      settings: {
+        downloadAllowed: settings?.allowDownload !== false,
+        showFileList: true,
+        passwordRequired: settings?.password,
+        expiresAt: settings?.expiresInDays 
+          ? Timestamp.fromDate(new Date(Date.now() + settings.expiresInDays * 24 * 60 * 60 * 1000))
+          : undefined,
+        watermarkEnabled: settings?.watermark,
+        trackingEnabled: true
+      }
+    };
+
+    const shareLink = await mediaService.createShareLink(shareData);
+
+    // Update Kampagne mit Share-Link
+    await this.update(campaign.id!, {
+      assetShareLinkId: shareLink.id,
+      assetShareUrl: `${window.location.origin}/share/${shareLink.shareId}`
+    });
+
+    return shareLink;
+  },
+
+  /**
+   * Holt alle Assets einer Kampagne mit aktuellen Metadaten
+   */
+  async getCampaignAssets(
+    campaignId: string
+  ): Promise<{
+    assets: any[];
+    folders: any[];
+    metadata: Map<string, any>;
+  }> {
+    const campaign = await this.getById(campaignId);
+    if (!campaign || !campaign.attachedAssets) {
+      return { assets: [], folders: [], metadata: new Map() };
+    }
+
+    const assetIds = campaign.attachedAssets
+      .filter(a => a.type === 'asset' && a.assetId)
+      .map(a => a.assetId!);
+    
+    const folderIds = campaign.attachedAssets
+      .filter(a => a.type === 'folder' && a.folderId)
+      .map(a => a.folderId!);
+
+    // Lade Assets und Folders parallel
+    const [assets, folders] = await Promise.all([
+      Promise.all(assetIds.map(id => mediaService.getMediaAssetById(id))),
+      Promise.all(folderIds.map(id => mediaService.getFolder(id)))
+    ]);
+
+    // Erstelle Metadata-Map mit historischen Daten
+    const metadata = new Map<string, any>();
+    campaign.attachedAssets.forEach(attachment => {
+      const key = attachment.assetId || attachment.folderId || '';
+      metadata.set(key, attachment.metadata);
+    });
+
+    return {
+      assets: assets.filter(Boolean),
+      folders: folders.filter(Boolean),
+      metadata
+    };
+  },
+
+  /**
+   * Aktualisiert die Asset-Einstellungen einer Kampagne
+   */
+  async updateAssetSettings(
+    campaignId: string,
+    settings: PRCampaign['assetSettings']
+  ): Promise<void> {
+    await this.update(campaignId, {
+      assetSettings: settings
+    });
+
+    // Wenn ein Share-Link existiert, aktualisiere auch dessen Einstellungen
+    const campaign = await this.getById(campaignId);
+    if (campaign?.assetShareLinkId) {
+      const shareLinkRef = doc(db, 'media_shares', campaign.assetShareLinkId);
+      await updateDoc(shareLinkRef, {
+        'settings.downloadAllowed': settings?.allowDownload,
+        'settings.passwordRequired': settings?.password,
+        'settings.watermarkEnabled': settings?.watermark,
+        'settings.expiresAt': settings?.expiresAt,
+        updatedAt: serverTimestamp()
+      });
+    }
+  },
+
+  /**
+   * Prüft ob eine Kampagne Assets hat
+   */
+  hasAssets(campaign: PRCampaign): boolean {
+    return (campaign.attachedAssets?.length || 0) > 0;
+  },
+
+  /**
+   * Zählt die Assets einer Kampagne
+   */
+  getAssetCount(campaign: PRCampaign): { assets: number; folders: number; total: number } {
+    const attachments = campaign.attachedAssets || [];
+    const assets = attachments.filter(a => a.type === 'asset').length;
+    const folders = attachments.filter(a => a.type === 'folder').length;
+    
+    return { assets, folders, total: assets + folders };
   }
 };
