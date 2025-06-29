@@ -1,4 +1,4 @@
-// src/components/pr/AiAssistantModal.tsx - Komplett ohne Label-Fehler
+// src/components/pr/AiAssistantModal.tsx - AKTUALISIERT mit Upgrade-Hinweisen
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -9,7 +9,8 @@ import {
   DocumentTextIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  ArrowUpIcon
 } from '@heroicons/react/24/outline';
 import { Button } from '@/components/button';
 import { Field, Label } from '@/components/fieldset';
@@ -28,6 +29,13 @@ interface Template {
   prompt: string;
 }
 
+/**
+ * Legacy AI Assistant Modal
+ * 
+ * ⚠️ HINWEIS: Diese Komponente wird durch StructuredGenerationModal ersetzt.
+ * Sie bleibt für Rückwärtskompatibilität bestehen, aber neue Implementierungen
+ * sollten das neue strukturierte Modal verwenden.
+ */
 export default function AiAssistantModal({ 
   onClose, 
   onGenerate, 
@@ -41,6 +49,7 @@ export default function AiAssistantModal({
   const [mode, setMode] = useState<'generate' | 'improve'>(existingContent ? 'improve' : 'generate');
   const [templates, setTemplates] = useState<Template[]>([]);
   const [isHealthy, setIsHealthy] = useState(true);
+  const [showUpgradeNotice, setShowUpgradeNotice] = useState(true);
 
   // Service Health Check
   useEffect(() => {
@@ -152,7 +161,7 @@ export default function AiAssistantModal({
             <div className="flex items-center gap-3">
               <SparklesIcon className="h-6 w-6 text-indigo-600" />
               <DialogTitle className="text-lg font-semibold">
-                KI-Assistent powered by Google Gemini
+                KI-Assistent (Legacy Version)
               </DialogTitle>
               {isHealthy && (
                 <CheckCircleIcon className="h-5 w-5 text-green-500" title="Service läuft" />
@@ -164,6 +173,38 @@ export default function AiAssistantModal({
           </div>
 
           <div className="flex-1 overflow-y-auto p-6">
+            {/* Upgrade Notice */}
+            {showUpgradeNotice && (
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-start">
+                  <ArrowUpIcon className="h-5 w-5 text-blue-600 mt-0.5 mr-3" />
+                  <div className="flex-1">
+                    <h3 className="text-sm font-medium text-blue-900">
+                      🚀 Neue strukturierte KI-Generierung verfügbar!
+                    </h3>
+                    <p className="mt-1 text-sm text-blue-700">
+                      Das neue strukturierte Modal bietet getrennte Felder für Headline und Content, 
+                      bessere Templates und professionelle journalistische Standards.
+                    </p>
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        onClick={() => window.location.reload()} // Placeholder für Upgrade
+                        className="text-sm text-blue-600 hover:text-blue-500 font-medium"
+                      >
+                        Zum neuen Modal wechseln →
+                      </button>
+                      <button
+                        onClick={() => setShowUpgradeNotice(false)}
+                        className="text-sm text-blue-600 hover:text-blue-500"
+                      >
+                        Ausblenden
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Service Status Warning */}
             {!isHealthy && (
               <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
@@ -229,7 +270,7 @@ export default function AiAssistantModal({
                   )}
                 </Field>
 
-                {/* Template Prompts - OHNE Label, nur mit div */}
+                {/* Template Prompts */}
                 {mode === 'generate' && templates.length > 0 && (
                   <div>
                     <p className="text-sm font-medium text-gray-700 mb-2">Oder wähle eine Vorlage:</p>
@@ -267,9 +308,23 @@ export default function AiAssistantModal({
                     </>
                   )}
                 </Button>
+
+                {/* Legacy-Hinweis */}
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                  <div className="flex items-start">
+                    <InformationCircleIcon className="h-4 w-4 text-yellow-600 mt-0.5 mr-2" />
+                    <div className="text-xs text-yellow-700">
+                      <p className="font-medium">Legacy-Version</p>
+                      <p className="mt-1">
+                        Dies ist die alte Version des KI-Assistenten. 
+                        Für bessere Ergebnisse verwende das neue strukturierte Modal.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              {/* Output Seite - OHNE Label, nur mit div */}
+              {/* Output Seite */}
               <div className="space-y-4">
                 <p className="text-base font-medium text-gray-700">Generierter Text:</p>
                 <div className="border rounded-lg bg-gray-50 min-h-[400px] max-h-[500px] overflow-y-auto">
@@ -307,6 +362,22 @@ export default function AiAssistantModal({
                     </Button>
                   </div>
                 )}
+
+                {/* Quality Notice für Legacy */}
+                {generatedText && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                    <div className="flex items-start">
+                      <InformationCircleIcon className="h-4 w-4 text-amber-600 mt-0.5 mr-2" />
+                      <div className="text-xs text-amber-700">
+                        <p className="font-medium">💡 Tipp für bessere Qualität</p>
+                        <p className="mt-1">
+                          Das neue strukturierte Modal bietet bessere journalistische Standards,
+                          getrennte Headline/Content-Generierung und optimierte Prompts.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -315,12 +386,12 @@ export default function AiAssistantModal({
               <div className="flex items-start">
                 <InformationCircleIcon className="h-5 w-5 text-blue-600 mt-0.5 mr-3" />
                 <div className="text-sm text-blue-700">
-                  <p className="font-medium">🤖 Powered by Google Gemini</p>
+                  <p className="font-medium">🤖 Powered by Google Gemini (Legacy Mode)</p>
                   <ul className="mt-1 list-disc list-inside space-y-1">
-                    <li>Hochmoderne KI für professionelle Pressemitteilungen</li>
+                    <li>Einfache Text-Generierung ohne Struktur</li>
+                    <li>Basis-Templates für schnelle Erstellung</li>
+                    <li>Für bessere Ergebnisse: Neues strukturiertes Modal nutzen</li>
                     <li>Sichere Verarbeitung über Firebase Functions</li>
-                    <li>Optimiert für deutsche Texte und Journalismus</li>
-                    <li>Du kannst Texte mehrfach überarbeiten lassen</li>
                   </ul>
                 </div>
               </div>

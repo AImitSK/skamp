@@ -1,4 +1,4 @@
-// src/app/dashboard/pr/campaigns/edit/[campaignId]/page.tsx
+// src/app/dashboard/pr/campaigns/edit/[campaignId]/page.tsx - KORRIGIERT
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -16,8 +16,18 @@ import { Select } from '@/components/select';
 import { Input } from '@/components/input';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import Link from 'next/link';
-import { SparklesIcon } from "@heroicons/react/24/outline";
-import AiAssistantModal from "@/components/pr/AiAssistantModal";
+import { SparklesIcon, CheckCircleIcon, ClockIcon } from "@heroicons/react/24/outline";
+
+// Dynamic import für das kompatible Modal
+import dynamic from 'next/dynamic';
+import { LegacyGenerationResult } from '@/lib/ai/interface-adapters';
+
+const CompatibleStructuredModal = dynamic(() => import('@/components/pr/ai/CompatibleStructuredModal'), {
+  ssr: false
+});
+
+// Verwende Legacy Generation Result für Kompatibilität
+type GenerationResult = LegacyGenerationResult;
 
 export default function EditPRCampaignPage() {
   const { user } = useAuth();
@@ -25,19 +35,22 @@ export default function EditPRCampaignPage() {
   const params = useParams();
   const campaignId = params.campaignId as string;
 
+  // Form State
   const [campaign, setCampaign] = useState<PRCampaign | null>(null);
   const [availableLists, setAvailableLists] = useState<DistributionList[]>([]);
-  
   const [selectedListId, setSelectedListId] = useState<string>('');
   const [campaignTitle, setCampaignTitle] = useState('');
   const [pressReleaseContent, setPressReleaseContent] = useState('');
 
+  // Loading & Error State
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // State für die Sichtbarkeit des KI-Modals
+  // KI-Assistent State
   const [showAiModal, setShowAiModal] = useState(false);
+  const [aiMetadata, setAiMetadata] = useState<any>(null);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   const loadCampaignData = useCallback(async () => {
     if (!user || !campaignId) return;
@@ -62,6 +75,16 @@ export default function EditPRCampaignPage() {
       setCampaignTitle(campaignData.title);
       setSelectedListId(campaignData.distributionListId);
       setPressReleaseContent(campaignData.contentHtml);
+
+      // KI-Metadata laden (falls vorhanden)
+      try {
+        const metadata = localStorage.getItem(`campaign_ai_metadata_${campaignId}`);
+        if (metadata) {
+          setAiMetadata(JSON.parse(metadata));
+        }
+      } catch (e) {
+        // Ignoriere Fehler beim Laden der Metadata
+      }
 
     } catch (err) {
       console.error("Fehler beim Laden der Kampagne:", err);
@@ -92,7 +115,10 @@ export default function EditPRCampaignPage() {
       };
       
       await prService.update(campaign.id!, updatedData);
-      alert('Änderungen gespeichert!');
+      
+      // Erfolgs-Nachricht anzeigen
+      setShowSuccessMessage(true);
+      setTimeout(() => setShowSuccessMessage(false), 3000);
 
     } catch (error) {
       console.error("Fehler beim Speichern der Kampagne:", error);
@@ -100,6 +126,40 @@ export default function EditPRCampaignPage() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // KI-Content Handler mit intelligenter Übernahme
+  const handleAiGenerate = (result: GenerationResult) => {
+    console.log('🤖 AI Generation Result (Edit Mode):', result);
+
+    // Intelligente Feld-Übernahme
+    if (result.structured?.headline) {
+      setCampaignTitle(result.structured.headline);
+    }
+    setPressReleaseContent(result.content);
+
+    // Metadata aktualisieren
+    if (result.metadata) {
+      setAiMetadata({
+        generatedBy: result.metadata.generatedBy,
+        timestamp: result.metadata.timestamp,
+        context: result.metadata.context
+      });
+
+      // Metadata in localStorage speichern
+      if (campaign?.id) {
+        localStorage.setItem(`campaign_ai_metadata_${campaign.id}`, JSON.stringify({
+          generatedBy: result.metadata.generatedBy,
+          timestamp: result.metadata.timestamp,
+          context: result.metadata.context
+        }));
+      }
+    }
+
+    // Modal schließen und Success anzeigen
+    setShowAiModal(false);
+    setShowSuccessMessage(true);
+    setTimeout(() => setShowSuccessMessage(false), 5000);
   };
 
   if (loading) return <div className="p-8 text-center">Lade Kampagnen-Daten...</div>;
@@ -110,7 +170,38 @@ export default function EditPRCampaignPage() {
       <div className="mb-8">
         <Heading>Kampagne bearbeiten</Heading>
         <Text className="mt-1">Du bearbeitest den Entwurf: "{campaign?.title}"</Text>
+        
+        {/* Campaign Metadata */}
+        {campaign && (
+          <div className="mt-3 flex items-center gap-4 text-sm text-gray-600">
+            <div className="flex items-center">
+              <ClockIcon className="h-4 w-4 mr-1" />
+              Erstellt: {campaign.createdAt?.toDate().toLocaleDateString('de-DE')}
+            </div>
+            {aiMetadata && (
+              <div className="flex items-center text-indigo-600">
+                <SparklesIcon className="h-4 w-4 mr-1" />
+                KI-generiert: {new Date(aiMetadata.timestamp).toLocaleDateString('de-DE')}
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* Success Message */}
+      {showSuccessMessage && (
+        <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <CheckCircleIcon className="h-5 w-5 text-green-600 mr-2" />
+            <div>
+              <h4 className="font-medium text-green-900">Änderungen gespeichert!</h4>
+              <p className="text-sm text-green-700 mt-1">
+                Die Kampagne wurde erfolgreich aktualisiert.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-8 p-8 border rounded-lg bg-white">
         <Field>
@@ -126,26 +217,54 @@ export default function EditPRCampaignPage() {
         </Field>
 
         <div className="border-t pt-8">
-            <div className="flex justify-between items-center mb-2">
-                <div>
-                    <h3 className="text-base font-semibold">Schritt 2: Pressemitteilung verfassen</h3>
-                    <Text>Gib den Titel und den Inhalt deiner Mitteilung ein.</Text>
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h3 className="text-base font-semibold">Schritt 2: Pressemitteilung verfassen</h3>
+              <Text>Gib den Titel und den Inhalt deiner Mitteilung ein oder nutze den KI-Assistenten.</Text>
+              
+              {/* KI-Metadata anzeigen */}
+              {aiMetadata && (
+                <div className="mt-2 p-2 bg-indigo-50 border border-indigo-200 rounded text-sm">
+                  <div className="flex items-center text-indigo-700">
+                    <SparklesIcon className="h-4 w-4 mr-1" />
+                    <span className="font-medium">Von KI generiert</span>
+                    <span className="ml-2">
+                      {new Date(aiMetadata.timestamp).toLocaleString('de-DE')}
+                    </span>
+                    {aiMetadata.context?.industry && (
+                      <span className="ml-2 px-2 py-0.5 bg-indigo-100 rounded text-xs">
+                        {aiMetadata.context.industry}
+                      </span>
+                    )}
+                    {aiMetadata.context?.tone && (
+                      <span className="ml-1 px-2 py-0.5 bg-indigo-100 rounded text-xs">
+                        {aiMetadata.context.tone}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <Button plain onClick={() => setShowAiModal(true)}>
-                    <SparklesIcon className="w-5 h-5 mr-2 text-indigo-500"/>
-                    KI-Assistent verwenden
-                </Button>
+              )}
             </div>
-            <div className="mt-4 space-y-4">
-              <Field>
-                <Label>Titel / Betreffzeile</Label>
-                <Input value={campaignTitle} onChange={(e) => setCampaignTitle(e.target.value)} />
-              </Field>
-              <Field>
-                <Label>Inhalt</Label>
-                <RichTextEditor content={pressReleaseContent} onChange={setPressReleaseContent} />
-              </Field>
-            </div>
+            
+            <Button 
+              onClick={() => setShowAiModal(true)}
+              className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-4 py-2 rounded-lg"
+            >
+              <SparklesIcon className="w-5 h-5"/>
+              KI-Assistent verwenden
+            </Button>
+          </div>
+          
+          <div className="mt-4 space-y-4">
+            <Field>
+              <Label>Titel / Betreffzeile</Label>
+              <Input value={campaignTitle} onChange={(e) => setCampaignTitle(e.target.value)} />
+            </Field>
+            <Field>
+              <Label>Inhalt</Label>
+              <RichTextEditor content={pressReleaseContent} onChange={setPressReleaseContent} />
+            </Field>
+          </div>
         </div>
         
         <div className="border-t pt-8">
@@ -163,12 +282,14 @@ export default function EditPRCampaignPage() {
         </Button>
       </div>
 
+      {/* Kompatibles strukturiertes KI-Modal */}
       {showAiModal && (
-        <AiAssistantModal
+        <CompatibleStructuredModal
           onClose={() => setShowAiModal(false)}
-          onGenerate={(generatedText) => {
-            // Füge den von der KI generierten Text in den Editor ein
-            setPressReleaseContent(generatedText);
+          onGenerate={handleAiGenerate}
+          existingContent={{
+            title: campaignTitle,
+            content: pressReleaseContent
           }}
         />
       )}

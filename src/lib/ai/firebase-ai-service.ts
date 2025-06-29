@@ -1,4 +1,5 @@
-// src/lib/ai/firebase-ai-service.ts - UPDATED für Next.js API Routes
+// src/lib/ai/firebase-ai-service.ts - KORRIGIERT (ohne Enhanced Service)
+
 interface GenerateRequest {
   prompt: string;
   mode: 'generate' | 'improve';
@@ -22,8 +23,10 @@ interface TemplateResponse {
   templates: Template[];
 }
 
+/**
+ * Firebase AI Service - Direkte API-Kommunikation
+ */
 export class FirebaseAIService {
-  // NEU: Next.js API Routes statt Firebase Functions
   private readonly generateUrl = '/api/ai/generate';
   private readonly templatesUrl = '/api/ai/templates';
   private readonly healthUrl = '/api/ai/health';
@@ -57,7 +60,6 @@ export class FirebaseAIService {
     } catch (error: any) {
       console.error('AI Generation Error:', error);
       
-      // Spezifische Fehlerbehandlung
       const message = error.message || 'Unbekannter Fehler';
       if (message.includes('Gemini Quota')) {
         throw new Error('KI-Dienst temporär ausgelastet. Bitte versuche es in wenigen Minuten erneut.');
