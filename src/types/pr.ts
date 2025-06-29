@@ -32,8 +32,8 @@ export interface CampaignAssetAttachment {
     };
   };
   
-  // Tracking
-  attachedAt: Timestamp;
+  // Tracking - GEÄNDERT: attachedAt ist jetzt optional
+  attachedAt?: Timestamp;
   attachedBy: string;
 }
 

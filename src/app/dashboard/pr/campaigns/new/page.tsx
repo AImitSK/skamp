@@ -1,39 +1,304 @@
-// src/app/dashboard/pr/campaigns/new/page.tsx - Customer-First Version
+// src/app/dashboard/pr/campaigns/new/page.tsx - Bereinigt und Gefixt
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { listsService } from '@/lib/firebase/lists-service';
 import { prService } from '@/lib/firebase/pr-service';
+import { mediaService } from '@/lib/firebase/media-service';
 import { DistributionList } from '@/types/lists';
-import { PRCampaign } from '@/types/pr';
+import { PRCampaign, CampaignAssetAttachment } from '@/types/pr';
+import { MediaAsset, MediaFolder } from '@/types/media';
 import { GenerationResult } from '@/types/ai';
 import { Heading } from '@/components/heading';
 import { Text } from '@/components/text';
 import { Button } from '@/components/button';
-import { Field, Label } from '@/components/fieldset';
-import { Select } from '@/components/select';
+import { Field, Label, Description } from '@/components/fieldset';
 import { Input } from '@/components/input';
 import { RichTextEditor } from '@/components/RichTextEditor';
+import { Badge } from '@/components/badge';
 import { 
   SparklesIcon, 
   CheckCircleIcon, 
-  ExclamationTriangleIcon,
   BuildingOfficeIcon,
   UsersIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  PhotoIcon,
+  XMarkIcon,
+  PlusIcon,
+  FolderIcon,
+  DocumentIcon,
+  ArrowUpTrayIcon
 } from "@heroicons/react/24/outline";
 import Link from 'next/link';
 
 // Import Customer Selector
 import { CustomerSelector } from '@/components/pr/CustomerSelector';
+import { ListSelector } from '@/components/pr/ListSelector';
 
 // Dynamic import für das neue Modal
 import dynamic from 'next/dynamic';
 const StructuredGenerationModal = dynamic(() => import('@/components/pr/ai/StructuredGenerationModal'), {
   ssr: false
 });
+
+// Asset-Selector Modal (gefixt ohne doppelte Keys)
+function AssetSelectorModal({ 
+  isOpen, 
+  onClose, 
+  clientId,
+  clientName,
+  onAssetsSelected,
+  existingAssets = []
+}: { 
+  isOpen: boolean;
+  onClose: () => void;
+  clientId: string;
+  clientName?: string;
+  onAssetsSelected: (assets: CampaignAssetAttachment[]) => void;
+  existingAssets?: CampaignAssetAttachment[];
+}) {
+  const [assets, setAssets] = useState<MediaAsset[]>([]);
+  const [folders, setFolders] = useState<MediaFolder[]>([]);
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+
+  // Initialisiere mit bereits ausgewählten Assets
+  useEffect(() => {
+    if (isOpen && existingAssets.length > 0) {
+      const existing = new Set<string>();
+      existingAssets.forEach(asset => {
+        if (asset.type === 'asset' && asset.assetId) {
+          existing.add(asset.assetId);
+        } else if (asset.type === 'folder' && asset.folderId) {
+          existing.add(asset.folderId);
+        }
+      });
+      setSelectedItems(existing);
+    }
+  }, [isOpen, existingAssets]);
+
+  useEffect(() => {
+    if (isOpen && user && clientId) {
+      loadClientMedia();
+    }
+  }, [isOpen, user, clientId]);
+
+  const loadClientMedia = async () => {
+    if (!user || !clientId) return;
+    
+    setLoading(true);
+    try {
+      const { assets: clientAssets, folders: clientFolders } = await mediaService.getMediaByClientId(
+        user.uid,
+        clientId
+      );
+      
+      // Dedupliziere Assets basierend auf ID
+      const uniqueAssets = clientAssets.filter((asset, index, self) =>
+        index === self.findIndex((a) => a.id === asset.id)
+      );
+      
+      const uniqueFolders = clientFolders.filter((folder, index, self) =>
+        index === self.findIndex((f) => f.id === folder.id)
+      );
+      
+      setAssets(uniqueAssets);
+      setFolders(uniqueFolders);
+    } catch (error) {
+      console.error('Fehler beim Laden der Medien:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleSelection = (id: string) => {
+    const newSelection = new Set(selectedItems);
+    if (newSelection.has(id)) {
+      newSelection.delete(id);
+    } else {
+      newSelection.add(id);
+    }
+    setSelectedItems(newSelection);
+  };
+
+  const handleConfirm = () => {
+    const attachments: CampaignAssetAttachment[] = [];
+    
+    // Assets hinzufügen
+    assets.forEach(asset => {
+      if (selectedItems.has(asset.id!)) {
+        attachments.push({
+          id: `asset-${asset.id}`,
+          type: 'asset',
+          assetId: asset.id,
+          metadata: {
+            fileName: asset.fileName,
+            fileType: asset.fileType,
+            description: asset.description || '',
+            thumbnailUrl: asset.downloadUrl
+          },
+          attachedAt: null as any, // Placeholder - will be removed before saving
+          attachedBy: user?.uid || ''
+        });
+      }
+    });
+
+    // Ordner hinzufügen
+    folders.forEach(folder => {
+      if (selectedItems.has(folder.id!)) {
+        attachments.push({
+          id: `folder-${folder.id}`,
+          type: 'folder',
+          folderId: folder.id,
+          metadata: {
+            folderName: folder.name,
+            description: folder.description || ''
+          },
+          attachedAt: null as any, // Placeholder - will be removed before saving
+          attachedBy: user?.uid || ''
+        });
+      }
+    });
+
+    onAssetsSelected(attachments);
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-25" onClick={onClose} />
+        
+        <div className="relative bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] flex flex-col">
+          {/* Header */}
+          <div className="px-6 py-4 border-b">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold">Medien auswählen</h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  Wähle Medien von {clientName || 'diesem Kunden'} aus
+                </p>
+              </div>
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto p-6">
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+                <p className="mt-4 text-gray-500">Lade Medien...</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Ordner */}
+                {folders.length > 0 && (
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-3">Ordner</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {folders.map(folder => (
+                        <button
+                          key={`folder-${folder.id}`}
+                          onClick={() => toggleSelection(folder.id!)}
+                          className={`p-4 rounded-lg border-2 transition-all ${
+                            selectedItems.has(folder.id!)
+                              ? 'border-indigo-500 bg-indigo-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <FolderIcon className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                          <p className="text-sm font-medium truncate">{folder.name}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Assets */}
+                {assets.length > 0 && (
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-3">Dateien</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {assets.map(asset => (
+                        <button
+                          key={`asset-${asset.id}`}
+                          onClick={() => toggleSelection(asset.id!)}
+                          className={`p-3 rounded-lg border-2 transition-all ${
+                            selectedItems.has(asset.id!)
+                              ? 'border-indigo-500 bg-indigo-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          {asset.fileType.startsWith('image/') ? (
+                            <img 
+                              src={asset.downloadUrl} 
+                              alt={asset.fileName}
+                              className="h-16 w-full object-cover rounded mb-2"
+                            />
+                          ) : (
+                            <DocumentIcon className="h-16 w-16 text-gray-400 mx-auto mb-2" />
+                          )}
+                          <p className="text-xs font-medium truncate">{asset.fileName}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {assets.length === 0 && folders.length === 0 && (
+                  <div className="text-center py-12">
+                    <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500 mb-4">Keine Medien für diesen Kunden gefunden</p>
+                    <Link 
+                      href={`/dashboard/mediathek?uploadFor=${clientId}`}
+                      target="_blank"
+                      className="inline-flex items-center text-indigo-600 hover:text-indigo-500"
+                    >
+                      <ArrowUpTrayIcon className="h-4 w-4 mr-1" />
+                      Medien in neuem Tab hochladen
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="px-6 py-4 border-t bg-gray-50">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-gray-600">
+                {selectedItems.size} ausgewählt
+              </p>
+              <div className="flex gap-3">
+                <Button plain onClick={onClose}>
+                  Abbrechen
+                </Button>
+                <Button 
+                  color="indigo" 
+                  onClick={handleConfirm}
+                  disabled={selectedItems.size === 0}
+                >
+                  Auswahl übernehmen
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function NewPRCampaignPage() {
   const { user } = useAuth();
@@ -48,6 +313,10 @@ export default function NewPRCampaignPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [campaignTitle, setCampaignTitle] = useState('');
   const [pressReleaseContent, setPressReleaseContent] = useState('');
+  
+  // NEU: Assets State
+  const [attachedAssets, setAttachedAssets] = useState<CampaignAssetAttachment[]>([]);
+  const [showAssetSelector, setShowAssetSelector] = useState(false);
 
   // KI-Assistent State
   const [showAiModal, setShowAiModal] = useState(false);
@@ -70,10 +339,24 @@ export default function NewPRCampaignPage() {
     }
   }, [user]);
 
-  const selectedList = availableLists.find(list => list.id === selectedListId);
+  const selectedList = useMemo(() => 
+    availableLists.find(list => list.id === selectedListId),
+    [availableLists, selectedListId]
+  );
   
-  // Validation
-  const validateForm = (): boolean => {
+  // Form validity check als useMemo statt Funktion
+  const isFormValid = useMemo(() => {
+    return !!(
+      selectedCustomerId &&
+      selectedListId &&
+      campaignTitle.trim() &&
+      pressReleaseContent.trim() &&
+      pressReleaseContent !== '<p></p>'
+    );
+  }, [selectedCustomerId, selectedListId, campaignTitle, pressReleaseContent]);
+
+  // Validation nur bei Submit
+  const validateForm = useCallback((): boolean => {
     const errors: Record<string, string> = {};
     
     if (!selectedCustomerId) {
@@ -91,34 +374,33 @@ export default function NewPRCampaignPage() {
     
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
-  };
+  }, [selectedCustomerId, selectedListId, campaignTitle, pressReleaseContent]);
 
   const handleSaveDraft = async () => {
     if (!validateForm() || !user || !selectedList) return;
 
     setIsSaving(true);
     try {
-      const campaignData: Omit<PRCampaign, 'id' | 'createdAt' | 'updatedAt'> = {
+      // Remove attachedAt from each asset using destructuring
+      const cleanedAssets = attachedAssets.map(({ attachedAt, ...rest }) => rest);
+
+      const campaignData = {
         userId: user.uid,
         title: campaignTitle,
         contentHtml: pressReleaseContent,
-        status: 'draft',
+        status: 'draft' as const,
         distributionListId: selectedList.id!,
         distributionListName: selectedList.name,
         recipientCount: selectedList.contactCount,
-        // NEU: Customer Data
         clientId: selectedCustomerId,
         clientName: selectedCustomerName,
+        attachedAssets: cleanedAssets,
         scheduledAt: null,
         sentAt: null,
       };
 
       const newCampaignId = await prService.create(campaignData);
       
-      // Erfolgs-Nachricht anzeigen
-      setShowSuccessMessage(true);
-      setTimeout(() => setShowSuccessMessage(false), 3000);
-
       // Optional: Metadata für KI-Nutzung speichern
       if (lastGeneration && lastGeneration.metadata) {
         localStorage.setItem(`campaign_ai_metadata_${newCampaignId}`, JSON.stringify({
@@ -132,14 +414,14 @@ export default function NewPRCampaignPage() {
 
     } catch (error) {
       console.error("Fehler beim Speichern der Kampagne:", error);
-      alert("Ein Fehler ist aufgetreten.");
+      alert("Ein Fehler ist aufgetreten beim Speichern der Kampagne.");
     } finally {
       setIsSaving(false);
     }
   };
 
   // KI-Content Handler
-  const handleAiGenerate = (result: GenerationResult) => {
+  const handleAiGenerate = useCallback((result: GenerationResult) => {
     console.log('🤖 AI Generation Result:', result);
 
     if (result.headline && result.structured?.headline) {
@@ -155,7 +437,69 @@ export default function NewPRCampaignPage() {
     setShowAiModal(false);
     setShowSuccessMessage(true);
     setTimeout(() => setShowSuccessMessage(false), 5000);
+  }, []);
+
+  // Customer Change Handler
+  const handleCustomerChange = useCallback((customerId: string, customerName: string) => {
+    setSelectedCustomerId(customerId);
+    setSelectedCustomerName(customerName);
+    // Clear customer validation error only
+    setValidationErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors.customer;
+      return newErrors;
+    });
+    
+    // Reset attached assets when customer changes
+    if (customerId !== selectedCustomerId) {
+      setAttachedAssets([]);
+    }
+  }, [selectedCustomerId]);
+
+  // Asset Management
+  const handleAssetsSelected = (newAssets: CampaignAssetAttachment[]) => {
+    setAttachedAssets(newAssets);
   };
+
+  const handleRemoveAsset = (assetId: string) => {
+    setAttachedAssets(attachedAssets.filter(a => 
+      !((a.type === 'asset' && a.assetId === assetId) ||
+        (a.type === 'folder' && a.folderId === assetId))
+    ));
+  };
+
+  // List Change Handler
+  const handleListChange = useCallback((listId: string, listName: string, contactCount: number) => {
+    setSelectedListId(listId);
+    // Clear list validation error only
+    setValidationErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors.list;
+      return newErrors;
+    });
+  }, []);
+
+  // Title Change Handler
+  const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setCampaignTitle(e.target.value);
+    // Clear title validation error only
+    setValidationErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors.title;
+      return newErrors;
+    });
+  }, []);
+
+  // Content Change Handler
+  const handleContentChange = useCallback((content: string) => {
+    setPressReleaseContent(content);
+    // Clear content validation error only
+    setValidationErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors.content;
+      return newErrors;
+    });
+  }, []);
 
   // Progress Steps
   const steps = [
@@ -176,6 +520,12 @@ export default function NewPRCampaignPage() {
       name: 'Inhalt', 
       icon: DocumentTextIcon,
       completed: !!campaignTitle && !!pressReleaseContent 
+    },
+    {
+      id: 'media',
+      name: 'Medien',
+      icon: PhotoIcon,
+      completed: attachedAssets.length > 0
     }
   ];
 
@@ -188,7 +538,7 @@ export default function NewPRCampaignPage() {
 
       {/* Progress Indicator */}
       <div className="mb-8">
-        <div className="flex items-center justify-between max-w-3xl">
+        <div className="flex items-center justify-between max-w-4xl">
           {steps.map((step, index) => {
             const Icon = step.icon;
             return (
@@ -208,7 +558,7 @@ export default function NewPRCampaignPage() {
                   <span className="ml-2 font-medium text-sm">{step.name}</span>
                 </div>
                 {index < steps.length - 1 && (
-                  <div className={`mx-4 h-0.5 w-16 ${
+                  <div className={`mx-4 h-0.5 w-12 ${
                     step.completed ? 'bg-indigo-600' : 'bg-gray-300'
                   }`} />
                 )}
@@ -239,7 +589,7 @@ export default function NewPRCampaignPage() {
       )}
 
       <div className="space-y-8 p-8 border rounded-lg bg-white">
-        {/* Schritt 1: Kunde auswählen (NEU - ERSTE POSITION) */}
+        {/* Schritt 1: Kunde auswählen */}
         <div>
           <h3 className="text-base font-semibold mb-4 flex items-center">
             <span className="bg-indigo-100 text-indigo-700 rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold mr-3">
@@ -250,33 +600,13 @@ export default function NewPRCampaignPage() {
           
           <CustomerSelector
             value={selectedCustomerId}
-            onChange={(customerId, customerName) => {
-              setSelectedCustomerId(customerId);
-              setSelectedCustomerName(customerName);
-              setValidationErrors({ ...validationErrors, customer: '' });
-            }}
+            onChange={handleCustomerChange}
             required={true}
-            description="Die Kampagne wird diesem Kunden zugeordnet. Alle Medien werden automatisch für diesen Kunden gefiltert."
+            description=""
             error={validationErrors.customer}
-            showStats={true}
-            showQuickAdd={true}
+            showStats={false}
+            showQuickAdd={false}
           />
-
-          {/* Customer Quick Actions */}
-          {selectedCustomerId && (
-            <div className="mt-4 flex gap-2">
-              <Link href={`/dashboard/mediathek?uploadFor=${selectedCustomerId}`}>
-                <Button plain className="text-sm">
-                  📎 Medien hochladen
-                </Button>
-              </Link>
-              <Link href={`/dashboard/crm/${selectedCustomerId}`}>
-                <Button plain className="text-sm">
-                  👤 Kunde anzeigen
-                </Button>
-              </Link>
-            </div>
-          )}
         </div>
 
         {/* Schritt 2: Verteiler auswählen (NUR WENN KUNDE AUSGEWÄHLT) */}
@@ -290,43 +620,16 @@ export default function NewPRCampaignPage() {
             An wen soll die Kampagne gesendet werden?
           </h3>
           
-          <Field>
-            <Label>Verteiler auswählen *</Label>
-            <Text className="mb-2 text-sm">Wählen Sie die Empfänger für Ihre Pressemitteilung.</Text>
-            {loading ? (
-              <div className="h-10 w-full bg-zinc-100 rounded-md animate-pulse" />
-            ) : (
-              <Select 
-                value={selectedListId} 
-                onChange={(e) => {
-                  setSelectedListId(e.target.value);
-                  setValidationErrors({ ...validationErrors, list: '' });
-                }}
-              >
-                <option value="">Verteiler wählen...</option>
-                {availableLists.map(list => (
-                  <option key={list.id} value={list.id!}>
-                    {list.name} ({list.contactCount} Kontakte)
-                  </option>
-                ))}
-              </Select>
-            )}
-            {validationErrors.list && (
-              <p className="mt-1 text-sm text-red-600">{validationErrors.list}</p>
-            )}
-            
-            {selectedList && (
-              <div className="mt-3 p-3 bg-indigo-50 border border-indigo-200 rounded-md text-sm">
-                <p>
-                  <strong>{selectedList.contactCount} Empfänger</strong> in der Liste "{selectedList.name}" ausgewählt.
-                  {selectedList.type === 'dynamic' && " (Diese Liste wird automatisch aktualisiert)"}
-                </p>
-                <Link href={`/dashboard/listen/${selectedList.id}`} className="text-indigo-600 font-medium hover:underline mt-1 inline-block">
-                  Liste ansehen oder bearbeiten &rarr;
-                </Link>
-              </div>
-            )}
-          </Field>
+          <ListSelector
+            value={selectedListId}
+            onChange={handleListChange}
+            lists={availableLists}
+            loading={loading}
+            required={true}
+            error={validationErrors.list}
+            showStats={true}
+            showQuickAdd={true}
+          />
         </div>
 
         {/* Schritt 3: Pressemitteilung (NUR WENN KUNDE & LISTE AUSGEWÄHLT) */}
@@ -409,10 +712,7 @@ export default function NewPRCampaignPage() {
                 <Label>Titel / Betreffzeile *</Label>
                 <Input 
                   value={campaignTitle}
-                  onChange={(e) => {
-                    setCampaignTitle(e.target.value);
-                    setValidationErrors({ ...validationErrors, title: '' });
-                  }}
+                  onChange={handleTitleChange}
                   placeholder="Innovative Partnerschaft revolutioniert die Branche..."
                   className={validationErrors.title ? 'border-red-300' : ''}
                 />
@@ -431,10 +731,7 @@ export default function NewPRCampaignPage() {
                 <Label>Inhalt *</Label>
                 <RichTextEditor 
                   content={pressReleaseContent}
-                  onChange={(content) => {
-                    setPressReleaseContent(content);
-                    setValidationErrors({ ...validationErrors, content: '' });
-                  }}
+                  onChange={handleContentChange}
                 />
                 {validationErrors.content && (
                   <p className="mt-1 text-sm text-red-600">{validationErrors.content}</p>
@@ -450,10 +747,99 @@ export default function NewPRCampaignPage() {
           </div>
         </div>
         
-        {/* Schritt 4: Versand planen (Placeholder) */}
+        {/* Schritt 4: Medien anhängen (NEU) */}
+        <div className={!selectedCustomerId ? 'opacity-50 pointer-events-none' : ''}>
+          <div className="border-t pt-8">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-base font-semibold flex items-center">
+                  <span className={`rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold mr-3 ${
+                    selectedCustomerId ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-400'
+                  }`}>
+                    4
+                  </span>
+                  Medien anhängen (optional)
+                </h3>
+                <Text>Füge Bilder, Dokumente und andere Medien zu deiner Kampagne hinzu.</Text>
+              </div>
+              
+              {selectedCustomerId && (
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => setShowAssetSelector(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <PlusIcon className="h-5 w-5" />
+                    Medien auswählen
+                  </Button>
+                  <Link
+                    href={`/dashboard/mediathek?uploadFor=${selectedCustomerId}`}
+                    target="_blank"
+                  >
+                    <Button plain className="flex items-center gap-2">
+                      <ArrowUpTrayIcon className="h-5 w-5" />
+                      Neue hochladen
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Angehängte Assets anzeigen */}
+            {attachedAssets.length > 0 ? (
+              <div className="space-y-3">
+                {attachedAssets.map((attachment) => (
+                  <div
+                    key={attachment.id}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  >
+                    <div className="flex items-center gap-3">
+                      {attachment.type === 'folder' ? (
+                        <FolderIcon className="h-6 w-6 text-gray-400" />
+                      ) : attachment.metadata.fileType?.startsWith('image/') ? (
+                        <img
+                          src={attachment.metadata.thumbnailUrl}
+                          alt={attachment.metadata.fileName}
+                          className="h-10 w-10 object-cover rounded"
+                        />
+                      ) : (
+                        <DocumentIcon className="h-6 w-6 text-gray-400" />
+                      )}
+                      <div>
+                        <p className="font-medium text-sm">
+                          {attachment.metadata.fileName || attachment.metadata.folderName}
+                        </p>
+                        {attachment.metadata.description && (
+                          <p className="text-xs text-gray-500">{attachment.metadata.description}</p>
+                        )}
+                      </div>
+                      {attachment.type === 'folder' && (
+                        <Badge color="blue" className="text-xs">Ordner</Badge>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleRemoveAsset(attachment.assetId || attachment.folderId || '')}
+                      className="text-red-600 hover:text-red-500"
+                    >
+                      <XMarkIcon className="h-5 w-5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 bg-gray-50 rounded-lg">
+                <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-500">Noch keine Medien angehängt</p>
+                <p className="text-sm text-gray-400 mt-1">Optional - du kannst Medien auch später hinzufügen</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Schritt 5: Versand planen (Placeholder) */}
         <div className={!selectedCustomerId || !selectedListId || !campaignTitle || !pressReleaseContent ? 'opacity-50 pointer-events-none' : ''}>
           <div className="border-t pt-8">
-            <h3 className="text-base font-semibold text-zinc-400">Schritt 4: Versand planen (zukünftiges Feature)</h3>
+            <h3 className="text-base font-semibold text-zinc-400">Schritt 5: Versand planen (zukünftiges Feature)</h3>
             <Text className="text-zinc-400">Hier wirst du den Versandzeitpunkt festlegen.</Text>
           </div>
         </div>
@@ -465,12 +851,24 @@ export default function NewPRCampaignPage() {
         </Link>
         <Button 
           color="indigo" 
-          disabled={!validateForm() || isSaving}
+          disabled={!isFormValid || isSaving}
           onClick={handleSaveDraft}
         >
           {isSaving ? 'Speichern...' : 'Als Entwurf speichern'}
         </Button>
       </div>
+
+      {/* Asset Selector Modal */}
+      {selectedCustomerId && (
+        <AssetSelectorModal
+          isOpen={showAssetSelector}
+          onClose={() => setShowAssetSelector(false)}
+          clientId={selectedCustomerId}
+          clientName={selectedCustomerName}
+          onAssetsSelected={handleAssetsSelected}
+          existingAssets={attachedAssets}
+        />
+      )}
 
       {/* Neues strukturiertes KI-Modal mit Customer Context */}
       {showAiModal && (

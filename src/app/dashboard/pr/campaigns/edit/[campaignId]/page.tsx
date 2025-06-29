@@ -1,4 +1,4 @@
-// src/app/dashboard/pr/campaigns/edit/[campaignId]/page.tsx - Mit Customer Support
+// src/app/dashboard/pr/campaigns/edit/[campaignId]/page.tsx - Gefixt
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -6,8 +6,10 @@ import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { listsService } from '@/lib/firebase/lists-service';
 import { prService } from '@/lib/firebase/pr-service';
+import { mediaService } from '@/lib/firebase/media-service';
 import { DistributionList } from '@/types/lists';
-import { PRCampaign } from '@/types/pr';
+import { PRCampaign, CampaignAssetAttachment } from '@/types/pr';
+import { MediaAsset, MediaFolder } from '@/types/media';
 import { Heading } from '@/components/heading';
 import { Text } from '@/components/text';
 import { Button } from '@/components/button';
@@ -16,6 +18,7 @@ import { Select } from '@/components/select';
 import { Input } from '@/components/input';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { CustomerBadge } from '@/components/pr/CustomerSelector';
+import { Badge } from '@/components/badge';
 import Link from 'next/link';
 import { 
   SparklesIcon, 
@@ -23,7 +26,12 @@ import {
   ClockIcon,
   BuildingOfficeIcon,
   DocumentTextIcon,
-  PhotoIcon
+  PhotoIcon,
+  XMarkIcon,
+  PlusIcon,
+  FolderIcon,
+  DocumentIcon,
+  ArrowUpTrayIcon
 } from "@heroicons/react/24/outline";
 
 // Dynamic import für das kompatible Modal
@@ -37,6 +45,246 @@ const CompatibleStructuredModal = dynamic(() => import('@/components/pr/ai/Compa
 // Verwende Legacy Generation Result für Kompatibilität
 type GenerationResult = LegacyGenerationResult;
 
+// Einfacher Asset-Selector Modal (mit Fix)
+function AssetSelectorModal({ 
+  isOpen, 
+  onClose, 
+  clientId,
+  clientName,
+  onAssetsSelected 
+}: { 
+  isOpen: boolean;
+  onClose: () => void;
+  clientId: string;
+  clientName?: string;
+  onAssetsSelected: (assets: CampaignAssetAttachment[]) => void;
+}) {
+  const [assets, setAssets] = useState<MediaAsset[]>([]);
+  const [folders, setFolders] = useState<MediaFolder[]>([]);
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (isOpen && user && clientId) {
+      loadClientMedia();
+    }
+  }, [isOpen, user, clientId]);
+
+  const loadClientMedia = async () => {
+    if (!user || !clientId) return;
+    
+    setLoading(true);
+    try {
+      const { assets: clientAssets, folders: clientFolders } = await mediaService.getMediaByClientId(
+        user.uid,
+        clientId
+      );
+      
+      // Dedupliziere Assets basierend auf ID
+      const uniqueAssets = clientAssets.filter((asset, index, self) =>
+        index === self.findIndex((a) => a.id === asset.id)
+      );
+      
+      const uniqueFolders = clientFolders.filter((folder, index, self) =>
+        index === self.findIndex((f) => f.id === folder.id)
+      );
+      
+      setAssets(uniqueAssets);
+      setFolders(uniqueFolders);
+    } catch (error) {
+      console.error('Fehler beim Laden der Medien:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleSelection = (id: string) => {
+    const newSelection = new Set(selectedItems);
+    if (newSelection.has(id)) {
+      newSelection.delete(id);
+    } else {
+      newSelection.add(id);
+    }
+    setSelectedItems(newSelection);
+  };
+
+  const handleConfirm = () => {
+    const attachments: CampaignAssetAttachment[] = [];
+    
+    // Assets hinzufügen
+    assets.forEach(asset => {
+      if (selectedItems.has(asset.id!)) {
+        attachments.push({
+          id: `asset-${asset.id}`,
+          type: 'asset',
+          assetId: asset.id,
+          metadata: {
+            fileName: asset.fileName,
+            fileType: asset.fileType,
+            description: asset.description || '',
+            thumbnailUrl: asset.downloadUrl
+          },
+          attachedAt: null as any, // Placeholder - will be removed before saving
+          attachedBy: user?.uid || ''
+        });
+      }
+    });
+
+    // Ordner hinzufügen
+    folders.forEach(folder => {
+      if (selectedItems.has(folder.id!)) {
+        attachments.push({
+          id: `folder-${folder.id}`,
+          type: 'folder',
+          folderId: folder.id,
+          metadata: {
+            folderName: folder.name,
+            description: folder.description || ''
+          },
+          attachedAt: null as any, // Placeholder - will be removed before saving
+          attachedBy: user?.uid || ''
+        });
+      }
+    });
+
+    onAssetsSelected(attachments);
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-25" onClick={onClose} />
+        
+        <div className="relative bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] flex flex-col">
+          {/* Header */}
+          <div className="px-6 py-4 border-b">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold">Medien auswählen</h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  Wähle Medien von {clientName || 'diesem Kunden'} aus
+                </p>
+              </div>
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto p-6">
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+                <p className="mt-4 text-gray-500">Lade Medien...</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Ordner */}
+                {folders.length > 0 && (
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-3">Ordner</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {folders.map(folder => (
+                        <button
+                          key={`folder-${folder.id}`}
+                          onClick={() => toggleSelection(folder.id!)}
+                          className={`p-4 rounded-lg border-2 transition-all ${
+                            selectedItems.has(folder.id!)
+                              ? 'border-indigo-500 bg-indigo-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <FolderIcon className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                          <p className="text-sm font-medium truncate">{folder.name}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Assets */}
+                {assets.length > 0 && (
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-3">Dateien</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {assets.map(asset => (
+                        <button
+                          key={`asset-${asset.id}`}
+                          onClick={() => toggleSelection(asset.id!)}
+                          className={`p-3 rounded-lg border-2 transition-all ${
+                            selectedItems.has(asset.id!)
+                              ? 'border-indigo-500 bg-indigo-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          {asset.fileType.startsWith('image/') ? (
+                            <img 
+                              src={asset.downloadUrl} 
+                              alt={asset.fileName}
+                              className="h-16 w-full object-cover rounded mb-2"
+                            />
+                          ) : (
+                            <DocumentIcon className="h-16 w-16 text-gray-400 mx-auto mb-2" />
+                          )}
+                          <p className="text-xs font-medium truncate">{asset.fileName}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {assets.length === 0 && folders.length === 0 && (
+                  <div className="text-center py-12">
+                    <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500 mb-4">Keine Medien für diesen Kunden gefunden</p>
+                    <Link 
+                      href={`/dashboard/mediathek?uploadFor=${clientId}`}
+                      target="_blank"
+                      className="inline-flex items-center text-indigo-600 hover:text-indigo-500"
+                    >
+                      <ArrowUpTrayIcon className="h-4 w-4 mr-1" />
+                      Medien in neuem Tab hochladen
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="px-6 py-4 border-t bg-gray-50">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-gray-600">
+                {selectedItems.size} ausgewählt
+              </p>
+              <div className="flex gap-3">
+                <Button plain onClick={onClose}>
+                  Abbrechen
+                </Button>
+                <Button 
+                  color="indigo" 
+                  onClick={handleConfirm}
+                  disabled={selectedItems.size === 0}
+                >
+                  Auswahl übernehmen
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function EditPRCampaignPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -49,6 +297,7 @@ export default function EditPRCampaignPage() {
   const [selectedListId, setSelectedListId] = useState<string>('');
   const [campaignTitle, setCampaignTitle] = useState('');
   const [pressReleaseContent, setPressReleaseContent] = useState('');
+  const [attachedAssets, setAttachedAssets] = useState<CampaignAssetAttachment[]>([]);
 
   // Loading & Error State
   const [loading, setLoading] = useState(true);
@@ -59,6 +308,9 @@ export default function EditPRCampaignPage() {
   const [showAiModal, setShowAiModal] = useState(false);
   const [aiMetadata, setAiMetadata] = useState<any>(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+
+  // Asset Selector State
+  const [showAssetSelector, setShowAssetSelector] = useState(false);
 
   const loadCampaignData = useCallback(async () => {
     if (!user || !campaignId) return;
@@ -83,6 +335,7 @@ export default function EditPRCampaignPage() {
       setCampaignTitle(campaignData.title);
       setSelectedListId(campaignData.distributionListId);
       setPressReleaseContent(campaignData.contentHtml);
+      setAttachedAssets(campaignData.attachedAssets || []);
 
       // KI-Metadata laden (falls vorhanden)
       try {
@@ -114,12 +367,16 @@ export default function EditPRCampaignPage() {
 
     setIsSaving(true);
     try {
-      const updatedData: Partial<PRCampaign> = {
+      // Remove attachedAt from each asset using destructuring
+      const cleanedAssets = attachedAssets.map(({ attachedAt, ...rest }) => rest);
+
+      const updatedData = {
         title: campaignTitle,
         contentHtml: pressReleaseContent,
         distributionListId: selectedListId,
         distributionListName: selectedList?.name,
         recipientCount: selectedList?.contactCount,
+        attachedAssets: cleanedAssets,
       };
       
       await prService.update(campaign.id!, updatedData);
@@ -130,9 +387,46 @@ export default function EditPRCampaignPage() {
 
     } catch (error) {
       console.error("Fehler beim Speichern der Kampagne:", error);
-      alert("Ein Fehler ist aufgetreten.");
+      alert("Ein Fehler ist aufgetreten beim Speichern der Kampagne.");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // Asset Management
+  const handleAssetsSelected = async (newAssets: CampaignAssetAttachment[]) => {
+    try {
+      // Füge neue Assets hinzu
+      await prService.attachAssets(campaign!.id!, newAssets);
+      
+      // Aktualisiere lokalen State
+      setAttachedAssets([...attachedAssets, ...newAssets]);
+      
+      setShowSuccessMessage(true);
+      setTimeout(() => setShowSuccessMessage(false), 3000);
+    } catch (error) {
+      console.error('Fehler beim Anhängen der Assets:', error);
+      alert('Fehler beim Anhängen der Medien');
+    }
+  };
+
+  const handleRemoveAsset = async (assetId: string) => {
+    try {
+      const asset = attachedAssets.find(a => 
+        (a.type === 'asset' && a.assetId === assetId) ||
+        (a.type === 'folder' && a.folderId === assetId)
+      );
+      
+      if (!asset) return;
+      
+      // Entferne aus Backend
+      await prService.removeAssets(campaign!.id!, [assetId]);
+      
+      // Aktualisiere lokalen State
+      setAttachedAssets(attachedAssets.filter(a => a !== asset));
+      
+    } catch (error) {
+      console.error('Fehler beim Entfernen des Assets:', error);
     }
   };
 
@@ -240,17 +534,15 @@ export default function EditPRCampaignPage() {
                 </div>
               </div>
               <div className="flex gap-2">
-                <Link href={`/dashboard/mediathek?clientId=${campaign.clientId}`}>
+                <Link 
+                  href={`/dashboard/mediathek?clientId=${campaign.clientId}`}
+                  target="_blank"
+                >
                   <Button plain className="text-sm">
                     <PhotoIcon className="h-4 w-4 mr-1" />
                     Medien verwalten
                   </Button>
                 </Link>
-                {/* TODO: Add Asset Manager Button */}
-                {/* <Button plain className="text-sm">
-                  <DocumentTextIcon className="h-4 w-4 mr-1" />
-                  Assets anhängen
-                </Button> */}
               </div>
             </div>
           </div>
@@ -327,15 +619,93 @@ export default function EditPRCampaignPage() {
           </div>
         </div>
 
-        {/* Assets Section - Coming Soon */}
+        {/* Assets Section - Funktionsfähig! */}
         <div className="border-t pt-8">
-          <h3 className="text-base font-semibold text-zinc-400">
-            <DocumentTextIcon className="h-5 w-5 inline mr-2" />
-            Medien anhängen (zukünftiges Feature)
-          </h3>
-          <Text className="text-zinc-400">
-            Hier kannst du bald Bilder, Dokumente und andere Medien an deine Kampagne anhängen.
-          </Text>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-base font-semibold">
+                <DocumentTextIcon className="h-5 w-5 inline mr-2" />
+                Medien anhängen
+              </h3>
+              <Text>
+                Füge Bilder, Dokumente und andere Medien zu deiner Kampagne hinzu.
+              </Text>
+            </div>
+            
+            {campaign?.clientId && (
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setShowAssetSelector(true)}
+                  className="flex items-center gap-2"
+                >
+                  <PlusIcon className="h-5 w-5" />
+                  Medien auswählen
+                </Button>
+                <Link
+                  href={`/dashboard/mediathek?uploadFor=${campaign.clientId}`}
+                  target="_blank"
+                >
+                  <Button plain className="flex items-center gap-2">
+                    <ArrowUpTrayIcon className="h-5 w-5" />
+                    Neue hochladen
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* Angehängte Assets anzeigen */}
+          {attachedAssets.length > 0 ? (
+            <div className="space-y-3">
+              {attachedAssets.map((attachment) => (
+                <div
+                  key={attachment.id}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    {attachment.type === 'folder' ? (
+                      <FolderIcon className="h-6 w-6 text-gray-400" />
+                    ) : attachment.metadata.fileType?.startsWith('image/') ? (
+                      <img
+                        src={attachment.metadata.thumbnailUrl}
+                        alt={attachment.metadata.fileName}
+                        className="h-10 w-10 object-cover rounded"
+                      />
+                    ) : (
+                      <DocumentIcon className="h-6 w-6 text-gray-400" />
+                    )}
+                    <div>
+                      <p className="font-medium text-sm">
+                        {attachment.metadata.fileName || attachment.metadata.folderName}
+                      </p>
+                      {attachment.metadata.description && (
+                        <p className="text-xs text-gray-500">{attachment.metadata.description}</p>
+                      )}
+                    </div>
+                    {attachment.type === 'folder' && (
+                      <Badge color="blue" className="text-xs">Ordner</Badge>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => handleRemoveAsset(attachment.assetId || attachment.folderId || '')}
+                    className="text-red-600 hover:text-red-500"
+                  >
+                    <XMarkIcon className="h-5 w-5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 bg-gray-50 rounded-lg">
+              <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-500">Noch keine Medien angehängt</p>
+              {!campaign?.clientId && (
+                <p className="text-sm text-gray-400 mt-1">
+                  Wähle zuerst einen Kunden aus, um Medien anzuhängen
+                </p>
+              )}
+            </div>
+          )}
         </div>
         
         <div className="border-t pt-8">
@@ -352,6 +722,17 @@ export default function EditPRCampaignPage() {
           {isSaving ? 'Speichern...' : 'Änderungen speichern'}
         </Button>
       </div>
+
+      {/* Asset Selector Modal */}
+      {campaign?.clientId && (
+        <AssetSelectorModal
+          isOpen={showAssetSelector}
+          onClose={() => setShowAssetSelector(false)}
+          clientId={campaign.clientId}
+          clientName={campaign.clientName}
+          onAssetsSelected={handleAssetsSelected}
+        />
+      )}
 
       {/* Kompatibles strukturiertes KI-Modal */}
       {showAiModal && (
