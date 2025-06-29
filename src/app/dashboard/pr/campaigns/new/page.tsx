@@ -1,4 +1,4 @@
-// src/app/dashboard/pr/campaigns/new/page.tsx - Bereinigt und Gefixt
+// src/app/dashboard/pr/campaigns/new/page.tsx - KORRIGIERT mit verbessertem Asset-Loading
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -30,7 +30,8 @@ import {
   PlusIcon,
   FolderIcon,
   DocumentIcon,
-  ArrowUpTrayIcon
+  ArrowUpTrayIcon,
+  ExclamationTriangleIcon
 } from "@heroicons/react/24/outline";
 import Link from 'next/link';
 
@@ -44,7 +45,47 @@ const StructuredGenerationModal = dynamic(() => import('@/components/pr/ai/Struc
   ssr: false
 });
 
-// Asset-Selector Modal (gefixt ohne doppelte Keys)
+// Hilfsfunktion für sicheres Bildladen
+const AssetPreview = ({ asset }: { asset: MediaAsset }) => {
+  const [imageError, setImageError] = useState(false);
+  const [loading, setLoading] = useState(true);
+  
+  const isImage = asset.fileType?.startsWith('image/');
+  
+  if (!isImage) {
+    return <DocumentIcon className="h-16 w-16 text-gray-400 mx-auto mb-2" />;
+  }
+  
+  return (
+    <div className="relative h-16 w-full mb-2">
+      {loading && (
+        <div className="absolute inset-0 bg-gray-100 animate-pulse rounded" />
+      )}
+      
+      {!imageError && asset.downloadUrl && (
+        <img 
+          src={asset.downloadUrl} 
+          alt={asset.fileName}
+          className="h-16 w-full object-cover rounded"
+          onError={(e) => {
+            console.error(`Failed to load image: ${asset.fileName}`, e);
+            setImageError(true);
+            setLoading(false);
+          }}
+          onLoad={() => setLoading(false)}
+        />
+      )}
+      
+      {(imageError || !asset.downloadUrl) && (
+        <div className="h-16 w-full bg-gray-100 rounded flex items-center justify-center">
+          <PhotoIcon className="h-8 w-8 text-gray-400" />
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Asset-Selector Modal (KORRIGIERT)
 function AssetSelectorModal({ 
   isOpen, 
   onClose, 
@@ -64,6 +105,7 @@ function AssetSelectorModal({
   const [folders, setFolders] = useState<MediaFolder[]>([]);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
 
   // Initialisiere mit bereits ausgewählten Assets
@@ -91,28 +133,129 @@ function AssetSelectorModal({
     if (!user || !clientId) return;
     
     setLoading(true);
+    setError(null);
+    
     try {
+      console.log(`🔄 Loading media for client: ${clientId}`);
+      
       const { assets: clientAssets, folders: clientFolders } = await mediaService.getMediaByClientId(
         user.uid,
         clientId
       );
       
-      // Dedupliziere Assets basierend auf ID
-      const uniqueAssets = clientAssets.filter((asset, index, self) =>
-        index === self.findIndex((a) => a.id === asset.id)
-      );
+      console.log(`📊 Raw data from service: ${clientAssets.length} assets, ${clientFolders.length} folders`);
       
-      const uniqueFolders = clientFolders.filter((folder, index, self) =>
-        index === self.findIndex((f) => f.id === folder.id)
-      );
+      // Validiere und bereinige Assets
+      const processedAssets = await processAssets(clientAssets);
+      const processedFolders = processFolders(clientFolders);
       
-      setAssets(uniqueAssets);
-      setFolders(uniqueFolders);
+      setAssets(processedAssets);
+      setFolders(processedFolders);
+      
     } catch (error) {
-      console.error('Fehler beim Laden der Medien:', error);
+      console.error('❌ Fehler beim Laden der Medien:', error);
+      setError('Fehler beim Laden der Medien. Bitte versuche es erneut.');
     } finally {
       setLoading(false);
     }
+  };
+
+  // Verarbeite und validiere Assets
+  const processAssets = async (rawAssets: MediaAsset[]): Promise<MediaAsset[]> => {
+    console.log('🧹 Processing assets...');
+    
+    // 1. Filtere ungültige Assets
+    const validAssets = rawAssets.filter(asset => {
+      if (!asset.id) {
+        console.warn('⚠️ Asset ohne ID gefunden:', asset);
+        return false;
+      }
+      if (!asset.downloadUrl) {
+        console.warn(`⚠️ Asset ${asset.id} ohne Download-URL:`, asset.fileName);
+        return false;
+      }
+      if (!asset.fileName) {
+        console.warn(`⚠️ Asset ${asset.id} ohne Dateinamen`);
+        return false;
+      }
+      return true;
+    });
+    
+    console.log(`✅ Valid assets: ${validAssets.length} of ${rawAssets.length}`);
+    
+    // 2. Entferne Duplikate
+    const uniqueMap = new Map<string, MediaAsset>();
+    validAssets.forEach(asset => {
+      if (!uniqueMap.has(asset.id!)) {
+        uniqueMap.set(asset.id!, asset);
+      } else {
+        console.warn(`⚠️ Duplikat gefunden und entfernt: ${asset.id} - ${asset.fileName}`);
+      }
+    });
+    
+    const uniqueAssets = Array.from(uniqueMap.values());
+    console.log(`🎯 Unique assets: ${uniqueAssets.length}`);
+    
+    // 3. Sortiere nach Datum (neueste zuerst)
+    uniqueAssets.sort((a, b) => {
+      const aTime = a.createdAt?.seconds || 0;
+      const bTime = b.createdAt?.seconds || 0;
+      return bTime - aTime;
+    });
+    
+    // 4. Validiere URLs für Bilder
+    const processedAssets = await Promise.all(
+      uniqueAssets.map(async (asset) => {
+        if (asset.fileType?.startsWith('image/') && asset.downloadUrl) {
+          try {
+            // Prüfe ob die URL gültig ist
+            const url = new URL(asset.downloadUrl);
+            if (!url.protocol.startsWith('http')) {
+              console.warn(`⚠️ Ungültiges Protokoll für Asset ${asset.id}: ${url.protocol}`);
+              asset.downloadUrl = ''; // Setze ungültige URL auf leer
+            }
+          } catch (e) {
+            console.warn(`⚠️ Ungültige URL für Asset ${asset.id}: ${asset.downloadUrl}`);
+            asset.downloadUrl = ''; // Setze ungültige URL auf leer
+          }
+        }
+        return asset;
+      })
+    );
+    
+    // 5. Final check
+    if (processedAssets.length > 0) {
+      console.log('🔍 Erste Asset:', {
+        id: processedAssets[0].id,
+        name: processedAssets[0].fileName,
+        hasUrl: !!processedAssets[0].downloadUrl
+      });
+      
+      const lastAsset = processedAssets[processedAssets.length - 1];
+      console.log('🔍 Letzte Asset:', {
+        id: lastAsset.id,
+        name: lastAsset.fileName,
+        hasUrl: !!lastAsset.downloadUrl
+      });
+    }
+    
+    return processedAssets;
+  };
+
+  // Verarbeite Ordner
+  const processFolders = (rawFolders: MediaFolder[]): MediaFolder[] => {
+    // Entferne Duplikate
+    const uniqueMap = new Map<string, MediaFolder>();
+    rawFolders.forEach(folder => {
+      if (folder.id && !uniqueMap.has(folder.id)) {
+        uniqueMap.set(folder.id, folder);
+      }
+    });
+    
+    const uniqueFolders = Array.from(uniqueMap.values());
+    
+    // Sortiere alphabetisch
+    return uniqueFolders.sort((a, b) => a.name.localeCompare(b.name));
   };
 
   const toggleSelection = (id: string) => {
@@ -201,6 +344,12 @@ function AssetSelectorModal({
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
                 <p className="mt-4 text-gray-500">Lade Medien...</p>
               </div>
+            ) : error ? (
+              <div className="text-center py-12">
+                <ExclamationTriangleIcon className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                <p className="text-red-600 mb-4">{error}</p>
+                <Button onClick={loadClientMedia}>Erneut versuchen</Button>
+              </div>
             ) : (
               <div className="space-y-6">
                 {/* Ordner */}
@@ -229,28 +378,33 @@ function AssetSelectorModal({
                 {/* Assets */}
                 {assets.length > 0 && (
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-3">Dateien</h4>
+                    <h4 className="font-medium text-gray-900 mb-3">
+                      Dateien ({assets.length})
+                    </h4>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      {assets.map(asset => (
+                      {assets.map((asset, index) => (
                         <button
                           key={`asset-${asset.id}`}
                           onClick={() => toggleSelection(asset.id!)}
-                          className={`p-3 rounded-lg border-2 transition-all ${
+                          className={`p-3 rounded-lg border-2 transition-all relative ${
                             selectedItems.has(asset.id!)
                               ? 'border-indigo-500 bg-indigo-50'
                               : 'border-gray-200 hover:border-gray-300'
                           }`}
+                          title={`${asset.fileName} (${index + 1}/${assets.length})`}
                         >
-                          {asset.fileType.startsWith('image/') ? (
-                            <img 
-                              src={asset.downloadUrl} 
-                              alt={asset.fileName}
-                              className="h-16 w-full object-cover rounded mb-2"
-                            />
-                          ) : (
-                            <DocumentIcon className="h-16 w-16 text-gray-400 mx-auto mb-2" />
+                          <AssetPreview asset={asset} />
+                          
+                          <p className="text-xs font-medium truncate">
+                            {asset.fileName}
+                          </p>
+                          
+                          {/* Warnung für fehlerhafte Assets */}
+                          {!asset.downloadUrl && (
+                            <div className="absolute inset-0 bg-red-500 bg-opacity-10 rounded-lg flex items-center justify-center">
+                              <ExclamationTriangleIcon className="h-6 w-6 text-red-500" />
+                            </div>
                           )}
-                          <p className="text-xs font-medium truncate">{asset.fileName}</p>
                         </button>
                       ))}
                     </div>
