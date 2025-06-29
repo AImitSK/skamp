@@ -1,7 +1,7 @@
-// src/app/dashboard/pr/page.tsx (VOLLSTÄNDIG mit Analytics Integration)
+// src/app/dashboard/pr/page.tsx - Mit Customer Support
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from 'next/link';
 import { useAuth } from "@/context/AuthContext";
 import { Heading } from "@/components/heading";
@@ -10,6 +10,7 @@ import { Button } from "@/components/button";
 import { Badge } from "@/components/badge";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/table";
 import { Checkbox } from "@/components/checkbox";
+import { CompactCustomerSelector, CustomerBadge } from "@/components/pr/CustomerSelector";
 import { 
   PlusIcon, 
   MagnifyingGlassIcon, 
@@ -20,7 +21,9 @@ import {
   EnvelopeIcon,
   UsersIcon,
   PaperAirplaneIcon,
-  ChartBarIcon  // Für Analytics
+  ChartBarIcon,
+  BuildingOfficeIcon,
+  PhotoIcon
 } from "@heroicons/react/20/solid";
 import { prService } from "@/lib/firebase/pr-service";
 import { PRCampaign, PRCampaignStatus } from "@/types/pr";
@@ -74,8 +77,13 @@ export default function PRCampaignsPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<PRCampaignStatus | 'all'>('all');
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>(''); // NEU
   const [selectedCampaignIds, setSelectedCampaignIds] = useState<Set<string>>(new Set());
   const [showSendModal, setShowSendModal] = useState<PRCampaign | null>(null);
+
+  const handleCustomerChange = useCallback((customerId: string, customerName: string) => {
+    setSelectedCustomerId(customerId);
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -96,27 +104,36 @@ export default function PRCampaignsPage() {
     }
   };
 
-  // Gefilterte Kampagnen
+  // Gefilterte Kampagnen - ERWEITERT mit Customer-Filter
   const filteredCampaigns = useMemo(() => {
     return campaigns.filter(campaign => {
       const searchMatch = campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         campaign.distributionListName.toLowerCase().includes(searchTerm.toLowerCase());
+                         campaign.distributionListName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         campaign.contentHtml.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         campaign.clientName?.toLowerCase().includes(searchTerm.toLowerCase()); // NEU
       
       const statusMatch = selectedStatus === 'all' || campaign.status === selectedStatus;
       
-      return searchMatch && statusMatch;
+      // NEU: Customer-Filter
+      const customerMatch = !selectedCustomerId || campaign.clientId === selectedCustomerId;
+      
+      return searchMatch && statusMatch && customerMatch;
     });
-  }, [campaigns, searchTerm, selectedStatus]);
+  }, [campaigns, searchTerm, selectedStatus, selectedCustomerId]);
 
-  // Statistiken
+  // Statistiken - ERWEITERT
   const stats = useMemo(() => {
     const total = campaigns.length;
     const drafts = campaigns.filter(c => c.status === 'draft').length;
     const scheduled = campaigns.filter(c => c.status === 'scheduled').length;
     const sent = campaigns.filter(c => c.status === 'sent').length;
     const totalRecipients = campaigns.reduce((sum, c) => sum + (c.recipientCount || 0), 0);
+    
+    // NEU: Customer-Statistiken
+    const uniqueCustomers = new Set(campaigns.map(c => c.clientId).filter(Boolean)).size;
+    const withAssets = campaigns.filter(c => c.attachedAssets && c.attachedAssets.length > 0).length;
 
-    return { total, drafts, scheduled, sent, totalRecipients };
+    return { total, drafts, scheduled, sent, totalRecipients, uniqueCustomers, withAssets };
   }, [campaigns]);
 
   // Bulk-Aktionen
@@ -204,8 +221,8 @@ export default function PRCampaignsPage() {
         </Link>
       </div>
 
-      {/* Statistiken */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+      {/* Statistiken - ERWEITERT */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-6">
         <div className="bg-white p-4 rounded-lg border">
           <div className="flex items-center">
             <div className="ml-3">
@@ -254,10 +271,32 @@ export default function PRCampaignsPage() {
             </div>
           </div>
         </div>
+
+        {/* NEU: Kunden-Statistik */}
+        <div className="bg-white p-4 rounded-lg border">
+          <div className="flex items-center">
+            <BuildingOfficeIcon className="h-8 w-8 text-indigo-500" />
+            <div className="ml-3">
+              <p className="text-sm font-medium text-gray-500">Kunden</p>
+              <p className="text-2xl font-semibold text-gray-900">{stats.uniqueCustomers}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* NEU: Assets-Statistik */}
+        <div className="bg-white p-4 rounded-lg border">
+          <div className="flex items-center">
+            <PhotoIcon className="h-8 w-8 text-amber-500" />
+            <div className="ml-3">
+              <p className="text-sm font-medium text-gray-500">Mit Medien</p>
+              <p className="text-2xl font-semibold text-gray-900">{stats.withAssets}</p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Filter und Suche */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+      {/* Filter und Suche - ERWEITERT */}
+      <div className="flex flex-col lg:flex-row gap-4 mb-6">
         <div className="relative flex-1">
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-zinc-400 pointer-events-none" />
           <input
@@ -269,11 +308,20 @@ export default function PRCampaignsPage() {
           />
         </div>
 
-        <div className="flex gap-2">
+        {/* NEU: Kunden-Filter */}
+        <div className="w-full lg:w-64">
+          <CompactCustomerSelector
+            value={selectedCustomerId}
+            onChange={handleCustomerChange}
+            className="w-full"
+          />
+        </div>
+
+        <div className="flex gap-2 flex-wrap">
           <button
             onClick={() => setSelectedStatus("all")}
             className={clsx(
-              "px-3 py-2 text-sm font-medium rounded-md",
+              "px-3 py-2 text-sm font-medium rounded-md whitespace-nowrap",
               selectedStatus === "all"
                 ? "bg-blue-100 text-blue-700"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -288,7 +336,7 @@ export default function PRCampaignsPage() {
                 key={status}
                 onClick={() => setSelectedStatus(status as PRCampaignStatus)}
                 className={clsx(
-                  "px-3 py-2 text-sm font-medium rounded-md",
+                  "px-3 py-2 text-sm font-medium rounded-md whitespace-nowrap",
                   selectedStatus === status
                     ? "bg-blue-100 text-blue-700"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -305,6 +353,7 @@ export default function PRCampaignsPage() {
       <div className="mb-4 flex items-center justify-between h-9">
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
           {filteredCampaigns.length} von {campaigns.length} Kampagnen
+          {selectedCustomerId && ' • Gefiltert nach Kunde'}
         </p>
         <div className={clsx(
           "flex items-center gap-4 transition-opacity", 
@@ -323,7 +372,7 @@ export default function PRCampaignsPage() {
         </div>
       </div>
 
-      {/* Kampagnen-Tabelle */}
+      {/* Kampagnen-Tabelle - ERWEITERT */}
       {filteredCampaigns.length === 0 && !loading ? (
         <div className="text-center py-12 border rounded-lg bg-white">
           <EnvelopeIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
@@ -357,6 +406,7 @@ export default function PRCampaignsPage() {
                 />
               </TableHeader>
               <TableHeader>Kampagne</TableHeader>
+              <TableHeader>Kunde</TableHeader>
               <TableHeader>Status</TableHeader>
               <TableHeader>Verteiler</TableHeader>
               <TableHeader>Empfänger</TableHeader>
@@ -382,6 +432,35 @@ export default function PRCampaignsPage() {
                     <div className="text-sm text-gray-500">
                       Geplant für: {formatDate(campaign.scheduledAt)}
                     </div>
+                  )}
+                  {/* NEU: Asset-Indikator */}
+                  {campaign.attachedAssets && campaign.attachedAssets.length > 0 && (
+                    <div className="mt-1 flex items-center text-xs text-gray-500">
+                      <PhotoIcon className="h-3 w-3 mr-1" />
+                      {campaign.attachedAssets.length} Medien angehängt
+                    </div>
+                  )}
+                </TableCell>
+                
+                {/* NEU: Kunden-Spalte */}
+                <TableCell>
+                  {campaign.clientId ? (
+                    <div className="flex items-center gap-2">
+                      <CustomerBadge 
+                        customerId={campaign.clientId}
+                        customerName={campaign.clientName}
+                        showIcon={false}
+                        className="text-xs"
+                      />
+                      <Link 
+                        href={`/dashboard/mediathek?clientId=${campaign.clientId}`}
+                        className="text-gray-400 hover:text-gray-600"
+                      >
+                        <PhotoIcon className="h-4 w-4" />
+                      </Link>
+                    </div>
+                  ) : (
+                    <span className="text-gray-400 text-sm">—</span>
                   )}
                 </TableCell>
                 
@@ -409,7 +488,7 @@ export default function PRCampaignsPage() {
                 
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    {/* NEU: Analytics Button nur für versendete Kampagnen */}
+                    {/* Analytics Button nur für versendete Kampagnen */}
                     {campaign.status === 'sent' && (
                       <Link href={`/dashboard/pr/campaigns/${campaign.id}/analytics`}>
                         <Button
@@ -455,7 +534,7 @@ export default function PRCampaignsPage() {
         </Table>
       )}
 
-      {/* Quick Actions Footer */}
+      {/* Quick Actions Footer - ERWEITERT */}
       {campaigns.length > 0 && (
         <div className="mt-8 border-t pt-6">
           <h3 className="text-lg font-medium mb-4">Schnellaktionen</h3>
@@ -470,17 +549,20 @@ export default function PRCampaignsPage() {
             </Link>
             
             <div className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer" onClick={() => {
-              alert("Template-System kommt bald!");
+              const customersWithCampaigns = new Set(campaigns.map(c => c.clientId).filter(Boolean));
+              if (customersWithCampaigns.size > 0) {
+                const firstCustomerId = Array.from(customersWithCampaigns)[0];
+                window.location.href = `/dashboard/mediathek?clientId=${firstCustomerId}`;
+              } else {
+                alert("Noch keine Kampagnen mit Kunden verknüpft.");
+              }
             }}>
-              <svg className="h-8 w-8 text-green-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <h4 className="font-medium">Templates</h4>
-              <p className="text-sm text-gray-600">Vorlagen für Pressemitteilungen</p>
+              <PhotoIcon className="h-8 w-8 text-amber-600 mb-2" />
+              <h4 className="font-medium">Mediathek</h4>
+              <p className="text-sm text-gray-600">Verwalte Medien für deine Kunden</p>
             </div>
 
             <div className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer" onClick={() => {
-              // NEU: Weiterleitung zu Analytics-Übersicht
               const sentCampaigns = campaigns.filter(c => c.status === 'sent');
               if (sentCampaigns.length > 0) {
                 window.location.href = `/dashboard/pr/campaigns/${sentCampaigns[0].id}/analytics`;

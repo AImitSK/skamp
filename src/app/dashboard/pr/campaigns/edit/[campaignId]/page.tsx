@@ -1,4 +1,4 @@
-// src/app/dashboard/pr/campaigns/edit/[campaignId]/page.tsx - KORRIGIERT
+// src/app/dashboard/pr/campaigns/edit/[campaignId]/page.tsx - Mit Customer Support
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -15,8 +15,16 @@ import { Field, Label } from '@/components/fieldset';
 import { Select } from '@/components/select';
 import { Input } from '@/components/input';
 import { RichTextEditor } from '@/components/RichTextEditor';
+import { CustomerBadge } from '@/components/pr/CustomerSelector';
 import Link from 'next/link';
-import { SparklesIcon, CheckCircleIcon, ClockIcon } from "@heroicons/react/24/outline";
+import { 
+  SparklesIcon, 
+  CheckCircleIcon, 
+  ClockIcon,
+  BuildingOfficeIcon,
+  DocumentTextIcon,
+  PhotoIcon
+} from "@heroicons/react/24/outline";
 
 // Dynamic import für das kompatible Modal
 import dynamic from 'next/dynamic';
@@ -171,13 +179,23 @@ export default function EditPRCampaignPage() {
         <Heading>Kampagne bearbeiten</Heading>
         <Text className="mt-1">Du bearbeitest den Entwurf: "{campaign?.title}"</Text>
         
-        {/* Campaign Metadata */}
+        {/* Campaign Metadata with Customer Info */}
         {campaign && (
           <div className="mt-3 flex items-center gap-4 text-sm text-gray-600">
             <div className="flex items-center">
               <ClockIcon className="h-4 w-4 mr-1" />
               Erstellt: {campaign.createdAt?.toDate().toLocaleDateString('de-DE')}
             </div>
+            {campaign.clientId && (
+              <div className="flex items-center gap-2">
+                <BuildingOfficeIcon className="h-4 w-4" />
+                <CustomerBadge 
+                  customerId={campaign.clientId} 
+                  customerName={campaign.clientName}
+                  showIcon={false}
+                />
+              </div>
+            )}
             {aiMetadata && (
               <div className="flex items-center text-indigo-600">
                 <SparklesIcon className="h-4 w-4 mr-1" />
@@ -204,8 +222,42 @@ export default function EditPRCampaignPage() {
       )}
 
       <div className="space-y-8 p-8 border rounded-lg bg-white">
+        {/* Customer Info Section - READ ONLY in Edit Mode */}
+        {campaign?.clientId && (
+          <div className="bg-gray-50 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-sm text-gray-600">Kunde</Label>
+                <div className="mt-1 flex items-center gap-3">
+                  <BuildingOfficeIcon className="h-5 w-5 text-gray-400" />
+                  <span className="font-medium text-gray-900">
+                    {campaign.clientName || 'Unbekannter Kunde'}
+                  </span>
+                  <CustomerBadge 
+                    customerId={campaign.clientId} 
+                    customerName={campaign.clientName}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Link href={`/dashboard/mediathek?clientId=${campaign.clientId}`}>
+                  <Button plain className="text-sm">
+                    <PhotoIcon className="h-4 w-4 mr-1" />
+                    Medien verwalten
+                  </Button>
+                </Link>
+                {/* TODO: Add Asset Manager Button */}
+                {/* <Button plain className="text-sm">
+                  <DocumentTextIcon className="h-4 w-4 mr-1" />
+                  Assets anhängen
+                </Button> */}
+              </div>
+            </div>
+          </div>
+        )}
+
         <Field>
-          <Label className="text-base font-semibold">Schritt 1: Verteiler auswählen</Label>
+          <Label className="text-base font-semibold">Verteiler</Label>
           <Select value={selectedListId} onChange={(e) => setSelectedListId(e.target.value)}>
             <option value="">Verteiler wählen...</option>
             {availableLists.map(list => (
@@ -214,13 +266,21 @@ export default function EditPRCampaignPage() {
               </option>
             ))}
           </Select>
+          
+          {selectedList && (
+            <div className="mt-3 p-3 bg-indigo-50 border border-indigo-200 rounded-md text-sm">
+              <p>
+                <strong>{selectedList.contactCount} Empfänger</strong> in der Liste "{selectedList.name}".
+              </p>
+            </div>
+          )}
         </Field>
 
         <div className="border-t pt-8">
           <div className="flex justify-between items-start mb-4">
             <div>
-              <h3 className="text-base font-semibold">Schritt 2: Pressemitteilung verfassen</h3>
-              <Text>Gib den Titel und den Inhalt deiner Mitteilung ein oder nutze den KI-Assistenten.</Text>
+              <h3 className="text-base font-semibold">Pressemitteilung</h3>
+              <Text>Bearbeite den Titel und den Inhalt deiner Mitteilung.</Text>
               
               {/* KI-Metadata anzeigen */}
               {aiMetadata && (
@@ -266,9 +326,20 @@ export default function EditPRCampaignPage() {
             </Field>
           </div>
         </div>
+
+        {/* Assets Section - Coming Soon */}
+        <div className="border-t pt-8">
+          <h3 className="text-base font-semibold text-zinc-400">
+            <DocumentTextIcon className="h-5 w-5 inline mr-2" />
+            Medien anhängen (zukünftiges Feature)
+          </h3>
+          <Text className="text-zinc-400">
+            Hier kannst du bald Bilder, Dokumente und andere Medien an deine Kampagne anhängen.
+          </Text>
+        </div>
         
         <div className="border-t pt-8">
-           <h3 className="text-base font-semibold text-zinc-400">Schritt 3: Versand planen (zukünftiges Feature)</h3>
+           <h3 className="text-base font-semibold text-zinc-400">Versand planen (zukünftiges Feature)</h3>
            <Text className="text-zinc-400">Hier wirst du den Versandzeitpunkt festlegen.</Text>
         </div>
       </div>
@@ -291,6 +362,11 @@ export default function EditPRCampaignPage() {
             title: campaignTitle,
             content: pressReleaseContent
           }}
+          // TODO: Pass customer context
+          // customerContext={{
+          //   companyName: campaign?.clientName,
+          //   companyId: campaign?.clientId
+          // }}
         />
       )}
     </div>
