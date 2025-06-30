@@ -1,4 +1,4 @@
-// src/types/lists.ts
+// src/types/lists.ts - Erweitert um Medienschwerpunkte-Filter
 import { Timestamp } from 'firebase/firestore';
 // KORRIGIERT: CompanyType wird jetzt aus der crm-Typdatei importiert
 import { CompanyType, TagColor } from './crm';
@@ -11,7 +11,7 @@ export interface ListFilters {
   // Firmen-Filter
   companyTypes?: ExtendedCompanyType[];
   industries?: string[];
-  countries?:string[];
+  countries?: string[];
   
   // Kontakt-Filter
   tagIds?: string[];
@@ -22,6 +22,9 @@ export interface ListFilters {
   // Spezielle Filter für Presse
   mediaOutlets?: string[]; // Bestimmte Verlage
   beats?: string[]; // Ressorts (Tech, Business, etc.)
+  
+  // NEU: Medienschwerpunkte-Filter
+  mediaFocus?: string[]; // Aus Company.mediaFocus extrahierte Schwerpunkte
   
   // Datum-Filter
   createdAfter?: Date;
@@ -125,6 +128,49 @@ export const PRESS_BEATS = [
   'Digitalisierung'
 ] as const;
 
+// NEU: Häufige Medienschwerpunkte (als Beispiele/Vorschläge)
+export const COMMON_MEDIA_FOCUS = [
+  // Technologie & Digital
+  'Künstliche Intelligenz',
+  'Cybersecurity',
+  'Cloud Computing',
+  'Blockchain',
+  'IoT',
+  'Robotik',
+  'Software',
+  'Hardware',
+  
+  // Wirtschaft & Business
+  'Startup',
+  'Mittelstand',
+  'Börse',
+  'Fintech',
+  'E-Commerce',
+  'Handel',
+  'Logistik',
+  'Immobilien',
+  
+  // Branchen
+  'Automotive',
+  'Gesundheitswesen',
+  'Bildung',
+  'Energie',
+  'Nachhaltigkeit',
+  'Tourismus',
+  'Mode',
+  'Food & Beverage',
+  
+  // Gesellschaft
+  'Politik',
+  'Kultur',
+  'Sport',
+  'Lifestyle',
+  'Familie',
+  'Reise',
+  'Entertainment',
+  'Gaming'
+] as const;
+
 // Template für Listen-Erstellung
 export interface ListTemplate {
   name: string;
@@ -143,7 +189,8 @@ export const LIST_TEMPLATES: ListTemplate[] = [
     color: 'blue',
     filters: {
       tagIds: ['presse'], // Wird zur Laufzeit aufgelöst
-      beats: ['Technologie', 'Digitalisierung', 'Startups']
+      beats: ['Technologie', 'Digitalisierung', 'Startups'],
+      mediaFocus: ['Künstliche Intelligenz', 'Software', 'Cloud Computing'] // NEU
     }
   },
   {
@@ -153,7 +200,18 @@ export const LIST_TEMPLATES: ListTemplate[] = [
     color: 'green',
     filters: {
       tagIds: ['presse'],
-      beats: ['Wirtschaft', 'Finanzen']
+      beats: ['Wirtschaft', 'Finanzen'],
+      mediaFocus: ['Börse', 'Mittelstand', 'Fintech'] // NEU
+    }
+  },
+  {
+    name: 'Nachhaltigkeits-Medien',
+    description: 'Verlage und Journalisten mit Fokus auf Nachhaltigkeit', // NEU
+    category: 'press',
+    color: 'emerald',
+    filters: {
+      companyTypes: ['publisher', 'media_house'],
+      mediaFocus: ['Nachhaltigkeit', 'Energie', 'Umwelt']
     }
   },
   {
