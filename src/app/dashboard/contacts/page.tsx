@@ -933,7 +933,6 @@ export default function ContactsPage() {
             options={Object.entries(companyTypeLabels).map(([value, label]) => ({ value, label }))} 
             selectedValues={selectedTypes} 
             onChange={(values) => setSelectedTypes(values as CompanyType[])}
-            className="w-full lg:w-auto"
           />
           
           <MultiSelectDropdown 
@@ -942,7 +941,6 @@ export default function ContactsPage() {
             options={tagOptions.map(tag => ({ value: tag.id!, label: tag.name }))} 
             selectedValues={selectedCompanyTagIds} 
             onChange={(values) => setSelectedCompanyTagIds(values)}
-            className="w-full lg:w-auto"
           />
         </div>
       )}
@@ -966,7 +964,6 @@ export default function ContactsPage() {
             options={companyOptions} 
             selectedValues={selectedContactCompanyIds} 
             onChange={(values) => setSelectedContactCompanyIds(values)}
-            className="w-full lg:w-auto"
           />
           
           <MultiSelectDropdown 
@@ -975,7 +972,6 @@ export default function ContactsPage() {
             options={positionOptions.map(pos => ({ value: pos, label: pos }))} 
             selectedValues={selectedContactPositions} 
             onChange={(values) => setSelectedContactPositions(values)}
-            className="w-full lg:w-auto"
           />
           
           <MultiSelectDropdown 
@@ -984,7 +980,6 @@ export default function ContactsPage() {
             options={tagOptions.map(tag => ({ value: tag.id!, label: tag.name }))} 
             selectedValues={selectedContactTagIds} 
             onChange={(values) => setSelectedContactTagIds(values)}
-            className="w-full lg:w-auto"
           />
         </div>
       )}
