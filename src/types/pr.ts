@@ -1,10 +1,54 @@
-// src/types/pr.ts - ERWEITERT mit Asset-Integration
+// src/types/pr.ts - VOLLSTÄNDIG mit Multi-List Support
 import { Timestamp } from 'firebase/firestore';
 
-// Definiert den Zustand einer Kampagne
 export type PRCampaignStatus = 'draft' | 'scheduled' | 'sending' | 'sent' | 'archived';
 
-// NEU: Asset-Attachment Type
+export interface PRCampaign {
+  id?: string;
+  userId: string;
+  
+  // Campaign Details
+  title: string;
+  contentHtml: string;
+  status: PRCampaignStatus;
+  
+  // Distribution Lists - ERWEITERT für Multi-List Support
+  distributionListId: string;        // Legacy: Einzelne Liste (für Rückwärtskompatibilität)
+  distributionListName: string;      // Legacy: Name der einzelnen Liste
+  distributionListIds?: string[];    // NEU: Array von Listen-IDs
+  distributionListNames?: string[];  // NEU: Array von Listen-Namen
+  recipientCount: number;
+  
+  // Customer
+  clientId?: string;
+  clientName?: string;
+  
+  // Attached Media
+  attachedAssets?: CampaignAssetAttachment[];
+  assetShareLinkId?: string;
+  assetShareUrl?: string;
+  assetSettings?: {
+    allowDownload?: boolean;
+    watermark?: boolean;
+    expiresAt?: Timestamp;
+    password?: string;
+  };
+  
+  // Timestamps
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
+  scheduledAt?: Timestamp | null;
+  sentAt?: Timestamp | null;
+  
+  // AI Metadata
+  aiGenerated?: boolean;
+  aiMetadata?: {
+    generatedBy: string;
+    timestamp: string;
+    context?: any;
+  };
+}
+
 export interface CampaignAssetAttachment {
   id: string;
   type: 'asset' | 'folder';
@@ -17,9 +61,9 @@ export interface CampaignAssetAttachment {
     folderName?: string;
     fileType?: string;
     description?: string;
-    thumbnailUrl?: string; // Für Vorschau
+    thumbnailUrl?: string;
     
-    // Zukünftige Metadaten-Erweiterungen (vorbereitet)
+    // Zukünftige Metadaten-Erweiterungen
     copyright?: string;
     author?: string;
     license?: string;
@@ -32,68 +76,14 @@ export interface CampaignAssetAttachment {
     };
   };
   
-  // Tracking - GEÄNDERT: attachedAt ist jetzt optional
-  attachedAt?: Timestamp;
+  // Tracking
+  attachedAt: Timestamp;
   attachedBy: string;
 }
 
-// Die Hauptdatenstruktur für eine PR-Kampagne - ERWEITERT
-export interface PRCampaign {
-  id?: string;
-  userId: string;
-  
-  // Inhaltliche Daten
-  title: string;          // Titel der Kampagne / Betreffzeile
-  contentHtml: string;    // Der Inhalt aus dem Rich-Text-Editor
-  
-  // NEU: Kunden-Zuordnung (wird Pflichtfeld)
-  clientId?: string;      // Optional für Rückwärtskompatibilität
-  clientName?: string;    // Denormalisiert für Performance
-  
-  // Status und Planung
-  status: PRCampaignStatus;
-  
-  // Empfänger-Informationen (denormalisiert für einfachen Zugriff)
-  distributionListId: string;
-  distributionListName: string;
-  recipientCount: number;
-  
-  // NEU: Angehängte Medien
-  attachedAssets?: CampaignAssetAttachment[];
-  
-  // NEU: Generierter Share-Link für alle Assets
-  assetShareLinkId?: string;
-  assetShareUrl?: string;
-  
-  // Zeitstempel
-  createdAt?: Timestamp;
-  updatedAt?: Timestamp;
-  scheduledAt?: Timestamp | null; // Für geplanten Versand
-  sentAt?: Timestamp | null;      // Wann wurde sie tatsächlich versendet
-  
-  // NEU: Versand-Einstellungen für Assets
-  assetSettings?: {
-    allowDownload: boolean;
-    passwordProtected: boolean;
-    password?: string;
-    expiresAt?: Timestamp;
-    watermark?: boolean;
-  };
-}
-
-// NEU: Interface für Asset-Selection im UI
-export interface AssetSelectionState {
-  selectedAssets: Map<string, CampaignAssetAttachment>;
-  selectedFolders: Map<string, CampaignAssetAttachment>;
-  isLoading: boolean;
-  error?: string;
-}
-
-// NEU: Filter-Optionen für Asset-Auswahl
-export interface AssetFilterOptions {
-  fileTypes?: string[];
-  tags?: string[];
-  dateFrom?: Date;
-  dateTo?: Date;
-  onlyWithMetadata?: boolean;
+export interface PRQuote {
+  person: string;
+  role: string;
+  company: string;
+  text: string;
 }
