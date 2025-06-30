@@ -2,7 +2,7 @@
 import { Timestamp } from 'firebase/firestore';
 
 // Basis-Typen
-export type CompanyType = 'customer' | 'supplier' | 'partner' | 'other';
+export type CompanyType = 'customer' | 'supplier' | 'partner' | 'publisher' | 'media_house' | 'agency' | 'other';
 export type CommunicationType = 'email' | 'phone' | 'meeting' | 'note' | 'task' | 'social';
 export type CommunicationDirection = 'inbound' | 'outbound' | 'internal';
 export type CommunicationStatus = 'completed' | 'pending' | 'cancelled';
@@ -15,17 +15,41 @@ export const companyTypeLabels: Record<CompanyType, string> = {
   customer: 'Kunde',
   supplier: 'Lieferant',
   partner: 'Partner',
+  publisher: 'Verlag',
+  media_house: 'Medienhaus',
+  agency: 'Agentur',
   other: 'Sonstiges'
 };
 
-// Erweiterte Company Types für Listen (inkl. Medien)
-// Diese werden nur in Listen-Filtern verwendet, nicht im Company-Typ selbst
-export const extendedCompanyTypeLabels = {
-  ...companyTypeLabels,
-  publisher: 'Verlag',
-  media_house: 'Medienhaus',
-  agency: 'Agentur'
-};
+// Media Types für Verlage/Medienhäuser
+export const MEDIA_TYPES = [
+  { value: 'newspaper', label: 'Tageszeitung' },
+  { value: 'magazine', label: 'Magazin' },
+  { value: 'online', label: 'Online-Medium' },
+  { value: 'blog', label: 'Blog' },
+  { value: 'podcast', label: 'Podcast' },
+  { value: 'tv', label: 'TV-Sender' },
+  { value: 'radio', label: 'Radio' },
+  { value: 'news_agency', label: 'Nachrichtenagentur' },
+  { value: 'trade_journal', label: 'Fachzeitschrift' },
+  { value: 'other', label: 'Sonstiges' }
+] as const;
+
+// Publikations-Frequenzen
+export const PUBLICATION_FREQUENCIES = [
+  { value: 'daily', label: 'Täglich' },
+  { value: 'weekly', label: 'Wöchentlich' },
+  { value: 'monthly', label: 'Monatlich' },
+  { value: 'quarterly', label: 'Vierteljährlich' },
+  { value: 'yearly', label: 'Jährlich' }
+] as const;
+
+// Publikations-Typen
+export const PUBLICATION_TYPES = [
+  { value: 'print', label: 'Print' },
+  { value: 'online', label: 'Online' },
+  { value: 'both', label: 'Print & Online' }
+] as const;
 
 // Company Interface
 export interface Company {
@@ -49,8 +73,9 @@ export interface Company {
   // Beispiel: "Technologie, Künstliche Intelligenz, Startups, Digitalisierung"
   mediaFocus?: string;
   
-  // Weitere Medien-spezifische Felder (optional für spätere Erweiterung)
-  mediaDetails?: {
+  // Media Info für detaillierte Medieninformationen
+  mediaInfo?: {
+    mediaType?: string; // newspaper, magazine, online, etc.
     circulation?: number; // Auflage
     reach?: number; // Reichweite
     publicationType?: 'print' | 'online' | 'both';
