@@ -10,6 +10,23 @@ export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type TagColor = 'blue' | 'green' | 'purple' | 'orange' | 'red' | 'pink' | 'yellow' | 'zinc' | 'indigo' | 'cyan' | 'emerald';
 
+// Company Type Labels
+export const companyTypeLabels: Record<CompanyType, string> = {
+  customer: 'Kunde',
+  supplier: 'Lieferant',
+  partner: 'Partner',
+  other: 'Sonstiges'
+};
+
+// Erweiterte Company Types für Listen (inkl. Medien)
+// Diese werden nur in Listen-Filtern verwendet, nicht im Company-Typ selbst
+export const extendedCompanyTypeLabels = {
+  ...companyTypeLabels,
+  publisher: 'Verlag',
+  media_house: 'Medienhaus',
+  agency: 'Agentur'
+};
+
 // Company Interface
 export interface Company {
   id?: string;
@@ -353,6 +370,49 @@ export const MAX_PAGE_SIZE = 100;
 export const MAX_TAGS_PER_ENTITY = 20;
 export const MAX_ATTACHMENTS_PER_COMMUNICATION = 10;
 export const MAX_IMPORT_ROWS = 5000;
+
+// Labels für UI
+export const communicationTypeLabels: Record<CommunicationType, string> = {
+  email: 'E-Mail',
+  phone: 'Anruf',
+  meeting: 'Meeting',
+  note: 'Notiz',
+  task: 'Aufgabe',
+  social: 'Social Media'
+};
+
+export const communicationDirectionLabels: Record<CommunicationDirection, string> = {
+  inbound: 'Eingehend',
+  outbound: 'Ausgehend',
+  internal: 'Intern'
+};
+
+export const communicationStatusLabels: Record<CommunicationStatus, string> = {
+  completed: 'Abgeschlossen',
+  pending: 'Ausstehend',
+  cancelled: 'Abgebrochen'
+};
+
+export const taskPriorityLabels: Record<TaskPriority, string> = {
+  low: 'Niedrig',
+  medium: 'Mittel',
+  high: 'Hoch',
+  urgent: 'Dringend'
+};
+
+export const tagColorClasses: Record<TagColor, string> = {
+  blue: 'bg-blue-100 text-blue-700',
+  green: 'bg-green-100 text-green-700',
+  purple: 'bg-purple-100 text-purple-700',
+  orange: 'bg-orange-100 text-orange-700',
+  red: 'bg-red-100 text-red-700',
+  pink: 'bg-pink-100 text-pink-700',
+  yellow: 'bg-yellow-100 text-yellow-700',
+  zinc: 'bg-zinc-100 text-zinc-700',
+  indigo: 'bg-indigo-100 text-indigo-700',
+  cyan: 'bg-cyan-100 text-cyan-700',
+  emerald: 'bg-emerald-100 text-emerald-700'
+};
 
 // Enums für Type Safety
 export enum EntityType {
