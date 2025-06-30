@@ -1,7 +1,7 @@
-// src/app/dashboard/pr/campaigns/new/page.tsx - KORRIGIERT mit verbessertem Asset-Loading
+// src/app/dashboard/pr/campaigns/new/page.tsx - KORRIGIERT
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { listsService } from '@/lib/firebase/lists-service';
@@ -19,6 +19,7 @@ import { Label } from '@/components/label';
 import { Input } from '@/components/input';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { Badge } from '@/components/badge';
+import { Checkbox } from '@/components/checkbox';
 import { 
   SparklesIcon, 
   CheckCircleIcon, 
@@ -31,13 +32,24 @@ import {
   FolderIcon,
   DocumentIcon,
   ArrowUpTrayIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  QuestionMarkCircleIcon,
+  EyeIcon,
+  PaperAirplaneIcon,
+  MagnifyingGlassIcon,
+  Squares2X2Icon,
+  ListBulletIcon,
+  FunnelIcon,
+  BarsArrowDownIcon,
+  CheckIcon,
+  ArrowLeftIcon,
+  XCircleIcon  // ADDED THIS
 } from "@heroicons/react/24/outline";
 import Link from 'next/link';
+import clsx from 'clsx';
 
 // Import Customer Selector
 import { CustomerSelector } from '@/components/pr/CustomerSelector';
-import { ListSelector } from '@/components/pr/ListSelector';
 
 // Dynamic import für das neue Modal
 import dynamic from 'next/dynamic';
@@ -45,48 +57,239 @@ const StructuredGenerationModal = dynamic(() => import('@/components/pr/ai/Struc
   ssr: false
 });
 
-// Hilfsfunktion für sicheres Bildladen
-const AssetPreview = ({ asset }: { asset: MediaAsset }) => {
-  const [imageError, setImageError] = useState(false);
-  const [loading, setLoading] = useState(true);
-  
-  const isImage = asset.fileType?.startsWith('image/');
-  
-  if (!isImage) {
-    return <DocumentIcon className="h-16 w-16 text-gray-400 mx-auto mb-2" />;
-  }
-  
+// Toast Types
+interface Toast {
+  id: string;
+  type: 'success' | 'error' | 'warning' | 'info';
+  title: string;
+  message?: string;
+  duration?: number;
+}
+
+// Toast Notification Component
+function ToastNotification({ toasts, onRemove }: { toasts: Toast[], onRemove: (id: string) => void }) {
+  const icons = {
+    success: CheckCircleIcon,
+    error: XCircleIcon,
+    warning: ExclamationTriangleIcon,
+    info: ExclamationTriangleIcon
+  };
+
+  const colors = {
+    success: 'bg-green-50 border-green-200 text-green-800',
+    error: 'bg-red-50 border-red-200 text-red-800',
+    warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
+    info: 'bg-blue-50 border-blue-200 text-blue-800'
+  };
+
+  const iconColors = {
+    success: 'text-green-400',
+    error: 'text-red-400',
+    warning: 'text-yellow-400',
+    info: 'text-blue-400'
+  };
+
   return (
-    <div className="relative h-16 w-full mb-2">
-      {loading && (
-        <div className="absolute inset-0 bg-gray-100 animate-pulse rounded" />
-      )}
-      
-      {!imageError && asset.downloadUrl && (
-        <img 
-          src={asset.downloadUrl} 
-          alt={asset.fileName}
-          className="h-16 w-full object-cover rounded"
-          onError={(e) => {
-            console.error(`Failed to load image: ${asset.fileName}`, e);
-            setImageError(true);
-            setLoading(false);
-          }}
-          onLoad={() => setLoading(false)}
+    <div className="fixed bottom-0 right-0 p-6 space-y-4 z-50">
+      {toasts.map((toast) => {
+        const Icon = icons[toast.type];
+        return (
+          <div
+            key={toast.id}
+            className={`${colors[toast.type]} border rounded-lg p-4 shadow-lg transform transition-all duration-300 ease-in-out animate-slide-in-up`}
+            style={{ minWidth: '320px' }}
+          >
+            <div className="flex">
+              <Icon className={`h-5 w-5 ${iconColors[toast.type]} mr-3 flex-shrink-0`} />
+              <div className="flex-1">
+                <p className="font-medium">{toast.title}</p>
+                {toast.message && (
+                  <p className="text-sm mt-1 opacity-90">{toast.message}</p>
+                )}
+              </div>
+              <button
+                onClick={() => onRemove(toast.id)}
+                className="ml-3 flex-shrink-0 rounded-md hover:opacity-70 focus:outline-none"
+              >
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// Toast Hook
+function useToast() {
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  
+  const showToast = useCallback((type: Toast['type'], title: string, message?: string) => {
+    const id = Date.now().toString();
+    const newToast: Toast = { id, type, title, message, duration: 5000 };
+    setToasts(prev => [...prev, newToast]);
+    
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, newToast.duration);
+  }, []);
+
+  const removeToast = useCallback((id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  return { toasts, showToast, removeToast };
+}
+
+// Animated Progress Steps
+function AnimatedProgressSteps({ 
+  steps, 
+  currentStepIndex 
+}: { 
+  steps: Array<{ id: string; name: string; icon: any; completed: boolean }>;
+  currentStepIndex: number;
+}) {
+  return (
+    <div className="relative mb-8">
+      {/* Progress Line */}
+      <div className="absolute top-5 left-0 right-0 h-0.5 bg-gray-200">
+        <div 
+          className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 transition-all duration-700 ease-out"
+          style={{ width: `${(steps.filter(s => s.completed).length / steps.length) * 100}%` }}
         />
-      )}
+      </div>
       
-      {(imageError || !asset.downloadUrl) && (
-        <div className="h-16 w-full bg-gray-100 rounded flex items-center justify-center">
-          <PhotoIcon className="h-8 w-8 text-gray-400" />
-        </div>
+      {/* Steps */}
+      <div className="relative flex justify-between">
+        {steps.map((step, index) => {
+          const Icon = step.icon;
+          const isActive = index === currentStepIndex;
+          const isCompleted = step.completed;
+          
+          return (
+            <div 
+              key={step.id}
+              className={`flex flex-col items-center transition-all duration-300 ${
+                isActive ? 'scale-110' : ''
+              }`}
+            >
+              <div className={clsx(
+                "rounded-full p-3 transition-all duration-300 transform",
+                isCompleted && "bg-green-500 scale-100",
+                isActive && !isCompleted && "bg-indigo-600 shadow-lg shadow-indigo-500/50 animate-pulse",
+                !isCompleted && !isActive && "bg-gray-200"
+              )}>
+                {isCompleted ? (
+                  <CheckCircleIcon className="h-6 w-6 text-white animate-scale-in" />
+                ) : (
+                  <Icon className={clsx("h-6 w-6", isActive ? "text-white" : "text-gray-400")} />
+                )}
+              </div>
+              <span className={clsx(
+                "mt-2 text-sm font-medium transition-colors",
+                isActive && "text-indigo-600",
+                isCompleted && "text-green-600",
+                !isActive && !isCompleted && "text-gray-400"
+              )}>
+                {step.name}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// Auto-Save Hook
+function useAutoSave(
+  data: any, 
+  onSave: () => Promise<void>,
+  enabled: boolean = false
+) {
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout>();
+  
+  useEffect(() => {
+    if (!enabled) return;
+    
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    setSaveStatus('saving');
+    
+    timeoutRef.current = setTimeout(async () => {
+      try {
+        await onSave();
+        setSaveStatus('saved');
+        setLastSaved(new Date());
+        
+        setTimeout(() => setSaveStatus('idle'), 2000);
+      } catch (error) {
+        setSaveStatus('error');
+      }
+    }, 2000); // 2s debounce
+    
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [data, enabled, onSave]);
+  
+  return { saveStatus, lastSaved };
+}
+
+// Auto-Save Indicator
+function AutoSaveIndicator({ 
+  status, 
+  lastSaved 
+}: { 
+  status: 'idle' | 'saving' | 'saved' | 'error';
+  lastSaved: Date | null;
+}) {
+  return (
+    <div className="flex items-center text-sm">
+      {status === 'saving' && (
+        <>
+          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-indigo-600 mr-2" />
+          <span className="text-gray-600">Speichert...</span>
+        </>
+      )}
+      {status === 'saved' && (
+        <>
+          <CheckCircleIcon className="h-4 w-4 text-green-500 mr-2 animate-scale-in" />
+          <span className="text-green-600">Gespeichert</span>
+        </>
+      )}
+      {status === 'error' && (
+        <>
+          <ExclamationTriangleIcon className="h-4 w-4 text-red-500 mr-2" />
+          <span className="text-red-600">Fehler beim Speichern</span>
+        </>
+      )}
+      {status === 'idle' && lastSaved && (
+        <span className="text-gray-500">
+          Zuletzt gespeichert {formatRelativeTime(lastSaved)}
+        </span>
       )}
     </div>
   );
-};
+}
 
-// Asset-Selector Modal (KORRIGIERT)
-function AssetSelectorModal({ 
+// Helper function
+function formatRelativeTime(date: Date): string {
+  const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
+  if (seconds < 60) return 'gerade eben';
+  if (seconds < 3600) return `vor ${Math.floor(seconds / 60)} Min.`;
+  return `vor ${Math.floor(seconds / 3600)} Std.`;
+}
+
+// Enhanced Asset Selector Modal
+function EnhancedAssetSelector({ 
   isOpen, 
   onClose, 
   clientId,
@@ -106,9 +309,12 @@ function AssetSelectorModal({
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [view, setView] = useState<'grid' | 'list'>('grid');
+  const [filterType, setFilterType] = useState<'all' | 'images' | 'documents'>('all');
+  const [searchTerm, setSearchTerm] = useState('');
   const { user } = useAuth();
 
-  // Initialisiere mit bereits ausgewählten Assets
+  // Initialize with existing assets
   useEffect(() => {
     if (isOpen && existingAssets.length > 0) {
       const existing = new Set<string>();
@@ -136,127 +342,44 @@ function AssetSelectorModal({
     setError(null);
     
     try {
-      console.log(`🔄 Loading media for client: ${clientId}`);
-      
       const { assets: clientAssets, folders: clientFolders } = await mediaService.getMediaByClientId(
         user.uid,
         clientId
       );
       
-      console.log(`📊 Raw data from service: ${clientAssets.length} assets, ${clientFolders.length} folders`);
-      
-      // Validiere und bereinige Assets
-      const processedAssets = await processAssets(clientAssets);
-      const processedFolders = processFolders(clientFolders);
-      
-      setAssets(processedAssets);
-      setFolders(processedFolders);
+      setAssets(clientAssets);
+      setFolders(clientFolders);
       
     } catch (error) {
-      console.error('❌ Fehler beim Laden der Medien:', error);
+      console.error('Fehler beim Laden der Medien:', error);
       setError('Fehler beim Laden der Medien. Bitte versuche es erneut.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Verarbeite und validiere Assets
-  const processAssets = async (rawAssets: MediaAsset[]): Promise<MediaAsset[]> => {
-    console.log('🧹 Processing assets...');
+  // Filter and sort assets
+  const filteredAssets = useMemo(() => {
+    let filtered = [...assets];
     
-    // 1. Filtere ungültige Assets
-    const validAssets = rawAssets.filter(asset => {
-      if (!asset.id) {
-        console.warn('⚠️ Asset ohne ID gefunden:', asset);
-        return false;
-      }
-      if (!asset.downloadUrl) {
-        console.warn(`⚠️ Asset ${asset.id} ohne Download-URL:`, asset.fileName);
-        return false;
-      }
-      if (!asset.fileName) {
-        console.warn(`⚠️ Asset ${asset.id} ohne Dateinamen`);
-        return false;
-      }
-      return true;
-    });
-    
-    console.log(`✅ Valid assets: ${validAssets.length} of ${rawAssets.length}`);
-    
-    // 2. Entferne Duplikate
-    const uniqueMap = new Map<string, MediaAsset>();
-    validAssets.forEach(asset => {
-      if (!uniqueMap.has(asset.id!)) {
-        uniqueMap.set(asset.id!, asset);
-      } else {
-        console.warn(`⚠️ Duplikat gefunden und entfernt: ${asset.id} - ${asset.fileName}`);
-      }
-    });
-    
-    const uniqueAssets = Array.from(uniqueMap.values());
-    console.log(`🎯 Unique assets: ${uniqueAssets.length}`);
-    
-    // 3. Sortiere nach Datum (neueste zuerst)
-    uniqueAssets.sort((a, b) => {
-      const aTime = a.createdAt?.seconds || 0;
-      const bTime = b.createdAt?.seconds || 0;
-      return bTime - aTime;
-    });
-    
-    // 4. Validiere URLs für Bilder
-    const processedAssets = await Promise.all(
-      uniqueAssets.map(async (asset) => {
-        if (asset.fileType?.startsWith('image/') && asset.downloadUrl) {
-          try {
-            // Prüfe ob die URL gültig ist
-            const url = new URL(asset.downloadUrl);
-            if (!url.protocol.startsWith('http')) {
-              console.warn(`⚠️ Ungültiges Protokoll für Asset ${asset.id}: ${url.protocol}`);
-              asset.downloadUrl = ''; // Setze ungültige URL auf leer
-            }
-          } catch (e) {
-            console.warn(`⚠️ Ungültige URL für Asset ${asset.id}: ${asset.downloadUrl}`);
-            asset.downloadUrl = ''; // Setze ungültige URL auf leer
-          }
-        }
-        return asset;
-      })
-    );
-    
-    // 5. Final check
-    if (processedAssets.length > 0) {
-      console.log('🔍 Erste Asset:', {
-        id: processedAssets[0].id,
-        name: processedAssets[0].fileName,
-        hasUrl: !!processedAssets[0].downloadUrl
-      });
-      
-      const lastAsset = processedAssets[processedAssets.length - 1];
-      console.log('🔍 Letzte Asset:', {
-        id: lastAsset.id,
-        name: lastAsset.fileName,
-        hasUrl: !!lastAsset.downloadUrl
-      });
+    // Type filter
+    if (filterType === 'images') {
+      filtered = filtered.filter(a => a.fileType?.startsWith('image/'));
+    } else if (filterType === 'documents') {
+      filtered = filtered.filter(a => !a.fileType?.startsWith('image/'));
     }
     
-    return processedAssets;
-  };
-
-  // Verarbeite Ordner
-  const processFolders = (rawFolders: MediaFolder[]): MediaFolder[] => {
-    // Entferne Duplikate
-    const uniqueMap = new Map<string, MediaFolder>();
-    rawFolders.forEach(folder => {
-      if (folder.id && !uniqueMap.has(folder.id)) {
-        uniqueMap.set(folder.id, folder);
-      }
-    });
+    // Search filter
+    if (searchTerm) {
+      const search = searchTerm.toLowerCase();
+      filtered = filtered.filter(a => 
+        a.fileName.toLowerCase().includes(search) ||
+        a.description?.toLowerCase().includes(search)
+      );
+    }
     
-    const uniqueFolders = Array.from(uniqueMap.values());
-    
-    // Sortiere alphabetisch
-    return uniqueFolders.sort((a, b) => a.name.localeCompare(b.name));
-  };
+    return filtered;
+  }, [assets, filterType, searchTerm]);
 
   const toggleSelection = (id: string) => {
     const newSelection = new Set(selectedItems);
@@ -268,10 +391,22 @@ function AssetSelectorModal({
     setSelectedItems(newSelection);
   };
 
+  const selectAll = () => {
+    const allIds = new Set([
+      ...filteredAssets.map(a => a.id!),
+      ...folders.map(f => f.id!)
+    ]);
+    setSelectedItems(allIds);
+  };
+
+  const deselectAll = () => {
+    setSelectedItems(new Set());
+  };
+
   const handleConfirm = () => {
     const attachments: CampaignAssetAttachment[] = [];
     
-    // Assets hinzufügen
+    // Add assets
     assets.forEach(asset => {
       if (selectedItems.has(asset.id!)) {
         attachments.push({
@@ -284,13 +419,13 @@ function AssetSelectorModal({
             description: asset.description || '',
             thumbnailUrl: asset.downloadUrl
           },
-          attachedAt: null as any, // Placeholder - will be removed before saving
+          attachedAt: null as any,
           attachedBy: user?.uid || ''
         });
       }
     });
 
-    // Ordner hinzufügen
+    // Add folders
     folders.forEach(folder => {
       if (selectedItems.has(folder.id!)) {
         attachments.push({
@@ -301,7 +436,7 @@ function AssetSelectorModal({
             folderName: folder.name,
             description: folder.description || ''
           },
-          attachedAt: null as any, // Placeholder - will be removed before saving
+          attachedAt: null as any,
           attachedBy: user?.uid || ''
         });
       }
@@ -316,24 +451,94 @@ function AssetSelectorModal({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center p-4">
-        <div className="fixed inset-0 bg-black bg-opacity-25" onClick={onClose} />
+        <div className="fixed inset-0 bg-black bg-opacity-25 transition-opacity" onClick={onClose} />
         
-        <div className="relative bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] flex flex-col">
+        <div className="relative bg-white rounded-lg shadow-xl max-w-5xl w-full max-h-[90vh] flex flex-col transform transition-all animate-modal-appear">
           {/* Header */}
-          <div className="px-6 py-4 border-b">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold">Medien auswählen</h3>
-                <p className="text-sm text-gray-500 mt-1">
-                  Wähle Medien von {clientName || 'diesem Kunden'} aus
-                </p>
+          <div className="sticky top-0 z-10 bg-white border-b">
+            <div className="px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold">Medien auswählen</h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Wähle Medien von {clientName || 'diesem Kunden'} aus
+                  </p>
+                </div>
+                <button
+                  onClick={onClose}
+                  className="text-gray-400 hover:text-gray-500 transition-colors"
+                >
+                  <XMarkIcon className="h-6 w-6" />
+                </button>
               </div>
-              <button
-                onClick={onClose}
-                className="text-gray-400 hover:text-gray-500"
-              >
-                <XMarkIcon className="h-6 w-6" />
-              </button>
+            </div>
+
+            {/* Controls */}
+            <div className="px-6 pb-3 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {/* Search */}
+                <div className="relative">
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Suchen..."
+                    className="pl-9 pr-3 py-1.5 text-sm w-64"
+                  />
+                </div>
+
+                {/* Filter */}
+                <select
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value as any)}
+                  className="text-sm border-gray-300 rounded-md"
+                >
+                  <option value="all">Alle Typen</option>
+                  <option value="images">Nur Bilder</option>
+                  <option value="documents">Nur Dokumente</option>
+                </select>
+
+                {/* Selection Actions */}
+                <div className="flex items-center gap-2 ml-4">
+                  <Button plain onClick={selectAll} className="text-xs">
+                    Alle auswählen
+                  </Button>
+                  <Button plain onClick={deselectAll} className="text-xs">
+                    Auswahl aufheben
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                {selectedItems.size > 0 && (
+                  <Badge color="indigo">
+                    {selectedItems.size} ausgewählt
+                  </Badge>
+                )}
+
+                {/* View Toggle */}
+                <div className="flex gap-1 p-1 bg-gray-100 rounded">
+                  <button
+                    onClick={() => setView('grid')}
+                    className={clsx(
+                      "p-1 rounded transition-colors",
+                      view === 'grid' ? "bg-white shadow" : "hover:bg-gray-200"
+                    )}
+                  >
+                    <Squares2X2Icon className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => setView('list')}
+                    className={clsx(
+                      "p-1 rounded transition-colors",
+                      view === 'list' ? "bg-white shadow" : "hover:bg-gray-200"
+                    )}
+                  >
+                    <ListBulletIcon className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -352,23 +557,44 @@ function AssetSelectorModal({
               </div>
             ) : (
               <div className="space-y-6">
-                {/* Ordner */}
+                {/* Folders */}
                 {folders.length > 0 && (
                   <div>
                     <h4 className="font-medium text-gray-900 mb-3">Ordner</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div className={clsx(
+                      view === 'grid' 
+                        ? "grid grid-cols-2 md:grid-cols-3 gap-3" 
+                        : "space-y-2"
+                    )}>
                       {folders.map(folder => (
                         <button
                           key={`folder-${folder.id}`}
                           onClick={() => toggleSelection(folder.id!)}
-                          className={`p-4 rounded-lg border-2 transition-all ${
+                          className={clsx(
+                            "text-left transition-all",
+                            view === 'grid' 
+                              ? "p-4 rounded-lg border-2" 
+                              : "w-full p-3 rounded-lg border flex items-center justify-between",
                             selectedItems.has(folder.id!)
-                              ? 'border-indigo-500 bg-indigo-50'
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
+                              ? "border-indigo-500 bg-indigo-50"
+                              : "border-gray-200 hover:border-gray-300"
+                          )}
                         >
-                          <FolderIcon className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                          <p className="text-sm font-medium truncate">{folder.name}</p>
+                          <div className={clsx(view === 'list' && "flex items-center gap-3")}>
+                            <FolderIcon className={clsx(
+                              "text-gray-400",
+                              view === 'grid' ? "h-8 w-8 mx-auto mb-2" : "h-6 w-6"
+                            )} />
+                            <div>
+                              <p className="text-sm font-medium truncate">{folder.name}</p>
+                              {folder.description && (
+                                <p className="text-xs text-gray-500 truncate">{folder.description}</p>
+                              )}
+                            </div>
+                          </div>
+                          {view === 'list' && selectedItems.has(folder.id!) && (
+                            <CheckCircleIcon className="h-5 w-5 text-indigo-600" />
+                          )}
                         </button>
                       ))}
                     </div>
@@ -376,34 +602,72 @@ function AssetSelectorModal({
                 )}
 
                 {/* Assets */}
-                {assets.length > 0 && (
+                {filteredAssets.length > 0 && (
                   <div>
                     <h4 className="font-medium text-gray-900 mb-3">
-                      Dateien ({assets.length})
+                      Dateien ({filteredAssets.length})
                     </h4>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      {assets.map((asset, index) => (
+                    <div className={clsx(
+                      view === 'grid' 
+                        ? "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3" 
+                        : "space-y-2"
+                    )}>
+                      {filteredAssets.map((asset, index) => (
                         <button
                           key={`asset-${asset.id}`}
                           onClick={() => toggleSelection(asset.id!)}
-                          className={`p-3 rounded-lg border-2 transition-all relative ${
+                          className={clsx(
+                            "text-left transition-all relative group",
+                            view === 'grid' 
+                              ? "p-3 rounded-lg border-2" 
+                              : "w-full p-3 rounded-lg border flex items-center justify-between",
                             selectedItems.has(asset.id!)
-                              ? 'border-indigo-500 bg-indigo-50'
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                          title={`${asset.fileName} (${index + 1}/${assets.length})`}
+                              ? "border-indigo-500 bg-indigo-50"
+                              : "border-gray-200 hover:border-gray-300"
+                          )}
+                          style={{ animationDelay: `${index * 0.05}s` }}
                         >
-                          <AssetPreview asset={asset} />
-                          
-                          <p className="text-xs font-medium truncate">
-                            {asset.fileName}
-                          </p>
-                          
-                          {/* Warnung für fehlerhafte Assets */}
-                          {!asset.downloadUrl && (
-                            <div className="absolute inset-0 bg-red-500 bg-opacity-10 rounded-lg flex items-center justify-center">
-                              <ExclamationTriangleIcon className="h-6 w-6 text-red-500" />
-                            </div>
+                          {view === 'grid' ? (
+                            <>
+                              {asset.fileType?.startsWith('image/') ? (
+                                <img 
+                                  src={asset.downloadUrl} 
+                                  alt={asset.fileName}
+                                  className="h-16 w-full object-cover rounded mb-2"
+                                />
+                              ) : (
+                                <DocumentIcon className="h-16 w-16 text-gray-400 mx-auto mb-2" />
+                              )}
+                              <p className="text-xs font-medium truncate">{asset.fileName}</p>
+                              {selectedItems.has(asset.id!) && (
+                                <div className="absolute top-2 right-2">
+                                  <CheckCircleIcon className="h-5 w-5 text-indigo-600 bg-white rounded-full" />
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex items-center gap-3">
+                                {asset.fileType?.startsWith('image/') ? (
+                                  <img 
+                                    src={asset.downloadUrl} 
+                                    alt={asset.fileName}
+                                    className="h-10 w-10 object-cover rounded"
+                                  />
+                                ) : (
+                                  <DocumentIcon className="h-10 w-10 text-gray-400" />
+                                )}
+                                <div className="min-w-0">
+                                  <p className="text-sm font-medium truncate">{asset.fileName}</p>
+                                  <p className="text-xs text-gray-500">
+                                    {asset.fileType?.split('/')[1]?.toUpperCase() || 'Datei'}
+                                  </p>
+                                </div>
+                              </div>
+                              {selectedItems.has(asset.id!) && (
+                                <CheckCircleIcon className="h-5 w-5 text-indigo-600 flex-shrink-0" />
+                              )}
+                            </>
                           )}
                         </button>
                       ))}
@@ -433,7 +697,7 @@ function AssetSelectorModal({
           <div className="px-6 py-4 border-t bg-gray-50">
             <div className="flex items-center justify-between">
               <p className="text-sm text-gray-600">
-                {selectedItems.size} ausgewählt
+                {selectedItems.size} von {assets.length + folders.length} ausgewählt
               </p>
               <div className="flex gap-3">
                 <Button plain onClick={onClose}>
@@ -455,21 +719,358 @@ function AssetSelectorModal({
   );
 }
 
+// Multi-List Selector Component
+function MultiListSelector({
+  availableLists,
+  selectedListIds,
+  onChange,
+  loading,
+  error
+}: {
+  availableLists: DistributionList[];
+  selectedListIds: string[];
+  onChange: (selectedIds: string[]) => void;
+  loading: boolean;
+  error?: string;
+}) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const filteredLists = useMemo(() => {
+    if (!searchTerm) return availableLists;
+    const search = searchTerm.toLowerCase();
+    return availableLists.filter(list => 
+      list.name.toLowerCase().includes(search)
+    );
+  }, [availableLists, searchTerm]);
+
+  const selectedLists = useMemo(() => 
+    availableLists.filter(list => selectedListIds.includes(list.id!)),
+    [availableLists, selectedListIds]
+  );
+
+  const totalRecipients = useMemo(() => 
+    selectedLists.reduce((sum, list) => sum + list.contactCount, 0),
+    [selectedLists]
+  );
+
+  const toggleList = (listId: string) => {
+    if (selectedListIds.includes(listId)) {
+      onChange(selectedListIds.filter(id => id !== listId));
+    } else {
+      onChange([...selectedListIds, listId]);
+    }
+  };
+
+  const selectAll = () => {
+    onChange(availableLists.map(list => list.id!));
+  };
+
+  const deselectAll = () => {
+    onChange([]);
+  };
+
+  if (loading) {
+    return (
+      <div className="animate-pulse">
+        <div className="h-10 bg-gray-200 rounded-md"></div>
+      </div>
+    );
+  }
+
+  return (
+    <Field>
+      <Label>
+        Verteiler auswählen
+        <span className="text-red-500 ml-1">*</span>
+      </Label>
+      
+      {/* Selected Lists Display */}
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setShowDropdown(!showDropdown)}
+          className={clsx(
+            "w-full px-3 py-2 text-left bg-white border rounded-md shadow-sm",
+            "focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500",
+            error ? "border-red-300" : "border-gray-300",
+            "cursor-pointer hover:border-gray-400"
+          )}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center flex-1 min-w-0">
+              <UsersIcon className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
+              {selectedLists.length > 0 ? (
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-gray-900">
+                    {selectedLists.length} Verteiler ausgewählt
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {totalRecipients.toLocaleString()} Empfänger insgesamt
+                  </div>
+                </div>
+              ) : (
+                <span className="text-gray-500">Verteiler wählen...</span>
+              )}
+            </div>
+            {selectedLists.length > 0 && (
+              <CheckCircleIcon className="h-5 w-5 text-green-500 ml-2 flex-shrink-0" />
+            )}
+          </div>
+        </button>
+
+        {/* Dropdown */}
+        {showDropdown && (
+          <>
+            <div 
+              className="fixed inset-0 z-10" 
+              onClick={() => setShowDropdown(false)}
+            />
+            
+            <div className="absolute z-20 mt-1 w-full bg-white rounded-md shadow-lg border border-gray-200 max-h-96 overflow-hidden">
+              {/* Search */}
+              <div className="p-2 border-b">
+                <div className="relative">
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Liste suchen..."
+                    className="pl-9 pr-3 py-2"
+                    autoFocus
+                  />
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="p-2 border-b flex gap-2">
+                <Button plain onClick={selectAll} className="text-xs flex-1">
+                  Alle auswählen
+                </Button>
+                <Button plain onClick={deselectAll} className="text-xs flex-1">
+                  Keine auswählen
+                </Button>
+              </div>
+
+              {/* List Items */}
+              <div className="max-h-64 overflow-y-auto">
+                {filteredLists.length === 0 ? (
+                  <div className="p-4 text-center text-gray-500">
+                    Keine Listen gefunden
+                  </div>
+                ) : (
+                  <ul className="py-1">
+                    {filteredLists.map((list) => {
+                      const isSelected = selectedListIds.includes(list.id!);
+                      
+                      return (
+                        <li key={list.id}>
+                          <label
+                            className={clsx(
+                              "flex items-center px-3 py-2 cursor-pointer",
+                              "hover:bg-gray-50",
+                              isSelected && "bg-indigo-50"
+                            )}
+                          >
+                            <Checkbox
+                              checked={isSelected}
+                              onChange={() => toggleList(list.id!)}
+                              className="mr-3"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className={clsx(
+                                "font-medium truncate",
+                                isSelected ? "text-indigo-900" : "text-gray-900"
+                              )}>
+                                {list.name}
+                              </div>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-xs text-gray-500">
+                                  {list.contactCount} Kontakte
+                                </span>
+                                {list.type === 'dynamic' && (
+                                  <Badge color="blue" className="text-xs">
+                                    Dynamisch
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          </label>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="p-2 border-t bg-gray-50 text-xs text-gray-500">
+                {selectedLists.length} von {availableLists.length} Listen ausgewählt
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Error */}
+      {error && (
+        <p className="mt-1 text-sm text-red-600">{error}</p>
+      )}
+
+      {/* Selected Lists Details */}
+      {selectedLists.length > 0 && (
+        <div className="mt-3 space-y-2">
+          {selectedLists.map(list => (
+            <div key={list.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+              <div>
+                <p className="font-medium text-sm">{list.name}</p>
+                <p className="text-xs text-gray-500">
+                  {list.contactCount} Kontakte
+                  {list.type === 'dynamic' && ' • Dynamisch'}
+                </p>
+              </div>
+              <button
+                onClick={() => toggleList(list.id!)}
+                className="text-red-600 hover:text-red-500"
+              >
+                <XMarkIcon className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+          
+          <div className="mt-3 p-3 bg-indigo-50 border border-indigo-200 rounded-md text-sm">
+            <p>
+              <strong>{totalRecipients.toLocaleString()} Empfänger</strong> in {selectedLists.length} Listen.
+            </p>
+          </div>
+        </div>
+      )}
+    </Field>
+  );
+}
+
+// Floating Action Button
+function FloatingActionButton({
+  onAiClick,
+  onPreviewClick,
+  onSaveClick,
+  disabled
+}: {
+  onAiClick: () => void;
+  onPreviewClick: () => void;
+  onSaveClick: () => void;
+  disabled: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="fixed bottom-6 right-6 z-40">
+      {isOpen && (
+        <div className="absolute bottom-16 right-0 space-y-2 animate-fade-in-up">
+          <button
+            onClick={() => {
+              onAiClick();
+              setIsOpen(false);
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-lg hover:shadow-xl transition-all whitespace-nowrap"
+          >
+            <SparklesIcon className="h-5 w-5 text-indigo-600" />
+            <span className="text-sm font-medium">KI-Assistent</span>
+          </button>
+          
+          <button
+            onClick={() => {
+              onPreviewClick();
+              setIsOpen(false);
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-lg hover:shadow-xl transition-all whitespace-nowrap"
+          >
+            <EyeIcon className="h-5 w-5 text-blue-600" />
+            <span className="text-sm font-medium">Vorschau</span>
+          </button>
+          
+          <button
+            onClick={() => {
+              onSaveClick();
+              setIsOpen(false);
+            }}
+            disabled={disabled}
+            className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-lg hover:shadow-xl transition-all whitespace-nowrap disabled:opacity-50"
+          >
+            <CheckCircleIcon className="h-5 w-5 text-green-600" />
+            <span className="text-sm font-medium">Speichern</span>
+          </button>
+        </div>
+      )}
+      
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={clsx(
+          "rounded-full p-4 shadow-lg transition-all duration-300",
+          isOpen 
+            ? "bg-gray-600 rotate-45" 
+            : "bg-gradient-to-r from-indigo-500 to-purple-600 hover:shadow-xl"
+        )}
+      >
+        <PlusIcon className="h-6 w-6 text-white" />
+      </button>
+    </div>
+  );
+}
+
+// Keyboard Shortcuts Hook
+function useKeyboardShortcuts({
+  onSave,
+  onAiModal,
+  onCloseModals
+}: {
+  onSave: () => void;
+  onAiModal: () => void;
+  onCloseModals: () => void;
+}) {
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Cmd/Ctrl + S = Speichern
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        onSave();
+      }
+      
+      // Cmd/Ctrl + K = KI-Assistent
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        onAiModal();
+      }
+      
+      // Escape = Modal schließen
+      if (e.key === 'Escape') {
+        onCloseModals();
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [onSave, onAiModal, onCloseModals]);
+}
+
+// Main Component
 export default function NewPRCampaignPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const { toasts, showToast, removeToast } = useToast();
   
-  // Form State - Customer First!
+  // Form State
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
   const [selectedCustomerName, setSelectedCustomerName] = useState<string>('');
   const [availableLists, setAvailableLists] = useState<DistributionList[]>([]);
-  const [selectedListId, setSelectedListId] = useState<string>('');
+  const [selectedListIds, setSelectedListIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [campaignTitle, setCampaignTitle] = useState('');
   const [pressReleaseContent, setPressReleaseContent] = useState('');
   
-  // NEU: Assets State
+  // Assets State
   const [attachedAssets, setAttachedAssets] = useState<CampaignAssetAttachment[]>([]);
   const [showAssetSelector, setShowAssetSelector] = useState(false);
 
@@ -478,10 +1079,13 @@ export default function NewPRCampaignPage() {
   const [aiGenerationHistory, setAiGenerationHistory] = useState<GenerationResult[]>([]);
   const [lastGeneration, setLastGeneration] = useState<GenerationResult | null>(null);
 
-  // Success/Warning State
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  // Validation State
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
+  // Draft State for Auto-Save
+  const [draftId, setDraftId] = useState<string | null>(null);
+
+  // Load lists
   useEffect(() => {
     if (user) {
       setLoading(true);
@@ -489,36 +1093,73 @@ export default function NewPRCampaignPage() {
         .then(setAvailableLists)
         .catch((error) => {
           console.error('Fehler beim Laden der Listen:', error);
+          showToast('error', 'Fehler beim Laden', 'Die Verteilerlisten konnten nicht geladen werden.');
         })
         .finally(() => setLoading(false));
     }
-  }, [user]);
+  }, [user, showToast]);
 
-  const selectedList = useMemo(() => 
-    availableLists.find(list => list.id === selectedListId),
-    [availableLists, selectedListId]
+  // Selected lists info
+  const selectedLists = useMemo(() => 
+    availableLists.filter(list => selectedListIds.includes(list.id!)),
+    [availableLists, selectedListIds]
   );
-  
-  // Form validity check als useMemo statt Funktion
+
+  const totalRecipients = useMemo(() => 
+    selectedLists.reduce((sum, list) => sum + list.contactCount, 0),
+    [selectedLists]
+  );
+
+  // Form validity
   const isFormValid = useMemo(() => {
     return !!(
       selectedCustomerId &&
-      selectedListId &&
+      selectedListIds.length > 0 &&
       campaignTitle.trim() &&
       pressReleaseContent.trim() &&
       pressReleaseContent !== '<p></p>'
     );
-  }, [selectedCustomerId, selectedListId, campaignTitle, pressReleaseContent]);
+  }, [selectedCustomerId, selectedListIds, campaignTitle, pressReleaseContent]);
 
-  // Validation nur bei Submit
+  // Progress steps
+  const steps = [
+    { 
+      id: 'customer', 
+      name: 'Kunde', 
+      icon: BuildingOfficeIcon,
+      completed: !!selectedCustomerId 
+    },
+    { 
+      id: 'lists', 
+      name: 'Verteiler', 
+      icon: UsersIcon,
+      completed: selectedListIds.length > 0 
+    },
+    { 
+      id: 'content', 
+      name: 'Inhalt', 
+      icon: DocumentTextIcon,
+      completed: !!campaignTitle && !!pressReleaseContent 
+    },
+    {
+      id: 'media',
+      name: 'Medien',
+      icon: PhotoIcon,
+      completed: attachedAssets.length > 0
+    }
+  ];
+
+  const currentStepIndex = steps.findIndex(step => !step.completed);
+
+  // Validation
   const validateForm = useCallback((): boolean => {
     const errors: Record<string, string> = {};
     
     if (!selectedCustomerId) {
       errors.customer = 'Bitte wählen Sie einen Kunden aus';
     }
-    if (!selectedListId) {
-      errors.list = 'Bitte wählen Sie einen Verteiler aus';
+    if (selectedListIds.length === 0) {
+      errors.lists = 'Bitte wählen Sie mindestens einen Verteiler aus';
     }
     if (!campaignTitle.trim()) {
       errors.title = 'Bitte geben Sie einen Titel ein';
@@ -529,14 +1170,15 @@ export default function NewPRCampaignPage() {
     
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
-  }, [selectedCustomerId, selectedListId, campaignTitle, pressReleaseContent]);
+  }, [selectedCustomerId, selectedListIds, campaignTitle, pressReleaseContent]);
 
+  // Save handlers
   const handleSaveDraft = async () => {
-    if (!validateForm() || !user || !selectedList) return;
+    if (!validateForm() || !user || selectedLists.length === 0) return;
 
     setIsSaving(true);
     try {
-      // Remove attachedAt from each asset using destructuring
+      // Remove attachedAt from assets
       const cleanedAssets = attachedAssets.map(({ attachedAt, ...rest }) => rest);
 
       const campaignData = {
@@ -544,9 +1186,9 @@ export default function NewPRCampaignPage() {
         title: campaignTitle,
         contentHtml: pressReleaseContent,
         status: 'draft' as const,
-        distributionListId: selectedList.id!,
-        distributionListName: selectedList.name,
-        recipientCount: selectedList.contactCount,
+        distributionListIds: selectedListIds,
+        distributionListNames: selectedLists.map(l => l.name),
+        recipientCount: totalRecipients,
         clientId: selectedCustomerId,
         clientName: selectedCustomerName,
         attachedAssets: cleanedAssets,
@@ -555,8 +1197,9 @@ export default function NewPRCampaignPage() {
       };
 
       const newCampaignId = await prService.create(campaignData);
+      setDraftId(newCampaignId);
       
-      // Optional: Metadata für KI-Nutzung speichern
+      // Save AI metadata if exists
       if (lastGeneration && lastGeneration.metadata) {
         localStorage.setItem(`campaign_ai_metadata_${newCampaignId}`, JSON.stringify({
           generatedBy: lastGeneration.metadata.generatedBy,
@@ -565,15 +1208,36 @@ export default function NewPRCampaignPage() {
         }));
       }
 
-      router.push(`/dashboard/pr/campaigns/edit/${newCampaignId}`);
+      showToast('success', 'Kampagne gespeichert!', 'Du wirst zur Bearbeitung weitergeleitet...');
+      
+      setTimeout(() => {
+        router.push(`/dashboard/pr/campaigns/edit/${newCampaignId}`);
+      }, 1500);
 
     } catch (error) {
       console.error("Fehler beim Speichern der Kampagne:", error);
-      alert("Ein Fehler ist aufgetreten beim Speichern der Kampagne.");
+      showToast('error', 'Fehler beim Speichern', 'Die Kampagne konnte nicht gespeichert werden.');
     } finally {
       setIsSaving(false);
     }
   };
+
+  // Auto-save hook
+  const { saveStatus, lastSaved } = useAutoSave(
+    { campaignTitle, pressReleaseContent, selectedListIds, attachedAssets },
+    async () => {
+      if (draftId && user) {
+        await prService.update(draftId, {
+          title: campaignTitle,
+          contentHtml: pressReleaseContent,
+          distributionListIds: selectedListIds,
+          recipientCount: totalRecipients,
+          attachedAssets: attachedAssets
+        });
+      }
+    },
+    !!draftId // Only enable auto-save after initial save
+  );
 
   // KI-Content Handler
   const handleAiGenerate = useCallback((result: GenerationResult) => {
@@ -590,22 +1254,20 @@ export default function NewPRCampaignPage() {
     setLastGeneration(result);
     setAiGenerationHistory(prev => [...prev, result]);
     setShowAiModal(false);
-    setShowSuccessMessage(true);
-    setTimeout(() => setShowSuccessMessage(false), 5000);
-  }, []);
+    
+    showToast('success', 'KI-Generierung erfolgreich!', 'Die Pressemitteilung wurde in die Felder übernommen.');
+  }, [showToast]);
 
   // Customer Change Handler
   const handleCustomerChange = useCallback((customerId: string, customerName: string) => {
     setSelectedCustomerId(customerId);
     setSelectedCustomerName(customerName);
-    // Clear customer validation error only
     setValidationErrors(prev => {
       const newErrors = { ...prev };
       delete newErrors.customer;
       return newErrors;
     });
     
-    // Reset attached assets when customer changes
     if (customerId !== selectedCustomerId) {
       setAttachedAssets([]);
     }
@@ -614,6 +1276,7 @@ export default function NewPRCampaignPage() {
   // Asset Management
   const handleAssetsSelected = (newAssets: CampaignAssetAttachment[]) => {
     setAttachedAssets(newAssets);
+    showToast('success', `${newAssets.length} Medien ausgewählt`, 'Die Medien wurden der Kampagne hinzugefügt.');
   };
 
   const handleRemoveAsset = (assetId: string) => {
@@ -621,401 +1284,414 @@ export default function NewPRCampaignPage() {
       !((a.type === 'asset' && a.assetId === assetId) ||
         (a.type === 'folder' && a.folderId === assetId))
     ));
+    showToast('info', 'Medium entfernt');
   };
 
-  // List Change Handler
-  const handleListChange = useCallback((listId: string, listName: string, contactCount: number) => {
-    setSelectedListId(listId);
-    // Clear list validation error only
-    setValidationErrors(prev => {
-      const newErrors = { ...prev };
-      delete newErrors.list;
-      return newErrors;
-    });
-  }, []);
-
-  // Title Change Handler
-  const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setCampaignTitle(e.target.value);
-    // Clear title validation error only
-    setValidationErrors(prev => {
-      const newErrors = { ...prev };
-      delete newErrors.title;
-      return newErrors;
-    });
-  }, []);
-
-  // Content Change Handler
-  const handleContentChange = useCallback((content: string) => {
-    setPressReleaseContent(content);
-    // Clear content validation error only
-    setValidationErrors(prev => {
-      const newErrors = { ...prev };
-      delete newErrors.content;
-      return newErrors;
-    });
-  }, []);
-
-  // Progress Steps
-  const steps = [
-    { 
-      id: 'customer', 
-      name: 'Kunde', 
-      icon: BuildingOfficeIcon,
-      completed: !!selectedCustomerId 
-    },
-    { 
-      id: 'list', 
-      name: 'Verteiler', 
-      icon: UsersIcon,
-      completed: !!selectedListId 
-    },
-    { 
-      id: 'content', 
-      name: 'Inhalt', 
-      icon: DocumentTextIcon,
-      completed: !!campaignTitle && !!pressReleaseContent 
-    },
-    {
-      id: 'media',
-      name: 'Medien',
-      icon: PhotoIcon,
-      completed: attachedAssets.length > 0
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onSave: handleSaveDraft,
+    onAiModal: () => setShowAiModal(true),
+    onCloseModals: () => {
+      setShowAssetSelector(false);
+      setShowAiModal(false);
     }
-  ];
+  });
 
   return (
     <div>
+      {/* Header */}
       <div className="mb-8">
-        <Heading>Neue PR-Kampagne erstellen</Heading>
-        <Text className="mt-1">Erstellen Sie eine neue Pressemitteilung für Ihre Kunden.</Text>
+        <div className="flex items-center justify-between">
+          <div>
+            <Heading>Neue PR-Kampagne erstellen</Heading>
+            <Text className="mt-1">Erstellen Sie eine neue Pressemitteilung für Ihre Kunden.</Text>
+          </div>
+          
+          {/* Auto-Save Indicator */}
+          {draftId && (
+            <AutoSaveIndicator status={saveStatus} lastSaved={lastSaved} />
+          )}
+        </div>
       </div>
 
       {/* Progress Indicator */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between max-w-4xl">
-          {steps.map((step, index) => {
-            const Icon = step.icon;
-            return (
-              <div key={step.id} className="flex items-center">
-                <div className={`flex items-center ${
-                  step.completed ? 'text-indigo-600' : 'text-gray-400'
-                }`}>
-                  <div className={`rounded-full p-2 ${
-                    step.completed ? 'bg-indigo-100' : 'bg-gray-100'
-                  }`}>
-                    {step.completed ? (
-                      <CheckCircleIcon className="h-6 w-6" />
-                    ) : (
-                      <Icon className="h-6 w-6" />
-                    )}
-                  </div>
-                  <span className="ml-2 font-medium text-sm">{step.name}</span>
-                </div>
-                {index < steps.length - 1 && (
-                  <div className={`mx-4 h-0.5 w-12 ${
-                    step.completed ? 'bg-indigo-600' : 'bg-gray-300'
-                  }`} />
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      <AnimatedProgressSteps steps={steps} currentStepIndex={currentStepIndex === -1 ? steps.length : currentStepIndex} />
 
-      {/* Success Message */}
-      {showSuccessMessage && (
-        <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="flex items-center">
-            <CheckCircleIcon className="h-5 w-5 text-green-600 mr-2" />
+      <div className="lg:grid lg:grid-cols-3 lg:gap-8">
+        {/* Main Form */}
+        <div className="lg:col-span-2 space-y-8">
+          <div className="p-8 border rounded-lg bg-white">
+            {/* Schritt 1: Kunde auswählen */}
             <div>
-              <h4 className="font-medium text-green-900">
-                {lastGeneration ? 'KI-Assistent erfolgreich verwendet!' : 'Entwurf gespeichert!'}
-              </h4>
-              <p className="text-sm text-green-700 mt-1">
-                {lastGeneration 
-                  ? 'Die Pressemitteilung wurde automatisch in Titel und Inhalt übernommen.'
-                  : 'Deine Kampagne wurde als Entwurf gespeichert.'
-                }
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="space-y-8 p-8 border rounded-lg bg-white">
-        {/* Schritt 1: Kunde auswählen */}
-        <div>
-          <h3 className="text-base font-semibold mb-4 flex items-center">
-            <span className="bg-indigo-100 text-indigo-700 rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold mr-3">
-              1
-            </span>
-            Für welchen Kunden ist diese Kampagne?
-          </h3>
-          
-          <CustomerSelector
-            value={selectedCustomerId}
-            onChange={handleCustomerChange}
-            required={true}
-            description=""
-            error={validationErrors.customer}
-            showStats={false}
-            showQuickAdd={false}
-          />
-        </div>
-
-        {/* Schritt 2: Verteiler auswählen (NUR WENN KUNDE AUSGEWÄHLT) */}
-        <div className={!selectedCustomerId ? 'opacity-50 pointer-events-none' : ''}>
-          <h3 className="text-base font-semibold mb-4 flex items-center">
-            <span className={`rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold mr-3 ${
-              selectedCustomerId ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-400'
-            }`}>
-              2
-            </span>
-            An wen soll die Kampagne gesendet werden?
-          </h3>
-          
-          <ListSelector
-            value={selectedListId}
-            onChange={handleListChange}
-            lists={availableLists}
-            loading={loading}
-            required={true}
-            error={validationErrors.list}
-            showStats={true}
-            showQuickAdd={true}
-          />
-        </div>
-
-        {/* Schritt 3: Pressemitteilung (NUR WENN KUNDE & LISTE AUSGEWÄHLT) */}
-        <div className={!selectedCustomerId || !selectedListId ? 'opacity-50 pointer-events-none' : ''}>
-          <div className="border-t pt-8">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 gap-4">
-              <div>
-                <h3 className="text-base font-semibold flex items-center">
-                  <span className={`rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold mr-3 ${
-                    selectedCustomerId && selectedListId ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-400'
-                  }`}>
-                    3
-                  </span>
-                  Pressemitteilung verfassen
-                </h3>
-                <Text>Erstelle professionelle Pressemitteilungen mit dem KI-Assistenten oder manuell.</Text>
-                
-                {/* KI-Features Highlight */}
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
-                    <SparklesIcon className="w-3 h-3 mr-1" />
-                    Strukturierte Generierung
-                  </span>
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
-                    <CheckCircleIcon className="w-3 h-3 mr-1" />
-                    Intelligente Übernahme
-                  </span>
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                    Journalistische Standards
-                  </span>
-                </div>
-              </div>
+              <h3 className="text-base font-semibold mb-4 flex items-center">
+                <span className="bg-indigo-100 text-indigo-700 rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold mr-3">
+                  1
+                </span>
+                Für welchen Kunden ist diese Kampagne?
+              </h3>
               
-              <Button 
-                onClick={() => setShowAiModal(true)}
-                disabled={!selectedCustomerId || !selectedListId}
-                className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-6 py-3 rounded-lg self-start sm:self-auto"
-              >
-                <SparklesIcon className="w-5 h-5" />
-                KI-Assistent öffnen
-              </Button>
+              <CustomerSelector
+                value={selectedCustomerId}
+                onChange={handleCustomerChange}
+                required={true}
+                description=""
+                error={validationErrors.customer}
+                showStats={false}
+                showQuickAdd={false}
+              />
             </div>
 
-            {/* KI-Generation History */}
-            {aiGenerationHistory.length > 0 && (
-              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <SparklesIcon className="h-4 w-4 text-blue-600 mr-2" />
-                    <span className="text-sm font-medium text-blue-900">
-                      KI-Assistent verwendet ({aiGenerationHistory.length}x)
+            {/* Schritt 2: Verteiler auswählen */}
+            <div className={clsx("border-t pt-8 mt-8", !selectedCustomerId && "opacity-50 pointer-events-none")}>
+              <h3 className="text-base font-semibold mb-4 flex items-center">
+                <span className={clsx(
+                  "rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold mr-3",
+                  selectedCustomerId ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-400"
+                )}>
+                  2
+                </span>
+                An wen soll die Kampagne gesendet werden?
+              </h3>
+              
+              <MultiListSelector
+                availableLists={availableLists}
+                selectedListIds={selectedListIds}
+                onChange={setSelectedListIds}
+                loading={loading}
+                error={validationErrors.lists}
+              />
+            </div>
+
+            {/* Schritt 3: Pressemitteilung */}
+            <div className={clsx(
+              "border-t pt-8 mt-8",
+              (!selectedCustomerId || selectedListIds.length === 0) && "opacity-50 pointer-events-none"
+            )}>
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 gap-4">
+                <div>
+                  <h3 className="text-base font-semibold flex items-center">
+                    <span className={clsx(
+                      "rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold mr-3",
+                      selectedCustomerId && selectedListIds.length > 0 ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-400"
+                    )}>
+                      3
+                    </span>
+                    Pressemitteilung verfassen
+                  </h3>
+                  <Text>Erstelle professionelle Pressemitteilungen mit dem KI-Assistenten oder manuell.</Text>
+                  
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
+                      <SparklesIcon className="w-3 h-3 mr-1" />
+                      Strukturierte Generierung
+                    </span>
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+                      <CheckCircleIcon className="w-3 h-3 mr-1" />
+                      Intelligente Übernahme
+                    </span>
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                      Journalistische Standards
                     </span>
                   </div>
-                  <button
-                    onClick={() => setShowAiModal(true)}
-                    className="text-sm text-blue-600 hover:text-blue-500 font-medium"
-                  >
-                    Erneut verwenden
-                  </button>
                 </div>
-                {lastGeneration?.metadata && (
-                  <div className="mt-2 text-xs text-blue-700">
-                    Letzte Generierung: {lastGeneration.metadata.timestamp ? 
-                      new Date(lastGeneration.metadata.timestamp).toLocaleString('de-DE') : 
-                      'Gerade eben'
-                    }
-                    {lastGeneration.metadata.context?.industry && 
-                      ` • ${lastGeneration.metadata.context.industry}`
-                    }
-                    {lastGeneration.metadata.context?.tone && 
-                      ` • ${lastGeneration.metadata.context.tone}`
-                    }
+                
+                <Button 
+                  onClick={() => setShowAiModal(true)}
+                  disabled={!selectedCustomerId || selectedListIds.length === 0}
+                  className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-6 py-3 rounded-lg self-start sm:self-auto"
+                >
+                  <SparklesIcon className="w-5 h-5" />
+                  KI-Assistent öffnen
+                </Button>
+              </div>
+
+              {/* KI-Generation History */}
+              {aiGenerationHistory.length > 0 && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <SparklesIcon className="h-4 w-4 text-blue-600 mr-2" />
+                      <span className="text-sm font-medium text-blue-900">
+                        KI-Assistent verwendet ({aiGenerationHistory.length}x)
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => setShowAiModal(true)}
+                      className="text-sm text-blue-600 hover:text-blue-500 font-medium"
+                    >
+                      Erneut verwenden
+                    </button>
+                  </div>
+                  {lastGeneration?.metadata && (
+                    <div className="mt-2 text-xs text-blue-700">
+                      Letzte Generierung: {lastGeneration.metadata.timestamp ? 
+                        new Date(lastGeneration.metadata.timestamp).toLocaleString('de-DE') : 
+                        'Gerade eben'
+                      }
+                      {lastGeneration.metadata.context?.industry && 
+                        ` • ${lastGeneration.metadata.context.industry}`
+                      }
+                      {lastGeneration.metadata.context?.tone && 
+                        ` • ${lastGeneration.metadata.context.tone}`
+                      }
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              <div className="mt-4 space-y-4">
+                <Field>
+                  <Label>Titel / Betreffzeile *</Label>
+                  <Input 
+                    value={campaignTitle}
+                    onChange={(e) => {
+                      setCampaignTitle(e.target.value);
+                      setValidationErrors(prev => {
+                        const newErrors = { ...prev };
+                        delete newErrors.title;
+                        return newErrors;
+                      });
+                    }}
+                    placeholder="Innovative Partnerschaft revolutioniert die Branche..."
+                    className={validationErrors.title ? 'border-red-300' : ''}
+                  />
+                  {validationErrors.title && (
+                    <p className="mt-1 text-sm text-red-600">{validationErrors.title}</p>
+                  )}
+                  {lastGeneration?.structured && campaignTitle === lastGeneration.structured.headline && (
+                    <div className="mt-1 text-xs text-green-600 flex items-center">
+                      <SparklesIcon className="w-3 h-3 mr-1" />
+                      Von KI generierte Headline
+                    </div>
+                  )}
+                </Field>
+                
+                <Field>
+                  <Label>Inhalt *</Label>
+                  <RichTextEditor 
+                    content={pressReleaseContent}
+                    onChange={(content) => {
+                      setPressReleaseContent(content);
+                      setValidationErrors(prev => {
+                        const newErrors = { ...prev };
+                        delete newErrors.content;
+                        return newErrors;
+                      });
+                    }}
+                  />
+                  {validationErrors.content && (
+                    <p className="mt-1 text-sm text-red-600">{validationErrors.content}</p>
+                  )}
+                  {lastGeneration && pressReleaseContent === lastGeneration.content && (
+                    <div className="mt-1 text-xs text-green-600 flex items-center">
+                      <SparklesIcon className="w-3 h-3 mr-1" />
+                      Von KI generierte strukturierte Pressemitteilung
+                    </div>
+                  )}
+                </Field>
+              </div>
+            </div>
+            
+            {/* Schritt 4: Medien anhängen */}
+            <div className={clsx("border-t pt-8 mt-8", !selectedCustomerId && "opacity-50 pointer-events-none")}>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-base font-semibold flex items-center">
+                    <span className={clsx(
+                      "rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold mr-3",
+                      selectedCustomerId ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-400"
+                    )}>
+                      4
+                    </span>
+                    Medien anhängen (optional)
+                  </h3>
+                  <Text>Füge Bilder, Videos oder Dokumente hinzu, um deine Pressemitteilung zu bereichern.</Text>
+                </div>
+                
+                {selectedCustomerId && (
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => setShowAssetSelector(true)}
+                      className="flex items-center gap-2"
+                    >
+                      <PlusIcon className="h-5 w-5" />
+                      Medien auswählen
+                    </Button>
+                    <Link
+                      href={`/dashboard/mediathek?uploadFor=${selectedCustomerId}`}
+                      target="_blank"
+                    >
+                      <Button plain className="flex items-center gap-2">
+                        <ArrowUpTrayIcon className="h-5 w-5" />
+                        Neue hochladen
+                      </Button>
+                    </Link>
                   </div>
                 )}
               </div>
-            )}
-            
-            <div className="mt-4 space-y-4">
-              <Field>
-                <Label>Titel / Betreffzeile *</Label>
-                <Input 
-                  value={campaignTitle}
-                  onChange={handleTitleChange}
-                  placeholder="Innovative Partnerschaft revolutioniert die Branche..."
-                  className={validationErrors.title ? 'border-red-300' : ''}
-                />
-                {validationErrors.title && (
-                  <p className="mt-1 text-sm text-red-600">{validationErrors.title}</p>
-                )}
-                {lastGeneration?.structured && campaignTitle === lastGeneration.structured.headline && (
-                  <div className="mt-1 text-xs text-green-600 flex items-center">
-                    <SparklesIcon className="w-3 h-3 mr-1" />
-                    Von KI generierte Headline
+
+              {/* Attached Assets */}
+              {attachedAssets.length > 0 ? (
+                <div className="space-y-3">
+                  {attachedAssets.map((attachment, index) => (
+                    <div
+                      key={attachment.id}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg animate-fade-in"
+                      style={{ animationDelay: `${index * 0.1}s` }}
+                    >
+                      <div className="flex items-center gap-3">
+                        {attachment.type === 'folder' ? (
+                          <FolderIcon className="h-6 w-6 text-gray-400" />
+                        ) : attachment.metadata.fileType?.startsWith('image/') ? (
+                          <img
+                            src={attachment.metadata.thumbnailUrl}
+                            alt={attachment.metadata.fileName}
+                            className="h-10 w-10 object-cover rounded"
+                          />
+                        ) : (
+                          <DocumentIcon className="h-6 w-6 text-gray-400" />
+                        )}
+                        <div>
+                          <p className="font-medium text-sm">
+                            {attachment.metadata.fileName || attachment.metadata.folderName}
+                          </p>
+                          {attachment.metadata.description && (
+                            <p className="text-xs text-gray-500">{attachment.metadata.description}</p>
+                          )}
+                        </div>
+                        {attachment.type === 'folder' && (
+                          <Badge color="blue" className="text-xs">Ordner</Badge>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => handleRemoveAsset(attachment.assetId || attachment.folderId || '')}
+                        className="text-red-600 hover:text-red-500 transition-colors"
+                      >
+                        <XMarkIcon className="h-5 w-5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-gray-50 rounded-lg">
+                  <div className="relative inline-block">
+                    <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto" />
+                    <div className="absolute -top-2 -right-2 animate-bounce">
+                      <SparklesIcon className="h-5 w-5 text-indigo-500" />
+                    </div>
                   </div>
-                )}
-              </Field>
-              
-              <Field>
-                <Label>Inhalt *</Label>
-                <RichTextEditor 
-                  content={pressReleaseContent}
-                  onChange={handleContentChange}
-                />
-                {validationErrors.content && (
-                  <p className="mt-1 text-sm text-red-600">{validationErrors.content}</p>
-                )}
-                {lastGeneration && pressReleaseContent === lastGeneration.content && (
-                  <div className="mt-1 text-xs text-green-600 flex items-center">
-                    <SparklesIcon className="w-3 h-3 mr-1" />
-                    Von KI generierte strukturierte Pressemitteilung
-                  </div>
-                )}
-              </Field>
+                  <p className="text-gray-500 mt-3">Noch keine Medien angehängt</p>
+                  <p className="text-sm text-gray-400 mt-1">Optional - du kannst Medien auch später hinzufügen</p>
+                </div>
+              )}
             </div>
           </div>
+          
+          <div className="flex justify-end gap-4">
+            <Link href="/dashboard/pr">
+              <Button plain>
+                <ArrowLeftIcon className="h-4 w-4 mr-2" />
+                Abbrechen
+              </Button>
+            </Link>
+            <Button 
+              color="indigo" 
+              disabled={!isFormValid || isSaving}
+              onClick={handleSaveDraft}
+            >
+              {isSaving ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Speichert...
+                </>
+              ) : (
+                'Als Entwurf speichern'
+              )}
+            </Button>
+          </div>
         </div>
-        
-        {/* Schritt 4: Medien anhängen (NEU) */}
-        <div className={!selectedCustomerId ? 'opacity-50 pointer-events-none' : ''}>
-          <div className="border-t pt-8">
-            <div className="flex items-center justify-between mb-4">
+
+        {/* Sidebar - Preview */}
+        <div className="mt-8 lg:mt-0">
+          <div className="lg:sticky lg:top-6 bg-white rounded-lg shadow-lg border p-6">
+            <h3 className="text-lg font-semibold mb-4">Kampagnen-Zusammenfassung</h3>
+            
+            <div className="space-y-4">
               <div>
-                <h3 className="text-base font-semibold flex items-center">
-                  <span className={`rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold mr-3 ${
-                    selectedCustomerId ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-400'
-                  }`}>
-                    4
-                  </span>
-                  Medien anhängen (optional)
-                </h3>
-                <Text>Füge Bilder, Dokumente und andere Medien zu deiner Kampagne hinzu.</Text>
+                <p className="text-sm font-medium text-gray-600">Kunde</p>
+                <p className="font-medium">
+                  {selectedCustomerName || (
+                    <span className="text-gray-400">Noch nicht ausgewählt</span>
+                  )}
+                </p>
               </div>
-              
-              {selectedCustomerId && (
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => setShowAssetSelector(true)}
-                    className="flex items-center gap-2"
-                  >
-                    <PlusIcon className="h-5 w-5" />
-                    Medien auswählen
-                  </Button>
-                  <Link
-                    href={`/dashboard/mediathek?uploadFor=${selectedCustomerId}`}
-                    target="_blank"
-                  >
-                    <Button plain className="flex items-center gap-2">
-                      <ArrowUpTrayIcon className="h-5 w-5" />
-                      Neue hochladen
-                    </Button>
-                  </Link>
+
+              <div>
+                <p className="text-sm font-medium text-gray-600">Verteiler</p>
+                {selectedLists.length > 0 ? (
+                  <div className="mt-1">
+                    <p className="font-medium">{selectedLists.length} Listen</p>
+                    <p className="text-sm text-gray-500">
+                      {totalRecipients.toLocaleString()} Empfänger
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-gray-400">Noch nicht ausgewählt</p>
+                )}
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-gray-600">Titel</p>
+                <p className={clsx("font-medium", !campaignTitle && "text-gray-400")}>
+                  {campaignTitle || "Noch kein Titel"}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-gray-600">Medien</p>
+                <p className={clsx("font-medium", attachedAssets.length === 0 && "text-gray-400")}>
+                  {attachedAssets.length > 0 
+                    ? `${attachedAssets.length} Medien angehängt`
+                    : "Keine Medien"
+                  }
+                </p>
+              </div>
+
+              {lastGeneration && (
+                <div className="pt-4 border-t">
+                  <div className="flex items-center text-sm text-indigo-600">
+                    <SparklesIcon className="h-4 w-4 mr-1" />
+                    KI-generiert
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* Angehängte Assets anzeigen */}
-            {attachedAssets.length > 0 ? (
-              <div className="space-y-3">
-                {attachedAssets.map((attachment) => (
-                  <div
-                    key={attachment.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                  >
-                    <div className="flex items-center gap-3">
-                      {attachment.type === 'folder' ? (
-                        <FolderIcon className="h-6 w-6 text-gray-400" />
-                      ) : attachment.metadata.fileType?.startsWith('image/') ? (
-                        <img
-                          src={attachment.metadata.thumbnailUrl}
-                          alt={attachment.metadata.fileName}
-                          className="h-10 w-10 object-cover rounded"
-                        />
-                      ) : (
-                        <DocumentIcon className="h-6 w-6 text-gray-400" />
-                      )}
-                      <div>
-                        <p className="font-medium text-sm">
-                          {attachment.metadata.fileName || attachment.metadata.folderName}
-                        </p>
-                        {attachment.metadata.description && (
-                          <p className="text-xs text-gray-500">{attachment.metadata.description}</p>
-                        )}
-                      </div>
-                      {attachment.type === 'folder' && (
-                        <Badge color="blue" className="text-xs">Ordner</Badge>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => handleRemoveAsset(attachment.assetId || attachment.folderId || '')}
-                      className="text-red-600 hover:text-red-500"
-                    >
-                      <XMarkIcon className="h-5 w-5" />
-                    </button>
-                  </div>
-                ))}
+            {/* Keyboard Shortcuts Help */}
+            <div className="mt-6 pt-6 border-t">
+              <p className="text-xs font-medium text-gray-600 mb-2">Tastenkürzel</p>
+              <div className="space-y-1 text-xs text-gray-500">
+                <div className="flex justify-between">
+                  <span>Speichern</span>
+                  <span className="font-mono">⌘ S</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>KI-Assistent</span>
+                  <span className="font-mono">⌘ K</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Modal schließen</span>
+                  <span className="font-mono">Esc</span>
+                </div>
               </div>
-            ) : (
-              <div className="text-center py-8 bg-gray-50 rounded-lg">
-                <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-500">Noch keine Medien angehängt</p>
-                <p className="text-sm text-gray-400 mt-1">Optional - du kannst Medien auch später hinzufügen</p>
-              </div>
-            )}
+            </div>
           </div>
         </div>
-
-        {/* Schritt 5: Versand planen (Placeholder) */}
-        <div className={!selectedCustomerId || !selectedListId || !campaignTitle || !pressReleaseContent ? 'opacity-50 pointer-events-none' : ''}>
-          <div className="border-t pt-8">
-            <h3 className="text-base font-semibold text-zinc-400">Schritt 5: Versand planen (zukünftiges Feature)</h3>
-            <Text className="text-zinc-400">Hier wirst du den Versandzeitpunkt festlegen.</Text>
-          </div>
-        </div>
-      </div>
-      
-      <div className="mt-8 flex justify-end gap-4">
-        <Link href="/dashboard/pr">
-          <Button plain>Abbrechen</Button>
-        </Link>
-        <Button 
-          color="indigo" 
-          disabled={!isFormValid || isSaving}
-          onClick={handleSaveDraft}
-        >
-          {isSaving ? 'Speichern...' : 'Als Entwurf speichern'}
-        </Button>
       </div>
 
       {/* Asset Selector Modal */}
       {selectedCustomerId && (
-        <AssetSelectorModal
+        <EnhancedAssetSelector
           isOpen={showAssetSelector}
           onClose={() => setShowAssetSelector(false)}
           clientId={selectedCustomerId}
@@ -1025,7 +1701,7 @@ export default function NewPRCampaignPage() {
         />
       )}
 
-      {/* Neues strukturiertes KI-Modal mit Customer Context */}
+      {/* AI Modal */}
       {showAiModal && (
         <StructuredGenerationModal
           onClose={() => setShowAiModal(false)}
@@ -1034,13 +1710,95 @@ export default function NewPRCampaignPage() {
             title: campaignTitle,
             content: pressReleaseContent
           }}
-          // TODO: Pass customer context to AI
-          // customerContext={{
-          //   companyName: selectedCustomerName,
-          //   companyId: selectedCustomerId
-          // }}
         />
       )}
+
+      {/* Floating Action Button */}
+      <FloatingActionButton
+        onAiClick={() => setShowAiModal(true)}
+        onPreviewClick={() => showToast('info', 'Preview kommt bald!')}
+        onSaveClick={handleSaveDraft}
+        disabled={!isFormValid || isSaving}
+      />
+
+      {/* Toast Notifications */}
+      <ToastNotification toasts={toasts} onRemove={removeToast} />
+
+      {/* CSS für Animationen */}
+      <style jsx global>{`
+        @keyframes slide-in-up {
+          from {
+            transform: translateY(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+        
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes fade-in-up {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes scale-in {
+          from {
+            transform: scale(0.8);
+            opacity: 0;
+          }
+          to {
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+
+        @keyframes modal-appear {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        
+        .animate-slide-in-up {
+          animation: slide-in-up 0.3s ease-out;
+        }
+        
+        .animate-fade-in {
+          animation: fade-in 0.3s ease-out;
+        }
+
+        .animate-fade-in-up {
+          animation: fade-in-up 0.3s ease-out;
+        }
+
+        .animate-scale-in {
+          animation: scale-in 0.2s ease-out;
+        }
+
+        .animate-modal-appear {
+          animation: modal-appear 0.2s ease-out;
+        }
+      `}</style>
     </div>
   );
 }
