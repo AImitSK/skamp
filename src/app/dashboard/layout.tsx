@@ -2,7 +2,7 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import { CrmDataProvider } from "@/context/CrmDataContext"; // NEU: Import des Daten-Providers
+import { CrmDataProvider } from "@/context/CrmDataContext";
 import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase/client-init";
@@ -67,29 +67,28 @@ export default function DashboardLayout({
   const sidebarContent = (
     <Sidebar>
       <SidebarHeader>
-        <div className="flex items-center gap-2 px-2">
-          <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-indigo-600 text-white">
-            <span className="text-sm font-semibold">S</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-semibold text-zinc-950 dark:text-white">
-              SKAMP
-            </span>
-            <span className="text-xs text-zinc-500 dark:text-zinc-400">
-              Marketing Suite
-            </span>
-          </div>
+        <div className="flex items-center gap-3 px-2">
+          <img 
+            src="/logo_skamp.svg" 
+            alt="SKAMP Logo" 
+            className="w-[120px] h-auto"
+          />
+
         </div>
       </SidebarHeader>
       <SidebarBody>
         <nav className="flex flex-col gap-1">
           {navigation.map((item) => {
             const Icon = item.icon;
+            const isActive = pathname === item.href || 
+              (item.href !== '/dashboard' && pathname.startsWith(item.href));
+            
             return (
               <SidebarItem
                 key={item.name}
                 href={item.href}
-                current={pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))}
+                current={isActive}
+                className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
               >
                 <Icon className="size-5" data-slot="icon" />
                 <SidebarLabel>{item.name}</SidebarLabel>
@@ -100,7 +99,10 @@ export default function DashboardLayout({
       </SidebarBody>
       <SidebarFooter>
         <Dropdown>
-          <DropdownButton as={SidebarItem}>
+          <DropdownButton 
+            as={SidebarItem}
+            className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+          >
             <Avatar
               src={user?.photoURL || undefined}
               initials={
@@ -122,12 +124,18 @@ export default function DashboardLayout({
             </SidebarLabel>
           </DropdownButton>
           <DropdownMenu anchor="top start" className="min-w-56">
-            <DropdownItem href="/dashboard/profile">
+            <DropdownItem 
+              href="/dashboard/profile"
+              className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            >
               <UserIcon className="size-4" data-slot="icon" />
               <DropdownLabel>Profil</DropdownLabel>
             </DropdownItem>
             <DropdownDivider />
-            <DropdownItem onClick={handleLogout}>
+            <DropdownItem 
+              onClick={handleLogout}
+              className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            >
               <ArrowRightOnRectangleIcon className="size-4" data-slot="icon" />
               <DropdownLabel>Abmelden</DropdownLabel>
             </DropdownItem>
@@ -139,7 +147,6 @@ export default function DashboardLayout({
 
   return (
     <ProtectedRoute>
-      {/* KORRIGIERT: Der CrmDataProvider umschließt jetzt das gesamte Layout */}
       <CrmDataProvider>
         <SidebarLayout 
           navbar={

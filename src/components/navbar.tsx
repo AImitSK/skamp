@@ -50,14 +50,18 @@ export const NavbarItem = forwardRef(function NavbarItem(
     '*:not-nth-2:last:data-[slot=icon]:ml-auto *:not-nth-2:last:data-[slot=icon]:size-5 sm:*:not-nth-2:last:data-[slot=icon]:size-4',
     // Avatar
     '*:data-[slot=avatar]:-m-0.5 *:data-[slot=avatar]:size-7 *:data-[slot=avatar]:[--avatar-radius:var(--radius-md)] sm:*:data-[slot=avatar]:size-6',
+    // Transition für smooth hover
+    'transition-all duration-150',
     // Hover
-    'data-hover:bg-zinc-950/5 data-hover:*:data-[slot=icon]:fill-zinc-950',
+    'hover:bg-zinc-950/5 hover:*:data-[slot=icon]:fill-zinc-950',
     // Active
-    'data-active:bg-zinc-950/5 data-active:*:data-[slot=icon]:fill-zinc-950',
+    'active:bg-zinc-950/10',
     // Dark mode
     'dark:text-white dark:*:data-[slot=icon]:fill-zinc-400',
-    'dark:data-hover:bg-white/5 dark:data-hover:*:data-[slot=icon]:fill-white',
-    'dark:data-active:bg-white/5 dark:data-active:*:data-[slot=icon]:fill-white'
+    'dark:hover:bg-white/5 dark:hover:*:data-[slot=icon]:fill-white',
+    'dark:active:bg-white/10',
+    // Cursor pointer für alle klickbaren Elemente
+    'cursor-pointer'
   )
 
   return (
@@ -80,7 +84,7 @@ export const NavbarItem = forwardRef(function NavbarItem(
       ) : (
         <Headless.Button
           {...props}
-          className={clsx('cursor-default', classes)}
+          className={classes}
           data-current={current ? 'true' : undefined}
           ref={ref}
         >

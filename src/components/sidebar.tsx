@@ -92,17 +92,20 @@ export const SidebarItem = forwardRef(function SidebarItem(
     '*:last:data-[slot=icon]:ml-auto *:last:data-[slot=icon]:size-5 sm:*:last:data-[slot=icon]:size-4',
     // Avatar
     '*:data-[slot=avatar]:-m-0.5 *:data-[slot=avatar]:size-7 sm:*:data-[slot=avatar]:size-6',
-    // Hover
-    'data-hover:bg-zinc-950/5 data-hover:*:data-[slot=icon]:fill-zinc-950',
+    // Hover - mit transition für smooth effect
+    'transition-colors duration-150',
+    'hover:bg-zinc-950/5 hover:*:data-[slot=icon]:fill-zinc-950',
     // Active
-    'data-active:bg-zinc-950/5 data-active:*:data-[slot=icon]:fill-zinc-950',
+    'active:bg-zinc-950/10',
     // Current
     'data-current:*:data-[slot=icon]:fill-zinc-950',
     // Dark mode
     'dark:text-white dark:*:data-[slot=icon]:fill-zinc-400',
-    'dark:data-hover:bg-white/5 dark:data-hover:*:data-[slot=icon]:fill-white',
-    'dark:data-active:bg-white/5 dark:data-active:*:data-[slot=icon]:fill-white',
-    'dark:data-current:*:data-[slot=icon]:fill-white'
+    'dark:hover:bg-white/5 dark:hover:*:data-[slot=icon]:fill-white',
+    'dark:active:bg-white/10',
+    'dark:data-current:*:data-[slot=icon]:fill-white',
+    // Zusätzlicher cursor pointer für alle klickbaren Elemente
+    'cursor-pointer'
   )
 
   return (
@@ -126,7 +129,7 @@ export const SidebarItem = forwardRef(function SidebarItem(
       ) : (
         <Headless.Button
           {...props}
-          className={clsx('cursor-default', classes)}
+          className={classes}
           data-current={current ? 'true' : undefined}
           ref={ref}
         >
