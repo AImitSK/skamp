@@ -96,7 +96,7 @@ function ToastNotification({ toasts, onRemove }: { toasts: Toast[], onRemove: (i
   };
 
   return (
-    <div className="fixed bottom-0 right-0 p-6 space-y-4 z-[9999]">
+    <div className="fixed bottom-0 right-0 p-6 space-y-4">
       {toasts.map((toast) => {
         const Icon = icons[toast.type];
         return (
@@ -539,7 +539,7 @@ export default function CompanyModal({ company, onClose, onSave, userId }: Compa
                                   onChange={(e) => updatePublication(index, 'name', e.target.value)}
                                   placeholder="z.B. Tech Today"
                                   className={clsx(
-                                    "text-sm transition-colors",
+                                    "text-sm transition-colors ",
                                     validationErrors.some(e => e.includes(`Publikation ${index + 1}`)) && "border-red-500 focus:border-red-500 focus:ring-red-500"
                                   )}
                                 />
@@ -596,7 +596,8 @@ export default function CompanyModal({ company, onClose, onSave, userId }: Compa
                             </div>
                             
                             <Field>
-                              <Label className="text-xs">
+                              <div className="mb-4">
+                              <Label>
                                 Themenschwerpunkte
                                 <InfoTooltip content="Fügen Sie die Hauptthemen dieser Publikation hinzu. Diese werden später für die Filterung in Verteilerlisten verwendet." className="ml-1.5 inline-flex align-text-top" />
                               </Label>
@@ -605,6 +606,7 @@ export default function CompanyModal({ company, onClose, onSave, userId }: Compa
                                 onChange={(areas) => updatePublication(index, 'focusAreas', areas)}
                                 placeholder="Schwerpunkt hinzufügen..."
                               />
+                              </div>
                             </Field>
                           </div>
                         ))}

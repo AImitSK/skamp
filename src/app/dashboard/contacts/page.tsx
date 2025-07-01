@@ -192,7 +192,7 @@ function QuickPreview({
                 <span className="text-gray-500">Publikationen:</span>
                 <div className="flex flex-wrap gap-1 justify-end max-w-[180px]">
                   {(item as Company).mediaInfo!.publications!.map((pub) => (
-                    <Badge key={pub.id} color="blue" className="text-xs">
+                    <Badge key={pub.id} color="purple" className="text-xs">
                       {pub.name}
                     </Badge>
                   ))}
@@ -220,6 +220,18 @@ function QuickPreview({
               <div className="flex justify-between">
                 <span className="text-gray-500">Telefon:</span>
                 <span>{(item as Contact).phone}</span>
+              </div>
+            )}
+            {(item as Contact).mediaInfo?.publications && (item as Contact).mediaInfo!.publications!.length > 0 && (
+              <div className="flex justify-between items-start">
+                <span className="text-gray-500">Publikationen:</span>
+                <div className="flex flex-wrap gap-1 justify-end max-w-[180px]">
+                  {(item as Contact).mediaInfo!.publications!.map((pub) => (
+                    <Badge key={pub} color="purple" className="text-xs">
+                      {pub}
+                    </Badge>
+                  ))}
+                </div>
               </div>
             )}
           </>
@@ -843,8 +855,23 @@ export default function ContactsPage() {
     return (
       <div className="flex gap-1 overflow-x-auto whitespace-nowrap scrollbar-hide">
         {publications.map((pub) => (
-          <Badge key={pub.id} color="blue" className="text-xs flex-shrink-0">
+          <Badge key={pub.id} color="purple" className="text-xs flex-shrink-0">
             {pub.name}
+          </Badge>
+        ))}
+      </div>
+    );
+  };
+  
+  const renderContactPublications = (contact: Contact) => {
+    const publications = contact.mediaInfo?.publications;
+    if (!publications || publications.length === 0) return <span className="text-gray-400">—</span>;
+    
+    return (
+      <div className="flex gap-1 overflow-x-auto whitespace-nowrap scrollbar-hide">
+        {publications.map((pubName) => (
+          <Badge key={pubName} color="purple" className="text-xs flex-shrink-0">
+            {pubName}
           </Badge>
         ))}
       </div>
@@ -884,6 +911,7 @@ export default function ContactsPage() {
           "Vorname": contact.firstName,
           "Nachname": contact.lastName,
           "Firma": contact.companyName || '',
+          "Publikationen": (contact.mediaInfo?.publications || []).join(', '),
           "Position": contact.position || '',
           "E-Mail": contact.email || '',
           "Telefon": contact.phone || '',
@@ -976,8 +1004,8 @@ export default function ContactsPage() {
         
         {/* Filter + Suche */}
         {activeTab === 'companies' && (
-          <div className="flex flex-col lg:flex-row gap-4 items-start">
-            <div className="relative flex-1">
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="relative w-full lg:flex-1">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-zinc-400 pointer-events-none" />
               <input
                 type="search"
@@ -988,7 +1016,7 @@ export default function ContactsPage() {
               />
             </div>
             
-            <div className="lg:w-48">
+            <div className="w-full lg:w-48">
               <MultiSelectDropdown 
                 label="" 
                 placeholder="Nach Typ filtern..." 
@@ -998,7 +1026,7 @@ export default function ContactsPage() {
               />
             </div>
             
-            <div className="lg:w-48">
+            <div className="w-full lg:w-48">
               <MultiSelectDropdown 
                 label="" 
                 placeholder="Nach Tags filtern..." 
@@ -1011,8 +1039,8 @@ export default function ContactsPage() {
         )}
 
         {activeTab === 'contacts' && (
-          <div className="flex flex-col lg:flex-row gap-4 items-start">
-            <div className="relative flex-1">
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="relative w-full lg:flex-1">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-zinc-400 pointer-events-none" />
               <input
                 type="search"
@@ -1023,7 +1051,7 @@ export default function ContactsPage() {
               />
             </div>
             
-            <div className="lg:w-48">
+            <div className="w-full lg:w-48">
               <MultiSelectDropdown 
                 label="" 
                 placeholder="Nach Firma filtern..." 
@@ -1033,7 +1061,7 @@ export default function ContactsPage() {
               />
             </div>
             
-            <div className="lg:w-48">
+            <div className="w-full lg:w-48">
               <MultiSelectDropdown 
                 label="" 
                 placeholder="Nach Position filtern..." 
@@ -1043,7 +1071,7 @@ export default function ContactsPage() {
               />
             </div>
             
-            <div className="lg:w-48">
+            <div className="w-full lg:w-48">
               <MultiSelectDropdown 
                 label="" 
                 placeholder="Nach Tags filtern..." 
@@ -1198,6 +1226,7 @@ export default function ContactsPage() {
                   </TableHeader>
                   <TableHeader>Name</TableHeader>
                   <TableHeader>Firma</TableHeader>
+                  <TableHeader>Publikationen</TableHeader>
                   <TableHeader>Tags</TableHeader>
                   <TableHeader>Position</TableHeader>
                   <TableHeader>E-Mail</TableHeader>
@@ -1242,6 +1271,7 @@ export default function ContactsPage() {
                       )}
                     </TableCell>
                     <TableCell>{contact.companyName || <span className="text-gray-400">—</span>}</TableCell>
+                    <TableCell>{renderContactPublications(contact)}</TableCell>
                     <TableCell>{renderTags(contact.tagIds)}</TableCell>
                     <TableCell>{contact.position || <span className="text-gray-400">—</span>}</TableCell>
                     <TableCell>
@@ -1557,16 +1587,6 @@ export default function ContactsPage() {
         
         .scrollbar-hide::-webkit-scrollbar {
           display: none;  /* Chrome, Safari and Opera */
-        }
-        
-        /* MultiSelectDropdown Höhe anpassen */
-        .rounded-md.border.border-zinc-300.p-2.min-h-[40px] {
-          min-height: 40px !important;
-          height: 40px;
-          display: flex;
-          align-items: center;
-          padding-top: 0.5rem !important;
-          padding-bottom: 0.5rem !important;
         }
       `}</style>
     </div>

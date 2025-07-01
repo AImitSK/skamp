@@ -149,15 +149,11 @@ export interface Contact {
     country?: string;
   };
   
-  // Soziale Medien
-  socialMedia?: {
-    linkedin?: string;
-    twitter?: string;
-    xing?: string;
-    facebook?: string;
-    instagram?: string;
-    other?: { platform: string; url: string }[];
-  };
+  // Soziale Medien - GEÄNDERT: Gleiche Struktur wie Company
+  socialMedia?: Array<{
+    platform: SocialPlatform;
+    url: string;
+  }>;
   
   // Kommunikationspräferenzen
   communicationPreferences?: {
@@ -167,19 +163,8 @@ export interface Contact {
     language?: string;
   };
   
-  // Medien-spezifische Informationen (für Journalisten)
+  // Medien-spezifische Informationen (reduziert)
   mediaInfo?: {
-    beat?: string; // Ressort
-    expertise?: string[]; // Spezialisierungen
-    preferredContactTime?: string;
-    deadlines?: string;
-    languagePreferences?: string[];
-    socialHandles?: {
-      twitter?: string;
-      linkedin?: string;
-      mastodon?: string;
-    };
-    
     // NEU: Publikations-Zuordnung
     publications?: string[]; // Array von Publikationsnamen
   };
