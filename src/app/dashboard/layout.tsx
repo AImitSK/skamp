@@ -27,6 +27,7 @@ import { Avatar } from "@/components/avatar";
 import { 
   HomeIcon, 
   UsersIcon, 
+  ShieldCheckIcon, 
   UserIcon, 
   ArrowRightOnRectangleIcon,
   QueueListIcon,
@@ -60,6 +61,7 @@ export default function DashboardLayout({
     { name: "Kontakte", href: "/dashboard/contacts", icon: UsersIcon },
     { name: "Listen", href: "/dashboard/listen", icon: QueueListIcon },
     { name: "PR-Tools", href: "/dashboard/pr", icon: MegaphoneIcon },
+    { name: "Freigaben", href: "/dashboard/freigaben", icon: ShieldCheckIcon },
     { name: "Mediathek", href: "/dashboard/mediathek", icon: PhotoIcon },
     { name: "Einstellungen", href: "/dashboard/settings/boilerplates", icon: Cog6ToothIcon },
   ];

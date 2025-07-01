@@ -1,7 +1,28 @@
-// src/types/pr.ts - VOLLSTÄNDIG mit Multi-List Support
+// src/types/pr.ts - VOLLSTÄNDIG mit Multi-List Support und Freigabe-Workflow
 import { Timestamp } from 'firebase/firestore';
 
-export type PRCampaignStatus = 'draft' | 'scheduled' | 'sending' | 'sent' | 'archived';
+// ERWEITERT: Neue Status für den Freigabe-Workflow hinzugefügt
+export type PRCampaignStatus =
+  | 'draft'
+  | 'in_review'         // NEU: Warten auf Kunden-Feedback
+  | 'changes_requested' // NEU: Kunde wünscht Änderungen
+  | 'approved'          // NEU: Vom Kunden freigegeben
+  | 'scheduled'
+  | 'sending'
+  | 'sent'
+  | 'archived';
+
+// NEU: Eigene Struktur für die Daten des Freigabeprozesses
+export interface ApprovalData {
+  shareId: string;       // Eindeutige, öffentliche ID für den Freigabe-Link
+  status: 'pending' | 'viewed' | 'commented' | 'approved';
+  feedbackHistory: Array<{
+    comment: string;
+    requestedAt: Timestamp;
+    author: string; // z.B. "Kunde"
+  }>;
+  approvedAt?: Timestamp;
+}
 
 export interface PRCampaign {
   id?: string;
@@ -13,10 +34,10 @@ export interface PRCampaign {
   status: PRCampaignStatus;
   
   // Distribution Lists - ERWEITERT für Multi-List Support
-  distributionListId: string;        // Legacy: Einzelne Liste (für Rückwärtskompatibilität)
-  distributionListName: string;      // Legacy: Name der einzelnen Liste
-  distributionListIds?: string[];    // NEU: Array von Listen-IDs
-  distributionListNames?: string[];  // NEU: Array von Listen-Namen
+  distributionListId: string;       // Legacy: Einzelne Liste (für Rückwärtskompatibilität)
+  distributionListName: string;     // Legacy: Name der einzelnen Liste
+  distributionListIds?: string[];   // NEU: Array von Listen-IDs
+  distributionListNames?: string[]; // NEU: Array von Listen-Namen
   recipientCount: number;
   
   // Customer
@@ -33,7 +54,12 @@ export interface PRCampaign {
     expiresAt?: Timestamp;
     password?: string;
   };
-  
+
+  // --- NEUE FELDER FÜR DEN FREIGABE-WORKFLOW ---
+  approvalRequired: boolean;
+  approvalData?: ApprovalData;
+  // --- ENDE DER NEUEN FELDER ---
+
   // Timestamps
   createdAt?: Timestamp;
   updatedAt?: Timestamp;

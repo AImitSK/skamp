@@ -33,13 +33,26 @@ import {
   InformationCircleIcon,
   ArrowDownTrayIcon,
   CheckIcon,
-  XMarkIcon
+  XMarkIcon,
+  ExclamationCircleIcon, // Für "Änderungen erbeten"
+  CheckBadgeIcon,         // Für "Freigegeben"
+      PencilSquareIcon,
+    ClockIcon,
+    ArchiveBoxIcon    
 } from "@heroicons/react/20/solid";
 import { prService } from "@/lib/firebase/pr-service";
 import { PRCampaign, PRCampaignStatus } from "@/types/pr";
 import EmailSendModal from "@/components/pr/EmailSendModal";
 import clsx from "clsx";
 import Papa from 'papaparse';
+
+// --- NEUER, SPEZIFISCHER FARB-TYP ---
+// Wir definieren genau die Farben, die deine Badge-Komponente akzeptiert.
+type BadgeColor =
+  | "blue" | "green" | "purple" | "orange" | "red" | "pink" | "yellow"
+  | "zinc" | "indigo" | "cyan" | "emerald" | "teal" | "amber" | "lime"
+  | "sky" | "violet" | "fuchsia" | "rose";
+
 
 // Toast Notification Component
 interface Toast {
@@ -460,32 +473,47 @@ function StatusBadge({ status }: { status: PRCampaignStatus }) {
 }
 
 // Status-Label und Farben
-const statusConfig: Record<PRCampaignStatus, { label: string; color: any; icon: any }> = {
-  draft: { 
-    label: 'Entwurf', 
-    color: 'zinc', 
-    icon: PencilIcon 
-  },
-  scheduled: { 
-    label: 'Geplant', 
-    color: 'blue', 
-    icon: CalendarIcon 
-  },
-  sending: { 
-    label: 'Wird versendet', 
-    color: 'orange', 
-    icon: EnvelopeIcon 
-  },
-  sent: { 
-    label: 'Versendet', 
-    color: 'green', 
-    icon: EnvelopeIcon 
-  },
-  archived: { 
-    label: 'Archiviert', 
-    color: 'zinc', 
-    icon: EyeIcon 
-  }
+const statusConfig: Record<PRCampaignStatus, { label: string; color: BadgeColor; icon: React.ElementType }> = {
+    draft: {
+        label: 'Entwurf',
+        color: 'zinc',
+        icon: PencilSquareIcon,
+    },
+    in_review: {
+        label: 'In Prüfung',
+        color: 'yellow',
+        icon: ClockIcon,
+    },
+    changes_requested: {
+        label: 'Änderung erbeten',
+        color: 'orange',
+        icon: ExclamationCircleIcon,
+    },
+    approved: {
+        label: 'Freigegeben',
+        color: 'teal',
+        icon: CheckBadgeIcon,
+    },
+    scheduled: {
+        label: 'Geplant',
+        color: 'blue',
+        icon: ClockIcon,
+    },
+    sending: {
+        label: 'Wird gesendet',
+        color: 'indigo',
+        icon: PaperAirplaneIcon,
+    },
+    sent: {
+        label: 'Gesendet',
+        color: 'green',
+        icon: CheckCircleIcon,
+    },
+    archived: {
+        label: 'Archiviert',
+        color: 'zinc',
+        icon: ArchiveBoxIcon,
+    },
 };
 
 export default function PRCampaignsPage() {
