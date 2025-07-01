@@ -144,23 +144,34 @@ function parseStructuredOutput(text: string): StructuredPressRelease {
   
   let inBody = false;
   let bodyCount = 0;
+  let foundHeadline = false;
   
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     
     if (!line) continue;
     
-    // Erste Zeile = Headline
-    if (i === 0 && !headline) {
-      headline = line;
+    // Erste nicht-leere Zeile = Headline
+    if (!foundHeadline && !headline) {
+      headline = line.replace(/^\*\*/, '').replace(/\*\*$/, '');
+      foundHeadline = true;
       continue;
     }
     
-    // Lead-Absatz (mit **)
-    if (line.startsWith('**') && line.endsWith('**') && !leadParagraph) {
-      leadParagraph = line.replace(/^\*\*/, '').replace(/\*\*$/, '');
-      inBody = true;
-      continue;
+    // Lead-Absatz - flexiblere Erkennung
+    if (!leadParagraph && foundHeadline && !line.startsWith('"') && !line.startsWith('*Über')) {
+      // Prüfe ob es ein Lead-Absatz sein könnte (mit oder ohne **)
+      if (line.startsWith('**') && line.endsWith('**')) {
+        leadParagraph = line.replace(/^\*\*/, '').replace(/\*\*$/, '');
+      } else if (!inBody && line.length > 50 && line.length < 300) {
+        // Wenn kein ** vorhanden, aber es sieht nach einem Lead aus
+        leadParagraph = line;
+      }
+      
+      if (leadParagraph) {
+        inBody = true;
+        continue;
+      }
     }
     
     // Zitat parsen
@@ -195,14 +206,24 @@ function parseStructuredOutput(text: string): StructuredPressRelease {
     
     // Body-Absätze
     if (inBody && bodyCount < 3 && !line.startsWith('"') && !line.startsWith('*')) {
-      bodyParagraphs.push(line);
-      bodyCount++;
+      // Wenn noch kein Lead gefunden wurde und dies der erste Body ist
+      if (!leadParagraph && bodyCount === 0) {
+        leadParagraph = line;
+      } else {
+        bodyParagraphs.push(line);
+        bodyCount++;
+      }
     }
   }
   
   // Validierung und Defaults
   if (!headline) headline = 'Pressemitteilung';
-  if (!leadParagraph) leadParagraph = bodyParagraphs[0] || 'Lead-Absatz fehlt';
+  if (!leadParagraph && bodyParagraphs.length > 0) {
+    // Nimm den ersten Body-Absatz als Lead
+    leadParagraph = bodyParagraphs[0];
+    bodyParagraphs = bodyParagraphs.slice(1);
+  }
+  if (!leadParagraph) leadParagraph = 'Lead-Absatz fehlt';
   if (bodyParagraphs.length === 0) bodyParagraphs = ['Haupttext der Pressemitteilung'];
   if (!quote.text) quote = { text: 'Wir freuen uns über diese Entwicklung', person: 'Sprecher', role: 'Geschäftsführer', company: 'Unternehmen' };
   if (!boilerplate) boilerplate = 'Über das Unternehmen: [Platzhalter für Unternehmensbeschreibung]';
@@ -296,10 +317,8 @@ export async function POST(request: NextRequest) {
     // Strukturierte Ausgabe parsen
     const structured = parseStructuredOutput(generatedText);
 
-    // HTML für Editor generieren mit verbesserter Formatierung
-    const htmlContent = `
-<h1>${structured.headline}</h1>
-
+// HTML für Editor generieren mit verbesserter Formatierung
+const htmlContent = `
 <p><strong>${structured.leadParagraph}</strong></p>
 
 ${structured.bodyParagraphs.map(p => `<p>${p}</p>`).join('\n\n')}
