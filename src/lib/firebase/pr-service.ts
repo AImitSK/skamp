@@ -1,4 +1,4 @@
-// src/lib/firebase/pr-service.ts - ERWEITERT mit Asset-Integration
+// src/lib/firebase/pr-service.ts - ERWEITERT mit Asset-Integration und Freigabe-Workflow
 import {
   collection,
   doc,
@@ -15,9 +15,10 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db } from './client-init';
-import { PRCampaign, CampaignAssetAttachment } from '@/types/pr';
+import { PRCampaign, CampaignAssetAttachment, ApprovalData } from '@/types/pr';
 import { mediaService } from './media-service';
 import { ShareLink } from '@/types/media';
+import { nanoid } from 'nanoid';
 
 export const prService = {
   
@@ -196,7 +197,7 @@ export const prService = {
     );
   },
 
-  // === NEU: ASSET-MANAGEMENT FUNKTIONEN ===
+  // === ASSET-MANAGEMENT FUNKTIONEN ===
 
   /**
    * Fügt Assets zu einer Kampagne hinzu
@@ -420,5 +421,206 @@ export const prService = {
     const folders = attachments.filter(a => a.type === 'folder').length;
     
     return { assets, folders, total: assets + folders };
+  },
+
+  // === NEUE FREIGABE-WORKFLOW FUNKTIONEN ===
+
+  /**
+   * Startet den Freigabeprozess für eine Kampagne
+   */
+  async requestApproval(campaignId: string): Promise<string> {
+    const campaign = await this.getById(campaignId);
+    if (!campaign) {
+      throw new Error('Kampagne nicht gefunden');
+    }
+
+    // Generiere eine eindeutige, URL-sichere Share-ID
+    const shareId = nanoid(10); // Kurze, lesbare ID
+    
+    const approvalData: ApprovalData = {
+      shareId,
+      status: 'pending',
+      feedbackHistory: [],
+      // approvedAt wird später gesetzt
+    };
+
+    await this.update(campaignId, {
+      status: 'in_review',
+      approvalRequired: true,
+      approvalData
+    });
+
+    return shareId;
+  },
+
+  /**
+   * Findet eine Kampagne anhand der Share-ID
+   */
+  async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
+    try {
+      const q = query(
+        collection(db, 'pr_campaigns'),
+        where('approvalData.shareId', '==', shareId)
+      );
+      
+      const snapshot = await getDocs(q);
+      
+      if (snapshot.empty) {
+        return null;
+      }
+
+      const doc = snapshot.docs[0];
+      return { id: doc.id, ...doc.data() } as PRCampaign;
+    } catch (error) {
+      console.error('Fehler beim Suchen der Kampagne:', error);
+      return null;
+    }
+  },
+
+  /**
+   * Speichert Kunden-Feedback und aktualisiert den Status
+   */
+  async submitFeedback(shareId: string, feedback: string, author: string = 'Kunde'): Promise<void> {
+    const campaign = await this.getCampaignByShareId(shareId);
+    if (!campaign || !campaign.id) {
+      throw new Error('Kampagne nicht gefunden');
+    }
+
+    if (!campaign.approvalData) {
+      throw new Error('Keine Freigabe-Daten vorhanden');
+    }
+
+    // Füge neues Feedback zur Historie hinzu
+    const feedbackHistory = [
+      ...campaign.approvalData.feedbackHistory,
+      {
+        comment: feedback,
+        requestedAt: Timestamp.now(),
+        author
+      }
+    ];
+
+    await this.update(campaign.id, {
+      status: 'changes_requested',
+      approvalData: {
+        ...campaign.approvalData,
+        status: 'commented',
+        feedbackHistory
+      }
+    });
+  },
+
+  /**
+   * Genehmigt eine Kampagne
+   */
+  async approveCampaign(shareId: string): Promise<void> {
+    const campaign = await this.getCampaignByShareId(shareId);
+    if (!campaign || !campaign.id) {
+      throw new Error('Kampagne nicht gefunden');
+    }
+
+    if (!campaign.approvalData) {
+      throw new Error('Keine Freigabe-Daten vorhanden');
+    }
+
+    await this.update(campaign.id, {
+      status: 'approved',
+      approvalData: {
+        ...campaign.approvalData,
+        status: 'approved',
+        approvedAt: Timestamp.now()
+      }
+    });
+  },
+
+  /**
+   * Markiert eine Freigabe-Seite als angesehen
+   */
+  async markApprovalAsViewed(shareId: string): Promise<void> {
+    const campaign = await this.getCampaignByShareId(shareId);
+    if (!campaign || !campaign.id || !campaign.approvalData) {
+      return;
+    }
+
+    // Nur aktualisieren, wenn noch im 'pending' Status
+    if (campaign.approvalData.status === 'pending') {
+      await this.update(campaign.id, {
+        approvalData: {
+          ...campaign.approvalData,
+          status: 'viewed'
+        }
+      });
+    }
+  },
+
+  /**
+   * Holt alle Kampagnen, die eine Freigabe benötigen
+   */
+  async getApprovalCampaigns(userId: string): Promise<PRCampaign[]> {
+    try {
+      const q = query(
+        collection(db, 'pr_campaigns'),
+        where('userId', '==', userId),
+        where('approvalRequired', '==', true)
+      );
+      
+      const snapshot = await getDocs(q);
+      const campaigns = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as PRCampaign));
+
+      // Client-seitige Sortierung nach letzter Aktivität
+      return campaigns.sort((a, b) => {
+        // Priorisiere nach Status
+        const statusOrder = {
+          'changes_requested': 0,
+          'in_review': 1,
+          'approved': 2
+        };
+
+        const aOrder = statusOrder[a.status as keyof typeof statusOrder] ?? 3;
+        const bOrder = statusOrder[b.status as keyof typeof statusOrder] ?? 3;
+
+        if (aOrder !== bOrder) {
+          return aOrder - bOrder;
+        }
+
+        // Dann nach Datum
+        if (!a.updatedAt || !b.updatedAt) return 0;
+        return b.updatedAt.toMillis() - a.updatedAt.toMillis();
+      });
+    } catch (error) {
+      console.error('Fehler beim Laden der Freigabe-Kampagnen:', error);
+      return [];
+    }
+  },
+
+  /**
+   * Generiert die vollständige Freigabe-URL
+   */
+  getApprovalUrl(shareId: string): string {
+    return `${window.location.origin}/freigabe/${shareId}`;
+  },
+
+  /**
+   * Prüft, ob eine Kampagne versendet werden kann
+   */
+  canSendCampaign(campaign: PRCampaign): { canSend: boolean; reason?: string } {
+    if (campaign.approvalRequired && campaign.status !== 'approved') {
+      return {
+        canSend: false,
+        reason: 'Diese Kampagne muss erst vom Kunden freigegeben werden.'
+      };
+    }
+
+    if (!campaign.distributionListId || campaign.recipientCount === 0) {
+      return {
+        canSend: false,
+        reason: 'Keine Empfänger ausgewählt.'
+      };
+    }
+
+    return { canSend: true };
   }
 };

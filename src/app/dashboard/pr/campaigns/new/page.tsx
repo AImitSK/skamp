@@ -1,4 +1,4 @@
-// src/app/dashboard/pr/campaigns/new/page.tsx - KORRIGIERT
+// src/app/dashboard/pr/campaigns/new/page.tsx - MIT FREIGABE-WORKFLOW
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -14,7 +14,7 @@ import { GenerationResult } from '@/types/ai';
 import { Heading } from '@/components/heading';
 import { Text } from '@/components/text';
 import { Button } from '@/components/button';
-import { Field, Description } from '@/components/fieldset';
+import { Field } from '@/components/fieldset';
 import { Label } from '@/components/label'; 
 import { Input } from '@/components/input';
 import { RichTextEditor } from '@/components/RichTextEditor';
@@ -43,8 +43,10 @@ import {
   BarsArrowDownIcon,
   CheckIcon,
   ArrowLeftIcon,
-  XCircleIcon  // ADDED THIS
-} from "@heroicons/react/24/outline";
+  XCircleIcon,
+  DocumentDuplicateIcon,
+  LinkIcon
+} from "@heroicons/react/20/solid";
 import Link from 'next/link';
 import clsx from 'clsx';
 
@@ -56,6 +58,127 @@ import dynamic from 'next/dynamic';
 const StructuredGenerationModal = dynamic(() => import('@/components/pr/ai/StructuredGenerationModal'), {
   ssr: false
 });
+
+// Modal für Freigabe-Link Anzeige
+function ApprovalLinkModal({ 
+  isOpen, 
+  onClose, 
+  approvalUrl, 
+  campaignTitle 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  approvalUrl: string; 
+  campaignTitle: string;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(approvalUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Fehler beim Kopieren:', error);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-25 transition-opacity"
+          onClick={onClose}
+        />
+        
+        <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full transform transition-all">
+          <div className="p-6">
+            {/* Header */}
+            <div className="flex items-start mb-4">
+              <div className="flex-shrink-0">
+                <CheckCircleIcon className="h-6 w-6 text-green-600" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Freigabe angefordert!
+                </h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  Die Kampagne "{campaignTitle}" wurde zur Freigabe gesendet.
+                </p>
+              </div>
+            </div>
+
+            {/* Freigabe-Link */}
+            <div className="bg-gray-50 rounded-lg p-4 mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Freigabe-Link für den Kunden:
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={approvalUrl}
+                  readOnly
+                  className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-md text-sm font-mono select-all"
+                />
+                <Button
+                  onClick={handleCopy}
+                  className="flex items-center gap-2"
+                  color={copied ? 'zinc' : 'indigo'}
+                >
+                  {copied ? (
+                    <>
+                      <CheckCircleIcon className="h-4 w-4" />
+                      Kopiert!
+                    </>
+                  ) : (
+                    <>
+                      <DocumentDuplicateIcon className="h-4 w-4" />
+                      Kopieren
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* Hinweise */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <h4 className="text-sm font-medium text-blue-900 mb-2">
+                Nächste Schritte:
+              </h4>
+              <ul className="text-sm text-blue-800 space-y-1">
+                <li>• Senden Sie diesen Link an Ihren Kunden</li>
+                <li>• Der Kunde kann die Pressemitteilung prüfen</li>
+                <li>• Sie werden benachrichtigt, sobald eine Entscheidung getroffen wurde</li>
+                <li>• Die Kampagne kann erst nach Freigabe versendet werden</li>
+              </ul>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <Button
+                onClick={onClose}
+                className="flex-1"
+                color="indigo"
+              >
+                Zum Freigaben-Center
+              </Button>
+              <Button
+                plain
+                onClick={() => {
+                  window.location.href = '/dashboard/pr';
+                }}
+              >
+                Zur Übersicht
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // Toast Types
 interface Toast {
@@ -419,7 +542,7 @@ function EnhancedAssetSelector({
             description: asset.description || '',
             thumbnailUrl: asset.downloadUrl
           },
-          attachedAt: null as any,
+          attachedAt: new Date() as any, // Proper timestamp
           attachedBy: user?.uid || ''
         });
       }
@@ -436,7 +559,7 @@ function EnhancedAssetSelector({
             folderName: folder.name,
             description: folder.description || ''
           },
-          attachedAt: null as any,
+          attachedAt: new Date() as any, // Proper timestamp
           attachedBy: user?.uid || ''
         });
       }
@@ -1074,6 +1197,11 @@ export default function NewPRCampaignPage() {
   const [attachedAssets, setAttachedAssets] = useState<CampaignAssetAttachment[]>([]);
   const [showAssetSelector, setShowAssetSelector] = useState(false);
 
+  // NEU: Freigabe-bezogene States
+  const [approvalRequired, setApprovalRequired] = useState(false);
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [approvalUrl, setApprovalUrl] = useState('');
+
   // KI-Assistent State
   const [showAiModal, setShowAiModal] = useState(false);
   const [aiGenerationHistory, setAiGenerationHistory] = useState<GenerationResult[]>([]);
@@ -1146,6 +1274,12 @@ export default function NewPRCampaignPage() {
       name: 'Medien',
       icon: PhotoIcon,
       completed: attachedAssets.length > 0
+    },
+    {
+      id: 'approval',
+      name: 'Freigabe',
+      icon: CheckCircleIcon,
+      completed: approvalRequired
     }
   ];
 
@@ -1178,14 +1312,21 @@ export default function NewPRCampaignPage() {
 
     setIsSaving(true);
     try {
-      // Remove attachedAt from assets
-      const cleanedAssets = attachedAssets.map(({ attachedAt, ...rest }) => rest);
+      // Clean assets - set proper timestamp
+      const cleanedAssets = attachedAssets.map(asset => ({
+        ...asset,
+        attachedAt: asset.attachedAt || new Date() // Use existing or set new date
+      }));
 
       const campaignData = {
         userId: user.uid,
         title: campaignTitle,
         contentHtml: pressReleaseContent,
         status: 'draft' as const,
+        // Legacy fields for backwards compatibility
+        distributionListId: selectedListIds[0] || '',
+        distributionListName: selectedLists[0]?.name || '',
+        // New multi-list fields
         distributionListIds: selectedListIds,
         distributionListNames: selectedLists.map(l => l.name),
         recipientCount: totalRecipients,
@@ -1194,6 +1335,7 @@ export default function NewPRCampaignPage() {
         attachedAssets: cleanedAssets,
         scheduledAt: null,
         sentAt: null,
+        approvalRequired // NEU: Freigabe-Flag
       };
 
       const newCampaignId = await prService.create(campaignData);
@@ -1208,11 +1350,19 @@ export default function NewPRCampaignPage() {
         }));
       }
 
-      showToast('success', 'Kampagne gespeichert!', 'Du wirst zur Bearbeitung weitergeleitet...');
-      
-      setTimeout(() => {
-        router.push(`/dashboard/pr/campaigns/edit/${newCampaignId}`);
-      }, 1500);
+      // NEU: Wenn Freigabe erforderlich, fordere sie an
+      if (approvalRequired) {
+        const shareId = await prService.requestApproval(newCampaignId);
+        const url = prService.getApprovalUrl(shareId);
+        setApprovalUrl(url);
+        setShowApprovalModal(true);
+      } else {
+        showToast('success', 'Kampagne gespeichert!', 'Du wirst zur Bearbeitung weitergeleitet...');
+        
+        setTimeout(() => {
+          router.push(`/dashboard/pr/campaigns/edit/${newCampaignId}`);
+        }, 1500);
+      }
 
     } catch (error) {
       console.error("Fehler beim Speichern der Kampagne:", error);
@@ -1224,15 +1374,21 @@ export default function NewPRCampaignPage() {
 
   // Auto-save hook
   const { saveStatus, lastSaved } = useAutoSave(
-    { campaignTitle, pressReleaseContent, selectedListIds, attachedAssets },
+    { campaignTitle, pressReleaseContent, selectedListIds, attachedAssets, approvalRequired },
     async () => {
-      if (draftId && user) {
+      if (draftId && user && selectedLists.length > 0) {
         await prService.update(draftId, {
           title: campaignTitle,
           contentHtml: pressReleaseContent,
+          // Legacy fields
+          distributionListId: selectedListIds[0] || '',
+          distributionListName: selectedLists[0]?.name || '',
+          // New multi-list fields
           distributionListIds: selectedListIds,
+          distributionListNames: selectedLists.map(l => l.name),
           recipientCount: totalRecipients,
-          attachedAssets: attachedAssets
+          attachedAssets: attachedAssets,
+          approvalRequired: approvalRequired
         });
       }
     },
@@ -1585,6 +1741,48 @@ export default function NewPRCampaignPage() {
                 </div>
               )}
             </div>
+
+            {/* NEU: Schritt 5: Freigabe-Option */}
+            <div className={clsx("border-t pt-8 mt-8", !selectedCustomerId && "opacity-50 pointer-events-none")}>
+              <h3 className="text-base font-semibold mb-4 flex items-center">
+                <span className={clsx(
+                  "rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold mr-3",
+                  selectedCustomerId ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-400"
+                )}>
+                  5
+                </span>
+                Freigabe-Einstellungen
+              </h3>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    checked={approvalRequired}
+                    onChange={(checked) => setApprovalRequired(checked)}
+                    className="mt-1"
+                  />
+                  <div className="flex-1">
+                    <Label className="text-base font-medium text-gray-900">
+                      Freigabe vom Kunden erforderlich
+                    </Label>
+                    <p className="mt-1 text-sm text-gray-600">
+                      Wenn aktiviert, muss der Kunde die Pressemitteilung vor dem Versand freigeben. 
+                      Sie erhalten einen Link, den Sie an den Kunden senden können.
+                    </p>
+                  </div>
+                </div>
+                
+                {approvalRequired && (
+                  <div className="mt-3 flex items-start gap-2 text-sm text-blue-800">
+                    <ExclamationTriangleIcon className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                    <p className="flex-1">
+                      Die Kampagne kann erst versendet werden, nachdem der Kunde sie freigegeben hat.
+                      Sie werden über alle Statusänderungen informiert.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
           
           <div className="flex justify-end gap-4">
@@ -1598,11 +1796,19 @@ export default function NewPRCampaignPage() {
               color="indigo" 
               disabled={!isFormValid || isSaving}
               onClick={handleSaveDraft}
+              className={clsx(
+                approvalRequired && "bg-orange-600 hover:bg-orange-500"
+              )}
             >
               {isSaving ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                   Speichert...
+                </>
+              ) : approvalRequired ? (
+                <>
+                  <PaperAirplaneIcon className="h-4 w-4 mr-2" />
+                  Freigabe anfordern
                 </>
               ) : (
                 'Als Entwurf speichern'
@@ -1653,6 +1859,16 @@ export default function NewPRCampaignPage() {
                   {attachedAssets.length > 0 
                     ? `${attachedAssets.length} Medien angehängt`
                     : "Keine Medien"
+                  }
+                </p>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-gray-600">Freigabe</p>
+                <p className={clsx("font-medium", !approvalRequired && "text-gray-400")}>
+                  {approvalRequired 
+                    ? "Kundenfreigabe erforderlich"
+                    : "Keine Freigabe nötig"
                   }
                 </p>
               </div>
@@ -1712,6 +1928,17 @@ export default function NewPRCampaignPage() {
           }}
         />
       )}
+
+      {/* NEU: Freigabe-Link Modal */}
+      <ApprovalLinkModal
+        isOpen={showApprovalModal}
+        onClose={() => {
+          setShowApprovalModal(false);
+          router.push('/dashboard/freigaben');
+        }}
+        approvalUrl={approvalUrl}
+        campaignTitle={campaignTitle}
+      />
 
       {/* Floating Action Button */}
       <FloatingActionButton
