@@ -9,6 +9,19 @@ export type CommunicationStatus = 'completed' | 'pending' | 'cancelled';
 export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type TagColor = 'blue' | 'green' | 'purple' | 'orange' | 'red' | 'pink' | 'yellow' | 'zinc' | 'indigo' | 'cyan' | 'emerald';
+export type SocialPlatform = 'linkedin' | 'twitter' | 'xing' | 'facebook' | 'instagram' | 'youtube' | 'tiktok' | 'other';
+
+// Social Platform Labels
+export const socialPlatformLabels: Record<SocialPlatform, string> = {
+  linkedin: 'LinkedIn',
+  twitter: 'Twitter/X',
+  xing: 'XING',
+  facebook: 'Facebook',
+  instagram: 'Instagram',
+  youtube: 'YouTube',
+  tiktok: 'TikTok',
+  other: 'Andere'
+};
 
 // Company Type Labels
 export const companyTypeLabels: Record<CompanyType, string> = {
@@ -32,24 +45,41 @@ export const MEDIA_TYPES = [
   { value: 'radio', label: 'Radio' },
   { value: 'news_agency', label: 'Nachrichtenagentur' },
   { value: 'trade_journal', label: 'Fachzeitschrift' },
+  { value: 'mixed', label: 'Gemischt' },
   { value: 'other', label: 'Sonstiges' }
 ] as const;
 
-// Publikations-Frequenzen
-export const PUBLICATION_FREQUENCIES = [
-  { value: 'daily', label: 'Täglich' },
-  { value: 'weekly', label: 'Wöchentlich' },
-  { value: 'monthly', label: 'Monatlich' },
-  { value: 'quarterly', label: 'Vierteljährlich' },
-  { value: 'yearly', label: 'Jährlich' }
+// Standard Beats/Ressorts für Journalisten
+export const STANDARD_BEATS = [
+  'Technologie',
+  'Wirtschaft',
+  'Politik',
+  'Wissenschaft',
+  'Gesundheit',
+  'Umwelt',
+  'Sport',
+  'Kultur',
+  'Lifestyle',
+  'Automobile',
+  'Immobilien',
+  'Bildung',
+  'Startups',
+  'Finanzen',
+  'Marketing',
+  'Digitalisierung'
 ] as const;
 
-// Publikations-Typen
-export const PUBLICATION_TYPES = [
-  { value: 'print', label: 'Print' },
-  { value: 'online', label: 'Online' },
-  { value: 'both', label: 'Print & Online' }
-] as const;
+// NEU: Publication Interface
+export interface Publication {
+  id: string;
+  name: string;
+  type: 'newspaper' | 'magazine' | 'online' | 'blog' | 'podcast' | 'tv' | 'radio' | 'newsletter' | 'trade_journal';
+  format: 'print' | 'online' | 'both';
+  frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly' | 'irregular';
+  focusAreas: string[]; // Themenschwerpunkte dieser Publikation
+  circulation?: number; // Auflage (Print)
+  reach?: number; // Reichweite (Online)
+}
 
 // Company Interface
 export interface Company {
@@ -62,25 +92,27 @@ export interface Company {
   phone?: string;
   address?: {
     street?: string;
+    street2?: string;
     city?: string;
     state?: string;
     postalCode?: string;
+    zip?: string;
     country?: string;
   };
-  
-  // NEU: Medienschwerpunkte für Verlage/Medienhäuser
-  // Kommagetrennte Liste von Schwerpunkten
-  // Beispiel: "Technologie, Künstliche Intelligenz, Startups, Digitalisierung"
-  mediaFocus?: string;
   
   // Media Info für detaillierte Medieninformationen
   mediaInfo?: {
     mediaType?: string; // newspaper, magazine, online, etc.
-    circulation?: number; // Auflage
-    reach?: number; // Reichweite
+    circulation?: number; // Gesamtauflage
+    reach?: number; // Gesamtreichweite
     publicationType?: 'print' | 'online' | 'both';
+    publicationFrequency?: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
     frequency?: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
     targetAudience?: string;
+    focusAreas?: string[]; // Allgemeine Schwerpunkte
+    
+    // NEU: Array von Publikationen
+    publications?: Publication[];
   };
   
   description?: string;
@@ -89,6 +121,10 @@ export interface Company {
   notes?: string;
   logoUrl?: string;
   tagIds?: string[];
+  socialMedia?: Array<{
+    platform: SocialPlatform;
+    url: string;
+  }>;
   userId: string;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
@@ -129,6 +165,23 @@ export interface Contact {
     bestTimeToContact?: string;
     doNotContact?: boolean;
     language?: string;
+  };
+  
+  // Medien-spezifische Informationen (für Journalisten)
+  mediaInfo?: {
+    beat?: string; // Ressort
+    expertise?: string[]; // Spezialisierungen
+    preferredContactTime?: string;
+    deadlines?: string;
+    languagePreferences?: string[];
+    socialHandles?: {
+      twitter?: string;
+      linkedin?: string;
+      mastodon?: string;
+    };
+    
+    // NEU: Publikations-Zuordnung
+    publications?: string[]; // Array von Publikationsnamen
   };
   
   birthday?: Date;

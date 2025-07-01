@@ -182,9 +182,21 @@ function QuickPreview({
             {(item as Company).website && (
               <div className="flex justify-between">
                 <span className="text-gray-500">Website:</span>
-                <a href={(item as Company).website} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-500 truncate max-w-[180px]">
+                <a href={(item as Company).website} target="_blank" rel="noopener noreferrer" className="text-[#005fab] hover:text-[#004a8c] truncate max-w-[180px]">
                   {(item as Company).website}
                 </a>
+              </div>
+            )}
+            {(item as Company).mediaInfo?.publications && (item as Company).mediaInfo!.publications!.length > 0 && (
+              <div className="flex justify-between items-start">
+                <span className="text-gray-500">Publikationen:</span>
+                <div className="flex flex-wrap gap-1 justify-end max-w-[180px]">
+                  {(item as Company).mediaInfo!.publications!.map((pub) => (
+                    <Badge key={pub.id} color="blue" className="text-xs">
+                      {pub.name}
+                    </Badge>
+                  ))}
+                </div>
               </div>
             )}
           </>
@@ -199,7 +211,7 @@ function QuickPreview({
             {(item as Contact).email && (
               <div className="flex justify-between">
                 <span className="text-gray-500">E-Mail:</span>
-                <a href={`mailto:${(item as Contact).email}`} className="text-indigo-600 hover:text-indigo-500 truncate max-w-[180px]">
+                <a href={`mailto:${(item as Contact).email}`} className="text-[#005fab] hover:text-[#004a8c] truncate max-w-[180px]">
                   {(item as Contact).email}
                 </a>
               </div>
@@ -272,7 +284,7 @@ function InlineEdit({
         onChange={(e) => setEditValue(e.target.value)}
         onKeyDown={handleKeyDown}
         className={clsx(
-          "px-2 py-1 border border-indigo-500 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500",
+          "px-2 py-1 border border-[#005fab] rounded focus:outline-none focus:ring-2 focus:ring-[#005fab]",
           className
         )}
       />
@@ -501,6 +513,10 @@ export default function ContactsPage() {
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
 
+  // Pagination States
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
+
   // Filter-States für Firmen
   const [selectedTypes, setSelectedTypes] = useState<CompanyType[]>([]);
   const [selectedCompanyTagIds, setSelectedCompanyTagIds] = useState<string[]>([]);
@@ -611,9 +627,33 @@ export default function ContactsPage() {
     });
   }, [contacts, searchTerm, selectedContactCompanyIds, selectedContactPositions, selectedContactTagIds, deletingIds]);
 
+  // Paginated Data
+  const paginatedCompanies = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredCompanies.slice(startIndex, endIndex);
+  }, [filteredCompanies, currentPage, itemsPerPage]);
+
+  const paginatedContacts = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredContacts.slice(startIndex, endIndex);
+  }, [filteredContacts, currentPage, itemsPerPage]);
+
+  // Total Pages
+  const totalCompanyPages = Math.ceil(filteredCompanies.length / itemsPerPage);
+  const totalContactPages = Math.ceil(filteredContacts.length / itemsPerPage);
+  const totalPages = activeTab === 'companies' ? totalCompanyPages : totalContactPages;
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedTypes, selectedCompanyTagIds, selectedContactCompanyIds, selectedContactTagIds, selectedContactPositions, activeTab]);
+
   const handleSelectAllCompanies = (checked: boolean) => {
     if (checked) {
-      setSelectedCompanyIds(new Set(filteredCompanies.map(c => c.id!)));
+      // Nur die aktuell sichtbaren (paginierten) auswählen
+      setSelectedCompanyIds(new Set(paginatedCompanies.map(c => c.id!)));
     } else {
       setSelectedCompanyIds(new Set());
     }
@@ -621,7 +661,8 @@ export default function ContactsPage() {
 
   const handleSelectAllContacts = (checked: boolean) => {
     if (checked) {
-      setSelectedContactIds(new Set(filteredContacts.map(c => c.id!)));
+      // Nur die aktuell sichtbaren (paginierten) auswählen
+      setSelectedContactIds(new Set(paginatedContacts.map(c => c.id!)));
     } else {
       setSelectedContactIds(new Set());
     }
@@ -787,9 +828,24 @@ export default function ContactsPage() {
     if (!tagIds || tagIds.length === 0) return null;
     const entityTags = tags.filter(tag => tagIds.includes(tag.id!));
     return (
-      <div className="flex flex-wrap gap-1">
+      <div className="flex gap-1 overflow-x-auto whitespace-nowrap scrollbar-hide">
         {entityTags.map(tag => (
-          <Badge key={tag.id} color={tag.color as any} className="text-xs">{tag.name}</Badge>
+          <Badge key={tag.id} color={tag.color as any} className="text-xs flex-shrink-0">{tag.name}</Badge>
+        ))}
+      </div>
+    );
+  };
+  
+  const renderPublications = (company: Company) => {
+    const publications = company.mediaInfo?.publications;
+    if (!publications || publications.length === 0) return <span className="text-gray-400">—</span>;
+    
+    return (
+      <div className="flex gap-1 overflow-x-auto whitespace-nowrap scrollbar-hide">
+        {publications.map((pub) => (
+          <Badge key={pub.id} color="blue" className="text-xs flex-shrink-0">
+            {pub.name}
+          </Badge>
         ))}
       </div>
     );
@@ -856,7 +912,7 @@ export default function ContactsPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-pulse">
-          <div className="h-8 w-8 bg-indigo-600 rounded-full animate-bounce"></div>
+          <div className="h-8 w-8 bg-[#005fab] rounded-full animate-bounce"></div>
           <p className="mt-4 text-zinc-500">Lade Daten...</p>
         </div>
       </div>
@@ -880,109 +936,125 @@ export default function ContactsPage() {
             <ArrowUpTrayIcon className="h-4 w-4" />
             Import
           </Button>
-          <Button onClick={handleAddNew}>
-            <PlusIcon className="size-4 mr-2" />
+          <button 
+            onClick={handleAddNew}
+            className="inline-flex items-center gap-x-2 rounded-lg bg-[#005fab] px-4 py-2 text-sm font-semibold text-white hover:bg-[#004a8c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005fab]"
+          >
+            <PlusIcon className="size-4" />
             {activeTab === 'companies' ? 'Firma hinzufügen' : 'Person hinzufügen'}
-          </Button>
+          </button>
         </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex gap-4 mb-6">
-        <button
-          onClick={() => { setActiveTab('companies'); setSearchTerm(''); }}
-          className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
-            activeTab === 'companies'
-              ? 'border-indigo-600 text-indigo-600'
-              : 'border-transparent text-zinc-600 hover:text-zinc-900 dark:text-zinc-400'
-          }`}
-        >
-          <BuildingOfficeIcon className="h-4 w-4" />
-          Firmen ({companies.length})
-        </button>
-        <button
-          onClick={() => { setActiveTab('contacts'); setSearchTerm(''); }}
-          className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
-            activeTab === 'contacts'
-              ? 'border-indigo-600 text-indigo-600'
-              : 'border-transparent text-zinc-600 hover:text-zinc-900 dark:text-zinc-400'
-          }`}
-        >
-          <UserIcon className="h-4 w-4" />
-          Personen ({contacts.length})
-        </button>
       </div>
       
-      {/* Filter + Suche */}
-      {activeTab === 'companies' && (
-        <div className="flex flex-col lg:flex-row gap-4 mb-6">
-          <div className="relative flex-1">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-zinc-400 pointer-events-none" />
-            <input
-              type="search"
-              placeholder="Firmen durchsuchen..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-md border border-zinc-300 py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
-            />
-          </div>
-          
-          <MultiSelectDropdown 
-            label="" 
-            placeholder="Nach Typ filtern..." 
-            options={Object.entries(companyTypeLabels).map(([value, label]) => ({ value, label }))} 
-            selectedValues={selectedTypes} 
-            onChange={(values) => setSelectedTypes(values as CompanyType[])}
-          />
-          
-          <MultiSelectDropdown 
-            label="" 
-            placeholder="Nach Tags filtern..." 
-            options={tagOptions.map(tag => ({ value: tag.id!, label: tag.name }))} 
-            selectedValues={selectedCompanyTagIds} 
-            onChange={(values) => setSelectedCompanyTagIds(values)}
-          />
+      {/* Tabs + Filter + Suche in einer Box */}
+      <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-lg p-4 mb-6 space-y-4">
+        {/* Tabs */}
+        <div className="flex gap-4">
+          <button
+            onClick={() => { setActiveTab('companies'); setSearchTerm(''); }}
+            className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
+              activeTab === 'companies'
+                ? 'border-[#005fab] text-[#005fab]'
+                : 'border-transparent text-zinc-600 hover:text-zinc-900 dark:text-zinc-400'
+            }`}
+          >
+            <BuildingOfficeIcon className="h-4 w-4" />
+            Firmen ({companies.length})
+          </button>
+          <button
+            onClick={() => { setActiveTab('contacts'); setSearchTerm(''); }}
+            className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
+              activeTab === 'contacts'
+                ? 'border-[#005fab] text-[#005fab]'
+                : 'border-transparent text-zinc-600 hover:text-zinc-900 dark:text-zinc-400'
+            }`}
+          >
+            <UserIcon className="h-4 w-4" />
+            Personen ({contacts.length})
+          </button>
         </div>
-      )}
+        
+        {/* Filter + Suche */}
+        {activeTab === 'companies' && (
+          <div className="flex flex-col lg:flex-row gap-4 items-start">
+            <div className="relative flex-1">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-zinc-400 pointer-events-none" />
+              <input
+                type="search"
+                placeholder="Firmen durchsuchen..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full h-10 rounded-md border border-zinc-300 py-2 pl-10 pr-4 text-sm focus:border-[#005fab] focus:outline-none focus:ring-1 focus:ring-[#005fab] transition-all"
+              />
+            </div>
+            
+            <div className="lg:w-48">
+              <MultiSelectDropdown 
+                label="" 
+                placeholder="Nach Typ filtern..." 
+                options={Object.entries(companyTypeLabels).map(([value, label]) => ({ value, label }))} 
+                selectedValues={selectedTypes} 
+                onChange={(values) => setSelectedTypes(values as CompanyType[])}
+              />
+            </div>
+            
+            <div className="lg:w-48">
+              <MultiSelectDropdown 
+                label="" 
+                placeholder="Nach Tags filtern..." 
+                options={tagOptions.map(tag => ({ value: tag.id!, label: tag.name }))} 
+                selectedValues={selectedCompanyTagIds} 
+                onChange={(values) => setSelectedCompanyTagIds(values)}
+              />
+            </div>
+          </div>
+        )}
 
-      {activeTab === 'contacts' && (
-        <div className="flex flex-col lg:flex-row gap-4 mb-6">
-          <div className="relative flex-1">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-zinc-400 pointer-events-none" />
-            <input
-              type="search"
-              placeholder="Personen durchsuchen..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-md border border-zinc-300 py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
-            />
+        {activeTab === 'contacts' && (
+          <div className="flex flex-col lg:flex-row gap-4 items-start">
+            <div className="relative flex-1">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-zinc-400 pointer-events-none" />
+              <input
+                type="search"
+                placeholder="Personen durchsuchen..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full h-10 rounded-md border border-zinc-300 py-2 pl-10 pr-4 text-sm focus:border-[#005fab] focus:outline-none focus:ring-1 focus:ring-[#005fab] transition-all"
+              />
+            </div>
+            
+            <div className="lg:w-48">
+              <MultiSelectDropdown 
+                label="" 
+                placeholder="Nach Firma filtern..." 
+                options={companyOptions} 
+                selectedValues={selectedContactCompanyIds} 
+                onChange={(values) => setSelectedContactCompanyIds(values)}
+              />
+            </div>
+            
+            <div className="lg:w-48">
+              <MultiSelectDropdown 
+                label="" 
+                placeholder="Nach Position filtern..." 
+                options={positionOptions.map(pos => ({ value: pos, label: pos }))} 
+                selectedValues={selectedContactPositions} 
+                onChange={(values) => setSelectedContactPositions(values)}
+              />
+            </div>
+            
+            <div className="lg:w-48">
+              <MultiSelectDropdown 
+                label="" 
+                placeholder="Nach Tags filtern..." 
+                options={tagOptions.map(tag => ({ value: tag.id!, label: tag.name }))} 
+                selectedValues={selectedContactTagIds} 
+                onChange={(values) => setSelectedContactTagIds(values)}
+              />
+            </div>
           </div>
-          
-          <MultiSelectDropdown 
-            label="" 
-            placeholder="Nach Firma filtern..." 
-            options={companyOptions} 
-            selectedValues={selectedContactCompanyIds} 
-            onChange={(values) => setSelectedContactCompanyIds(values)}
-          />
-          
-          <MultiSelectDropdown 
-            label="" 
-            placeholder="Nach Position filtern..." 
-            options={positionOptions.map(pos => ({ value: pos, label: pos }))} 
-            selectedValues={selectedContactPositions} 
-            onChange={(values) => setSelectedContactPositions(values)}
-          />
-          
-          <MultiSelectDropdown 
-            label="" 
-            placeholder="Nach Tags filtern..." 
-            options={tagOptions.map(tag => ({ value: tag.id!, label: tag.name }))} 
-            selectedValues={selectedContactTagIds} 
-            onChange={(values) => setSelectedContactTagIds(values)}
-          />
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Ergebnis-Info und Bulk-Aktionen */}
       <div className="mb-4 flex items-center justify-between h-9">
@@ -1017,13 +1089,14 @@ export default function ContactsPage() {
                 <TableRow>
                   <TableHeader className="w-12">
                     <Checkbox 
-                      checked={filteredCompanies.length > 0 && selectedCompanyIds.size === filteredCompanies.length} 
-                      indeterminate={selectedCompanyIds.size > 0 && selectedCompanyIds.size < filteredCompanies.length} 
+                      checked={paginatedCompanies.length > 0 && paginatedCompanies.every(company => selectedCompanyIds.has(company.id!))} 
+                      indeterminate={paginatedCompanies.some(company => selectedCompanyIds.has(company.id!)) && !paginatedCompanies.every(company => selectedCompanyIds.has(company.id!))} 
                       onChange={(checked) => handleSelectAllCompanies(checked)}
                     />
                   </TableHeader>
                   <TableHeader>Name</TableHeader>
                   <TableHeader>Typ</TableHeader>
+                  <TableHeader>Publikationen</TableHeader>
                   <TableHeader>Tags</TableHeader>
                   <TableHeader>Website</TableHeader>
                   <TableHeader>Telefon</TableHeader>
@@ -1031,7 +1104,7 @@ export default function ContactsPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredCompanies.map((company) => (
+                {paginatedCompanies.map((company) => (
                   <TableRow 
                     key={company.id} 
                     className={clsx(
@@ -1056,7 +1129,7 @@ export default function ContactsPage() {
                         />
                       ) : (
                         <div 
-                          className="font-medium text-indigo-600 hover:text-indigo-500 cursor-pointer"
+                          className="font-medium text-[#005fab] hover:text-[#004a8c] cursor-pointer"
                           onMouseEnter={(e) => handleMouseEnter(company, 'company', e)}
                           onMouseLeave={handleMouseLeave}
                         >
@@ -1069,6 +1142,7 @@ export default function ContactsPage() {
                     <TableCell>
                       <Badge color="zinc">{companyTypeLabels[company.type]}</Badge>
                     </TableCell>
+                    <TableCell>{renderPublications(company)}</TableCell>
                     <TableCell>{renderTags(company.tagIds)}</TableCell>
                     <TableCell>
                       {company.website ? (
@@ -1076,7 +1150,7 @@ export default function ContactsPage() {
                           href={company.website} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="text-indigo-600 hover:text-indigo-500 hover:underline text-sm"
+                          className="text-[#005fab] hover:text-[#004a8c] hover:underline text-sm"
                         >
                           Website
                         </a>
@@ -1088,7 +1162,7 @@ export default function ContactsPage() {
                       {company.phone ? (
                         <a 
                           href={`tel:${company.phone}`}
-                          className="text-indigo-600 hover:text-indigo-500 hover:underline text-sm"
+                          className="text-[#005fab] hover:text-[#004a8c] hover:underline text-sm"
                         >
                           {company.phone}
                         </a>
@@ -1132,7 +1206,7 @@ export default function ContactsPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredContacts.map((contact) => (
+                {paginatedContacts.map((contact) => (
                   <TableRow 
                     key={contact.id} 
                     className={clsx(
@@ -1157,7 +1231,7 @@ export default function ContactsPage() {
                         />
                       ) : (
                         <div 
-                          className="font-medium text-indigo-600 hover:text-indigo-500 cursor-pointer"
+                          className="font-medium text-[#005fab] hover:text-[#004a8c] cursor-pointer"
                           onMouseEnter={(e) => handleMouseEnter(contact, 'contact', e)}
                           onMouseLeave={handleMouseLeave}
                         >
@@ -1174,7 +1248,7 @@ export default function ContactsPage() {
                       {contact.email ? (
                         <a 
                           href={`mailto:${contact.email}`}
-                          className="text-indigo-600 hover:text-indigo-500 hover:underline text-sm"
+                          className="text-[#005fab] hover:text-[#004a8c] hover:underline text-sm"
                         >
                           {contact.email}
                         </a>
@@ -1186,7 +1260,7 @@ export default function ContactsPage() {
                       {contact.phone ? (
                         <a 
                           href={`tel:${contact.phone}`}
-                          className="text-indigo-600 hover:text-indigo-500 hover:underline text-sm"
+                          className="text-[#005fab] hover:text-[#004a8c] hover:underline text-sm"
                         >
                           {contact.phone}
                         </a>
@@ -1210,6 +1284,162 @@ export default function ContactsPage() {
           )}
         </div>
       </div>
+
+      {/* Pagination */}
+      {(activeTab === 'companies' ? filteredCompanies.length : filteredContacts.length) > 0 && (
+        <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 px-2">
+          {/* Items per page selector */}
+          <div className="flex items-center gap-2">
+            <label htmlFor="itemsPerPage" className="text-sm text-gray-600">
+              Einträge pro Seite:
+            </label>
+            <select
+              id="itemsPerPage"
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-[#005fab] focus:outline-none focus:ring-1 focus:ring-[#005fab]"
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+
+          {/* Page info and navigation */}
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-600">
+              {activeTab === 'companies' ? (
+                <>
+                  {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, filteredCompanies.length)} von {filteredCompanies.length}
+                </>
+              ) : (
+                <>
+                  {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, filteredContacts.length)} von {filteredContacts.length}
+                </>
+              )}
+            </span>
+            
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Erste Seite"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                </svg>
+              </button>
+              
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Vorherige Seite"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+
+              {/* Page numbers */}
+              <div className="flex items-center gap-1 mx-2">
+                {totalPages <= 7 ? (
+                  // Show all pages if 7 or less
+                  Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={clsx(
+                        "min-w-[32px] h-8 px-2 rounded text-sm font-medium transition-colors",
+                        currentPage === page
+                          ? "bg-[#005fab] text-white"
+                          : "hover:bg-gray-100"
+                      )}
+                    >
+                      {page}
+                    </button>
+                  ))
+                ) : (
+                  // Show page numbers with ellipsis
+                  <>
+                    {currentPage > 3 && (
+                      <>
+                        <button
+                          onClick={() => setCurrentPage(1)}
+                          className="min-w-[32px] h-8 px-2 rounded text-sm font-medium hover:bg-gray-100"
+                        >
+                          1
+                        </button>
+                        {currentPage > 4 && <span className="px-1">...</span>}
+                      </>
+                    )}
+                    
+                    {Array.from({ length: 5 }, (_, i) => {
+                      const page = currentPage - 2 + i;
+                      if (page > 0 && page <= totalPages) {
+                        return (
+                          <button
+                            key={page}
+                            onClick={() => setCurrentPage(page)}
+                            className={clsx(
+                              "min-w-[32px] h-8 px-2 rounded text-sm font-medium transition-colors",
+                              currentPage === page
+                                ? "bg-[#005fab] text-white"
+                                : "hover:bg-gray-100"
+                            )}
+                          >
+                            {page}
+                          </button>
+                        );
+                      }
+                      return null;
+                    }).filter(Boolean)}
+                    
+                    {currentPage < totalPages - 2 && (
+                      <>
+                        {currentPage < totalPages - 3 && <span className="px-1">...</span>}
+                        <button
+                          onClick={() => setCurrentPage(totalPages)}
+                          className="min-w-[32px] h-8 px-2 rounded text-sm font-medium hover:bg-gray-100"
+                        >
+                          {totalPages}
+                        </button>
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Nächste Seite"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+              
+              <button
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+                className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Letzte Seite"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Quick Preview */}
       {previewItem && (
@@ -1317,6 +1547,26 @@ export default function ContactsPage() {
 
         .animate-fade-in-scale {
           animation: fade-in-scale 0.2s ease-out;
+        }
+        
+        /* Scrollbar verstecken aber Scrolling erlauben */
+        .scrollbar-hide {
+          -ms-overflow-style: none;  /* IE and Edge */
+          scrollbar-width: none;  /* Firefox */
+        }
+        
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;  /* Chrome, Safari and Opera */
+        }
+        
+        /* MultiSelectDropdown Höhe anpassen */
+        .rounded-md.border.border-zinc-300.p-2.min-h-[40px] {
+          min-height: 40px !important;
+          height: 40px;
+          display: flex;
+          align-items: center;
+          padding-top: 0.5rem !important;
+          padding-bottom: 0.5rem !important;
         }
       `}</style>
     </div>
