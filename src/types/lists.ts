@@ -1,4 +1,4 @@
-// src/types/lists.ts - Erweitert um Medienschwerpunkte-Filter
+// src/types/lists.ts - Erweitert um neue Publikations-Filter
 import { Timestamp } from 'firebase/firestore';
 // KORRIGIERT: CompanyType wird jetzt aus der crm-Typdatei importiert
 import { CompanyType, TagColor } from './crm';
@@ -25,6 +25,12 @@ export interface ListFilters {
   
   // NEU: Medienschwerpunkte-Filter
   mediaFocus?: string[]; // Aus Company.mediaFocus extrahierte Schwerpunkte
+  
+  // NEU: Publikations-spezifische Filter
+  publicationFormat?: 'print' | 'online' | 'both'; // Format der Publikation
+  publicationFocusAreas?: string[]; // Themenschwerpunkte der Publikationen
+  minCirculation?: number; // Minimale Auflage/Reichweite
+  publicationNames?: string[]; // Spezifische Publikationsnamen
   
   // Datum-Filter
   createdAfter?: Date;
@@ -190,7 +196,8 @@ export const LIST_TEMPLATES: ListTemplate[] = [
     filters: {
       tagIds: ['presse'], // Wird zur Laufzeit aufgelöst
       beats: ['Technologie', 'Digitalisierung', 'Startups'],
-      mediaFocus: ['Künstliche Intelligenz', 'Software', 'Cloud Computing'] // NEU
+      mediaFocus: ['Künstliche Intelligenz', 'Software', 'Cloud Computing'], // NEU
+      publicationFocusAreas: ['Künstliche Intelligenz', 'Software', 'Cloud Computing'] // NEU
     }
   },
   {
@@ -201,7 +208,8 @@ export const LIST_TEMPLATES: ListTemplate[] = [
     filters: {
       tagIds: ['presse'],
       beats: ['Wirtschaft', 'Finanzen'],
-      mediaFocus: ['Börse', 'Mittelstand', 'Fintech'] // NEU
+      mediaFocus: ['Börse', 'Mittelstand', 'Fintech'], // NEU
+      publicationFocusAreas: ['Börse', 'Mittelstand', 'Fintech'] // NEU
     }
   },
   {
@@ -211,7 +219,8 @@ export const LIST_TEMPLATES: ListTemplate[] = [
     color: 'emerald',
     filters: {
       companyTypes: ['publisher', 'media_house'],
-      mediaFocus: ['Nachhaltigkeit', 'Energie', 'Umwelt']
+      mediaFocus: ['Nachhaltigkeit', 'Energie', 'Umwelt'],
+      publicationFocusAreas: ['Nachhaltigkeit', 'Energie', 'Umwelt'] // NEU
     }
   },
   {

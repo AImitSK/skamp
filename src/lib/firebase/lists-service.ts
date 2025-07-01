@@ -146,7 +146,9 @@ export const listsService = {
     
     // Alle Firmen für erweiterte Filter
     let allCompanies: Company[] = [];
-    if (filters.companyTypes || filters.industries || filters.countries) {
+    if (filters.companyTypes || filters.industries || filters.countries || 
+        filters.publicationFormat || filters.publicationFocusAreas || 
+        filters.minCirculation || filters.publicationNames) {
       allCompanies = await companiesService.getAll(userId);
     }
 
@@ -168,6 +170,54 @@ export const listsService = {
       if (filters.positions && filters.positions.length > 0) {
         if (!contact.position || !filters.positions.includes(contact.position)) {
           return false;
+        }
+      }
+
+      // Publikations-Filter für Kontakte
+      if (contact.mediaInfo?.publications && contact.mediaInfo.publications.length > 0) {
+        // Wenn Publikationsfilter gesetzt sind, prüfe ob der Kontakt passende Publikationen hat
+        if (filters.publicationNames && filters.publicationNames.length > 0) {
+          const hasMatchingPublication = contact.mediaInfo.publications.some(pubName =>
+            filters.publicationNames!.includes(pubName)
+          );
+          if (!hasMatchingPublication) return false;
+        }
+        
+        // Prüfe publikationsspezifische Filter über die Firma
+        if (contact.companyId && allCompanies.length > 0) {
+          const company = allCompanies.find(c => c.id === contact.companyId);
+          if (company?.mediaInfo?.publications) {
+            // Finde die Publikationen, denen der Kontakt zugeordnet ist
+            const contactPublications = company.mediaInfo.publications.filter(pub =>
+              contact.mediaInfo?.publications?.includes(pub.name)
+            );
+            
+            if (contactPublications.length > 0) {
+              // Format-Filter
+              if (filters.publicationFormat) {
+                const hasMatchingFormat = contactPublications.some(pub =>
+                  pub.format === filters.publicationFormat
+                );
+                if (!hasMatchingFormat) return false;
+              }
+              
+              // Themenschwerpunkte-Filter
+              if (filters.publicationFocusAreas && filters.publicationFocusAreas.length > 0) {
+                const hasMatchingFocus = contactPublications.some(pub =>
+                  pub.focusAreas?.some(area => filters.publicationFocusAreas!.includes(area))
+                );
+                if (!hasMatchingFocus) return false;
+              }
+              
+              // Auflagen-Filter
+              if (filters.minCirculation && filters.minCirculation > 0) {
+                const hasMatchingCirculation = contactPublications.some(pub =>
+                  (pub.circulation || pub.reach || 0) >= filters.minCirculation!
+                );
+                if (!hasMatchingCirculation) return false;
+              }
+            }
+          }
         }
       }
 

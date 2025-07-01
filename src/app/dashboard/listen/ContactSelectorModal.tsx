@@ -73,7 +73,11 @@ export default function ContactSelectorModal({
                 onClick={() => handleToggleSelection(contact.id!)}
                 className="flex items-center gap-4 px-6 py-3 cursor-pointer hover:bg-zinc-50"
               >
-                <Checkbox checked={selectedIds.has(contact.id!)} onChange={() => {}} />
+                <Checkbox 
+                  checked={selectedIds.has(contact.id!)} 
+                  onChange={() => {}}
+                  className="text-[#005fab] focus:ring-[#005fab]"
+                />
                 <div>
                   <p className="font-medium">{contact.firstName} {contact.lastName}</p>
                   <p className="text-sm text-zinc-500">{contact.position}{contact.companyName && ` bei ${contact.companyName}`}</p>
@@ -89,7 +93,12 @@ export default function ContactSelectorModal({
         </div>
         <div className="flex gap-4">
           <Button plain onClick={onClose}>Abbrechen</Button>
-          <Button color="indigo" onClick={handleSave}>Auswahl übernehmen</Button>
+          <button 
+            onClick={handleSave}
+            className="inline-flex items-center gap-x-2 rounded-lg bg-[#005fab] px-4 py-2 text-sm font-semibold text-white hover:bg-[#004a8c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005fab]"
+          >
+            Auswahl übernehmen
+          </button>
         </div>
       </DialogActions>
     </Dialog>

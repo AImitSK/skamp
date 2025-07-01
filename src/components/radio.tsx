@@ -17,11 +17,11 @@ export function Radio({ value, className, ...props }: RadioProps<'input'>) {
         // Basic layout
         'group relative flex cursor-pointer rounded-lg bg-white p-4 text-zinc-900 shadow-sm transition',
         // Pseudos
-        'focus:outline-none data-[focus]:outline-1 data-[focus]:outline-white data-[focus]:ring-2 data-[focus]:ring-indigo-600'
+        'focus:outline-none data-[focus]:outline-1 data-[focus]:outline-white data-[focus]:ring-2 data-[focus]:ring-[#005fab]'
       )}
     >
       {/* Der eigentliche Radio-Kreis */}
-      <span className="flex h-6 w-6 items-center justify-center rounded-full border border-zinc-300 bg-white transition duration-200 ease-in-out group-data-[checked]:border-indigo-600 group-data-[checked]:bg-indigo-600">
+      <span className="flex h-6 w-6 items-center justify-center rounded-full border border-zinc-300 bg-white transition duration-200 ease-in-out group-data-[checked]:border-[#005fab] group-data-[checked]:bg-[#005fab]">
         <span className="h-1.5 w-1.5 rounded-full bg-white transition duration-200 ease-in-out group-data-[checked]:scale-100 scale-0" />
       </span>
     </HeadlessRadio>

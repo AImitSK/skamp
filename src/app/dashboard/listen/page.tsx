@@ -1,4 +1,4 @@
-// src/app/dashboard/listen/page.tsx - Modernisierte Version
+// src/app/dashboard/listen/page.tsx - Überarbeitete Version
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
@@ -137,18 +137,7 @@ function QuickPreview({ list, position }: { list: DistributionList; position: { 
       style={{ left: `${adjustedPosition.x}px`, top: `${adjustedPosition.y}px` }}
     >
       <div className="mb-3">
-        <h4 className="font-semibold text-gray-900 flex items-center gap-2">
-          <div className={clsx(
-            "h-3 w-3 rounded-full",
-            list.color === 'blue' && 'bg-blue-500',
-            list.color === 'green' && 'bg-green-500',
-            list.color === 'purple' && 'bg-purple-500',
-            list.color === 'orange' && 'bg-orange-500',
-            list.color === 'red' && 'bg-red-500',
-            list.color === 'pink' && 'bg-pink-500',
-            list.color === 'yellow' && 'bg-yellow-500',
-            (!list.color || list.color === 'zinc') && 'bg-zinc-500'
-          )} />
+        <h4 className="font-semibold text-gray-900">
           {list.name}
         </h4>
         {list.description && (
@@ -213,7 +202,7 @@ function InlineEdit({
         onChange={(e) => setEditValue(e.target.value)}
         onKeyDown={handleKeyDown}
         className={clsx(
-          "px-2 py-1 border border-indigo-500 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500",
+          "px-2 py-1 border border-[#005fab] rounded focus:outline-none focus:ring-2 focus:ring-[#005fab]",
           className
         )}
       />
@@ -238,12 +227,14 @@ function DropdownMenu({
   list, 
   onDelete, 
   onEdit,
+  onEditModal,
   onRefresh,
   onExport
 }: { 
   list: DistributionList;
   onDelete: (id: string, name: string) => void;
   onEdit: (id: string) => void;
+  onEditModal: (list: DistributionList) => void;
   onRefresh: (id: string) => void;
   onExport: (list: DistributionList) => void;
 }) {
@@ -309,7 +300,7 @@ function DropdownMenu({
               Anzeigen
             </Link>
 
-        <Link href={`/dashboard/listen/${list.id}/analytics`}
+            <Link href={`/dashboard/listen/${list.id}/analytics`}
               className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
               onClick={() => setIsOpen(false)}
             >
@@ -323,6 +314,14 @@ function DropdownMenu({
             >
               <PencilIcon className="h-4 w-4 mr-3 text-gray-400" />
               Umbenennen
+            </button>
+
+            <button
+              onClick={() => handleAction(() => onEditModal(list))}
+              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors text-left"
+            >
+              <PencilIcon className="h-4 w-4 mr-3 text-gray-400" />
+              Bearbeiten
             </button>
 
             {list.type === 'dynamic' && (
@@ -449,6 +448,10 @@ export default function ListsPage() {
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {}, confirmText: undefined, cancelText: undefined });
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
   const [refreshingIds, setRefreshingIds] = useState<Set<string>>(new Set());
+
+  // Pagination States
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
 
   // Toast Management
   const showToast = useCallback((type: Toast['type'], title: string, message?: string) => {
@@ -600,10 +603,8 @@ export default function ListsPage() {
 
   const handleExportList = async (list: DistributionList) => {
     try {
-      // TODO: Implement actual contact fetching for the list
       showToast('info', 'Export gestartet', `Die Liste "${list.name}" wird exportiert...`);
       
-      // Dummy data for now
       const exportData = [{
         "Listenname": list.name,
         "Typ": list.type === 'dynamic' ? 'Dynamisch' : 'Statisch',
@@ -659,6 +660,21 @@ export default function ListsPage() {
     });
   }, [lists, searchTerm, selectedCategory, deletingIds]);
 
+  // Paginated Data
+  const paginatedLists = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredLists.slice(startIndex, endIndex);
+  }, [filteredLists, currentPage, itemsPerPage]);
+
+  // Total Pages
+  const totalPages = Math.ceil(filteredLists.length / itemsPerPage);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedCategory]);
+
   const getCategoryLabel = (category: string) => {
     const labels: { [key: string]: string } = {
       press: 'Presse',
@@ -669,17 +685,6 @@ export default function ListsPage() {
       all: 'Alle'
     };
     return labels[category] || category;
-  };
-
-  const getCategoryColor = (category?: string) => {
-    const colors: { [key: string]: string } = {
-      press: 'blue',
-      customers: 'green',
-      partners: 'purple',
-      leads: 'orange',
-      custom: 'zinc'
-    };
-    return colors[category || ''] || 'zinc';
   };
 
   const formatDate = (timestamp: any) => {
@@ -695,7 +700,7 @@ export default function ListsPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-pulse">
-          <div className="h-8 w-8 bg-indigo-600 rounded-full animate-bounce"></div>
+          <div className="h-8 w-8 bg-[#005fab] rounded-full animate-bounce"></div>
           <p className="mt-4 text-zinc-500">Lade Listen...</p>
         </div>
       </div>
@@ -711,56 +716,63 @@ export default function ListsPage() {
             Verwalte deine Marketing-Verteiler für alle Kanäle
           </Text>
         </div>
-        <Button onClick={() => setShowCreateModal(true)}>
-          <PlusIcon className="size-4 mr-2" />
+        <button 
+          onClick={() => setShowCreateModal(true)}
+          className="inline-flex items-center gap-x-2 rounded-lg bg-[#005fab] px-4 py-2 text-sm font-semibold text-white hover:bg-[#004a8c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005fab]"
+        >
+          <PlusIcon className="size-4" />
           Liste erstellen
-        </Button>
+        </button>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-4 mb-6">
-        <div className="relative flex-1">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-zinc-400 pointer-events-none" />
-          <input
-            type="search"
-            placeholder="Listen durchsuchen..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-md border border-zinc-300 py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
-          />
-        </div>
+      {/* Filter + Suche in einer Box */}
+      <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-lg p-4 mb-6 space-y-4">
+        {/* Kategorie-Filter + Suche + Refresh-Button */}
+        <div className="flex flex-col lg:flex-row gap-4">
+          <div className="relative flex-1">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-zinc-400 pointer-events-none" />
+            <input
+              type="search"
+              placeholder="Listen durchsuchen..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full h-10 rounded-md border border-zinc-300 py-2 pl-10 pr-4 text-sm focus:border-[#005fab] focus:outline-none focus:ring-1 focus:ring-[#005fab] transition-all"
+            />
+          </div>
 
-        <div className="flex gap-2 flex-wrap">
-          <button
-            onClick={() => setSelectedCategory("all")}
-            className={clsx(
-              "px-3 py-2 text-sm font-medium rounded-md whitespace-nowrap transition-all",
-              selectedCategory === "all"
-                ? "bg-blue-100 text-blue-700 ring-2 ring-blue-500 ring-opacity-50"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            )}
-          >
-            Alle ({lists.length})
-          </button>
-          {categories.map(category => (
+          <div className="flex gap-2 flex-wrap">
             <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
+              onClick={() => setSelectedCategory("all")}
               className={clsx(
                 "px-3 py-2 text-sm font-medium rounded-md whitespace-nowrap transition-all",
-                selectedCategory === category
+                selectedCategory === "all"
                   ? "bg-blue-100 text-blue-700 ring-2 ring-blue-500 ring-opacity-50"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               )}
             >
-              {getCategoryLabel(category)} ({lists.filter(l => (l.category || 'custom') === category).length})
+              Alle ({lists.length})
             </button>
-          ))}
-        </div>
+            {categories.map(category => (
+              <button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                className={clsx(
+                  "px-3 py-2 text-sm font-medium rounded-md whitespace-nowrap transition-all",
+                  selectedCategory === category
+                    ? "bg-blue-100 text-blue-700 ring-2 ring-blue-500 ring-opacity-50"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                )}
+              >
+                {getCategoryLabel(category)} ({lists.filter(l => (l.category || 'custom') === category).length})
+              </button>
+            ))}
+          </div>
 
-        <Button plain onClick={handleRefreshAllLists} className="flex items-center gap-2">
-          <ArrowPathIcon className="h-4 w-4" />
-          Alle aktualisieren
-        </Button>
+          <Button plain onClick={handleRefreshAllLists} className="flex items-center gap-2">
+            <ArrowPathIcon className="h-4 w-4" />
+            Alle aktualisieren
+          </Button>
+        </div>
       </div>
 
       {/* Ergebnis-Info */}
@@ -782,10 +794,13 @@ export default function ListsPage() {
           </p>
           {!searchTerm && selectedCategory === "all" && (
             <div className="mt-6">
-              <Button onClick={() => setShowCreateModal(true)}>
-                <PlusIcon className="size-4 mr-2" />
+              <button 
+                onClick={() => setShowCreateModal(true)}
+                className="inline-flex items-center gap-x-2 rounded-lg bg-[#005fab] px-4 py-2 text-sm font-semibold text-white hover:bg-[#004a8c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005fab]"
+              >
+                <PlusIcon className="size-4" />
                 Erste Liste erstellen
-              </Button>
+              </button>
             </div>
           )}
         </div>
@@ -805,7 +820,7 @@ export default function ListsPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredLists.map((list) => {
+                {paginatedLists.map((list) => {
                   const listMetrics = metrics.get(list.id!);
                   return (
                     <TableRow 
@@ -816,44 +831,31 @@ export default function ListsPage() {
                       )}
                     >
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div className={clsx(
-                            "h-3 w-3 rounded-full flex-shrink-0",
-                            list.color === 'blue' && 'bg-blue-500',
-                            list.color === 'green' && 'bg-green-500',
-                            list.color === 'purple' && 'bg-purple-500',
-                            list.color === 'orange' && 'bg-orange-500',
-                            list.color === 'red' && 'bg-red-500',
-                            list.color === 'pink' && 'bg-pink-500',
-                            list.color === 'yellow' && 'bg-yellow-500',
-                            (!list.color || list.color === 'zinc') && 'bg-zinc-500'
-                          )} />
-                          {editingId === list.id ? (
-                            <InlineEdit
-                              value={list.name}
-                              onSave={(value) => handleInlineEdit(list.id!, value)}
-                              onCancel={() => setEditingId(null)}
-                              className="w-full"
-                            />
-                          ) : (
-                            <div 
-                              className="font-medium text-gray-900 cursor-pointer hover:text-indigo-600"
-                              onMouseEnter={(e) => handleMouseEnter(list, e)}
-                              onMouseLeave={handleMouseLeave}
+                        {editingId === list.id ? (
+                          <InlineEdit
+                            value={list.name}
+                            onSave={(value) => handleInlineEdit(list.id!, value)}
+                            onCancel={() => setEditingId(null)}
+                            className="w-full"
+                          />
+                        ) : (
+                          <div 
+                            className="font-medium text-[#005fab] hover:text-[#004a8c] cursor-pointer"
+                            onMouseEnter={(e) => handleMouseEnter(list, e)}
+                            onMouseLeave={handleMouseLeave}
+                          >
+                            <Link
+                              href={`/dashboard/listen/${list.id}`}
+                              className="hover:underline"
                             >
-                              <Link
-                                href={`/dashboard/listen/${list.id}`}
-                                className="hover:underline"
-                              >
-                                {list.name}
-                              </Link>
-                            </div>
-                          )}
-                        </div>
+                              {list.name}
+                            </Link>
+                          </div>
+                        )}
                       </TableCell>
                       
                       <TableCell>
-                        <Badge color={getCategoryColor(list.category) as any} className="text-xs">
+                        <Badge color="purple" className="text-xs">
                           {getCategoryLabel(list.category || 'custom')}
                         </Badge>
                       </TableCell>
@@ -905,6 +907,7 @@ export default function ListsPage() {
                           list={list}
                           onDelete={handleDeleteList}
                           onEdit={setEditingId}
+                          onEditModal={setEditingListModal}
                           onRefresh={handleRefreshList}
                           onExport={handleExportList}
                         />
@@ -914,6 +917,152 @@ export default function ListsPage() {
                 })}
               </TableBody>
             </Table>
+          </div>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {filteredLists.length > 0 && (
+        <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 px-2">
+          {/* Items per page selector */}
+          <div className="flex items-center gap-2">
+            <label htmlFor="itemsPerPage" className="text-sm text-gray-600">
+              Einträge pro Seite:
+            </label>
+            <select
+              id="itemsPerPage"
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-[#005fab] focus:outline-none focus:ring-1 focus:ring-[#005fab]"
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+
+          {/* Page info and navigation */}
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-600">
+              {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, filteredLists.length)} von {filteredLists.length}
+            </span>
+            
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Erste Seite"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                </svg>
+              </button>
+              
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Vorherige Seite"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+
+              {/* Page numbers */}
+              <div className="flex items-center gap-1 mx-2">
+                {totalPages <= 7 ? (
+                  Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={clsx(
+                        "min-w-[32px] h-8 px-2 rounded text-sm font-medium transition-colors",
+                        currentPage === page
+                          ? "bg-[#005fab] text-white"
+                          : "hover:bg-gray-100"
+                      )}
+                    >
+                      {page}
+                    </button>
+                  ))
+                ) : (
+                  <>
+                    {currentPage > 3 && (
+                      <>
+                        <button
+                          onClick={() => setCurrentPage(1)}
+                          className="min-w-[32px] h-8 px-2 rounded text-sm font-medium hover:bg-gray-100"
+                        >
+                          1
+                        </button>
+                        {currentPage > 4 && <span className="px-1">...</span>}
+                      </>
+                    )}
+                    
+                    {Array.from({ length: 5 }, (_, i) => {
+                      const page = currentPage - 2 + i;
+                      if (page > 0 && page <= totalPages) {
+                        return (
+                          <button
+                            key={page}
+                            onClick={() => setCurrentPage(page)}
+                            className={clsx(
+                              "min-w-[32px] h-8 px-2 rounded text-sm font-medium transition-colors",
+                              currentPage === page
+                                ? "bg-[#005fab] text-white"
+                                : "hover:bg-gray-100"
+                            )}
+                          >
+                            {page}
+                          </button>
+                        );
+                      }
+                      return null;
+                    }).filter(Boolean)}
+                    
+                    {currentPage < totalPages - 2 && (
+                      <>
+                        {currentPage < totalPages - 3 && <span className="px-1">...</span>}
+                        <button
+                          onClick={() => setCurrentPage(totalPages)}
+                          className="min-w-[32px] h-8 px-2 rounded text-sm font-medium hover:bg-gray-100"
+                        >
+                          {totalPages}
+                        </button>
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Nächste Seite"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+              
+              <button
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+                className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Letzte Seite"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       )}

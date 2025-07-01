@@ -1,4 +1,4 @@
-// src/app/dashboard/listen/ListModal.tsx
+// src/app/dashboard/listen/ListModal.tsx - Überarbeitete Version
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
@@ -13,17 +13,15 @@ import { Radio, RadioGroup, RadioField } from "@/components/radio";
 import { MultiSelectDropdown } from "@/components/MultiSelectDropdown";
 import { listsService } from "@/lib/firebase/lists-service";
 import { useCrmData } from "@/context/CrmDataContext";
-import { DistributionList, ListFilters, LIST_TEMPLATES, ExtendedCompanyType } from "@/types/lists";
-import { Contact } from "@/types/crm";
+import { DistributionList, ListFilters, ExtendedCompanyType } from "@/types/lists";
+import { Contact, CompanyType, companyTypeLabels } from "@/types/crm";
 import clsx from "clsx";
 import ContactSelectorModal from "./ContactSelectorModal";
 import {
-  SparklesIcon,
   CheckCircleIcon,
   XCircleIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon,
-  XMarkIcon,
   UsersIcon,
   BuildingOfficeIcon,
   TagIcon,
@@ -31,12 +29,8 @@ import {
   NewspaperIcon,
   EnvelopeIcon,
   PhoneIcon,
-  CalendarIcon,
-  MapPinIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
-  FunnelIcon,
-  Squares2X2Icon
+  DocumentTextIcon,
+  FunnelIcon
 } from "@heroicons/react/24/outline";
 
 // Toast Types
@@ -48,7 +42,7 @@ interface Toast {
   duration?: number;
 }
 
-// Toast Notification Component
+// Toast Component
 function ToastNotification({ toasts, onRemove }: { toasts: Toast[], onRemove: (id: string) => void }) {
   const icons = {
     success: CheckCircleIcon,
@@ -124,153 +118,23 @@ function useToast() {
   return { toasts, showToast, removeToast };
 }
 
-// Animated Progress Steps
-function AnimatedProgressSteps({ 
-  steps, 
-  currentStepIndex 
-}: { 
-  steps: Array<{ id: string; name: string; icon: any; completed: boolean }>;
-  currentStepIndex: number;
-}) {
-  return (
-    <div className="relative mb-8">
-      {/* Progress Line */}
-      <div className="absolute top-5 left-0 right-0 h-0.5 bg-gray-200">
-        <div 
-          className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 transition-all duration-700 ease-out"
-          style={{ width: `${(steps.filter(s => s.completed).length / steps.length) * 100}%` }}
-        />
-      </div>
-      
-      {/* Steps */}
-      <div className="relative flex justify-between">
-        {steps.map((step, index) => {
-          const Icon = step.icon;
-          const isActive = index === currentStepIndex;
-          const isCompleted = step.completed;
-          
-          return (
-            <div 
-              key={step.id}
-              className={`flex flex-col items-center transition-all duration-300 ${
-                isActive ? 'scale-110' : ''
-              }`}
-            >
-              <div className={clsx(
-                "rounded-full p-3 transition-all duration-300 transform",
-                isCompleted && "bg-green-500 scale-100",
-                isActive && !isCompleted && "bg-indigo-600 shadow-lg shadow-indigo-500/50 animate-pulse",
-                !isCompleted && !isActive && "bg-gray-200"
-              )}>
-                {isCompleted ? (
-                  <CheckCircleIcon className="h-6 w-6 text-white animate-scale-in" />
-                ) : (
-                  <Icon className={clsx("h-6 w-6", isActive ? "text-white" : "text-gray-400")} />
-                )}
-              </div>
-              <span className={clsx(
-                "mt-2 text-sm font-medium transition-colors",
-                isActive && "text-indigo-600",
-                isCompleted && "text-green-600",
-                !isActive && !isCompleted && "text-gray-400"
-              )}>
-                {step.name}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// Filter Group Component
-function FilterGroup({ 
-  title, 
-  icon: Icon,
-  isOpen, 
-  onToggle, 
-  children,
-  badge 
-}: { 
-  title: string;
-  icon: any;
-  isOpen: boolean;
-  onToggle: () => void;
-  children: React.ReactNode;
-  badge?: string;
-}) {
-  return (
-    <div className="border rounded-lg overflow-hidden transition-all duration-300">
-      <button
-        type="button"
-        onClick={onToggle}
-        className={clsx(
-          "w-full px-4 py-3 flex items-center justify-between transition-colors",
-          isOpen ? "bg-indigo-50 border-b" : "bg-gray-50 hover:bg-gray-100"
-        )}
-      >
-        <div className="flex items-center gap-3">
-          <Icon className={clsx(
-            "h-5 w-5 transition-colors",
-            isOpen ? "text-indigo-600" : "text-gray-500"
-          )} />
-          <span className={clsx(
-            "font-medium",
-            isOpen ? "text-indigo-900" : "text-gray-700"
-          )}>
-            {title}
-          </span>
-          {badge && (
-            <Badge color={isOpen ? "indigo" : "zinc"} className="text-xs">
-              {badge}
-            </Badge>
-          )}
-        </div>
-        {isOpen ? (
-          <ChevronUpIcon className="h-5 w-5 text-indigo-600" />
-        ) : (
-          <ChevronDownIcon className="h-5 w-5 text-gray-400" />
-        )}
-      </button>
-      
-      <div className={clsx(
-        "transition-all duration-300 overflow-hidden",
-        isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-      )}>
-        <div className="p-4 space-y-4 bg-white">
-          {children}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Keyboard Shortcuts Hook
-function useKeyboardShortcuts({
-  onSave,
-  onClose
-}: {
-  onSave: () => void;
-  onClose: () => void;
-}) {
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      // Cmd/Ctrl + S = Speichern
-      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
-        e.preventDefault();
-        onSave();
-      }
-      
-      // Escape = Modal schließen
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-    
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [onSave, onClose]);
+// Validation Helper
+function validateListData(formData: Partial<DistributionList>) {
+  const errors: string[] = [];
+  
+  if (!formData.name?.trim()) {
+    errors.push('Listenname ist erforderlich');
+  }
+  
+  if (formData.type === 'dynamic' && (!formData.filters || Object.keys(formData.filters).length === 0)) {
+    errors.push('Mindestens ein Filter muss für dynamische Listen ausgewählt werden');
+  }
+  
+  if (formData.type === 'static' && (!formData.contactIds || formData.contactIds.length === 0)) {
+    errors.push('Mindestens ein Kontakt muss für statische Listen ausgewählt werden');
+  }
+  
+  return errors;
 }
 
 interface ListModalProps {
@@ -289,7 +153,6 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
     description: '',
     type: 'dynamic',
     category: 'custom',
-    color: 'blue',
     filters: {},
     contactIds: []
   });
@@ -299,64 +162,50 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
   const [previewContacts, setPreviewContacts] = useState<Contact[]>([]);
   const [previewCount, setPreviewCount] = useState(0);
   const [loadingPreview, setLoadingPreview] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<string>('');
-  
-  // Filter Group States
-  const [openFilterGroups, setOpenFilterGroups] = useState<Record<string, boolean>>({
-    basic: true,
-    media: false,
-    contact: false,
-    advanced: false
-  });
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const formRef = useRef<HTMLFormElement>(null);
 
-  // Extract Media Focus options
-  const availableMediaFocus = useMemo(() => {
-    const focusSet = new Set<string>();
+  // Extract unique values for filters
+  const availableIndustries = useMemo(() => 
+    Array.from(new Set(companies.map(c => c.industry).filter((item): item is string => !!item))).sort(), 
+    [companies]
+  );
+  
+  const availableCountries = useMemo(() => 
+    Array.from(new Set(companies.map(c => c.address?.country).filter((item): item is string => !!item))).sort(), 
+    [companies]
+  );
+
+  // Extract publications data
+  const availablePublications = useMemo(() => {
+    const pubs: { name: string; format: string; focusAreas: string[]; circulation?: number }[] = [];
     companies.forEach(company => {
-      if (company.mediaFocus) {
-        // Split by comma and trim
-        const focuses = company.mediaFocus.split(',').map(f => f.trim()).filter(f => f);
-        focuses.forEach(focus => focusSet.add(focus));
+      if (company.mediaInfo?.publications) {
+        company.mediaInfo.publications.forEach(pub => {
+          pubs.push({
+            name: pub.name,
+            format: pub.format,
+            focusAreas: pub.focusAreas || [],
+            circulation: pub.circulation || pub.reach
+          });
+        });
       }
     });
-    return Array.from(focusSet).sort();
+    return pubs;
   }, [companies]);
 
-  const availableIndustries = useMemo(() => Array.from(new Set(companies.map(c => c.industry).filter((item): item is string => !!item))).sort(), [companies]);
-  const availablePositions = useMemo(() => Array.from(new Set(contacts.map(c => c.position).filter((item): item is string => !!item))).sort(), [contacts]);
-  const availableCountries = useMemo(() => Array.from(new Set(companies.map(c => c.address?.country).filter((item): item is string => !!item))).sort(), [companies]);
+  const uniquePublicationNames = useMemo(() => 
+    Array.from(new Set(availablePublications.map(p => p.name))).sort(),
+    [availablePublications]
+  );
 
-  // Progress Steps
-  const steps = [
-    { 
-      id: 'info', 
-      name: 'Grundinfos', 
-      icon: InformationCircleIcon,
-      completed: !!formData.name && !!formData.category
-    },
-    { 
-      id: 'type', 
-      name: 'Listen-Typ', 
-      icon: Squares2X2Icon,
-      completed: !!formData.type
-    },
-    { 
-      id: 'criteria', 
-      name: formData.type === 'dynamic' ? 'Filter' : 'Kontakte', 
-      icon: formData.type === 'dynamic' ? FunnelIcon : UsersIcon,
-      completed: formData.type === 'dynamic' 
-        ? Object.values(formData.filters || {}).some(v => v && (!Array.isArray(v) || v.length > 0))
-        : (formData.contactIds?.length || 0) > 0
-    },
-    { 
-      id: 'preview', 
-      name: 'Vorschau', 
-      icon: CheckCircleIcon,
-      completed: false
-    }
-  ];
-
-  const currentStepIndex = steps.findIndex(step => !step.completed);
+  const allFocusAreas = useMemo(() => {
+    const areas = new Set<string>();
+    availablePublications.forEach(pub => {
+      pub.focusAreas.forEach(area => areas.add(area));
+    });
+    return Array.from(areas).sort();
+  }, [availablePublications]);
 
   useEffect(() => {
     if (list) {
@@ -413,23 +262,6 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
     }
   };
 
-  const handleTemplateSelect = (templateId: string) => {
-    const template = LIST_TEMPLATES.find(t => t.name === templateId);
-    if (template) {
-      setFormData(prev => ({ 
-        ...prev, 
-        name: template.name, 
-        description: template.description, 
-        category: template.category, 
-        color: template.color, 
-        type: 'dynamic', 
-        filters: { ...template.filters } 
-      }));
-      setSelectedTemplate(templateId);
-      showToast('success', 'Vorlage angewendet', `Die Vorlage "${template.name}" wurde übernommen.`);
-    }
-  };
-
   const handleFilterChange = (filterKey: keyof ListFilters, value: any) => {
     setFormData(prev => ({ ...prev, filters: { ...prev.filters, [filterKey]: value } }));
   };
@@ -442,19 +274,24 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name) {
-      showToast('error', 'Name erforderlich', 'Bitte geben Sie einen Namen für die Liste ein.');
+    
+    // Validierung
+    const errors = validateListData(formData);
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      showToast('error', 'Validierungsfehler', errors[0]);
       return;
     }
     
+    setValidationErrors([]);
     setLoading(true);
+    
     try {
       const dataToSave: Omit<DistributionList, 'id' | 'contactCount' | 'createdAt' | 'updatedAt'> = {
-        name: formData.name, 
+        name: formData.name!, 
         description: formData.description || '', 
         type: formData.type!, 
         category: formData.category || 'custom',
-        color: formData.color || 'blue', 
         userId: userId,
         filters: formData.type === 'dynamic' ? formData.filters : {},
         contactIds: formData.type === 'static' ? formData.contactIds : [],
@@ -470,26 +307,22 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
     }
   };
 
-  const toggleFilterGroup = (group: string) => {
-    setOpenFilterGroups(prev => ({ ...prev, [group]: !prev[group] }));
-  };
-
-  const activeFiltersCount = useMemo(() => {
-    if (!formData.filters) return 0;
-    return Object.values(formData.filters).filter(v => 
-      v && (Array.isArray(v) ? v.length > 0 : true)
-    ).length;
-  }, [formData.filters]);
-
-  // Use keyboard shortcuts
-  useKeyboardShortcuts({
-    onSave: () => {
-      if (formData.name && !loading) {
-        handleSubmit(new Event('submit') as any);
+  // Keyboard Shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        handleSubmit(e as any);
       }
-    },
-    onClose
-  });
+      
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [formData]);
 
   const categoryOptions = [ 
     { value: 'press', label: 'Presse' }, 
@@ -498,70 +331,24 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
     { value: 'leads', label: 'Leads' }, 
     { value: 'custom', label: 'Benutzerdefiniert' }
   ];
-  
-  const colorOptions = [ 
-    { value: 'blue', class: 'bg-blue-500' }, 
-    { value: 'green', class: 'bg-green-500' }, 
-    { value: 'purple', class: 'bg-purple-500' }, 
-    { value: 'orange', class: 'bg-orange-500' }, 
-    { value: 'red', class: 'bg-red-500' }, 
-    { value: 'pink', class: 'bg-pink-500' }, 
-    { value: 'yellow', class: 'bg-yellow-500' }, 
-    { value: 'zinc', class: 'bg-zinc-500' }
-  ];
-  
-  const companyTypeOptions = [ 
-    { value: 'customer', label: 'Kunde' }, 
-    { value: 'supplier', label: 'Lieferant' }, 
-    { value: 'partner', label: 'Partner' }, 
-    { value: 'publisher', label: 'Verlag' }, 
-    { value: 'media_house', label: 'Medienhaus' }, 
-    { value: 'agency', label: 'Agentur' }, 
-    { value: 'other', label: 'Sonstiges' } 
-  ];
 
   return (
     <>
-      <Dialog open={true} onClose={onClose} size="5xl">
-        <form onSubmit={handleSubmit}>
+      <Dialog 
+        open={true} 
+        onClose={onClose} 
+        size="5xl"
+        className="animate-fade-in"
+      >
+        <form ref={formRef} onSubmit={handleSubmit}>
           <DialogTitle className="px-6 py-4 text-base font-semibold">
             {list ? 'Liste bearbeiten' : 'Neue Liste erstellen'}
           </DialogTitle>
-          
-          {/* Progress Steps */}
-          <div className="px-6 pb-4">
-            <AnimatedProgressSteps steps={steps} currentStepIndex={currentStepIndex === -1 ? steps.length : currentStepIndex} />
-          </div>
           
           <DialogBody className="p-6 max-h-[70vh] overflow-y-auto">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 space-y-6">
                 <FieldGroup>
-                  {/* Template Selection */}
-                  {!list && (
-                    <Field>
-                      <Label>Vorlage verwenden</Label>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
-                        {LIST_TEMPLATES.map(template => (
-                          <button 
-                            key={template.name} 
-                            type="button" 
-                            onClick={() => handleTemplateSelect(template.name)} 
-                            className={clsx(
-                              "text-left p-3 rounded-lg border-2 transition-all transform hover:scale-[1.02]",
-                              selectedTemplate === template.name 
-                                ? "border-indigo-500 bg-indigo-50 ring-2 ring-indigo-500" 
-                                : "border-gray-200 hover:border-gray-300 bg-white"
-                            )}
-                          >
-                            <div className="font-semibold">{template.name}</div>
-                            <div className="text-gray-600 text-xs mt-1">{template.description}</div>
-                          </button>
-                        ))}
-                      </div>
-                    </Field>
-                  )}
-                  
                   {/* Basic Info */}
                   <Field>
                     <Label>Listen-Name *</Label>
@@ -571,6 +358,10 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
                       required 
                       autoFocus
                       placeholder="z.B. Tech-Journalisten Deutschland"
+                      className={clsx(
+                        "transition-colors",
+                        validationErrors.some(e => e.includes('Listenname')) && "border-red-500 focus:border-red-500 focus:ring-red-500"
+                      )}
                     />
                   </Field>
                   
@@ -584,39 +375,17 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
                     />
                   </Field>
                   
-                  <div className="grid grid-cols-2 gap-4">
-                    <Field>
-                      <Label>Kategorie</Label>
-                      <Select 
-                        value={formData.category || 'custom'} 
-                        onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
-                      >
-                        {categoryOptions.map(option => (
-                          <option key={option.value} value={option.value}>{option.label}</option>
-                        ))}
-                      </Select>
-                    </Field>
-                    
-                    <Field>
-                      <Label>Farbe</Label>
-                      <div className="flex gap-2 mt-1">
-                        {colorOptions.map(color => (
-                          <button 
-                            key={color.value} 
-                            type="button" 
-                            onClick={() => setFormData({ ...formData, color: color.value as any })} 
-                            className={clsx(
-                              "w-8 h-8 rounded-full border-2 transition-all transform hover:scale-110",
-                              color.class, 
-                              formData.color === color.value 
-                                ? "border-indigo-600 ring-2 ring-indigo-300" 
-                                : "border-gray-300 hover:border-indigo-400"
-                            )} 
-                          />
-                        ))}
-                      </div>
-                    </Field>
-                  </div>
+                  <Field>
+                    <Label>Kategorie</Label>
+                    <Select 
+                      value={formData.category || 'custom'} 
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
+                    >
+                      {categoryOptions.map(option => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </Select>
+                  </Field>
                   
                   {/* List Type */}
                   <Field>
@@ -645,120 +414,151 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
                   
                   {/* Dynamic Filters */}
                   {formData.type === 'dynamic' && (
-                    <div className="space-y-4 animate-fade-in">
+                    <div className="space-y-6 animate-fade-in">
                       <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-medium text-zinc-900">Filter-Kriterien</h3>
-                        {activeFiltersCount > 0 && (
-                          <Badge color="indigo">{activeFiltersCount} aktive Filter</Badge>
-                        )}
+                        <h3 className="font-medium text-zinc-900 flex items-center gap-2">
+                          <FunnelIcon className="h-5 w-5" />
+                          Filter-Kriterien
+                        </h3>
                       </div>
                       
-                      {/* Basic Filters */}
-                      <FilterGroup
-                        title="Basis-Filter"
-                        icon={BuildingOfficeIcon}
-                        isOpen={openFilterGroups.basic}
-                        onToggle={() => toggleFilterGroup('basic')}
-                      >
-                        <MultiSelectDropdown 
-                          label="Firmentypen" 
-                          placeholder="Alle Typen" 
-                          options={companyTypeOptions} 
-                          selectedValues={formData.filters?.companyTypes || []} 
-                          onChange={(values) => handleFilterChange('companyTypes', values as ExtendedCompanyType[])}
-                        />
-                        <MultiSelectDropdown 
-                          label="Tags" 
-                          placeholder="Alle Tags" 
-                          options={tags.map(tag => ({ value: tag.id!, label: tag.name }))} 
-                          selectedValues={formData.filters?.tagIds || []} 
-                          onChange={(values) => handleFilterChange('tagIds', values)}
-                        />
-                      </FilterGroup>
+                      {/* Firmen Filter */}
+                      <div className="space-y-4 rounded-md border p-4 bg-zinc-50/50">
+                        <div className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
+                          <BuildingOfficeIcon className="h-5 w-5 text-gray-400" />
+                          Firmen-Filter
+                        </div>
+                        
+                        <div className="space-y-4">
+                          <MultiSelectDropdown 
+                            label="Firmentypen" 
+                            placeholder="Alle Typen" 
+                            options={Object.entries(companyTypeLabels).map(([value, label]) => ({ value, label }))} 
+                            selectedValues={formData.filters?.companyTypes || []} 
+                            onChange={(values) => handleFilterChange('companyTypes', values as CompanyType[])}
+                          />
+                          
+                          <MultiSelectDropdown 
+                            label="Branchen" 
+                            placeholder="Alle Branchen" 
+                            options={availableIndustries.map(i => ({ value: i, label: i }))} 
+                            selectedValues={formData.filters?.industries || []} 
+                            onChange={(values) => handleFilterChange('industries', values)}
+                          />
+                          
+                          <MultiSelectDropdown 
+                            label="Tags" 
+                            placeholder="Alle Tags" 
+                            options={tags.map(tag => ({ value: tag.id!, label: tag.name }))} 
+                            selectedValues={formData.filters?.tagIds || []} 
+                            onChange={(values) => handleFilterChange('tagIds', values)}
+                          />
+                          
+                          <MultiSelectDropdown 
+                            label="Länder" 
+                            placeholder="Alle Länder" 
+                            options={availableCountries.map(c => ({ value: c, label: c }))} 
+                            selectedValues={formData.filters?.countries || []} 
+                            onChange={(values) => handleFilterChange('countries', values)}
+                          />
+                        </div>
+                      </div>
                       
-                      {/* Media Filters */}
-                      <FilterGroup
-                        title="Medien-Filter"
-                        icon={NewspaperIcon}
-                        isOpen={openFilterGroups.media}
-                        onToggle={() => toggleFilterGroup('media')}
-                        badge="NEU"
-                      >
-                        <MultiSelectDropdown 
-                          label="Medienschwerpunkte" 
-                          placeholder="Alle Schwerpunkte" 
-                          options={availableMediaFocus.map(f => ({ value: f, label: f }))} 
-                          selectedValues={formData.filters?.mediaFocus || []} 
-                          onChange={(values) => handleFilterChange('mediaFocus', values)}
-                        />
-                        <MultiSelectDropdown 
-                          label="Branchen" 
-                          placeholder="Alle Branchen" 
-                          options={availableIndustries.map(i => ({ value: i, label: i }))} 
-                          selectedValues={formData.filters?.industries || []} 
-                          onChange={(values) => handleFilterChange('industries', values)}
-                        />
-                      </FilterGroup>
-                      
-                      {/* Contact Filters */}
-                      <FilterGroup
-                        title="Kontakt-Filter"
-                        icon={UsersIcon}
-                        isOpen={openFilterGroups.contact}
-                        onToggle={() => toggleFilterGroup('contact')}
-                      >
-                        <MultiSelectDropdown 
-                          label="Positionen" 
-                          placeholder="Alle Positionen" 
-                          options={availablePositions.map(p => ({ value: p, label: p }))} 
-                          selectedValues={formData.filters?.positions || []} 
-                          onChange={(values) => handleFilterChange('positions', values)}
-                        />
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="relative flex items-center">
-                            <input 
-                              id="hasEmail" 
-                              type="checkbox" 
-                              checked={formData.filters?.hasEmail || false} 
-                              onChange={(e) => handleFilterChange('hasEmail', e.target.checked)} 
-                              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                            />
-                            <label htmlFor="hasEmail" className="ml-3 flex items-center text-sm text-gray-900">
-                              <EnvelopeIcon className="h-4 w-4 mr-1 text-gray-400" />
-                              Hat E-Mail
-                            </label>
-                          </div>
-                          <div className="relative flex items-center">
-                            <input 
-                              id="hasPhone" 
-                              type="checkbox" 
-                              checked={formData.filters?.hasPhone || false} 
-                              onChange={(e) => handleFilterChange('hasPhone', e.target.checked)} 
-                              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                            />
-                            <label htmlFor="hasPhone" className="ml-3 flex items-center text-sm text-gray-900">
-                              <PhoneIcon className="h-4 w-4 mr-1 text-gray-400" />
-                              Hat Telefon
-                            </label>
+                      {/* Personen Filter */}
+                      <div className="space-y-4 rounded-md border p-4 bg-zinc-50/50">
+                        <div className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
+                          <UsersIcon className="h-5 w-5 text-gray-400" />
+                          Personen-Filter
+                        </div>
+                        
+                        <div className="space-y-4">
+                          <MultiSelectDropdown 
+                            label="Tags" 
+                            placeholder="Alle Tags" 
+                            options={tags.map(tag => ({ value: tag.id!, label: tag.name }))} 
+                            selectedValues={formData.filters?.tagIds || []} 
+                            onChange={(values) => handleFilterChange('tagIds', values)}
+                          />
+                          
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="relative flex items-center">
+                              <input 
+                                id="hasEmail" 
+                                type="checkbox" 
+                                checked={formData.filters?.hasEmail || false} 
+                                onChange={(e) => handleFilterChange('hasEmail', e.target.checked)} 
+                                className="h-4 w-4 rounded border-gray-300 text-[#005fab] focus:ring-[#005fab]"
+                              />
+                              <label htmlFor="hasEmail" className="ml-3 flex items-center text-sm text-gray-900">
+                                <EnvelopeIcon className="h-4 w-4 mr-1 text-gray-400" />
+                                Hat E-Mail
+                              </label>
+                            </div>
+                            <div className="relative flex items-center">
+                              <input 
+                                id="hasPhone" 
+                                type="checkbox" 
+                                checked={formData.filters?.hasPhone || false} 
+                                onChange={(e) => handleFilterChange('hasPhone', e.target.checked)} 
+                                className="h-4 w-4 rounded border-gray-300 text-[#005fab] focus:ring-[#005fab]"
+                              />
+                              <label htmlFor="hasPhone" className="ml-3 flex items-center text-sm text-gray-900">
+                                <PhoneIcon className="h-4 w-4 mr-1 text-gray-400" />
+                                Hat Telefon
+                              </label>
+                            </div>
                           </div>
                         </div>
-                      </FilterGroup>
+                      </div>
                       
-                      {/* Advanced Filters */}
-                      <FilterGroup
-                        title="Erweiterte Filter"
-                        icon={GlobeAltIcon}
-                        isOpen={openFilterGroups.advanced}
-                        onToggle={() => toggleFilterGroup('advanced')}
-                      >
-                        <MultiSelectDropdown 
-                          label="Länder" 
-                          placeholder="Alle Länder" 
-                          options={availableCountries.map(c => ({ value: c, label: c }))} 
-                          selectedValues={formData.filters?.countries || []} 
-                          onChange={(values) => handleFilterChange('countries', values)}
-                        />
-                      </FilterGroup>
+                      {/* Publikationen Filter */}
+                      <div className="space-y-4 rounded-md border p-4 bg-zinc-50/50">
+                        <div className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
+                          <DocumentTextIcon className="h-5 w-5 text-gray-400" />
+                          Publikationen-Filter
+                        </div>
+                        
+                        <div className="space-y-4">
+                          <Field>
+                            <Label>Format</Label>
+                            <Select 
+                              value={formData.filters?.publicationFormat || ''} 
+                              onChange={(e) => handleFilterChange('publicationFormat', e.target.value || undefined)}
+                            >
+                              <option value="">Alle Formate</option>
+                              <option value="print">Print</option>
+                              <option value="online">Online</option>
+                              <option value="both">Print & Online</option>
+                            </Select>
+                          </Field>
+                          
+                          <MultiSelectDropdown 
+                            label="Themenschwerpunkte" 
+                            placeholder="Alle Schwerpunkte" 
+                            options={allFocusAreas.map(f => ({ value: f, label: f }))} 
+                            selectedValues={formData.filters?.publicationFocusAreas || []} 
+                            onChange={(values) => handleFilterChange('publicationFocusAreas', values)}
+                          />
+                          
+                          <Field>
+                            <Label>Auflage größer als</Label>
+                            <Input 
+                              type="number" 
+                              value={formData.filters?.minCirculation || ''} 
+                              onChange={(e) => handleFilterChange('minCirculation', e.target.value ? parseInt(e.target.value) : undefined)}
+                              placeholder="z.B. 10000"
+                            />
+                          </Field>
+                          
+                          <MultiSelectDropdown 
+                            label="Name der Publikation" 
+                            placeholder="Alle Publikationen" 
+                            options={uniquePublicationNames.map(n => ({ value: n, label: n }))} 
+                            selectedValues={formData.filters?.publicationNames || []} 
+                            onChange={(values) => handleFilterChange('publicationNames', values)}
+                          />
+                        </div>
+                      </div>
                     </div>
                   )}
                   
@@ -780,12 +580,12 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
               
               {/* Live Preview */}
               <div className="space-y-4">
-                <div className="sticky top-6 border rounded-lg p-4 bg-white shadow-lg animate-fade-in-scale">
+                <div className="sticky top-6 border rounded-lg p-4 bg-white animate-fade-in-scale">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="font-medium text-zinc-900">Live-Vorschau</h3>
                     {loadingPreview ? (
                       <div className="flex items-center gap-2 text-sm text-zinc-500">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-600"></div>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#005fab]"></div>
                         <span>Lade...</span>
                       </div>
                     ) : (
@@ -812,7 +612,7 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
                           </div>
                           <div className="flex items-center gap-1">
                             {contact.email && (
-                              <EnvelopeIcon className="h-3 w-3 text-indigo-600" title="Hat E-Mail" />
+                              <EnvelopeIcon className="h-3 w-3 text-[#005fab]" title="Hat E-Mail" />
                             )}
                             {contact.phone && (
                               <PhoneIcon className="h-3 w-3 text-green-600" title="Hat Telefon" />
@@ -837,42 +637,37 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
                       </div>
                     </div>
                   )}
-                  
-                  {/* Keyboard Shortcuts */}
-                  <div className="mt-4 pt-4 border-t">
-                    <p className="text-xs font-medium text-gray-600 mb-2">Tastenkürzel</p>
-                    <div className="space-y-1 text-xs text-gray-500">
-                      <div className="flex justify-between">
-                        <span>Speichern</span>
-                        <span className="font-mono">⌘ S</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Schließen</span>
-                        <span className="font-mono">Esc</span>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
           </DialogBody>
           
-          <DialogActions className="px-6 py-4 flex justify-end gap-x-4">
-            <Button plain onClick={onClose}>Abbrechen</Button>
-            <Button 
-              color="indigo" 
-              type="submit" 
-              disabled={loading || !formData.name}
-            >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Speichert...
-                </>
-              ) : (
-                'Speichern'
-              )}
-            </Button>
+          <DialogActions className="px-6 py-4 flex justify-between">
+            <div className="text-xs text-gray-500">
+              <span className="hidden sm:inline">Tastenkürzel: </span>
+              <kbd className="px-1.5 py-0.5 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded">⌘S</kbd> Speichern
+              <span className="mx-2">·</span>
+              <kbd className="px-1.5 py-0.5 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded">Esc</kbd> Abbrechen
+            </div>
+            <div className="flex gap-x-4">
+              <Button plain onClick={onClose}>Abbrechen</Button>
+              <button 
+                type="submit" 
+                disabled={loading || !formData.name}
+                className="relative inline-flex items-center gap-x-2 rounded-lg bg-[#005fab] px-4 py-2 text-sm font-semibold text-white hover:bg-[#004a8c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005fab] disabled:opacity-50"
+              >
+                {loading ? (
+                  <>
+                    <span className="opacity-0">Speichern</span>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                    </div>
+                  </>
+                ) : (
+                  'Speichern'
+                )}
+              </button>
+            </div>
           </DialogActions>
         </form>
       </Dialog>
@@ -921,17 +716,6 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
             transform: scale(1);
           }
         }
-
-        @keyframes scale-in {
-          from {
-            transform: scale(0.8);
-            opacity: 0;
-          }
-          to {
-            transform: scale(1);
-            opacity: 1;
-          }
-        }
         
         .animate-slide-in-up {
           animation: slide-in-up 0.3s ease-out;
@@ -943,10 +727,6 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
 
         .animate-fade-in-scale {
           animation: fade-in-scale 0.2s ease-out;
-        }
-
-        .animate-scale-in {
-          animation: scale-in 0.2s ease-out;
         }
       `}</style>
     </>
