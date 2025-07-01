@@ -151,51 +151,6 @@ function formatShortDate(timestamp: any) {
   });
 }
 
-// Quick Stats Card Component
-function QuickStatsCard({ company, contactCount, publicationCount, listCount }: { 
-  company: Company; 
-  contactCount: number;
-  publicationCount: number;
-  listCount: number;
-}) {
-  return (
-    <div className="rounded-lg border bg-white overflow-hidden">
-      <div className="px-4 py-3 border-b bg-gray-50">
-        <h3 className="font-semibold text-lg flex items-center gap-2">
-          <ChartBarIcon className="h-5 w-5 text-gray-500" />
-          Übersicht
-        </h3>
-      </div>
-      <div className="p-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="text-center p-3 bg-gray-50 rounded-lg">
-            <UsersIcon className="h-8 w-8 text-[#005fab] mx-auto mb-1" />
-            <div className="text-2xl font-bold text-gray-900">{contactCount}</div>
-            <div className="text-sm text-gray-600">Kontakte</div>
-          </div>
-          <div className="text-center p-3 bg-gray-50 rounded-lg">
-            <TagIcon className="h-8 w-8 text-purple-600 mx-auto mb-1" />
-            <div className="text-2xl font-bold text-gray-900">{company.tagIds?.length || 0}</div>
-            <div className="text-sm text-gray-600">Tags</div>
-          </div>
-          {publicationCount > 0 && (
-            <div className="text-center p-3 bg-gray-50 rounded-lg">
-              <DocumentTextIcon className="h-8 w-8 text-green-600 mx-auto mb-1" />
-              <div className="text-2xl font-bold text-gray-900">{publicationCount}</div>
-              <div className="text-sm text-gray-600">Publikationen</div>
-            </div>
-          )}
-          <div className="text-center p-3 bg-gray-50 rounded-lg">
-            <ListBulletIcon className="h-8 w-8 text-orange-600 mx-auto mb-1" />
-            <div className="text-2xl font-bold text-gray-900">{listCount}</div>
-            <div className="text-sm text-gray-600">Listen</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // Publication Card Component
 function PublicationCard({ publication, contactCount }: { publication: any; contactCount: number }) {
   const formatLabels: { [key: string]: string } = {
@@ -295,6 +250,14 @@ export default function CompanyDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    type?: 'danger' | 'warning';
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
 
   // Toast Management
   const showToast = useCallback((type: Toast['type'], title: string, message?: string) => {
@@ -584,6 +547,77 @@ export default function CompanyDetailPage() {
               </div>
             )}
 
+            {/* Kontakte */}
+            <div className="rounded-lg border bg-white overflow-hidden">
+              <div className="px-4 py-3 border-b bg-gray-50">
+                <h3 className="font-semibold text-lg flex items-center gap-2">
+                  <UsersIcon className="h-5 w-5 text-gray-500" />
+                  Kontakte
+                  <Badge color="blue" className="ml-auto">{contacts.length}</Badge>
+                </h3>
+              </div>
+              <div className="p-4">
+                {contacts.length > 0 ? (
+                  <div className="space-y-3">
+                    {contacts.map(contact => {
+                      // Finde die Publikationen des Kontakts
+                      const contactPublications = contact.mediaInfo?.publications || [];
+                      
+                      return (
+                        <div key={contact.id} className="flex items-start justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                          <div className="flex-1">
+                            <Link 
+                              href={`/dashboard/contacts/contacts/${contact.id}`} 
+                              className="text-[#005fab] hover:text-[#004a8c] hover:underline font-medium"
+                            >
+                              {contact.firstName} {contact.lastName}
+                            </Link>
+                            {contact.position && (
+                              <span className="text-sm text-zinc-500 ml-2">• {contact.position}</span>
+                            )}
+                            {contactPublications.length > 0 && (
+                              <div className="mt-1 flex flex-wrap gap-1">
+                                {contactPublications.map((pubName, idx) => (
+                                  <Badge key={idx} color="purple" className="text-xs">
+                                    {pubName}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 ml-4">
+                            {contact.email && (
+                              <a 
+                                href={`mailto:${contact.email}`}
+                                className="text-gray-400 hover:text-[#005fab] transition-colors"
+                                title="E-Mail senden"
+                              >
+                                <EnvelopeIcon className="h-5 w-5" />
+                              </a>
+                            )}
+                            {contact.phone && (
+                              <a 
+                                href={`tel:${contact.phone}`}
+                                className="text-gray-400 hover:text-[#005fab] transition-colors"
+                                title="Anrufen"
+                              >
+                                <PhoneIcon className="h-5 w-5" />
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-gray-400 text-sm text-center py-8">
+                    <UsersIcon className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                    Keine Kontakte vorhanden
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Notizen */}
             {company.notes && (
               <div className="rounded-lg border bg-white overflow-hidden">
@@ -599,14 +633,6 @@ export default function CompanyDetailPage() {
 
           {/* Rechte Spalte - Sidebar */}
           <div className="space-y-6">
-            {/* Quick Stats */}
-            <QuickStatsCard 
-              company={company}
-              contactCount={contacts.length}
-              publicationCount={publicationCount}
-              listCount={lists.length}
-            />
-
             {/* Details */}
             <div className="rounded-lg border bg-white overflow-hidden">
               <div className="px-4 py-3 border-b bg-gray-50">
@@ -648,43 +674,6 @@ export default function CompanyDetailPage() {
                 </div>
               </div>
             )}
-
-            {/* Kontakte */}
-            <div className="rounded-lg border bg-white overflow-hidden">
-              <div className="px-4 py-3 border-b bg-gray-50">
-                <h3 className="font-semibold text-lg flex items-center gap-2">
-                  <UsersIcon className="h-5 w-5 text-gray-500" />
-                  Kontakte
-                  <Badge color="blue" className="ml-auto">{contacts.length}</Badge>
-                </h3>
-              </div>
-              <div className="p-4">
-                {contacts.length > 0 ? (
-                  <ul className="space-y-2">
-                    {contacts.slice(0, 5).map(contact => (
-                      <li key={contact.id}>
-                        <Link 
-                          href={`/dashboard/contacts/contacts/${contact.id}`} 
-                          className="text-[#005fab] hover:text-[#004a8c] hover:underline"
-                        >
-                          {contact.firstName} {contact.lastName}
-                        </Link>
-                        {contact.position && (
-                          <span className="text-sm text-zinc-500 ml-2">• {contact.position}</span>
-                        )}
-                      </li>
-                    ))}
-                    {contacts.length > 5 && (
-                      <li className="text-sm text-gray-500 pt-2">
-                        ... und {contacts.length - 5} weitere
-                      </li>
-                    )}
-                  </ul>
-                ) : (
-                  <div className="text-gray-400 text-sm">Keine Kontakte vorhanden</div>
-                )}
-              </div>
-            </div>
 
             {/* Verteilerlisten */}
             {lists.length > 0 && (

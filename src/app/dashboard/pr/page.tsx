@@ -1,4 +1,4 @@
-// src/app/dashboard/pr/page.tsx - Modernisierte Version mit erweiterten Features
+// src/app/dashboard/pr/page.tsx - Überarbeitet mit neuem Design und Pagination
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
@@ -212,7 +212,7 @@ function InlineEdit({
         onChange={(e) => setEditValue(e.target.value)}
         onKeyDown={handleKeyDown}
         className={clsx(
-          "px-2 py-1 border border-indigo-500 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500",
+          "px-2 py-1 border border-[#005fab] rounded focus:outline-none focus:ring-2 focus:ring-[#005fab]",
           className
         )}
       />
@@ -510,6 +510,10 @@ export default function PRCampaignsPage() {
   const [previewCampaign, setPreviewCampaign] = useState<{ campaign: PRCampaign; position: { x: number; y: number } } | null>(null);
   const tableRef = useRef<HTMLDivElement>(null);
 
+  // Pagination States
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
+
   // Toast Management
   const showToast = useCallback((type: Toast['type'], title: string, message?: string) => {
     const id = Date.now().toString();
@@ -565,6 +569,21 @@ export default function PRCampaignsPage() {
       return searchMatch && statusMatch && customerMatch;
     });
   }, [campaigns, searchTerm, selectedStatus, selectedCustomerId, deletingIds]);
+
+  // Paginated Data
+  const paginatedCampaigns = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredCampaigns.slice(startIndex, endIndex);
+  }, [filteredCampaigns, currentPage, itemsPerPage]);
+
+  // Total Pages
+  const totalPages = Math.ceil(filteredCampaigns.length / itemsPerPage);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedStatus, selectedCustomerId]);
 
   // Export Function
   const handleExport = () => {
@@ -626,7 +645,7 @@ export default function PRCampaignsPage() {
   // Bulk-Aktionen
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedCampaignIds(new Set(filteredCampaigns.map(c => c.id!)));
+      setSelectedCampaignIds(new Set(paginatedCampaigns.map(c => c.id!)));
     } else {
       setSelectedCampaignIds(new Set());
     }
@@ -698,7 +717,7 @@ export default function PRCampaignsPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-pulse">
-          <div className="h-8 w-8 bg-indigo-600 rounded-full animate-bounce"></div>
+          <div className="h-8 w-8 bg-[#005fab] rounded-full animate-bounce"></div>
           <p className="mt-4 text-zinc-500">Lade Kampagnen...</p>
         </div>
       </div>
@@ -717,8 +736,8 @@ export default function PRCampaignsPage() {
         </div>
         <div className="flex items-center gap-3">
           {/* KI-Modell Anzeige - Dynamisch */}
-          <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200">
-            <SparklesIcon className="h-5 w-5 text-indigo-600" />
+          <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+            <SparklesIcon className="h-5 w-5 text-[#005fab]" />
             <div className="text-sm">
               <span className="font-medium text-gray-700">KI-Modell:</span>
               <span className="ml-1 text-gray-600">Gemini 1.5 Flash</span>
@@ -726,34 +745,36 @@ export default function PRCampaignsPage() {
           </div>
           
           <Link href="/dashboard/pr/campaigns/new">
-            <Button>
-              <PlusIcon className="size-4 mr-2" />
+            <button className="inline-flex items-center gap-x-2 rounded-lg bg-[#005fab] px-4 py-2 text-sm font-semibold text-white hover:bg-[#004a8c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005fab]">
+              <PlusIcon className="size-4" />
               Neue Kampagne
-            </Button>
+            </button>
           </Link>
         </div>
       </div>
 
-      {/* Filter und Suche - Kompakter */}
-      <div className="flex flex-col lg:flex-row gap-4 mb-6">
-        <div className="relative flex-1">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-zinc-400 pointer-events-none" />
-          <input
-            type="search"
-            placeholder="Kampagnen durchsuchen..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-md border border-zinc-300 py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
-          />
-        </div>
+      {/* Filter + Suche in einer Box */}
+      <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-lg p-4 mb-6 space-y-4">
+        {/* Suche + Kunden-Filter + Export */}
+        <div className="flex flex-col lg:flex-row gap-4">
+          <div className="relative flex-1">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-zinc-400 pointer-events-none" />
+            <input
+              type="search"
+              placeholder="Kampagnen durchsuchen..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full h-10 rounded-md border border-zinc-300 py-2 pl-10 pr-4 text-sm focus:border-[#005fab] focus:outline-none focus:ring-1 focus:ring-[#005fab] transition-all"
+            />
+          </div>
 
-        {/* Kunden-Filter */}
-        <div className="w-full lg:w-64">
-          <CompactCustomerSelector
-            value={selectedCustomerId}
-            onChange={handleCustomerChange}
-            className="w-full"
-          />
+          <div className="w-full lg:w-64">
+            <CompactCustomerSelector
+              value={selectedCustomerId}
+              onChange={handleCustomerChange}
+              className="w-full"
+            />
+          </div>
         </div>
 
         {/* Status-Filter */}
@@ -787,15 +808,9 @@ export default function PRCampaignsPage() {
             );
           })}
         </div>
-
-        {/* Export Button */}
-        <Button plain onClick={handleExport} className="flex items-center gap-2">
-          <ArrowDownTrayIcon className="h-4 w-4" />
-          Export
-        </Button>
       </div>
 
-      {/* Bulk-Aktionen */}
+      {/* Ergebnis-Info und Bulk-Aktionen */}
       <div className="mb-4 flex items-center justify-between h-9">
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
           {filteredCampaigns.length} von {campaigns.length} Kampagnen
@@ -835,10 +850,10 @@ export default function PRCampaignsPage() {
           </p>
           {campaigns.length === 0 && (
             <Link href="/dashboard/pr/campaigns/new">
-              <Button>
-                <PlusIcon className="size-4 mr-2" />
+              <button className="inline-flex items-center gap-x-2 rounded-lg bg-[#005fab] px-4 py-2 text-sm font-semibold text-white hover:bg-[#004a8c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005fab]">
+                <PlusIcon className="size-4" />
                 Erste Kampagne erstellen
-              </Button>
+              </button>
             </Link>
           )}
         </div>
@@ -850,9 +865,9 @@ export default function PRCampaignsPage() {
                 <TableRow>
                   <TableHeader className="w-12">
                     <Checkbox 
-                      checked={filteredCampaigns.length > 0 && selectedCampaignIds.size === filteredCampaigns.length}
-                      indeterminate={selectedCampaignIds.size > 0 && selectedCampaignIds.size < filteredCampaigns.length}
-                      onChange={handleSelectAll}
+                      checked={paginatedCampaigns.length > 0 && paginatedCampaigns.every(campaign => selectedCampaignIds.has(campaign.id!))}
+                      indeterminate={paginatedCampaigns.some(campaign => selectedCampaignIds.has(campaign.id!)) && !paginatedCampaigns.every(campaign => selectedCampaignIds.has(campaign.id!))}
+                      onChange={(checked) => handleSelectAll(checked)}
                     />
                   </TableHeader>
                   <TableHeader>Kampagne</TableHeader>
@@ -866,7 +881,7 @@ export default function PRCampaignsPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredCampaigns.map((campaign, index) => (
+                {paginatedCampaigns.map((campaign) => (
                   <TableRow 
                     key={campaign.id}
                     className={clsx(
@@ -892,11 +907,13 @@ export default function PRCampaignsPage() {
                         />
                       ) : (
                         <div 
-                          className="font-medium text-gray-900 cursor-pointer hover:text-indigo-600"
+                          className="font-medium text-[#005fab] hover:text-[#004a8c] cursor-pointer"
                           onMouseEnter={(e) => handleMouseEnter(campaign, e)}
                           onMouseLeave={handleMouseLeave}
                         >
-                          {campaign.title}
+                          <Link href={`/dashboard/pr/campaigns/${campaign.id}`} className="hover:underline">
+                            {campaign.title}
+                          </Link>
                         </div>
                       )}
                       {campaign.scheduledAt && (
@@ -916,7 +933,7 @@ export default function PRCampaignsPage() {
                             customerId={campaign.clientId}
                             customerName={campaign.clientName}
                             showIcon={false}
-                            className="text-xs hover:bg-indigo-100 transition-colors cursor-pointer"
+                            className="text-xs hover:bg-blue-100 transition-colors cursor-pointer"
                           />
                         </Link>
                       ) : (
@@ -970,6 +987,152 @@ export default function PRCampaignsPage() {
                 ))}
               </TableBody>
             </Table>
+          </div>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {filteredCampaigns.length > 0 && (
+        <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 px-2">
+          {/* Items per page selector */}
+          <div className="flex items-center gap-2">
+            <label htmlFor="itemsPerPage" className="text-sm text-gray-600">
+              Einträge pro Seite:
+            </label>
+            <select
+              id="itemsPerPage"
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-[#005fab] focus:outline-none focus:ring-1 focus:ring-[#005fab]"
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+
+          {/* Page info and navigation */}
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-600">
+              {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, filteredCampaigns.length)} von {filteredCampaigns.length}
+            </span>
+            
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Erste Seite"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                </svg>
+              </button>
+              
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Vorherige Seite"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+
+              {/* Page numbers */}
+              <div className="flex items-center gap-1 mx-2">
+                {totalPages <= 7 ? (
+                  Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={clsx(
+                        "min-w-[32px] h-8 px-2 rounded text-sm font-medium transition-colors",
+                        currentPage === page
+                          ? "bg-[#005fab] text-white"
+                          : "hover:bg-gray-100"
+                      )}
+                    >
+                      {page}
+                    </button>
+                  ))
+                ) : (
+                  <>
+                    {currentPage > 3 && (
+                      <>
+                        <button
+                          onClick={() => setCurrentPage(1)}
+                          className="min-w-[32px] h-8 px-2 rounded text-sm font-medium hover:bg-gray-100"
+                        >
+                          1
+                        </button>
+                        {currentPage > 4 && <span className="px-1">...</span>}
+                      </>
+                    )}
+                    
+                    {Array.from({ length: 5 }, (_, i) => {
+                      const page = currentPage - 2 + i;
+                      if (page > 0 && page <= totalPages) {
+                        return (
+                          <button
+                            key={page}
+                            onClick={() => setCurrentPage(page)}
+                            className={clsx(
+                              "min-w-[32px] h-8 px-2 rounded text-sm font-medium transition-colors",
+                              currentPage === page
+                                ? "bg-[#005fab] text-white"
+                                : "hover:bg-gray-100"
+                            )}
+                          >
+                            {page}
+                          </button>
+                        );
+                      }
+                      return null;
+                    }).filter(Boolean)}
+                    
+                    {currentPage < totalPages - 2 && (
+                      <>
+                        {currentPage < totalPages - 3 && <span className="px-1">...</span>}
+                        <button
+                          onClick={() => setCurrentPage(totalPages)}
+                          className="min-w-[32px] h-8 px-2 rounded text-sm font-medium hover:bg-gray-100"
+                        >
+                          {totalPages}
+                        </button>
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Nächste Seite"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+              
+              <button
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+                className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Letzte Seite"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       )}
