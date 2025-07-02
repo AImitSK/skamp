@@ -1,4 +1,4 @@
-// src/app/dashboard/freigaben/page.tsx - Überarbeitete Version
+// src/app/dashboard/freigaben/page.tsx - Überarbeitete Version mit Auto-Refresh
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
@@ -22,7 +22,8 @@ import {
   XCircleIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon,
-  PaperAirplaneIcon
+  PaperAirplaneIcon,
+  ArrowPathIcon
 } from "@heroicons/react/20/solid";
 import { prService } from "@/lib/firebase/pr-service";
 import { PRCampaign } from "@/types/pr";
@@ -310,6 +311,10 @@ export default function ApprovalsPage() {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [previewCampaign, setPreviewCampaign] = useState<{ campaign: PRCampaign; position: { x: number; y: number } } | null>(null);
   
+  // Refresh States
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  
   // Pagination States
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
@@ -329,27 +334,68 @@ export default function ApprovalsPage() {
     setToasts(prev => prev.filter(t => t.id !== id));
   }, []);
 
+const loadCampaigns = async () => {
+  if (!user) return;
+  setLoading(true);
+  setIsRefreshing(true);
+  try {
+    const allCampaigns = await prService.getAll(user.uid);
+    // Nur Kampagnen mit Freigabe-Anforderung
+    const approvalCampaigns = allCampaigns.filter((c: PRCampaign) => c.approvalRequired && c.approvalData);
+    
+    // DEBUG: Log die Status
+    console.log('Loaded campaigns with approval:', approvalCampaigns.map(c => ({
+      id: c.id,
+      title: c.title,
+      status: c.status,
+      approvalStatus: c.approvalData?.status
+    })));
+    
+    setCampaigns(approvalCampaigns);
+    setLastRefresh(new Date());
+    
+    if (!loading) {
+      showToast('success', 'Daten aktualisiert');
+    }
+  } catch (error) {
+    console.error("Fehler beim Laden der Kampagnen:", error);
+    showToast('error', 'Fehler beim Laden', 'Die Freigaben konnten nicht geladen werden.');
+  } finally {
+    setLoading(false);
+    setIsRefreshing(false);
+  }
+};
+
   useEffect(() => {
     if (user) {
       loadCampaigns();
     }
   }, [user]);
 
-  const loadCampaigns = async () => {
-    if (!user) return;
-    setLoading(true);
-    try {
-      const allCampaigns = await prService.getAll(user.uid);
-      // Nur Kampagnen mit Freigabe-Anforderung
-      const approvalCampaigns = allCampaigns.filter((c: PRCampaign) => c.approvalRequired && c.approvalData);
-      setCampaigns(approvalCampaigns);
-    } catch (error) {
-      console.error("Fehler beim Laden der Kampagnen:", error);
-      showToast('error', 'Fehler beim Laden', 'Die Freigaben konnten nicht geladen werden.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Auto-Refresh alle 30 Sekunden
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!loading && !isRefreshing && user) {
+        loadCampaigns();
+      }
+    }, 30000); // 30 Sekunden
+    
+    return () => clearInterval(interval);
+  }, [user, loading, isRefreshing]);
+
+  // Refresh bei Fokus (wenn User zum Tab zurückkehrt)
+  useEffect(() => {
+    const handleFocus = () => {
+      const timeSinceLastRefresh = new Date().getTime() - lastRefresh.getTime();
+      // Nur refreshen wenn mehr als 10 Sekunden vergangen sind
+      if (timeSinceLastRefresh > 10000 && !loading && !isRefreshing && user) {
+        loadCampaigns();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [lastRefresh, loading, isRefreshing, user]);
 
   const filteredCampaigns = useMemo(() => {
     return campaigns.filter(campaign => {
@@ -476,6 +522,31 @@ export default function ApprovalsPage() {
           <Text className="mt-1">
             Verwalten und überwachen Sie alle Pressemitteilungen, die eine Kundenfreigabe benötigen
           </Text>
+        </div>
+        
+        {/* Refresh Button */}
+        <div className="flex items-center gap-3">
+          <Text className="text-xs text-gray-500">
+            Zuletzt aktualisiert: {lastRefresh.toLocaleTimeString('de-DE')}
+          </Text>
+          <Button
+            onClick={() => loadCampaigns()}
+            disabled={isRefreshing}
+            plain
+            className="flex items-center gap-2"
+          >
+            {isRefreshing ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                Aktualisiert...
+              </>
+            ) : (
+              <>
+                <ArrowPathIcon className="h-4 w-4" />
+                Aktualisieren
+              </>
+            )}
+          </Button>
         </div>
       </div>
 

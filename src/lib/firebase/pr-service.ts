@@ -13,6 +13,7 @@ import {
   serverTimestamp,
   writeBatch,
   Timestamp,
+  limit,
 } from 'firebase/firestore';
 import { db } from './client-init';
 import { PRCampaign, CampaignAssetAttachment, ApprovalData } from '@/types/pr';
@@ -94,6 +95,10 @@ export const prService = {
 
   async update(campaignId: string, data: Partial<Omit<PRCampaign, 'id'| 'userId'>>): Promise<void> {
     const docRef = doc(db, 'pr_campaigns', campaignId);
+    
+    // Log für Debugging
+    console.log('Updating campaign:', campaignId, 'with data:', data);
+    
     await updateDoc(docRef, {
       ...data,
       updatedAt: serverTimestamp(),
@@ -111,6 +116,23 @@ export const prService = {
       }
     }
     
+    // Lösche auch den Approval Share wenn vorhanden
+    if (campaign?.approvalData?.shareId) {
+      try {
+        const q = query(
+          collection(db, 'pr_approval_shares'),
+          where('shareId', '==', campaign.approvalData.shareId),
+          limit(1)
+        );
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+          await deleteDoc(snapshot.docs[0].ref);
+        }
+      } catch (error) {
+        console.warn('Fehler beim Löschen des Approval Shares:', error);
+      }
+    }
+    
     await deleteDoc(doc(db, 'pr_campaigns', campaignId));
   },
 
@@ -119,11 +141,15 @@ export const prService = {
     
     // NEU: Sammle Share-Links zum Löschen
     const shareLinksToDelete: string[] = [];
+    const approvalSharesToDelete: string[] = [];
     
     for (const id of campaignIds) {
       const campaign = await this.getById(id);
       if (campaign?.assetShareLinkId) {
         shareLinksToDelete.push(campaign.assetShareLinkId);
+      }
+      if (campaign?.approvalData?.shareId) {
+        approvalSharesToDelete.push(campaign.approvalData.shareId);
       }
       
       const docRef = doc(db, 'pr_campaigns', id);
@@ -138,6 +164,23 @@ export const prService = {
         await mediaService.deleteShareLink(shareLinkId);
       } catch (error) {
         console.warn('Fehler beim Löschen des Share-Links:', error);
+      }
+    }
+    
+    // Lösche Approval Shares
+    for (const shareId of approvalSharesToDelete) {
+      try {
+        const q = query(
+          collection(db, 'pr_approval_shares'),
+          where('shareId', '==', shareId),
+          limit(1)
+        );
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+          await deleteDoc(snapshot.docs[0].ref);
+        }
+      } catch (error) {
+        console.warn('Fehler beim Löschen des Approval Shares:', error);
       }
     }
   },
@@ -162,16 +205,22 @@ export const prService = {
     scheduled: number;
     sent: number;
     archived: number;
+    in_review: number;
+    changes_requested: number;
+    approved: number;
     totalRecipients: number;
-    totalAssetsShared: number; // NEU
+    totalAssetsShared: number;
   }> {
     const campaigns = await this.getAll(userId);
     
     return campaigns.reduce((acc, campaign) => {
       acc.total++;
-      acc[campaign.status as keyof typeof acc]++;
+      // Sicherstellen, dass alle Status-Typen behandelt werden
+      const status = campaign.status as keyof typeof acc;
+      if (status in acc && typeof acc[status] === 'number') {
+        (acc[status] as number)++;
+      }
       acc.totalRecipients += campaign.recipientCount || 0;
-      // NEU: Zähle geteilte Assets
       acc.totalAssetsShared += campaign.attachedAssets?.length || 0;
       return acc;
     }, {
@@ -180,6 +229,9 @@ export const prService = {
       scheduled: 0,
       sent: 0,
       archived: 0,
+      in_review: 0,
+      changes_requested: 0,
+      approved: 0,
       totalRecipients: 0,
       totalAssetsShared: 0
     });
@@ -423,7 +475,7 @@ export const prService = {
     return { assets, folders, total: assets + folders };
   },
 
-  // === NEUE FREIGABE-WORKFLOW FUNKTIONEN ===
+  // === NEUE FREIGABE-WORKFLOW FUNKTIONEN (mit media_shares Pattern) ===
 
   /**
    * Startet den Freigabeprozess für eine Kampagne
@@ -435,13 +487,34 @@ export const prService = {
     }
 
     // Generiere eine eindeutige, URL-sichere Share-ID
-    const shareId = nanoid(10); // Kurze, lesbare ID
+    const shareId = nanoid(10);
     
+    // Erstelle separaten Share-Link Eintrag (wie bei media_shares)
+    const approvalShareData: any = {
+      shareId,
+      campaignId,
+      userId: campaign.userId,
+      campaignTitle: campaign.title,
+      campaignContent: campaign.contentHtml,
+      clientName: campaign.clientName,
+      clientId: campaign.clientId,
+      status: 'pending',
+      feedbackHistory: [],
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      isActive: true
+    };
+
+    console.log('Creating approval share with data:', approvalShareData);
+    
+    const docRef = await addDoc(collection(db, 'pr_approval_shares'), approvalShareData);
+    console.log('Created approval share with ID:', docRef.id);
+
+    // Update Kampagne mit Status und approvalData
     const approvalData: ApprovalData = {
       shareId,
       status: 'pending',
       feedbackHistory: [],
-      // approvedAt wird später gesetzt
     };
 
     await this.update(campaignId, {
@@ -454,25 +527,56 @@ export const prService = {
   },
 
   /**
-   * Findet eine Kampagne anhand der Share-ID
+   * Findet eine Kampagne anhand der Share-ID (nutzt pr_approval_shares)
    */
   async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
     try {
+      // Hole Share-Link Dokument direkt (wie bei media_shares)
       const q = query(
-        collection(db, 'pr_campaigns'),
-        where('approvalData.shareId', '==', shareId)
+        collection(db, 'pr_approval_shares'),
+        where('shareId', '==', shareId),
+        where('isActive', '==', true),
+        limit(1)
       );
       
       const snapshot = await getDocs(q);
-      
       if (snapshot.empty) {
+        console.log('No approval share found for shareId:', shareId);
         return null;
       }
-
-      const doc = snapshot.docs[0];
-      return { id: doc.id, ...doc.data() } as PRCampaign;
+      
+      const shareDoc = snapshot.docs[0];
+      const shareData = shareDoc.data();
+      
+      console.log('Found approval share:', shareData);
+      
+      // Konstruiere Kampagnen-Objekt aus Share-Daten
+      return {
+        id: shareData.campaignId,
+        userId: shareData.userId,
+        title: shareData.campaignTitle,
+        contentHtml: shareData.campaignContent,
+        clientName: shareData.clientName,
+        clientId: shareData.clientId,
+        status: shareData.status === 'approved' ? 'approved' : 
+                shareData.status === 'commented' ? 'changes_requested' : 
+                'in_review',
+        approvalRequired: true,
+        approvalData: {
+          shareId: shareData.shareId,
+          status: shareData.status,
+          feedbackHistory: shareData.feedbackHistory || [],
+          approvedAt: shareData.approvedAt
+        },
+        // Minimal-Daten für Type-Kompatibilität
+        distributionListId: '',
+        distributionListName: '',
+        recipientCount: 0,
+        createdAt: shareData.createdAt,
+        updatedAt: shareData.updatedAt
+      } as PRCampaign;
     } catch (error) {
-      console.error('Fehler beim Suchen der Kampagne:', error);
+      console.error('Fehler beim Laden der Freigabe:', error);
       return null;
     }
   },
@@ -481,75 +585,161 @@ export const prService = {
    * Speichert Kunden-Feedback und aktualisiert den Status
    */
   async submitFeedback(shareId: string, feedback: string, author: string = 'Kunde'): Promise<void> {
-    const campaign = await this.getCampaignByShareId(shareId);
-    if (!campaign || !campaign.id) {
-      throw new Error('Kampagne nicht gefunden');
-    }
-
-    if (!campaign.approvalData) {
-      throw new Error('Keine Freigabe-Daten vorhanden');
-    }
-
+    console.log('submitFeedback called with:', { shareId, feedback, author });
+    
+    // Update im pr_approval_shares Dokument
+    const q = query(
+      collection(db, 'pr_approval_shares'),
+      where('shareId', '==', shareId),
+      where('isActive', '==', true),
+      limit(1)
+    );
+    
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) throw new Error('Freigabe nicht gefunden');
+    
+    const docRef = snapshot.docs[0].ref;
+    const currentData = snapshot.docs[0].data();
+    
     // Füge neues Feedback zur Historie hinzu
-    const feedbackHistory = [
-      ...campaign.approvalData.feedbackHistory,
-      {
-        comment: feedback,
-        requestedAt: Timestamp.now(),
-        author
-      }
-    ];
+    const newFeedback = {
+      comment: feedback,
+      requestedAt: Timestamp.now(),
+      author
+    };
 
-    await this.update(campaign.id, {
-      status: 'changes_requested',
-      approvalData: {
-        ...campaign.approvalData,
-        status: 'commented',
-        feedbackHistory
-      }
+    const updatedFeedbackHistory = [...(currentData.feedbackHistory || []), newFeedback];
+
+    // Update pr_approval_shares
+    await updateDoc(docRef, {
+      status: 'commented',
+      feedbackHistory: updatedFeedbackHistory,
+      updatedAt: serverTimestamp()
     });
+    
+    console.log('Updated pr_approval_shares with status: commented');
+    
+    // Update auch die Kampagne mit den gleichen Daten
+    if (currentData.campaignId) {
+      // WICHTIG: Erstelle ein komplett neues approvalData Objekt
+      const updatedApprovalData: ApprovalData = {
+        shareId: shareId,
+        status: 'commented', // WICHTIG: Dieser Status muss gesetzt werden!
+        feedbackHistory: updatedFeedbackHistory
+      };
+
+      // Update mit dem kompletten neuen Objekt
+      await this.update(currentData.campaignId, {
+        status: 'changes_requested',
+        approvalData: updatedApprovalData // Komplettes Objekt überschreiben
+      });
+      
+      console.log('Updated campaign with:', {
+        campaignId: currentData.campaignId,
+        status: 'changes_requested',
+        approvalDataStatus: 'commented'
+      });
+    }
   },
 
   /**
    * Genehmigt eine Kampagne
    */
   async approveCampaign(shareId: string): Promise<void> {
-    const campaign = await this.getCampaignByShareId(shareId);
-    if (!campaign || !campaign.id) {
-      throw new Error('Kampagne nicht gefunden');
-    }
-
-    if (!campaign.approvalData) {
-      throw new Error('Keine Freigabe-Daten vorhanden');
-    }
-
-    await this.update(campaign.id, {
+    console.log('approveCampaign called with shareId:', shareId);
+    
+    // Update im pr_approval_shares Dokument
+    const q = query(
+      collection(db, 'pr_approval_shares'),
+      where('shareId', '==', shareId),
+      where('isActive', '==', true),
+      limit(1)
+    );
+    
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) throw new Error('Freigabe nicht gefunden');
+    
+    const docRef = snapshot.docs[0].ref;
+    const currentData = snapshot.docs[0].data();
+    const approvedAt = Timestamp.now();
+    
+    // Update pr_approval_shares
+    await updateDoc(docRef, {
       status: 'approved',
-      approvalData: {
-        ...campaign.approvalData,
-        status: 'approved',
-        approvedAt: Timestamp.now()
-      }
+      approvedAt: approvedAt,
+      updatedAt: serverTimestamp()
     });
+    
+    console.log('Updated pr_approval_shares with status: approved');
+    
+    // Update auch die Kampagne mit den gleichen Daten
+    if (currentData.campaignId) {
+      // WICHTIG: Erstelle ein komplett neues approvalData Objekt
+      const updatedApprovalData: ApprovalData = {
+        shareId: shareId,
+        status: 'approved', // WICHTIG: Dieser Status muss gesetzt werden!
+        feedbackHistory: currentData.feedbackHistory || [],
+        approvedAt: approvedAt
+      };
+
+      await this.update(currentData.campaignId, {
+        status: 'approved',
+        approvalData: updatedApprovalData // Komplettes Objekt überschreiben
+      });
+      
+      console.log('Updated campaign with:', {
+        campaignId: currentData.campaignId,
+        status: 'approved',
+        approvalDataStatus: 'approved'
+      });
+    }
   },
 
   /**
    * Markiert eine Freigabe-Seite als angesehen
    */
   async markApprovalAsViewed(shareId: string): Promise<void> {
-    const campaign = await this.getCampaignByShareId(shareId);
-    if (!campaign || !campaign.id || !campaign.approvalData) {
-      return;
-    }
-
+    console.log('markApprovalAsViewed called with shareId:', shareId);
+    
+    const q = query(
+      collection(db, 'pr_approval_shares'),
+      where('shareId', '==', shareId),
+      where('isActive', '==', true),
+      limit(1)
+    );
+    
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) return;
+    
+    const docRef = snapshot.docs[0].ref;
+    const currentData = snapshot.docs[0].data();
+    
     // Nur aktualisieren, wenn noch im 'pending' Status
-    if (campaign.approvalData.status === 'pending') {
-      await this.update(campaign.id, {
-        approvalData: {
-          ...campaign.approvalData,
-          status: 'viewed'
-        }
+    if (currentData.status === 'pending') {
+      // Update pr_approval_shares
+      await updateDoc(docRef, {
+        status: 'viewed',
+        viewedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       });
+      
+      console.log('Updated pr_approval_shares with status: viewed');
+      
+      // Update auch die Kampagne
+      if (currentData.campaignId) {
+        // WICHTIG: Erstelle ein komplett neues approvalData Objekt
+        const updatedApprovalData: ApprovalData = {
+          shareId: shareId,
+          status: 'viewed', // WICHTIG: Dieser Status muss gesetzt werden!
+          feedbackHistory: currentData.feedbackHistory || []
+        };
+
+        await this.update(currentData.campaignId, {
+          approvalData: updatedApprovalData // Komplettes Objekt überschreiben
+        });
+        
+        console.log('Updated campaign with approvalDataStatus: viewed');
+      }
     }
   },
 
@@ -570,7 +760,7 @@ export const prService = {
         ...doc.data()
       } as PRCampaign));
 
-      // Client-seitige Sortierung nach letzter Aktivität
+      // Client-seitige Sortierung nach Status und Datum
       return campaigns.sort((a, b) => {
         // Priorisiere nach Status
         const statusOrder = {
