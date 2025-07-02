@@ -90,10 +90,19 @@ export default function DashboardLayout({
                 key={item.name}
                 href={item.href}
                 current={isActive}
-                className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                // HINZUGEFÜGT: Textfarbe für den Normalzustand
+                className={`
+                  text-white 
+                  hover:bg-[#0693e3] 
+                  dark:hover:bg-zinc-800 
+                  transition-colors
+                  ${isActive ? 'bg-[#0693e3]' : ''} // Optional: Hintergrund für aktiven Link
+                `}
               >
-                <Icon className="size-5" data-slot="icon" />
-                <SidebarLabel>{item.name}</SidebarLabel>
+                {/* HINZUGEFÜGT: Farbe für das Icon */}
+                <Icon className="size-5 text-white" data-slot="icon" />
+        <SidebarLabel className="text-white">{item.name}</SidebarLabel>
+
               </SidebarItem>
             );
           })}
@@ -119,7 +128,7 @@ export default function DashboardLayout({
                 <span className="truncate">
                   {user?.displayName || user?.email?.split("@")[0]}
                 </span>
-                <span className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
+                <span className="text-xs text-[#ffffff] dark:text-[#ffffff] truncate">
                   {user?.email}
                 </span>
               </div>

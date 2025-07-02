@@ -57,7 +57,7 @@ export function SidebarLayout({
   let [showSidebar, setShowSidebar] = useState(false)
 
   return (
-    <div className="relative isolate flex min-h-svh w-full bg-white max-lg:flex-col lg:bg-zinc-100 dark:bg-zinc-900 dark:lg:bg-zinc-950">
+    <div className="relative isolate flex min-h-svh w-full bg-white max-lg:flex-col lg:bg-[#005fab] dark:bg-zinc-900 dark:lg:bg-zinc-950">
       {/* Sidebar on desktop */}
       <div className="fixed inset-y-0 left-0 w-64 max-lg:hidden">{sidebar}</div>
 
@@ -72,7 +72,7 @@ export function SidebarLayout({
           <NavbarItem 
             onClick={() => setShowSidebar(true)} 
             aria-label="Open navigation"
-            className="hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+            className="hover:bg-[#005fab] dark:hover:bg-zinc-800 rounded-lg transition-colors"
           >
             <OpenMenuIcon />
           </NavbarItem>

@@ -51,11 +51,12 @@ export function canEditCampaign(campaign: PRCampaign): {
         reason: 'Die Kampagne befindet sich in der Kundenprüfung und kann nicht bearbeitet werden.' 
       };
       
+
     case 'approved':
-      // Freigegeben = nicht mehr bearbeitbar (außer man will den Status zurücksetzen)
+      // Freigegeben = nicht mehr bearbeitbar
       return { 
         canEdit: false, 
-        reason: 'Die Kampagne wurde bereits freigegeben. Erstellen Sie eine Kopie für weitere Änderungen.' 
+        reason: 'Die Kampagne wurde bereits freigegeben und kann nicht mehr bearbeitet werden.' 
       };
       
     default:

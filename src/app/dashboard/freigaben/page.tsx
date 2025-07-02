@@ -356,6 +356,8 @@ function DropdownMenu({
               Kampagne anzeigen
             </Link>
 
+
+
             <button
               onClick={() => handleAction(() => onViewDetails(campaign))}
               className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors text-left"
