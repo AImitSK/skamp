@@ -1,4 +1,4 @@
-// src/app/dashboard/freigaben/page.tsx - Überarbeitete Version mit Auto-Refresh
+// src/app/dashboard/freigaben/page.tsx - Vollständige Version mit Medien-Integration
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
@@ -23,7 +23,10 @@ import {
   ExclamationTriangleIcon,
   InformationCircleIcon,
   PaperAirplaneIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  PhotoIcon,
+  FolderIcon,
+  DocumentIcon
 } from "@heroicons/react/20/solid";
 import { prService } from "@/lib/firebase/pr-service";
 import { PRCampaign } from "@/types/pr";
@@ -169,6 +172,17 @@ function QuickPreview({
           {getStatusBadge()}
         </div>
         
+        {/* NEU: Medien-Info */}
+        {campaign.attachedAssets && campaign.attachedAssets.length > 0 && (
+          <div className="flex justify-between items-center">
+            <span className="text-gray-500">Medien:</span>
+            <div className="flex items-center gap-1">
+              <PhotoIcon className="h-4 w-4 text-gray-400" />
+              <span className="text-xs font-medium">{campaign.attachedAssets.length}</span>
+            </div>
+          </div>
+        )}
+        
         {campaign.approvalData?.feedbackHistory && campaign.approvalData.feedbackHistory.length > 0 && (
           <div className="pt-2 border-t">
             <span className="text-gray-500 text-xs">Letztes Feedback:</span>
@@ -192,6 +206,35 @@ function QuickPreview({
           </div>
         )}
       </div>
+      
+      {/* NEU: Medien-Details wenn vorhanden */}
+      {campaign.attachedAssets && campaign.attachedAssets.length > 0 && (
+        <div className="mt-3 pt-3 border-t">
+          <p className="text-xs font-medium text-gray-700 mb-2">Angehängte Medien:</p>
+          <div className="space-y-1">
+            {campaign.attachedAssets.slice(0, 3).map((asset, idx) => (
+              <div key={idx} className="flex items-center gap-2 text-xs text-gray-600">
+                {asset.type === 'folder' ? (
+                  <>
+                    <FolderIcon className="h-3 w-3 text-gray-400" />
+                    <span className="truncate">{asset.metadata.folderName}</span>
+                  </>
+                ) : (
+                  <>
+                    <DocumentIcon className="h-3 w-3 text-gray-400" />
+                    <span className="truncate">{asset.metadata.fileName}</span>
+                  </>
+                )}
+              </div>
+            ))}
+            {campaign.attachedAssets.length > 3 && (
+              <p className="text-xs text-gray-500 italic">
+                +{campaign.attachedAssets.length - 3} weitere
+              </p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -200,14 +243,19 @@ function QuickPreview({
 function DropdownMenu({ 
   campaign,
   onCopyLink,
-  onViewDetails
+  onViewDetails,
+  onResubmit,
+  showToast
 }: { 
   campaign: PRCampaign;
   onCopyLink: (shareId: string) => void;
   onViewDetails: (campaign: PRCampaign) => void;
+  onResubmit?: (campaign: PRCampaign) => void;
+  showToast: (type: Toast['type'], title: string, message?: string) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  const [isResubmitting, setIsResubmitting] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -232,9 +280,29 @@ function DropdownMenu({
     }
   }, [isOpen]);
 
-  const handleAction = (action: () => void) => {
-    action();
-    setIsOpen(false);
+  const handleAction = (action: () => void | Promise<void>) => {
+    const result = action();
+    if (result instanceof Promise) {
+      result.finally(() => setIsOpen(false));
+    } else {
+      setIsOpen(false);
+    }
+  };
+
+  const handleResubmit = async () => {
+    try {
+      setIsResubmitting(true);
+      await prService.resubmitForApproval(campaign.id!);
+      showToast('success', 'Erneut zur Freigabe gesendet', 'Die Kampagne wurde erneut an den Kunden gesendet.');
+      
+      if (onResubmit) {
+        onResubmit(campaign);
+      }
+    } catch (error) {
+      showToast('error', 'Fehler beim erneuten Senden', 'Die Kampagne konnte nicht erneut gesendet werden.');
+    } finally {
+      setIsResubmitting(false);
+    }
   };
 
   return (
@@ -295,6 +363,30 @@ function DropdownMenu({
               <ChatBubbleLeftRightIcon className="h-4 w-4 mr-3 text-gray-400" />
               Feedback-Historie
             </button>
+
+            {/* NEU: Erneut senden für changes_requested Status */}
+            {campaign.status === 'changes_requested' && (
+              <>
+                <div className="border-t border-gray-100 my-1"></div>
+                <button
+                  onClick={() => handleAction(handleResubmit)}
+                  disabled={isResubmitting}
+                  className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors text-left disabled:opacity-50"
+                >
+                  {isResubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400 mr-3"></div>
+                      Wird gesendet...
+                    </>
+                  ) : (
+                    <>
+                      <ArrowPathIcon className="h-4 w-4 mr-3 text-gray-400" />
+                      Erneut senden
+                    </>
+                  )}
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -334,37 +426,29 @@ export default function ApprovalsPage() {
     setToasts(prev => prev.filter(t => t.id !== id));
   }, []);
 
-const loadCampaigns = async () => {
-  if (!user) return;
-  setLoading(true);
-  setIsRefreshing(true);
-  try {
-    const allCampaigns = await prService.getAll(user.uid);
-    // Nur Kampagnen mit Freigabe-Anforderung
-    const approvalCampaigns = allCampaigns.filter((c: PRCampaign) => c.approvalRequired && c.approvalData);
-    
-    // DEBUG: Log die Status
-    console.log('Loaded campaigns with approval:', approvalCampaigns.map(c => ({
-      id: c.id,
-      title: c.title,
-      status: c.status,
-      approvalStatus: c.approvalData?.status
-    })));
-    
-    setCampaigns(approvalCampaigns);
-    setLastRefresh(new Date());
-    
-    if (!loading) {
-      showToast('success', 'Daten aktualisiert');
+  const loadCampaigns = async () => {
+    if (!user) return;
+    setLoading(true);
+    setIsRefreshing(true);
+    try {
+      const allCampaigns = await prService.getAll(user.uid);
+      // Nur Kampagnen mit Freigabe-Anforderung
+      const approvalCampaigns = allCampaigns.filter((c: PRCampaign) => c.approvalRequired && c.approvalData);
+      
+      setCampaigns(approvalCampaigns);
+      setLastRefresh(new Date());
+      
+      if (!loading) {
+        showToast('success', 'Daten aktualisiert');
+      }
+    } catch (error) {
+      console.error("Fehler beim Laden der Kampagnen:", error);
+      showToast('error', 'Fehler beim Laden', 'Die Freigaben konnten nicht geladen werden.');
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
     }
-  } catch (error) {
-    console.error("Fehler beim Laden der Kampagnen:", error);
-    showToast('error', 'Fehler beim Laden', 'Die Freigaben konnten nicht geladen werden.');
-  } finally {
-    setLoading(false);
-    setIsRefreshing(false);
-  }
-};
+  };
 
   useEffect(() => {
     if (user) {
@@ -445,7 +529,12 @@ const loadCampaigns = async () => {
 
   const handleViewDetails = (campaign: PRCampaign) => {
     // Hier könnte ein Modal mit der Feedback-Historie geöffnet werden
-    showToast('info', 'Feedback-Historie', `${campaign.approvalData?.feedbackHistory?.length || 0} Feedback-Einträge vorhanden.`);
+    const feedbackCount = campaign.approvalData?.feedbackHistory?.length || 0;
+    const assetCount = campaign.attachedAssets?.length || 0;
+    
+    showToast('info', 'Kampagnen-Details', 
+      `${feedbackCount} Feedback-Einträge${assetCount > 0 ? `, ${assetCount} Medien angehängt` : ''}.`
+    );
   };
 
   const handleMouseEnter = (campaign: PRCampaign, event: React.MouseEvent) => {
@@ -630,6 +719,15 @@ const loadCampaigns = async () => {
                         {campaign.title}
                       </Link>
                     </div>
+                    {/* NEU: Medien-Indikator */}
+                    {campaign.attachedAssets && campaign.attachedAssets.length > 0 && (
+                      <div className="mt-1 flex items-center gap-2">
+                        <div className="flex items-center gap-1 text-xs text-gray-500">
+                          <PhotoIcon className="h-3 w-3" />
+                          {campaign.attachedAssets.length} Medien angehängt
+                        </div>
+                      </div>
+                    )}
                   </TableCell>
                   <TableCell>{campaign.clientName || '—'}</TableCell>
                   <TableCell>{getStatusBadge(campaign)}</TableCell>
@@ -654,6 +752,8 @@ const loadCampaigns = async () => {
                       campaign={campaign}
                       onCopyLink={handleCopyLink}
                       onViewDetails={handleViewDetails}
+                      onResubmit={() => loadCampaigns()}
+                      showToast={showToast}
                     />
                   </TableCell>
                 </TableRow>

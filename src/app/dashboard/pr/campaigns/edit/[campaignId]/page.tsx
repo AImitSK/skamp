@@ -1,4 +1,4 @@
-// src/app/dashboard/pr/campaigns/edit/[campaignId]/page.tsx - VOLLSTÄNDIG ÜBERARBEITET
+// src/app/dashboard/pr/campaigns/edit/[campaignId]/page.tsx - VOLLSTÄNDIG MIT FREIGABE-WORKFLOW
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -43,15 +43,250 @@ import {
   ArrowLeftIcon,
   XCircleIcon,
   InformationCircleIcon,
-  QuestionMarkCircleIcon
+  QuestionMarkCircleIcon,
+  ExclamationCircleIcon,
+  PaperAirplaneIcon,
+  ChatBubbleLeftRightIcon,
+  DocumentDuplicateIcon,
+  LinkIcon
 } from "@heroicons/react/24/outline";
 import clsx from 'clsx';
+import { Timestamp } from 'firebase/firestore';
 
 // Dynamic import für das strukturierte Modal
 import dynamic from 'next/dynamic';
 const StructuredGenerationModal = dynamic(() => import('@/components/pr/ai/StructuredGenerationModal'), {
   ssr: false
 });
+
+// Hilfsfunktion für die Bearbeitungs-Berechtigung
+function canEditCampaign(campaign: PRCampaign): { 
+  canEdit: boolean; 
+  reason?: string;
+  showResubmitPrompt?: boolean;
+} {
+  // Bereits versendete Kampagnen können nicht bearbeitet werden
+  if (campaign.status === 'sent' || campaign.status === 'archived') {
+    return { 
+      canEdit: false, 
+      reason: 'Versendete oder archivierte Kampagnen können nicht bearbeitet werden.' 
+    };
+  }
+
+  // Wenn keine Freigabe erforderlich ist, kann immer bearbeitet werden
+  if (!campaign.approvalRequired) {
+    return { canEdit: true };
+  }
+
+  // MIT Freigabe-Anforderung:
+  switch (campaign.status) {
+    case 'draft':
+      // Entwürfe können immer bearbeitet werden
+      return { canEdit: true };
+      
+    case 'changes_requested':
+      // WICHTIG: Wenn Änderungen angefordert wurden, MUSS bearbeitet werden können!
+      return { 
+        canEdit: true,
+        showResubmitPrompt: true // Zeige Hinweis zum erneuten Senden
+      };
+      
+    case 'in_review':
+      // In Prüfung = nicht bearbeitbar
+      return { 
+        canEdit: false, 
+        reason: 'Die Kampagne befindet sich in der Kundenprüfung und kann nicht bearbeitet werden.' 
+      };
+      
+    case 'approved':
+      // Freigegeben = nicht mehr bearbeitbar (außer man will den Status zurücksetzen)
+      return { 
+        canEdit: false, 
+        reason: 'Die Kampagne wurde bereits freigegeben. Erstellen Sie eine Kopie für weitere Änderungen.' 
+      };
+      
+    default:
+      return { canEdit: true };
+  }
+}
+
+// Approval Feedback Banner Component
+function ApprovalFeedbackBanner({ 
+  campaign, 
+  onResubmit,
+  showToast
+}: {
+  campaign: PRCampaign;
+  onResubmit?: () => void;
+  showToast: (type: 'success' | 'error', title: string, message?: string) => void;
+}) {
+  const router = useRouter();
+  const [isResubmitting, setIsResubmitting] = useState(false);
+
+  if (!campaign.approvalRequired || !campaign.approvalData) {
+    return null;
+  }
+
+  const lastFeedback = campaign.approvalData.feedbackHistory
+    ?.filter(f => f.author === 'Kunde')
+    ?.slice(-1)[0];
+
+  const formatDate = (timestamp: any) => {
+    if (!timestamp) return '';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return date.toLocaleString('de-DE', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const handleResubmit = async () => {
+    try {
+      setIsResubmitting(true);
+      await prService.resubmitForApproval(campaign.id!);
+      showToast('success', 'Erneut zur Freigabe gesendet', 'Die Kampagne wurde erneut an den Kunden gesendet.');
+      
+      if (onResubmit) {
+        onResubmit();
+      } else {
+        router.refresh();
+      }
+    } catch (error) {
+      showToast('error', 'Fehler beim erneuten Senden', 'Die Kampagne konnte nicht erneut gesendet werden.');
+      console.error('Fehler beim erneuten Senden:', error);
+    } finally {
+      setIsResubmitting(false);
+    }
+  };
+
+  // Status: Änderungen angefordert
+  if (campaign.status === 'changes_requested' && lastFeedback) {
+    return (
+      <div className="mb-6 bg-orange-50 border border-orange-200 rounded-lg p-4">
+        <div className="flex items-start">
+          <ExclamationCircleIcon className="h-5 w-5 text-orange-600 mt-0.5 mr-3 flex-shrink-0" />
+          <div className="flex-1">
+            <h3 className="text-sm font-medium text-orange-900">
+              Änderungen vom Kunden angefordert
+            </h3>
+            <div className="mt-2 text-sm text-orange-800">
+              <p className="font-medium">Feedback:</p>
+              <p className="mt-1 italic bg-orange-100 rounded p-2 border border-orange-200">
+                "{lastFeedback.comment}"
+              </p>
+              <p className="mt-2 text-xs text-orange-600 flex items-center gap-1">
+                <ChatBubbleLeftRightIcon className="h-3 w-3" />
+                {formatDate(lastFeedback.requestedAt)} • {lastFeedback.author}
+              </p>
+            </div>
+            
+            {/* Medien-Hinweis wenn vorhanden */}
+            {campaign.attachedAssets && campaign.attachedAssets.length > 0 && (
+              <div className="mt-3 p-2 bg-orange-100 rounded text-xs text-orange-700">
+                <p className="font-medium">Hinweis:</p>
+                <p>Die angehängten Medien ({campaign.attachedAssets.length}) sind ebenfalls Teil der Freigabe.</p>
+              </div>
+            )}
+            
+            <Button
+              onClick={handleResubmit}
+              disabled={isResubmitting}
+              color="indigo"
+              className="mt-3"
+            >
+              {isResubmitting ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Wird gesendet...
+                </>
+              ) : (
+                <>
+                  <PaperAirplaneIcon className="h-4 w-4 mr-2" />
+                  Nach Überarbeitung erneut zur Freigabe senden
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Status: In Prüfung
+  if (campaign.status === 'in_review') {
+    return (
+      <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="flex items-center">
+          <ClockIcon className="h-5 w-5 text-yellow-600 mr-3" />
+          <div className="flex-1">
+            <h3 className="text-sm font-medium text-yellow-900">
+              Warten auf Kundenfreigabe
+            </h3>
+            <p className="text-sm text-yellow-700 mt-1">
+              Diese Kampagne wurde zur Freigabe an den Kunden gesendet und wartet auf eine Rückmeldung.
+            </p>
+            {campaign.attachedAssets && campaign.attachedAssets.length > 0 && (
+              <p className="text-xs text-yellow-600 mt-2">
+                {campaign.attachedAssets.length} Medien sind Teil der Freigabe.
+              </p>
+            )}
+          </div>
+          <div className="flex gap-2">
+            {campaign.approvalData?.shareId && (
+              <Button
+                plain
+                onClick={async () => {
+                  const url = prService.getApprovalUrl(campaign.approvalData!.shareId);
+                  await navigator.clipboard.writeText(url);
+                  showToast('success', 'Link kopiert', 'Der Freigabe-Link wurde kopiert.');
+                }}
+                className="text-sm"
+              >
+                <LinkIcon className="h-4 w-4 mr-1" />
+                Link kopieren
+              </Button>
+            )}
+            <Button
+              plain
+              onClick={() => router.push('/dashboard/freigaben')}
+            >
+              Zum Freigaben-Center
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Status: Freigegeben
+  if (campaign.status === 'approved') {
+    return (
+      <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="flex items-center">
+          <CheckCircleIcon className="h-5 w-5 text-green-600 mr-3" />
+          <div className="flex-1">
+            <h3 className="text-sm font-medium text-green-900">
+              Vom Kunden freigegeben
+            </h3>
+            <p className="text-sm text-green-700 mt-1">
+              Diese Kampagne wurde vom Kunden freigegeben und kann versendet werden.
+            </p>
+            {campaign.approvalData.approvedAt && (
+              <p className="text-xs text-green-600 mt-2">
+                Freigegeben am {formatDate(campaign.approvalData.approvedAt)}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
 
 // Toast Types
 interface Toast {
@@ -269,7 +504,7 @@ function EnhancedAssetSelector({
             description: asset.description || '',
             thumbnailUrl: asset.downloadUrl
           },
-          attachedAt: null as any,
+          attachedAt: Timestamp.now(), // WICHTIG: Verwende Firestore Timestamp
           attachedBy: user?.uid || ''
         });
       }
@@ -286,7 +521,7 @@ function EnhancedAssetSelector({
             folderName: folder.name,
             description: folder.description || ''
           },
-          attachedAt: null as any,
+          attachedAt: Timestamp.now(), // WICHTIG: Verwende Firestore Timestamp
           attachedBy: user?.uid || ''
         });
       }
@@ -797,7 +1032,7 @@ function MultiListSelector({
   );
 }
 
-// Auto-Save Hook
+// Auto-Save Hook - KORRIGIERT ohne endlose Animation
 function useAutoSave(
   data: any, 
   onSave: () => Promise<void>,
@@ -806,10 +1041,30 @@ function useAutoSave(
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout>();
+  const isMountedRef = useRef(true);
+  const previousDataRef = useRef<string>('');
   
   useEffect(() => {
-    if (!enabled) return;
-    
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!enabled) {
+      setSaveStatus('idle');
+      return;
+    }
+
+    // Verhindere Auto-Save beim ersten Laden
+    const currentData = JSON.stringify(data);
+    if (previousDataRef.current === '' || previousDataRef.current === currentData) {
+      previousDataRef.current = currentData;
+      return;
+    }
+    previousDataRef.current = currentData;
+
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
@@ -817,14 +1072,24 @@ function useAutoSave(
     setSaveStatus('saving');
     
     timeoutRef.current = setTimeout(async () => {
+      if (!isMountedRef.current) return;
+      
       try {
         await onSave();
-        setSaveStatus('saved');
-        setLastSaved(new Date());
-        
-        setTimeout(() => setSaveStatus('idle'), 2000);
+        if (isMountedRef.current) {
+          setSaveStatus('saved');
+          setLastSaved(new Date());
+          
+          setTimeout(() => {
+            if (isMountedRef.current) {
+              setSaveStatus('idle');
+            }
+          }, 2000);
+        }
       } catch (error) {
-        setSaveStatus('error');
+        if (isMountedRef.current) {
+          setSaveStatus('error');
+        }
       }
     }, 2000); // 2s debounce
     
@@ -1026,6 +1291,12 @@ export default function EditPRCampaignPage() {
     [selectedLists]
   );
 
+  // Bearbeitungs-Berechtigung prüfen
+  const editStatus = useMemo(() => 
+    campaign ? canEditCampaign(campaign) : { canEdit: true },
+    [campaign]
+  );
+
   const loadCampaignData = useCallback(async () => {
     if (!user || !campaignId) return;
     setLoading(true);
@@ -1084,13 +1355,10 @@ export default function EditPRCampaignPage() {
   const isFormValid = selectedListIds.length > 0 && campaignTitle.trim() !== '' && pressReleaseContent.trim() !== '' && pressReleaseContent !== '<p></p>';
 
   const handleUpdate = async () => {
-    if (!isFormValid || !campaign || selectedLists.length === 0) return;
+    if (!isFormValid || !campaign || selectedLists.length === 0 || !editStatus.canEdit) return;
 
     setIsSaving(true);
     try {
-      // Remove attachedAt from each asset
-      const cleanedAssets = attachedAssets.map(({ attachedAt, ...rest }) => rest);
-
       // Für Rückwärtskompatibilität: Verwende die erste Liste als Haupt-Liste
       const primaryList = selectedLists[0];
 
@@ -1107,7 +1375,7 @@ export default function EditPRCampaignPage() {
         distributionListNames: selectedLists.map(l => l.name),
         
         recipientCount: totalRecipients,
-        attachedAssets: cleanedAssets,
+        attachedAssets: attachedAssets, // Verwende die Assets wie sie sind (mit Timestamp)
       };
       
       await prService.update(campaign.id!, updatedData);
@@ -1122,11 +1390,11 @@ export default function EditPRCampaignPage() {
     }
   };
 
-  // Auto-Save
+  // Auto-Save - mit korrigierter Logik
   const { saveStatus, lastSaved } = useAutoSave(
     { campaignTitle, pressReleaseContent, selectedListIds, attachedAssets },
     async () => {
-      if (campaign && selectedLists.length > 0) {
+      if (campaign && selectedLists.length > 0 && editStatus.canEdit) {
         const primaryList = selectedLists[0];
         
         await prService.update(campaign.id!, {
@@ -1141,7 +1409,7 @@ export default function EditPRCampaignPage() {
         });
       }
     },
-    !!campaign && isFormValid
+    !!campaign && isFormValid && editStatus.canEdit
   );
 
   // Asset Management
@@ -1245,14 +1513,14 @@ export default function EditPRCampaignPage() {
         <div className="flex items-center justify-between">
           <div>
             <Heading>Kampagne bearbeiten</Heading>
-            <Text className="mt-1">Du bearbeitest den Entwurf: "{campaign?.title}"</Text>
+            <Text className="mt-1">Du bearbeitest: "{campaign?.title}"</Text>
             
             {/* Campaign Metadata */}
             {campaign && (
               <div className="mt-3 flex items-center gap-4 text-sm text-gray-600">
                 <div className="flex items-center">
                   <ClockIcon className="h-4 w-4 mr-1" />
-                  Erstellt: {campaign.createdAt?.toDate().toLocaleDateString('de-DE')}
+                  Erstellt: {campaign.createdAt?.toDate ? campaign.createdAt.toDate().toLocaleDateString('de-DE') : 'Unbekannt'}
                 </div>
                 {campaign.clientId && (
                   <div className="flex items-center gap-2">
@@ -1279,190 +1547,214 @@ export default function EditPRCampaignPage() {
         </div>
       </div>
 
+      {/* Freigabe-Feedback Banner */}
+      {campaign && (
+        <ApprovalFeedbackBanner 
+          campaign={campaign}
+          onResubmit={loadCampaignData}
+          showToast={showToast}
+        />
+      )}
+
+      {/* Bearbeitungs-Warnung */}
+      {!editStatus.canEdit && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-center">
+            <ExclamationTriangleIcon className="h-5 w-5 text-red-600 mr-3" />
+            <p className="text-red-800">{editStatus.reason}</p>
+          </div>
+        </div>
+      )}
+
       <div className="lg:grid lg:grid-cols-3 lg:gap-8">
         {/* Main Form */}
-        <div className="lg:col-span-2 space-y-8">
+        <div className={clsx(
+          "lg:col-span-2 space-y-8",
+          !editStatus.canEdit && "opacity-50 pointer-events-none"
+        )}>
           <div className="p-8 border rounded-lg bg-white">
-            {/* Customer Info - READ ONLY */}
-            {campaign?.clientId && (
-              <div className="bg-gray-50 rounded-lg p-4 mb-8">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-sm text-gray-600">Kunde</Label>
-                    <div className="mt-1 flex items-center gap-3">
-                      <BuildingOfficeIcon className="h-5 w-5 text-gray-400" />
-                      <span className="font-medium text-gray-900">
-                        {campaign.clientName || 'Unbekannter Kunde'}
-                      </span>
-                      <CustomerBadge 
-                        customerId={campaign.clientId} 
-                        customerName={campaign.clientName}
-                      />
+            <fieldset disabled={!editStatus.canEdit}>
+              {/* Customer Info - READ ONLY */}
+              {campaign?.clientId && (
+                <div className="bg-gray-50 rounded-lg p-4 mb-8">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm text-gray-600">Kunde</Label>
+                      <div className="mt-1 flex items-center gap-3">
+                        <BuildingOfficeIcon className="h-5 w-5 text-gray-400" />
+                        <span className="font-medium text-gray-900">
+                          {campaign.clientName || 'Unbekannter Kunde'}
+                        </span>
+                        <CustomerBadge 
+                          customerId={campaign.clientId} 
+                          customerName={campaign.clientName}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Link 
+                        href={`/dashboard/mediathek?clientId=${campaign.clientId}`}
+                        target="_blank"
+                      >
+                        <Button plain className="text-sm">
+                          <PhotoIcon className="h-4 w-4 mr-1" />
+                          Medien verwalten
+                        </Button>
+                      </Link>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Link 
-                      href={`/dashboard/mediathek?clientId=${campaign.clientId}`}
-                      target="_blank"
-                    >
-                      <Button plain className="text-sm">
-                        <PhotoIcon className="h-4 w-4 mr-1" />
-                        Medien verwalten
-                      </Button>
-                    </Link>
+                </div>
+              )}
+
+              {/* Multi-List Selector */}
+              <MultiListSelector
+                availableLists={availableLists}
+                selectedListIds={selectedListIds}
+                onChange={setSelectedListIds}
+                loading={loading}
+              />
+
+              <div className="border-t pt-8 mt-8">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="text-base font-semibold">Pressemitteilung</h3>
+                    <Text>Bearbeite den Titel und den Inhalt deiner Mitteilung.</Text>
+                    
+                    {/* KI-Metadata */}
+                    {aiMetadata && (
+                      <div className="mt-2 p-2 bg-indigo-50 border border-indigo-200 rounded text-sm">
+                        <div className="flex items-center text-indigo-700">
+                          <SparklesIcon className="h-4 w-4 mr-1" />
+                          <span className="font-medium">Von KI generiert</span>
+                          <span className="ml-2">
+                            {new Date(aiMetadata.timestamp).toLocaleString('de-DE')}
+                          </span>
+                          {aiMetadata.context?.industry && (
+                            <span className="ml-2 px-2 py-0.5 bg-indigo-100 rounded text-xs">
+                              {aiMetadata.context.industry}
+                            </span>
+                          )}
+                          {aiMetadata.context?.tone && (
+                            <span className="ml-1 px-2 py-0.5 bg-indigo-100 rounded text-xs">
+                              {aiMetadata.context.tone}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
+                  
+                  <Button 
+                    onClick={() => setShowAiModal(true)}
+                    className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-4 py-2 rounded-lg"
+                  >
+                    <SparklesIcon className="w-5 h-5"/>
+                    KI-Assistent verwenden
+                  </Button>
+                </div>
+                
+                <div className="mt-4 space-y-4">
+                  <Field>
+                    <Label>Titel / Betreffzeile</Label>
+                    <Input value={campaignTitle} onChange={(e) => setCampaignTitle(e.target.value)} />
+                  </Field>
+                  <Field>
+                    <Label>Inhalt</Label>
+                    <RichTextEditor content={pressReleaseContent} onChange={setPressReleaseContent} />
+                  </Field>
                 </div>
               </div>
-            )}
 
-            {/* Multi-List Selector */}
-            <MultiListSelector
-              availableLists={availableLists}
-              selectedListIds={selectedListIds}
-              onChange={setSelectedListIds}
-              loading={loading}
-            />
-
-            <div className="border-t pt-8 mt-8">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="text-base font-semibold">Pressemitteilung</h3>
-                  <Text>Bearbeite den Titel und den Inhalt deiner Mitteilung.</Text>
+              {/* Assets Section */}
+              <div className="border-t pt-8 mt-8">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-base font-semibold">
+                      <DocumentTextIcon className="h-5 w-5 inline mr-2" />
+                      Medien anhängen
+                    </h3>
+                    <Text>
+                      Füge Bilder, Dokumente und andere Medien zu deiner Kampagne hinzu.
+                    </Text>
+                  </div>
                   
-                  {/* KI-Metadata */}
-                  {aiMetadata && (
-                    <div className="mt-2 p-2 bg-indigo-50 border border-indigo-200 rounded text-sm">
-                      <div className="flex items-center text-indigo-700">
-                        <SparklesIcon className="h-4 w-4 mr-1" />
-                        <span className="font-medium">Von KI generiert</span>
-                        <span className="ml-2">
-                          {new Date(aiMetadata.timestamp).toLocaleString('de-DE')}
-                        </span>
-                        {aiMetadata.context?.industry && (
-                          <span className="ml-2 px-2 py-0.5 bg-indigo-100 rounded text-xs">
-                            {aiMetadata.context.industry}
-                          </span>
-                        )}
-                        {aiMetadata.context?.tone && (
-                          <span className="ml-1 px-2 py-0.5 bg-indigo-100 rounded text-xs">
-                            {aiMetadata.context.tone}
-                          </span>
-                        )}
-                      </div>
+                  {campaign?.clientId && (
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => setShowAssetSelector(true)}
+                        className="flex items-center gap-2"
+                      >
+                        <PlusIcon className="h-5 w-5" />
+                        Medien auswählen
+                      </Button>
+                      <Link
+                        href={`/dashboard/mediathek?uploadFor=${campaign.clientId}`}
+                        target="_blank"
+                      >
+                        <Button plain className="flex items-center gap-2">
+                          <ArrowUpTrayIcon className="h-5 w-5" />
+                          Neue hochladen
+                        </Button>
+                      </Link>
                     </div>
                   )}
                 </div>
-                
-                <Button 
-                  onClick={() => setShowAiModal(true)}
-                  className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-4 py-2 rounded-lg"
-                >
-                  <SparklesIcon className="w-5 h-5"/>
-                  KI-Assistent verwenden
-                </Button>
-              </div>
-              
-              <div className="mt-4 space-y-4">
-                <Field>
-                  <Label>Titel / Betreffzeile</Label>
-                  <Input value={campaignTitle} onChange={(e) => setCampaignTitle(e.target.value)} />
-                </Field>
-                <Field>
-                  <Label>Inhalt</Label>
-                  <RichTextEditor content={pressReleaseContent} onChange={setPressReleaseContent} />
-                </Field>
-              </div>
-            </div>
 
-            {/* Assets Section */}
-            <div className="border-t pt-8 mt-8">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-base font-semibold">
-                    <DocumentTextIcon className="h-5 w-5 inline mr-2" />
-                    Medien anhängen
-                  </h3>
-                  <Text>
-                    Füge Bilder, Dokumente und andere Medien zu deiner Kampagne hinzu.
-                  </Text>
-                </div>
-                
-                {campaign?.clientId && (
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => setShowAssetSelector(true)}
-                      className="flex items-center gap-2"
-                    >
-                      <PlusIcon className="h-5 w-5" />
-                      Medien auswählen
-                    </Button>
-                    <Link
-                      href={`/dashboard/mediathek?uploadFor=${campaign.clientId}`}
-                      target="_blank"
-                    >
-                      <Button plain className="flex items-center gap-2">
-                        <ArrowUpTrayIcon className="h-5 w-5" />
-                        Neue hochladen
-                      </Button>
-                    </Link>
+                {/* Attached Assets */}
+                {attachedAssets.length > 0 ? (
+                  <div className="space-y-3">
+                    {attachedAssets.map((attachment, index) => (
+                      <div
+                        key={attachment.id}
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg animate-fade-in"
+                        style={{ animationDelay: `${index * 0.1}s` }}
+                      >
+                        <div className="flex items-center gap-3">
+                          {attachment.type === 'folder' ? (
+                            <FolderIcon className="h-6 w-6 text-gray-400" />
+                          ) : attachment.metadata.fileType?.startsWith('image/') ? (
+                            <img
+                              src={attachment.metadata.thumbnailUrl}
+                              alt={attachment.metadata.fileName}
+                              className="h-10 w-10 object-cover rounded"
+                            />
+                          ) : (
+                            <DocumentIcon className="h-6 w-6 text-gray-400" />
+                          )}
+                          <div>
+                            <p className="font-medium text-sm">
+                              {attachment.metadata.fileName || attachment.metadata.folderName}
+                            </p>
+                            {attachment.metadata.description && (
+                              <p className="text-xs text-gray-500">{attachment.metadata.description}</p>
+                            )}
+                          </div>
+                          {attachment.type === 'folder' && (
+                            <Badge color="blue" className="text-xs">Ordner</Badge>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => handleRemoveAsset(attachment.assetId || attachment.folderId || '')}
+                          className="text-red-600 hover:text-red-500 transition-colors"
+                        >
+                          <XMarkIcon className="h-5 w-5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 bg-gray-50 rounded-lg">
+                    <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-500">Noch keine Medien angehängt</p>
+                    {!campaign?.clientId && (
+                      <p className="text-sm text-gray-400 mt-1">
+                        Wähle zuerst einen Kunden aus, um Medien anzuhängen
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
-
-              {/* Attached Assets */}
-              {attachedAssets.length > 0 ? (
-                <div className="space-y-3">
-                  {attachedAssets.map((attachment, index) => (
-                    <div
-                      key={attachment.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg animate-fade-in"
-                      style={{ animationDelay: `${index * 0.1}s` }}
-                    >
-                      <div className="flex items-center gap-3">
-                        {attachment.type === 'folder' ? (
-                          <FolderIcon className="h-6 w-6 text-gray-400" />
-                        ) : attachment.metadata.fileType?.startsWith('image/') ? (
-                          <img
-                            src={attachment.metadata.thumbnailUrl}
-                            alt={attachment.metadata.fileName}
-                            className="h-10 w-10 object-cover rounded"
-                          />
-                        ) : (
-                          <DocumentIcon className="h-6 w-6 text-gray-400" />
-                        )}
-                        <div>
-                          <p className="font-medium text-sm">
-                            {attachment.metadata.fileName || attachment.metadata.folderName}
-                          </p>
-                          {attachment.metadata.description && (
-                            <p className="text-xs text-gray-500">{attachment.metadata.description}</p>
-                          )}
-                        </div>
-                        {attachment.type === 'folder' && (
-                          <Badge color="blue" className="text-xs">Ordner</Badge>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => handleRemoveAsset(attachment.assetId || attachment.folderId || '')}
-                        className="text-red-600 hover:text-red-500 transition-colors"
-                      >
-                        <XMarkIcon className="h-5 w-5" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 bg-gray-50 rounded-lg">
-                  <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-500">Noch keine Medien angehängt</p>
-                  {!campaign?.clientId && (
-                    <p className="text-sm text-gray-400 mt-1">
-                      Wähle zuerst einen Kunden aus, um Medien anzuhängen
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
+            </fieldset>
           </div>
           
           <div className="flex justify-end gap-4">
@@ -1472,16 +1764,44 @@ export default function EditPRCampaignPage() {
                 Zurück zur Übersicht
               </Button>
             </Link>
-            <Button color="indigo" disabled={!isFormValid || isSaving} onClick={handleUpdate}>
-              {isSaving ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Speichert...
-                </>
-              ) : (
-                'Änderungen speichern'
-              )}
-            </Button>
+            
+            {editStatus.canEdit ? (
+              <>
+                <Button 
+                  color="indigo" 
+                  disabled={!isFormValid || isSaving}
+                  onClick={handleUpdate}
+                >
+                  {isSaving ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Speichert...
+                    </>
+                  ) : (
+                    'Änderungen speichern'
+                  )}
+                </Button>
+                
+                {editStatus.showResubmitPrompt && (
+                  <Button
+                    onClick={async () => {
+                      await handleUpdate();
+                      await prService.resubmitForApproval(campaign!.id!);
+                      showToast('success', 'Erneut zur Freigabe gesendet');
+                      router.push('/dashboard/freigaben');
+                    }}
+                    className="bg-orange-600 hover:bg-orange-500"
+                  >
+                    <PaperAirplaneIcon className="h-4 w-4 mr-2" />
+                    Erneut zur Freigabe senden
+                  </Button>
+                )}
+              </>
+            ) : (
+              <Link href="/dashboard/pr">
+                <Button color="indigo">Zur Übersicht</Button>
+              </Link>
+            )}
           </div>
         </div>
 
@@ -1493,8 +1813,22 @@ export default function EditPRCampaignPage() {
             <div className="space-y-4">
               <div>
                 <p className="text-sm font-medium text-gray-600">Status</p>
-                <Badge color="zinc" className="mt-1">
-                  {campaign?.status === 'draft' ? 'Entwurf' : campaign?.status}
+                <Badge color={
+                  campaign?.status === 'draft' ? 'zinc' :
+                  campaign?.status === 'in_review' ? 'yellow' :
+                  campaign?.status === 'changes_requested' ? 'orange' :
+                  campaign?.status === 'approved' ? 'green' :
+                  campaign?.status === 'scheduled' ? 'blue' :
+                  campaign?.status === 'sent' ? 'indigo' :
+                  'gray'
+                } className="mt-1">
+                  {campaign?.status === 'draft' && 'Entwurf'}
+                  {campaign?.status === 'in_review' && 'In Prüfung'}
+                  {campaign?.status === 'changes_requested' && 'Änderungen erbeten'}
+                  {campaign?.status === 'approved' && 'Freigegeben'}
+                  {campaign?.status === 'scheduled' && 'Geplant'}
+                  {campaign?.status === 'sent' && 'Versendet'}
+                  {campaign?.status === 'archived' && 'Archiviert'}
                 </Badge>
               </div>
 
@@ -1528,6 +1862,15 @@ export default function EditPRCampaignPage() {
                   }
                 </p>
               </div>
+
+              {campaign?.approvalRequired && (
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Freigabe</p>
+                  <p className="font-medium text-orange-600">
+                    Kundenfreigabe erforderlich
+                  </p>
+                </div>
+              )}
 
               {aiMetadata && (
                 <div className="pt-4 border-t">
@@ -1566,13 +1909,27 @@ export default function EditPRCampaignPage() {
                   Vorschau anzeigen
                 </Button>
               </Link>
-              {campaign?.status === 'draft' && (
+              {campaign?.status === 'draft' && editStatus.canEdit && (
                 <Button 
                   className="w-full justify-center"
                   onClick={() => showToast('info', 'Coming soon!', 'E-Mail-Versand wird bald verfügbar sein.')}
                 >
                   <UsersIcon className="h-4 w-4 mr-2" />
                   Jetzt versenden
+                </Button>
+              )}
+              {campaign?.approvalData?.shareId && (
+                <Button
+                  plain
+                  className="w-full justify-center"
+                  onClick={async () => {
+                    const url = prService.getApprovalUrl(campaign.approvalData!.shareId);
+                    await navigator.clipboard.writeText(url);
+                    showToast('success', 'Link kopiert', 'Der Freigabe-Link wurde kopiert.');
+                  }}
+                >
+                  <LinkIcon className="h-4 w-4 mr-2" />
+                  Freigabe-Link kopieren
                 </Button>
               )}
             </div>
@@ -1609,7 +1966,7 @@ export default function EditPRCampaignPage() {
         onAiClick={() => setShowAiModal(true)}
         onPreviewClick={() => router.push(`/dashboard/pr/campaigns/${campaign?.id}`)}
         onSaveClick={handleUpdate}
-        disabled={!isFormValid || isSaving}
+        disabled={!isFormValid || isSaving || !editStatus.canEdit}
       />
 
       {/* Toast Notifications */}
