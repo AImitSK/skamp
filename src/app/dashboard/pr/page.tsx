@@ -332,8 +332,8 @@ function DropdownMenu({
               Vorschau
             </Link>
 
-            {/* Bearbeiten - nur für Entwürfe */}
-            {campaign.status === 'draft' && (
+            {/* Bearbeiten - für Entwürfe und changes_requested */}
+            {(campaign.status === 'draft' || campaign.status === 'changes_requested') && (
               <>
                 <button
                   onClick={() => handleAction(() => onEdit(campaign.id!))}
@@ -352,13 +352,15 @@ function DropdownMenu({
                   Bearbeiten
                 </Link>
 
-                <button
-                  onClick={() => handleAction(() => onSend(campaign))}
-                  className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors text-left"
-                >
-                  <PaperAirplaneIcon className="h-4 w-4 mr-3 text-gray-400" />
-                  Jetzt versenden
-                </button>
+                {campaign.status === 'draft' && (
+                  <button
+                    onClick={() => handleAction(() => onSend(campaign))}
+                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors text-left"
+                  >
+                    <PaperAirplaneIcon className="h-4 w-4 mr-3 text-gray-400" />
+                    Jetzt versenden
+                  </button>
+                )}
               </>
             )}
 

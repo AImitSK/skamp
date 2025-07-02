@@ -1813,6 +1813,7 @@ export default function EditPRCampaignPage() {
             <div className="space-y-4">
               <div>
                 <p className="text-sm font-medium text-gray-600">Status</p>
+
                 <Badge color={
                   campaign?.status === 'draft' ? 'zinc' :
                   campaign?.status === 'in_review' ? 'yellow' :
@@ -1820,7 +1821,7 @@ export default function EditPRCampaignPage() {
                   campaign?.status === 'approved' ? 'green' :
                   campaign?.status === 'scheduled' ? 'blue' :
                   campaign?.status === 'sent' ? 'indigo' :
-                  'gray'
+                  'zinc'
                 } className="mt-1">
                   {campaign?.status === 'draft' && 'Entwurf'}
                   {campaign?.status === 'in_review' && 'In Prüfung'}

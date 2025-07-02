@@ -654,11 +654,11 @@ async resubmitForApproval(campaignId: string): Promise<void> {
   console.log('Campaign resubmitted for approval');
 },
 
-  /**
+/**
    * Speichert Kunden-Feedback und aktualisiert den Status
    */
   async submitFeedback(shareId: string, feedback: string, author: string = 'Kunde'): Promise<void> {
-    console.log('submitFeedback called with:', { shareId, feedback, author });
+    console.log('🔍 submitFeedback called with:', { shareId, feedback, author });
     
     // Update im pr_approval_shares Dokument
     const q = query(
@@ -673,6 +673,8 @@ async resubmitForApproval(campaignId: string): Promise<void> {
     
     const docRef = snapshot.docs[0].ref;
     const currentData = snapshot.docs[0].data();
+    
+    console.log('🔍 Current approval share data:', currentData);
     
     // Füge neues Feedback zur Historie hinzu
     const newFeedback = {
@@ -690,7 +692,7 @@ async resubmitForApproval(campaignId: string): Promise<void> {
       updatedAt: serverTimestamp()
     });
     
-    console.log('Updated pr_approval_shares with status: commented');
+    console.log('✅ Updated pr_approval_shares with status: commented');
     
     // Update auch die Kampagne mit den gleichen Daten
     if (currentData.campaignId) {
@@ -701,13 +703,19 @@ async resubmitForApproval(campaignId: string): Promise<void> {
         feedbackHistory: updatedFeedbackHistory
       };
 
+      console.log('🔍 Updating campaign with:', {
+        campaignId: currentData.campaignId,
+        status: 'changes_requested',
+        approvalData: updatedApprovalData
+      });
+
       // Update mit dem kompletten neuen Objekt
       await this.update(currentData.campaignId, {
         status: 'changes_requested',
         approvalData: updatedApprovalData // Komplettes Objekt überschreiben
       });
       
-      console.log('Updated campaign with:', {
+      console.log('✅ Updated campaign with:', {
         campaignId: currentData.campaignId,
         status: 'changes_requested',
         approvalDataStatus: 'commented'

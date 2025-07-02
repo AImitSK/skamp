@@ -1,5 +1,4 @@
-// Hilfsfunktion für die Bearbeitungs-Berechtigung
-// Kann in src/lib/utils/campaign-utils.ts oder direkt in der Edit-Seite verwendet werden
+// src/lib/utils/campaign-utils.ts
 
 import { PRCampaign } from '@/types/pr';
 
@@ -11,6 +10,13 @@ export function canEditCampaign(campaign: PRCampaign): {
   reason?: string;
   showResubmitPrompt?: boolean;
 } {
+  // Debug log
+  console.log('🔍 canEditCampaign called with:', {
+    id: campaign.id,
+    status: campaign.status,
+    approvalRequired: campaign.approvalRequired
+  });
+
   // Bereits versendete Kampagnen können nicht bearbeitet werden
   if (campaign.status === 'sent' || campaign.status === 'archived') {
     return { 
@@ -32,6 +38,7 @@ export function canEditCampaign(campaign: PRCampaign): {
       
     case 'changes_requested':
       // WICHTIG: Wenn Änderungen angefordert wurden, MUSS bearbeitet werden können!
+      console.log('✅ Campaign has changes_requested - allowing edit');
       return { 
         canEdit: true,
         showResubmitPrompt: true // Zeige Hinweis zum erneuten Senden
@@ -52,6 +59,7 @@ export function canEditCampaign(campaign: PRCampaign): {
       };
       
     default:
+      console.log('⚠️ Unknown campaign status:', campaign.status);
       return { canEdit: true };
   }
 }
