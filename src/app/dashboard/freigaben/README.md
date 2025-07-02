@@ -1,109 +1,156 @@
-# Projekt-Erweiterung: Freigabe-Workflow für PR-Kampagnen
+# Freigabe-Tool - Offene Punkte
 
-Dieses Dokument beschreibt den Plan zur Implementierung eines professionellen Freigabe-Workflows in die PR-Toolbox. Ziel ist es, die Zusammenarbeit zwischen PR-Agenturen und ihren Kunden zu vereinfachen, zu professionalisieren und zu beschleunigen.
+## 🚀 Implementierte Features
 
-## Kernaussage
+- ✅ **Freigabe-Workflow** mit allen Status-Übergängen (draft → in_review → changes_requested/approved → sent)
+- ✅ **Öffentliche Freigabe-Seite** für Kunden (ohne Login unter `/freigabe/[shareId]`)
+- ✅ **Feedback-System** mit vollständiger Historie und Modal-Ansicht
+- ✅ **Bearbeitungssperren** je nach Freigabe-Status
+- ✅ **Freigaben-Center** (`/dashboard/freigaben`) zur zentralen Übersicht
+- ✅ **Medien-Integration** - Angehängte Medien werden in der Freigabe angezeigt
+- ✅ **Erneut senden** - Überarbeitete Kampagnen können erneut zur Freigabe gesendet werden
+- ✅ **Kampagnen-Detailseite** mit allen Informationen und Aktionen
 
-Wir führen einen neuen **Freigabe-Workflow** ein, der durch eine Checkbox bei der Erstellung einer Pressemitteilung ausgelöst wird. Das Kernstück ist eine **öffentliche Freigabe-Seite**, auf der Kunden ohne Login Feedback geben oder die Freigabe erteilen können. Der gesamte Prozess wird in einem neuen Navigationsbereich namens **"Freigaben"** im Dashboard verwaltet.
+## 📋 Offene Punkte
 
----
+### 1. E-Mail-Benachrichtigungen (Priorität: HOCH)
+- [ ] **E-Mail an Kunde** wenn Freigabe angefordert wird
+  - Betreff: "Neue Pressemitteilung zur Freigabe"
+  - Inhalt: Kurze Vorschau + Freigabe-Link
+  - Button: "Zur Freigabe"
+- [ ] **E-Mail an Agentur** bei Kunde-Feedback
+  - Bei Änderungswünschen: Sofort-Benachrichtigung mit Feedback-Text
+  - Bei Freigabe: Bestätigung mit Timestamp
+- [ ] **Erinnerungen** bei ausstehenden Freigaben
+  - Nach 24h, 48h, 72h
+  - Konfigurierbare Intervalle
+- [ ] **E-Mail-Templates** anlegen und verwalten
 
-## Implementierungsplan
+### 2. Freigabe-Link Management
+- [ ] **Copy-Button** direkt in der Kampagnen-Übersicht
+- [ ] **QR-Code Generator** für Freigabe-Links (für Print-Handouts)
+- [ ] **Passwortschutz** für sensible Kampagnen
+  - Optional bei Kampagnen-Erstellung
+  - Passwort-Eingabe auf Freigabe-Seite
+- [ ] **Ablaufdatum** für Freigabe-Links
+  - Konfigurierbar (24h, 7 Tage, 30 Tage)
+  - Automatische Deaktivierung
+- [ ] **Link-Verwaltung** im Freigaben-Center
+  - Aktive Links anzeigen
+  - Links manuell deaktivieren
+  - Neue Links generieren
 
-### Phase 1: Anpassung des Datenmodells & Backends
+### 3. Erweiterte Freigabe-Features
+- [ ] **Mehrere Freigeber** (Multi-Approval)
+  - Mehrere Personen müssen freigeben
+  - Reihenfolge definierbar (sequenziell/parallel)
+  - Status-Tracking pro Freigeber
+- [ ] **Inline-Kommentare**
+  - Feedback direkt im Text markieren
+  - Ähnlich wie Google Docs Kommentare
+  - Diskussions-Threads pro Kommentar
+- [ ] **Versionierung**
+  - Änderungen zwischen Versionen anzeigen (Diff-View)
+  - Versions-Historie speichern
+  - Rollback zu vorherigen Versionen
+- [ ] **PDF-Export**
+  - Freigegebene Version als PDF mit Freigabe-Stempel
+  - Datum, Zeit und Freigeber-Info
+  - Digitale Signatur optional
+- [ ] **Digitale Signatur**
+  - Integration mit DocuSign/Adobe Sign
+  - Rechtssichere Freigabe-Dokumentation
+  - Audit-Trail
 
-Das Fundament des neuen Prozesses sind Erweiterungen an den bestehenden Datenmodellen in `src/types/pr.ts` und dem dazugehörigen Backend-Service.
+### 4. Analytics & Tracking
+- [ ] **Link-Tracking**
+  - Wann wurde der Link geöffnet?
+  - Wie oft wurde er aufgerufen?
+  - Verweildauer auf der Seite
+- [ ] **Device/Browser-Tracking**
+  - Welches Gerät wurde verwendet?
+  - Browser-Information
+  - Geolocation (optional)
+- [ ] **Download-Tracking** für Medien
+  - Welche Medien wurden heruntergeladen?
+  - Download-Anzahl pro Asset
+  - Download-Historie
+- [ ] **Freigabe-Reports**
+  - Durchschnittliche Freigabe-Dauer
+  - Häufigkeit von Änderungswünschen
+  - Performance-Metriken
 
-1.  **PR-Kampagnen-Status erweitern:**
-    Das `PRCampaignStatus`-Typ-Alias wird um neue Zustände für den Freigabeprozess ergänzt.
+### 5. UX-Verbesserungen
+- [ ] **Mobile Optimierung** der Freigabe-Seite
+  - Responsive Design verbessern
+  - Touch-optimierte Buttons
+  - Vereinfachte Navigation
+- [ ] **Fortschrittsanzeige** im Freigabe-Prozess
+  - Visueller Progress-Indicator
+  - Schritte: Entwurf → Review → Freigabe → Versand
+- [ ] **E-Mail-Vorschau** in der Freigabe
+  - Zeigen wie die finale E-Mail aussehen wird
+  - Mit allen Formatierungen und Medien
+- [ ] **Quick-Edit** für kleine Änderungen
+  - Tippfehler direkt korrigieren
+  - Ohne kompletten Workflow neu zu starten
+  - Änderungs-Historie
 
-    ```typescript
-    // src/types/pr.ts
-    export type PRCampaignStatus =
-      | 'draft'               // Entwurf (aktuell)
-      | 'in_review'           // NEU: Warten auf Kunden-Feedback
-      | 'changes_requested'   // NEU: Kunde wünscht Änderungen
-      | 'approved'            // NEU: Vom Kunden freigegeben
-      | 'scheduled'           // Geplant
-      | 'sent'                // Versendet
-      | 'archived';           // Archiviert
-    ```
+### 6. Integration & Automatisierung
+- [ ] **Slack/Teams Integration**
+  - Benachrichtigungen in Channels
+  - Freigabe direkt aus Slack/Teams
+  - Status-Updates in Echtzeit
+- [ ] **Kalender-Integration**
+  - Deadlines in Google Calendar/Outlook
+  - Automatische Termin-Erstellung
+  - Erinnerungen vor Ablauf
+- [ ] **Automatische Archivierung**
+  - Nach erfolgreichem Versand
+  - Konfigurierbare Aufbewahrungsfristen
+  - Archiv-Suche
+- [ ] **Freigabe-Templates**
+  - Vordefinierte Freigabe-Workflows
+  - Für wiederkehrende Kampagnen-Typen
+  - Template-Verwaltung
 
-2.  **`PRCampaign`-Interface erweitern:**
-    Die Kampagne selbst erhält neue Felder zur Steuerung und Protokollierung des Freigabeprozesses.
+### 7. Sicherheit & Compliance
+- [ ] **Audit-Log**
+  - Alle Aktionen protokollieren
+  - Wer hat wann was gemacht?
+  - Export für Compliance
+- [ ] **Rollen & Berechtigungen**
+  - Wer darf Freigaben anfordern?
+  - Wer darf freigeben?
+  - Hierarchische Freigabe-Strukturen
+- [ ] **DSGVO-Konformität**
+  - Datenschutz-Einstellungen
+  - Löschfristen
+  - Datenexport für Kunden
 
-    ```typescript
-    // src/types/pr.ts
-    export interface PRCampaign {
-      // ... bestehende Felder ...
+## 🎯 Priorisierung
 
-      // NEU: Freigabe-Management
-      approvalRequired: boolean; // Steuert, ob der Workflow aktiv ist
-      approvalData?: {
-        shareId: string;       // Eindeutige, öffentliche ID für den Freigabe-Link
-        status: 'pending' | 'viewed' | 'commented' | 'approved';
-        feedbackHistory: Array<{
-          comment: string;
-          requestedAt: Timestamp;
-          author: string; // z.B. "Kunde"
-        }>;
-        approvedAt?: Timestamp;
-      };
-    }
-    ```
+### Phase 1 (Quick Wins)
+1. E-Mail-Benachrichtigungen (Basis)
+2. Copy-Button für Freigabe-Links
+3. Mobile Optimierung
+4. Link-Tracking (Basis)
 
-3.  **Backend-Service anpassen (`pr-service.ts`):**
-    Der `pr-service` in `src/lib/firebase/pr-service.ts` wird um drei zentrale Funktionen erweitert:
-    * `requestApproval(campaignId)`: Setzt Status auf `in_review` und erzeugt die `shareId`.
-    * `submitFeedback(shareId, feedback)`: Speichert Kunden-Feedback und setzt Status auf `changes_requested`.
-    * `approveCampaign(shareId)`: Setzt Status auf `approved` und speichert den Freigabezeitpunkt.
+### Phase 2 (Erweiterungen)
+1. Passwortschutz & Ablaufdatum
+2. Inline-Kommentare
+3. PDF-Export
+4. Analytics Dashboard
 
----
+### Phase 3 (Advanced)
+1. Multi-Approval Workflows
+2. Digitale Signatur
+3. Integrationen (Slack/Teams)
+4. Versionierung & Diff-View
 
-### Phase 2: Die öffentliche Freigabe-Seite
+## 📝 Notizen
 
-Diese Seite ist das Kernstück der Kundeninteraktion und wird unter `src/app/freigabe/[shareId]/page.tsx` erstellt. Sie erfordert keinen Login.
-
-* **Aufbau:**
-    * **Header:** Titel der Pressemitteilung und Name des Kunden.
-    * **Inhalts-Anzeige:** Schreibgeschützte Ansicht des `contentHtml` der Kampagne.
-    * **Status-Anzeige:** Eine klare visuelle Kennzeichnung des aktuellen Status (`In Prüfung`, `Freigegeben`).
-    * **Aktions-Buttons:**
-        * `Freigabe erteilen`: Ruft `approveCampaign()` auf.
-        * `Änderungen anfordern`: Blendet ein Textfeld für Feedback ein.
-    * **Feedback-Formular:** Ein `<textarea>`, um Kommentare zu senden, die an `submitFeedback()` übergeben werden.
-
----
-
-### Phase 3: Integration in den bestehenden PR-Workflow
-
-Die neuen Funktionen werden nahtlos in die bestehende Benutzeroberfläche integriert.
-
-1.  **Kampagnen-Erstellung (`.../pr/campaigns/new/page.tsx`):**
-    * Eine neue Checkbox **"Freigabe vom Kunden erforderlich"** wird hinzugefügt.
-    * Ist die Checkbox aktiv, ändert sich der "Speichern"-Button zu **"Freigabe anfordern"**. Dieser Button triggert den `requestApproval`-Prozess und zeigt der Agentur den generierten Freigabe-Link an.
-
-2.  **Versand-Sperre (`EmailSendModal.tsx`):**
-    * Der Versand einer Pressemitteilung wird blockiert, solange eine erforderliche Freigabe (`approvalRequired: true`) nicht den Status `approved` hat.
-
----
-
-### Phase 4: Der neue "Freigaben"-Bereich im Dashboard
-
-Ein zentraler Ort für Agenturen, um den Überblick über alle Freigabeprozesse zu behalten.
-
-1.  **Navigation (`.../dashboard/layout.tsx`):**
-    * Ein neuer Menüpunkt **"Freigaben"** wird in der Sidebar hinzugefügt, der auf `/dashboard/freigaben` verweist.
-
-2.  **Freigaben-Center (`.../dashboard/freigaben/page.tsx`):**
-    * Eine tabellarische Übersicht aller Kampagnen, die eine Freigabe benötigen.
-    * **Filterbare Ansicht** nach Status (`Warten auf Feedback`, `Änderungen erbeten`, `Freigegeben`).
-    * **Tabellenspalten:** Kampagnentitel, Kunde, Status (als farbige Badge), Datum der letzten Aktivität und ein direkter Link zur öffentlichen Freigabe-Seite.
-
-## Vorteile dieser Architektur
-
-* **Klarer Prozess:** Eindeutige Status-Definitionen verhindern Missverständnisse.
-* **Effizienz:** Zentrales Feedback- und Freigabe-Management ersetzt unübersichtlichen E-Mail-Verkehr.
-* **Professionalität:** Kunden interagieren über eine saubere, gebrandete und einfach zu bedienende Oberfläche.
-* **Lückenlose Dokumentation:** Alle Korrekturschleifen und die finale Freigabe werden automatisch und nachvollziehbar protokolliert.
-* **Skalierbarkeit:** Die Architektur ist leicht auf andere Freigabe-Workflows (z.B. für Designs, Newsletter) übertragbar.
+- Die Basis-Funktionalität des Freigabe-Workflows ist vollständig implementiert
+- Die wichtigsten nächsten Schritte sind E-Mail-Benachrichtigungen für einen reibungslosen Workflow
+- Mobile Optimierung ist wichtig, da Kunden oft unterwegs freigeben möchten
+- Viele Features können schrittweise hinzugefügt werden ohne die Grundfunktionalität zu beeinträchtigen
