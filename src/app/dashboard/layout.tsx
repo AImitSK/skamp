@@ -63,7 +63,7 @@ export default function DashboardLayout({
     { name: "Listen", href: "/dashboard/listen", icon: QueueListIcon },
     { name: "PR-Tools", href: "/dashboard/pr", icon: MegaphoneIcon },
     { name: "Freigaben", href: "/dashboard/freigaben", icon: ShieldCheckIcon },
-    { name: "Freigaben", href: "/dashboard/calendar", icon: CalendarDaysIcon },
+    { name: "Kalender", href: "/dashboard/calendar", icon: CalendarDaysIcon },
     { name: "Mediathek", href: "/dashboard/mediathek", icon: PhotoIcon },
     { name: "Einstellungen", href: "/dashboard/settings/boilerplates", icon: Cog6ToothIcon },
   ];

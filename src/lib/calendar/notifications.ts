@@ -1,22 +1,7 @@
 // src/lib/calendar/notifications.ts
 import { prService } from '@/lib/firebase/pr-service';
 import { PRCampaign } from '@/types/pr';
-
-// Event Types
-export interface CalendarEvent {
-  id: string;
-  title: string;
-  date: Date;
-  type: 'campaign_scheduled' | 'campaign_sent' | 'approval_pending' | 'approval_overdue' | 'task';
-  status?: 'pending' | 'completed' | 'overdue';
-  campaignId?: string;
-  clientName?: string;
-  metadata?: {
-    campaignTitle?: string;
-    daysOverdue?: number;
-    recipientCount?: number;
-  };
-}
+import { CalendarEvent } from '@/types/calendar';
 
 export interface Notification {
   id: string;
@@ -49,7 +34,7 @@ async function getUpcomingEvents(userId: string, hoursAhead: number = 24): Promi
           date: scheduledDate,
           type: 'campaign_scheduled',
           campaignId: campaign.id,
-          clientName: campaign.clientName,
+          clientId: campaign.clientId,
           metadata: {
             campaignTitle: campaign.title,
             recipientCount: campaign.recipientCount
@@ -71,7 +56,7 @@ async function getUpcomingEvents(userId: string, hoursAhead: number = 24): Promi
             type: 'approval_overdue',
             status: 'overdue',
             campaignId: campaign.id,
-            clientName: campaign.clientName,
+            clientId: campaign.clientId,
             metadata: {
               campaignTitle: campaign.title,
               daysOverdue: daysSinceRequest - 7
@@ -90,7 +75,7 @@ async function getUpcomingEvents(userId: string, hoursAhead: number = 24): Promi
         type: 'approval_pending',
         status: 'pending',
         campaignId: campaign.id,
-        clientName: campaign.clientName,
+        clientId: campaign.clientId,
         metadata: {
           campaignTitle: campaign.title
         }
@@ -162,13 +147,36 @@ export const getEventsForDateRange = async (
   startDate: Date, 
   endDate: Date
 ): Promise<CalendarEvent[]> => {
+  console.log('🔍 getEventsForDateRange Debug:', {
+    userId,
+    startDate: startDate.toISOString(),
+    endDate: endDate.toISOString()
+  });
+  
   const campaigns = await prService.getAll(userId);
+  console.log('📊 Gefundene Kampagnen:', campaigns.length);
+  
   const events: CalendarEvent[] = [];
+  const now = new Date();
   
   campaigns.forEach((campaign: PRCampaign) => {
+    console.log('🔎 Prüfe Kampagne:', {
+      id: campaign.id,
+      title: campaign.title,
+      status: campaign.status,
+      scheduledAt: campaign.scheduledAt?.toDate?.(),
+      sentAt: campaign.sentAt?.toDate?.()
+    });
+    
     // Versendete Kampagnen
     if (campaign.sentAt) {
       const sentDate = campaign.sentAt.toDate();
+      console.log('📤 Versendete Kampagne gefunden:', {
+        title: campaign.title,
+        sentDate: sentDate.toISOString(),
+        inRange: sentDate >= startDate && sentDate <= endDate
+      });
+      
       if (sentDate >= startDate && sentDate <= endDate) {
         events.push({
           id: `campaign-sent-${campaign.id}`,
@@ -176,7 +184,7 @@ export const getEventsForDateRange = async (
           date: sentDate,
           type: 'campaign_sent',
           campaignId: campaign.id,
-          clientName: campaign.clientName,
+          clientId: campaign.clientId,
           metadata: {
             campaignTitle: campaign.title,
             recipientCount: campaign.recipientCount
@@ -188,6 +196,12 @@ export const getEventsForDateRange = async (
     // Geplante Kampagnen
     if (campaign.scheduledAt && campaign.status === 'scheduled') {
       const scheduledDate = campaign.scheduledAt.toDate();
+      console.log('📅 Geplante Kampagne gefunden:', {
+        title: campaign.title,
+        scheduledDate: scheduledDate.toISOString(),
+        inRange: scheduledDate >= startDate && scheduledDate <= endDate
+      });
+      
       if (scheduledDate >= startDate && scheduledDate <= endDate) {
         events.push({
           id: `campaign-scheduled-${campaign.id}`,
@@ -195,7 +209,7 @@ export const getEventsForDateRange = async (
           date: scheduledDate,
           type: 'campaign_scheduled',
           campaignId: campaign.id,
-          clientName: campaign.clientName,
+          clientId: campaign.clientId,
           metadata: {
             campaignTitle: campaign.title,
             recipientCount: campaign.recipientCount
@@ -203,8 +217,77 @@ export const getEventsForDateRange = async (
         });
       }
     }
+    
+    // Freigaben (immer im aktuellen Monat anzeigen wenn in Review)
+    if (campaign.status === 'in_review') {
+      console.log('⏳ In Review Kampagne gefunden:', {
+        title: campaign.title,
+        updatedAt: campaign.updatedAt?.toDate?.()
+      });
+      
+      const reviewDate = campaign.updatedAt?.toDate() || now;
+      
+      // Zeige In-Review Kampagnen im aktuellen Zeitraum
+      if (reviewDate >= startDate && reviewDate <= endDate || !campaign.updatedAt) {
+        events.push({
+          id: `approval-pending-${campaign.id}`,
+          title: `⏳ Freigabe: ${campaign.title}`,
+          date: new Date(now.getFullYear(), now.getMonth(), now.getDate()), // Heute
+          type: 'approval_pending',
+          status: 'pending',
+          campaignId: campaign.id,
+          clientId: campaign.clientId,
+          metadata: {
+            campaignTitle: campaign.title
+          }
+        });
+      }
+      
+      // Prüfe auf überfällige Freigaben
+      if (campaign.approvalData?.feedbackHistory?.[0]?.requestedAt) {
+        const requestDate = campaign.approvalData.feedbackHistory[0].requestedAt.toDate();
+        const daysSinceRequest = Math.floor((now.getTime() - requestDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (daysSinceRequest > 7) {
+          events.push({
+            id: `approval-overdue-${campaign.id}`,
+            title: `⚠️ Überfällig: ${campaign.title}`,
+            date: new Date(now.getFullYear(), now.getMonth(), now.getDate()), // Heute
+            type: 'approval_overdue',
+            status: 'overdue',
+            priority: 'urgent',
+            campaignId: campaign.id,
+            clientId: campaign.clientId,
+            metadata: {
+              campaignTitle: campaign.title,
+              daysOverdue: daysSinceRequest - 7
+            }
+          });
+        }
+      }
+    }
+    
+    // Draft Kampagnen als "Geplant" anzeigen (optional)
+    if (campaign.status === 'draft' && campaign.createdAt) {
+      const createdDate = campaign.createdAt.toDate();
+      // Zeige Drafts, die in diesem Monat erstellt wurden
+      if (createdDate >= startDate && createdDate <= endDate) {
+        events.push({
+          id: `campaign-draft-${campaign.id}`,
+          title: `📝 Entwurf: ${campaign.title}`,
+          date: createdDate,
+          type: 'task', // Verwende task type für Drafts
+          campaignId: campaign.id,
+          clientId: campaign.clientId,
+          metadata: {
+            campaignTitle: campaign.title
+          }
+        });
+      }
+    }
   });
   
+  console.log('✅ Finale Events:', events.length, events);
   return events.sort((a, b) => a.date.getTime() - b.date.getTime());
 };
 
@@ -217,7 +300,7 @@ export const createEventFromCampaign = (campaign: PRCampaign): CalendarEvent | n
       date: campaign.scheduledAt.toDate(),
       type: 'campaign_scheduled',
       campaignId: campaign.id,
-      clientName: campaign.clientName,
+      clientId: campaign.clientId,
       metadata: {
         campaignTitle: campaign.title,
         recipientCount: campaign.recipientCount
@@ -232,7 +315,7 @@ export const createEventFromCampaign = (campaign: PRCampaign): CalendarEvent | n
       date: campaign.sentAt.toDate(),
       type: 'campaign_sent',
       campaignId: campaign.id,
-      clientName: campaign.clientName,
+      clientId: campaign.clientId,
       metadata: {
         campaignTitle: campaign.title,
         recipientCount: campaign.recipientCount

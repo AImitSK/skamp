@@ -1,6 +1,8 @@
 // Komponente für die Anzeige des Freigabe-Status in der Kampagnen-Bearbeitungsseite
 // Kann in src/app/dashboard/pr/campaigns/edit/[id]/page.tsx verwendet werden
 
+"use client";
+
 import { PRCampaign } from '@/types/pr';
 import { Button } from '@/components/button';
 import { 
@@ -13,6 +15,8 @@ import {
 import { prService } from '@/lib/firebase/pr-service';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+
+
 
 interface ApprovalFeedbackBannerProps {
   campaign: PRCampaign;

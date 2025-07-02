@@ -18,10 +18,10 @@ export interface CalendarEvent {
   
   // Metadaten
   metadata?: {
-    campaignTitle?: string;
-    clientName?: string;
-    recipientCount?: number;
-    daysOverdue?: number;
+  campaignTitle?: string;
+  clientName?: string;  // ← Diese Zeile hinzufügen
+  recipientCount?: number;
+  daysOverdue?: number;
     assignedTo?: string[];
     description?: string;
     location?: string;
@@ -50,6 +50,7 @@ export interface CalendarFilter {
   startDate?: Date;
   endDate?: Date;
   searchTerm?: string;
+  
 }
 
 export interface CalendarView {
