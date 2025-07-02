@@ -1,7 +1,7 @@
 // src/app/dashboard/calendar/page.tsx
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Heading } from '@/components/heading';
 import { Text } from '@/components/text';
@@ -19,9 +19,12 @@ import {
   FunnelIcon
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
+import ReactDOM from 'react-dom';
 import { getEventsForDateRange } from '@/lib/calendar/notifications';
 import { CalendarEvent } from '@/types/calendar';
 import { EventDetailsModal } from '@/components/calendar/EventDetailsModal';
+import { ApprovalWidget } from '@/components/calendar/ApprovalWidget';
+import { EventHoverCard } from '@/components/calendar/EventHoverCard';
 import { prService } from '@/lib/firebase/pr-service';
 import { Timestamp } from 'firebase/firestore';
 
@@ -43,6 +46,48 @@ const getDaysInMonth = (date: Date) => {
 
 // Event Card Component
 function EventCard({ event, onClick }: { event: CalendarEvent; onClick: () => void }) {
+  const [isHovered, setIsHovered] = useState(false);
+  const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 });
+  const cardRef = useRef<HTMLDivElement>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleMouseEnter = (e: React.MouseEvent) => {
+    // Clear any existing timeout
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    
+    // Set timeout for hover delay
+    hoverTimeoutRef.current = setTimeout(() => {
+      if (cardRef.current) {
+        const rect = cardRef.current.getBoundingClientRect();
+        setHoverPosition({
+          x: rect.left + rect.width / 2,
+          y: rect.top
+        });
+        setIsHovered(true);
+      }
+    }, 500); // 500ms delay before showing
+  };
+
+  const handleMouseLeave = () => {
+    // Clear timeout if mouse leaves before delay
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    setIsHovered(false);
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const getEventIcon = () => {
     switch (event.type) {
       case 'campaign_scheduled':
@@ -74,18 +119,33 @@ function EventCard({ event, onClick }: { event: CalendarEvent; onClick: () => vo
   };
 
   return (
-    <div 
-      onClick={onClick}
-      className={clsx(
-        "text-xs p-1 rounded border mb-1 truncate cursor-pointer transition-all",
-        getEventColor()
-      )}
-    >
-      <div className="flex items-center gap-1">
-        {getEventIcon()}
-        <span className="truncate">{event.title}</span>
+    <>
+      <div 
+        ref={cardRef}
+        onClick={onClick}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        className={clsx(
+          "text-xs p-1 rounded border mb-1 truncate cursor-pointer transition-all",
+          getEventColor()
+        )}
+      >
+        <div className="flex items-center gap-1">
+          {getEventIcon()}
+          <span className="truncate">{event.title}</span>
+        </div>
       </div>
-    </div>
+      
+      {/* Hover Card Portal */}
+      {typeof window !== 'undefined' && ReactDOM.createPortal(
+        <EventHoverCard 
+          event={event} 
+          isVisible={isHovered} 
+          position={hoverPosition} 
+        />,
+        document.body
+      )}
+    </>
   );
 }
 
@@ -724,6 +784,19 @@ export default function CalendarDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Freigabe-Widget unter dem Kalender mit voller Breite */}
+      {user?.uid && (
+        <div className="mt-6">
+          <ApprovalWidget 
+            userId={user.uid} 
+            onRefresh={() => {
+              // Kalender-Events neu laden
+              window.location.reload();
+            }}
+          />
+        </div>
+      )}
 
       {/* Event Details Modal */}
       <EventDetailsModal 
