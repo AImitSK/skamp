@@ -2,6 +2,8 @@
 import { prService } from '@/lib/firebase/pr-service';
 import { PRCampaign } from '@/types/pr';
 import { CalendarEvent } from '@/types/calendar';
+import { taskService } from '@/lib/firebase/task-service';
+import { Task } from '@/types/tasks';
 
 export interface Notification {
   id: string;
@@ -159,6 +161,17 @@ export const getEventsForDateRange = async (
   const events: CalendarEvent[] = [];
   const now = new Date();
   
+  // Lade Tasks
+  let tasks: Task[] = [];
+  try {
+    console.log('🔄 Versuche Tasks zu laden...');
+    tasks = await taskService.getByDateRange(userId, startDate, endDate);
+    console.log('📊 Gefundene Tasks:', tasks.length);
+    console.log('📝 Tasks Detail:', tasks);
+  } catch (error) {
+    console.error('⚠️ Fehler beim Laden der Tasks:', error);
+  }
+  
   campaigns.forEach((campaign: PRCampaign) => {
     console.log('🔎 Prüfe Kampagne:', {
       id: campaign.id,
@@ -187,6 +200,7 @@ export const getEventsForDateRange = async (
           clientId: campaign.clientId,
           metadata: {
             campaignTitle: campaign.title,
+            clientName: campaign.clientName,
             recipientCount: campaign.recipientCount
           }
         });
@@ -212,6 +226,7 @@ export const getEventsForDateRange = async (
           clientId: campaign.clientId,
           metadata: {
             campaignTitle: campaign.title,
+            clientName: campaign.clientName,
             recipientCount: campaign.recipientCount
           }
         });
@@ -238,7 +253,8 @@ export const getEventsForDateRange = async (
           campaignId: campaign.id,
           clientId: campaign.clientId,
           metadata: {
-            campaignTitle: campaign.title
+            campaignTitle: campaign.title,
+            clientName: campaign.clientName
           }
         });
       }
@@ -260,6 +276,7 @@ export const getEventsForDateRange = async (
             clientId: campaign.clientId,
             metadata: {
               campaignTitle: campaign.title,
+              clientName: campaign.clientName,
               daysOverdue: daysSinceRequest - 7
             }
           });
@@ -280,10 +297,49 @@ export const getEventsForDateRange = async (
           campaignId: campaign.id,
           clientId: campaign.clientId,
           metadata: {
-            campaignTitle: campaign.title
+            campaignTitle: campaign.title,
+            clientName: campaign.clientName
           }
         });
       }
+    }
+  });
+  
+  // Verarbeite Tasks
+  tasks.forEach((task: Task) => {
+    if (task.dueDate) {
+      const dueDate = task.dueDate.toDate();
+      
+      // Priorität in Event-Priorität umwandeln
+      let priority: 'low' | 'medium' | 'high' | 'urgent' = 'medium';
+      if (task.priority === 'urgent') priority = 'urgent';
+      else if (task.priority === 'high') priority = 'high';
+      else if (task.priority === 'low') priority = 'low';
+      
+      // Finde den Kundennamen falls verknüpft
+      let clientName: string | undefined;
+      if (task.linkedClientId) {
+        const linkedCampaign = campaigns.find(c => c.clientId === task.linkedClientId);
+        clientName = linkedCampaign?.clientName;
+      }
+      
+      events.push({
+        id: `task-${task.id}`,
+        title: `📋 ${task.title}`,
+        date: dueDate,
+        type: 'task',
+        status: task.status === 'completed' ? 'completed' : 'pending',
+        priority: priority,
+        taskId: task.id,
+        clientId: task.linkedClientId,
+        campaignId: task.linkedCampaignId,
+        metadata: {
+          description: task.description,
+          clientName: clientName
+        }
+      });
+      
+      console.log(`✅ Task als Event hinzugefügt: ${task.title}`);
     }
   });
   
@@ -303,6 +359,7 @@ export const createEventFromCampaign = (campaign: PRCampaign): CalendarEvent | n
       clientId: campaign.clientId,
       metadata: {
         campaignTitle: campaign.title,
+        clientName: campaign.clientName,
         recipientCount: campaign.recipientCount
       }
     };
@@ -318,6 +375,7 @@ export const createEventFromCampaign = (campaign: PRCampaign): CalendarEvent | n
       clientId: campaign.clientId,
       metadata: {
         campaignTitle: campaign.title,
+        clientName: campaign.clientName,
         recipientCount: campaign.recipientCount
       }
     };
