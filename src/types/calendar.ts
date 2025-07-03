@@ -18,14 +18,20 @@ export interface CalendarEvent {
   
   // Metadaten
   metadata?: {
-  campaignTitle?: string;
-  clientName?: string;  // ← Diese Zeile hinzufügen
-  recipientCount?: number;
-  daysOverdue?: number;
+    campaignTitle?: string;
+    clientName?: string;
+    recipientCount?: number;
+    daysOverdue?: number;
     assignedTo?: string[];
     description?: string;
     location?: string;
     reminderMinutesBefore?: number;
+    
+    // NEU: Zeit-spezifische Felder für Tasks
+    isAllDay?: boolean;
+    startTime?: string; // Format: "HH:MM"
+    endTime?: string;   // Format: "HH:MM"
+    duration?: number;  // Dauer in Minuten (alternativ zu endTime)
   };
   
   // Styling
@@ -134,6 +140,29 @@ export const EventFactories = {
       daysOverdue
     },
     color: '#dc2626'
+  }),
+  
+  // NEU: Task Factory mit Zeitunterstützung
+  task: (task: any): CalendarEvent => ({
+    id: `task-${task.id}`,
+    title: `📋 ${task.title}`,
+    date: task.dueDate?.toDate() || new Date(),
+    type: 'task',
+    taskId: task.id,
+    status: task.status === 'completed' ? 'completed' : 'pending',
+    priority: task.priority,
+    clientId: task.linkedClientId,
+    campaignId: task.linkedCampaignId,
+    metadata: {
+      description: task.description,
+      clientName: task.clientName,
+      isAllDay: task.isAllDay !== false, // Default ist true
+      startTime: task.startTime,
+      endTime: task.endTime,
+      duration: task.duration
+    },
+    color: '#8b5cf6',
+    allDay: task.isAllDay !== false
   })
 };
 

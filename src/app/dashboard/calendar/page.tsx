@@ -13,10 +13,25 @@ import { getEventsForDateRange } from '@/lib/calendar/notifications';
 import { CalendarEvent, EVENT_ICONS } from '@/types/calendar';
 import { EventDetailsModal } from '@/components/calendar/EventDetailsModal';
 import { OverdueTasksWidget } from '@/components/calendar/OverdueTasksWidget';
-import { ApprovalWidget } from '@/components/calendar/ApprovalWidget';
 import { prService } from '@/lib/firebase/pr-service';
 import { taskService } from '@/lib/firebase/task-service';
-import { Task, TaskPriority } from '@/types/tasks';
+// Temporäre Type-Definitionen falls tasks.ts nicht existiert
+type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+interface Task {
+  id?: string;
+  userId: string;
+  title: string;
+  description?: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  priority: TaskPriority;
+  dueDate?: Timestamp;
+  startTime?: string;
+  endTime?: string;
+  isAllDay?: boolean;
+  linkedCampaignId?: string;
+  linkedClientId?: string;
+}
+// import { Task, TaskPriority } from '@/types/tasks';
 import { Timestamp } from 'firebase/firestore';
 import { companiesService } from '@/lib/firebase/crm-service';
 import { Company } from '@/types/crm';
@@ -27,7 +42,7 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { EventDropArg, EventClickArg } from '@fullcalendar/core'; // <-- KORRIGIERTER IMPORT
+import { EventDropArg, EventClickArg } from '@fullcalendar/core';
 
 // Quick Task Modal (kann unverändert bleiben oder in eine eigene Datei ausgelagert werden)
 function QuickTaskModal({
@@ -51,6 +66,9 @@ function QuickTaskModal({
     const [linkedCampaignId, setLinkedCampaignId] = useState('');
     const [linkedClientId, setLinkedClientId] = useState('');
     const [priority, setPriority] = useState<TaskPriority>('medium');
+    const [isAllDay, setIsAllDay] = useState(true);
+    const [startTime, setStartTime] = useState('09:00');
+    const [endTime, setEndTime] = useState('10:00');
 
     useEffect(() => {
       if (defaultDate) {
@@ -69,7 +87,10 @@ function QuickTaskModal({
         date,
         linkedCampaignId,
         linkedClientId,
-        priority
+        priority,
+        isAllDay,
+        startTime: !isAllDay ? startTime : undefined,
+        endTime: !isAllDay ? endTime : undefined
       });
       // Reset form
       setTitle('');
@@ -77,6 +98,9 @@ function QuickTaskModal({
       setLinkedCampaignId('');
       setLinkedClientId('');
       setPriority('medium');
+      setIsAllDay(true);
+      setStartTime('09:00');
+      setEndTime('10:00');
       onClose();
     };
 
@@ -133,18 +157,40 @@ function QuickTaskModal({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Priorität
+                  Zeiteinstellungen
                 </label>
-                <select
-                  value={priority}
-                  onChange={(e) => setPriority(e.target.value as TaskPriority)}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#005fab] focus:outline-none focus:ring-1 focus:ring-[#005fab]"
-                >
-                  <option value="low">Niedrig</option>
-                  <option value="medium">Mittel</option>
-                  <option value="high">Hoch</option>
-                  <option value="urgent">Dringend</option>
-                </select>
+                <label className="flex items-center gap-2 cursor-pointer mb-2">
+                  <input
+                    type="checkbox"
+                    checked={isAllDay}
+                    onChange={(e) => setIsAllDay(e.target.checked)}
+                    className="rounded"
+                  />
+                  <span className="text-sm">Ganztägig</span>
+                </label>
+                
+                {!isAllDay && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">Von</label>
+                      <input
+                        type="time"
+                        value={startTime}
+                        onChange={(e) => setStartTime(e.target.value)}
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#005fab] focus:outline-none focus:ring-1 focus:ring-[#005fab]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">Bis</label>
+                      <input
+                        type="time"
+                        value={endTime}
+                        onChange={(e) => setEndTime(e.target.value)}
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#005fab] focus:outline-none focus:ring-1 focus:ring-[#005fab]"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -268,16 +314,44 @@ export default function CalendarDashboard() {
         if (selectedClientIds.length > 0 && (!event.clientId || !selectedClientIds.includes(event.clientId))) return false;
         return true;
       })
-      .map(event => ({ // Mappe Events in das FullCalendar-Format
-        id: event.id,
-        title: event.title,
-        start: event.date,
-        allDay: true,
-        extendedProps: {
-          ...event
-        },
-        className: `fc-event-${event.type}`,
-      }));
+      .map(event => {
+        // Basis-Event-Objekt
+        const calendarEvent: any = {
+          id: event.id,
+          title: event.title,
+          allDay: true,
+          extendedProps: {
+            ...event
+          },
+          className: `fc-event-${event.type}`,
+        };
+
+        // Spezielle Behandlung für Tasks mit Zeiten
+        if (event.type === 'task' && event.metadata) {
+          const meta = event.metadata as any; // Type assertion für flexibleren Zugriff
+          if (meta.startTime && meta.endTime && !meta.isAllDay) {
+            const startDate = new Date(event.date);
+            const endDate = new Date(event.date);
+            
+            // Setze Start- und Endzeiten
+            const [startHour, startMinute] = meta.startTime.split(':').map(Number);
+            const [endHour, endMinute] = meta.endTime.split(':').map(Number);
+            
+            startDate.setHours(startHour, startMinute, 0, 0);
+            endDate.setHours(endHour, endMinute, 0, 0);
+            
+            calendarEvent.start = startDate;
+            calendarEvent.end = endDate;
+            calendarEvent.allDay = false;
+          } else {
+            calendarEvent.start = event.date;
+          }
+        } else {
+          calendarEvent.start = event.date;
+        }
+
+        return calendarEvent;
+      });
   }, [events, filters, selectedClientIds]);
 
   // Client-Optionen für das Dropdown
@@ -335,6 +409,9 @@ export default function CalendarDashboard() {
         status: 'pending',
         priority: taskData.priority,
         dueDate: taskData.date ? Timestamp.fromDate(taskData.date) : undefined,
+        isAllDay: taskData.isAllDay !== undefined ? taskData.isAllDay : true,
+        startTime: taskData.startTime,
+        endTime: taskData.endTime
       };
       if (taskData.linkedCampaignId) (newTask as any).linkedCampaignId = taskData.linkedCampaignId;
       if (taskData.linkedClientId) (newTask as any).linkedClientId = taskData.linkedClientId;
@@ -378,8 +455,8 @@ export default function CalendarDashboard() {
         </div>
       </div>
 
-      {/* --- WIDGETS AN NEUER POSITION --- */}
-      <div className="space-y-6 mb-6">
+      {/* --- NUR NOCH OVERDUE TASKS WIDGET --- */}
+      <div className="mb-6">
         {user?.uid && (
             <OverdueTasksWidget
             key={`overdue-${refreshKey}`}
@@ -403,17 +480,62 @@ export default function CalendarDashboard() {
             onRefresh={handleDataRefresh}
             />
         )}
-        {user?.uid && (
-            <ApprovalWidget
-                key={`approval-${refreshKey}`}
-                userId={user.uid}
-                onRefresh={handleDataRefresh}
-            />
-        )}
       </div>
       {/* --- ENDE WIDGETS --- */}
 
-      {/* Filter Box */}
+
+      {/* FullCalendar Integration */}
+      <div className="bg-white rounded-lg border p-4">
+        <style>
+            {`
+                /* Event Backgrounds */
+                .fc-event-campaign_scheduled { background-color: #dbeafe; border-color: #bfdbfe; }
+                .fc-event-campaign_sent { background-color: #d1fae5; border-color: #a7f3d0; }
+                .fc-event-approval_pending, .fc-event-approval_overdue { background-color: #fef9c3; border-color: #fef08a; }
+                .fc-event-task { background-color: #e9d5ff; border-color: #d8b4fe; }
+
+                /* Textfarbe explizit für die Text-Elemente setzen */
+                .fc-event-campaign_scheduled .fc-event-title, .fc-event-campaign_scheduled .fc-event-time, .fc-event-campaign_scheduled span { color: #1e40af !important; }
+                .fc-event-campaign_sent .fc-event-title, .fc-event-campaign_sent .fc-event-time, .fc-event-campaign_sent span { color: #065f46 !important; }
+                .fc-event-approval_pending .fc-event-title, .fc-event-approval_pending .fc-event-time, .fc-event-approval_pending span { color: #854d0e !important; }
+                .fc-event-approval_overdue .fc-event-title, .fc-event-approval_overdue .fc-event-time, .fc-event-approval_overdue span { color: #991b1b !important; }
+                .fc-event-task .fc-event-title, .fc-event-task .fc-event-time, .fc-event-task span { color: #6b21a8 !important; }
+
+                /* Allgemeine Stile */
+                .fc-daygrid-event { white-space: normal; cursor: pointer; padding: 2px 4px; }
+                .fc-event-title { font-weight: 500; }
+                .fc .fc-toolbar-title { font-size: 1.25rem; font-weight: 600; }
+                .fc .fc-button-primary { background-color: #005fab !important; border-color: #005fab !important; }
+                
+                /* Erhöhte Zellenhöhe */
+                .fc .fc-daygrid-body-unbalanced .fc-daygrid-day-frame { min-height: 100px; }
+                .fc .fc-timegrid-slot { height: 60px; }
+            `}
+        </style>
+        <FullCalendar
+            key={`calendar-${refreshKey}`}
+            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+            initialView="dayGridMonth"
+            headerToolbar={{
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            }}
+            events={filteredEventsForCalendar}
+            locale="de"
+            buttonText={{ today: 'Heute', month: 'Monat', week: 'Woche', day: 'Tag' }}
+            editable={true}
+            droppable={true}
+            eventDrop={handleEventDrop}
+            eventClick={handleEventClick}
+            dateClick={handleDateClick}
+            eventContent={renderEventContent}
+            aspectRatio={2.2}
+            dayMaxEvents={true}
+        />
+      </div>
+
+            {/* Filter Box */}
       <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-lg p-4 my-6 space-y-4">
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="w-full lg:w-64">
@@ -442,52 +564,6 @@ export default function CalendarDashboard() {
         </div>
       </div>
 
-      {/* FullCalendar Integration */}
-      <div className="bg-white rounded-lg border p-4">
-        <style>
-            {`
-                /* Event Backgrounds */
-                .fc-event-campaign_scheduled { background-color: #dbeafe; border-color: #bfdbfe; }
-                .fc-event-campaign_sent { background-color: #d1fae5; border-color: #a7f3d0; }
-                .fc-event-approval_pending, .fc-event-approval_overdue { background-color: #fef9c3; border-color: #fef08a; }
-                .fc-event-task { background-color: #e9d5ff; border-color: #d8b4fe; }
-
-                /* Textfarbe explizit für die Text-Elemente setzen */
-                .fc-event-campaign_scheduled .fc-event-title, .fc-event-campaign_scheduled .fc-event-time, .fc-event-campaign_scheduled span { color: #1e40af !important; }
-                .fc-event-campaign_sent .fc-event-title, .fc-event-campaign_sent .fc-event-time, .fc-event-campaign_sent span { color: #065f46 !important; }
-                .fc-event-approval_pending .fc-event-title, .fc-event-approval_pending .fc-event-time, .fc-event-approval_pending span { color: #854d0e !important; }
-                .fc-event-approval_overdue .fc-event-title, .fc-event-approval_overdue .fc-event-time, .fc-event-approval_overdue span { color: #991b1b !important; }
-                .fc-event-task .fc-event-title, .fc-event-task .fc-event-time, .fc-event-task span { color: #6b21a8 !important; }
-
-                /* Allgemeine Stile */
-                .fc-daygrid-event { white-space: normal; cursor: pointer; padding: 2px 4px; }
-                .fc-event-title { font-weight: 500; }
-                .fc .fc-toolbar-title { font-size: 1.25rem; font-weight: 600; }
-                .fc .fc-button-primary { background-color: #005fab !important; border-color: #005fab !important; }
-            `}
-        </style>
-        <FullCalendar
-            key={`calendar-${refreshKey}`}
-            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-            initialView="dayGridMonth"
-            headerToolbar={{
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth,timeGridWeek,timeGridDay'
-            }}
-            events={filteredEventsForCalendar}
-            locale="de"
-            buttonText={{ today: 'Heute', month: 'Monat', week: 'Woche', day: 'Tag' }}
-            editable={true}
-            droppable={true}
-            eventDrop={handleEventDrop}
-            eventClick={handleEventClick}
-            dateClick={handleDateClick}
-            eventContent={renderEventContent}
-            aspectRatio={2.2}
-            dayMaxEvents={true}
-        />
-      </div>
 
       <EventDetailsModal
         event={selectedEvent}

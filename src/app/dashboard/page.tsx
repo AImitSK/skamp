@@ -7,9 +7,12 @@ import { Text } from "@/components/text";
 import { Badge } from "@/components/badge";
 import { DescriptionList, DescriptionTerm, DescriptionDetails } from "@/components/description-list";
 import { Divider } from "@/components/divider";
+import { ApprovalWidget } from '@/components/calendar/ApprovalWidget';
+import { useState } from 'react';
 
 export default function DashboardHomePage() {
   const { user } = useAuth();
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Formatiere das Erstellungsdatum
   const accountCreated = user?.metadata?.creationTime
@@ -30,6 +33,10 @@ export default function DashboardHomePage() {
       })
     : "Unbekannt";
 
+  const handleDataRefresh = () => {
+    setRefreshKey(prev => prev + 1);
+  };
+
   return (
     <div>
       <div className="mb-8">
@@ -39,6 +46,17 @@ export default function DashboardHomePage() {
           du wieder da bist!
         </Text>
       </div>
+
+      {/* Freigabe-Widget */}
+      {user?.uid && (
+        <div className="mb-8">
+          <ApprovalWidget
+            key={`approval-${refreshKey}`}
+            userId={user.uid}
+            onRefresh={handleDataRefresh}
+          />
+        </div>
+      )}
 
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Schnellzugriff */}

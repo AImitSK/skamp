@@ -16,6 +16,11 @@ export interface Task {
   
   // Zeitdaten
   dueDate?: Timestamp;
+  startTime?: string; // Format: "HH:MM" z.B. "14:30"
+  endTime?: string;   // Format: "HH:MM" z.B. "15:30"
+  isAllDay?: boolean; // Explizit markieren ob ganztägig
+  duration?: number;  // Dauer in Minuten (alternativ zu endTime)
+  
   completedAt?: Timestamp;
   reminder?: Timestamp;
   

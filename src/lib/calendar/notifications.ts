@@ -5,6 +5,7 @@ import { CalendarEvent } from '@/types/calendar';
 import { taskService } from '@/lib/firebase/task-service';
 import { Task } from '@/types/tasks';
 
+
 export interface Notification {
   id: string;
   title: string;
@@ -335,7 +336,12 @@ export const getEventsForDateRange = async (
         campaignId: task.linkedCampaignId,
         metadata: {
           description: task.description,
-          clientName: clientName
+          clientName: clientName,
+          // NEU: Zeitinformationen hinzufügen
+          isAllDay: task.isAllDay !== false, // Default ist true
+          startTime: task.startTime,
+          endTime: task.endTime,
+          duration: task.duration
         }
       });
       
