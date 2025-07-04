@@ -192,3 +192,4 @@ Entwicklungsserver starten:
 npm run dev
 ```
 
+[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
