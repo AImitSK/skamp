@@ -8,7 +8,14 @@ const config: Config = {
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        primary: {
+          DEFAULT: '#005fab',
+          hover: '#004a8c', // Eine dunklere Variante für den Hover-Effekt
+        },
+      },
+    },
   },
   plugins: [], // Leer lassen für maximale Stabilität
 }
