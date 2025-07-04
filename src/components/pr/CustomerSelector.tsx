@@ -318,7 +318,7 @@ export function CustomerSelector({
                 plain
                 onClick={() => {
                   // TODO: Navigate to customer media
-                  window.location.href = `/dashboard/mediathek?clientId=${selectedCompany.id}`;
+                  window.location.href = `/dashboard/pr-tools/media-library?clientId=${selectedCompany.id}`;
                 }}
                 className="text-xs text-indigo-600 hover:text-indigo-500"
               >

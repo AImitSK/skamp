@@ -367,7 +367,7 @@ export default function CompanyDetailPage() {
               <h3 className="text-sm font-medium text-red-800">Fehler</h3>
               <div className="mt-2 text-sm text-red-700">{error}</div>
               <div className="mt-4">
-                <Button onClick={() => router.push('/dashboard/contacts')} plain>
+                <Button onClick={() => router.push('/dashboard/contacts/crm/')} plain>
                   Zurück zur Übersicht
                 </Button>
               </div>
@@ -384,7 +384,7 @@ export default function CompanyDetailPage() {
       <div className="p-8 text-center">
         <div className="text-gray-500">Firma konnte nicht gefunden werden.</div>
         <div className="mt-4">
-          <Button onClick={() => router.push('/dashboard/contacts')} plain>
+          <Button onClick={() => router.push('/dashboard/contacts/crm/')} plain>
             Zurück zur Übersicht
           </Button>
         </div>
@@ -399,7 +399,7 @@ export default function CompanyDetailPage() {
         <div className="mb-6">
           <Button 
             plain 
-            onClick={() => router.push('/dashboard/contacts')}
+            onClick={() => router.push('/dashboard/contacts/crm/')}
             className="mb-4 flex items-center gap-2"
           >
             <ArrowLeftIcon className="h-4 w-4" />
@@ -567,7 +567,7 @@ export default function CompanyDetailPage() {
                         <div key={contact.id} className="flex items-start justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
                           <div className="flex-1">
                             <Link 
-                              href={`/dashboard/contacts/contacts/${contact.id}`} 
+                              href={`/dashboard/contacts/crm/contacts/${contact.id}`} 
                               className="text-[#005fab] hover:text-[#004a8c] hover:underline font-medium"
                             >
                               {contact.firstName} {contact.lastName}
@@ -690,7 +690,7 @@ export default function CompanyDetailPage() {
                     {lists.map(list => (
                       <li key={list.id} className="flex items-center justify-between">
                         <Link 
-                          href={`/dashboard/listen/${list.id}`} 
+                          href={`/dashboard/contacts/lists/${list.id}`} 
                           className="text-[#005fab] hover:text-[#004a8c] hover:underline"
                         >
                           {list.name}

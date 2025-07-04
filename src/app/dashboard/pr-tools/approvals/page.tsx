@@ -348,7 +348,7 @@ function DropdownMenu({
             <div className="border-t border-gray-100 my-1"></div>
 
             <Link
-              href={`/dashboard/pr/campaigns/${campaign.id}`}
+              href={`/dashboard/pr-tools/campaigns/campaigns/${campaign.id}`}
               className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
               onClick={() => setIsOpen(false)}
             >
@@ -717,7 +717,7 @@ export default function ApprovalsPage() {
                       onMouseEnter={(e) => handleMouseEnter(campaign, e)}
                       onMouseLeave={handleMouseLeave}
                     >
-                      <Link href={`/dashboard/pr/campaigns/${campaign.id}`} className="hover:underline">
+                      <Link href={`//dashboard/pr-tools/campaigns/campaigns/${campaign.id}`} className="hover:underline">
                         {campaign.title}
                       </Link>
                     </div>

@@ -1,4 +1,4 @@
-// src/app/dashboard/pr/campaigns/[campaignId]/page.tsx
+// src\app\dashboard\pr-tools\campaigns\campaigns\[campaignId]\page.tsx
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -200,7 +200,7 @@ export default function CampaignDetailPage() {
     try {
       setIsDeleting(true);
       await prService.delete(campaign.id!);
-      router.push('/dashboard/pr');
+      router.push('/dashboard/pr-tools/campaigns');
     } catch (error) {
       console.error('Fehler beim Löschen:', error);
       alert('Fehler beim Löschen der Kampagne');
@@ -236,7 +236,7 @@ export default function CampaignDetailPage() {
     return (
       <div className="text-center py-12">
         <p className="text-red-600 mb-4">{error || 'Kampagne nicht gefunden'}</p>
-        <Link href="/dashboard/pr">
+        <Link href="/dashboard/pr-tools/campaigns">
           <Button>Zurück zur Übersicht</Button>
         </Link>
       </div>
@@ -252,7 +252,7 @@ export default function CampaignDetailPage() {
       {/* Header */}
       <div className="mb-8">
         <Link 
-          href="/dashboard/pr" 
+          href="/dashboard/pr-tools/campaigns" 
           className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
         >
           <ArrowLeftIcon className="h-4 w-4 mr-1" />
@@ -280,7 +280,7 @@ export default function CampaignDetailPage() {
           {/* Actions */}
           <div className="flex items-center gap-3">
             {campaign.status === 'sent' && (
-              <Link href={`/dashboard/pr/campaigns/${campaign.id}/analytics`}>
+              <Link href={`/dashboard/pr-tools/campaigns/campaigns/${campaign.id}/analytics`}>
                 <Button plain>
                   <ChartBarIcon className="h-5 w-5 mr-2" />
                   Analytics
@@ -289,7 +289,7 @@ export default function CampaignDetailPage() {
             )}
             
             {editStatus.canEdit && (
-              <Link href={`/dashboard/pr/campaigns/edit/${campaign.id}`}>
+              <Link href={`/dashboard/pr-tools/campaigns/campaigns/edit/${campaign.id}`}>
                 <Button plain>
                   <PencilIcon className="h-5 w-5 mr-2" />
                   Bearbeiten

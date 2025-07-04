@@ -300,7 +300,7 @@ export function ListSelector({
             </div>
             <div className="ml-4">
               <a
-                href={`/dashboard/listen/${selectedList.id}`}
+                href={`/dashboard/contacts/lists/${selectedList.id}`}
                 target="_blank"
                 className="text-xs text-indigo-600 hover:text-indigo-500"
               >

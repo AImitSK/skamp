@@ -346,7 +346,7 @@ export default function ContactDetailPage() {
               <h3 className="text-sm font-medium text-red-800">Fehler</h3>
               <div className="mt-2 text-sm text-red-700">{error}</div>
               <div className="mt-4">
-                <Button onClick={() => router.push('/dashboard/contacts')} plain>
+                <Button onClick={() => router.push('/dashboard/contacts/crm/')} plain>
                   Zurück zur Übersicht
                 </Button>
               </div>
@@ -363,7 +363,7 @@ export default function ContactDetailPage() {
       <div className="p-8 text-center">
         <div className="text-gray-500">Kontakt konnte nicht gefunden werden.</div>
         <div className="mt-4">
-          <Button onClick={() => router.push('/dashboard/contacts')} plain>
+          <Button onClick={() => router.push('/dashboard/contacts/crm/')} plain>
             Zurück zur Übersicht
           </Button>
         </div>
@@ -378,7 +378,7 @@ export default function ContactDetailPage() {
         <div className="mb-6">
           <Button 
             plain 
-            onClick={() => router.push('/dashboard/contacts')}
+            onClick={() => router.push('/dashboard/contacts/crm/')}
             className="mb-4 flex items-center gap-2"
           >
             <ArrowLeftIcon className="h-4 w-4" />
@@ -457,7 +457,7 @@ export default function ContactDetailPage() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <Link 
-                        href={`/dashboard/contacts/companies/${company.id}`}
+                        href={`/dashboard/contacts/crm/companies/${company.id}`}
                         className="text-[#005fab] hover:text-[#004a8c] hover:underline font-medium text-lg"
                       >
                         {company.name}
@@ -490,7 +490,7 @@ export default function ContactDetailPage() {
                     </div>
                     <Button 
                       plain
-                      onClick={() => router.push(`/dashboard/contacts/companies/${company.id}`)}
+                      onClick={() => router.push(`/dashboard/contacts/crm/companies/${company.id}`)}
                       className="ml-4"
                     >
                       Zur Firma
@@ -661,7 +661,7 @@ export default function ContactDetailPage() {
                     {lists.map(list => (
                       <li key={list.id} className="flex items-center justify-between">
                         <Link 
-                          href={`/dashboard/listen/${list.id}`} 
+                          href={`/dashboard/contacts/lists/${list.id}`} 
                           className="text-[#005fab] hover:text-[#004a8c] hover:underline"
                         >
                           {list.name}

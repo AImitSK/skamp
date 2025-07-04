@@ -251,7 +251,7 @@ function ApprovalFeedbackBanner({
             )}
             <Button
               plain
-              onClick={() => router.push('/dashboard/freigaben')}
+              onClick={() => router.push('/dashboard/pr-tools/approvals')}
             >
               Zum Freigaben-Center
             </Button>
@@ -765,7 +765,7 @@ function EnhancedAssetSelector({
                     <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-500 mb-4">Keine Medien für diesen Kunden gefunden</p>
                     <Link 
-                      href={`/dashboard/mediathek?uploadFor=${clientId}`}
+                      href={`/dashboard/pr-tools/media-library?uploadFor=${clientId}`}
                       target="_blank"
                       className="inline-flex items-center text-indigo-600 hover:text-indigo-500"
                     >
@@ -1498,7 +1498,7 @@ export default function EditPRCampaignPage() {
       <div className="p-8 text-center text-red-500">
         {error}
         <div className="mt-4">
-          <Link href="/dashboard/pr">
+          <Link href="/dashboard/pr-tools/campaigns">
             <Button>Zurück zur Übersicht</Button>
           </Link>
         </div>
@@ -1593,7 +1593,7 @@ export default function EditPRCampaignPage() {
                     </div>
                     <div className="flex gap-2">
                       <Link 
-                        href={`/dashboard/mediathek?clientId=${campaign.clientId}`}
+                        href={`/dashboard/pr-tools/media-library?clientId=${campaign.clientId}`}
                         target="_blank"
                       >
                         <Button plain className="text-sm">
@@ -1688,7 +1688,7 @@ export default function EditPRCampaignPage() {
                         Medien auswählen
                       </Button>
                       <Link
-                        href={`/dashboard/mediathek?uploadFor=${campaign.clientId}`}
+                        href={`/dashboard/pr-tools/media-library?uploadFor=${campaign.clientId}`}
                         target="_blank"
                       >
                         <Button plain className="flex items-center gap-2">
@@ -1758,7 +1758,7 @@ export default function EditPRCampaignPage() {
           </div>
           
           <div className="flex justify-end gap-4">
-            <Link href="/dashboard/pr">
+            <Link href="/dashboard/pr-tools/campaigns">
               <Button plain>
                 <ArrowLeftIcon className="h-4 w-4 mr-2" />
                 Zurück zur Übersicht
@@ -1788,7 +1788,7 @@ export default function EditPRCampaignPage() {
                       await handleUpdate();
                       await prService.resubmitForApproval(campaign!.id!);
                       showToast('success', 'Erneut zur Freigabe gesendet');
-                      router.push('/dashboard/freigaben');
+                      router.push('/dashboard/pr-tools/approvals');
                     }}
                     className="bg-orange-600 hover:bg-orange-500"
                   >
@@ -1798,7 +1798,7 @@ export default function EditPRCampaignPage() {
                 )}
               </>
             ) : (
-              <Link href="/dashboard/pr">
+              <Link href="/dashboard/pr-tools/campaigns">
                 <Button color="indigo">Zur Übersicht</Button>
               </Link>
             )}
@@ -1904,7 +1904,7 @@ export default function EditPRCampaignPage() {
 
             {/* Quick Actions */}
             <div className="mt-6 pt-6 border-t space-y-2">
-              <Link href={`/dashboard/pr/campaigns/${campaign?.id}`}>
+              <Link href={`/dashboard/pr-tools/campaigns/campaigns/${campaign?.id}`}>
                 <Button plain className="w-full justify-center">
                   <EyeIcon className="h-4 w-4 mr-2" />
                   Vorschau anzeigen
@@ -1965,7 +1965,7 @@ export default function EditPRCampaignPage() {
       {/* Floating Action Button */}
       <FloatingActionButton
         onAiClick={() => setShowAiModal(true)}
-        onPreviewClick={() => router.push(`/dashboard/pr/campaigns/${campaign?.id}`)}
+        onPreviewClick={() => router.push(`/dashboard/pr-tools/campaigns/campaigns/${campaign?.id}`)}
         onSaveClick={handleUpdate}
         disabled={!isFormValid || isSaving || !editStatus.canEdit}
       />

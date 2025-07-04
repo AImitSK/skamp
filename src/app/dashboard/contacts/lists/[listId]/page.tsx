@@ -339,7 +339,7 @@ export default function ListDetailPage() {
               <h3 className="text-sm font-medium text-red-800">Fehler</h3>
               <div className="mt-2 text-sm text-red-700">{error}</div>
               <div className="mt-4">
-                <Button onClick={() => router.push('/dashboard/listen')} plain>
+                <Button onClick={() => router.push('/dashboard/contacts/lists')} plain>
                   Zurück zur Übersicht
                 </Button>
               </div>
@@ -355,7 +355,7 @@ export default function ListDetailPage() {
       <div className="p-8 text-center">
         <div className="text-gray-500">Liste konnte nicht gefunden werden.</div>
         <div className="mt-4">
-          <Button onClick={() => router.push('/dashboard/listen')} plain>
+          <Button onClick={() => router.push('/dashboard/contacts/lists')} plain>
             Zurück zur Übersicht
           </Button>
         </div>
@@ -370,7 +370,7 @@ export default function ListDetailPage() {
         <div className="mb-6">
           <Button 
             plain 
-            onClick={() => router.push('/dashboard/listen')}
+            onClick={() => router.push('/dashboard/contacts/lists')}
             className="mb-4 flex items-center gap-2"
           >
             <ArrowLeftIcon className="h-4 w-4" />
@@ -433,7 +433,7 @@ export default function ListDetailPage() {
                         <TableRow key={contact.id} className="hover:bg-gray-50">
                           <TableCell className="font-medium">
                             <Link 
-                              href={`/dashboard/contacts/contacts/${contact.id}`} 
+                              href={`/dashboard/contacts/crm/contacts/${contact.id}`} 
                               className="text-[#005fab] hover:text-[#004a8c] hover:underline"
                             >
                               {contact.firstName} {contact.lastName}
@@ -443,7 +443,7 @@ export default function ListDetailPage() {
                           <TableCell>
                             {contact.companyId && contact.companyName ? (
                               <Link 
-                                href={`/dashboard/contacts/companies/${contact.companyId}`} 
+                                href={`/dashboard/contacts/crm/companies/${contact.companyId}`} 
                                 className="text-[#005fab] hover:text-[#004a8c] hover:underline"
                               >
                                 {contact.companyName}

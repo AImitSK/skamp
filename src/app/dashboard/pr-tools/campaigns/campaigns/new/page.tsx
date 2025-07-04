@@ -167,7 +167,7 @@ function ApprovalLinkModal({
               <Button
                 plain
                 onClick={() => {
-                  window.location.href = '/dashboard/pr';
+                  window.location.href = '/dashboard/pr-tools/campaigns';
                 }}
               >
                 Zur Übersicht
@@ -803,7 +803,7 @@ function EnhancedAssetSelector({
                     <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-500 mb-4">Keine Medien für diesen Kunden gefunden</p>
                     <Link 
-                      href={`/dashboard/mediathek?uploadFor=${clientId}`}
+                      href={`/dashboard/pr-tools/media-library?uploadFor=${clientId}`}
                       target="_blank"
                       className="inline-flex items-center text-indigo-600 hover:text-indigo-500"
                     >
@@ -1360,7 +1360,7 @@ export default function NewPRCampaignPage() {
         showToast('success', 'Kampagne gespeichert!', 'Du wirst zur Bearbeitung weitergeleitet...');
         
         setTimeout(() => {
-          router.push(`/dashboard/pr/campaigns/edit/${newCampaignId}`);
+          router.push(`/dashboard/pr-tools/campaigns/campaigns/edit/${newCampaignId}`);
         }, 1500);
       }
 
@@ -1674,7 +1674,7 @@ export default function NewPRCampaignPage() {
                       Medien auswählen
                     </Button>
                     <Link
-                      href={`/dashboard/mediathek?uploadFor=${selectedCustomerId}`}
+                      href={`/dashboard/pr-tools/media-library?uploadFor=${selectedCustomerId}`}
                       target="_blank"
                     >
                       <Button plain className="flex items-center gap-2">
@@ -1786,7 +1786,7 @@ export default function NewPRCampaignPage() {
           </div>
           
           <div className="flex justify-end gap-4">
-            <Link href="/dashboard/pr">
+            <Link href="/dashboard/pr-tools/campaigns">
               <Button plain>
                 <ArrowLeftIcon className="h-4 w-4 mr-2" />
                 Abbrechen
@@ -1934,7 +1934,7 @@ export default function NewPRCampaignPage() {
         isOpen={showApprovalModal}
         onClose={() => {
           setShowApprovalModal(false);
-          router.push('/dashboard/freigaben');
+          router.push('/dashboard/pr-tools/approvals');
         }}
         approvalUrl={approvalUrl}
         campaignTitle={campaignTitle}

@@ -19,8 +19,8 @@ export default function MediaUploadLink({
   className = ''
 }: MediaUploadLinkProps) {
   
-  const uploadUrl = `/dashboard/mediathek?uploadFor=${companyId}`;
-  const mediaUrl = `/dashboard/mediathek`; // Später: mit Client-Filter
+  const uploadUrl = `/dashboard/pr-tools/media-library?uploadFor=${companyId}`;
+  const mediaUrl = `/dashboard/pr-tools/media-library`; // Später: mit Client-Filter
   
   if (variant === 'compact') {
     return (

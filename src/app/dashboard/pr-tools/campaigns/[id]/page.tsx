@@ -133,7 +133,7 @@ export function ApprovalFeedbackBanner({
           </div>
           <Button
             plain
-            onClick={() => router.push('/dashboard/freigaben')}
+            onClick={() => router.push('/dashboard/pr-tools/approvals')}
             className="ml-4"
           >
             Zum Freigaben-Center

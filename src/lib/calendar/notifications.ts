@@ -107,7 +107,7 @@ export const checkUpcomingEvents = async (userId: string): Promise<Notification[
           body: event.metadata?.campaignTitle || event.title,
           icon: '📤',
           priority: 'normal' as const,
-          action: `/dashboard/pr/campaigns/${event.campaignId}`
+          action: `/dashboard/pr-tools/campaigns/campaigns/${event.campaignId}`
         };
         
       case 'approval_overdue':
@@ -117,7 +117,7 @@ export const checkUpcomingEvents = async (userId: string): Promise<Notification[
           body: `${event.metadata?.campaignTitle || event.title} - ${event.metadata?.daysOverdue} Tage überfällig`,
           icon: '⚠️',
           priority: 'high' as const,
-          action: '/dashboard/freigaben'
+          action: '/dashboard/pr-tools/approvals'
         };
         
       case 'approval_pending':
@@ -127,7 +127,7 @@ export const checkUpcomingEvents = async (userId: string): Promise<Notification[
           body: event.metadata?.campaignTitle || event.title,
           icon: '⏳',
           priority: 'normal' as const,
-          action: `/dashboard/freigaben`
+          action: `/dashboard/pr-tools/approvals`
         };
         
       default:

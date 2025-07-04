@@ -164,14 +164,14 @@ export function EventDetailsModal({ event, isOpen, onClose, onTaskUpdated }: Eve
       case 'campaign_scheduled':
       case 'campaign_sent':
         return (
-          <Link href={`/dashboard/pr/campaigns/${event.campaignId}`}>
+          <Link href={`/dashboard/pr-tools/campaigns/campaigns/${event.campaignId}`}>
             <Button>Kampagne anzeigen</Button>
           </Link>
         );
       case 'approval_pending':
       case 'approval_overdue':
         return (
-          <Link href="/dashboard/freigaben">
+          <Link href="/dashboard/pr-tools/approvals">
             <Button>Zur Freigabe</Button>
           </Link>
         );

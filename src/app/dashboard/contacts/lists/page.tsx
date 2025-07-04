@@ -292,7 +292,7 @@ function DropdownMenu({
         >
           <div className="py-1">
             <Link
-              href={`/dashboard/listen/${list.id}`}
+              href={`/dashboard/contacts/lists/${list.id}`}
               className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
               onClick={() => setIsOpen(false)}
             >
@@ -300,7 +300,7 @@ function DropdownMenu({
               Anzeigen
             </Link>
 
-            <Link href={`/dashboard/listen/${list.id}/analytics`}
+            <Link href={`/dashboard/contacts/lists/${list.id}/analytics`}
               className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
               onClick={() => setIsOpen(false)}
             >
@@ -845,7 +845,7 @@ export default function ListsPage() {
                             onMouseLeave={handleMouseLeave}
                           >
                             <Link
-                              href={`/dashboard/listen/${list.id}`}
+                              href={`/dashboard/contacts/lists/${list.id}`}
                               className="hover:underline"
                             >
                               {list.name}

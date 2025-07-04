@@ -149,7 +149,7 @@ export default function CampaignAnalyticsPage() {
     return (
       <div className="p-8">
         <div className="flex items-center justify-between mb-6">
-          <Link href="/dashboard/pr">
+          <Link href="/dashboard/pr-tools/campaigns">
             <Button plain>
               <ArrowLeftIcon className="size-4 mr-2" />
               Zurück
@@ -172,7 +172,7 @@ export default function CampaignAnalyticsPage() {
           )}
           
           <div className="flex gap-2 justify-center">
-            <Link href="/dashboard/pr">
+            <Link href="/dashboard/pr-tools/campaigns">
               <Button plain>Zur Übersicht</Button>
             </Link>
             <Button onClick={loadData}>
@@ -189,7 +189,7 @@ export default function CampaignAnalyticsPage() {
     return (
       <div className="p-8 text-center">
         <p className="text-red-600">Kampagne oder Analytics konnten nicht geladen werden.</p>
-        <Link href="/dashboard/pr">
+        <Link href="/dashboard/pr-tools/campaigns">
           <Button className="mt-4">Zurück zur Übersicht</Button>
         </Link>
       </div>
@@ -230,7 +230,7 @@ export default function CampaignAnalyticsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
-          <Link href="/dashboard/pr">
+          <Link href="/dashboard/pr-tools/campaigns">
             <Button plain>
               <ArrowLeftIcon className="size-4 mr-2" />
               Zurück

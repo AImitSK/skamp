@@ -200,7 +200,7 @@ export function ApprovalWidget({ userId, onRefresh }: ApprovalWidgetProps) {
                         {stats.overdue} überfällig
                       </span>
                     </div>
-                    <Link href="/dashboard/freigaben">
+                    <Link href="/dashboard/pr-tools/approvals">
                       <Button className="bg-red-600 text-white hover:bg-red-700">
                         <span className="text-xs">Anzeigen</span>
                       </Button>
@@ -255,7 +255,7 @@ export function ApprovalWidget({ userId, onRefresh }: ApprovalWidgetProps) {
                           </p>
                         </div>
                       </div>
-                      <Link href={`/dashboard/pr/campaigns/${campaign.id}`}>
+                      <Link href={`/dashboard/pr-tools/campaigns/campaigns/${campaign.id}`}>
                         <Button plain>
                           <ArrowRightIcon className="h-4 w-4" />
                         </Button>
@@ -277,7 +277,7 @@ export function ApprovalWidget({ userId, onRefresh }: ApprovalWidgetProps) {
             <p className="text-xs text-gray-500">
               {campaigns.length} {campaigns.length === 1 ? 'Kampagne' : 'Kampagnen'} insgesamt
             </p>
-            <Link href="/dashboard/freigaben">
+            <Link href="/dashboard/pr-tools/approvals">
               <Button plain>
                 Alle Freigaben verwalten
                 <ArrowRightIcon className="h-4 w-4 ml-2" />
@@ -399,7 +399,7 @@ export function ApprovalWidget({ userId, onRefresh }: ApprovalWidgetProps) {
                           <span className="text-xs">Link kopieren</span>
                         </Button>
                       )}
-                      <Link href={`/dashboard/pr/campaigns/${campaign.id}`}>
+                      <Link href={`/dashboard/pr-tools/campaigns/campaigns/${campaign.id}`}>
                         <Button>
                           <span className="text-xs">Bearbeiten</span>
                         </Button>

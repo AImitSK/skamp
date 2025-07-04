@@ -227,7 +227,7 @@ export async function GET() {
       success: true,
       templates: templates,
       count: templates.length,
-      categories: [...new Set(templates.map(t => t.category))],
+      categories: Array.from(new Set(templates.map(t => t.category))),
       version: '2.0' // Enhanced version
     });
   } catch (error) {

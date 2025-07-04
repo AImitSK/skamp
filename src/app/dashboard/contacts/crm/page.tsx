@@ -1,4 +1,4 @@
-// src/app/dashboard/contacts/page.tsx - Modernisierte Version
+// src\app\dashboard\contacts\crm\page.tsx
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
@@ -389,7 +389,7 @@ function DropdownMenu({
         >
           <div className="py-1">
             <Link
-              href={`/dashboard/contacts/${type === 'company' ? 'companies' : 'contacts'}/${item.id}`}
+              href={`/dashboard/contacts/crm/${type === 'company' ? 'companies' : 'contacts'}/${item.id}`}
               className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
               onClick={() => setIsOpen(false)}
             >
@@ -1178,7 +1178,7 @@ export default function ContactsPage() {
                           onMouseEnter={(e) => handleMouseEnter(company, 'company', e)}
                           onMouseLeave={handleMouseLeave}
                         >
-                          <Link href={`/dashboard/contacts/companies/${company.id}`} className="hover:underline">
+                          <Link href={`/dashboard/contacts/crm/companies/${company.id}`} className="hover:underline">
                             {company.name}
                           </Link>
                         </div>
@@ -1281,7 +1281,7 @@ export default function ContactsPage() {
                           onMouseEnter={(e) => handleMouseEnter(contact, 'contact', e)}
                           onMouseLeave={handleMouseLeave}
                         >
-                          <Link href={`/dashboard/contacts/contacts/${contact.id}`} className="hover:underline">
+                          <Link href={`/dashboard/contacts/crm/contacts/${contact.id}`} className="hover:underline">
                             {contact.firstName} {contact.lastName}
                           </Link>
                         </div>

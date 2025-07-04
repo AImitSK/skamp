@@ -493,3 +493,14 @@ export enum ActionType {
   Import = 'import',
   Export = 'export'
 }
+
+// Boilerplate Interface
+export interface Boilerplate {
+  id?: string;
+  name: string;
+  category?: string;
+  content: string;
+  userId: string;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
+}

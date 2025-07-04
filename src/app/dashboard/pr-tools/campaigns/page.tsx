@@ -313,7 +313,7 @@ function DropdownMenu({
             {/* Analytics - nur für versendete */}
             {campaign.status === 'sent' && (
               <Link
-                href={`/dashboard/pr/campaigns/${campaign.id}/analytics`}
+                href={`/dashboard/pr-tools/campaigns/campaigns/${campaign.id}/analytics`}
                 className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                 onClick={() => setIsOpen(false)}
               >
@@ -324,7 +324,7 @@ function DropdownMenu({
 
             {/* Vorschau */}
             <Link
-              href={`/dashboard/pr/campaigns/${campaign.id}`}
+              href={`/dashboard/pr-tools/campaigns/campaigns/${campaign.id}`}
               className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
               onClick={() => setIsOpen(false)}
             >
@@ -344,7 +344,7 @@ function DropdownMenu({
                 </button>
 
                 <Link
-                  href={`/dashboard/pr/campaigns/edit/${campaign.id}`}
+                  href={`/dashboard/pr-tools/campaigns/campaigns/edit/${campaign.id}`}
                   className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                   onClick={() => setIsOpen(false)}
                 >
@@ -775,7 +775,7 @@ export default function PRCampaignsPage() {
             </div>
           </div>
           
-          <Link href="/dashboard/pr/campaigns/new">
+          <Link href="/dashboard/pr-tools/campaigns/campaigns/new">
             <button className="inline-flex items-center gap-x-2 rounded-lg bg-[#005fab] px-4 py-2 text-sm font-semibold text-white hover:bg-[#004a8c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005fab]">
               <PlusIcon className="size-4" />
               Neue Kampagne
@@ -880,7 +880,7 @@ export default function PRCampaignsPage() {
             }
           </p>
           {campaigns.length === 0 && (
-            <Link href="/dashboard/pr/campaigns/new">
+            <Link href="/dashboard/pr-tools/campaigns/campaigns/new">
               <button className="inline-flex items-center gap-x-2 rounded-lg bg-[#005fab] px-4 py-2 text-sm font-semibold text-white hover:bg-[#004a8c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005fab]">
                 <PlusIcon className="size-4" />
                 Erste Kampagne erstellen
@@ -942,7 +942,7 @@ export default function PRCampaignsPage() {
                           onMouseEnter={(e) => handleMouseEnter(campaign, e)}
                           onMouseLeave={handleMouseLeave}
                         >
-                          <Link href={`/dashboard/pr/campaigns/${campaign.id}`} className="hover:underline">
+                          <Link href={`/dashboard/pr-tools/campaigns/campaigns/${campaign.id}`} className="hover:underline">
                             {campaign.title}
                           </Link>
                         </div>
@@ -957,7 +957,7 @@ export default function PRCampaignsPage() {
                     <TableCell>
                       {campaign.clientId ? (
                         <Link 
-                          href={`/dashboard/contacts/companies/${campaign.clientId}`}
+                          href={`/dashboard/contacts/crm/companies/${campaign.clientId}`}
                           className="inline-block"
                         >
                           <CustomerBadge 
