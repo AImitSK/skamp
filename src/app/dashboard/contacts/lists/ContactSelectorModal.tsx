@@ -1,4 +1,4 @@
-// src\app\dashboard\contacts\lists\ContactSelectorModal.tsx
+// src/app/dashboard/contacts/lists/ContactSelectorModal.tsx
 "use client";
 
 import { useState, useMemo } from "react";
@@ -6,6 +6,7 @@ import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dia
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
 import { Checkbox } from "@/components/checkbox";
+import { Text } from "@/components/text";
 import { useCrmData } from "@/context/CrmDataContext";
 import { Contact } from "@/types/crm";
 import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
@@ -49,56 +50,74 @@ export default function ContactSelectorModal({
 
   return (
     <Dialog open={true} onClose={onClose} size="2xl">
-      <DialogTitle className="px-6 py-4">Kontakte auswählen</DialogTitle>
-      <div className="p-6 border-b border-t">
+      <DialogTitle className="px-6 py-4 text-lg font-semibold">
+        Kontakte auswählen
+      </DialogTitle>
+      
+      <div className="px-6 py-4 border-b border-t">
         <div className="relative">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-zinc-400 pointer-events-none" />
+          <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-5 text-gray-400 z-10" />
           <Input
             type="search"
             placeholder="Kontakte durchsuchen..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10"
+            className="pl-10"
           />
         </div>
       </div>
+      
       <DialogBody className="p-0 max-h-[50vh] overflow-y-auto">
         {loading ? (
-            <div className="p-6 text-center text-zinc-500">Lade Kontakte...</div>
+          <div className="p-6 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#005fab] mx-auto"></div>
+            <Text className="mt-2">Lade Kontakte...</Text>
+          </div>
         ) : (
           <div className="divide-y divide-gray-200">
             {filteredContacts.map(contact => (
               <div 
                 key={contact.id} 
                 onClick={() => handleToggleSelection(contact.id!)}
-                className="flex items-center gap-4 px-6 py-3 cursor-pointer hover:bg-zinc-50"
+                className="flex items-center gap-4 px-6 py-3 cursor-pointer hover:bg-gray-50 transition-colors"
               >
                 <Checkbox 
                   checked={selectedIds.has(contact.id!)} 
                   onChange={() => {}}
                   className="text-[#005fab] focus:ring-[#005fab]"
                 />
-                <div>
+                <div className="flex-1">
                   <p className="font-medium">{contact.firstName} {contact.lastName}</p>
-                  <p className="text-sm text-zinc-500">{contact.position}{contact.companyName && ` bei ${contact.companyName}`}</p>
+                  <p className="text-sm text-gray-500">
+                    {contact.position}
+                    {contact.companyName && ` bei ${contact.companyName}`}
+                  </p>
                 </div>
               </div>
             ))}
+            {filteredContacts.length === 0 && (
+              <div className="p-6 text-center">
+                <Text>Keine Kontakte gefunden</Text>
+              </div>
+            )}
           </div>
         )}
       </DialogBody>
-      <DialogActions className="px-6 py-4 flex justify-between items-center bg-zinc-50">
-        <div className="text-sm text-zinc-600">
+      
+      <DialogActions className="px-6 py-4 flex justify-between items-center bg-gray-50">
+        <Text className="text-sm">
           {selectedIds.size} Kontakte ausgewählt
-        </div>
-        <div className="flex gap-4">
-          <Button plain onClick={onClose}>Abbrechen</Button>
-          <button 
+        </Text>
+        <div className="flex gap-3">
+          <Button plain onClick={onClose} className="whitespace-nowrap">
+            Abbrechen
+          </Button>
+          <Button 
             onClick={handleSave}
-            className="inline-flex items-center gap-x-2 rounded-lg bg-[#005fab] px-4 py-2 text-sm font-semibold text-white hover:bg-[#004a8c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005fab]"
+            className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
           >
             Auswahl übernehmen
-          </button>
+          </Button>
         </div>
       </DialogActions>
     </Dialog>

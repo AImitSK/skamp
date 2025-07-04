@@ -1,4 +1,4 @@
-// src/app/dashboard/contacts/CompanyModal.tsx
+// src/app/dashboard/contacts/crm/CompanyModal.tsx
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -9,8 +9,9 @@ import { Textarea } from "@/components/textarea";
 import { Select } from "@/components/select";
 import { Button } from "@/components/button";
 import { Badge } from "@/components/badge";
+import { Text } from "@/components/text";
 import { companiesService, tagsService } from "@/lib/firebase/crm-service";
-import { Company, CompanyType, Tag, TagColor, SocialPlatform, socialPlatformLabels, MEDIA_TYPES } from "@/types/crm";
+import { Company, CompanyType, Tag, TagColor, SocialPlatform, socialPlatformLabels } from "@/types/crm";
 import { TagInput } from "@/components/tag-input";
 import { FocusAreasInput } from "@/components/FocusAreasInput";
 import { InfoTooltip } from "@/components/InfoTooltip";
@@ -61,19 +62,36 @@ const PUBLICATION_FREQUENCIES = [
 ];
 
 // Alert Component
-function Alert({ type = 'info', message }: { type?: 'info' | 'error'; message: string }) {
+function Alert({ 
+  type = 'info', 
+  title, 
+  message 
+}: { 
+  type?: 'info' | 'error';
+  title?: string;
+  message: string;
+}) {
+  const styles = {
+    info: 'bg-blue-50 text-blue-700',
+    error: 'bg-red-50 text-red-700'
+  };
+
+  const icons = {
+    info: InformationCircleIcon,
+    error: InformationCircleIcon
+  };
+
+  const Icon = icons[type];
+
   return (
-    <div className={`rounded-md p-4 ${type === 'error' ? 'bg-red-50' : 'bg-blue-50'}`}>
+    <div className={`rounded-md p-4 ${styles[type].split(' ')[0]}`}>
       <div className="flex">
         <div className="shrink-0">
-          <InformationCircleIcon 
-            className={`h-5 w-5 ${type === 'error' ? 'text-red-400' : 'text-blue-400'}`} 
-          />
+          <Icon aria-hidden="true" className={`size-5 ${type === 'error' ? 'text-red-400' : 'text-blue-400'}`} />
         </div>
         <div className="ml-3">
-          <p className={`text-sm ${type === 'error' ? 'text-red-700' : 'text-blue-700'}`}>
-            {message}
-          </p>
+          {title && <Text className={`font-medium ${styles[type].split(' ')[1]}`}>{title}</Text>}
+          <Text className={`text-sm ${styles[type].split(' ')[1]}`}>{message}</Text>
         </div>
       </div>
     </div>
@@ -360,8 +378,8 @@ export default function CompanyModal({ company, onClose, onSave, userId }: Compa
                       Publikationen
                       <InfoTooltip content="Fügen Sie hier alle Publikationen hinzu, die von diesem Medienunternehmen herausgegeben werden" className="ml-1.5 inline-flex align-text-top" />
                     </div>
-                    <Button type="button" onClick={addPublication} className="text-sm">
-                      <PlusIcon className="h-4 w-4 mr-1" />
+                    <Button type="button" onClick={addPublication} plain className="text-sm">
+                      <PlusIcon className="h-4 w-4" />
                       Publikation hinzufügen
                     </Button>
                   </div>
@@ -458,7 +476,7 @@ export default function CompanyModal({ company, onClose, onSave, userId }: Compa
                   ) : (
                     <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
                       <DocumentTextIcon className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                      <div className="text-sm">Noch keine Publikationen hinzugefügt</div>
+                      <Text>Noch keine Publikationen hinzugefügt</Text>
                     </div>
                   )}
                 </div>
@@ -544,8 +562,8 @@ export default function CompanyModal({ company, onClose, onSave, userId }: Compa
                   </div>
                 </div>
               ))}
-              <Button type="button" onClick={addSocialMediaField} className="w-full">
-                <PlusIcon className="h-4 w-4 mr-2" />
+              <Button type="button" onClick={addSocialMediaField} plain className="w-full">
+                <PlusIcon className="h-4 w-4" />
                 Profil hinzufügen
               </Button>
             </div>
@@ -575,13 +593,13 @@ export default function CompanyModal({ company, onClose, onSave, userId }: Compa
 
         <DialogActions className="px-6 py-4">
           <Button plain onClick={onClose}>Abbrechen</Button>
-          <button 
+          <Button 
             type="submit" 
             disabled={loading}
-            className="inline-flex items-center gap-x-2 rounded-lg bg-[#005fab] px-4 py-2 text-sm font-semibold text-white hover:bg-[#004a8c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005fab] disabled:opacity-50"
+            className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
           >
             {loading ? 'Speichern...' : 'Speichern'}
-          </button>
+          </Button>
         </DialogActions>
       </form>
     </Dialog>

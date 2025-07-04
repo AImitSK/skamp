@@ -1,7 +1,7 @@
-// src\app\dashboard\contacts\lists\ListModal.tsx
+// src/app/dashboard/contacts/lists/ListModal.tsx
 "use client";
 
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
 import { Field, Label, FieldGroup, Description } from "@/components/fieldset";
 import { Input } from "@/components/input";
@@ -9,132 +9,57 @@ import { Textarea } from "@/components/textarea";
 import { Select } from "@/components/select";
 import { Button } from "@/components/button";
 import { Badge } from "@/components/badge";
+import { Text } from "@/components/text";
 import { Radio, RadioGroup, RadioField } from "@/components/radio";
+import { Checkbox } from "@/components/checkbox";
 import { MultiSelectDropdown } from "@/components/MultiSelectDropdown";
 import { listsService } from "@/lib/firebase/lists-service";
 import { useCrmData } from "@/context/CrmDataContext";
-import { DistributionList, ListFilters, ExtendedCompanyType } from "@/types/lists";
+import { DistributionList, ListFilters } from "@/types/lists";
 import { Contact, CompanyType, companyTypeLabels } from "@/types/crm";
-import clsx from "clsx";
 import ContactSelectorModal from "./ContactSelectorModal";
 import {
-  CheckCircleIcon,
-  XCircleIcon,
-  ExclamationTriangleIcon,
   InformationCircleIcon,
   UsersIcon,
   BuildingOfficeIcon,
   TagIcon,
   GlobeAltIcon,
-  NewspaperIcon,
   EnvelopeIcon,
   PhoneIcon,
   DocumentTextIcon,
   FunnelIcon
-} from "@heroicons/react/24/outline";
+} from "@heroicons/react/20/solid";
 
-// Toast Types
-interface Toast {
-  id: string;
-  type: 'success' | 'error' | 'warning' | 'info';
-  title: string;
-  message?: string;
-  duration?: number;
-}
-
-// Toast Component
-function ToastNotification({ toasts, onRemove }: { toasts: Toast[], onRemove: (id: string) => void }) {
-  const icons = {
-    success: CheckCircleIcon,
-    error: XCircleIcon,
-    warning: ExclamationTriangleIcon,
-    info: InformationCircleIcon
+// Alert Component
+function Alert({ 
+  type = 'info', 
+  title, 
+  message 
+}: { 
+  type?: 'info' | 'error';
+  title?: string;
+  message: string;
+}) {
+  const styles = {
+    info: 'bg-blue-50 text-blue-700',
+    error: 'bg-red-50 text-red-700'
   };
 
-  const colors = {
-    success: 'bg-green-50 border-green-200 text-green-800',
-    error: 'bg-red-50 border-red-200 text-red-800',
-    warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
-    info: 'bg-blue-50 border-blue-200 text-blue-800'
-  };
-
-  const iconColors = {
-    success: 'text-green-400',
-    error: 'text-red-400',
-    warning: 'text-yellow-400',
-    info: 'text-blue-400'
-  };
+  const Icon = InformationCircleIcon;
 
   return (
-    <div className="fixed bottom-0 right-0 p-6 space-y-4 z-[60]">
-      {toasts.map((toast) => {
-        const Icon = icons[toast.type];
-        return (
-          <div
-            key={toast.id}
-            className={`${colors[toast.type]} border rounded-lg p-4 shadow-lg transform transition-all duration-300 ease-in-out animate-slide-in-up`}
-            style={{ minWidth: '320px' }}
-          >
-            <div className="flex">
-              <Icon className={`h-5 w-5 ${iconColors[toast.type]} mr-3 flex-shrink-0`} />
-              <div className="flex-1">
-                <p className="font-medium">{toast.title}</p>
-                {toast.message && (
-                  <p className="text-sm mt-1 opacity-90">{toast.message}</p>
-                )}
-              </div>
-              <button
-                onClick={() => onRemove(toast.id)}
-                className="ml-3 flex-shrink-0 rounded-md hover:opacity-70 focus:outline-none"
-              >
-                <XCircleIcon className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
-        );
-      })}
+    <div className={`rounded-md p-4 ${styles[type].split(' ')[0]}`}>
+      <div className="flex">
+        <div className="shrink-0">
+          <Icon aria-hidden="true" className={`size-5 ${type === 'error' ? 'text-red-400' : 'text-blue-400'}`} />
+        </div>
+        <div className="ml-3">
+          {title && <Text className={`font-medium ${styles[type].split(' ')[1]}`}>{title}</Text>}
+          <Text className={`text-sm ${styles[type].split(' ')[1]}`}>{message}</Text>
+        </div>
+      </div>
     </div>
   );
-}
-
-// Toast Hook
-function useToast() {
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  
-  const showToast = useCallback((type: Toast['type'], title: string, message?: string) => {
-    const id = Date.now().toString();
-    const newToast: Toast = { id, type, title, message, duration: 5000 };
-    setToasts(prev => [...prev, newToast]);
-    
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
-    }, newToast.duration);
-  }, []);
-
-  const removeToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
-  }, []);
-
-  return { toasts, showToast, removeToast };
-}
-
-// Validation Helper
-function validateListData(formData: Partial<DistributionList>) {
-  const errors: string[] = [];
-  
-  if (!formData.name?.trim()) {
-    errors.push('Listenname ist erforderlich');
-  }
-  
-  if (formData.type === 'dynamic' && (!formData.filters || Object.keys(formData.filters).length === 0)) {
-    errors.push('Mindestens ein Filter muss für dynamische Listen ausgewählt werden');
-  }
-  
-  if (formData.type === 'static' && (!formData.contactIds || formData.contactIds.length === 0)) {
-    errors.push('Mindestens ein Kontakt muss für statische Listen ausgewählt werden');
-  }
-  
-  return errors;
 }
 
 interface ListModalProps {
@@ -146,7 +71,6 @@ interface ListModalProps {
 
 export default function ListModal({ list, onClose, onSave, userId }: ListModalProps) {
   const { companies, contacts, tags } = useCrmData();
-  const { toasts, showToast, removeToast } = useToast();
 
   const [formData, setFormData] = useState<Partial<DistributionList>>({
     name: '',
@@ -237,7 +161,6 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
       setPreviewCount(contacts.length);
     } catch (error) {
       console.error("Fehler bei der Vorschau:", error);
-      showToast('error', 'Fehler bei der Vorschau', 'Die Kontakte konnten nicht geladen werden.');
     } finally {
       setLoadingPreview(false);
     }
@@ -256,7 +179,6 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
       setPreviewCount(contacts.length);
     } catch (error) {
       console.error("Fehler bei der Vorschau:", error);
-      showToast('error', 'Fehler bei der Vorschau', 'Die Kontakte konnten nicht geladen werden.');
     } finally {
       setLoadingPreview(false);
     }
@@ -269,17 +191,27 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
   const handleSaveContactSelection = (selectedIds: string[]) => {
     setFormData(prev => ({ ...prev, contactIds: selectedIds }));
     setIsContactSelectorOpen(false);
-    showToast('success', `${selectedIds.length} Kontakte ausgewählt`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validierung
-    const errors = validateListData(formData);
+    const errors: string[] = [];
+    if (!formData.name?.trim()) {
+      errors.push('Listenname ist erforderlich');
+    }
+    
+    if (formData.type === 'dynamic' && (!formData.filters || Object.keys(formData.filters).length === 0)) {
+      errors.push('Mindestens ein Filter muss für dynamische Listen ausgewählt werden');
+    }
+    
+    if (formData.type === 'static' && (!formData.contactIds || formData.contactIds.length === 0)) {
+      errors.push('Mindestens ein Kontakt muss für statische Listen ausgewählt werden');
+    }
+    
     if (errors.length > 0) {
       setValidationErrors(errors);
-      showToast('error', 'Validierungsfehler', errors[0]);
       return;
     }
     
@@ -297,32 +229,13 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
         contactIds: formData.type === 'static' ? formData.contactIds : [],
       };
       await onSave(dataToSave);
-      showToast('success', 'Liste gespeichert', `Die Liste "${formData.name}" wurde erfolgreich ${list ? 'aktualisiert' : 'erstellt'}.`);
       onClose();
     } catch (error) {
-      console.error("Fehler beim Speichern der Liste:", error);
-      showToast('error', 'Fehler beim Speichern', 'Die Liste konnte nicht gespeichert werden.');
+      setValidationErrors(['Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.']);
     } finally {
       setLoading(false);
     }
   };
-
-  // Keyboard Shortcuts
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
-        e.preventDefault();
-        handleSubmit(e as any);
-      }
-      
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-    
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [formData]);
 
   const categoryOptions = [ 
     { value: 'press', label: 'Presse' }, 
@@ -334,18 +247,19 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
 
   return (
     <>
-      <Dialog 
-        open={true} 
-        onClose={onClose} 
-        size="5xl"
-        className="animate-fade-in"
-      >
+      <Dialog open={true} onClose={onClose} size="5xl">
         <form ref={formRef} onSubmit={handleSubmit}>
-          <DialogTitle className="px-6 py-4 text-base font-semibold">
+          <DialogTitle className="px-6 py-4 text-lg font-semibold">
             {list ? 'Liste bearbeiten' : 'Neue Liste erstellen'}
           </DialogTitle>
           
           <DialogBody className="p-6 max-h-[70vh] overflow-y-auto">
+            {validationErrors.length > 0 && (
+              <div className="mb-4">
+                <Alert type="error" message={validationErrors[0]} />
+              </div>
+            )}
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 space-y-6">
                 <FieldGroup>
@@ -358,10 +272,6 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
                       required 
                       autoFocus
                       placeholder="z.B. Tech-Journalisten Deutschland"
-                      className={clsx(
-                        "transition-colors",
-                        validationErrors.some(e => e.includes('Listenname')) && "border-red-500 focus:border-red-500 focus:ring-red-500"
-                      )}
                     />
                   </Field>
                   
@@ -414,17 +324,17 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
                   
                   {/* Dynamic Filters */}
                   {formData.type === 'dynamic' && (
-                    <div className="space-y-6 animate-fade-in">
+                    <div className="space-y-6">
                       <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-medium text-zinc-900 flex items-center gap-2">
+                        <h3 className="font-medium text-gray-900 flex items-center gap-2">
                           <FunnelIcon className="h-5 w-5" />
                           Filter-Kriterien
                         </h3>
                       </div>
                       
                       {/* Firmen Filter */}
-                      <div className="space-y-4 rounded-md border p-4 bg-zinc-50/50">
-                        <div className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
+                      <div className="space-y-4 rounded-md border p-4 bg-gray-50">
+                        <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
                           <BuildingOfficeIcon className="h-5 w-5 text-gray-400" />
                           Firmen-Filter
                         </div>
@@ -465,44 +375,30 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
                       </div>
                       
                       {/* Personen Filter */}
-                      <div className="space-y-4 rounded-md border p-4 bg-zinc-50/50">
-                        <div className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
+                      <div className="space-y-4 rounded-md border p-4 bg-gray-50">
+                        <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
                           <UsersIcon className="h-5 w-5 text-gray-400" />
                           Personen-Filter
                         </div>
                         
                         <div className="space-y-4">
-                          <MultiSelectDropdown 
-                            label="Tags" 
-                            placeholder="Alle Tags" 
-                            options={tags.map(tag => ({ value: tag.id!, label: tag.name }))} 
-                            selectedValues={formData.filters?.tagIds || []} 
-                            onChange={(values) => handleFilterChange('tagIds', values)}
-                          />
-                          
                           <div className="grid grid-cols-2 gap-4">
                             <div className="relative flex items-center">
-                              <input 
-                                id="hasEmail" 
-                                type="checkbox" 
+                              <Checkbox 
                                 checked={formData.filters?.hasEmail || false} 
-                                onChange={(e) => handleFilterChange('hasEmail', e.target.checked)} 
-                                className="h-4 w-4 rounded border-gray-300 text-[#005fab] focus:ring-[#005fab]"
+                                onChange={(checked) => handleFilterChange('hasEmail', checked)} 
                               />
-                              <label htmlFor="hasEmail" className="ml-3 flex items-center text-sm text-gray-900">
+                              <label className="ml-3 flex items-center text-sm text-gray-900">
                                 <EnvelopeIcon className="h-4 w-4 mr-1 text-gray-400" />
                                 Hat E-Mail
                               </label>
                             </div>
                             <div className="relative flex items-center">
-                              <input 
-                                id="hasPhone" 
-                                type="checkbox" 
+                              <Checkbox 
                                 checked={formData.filters?.hasPhone || false} 
-                                onChange={(e) => handleFilterChange('hasPhone', e.target.checked)} 
-                                className="h-4 w-4 rounded border-gray-300 text-[#005fab] focus:ring-[#005fab]"
+                                onChange={(checked) => handleFilterChange('hasPhone', checked)} 
                               />
-                              <label htmlFor="hasPhone" className="ml-3 flex items-center text-sm text-gray-900">
+                              <label className="ml-3 flex items-center text-sm text-gray-900">
                                 <PhoneIcon className="h-4 w-4 mr-1 text-gray-400" />
                                 Hat Telefon
                               </label>
@@ -512,8 +408,8 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
                       </div>
                       
                       {/* Publikationen Filter */}
-                      <div className="space-y-4 rounded-md border p-4 bg-zinc-50/50">
-                        <div className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
+                      <div className="space-y-4 rounded-md border p-4 bg-gray-50">
+                        <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
                           <DocumentTextIcon className="h-5 w-5 text-gray-400" />
                           Publikationen-Filter
                         </div>
@@ -564,13 +460,13 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
                   
                   {/* Static Contact Selection */}
                   {formData.type === 'static' && (
-                    <div className="border rounded-lg p-4 bg-zinc-50/50 animate-fade-in">
-                      <h3 className="font-medium mb-2 text-zinc-900">Manuelle Kontaktauswahl</h3>
-                      <p className="text-sm text-zinc-600 mb-4">
+                    <div className="border rounded-lg p-4 bg-gray-50">
+                      <h3 className="font-medium mb-2 text-gray-900">Manuelle Kontaktauswahl</h3>
+                      <Text className="text-sm mb-4">
                         Füge Kontakte manuell zu dieser Liste hinzu. Die Auswahl bleibt unverändert, bis du sie wieder anpasst.
-                      </p>
-                      <Button type="button" onClick={() => setIsContactSelectorOpen(true)}>
-                        <UsersIcon className="h-4 w-4 mr-2" />
+                      </Text>
+                      <Button type="button" onClick={() => setIsContactSelectorOpen(true)} className="whitespace-nowrap">
+                        <UsersIcon />
                         {(formData.contactIds?.length || 0).toLocaleString()} Kontakte auswählen
                       </Button>
                     </div>
@@ -580,32 +476,31 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
               
               {/* Live Preview */}
               <div className="space-y-4">
-                <div className="sticky top-6 border rounded-lg p-4 bg-white animate-fade-in-scale">
+                <div className="sticky top-6 border rounded-lg p-4 bg-white">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-medium text-zinc-900">Live-Vorschau</h3>
+                    <h3 className="font-medium text-gray-900">Live-Vorschau</h3>
                     {loadingPreview ? (
-                      <div className="flex items-center gap-2 text-sm text-zinc-500">
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#005fab]"></div>
                         <span>Lade...</span>
                       </div>
                     ) : (
-                      <Badge color="blue">{previewCount.toLocaleString()} Kontakte</Badge>
+                      <Badge color="blue" className="whitespace-nowrap">{previewCount.toLocaleString()} Kontakte</Badge>
                     )}
                   </div>
                   
                   {previewContacts.length > 0 ? (
                     <div className="space-y-1 max-h-96 overflow-y-auto">
-                      {previewContacts.map((contact, index) => (
+                      {previewContacts.map((contact) => (
                         <div 
                           key={contact.id} 
-                          className="flex items-center justify-between py-1.5 px-2 bg-zinc-50 rounded animate-fade-in"
-                          style={{ animationDelay: `${index * 0.05}s` }}
+                          className="flex items-center justify-between py-1.5 px-2 bg-gray-50 rounded"
                         >
                           <div>
-                            <div className="font-medium text-sm text-zinc-800">
+                            <div className="font-medium text-sm text-gray-800">
                               {contact.firstName} {contact.lastName}
                             </div>
-                            <div className="text-xs text-zinc-500">
+                            <div className="text-xs text-gray-500">
                               {contact.position && `${contact.position} • `}
                               {contact.companyName || 'Keine Firma'}
                             </div>
@@ -621,20 +516,20 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
                         </div>
                       ))}
                       {previewCount > 10 && (
-                        <div className="text-sm text-zinc-500 text-center pt-2">
+                        <Text className="text-sm text-center pt-2">
                           ... und {(previewCount - 10).toLocaleString()} weitere Kontakte
-                        </div>
+                        </Text>
                       )}
                     </div>
                   ) : (
-                    <div className="text-center py-8 text-zinc-500">
+                    <div className="text-center py-8">
                       <UsersIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                      <div className="text-sm">
+                      <Text className="text-sm">
                         {formData.type === 'dynamic' 
                           ? "Keine Kontakte entsprechen den Filtern." 
                           : "Noch keine Kontakte ausgewählt."
                         }
-                      </div>
+                      </Text>
                     </div>
                   )}
                 </div>
@@ -642,32 +537,17 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
             </div>
           </DialogBody>
           
-          <DialogActions className="px-6 py-4 flex justify-between">
-            <div className="text-xs text-gray-500">
-              <span className="hidden sm:inline">Tastenkürzel: </span>
-              <kbd className="px-1.5 py-0.5 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded">⌘S</kbd> Speichern
-              <span className="mx-2">·</span>
-              <kbd className="px-1.5 py-0.5 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded">Esc</kbd> Abbrechen
-            </div>
-            <div className="flex gap-x-4">
-              <Button plain onClick={onClose}>Abbrechen</Button>
-              <button 
-                type="submit" 
-                disabled={loading || !formData.name}
-                className="relative inline-flex items-center gap-x-2 rounded-lg bg-[#005fab] px-4 py-2 text-sm font-semibold text-white hover:bg-[#004a8c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005fab] disabled:opacity-50"
-              >
-                {loading ? (
-                  <>
-                    <span className="opacity-0">Speichern</span>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                    </div>
-                  </>
-                ) : (
-                  'Speichern'
-                )}
-              </button>
-            </div>
+          <DialogActions className="px-6 py-4">
+            <Button plain onClick={onClose} className="whitespace-nowrap">
+              Abbrechen
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={loading || !formData.name}
+              className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
+            >
+              {loading ? 'Speichern...' : 'Speichern'}
+            </Button>
           </DialogActions>
         </form>
       </Dialog>
@@ -680,55 +560,6 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
           onSave={handleSaveContactSelection}
         />
       )}
-      
-      {/* Toast Notifications */}
-      <ToastNotification toasts={toasts} onRemove={removeToast} />
-
-      {/* CSS für Animationen */}
-      <style jsx global>{`
-        @keyframes slide-in-up {
-          from {
-            transform: translateY(100%);
-            opacity: 0;
-          }
-          to {
-            transform: translateY(0);
-            opacity: 1;
-          }
-        }
-        
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-
-        @keyframes fade-in-scale {
-          from {
-            opacity: 0;
-            transform: scale(0.95);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-        
-        .animate-slide-in-up {
-          animation: slide-in-up 0.3s ease-out;
-        }
-        
-        .animate-fade-in {
-          animation: fade-in 0.3s ease-out;
-        }
-
-        .animate-fade-in-scale {
-          animation: fade-in-scale 0.2s ease-out;
-        }
-      `}</style>
     </>
   );
 }

@@ -1,10 +1,9 @@
-// src\app\dashboard\contacts\lists\[listId]\page.tsx
+// src/app/dashboard/contacts/lists/[listId]/page.tsx
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import clsx from 'clsx';
 import { useAuth } from "@/context/AuthContext";
 import { listsService } from "@/lib/firebase/lists-service";
 import { tagsService } from "@/lib/firebase/crm-service";
@@ -31,80 +30,95 @@ import {
   DocumentTextIcon,
   FunnelIcon,
   PencilIcon,
-  ArrowPathIcon
-} from "@heroicons/react/24/outline";
-import { 
+  ArrowPathIcon,
   CheckCircleIcon,
   XCircleIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon
 } from "@heroicons/react/20/solid";
 
-// Toast Types
-interface Toast {
-  id: string;
-  type: 'success' | 'error' | 'warning' | 'info';
+// Alert Component
+function Alert({ 
+  type = 'info', 
+  title, 
+  message, 
+  action 
+}: { 
+  type?: 'info' | 'success' | 'warning' | 'error';
   title: string;
   message?: string;
-  duration?: number;
-}
+  action?: { label: string; onClick: () => void };
+}) {
+  const styles = {
+    info: 'bg-blue-50 text-blue-700',
+    success: 'bg-green-50 text-green-700',
+    warning: 'bg-yellow-50 text-yellow-700',
+    error: 'bg-red-50 text-red-700'
+  };
 
-// Toast Component
-function ToastNotification({ toasts, onRemove }: { toasts: Toast[], onRemove: (id: string) => void }) {
   const icons = {
+    info: InformationCircleIcon,
     success: CheckCircleIcon,
-    error: XCircleIcon,
     warning: ExclamationTriangleIcon,
-    info: InformationCircleIcon
+    error: XCircleIcon
   };
 
-  const colors = {
-    success: 'bg-green-50 border-green-200 text-green-800',
-    error: 'bg-red-50 border-red-200 text-red-800',
-    warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
-    info: 'bg-blue-50 border-blue-200 text-blue-800'
-  };
-
-  const iconColors = {
-    success: 'text-green-400',
-    error: 'text-red-400',
-    warning: 'text-yellow-400',
-    info: 'text-blue-400'
-  };
+  const Icon = icons[type];
 
   return (
-    <div className="fixed bottom-0 right-0 p-6 space-y-4 z-50">
-      {toasts.map((toast) => {
-        const Icon = icons[toast.type];
-        return (
-          <div
-            key={toast.id}
-            className={`${colors[toast.type]} border rounded-lg p-4 shadow-lg transform transition-all duration-300 ease-in-out animate-slide-in-up`}
-            style={{ minWidth: '320px' }}
-          >
-            <div className="flex">
-              <Icon className={`h-5 w-5 ${iconColors[toast.type]} mr-3 flex-shrink-0`} />
-              <div className="flex-1">
-                <p className="font-medium">{toast.title}</p>
-                {toast.message && (
-                  <p className="text-sm mt-1 opacity-90">{toast.message}</p>
-                )}
-              </div>
-              <button
-                onClick={() => onRemove(toast.id)}
-                className="ml-3 flex-shrink-0 rounded-md hover:opacity-70 focus:outline-none"
-              >
-                <XCircleIcon className="h-5 w-5" />
-              </button>
-            </div>
+    <div className={`rounded-md p-4 ${styles[type].split(' ')[0]}`}>
+      <div className="flex">
+        <div className="shrink-0">
+          <Icon aria-hidden="true" className={`size-5 ${type === 'info' || type === 'success' ? 'text-blue-400' : type === 'warning' ? 'text-yellow-400' : 'text-red-400'}`} />
+        </div>
+        <div className="ml-3 flex-1 md:flex md:justify-between">
+          <div>
+            <Text className={`font-medium ${styles[type].split(' ')[1]}`}>{title}</Text>
+            {message && <Text className={`mt-2 ${styles[type].split(' ')[1]}`}>{message}</Text>}
           </div>
-        );
-      })}
+          {action && (
+            <p className="mt-3 text-sm md:mt-0 md:ml-6">
+              <button
+                onClick={action.onClick}
+                className={`font-medium whitespace-nowrap ${styles[type].split(' ')[1]} hover:opacity-80`}
+              >
+                {action.label}
+                <span aria-hidden="true"> →</span>
+              </button>
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
 
-// Hilfsfunktion zum Formatieren des Datums
+// InfoCard Component
+function InfoCard({ 
+  title, 
+  icon: Icon, 
+  children 
+}: { 
+  title: string; 
+  icon: React.ComponentType<{ className?: string }>;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-lg border bg-white overflow-hidden">
+      <div className="px-4 py-3 border-b bg-gray-50">
+        <h3 className="font-semibold text-lg flex items-center gap-2">
+          <Icon className="h-5 w-5 text-gray-500" />
+          {title}
+        </h3>
+      </div>
+      <div className="p-4">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// Helper functions
 function formatDate(timestamp: any) {
   if (!timestamp || !timestamp.toDate) return 'N/A';
   return timestamp.toDate().toLocaleString('de-DE', {
@@ -113,15 +127,6 @@ function formatDate(timestamp: any) {
     year: 'numeric',
     hour: '2-digit', 
     minute: '2-digit'
-  });
-}
-
-function formatShortDate(timestamp: any) {
-  if (!timestamp || !timestamp.toDate) return 'N/A';
-  return timestamp.toDate().toLocaleDateString('de-DE', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
   });
 }
 
@@ -138,21 +143,12 @@ export default function ListDetailPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string } | null>(null);
 
-  // Toast Management
-  const showToast = useCallback((type: Toast['type'], title: string, message?: string) => {
-    const id = Date.now().toString();
-    const newToast: Toast = { id, type, title, message, duration: 5000 };
-    setToasts(prev => [...prev, newToast]);
-    
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
-    }, newToast.duration);
-  }, []);
-
-  const removeToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
+  // Alert Management
+  const showAlert = useCallback((type: 'info' | 'success' | 'warning' | 'error', title: string, message?: string) => {
+    setAlert({ type, title, message });
+    setTimeout(() => setAlert(null), 5000);
   }, []);
 
   const loadData = useCallback(async () => {
@@ -160,7 +156,6 @@ export default function ListDetailPage() {
     setLoading(true);
     setError(null);
     try {
-      // Lade Liste und Tags parallel
       const [listData, userTags] = await Promise.all([
         listsService.getById(listId),
         tagsService.getAll(user.uid)
@@ -175,11 +170,7 @@ export default function ListDetailPage() {
         setError("Liste nicht gefunden.");
       }
     } catch (err: any) {
-      console.error(err);
       setError("Fehler beim Laden der Listendetails.");
-      if (err.code === 'failed-precondition') {
-        setError("Fehler: Ein Datenbank-Index ist erforderlich. Bitte erstelle den Index gemäß der Anweisung in der Browser-Konsole und lade die Seite neu.");
-      }
     } finally {
       setLoading(false);
     }
@@ -195,11 +186,10 @@ export default function ListDetailPage() {
     setRefreshing(true);
     try {
       await listsService.refreshDynamicList(list.id!);
-      showToast('success', 'Liste aktualisiert', 'Die dynamische Liste wurde erfolgreich aktualisiert.');
+      showAlert('success', 'Liste aktualisiert', 'Die dynamische Liste wurde erfolgreich aktualisiert.');
       await loadData();
     } catch (error) {
-      console.error("Fehler beim Aktualisieren der Liste:", error);
-      showToast('error', 'Fehler', 'Die Liste konnte nicht aktualisiert werden.');
+      showAlert('error', 'Fehler', 'Die Liste konnte nicht aktualisiert werden.');
     } finally {
       setRefreshing(false);
     }
@@ -209,12 +199,11 @@ export default function ListDetailPage() {
     if(!list?.id) return;
     try {
       await listsService.update(list.id, listData);
-      showToast('success', 'Liste aktualisiert', 'Die Liste wurde erfolgreich aktualisiert.');
+      showAlert('success', 'Liste aktualisiert', 'Die Liste wurde erfolgreich aktualisiert.');
       setShowEditModal(false);
       await loadData();
     } catch (error) {
-      console.error("Fehler beim Aktualisieren der Liste:", error);
-      showToast('error', 'Fehler', 'Die Liste konnte nicht aktualisiert werden.');
+      showAlert('error', 'Fehler', 'Die Liste konnte nicht aktualisiert werden.');
     }
   };
 
@@ -230,7 +219,7 @@ export default function ListDetailPage() {
   };
 
   const renderFilterValue = (key: string, value: any): string => {
-    // Spezielle Behandlung für Tag-IDs
+    // Tag-IDs
     if (key === 'tagIds' && Array.isArray(value)) {
       const tagNames = value.map(tagId => {
         const tag = tags.find(t => t.id === tagId);
@@ -241,7 +230,7 @@ export default function ListDetailPage() {
       return `${tagNames.slice(0, 3).join(', ')} (+${tagNames.length - 3} weitere)`;
     }
     
-    // Spezielle Behandlung für Firmentypen
+    // Firmentypen
     if (key === 'companyTypes' && Array.isArray(value)) {
       const extendedTypeLabels: { [key: string]: string } = {
         ...companyTypeLabels,
@@ -255,7 +244,7 @@ export default function ListDetailPage() {
       return `${typeLabels.slice(0, 3).join(', ')} (+${typeLabels.length - 3} weitere)`;
     }
     
-    // Spezielle Behandlung für Publikationsformat
+    // Publikationsformat
     if (key === 'publicationFormat' && value) {
       const formatLabels: { [key: string]: string } = {
         'print': 'Print',
@@ -265,12 +254,12 @@ export default function ListDetailPage() {
       return formatLabels[value] || value;
     }
     
-    // Spezielle Behandlung für Mindestauflage
+    // Mindestauflage
     if (key === 'minCirculation' && typeof value === 'number') {
       return value.toLocaleString('de-DE');
     }
     
-    // Standard-Behandlung für Arrays
+    // Arrays
     if (Array.isArray(value)) {
       if (value.length === 0) return '—';
       if (value.length <= 3) return value.join(', ');
@@ -278,7 +267,6 @@ export default function ListDetailPage() {
     }
     
     if (typeof value === 'boolean') return value ? 'Ja' : 'Nein';
-    if (value instanceof Date) return formatShortDate({ toDate: () => value });
     return String(value || '—');
   };
 
@@ -311,9 +299,7 @@ export default function ListDetailPage() {
       publicationFormat: 'Publikationsformat',
       publicationFocusAreas: 'Themenschwerpunkte',
       minCirculation: 'Mindestauflage',
-      publicationNames: 'Publikationen',
-      beats: 'Ressorts',
-      mediaFocus: 'Medienschwerpunkte'
+      publicationNames: 'Publikationen'
     };
     return labelMap[key] || key;
   };
@@ -321,9 +307,9 @@ export default function ListDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-pulse">
-          <div className="h-8 w-8 bg-[#005fab] rounded-full animate-bounce"></div>
-          <p className="mt-4 text-zinc-500">Lade Listendetails...</p>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto"></div>
+          <Text className="mt-4">Lade Listendetails...</Text>
         </div>
       </div>
     );
@@ -332,19 +318,11 @@ export default function ListDetailPage() {
   if (error) {
     return (
       <div className="p-8">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="flex">
-            <XCircleIcon className="h-5 w-5 text-red-400" />
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">Fehler</h3>
-              <div className="mt-2 text-sm text-red-700">{error}</div>
-              <div className="mt-4">
-                <Button onClick={() => router.push('/dashboard/contacts/lists')} plain>
-                  Zurück zur Übersicht
-                </Button>
-              </div>
-            </div>
-          </div>
+        <Alert type="error" title="Fehler" message={error} />
+        <div className="mt-4">
+          <Button onClick={() => router.push('/dashboard/contacts/lists')} plain className="whitespace-nowrap">
+            Zurück zur Übersicht
+          </Button>
         </div>
       </div>
     );
@@ -353,9 +331,9 @@ export default function ListDetailPage() {
   if (!list) {
     return (
       <div className="p-8 text-center">
-        <div className="text-gray-500">Liste konnte nicht gefunden werden.</div>
+        <Text>Liste konnte nicht gefunden werden.</Text>
         <div className="mt-4">
-          <Button onClick={() => router.push('/dashboard/contacts/lists')} plain>
+          <Button onClick={() => router.push('/dashboard/contacts/lists')} plain className="whitespace-nowrap">
             Zurück zur Übersicht
           </Button>
         </div>
@@ -366,12 +344,19 @@ export default function ListDetailPage() {
   return (
     <>
       <div className="p-6 md:p-8">
+        {/* Alert */}
+        {alert && (
+          <div className="mb-4">
+            <Alert type={alert.type} title={alert.title} message={alert.message} />
+          </div>
+        )}
+
         {/* Header */}
         <div className="mb-6">
           <Button 
             plain 
             onClick={() => router.push('/dashboard/contacts/lists')}
-            className="mb-4 flex items-center gap-2"
+            className="mb-4 flex items-center gap-2 whitespace-nowrap"
           >
             <ArrowLeftIcon className="h-4 w-4" />
             Zurück zur Übersicht
@@ -388,19 +373,19 @@ export default function ListDetailPage() {
                   plain 
                   onClick={handleRefreshList}
                   disabled={refreshing}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 whitespace-nowrap"
                 >
-                  <ArrowPathIcon className={clsx("h-4 w-4", refreshing && "animate-spin")} />
+                  <ArrowPathIcon className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
                   Aktualisieren
                 </Button>
               )}
-              <button 
+              <Button 
                 onClick={() => setShowEditModal(true)}
-                className="inline-flex items-center gap-x-2 rounded-lg bg-[#005fab] px-4 py-2 text-sm font-semibold text-white hover:bg-[#004a8c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005fab]"
+                className="bg-[#005fab] hover:bg-[#004a8c] text-white inline-flex items-center gap-x-2 whitespace-nowrap"
               >
                 <PencilIcon className="h-4 w-4" />
                 Liste bearbeiten
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -413,7 +398,7 @@ export default function ListDetailPage() {
                 <h3 className="font-semibold text-lg flex items-center gap-2">
                   <UsersIcon className="h-5 w-5 text-gray-500" />
                   Enthaltene Kontakte
-                  <Badge color="blue" className="ml-2">{list.contactCount || 0}</Badge>
+                  <Badge color="blue" className="ml-2 whitespace-nowrap">{list.contactCount || 0}</Badge>
                 </h3>
               </div>
               
@@ -439,7 +424,7 @@ export default function ListDetailPage() {
                               {contact.firstName} {contact.lastName}
                             </Link>
                           </TableCell>
-                          <TableCell>{contact.position || <span className="text-gray-400">—</span>}</TableCell>
+                          <TableCell>{contact.position || <Text>—</Text>}</TableCell>
                           <TableCell>
                             {contact.companyId && contact.companyName ? (
                               <Link 
@@ -449,7 +434,7 @@ export default function ListDetailPage() {
                                 {contact.companyName}
                               </Link>
                             ) : (
-                              <span className="text-gray-400">—</span>
+                              <Text>—</Text>
                             )}
                           </TableCell>
                           <TableCell>
@@ -473,7 +458,7 @@ export default function ListDetailPage() {
                                 </a>
                               )}
                               {!contact.email && !contact.phone && (
-                                <span className="text-gray-400">—</span>
+                                <Text>—</Text>
                               )}
                             </div>
                           </TableCell>
@@ -481,13 +466,13 @@ export default function ListDetailPage() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={4} className="text-center text-zinc-500 py-12">
+                        <TableCell colSpan={4} className="text-center py-12">
                           <UsersIcon className="mx-auto h-12 w-12 text-gray-300 mb-3" />
-                          <div>Diese Liste enthält keine Kontakte.</div>
+                          <Text>Diese Liste enthält keine Kontakte.</Text>
                           {list.type === 'dynamic' && (
-                            <div className="mt-2 text-sm">
+                            <Text className="mt-2 text-sm">
                               Die Filterkriterien ergeben keine Treffer.
-                            </div>
+                            </Text>
                           )}
                         </TableCell>
                       </TableRow>
@@ -501,16 +486,13 @@ export default function ListDetailPage() {
           {/* Sidebar mit Details */}
           <div className="space-y-6">
             {/* Listen-Details */}
-            <div className="rounded-lg border bg-white">
-              <div className="px-4 py-3 border-b bg-gray-50">
-                <h3 className="font-semibold text-lg">Listen-Details</h3>
-              </div>
-              <div className="p-4 space-y-3 text-sm">
+            <InfoCard title="Listen-Details" icon={ListBulletIcon}>
+              <div className="space-y-3 text-sm">
                 <div className="flex items-center gap-3">
                   <ListBulletIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
                   <div className="flex items-center gap-2">
                     <span className="text-gray-600">Typ:</span>
-                    <Badge color={list.type === 'dynamic' ? 'green' : 'zinc'}>
+                    <Badge color={list.type === 'dynamic' ? 'green' : 'zinc'} className="whitespace-nowrap">
                       {list.type === 'dynamic' ? 'Dynamische Liste' : 'Statische Liste'}
                     </Badge>
                   </div>
@@ -520,7 +502,7 @@ export default function ListDetailPage() {
                   <HashtagIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
                   <div className="flex items-center gap-2">
                     <span className="text-gray-600">Kategorie:</span>
-                    <Badge color="purple">{getCategoryLabel(list.category)}</Badge>
+                    <Badge color="purple" className="whitespace-nowrap">{getCategoryLabel(list.category)}</Badge>
                   </div>
                 </div>
                 
@@ -540,42 +522,33 @@ export default function ListDetailPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </InfoCard>
             
             {/* Aktive Filter */}
             {list.type === 'dynamic' && list.filters && Object.values(list.filters).some(v => v && (!Array.isArray(v) || v.length > 0)) && (
-              <div className="rounded-lg border bg-white">
-                <div className="px-4 py-3 border-b bg-gray-50">
-                  <h3 className="font-semibold text-lg flex items-center gap-2">
-                    <FunnelIcon className="h-5 w-5 text-gray-500" />
-                    Aktive Filter
-                  </h3>
-                </div>
-                <div className="p-4">
-                  <ul className="space-y-3">
-                    {Object.entries(list.filters).map(([key, value]) => {
-                      // Filter ausblenden, die keine Werte haben oder redundant sind
-                      if (!value || (Array.isArray(value) && value.length === 0)) return null;
-                      if (key === 'beats' || key === 'mediaFocus') return null; // Redundante Filter ausblenden
-                      
-                      const Icon = getFilterIcon(key);
-                      return (
-                        <li key={key} className="flex items-start gap-3">
-                          <Icon className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
-                          <div className="flex-1">
-                            <div className="font-medium text-sm text-gray-700">
-                              {getFilterLabel(key)}
-                            </div>
-                            <div className="text-sm text-gray-600 mt-0.5">
-                              {renderFilterValue(key, value)}
-                            </div>
+              <InfoCard title="Aktive Filter" icon={FunnelIcon}>
+                <ul className="space-y-3">
+                  {Object.entries(list.filters).map(([key, value]) => {
+                    if (!value || (Array.isArray(value) && value.length === 0)) return null;
+                    if (key === 'beats' || key === 'mediaFocus') return null;
+                    
+                    const Icon = getFilterIcon(key);
+                    return (
+                      <li key={key} className="flex items-start gap-3">
+                        <Icon className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <div className="font-medium text-sm text-gray-700">
+                            {getFilterLabel(key)}
                           </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              </div>
+                          <div className="text-sm text-gray-600 mt-0.5">
+                            {renderFilterValue(key, value)}
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </InfoCard>
             )}
           </div>
         </div>
@@ -590,27 +563,6 @@ export default function ListDetailPage() {
           userId={user.uid}
         />
       )}
-      
-      {/* Toast Notifications */}
-      <ToastNotification toasts={toasts} onRemove={removeToast} />
-
-      {/* CSS für Animationen */}
-      <style jsx global>{`
-        @keyframes slide-in-up {
-          from {
-            transform: translateY(100%);
-            opacity: 0;
-          }
-          to {
-            transform: translateY(0);
-            opacity: 1;
-          }
-        }
-        
-        .animate-slide-in-up {
-          animation: slide-in-up 0.3s ease-out;
-        }
-      `}</style>
     </>
   );
 }
