@@ -1,7 +1,7 @@
-// src\app\dashboard\contacts\crm\page.tsx
+// src/app/dashboard/contacts/crm/page.tsx
 "use client";
 
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from "@/context/AuthContext";
@@ -9,8 +9,8 @@ import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
 import { Button } from "@/components/button";
 import { Badge } from "@/components/badge";
-import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/table";
 import { Checkbox } from "@/components/checkbox";
+import { Input } from "@/components/input";
 import { 
   PlusIcon, 
   MagnifyingGlassIcon, 
@@ -22,420 +22,83 @@ import {
   UserIcon,
   EllipsisVerticalIcon,
   EyeIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ExclamationTriangleIcon,
   InformationCircleIcon,
-  CheckIcon,
-  XMarkIcon
+  ExclamationTriangleIcon
 } from "@heroicons/react/20/solid";
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { companiesService, contactsService, tagsService } from "@/lib/firebase/crm-service";
 import { Company, Contact, Tag, companyTypeLabels, CompanyType } from "@/types/crm";
 import CompanyModal from "./CompanyModal";
 import ContactModal from "./ContactModal";
 import ImportModal from "./ImportModal";
-import clsx from "clsx";
 import { MultiSelectDropdown } from "@/components/MultiSelectDropdown";
 import Papa from 'papaparse';
 
 type TabType = 'companies' | 'contacts';
 
-// Toast Notification Component
-interface Toast {
-  id: string;
-  type: 'success' | 'error' | 'warning' | 'info';
+// Standard Alert Component nach Tailwind UI Pattern
+function Alert({ 
+  type = 'info', 
+  title, 
+  message, 
+  action 
+}: { 
+  type?: 'info' | 'success' | 'warning' | 'error';
   title: string;
   message?: string;
-  duration?: number;
-}
+  action?: { label: string; onClick: () => void };
+}) {
+  const styles = {
+    info: 'bg-blue-50 text-blue-700',
+    success: 'bg-green-50 text-green-700',
+    warning: 'bg-yellow-50 text-yellow-700',
+    error: 'bg-red-50 text-red-700'
+  };
 
-function ToastNotification({ toasts, onRemove }: { toasts: Toast[], onRemove: (id: string) => void }) {
   const icons = {
-    success: CheckCircleIcon,
-    error: XCircleIcon,
+    info: InformationCircleIcon,
+    success: InformationCircleIcon,
     warning: ExclamationTriangleIcon,
-    info: InformationCircleIcon
+    error: ExclamationTriangleIcon
   };
 
-  const colors = {
-    success: 'bg-green-50 border-green-200 text-green-800',
-    error: 'bg-red-50 border-red-200 text-red-800',
-    warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
-    info: 'bg-blue-50 border-blue-200 text-blue-800'
-  };
-
-  const iconColors = {
-    success: 'text-green-400',
-    error: 'text-red-400',
-    warning: 'text-yellow-400',
-    info: 'text-blue-400'
-  };
+  const Icon = icons[type];
 
   return (
-    <div className="fixed bottom-0 right-0 p-6 space-y-4 z-50">
-      {toasts.map((toast) => {
-        const Icon = icons[toast.type];
-        return (
-          <div
-            key={toast.id}
-            className={`${colors[toast.type]} border rounded-lg p-4 shadow-lg transform transition-all duration-300 ease-in-out animate-slide-in-up`}
-            style={{ minWidth: '320px' }}
-          >
-            <div className="flex">
-              <Icon className={`h-5 w-5 ${iconColors[toast.type]} mr-3 flex-shrink-0`} />
-              <div className="flex-1">
-                <p className="font-medium">{toast.title}</p>
-                {toast.message && (
-                  <p className="text-sm mt-1 opacity-90">{toast.message}</p>
-                )}
-              </div>
+    <div className={`rounded-md p-4 ${styles[type].split(' ')[0]}`}>
+      <div className="flex">
+        <div className="shrink-0">
+          <Icon aria-hidden="true" className={`size-5 ${type === 'info' || type === 'success' ? 'text-blue-400' : type === 'warning' ? 'text-yellow-400' : 'text-red-400'}`} />
+        </div>
+        <div className="ml-3 flex-1 md:flex md:justify-between">
+          <div>
+            <p className={`text-sm font-medium ${styles[type].split(' ')[1]}`}>{title}</p>
+            {message && <p className={`mt-2 text-sm ${styles[type].split(' ')[1]}`}>{message}</p>}
+          </div>
+          {action && (
+            <p className="mt-3 text-sm md:mt-0 md:ml-6">
               <button
-                onClick={() => onRemove(toast.id)}
-                className="ml-3 flex-shrink-0 rounded-md hover:opacity-70 focus:outline-none"
+                onClick={action.onClick}
+                className={`font-medium whitespace-nowrap ${styles[type].split(' ')[1]} hover:opacity-80`}
               >
-                <XCircleIcon className="h-5 w-5" />
+                {action.label}
+                <span aria-hidden="true"> →</span>
               </button>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// Quick Preview Component
-function QuickPreview({ 
-  item, 
-  type,
-  position,
-  tags
-}: { 
-  item: Company | Contact;
-  type: 'company' | 'contact';
-  position: { x: number; y: number };
-  tags: Tag[];
-}) {
-  const previewRef = useRef<HTMLDivElement>(null);
-  const [adjustedPosition, setAdjustedPosition] = useState(position);
-
-  useEffect(() => {
-    if (previewRef.current) {
-      const rect = previewRef.current.getBoundingClientRect();
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-      
-      let newX = position.x;
-      let newY = position.y;
-      
-      if (rect.right > viewportWidth) {
-        newX = position.x - rect.width - 20;
-      }
-      if (rect.bottom > viewportHeight) {
-        newY = viewportHeight - rect.height - 20;
-      }
-      
-      setAdjustedPosition({ x: newX, y: newY });
-    }
-  }, [position]);
-
-  const formatDate = (timestamp: any) => {
-    if (!timestamp || !timestamp.toDate) return '—';
-    return timestamp.toDate().toLocaleDateString('de-DE', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    });
-  };
-
-  return (
-    <div
-      ref={previewRef}
-      className="fixed z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-4 w-80 animate-fade-in-scale"
-      style={{ left: `${adjustedPosition.x}px`, top: `${adjustedPosition.y}px` }}
-    >
-      <div className="mb-3">
-        <h4 className="font-semibold text-gray-900">
-          {type === 'company' ? (item as Company).name : `${(item as Contact).firstName} ${(item as Contact).lastName}`}
-        </h4>
-        {type === 'company' && (item as Company).industry && (
-          <p className="text-sm text-gray-600">{(item as Company).industry}</p>
-        )}
-        {type === 'contact' && (item as Contact).position && (
-          <p className="text-sm text-gray-600">{(item as Contact).position}</p>
-        )}
-      </div>
-      
-      <div className="space-y-2 text-sm">
-        {type === 'company' ? (
-          <>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Typ:</span>
-              <Badge color="zinc" className="text-xs">
-                {companyTypeLabels[(item as Company).type]}
-              </Badge>
-            </div>
-            {(item as Company).phone && (
-              <div className="flex justify-between">
-                <span className="text-gray-500">Telefon:</span>
-                <span>{(item as Company).phone}</span>
-              </div>
-            )}
-            {(item as Company).website && (
-              <div className="flex justify-between">
-                <span className="text-gray-500">Website:</span>
-                <a href={(item as Company).website} target="_blank" rel="noopener noreferrer" className="text-[#005fab] hover:text-[#004a8c] truncate max-w-[180px]">
-                  {(item as Company).website}
-                </a>
-              </div>
-            )}
-            {(item as Company).mediaInfo?.publications && (item as Company).mediaInfo!.publications!.length > 0 && (
-              <div className="flex justify-between items-start">
-                <span className="text-gray-500">Publikationen:</span>
-                <div className="flex flex-wrap gap-1 justify-end max-w-[180px]">
-                  {(item as Company).mediaInfo!.publications!.map((pub) => (
-                    <Badge key={pub.id} color="purple" className="text-xs">
-                      {pub.name}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
-        ) : (
-          <>
-            {(item as Contact).companyName && (
-              <div className="flex justify-between">
-                <span className="text-gray-500">Firma:</span>
-                <span className="font-medium">{(item as Contact).companyName}</span>
-              </div>
-            )}
-            {(item as Contact).email && (
-              <div className="flex justify-between">
-                <span className="text-gray-500">E-Mail:</span>
-                <a href={`mailto:${(item as Contact).email}`} className="text-[#005fab] hover:text-[#004a8c] truncate max-w-[180px]">
-                  {(item as Contact).email}
-                </a>
-              </div>
-            )}
-            {(item as Contact).phone && (
-              <div className="flex justify-between">
-                <span className="text-gray-500">Telefon:</span>
-                <span>{(item as Contact).phone}</span>
-              </div>
-            )}
-            {(item as Contact).mediaInfo?.publications && (item as Contact).mediaInfo!.publications!.length > 0 && (
-              <div className="flex justify-between items-start">
-                <span className="text-gray-500">Publikationen:</span>
-                <div className="flex flex-wrap gap-1 justify-end max-w-[180px]">
-                  {(item as Contact).mediaInfo!.publications!.map((pub) => (
-                    <Badge key={pub} color="purple" className="text-xs">
-                      {pub}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
-        )}
-        <div className="flex justify-between">
-          <span className="text-gray-500">Erstellt:</span>
-          <span>{formatDate(item.createdAt)}</span>
+            </p>
+          )}
         </div>
-        {item.tagIds && item.tagIds.length > 0 && (
-          <div className="pt-2 border-t">
-            <div className="flex flex-wrap gap-1">
-              {item.tagIds.map(tagId => {
-                const tag = tags.find(t => t.id === tagId);
-                return tag ? (
-                  <Badge key={tag.id} color={tag.color as any} className="text-xs">
-                    {tag.name}
-                  </Badge>
-                ) : null;
-              })}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
 }
 
-// Inline Edit Component
-function InlineEdit({ 
-  value, 
-  onSave, 
-  onCancel,
-  className = ""
-}: { 
-  value: string; 
-  onSave: (value: string) => void;
-  onCancel: () => void;
-  className?: string;
-}) {
-  const [editValue, setEditValue] = useState(value);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    inputRef.current?.focus();
-    inputRef.current?.select();
-  }, []);
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      onSave(editValue);
-    } else if (e.key === 'Escape') {
-      onCancel();
-    }
-  };
-
-  return (
-    <div className="flex items-center gap-2">
-      <input
-        ref={inputRef}
-        type="text"
-        value={editValue}
-        onChange={(e) => setEditValue(e.target.value)}
-        onKeyDown={handleKeyDown}
-        className={clsx(
-          "px-2 py-1 border border-[#005fab] rounded focus:outline-none focus:ring-2 focus:ring-[#005fab]",
-          className
-        )}
-      />
-      <button
-        onClick={() => onSave(editValue)}
-        className="p-1 text-green-600 hover:bg-green-50 rounded"
-      >
-        <CheckIcon className="h-4 w-4" />
-      </button>
-      <button
-        onClick={onCancel}
-        className="p-1 text-red-600 hover:bg-red-50 rounded"
-      >
-        <XMarkIcon className="h-4 w-4" />
-      </button>
-    </div>
-  );
-}
-
-// Dropdown Menu Component
-function DropdownMenu({ 
-  item,
-  type,
-  onDelete, 
-  onEdit,
-  onRename
-}: { 
-  item: Company | Contact;
-  type: 'company' | 'contact';
-  onDelete: (id: string, name: string) => void;
-  onEdit: () => void; // Changed to callback style
-  onRename: (id: string) => void;
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
-  const menuRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    if (isOpen && buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      setDropdownPosition({
-        top: rect.bottom + window.scrollY,
-        left: rect.right - 192 + window.scrollX
-      });
-    }
-  }, [isOpen]);
-
-  const handleAction = (action: () => void) => {
-    action();
-    setIsOpen(false);
-  };
-
-  const displayName = type === 'company' 
-    ? (item as Company).name 
-    : `${(item as Contact).firstName} ${(item as Contact).lastName}`;
-
-  return (
-    <div className="relative" ref={menuRef}>
-      <button
-        ref={buttonRef}
-        onClick={() => setIsOpen(!isOpen)}
-        className="p-1 rounded hover:bg-gray-100 transition-colors"
-      >
-        <EllipsisVerticalIcon className="h-5 w-5 text-gray-500" />
-      </button>
-
-      {isOpen && (
-        <div 
-          className={`fixed w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 transform transition-all duration-200 ${
-            isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
-          }`}
-          style={{ 
-            top: `${dropdownPosition.top}px`,
-            left: `${dropdownPosition.left}px`,
-            zIndex: 9999
-          }}
-        >
-          <div className="py-1">
-            <Link
-              href={`/dashboard/contacts/crm/${type === 'company' ? 'companies' : 'contacts'}/${item.id}`}
-              className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-              onClick={() => setIsOpen(false)}
-            >
-              <EyeIcon className="h-4 w-4 mr-3 text-gray-400" />
-              Anzeigen
-            </Link>
-
-            <button
-              onClick={() => handleAction(() => onRename(item.id!))}
-              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors text-left"
-            >
-              <PencilIcon className="h-4 w-4 mr-3 text-gray-400" />
-              Umbenennen
-            </button>
-
-            <button
-              onClick={() => handleAction(onEdit)}
-              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors text-left"
-            >
-              <PencilIcon className="h-4 w-4 mr-3 text-gray-400" />
-              Bearbeiten
-            </button>
-
-            <div className="border-t border-gray-100 my-1"></div>
-
-            <button
-              onClick={() => handleAction(() => onDelete(item.id!, displayName))}
-              className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors text-left"
-            >
-              <TrashIcon className="h-4 w-4 mr-3" />
-              Löschen
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Confirm Dialog Component
+// Confirm Dialog als einfaches Modal
 function ConfirmDialog({ 
   isOpen, 
   onClose, 
   onConfirm, 
   title, 
-  message, 
+  message,
   confirmText = "Löschen",
   cancelText = "Abbrechen",
   type = "danger"
@@ -452,41 +115,48 @@ function ConfirmDialog({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex min-h-screen items-center justify-center p-4">
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-25 transition-opacity"
-          onClick={onClose}
-        />
-        
-        <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full transform transition-all">
-          <div className="p-6">
-            <div className="flex items-center mb-4">
-              {type === 'danger' ? (
-                <XCircleIcon className="h-6 w-6 text-red-600 mr-3" />
-              ) : (
-                <ExclamationTriangleIcon className="h-6 w-6 text-yellow-600 mr-3" />
-              )}
-              <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+    <div className="relative z-50">
+      <div className="fixed inset-0 bg-gray-500 bg-opacity-75" onClick={onClose} />
+      
+      <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+          <div className="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+            <div className="sm:flex sm:items-start">
+              <div className={`mx-auto flex h-12 w-12 shrink-0 items-center justify-center rounded-full sm:mx-0 sm:h-10 sm:w-10 ${
+                type === 'danger' ? 'bg-red-100' : 'bg-yellow-100'
+              }`}>
+                <ExclamationTriangleIcon className={`h-6 w-6 ${
+                  type === 'danger' ? 'text-red-600' : 'text-yellow-600'
+                }`} />
+              </div>
+              <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+                <h3 className="text-base font-semibold text-gray-900">{title}</h3>
+                <div className="mt-2">
+                  <p className="text-sm text-gray-500">{message}</p>
+                </div>
+              </div>
             </div>
-            <p className="text-gray-600 mb-6">{message}</p>
-            <div className="flex justify-end gap-3">
-              <Button plain onClick={onClose}>
-                {cancelText}
-              </Button>
-              <button 
-                className={clsx(
-                  "px-3 py-2 text-sm font-semibold rounded-md transition-colors",
-                  type === 'danger' 
-                    ? "bg-red-600 text-white hover:bg-red-500" 
-                    : "bg-yellow-600 text-white hover:bg-yellow-500"
-                )}
+            <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+              <button
+                type="button"
                 onClick={() => {
                   onConfirm();
                   onClose();
                 }}
+                className={`inline-flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white shadow-xs sm:ml-3 sm:w-auto ${
+                  type === 'danger' 
+                    ? 'bg-red-600 hover:bg-red-500' 
+                    : 'bg-yellow-600 hover:bg-yellow-500'
+                }`}
               >
                 {confirmText}
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-gray-300 ring-inset hover:bg-gray-50 sm:mt-0 sm:w-auto"
+              >
+                {cancelText}
               </button>
             </div>
           </div>
@@ -500,9 +170,7 @@ export default function ContactsPage() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
   
-  // Initialisiere activeTab basierend auf URL-Parameter
-  const initialTab = searchParams.get('tab') === 'contacts' ? 'contacts' : 
-                    searchParams.get('tab') === 'companies' ? 'companies' : 'companies';
+  const initialTab = searchParams.get('tab') === 'contacts' ? 'contacts' : 'companies';
   
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -520,9 +188,7 @@ export default function ContactsPage() {
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [previewItem, setPreviewItem] = useState<{ item: Company | Contact; type: 'company' | 'contact'; position: { x: number; y: number } } | null>(null);
-  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string } | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     title: string;
@@ -530,41 +196,28 @@ export default function ContactsPage() {
     onConfirm: () => void;
     type?: 'danger' | 'warning';
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
-  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
 
-  // Pagination States
+  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(25);
+  const [itemsPerPage] = useState(25);
 
-  // Filter-States für Firmen
+  // Filter States
   const [selectedTypes, setSelectedTypes] = useState<CompanyType[]>([]);
   const [selectedCompanyTagIds, setSelectedCompanyTagIds] = useState<string[]>([]);
-  
-  // Filter-States für Kontakte
   const [selectedContactCompanyIds, setSelectedContactCompanyIds] = useState<string[]>([]);
   const [selectedContactTagIds, setSelectedContactTagIds] = useState<string[]>([]);
-  const [selectedContactPositions, setSelectedContactPositions] = useState<string[]>([]);
 
-  // Toast Management
-  const showToast = useCallback((type: Toast['type'], title: string, message?: string) => {
-    const id = Date.now().toString();
-    const newToast: Toast = { id, type, title, message, duration: 5000 };
-    setToasts(prev => [...prev, newToast]);
-    
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
-    }, newToast.duration);
+  // Alert Management
+  const showAlert = useCallback((type: 'info' | 'success' | 'warning' | 'error', title: string, message?: string) => {
+    setAlert({ type, title, message });
+    setTimeout(() => setAlert(null), 5000);
   }, []);
 
-  const removeToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
-  }, []);
-
-  // Aktualisiere die Tab-Buttons, um die URL zu ändern
+  // Tab Change Handler
   const handleTabChange = (tab: TabType) => {
     setActiveTab(tab);
     setSearchTerm('');
-    // URL aktualisieren ohne Seiten-Reload
+    setCurrentPage(1);
     const newUrl = new URL(window.location.href);
     newUrl.searchParams.set('tab', tab);
     window.history.pushState({}, '', newUrl);
@@ -589,99 +242,73 @@ export default function ContactsPage() {
       setContacts(contactsData);
       setTags(tagsData);
     } catch (error) {
-      console.error("Fehler beim Laden der Daten:", error);
-      showToast('error', 'Fehler beim Laden', 'Die Daten konnten nicht geladen werden.');
+      showAlert('error', 'Fehler beim Laden', 'Die Daten konnten nicht geladen werden.');
     } finally {
       setLoading(false);
     }
   };
 
+  // Memoized Filter Options
   const tagOptions = useMemo(() => {
     return tags.sort((a, b) => a.name.localeCompare(b.name));
   }, [tags]);
 
-  const positionOptions = useMemo(() => {
-    const positions = contacts.map(c => c.position).filter(Boolean) as string[];
-    return Array.from(new Set(positions)).sort();
-  }, [contacts]);
-  
   const companyOptions = useMemo(() => {
     return companies
       .map(c => ({ value: c.id!, label: c.name }))
       .sort((a, b) => a.label.localeCompare(b.label));
   }, [companies]);
 
+  // Filtered Data
   const filteredCompanies = useMemo(() => {
-    return companies
-      .filter(company => {
-        if (deletingIds.has(company.id!)) return false;
+    return companies.filter(company => {
+      const searchMatch = company.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         company.industry?.toLowerCase().includes(searchTerm.toLowerCase());
+      if (!searchMatch) return false;
+      
+      const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(company.type);
+      if (!typeMatch) return false;
         
-        const searchMatch = company.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                           company.industry?.toLowerCase().includes(searchTerm.toLowerCase());
-        if (!searchMatch) return false;
-        
-        const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(company.type);
-        if (!typeMatch) return false;
-          
-        const tagMatch = selectedCompanyTagIds.length === 0 || 
-                        company.tagIds?.some(tagId => selectedCompanyTagIds.includes(tagId));
-        if (!tagMatch) return false;
+      const tagMatch = selectedCompanyTagIds.length === 0 || 
+                      company.tagIds?.some(tagId => selectedCompanyTagIds.includes(tagId));
+      if (!tagMatch) return false;
 
-        return true;
-      });
-  }, [companies, searchTerm, selectedTypes, selectedCompanyTagIds, deletingIds]);
+      return true;
+    });
+  }, [companies, searchTerm, selectedTypes, selectedCompanyTagIds]);
 
   const filteredContacts = useMemo(() => {
     return contacts.filter(contact => {
-      if (deletingIds.has(contact.id!)) return false;
-      
       const searchMatch = `${contact.firstName} ${contact.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         contact.email?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         contact.companyName?.toLowerCase().includes(searchTerm.toLowerCase());
+                         contact.email?.toLowerCase().includes(searchTerm.toLowerCase());
       if (!searchMatch) return false;
 
       const companyMatch = selectedContactCompanyIds.length === 0 || 
                           (contact.companyId && selectedContactCompanyIds.includes(contact.companyId));
       if (!companyMatch) return false;
       
-      const positionMatch = selectedContactPositions.length === 0 || 
-                           (contact.position && selectedContactPositions.includes(contact.position));
-      if (!positionMatch) return false;
-        
       const tagMatch = selectedContactTagIds.length === 0 || 
                       contact.tagIds?.some(tagId => selectedContactTagIds.includes(tagId));
       if (!tagMatch) return false;
 
       return true;
     });
-  }, [contacts, searchTerm, selectedContactCompanyIds, selectedContactPositions, selectedContactTagIds, deletingIds]);
+  }, [contacts, searchTerm, selectedContactCompanyIds, selectedContactTagIds]);
 
   // Paginated Data
   const paginatedCompanies = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return filteredCompanies.slice(startIndex, endIndex);
+    return filteredCompanies.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredCompanies, currentPage, itemsPerPage]);
 
   const paginatedContacts = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return filteredContacts.slice(startIndex, endIndex);
+    return filteredContacts.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredContacts, currentPage, itemsPerPage]);
 
-  // Total Pages
-  const totalCompanyPages = Math.ceil(filteredCompanies.length / itemsPerPage);
-  const totalContactPages = Math.ceil(filteredContacts.length / itemsPerPage);
-  const totalPages = activeTab === 'companies' ? totalCompanyPages : totalContactPages;
-
-  // Reset page when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, selectedTypes, selectedCompanyTagIds, selectedContactCompanyIds, selectedContactTagIds, selectedContactPositions, activeTab]);
-
+  // Selection Handlers
   const handleSelectAllCompanies = (checked: boolean) => {
     if (checked) {
-      // Nur die aktuell sichtbaren (paginierten) auswählen
       setSelectedCompanyIds(new Set(paginatedCompanies.map(c => c.id!)));
     } else {
       setSelectedCompanyIds(new Set());
@@ -690,33 +317,13 @@ export default function ContactsPage() {
 
   const handleSelectAllContacts = (checked: boolean) => {
     if (checked) {
-      // Nur die aktuell sichtbaren (paginierten) auswählen
       setSelectedContactIds(new Set(paginatedContacts.map(c => c.id!)));
     } else {
       setSelectedContactIds(new Set());
     }
   };
 
-  const handleSelectCompany = (id: string, checked: boolean) => {
-    const newSelection = new Set(selectedCompanyIds);
-    if (checked) {
-      newSelection.add(id);
-    } else {
-      newSelection.delete(id);
-    }
-    setSelectedCompanyIds(newSelection);
-  };
-
-  const handleSelectContact = (id: string, checked: boolean) => {
-    const newSelection = new Set(selectedContactIds);
-    if (checked) {
-      newSelection.add(id);
-    } else {
-      newSelection.delete(id);
-    }
-    setSelectedContactIds(newSelection);
-  };
-
+  // Bulk Delete
   const handleBulkDelete = async () => {
     const count = activeTab === 'companies' ? selectedCompanyIds.size : selectedContactIds.size;
     if (count === 0) return;
@@ -724,203 +331,68 @@ export default function ContactsPage() {
     
     setConfirmDialog({
       isOpen: true,
-      title: `Mehrere ${type} löschen`,
-      message: `Möchten Sie wirklich ${count} ausgewählte ${type} unwiderruflich löschen?`,
+      title: `${count} ${type} löschen`,
+      message: `Möchten Sie wirklich ${count} ${type} unwiderruflich löschen?`,
       type: 'danger',
       onConfirm: async () => {
         const ids = activeTab === 'companies' ? Array.from(selectedCompanyIds) : Array.from(selectedContactIds);
         const service = activeTab === 'companies' ? companiesService : contactsService;
         
-        setDeletingIds(new Set(ids));
-        if (activeTab === 'companies') {
-          setSelectedCompanyIds(new Set());
-        } else {
-          setSelectedContactIds(new Set());
-        }
-        
         try {
           await Promise.all(ids.map(id => service.delete(id)));
-          showToast('success', `${type} gelöscht`, `${count} ${type} wurden erfolgreich gelöscht.`);
+          showAlert('success', `${count} ${type} gelöscht`);
           await loadData();
+          if (activeTab === 'companies') {
+            setSelectedCompanyIds(new Set());
+          } else {
+            setSelectedContactIds(new Set());
+          }
         } catch (error) {
-          console.error("Fehler beim Löschen:", error);
-          showToast('error', 'Fehler beim Löschen', `Die ${type} konnten nicht gelöscht werden.`);
-          setDeletingIds(new Set());
+          showAlert('error', 'Fehler beim Löschen');
         }
       }
     });
   };
 
-  const handleEditCompany = (company: Company) => {
-    setSelectedCompany(company);
-    setShowCompanyModal(true);
-  };
-
-  const handleEditContact = (contact: Contact) => {
-    setSelectedContact(contact);
-    setShowContactModal(true);
-  };
-
-  const handleDeleteCompany = async (id: string, name: string) => {
+  // Delete Individual Item
+  const handleDelete = async (id: string, name: string, type: 'company' | 'contact') => {
     setConfirmDialog({
       isOpen: true,
-      title: 'Firma löschen',
-      message: `Möchten Sie die Firma "${name}" wirklich unwiderruflich löschen?`,
+      title: `${type === 'company' ? 'Firma' : 'Kontakt'} löschen`,
+      message: `Möchten Sie "${name}" wirklich löschen?`,
       type: 'danger',
       onConfirm: async () => {
-        setDeletingIds(new Set([id]));
-        
         try {
-          await companiesService.delete(id);
-          showToast('success', 'Firma gelöscht', `"${name}" wurde erfolgreich gelöscht.`);
+          const service = type === 'company' ? companiesService : contactsService;
+          await service.delete(id);
+          showAlert('success', `${name} wurde gelöscht`);
           await loadData();
         } catch (error) {
-          console.error("Fehler beim Löschen der Firma:", error);
-          showToast('error', 'Fehler beim Löschen', 'Die Firma konnte nicht gelöscht werden.');
-          setDeletingIds(new Set());
+          showAlert('error', 'Fehler beim Löschen');
         }
       }
     });
   };
 
-  const handleDeleteContact = async (id: string, name: string) => {
-    setConfirmDialog({
-      isOpen: true,
-      title: 'Kontakt löschen',
-      message: `Möchten Sie den Kontakt "${name}" wirklich unwiderruflich löschen?`,
-      type: 'danger',
-      onConfirm: async () => {
-        setDeletingIds(new Set([id]));
-        
-        try {
-          await contactsService.delete(id);
-          showToast('success', 'Kontakt gelöscht', `"${name}" wurde erfolgreich gelöscht.`);
-          await loadData();
-        } catch (error) {
-          console.error("Fehler beim Löschen des Kontakts:", error);
-          showToast('error', 'Fehler beim Löschen', 'Der Kontakt konnte nicht gelöscht werden.');
-          setDeletingIds(new Set());
-        }
-      }
-    });
-  };
-
-  const handleInlineEdit = async (id: string, newName: string, type: 'company' | 'contact') => {
-    if (!newName.trim()) {
-      showToast('error', 'Fehler', 'Der Name darf nicht leer sein.');
-      setEditingId(null);
-      return;
-    }
-
-    try {
-      if (type === 'company') {
-        await companiesService.update(id, { name: newName });
-        showToast('success', 'Name aktualisiert', 'Der Firmenname wurde erfolgreich geändert.');
-      } else {
-        const [firstName, ...lastNameParts] = newName.trim().split(' ');
-        const lastName = lastNameParts.join(' ');
-        await contactsService.update(id, { firstName, lastName: lastName || '' });
-        showToast('success', 'Name aktualisiert', 'Der Kontaktname wurde erfolgreich geändert.');
-      }
-      setEditingId(null);
-      await loadData();
-    } catch (error) {
-      console.error("Fehler beim Aktualisieren des Namens:", error);
-      showToast('error', 'Fehler', 'Der Name konnte nicht aktualisiert werden.');
-    }
-  };
-
-  const handleMouseEnter = (item: Company | Contact, type: 'company' | 'contact', event: React.MouseEvent) => {
-    const rect = (event.target as HTMLElement).getBoundingClientRect();
-    setPreviewItem({
-      item,
-      type,
-      position: { x: rect.right + 10, y: rect.top }
-    });
-  };
-
-  const handleMouseLeave = () => {
-    setPreviewItem(null);
-  };
-  
-  const handleAddNew = () => {
-    if (activeTab === 'companies') {
-        setSelectedCompany(null);
-        setShowCompanyModal(true);
-    } else {
-        setSelectedContact(null);
-        setShowContactModal(true);
-    }
-  };
-
-  const renderTags = (tagIds?: string[]) => {
-    if (!tagIds || tagIds.length === 0) return null;
-    const entityTags = tags.filter(tag => tagIds.includes(tag.id!));
-    return (
-      <div className="flex gap-1 overflow-x-auto whitespace-nowrap scrollbar-hide">
-        {entityTags.map(tag => (
-          <Badge key={tag.id} color={tag.color as any} className="text-xs flex-shrink-0">{tag.name}</Badge>
-        ))}
-      </div>
-    );
-  };
-  
-  const renderPublications = (company: Company) => {
-    const publications = company.mediaInfo?.publications;
-    if (!publications || publications.length === 0) return <span className="text-gray-400">—</span>;
-    
-    return (
-      <div className="flex gap-1 overflow-x-auto whitespace-nowrap scrollbar-hide">
-        {publications.map((pub) => (
-          <Badge key={pub.id} color="purple" className="text-xs flex-shrink-0">
-            {pub.name}
-          </Badge>
-        ))}
-      </div>
-    );
-  };
-  
-  const renderContactPublications = (contact: Contact) => {
-    const publications = contact.mediaInfo?.publications;
-    if (!publications || publications.length === 0) return <span className="text-gray-400">—</span>;
-    
-    return (
-      <div className="flex gap-1 overflow-x-auto whitespace-nowrap scrollbar-hide">
-        {publications.map((pubName) => (
-          <Badge key={pubName} color="purple" className="text-xs flex-shrink-0">
-            {pubName}
-          </Badge>
-        ))}
-      </div>
-    );
-  };
-  
+  // Export Function
   const handleExport = () => {
-    const isCompanies = activeTab === 'companies';
-    const data = isCompanies ? filteredCompanies : filteredContacts;
-    const filename = isCompanies ? 'firmen-export.csv' : 'kontakte-export.csv';
+    const data = activeTab === 'companies' ? filteredCompanies : filteredContacts;
+    const filename = activeTab === 'companies' ? 'firmen-export.csv' : 'kontakte-export.csv';
 
     if (data.length === 0) {
-      showToast('warning', 'Keine Daten', 'Keine Daten zum Exportieren in der aktuellen Ansicht.');
+      showAlert('warning', 'Keine Daten zum Exportieren');
       return;
     }
 
     try {
       let csv;
-      if (isCompanies) {
+      if (activeTab === 'companies') {
         const companyData = (data as Company[]).map(company => ({
           "Firmenname": company.name,
           "Typ": companyTypeLabels[company.type],
           "Branche": company.industry || '',
           "Website": company.website || '',
           "Telefon": company.phone || '',
-          "Strasse": company.address?.street || '',
-          "Adresszeile 2": company.address?.street2 || '',
-          "PLZ": company.address?.zip || '',
-          "Stadt": company.address?.city || '',
-          "Land": company.address?.country || '',
-          "Notizen": company.notes || '',
-          "Tags": (company.tagIds || []).map(tagId => tags.find(t => t.id === tagId)?.name).filter(Boolean).join(', '),
         }));
         csv = Papa.unparse(companyData);
       } else {
@@ -928,12 +400,9 @@ export default function ContactsPage() {
           "Vorname": contact.firstName,
           "Nachname": contact.lastName,
           "Firma": contact.companyName || '',
-          "Publikationen": (contact.mediaInfo?.publications || []).join(', '),
           "Position": contact.position || '',
           "E-Mail": contact.email || '',
           "Telefon": contact.phone || '',
-          "Notizen": contact.notes || '',
-          "Tags": (contact.tagIds || []).map(tagId => tags.find(t => t.id === tagId)?.name).filter(Boolean).join(', '),
         }));
         csv = Papa.unparse(contactData);
       }
@@ -946,19 +415,18 @@ export default function ContactsPage() {
       link.click();
       document.body.removeChild(link);
       
-      showToast('success', 'Export erfolgreich', `${data.length} ${isCompanies ? 'Firmen' : 'Kontakte'} wurden exportiert.`);
+      showAlert('success', 'Export erfolgreich');
     } catch (error) {
-      console.error("Fehler beim Exportieren:", error);
-      showToast('error', 'Fehler', 'Die Daten konnten nicht exportiert werden.');
+      showAlert('error', 'Export fehlgeschlagen');
     }
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-pulse">
-          <div className="h-8 w-8 bg-[#005fab] rounded-full animate-bounce"></div>
-          <p className="mt-4 text-zinc-500">Lade Daten...</p>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto"></div>
+          <p className="mt-4 text-gray-500">Lade Daten...</p>
         </div>
       </div>
     );
@@ -966,547 +434,580 @@ export default function ContactsPage() {
 
   return (
     <div>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <Heading>Kontakte</Heading>
-          <Text className="mt-1">Verwalte deine Firmen und Ansprechpartner</Text>
+      {/* Alert */}
+      {alert && (
+        <div className="mb-4">
+          <Alert type={alert.type} title={alert.title} message={alert.message} />
         </div>
-        <div className="flex items-center gap-x-2">
-          <Button 
-            plain 
+      )}
+
+      {/* Header */}
+      <div className="md:flex md:items-center md:justify-between">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-2xl/7 font-bold text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+            Kontakte
+          </h2>
+          <p className="mt-2 text-sm text-gray-700">
+            Verwalte deine Firmen und Ansprechpartner
+          </p>
+        </div>
+        <div className="mt-4 flex md:mt-0 md:ml-4">
+          <button
+            type="button"
             onClick={() => setShowImportModal(true)}
-            className="flex items-center gap-1"
+            className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-gray-300 ring-inset hover:bg-gray-50"
           >
-            <ArrowUpTrayIcon className="h-4 w-4" />
+            <ArrowUpTrayIcon className="mr-2 h-4 w-4" />
             Import
-          </Button>
-          <button 
-            onClick={handleAddNew}
-            className="inline-flex items-center gap-x-2 rounded-lg bg-[#005fab] px-4 py-2 text-sm font-semibold text-white hover:bg-[#004a8c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005fab]"
+          </button>
+          <button
+            type="button"
+            onClick={handleExport}
+            className="ml-3 inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-gray-300 ring-inset hover:bg-gray-50"
           >
-            <PlusIcon className="size-4" />
+            <ArrowDownTrayIcon className="mr-2 h-4 w-4" />
+            Export
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (activeTab === 'companies') {
+                setSelectedCompany(null);
+                setShowCompanyModal(true);
+              } else {
+                setSelectedContact(null);
+                setShowContactModal(true);
+              }
+            }}
+            className="ml-3 inline-flex items-center rounded-md bg-[#005fab] px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-[#004a8c] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#005fab]"
+          >
+            <PlusIcon className="mr-2 h-4 w-4" />
             {activeTab === 'companies' ? 'Firma hinzufügen' : 'Person hinzufügen'}
           </button>
         </div>
       </div>
-      
-      {/* Tabs + Filter + Suche in einer Box */}
-      <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-lg p-4 mb-6 space-y-4">
-        {/* Tabs */}
-        <div className="flex gap-4">
-          <button
-            onClick={() => handleTabChange('companies')}
-            className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
-              activeTab === 'companies'
-                ? 'border-[#005fab] text-[#005fab]'
-                : 'border-transparent text-zinc-600 hover:text-zinc-900 dark:text-zinc-400'
-            }`}
-          >
-            <BuildingOfficeIcon className="h-4 w-4" />
-            Firmen ({companies.length})
-          </button>
-          <button
-            onClick={() => handleTabChange('contacts')}
-            className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
-              activeTab === 'contacts'
-                ? 'border-[#005fab] text-[#005fab]'
-                : 'border-transparent text-zinc-600 hover:text-zinc-900 dark:text-zinc-400'
-            }`}
-          >
-            <UserIcon className="h-4 w-4" />
-            Personen ({contacts.length})
-          </button>
-        </div>
-        
-        {/* Filter + Suche */}
-        {activeTab === 'companies' && (
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="relative w-full lg:flex-1">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-zinc-400 pointer-events-none" />
-              <input
-                type="search"
-                placeholder="Firmen durchsuchen..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-10 rounded-md border border-zinc-300 py-2 pl-10 pr-4 text-sm focus:border-[#005fab] focus:outline-none focus:ring-1 focus:ring-[#005fab] transition-all"
-              />
-            </div>
-            
-            <div className="w-full lg:w-48">
-              <MultiSelectDropdown 
-                label="" 
-                placeholder="Nach Typ filtern..." 
-                options={Object.entries(companyTypeLabels).map(([value, label]) => ({ value, label }))} 
-                selectedValues={selectedTypes} 
-                onChange={(values) => setSelectedTypes(values as CompanyType[])}
-              />
-            </div>
-            
-            <div className="w-full lg:w-48">
-              <MultiSelectDropdown 
-                label="" 
-                placeholder="Nach Tags filtern..." 
-                options={tagOptions.map(tag => ({ value: tag.id!, label: tag.name }))} 
-                selectedValues={selectedCompanyTagIds} 
-                onChange={(values) => setSelectedCompanyTagIds(values)}
-              />
-            </div>
-          </div>
-        )}
 
-        {activeTab === 'contacts' && (
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="relative w-full lg:flex-1">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-zinc-400 pointer-events-none" />
-              <input
-                type="search"
-                placeholder="Personen durchsuchen..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-10 rounded-md border border-zinc-300 py-2 pl-10 pr-4 text-sm focus:border-[#005fab] focus:outline-none focus:ring-1 focus:ring-[#005fab] transition-all"
+      {/* Tabs */}
+      <div className="mt-8">
+        <div className="border-b border-gray-200">
+          <nav aria-label="Tabs" className="-mb-px flex space-x-8">
+            <button
+              onClick={() => handleTabChange('companies')}
+              className={`group inline-flex items-center border-b-2 px-1 py-4 text-sm font-medium ${
+                activeTab === 'companies'
+                  ? 'border-[#005fab] text-[#005fab]'
+                  : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+              }`}
+            >
+              <BuildingOfficeIcon
+                className={`mr-2 -ml-0.5 size-5 ${
+                  activeTab === 'companies' ? 'text-[#005fab]' : 'text-gray-400 group-hover:text-gray-500'
+                }`}
               />
-            </div>
-            
-            <div className="w-full lg:w-48">
-              <MultiSelectDropdown 
-                label="" 
-                placeholder="Nach Firma filtern..." 
-                options={companyOptions} 
-                selectedValues={selectedContactCompanyIds} 
-                onChange={(values) => setSelectedContactCompanyIds(values)}
+              <span>Firmen ({companies.length})</span>
+            </button>
+            <button
+              onClick={() => handleTabChange('contacts')}
+              className={`group inline-flex items-center border-b-2 px-1 py-4 text-sm font-medium ${
+                activeTab === 'contacts'
+                  ? 'border-[#005fab] text-[#005fab]'
+                  : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+              }`}
+            >
+              <UserIcon
+                className={`mr-2 -ml-0.5 size-5 ${
+                  activeTab === 'contacts' ? 'text-[#005fab]' : 'text-gray-400 group-hover:text-gray-500'
+                }`}
               />
-            </div>
-            
-            <div className="w-full lg:w-48">
-              <MultiSelectDropdown 
-                label="" 
-                placeholder="Nach Position filtern..." 
-                options={positionOptions.map(pos => ({ value: pos, label: pos }))} 
-                selectedValues={selectedContactPositions} 
-                onChange={(values) => setSelectedContactPositions(values)}
-              />
-            </div>
-            
-            <div className="w-full lg:w-48">
-              <MultiSelectDropdown 
-                label="" 
-                placeholder="Nach Tags filtern..." 
-                options={tagOptions.map(tag => ({ value: tag.id!, label: tag.name }))} 
-                selectedValues={selectedContactTagIds} 
-                onChange={(values) => setSelectedContactTagIds(values)}
-              />
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Ergebnis-Info und Bulk-Aktionen */}
-      <div className="mb-4 flex items-center justify-between h-9">
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            {activeTab === 'companies' ? `${filteredCompanies.length} von ${companies.length} Firmen` : `${filteredContacts.length} von ${contacts.length} Kontakten`}
-        </p>
-        <div className={clsx(
-          "flex items-center gap-4 transition-all duration-300", 
-          (activeTab === 'companies' && selectedCompanyIds.size > 0) || (activeTab === 'contacts' && selectedContactIds.size > 0)
-            ? "opacity-100 transform translate-y-0" 
-            : "opacity-0 transform -translate-y-2 pointer-events-none"
-        )}>
-          <span className="text-sm text-zinc-600">
-            {activeTab === 'companies' ? `${selectedCompanyIds.size} ausgewählt` : `${selectedContactIds.size} ausgewählt`}
-          </span>
-          <button 
-            onClick={handleBulkDelete} 
-            className="inline-flex items-center gap-2 rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-500 transition-colors"
-          >
-            <TrashIcon className="size-4" /> 
-            Löschen
-          </button>
+              <span>Personen ({contacts.length})</span>
+            </button>
+          </nav>
         </div>
       </div>
 
-      {/* Tables */}
-      <div className="relative">
-        <div className="overflow-x-auto rounded-lg border">
+      {/* Search and Filters */}
+      <div className="mt-6 sm:flex sm:items-center sm:justify-between">
+        <div className="mt-3 flex sm:mt-0">
+          <div className="-mr-px grid grow grid-cols-1 focus-within:relative">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder={`${activeTab === 'companies' ? 'Firmen' : 'Personen'} durchsuchen...`}
+              className="col-start-1 row-start-1 block w-full rounded-l-md bg-white py-1.5 pr-3 pl-10 text-base text-gray-900 border border-gray-300 placeholder:text-gray-400 focus:border-[#005fab] focus:outline-none focus:ring-1 focus:ring-[#005fab] sm:pl-9 sm:text-sm/6"
+            />
+            <MagnifyingGlassIcon
+              className="pointer-events-none col-start-1 row-start-1 ml-3 size-5 self-center text-gray-400 sm:size-4"
+            />
+          </div>
+          
           {activeTab === 'companies' && (
-            <Table className="min-w-full">
-              <TableHead>
-                <TableRow>
-                  <TableHeader className="w-12">
-                    <Checkbox 
-                      checked={paginatedCompanies.length > 0 && paginatedCompanies.every(company => selectedCompanyIds.has(company.id!))} 
-                      indeterminate={paginatedCompanies.some(company => selectedCompanyIds.has(company.id!)) && !paginatedCompanies.every(company => selectedCompanyIds.has(company.id!))} 
-                      onChange={(checked) => handleSelectAllCompanies(checked)}
-                    />
-                  </TableHeader>
-                  <TableHeader>Name</TableHeader>
-                  <TableHeader>Typ</TableHeader>
-                  <TableHeader>Publikationen</TableHeader>
-                  <TableHeader>Tags</TableHeader>
-                  <TableHeader>Website</TableHeader>
-                  <TableHeader>Telefon</TableHeader>
-                  <TableHeader className="w-12 relative overflow-visible"></TableHeader>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {paginatedCompanies.map((company) => (
-                  <TableRow 
-                    key={company.id} 
-                    className={clsx(
-                      "hover:bg-gray-50 transition-colors duration-150",
-                      deletingIds.has(company.id!) && "opacity-50"
-                    )}
-                  >
-                    <TableCell>
-                      <Checkbox 
-                        checked={selectedCompanyIds.has(company.id!)} 
-                        onChange={(checked) => handleSelectCompany(company.id!, checked)}
-                        disabled={deletingIds.has(company.id!)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      {editingId === company.id ? (
-                        <InlineEdit
-                          value={company.name}
-                          onSave={(value) => handleInlineEdit(company.id!, value, 'company')}
-                          onCancel={() => setEditingId(null)}
-                          className="w-full"
-                        />
-                      ) : (
-                        <div 
-                          className="font-medium text-[#005fab] hover:text-[#004a8c] cursor-pointer"
-                          onMouseEnter={(e) => handleMouseEnter(company, 'company', e)}
-                          onMouseLeave={handleMouseLeave}
-                        >
-                          <Link href={`/dashboard/contacts/crm/companies/${company.id}`} className="hover:underline">
-                            {company.name}
-                          </Link>
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge color="zinc">{companyTypeLabels[company.type]}</Badge>
-                    </TableCell>
-                    <TableCell>{renderPublications(company)}</TableCell>
-                    <TableCell>{renderTags(company.tagIds)}</TableCell>
-                    <TableCell>
-                      {company.website ? (
-                        <a 
-                          href={company.website} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-[#005fab] hover:text-[#004a8c] hover:underline text-sm"
-                        >
-                          Website
-                        </a>
-                      ) : (
-                        <span className="text-gray-400">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {company.phone ? (
-                        <a 
-                          href={`tel:${company.phone}`}
-                          className="text-[#005fab] hover:text-[#004a8c] hover:underline text-sm"
-                        >
-                          {company.phone}
-                        </a>
-                      ) : (
-                        <span className="text-gray-400">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="relative overflow-visible">
-                      <DropdownMenu 
-                        item={company}
-                        type="company"
-                        onDelete={handleDeleteCompany}
-                        onEdit={() => handleEditCompany(company)}
-                        onRename={setEditingId}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <>
+              <div className="ml-3">
+                <MultiSelectDropdown 
+                  placeholder="Nach Typ filtern..." 
+                  options={Object.entries(companyTypeLabels).map(([value, label]) => ({ value, label }))} 
+                  selectedValues={selectedTypes} 
+                  onChange={(values) => setSelectedTypes(values as CompanyType[])}
+                />
+              </div>
+              <div className="ml-3">
+                <MultiSelectDropdown 
+                  placeholder="Nach Tags filtern..." 
+                  options={tagOptions.map(tag => ({ value: tag.id!, label: tag.name }))} 
+                  selectedValues={selectedCompanyTagIds} 
+                  onChange={(values) => setSelectedCompanyTagIds(values)}
+                />
+              </div>
+            </>
           )}
 
           {activeTab === 'contacts' && (
-            <Table className="min-w-full">
-              <TableHead>
-                <TableRow>
-                  <TableHeader className="w-12">
-                    <Checkbox 
-                      checked={filteredContacts.length > 0 && selectedContactIds.size === filteredContacts.length} 
-                      indeterminate={selectedContactIds.size > 0 && selectedContactIds.size < filteredContacts.length} 
-                      onChange={(checked) => handleSelectAllContacts(checked)}
-                    />
-                  </TableHeader>
-                  <TableHeader>Name</TableHeader>
-                  <TableHeader>Firma</TableHeader>
-                  <TableHeader>Publikationen</TableHeader>
-                  <TableHeader>Tags</TableHeader>
-                  <TableHeader>Position</TableHeader>
-                  <TableHeader>E-Mail</TableHeader>
-                  <TableHeader>Telefon</TableHeader>
-                  <TableHeader className="w-12 relative overflow-visible"></TableHeader>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {paginatedContacts.map((contact) => (
-                  <TableRow 
-                    key={contact.id} 
-                    className={clsx(
-                      "hover:bg-gray-50 transition-colors duration-150",
-                      deletingIds.has(contact.id!) && "opacity-50"
-                    )}
-                  >
-                    <TableCell>
-                      <Checkbox 
-                        checked={selectedContactIds.has(contact.id!)} 
-                        onChange={(checked) => handleSelectContact(contact.id!, checked)}
-                        disabled={deletingIds.has(contact.id!)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      {editingId === contact.id ? (
-                        <InlineEdit
-                          value={`${contact.firstName} ${contact.lastName}`}
-                          onSave={(value) => handleInlineEdit(contact.id!, value, 'contact')}
-                          onCancel={() => setEditingId(null)}
-                          className="w-full"
-                        />
-                      ) : (
-                        <div 
-                          className="font-medium text-[#005fab] hover:text-[#004a8c] cursor-pointer"
-                          onMouseEnter={(e) => handleMouseEnter(contact, 'contact', e)}
-                          onMouseLeave={handleMouseLeave}
-                        >
-                          <Link href={`/dashboard/contacts/crm/contacts/${contact.id}`} className="hover:underline">
-                            {contact.firstName} {contact.lastName}
-                          </Link>
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell>{contact.companyName || <span className="text-gray-400">—</span>}</TableCell>
-                    <TableCell>{renderContactPublications(contact)}</TableCell>
-                    <TableCell>{renderTags(contact.tagIds)}</TableCell>
-                    <TableCell>{contact.position || <span className="text-gray-400">—</span>}</TableCell>
-                    <TableCell>
-                      {contact.email ? (
-                        <a 
-                          href={`mailto:${contact.email}`}
-                          className="text-[#005fab] hover:text-[#004a8c] hover:underline text-sm"
-                        >
-                          {contact.email}
-                        </a>
-                      ) : (
-                        <span className="text-gray-400">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {contact.phone ? (
-                        <a 
-                          href={`tel:${contact.phone}`}
-                          className="text-[#005fab] hover:text-[#004a8c] hover:underline text-sm"
-                        >
-                          {contact.phone}
-                        </a>
-                      ) : (
-                        <span className="text-gray-400">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="relative overflow-visible">
-                      <DropdownMenu 
-                        item={contact}
-                        type="contact"
-                        onDelete={handleDeleteContact}
-                        onEdit={() => handleEditContact(contact)}
-                        onRename={setEditingId}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <>
+              <div className="ml-3">
+                <MultiSelectDropdown 
+                  placeholder="Nach Firma filtern..." 
+                  options={companyOptions} 
+                  selectedValues={selectedContactCompanyIds} 
+                  onChange={(values) => setSelectedContactCompanyIds(values)}
+                />
+              </div>
+              <div className="ml-3">
+                <MultiSelectDropdown 
+                  placeholder="Nach Tags filtern..." 
+                  options={tagOptions.map(tag => ({ value: tag.id!, label: tag.name }))} 
+                  selectedValues={selectedContactTagIds} 
+                  onChange={(values) => setSelectedContactTagIds(values)}
+                />
+              </div>
+            </>
           )}
+        </div>
+      </div>
+
+      {/* Results Info and Bulk Actions */}
+      <div className="mt-4 flex items-center justify-between">
+        <p className="text-sm text-gray-700">
+          {activeTab === 'companies' 
+            ? `${filteredCompanies.length} von ${companies.length} Firmen`
+            : `${filteredContacts.length} von ${contacts.length} Kontakten`}
+        </p>
+        
+        {((activeTab === 'companies' && selectedCompanyIds.size > 0) || 
+          (activeTab === 'contacts' && selectedContactIds.size > 0)) && (
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-600">
+              {activeTab === 'companies' ? selectedCompanyIds.size : selectedContactIds.size} ausgewählt
+            </span>
+            <button
+              onClick={handleBulkDelete}
+              className="inline-flex items-center rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-500"
+            >
+              <TrashIcon className="mr-2 h-4 w-4" />
+              Löschen
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Table */}
+      <div className="mt-8 flow-root">
+        <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+          <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+            {activeTab === 'companies' ? (
+              <table className="min-w-full divide-y divide-gray-300">
+                <thead>
+                  <tr>
+                    <th scope="col" className="relative px-7 sm:w-12 sm:px-6">
+                      <Checkbox
+                        checked={paginatedCompanies.length > 0 && paginatedCompanies.every(c => selectedCompanyIds.has(c.id!))}
+                        indeterminate={paginatedCompanies.some(c => selectedCompanyIds.has(c.id!)) && !paginatedCompanies.every(c => selectedCompanyIds.has(c.id!))}
+                        onChange={(checked) => handleSelectAllCompanies(checked)}
+                      />
+                    </th>
+                    <th scope="col" className="py-3.5 pr-3 pl-4 text-left text-sm font-semibold text-gray-900 sm:pl-3">
+                      Name
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Typ
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Publikationen
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Tags
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Website
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Telefon
+                    </th>
+                    <th scope="col" className="relative py-3.5 pr-4 pl-3 sm:pr-3">
+                      <span className="sr-only">Aktionen</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white">
+                  {paginatedCompanies.map((company, index) => (
+                    <tr key={company.id} className={index % 2 === 0 ? undefined : 'bg-gray-50'}>
+                      <td className="relative px-7 sm:w-12 sm:px-6">
+                        <Checkbox
+                          checked={selectedCompanyIds.has(company.id!)}
+                          onChange={(checked) => {
+                            const newIds = new Set(selectedCompanyIds);
+                            if (checked) {
+                              newIds.add(company.id!);
+                            } else {
+                              newIds.delete(company.id!);
+                            }
+                            setSelectedCompanyIds(newIds);
+                          }}
+                        />
+                      </td>
+                      <td className="py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-3">
+                        <Link href={`/dashboard/contacts/crm/companies/${company.id}`} className="text-[#005fab] hover:text-[#004a8c]">
+                          {company.name}
+                        </Link>
+                      </td>
+                      <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500">
+                        <Badge color="zinc">{companyTypeLabels[company.type]}</Badge>
+                      </td>
+                      <td className="px-3 py-4 text-sm text-gray-500">
+                        {company.mediaInfo?.publications && company.mediaInfo.publications.length > 0 ? (
+                          <div className="flex gap-1 flex-wrap">
+                            {company.mediaInfo.publications.slice(0, 2).map((pub) => (
+                              <Badge key={pub.id} color="blue" className="text-xs">
+                                {pub.name}
+                              </Badge>
+                            ))}
+                            {company.mediaInfo.publications.length > 2 && (
+                              <span className="text-xs text-gray-400">+{company.mediaInfo.publications.length - 2}</span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-4 text-sm text-gray-500">
+                        {company.tagIds && company.tagIds.length > 0 ? (
+                          <div className="flex gap-1 flex-wrap">
+                            {company.tagIds.slice(0, 3).map(tagId => {
+                              const tag = tags.find(t => t.id === tagId);
+                              return tag ? <Badge key={tag.id} color={tag.color as any} className="text-xs">{tag.name}</Badge> : null;
+                            })}
+                            {company.tagIds.length > 3 && (
+                              <span className="text-xs text-gray-400">+{company.tagIds.length - 3}</span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-4 text-sm text-gray-500">
+                        {company.website ? (
+                          <a href={company.website} target="_blank" rel="noopener noreferrer" className="text-[#005fab] hover:text-[#004a8c] truncate block max-w-xs">
+                            {company.website.replace(/^https?:\/\/(www\.)?/, '')}
+                          </a>
+                        ) : '—'}
+                      </td>
+                      <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500">
+                        {company.phone ? (
+                          <a href={`tel:${company.phone}`} className="text-[#005fab] hover:text-[#004a8c]">
+                            {company.phone}
+                          </a>
+                        ) : '—'}
+                      </td>
+                      <td className="relative py-4 pr-4 pl-3 text-right text-sm font-medium whitespace-nowrap sm:pr-3">
+                        <Menu as="div" className="relative inline-block text-left">
+                          <MenuButton className="flex items-center rounded-full p-2 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2">
+                            <span className="sr-only">Optionen öffnen</span>
+                            <EllipsisVerticalIcon className="size-5" />
+                          </MenuButton>
+                          <MenuItems className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                            <div className="py-1">
+                              <MenuItem>
+                                <Link
+                                  href={`/dashboard/contacts/crm/companies/${company.id}`}
+                                  className="flex items-center px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900"
+                                >
+                                  <EyeIcon className="mr-3 h-5 w-5 text-gray-400" />
+                                  Anzeigen
+                                </Link>
+                              </MenuItem>
+                              <MenuItem>
+                                <button
+                                  onClick={() => {
+                                    setSelectedCompany(company);
+                                    setShowCompanyModal(true);
+                                  }}
+                                  className="flex w-full items-center px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900"
+                                >
+                                  <PencilIcon className="mr-3 h-5 w-5 text-gray-400" />
+                                  Bearbeiten
+                                </button>
+                              </MenuItem>
+                              <MenuItem>
+                                <button
+                                  onClick={() => handleDelete(company.id!, company.name, 'company')}
+                                  className="flex w-full items-center px-4 py-2 text-sm text-red-600 data-focus:bg-red-50 data-focus:text-red-700"
+                                >
+                                  <TrashIcon className="mr-3 h-5 w-5 text-red-400" />
+                                  Löschen
+                                </button>
+                              </MenuItem>
+                            </div>
+                          </MenuItems>
+                        </Menu>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <table className="min-w-full divide-y divide-gray-300">
+                <thead>
+                  <tr>
+                    <th scope="col" className="relative px-7 sm:w-12 sm:px-6">
+                      <Checkbox
+                        checked={paginatedContacts.length > 0 && paginatedContacts.every(c => selectedContactIds.has(c.id!))}
+                        indeterminate={paginatedContacts.some(c => selectedContactIds.has(c.id!)) && !paginatedContacts.every(c => selectedContactIds.has(c.id!))}
+                        onChange={(checked) => handleSelectAllContacts(checked)}
+                      />
+                    </th>
+                    <th scope="col" className="py-3.5 pr-3 pl-4 text-left text-sm font-semibold text-gray-900 sm:pl-3">
+                      Name
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Firma
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Publikationen
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Tags
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Position
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      E-Mail
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                      Telefon
+                    </th>
+                    <th scope="col" className="relative py-3.5 pr-4 pl-3 sm:pr-3">
+                      <span className="sr-only">Aktionen</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white">
+                  {paginatedContacts.map((contact, index) => (
+                    <tr key={contact.id} className={index % 2 === 0 ? undefined : 'bg-gray-50'}>
+                      <td className="relative px-7 sm:w-12 sm:px-6">
+                        <Checkbox
+                          checked={selectedContactIds.has(contact.id!)}
+                          onChange={(checked) => {
+                            const newIds = new Set(selectedContactIds);
+                            if (checked) {
+                              newIds.add(contact.id!);
+                            } else {
+                              newIds.delete(contact.id!);
+                            }
+                            setSelectedContactIds(newIds);
+                          }}
+                        />
+                      </td>
+                      <td className="py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-3">
+                        <Link href={`/dashboard/contacts/crm/contacts/${contact.id}`} className="text-[#005fab] hover:text-[#004a8c]">
+                          {contact.firstName} {contact.lastName}
+                        </Link>
+                      </td>
+                      <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500">
+                        {contact.companyName || '—'}
+                      </td>
+                      <td className="px-3 py-4 text-sm text-gray-500">
+                        {contact.mediaInfo?.publications && contact.mediaInfo.publications.length > 0 ? (
+                          <div className="flex gap-1 flex-wrap">
+                            {contact.mediaInfo.publications.slice(0, 2).map((pubName) => (
+                              <Badge key={pubName} color="blue" className="text-xs">
+                                {pubName}
+                              </Badge>
+                            ))}
+                            {contact.mediaInfo.publications.length > 2 && (
+                              <span className="text-xs text-gray-400">+{contact.mediaInfo.publications.length - 2}</span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-4 text-sm text-gray-500">
+                        {contact.tagIds && contact.tagIds.length > 0 ? (
+                          <div className="flex gap-1 flex-wrap">
+                            {contact.tagIds.slice(0, 3).map(tagId => {
+                              const tag = tags.find(t => t.id === tagId);
+                              return tag ? <Badge key={tag.id} color={tag.color as any} className="text-xs">{tag.name}</Badge> : null;
+                            })}
+                            {contact.tagIds.length > 3 && (
+                              <span className="text-xs text-gray-400">+{contact.tagIds.length - 3}</span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500">
+                        {contact.position || '—'}
+                      </td>
+                      <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500">
+                        {contact.email ? (
+                          <a href={`mailto:${contact.email}`} className="text-[#005fab] hover:text-[#004a8c]">
+                            {contact.email}
+                          </a>
+                        ) : '—'}
+                      </td>
+                      <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500">
+                        {contact.phone ? (
+                          <a href={`tel:${contact.phone}`} className="text-[#005fab] hover:text-[#004a8c]">
+                            {contact.phone}
+                          </a>
+                        ) : '—'}
+                      </td>
+                      <td className="relative py-4 pr-4 pl-3 text-right text-sm font-medium whitespace-nowrap sm:pr-3">
+                        <Menu as="div" className="relative inline-block text-left">
+                          <MenuButton className="flex items-center rounded-full p-2 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2">
+                            <span className="sr-only">Optionen öffnen</span>
+                            <EllipsisVerticalIcon className="size-5" />
+                          </MenuButton>
+                          <MenuItems className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                            <div className="py-1">
+                              <MenuItem>
+                                <Link
+                                  href={`/dashboard/contacts/crm/contacts/${contact.id}`}
+                                  className="flex items-center px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900"
+                                >
+                                  <EyeIcon className="mr-3 h-5 w-5 text-gray-400" />
+                                  Anzeigen
+                                </Link>
+                              </MenuItem>
+                              <MenuItem>
+                                <button
+                                  onClick={() => {
+                                    setSelectedContact(contact);
+                                    setShowContactModal(true);
+                                  }}
+                                  className="flex w-full items-center px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:text-gray-900"
+                                >
+                                  <PencilIcon className="mr-3 h-5 w-5 text-gray-400" />
+                                  Bearbeiten
+                                </button>
+                              </MenuItem>
+                              <MenuItem>
+                                <button
+                                  onClick={() => handleDelete(contact.id!, `${contact.firstName} ${contact.lastName}`, 'contact')}
+                                  className="flex w-full items-center px-4 py-2 text-sm text-red-600 data-focus:bg-red-50 data-focus:text-red-700"
+                                >
+                                  <TrashIcon className="mr-3 h-5 w-5 text-red-400" />
+                                  Löschen
+                                </button>
+                              </MenuItem>
+                            </div>
+                          </MenuItems>
+                        </Menu>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Pagination */}
-      {(activeTab === 'companies' ? filteredCompanies.length : filteredContacts.length) > 0 && (
-        <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 px-2">
-          {/* Items per page selector */}
-          <div className="flex items-center gap-2">
-            <label htmlFor="itemsPerPage" className="text-sm text-gray-600">
-              Einträge pro Seite:
-            </label>
-            <select
-              id="itemsPerPage"
-              value={itemsPerPage}
-              onChange={(e) => {
-                setItemsPerPage(Number(e.target.value));
-                setCurrentPage(1);
-              }}
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-[#005fab] focus:outline-none focus:ring-1 focus:ring-[#005fab]"
+      {((activeTab === 'companies' && filteredCompanies.length > itemsPerPage) || 
+        (activeTab === 'contacts' && filteredContacts.length > itemsPerPage)) && (
+        <nav className="mt-6 flex items-center justify-between border-t border-gray-200 px-4 sm:px-0">
+          <div className="-mt-px flex w-0 flex-1">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="inline-flex items-center border-t-2 border-transparent pr-1 pt-4 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <option value={10}>10</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-            </select>
+              <svg className="mr-3 h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M7.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l2.293 2.293a1 1 0 010 1.414z" clipRule="evenodd" />
+              </svg>
+              Zurück
+            </button>
           </div>
-
-          {/* Page info and navigation */}
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">
-              {activeTab === 'companies' ? (
-                <>
-                  {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, filteredCompanies.length)} von {filteredCompanies.length}
-                </>
-              ) : (
-                <>
-                  {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, filteredContacts.length)} von {filteredContacts.length}
-                </>
-              )}
-            </span>
-            
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1}
-                className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                aria-label="Erste Seite"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-                </svg>
-              </button>
+          <div className="hidden md:-mt-px md:flex">
+            {(() => {
+              const totalPages = activeTab === 'companies' 
+                ? Math.ceil(filteredCompanies.length / itemsPerPage)
+                : Math.ceil(filteredContacts.length / itemsPerPage);
               
-              <button
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-                className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                aria-label="Vorherige Seite"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-
-              {/* Page numbers */}
-              <div className="flex items-center gap-1 mx-2">
-                {totalPages <= 7 ? (
-                  // Show all pages if 7 or less
-                  Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={clsx(
-                        "min-w-[32px] h-8 px-2 rounded text-sm font-medium transition-colors",
-                        currentPage === page
-                          ? "bg-[#005fab] text-white"
-                          : "hover:bg-gray-100"
-                      )}
-                    >
-                      {page}
-                    </button>
-                  ))
-                ) : (
-                  // Show page numbers with ellipsis
-                  <>
-                    {currentPage > 3 && (
-                      <>
-                        <button
-                          onClick={() => setCurrentPage(1)}
-                          className="min-w-[32px] h-8 px-2 rounded text-sm font-medium hover:bg-gray-100"
-                        >
-                          1
-                        </button>
-                        {currentPage > 4 && <span className="px-1">...</span>}
-                      </>
-                    )}
-                    
-                    {Array.from({ length: 5 }, (_, i) => {
-                      const page = currentPage - 2 + i;
-                      if (page > 0 && page <= totalPages) {
-                        return (
-                          <button
-                            key={page}
-                            onClick={() => setCurrentPage(page)}
-                            className={clsx(
-                              "min-w-[32px] h-8 px-2 rounded text-sm font-medium transition-colors",
-                              currentPage === page
-                                ? "bg-[#005fab] text-white"
-                                : "hover:bg-gray-100"
-                            )}
-                          >
-                            {page}
-                          </button>
-                        );
-                      }
-                      return null;
-                    }).filter(Boolean)}
-                    
-                    {currentPage < totalPages - 2 && (
-                      <>
-                        {currentPage < totalPages - 3 && <span className="px-1">...</span>}
-                        <button
-                          onClick={() => setCurrentPage(totalPages)}
-                          className="min-w-[32px] h-8 px-2 rounded text-sm font-medium hover:bg-gray-100"
-                        >
-                          {totalPages}
-                        </button>
-                      </>
-                    )}
-                  </>
-                )}
-              </div>
-
-              <button
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages}
-                className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                aria-label="Nächste Seite"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
+              const pages = [];
+              const maxVisible = 7;
+              let start = Math.max(1, currentPage - 3);
+              let end = Math.min(totalPages, start + maxVisible - 1);
               
-              <button
-                onClick={() => setCurrentPage(totalPages)}
-                disabled={currentPage === totalPages}
-                className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                aria-label="Letzte Seite"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
+              if (end - start < maxVisible - 1) {
+                start = Math.max(1, end - maxVisible + 1);
+              }
+              
+              for (let i = start; i <= end; i++) {
+                pages.push(
+                  <button
+                    key={i}
+                    onClick={() => setCurrentPage(i)}
+                    className={`inline-flex items-center border-t-2 px-4 pt-4 text-sm font-medium ${
+                      currentPage === i
+                        ? 'border-[#005fab] text-[#005fab]'
+                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                    }`}
+                  >
+                    {i}
+                  </button>
+                );
+              }
+              
+              return pages;
+            })()}
           </div>
-        </div>
-      )}
-
-      {/* Quick Preview */}
-      {previewItem && (
-        <QuickPreview 
-          item={previewItem.item}
-          type={previewItem.type}
-          position={previewItem.position}
-          tags={tags}
-        />
+          <div className="-mt-px flex w-0 flex-1 justify-end">
+            <button
+              onClick={() => {
+                const totalPages = activeTab === 'companies' 
+                  ? Math.ceil(filteredCompanies.length / itemsPerPage)
+                  : Math.ceil(filteredContacts.length / itemsPerPage);
+                setCurrentPage(prev => Math.min(totalPages, prev + 1));
+              }}
+              disabled={currentPage === (activeTab === 'companies' 
+                ? Math.ceil(filteredCompanies.length / itemsPerPage)
+                : Math.ceil(filteredContacts.length / itemsPerPage))}
+              className="inline-flex items-center border-t-2 border-transparent pl-1 pt-4 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Weiter
+              <svg className="ml-3 h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        </nav>
       )}
 
       {/* Modals */}
       {showCompanyModal && (
         <CompanyModal 
           company={selectedCompany} 
-          onClose={() => setShowCompanyModal(false)} 
+          onClose={() => {
+            setShowCompanyModal(false);
+            setSelectedCompany(null);
+          }} 
           onSave={() => {
             loadData();
-            showToast('success', selectedCompany ? 'Firma aktualisiert' : 'Firma erstellt', 
-              selectedCompany ? 'Die Firma wurde erfolgreich aktualisiert.' : 'Die neue Firma wurde erfolgreich erstellt.');
+            showAlert('success', selectedCompany ? 'Firma aktualisiert' : 'Firma erstellt');
           }} 
           userId={user?.uid || ''}
         />
@@ -1516,11 +1017,13 @@ export default function ContactsPage() {
         <ContactModal 
           contact={selectedContact} 
           companies={companies} 
-          onClose={() => setShowContactModal(false)} 
+          onClose={() => {
+            setShowContactModal(false);
+            setSelectedContact(null);
+          }} 
           onSave={() => {
             loadData();
-            showToast('success', selectedContact ? 'Kontakt aktualisiert' : 'Kontakt erstellt',
-              selectedContact ? 'Der Kontakt wurde erfolgreich aktualisiert.' : 'Der neue Kontakt wurde erfolgreich erstellt.');
+            showAlert('success', selectedContact ? 'Kontakt aktualisiert' : 'Kontakt erstellt');
           }} 
           userId={user?.uid || ''}
         />
@@ -1530,16 +1033,13 @@ export default function ContactsPage() {
         <ImportModal 
           activeTab={activeTab} 
           onClose={() => setShowImportModal(false)} 
-          onImportSuccess={() => { 
-            setShowImportModal(false); 
+          onImportSuccess={() => {
+            setShowImportModal(false);
             loadData();
-            showToast('success', 'Import erfolgreich', 'Die Daten wurden erfolgreich importiert.');
+            showAlert('success', 'Import erfolgreich');
           }}
         />
       )}
-
-      {/* Toast Notifications */}
-      <ToastNotification toasts={toasts} onRemove={removeToast} />
 
       {/* Confirm Dialog */}
       <ConfirmDialog
@@ -1550,62 +1050,6 @@ export default function ContactsPage() {
         message={confirmDialog.message}
         type={confirmDialog.type}
       />
-
-      {/* CSS für Animationen */}
-      <style jsx global>{`
-        @keyframes slide-in-up {
-          from {
-            transform: translateY(100%);
-            opacity: 0;
-          }
-          to {
-            transform: translateY(0);
-            opacity: 1;
-          }
-        }
-        
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-
-        @keyframes fade-in-scale {
-          from {
-            opacity: 0;
-            transform: scale(0.95);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-        
-        .animate-slide-in-up {
-          animation: slide-in-up 0.3s ease-out;
-        }
-        
-        .animate-fade-in {
-          animation: fade-in 0.3s ease-out;
-        }
-
-        .animate-fade-in-scale {
-          animation: fade-in-scale 0.2s ease-out;
-        }
-        
-        /* Scrollbar verstecken aber Scrolling erlauben */
-        .scrollbar-hide {
-          -ms-overflow-style: none;  /* IE and Edge */
-          scrollbar-width: none;  /* Firefox */
-        }
-        
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;  /* Chrome, Safari and Opera */
-        }
-      `}</style>
     </div>
   );
 }
