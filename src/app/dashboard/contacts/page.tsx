@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from "@/context/AuthContext";
 import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
@@ -497,7 +498,13 @@ function ConfirmDialog({
 
 export default function ContactsPage() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<TabType>('companies');
+  const searchParams = useSearchParams();
+  
+  // Initialisiere activeTab basierend auf URL-Parameter
+  const initialTab = searchParams.get('tab') === 'contacts' ? 'contacts' : 
+                    searchParams.get('tab') === 'companies' ? 'companies' : 'companies';
+  
+  const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
@@ -552,6 +559,16 @@ export default function ContactsPage() {
   const removeToast = useCallback((id: string) => {
     setToasts(prev => prev.filter(t => t.id !== id));
   }, []);
+
+  // Aktualisiere die Tab-Buttons, um die URL zu ändern
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab);
+    setSearchTerm('');
+    // URL aktualisieren ohne Seiten-Reload
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.set('tab', tab);
+    window.history.pushState({}, '', newUrl);
+  };
 
   useEffect(() => {
     if (user) {
@@ -979,7 +996,7 @@ export default function ContactsPage() {
         {/* Tabs */}
         <div className="flex gap-4">
           <button
-            onClick={() => { setActiveTab('companies'); setSearchTerm(''); }}
+            onClick={() => handleTabChange('companies')}
             className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
               activeTab === 'companies'
                 ? 'border-[#005fab] text-[#005fab]'
@@ -990,7 +1007,7 @@ export default function ContactsPage() {
             Firmen ({companies.length})
           </button>
           <button
-            onClick={() => { setActiveTab('contacts'); setSearchTerm(''); }}
+            onClick={() => handleTabChange('contacts')}
             className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
               activeTab === 'contacts'
                 ? 'border-[#005fab] text-[#005fab]'
