@@ -1,4 +1,4 @@
-// src\app\dashboard\academy\blog\page.tsx
+// src\app\dashboard\academy\documentation\page.tsx
 "use client";
 
 import { Heading } from "@/components/heading";
