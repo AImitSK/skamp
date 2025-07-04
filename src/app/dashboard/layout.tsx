@@ -112,21 +112,21 @@ export default function DashboardLayout({
               </DropdownButton>
               <DropdownMenu anchor="bottom end" className="min-w-48">
                 <DropdownItem 
-                  href="/dashboard/contacts?tab=companies"
+                  href="/dashboard/contacts/crm?tab=companies"
                   className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
                 >
                   <BuildingOfficeIcon className="size-4 flex-shrink-0" />
                   <DropdownLabel>Unternehmen</DropdownLabel>
                 </DropdownItem>
                 <DropdownItem 
-                  href="/dashboard/contacts?tab=contacts"
+                  href="/dashboard/contacts/crm?tab=contacts"
                   className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
                 >
                   <UserGroupIcon className="size-4 flex-shrink-0" />
                   <DropdownLabel>Personen</DropdownLabel>
                 </DropdownItem>
                 <DropdownItem 
-                  href="/dashboard/listen"
+                  href="/dashboard/contacts/lists"
                   className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
                 >
                   <QueueListIcon className="size-4 flex-shrink-0" />
@@ -147,35 +147,35 @@ export default function DashboardLayout({
               </DropdownButton>
               <DropdownMenu anchor="bottom end" className="min-w-48">
                 <DropdownItem 
-                  href="/dashboard/pr"
+                  href="/dashboard/pr-tools/campaigns"
                   className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
                 >
                   <MegaphoneIcon className="size-4 flex-shrink-0" />
                   <DropdownLabel>Kampagnen</DropdownLabel>
                 </DropdownItem>
                 <DropdownItem 
-                  href="/dashboard/freigaben"
+                  href="/dashboard/pr-tools/approvals"
                   className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
                 >
                   <ShieldCheckIcon className="size-4 flex-shrink-0" />
                   <DropdownLabel>Freigaben</DropdownLabel>
                 </DropdownItem>
                 <DropdownItem 
-                  href="/dashboard/calendar"
+                  href="/dashboard/pr-tools/calendar"
                   className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
                 >
                   <CalendarDaysIcon className="size-4 flex-shrink-0" />
                   <DropdownLabel>Kalender</DropdownLabel>
                 </DropdownItem>
                 <DropdownItem 
-                  href="/dashboard/mediathek"
+                  href="/dashboard/pr-tools/media-library"
                   className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
                 >
                   <PhotoIcon className="size-4 flex-shrink-0" />
                   <DropdownLabel>Mediathek</DropdownLabel>
                 </DropdownItem>
                 <DropdownItem 
-                  href="/dashboard/settings/boilerplates"
+                  href="/dashboard/pr-tools/boilerplates"
                   className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
                 >
                   <DocumentTextIcon className="size-4 flex-shrink-0" />
@@ -196,14 +196,14 @@ export default function DashboardLayout({
               </DropdownButton>
               <DropdownMenu anchor="bottom end" className="min-w-48">
                 <DropdownItem 
-                  href="#"
+                  href="/dashboard/communication/inbox"
                   className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
                 >
                   <InboxIcon className="size-4 flex-shrink-0" />
                   <DropdownLabel>Kampagnen In-Box</DropdownLabel>
                 </DropdownItem>
                 <DropdownItem 
-                  href="#"
+                  href="/dashboard/communication/notifications"
                   className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
                 >
                   <BellIcon className="size-4 flex-shrink-0" />
@@ -224,21 +224,21 @@ export default function DashboardLayout({
               </DropdownButton>
               <DropdownMenu anchor="bottom end" className="min-w-48">
                 <DropdownItem 
-                  href="#"
+                  href="/dashboard/academy/documentation"
                   className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
                 >
                   <BookOpenIcon className="size-4 flex-shrink-0" />
                   <DropdownLabel>Dokumentation</DropdownLabel>
                 </DropdownItem>
                 <DropdownItem 
-                  href="#"
+                  href="/dashboard/academy/tutorials"
                   className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
                 >
                   <AcademicCapIcon className="size-4 flex-shrink-0" />
                   <DropdownLabel>Einsteiger Tutorials</DropdownLabel>
                 </DropdownItem>
                 <DropdownItem 
-                  href="#"
+                  href="/dashboard/academy/blog"
                   className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
                 >
                   <NewspaperIcon className="size-4 flex-shrink-0" />
@@ -264,21 +264,21 @@ export default function DashboardLayout({
           </DropdownButton>
           <DropdownMenu anchor="top end" className="min-w-48">
             <DropdownItem 
-              href="#"
+              href="/dashboard/settings/notifications"
               className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
             >
               <BellAlertIcon className="size-4 flex-shrink-0" />
               <DropdownLabel>Benachrichtigungen</DropdownLabel>
             </DropdownItem>
             <DropdownItem 
-              href="#"
+              href="/dashboard/settings/branding"
               className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
             >
               <PaintBrushIcon className="size-4 flex-shrink-0" />
               <DropdownLabel>Branding</DropdownLabel>
             </DropdownItem>
             <DropdownItem 
-              href="#"
+              href="/dashboard/settings/import-export"
               className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
             >
               <ArrowDownTrayIcon className="size-4 flex-shrink-0" />
@@ -316,35 +316,35 @@ export default function DashboardLayout({
           </DropdownButton>
           <DropdownMenu anchor="top end" className="min-w-56">
             <DropdownItem 
-              href="/dashboard/profile"
+              href="/dashboard/admin/profile"
               className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
             >
               <UserIcon className="size-4 flex-shrink-0" />
               <DropdownLabel>Profil</DropdownLabel>
             </DropdownItem>
             <DropdownItem 
-              href="#"
+              href="/dashboard/admin/contract"
               className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
             >
               <DocumentCheckIcon className="size-4 flex-shrink-0" />
               <DropdownLabel>Vertrag</DropdownLabel>
             </DropdownItem>
             <DropdownItem 
-              href="#"
+              href="/dashboard/admin/billing"
               className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
             >
               <CreditCardIcon className="size-4 flex-shrink-0" />
               <DropdownLabel>Abrechnung</DropdownLabel>
             </DropdownItem>
             <DropdownItem 
-              href="#"
+              href="/dashboard/admin/integrations"
               className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
             >
               <PuzzlePieceIcon className="size-4 flex-shrink-0" />
               <DropdownLabel>Integrationen</DropdownLabel>
             </DropdownItem>
             <DropdownItem 
-              href="#"
+              href="/dashboard/admin/api"
               className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
             >
               <CodeBracketIcon className="size-4 flex-shrink-0" />
