@@ -1,7 +1,7 @@
-// src\app\dashboard\pr-tools\media-library\page.tsx
+// src/app/dashboard/pr-tools/media-library/page.tsx
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useCrmData } from "@/context/CrmDataContext";
@@ -11,7 +11,17 @@ import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
 import { Button } from "@/components/button";
 import { Badge } from "@/components/badge";
+import { Input } from "@/components/input";
+import { Checkbox } from "@/components/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/table";
+import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
+import { 
+  Dropdown,
+  DropdownButton,
+  DropdownMenu,
+  DropdownItem,
+  DropdownDivider
+} from "@/components/dropdown";
 import { 
   PlusIcon, 
   PhotoIcon, 
@@ -25,15 +35,15 @@ import {
   FolderPlusIcon,
   ShareIcon,
   EllipsisVerticalIcon,
-  PencilIcon
+  PencilIcon,
+  InformationCircleIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  MagnifyingGlassIcon
 } from "@heroicons/react/20/solid";
 import { FolderIcon } from "@heroicons/react/24/solid";
-import { 
-  Dropdown,
-  DropdownButton,
-  DropdownMenu,
-  DropdownItem,
-} from "@/components/dropdown";
 import Link from 'next/link';
 import UploadModal from "./UploadModal";
 import FolderCard from "@/components/mediathek/FolderCard";
@@ -44,6 +54,62 @@ import AssetDetailsModal from "@/components/mediathek/AssetDetailsModal";
 
 type ViewMode = 'grid' | 'list';
 
+// Alert Component
+function Alert({ 
+  type = 'info', 
+  title, 
+  message, 
+  action 
+}: { 
+  type?: 'info' | 'success' | 'warning' | 'error';
+  title: string;
+  message?: string;
+  action?: { label: string; onClick: () => void };
+}) {
+  const styles = {
+    info: 'bg-blue-50 text-blue-700',
+    success: 'bg-green-50 text-green-700',
+    warning: 'bg-yellow-50 text-yellow-700',
+    error: 'bg-red-50 text-red-700'
+  };
+
+  const icons = {
+    info: InformationCircleIcon,
+    success: CheckCircleIcon,
+    warning: ExclamationTriangleIcon,
+    error: ExclamationTriangleIcon
+  };
+
+  const Icon = icons[type];
+
+  return (
+    <div className={`rounded-md p-4 ${styles[type].split(' ')[0]}`}>
+      <div className="flex">
+        <div className="shrink-0">
+          <Icon aria-hidden="true" className={`size-5 ${type === 'info' || type === 'success' ? 'text-blue-400' : type === 'warning' ? 'text-yellow-400' : 'text-red-400'}`} />
+        </div>
+        <div className="ml-3 flex-1 md:flex md:justify-between">
+          <div>
+            <Text className={`font-medium ${styles[type].split(' ')[1]}`}>{title}</Text>
+            {message && <Text className={`mt-2 ${styles[type].split(' ')[1]}`}>{message}</Text>}
+          </div>
+          {action && (
+            <p className="mt-3 text-sm md:mt-0 md:ml-6">
+              <button
+                onClick={action.onClick}
+                className={`font-medium whitespace-nowrap ${styles[type].split(' ')[1]} hover:opacity-80`}
+              >
+                {action.label}
+                <span aria-hidden="true"> →</span>
+              </button>
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function MediathekPage() {
   const { user } = useAuth();
   const { companies } = useCrmData();
@@ -52,11 +118,12 @@ export default function MediathekPage() {
   
   const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
   const [folders, setFolders] = useState<MediaFolder[]>([]);
-  const [allFolders, setAllFolders] = useState<MediaFolder[]>([]); // Für Vererbungs-Berechnung
+  const [allFolders, setAllFolders] = useState<MediaFolder[]>([]);
   const [currentFolderId, setCurrentFolderId] = useState<string | undefined>(undefined);
   const [breadcrumbs, setBreadcrumbs] = useState<FolderBreadcrumb[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [searchTerm, setSearchTerm] = useState("");
   
   // Modal States
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -70,11 +137,8 @@ export default function MediathekPage() {
   // Upload-spezifische States
   const [preselectedClientId, setPreselectedClientId] = useState<string | undefined>(undefined);
 
-  // Get asset's folder
-  const getAssetFolder = (asset: MediaAsset): MediaFolder | undefined => {
-    if (!asset.folderId) return undefined;
-    return allFolders.find(f => f.id === asset.folderId); // Verwende allFolders für korrekte Vererbung
-  };
+  // Alert State
+  const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string } | null>(null);
 
   // Drag & Drop States
   const [draggedAsset, setDraggedAsset] = useState<MediaAsset | null>(null);
@@ -88,6 +152,31 @@ export default function MediathekPage() {
   // Folder Drag States
   const [draggedFolder, setDraggedFolder] = useState<MediaFolder | null>(null);
 
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(25);
+
+  // Confirm Dialog State
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    type?: 'danger' | 'warning';
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+
+  // Alert Management
+  const showAlert = useCallback((type: 'info' | 'success' | 'warning' | 'error', title: string, message?: string) => {
+    setAlert({ type, title, message });
+    setTimeout(() => setAlert(null), 5000);
+  }, []);
+
+  // Get asset's folder
+  const getAssetFolder = (asset: MediaAsset): MediaFolder | undefined => {
+    if (!asset.folderId) return undefined;
+    return allFolders.find(f => f.id === asset.folderId);
+  };
+
   // URL-Parameter Handler
   useEffect(() => {
     const uploadFor = searchParams.get('uploadFor');
@@ -98,7 +187,6 @@ export default function MediathekPage() {
         setPreselectedClientId(uploadFor);
         setShowUploadModal(true);
         
-        // Entferne Parameter aus URL
         const newUrl = new URL(window.location.href);
         newUrl.searchParams.delete('uploadFor');
         router.replace(newUrl.pathname + newUrl.search, { scroll: false });
@@ -121,11 +209,9 @@ export default function MediathekPage() {
         mediaService.getMediaAssets(user.uid, currentFolderId)
       ]);
       
-      // Für UI-Anzeige: Nur Unterordner
       setFolders(foldersData);
       setMediaAssets(assetsData);
       
-      // Für Vererbungs-Berechnung: Alle Ordner inklusive aktueller
       let allFoldersWithParent = foldersData;
       if (currentFolderId) {
         const currentFolder = await mediaService.getFolder(currentFolderId);
@@ -143,43 +229,35 @@ export default function MediathekPage() {
       }
     } catch (error) {
       console.error("Fehler beim Laden der Daten:", error);
+      showAlert('error', 'Fehler beim Laden', 'Die Mediathek konnte nicht geladen werden.');
     } finally {
       setLoading(false);
     }
   };
 
   // FOLDER DRAG & DROP HANDLERS
-  
   const handleFolderMove = useCallback(async (folderId: string, targetFolderId: string) => {
     if (!user) return;
     
     try {
       setMoving(true);
-      
-      // 🔧 FIXED: Drag-State sofort zurücksetzen
       setDragOverFolder(null);
       setDraggedFolder(null);
       
-      // 1. Ordner verschieben
       await mediaService.updateFolder(folderId, {
         parentFolderId: targetFolderId
       });
       
-      // 2. Automatische Firma-Vererbung für Ordner und alle Inhalte
-      console.log('🏢 Updating client inheritance for moved folder and contents...');
       await mediaService.updateFolderClientInheritance(folderId, user.uid);
-      
-      // 3. Daten neu laden
       await loadData();
       
-      console.log('✅ Folder moved successfully with automatic client inheritance!');
+      showAlert('success', 'Ordner verschoben');
       
     } catch (error) {
       console.error('Error moving folder:', error);
-      alert('Fehler beim Verschieben des Ordners. Bitte versuchen Sie es erneut.');
+      showAlert('error', 'Fehler beim Verschieben', 'Der Ordner konnte nicht verschoben werden.');
     } finally {
       setMoving(false);
-      // 🔧 FIXED: Zusätzliche State-Bereinigung
       setDraggedFolder(null);
       setDragOverFolder(null);
     }
@@ -190,14 +268,11 @@ export default function MediathekPage() {
   };
 
   const handleFolderDragEnd = () => {
-    // 🔧 FIXED: Alle Drag-States zurücksetzen
     setDraggedFolder(null);
     setDragOverFolder(null);
-    console.log('🔄 Folder drag ended - all states reset');
   };
 
   // BULK SELECTION HANDLERS
-  
   const toggleAssetSelection = (assetId: string) => {
     const newSelection = new Set(selectedAssets);
     if (newSelection.has(assetId)) {
@@ -213,8 +288,8 @@ export default function MediathekPage() {
   };
 
   const selectAllAssets = () => {
-    const allAssetIds = new Set(mediaAssets.map(asset => asset.id!));
-    setSelectedAssets(allAssetIds);
+    const visibleAssetIds = new Set(paginatedAssets.map(asset => asset.id!));
+    setSelectedAssets(visibleAssetIds);
     setIsSelectionMode(true);
   };
 
@@ -227,26 +302,32 @@ export default function MediathekPage() {
     if (selectedAssets.size === 0) return;
     
     const count = selectedAssets.size;
-    if (!window.confirm(`Möchten Sie ${count} ${count === 1 ? 'Datei' : 'Dateien'} wirklich löschen?`)) {
-      return;
-    }
-
-    try {
-      setMoving(true);
-      const assetsToDelete = mediaAssets.filter(asset => selectedAssets.has(asset.id!));
-      
-      await Promise.all(
-        assetsToDelete.map(asset => mediaService.deleteMediaAsset(asset))
-      );
-      
-      clearSelection();
-      await loadData();
-    } catch (error) {
-      console.error('Fehler beim Bulk-Löschen:', error);
-      alert('Fehler beim Löschen der Dateien. Bitte versuchen Sie es erneut.');
-    } finally {
-      setMoving(false);
-    }
+    
+    setConfirmDialog({
+      isOpen: true,
+      title: `${count} ${count === 1 ? 'Datei' : 'Dateien'} löschen`,
+      message: `Möchten Sie wirklich ${count} ${count === 1 ? 'Datei' : 'Dateien'} unwiderruflich löschen?`,
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          setMoving(true);
+          const assetsToDelete = mediaAssets.filter(asset => selectedAssets.has(asset.id!));
+          
+          await Promise.all(
+            assetsToDelete.map(asset => mediaService.deleteMediaAsset(asset))
+          );
+          
+          clearSelection();
+          await loadData();
+          showAlert('success', `${count} ${count === 1 ? 'Datei' : 'Dateien'} gelöscht`);
+        } catch (error) {
+          console.error('Fehler beim Bulk-Löschen:', error);
+          showAlert('error', 'Fehler beim Löschen', 'Die Dateien konnten nicht gelöscht werden.');
+        } finally {
+          setMoving(false);
+        }
+      }
+    });
   };
 
   const handleBulkMove = async (targetFolderId?: string) => {
@@ -255,7 +336,6 @@ export default function MediathekPage() {
     try {
       setMoving(true);
       
-      // userId hinzugefügt für automatische Firma-Vererbung
       await Promise.all(
         Array.from(selectedAssets).map(assetId => 
           mediaService.moveAssetToFolder(assetId, targetFolderId, user?.uid)
@@ -264,9 +344,10 @@ export default function MediathekPage() {
       
       clearSelection();
       await loadData();
+      showAlert('success', 'Dateien verschoben');
     } catch (error) {
       console.error('Fehler beim Bulk-Verschieben:', error);
-      alert('Fehler beim Verschieben der Dateien. Bitte versuchen Sie es erneut.');
+      showAlert('error', 'Fehler beim Verschieben', 'Die Dateien konnten nicht verschoben werden.');
     } finally {
       setMoving(false);
     }
@@ -290,11 +371,8 @@ export default function MediathekPage() {
       }
     };
 
-    // 🆕 ADDED: Globaler Mouse-Up Handler für Drag-State-Reset
     const handleGlobalMouseUp = () => {
-      // Reset aller Drag-States beim Loslassen der Maus (Sicherheits-Reset)
       if (draggedFolder || dragOverFolder) {
-        console.log('🔄 Global mouse up - resetting folder drag states');
         setDraggedFolder(null);
         setDragOverFolder(null);
       }
@@ -310,13 +388,10 @@ export default function MediathekPage() {
   }, [selectedAssets, mediaAssets, draggedFolder, dragOverFolder]);
 
   // DRAG & DROP HANDLERS
-  
   const handleAssetDragStart = (e: React.DragEvent, asset: MediaAsset) => {
     if (selectedAssets.has(asset.id!) && selectedAssets.size > 1) {
-      // Multi-drag: Verwende bestehende Selection
       setDraggedAsset(null);
     } else {
-      // Single-drag: Nur draggedAsset setzen, KEINE Selection ändern
       setDraggedAsset(asset);
     }
     
@@ -345,19 +420,15 @@ export default function MediathekPage() {
 
     const dragData = e.dataTransfer.getData('text/plain');
 
-    // Handle folder drops
     if (dragData.startsWith('folder:')) {
-      return; // FolderCard handles this
+      return;
     }
 
-    // Handle asset drops - Bessere Logik für Single vs Bulk
     let assetsToMove: string[] = [];
     
     if (selectedAssets.size > 0) {
-      // Bulk-Move: Verwende Selection
       assetsToMove = Array.from(selectedAssets);
     } else if (draggedAsset?.id) {
-      // Single-Move: Verwende draggedAsset
       assetsToMove = [draggedAsset.id];
     }
 
@@ -376,14 +447,14 @@ export default function MediathekPage() {
       if (count > 1) {
         await handleBulkMove(targetFolder.id);
       } else {
-        // Single move mit automatischer Firma-Vererbung
         await mediaService.moveAssetToFolder(assetsToMove[0], targetFolder.id, user?.uid);
         await loadData();
+        showAlert('success', 'Datei verschoben');
       }
       
     } catch (error) {
       console.error('Error moving assets:', error);
-      alert('Fehler beim Verschieben der Dateien. Bitte versuchen Sie es erneut.');
+      showAlert('error', 'Fehler beim Verschieben', 'Die Dateien konnten nicht verschoben werden.');
     } finally {
       setMoving(false);
       setDraggedAsset(null);
@@ -397,28 +468,23 @@ export default function MediathekPage() {
 
     const dragData = e.dataTransfer.getData('text/plain');
     
-    // Handle folder drop to root
     if (dragData.startsWith('folder:')) {
       const folderId = dragData.replace('folder:', '');
       
       try {
         setMoving(true);
         
-        // 1. Ordner ins Root verschieben
         await mediaService.updateFolder(folderId, {
           parentFolderId: undefined
         });
         
-        // 2. 🆕 Automatische Firma-Vererbung zurücksetzen (Root = editierbar)
-        console.log('🏢 Resetting client inheritance for folder moved to root...');
         await mediaService.updateFolderClientInheritance(folderId, user!.uid);
-        
         await loadData();
-        console.log('✅ Folder moved to root with client inheritance reset!');
+        showAlert('success', 'Ordner in Root verschoben');
         
       } catch (error) {
         console.error('Error moving folder to root:', error);
-        alert('Fehler beim Verschieben des Ordners. Bitte versuchen Sie es erneut.');
+        showAlert('error', 'Fehler beim Verschieben', 'Der Ordner konnte nicht verschoben werden.');
       } finally {
         setMoving(false);
         setDraggedFolder(null);
@@ -426,20 +492,16 @@ export default function MediathekPage() {
       return;
     }
 
-    // Handle asset drop to root - Bessere Logik für Single vs Bulk  
     let assetsToMove: string[] = [];
     
     if (selectedAssets.size > 0) {
-      // Bulk-Move: Verwende Selection
       assetsToMove = Array.from(selectedAssets);
     } else if (draggedAsset?.id) {
-      // Single-Move: Verwende draggedAsset
       assetsToMove = [draggedAsset.id];
     }
 
     if (assetsToMove.length === 0) return;
 
-    // Only move assets that are currently in folders
     const currentAssets = mediaAssets.filter(asset => 
       assetsToMove.includes(asset.id!) && asset.folderId
     );
@@ -454,21 +516,20 @@ export default function MediathekPage() {
       if (count > 1) {
         await Promise.all(
           currentAssets.map(asset => 
-            // userId hinzugefügt für automatische Firma-Vererbung
             mediaService.moveAssetToFolder(asset.id!, undefined, user?.uid)
           )
         );
         clearSelection();
       } else {
-        // userId hinzugefügt für automatische Firma-Vererbung
         await mediaService.moveAssetToFolder(currentAssets[0].id!, undefined, user?.uid);
       }
       
       await loadData();
+      showAlert('success', `${count} ${count === 1 ? 'Datei' : 'Dateien'} in Root verschoben`);
       
     } catch (error) {
       console.error('Error moving assets to root:', error);
-      alert('Fehler beim Verschieben der Dateien. Bitte versuchen Sie es erneut.');
+      showAlert('error', 'Fehler beim Verschieben', 'Die Dateien konnten nicht verschoben werden.');
     } finally {
       setMoving(false);
       setDraggedAsset(null);
@@ -500,6 +561,7 @@ export default function MediathekPage() {
         });
       }
       await loadData();
+      showAlert('success', editingFolder ? 'Ordner aktualisiert' : 'Ordner erstellt');
     } catch (error) {
       console.error("Fehler beim Speichern des Ordners:", error);
       throw error;
@@ -507,23 +569,32 @@ export default function MediathekPage() {
   };
 
   const handleDeleteFolder = async (folder: MediaFolder) => {
-    if (window.confirm(`Möchten Sie den Ordner "${folder.name}" wirklich löschen?`)) {
-      try {
-        await mediaService.deleteFolder(folder.id!);
-        await loadData();
-      } catch (error) {
-        console.error("Fehler beim Löschen des Ordners:", error);
-        alert("Der Ordner konnte nicht gelöscht werden. Stellen Sie sicher, dass er leer ist.");
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Ordner löschen',
+      message: `Möchten Sie den Ordner "${folder.name}" wirklich löschen?`,
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          await mediaService.deleteFolder(folder.id!);
+          await loadData();
+          showAlert('success', 'Ordner gelöscht');
+        } catch (error) {
+          console.error("Fehler beim Löschen des Ordners:", error);
+          showAlert('error', 'Fehler beim Löschen', 'Der Ordner konnte nicht gelöscht werden. Stellen Sie sicher, dass er leer ist.');
+        }
       }
-    }
+    });
   };
 
   const handleOpenFolder = (folder: MediaFolder) => {
     setCurrentFolderId(folder.id);
+    setCurrentPage(1);
   };
 
   const handleNavigateToFolder = (folderId?: string) => {
     setCurrentFolderId(folderId);
+    setCurrentPage(1);
   };
 
   const handleShareFolder = (folder: MediaFolder) => {
@@ -542,15 +613,22 @@ export default function MediathekPage() {
   };
 
   const handleDeleteAsset = async (asset: MediaAsset) => {
-    if (window.confirm(`Möchten Sie die Datei "${asset.fileName}" wirklich löschen?`)) {
-      try {
-        await mediaService.deleteMediaAsset(asset);
-        await loadData();
-      } catch(error) {
-        console.error("Fehler beim Löschen der Datei: ", error)
-        alert("Die Datei konnte nicht gelöscht werden.")
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Datei löschen',
+      message: `Möchten Sie die Datei "${asset.fileName}" wirklich löschen?`,
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          await mediaService.deleteMediaAsset(asset);
+          await loadData();
+          showAlert('success', 'Datei gelöscht');
+        } catch(error) {
+          console.error("Fehler beim Löschen der Datei: ", error);
+          showAlert('error', 'Fehler beim Löschen', 'Die Datei konnte nicht gelöscht werden.');
+        }
       }
-    }
+    });
   };
 
   // Asset-Details Handlers
@@ -574,6 +652,35 @@ export default function MediathekPage() {
     setShowUploadModal(false);
     setPreselectedClientId(undefined);
   };
+
+  // Filtered assets and folders based on search
+  const filteredFolders = useMemo(() => {
+    if (!searchTerm) return folders;
+    return folders.filter(folder => 
+      folder.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [folders, searchTerm]);
+
+  const filteredAssets = useMemo(() => {
+    if (!searchTerm) return mediaAssets;
+    return mediaAssets.filter(asset => 
+      asset.fileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      asset.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [mediaAssets, searchTerm]);
+
+  // Paginated Data
+  const paginatedAssets = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredAssets.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredAssets, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(filteredAssets.length / itemsPerPage);
+
+  // Reset page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   // Helper Functions
   const formatFileSize = (bytes: number) => {
@@ -605,31 +712,21 @@ export default function MediathekPage() {
     }
   };
 
-  const getPreselectedCompany = () => {
-    if (!preselectedClientId) return null;
-    return companies.find(c => c.id === preselectedClientId);
-  };
-
-  // 🆕 Helper für Asset-Tooltip
   const getAssetTooltip = (asset: MediaAsset) => {
     let tooltip = asset.fileName;
     
-    // Dateityp hinzufügen
     const fileExt = asset.fileType.split('/')[1]?.toUpperCase() || 'Datei';
     tooltip += `\n\nTyp: ${fileExt}`;
     
-    // Erstellungsdatum
     if (asset.createdAt) {
       const date = new Date(asset.createdAt.seconds * 1000).toLocaleDateString('de-DE');
       tooltip += `\nErstellt: ${date}`;
     }
     
-    // Beschreibung (falls vorhanden)
     if (asset.description) {
       tooltip += `\n\nBeschreibung: ${asset.description}`;
     }
     
-    // Kunde (falls vorhanden)
     const company = asset.clientId ? companies.find(c => c.id === asset.clientId) : null;
     if (company) {
       tooltip += `\nKunde: ${company.name}`;
@@ -645,7 +742,7 @@ export default function MediathekPage() {
       onDrop={(draggedAsset || selectedAssets.size > 0 || draggedFolder) && !currentFolderId ? handleRootDrop : undefined}
     >
       {/* Render Folders First */}
-      {folders.map((folder) => (
+      {filteredFolders.map((folder) => (
         <FolderCard
           key={folder.id}
           folder={folder}
@@ -664,8 +761,8 @@ export default function MediathekPage() {
         />
       ))}
       
-      {/* Render Media Assets - 🆕 CLEANER VERSION */}
-      {mediaAssets.map((asset) => {
+      {/* Render Media Assets */}
+      {paginatedAssets.map((asset) => {
         const FileIcon = getFileIcon(asset.fileType);
         const isSelected = selectedAssets.has(asset.id!);
         const isDragging = draggedAsset?.id === asset.id || (selectedAssets.has(asset.id!) && selectedAssets.size > 1);
@@ -676,7 +773,7 @@ export default function MediathekPage() {
             className={`group relative bg-white rounded-lg border shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden ${
               isDragging ? 'opacity-50 scale-95' : ''
             } ${
-              isSelected ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200'
+              isSelected ? 'border-[#005fab] bg-blue-50' : 'border-gray-200'
             }`}
             draggable={true}
             onDragStart={(e: React.DragEvent) => handleAssetDragStart(e, asset)}
@@ -688,7 +785,6 @@ export default function MediathekPage() {
                 if (!isSelectionMode) setIsSelectionMode(true);
               }
             }}
-            // 🆕 Tooltip für Asset
             title={getAssetTooltip(asset)}
           >
             {/* Selection Checkbox */}
@@ -700,10 +796,11 @@ export default function MediathekPage() {
                   type="checkbox"
                   checked={isSelected}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    e.stopPropagation();
                     toggleAssetSelection(asset.id!);
                     if (!isSelectionMode) setIsSelectionMode(true);
                   }}
-                  className="w-4 h-4 text-indigo-600 bg-white border-gray-300 rounded focus:ring-indigo-500 focus:ring-2"
+                  className="size-4 text-[#005fab] bg-white border-gray-300 rounded focus:ring-[#005fab] focus:ring-2"
                   onClick={(e: React.MouseEvent) => e.stopPropagation()}
                 />
               </label>
@@ -711,7 +808,7 @@ export default function MediathekPage() {
 
             {/* Multi-Selection Badge */}
             {selectedAssets.has(asset.id!) && selectedAssets.size > 1 && (
-              <div className="absolute top-2 right-2 bg-indigo-600 text-white text-xs px-2 py-1 rounded-full">
+              <div className="absolute top-2 right-2 bg-[#005fab] text-white text-xs px-2 py-1 rounded-full">
                 {selectedAssets.size}
               </div>
             )}
@@ -746,28 +843,28 @@ export default function MediathekPage() {
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Dropdown>
                     <DropdownButton 
-                      as={Button} 
                       plain 
-                      className="bg-white/90 shadow-sm hover:bg-white p-2"
+                      className="bg-white/90 shadow-sm hover:bg-white p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#005fab]"
                       onClick={(e: React.MouseEvent) => e.stopPropagation()}
                     >
                       <EllipsisVerticalIcon className="h-4 w-4" />
                     </DropdownButton>
-                    <DropdownMenu anchor="bottom end">
-                      <DropdownItem onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleEditAsset(asset); }}>
-                        <PencilIcon className="h-4 w-4 mr-2" />
+                    <DropdownMenu anchor="bottom end" className="bg-white shadow-lg rounded-lg">
+                      <DropdownItem onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleEditAsset(asset); }} className="hover:bg-gray-50">
+                        <PencilIcon className="text-gray-500" />
                         Details bearbeiten
                       </DropdownItem>
-                      <DropdownItem onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleShareAsset(asset); }}>
-                        <ShareIcon className="h-4 w-4 mr-2" />
+                      <DropdownItem onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleShareAsset(asset); }} className="hover:bg-gray-50">
+                        <ShareIcon className="text-gray-500" />
                         Teilen
                       </DropdownItem>
+                      <DropdownDivider />
                       <DropdownItem 
                         onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleDeleteAsset(asset); }}
-                        className="text-red-600"
+                        className="hover:bg-red-50"
                       >
-                        <TrashIcon className="h-4 w-4 mr-2" />
-                        Löschen
+                        <TrashIcon className="text-red-500" />
+                        <span className="text-red-600">Löschen</span>
                       </DropdownItem>
                     </DropdownMenu>
                   </Dropdown>
@@ -775,13 +872,12 @@ export default function MediathekPage() {
               )}
             </div>
 
-            {/* 🆕 CLEANER File Info - Nur Name und Client-Badge */}
+            {/* File Info */}
             <div className="p-4">
               <h3 className="text-sm font-medium text-gray-900 truncate mb-2" title={asset.fileName}>
                 {asset.fileName}
               </h3>
               
-              {/* Nur Client-Badge, falls vorhanden */}
               {asset.clientId && (
                 <div>
                   <Badge color="blue" className="text-xs">
@@ -789,9 +885,6 @@ export default function MediathekPage() {
                   </Badge>
                 </div>
               )}
-              
-              {/* 🚫 ENTFERNT: Dateityp und Erstellungsdatum */}
-              {/* Diese Infos sind jetzt im Tooltip verfügbar */}
             </div>
           </div>
         );
@@ -803,33 +896,46 @@ export default function MediathekPage() {
     <Table>
       <TableHead>
         <TableRow>
+          <TableHeader>
+            <Checkbox
+              checked={paginatedAssets.length > 0 && paginatedAssets.every(a => selectedAssets.has(a.id!))}
+              indeterminate={paginatedAssets.some(a => selectedAssets.has(a.id!)) && !paginatedAssets.every(a => selectedAssets.has(a.id!))}
+              onChange={(checked) => {
+                if (checked) {
+                  selectAllAssets();
+                } else {
+                  clearSelection();
+                }
+              }}
+            />
+          </TableHeader>
           <TableHeader>Name</TableHeader>
           <TableHeader>Typ</TableHeader>
+          <TableHeader>Größe</TableHeader>
+          <TableHeader>Kunde</TableHeader>
           <TableHeader>Erstellt am</TableHeader>
-          <TableHeader className="text-right">Aktionen</TableHeader>
+          <TableHeader>
+            <span className="sr-only">Aktionen</span>
+          </TableHeader>
         </TableRow>
       </TableHead>
       <TableBody>
         {/* Render Folders First */}
-        {folders.map((folder) => {
+        {filteredFolders.map((folder) => {
           const associatedCompany = folder.clientId 
             ? companies.find(c => c.id === folder.clientId)
             : null;
             
           return (
-            <TableRow key={`folder-${folder.id}`} className="cursor-pointer hover:bg-gray-50">
-              <TableCell onClick={() => handleOpenFolder(folder)}>
-                <div className="flex items-center space-x-3">
+            <TableRow key={`folder-${folder.id}`} className="hover:bg-gray-50">
+              <TableCell>
+                <div className="h-4 w-4" />
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-3 cursor-pointer" onClick={() => handleOpenFolder(folder)}>
                   <FolderIcon className="h-8 w-8" style={{ color: folder.color }} />
                   <div>
                     <div className="font-medium">{folder.name}</div>
-                    {associatedCompany && (
-                      <div className="mt-1">
-                        <Badge color="blue" className="text-xs">
-                          {associatedCompany.name}
-                        </Badge>
-                      </div>
-                    )}
                     {folder.description && (
                       <div className="text-sm text-gray-500">{folder.description}</div>
                     )}
@@ -837,62 +943,120 @@ export default function MediathekPage() {
                 </div>
               </TableCell>
               <TableCell>Ordner</TableCell>
+              <TableCell>—</TableCell>
               <TableCell>
-                {folder.createdAt ? new Date(folder.createdAt.seconds * 1000).toLocaleDateString('de-DE') : '-'}
+                {associatedCompany ? (
+                  <Badge color="blue" className="text-xs">
+                    {associatedCompany.name}
+                  </Badge>
+                ) : (
+                  <Text>—</Text>
+                )}
               </TableCell>
-              <TableCell className="text-right space-x-2">
-                <Button plain onClick={() => handleEditFolder(folder)}>
-                  Bearbeiten
-                </Button>
-                <Button plain className="text-red-600 hover:text-red-500" onClick={() => handleDeleteFolder(folder)}>
-                  Löschen
-                </Button>
+              <TableCell>
+                {folder.createdAt ? new Date(folder.createdAt.seconds * 1000).toLocaleDateString('de-DE') : '—'}
+              </TableCell>
+              <TableCell>
+                <Dropdown>
+                  <DropdownButton plain className="p-2 hover:bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#005fab]">
+                    <EllipsisVerticalIcon className="h-5 w-5 text-gray-700" />
+                  </DropdownButton>
+                  <DropdownMenu anchor="bottom end" className="bg-white shadow-lg rounded-lg">
+                    <DropdownItem onClick={() => handleEditFolder(folder)} className="hover:bg-gray-50">
+                      <PencilIcon className="text-gray-500" />
+                      Bearbeiten
+                    </DropdownItem>
+                    <DropdownItem onClick={() => handleShareFolder(folder)} className="hover:bg-gray-50">
+                      <ShareIcon className="text-gray-500" />
+                      Teilen
+                    </DropdownItem>
+                    <DropdownDivider />
+                    <DropdownItem onClick={() => handleDeleteFolder(folder)} className="hover:bg-red-50">
+                      <TrashIcon className="text-red-500" />
+                      <span className="text-red-600">Löschen</span>
+                    </DropdownItem>
+                  </DropdownMenu>
+                </Dropdown>
               </TableCell>
             </TableRow>
           );
         })}
         
         {/* Render Media Assets */}
-        {mediaAssets.map((asset) => {
+        {paginatedAssets.map((asset) => {
           const associatedCompany = asset.clientId 
             ? companies.find(c => c.id === asset.clientId)
             : null;
+          const FileIcon = getFileIcon(asset.fileType);
             
           return (
-            <TableRow key={asset.id}>
+            <TableRow key={asset.id} className="hover:bg-gray-50">
               <TableCell>
-                <div className="flex items-center space-x-3">
+                <Checkbox
+                  checked={selectedAssets.has(asset.id!)}
+                  onChange={(checked) => {
+                    toggleAssetSelection(asset.id!);
+                    if (!isSelectionMode && checked) setIsSelectionMode(true);
+                  }}
+                />
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-3">
                   {asset.fileType.startsWith('image/') ? (
                     <img src={asset.downloadUrl} alt={asset.fileName} className="h-10 w-10 object-cover rounded" />
                   ) : (
                     <div className="h-10 w-10 rounded bg-gray-200 flex items-center justify-center">
-                      <PhotoIcon className="h-6 w-6 text-gray-500" />
+                      <FileIcon className="h-6 w-6 text-gray-500" />
                     </div>
                   )}
                   <div>
                     <div className="font-medium">{asset.fileName}</div>
-                    {associatedCompany && (
-                      <div className="mt-1">
-                        <Badge color="blue" className="text-xs">
-                          {associatedCompany.name}
-                        </Badge>
-                      </div>
-                    )}
                   </div>
                 </div>
               </TableCell>
-              <TableCell>{asset.fileType}</TableCell>
-              <TableCell>{asset.createdAt ? new Date(asset.createdAt.seconds * 1000).toLocaleDateString('de-DE') : '-'}</TableCell>
-              <TableCell className="text-right space-x-2">
-                <Link href={asset.downloadUrl} target="_blank" passHref>
-                  <Button plain>Ansehen</Button>
-                </Link>
-                <Button plain onClick={() => handleEditAsset(asset)}>
-                  Details
-                </Button>
-                <Button plain className="text-red-600 hover:text-red-500" onClick={() => handleDeleteAsset(asset)}>
-                  Löschen
-                </Button>
+              <TableCell>
+                <Text>{asset.fileType.split('/')[1]?.toUpperCase() || 'Datei'}</Text>
+              </TableCell>
+              <TableCell>
+                <Text>—</Text>
+              </TableCell>
+              <TableCell>
+                {associatedCompany ? (
+                  <Badge color="blue" className="text-xs">
+                    {associatedCompany.name}
+                  </Badge>
+                ) : (
+                  <Text>—</Text>
+                )}
+              </TableCell>
+              <TableCell>
+                {asset.createdAt ? new Date(asset.createdAt.seconds * 1000).toLocaleDateString('de-DE') : '—'}
+              </TableCell>
+              <TableCell>
+                <Dropdown>
+                  <DropdownButton plain className="p-2 hover:bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#005fab]">
+                    <EllipsisVerticalIcon className="h-5 w-5 text-gray-700" />
+                  </DropdownButton>
+                  <DropdownMenu anchor="bottom end" className="bg-white shadow-lg rounded-lg">
+                    <DropdownItem href={asset.downloadUrl} target="_blank" className="hover:bg-gray-50">
+                      <EyeIcon className="text-gray-500" />
+                      Ansehen
+                    </DropdownItem>
+                    <DropdownItem onClick={() => handleEditAsset(asset)} className="hover:bg-gray-50">
+                      <PencilIcon className="text-gray-500" />
+                      Details bearbeiten
+                    </DropdownItem>
+                    <DropdownItem onClick={() => handleShareAsset(asset)} className="hover:bg-gray-50">
+                      <ShareIcon className="text-gray-500" />
+                      Teilen
+                    </DropdownItem>
+                    <DropdownDivider />
+                    <DropdownItem onClick={() => handleDeleteAsset(asset)} className="hover:bg-red-50">
+                      <TrashIcon className="text-red-500" />
+                      <span className="text-red-600">Löschen</span>
+                    </DropdownItem>
+                  </DropdownMenu>
+                </Dropdown>
               </TableCell>
             </TableRow>
           );
@@ -901,132 +1065,65 @@ export default function MediathekPage() {
     </Table>
   );
 
-  const totalItems = folders.length + mediaAssets.length;
+  const totalItems = filteredFolders.length + filteredAssets.length;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto"></div>
+          <Text className="mt-4">Lade Mediathek...</Text>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
-      {/* Moving Indicator */}
-      {moving && (
-        <div className="fixed top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg z-50">
-          🔄 {draggedFolder ? 'Ordner wird' : selectedAssets.size > 1 ? `${selectedAssets.size} Dateien werden` : 'Datei wird'} verschoben...
+      {/* Alert */}
+      {alert && (
+        <div className="mb-4">
+          <Alert type={alert.type} title={alert.title} message={alert.message} />
         </div>
       )}
 
-      {/* Auto-Upload Notification */}
-      {preselectedClientId && (
-        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-          <div className="flex items-center space-x-2 text-sm">
-            <span className="text-green-800">
-              📁 Upload-Modal für <strong>{getPreselectedCompany()?.name}</strong> wird geöffnet...
-            </span>
-          </div>
+      {/* Moving Indicator */}
+      {moving && (
+        <div className="fixed top-4 right-4 bg-[#005fab] text-white px-4 py-2 rounded-lg shadow-lg z-50">
+          {draggedFolder ? 'Ordner wird' : selectedAssets.size > 1 ? `${selectedAssets.size} Dateien werden` : 'Datei wird'} verschoben...
         </div>
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <Heading>Mediathek</Heading>
-          <Text className="mt-1">
-            Verwalten Sie Ihre Bilder, Videos und Dokumente.
-            {draggedAsset && <span className="text-blue-600 font-medium"> 📁 Datei per Drag & Drop verschieben!</span>}
-            {draggedFolder && <span className="text-purple-600 font-medium"> 📂 Ordner wird verschoben!</span>}
-          </Text>
+      <div className="md:flex md:items-center md:justify-between">
+        <div className="min-w-0 flex-1">
+          <Heading level={1}>Mediathek</Heading>
+          {draggedAsset && <Text className="mt-1 text-blue-600 font-medium">Datei per Drag & Drop verschieben!</Text>}
+          {draggedFolder && <Text className="mt-1 text-purple-600 font-medium">Ordner wird verschoben!</Text>}
         </div>
-        
-        <div className="flex items-center gap-3">
-          {/* Action Buttons - Immer sichtbar */}
+        <div className="mt-4 flex md:mt-0 md:ml-4 gap-3">
           <Button 
-            color="zinc" 
             onClick={handleCreateFolder}
             disabled={draggedFolder !== null}
+            className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005fab]"
           >
-            <FolderPlusIcon className="size-4 mr-2" />
-            Ordner
+            <FolderPlusIcon />
+            Ordner anlegen
           </Button>
           <Button 
             onClick={handleUploadModalOpen}
             disabled={draggedFolder !== null}
+            className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005fab]"
           >
-            <PlusIcon className="size-4 mr-2" />
-            Dateien
+            <PlusIcon />
+            Dateien hochladen
           </Button>
         </div>
       </div>
 
-      {/* Unified Stats & Controls Bar */}
-      {totalItems > 0 && (
-        <div className={`mb-4 p-2 rounded-lg ${selectedAssets.size > 0 ? 'bg-indigo-50 border border-indigo-200' : 'bg-gray-50'}`}>
-          <div className="flex items-center justify-between text-sm">
-            <span className={selectedAssets.size > 0 ? 'text-indigo-900' : 'text-gray-600'}>
-              {folders.length} {folders.length === 1 ? 'Ordner' : 'Ordner'}, {' '}
-              {mediaAssets.length} {mediaAssets.length === 1 ? 'Datei' : 'Dateien'}
-              {selectedAssets.size > 0 && (
-                <span className="ml-2 font-medium">
-                  • {selectedAssets.size} ausgewählt
-                </span>
-              )}
-            </span>
-            
-            <div className="flex items-center gap-4">
-              {/* Bulk Actions (nur bei Selection) */}
-              {selectedAssets.size > 0 && (
-                <div className="flex items-center space-x-2">
-                  <Button plain onClick={selectAllAssets} className="text-indigo-600 text-xs">
-                    Alle
-                  </Button>
-                  <Button plain onClick={clearSelection} className="text-gray-600 text-xs">
-                    Aufheben
-                  </Button>
-                  <Button 
-                    plain 
-                    onClick={handleBulkDelete}
-                    className="text-red-600 hover:text-red-700 text-xs"
-                  >
-                    <TrashIcon className="h-3 w-3 mr-1" />
-                    Löschen
-                  </Button>
-                  <Button 
-                    plain 
-                    onClick={() => handleBulkMove(undefined)}
-                    className="text-blue-600 hover:text-blue-700 text-xs"
-                  >
-                    📁 Root
-                  </Button>
-                </div>
-              )}
-              
-              {/* View Toggle */}
-              <div className="flex items-center bg-gray-100 rounded-lg p-1">
-                <Button
-                  plain
-                  onClick={() => setViewMode('grid')}
-                  className={`p-1.5 rounded ${viewMode === 'grid' 
-                    ? 'bg-white shadow-sm text-indigo-600' 
-                    : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  <Squares2X2Icon className="h-3 w-3" />
-                </Button>
-                <Button
-                  plain
-                  onClick={() => setViewMode('list')}
-                  className={`p-1.5 rounded ${viewMode === 'list' 
-                    ? 'bg-white shadow-sm text-indigo-600' 
-                    : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  <ListBulletIcon className="h-3 w-3" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Breadcrumb Navigation */}
       {breadcrumbs.length > 0 && (
-        <div className="mb-6">
+        <div className="mt-6">
           <BreadcrumbNavigation 
             breadcrumbs={breadcrumbs}
             onNavigate={handleNavigateToFolder}
@@ -1034,45 +1131,159 @@ export default function MediathekPage() {
         </div>
       )}
 
+      {/* Search and Controls */}
+      <div className="mt-6 flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-5 text-gray-400 z-10" />
+          <Input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Dateien und Ordner durchsuchen..."
+            className="pl-10"
+          />
+        </div>
+        
+        {/* View Toggle */}
+        <div className="flex items-center bg-gray-100 rounded-lg p-1">
+          <Button
+            plain
+            onClick={() => setViewMode('grid')}
+            className={`p-2 rounded ${viewMode === 'grid' 
+              ? 'bg-white shadow-sm text-[#005fab]' 
+              : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <Squares2X2Icon className="h-4 w-4" />
+          </Button>
+          <Button
+            plain
+            onClick={() => setViewMode('list')}
+            className={`p-2 rounded ${viewMode === 'list' 
+              ? 'bg-white shadow-sm text-[#005fab]' 
+              : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <ListBulletIcon className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Results Info and Bulk Actions */}
+      <div className="mt-4 flex items-center justify-between">
+        <Text>
+          {filteredFolders.length} {filteredFolders.length === 1 ? 'Ordner' : 'Ordner'}, {' '}
+          {filteredAssets.length} {filteredAssets.length === 1 ? 'Datei' : 'Dateien'}
+        </Text>
+        
+        <div className="flex min-h-10 items-center gap-4">
+          {selectedAssets.size > 0 && (
+            <>
+              <Text>
+                {selectedAssets.size} ausgewählt
+              </Text>
+              <Button plain onClick={selectAllAssets} className="text-[#005fab]">
+                Alle auswählen
+              </Button>
+              <Button plain onClick={clearSelection}>
+                Auswahl aufheben
+              </Button>
+              <Button color="zinc" onClick={handleBulkDelete}>
+                <TrashIcon />
+                Löschen
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+
       {/* Content */}
-      {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-            <p className="text-gray-500">Lade Mediathek...</p>
+      <div className="mt-8">
+        {totalItems === 0 ? (
+          <div className="text-center py-12 border rounded-lg bg-white">
+            <PhotoIcon className="mx-auto h-12 w-12 text-gray-400" />
+            <Heading level={3} className="mt-2">
+              {currentFolderId ? 'Dieser Ordner ist leer' : 'Ihre Mediathek ist leer'}
+            </Heading>
+            <Text className="mt-1">
+              {currentFolderId 
+                ? 'Laden Sie Dateien hoch oder erstellen Sie Unterordner.'
+                : 'Erstellen Sie Ihren ersten Ordner oder laden Sie Dateien hoch.'
+              }
+            </Text>
+            <div className="mt-6 flex justify-center gap-3">
+              <Button plain onClick={handleCreateFolder}>
+                <FolderPlusIcon />
+                Ordner erstellen
+              </Button>
+              <Button onClick={handleUploadModalOpen} className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap">
+                <PlusIcon />
+                Dateien hochladen
+              </Button>
+            </div>
           </div>
-        </div>
-      ) : totalItems === 0 ? (
-        <div className="text-center py-12 border rounded-lg bg-white">
-          <PhotoIcon className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-lg font-medium text-gray-900">
-            {currentFolderId ? 'Dieser Ordner ist leer' : 'Ihre Mediathek ist leer'}
-          </h3>
-          <p className="mt-1 text-sm text-gray-500">
-            {currentFolderId 
-              ? 'Laden Sie Dateien hoch oder erstellen Sie Unterordner.'
-              : 'Erstellen Sie Ihren ersten Ordner oder laden Sie Dateien hoch.'
-            }
-          </p>
-          <div className="mt-6 flex justify-center gap-3">
-            <Button color="zinc" onClick={handleCreateFolder}>
-              <FolderPlusIcon className="size-4 mr-2" />
-              Ordner erstellen
+        ) : (
+          <div className="bg-white rounded-lg border">
+            <div className="p-6">
+              {viewMode === 'grid' ? renderGridView() : renderListView()}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && viewMode === 'list' && (
+        <nav className="mt-6 flex items-center justify-between border-t border-gray-200 px-4 sm:px-0 pt-4">
+          <div className="-mt-px flex w-0 flex-1">
+            <Button
+              plain
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeftIcon />
+              Zurück
             </Button>
-            <Button onClick={handleUploadModalOpen}>
-              <PlusIcon className="size-4 mr-2" />
-              Dateien hochladen
+          </div>
+          <div className="hidden md:-mt-px md:flex">
+            {(() => {
+              const pages = [];
+              const maxVisible = 7;
+              let start = Math.max(1, currentPage - 3);
+              let end = Math.min(totalPages, start + maxVisible - 1);
+              
+              if (end - start < maxVisible - 1) {
+                start = Math.max(1, end - maxVisible + 1);
+              }
+              
+              for (let i = start; i <= end; i++) {
+                pages.push(
+                  <Button
+                    key={i}
+                    plain
+                    onClick={() => setCurrentPage(i)}
+                    className={currentPage === i ? 'font-semibold text-[#005fab]' : ''}
+                  >
+                    {i}
+                  </Button>
+                );
+              }
+              
+              return pages;
+            })()}
+          </div>
+          <div className="-mt-px flex w-0 flex-1 justify-end">
+            <Button
+              plain
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Weiter
+              <ChevronRightIcon />
             </Button>
           </div>
-        </div>
-      ) : (
-        <div className="bg-white rounded-lg border">
-          <div className="p-6">
-            {viewMode === 'grid' ? renderGridView() : renderListView()}
-          </div>
-        </div>
+        </nav>
       )}
-      
+
       {/* Modals */}
       {showUploadModal && (
         <UploadModal 
@@ -1088,7 +1299,7 @@ export default function MediathekPage() {
         <FolderModal 
           folder={editingFolder}
           parentFolderId={currentFolderId}
-          allFolders={allFolders} // Verwende allFolders für Vererbungs-Berechnung
+          allFolders={allFolders}
           onClose={() => {
             setShowFolderModal(false);
             setEditingFolder(undefined);
@@ -1110,11 +1321,52 @@ export default function MediathekPage() {
         <AssetDetailsModal
           asset={editingAsset}
           currentFolder={getAssetFolder(editingAsset)}
-          allFolders={allFolders} // Verwende allFolders für Vererbungs-Berechnung
+          allFolders={allFolders}
           onClose={handleCloseAssetDetailsModal}
           onSave={loadData}
         />
       )}
+
+      {/* Confirm Dialog */}
+      <Dialog
+        open={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+      >
+        <div className="p-6">
+          <div className="sm:flex sm:items-start">
+            <div className={`mx-auto flex h-12 w-12 shrink-0 items-center justify-center rounded-full sm:mx-0 sm:h-10 sm:w-10 ${
+              confirmDialog.type === 'danger' ? 'bg-red-100' : 'bg-yellow-100'
+            }`}>
+              <ExclamationTriangleIcon className={`h-6 w-6 ${
+                confirmDialog.type === 'danger' ? 'text-red-600' : 'text-yellow-600'
+              }`} />
+            </div>
+            <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+              <DialogTitle>{confirmDialog.title}</DialogTitle>
+              <DialogBody className="mt-2">
+                <Text>{confirmDialog.message}</Text>
+              </DialogBody>
+            </div>
+          </div>
+          <DialogActions className="mt-5 sm:mt-4">
+            <Button
+              plain
+              onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+            >
+              Abbrechen
+            </Button>
+            <Button
+              color={confirmDialog.type === 'danger' ? 'zinc' : 'zinc'}
+              onClick={() => {
+                confirmDialog.onConfirm();
+                setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+              }}
+            >
+              {confirmDialog.type === 'danger' ? 'Löschen' : 'Bestätigen'}
+            </Button>
+          </DialogActions>
+        </div>
+      </Dialog>
     </div>
   );
 }

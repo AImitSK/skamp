@@ -9,7 +9,7 @@ import { Textarea } from "@/components/textarea";
 import { Button } from "@/components/button";
 import { Checkbox } from "@/components/checkbox";
 import { Text } from "@/components/text";
-import { ShareLink, MediaFolder, MediaAsset } from "@/types/media";
+import { MediaFolder, MediaAsset } from "@/types/media";
 import { useAuth } from "@/context/AuthContext";
 import { mediaService } from "@/lib/firebase/media-service";
 import { 
@@ -24,6 +24,16 @@ interface ShareModalProps {
   type: 'folder' | 'file';
   onClose: () => void;
   onSuccess?: () => void;
+}
+
+interface CreatedShareLink {
+  id: string;
+  shareId: string;
+  title: string;
+  type: 'folder' | 'file';
+  downloadAllowed: boolean;
+  passwordRequired?: string;
+  accessCount: number;
 }
 
 export default function ShareModal({ 
@@ -43,7 +53,7 @@ export default function ShareModal({
   const [downloadAllowed, setDownloadAllowed] = useState(true);
   const [passwordRequired, setPasswordRequired] = useState('');
   const [creating, setCreating] = useState(false);
-  const [shareLink, setShareLink] = useState<ShareLink | null>(null);
+  const [createdLink, setCreatedLink] = useState<CreatedShareLink | null>(null);
   const [copied, setCopied] = useState(false);
 
   const handleCreateLink = async () => {
@@ -71,19 +81,44 @@ export default function ShareModal({
         shareData.settings.passwordRequired = passwordRequired.trim();
       }
 
-      const newShareLink = await mediaService.createShareLink(shareData);
-      setShareLink(newShareLink);
-      onSuccess?.();
+      // createShareLink gibt ein ShareLink Objekt zurück
+      const result = await mediaService.createShareLink(shareData);
+      
+      // Extrahiere die shareId - result ist vom Typ ShareLink
+      const generatedShareId = (result as any).shareId || (result as any).id;
+      
+      if (!generatedShareId || typeof generatedShareId !== 'string') {
+        throw new Error('Keine gültige shareId erhalten');
+      }
+      
+      // Erstelle ein lokales Objekt für die Anzeige
+      const linkData: CreatedShareLink = {
+        id: generatedShareId,
+        shareId: generatedShareId,
+        title: title.trim(),
+        type,
+        downloadAllowed,
+        passwordRequired: passwordRequired.trim() || undefined,
+        accessCount: 0,
+      };
+      
+      setCreatedLink(linkData);
+      
+      // Rufe onSuccess nur auf, wenn explizit gewünscht
+      // aber NICHT beim normalen Share-Vorgang
+      // onSuccess?.();
+      
     } catch (error) {
       console.error('Fehler beim Erstellen des Share-Links:', error);
+      alert('Fehler beim Erstellen des Share-Links. Bitte versuchen Sie es erneut.');
     } finally {
       setCreating(false);
     }
   };
 
   const getShareUrl = () => {
-    if (!shareLink) return '';
-    return `${window.location.origin}/share/${shareLink.shareId}`;
+    if (!createdLink) return '';
+    return `${window.location.origin}/share/${createdLink.shareId}`;
   };
 
   const handleCopyLink = async () => {
@@ -96,10 +131,18 @@ export default function ShareModal({
     }
   };
 
-  if (shareLink) {
+  const handleClose = () => {
+    // Beim Schließen erst onSuccess aufrufen, falls ein Link erstellt wurde
+    if (createdLink && onSuccess) {
+      onSuccess();
+    }
+    onClose();
+  };
+
+  if (createdLink) {
     // Link wurde erstellt - Erfolgsansicht
     return (
-      <Dialog open={true} onClose={onClose} size="lg">
+      <Dialog open={true} onClose={handleClose} size="lg">
         <div className="p-6">
           <DialogTitle>
             <div className="flex items-center gap-2">
@@ -122,14 +165,14 @@ export default function ShareModal({
               
               {/* Share URL */}
               <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                <div className="flex items-center justify-between">
-                  <code className="text-sm text-gray-700 flex-1 truncate mr-4">
+                <div className="flex items-center justify-between gap-2">
+                  <code className="text-sm text-gray-700 flex-1 truncate">
                     {getShareUrl()}
                   </code>
                   <Button
                     plain
                     onClick={handleCopyLink}
-                    className={copied ? 'text-green-600' : 'text-gray-600'}
+                    className={`whitespace-nowrap ${copied ? 'text-green-600' : 'text-gray-600'}`}
                   >
                     {copied ? (
                       <>
@@ -150,21 +193,21 @@ export default function ShareModal({
               <div className="text-left bg-white border rounded-lg p-4">
                 <Text className="font-medium text-gray-900 mb-2">Link-Details:</Text>
                 <ul className="text-sm text-gray-600 space-y-1">
-                  <li><strong>Titel:</strong> {shareLink.title}</li>
+                  <li><strong>Titel:</strong> {createdLink.title}</li>
                   <li><strong>Typ:</strong> {type === 'folder' ? 'Ordner' : 'Datei'}</li>
-                  <li><strong>Download:</strong> {shareLink.settings.downloadAllowed ? 'Erlaubt' : 'Nicht erlaubt'}</li>
-                  {shareLink.settings.passwordRequired && (
+                  <li><strong>Download:</strong> {createdLink.downloadAllowed ? 'Erlaubt' : 'Nicht erlaubt'}</li>
+                  {createdLink.passwordRequired && (
                     <li><strong>Passwort:</strong> Erforderlich</li>
                   )}
-                  <li><strong>Zugriffe:</strong> {shareLink.accessCount}</li>
+                  <li><strong>Zugriffe:</strong> {createdLink.accessCount}</li>
                 </ul>
               </div>
             </div>
           </DialogBody>
 
-          <DialogActions>
+          <DialogActions className="mt-5 sm:mt-4">
             <Button 
-              onClick={onClose}
+              onClick={handleClose}
               className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
             >
               Fertig
@@ -208,7 +251,7 @@ export default function ShareModal({
               />
             </Field>
 
-            <div className="space-y-3">
+            <Field>
               <Label>Einstellungen</Label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <Checkbox
@@ -217,7 +260,7 @@ export default function ShareModal({
                 />
                 <span className="text-sm">Download erlauben</span>
               </label>
-            </div>
+            </Field>
 
             <Field>
               <Label>Passwort-Schutz (optional)</Label>
@@ -246,7 +289,7 @@ export default function ShareModal({
           </FieldGroup>
         </DialogBody>
 
-        <DialogActions>
+        <DialogActions className="mt-5 sm:mt-4">
           <Button plain onClick={onClose} disabled={creating}>
             Abbrechen
           </Button>

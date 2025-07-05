@@ -494,13 +494,47 @@ export enum ActionType {
   Export = 'export'
 }
 
-// Boilerplate Interface
 export interface Boilerplate {
   id?: string;
   name: string;
-  category?: string;
+  category: 'company' | 'contact' | 'legal' | 'product' | 'custom';
   content: string;
   userId: string;
-  createdAt?: Timestamp;
-  updatedAt?: Timestamp;
+  
+  // Kunden-Zuordnung
+  clientId?: string;          // Optional: Spezifisch für einen Kunden
+  clientName?: string;        // Für bessere Performance beim Anzeigen
+  isGlobal: boolean;          // true = für alle Kunden, false = kundenspezifisch
+  
+  // Erweiterte Metadaten
+  description?: string;       // Kurze Beschreibung wann/wo verwendet
+  tags?: string[];           // Für bessere Suche
+  isFavorite?: boolean;      // Favoriten-Markierung
+  isArchived?: boolean;      // Soft-Delete
+  usageCount?: number;       // Verwendungszähler
+  lastUsedAt?: any;         // Firestore Timestamp
+  
+  // Position im Editor
+  defaultPosition?: 'top' | 'bottom' | 'signature' | 'custom';  // Wo soll es eingefügt werden
+  
+  // Reihenfolge für Sortierung
+  sortOrder?: number;        // Manuelle Sortierung innerhalb der Kategorie
+  
+  // Timestamps
+  createdAt?: any;
+  updatedAt?: any;
+}
+
+export interface BoilerplateCreateData {
+  name: string;
+  category: 'company' | 'contact' | 'legal' | 'product' | 'custom';
+  content: string;
+  userId: string;
+  clientId?: string;
+  clientName?: string;
+  isGlobal?: boolean;
+  description?: string;
+  tags?: string[];
+  defaultPosition?: 'top' | 'bottom' | 'signature' | 'custom';
+  sortOrder?: number;
 }
