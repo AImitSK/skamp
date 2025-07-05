@@ -1,4 +1,4 @@
-// src/types/pr.ts - VOLLSTÄNDIG mit Multi-List Support und Freigabe-Workflow
+// src/types/pr.ts - VOLLSTÄNDIG mit Multi-List Support, Freigabe-Workflow und Boilerplate-Integration
 import { Timestamp } from 'firebase/firestore';
 
 // ERWEITERT: Neue Status für den Freigabe-Workflow hinzugefügt
@@ -24,14 +24,28 @@ export interface ApprovalData {
   approvedAt?: Timestamp;
 }
 
+// NEU: Struktur für Boilerplate-Sections in Kampagnen
+export interface CampaignBoilerplateSection {
+  id: string;
+  boilerplateId: string;
+  position: 'header' | 'footer' | 'custom';
+  order: number;
+  isLocked: boolean;
+  customTitle?: string;
+}
+
 export interface PRCampaign {
   id?: string;
   userId: string;
   
   // Campaign Details
   title: string;
-  contentHtml: string;
+  contentHtml: string; // Der finale, zusammengesetzte HTML-Content
   status: PRCampaignStatus;
+  
+  // NEU: Structured Content Fields für intelligente Boilerplate-Integration
+  mainContent?: string; // Der reine Hauptinhalt ohne Boilerplates (nur der individuelle Teil)
+  boilerplateSections?: CampaignBoilerplateSection[]; // Die strukturierten Boilerplate-Sections
   
   // Distribution Lists - ERWEITERT für Multi-List Support
   distributionListId: string;       // Legacy: Einzelne Liste (für Rückwärtskompatibilität)
