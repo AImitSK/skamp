@@ -1,14 +1,17 @@
-// src\app\dashboard\pr-tools\approvals\page.tsx
+// src/app/dashboard/pr-tools/approvals/page.tsx
 "use client";
 
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from 'next/link';
 import { useAuth } from "@/context/AuthContext";
 import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
 import { Button } from "@/components/button";
 import { Badge } from "@/components/badge";
+import { Input } from "@/components/input";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/table";
+import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
+import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from "@/components/dropdown";
 import { 
   MagnifyingGlassIcon,
   CheckBadgeIcon,
@@ -18,381 +21,184 @@ import {
   EyeIcon,
   LinkIcon,
   DocumentTextIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ExclamationTriangleIcon,
   InformationCircleIcon,
-  PaperAirplaneIcon,
   ArrowPathIcon,
   PhotoIcon,
   FolderIcon,
-  DocumentIcon
+  DocumentIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  ExclamationTriangleIcon
 } from "@heroicons/react/20/solid";
 import { prService } from "@/lib/firebase/pr-service";
 import { PRCampaign } from "@/types/pr";
-import clsx from "clsx";
 
 // Types
 type ApprovalStatus = 'all' | 'in_review' | 'changes_requested' | 'approved';
 
-interface Toast {
-  id: string;
-  type: 'success' | 'error' | 'warning' | 'info';
+// Alert Component
+function Alert({ 
+  type = 'info', 
+  title, 
+  message, 
+  action 
+}: { 
+  type?: 'info' | 'success' | 'warning' | 'error';
   title: string;
   message?: string;
-  duration?: number;
-}
+  action?: { label: string; onClick: () => void };
+}) {
+  const styles = {
+    info: 'bg-blue-50 text-blue-700',
+    success: 'bg-green-50 text-green-700',
+    warning: 'bg-yellow-50 text-yellow-700',
+    error: 'bg-red-50 text-red-700'
+  };
 
-// Toast Notification Component
-function ToastNotification({ toasts, onRemove }: { toasts: Toast[], onRemove: (id: string) => void }) {
   const icons = {
+    info: InformationCircleIcon,
     success: CheckCircleIcon,
-    error: XCircleIcon,
     warning: ExclamationTriangleIcon,
-    info: InformationCircleIcon
+    error: XCircleIcon
   };
 
-  const colors = {
-    success: 'bg-green-50 border-green-200 text-green-800',
-    error: 'bg-red-50 border-red-200 text-red-800',
-    warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
-    info: 'bg-blue-50 border-blue-200 text-blue-800'
-  };
-
-  const iconColors = {
-    success: 'text-green-400',
-    error: 'text-red-400',
-    warning: 'text-yellow-400',
-    info: 'text-blue-400'
-  };
+  const Icon = icons[type];
 
   return (
-    <div className="fixed bottom-0 right-0 p-6 space-y-4 z-50">
-      {toasts.map((toast) => {
-        const Icon = icons[toast.type];
-        return (
-          <div
-            key={toast.id}
-            className={`${colors[toast.type]} border rounded-lg p-4 shadow-lg transform transition-all duration-300 ease-in-out animate-slide-in-up`}
-            style={{ minWidth: '320px' }}
-          >
-            <div className="flex">
-              <Icon className={`h-5 w-5 ${iconColors[toast.type]} mr-3 flex-shrink-0`} />
-              <div className="flex-1">
-                <p className="font-medium">{toast.title}</p>
-                {toast.message && (
-                  <p className="text-sm mt-1 opacity-90">{toast.message}</p>
-                )}
-              </div>
-              <button
-                onClick={() => onRemove(toast.id)}
-                className="ml-3 flex-shrink-0 rounded-md hover:opacity-70 focus:outline-none"
-              >
-                <XCircleIcon className="h-5 w-5" />
-              </button>
-            </div>
+    <div className={`rounded-md p-4 ${styles[type].split(' ')[0]}`}>
+      <div className="flex">
+        <div className="shrink-0">
+          <Icon aria-hidden="true" className={`size-5 ${type === 'info' || type === 'success' ? 'text-blue-400' : type === 'warning' ? 'text-yellow-400' : 'text-red-400'}`} />
+        </div>
+        <div className="ml-3 flex-1 md:flex md:justify-between">
+          <div>
+            <Text className={`font-medium ${styles[type].split(' ')[1]}`}>{title}</Text>
+            {message && <Text className={`mt-2 ${styles[type].split(' ')[1]}`}>{message}</Text>}
           </div>
-        );
-      })}
+          {action && (
+            <p className="mt-3 text-sm md:mt-0 md:ml-6">
+              <button
+                onClick={action.onClick}
+                className={`font-medium whitespace-nowrap ${styles[type].split(' ')[1]} hover:opacity-80`}
+              >
+                {action.label}
+                <span aria-hidden="true"> →</span>
+              </button>
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
 
-// Quick Preview Component
-function QuickPreview({ 
+// Feedback History Modal
+function FeedbackHistoryModal({ 
   campaign, 
-  position 
+  onClose 
 }: { 
-  campaign: PRCampaign;
-  position: { x: number; y: number };
+  campaign: PRCampaign; 
+  onClose: () => void;
 }) {
-  const previewRef = useRef<HTMLDivElement>(null);
-  const [adjustedPosition, setAdjustedPosition] = useState(position);
-
-  useEffect(() => {
-    if (previewRef.current) {
-      const rect = previewRef.current.getBoundingClientRect();
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-      
-      let newX = position.x;
-      let newY = position.y;
-      
-      if (rect.right > viewportWidth) {
-        newX = position.x - rect.width - 20;
-      }
-      if (rect.bottom > viewportHeight) {
-        newY = viewportHeight - rect.height - 20;
-      }
-      
-      setAdjustedPosition({ x: newX, y: newY });
-    }
-  }, [position]);
-
   const formatDate = (timestamp: any) => {
     if (!timestamp || !timestamp.toDate) return '—';
     return timestamp.toDate().toLocaleDateString('de-DE', {
       day: '2-digit',
-      month: 'short',
+      month: 'long',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     });
   };
 
-  const getStatusBadge = () => {
-    switch (campaign.approvalData?.status) {
-      case 'pending':
-        return <Badge color="yellow" className="text-xs">Warten auf Feedback</Badge>;
-      case 'viewed':
-        return <Badge color="blue" className="text-xs">Angesehen</Badge>;
-      case 'commented':
-        return <Badge color="orange" className="text-xs">Kommentiert</Badge>;
-      case 'approved':
-        return <Badge color="green" className="text-xs">Freigegeben</Badge>;
-      default:
-        return null;
+  const getStatusFromHistory = (campaign: PRCampaign, index: number) => {
+    // Bestimme den Status basierend auf der Position und dem aktuellen Kampagnenstatus
+    if (campaign.approvalData?.status === 'approved' && index === campaign.approvalData.feedbackHistory!.length - 1) {
+      return 'approved';
     }
+    // Wenn es einen Kommentar gibt, wurde kommentiert
+    if (campaign.approvalData?.feedbackHistory?.[index].comment) {
+      return 'commented';
+    }
+    // Ansonsten nur angesehen
+    return 'viewed';
   };
 
   return (
-    <div
-      ref={previewRef}
-      className="fixed z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-4 w-80 animate-fade-in-scale"
-      style={{ left: `${adjustedPosition.x}px`, top: `${adjustedPosition.y}px` }}
-    >
-      <div className="mb-3">
-        <h4 className="font-semibold text-gray-900">{campaign.title}</h4>
-        <p className="text-sm text-gray-600 mt-1">{campaign.clientName}</p>
-      </div>
-      
-      <div className="space-y-2 text-sm">
-        <div className="flex justify-between items-center">
-          <span className="text-gray-500">Status:</span>
-          {getStatusBadge()}
-        </div>
-        
-        {/* NEU: Medien-Info */}
-        {campaign.attachedAssets && campaign.attachedAssets.length > 0 && (
-          <div className="flex justify-between items-center">
-            <span className="text-gray-500">Medien:</span>
-            <div className="flex items-center gap-1">
-              <PhotoIcon className="h-4 w-4 text-gray-400" />
-              <span className="text-xs font-medium">{campaign.attachedAssets.length}</span>
+    <Dialog open={true} onClose={onClose} size="2xl">
+      <div className="p-6">
+        <DialogTitle>Feedback-Historie</DialogTitle>
+        <DialogBody className="mt-4">
+          <div className="mb-4">
+            <Text className="font-medium">{campaign.title}</Text>
+            <Text className="text-sm text-gray-500">{campaign.clientName}</Text>
+          </div>
+
+          {campaign.approvalData?.feedbackHistory && campaign.approvalData.feedbackHistory.length > 0 ? (
+            <div className="space-y-4">
+              {campaign.approvalData.feedbackHistory.map((feedback, index) => {
+                const status = getStatusFromHistory(campaign, index);
+                return (
+                  <div key={index} className="border rounded-lg p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge color={status === 'approved' ? 'green' : status === 'commented' ? 'orange' : 'blue'}>
+                            {status === 'approved' ? 'Freigegeben' : status === 'commented' ? 'Kommentiert' : 'Angesehen'}
+                          </Badge>
+                          <Text className="text-sm text-gray-500">{formatDate(feedback.requestedAt)}</Text>
+                        </div>
+                        {feedback.comment && (
+                          <Text className="text-sm italic text-gray-700">"{feedback.comment}"</Text>
+                        )}
+                        {feedback.author && (
+                          <Text className="text-sm text-gray-500 mt-2">
+                            Von: {feedback.author}
+                          </Text>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          </div>
-        )}
-        
-        {campaign.approvalData?.feedbackHistory && campaign.approvalData.feedbackHistory.length > 0 && (
-          <div className="pt-2 border-t">
-            <span className="text-gray-500 text-xs">Letztes Feedback:</span>
-            <p className="text-xs mt-1 text-gray-600 italic">
-              "{campaign.approvalData.feedbackHistory[campaign.approvalData.feedbackHistory.length - 1].comment}"
-            </p>
-          </div>
-        )}
-        
-        <div className="flex justify-between">
-          <span className="text-gray-500">Angefordert:</span>
-          <span className="text-xs">{campaign.approvalData?.feedbackHistory?.[0] 
-            ? formatDate(campaign.approvalData.feedbackHistory[0].requestedAt)
-            : '—'}</span>
-        </div>
-        
-        {campaign.approvalData?.approvedAt && (
-          <div className="flex justify-between">
-            <span className="text-gray-500">Freigegeben:</span>
-            <span className="text-xs">{formatDate(campaign.approvalData.approvedAt)}</span>
-          </div>
-        )}
-      </div>
-      
-      {/* NEU: Medien-Details wenn vorhanden */}
-      {campaign.attachedAssets && campaign.attachedAssets.length > 0 && (
-        <div className="mt-3 pt-3 border-t">
-          <p className="text-xs font-medium text-gray-700 mb-2">Angehängte Medien:</p>
-          <div className="space-y-1">
-            {campaign.attachedAssets.slice(0, 3).map((asset, idx) => (
-              <div key={idx} className="flex items-center gap-2 text-xs text-gray-600">
-                {asset.type === 'folder' ? (
-                  <>
-                    <FolderIcon className="h-3 w-3 text-gray-400" />
-                    <span className="truncate">{asset.metadata.folderName}</span>
-                  </>
-                ) : (
-                  <>
-                    <DocumentIcon className="h-3 w-3 text-gray-400" />
-                    <span className="truncate">{asset.metadata.fileName}</span>
-                  </>
-                )}
+          ) : (
+            <div className="text-center py-8">
+              <ChatBubbleLeftRightIcon className="h-12 w-12 mx-auto text-gray-300" />
+              <Text className="mt-2 text-gray-500">Noch kein Feedback vorhanden</Text>
+            </div>
+          )}
+
+          {campaign.attachedAssets && campaign.attachedAssets.length > 0 && (
+            <div className="mt-6 pt-6 border-t">
+              <Text className="font-medium mb-3">Angehängte Medien ({campaign.attachedAssets.length})</Text>
+              <div className="space-y-2">
+                {campaign.attachedAssets.map((asset, idx) => (
+                  <div key={idx} className="flex items-center gap-3 p-2 bg-gray-50 rounded">
+                    {asset.type === 'folder' ? (
+                      <>
+                        <FolderIcon className="h-5 w-5 text-gray-400" />
+                        <span className="text-sm">{asset.metadata.folderName}</span>
+                      </>
+                    ) : (
+                      <>
+                        <DocumentIcon className="h-5 w-5 text-gray-400" />
+                        <span className="text-sm">{asset.metadata.fileName}</span>
+                      </>
+                    )}
+                  </div>
+                ))}
               </div>
-            ))}
-            {campaign.attachedAssets.length > 3 && (
-              <p className="text-xs text-gray-500 italic">
-                +{campaign.attachedAssets.length - 3} weitere
-              </p>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Dropdown Menu Component
-function DropdownMenu({ 
-  campaign,
-  onCopyLink,
-  onViewDetails,
-  onResubmit,
-  showToast
-}: { 
-  campaign: PRCampaign;
-  onCopyLink: (shareId: string) => void;
-  onViewDetails: (campaign: PRCampaign) => void;
-  onResubmit?: (campaign: PRCampaign) => void;
-  showToast: (type: Toast['type'], title: string, message?: string) => void;
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
-  const [isResubmitting, setIsResubmitting] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    if (isOpen && buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      setDropdownPosition({
-        top: rect.bottom + window.scrollY,
-        left: rect.right - 192 + window.scrollX
-      });
-    }
-  }, [isOpen]);
-
-  const handleAction = (action: () => void | Promise<void>) => {
-    const result = action();
-    if (result instanceof Promise) {
-      result.finally(() => setIsOpen(false));
-    } else {
-      setIsOpen(false);
-    }
-  };
-
-  const handleResubmit = async () => {
-    try {
-      setIsResubmitting(true);
-      await prService.resubmitForApproval(campaign.id!);
-      showToast('success', 'Erneut zur Freigabe gesendet', 'Die Kampagne wurde erneut an den Kunden gesendet.');
-      
-      if (onResubmit) {
-        onResubmit(campaign);
-      }
-    } catch (error) {
-      showToast('error', 'Fehler beim erneuten Senden', 'Die Kampagne konnte nicht erneut gesendet werden.');
-    } finally {
-      setIsResubmitting(false);
-    }
-  };
-
-  return (
-    <div className="relative" ref={menuRef}>
-      <button
-        ref={buttonRef}
-        onClick={() => setIsOpen(!isOpen)}
-        className="p-1 rounded hover:bg-gray-100 transition-colors"
-      >
-        <EllipsisVerticalIcon className="h-5 w-5 text-gray-500" />
-      </button>
-
-      {isOpen && (
-        <div 
-          className={`fixed w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 transform transition-all duration-200 ${
-            isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
-          }`}
-          style={{ 
-            top: `${dropdownPosition.top}px`,
-            left: `${dropdownPosition.left}px`,
-            zIndex: 9999
-          }}
-        >
-          <div className="py-1">
-            <Link
-              href={`/freigabe/${campaign.approvalData?.shareId}`}
-              target="_blank"
-              className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-              onClick={() => setIsOpen(false)}
-            >
-              <EyeIcon className="h-4 w-4 mr-3 text-gray-400" />
-              Freigabe-Link öffnen
-            </Link>
-
-            <button
-              onClick={() => handleAction(() => onCopyLink(campaign.approvalData?.shareId || ''))}
-              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors text-left"
-            >
-              <LinkIcon className="h-4 w-4 mr-3 text-gray-400" />
-              Link kopieren
-            </button>
-
-            <div className="border-t border-gray-100 my-1"></div>
-
-            <Link
-              href={`/dashboard/pr-tools/campaigns/campaigns/${campaign.id}`}
-              className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-              onClick={() => setIsOpen(false)}
-            >
-              <DocumentTextIcon className="h-4 w-4 mr-3 text-gray-400" />
-              Kampagne anzeigen
-            </Link>
-
-
-
-            <button
-              onClick={() => handleAction(() => onViewDetails(campaign))}
-              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors text-left"
-            >
-              <ChatBubbleLeftRightIcon className="h-4 w-4 mr-3 text-gray-400" />
-              Feedback-Historie
-            </button>
-
-            {/* NEU: Erneut senden für changes_requested Status */}
-            {campaign.status === 'changes_requested' && (
-              <>
-                <div className="border-t border-gray-100 my-1"></div>
-                <button
-                  onClick={() => handleAction(handleResubmit)}
-                  disabled={isResubmitting}
-                  className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors text-left disabled:opacity-50"
-                >
-                  {isResubmitting ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400 mr-3"></div>
-                      Wird gesendet...
-                    </>
-                  ) : (
-                    <>
-                      <ArrowPathIcon className="h-4 w-4 mr-3 text-gray-400" />
-                      Erneut senden
-                    </>
-                  )}
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
+            </div>
+          )}
+        </DialogBody>
+        <DialogActions>
+          <Button plain onClick={onClose}>Schließen</Button>
+        </DialogActions>
+      </div>
+    </Dialog>
   );
 }
 
@@ -402,30 +208,22 @@ export default function ApprovalsPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<ApprovalStatus>('all');
   const [searchTerm, setSearchTerm] = useState("");
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const [previewCampaign, setPreviewCampaign] = useState<{ campaign: PRCampaign; position: { x: number; y: number } } | null>(null);
+  const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string } | null>(null);
+  const [selectedCampaign, setSelectedCampaign] = useState<PRCampaign | null>(null);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   
   // Refresh States
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   
-  // Pagination States
+  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(25);
+  const [itemsPerPage] = useState(25);
 
-  // Toast Management
-  const showToast = useCallback((type: Toast['type'], title: string, message?: string) => {
-    const id = Date.now().toString();
-    const newToast: Toast = { id, type, title, message, duration: 5000 };
-    setToasts(prev => [...prev, newToast]);
-    
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
-    }, newToast.duration);
-  }, []);
-
-  const removeToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
+  // Alert Management
+  const showAlert = useCallback((type: 'info' | 'success' | 'warning' | 'error', title: string, message?: string) => {
+    setAlert({ type, title, message });
+    setTimeout(() => setAlert(null), 5000);
   }, []);
 
   const loadCampaigns = async () => {
@@ -434,18 +232,16 @@ export default function ApprovalsPage() {
     setIsRefreshing(true);
     try {
       const allCampaigns = await prService.getAll(user.uid);
-      // Nur Kampagnen mit Freigabe-Anforderung
       const approvalCampaigns = allCampaigns.filter((c: PRCampaign) => c.approvalRequired && c.approvalData);
       
       setCampaigns(approvalCampaigns);
       setLastRefresh(new Date());
       
       if (!loading) {
-        showToast('success', 'Daten aktualisiert');
+        showAlert('success', 'Daten aktualisiert');
       }
     } catch (error) {
-      console.error("Fehler beim Laden der Kampagnen:", error);
-      showToast('error', 'Fehler beim Laden', 'Die Freigaben konnten nicht geladen werden.');
+      showAlert('error', 'Fehler beim Laden', 'Die Freigaben konnten nicht geladen werden.');
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -464,16 +260,15 @@ export default function ApprovalsPage() {
       if (!loading && !isRefreshing && user) {
         loadCampaigns();
       }
-    }, 30000); // 30 Sekunden
+    }, 30000);
     
     return () => clearInterval(interval);
   }, [user, loading, isRefreshing]);
 
-  // Refresh bei Fokus (wenn User zum Tab zurückkehrt)
+  // Refresh bei Fokus
   useEffect(() => {
     const handleFocus = () => {
       const timeSinceLastRefresh = new Date().getTime() - lastRefresh.getTime();
-      // Nur refreshen wenn mehr als 10 Sekunden vergangen sind
       if (timeSinceLastRefresh > 10000 && !loading && !isRefreshing && user) {
         loadCampaigns();
       }
@@ -492,7 +287,6 @@ export default function ApprovalsPage() {
 
       if (activeTab === 'all') return true;
       
-      // Map tabs to campaign status
       const statusMap: { [key in ApprovalStatus]: string[] } = {
         'all': [],
         'in_review': ['pending', 'viewed'],
@@ -507,11 +301,9 @@ export default function ApprovalsPage() {
   // Paginated Data
   const paginatedCampaigns = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return filteredCampaigns.slice(startIndex, endIndex);
+    return filteredCampaigns.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredCampaigns, currentPage, itemsPerPage]);
 
-  // Total Pages
   const totalPages = Math.ceil(filteredCampaigns.length / itemsPerPage);
 
   // Reset page when filters change
@@ -523,32 +315,25 @@ export default function ApprovalsPage() {
     const url = `${window.location.origin}/freigabe/${shareId}`;
     try {
       await navigator.clipboard.writeText(url);
-      showToast('success', 'Link kopiert', 'Der Freigabe-Link wurde in die Zwischenablage kopiert.');
+      showAlert('success', 'Link kopiert', 'Der Freigabe-Link wurde in die Zwischenablage kopiert.');
     } catch (error) {
-      showToast('error', 'Fehler', 'Der Link konnte nicht kopiert werden.');
+      showAlert('error', 'Fehler', 'Der Link konnte nicht kopiert werden.');
     }
   };
 
-  const handleViewDetails = (campaign: PRCampaign) => {
-    // Hier könnte ein Modal mit der Feedback-Historie geöffnet werden
-    const feedbackCount = campaign.approvalData?.feedbackHistory?.length || 0;
-    const assetCount = campaign.attachedAssets?.length || 0;
-    
-    showToast('info', 'Kampagnen-Details', 
-      `${feedbackCount} Feedback-Einträge${assetCount > 0 ? `, ${assetCount} Medien angehängt` : ''}.`
-    );
+  const handleViewFeedback = (campaign: PRCampaign) => {
+    setSelectedCampaign(campaign);
+    setShowFeedbackModal(true);
   };
 
-  const handleMouseEnter = (campaign: PRCampaign, event: React.MouseEvent) => {
-    const rect = (event.target as HTMLElement).getBoundingClientRect();
-    setPreviewCampaign({
-      campaign,
-      position: { x: rect.right + 10, y: rect.top }
-    });
-  };
-
-  const handleMouseLeave = () => {
-    setPreviewCampaign(null);
+  const handleResubmit = async (campaign: PRCampaign) => {
+    try {
+      await prService.resubmitForApproval(campaign.id!);
+      showAlert('success', 'Erneut zur Freigabe gesendet', 'Die Kampagne wurde erneut an den Kunden gesendet.');
+      await loadCampaigns();
+    } catch (error) {
+      showAlert('error', 'Fehler beim erneuten Senden', 'Die Kampagne konnte nicht erneut gesendet werden.');
+    }
   };
 
   const getStatusBadge = (campaign: PRCampaign) => {
@@ -596,9 +381,9 @@ export default function ApprovalsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-pulse">
-          <div className="h-8 w-8 bg-[#005fab] rounded-full animate-bounce"></div>
-          <p className="mt-4 text-zinc-500">Lade Freigaben...</p>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto"></div>
+          <Text className="mt-4">Lade Freigaben...</Text>
         </div>
       </div>
     );
@@ -606,127 +391,131 @@ export default function ApprovalsPage() {
 
   return (
     <div>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <Heading>Freigaben-Center</Heading>
-          <Text className="mt-1">
-            Verwalten und überwachen Sie alle Pressemitteilungen, die eine Kundenfreigabe benötigen
-          </Text>
+      {/* Alert */}
+      {alert && (
+        <div className="mb-4">
+          <Alert type={alert.type} title={alert.title} message={alert.message} />
         </div>
-        
-        {/* Refresh Button */}
-        <div className="flex items-center gap-3">
-          <Text className="text-xs text-gray-500">
-            Zuletzt aktualisiert: {lastRefresh.toLocaleTimeString('de-DE')}
+      )}
+
+      {/* Header */}
+      <div className="md:flex md:items-center md:justify-between">
+        <div className="min-w-0 flex-1">
+          <Heading>Freigaben-Center</Heading>
+        </div>
+        <div className="mt-4 flex md:mt-0 md:ml-4 gap-3">
+          <Text className="text-xs text-gray-500 self-center">
+            Zuletzt aktualisiert: {lastRefresh.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
           </Text>
           <Button
             onClick={() => loadCampaigns()}
             disabled={isRefreshing}
             plain
-            className="flex items-center gap-2"
+            className="whitespace-nowrap"
           >
-            {isRefreshing ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
-                Aktualisiert...
-              </>
-            ) : (
-              <>
-                <ArrowPathIcon className="h-4 w-4" />
-                Aktualisieren
-              </>
-            )}
+            <ArrowPathIcon className={isRefreshing ? 'animate-spin' : ''} />
+            Aktualisieren
           </Button>
         </div>
       </div>
 
-      {/* Filter-Box */}
-      <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-lg p-4 mb-6 space-y-4">
-        {/* Tabs */}
-        <div className="flex gap-4 overflow-x-auto">
-          {approvalTabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as ApprovalStatus)}
-              className={clsx(
-                'pb-3 px-1 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap',
-                activeTab === tab.id
-                  ? 'border-[#005fab] text-[#005fab]'
-                  : 'border-transparent text-zinc-600 hover:text-zinc-900 dark:text-zinc-400'
-              )}
-            >
-              {tab.id === 'in_review' && <ClockIcon className="h-4 w-4" />}
-              {tab.id === 'changes_requested' && <ChatBubbleLeftRightIcon className="h-4 w-4" />}
-              {tab.id === 'approved' && <CheckBadgeIcon className="h-4 w-4" />}
-              {tab.label} ({tab.count})
-            </button>
-          ))}
+      {/* Tabs */}
+      <div className="mt-8">
+        <div className="border-b border-gray-200">
+          <nav aria-label="Tabs" className="-mb-px flex gap-8 overflow-x-auto">
+            {approvalTabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as ApprovalStatus)}
+                className={`group inline-flex items-center border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap ${
+                  activeTab === tab.id
+                    ? 'border-[#005fab] text-[#005fab]'
+                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                }`}
+              >
+                {tab.id === 'in_review' && (
+                  <ClockIcon className={`mr-2 -ml-0.5 size-5 ${
+                    activeTab === tab.id ? 'text-[#005fab]' : 'text-gray-400 group-hover:text-gray-500'
+                  }`} />
+                )}
+                {tab.id === 'changes_requested' && (
+                  <ChatBubbleLeftRightIcon className={`mr-2 -ml-0.5 size-5 ${
+                    activeTab === tab.id ? 'text-[#005fab]' : 'text-gray-400 group-hover:text-gray-500'
+                  }`} />
+                )}
+                {tab.id === 'approved' && (
+                  <CheckBadgeIcon className={`mr-2 -ml-0.5 size-5 ${
+                    activeTab === tab.id ? 'text-[#005fab]' : 'text-gray-400 group-hover:text-gray-500'
+                  }`} />
+                )}
+                <span>{tab.label} ({tab.count})</span>
+              </button>
+            ))}
+          </nav>
         </div>
-        
-        {/* Suche */}
-        <div className="relative w-full lg:max-w-md">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-zinc-400 pointer-events-none" />
-          <input
-            type="search"
-            placeholder="Kampagnen durchsuchen..."
+      </div>
+
+      {/* Search */}
+      <div className="mt-6">
+        <div className="relative max-w-md">
+          <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-5 text-gray-400 z-10" />
+          <Input
+            type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full h-10 rounded-md border border-zinc-300 py-2 pl-10 pr-4 text-sm focus:border-[#005fab] focus:outline-none focus:ring-1 focus:ring-[#005fab] transition-all"
+            placeholder="Kampagnen durchsuchen..."
+            className="pl-10"
           />
         </div>
       </div>
 
-      {/* Ergebnis-Info */}
-      <div className="mb-4">
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+      {/* Results Info */}
+      <div className="mt-4">
+        <Text>
           {filteredCampaigns.length} von {campaigns.length} Freigaben
-        </p>
+        </Text>
       </div>
 
-      {/* Tabelle */}
-      <div className="overflow-x-auto rounded-lg border">
-        <Table className="min-w-full">
-          <TableHead>
-            <TableRow>
-              <TableHeader>Kampagne</TableHeader>
-              <TableHeader>Kunde</TableHeader>
-              <TableHeader>Status</TableHeader>
-              <TableHeader>Letzte Aktivität</TableHeader>
-              <TableHeader className="w-12 relative overflow-visible"></TableHeader>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {paginatedCampaigns.length === 0 ? (
+      {/* Table */}
+      <div className="mt-8">
+        {paginatedCampaigns.length === 0 ? (
+          <div className="text-center py-12 border rounded-lg bg-white">
+            <CheckBadgeIcon className="mx-auto h-12 w-12 text-gray-400" />
+            <Heading level={3} className="mt-2">Keine Freigaben gefunden</Heading>
+            <Text className="mt-1">
+              {searchTerm || activeTab !== 'all' 
+                ? "Versuchen Sie andere Suchkriterien" 
+                : "Noch keine Kampagnen zur Freigabe eingereicht"}
+            </Text>
+          </div>
+        ) : (
+          <Table>
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-10">
-                  <CheckBadgeIcon className="mx-auto h-12 w-12 text-gray-400" />
-                  <Text className="mt-2 text-zinc-500">
-                    {searchTerm || activeTab !== 'all' 
-                      ? "Keine Freigaben in dieser Ansicht gefunden." 
-                      : "Noch keine Kampagnen zur Freigabe eingereicht."}
-                  </Text>
-                </TableCell>
+                <TableHeader>Kampagne</TableHeader>
+                <TableHeader>Kunde</TableHeader>
+                <TableHeader>Status</TableHeader>
+                <TableHeader>Letzte Aktivität</TableHeader>
+                <TableHeader>
+                  <span className="sr-only">Aktionen</span>
+                </TableHeader>
               </TableRow>
-            ) : (
-              paginatedCampaigns.map((campaign) => (
-                <TableRow key={campaign.id} className="hover:bg-gray-50 transition-colors">
+            </TableHead>
+            <TableBody>
+              {paginatedCampaigns.map((campaign) => (
+                <TableRow key={campaign.id} className="hover:bg-gray-50">
                   <TableCell>
-                    <div 
-                      className="font-medium text-[#005fab] hover:text-[#004a8c] cursor-pointer"
-                      onMouseEnter={(e) => handleMouseEnter(campaign, e)}
-                      onMouseLeave={handleMouseLeave}
+                    <Link 
+                      href={`/dashboard/pr-tools/campaigns/campaigns/${campaign.id}`} 
+                      className="text-[#005fab] hover:text-[#004a8c] font-medium"
                     >
-                      <Link href={`//dashboard/pr-tools/campaigns/campaigns/${campaign.id}`} className="hover:underline">
-                        {campaign.title}
-                      </Link>
-                    </div>
-                    {/* NEU: Medien-Indikator */}
+                      {campaign.title}
+                    </Link>
                     {campaign.attachedAssets && campaign.attachedAssets.length > 0 && (
                       <div className="mt-1 flex items-center gap-2">
                         <div className="flex items-center gap-1 text-xs text-gray-500">
                           <PhotoIcon className="h-3 w-3" />
-                          {campaign.attachedAssets.length} Medien angehängt
+                          {campaign.attachedAssets.length} Medien
                         </div>
                       </div>
                     )}
@@ -749,211 +538,129 @@ export default function ApprovalsPage() {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="relative overflow-visible">
-                    <DropdownMenu 
-                      campaign={campaign}
-                      onCopyLink={handleCopyLink}
-                      onViewDetails={handleViewDetails}
-                      onResubmit={() => loadCampaigns()}
-                      showToast={showToast}
-                    />
+                  <TableCell>
+                    <Dropdown>
+                      <DropdownButton plain className="p-2 hover:bg-gray-100 rounded-lg">
+                        <EllipsisVerticalIcon className="h-5 w-5 text-gray-700" />
+                      </DropdownButton>
+                      <DropdownMenu anchor="bottom end" className="bg-white shadow-lg rounded-lg">
+                        <DropdownItem 
+                          href={`/freigabe/${campaign.approvalData?.shareId}`}
+                          target="_blank"
+                          className="hover:bg-gray-50"
+                        >
+                          <EyeIcon className="text-gray-500" />
+                          Freigabe-Link öffnen
+                        </DropdownItem>
+                        <DropdownItem 
+                          onClick={() => handleCopyLink(campaign.approvalData?.shareId || '')}
+                          className="hover:bg-gray-50"
+                        >
+                          <LinkIcon className="text-gray-500" />
+                          Link kopieren
+                        </DropdownItem>
+                        <DropdownDivider />
+                        <DropdownItem 
+                          href={`/dashboard/pr-tools/campaigns/campaigns/${campaign.id}`}
+                          className="hover:bg-gray-50"
+                        >
+                          <DocumentTextIcon className="text-gray-500" />
+                          Kampagne anzeigen
+                        </DropdownItem>
+                        <DropdownItem 
+                          onClick={() => handleViewFeedback(campaign)}
+                          className="hover:bg-gray-50"
+                        >
+                          <ChatBubbleLeftRightIcon className="text-gray-500" />
+                          Feedback-Historie
+                        </DropdownItem>
+                        {campaign.status === 'changes_requested' && (
+                          <>
+                            <DropdownDivider />
+                            <DropdownItem 
+                              onClick={() => handleResubmit(campaign)}
+                              className="hover:bg-gray-50"
+                            >
+                              <ArrowPathIcon className="text-gray-500" />
+                              Erneut senden
+                            </DropdownItem>
+                          </>
+                        )}
+                      </DropdownMenu>
+                    </Dropdown>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </div>
 
       {/* Pagination */}
-      {filteredCampaigns.length > 0 && (
-        <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 px-2">
-          {/* Items per page selector */}
-          <div className="flex items-center gap-2">
-            <label htmlFor="itemsPerPage" className="text-sm text-gray-600">
-              Einträge pro Seite:
-            </label>
-            <select
-              id="itemsPerPage"
-              value={itemsPerPage}
-              onChange={(e) => {
-                setItemsPerPage(Number(e.target.value));
-                setCurrentPage(1);
-              }}
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-[#005fab] focus:outline-none focus:ring-1 focus:ring-[#005fab]"
+      {totalPages > 1 && (
+        <nav className="mt-6 flex items-center justify-between border-t border-gray-200 px-4 sm:px-0 pt-4">
+          <div className="-mt-px flex w-0 flex-1">
+            <Button
+              plain
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="whitespace-nowrap"
             >
-              <option value={10}>10</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-            </select>
+              <ChevronLeftIcon />
+              Zurück
+            </Button>
           </div>
-
-          {/* Page info and navigation */}
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">
-              {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, filteredCampaigns.length)} von {filteredCampaigns.length}
-            </span>
-            
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1}
-                className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                aria-label="Erste Seite"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-                </svg>
-              </button>
+          <div className="hidden md:-mt-px md:flex">
+            {(() => {
+              const pages = [];
+              const maxVisible = 7;
+              let start = Math.max(1, currentPage - 3);
+              let end = Math.min(totalPages, start + maxVisible - 1);
               
-              <button
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-                className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                aria-label="Vorherige Seite"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-
-              {/* Page numbers */}
-              <div className="flex items-center gap-1 mx-2">
-                {totalPages <= 7 ? (
-                  Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={clsx(
-                        "min-w-[32px] h-8 px-2 rounded text-sm font-medium transition-colors",
-                        currentPage === page
-                          ? "bg-[#005fab] text-white"
-                          : "hover:bg-gray-100"
-                      )}
-                    >
-                      {page}
-                    </button>
-                  ))
-                ) : (
-                  <>
-                    {currentPage > 3 && (
-                      <>
-                        <button
-                          onClick={() => setCurrentPage(1)}
-                          className="min-w-[32px] h-8 px-2 rounded text-sm font-medium hover:bg-gray-100"
-                        >
-                          1
-                        </button>
-                        {currentPage > 4 && <span className="px-1">...</span>}
-                      </>
-                    )}
-                    
-                    {Array.from({ length: 5 }, (_, i) => {
-                      const page = currentPage - 2 + i;
-                      if (page > 0 && page <= totalPages) {
-                        return (
-                          <button
-                            key={page}
-                            onClick={() => setCurrentPage(page)}
-                            className={clsx(
-                              "min-w-[32px] h-8 px-2 rounded text-sm font-medium transition-colors",
-                              currentPage === page
-                                ? "bg-[#005fab] text-white"
-                                : "hover:bg-gray-100"
-                            )}
-                          >
-                            {page}
-                          </button>
-                        );
-                      }
-                      return null;
-                    }).filter(Boolean)}
-                    
-                    {currentPage < totalPages - 2 && (
-                      <>
-                        {currentPage < totalPages - 3 && <span className="px-1">...</span>}
-                        <button
-                          onClick={() => setCurrentPage(totalPages)}
-                          className="min-w-[32px] h-8 px-2 rounded text-sm font-medium hover:bg-gray-100"
-                        >
-                          {totalPages}
-                        </button>
-                      </>
-                    )}
-                  </>
-                )}
-              </div>
-
-              <button
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages}
-                className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                aria-label="Nächste Seite"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
+              if (end - start < maxVisible - 1) {
+                start = Math.max(1, end - maxVisible + 1);
+              }
               
-              <button
-                onClick={() => setCurrentPage(totalPages)}
-                disabled={currentPage === totalPages}
-                className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                aria-label="Letzte Seite"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
+              for (let i = start; i <= end; i++) {
+                pages.push(
+                  <Button
+                    key={i}
+                    plain
+                    onClick={() => setCurrentPage(i)}
+                    className={currentPage === i ? 'font-semibold text-[#005fab]' : ''}
+                  >
+                    {i}
+                  </Button>
+                );
+              }
+              
+              return pages;
+            })()}
           </div>
-        </div>
+          <div className="-mt-px flex w-0 flex-1 justify-end">
+            <Button
+              plain
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="whitespace-nowrap"
+            >
+              Weiter
+              <ChevronRightIcon />
+            </Button>
+          </div>
+        </nav>
       )}
 
-      {/* Quick Preview */}
-      {previewCampaign && (
-        <QuickPreview 
-          campaign={previewCampaign.campaign}
-          position={previewCampaign.position}
+      {/* Feedback History Modal */}
+      {showFeedbackModal && selectedCampaign && (
+        <FeedbackHistoryModal 
+          campaign={selectedCampaign}
+          onClose={() => {
+            setShowFeedbackModal(false);
+            setSelectedCampaign(null);
+          }}
         />
       )}
-
-      {/* Toast Notifications */}
-      <ToastNotification toasts={toasts} onRemove={removeToast} />
-
-      {/* CSS für Animationen */}
-      <style jsx global>{`
-        @keyframes slide-in-up {
-          from {
-            transform: translateY(100%);
-            opacity: 0;
-          }
-          to {
-            transform: translateY(0);
-            opacity: 1;
-          }
-        }
-        
-        @keyframes fade-in-scale {
-          from {
-            opacity: 0;
-            transform: scale(0.95);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-        
-        .animate-slide-in-up {
-          animation: slide-in-up 0.3s ease-out;
-        }
-
-        .animate-fade-in-scale {
-          animation: fade-in-scale 0.2s ease-out;
-        }
-      `}</style>
     </div>
   );
 }
