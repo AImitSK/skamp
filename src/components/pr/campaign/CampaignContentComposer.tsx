@@ -17,6 +17,8 @@ interface CampaignContentComposerProps {
   mainContent: string;
   onMainContentChange: (content: string) => void;
   onFullContentChange: (fullContent: string) => void;
+  onBoilerplateSectionsChange?: (sections: BoilerplateSection[]) => void; // NEU
+  initialBoilerplateSections?: BoilerplateSection[]; // NEU
 }
 
 export default function CampaignContentComposer({
@@ -27,11 +29,21 @@ export default function CampaignContentComposer({
   onTitleChange,
   mainContent,
   onMainContentChange,
-  onFullContentChange
+  onFullContentChange,
+  onBoilerplateSectionsChange,
+  initialBoilerplateSections = []
 }: CampaignContentComposerProps) {
-  const [boilerplateSections, setBoilerplateSections] = useState<BoilerplateSection[]>([]);
+  const [boilerplateSections, setBoilerplateSections] = useState<BoilerplateSection[]>(initialBoilerplateSections);
   const [processedContent, setProcessedContent] = useState('');
   const [showPreview, setShowPreview] = useState(false);
+
+  // Update parent when sections change
+  const handleBoilerplateSectionsChange = (sections: BoilerplateSection[]) => {
+    setBoilerplateSections(sections);
+    if (onBoilerplateSectionsChange) {
+      onBoilerplateSectionsChange(sections);
+    }
+  };
 
   // Process content whenever sections or main content changes
   useEffect(() => {
@@ -83,7 +95,7 @@ export default function CampaignContentComposer({
           userId={userId}
           clientId={clientId}
           clientName={clientName}
-          onContentChange={setBoilerplateSections}
+          onContentChange={handleBoilerplateSectionsChange}
           initialSections={boilerplateSections}
         />
       </div>

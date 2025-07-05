@@ -10,11 +10,10 @@ import { Text } from "@/components/text";
 import { Button } from "@/components/button";
 import { Badge } from "@/components/badge";
 import { Field, Label, FieldGroup } from "@/components/fieldset";
-import { Input } from "@/components/input";
 import { Select } from "@/components/select";
 import { Checkbox } from "@/components/checkbox";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
-import { RichTextEditor } from "@/components/RichTextEditor";
+import CampaignContentComposer from '@/components/pr/campaign/CampaignContentComposer';
 import { 
   ArrowLeftIcon,
   BuildingOfficeIcon,
@@ -43,6 +42,7 @@ import { PRCampaign } from "@/types/pr";
 import { DistributionList } from "@/types/lists";
 import { CampaignAssetAttachment } from "@/types/pr";
 import { MediaAsset, MediaFolder } from "@/types/media";
+import { Input } from "@/components/input";
 
 // Dynamic import für AI Modal
 import dynamic from 'next/dynamic';
@@ -458,8 +458,10 @@ export default function EditPRCampaignPage() {
   // Form State
   const [selectedListIds, setSelectedListIds] = useState<string[]>([]);
   const [campaignTitle, setCampaignTitle] = useState('');
-  const [pressReleaseContent, setPressReleaseContent] = useState('');
+  const [mainContent, setMainContent] = useState(''); // NEU: Nur der Hauptinhalt
+  const [pressReleaseContent, setPressReleaseContent] = useState(''); // Finaler HTML Content
   const [attachedAssets, setAttachedAssets] = useState<CampaignAssetAttachment[]>([]);
+  const [boilerplateSections, setBoilerplateSections] = useState<any[]>([]); // NEU: Boilerplate Sections
   
   // UI State
   const [loading, setLoading] = useState(true);
@@ -506,6 +508,20 @@ export default function EditPRCampaignPage() {
       } else {
         setSelectedListIds([campaignData.distributionListId]);
       }
+      
+      // NEU: Lade mainContent wenn vorhanden, sonst Fallback auf contentHtml
+      if (campaignData.mainContent !== undefined) {
+        setMainContent(campaignData.mainContent);
+      } else {
+        // Fallback für alte Kampagnen
+        setMainContent(campaignData.contentHtml);
+      }
+      
+      // NEU: Lade Boilerplate Sections
+      if (campaignData.boilerplateSections) {
+        setBoilerplateSections(campaignData.boilerplateSections);
+      }
+      
       setPressReleaseContent(campaignData.contentHtml);
       setAttachedAssets(campaignData.attachedAssets || []);
       
@@ -556,7 +572,9 @@ export default function EditPRCampaignPage() {
       
       const updatedData = {
         title: campaignTitle,
-        contentHtml: pressReleaseContent,
+        contentHtml: pressReleaseContent, // Der finale, zusammengesetzte Content
+        mainContent: mainContent, // NEU: Der reine Hauptinhalt
+        boilerplateSections: boilerplateSections, // NEU: Die Boilerplate Sections
         distributionListId: primaryList.id!,
         distributionListName: primaryList.name,
         distributionListIds: selectedListIds,
@@ -587,7 +605,7 @@ export default function EditPRCampaignPage() {
     if (result.structured?.headline) {
       setCampaignTitle(result.structured.headline);
     }
-    setPressReleaseContent(result.content);
+    setMainContent(result.content); // NEU: Setze nur den Hauptinhalt
     setShowAiModal(false);
   };
 
@@ -708,7 +726,7 @@ export default function EditPRCampaignPage() {
                     )}
                   </Field>
 
-                  {/* Inhalt */}
+                  {/* Inhalt - NEU: Mit Content Composer */}
                   <div className="border-t pt-6 mt-6">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-base font-semibold">Pressemitteilung *</h3>
@@ -722,22 +740,19 @@ export default function EditPRCampaignPage() {
                       </Button>
                     </div>
                     
-                    <Field>
-                      <Label>Titel *</Label>
-                      <Input
-                        value={campaignTitle}
-                        onChange={(e) => setCampaignTitle(e.target.value)}
-                        required
-                      />
-                    </Field>
-                    
-                    <Field>
-                      <Label>Inhalt *</Label>
-                      <RichTextEditor
-                        content={pressReleaseContent}
-                        onChange={setPressReleaseContent}
-                      />
-                    </Field>
+                    {/* NEU: Content Composer statt einzelner Felder */}
+                    <CampaignContentComposer
+                      userId={user!.uid}
+                      clientId={campaign.clientId}
+                      clientName={campaign.clientName}
+                      title={campaignTitle}
+                      onTitleChange={setCampaignTitle}
+                      mainContent={mainContent}
+                      onMainContentChange={setMainContent}
+                      onFullContentChange={setPressReleaseContent}
+                      onBoilerplateSectionsChange={setBoilerplateSections}
+                      initialBoilerplateSections={boilerplateSections}
+                    />
                   </div>
 
                   {/* Medien */}
@@ -751,7 +766,7 @@ export default function EditPRCampaignPage() {
                           plain
                           className="whitespace-nowrap"
                         >
-                          <PlusIcon />
+                          <PlusIcon className="h-4 w-4 mr-1" />
                           Medien hinzufügen
                         </Button>
                       )}
@@ -923,7 +938,7 @@ export default function EditPRCampaignPage() {
           onGenerate={handleAiGenerate}
           existingContent={{
             title: campaignTitle,
-            content: pressReleaseContent
+            content: mainContent
           }}
         />
       )}

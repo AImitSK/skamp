@@ -14,8 +14,8 @@ import { Select } from "@/components/select";
 import { Checkbox } from "@/components/checkbox";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
 import CampaignContentComposer from '@/components/pr/campaign/CampaignContentComposer';
-import { 
-  PlusIcon, 
+import {
+  PlusIcon,
   ArrowLeftIcon,
   BuildingOfficeIcon,
   UsersIcon,
@@ -35,7 +35,7 @@ import { prService } from "@/lib/firebase/pr-service";
 import { mediaService } from "@/lib/firebase/media-service";
 import { companiesService } from "@/lib/firebase/crm-service";
 import { DistributionList } from "@/types/lists";
-import { CampaignAssetAttachment } from "@/types/pr";
+import { CampaignAssetAttachment, CampaignBoilerplateSection } from "@/types/pr"; // WICHTIG: Import hinzugefügt
 import { MediaAsset, MediaFolder } from "@/types/media";
 import { Company } from "@/types/crm";
 import { Input } from "@/components/input";
@@ -47,11 +47,11 @@ const StructuredGenerationModal = dynamic(() => import('@/components/pr/ai/Struc
 });
 
 // Alert Component
-function Alert({ 
-  type = 'info', 
-  title, 
-  message 
-}: { 
+function Alert({
+  type = 'info',
+  title,
+  message
+}: {
   type?: 'info' | 'error';
   title?: string;
   message: string;
@@ -84,14 +84,14 @@ function Alert({
 }
 
 // Asset Selector Modal (bleibt unverändert)
-function AssetSelectorModal({ 
-  isOpen, 
-  onClose, 
+function AssetSelectorModal({
+  isOpen,
+  onClose,
   clientId,
   clientName,
   onAssetsSelected,
   userId
-}: { 
+}: {
   isOpen: boolean;
   onClose: () => void;
   clientId: string;
@@ -130,7 +130,7 @@ function AssetSelectorModal({
   const filteredAssets = useMemo(() => {
     if (!searchTerm) return assets;
     const search = searchTerm.toLowerCase();
-    return assets.filter(a => 
+    return assets.filter(a =>
       a.fileName.toLowerCase().includes(search) ||
       a.description?.toLowerCase().includes(search)
     );
@@ -264,8 +264,8 @@ function AssetSelectorModal({
                         className="mr-3"
                       />
                       {asset.fileType?.startsWith('image/') ? (
-                        <img 
-                          src={asset.downloadUrl} 
+                        <img
+                          src={asset.downloadUrl}
                           alt={asset.fileName}
                           className="h-10 w-10 object-cover rounded mr-3"
                         />
@@ -288,7 +288,7 @@ function AssetSelectorModal({
               <div className="text-center py-12">
                 <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <Text>Keine Medien für diesen Kunden gefunden</Text>
-                <Link 
+                <Link
                   href={`/dashboard/pr-tools/media-library?uploadFor=${clientId}`}
                   target="_blank"
                   className="inline-flex items-center mt-4 text-[#005fab] hover:text-[#004a8c]"
@@ -303,7 +303,7 @@ function AssetSelectorModal({
       </DialogBody>
       <DialogActions className="px-6 py-4">
         <Button plain onClick={onClose}>Abbrechen</Button>
-        <Button 
+        <Button
           onClick={handleConfirm}
           disabled={selectedItems.size === 0}
           className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
@@ -326,8 +326,9 @@ export default function NewPRCampaignPage() {
   const [selectedCompanyId, setSelectedCompanyId] = useState('');
   const [selectedListIds, setSelectedListIds] = useState<string[]>([]);
   const [campaignTitle, setCampaignTitle] = useState('');
-  const [mainContent, setMainContent] = useState(''); // NEU: Nur der Hauptinhalt
+  const [mainContent, setMainContent] = useState('');
   const [pressReleaseContent, setPressReleaseContent] = useState(''); // Finaler HTML Content
+  const [boilerplateSections, setBoilerplateSections] = useState<CampaignBoilerplateSection[]>([]); // NEU
   const [attachedAssets, setAttachedAssets] = useState<CampaignAssetAttachment[]>([]);
   const [approvalRequired, setApprovalRequired] = useState(false);
   
@@ -361,17 +362,17 @@ export default function NewPRCampaignPage() {
     }
   };
 
-  const selectedCompany = useMemo(() => 
+  const selectedCompany = useMemo(() =>
     companies.find(c => c.id === selectedCompanyId),
     [companies, selectedCompanyId]
   );
 
-  const selectedLists = useMemo(() => 
+  const selectedLists = useMemo(() =>
     availableLists.filter(list => selectedListIds.includes(list.id!)),
     [availableLists, selectedListIds]
   );
 
-  const totalRecipients = useMemo(() => 
+  const totalRecipients = useMemo(() =>
     selectedLists.reduce((sum, list) => sum + list.contactCount, 0),
     [selectedLists]
   );
@@ -406,8 +407,9 @@ export default function NewPRCampaignPage() {
       const campaignData = {
         userId: user!.uid,
         title: campaignTitle,
-        contentHtml: pressReleaseContent, // Der finale, zusammengesetzte Content
-        mainContent: mainContent, // NEU: Der reine Hauptinhalt
+        contentHtml: pressReleaseContent,
+        mainContent: mainContent,
+        boilerplateSections: boilerplateSections, // NEU
         status: 'draft' as const,
         distributionListId: selectedListIds[0],
         distributionListName: selectedLists[0].name,
@@ -424,7 +426,6 @@ export default function NewPRCampaignPage() {
 
       const newCampaignId = await prService.create(campaignData);
       
-      // Bei Freigabe-Anforderung
       if (approvalRequired) {
         await prService.requestApproval(newCampaignId);
       }
@@ -441,12 +442,12 @@ export default function NewPRCampaignPage() {
     if (result.structured?.headline) {
       setCampaignTitle(result.structured.headline);
     }
-    setMainContent(result.content); // NEU: Setze nur den Hauptinhalt
+    setMainContent(result.content);
     setShowAiModal(false);
   };
 
   const handleRemoveAsset = (assetId: string) => {
-    setAttachedAssets(attachedAssets.filter(a => 
+    setAttachedAssets(attachedAssets.filter(a =>
       !((a.type === 'asset' && a.assetId === assetId) ||
         (a.type === 'folder' && a.folderId === assetId))
     ));
@@ -467,8 +468,8 @@ export default function NewPRCampaignPage() {
     <div>
       {/* Header */}
       <div className="mb-8">
-        <Link 
-          href="/dashboard/pr-tools/campaigns" 
+        <Link
+          href="/dashboard/pr-tools/campaigns"
           className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
         >
           <ArrowLeftIcon className="h-4 w-4 mr-1" />
@@ -543,7 +544,7 @@ export default function NewPRCampaignPage() {
                   )}
                 </Field>
 
-                {/* Inhalt - NEU: Mit Content Composer */}
+                {/* Inhalt */}
                 <div className="border-t pt-6 mt-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-base font-semibold">Pressemitteilung *</h3>
@@ -557,7 +558,7 @@ export default function NewPRCampaignPage() {
                     </Button>
                   </div>
                   
-                  {/* NEU: Content Composer statt einzelner Felder */}
+                  {/* NEU: Content Composer mit Boilerplate-Props */}
                   <CampaignContentComposer
                     userId={user!.uid}
                     clientId={selectedCompanyId}
@@ -567,6 +568,8 @@ export default function NewPRCampaignPage() {
                     mainContent={mainContent}
                     onMainContentChange={setMainContent}
                     onFullContentChange={setPressReleaseContent}
+                    onBoilerplateSectionsChange={setBoilerplateSections}
+                    initialBoilerplateSections={boilerplateSections}
                   />
                 </div>
 
