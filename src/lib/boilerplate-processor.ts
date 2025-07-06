@@ -13,6 +13,20 @@ export async function processBoilerplates(
 
   const parts: string[] = [];
 
+  // Add title and date if available
+  if (context.campaign?.title) {
+    parts.push(`<h1 class="text-2xl font-bold text-gray-900 mb-2">${context.campaign.title}</h1>`);
+    
+    // Format current date in German format
+    const today = new Date();
+    const formattedDate = today.toLocaleDateString('de-DE', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    });
+    parts.push(`<p class="text-sm text-gray-600 mb-6">${formattedDate}</p>`);
+  }
+
   // Add header sections
   for (const section of headerSections) {
     if (section.boilerplate) {
@@ -23,7 +37,7 @@ export async function processBoilerplates(
 
   // Add separator after headers if any exist
   if (headerSections.length > 0 && (mainContent || customSections.length > 0)) {
-    parts.push('<hr class="my-6" />');
+    parts.push('<hr class="mt-12 mb-3 border-gray-300" />');
   }
 
   // Add main content with custom sections
@@ -41,7 +55,7 @@ export async function processBoilerplates(
 
   // Add separator before footers if any exist
   if (footerSections.length > 0 && (parts.length > 0)) {
-    parts.push('<hr class="my-6" />');
+    parts.push('<hr class="mt-12 mb-3 border-gray-300" />');
   }
 
   // Add footer sections

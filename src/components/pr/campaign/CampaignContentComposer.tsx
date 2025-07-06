@@ -1,12 +1,72 @@
 // src/components/pr/campaign/CampaignContentComposer.tsx
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import IntelligentBoilerplateSection, { BoilerplateSection } from './IntelligentBoilerplateSection';
 import { processBoilerplates } from '@/lib/boilerplate-processor';
 import { Field, Label } from '@/components/fieldset';
 import { Input } from '@/components/input';
+import { Button } from '@/components/button';
+import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/dialog';
+import { 
+  DocumentArrowDownIcon, 
+  FolderIcon, 
+  HomeIcon,
+  ChevronRightIcon 
+} from '@heroicons/react/20/solid';
+import { mediaService } from '@/lib/firebase/media-service';
+import { MediaFolder } from '@/types/media';
+import { Text } from '@/components/text';
+import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/solid';
+
+// Dynamic import für html2pdf to avoid SSR issues
+const loadHtml2Pdf = () => import('html2pdf.js');
+
+// Success/Error Alert Component
+function AlertMessage({ 
+  type, 
+  message, 
+  onClose 
+}: { 
+  type: 'success' | 'error';
+  message: string;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 5000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div className={`fixed top-4 right-4 z-50 max-w-md animate-slide-in-right`}>
+      <div className={`rounded-lg px-4 py-3 shadow-lg flex items-start gap-3 ${
+        type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+      }`}>
+        {type === 'success' ? (
+          <CheckCircleIcon className="h-5 w-5 text-green-400 shrink-0 mt-0.5" />
+        ) : (
+          <XCircleIcon className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
+        )}
+        <div className="flex-1">
+          <p className="text-sm font-medium">{message}</p>
+        </div>
+        <button
+          onClick={onClose}
+          className={`ml-4 shrink-0 rounded-md p-1.5 inline-flex hover:bg-opacity-20 ${
+            type === 'success' ? 'hover:bg-green-600' : 'hover:bg-red-600'
+          }`}
+        >
+          <span className="sr-only">Schließen</span>
+          <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+}
 
 interface CampaignContentComposerProps {
   userId: string;
@@ -17,8 +77,159 @@ interface CampaignContentComposerProps {
   mainContent: string;
   onMainContentChange: (content: string) => void;
   onFullContentChange: (fullContent: string) => void;
-  onBoilerplateSectionsChange?: (sections: BoilerplateSection[]) => void; // NEU
-  initialBoilerplateSections?: BoilerplateSection[]; // NEU
+  onBoilerplateSectionsChange?: (sections: BoilerplateSection[]) => void;
+  initialBoilerplateSections?: BoilerplateSection[];
+}
+
+// Folder Selector Dialog Component
+function FolderSelectorDialog({
+  isOpen,
+  onClose,
+  onFolderSelect,
+  userId,
+  clientId
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onFolderSelect: (folderId?: string) => void;
+  userId: string;
+  clientId?: string;
+}) {
+  const [folders, setFolders] = useState<MediaFolder[]>([]);
+  const [currentFolderId, setCurrentFolderId] = useState<string | undefined>(undefined);
+  const [breadcrumbs, setBreadcrumbs] = useState<Array<{ id?: string; name: string }>>([{ name: 'Mediathek' }]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadFolders();
+    }
+  }, [isOpen, currentFolderId]);
+
+  const loadFolders = async () => {
+    setLoading(true);
+    try {
+      const foldersData = await mediaService.getFolders(userId, currentFolderId);
+      
+      // Filter für Client-Ordner wenn clientId vorhanden
+      const filteredFolders = clientId 
+        ? foldersData.filter(f => f.clientId === clientId || !f.clientId)
+        : foldersData;
+      
+      setFolders(filteredFolders);
+      
+      // Update breadcrumbs
+      if (currentFolderId) {
+        const crumbs = await mediaService.getBreadcrumbs(currentFolderId);
+        setBreadcrumbs([
+          { name: 'Mediathek' },
+          ...crumbs.map(c => ({ id: c.id, name: c.name }))
+        ]);
+      } else {
+        setBreadcrumbs([{ name: 'Mediathek' }]);
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden der Ordner:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleNavigate = (folderId?: string) => {
+    setCurrentFolderId(folderId);
+  };
+
+  const handleConfirm = () => {
+    onFolderSelect(currentFolderId);
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <Dialog open={isOpen} onClose={onClose} size="2xl">
+      <DialogTitle className="px-6 py-4">PDF Speicherort auswählen</DialogTitle>
+      <DialogBody className="px-6">
+        {/* Breadcrumbs */}
+        <div className="flex items-center gap-2 mb-4 text-sm">
+          {breadcrumbs.map((crumb, index) => (
+            <div key={index} className="flex items-center gap-2">
+              {index > 0 && <ChevronRightIcon className="h-4 w-4 text-gray-400" />}
+              <button
+                onClick={() => handleNavigate(crumb.id)}
+                className="text-[#005fab] hover:text-[#004a8c]"
+              >
+                {crumb.name}
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto"></div>
+            <Text className="mt-4">Lade Ordner...</Text>
+          </div>
+        ) : (
+          <div className="min-h-[300px] max-h-[400px] overflow-y-auto">
+            {/* Current Folder Option */}
+            <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <HomeIcon className="h-5 w-5 text-blue-600" />
+                  <div>
+                    <p className="font-medium text-blue-900">
+                      {currentFolderId ? breadcrumbs[breadcrumbs.length - 1].name : 'Mediathek (Hauptordner)'}
+                    </p>
+                    <p className="text-sm text-blue-700">PDF hier speichern</p>
+                  </div>
+                </div>
+                <Button
+                  onClick={handleConfirm}
+                  className="bg-[#005fab] hover:bg-[#004a8c] text-white"
+                >
+                  Hier speichern
+                </Button>
+              </div>
+            </div>
+
+            {/* Subfolders */}
+            {folders.length > 0 ? (
+              <div className="grid grid-cols-1 gap-2">
+                {folders.map(folder => (
+                  <button
+                    key={folder.id}
+                    onClick={() => handleNavigate(folder.id)}
+                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 border text-left transition-colors"
+                  >
+                    <FolderIcon 
+                      className="h-5 w-5 shrink-0" 
+                      style={{ color: folder.color || '#6B7280' }}
+                    />
+                    <div className="flex-1">
+                      <p className="font-medium">{folder.name}</p>
+                      {folder.description && (
+                        <p className="text-sm text-gray-500">{folder.description}</p>
+                      )}
+                    </div>
+                    <ChevronRightIcon className="h-5 w-5 text-gray-400" />
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <FolderIcon className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                <p>Keine Unterordner vorhanden</p>
+              </div>
+            )}
+          </div>
+        )}
+      </DialogBody>
+      <DialogActions className="px-6 py-4">
+        <Button plain onClick={onClose}>Abbrechen</Button>
+      </DialogActions>
+    </Dialog>
+  );
 }
 
 export default function CampaignContentComposer({
@@ -36,6 +247,11 @@ export default function CampaignContentComposer({
   const [boilerplateSections, setBoilerplateSections] = useState<BoilerplateSection[]>(initialBoilerplateSections);
   const [processedContent, setProcessedContent] = useState('');
   const [showPreview, setShowPreview] = useState(false);
+  const [showFolderSelector, setShowFolderSelector] = useState(false);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [pdfDownloadUrl, setPdfDownloadUrl] = useState<string | null>(null);
+  const [alertMessage, setAlertMessage] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
 
   // Update parent when sections change
   const handleBoilerplateSectionsChange = (sections: BoilerplateSection[]) => {
@@ -75,8 +291,101 @@ export default function CampaignContentComposer({
     composeFullContent();
   }, [boilerplateSections, mainContent, title, clientName]);
 
+  // Generate PDF
+  const generatePdf = async (targetFolderId?: string) => {
+    if (!previewRef.current || !title) return;
+    
+    setGeneratingPdf(true);
+    try {
+      // Dynamically import html2pdf
+      const html2pdfModule = await loadHtml2Pdf();
+      const html2pdf = html2pdfModule.default;
+
+      // PDF Options mit besseren Margins
+      const opt = {
+        margin: [15, 15, 20, 15], // top, left, bottom, right - mehr Platz unten
+        filename: `Pressemitteilung_${title.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          letterRendering: true,
+          scrollY: 0,
+          windowHeight: previewRef.current.scrollHeight + 50 // Extra height to prevent cutoff
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: 'portrait' 
+        },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+
+      // Generate PDF Blob
+      const pdfBlob = await html2pdf()
+        .from(previewRef.current)
+        .set(opt)
+        .outputPdf('blob');
+
+      // Create File object
+      const pdfFile = new File([pdfBlob], opt.filename, { type: 'application/pdf' });
+
+      // Upload to Media Center
+      const uploadedAsset = await mediaService.uploadMedia(
+        pdfFile,
+        userId,
+        targetFolderId,
+        undefined // No progress callback needed
+      );
+
+      // Set clientId if available
+      if (clientId && uploadedAsset.id) {
+        await mediaService.updateAsset(uploadedAsset.id, { clientId });
+      }
+
+      setPdfDownloadUrl(uploadedAsset.downloadUrl);
+      
+      // Success message mit Catalyst Component
+      setAlertMessage({
+        type: 'success',
+        message: 'PDF wurde erfolgreich erstellt und im Mediacenter gespeichert!'
+      });
+      
+    } catch (error) {
+      console.error('Fehler beim PDF-Export:', error);
+      setAlertMessage({
+        type: 'error',
+        message: 'Fehler beim Erstellen des PDFs. Bitte versuchen Sie es erneut.'
+      });
+    } finally {
+      setGeneratingPdf(false);
+      setShowFolderSelector(false);
+    }
+  };
+
+  const handlePdfExport = () => {
+    if (!title) {
+      setAlertMessage({
+        type: 'error',
+        message: 'Bitte geben Sie einen Titel für die Pressemitteilung ein.'
+      });
+      return;
+    }
+    setShowFolderSelector(true);
+  };
+
   return (
-    <div className="space-y-6">
+    <>
+      {/* Alert Messages */}
+      {alertMessage && (
+        <AlertMessage
+          type={alertMessage.type}
+          message={alertMessage.message}
+          onClose={() => setAlertMessage(null)}
+        />
+      )}
+
+      <div className="space-y-6">
       {/* Title Input */}
       <Field>
         <Label>Titel der Pressemitteilung *</Label>
@@ -89,18 +398,7 @@ export default function CampaignContentComposer({
         />
       </Field>
 
-      {/* Boilerplate Sections */}
-      <div className="bg-gray-50 rounded-lg p-4">
-        <IntelligentBoilerplateSection
-          userId={userId}
-          clientId={clientId}
-          clientName={clientName}
-          onContentChange={handleBoilerplateSectionsChange}
-          initialSections={boilerplateSections}
-        />
-      </div>
-
-      {/* Main Content Editor */}
+      {/* Main Content Editor - JETZT VOR BOILERPLATE */}
       <Field>
         <Label>Hauptinhalt der Pressemitteilung *</Label>
         <div className="mt-2 border rounded-lg">
@@ -114,27 +412,76 @@ export default function CampaignContentComposer({
         </p>
       </Field>
 
+      {/* Boilerplate Sections - JETZT NACH HAUPTINHALT */}
+      <div className="bg-gray-50 rounded-lg p-4">
+        <IntelligentBoilerplateSection
+          userId={userId}
+          clientId={clientId}
+          clientName={clientName}
+          onContentChange={handleBoilerplateSectionsChange}
+          initialSections={boilerplateSections}
+        />
+      </div>
+
       {/* Preview Toggle */}
       <div className="border-t pt-4">
-        <button
-          type="button"
-          onClick={() => setShowPreview(!showPreview)}
-          className="text-sm font-medium text-indigo-600 hover:text-indigo-500 flex items-center gap-2"
-        >
-          <span>{showPreview ? '▼' : '▶'}</span>
-          Vorschau der vollständigen Pressemitteilung
-        </button>
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => setShowPreview(!showPreview)}
+            className="text-sm font-medium text-indigo-600 hover:text-indigo-500 flex items-center gap-2"
+          >
+            <span>{showPreview ? '▼' : '▶'}</span>
+            Vorschau der vollständigen Pressemitteilung
+          </button>
+          
+          {showPreview && (
+            <div className="flex items-center gap-3">
+              {pdfDownloadUrl && (
+                <a
+                  href={pdfDownloadUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-[#005fab] hover:text-[#004a8c] underline"
+                >
+                  PDF öffnen
+                </a>
+              )}
+              <Button
+                type="button"
+                onClick={handlePdfExport}
+                disabled={generatingPdf || !processedContent}
+                className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
+              >
+                <DocumentArrowDownIcon className="h-4 w-4 mr-1" />
+                {generatingPdf ? 'PDF wird erstellt...' : 'Als PDF exportieren'}
+              </Button>
+            </div>
+          )}
+        </div>
         
         {showPreview && (
           <div className="mt-4 p-6 bg-white border rounded-lg shadow-sm">
             <h3 className="text-lg font-semibold mb-4">Vorschau</h3>
             <div 
+              ref={previewRef}
               className="prose max-w-none"
+              style={{ paddingBottom: '20px' }} // Extra padding for PDF
               dangerouslySetInnerHTML={{ __html: processedContent || '<p class="text-gray-500">Noch kein Inhalt vorhanden</p>' }}
             />
           </div>
         )}
       </div>
+
+      {/* Folder Selector Dialog */}
+      <FolderSelectorDialog
+        isOpen={showFolderSelector}
+        onClose={() => setShowFolderSelector(false)}
+        onFolderSelect={generatePdf}
+        userId={userId}
+        clientId={clientId}
+      />
     </div>
+    </>
   );
 }

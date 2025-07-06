@@ -730,14 +730,14 @@ export default function EditPRCampaignPage() {
                   <div className="border-t pt-6 mt-6">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-base font-semibold">Pressemitteilung *</h3>
-                      <Button
-                        type="button"
-                        onClick={() => setShowAiModal(true)}
-                        className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white whitespace-nowrap"
-                      >
-                        <SparklesIcon />
-                        KI-Assistent
-                      </Button>
+<Button
+  type="button"
+  onClick={() => setShowAiModal(true)}
+  className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white whitespace-nowrap"
+>
+  <SparklesIcon className="h-4 w-4" />
+  KI-Assistent
+</Button>
                     </div>
                     
                     {/* NEU: Content Composer statt einzelner Felder */}

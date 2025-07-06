@@ -192,8 +192,12 @@ export default function IntelligentBoilerplateSection({
           Textbausteine
         </h3>
         <Button
+          type="button"
           plain
-          onClick={() => setShowSelector(true)}
+          onClick={(e: React.MouseEvent) => {
+            e.stopPropagation();
+            setShowSelector(true);
+          }}
           className="text-sm"
         >
           <PlusIcon className="h-4 w-4 mr-1" />
@@ -210,7 +214,11 @@ export default function IntelligentBoilerplateSection({
             Füge wiederverwendbare Textblöcke wie Unternehmensbeschreibungen oder Kontaktinfos hinzu
           </p>
           <Button
-            onClick={() => setShowSelector(true)}
+            type="button"
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation();
+              setShowSelector(true);
+            }}
             className="mt-4"
           >
             Ersten Baustein hinzufügen
@@ -258,7 +266,11 @@ export default function IntelligentBoilerplateSection({
 
                             {/* Expand/Collapse */}
                             <button
-                              onClick={() => handleToggleCollapse(section.id)}
+                              type="button"
+                              onClick={(e: React.MouseEvent) => {
+                                e.stopPropagation();
+                                handleToggleCollapse(section.id);
+                              }}
                               className="text-gray-500 hover:text-gray-700"
                             >
                               {section.isCollapsed ? 
@@ -294,7 +306,11 @@ export default function IntelligentBoilerplateSection({
                           {/* Actions */}
                           <div className="flex items-center gap-1">
                             <button
-                              onClick={() => handleToggleLock(section.id)}
+                              type="button"
+                              onClick={(e: React.MouseEvent) => {
+                                e.stopPropagation();
+                                handleToggleLock(section.id);
+                              }}
                               className="p-1.5 text-gray-400 hover:text-gray-600 rounded hover:bg-gray-100"
                               title={section.isLocked ? "Entsperren" : "Sperren"}
                             >
@@ -304,7 +320,11 @@ export default function IntelligentBoilerplateSection({
                               }
                             </button>
                             <button
-                              onClick={() => handleRemoveSection(section.id)}
+                              type="button"
+                              onClick={(e: React.MouseEvent) => {
+                                e.stopPropagation();
+                                handleRemoveSection(section.id);
+                              }}
                               className="p-1.5 text-gray-400 hover:text-red-600 rounded hover:bg-red-50"
                               title="Entfernen"
                             >
@@ -330,8 +350,10 @@ export default function IntelligentBoilerplateSection({
       {sections.length > 0 && (
         <div className="flex gap-2 justify-center pt-2">
           <Button
+            type="button"
             plain
-            onClick={() => {
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation();
               setSelectedPosition('header');
               setShowSelector(true);
             }}
@@ -340,8 +362,10 @@ export default function IntelligentBoilerplateSection({
             Kopfbereich
           </Button>
           <Button
+            type="button"
             plain
-            onClick={() => {
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation();
               setSelectedPosition('custom');
               setShowSelector(true);
             }}
@@ -350,8 +374,10 @@ export default function IntelligentBoilerplateSection({
             Hauptinhalt
           </Button>
           <Button
+            type="button"
             plain
-            onClick={() => {
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation();
               setSelectedPosition('footer');
               setShowSelector(true);
             }}
@@ -455,7 +481,11 @@ function BoilerplateSelectorModal({
               {(['header', 'custom', 'footer'] as const).map(pos => (
                 <button
                   key={pos}
-                  onClick={() => setPosition(pos)}
+                  type="button"
+                  onClick={(e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    setPosition(pos);
+                  }}
                   className={clsx(
                     "px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                     position === pos 
@@ -485,7 +515,10 @@ function BoilerplateSelectorModal({
                 <div
                   key={boilerplate.id}
                   className="border rounded-lg p-4 hover:border-indigo-300 hover:bg-indigo-50 cursor-pointer transition-colors"
-                  onClick={() => onSelect(boilerplate, position)}
+                  onClick={(e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    onSelect(boilerplate, position);
+                  }}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -512,7 +545,7 @@ function BoilerplateSelectorModal({
 
         {/* Modal Footer */}
         <div className="p-6 border-t flex justify-end">
-          <Button plain onClick={onClose}>
+          <Button type="button" plain onClick={onClose}>
             Abbrechen
           </Button>
         </div>

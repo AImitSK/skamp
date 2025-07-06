@@ -35,7 +35,8 @@ import { prService } from "@/lib/firebase/pr-service";
 import { mediaService } from "@/lib/firebase/media-service";
 import { companiesService } from "@/lib/firebase/crm-service";
 import { DistributionList } from "@/types/lists";
-import { CampaignAssetAttachment, CampaignBoilerplateSection } from "@/types/pr"; // WICHTIG: Import hinzugefügt
+import { CampaignAssetAttachment } from "@/types/pr";
+import { BoilerplateSection } from "@/components/pr/campaign/IntelligentBoilerplateSection"; // Korrekter Import
 import { MediaAsset, MediaFolder } from "@/types/media";
 import { Company } from "@/types/crm";
 import { Input } from "@/components/input";
@@ -328,7 +329,7 @@ export default function NewPRCampaignPage() {
   const [campaignTitle, setCampaignTitle] = useState('');
   const [mainContent, setMainContent] = useState('');
   const [pressReleaseContent, setPressReleaseContent] = useState(''); // Finaler HTML Content
-  const [boilerplateSections, setBoilerplateSections] = useState<CampaignBoilerplateSection[]>([]); // NEU
+  const [boilerplateSections, setBoilerplateSections] = useState<BoilerplateSection[]>([]); // Korrigierter Typ
   const [attachedAssets, setAttachedAssets] = useState<CampaignAssetAttachment[]>([]);
   const [approvalRequired, setApprovalRequired] = useState(false);
   
@@ -553,7 +554,7 @@ export default function NewPRCampaignPage() {
                       onClick={() => setShowAiModal(true)}
                       className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white whitespace-nowrap"
                     >
-                      <SparklesIcon />
+                      <SparklesIcon className="h-4 w-4" />
                       KI-Assistent
                     </Button>
                   </div>
@@ -719,7 +720,7 @@ export default function NewPRCampaignPage() {
           >
             {saving ? 'Speichert...' : approvalRequired ? (
               <>
-                <PaperAirplaneIcon />
+                <PaperAirplaneIcon className="h-4 w-4" />
                 Freigabe anfordern
               </>
             ) : 'Als Entwurf speichern'}

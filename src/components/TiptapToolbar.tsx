@@ -2,7 +2,7 @@
 "use client";
 
 import { type Editor } from '@tiptap/react';
-import clsx from 'clsx'; // Dieser Import sollte jetzt funktionieren
+import clsx from 'clsx';
 
 type ToolbarProps = {
   editor: Editor | null;
@@ -22,11 +22,23 @@ export const TiptapToolbar = ({ editor }: ToolbarProps) => {
   ];
 
   return (
-    <div className="flex flex-wrap items-center gap-1 border-b border-zinc-300 p-2 bg-zinc-50">
+    <div 
+      className="flex flex-wrap items-center gap-1 border-b border-zinc-300 p-2 bg-zinc-50"
+      onMouseDown={(e) => e.preventDefault()} // Verhindert Focus-Verlust
+    >
       {buttons.map(btn => (
         <button
           key={btn.label}
-          onClick={() => (editor.chain().focus() as any)[btn.command]().run()}
+          type="button" // Wichtig: Verhindert Form-Submit
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation(); // Verhindert Event Bubbling
+            (editor.chain().focus() as any)[btn.command]().run();
+          }}
+          onMouseDown={(e) => {
+            e.preventDefault(); // Verhindert Focus-Verlust beim Klick
+            e.stopPropagation();
+          }}
           disabled={!(editor.can() as any)[btn.command]()}
           className={clsx(
             'p-2 w-9 h-9 flex items-center justify-center rounded-md text-sm font-semibold transition-colors',
