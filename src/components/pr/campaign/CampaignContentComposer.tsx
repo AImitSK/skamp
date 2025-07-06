@@ -20,6 +20,7 @@ import { mediaService } from '@/lib/firebase/media-service';
 import { MediaFolder } from '@/types/media';
 import { Text } from '@/components/text';
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/solid';
+import { InfoTooltip } from '@/components/InfoTooltip';
 
 // Dynamic import für html2pdf to avoid SSR issues
 const loadHtml2Pdf = () => import('html2pdf.js');
@@ -388,7 +389,13 @@ export default function CampaignContentComposer({
       <div className="space-y-6">
       {/* Title Input */}
       <Field>
-        <Label>Titel der Pressemitteilung *</Label>
+        <Label className="flex items-center">
+          Titel der Pressemitteilung
+          <InfoTooltip 
+            content="Pflichtfeld: Der Titel sollte prägnant und aussagekräftig sein. Er wird als Überschrift in der Pressemitteilung und im E-Mail-Betreff verwendet."
+            className="ml-1"
+          />
+        </Label>
         <Input
           type="text"
           value={title}
@@ -400,7 +407,13 @@ export default function CampaignContentComposer({
 
       {/* Main Content Editor - JETZT VOR BOILERPLATE */}
       <Field>
-        <Label>Hauptinhalt der Pressemitteilung *</Label>
+        <Label className="flex items-center">
+          Hauptinhalt der Pressemitteilung
+          <InfoTooltip 
+            content="Pflichtfeld: Verfassen Sie hier den individuellen Inhalt Ihrer Pressemitteilung. Nutzen Sie die Formatierungsoptionen für professionelle Gestaltung."
+            className="ml-1"
+          />
+        </Label>
         <div className="mt-2 border rounded-lg">
           <RichTextEditor
             content={mainContent}
@@ -465,7 +478,7 @@ export default function CampaignContentComposer({
             <h3 className="text-lg font-semibold mb-4">Vorschau</h3>
             <div 
               ref={previewRef}
-              className="prose max-w-none"
+              className="prose prose-sm sm:prose-base lg:prose-lg max-w-none [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mt-6 [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mt-5 [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:mt-4 [&_h3]:mb-2"
               style={{ paddingBottom: '20px' }} // Extra padding for PDF
               dangerouslySetInnerHTML={{ __html: processedContent || '<p class="text-gray-500">Noch kein Inhalt vorhanden</p>' }}
             />

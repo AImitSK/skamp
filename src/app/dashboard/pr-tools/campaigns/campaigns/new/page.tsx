@@ -40,6 +40,7 @@ import { BoilerplateSection } from "@/components/pr/campaign/IntelligentBoilerpl
 import { MediaAsset, MediaFolder } from "@/types/media";
 import { Company } from "@/types/crm";
 import { Input } from "@/components/input";
+import { InfoTooltip } from "@/components/InfoTooltip";
 
 // Dynamic import für AI Modal
 import dynamic from 'next/dynamic';
@@ -332,6 +333,7 @@ export default function NewPRCampaignPage() {
   const [boilerplateSections, setBoilerplateSections] = useState<BoilerplateSection[]>([]); // Korrigierter Typ
   const [attachedAssets, setAttachedAssets] = useState<CampaignAssetAttachment[]>([]);
   const [approvalRequired, setApprovalRequired] = useState(false);
+  const [listSearchTerm, setListSearchTerm] = useState(''); // NEU: Suchbegriff für Listen
   
   // UI State
   const [loading, setLoading] = useState(true);
@@ -377,6 +379,17 @@ export default function NewPRCampaignPage() {
     selectedLists.reduce((sum, list) => sum + list.contactCount, 0),
     [selectedLists]
   );
+
+  // Gefilterte Listen basierend auf Suchbegriff
+  const filteredLists = useMemo(() => {
+    if (!listSearchTerm) return availableLists;
+    
+    const searchLower = listSearchTerm.toLowerCase();
+    return availableLists.filter(list => 
+      list.name.toLowerCase().includes(searchLower) ||
+      (list.description && list.description.toLowerCase().includes(searchLower))
+    );
+  }, [availableLists, listSearchTerm]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -494,7 +507,13 @@ export default function NewPRCampaignPage() {
               <FieldGroup>
                 {/* Kunde */}
                 <Field>
-                  <Label>Kunde *</Label>
+                  <Label className="flex items-center">
+                    Kunde
+                    <InfoTooltip 
+                      content="Pflichtfeld: Wählen Sie den Kunden aus, für den diese PR-Kampagne erstellt wird. Die Kampagne wird diesem Kunden zugeordnet."
+                      className="ml-1"
+                    />
+                  </Label>
                   <Select
                     value={selectedCompanyId}
                     onChange={(e) => setSelectedCompanyId(e.target.value)}
@@ -511,32 +530,73 @@ export default function NewPRCampaignPage() {
 
                 {/* Verteiler */}
                 <Field>
-                  <Label>Verteiler *</Label>
+                  <Label className="flex items-center">
+                    Verteiler
+                    <InfoTooltip 
+                      content="Pflichtfeld: Wählen Sie mindestens eine Verteilerliste aus. Die Pressemitteilung wird an alle Kontakte in den ausgewählten Listen gesendet."
+                      className="ml-1"
+                    />
+                  </Label>
+                  
+                  {/* Suchfeld für Listen */}
+                  <div className="mb-3">
+                    <div className="relative">
+                      <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        type="text"
+                        value={listSearchTerm}
+                        onChange={(e) => setListSearchTerm(e.target.value)}
+                        placeholder="Listen durchsuchen..."
+                        className="pl-9"
+                      />
+                    </div>
+                    {listSearchTerm && (
+                      <p className="mt-1 text-sm text-gray-500">
+                        {filteredLists.length} von {availableLists.length} Listen gefunden
+                      </p>
+                    )}
+                  </div>
+
                   <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3">
-                    {availableLists.map((list) => (
-                      <label key={list.id} className="flex items-center">
-                        <Checkbox
-                          checked={selectedListIds.includes(list.id!)}
-                          onChange={(checked) => {
-                            if (checked) {
-                              setSelectedListIds([...selectedListIds, list.id!]);
-                            } else {
-                              setSelectedListIds(selectedListIds.filter(id => id !== list.id));
-                            }
-                          }}
-                          className="mr-3"
-                        />
-                        <div className="flex-1">
-                          <span className="font-medium">{list.name}</span>
-                          <span className="text-sm text-gray-500 ml-2">
-                            ({list.contactCount} Kontakte)
-                          </span>
-                          {list.type === 'dynamic' && (
-                            <Badge color="blue" className="ml-2 text-xs">Dynamisch</Badge>
-                          )}
-                        </div>
-                      </label>
-                    ))}
+                    {filteredLists.length > 0 ? (
+                      filteredLists.map((list) => (
+                        <label key={list.id} className="flex items-center hover:bg-gray-50 rounded p-1">
+                          <Checkbox
+                            checked={selectedListIds.includes(list.id!)}
+                            onChange={(checked) => {
+                              if (checked) {
+                                setSelectedListIds([...selectedListIds, list.id!]);
+                              } else {
+                                setSelectedListIds(selectedListIds.filter(id => id !== list.id));
+                              }
+                            }}
+                            className="mr-3"
+                          />
+                          <div className="flex-1">
+                            <span className="font-medium">{list.name}</span>
+                            <span className="text-sm text-gray-500 ml-2">
+                              ({list.contactCount} Kontakte)
+                            </span>
+                            {list.type === 'dynamic' && (
+                              <Badge color="blue" className="ml-2 text-xs">Dynamisch</Badge>
+                            )}
+                            {list.description && (
+                              <p className="text-xs text-gray-500 mt-0.5">{list.description}</p>
+                            )}
+                          </div>
+                        </label>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        <UsersIcon className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                        <p className="text-sm">
+                          {listSearchTerm 
+                            ? 'Keine Listen gefunden' 
+                            : 'Noch keine Verteiler erstellt'
+                          }
+                        </p>
+                      </div>
+                    )}
                   </div>
                   {selectedLists.length > 0 && (
                     <p className="mt-2 text-sm text-gray-500">
@@ -548,7 +608,13 @@ export default function NewPRCampaignPage() {
                 {/* Inhalt */}
                 <div className="border-t pt-6 mt-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-base font-semibold">Pressemitteilung *</h3>
+                    <h3 className="text-base font-semibold flex items-center">
+                      Pressemitteilung
+                      <InfoTooltip 
+                        content="Pflichtfeld: Erstellen Sie hier den Inhalt Ihrer Pressemitteilung. Sie müssen einen Titel und Hauptinhalt eingeben."
+                        className="ml-1"
+                      />
+                    </h3>
                     <Button
                       type="button"
                       onClick={() => setShowAiModal(true)}
