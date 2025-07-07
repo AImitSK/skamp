@@ -746,6 +746,7 @@ export default function NewPRCampaignPage() {
 
                   {/* Content Composer */}
                   <CampaignContentComposer
+                    key={`composer-${boilerplateSections.length}`}
                     userId={user!.uid}
                     clientId={selectedCompanyId}
                     clientName={selectedCompany?.name}

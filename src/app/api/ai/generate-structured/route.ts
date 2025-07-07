@@ -132,9 +132,12 @@ ZIELGRUPPE: MEDIEN/JOURNALISTEN
   }
 };
 
-// Parsing-Funktion für strukturierte Ausgabe
+// Verbesserte Parsing-Funktion für strukturierte Ausgabe
 function parseStructuredOutput(text: string): StructuredPressRelease {
-  const lines = text.split('\n').filter(line => line.trim() !== '');
+  console.log('=== PARSING START ===');
+  console.log('Raw text:', text.substring(0, 500) + '...');
+  
+  const lines = text.split('\n');
   
   let headline = '';
   let leadParagraph = '';
@@ -142,44 +145,57 @@ function parseStructuredOutput(text: string): StructuredPressRelease {
   let quote = { text: '', person: '', role: '', company: '' };
   let boilerplate = '';
   
-  let inBody = false;
+  let currentSection = 'searching'; // searching, lead, body, quote, boilerplate
   let bodyCount = 0;
-  let foundHeadline = false;
   
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     
     if (!line) continue;
     
-    // Erste nicht-leere Zeile = Headline
-    if (!foundHeadline && !headline) {
+    console.log(`Line ${i}: [${currentSection}] "${line.substring(0, 50)}..."`);
+    
+    // 1. Headline - erste nicht-leere Zeile
+    if (!headline && currentSection === 'searching') {
       headline = line.replace(/^\*\*/, '').replace(/\*\*$/, '');
-      foundHeadline = true;
+      currentSection = 'lead';
+      console.log('Found headline:', headline);
       continue;
     }
     
-    // Lead-Absatz - flexiblere Erkennung
-    if (!leadParagraph && foundHeadline && !line.startsWith('"') && !line.startsWith('*Über')) {
-      // Prüfe ob es ein Lead-Absatz sein könnte (mit oder ohne **)
+    // 2. Lead-Absatz - verschiedene Formate erkennen
+    if (!leadParagraph && currentSection === 'lead') {
+      // Format 1: **Text in Sternen**
       if (line.startsWith('**') && line.endsWith('**')) {
-        leadParagraph = line.replace(/^\*\*/, '').replace(/\*\*$/, '');
-      } else if (!inBody && line.length > 50 && line.length < 300) {
-        // Wenn kein ** vorhanden, aber es sieht nach einem Lead aus
-        leadParagraph = line;
-      }
-      
-      if (leadParagraph) {
-        inBody = true;
+        leadParagraph = line.substring(2, line.length - 2);
+        currentSection = 'body';
+        console.log('Found lead (format 1):', leadParagraph);
         continue;
       }
+      
+      // Format 2: Erster Absatz nach Headline (wenn er W-Fragen beantwortet)
+      const hasWQuestions = 
+        (line.includes('Wer') || line.includes('Was') || line.includes('Wann') || 
+         line.includes('Wo') || line.includes('Warum')) ||
+        (line.length > 100 && line.length < 400); // Typische Lead-Länge
+      
+      if (hasWQuestions) {
+        leadParagraph = line;
+        currentSection = 'body';
+        console.log('Found lead (format 2):', leadParagraph);
+        continue;
+      }
+      
+      // Wenn keine typischen Lead-Merkmale, gehe zu Body
+      currentSection = 'body';
     }
     
-    // Zitat parsen
+    // 3. Zitat erkennen
     if (line.startsWith('"')) {
-      const fullQuote = line;
+      currentSection = 'quote';
       
-      // Versuche verschiedene Zitat-Formate zu parsen
-      const quoteMatch = fullQuote.match(/"([^"]+)"[,\s]*sagt\s+([^,]+?)(?:,\s*([^,]+?))?(?:\s+bei\s+([^.]+))?\.?$/);
+      // Verschiedene Zitat-Formate parsen
+      const quoteMatch = line.match(/"([^"]+)"[,\s]*sagt\s+([^,]+?)(?:,\s*([^,]+?))?(?:\s+bei\s+([^.]+))?\.?$/);
       if (quoteMatch) {
         quote = {
           text: quoteMatch[1],
@@ -187,46 +203,82 @@ function parseStructuredOutput(text: string): StructuredPressRelease {
           role: quoteMatch[3] ? quoteMatch[3].trim() : 'Sprecher',
           company: quoteMatch[4] ? quoteMatch[4].trim() : ''
         };
+        console.log('Found quote:', quote);
       } else {
-        // Fallback für einfache Zitate
+        // Einfacheres Format nur mit Zitat
         const simpleMatch = line.match(/"([^"]+)"/);
         if (simpleMatch) {
           quote.text = simpleMatch[1];
+          // Versuche Person aus nachfolgenden Zeilen zu extrahieren
+          if (i + 1 < lines.length) {
+            const nextLine = lines[i + 1].trim();
+            const personMatch = nextLine.match(/[-–—]\s*(.+)/);
+            if (personMatch) {
+              const parts = personMatch[1].split(',').map(p => p.trim());
+              quote.person = parts[0] || 'Sprecher';
+              quote.role = parts[1] || 'Geschäftsführer';
+              quote.company = parts[2] || '';
+              i++; // Skip next line
+            }
+          }
         }
       }
-      inBody = false;
+      currentSection = 'boilerplate';
       continue;
     }
     
-    // Boilerplate (mit *)
-    if (line.startsWith('*Über ') || line.startsWith('*About ')) {
+    // 4. Boilerplate erkennen
+    if (line.startsWith('*Über ') || line.startsWith('*About ') || 
+        line.startsWith('Über ') && currentSection === 'boilerplate') {
       boilerplate = line.replace(/^\*/, '').replace(/\*$/, '');
+      console.log('Found boilerplate:', boilerplate);
       continue;
     }
     
-    // Body-Absätze
-    if (inBody && bodyCount < 3 && !line.startsWith('"') && !line.startsWith('*')) {
-      // Wenn noch kein Lead gefunden wurde und dies der erste Body ist
-      if (!leadParagraph && bodyCount === 0) {
-        leadParagraph = line;
-      } else {
-        bodyParagraphs.push(line);
-        bodyCount++;
+    // 5. Body-Absätze sammeln
+    if (currentSection === 'body' && bodyCount < 3) {
+      // Skip wenn es wie ein Zitat oder Boilerplate aussieht
+      if (line.startsWith('"') || line.startsWith('*')) {
+        continue;
       }
+      
+      bodyParagraphs.push(line);
+      bodyCount++;
+      console.log(`Added body paragraph ${bodyCount}:`, line.substring(0, 50) + '...');
     }
   }
   
-  // Validierung und Defaults
-  if (!headline) headline = 'Pressemitteilung';
+  // Nachbearbeitung und Validierung
+  
+  // Wenn kein Lead gefunden wurde, nimm ersten Body-Absatz
   if (!leadParagraph && bodyParagraphs.length > 0) {
-    // Nimm den ersten Body-Absatz als Lead
     leadParagraph = bodyParagraphs[0];
     bodyParagraphs = bodyParagraphs.slice(1);
+    console.log('Using first body as lead:', leadParagraph);
   }
+  
+  // Defaults für fehlende Elemente
+  if (!headline) headline = 'Pressemitteilung';
   if (!leadParagraph) leadParagraph = 'Lead-Absatz fehlt';
   if (bodyParagraphs.length === 0) bodyParagraphs = ['Haupttext der Pressemitteilung'];
-  if (!quote.text) quote = { text: 'Wir freuen uns über diese Entwicklung', person: 'Sprecher', role: 'Geschäftsführer', company: 'Unternehmen' };
-  if (!boilerplate) boilerplate = 'Über das Unternehmen: [Platzhalter für Unternehmensbeschreibung]';
+  if (!quote.text) {
+    quote = { 
+      text: 'Wir freuen uns über diese Entwicklung', 
+      person: 'Sprecher', 
+      role: 'Geschäftsführer', 
+      company: 'Unternehmen' 
+    };
+  }
+  if (!boilerplate) {
+    boilerplate = 'Über das Unternehmen: [Platzhalter für Unternehmensbeschreibung]';
+  }
+  
+  console.log('=== PARSING RESULT ===');
+  console.log('Headline:', headline);
+  console.log('Lead length:', leadParagraph.length);
+  console.log('Body paragraphs:', bodyParagraphs.length);
+  console.log('Has quote:', !!quote.text);
+  console.log('=== PARSING END ===');
   
   return {
     headline,
