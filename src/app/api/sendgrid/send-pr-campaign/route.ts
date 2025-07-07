@@ -29,6 +29,7 @@ interface SendPRCampaignRequest {
     phone?: string;
     email?: string;
   };
+  mediaShareUrl?: string; // NEU: Optional media share URL
 }
 
 export async function POST(request: NextRequest) {
@@ -53,8 +54,8 @@ export async function POST(request: NextRequest) {
     for (const recipient of data.recipients) {
       try {
         // HTML E-Mail aufbauen
-        const htmlContent = buildPREmailHtml(data.campaignEmail, data.senderInfo, recipient);
-        const textContent = buildPREmailText(data.campaignEmail, data.senderInfo, recipient);
+        const htmlContent = buildPREmailHtml(data.campaignEmail, data.senderInfo, recipient, data.mediaShareUrl);
+        const textContent = buildPREmailText(data.campaignEmail, data.senderInfo, recipient, data.mediaShareUrl);
         const personalizedSubject = replaceVariables(data.campaignEmail.subject, recipient, data.senderInfo);
 
         const msg = {
@@ -123,8 +124,18 @@ export async function POST(request: NextRequest) {
 function buildPREmailHtml(
   email: SendPRCampaignRequest['campaignEmail'], 
   sender: SendPRCampaignRequest['senderInfo'],
-  recipient: SendPRCampaignRequest['recipients'][0]
+  recipient: SendPRCampaignRequest['recipients'][0],
+  mediaShareUrl?: string
 ): string {
+  // NEU: Media Button HTML
+  const mediaButtonHtml = mediaShareUrl ? `
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="${mediaShareUrl}" 
+                   style="display: inline-block; padding: 12px 30px; background-color: #667eea; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                    📎 Medien ansehen
+                </a>
+            </div>` : '';
+
   return `
 <!DOCTYPE html>
 <html>
@@ -221,6 +232,8 @@ function buildPREmailHtml(
                 ${replaceVariables(email.pressReleaseHtml, recipient, sender)}
             </div>
             
+            ${mediaButtonHtml}
+            
             <div class="closing">
                 ${replaceVariables(email.closing, recipient, sender)}
             </div>
@@ -241,8 +254,11 @@ function buildPREmailHtml(
 function buildPREmailText(
   email: SendPRCampaignRequest['campaignEmail'], 
   sender: SendPRCampaignRequest['senderInfo'],
-  recipient: SendPRCampaignRequest['recipients'][0]
+  recipient: SendPRCampaignRequest['recipients'][0],
+  mediaShareUrl?: string
 ): string {
+  const mediaText = mediaShareUrl ? `\n\n📎 Medien ansehen: ${mediaShareUrl}\n` : '';
+  
   return `
 ${replaceVariables(email.greeting, recipient, sender)}
 
@@ -251,7 +267,7 @@ ${replaceVariables(email.introduction, recipient, sender)}
 --- PRESSEMITTEILUNG ---
 ${stripHtml(replaceVariables(email.pressReleaseHtml, recipient, sender))}
 --- ENDE PRESSEMITTEILUNG ---
-
+${mediaText}
 ${replaceVariables(email.closing, recipient, sender)}
 
 ${replaceVariables(email.signature, recipient, sender)}

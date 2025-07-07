@@ -1,12 +1,14 @@
-// src/app/freigabe/[shareId]/page.tsx - ERWEITERT mit Medien-Anzeige
+// src/app/freigabe/[shareId]/page.tsx - Mit Branding-Integration
 "use client";
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { prService } from "@/lib/firebase/pr-service";
 import { mediaService } from "@/lib/firebase/media-service";
+import { brandingService } from "@/lib/firebase/branding-service";
 import { PRCampaign, CampaignAssetAttachment } from "@/types/pr";
 import { MediaAsset, MediaFolder } from "@/types/media";
+import { BrandingSettings } from "@/types/branding";
 import { 
   CheckCircleIcon,
   ExclamationCircleIcon,
@@ -24,7 +26,11 @@ import {
   DocumentIcon,
   FilmIcon,
   ArrowDownTrayIcon,
-  EyeIcon
+  EyeIcon,
+  PhoneIcon,
+  EnvelopeIcon,
+  GlobeAltIcon,
+  MapPinIcon
 } from "@heroicons/react/24/outline";
 import { Button } from "@/components/button";
 import { Textarea } from "@/components/textarea";
@@ -246,6 +252,7 @@ export default function ApprovalPage() {
   const shareId = params.shareId as string;
   
   const [campaign, setCampaign] = useState<PRCampaign | null>(null);
+  const [brandingSettings, setBrandingSettings] = useState<BrandingSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
@@ -278,6 +285,17 @@ export default function ApprovalPage() {
       }
 
       setCampaign(campaignData);
+
+      // Lade Branding-Einstellungen
+      if (campaignData.userId) {
+        try {
+          const branding = await brandingService.getBrandingSettings(campaignData.userId);
+          setBrandingSettings(branding);
+        } catch (brandingError) {
+          console.error('Fehler beim Laden der Branding-Einstellungen:', brandingError);
+          // Kein kritischer Fehler - fahre ohne Branding fort
+        }
+      }
 
     } catch (error) {
       console.error('Fehler beim Laden der Kampagne:', error);
@@ -395,7 +413,7 @@ export default function ApprovalPage() {
   const isApproved = currentStatus === 'approved';
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -434,188 +452,269 @@ export default function ApprovalPage() {
               </div>
             </div>
             
+            {/* Logo oder Fallback */}
             <div className="text-right">
-              <div className="text-xs text-gray-400 mb-1">Freigabe-System</div>
-              <div className="text-sm font-medium text-[#005fab]">SKAMP</div>
+              {brandingSettings?.logoUrl ? (
+                <img 
+                  src={brandingSettings.logoUrl} 
+                  alt={brandingSettings.companyName || 'Logo'} 
+                  className="h-12 w-auto object-contain"
+                />
+              ) : (
+                <>
+                  <div className="text-xs text-gray-400 mb-1">Freigabe-System</div>
+                  <div className="text-sm font-medium text-[#005fab]">SKAMP</div>
+                </>
+              )}
             </div>
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Success Message */}
-        {actionCompleted && (
-          <div className={clsx(
-            "mb-6 p-4 rounded-lg flex items-start gap-3",
-            isApproved 
-              ? "bg-green-50 border border-green-200" 
-              : "bg-orange-50 border border-orange-200"
-          )}>
-            {isApproved ? (
-              <>
-                <CheckCircleIcon className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-medium text-green-900">Freigabe erfolgreich erteilt</p>
-                  <p className="text-sm text-green-700 mt-1">
-                    Die Pressemitteilung wurde freigegeben und kann nun versendet werden.
-                  </p>
-                </div>
-              </>
-            ) : (
-              <>
-                <ExclamationCircleIcon className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-medium text-orange-900">Änderungen angefordert</p>
-                  <p className="text-sm text-orange-700 mt-1">
-                    Ihr Feedback wurde übermittelt. Die Agentur wird die gewünschten Änderungen vornehmen.
-                  </p>
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
-        {/* Feedback History */}
-        {campaign.approvalData?.feedbackHistory && campaign.approvalData.feedbackHistory.length > 0 && (
-          <div className="mb-6">
-            <h3 className="text-sm font-medium text-gray-900 mb-3 flex items-center gap-2">
-              <ChatBubbleLeftRightIcon className="h-4 w-4" />
-              Bisheriges Feedback
-            </h3>
-            <div className="space-y-3">
-              {campaign.approvalData.feedbackHistory.map((feedback, index) => (
-                <div key={index} className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-orange-900">{feedback.author}</span>
-                    <span className="text-xs text-orange-600">{formatDate(feedback.requestedAt)}</span>
+      <div className="flex-1">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Success Message */}
+          {actionCompleted && (
+            <div className={clsx(
+              "mb-6 p-4 rounded-lg flex items-start gap-3",
+              isApproved 
+                ? "bg-green-50 border border-green-200" 
+                : "bg-orange-50 border border-orange-200"
+            )}>
+              {isApproved ? (
+                <>
+                  <CheckCircleIcon className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium text-green-900">Freigabe erfolgreich erteilt</p>
+                    <p className="text-sm text-green-700 mt-1">
+                      Die Pressemitteilung wurde freigegeben und kann nun versendet werden.
+                    </p>
                   </div>
-                  <p className="text-sm text-orange-800">{feedback.comment}</p>
-                </div>
-              ))}
+                </>
+              ) : (
+                <>
+                  <ExclamationCircleIcon className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium text-orange-900">Änderungen angefordert</p>
+                    <p className="text-sm text-orange-700 mt-1">
+                      Ihr Feedback wurde übermittelt. Die Agentur wird die gewünschten Änderungen vornehmen.
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Feedback History */}
+          {campaign.approvalData?.feedbackHistory && campaign.approvalData.feedbackHistory.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-sm font-medium text-gray-900 mb-3 flex items-center gap-2">
+                <ChatBubbleLeftRightIcon className="h-4 w-4" />
+                Bisheriges Feedback
+              </h3>
+              <div className="space-y-3">
+                {campaign.approvalData.feedbackHistory.map((feedback, index) => (
+                  <div key={index} className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-orange-900">{feedback.author}</span>
+                      <span className="text-xs text-orange-600">{formatDate(feedback.requestedAt)}</span>
+                    </div>
+                    <p className="text-sm text-orange-800">{feedback.comment}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* PR Content */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+            <div className="border-b border-gray-200 px-6 py-4">
+              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <DocumentTextIcon className="h-5 w-5 text-gray-400" />
+                Inhalt der Pressemitteilung
+              </h2>
+            </div>
+            <div className="px-6 py-6">
+              <div 
+                className="prose prose-gray max-w-none"
+                dangerouslySetInnerHTML={{ __html: campaign.contentHtml }}
+              />
             </div>
           </div>
-        )}
 
-        {/* PR Content */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-          <div className="border-b border-gray-200 px-6 py-4">
-            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <DocumentTextIcon className="h-5 w-5 text-gray-400" />
-              Inhalt der Pressemitteilung
-            </h2>
-          </div>
-          <div className="px-6 py-6">
-            <div 
-              className="prose prose-gray max-w-none"
-              dangerouslySetInnerHTML={{ __html: campaign.contentHtml }}
+          {/* NEU: Media Gallery */}
+          {campaign.attachedAssets && (
+            <MediaGallery 
+              attachments={campaign.attachedAssets} 
+              loading={loading}
             />
-          </div>
-        </div>
+          )}
 
-        {/* NEU: Media Gallery */}
-        {campaign.attachedAssets && (
-          <MediaGallery 
-            attachments={campaign.attachedAssets} 
-            loading={loading}
-          />
-        )}
+          {/* Actions */}
+          {!isApproved && !actionCompleted && (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Ihre Aktion</h3>
+              
+              {showFeedbackForm ? (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Welche Änderungen wünschen Sie?
+                    </label>
+                    <Textarea
+                      value={feedbackText}
+                      onChange={(e) => setFeedbackText(e.target.value)}
+                      rows={4}
+                      placeholder="Bitte beschreiben Sie die gewünschten Änderungen..."
+                      className="w-full"
+                      autoFocus
+                    />
+                  </div>
+                  
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={handleRequestChanges}
+                      disabled={!feedbackText.trim() || submitting}
+                      color="indigo"
+                      className="flex-1"
+                    >
+                      {submitting ? 'Wird gesendet...' : 'Änderungen senden'}
+                    </Button>
+                    <Button
+                      plain
+                      onClick={() => {
+                        setShowFeedbackForm(false);
+                        setFeedbackText('');
+                      }}
+                      disabled={submitting}
+                    >
+                      Abbrechen
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-gray-600">
+                    Bitte prüfen Sie die Pressemitteilung {campaign.attachedAssets && campaign.attachedAssets.length > 0 ? 'und die angehängten Medien ' : ''}sorgfältig. 
+                    Sie können entweder die Freigabe erteilen oder Änderungen anfordern.
+                  </p>
+                  
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Button
+                      onClick={handleApprove}
+                      color="indigo"
+                      className="flex-1 bg-green-600 hover:bg-green-500"
+                      disabled={submitting}
+                    >
+                      <CheckIcon className="h-5 w-5 mr-2" />
+                      {submitting ? 'Wird verarbeitet...' : 'Freigabe erteilen'}
+                    </Button>
+                    <Button
+                      onClick={() => setShowFeedbackForm(true)}
+                      plain
+                      className="flex-1"
+                      disabled={submitting}
+                    >
+                      <PencilSquareIcon className="h-5 w-5 mr-2" />
+                      Änderungen anfordern
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
-        {/* Actions */}
-        {!isApproved && !actionCompleted && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Ihre Aktion</h3>
-            
-            {showFeedbackForm ? (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Welche Änderungen wünschen Sie?
-                  </label>
-                  <Textarea
-                    value={feedbackText}
-                    onChange={(e) => setFeedbackText(e.target.value)}
-                    rows={4}
-                    placeholder="Bitte beschreiben Sie die gewünschten Änderungen..."
-                    className="w-full"
-                    autoFocus
-                  />
-                </div>
-                
-                <div className="flex gap-3">
-                  <Button
-                    onClick={handleRequestChanges}
-                    disabled={!feedbackText.trim() || submitting}
-                    color="indigo"
-                    className="flex-1"
-                  >
-                    {submitting ? 'Wird gesendet...' : 'Änderungen senden'}
-                  </Button>
-                  <Button
-                    plain
-                    onClick={() => {
-                      setShowFeedbackForm(false);
-                      setFeedbackText('');
-                    }}
-                    disabled={submitting}
-                  >
-                    Abbrechen
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <p className="text-gray-600">
-                  Bitte prüfen Sie die Pressemitteilung {campaign.attachedAssets && campaign.attachedAssets.length > 0 ? 'und die angehängten Medien ' : ''}sorgfältig. 
-                  Sie können entweder die Freigabe erteilen oder Änderungen anfordern.
+          {/* Info Box */}
+          <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex">
+              <InformationCircleIcon className="h-5 w-5 text-blue-400 mr-3 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-blue-800">
+                <p className="font-medium mb-1">Hinweis zum Freigabeprozess</p>
+                <p>
+                  Nach Ihrer Freigabe kann die Pressemitteilung {campaign.attachedAssets && campaign.attachedAssets.length > 0 ? 'zusammen mit den Medien ' : ''}
+                  von der Agentur versendet werden. Bei Änderungswünschen wird die Agentur benachrichtigt und die Mitteilung entsprechend angepasst.
                 </p>
-                
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Button
-                    onClick={handleApprove}
-                    color="indigo"
-                    className="flex-1 bg-green-600 hover:bg-green-500"
-                    disabled={submitting}
-                  >
-                    <CheckIcon className="h-5 w-5 mr-2" />
-                    {submitting ? 'Wird verarbeitet...' : 'Freigabe erteilen'}
-                  </Button>
-                  <Button
-                    onClick={() => setShowFeedbackForm(true)}
-                    plain
-                    className="flex-1"
-                    disabled={submitting}
-                  >
-                    <PencilSquareIcon className="h-5 w-5 mr-2" />
-                    Änderungen anfordern
-                  </Button>
-                </div>
               </div>
-            )}
-          </div>
-        )}
-
-        {/* Info Box */}
-        <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex">
-            <InformationCircleIcon className="h-5 w-5 text-blue-400 mr-3 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-blue-800">
-              <p className="font-medium mb-1">Hinweis zum Freigabeprozess</p>
-              <p>
-                Nach Ihrer Freigabe kann die Pressemitteilung {campaign.attachedAssets && campaign.attachedAssets.length > 0 ? 'zusammen mit den Medien ' : ''}
-                von der Agentur versendet werden. Bei Änderungswünschen wird die Agentur benachrichtigt und die Mitteilung entsprechend angepasst.
-              </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Footer */}
+      {/* Footer mit Branding */}
       <div className="bg-white border-t mt-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="text-center text-sm text-gray-500">
-            <p>Bereitgestellt über SKAMP PR-Suite</p>
-          </div>
+          {brandingSettings ? (
+            <div className="space-y-3">
+              {/* Firmeninfo-Zeile */}
+              <div className="flex flex-wrap items-center justify-center gap-2 text-sm text-gray-600">
+                {brandingSettings.companyName && (
+                  <span className="font-medium">{brandingSettings.companyName}</span>
+                )}
+                
+                {brandingSettings.address && (brandingSettings.address.street || brandingSettings.address.postalCode || brandingSettings.address.city) && (
+                  <>
+                    <span className="text-gray-400">|</span>
+                    <span className="flex items-center gap-1">
+                      <MapPinIcon className="h-4 w-4" />
+                      {[
+                        brandingSettings.address.street,
+                        brandingSettings.address.postalCode && brandingSettings.address.city 
+                          ? `${brandingSettings.address.postalCode} ${brandingSettings.address.city}`
+                          : brandingSettings.address.postalCode || brandingSettings.address.city
+                      ].filter(Boolean).join(', ')}
+                    </span>
+                  </>
+                )}
+                
+                {brandingSettings.phone && (
+                  <>
+                    <span className="text-gray-400">|</span>
+                    <span className="flex items-center gap-1">
+                      <PhoneIcon className="h-4 w-4" />
+                      {brandingSettings.phone}
+                    </span>
+                  </>
+                )}
+                
+                {brandingSettings.email && (
+                  <>
+                    <span className="text-gray-400">|</span>
+                    <span className="flex items-center gap-1">
+                      <EnvelopeIcon className="h-4 w-4" />
+                      {brandingSettings.email}
+                    </span>
+                  </>
+                )}
+                
+                {brandingSettings.website && (
+                  <>
+                    <span className="text-gray-400">|</span>
+                    <a 
+                      href={brandingSettings.website} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-[#005fab] hover:underline"
+                    >
+                      <GlobeAltIcon className="h-4 w-4" />
+                      {brandingSettings.website.replace(/^https?:\/\/(www\.)?/, '')}
+                    </a>
+                  </>
+                )}
+              </div>
+              
+              {/* Copyright-Zeile */}
+              {brandingSettings.showCopyright && (
+                <div className="text-center text-xs text-gray-500">
+                  <p>Copyright © {new Date().getFullYear()} SKAMP. Alle Rechte vorbehalten.</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center text-sm text-gray-500">
+              <p>Bereitgestellt über SKAMP PR-Suite</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

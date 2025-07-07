@@ -18,44 +18,45 @@ import {
 import { db } from './client-init';
 import { PRCampaign, CampaignAssetAttachment, ApprovalData } from '@/types/pr';
 import { mediaService } from './media-service';
-import { ShareLink } from '@/types/media';
+// KORRIGIERT: CreateShareLinkData importiert, um Typkonsistenz sicherzustellen
+import { ShareLink, CreateShareLinkData } from '@/types/media'; 
 import { nanoid } from 'nanoid';
 
 export const prService = {
   
   // src/lib/firebase/pr-service.ts - KORRIGIERTER create() METHOD
 
-async create(campaignData: Omit<PRCampaign, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
-  // Konvertiere boilerplateSections zu einem speicherbaren Format
-  const dataToSave = {
-    ...campaignData,
-    // Stelle sicher, dass boilerplateSections serialisierbar ist
-    boilerplateSections: campaignData.boilerplateSections ? 
-      campaignData.boilerplateSections.map((section: any) => {
-        const cleanSection: any = {
-          id: section.id,
-          type: section.type,
-          position: section.position,
-          order: section.order,
-          isLocked: section.isLocked,
-          isCollapsed: section.isCollapsed
-        };
-        
-        // Nur definierte Werte hinzufügen
-        if (section.boilerplateId) cleanSection.boilerplateId = section.boilerplateId;
-        if (section.content) cleanSection.content = section.content;
-        if (section.metadata) cleanSection.metadata = section.metadata;
-        if (section.customTitle) cleanSection.customTitle = section.customTitle;
-        
-        return cleanSection;
-      }) : [],
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  };
-  
-  const docRef = await addDoc(collection(db, 'pr_campaigns'), dataToSave);
-  return docRef.id;
-},
+  async create(campaignData: Omit<PRCampaign, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    // Konvertiere boilerplateSections zu einem speicherbaren Format
+    const dataToSave = {
+      ...campaignData,
+      // Stelle sicher, dass boilerplateSections serialisierbar ist
+      boilerplateSections: campaignData.boilerplateSections ? 
+        campaignData.boilerplateSections.map((section: any) => {
+          const cleanSection: any = {
+            id: section.id,
+            type: section.type,
+            position: section.position,
+            order: section.order,
+            isLocked: section.isLocked,
+            isCollapsed: section.isCollapsed
+          };
+          
+          // Nur definierte Werte hinzufügen
+          if (section.boilerplateId) cleanSection.boilerplateId = section.boilerplateId;
+          if (section.content) cleanSection.content = section.content;
+          if (section.metadata) cleanSection.metadata = section.metadata;
+          if (section.customTitle) cleanSection.customTitle = section.customTitle;
+          
+          return cleanSection;
+        }) : [],
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+    
+    const docRef = await addDoc(collection(db, 'pr_campaigns'), dataToSave);
+    return docRef.id;
+  },
 
   async getById(campaignId: string): Promise<PRCampaign | null> {
     const docRef = doc(db, 'pr_campaigns', campaignId);
@@ -354,61 +355,38 @@ async create(campaignData: Omit<PRCampaign, 'id' | 'createdAt' | 'updatedAt'>): 
         folderIds.push(attachment.folderId);
       }
     });
-
-    // Bestimme Share-Type
-    let shareType: 'file' | 'folder' | 'collection' = 'collection';
-    let primaryTargetId = '';
-
-    if (assetIds.length === 1 && folderIds.length === 0) {
-      shareType = 'file';
-      primaryTargetId = assetIds[0];
-    } else if (folderIds.length === 1 && assetIds.length === 0) {
-      shareType = 'folder';
-      primaryTargetId = folderIds[0];
-    } else {
-      // Collection: Verwende die Kampagnen-ID als Target
-      primaryTargetId = campaign.id!;
-    }
-
-    // Erstelle Share-Link
-    const shareData: Omit<ShareLink, 'id' | 'shareId' | 'accessCount' | 'createdAt' | 'lastAccessedAt'> = {
+    
+    // Erstelle Share-Link Daten gemäß der `CreateShareLinkData` Definition
+    const shareData: CreateShareLinkData = {
       userId: campaign.userId,
-      type: shareType,
-      targetId: primaryTargetId,
-      targetIds: [...assetIds, ...folderIds],
-      assetCount: assetIds.length + folderIds.length,
+      type: 'campaign', // Eindeutig als Kampagne definieren
+      targetId: campaign.id!, // Die Kampagnen-ID ist das Hauptziel
       title: `Pressematerial: ${campaign.title}`,
       description: campaign.clientName 
         ? `Medienmaterial für die Pressemitteilung von ${campaign.clientName}`
         : 'Medienmaterial für die Pressemitteilung',
-      isActive: true,
       
-      // Kampagnen-Kontext
-      context: {
-        type: 'pr_campaign',
-        campaignId: campaign.id!,
-        campaignTitle: campaign.title,
-        senderCompany: campaign.clientName
-      },
+      // NEU & KORRIGIERT: assetIds und folderIds direkt übergeben
+      assetIds: assetIds,
+      folderIds: folderIds,
       
       settings: {
         downloadAllowed: settings?.allowDownload !== false,
-        showFileList: true,
-        passwordRequired: settings?.password,
+        passwordRequired: settings?.password || null,
+        watermarkEnabled: settings?.watermark || false,
+        // ✅ FIX: Erzeugt ein `Date`-Objekt oder `null`, um dem Linterfehler zu beheben.
         expiresAt: settings?.expiresInDays 
-          ? Timestamp.fromDate(new Date(Date.now() + settings.expiresInDays * 24 * 60 * 60 * 1000))
-          : undefined,
-        watermarkEnabled: settings?.watermark,
-        trackingEnabled: true
+          ? new Date(Date.now() + settings.expiresInDays * 24 * 60 * 60 * 1000)
+          : null,
       }
     };
 
     const shareLink = await mediaService.createShareLink(shareData);
 
-    // Update Kampagne mit Share-Link
+    // ✅ KORRIGIERT: Verwendet die Umgebungsvariable statt "window.location.origin"
     await this.update(campaign.id!, {
       assetShareLinkId: shareLink.id,
-      assetShareUrl: `${window.location.origin}/share/${shareLink.shareId}`
+      assetShareUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/share/${shareLink.shareId}`
     });
 
     return shareLink;
@@ -474,9 +452,10 @@ async create(campaignData: Omit<PRCampaign, 'id' | 'createdAt' | 'updatedAt'>): 
       const shareLinkRef = doc(db, 'media_shares', campaign.assetShareLinkId);
       await updateDoc(shareLinkRef, {
         'settings.downloadAllowed': settings?.allowDownload,
-        'settings.passwordRequired': settings?.password,
+        'settings.passwordRequired': settings?.password || null,
         'settings.watermarkEnabled': settings?.watermark,
-        'settings.expiresAt': settings?.expiresAt,
+        // ✅ FIX: Stellt sicher, dass `null` statt `undefined` übergeben wird, um Typfehler zu vermeiden.
+        'settings.expiresAt': settings?.expiresAt || null, 
         updatedAt: serverTimestamp()
       });
     }
@@ -867,14 +846,14 @@ async create(campaignData: Omit<PRCampaign, 'id' | 'createdAt' | 'updatedAt'>): 
       // Client-seitige Sortierung nach Status und Datum
       return campaigns.sort((a, b) => {
         // Priorisiere nach Status
-        const statusOrder = {
+        const statusOrder: { [key: string]: number } = {
           'changes_requested': 0,
           'in_review': 1,
           'approved': 2
         };
 
-        const aOrder = statusOrder[a.status as keyof typeof statusOrder] ?? 3;
-        const bOrder = statusOrder[b.status as keyof typeof statusOrder] ?? 3;
+        const aOrder = statusOrder[a.status] ?? 3;
+        const bOrder = statusOrder[b.status] ?? 3;
 
         if (aOrder !== bOrder) {
           return aOrder - bOrder;
@@ -894,7 +873,8 @@ async create(campaignData: Omit<PRCampaign, 'id' | 'createdAt' | 'updatedAt'>): 
    * Generiert die vollständige Freigabe-URL
    */
   getApprovalUrl(shareId: string): string {
-    return `${window.location.origin}/freigabe/${shareId}`;
+    // ✅ KORRIGIERT: Verwendet die Umgebungsvariable statt "window.location.origin"
+    return `${process.env.NEXT_PUBLIC_BASE_URL}/freigabe/${shareId}`;
   },
 
   /**

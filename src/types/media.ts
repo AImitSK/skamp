@@ -12,14 +12,14 @@ export interface MediaAsset {
   tags?: string[];
   folderId?: string; // Ordner-Zuordnung
   clientId?: string; // Kunden-Zuordnung
-  
+
   // NEU: Erweiterte Metadaten (Vorbereitung für Phase 2)
   metadata?: {
     // Technische Daten
     fileSize?: number;
     dimensions?: { width: number; height: number };
     duration?: number; // Für Videos in Sekunden
-    
+
     // Rechtliche Daten
     copyright?: {
       owner: string;
@@ -27,14 +27,14 @@ export interface MediaAsset {
       license: 'CC0' | 'CC-BY' | 'CC-BY-SA' | 'CC-BY-NC' | 'Copyright' | 'Custom';
       customTerms?: string;
     };
-    
+
     // Urheber
     author?: {
       name: string;
       email?: string;
       company?: string;
     };
-    
+
     // Nutzungsrechte
     usage?: {
       allowedUses: ('print' | 'digital' | 'social' | 'broadcast' | 'internal')[];
@@ -45,7 +45,7 @@ export interface MediaAsset {
       creditText?: string;
     };
   };
-  
+
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }
@@ -62,24 +62,28 @@ export interface MediaFolder {
   updatedAt?: Timestamp;
 }
 
+// ERWEITERT: Neuer 'campaign' Typ hinzugefügt
+export type ShareLinkType = 'file' | 'folder' | 'campaign';
+
 // ERWEITERT: Share-Link für Multi-Asset und Kampagnen-Support
 export interface ShareLink {
   id?: string;
   userId: string; // Wer hat den Link erstellt
   shareId: string; // Öffentliche UUID für URL
-  type: 'folder' | 'file' | 'collection'; // NEU: 'collection' für mehrere Assets
+  type: ShareLinkType; // Verwendet den erweiterten Typ
   targetId: string; // ID des Ordners oder der Datei
-  
-  // NEU: Multi-Asset Support
-  targetIds?: string[]; // Mehrere Assets/Ordner für 'collection' type
-  assetCount?: number;
-  
+
+  // NEU: Arrays für Campaign-Medien
+  assetIds?: string[]; // Asset-IDs für Kampagnen-Medien
+  folderIds?: string[]; // Folder-IDs für Kampagnen-Medien
+
   title: string; // Titel für die Share-Seite
   description?: string; // Beschreibung für die Share-Seite
-  isActive: boolean; // Link an/aus
+  active: boolean; // Link an/aus (vorher: isActive)
   accessCount: number; // Wie oft aufgerufen
-  
-  // NEU: Kampagnen-Kontext
+  lastAccessedAt?: Timestamp;
+
+  // NEU: Kampagnen-Kontext (aus bestehendem Dokument übernommen)
   context?: {
     type: 'pr_campaign' | 'direct_share';
     campaignId?: string;
@@ -87,21 +91,19 @@ export interface ShareLink {
     senderName?: string;
     senderCompany?: string;
   };
-  
+
   settings: {
-    passwordRequired?: string; // Optional: Passwort
-    expiresAt?: Timestamp; // Optional: Ablaufdatum
-    downloadAllowed: boolean; // Download erlauben
+    expiresAt: Date | null;
+    downloadAllowed: boolean;
+    passwordRequired: string | null;
+    watermarkEnabled: boolean;
     showFileList?: boolean; // Bei Ordnern: Dateiliste anzeigen
-    
-    // NEU: Erweiterte Einstellungen
-    watermarkEnabled?: boolean;
     maxDownloads?: number; // Maximale Downloads pro Asset
     requireEmail?: boolean; // E-Mail vor Download erforderlich
     trackingEnabled?: boolean; // Detailliertes Tracking
   };
-  
-  // NEU: Tracking-Daten
+
+  // NEU: Tracking-Daten (aus bestehendem Dokument übernommen)
   analytics?: {
     uniqueVisitors: number;
     totalDownloads: number;
@@ -113,9 +115,26 @@ export interface ShareLink {
       email?: string; // Falls E-Mail erforderlich war
     };
   };
-  
+
   createdAt?: Timestamp;
-  lastAccessedAt?: Timestamp;
+  updatedAt?: Timestamp; // Hinzugefügt für Konsistenz
+}
+
+// Die mediaService.createShareLink Funktion muss diese neuen optionalen Felder akzeptieren:
+export interface CreateShareLinkData {
+  targetId: string;
+  type: ShareLinkType;
+  title: string;
+  description?: string;
+  settings: {
+    expiresAt: Date | null;
+    downloadAllowed: boolean;
+    passwordRequired: string | null;
+    watermarkEnabled: boolean;
+  };
+  assetIds?: string[]; // NEU
+  folderIds?: string[]; // NEU
+  userId: string;
 }
 
 // Breadcrumb für Navigation
@@ -160,17 +179,17 @@ export interface AssetPackage {
   description: string;
   clientId: string;
   userId: string;
-  
+
   contents: {
     assets: string[]; // Asset-IDs
     folders: string[]; // Folder-IDs
-    
+
     // Strukturierte Organisation
     categories?: {
       [key: string]: string[]; // z.B. 'logos': ['assetId1', 'assetId2']
     };
   };
-  
+
   // Automatische Updates
   rules?: {
     autoInclude?: {
@@ -184,14 +203,14 @@ export interface AssetPackage {
       tags?: string[];
     };
   };
-  
+
   // Nutzungs-Statistiken
   usage?: {
     lastUsed?: Timestamp;
     useCount: number;
     inCampaigns: string[]; // Campaign-IDs
   };
-  
+
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }

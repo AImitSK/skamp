@@ -175,3 +175,30 @@ export interface TopPerformingEmail {
   clickCount: number;
   lastEngagement: Date;
 }
+
+// Datentypen für die API
+interface SendPRCampaignRequest {
+  recipients: Array<{
+    email: string;
+    name: string;
+    firstName: string;
+    lastName: string;
+    companyName?: string;
+  }>;
+  campaignEmail: {
+    subject: string;
+    greeting: string;
+    introduction: string;
+    pressReleaseHtml: string;
+    closing: string;
+    signature: string;
+  };
+  senderInfo: {
+    name: string;
+    title: string;
+    company: string;
+    phone?: string;
+    email?: string;
+  };
+  mediaShareUrl?: string; // NEU: Optional media share URL
+}

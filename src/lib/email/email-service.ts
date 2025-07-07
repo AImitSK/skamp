@@ -43,7 +43,8 @@ export class EmailService {
       phone?: string;
       email?: string;
     },
-    contacts: Contact[]
+    contacts: Contact[],
+    mediaShareUrl?: string // NEU: Optional media share URL
   ): Promise<EmailSendResult> {
     
     // Kontakte zu Empfängern konvertieren
@@ -70,7 +71,8 @@ export class EmailService {
       body: JSON.stringify({
         recipients,
         campaignEmail: emailContent,
-        senderInfo
+        senderInfo,
+        mediaShareUrl // NEU: Share-Link übergeben
       }),
     });
 
@@ -94,7 +96,8 @@ export class EmailService {
       company: string;
       phone?: string;
       email?: string;
-    }
+    },
+    mediaShareUrl?: string // NEU: Optional media share URL
   ): EmailPreviewData {
     
     const recipient = {
@@ -120,11 +123,12 @@ export class EmailService {
         day: 'numeric',
         month: 'long',
         year: 'numeric'
-      })
+      }),
+      mediaShareUrl: mediaShareUrl || '' // NEU: Share-Link als Variable
     };
 
-    const html = this.buildPreviewHtml(campaignEmail, variables);
-    const text = this.buildPreviewText(campaignEmail, variables);
+    const html = this.buildPreviewHtml(campaignEmail, variables, mediaShareUrl);
+    const text = this.buildPreviewText(campaignEmail, variables, mediaShareUrl);
     const subject = this.replaceVariables(campaignEmail.subject, variables);
 
     return {
@@ -141,7 +145,16 @@ export class EmailService {
   /**
    * Preview HTML aufbauen
    */
-  private buildPreviewHtml(email: PRCampaignEmail, variables: Record<string, string>): string {
+  private buildPreviewHtml(email: PRCampaignEmail, variables: Record<string, string>, mediaShareUrl?: string): string {
+    // NEU: Media Button HTML
+    const mediaButtonHtml = mediaShareUrl ? `
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="${mediaShareUrl}" 
+                   style="display: inline-block; padding: 12px 30px; background-color: #667eea; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                    📎 Medien ansehen
+                </a>
+            </div>` : '';
+
     return `
 <!DOCTYPE html>
 <html>
@@ -234,6 +247,8 @@ export class EmailService {
                 ${this.replaceVariables(email.pressReleaseHtml, variables)}
             </div>
             
+            ${mediaButtonHtml}
+            
             <div class="closing">
                 ${this.replaceVariables(email.closing, variables)}
             </div>
@@ -254,7 +269,9 @@ export class EmailService {
   /**
    * Preview Text aufbauen
    */
-  private buildPreviewText(email: PRCampaignEmail, variables: Record<string, string>): string {
+  private buildPreviewText(email: PRCampaignEmail, variables: Record<string, string>, mediaShareUrl?: string): string {
+    const mediaText = mediaShareUrl ? `\n\n📎 Medien ansehen: ${mediaShareUrl}\n` : '';
+    
     return `
 ${this.replaceVariables(email.greeting, variables)}
 
@@ -263,7 +280,7 @@ ${this.replaceVariables(email.introduction, variables)}
 --- PRESSEMITTEILUNG ---
 ${this.stripHtml(this.replaceVariables(email.pressReleaseHtml, variables))}
 --- ENDE PRESSEMITTEILUNG ---
-
+${mediaText}
 ${this.replaceVariables(email.closing, variables)}
 
 ${this.replaceVariables(email.signature, variables)}

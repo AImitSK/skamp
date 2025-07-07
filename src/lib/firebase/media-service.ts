@@ -1,4 +1,4 @@
-// src/lib/firebase/media-service.ts - Mit CORS-Fix für Asset-Validation und automatischer Firma-Vererbung
+// src/lib/firebase/media-service.ts - Mit CORS-Fix, automatischer Firma-Vererbung und erweiterten Share-Links
 import {
   collection,
   doc,
@@ -19,7 +19,8 @@ import {
   deleteObject,
 } from 'firebase/storage';
 import { db, storage } from './client-init';
-import { MediaAsset, MediaFolder, FolderBreadcrumb, ShareLink } from '@/types/media';
+// NEU: ShareLinkType importiert, um die neue Funktion zu unterstützen
+import { MediaAsset, MediaFolder, FolderBreadcrumb, ShareLink, ShareLinkType } from '@/types/media';
 
 // 🆕 Import der Folder-Utils für Firma-Vererbung
 import { getRootFolderClientId } from '@/lib/utils/folder-utils';
@@ -31,8 +32,6 @@ async function validateAssetUrl(url: string, timeout = 3000): Promise<boolean> {
     
     // 🆕 Für Firebase Storage URLs: Grundvalidierung ohne fetch()
     if (url.includes('firebasestorage.googleapis.com')) {
-      // Firebase Storage URLs sind normalerweise gültig wenn sie syntaktisch korrekt sind
-      // und einen gültigen Token haben
       const hasValidStructure = url.includes('/o/') && url.includes('alt=media') && url.includes('token=');
       if (hasValidStructure) {
         console.log(`✅ Firebase Storage URL structure valid - skipping fetch validation`);
@@ -45,17 +44,15 @@ async function validateAssetUrl(url: string, timeout = 3000): Promise<boolean> {
     const timeoutId = setTimeout(() => controller.abort(), timeout);
     
     try {
-      // Vereinfachter fetch ohne spezielle Headers
       const response = await fetch(url, {
-        method: 'HEAD', // Zurück zu HEAD für bessere Performance
+        method: 'HEAD',
         signal: controller.signal,
-        mode: 'no-cors', // Wichtig: no-cors um CORS-Probleme zu umgehen
+        mode: 'no-cors',
         cache: 'no-cache'
       });
       
       clearTimeout(timeoutId);
       
-      // Bei no-cors mode ist response.status immer 0, aber type zeigt success/error
       const isValid = response.type === 'opaque' || response.ok;
       console.log(`✅ Asset validation result: ${isValid} (Type: ${response.type}, Status: ${response.status})`);
       
@@ -63,25 +60,17 @@ async function validateAssetUrl(url: string, timeout = 3000): Promise<boolean> {
       
     } catch (fetchError: any) {
       clearTimeout(timeoutId);
-      
-      // Bei no-cors können trotzdem Fehler auftreten
       console.warn(`⚠️ Fetch validation failed: ${fetchError.message}`);
-      
-      // Fallback: Asset als gültig behandeln (konservativ)
       return true;
     }
     
   } catch (error: any) {
     console.warn(`⚠️ Asset validation failed for ${url}:`, error.message);
-    
-    // Alle Fehlertypen als "gültig" behandeln in Development
     if (error.name === 'AbortError') {
       console.warn('⏱️ Validation timeout - assuming asset is valid');
     } else if (error.message?.includes('CORS') || error.message?.includes('Failed to fetch')) {
       console.warn('🌐 Network/CORS error - assuming asset is valid');
     }
-    
-    // Konservatives Verhalten: Bei Unsicherheit als gültig behandeln
     return true;
   }
 }
@@ -89,47 +78,86 @@ async function validateAssetUrl(url: string, timeout = 3000): Promise<boolean> {
 export const mediaService = {
   // === SHARE LINK OPERATIONS ===
   
-  async createShareLink(shareData: Omit<ShareLink, 'id' | 'shareId' | 'accessCount' | 'createdAt' | 'lastAccessedAt'>): Promise<ShareLink> {
+  // ERWEITERT: createShareLink akzeptiert jetzt assetIds und folderIds für Kampagnen
+  async createShareLink(data: {
+    targetId: string;
+    type: ShareLinkType;
+    title: string;
+    description?: string;
+    settings: {
+      expiresAt: Date | null;
+      downloadAllowed: boolean;
+      passwordRequired: string | null;
+      watermarkEnabled: boolean;
+    };
+    assetIds?: string[];  // NEU
+    folderIds?: string[]; // NEU
+    userId: string;
+  }): Promise<ShareLink> {
     try {
       const shareId = self.crypto?.randomUUID?.() 
         ? crypto.randomUUID().replace(/-/g, '').substring(0, 12)
         : Math.random().toString(36).substring(2, 14);
+        
+const shareLink: Omit<ShareLink, 'id'> = {
+  shareId,
+  userId: data.userId,
+  targetId: data.targetId,
+  type: data.type,
+  title: data.title,
+  description: data.description,
+  settings: data.settings,
+  assetIds: data.assetIds,
+  folderIds: data.folderIds,
+  active: true,
+  accessCount: 0,
+  createdAt: serverTimestamp() as any,
+  updatedAt: serverTimestamp() as any
+  // ✅ Die Zeile für 'lastAccessedAt' wurde komplett entfernt.
+};
       
-      const linkData: any = {
-        userId: shareData.userId,
-        type: shareData.type,
-        targetId: shareData.targetId,
-        title: shareData.title,
-        isActive: shareData.isActive,
-        shareId,
-        accessCount: 0,
-        settings: {
-          downloadAllowed: shareData.settings.downloadAllowed,
-          showFileList: shareData.settings.showFileList || false,
-        },
-        createdAt: serverTimestamp(),
-      };
-
-      if (shareData.description) {
-        linkData.description = shareData.description;
-      }
-
-      if (shareData.settings.passwordRequired) {
-        linkData.settings.passwordRequired = shareData.settings.passwordRequired;
-      }
-
-      if (shareData.settings.expiresAt) {
-        linkData.settings.expiresAt = shareData.settings.expiresAt;
-      }
+      // Beachte: Der Collection-Name 'media_shares' aus der Originaldatei wird beibehalten.
+      const docRef = await addDoc(collection(db, 'media_shares'), shareLink);
       
-      console.log('Creating share link with clean data:', linkData);
-      
-      const docRef = await addDoc(collection(db, 'media_shares'), linkData);
-      return { id: docRef.id, ...linkData } as ShareLink;
+      return {
+        id: docRef.id,
+        ...shareLink,
+      } as ShareLink;
+
     } catch (error) {
       console.error("Fehler beim Erstellen des Share-Links:", error);
       throw error;
     }
+  },
+
+  // NEU: Methode zum Laden von Campaign-Medien basierend auf einem ShareLink
+  async getCampaignMediaAssets(shareLink: ShareLink): Promise<MediaAsset[]> {
+    const allAssets: MediaAsset[] = [];
+    
+    // Lade direkte Assets
+    if (shareLink.assetIds && shareLink.assetIds.length > 0) {
+      const assetPromises = shareLink.assetIds.map(id => this.getMediaAssetById(id));
+      const assets = await Promise.all(assetPromises);
+      allAssets.push(...assets.filter(a => a !== null) as MediaAsset[]);
+    }
+    
+    // Lade Assets aus Folders
+    if (shareLink.folderIds && shareLink.folderIds.length > 0) {
+      for (const folderId of shareLink.folderIds) {
+        const folderAssets = await this.getMediaAssetsInFolder(folderId);
+        allAssets.push(...folderAssets);
+      }
+    }
+    
+    // Deduplizierung (falls ein Asset direkt und in einem Ordner verlinkt ist)
+    const uniqueAssets = new Map<string, MediaAsset>();
+    allAssets.forEach(asset => {
+      if (asset.id) {
+        uniqueAssets.set(asset.id, asset);
+      }
+    });
+    
+    return Array.from(uniqueAssets.values());
   },
 
   async getShareLinks(userId: string): Promise<ShareLink[]> {
@@ -155,7 +183,7 @@ export const mediaService = {
       const q = query(
         collection(db, 'media_shares'),
         where('shareId', '==', shareId),
-        where('isActive', '==', true)
+        where('active', '==', true) // 'isActive' zu 'active' geändert gemäß Typdefinition
       );
       const snapshot = await getDocs(q);
       
@@ -176,8 +204,11 @@ export const mediaService = {
   async incrementShareAccess(shareLinkId: string): Promise<void> {
     try {
       const docRef = doc(db, 'media_shares', shareLinkId);
+      const docSnap = await getDoc(docRef);
+      const currentCount = docSnap.data()?.accessCount || 0;
+
       await updateDoc(docRef, {
-        accessCount: (await getDoc(docRef)).data()?.accessCount + 1 || 1,
+        accessCount: currentCount + 1,
         lastAccessedAt: serverTimestamp(),
       });
     } catch (error) {
@@ -189,7 +220,7 @@ export const mediaService = {
     try {
       const docRef = doc(db, 'media_shares', shareLinkId);
       await updateDoc(docRef, {
-        isActive: false,
+        active: false, // 'isActive' zu 'active'
       });
     } catch (error) {
       console.error("Fehler beim Deaktivieren des Share-Links:", error);
@@ -207,6 +238,7 @@ export const mediaService = {
     }
   },
 
+  // ... (restliche Methoden bleiben unverändert) ...
   // === FOLDER OPERATIONS ===
   
   async createFolder(folder: Omit<MediaFolder, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
