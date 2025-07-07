@@ -1,14 +1,16 @@
 // next.config.mjs
-
-import nextMDX from '@next/mdx'
+import createMDX from '@next/mdx'
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Hier kommen deine normalen Next.js-Einstellungen rein
-  // Wichtig: pageExtensions ist im App Router nicht mehr nötig
-};
+  // Configure `pageExtensions` to include MDX files
+  pageExtensions: ['js', 'jsx', 'md', 'mdx', 'ts', 'tsx'],
+  // Optionally, add any other Next.js config below
+}
 
-const withMDX = nextMDX()
+const withMDX = createMDX({
+  // Add markdown plugins here, as desired
+})
 
-// Exportiere die mit MDX erweiterte Konfiguration
+// Merge MDX config with Next.js config
 export default withMDX(nextConfig)

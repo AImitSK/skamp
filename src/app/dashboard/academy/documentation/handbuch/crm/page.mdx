@@ -1,0 +1,274 @@
+export const metadata = {
+  title: 'CRM & Kontakte - SKAMP Handbuch',
+  description: 'Detaillierte Anleitung zur Verwaltung von Kontakten und Firmen in SKAMP'
+}
+
+# 👥 CRM & Kontakte
+
+Das CRM-Modul ist das Herzstück von SKAMP. Hier verwaltest du alle deine Medienkontakte, Journalisten und Firmen. Diese Anleitung zeigt dir alle Funktionen im Detail.
+
+<div className="not-prose bg-blue-50 border border-blue-200 rounded-lg p-6 my-8">
+  <h3 className="text-lg font-semibold text-blue-900 mb-2">📌 Auf dieser Seite lernst du:</h3>
+  <ul className="space-y-2 text-blue-700">
+    <li>✓ Wie du Firmen und Kontakte anlegst und verwaltest</li>
+    <li>✓ Das Tag-System optimal nutzt</li>
+    <li>✓ Publikationen für Medienhäuser einrichtest</li>
+    <li>✓ Kontakte importierst und exportierst</li>
+    <li>✓ Erweiterte Filter und Suche verwendest</li>
+  </ul>
+</div>
+
+## Navigation im CRM
+
+Das CRM findest du unter **Kontakte → CRM** in der Hauptnavigation. Die Oberfläche ist in zwei Hauptbereiche unterteilt:
+
+<div className="not-prose grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
+  <div className="bg-white border border-gray-200 rounded-lg p-4">
+    <h4 className="font-semibold text-gray-900 mb-2">📁 Firmen-Tab</h4>
+    <p className="text-sm text-gray-600">
+      Verwalte Unternehmen, Verlage, Medienhäuser und Agenturen. 
+      Perfekt für die Organisation deiner Geschäftskontakte.
+    </p>
+  </div>
+  <div className="bg-white border border-gray-200 rounded-lg p-4">
+    <h4 className="font-semibold text-gray-900 mb-2">👤 Personen-Tab</h4>
+    <p className="text-sm text-gray-600">
+      Hier findest du alle individuellen Kontakte wie Journalisten, 
+      Redakteure und andere Ansprechpartner.
+    </p>
+  </div>
+</div>
+
+## Firmen verwalten
+
+### Neue Firma anlegen
+
+1. Klicke auf den Button **"Neue Firma"**
+2. Fülle das Formular aus:
+
+<div className="not-prose bg-gray-50 rounded-lg p-6 my-6">
+  <h4 className="font-medium text-gray-900 mb-4">Pflichtfelder:</h4>
+  <ul className="space-y-3">
+    <li className="flex items-start">
+      <span className="text-red-500 mr-2">*</span>
+      <div>
+        <strong>Firmenname:</strong> Der offizielle Name des Unternehmens
+      </div>
+    </li>
+    <li className="flex items-start">
+      <span className="text-red-500 mr-2">*</span>
+      <div>
+        <strong>Typ:</strong> Wähle aus:
+        <ul className="mt-1 ml-4 text-sm text-gray-600">
+          <li>• <strong>Kunde</strong> - Deine Auftraggeber</li>
+          <li>• <strong>Lieferant</strong> - Dienstleister und Partner</li>
+          <li>• <strong>Partner</strong> - Kooperationspartner</li>
+          <li>• <strong>Verlag</strong> - Klassische Verlage</li>
+          <li>• <strong>Medienhaus</strong> - TV, Radio, Online-Medien</li>
+          <li>• <strong>Agentur</strong> - PR- oder Werbeagenturen</li>
+          <li>• <strong>Sonstiges</strong> - Alles andere</li>
+        </ul>
+      </div>
+    </li>
+  </ul>
+</div>
+
+### Spezialfelder für Medienhäuser
+
+Wenn du **"Medienhaus"** oder **"Verlag"** als Typ auswählst, erscheinen zusätzliche Felder:
+
+<div className="not-prose bg-purple-50 border border-purple-200 rounded-lg p-6 my-6">
+  <h4 className="text-purple-900 font-semibold mb-3">📰 Publikationen verwalten</h4>
+  <p className="text-purple-700 mb-4">
+    Du kannst mehrere Publikationen pro Medienhaus anlegen. Für jede Publikation erfasst du:
+  </p>
+  <ul className="space-y-2 text-purple-700">
+    <li>• <strong>Name:</strong> z.B. "Süddeutsche Zeitung"</li>
+    <li>• <strong>Typ:</strong> Zeitung, Magazin, Online, TV-Sendung, etc.</li>
+    <li>• <strong>Frequenz:</strong> Täglich, Wöchentlich, Monatlich</li>
+    <li>• <strong>Auflage/Reichweite:</strong> Für deine Mediaplanung</li>
+    <li>• <strong>Themenschwerpunkte:</strong> Politik, Wirtschaft, Lifestyle, etc.</li>
+  </ul>
+</div>
+
+## Kontakte (Personen) verwalten
+
+### Neuen Kontakt anlegen
+
+1. Wechsle zum Tab **"Personen"**
+2. Klicke auf **"Neue Person"**
+3. Erfasse die Kontaktdaten:
+
+**Wichtige Felder:**
+- **Name & E-Mail** (Pflicht)
+- **Firma**: Verknüpfe den Kontakt mit einer Firma
+- **Position**: z.B. "Chefredakteur", "Wirtschaftsredakteur"
+- **Publikationen**: Bei Journalisten kannst du angeben, für welche Publikationen sie schreiben
+
+<div className="not-prose bg-green-50 border border-green-200 rounded-lg p-6 my-6">
+  <h4 className="text-green-900 font-semibold mb-2">💡 Pro-Tipp: Publikationszuordnung</h4>
+  <p className="text-green-700">
+    Wenn du einen Journalisten einer Firma zuordnest, die Publikationen hat, 
+    kannst du im Dropdown auswählen, für welche Publikationen er/sie schreibt. 
+    Das hilft dir später bei der gezielten Ansprache!
+  </p>
+</div>
+
+## Das Tag-System
+
+Tags helfen dir, Kontakte und Firmen zu kategorisieren. Sie sind farbcodiert und erleichtern die Filterung.
+
+### Tags erstellen und verwalten
+
+1. Klicke auf **"Tags verwalten"** (oben rechts)
+2. Erstelle neue Tags mit:
+   - **Name**: z.B. "VIP", "Tech-Presse", "Regional"
+   - **Farbe**: Wähle aus 8 vordefinierten Farben
+
+### Tags effektiv nutzen
+
+<div className="not-prose grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
+  <div className="bg-white border border-gray-200 rounded-lg p-4">
+    <h5 className="font-medium text-gray-900 mb-2">Beispiele für Firmen-Tags:</h5>
+    <ul className="text-sm text-gray-600 space-y-1">
+      <li>• 🔴 Wichtiger Kunde</li>
+      <li>• 🟢 Aktiver Partner</li>
+      <li>• 🔵 Großer Verlag</li>
+      <li>• 🟡 Neuer Kontakt</li>
+    </ul>
+  </div>
+  <div className="bg-white border border-gray-200 rounded-lg p-4">
+    <h5 className="font-medium text-gray-900 mb-2">Beispiele für Personen-Tags:</h5>
+    <ul className="text-sm text-gray-600 space-y-1">
+      <li>• 🟣 Entscheider</li>
+      <li>• 🟠 Fachpresse</li>
+      <li>• 🟤 Blogger</li>
+      <li>• ⚫ Inaktiv</li>
+    </ul>
+  </div>
+</div>
+
+## Import & Export
+
+### CSV-Import
+
+Der CSV-Import ist perfekt, wenn du bereits eine Kontaktliste hast:
+
+1. Klicke auf **"Importieren"**
+2. Lade deine CSV-Datei hoch
+3. Ordne die Spalten den SKAMP-Feldern zu
+4. Überprüfe die Vorschau
+5. Starte den Import
+
+<div className="not-prose bg-yellow-50 border border-yellow-200 rounded-lg p-6 my-6">
+  <h4 className="text-yellow-900 font-semibold mb-2">⚠️ Wichtig beim Import</h4>
+  <ul className="text-yellow-700 space-y-1">
+    <li>• Die CSV sollte UTF-8 codiert sein</li>
+    <li>• Trennzeichen: Komma oder Semikolon</li>
+    <li>• Erste Zeile sollte Spaltennamen enthalten</li>
+    <li>• E-Mail-Adressen werden auf Duplikate geprüft</li>
+  </ul>
+</div>
+
+### Export-Funktion
+
+Du kannst deine Kontakte jederzeit exportieren:
+- Wähle die gewünschten Kontakte aus
+- Klicke auf **"Exportieren"**
+- Die CSV enthält alle sichtbaren Felder
+
+## Erweiterte Funktionen
+
+### Suche und Filter
+
+Die Suchleiste durchsucht automatisch:
+- Namen
+- E-Mail-Adressen
+- Firmennamen
+- Positionen
+
+**Filter-Optionen:**
+- Nach Firma
+- Nach Tags
+- Nach Typ (bei Firmen)
+- Nach Publikation (bei Journalisten)
+
+### Inline-Bearbeitung
+
+<div className="not-prose bg-gray-50 rounded-lg p-6 my-6">
+  <p className="text-gray-700">
+    <strong>Schnell-Tipp:</strong> Du kannst viele Felder direkt in der Tabelle bearbeiten! 
+    Einfach auf den Wert klicken, ändern und mit Enter bestätigen. 
+    Perfekt für schnelle Korrekturen.
+  </p>
+</div>
+
+### Bulk-Aktionen
+
+1. Wähle mehrere Einträge mit den Checkboxen aus
+2. Nutze die Aktionen in der Toolbar:
+   - **Löschen**: Mehrere Einträge auf einmal entfernen
+   - **Tags zuweisen**: Tags für mehrere Kontakte gleichzeitig
+   - **Exportieren**: Nur ausgewählte Einträge
+
+## Best Practices
+
+<div className="not-prose space-y-4 my-8">
+  <div className="bg-white border-l-4 border-blue-500 p-4">
+    <h4 className="font-semibold text-gray-900 mb-1">1. Vollständige Daten erfassen</h4>
+    <p className="text-gray-600">
+      Je mehr Informationen du speicherst, desto gezielter kannst du später deine Kampagnen ausrichten.
+    </p>
+  </div>
+  
+  <div className="bg-white border-l-4 border-green-500 p-4">
+    <h4 className="font-semibold text-gray-900 mb-1">2. Tags konsequent nutzen</h4>
+    <p className="text-gray-600">
+      Entwickle ein einheitliches Tag-System und halte dich daran. Das erleichtert die Arbeit im Team.
+    </p>
+  </div>
+  
+  <div className="bg-white border-l-4 border-purple-500 p-4">
+    <h4 className="font-semibold text-gray-900 mb-1">3. Publikationen aktuell halten</h4>
+    <p className="text-gray-600">
+      Überprüfe regelmäßig, ob Journalisten noch für die gleichen Publikationen schreiben.
+    </p>
+  </div>
+  
+  <div className="bg-white border-l-4 border-yellow-500 p-4">
+    <h4 className="font-semibold text-gray-900 mb-1">4. Notizen nutzen</h4>
+    <p className="text-gray-600">
+      Halte wichtige Informationen in den Notizfeldern fest, z.B. bevorzugte Kontaktzeiten oder Themeninteressen.
+    </p>
+  </div>
+</div>
+
+## Häufige Fragen
+
+**Kann ich Kontakte ohne Firma anlegen?**  
+Ja, das Feld "Firma" ist optional. Das ist praktisch für freie Journalisten oder wenn du die Firma noch nicht kennst.
+
+**Wie viele Tags kann ich einem Kontakt zuweisen?**  
+Es gibt keine Begrenzung. Nutze so viele Tags wie nötig, aber übertreibe es nicht.
+
+**Werden gelöschte Kontakte endgültig entfernt?**  
+Ja, gelöschte Kontakte können nicht wiederhergestellt werden. Sei vorsichtig!
+
+**Kann ich die Publikationsliste nachträglich ändern?**  
+Ja, bearbeite einfach die Firma und passe die Publikationen an. Die Änderungen wirken sich auf alle verknüpften Kontakte aus.
+
+---
+
+<div className="not-prose bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-8 my-8 text-center">
+  <h3 className="text-2xl font-bold text-gray-900 mb-4">
+    Bereit für den nächsten Schritt?
+  </h3>
+  <p className="text-gray-600 mb-6">
+    Jetzt wo du das CRM kennst, lerne wie du professionelle Kampagnen erstellst!
+  </p>
+  <a href="/dashboard/academy/documentation/handbuch/kampagnen">
+    <button className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+      Weiter zu Kampagnen →
+    </button>
+  </a>
+</div>
