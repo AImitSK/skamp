@@ -1,4 +1,4 @@
-// src/lib/firebase/pr-service.ts - ERWEITERT mit Asset-Integration und Freigabe-Workflow
+// src/lib/firebase/pr-service.ts - FINALE, VOLLSTÄNDIGE VERSION
 import {
   collection,
   doc,
@@ -18,9 +18,15 @@ import {
 import { db } from './client-init';
 import { PRCampaign, CampaignAssetAttachment, ApprovalData } from '@/types/pr';
 import { mediaService } from './media-service';
-// KORRIGIERT: CreateShareLinkData importiert, um Typkonsistenz sicherzustellen
 import { ShareLink, CreateShareLinkData } from '@/types/media'; 
 import { nanoid } from 'nanoid';
+
+// ✅ ZENTRALER ORT FÜR DIE BASIS-URL MIT FALLBACK
+const getBaseUrl = () => {
+  // Diese Funktion liest die Variable aus. Wenn sie nicht da ist, wird ein Standardwert verwendet.
+  return process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+};
+
 
 export const prService = {
   
@@ -374,7 +380,6 @@ export const prService = {
         downloadAllowed: settings?.allowDownload !== false,
         passwordRequired: settings?.password || null,
         watermarkEnabled: settings?.watermark || false,
-        // ✅ FIX: Erzeugt ein `Date`-Objekt oder `null`, um dem Linterfehler zu beheben.
         expiresAt: settings?.expiresInDays 
           ? new Date(Date.now() + settings.expiresInDays * 24 * 60 * 60 * 1000)
           : null,
@@ -383,10 +388,11 @@ export const prService = {
 
     const shareLink = await mediaService.createShareLink(shareData);
 
-    // ✅ KORRIGIERT: Verwendet die Umgebungsvariable statt "window.location.origin"
+    // ✅ KORRIGIERTE STELLE
+    const baseUrl = getBaseUrl();
     await this.update(campaign.id!, {
       assetShareLinkId: shareLink.id,
-      assetShareUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/share/${shareLink.shareId}`
+      assetShareUrl: `${baseUrl}/share/${shareLink.shareId}`
     });
 
     return shareLink;
@@ -454,7 +460,6 @@ export const prService = {
         'settings.downloadAllowed': settings?.allowDownload,
         'settings.passwordRequired': settings?.password || null,
         'settings.watermarkEnabled': settings?.watermark,
-        // ✅ FIX: Stellt sicher, dass `null` statt `undefined` übergeben wird, um Typfehler zu vermeiden.
         'settings.expiresAt': settings?.expiresAt || null, 
         updatedAt: serverTimestamp()
       });
@@ -873,8 +878,9 @@ export const prService = {
    * Generiert die vollständige Freigabe-URL
    */
   getApprovalUrl(shareId: string): string {
-    // ✅ KORRIGIERT: Verwendet die Umgebungsvariable statt "window.location.origin"
-    return `${process.env.NEXT_PUBLIC_BASE_URL}/freigabe/${shareId}`;
+    // ✅ KORRIGIERTE STELLE
+    const baseUrl = getBaseUrl();
+    return `${baseUrl}/freigabe/${shareId}`;
   },
 
   /**
