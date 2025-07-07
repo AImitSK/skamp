@@ -43,6 +43,7 @@ import { DistributionList } from "@/types/lists";
 import { CampaignAssetAttachment } from "@/types/pr";
 import { MediaAsset, MediaFolder } from "@/types/media";
 import { Input } from "@/components/input";
+import { BoilerplateSection } from "@/components/pr/campaign/IntelligentBoilerplateSection";
 
 // Dynamic import für AI Modal
 import dynamic from 'next/dynamic';
@@ -458,10 +459,10 @@ export default function EditPRCampaignPage() {
   // Form State
   const [selectedListIds, setSelectedListIds] = useState<string[]>([]);
   const [campaignTitle, setCampaignTitle] = useState('');
-  const [mainContent, setMainContent] = useState(''); // NEU: Nur der Hauptinhalt
+  const [mainContent, setMainContent] = useState('');
   const [pressReleaseContent, setPressReleaseContent] = useState(''); // Finaler HTML Content
   const [attachedAssets, setAttachedAssets] = useState<CampaignAssetAttachment[]>([]);
-  const [boilerplateSections, setBoilerplateSections] = useState<any[]>([]); // NEU: Boilerplate Sections
+  const [boilerplateSections, setBoilerplateSections] = useState<BoilerplateSection[]>([]);
   
   // UI State
   const [loading, setLoading] = useState(true);
@@ -509,7 +510,7 @@ export default function EditPRCampaignPage() {
         setSelectedListIds([campaignData.distributionListId]);
       }
       
-      // NEU: Lade mainContent wenn vorhanden, sonst Fallback auf contentHtml
+      // Lade mainContent wenn vorhanden, sonst Fallback auf contentHtml
       if (campaignData.mainContent !== undefined) {
         setMainContent(campaignData.mainContent);
       } else {
@@ -517,9 +518,9 @@ export default function EditPRCampaignPage() {
         setMainContent(campaignData.contentHtml);
       }
       
-      // NEU: Lade Boilerplate Sections
+      // Lade Boilerplate Sections
       if (campaignData.boilerplateSections) {
-        setBoilerplateSections(campaignData.boilerplateSections);
+        setBoilerplateSections(campaignData.boilerplateSections as BoilerplateSection[]);
       }
       
       setPressReleaseContent(campaignData.contentHtml);
@@ -572,9 +573,9 @@ export default function EditPRCampaignPage() {
       
       const updatedData = {
         title: campaignTitle,
-        contentHtml: pressReleaseContent, // Der finale, zusammengesetzte Content
-        mainContent: mainContent, // NEU: Der reine Hauptinhalt
-        boilerplateSections: boilerplateSections, // NEU: Die Boilerplate Sections
+        contentHtml: pressReleaseContent,
+        mainContent: mainContent,
+        boilerplateSections: boilerplateSections,
         distributionListId: primaryList.id!,
         distributionListName: primaryList.name,
         distributionListIds: selectedListIds,
@@ -602,10 +603,71 @@ export default function EditPRCampaignPage() {
   };
 
   const handleAiGenerate = (result: any) => {
+    // Titel setzen
     if (result.structured?.headline) {
       setCampaignTitle(result.structured.headline);
     }
-    setMainContent(result.content); // NEU: Setze nur den Hauptinhalt
+    
+    // NEU: Strukturierte Elemente direkt in Boilerplate Sections umwandeln
+    if (result.structured) {
+      const newSections: BoilerplateSection[] = [];
+      let order = boilerplateSections.length;
+      
+      // Lead
+      if (result.structured.leadParagraph) {
+        newSections.push({
+          id: `ai-lead-${Date.now()}`,
+          type: 'lead',
+          content: `<p><strong>${result.structured.leadParagraph}</strong></p>`,
+          position: 'custom',
+          order: order++,
+          isLocked: false,
+          isCollapsed: false,
+          customTitle: 'Lead-Absatz (KI-generiert)'
+        });
+      }
+      
+      // Haupttext
+      if (result.structured.bodyParagraphs && result.structured.bodyParagraphs.length > 0) {
+        const mainContent = result.structured.bodyParagraphs
+          .map((p: string) => `<p>${p}</p>`)
+          .join('\n\n');
+        
+        newSections.push({
+          id: `ai-main-${Date.now() + 1}`,
+          type: 'main',
+          content: mainContent,
+          position: 'custom',
+          order: order++,
+          isLocked: false,
+          isCollapsed: false,
+          customTitle: 'Haupttext (KI-generiert)'
+        });
+      }
+      
+      // Zitat
+      if (result.structured.quote && result.structured.quote.text) {
+        newSections.push({
+          id: `ai-quote-${Date.now() + 2}`,
+          type: 'quote',
+          content: result.structured.quote.text,
+          metadata: {
+            person: result.structured.quote.person,
+            role: result.structured.quote.role,
+            company: result.structured.quote.company
+          },
+          position: 'custom',
+          order: order++,
+          isLocked: false,
+          isCollapsed: false,
+          customTitle: 'Zitat (KI-generiert)'
+        });
+      }
+      
+      // Füge neue Sections zu bestehenden hinzu
+      setBoilerplateSections([...boilerplateSections, ...newSections]);
+    }
+    
     setShowAiModal(false);
   };
 
@@ -726,21 +788,21 @@ export default function EditPRCampaignPage() {
                     )}
                   </Field>
 
-                  {/* Inhalt - NEU: Mit Content Composer */}
+                  {/* Inhalt - Mit Content Composer */}
                   <div className="border-t pt-6 mt-6">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-base font-semibold">Pressemitteilung *</h3>
-<Button
-  type="button"
-  onClick={() => setShowAiModal(true)}
-  className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white whitespace-nowrap"
->
-  <SparklesIcon className="h-4 w-4" />
-  KI-Assistent
-</Button>
+                      <Button
+                        type="button"
+                        onClick={() => setShowAiModal(true)}
+                        className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white whitespace-nowrap"
+                      >
+                        <SparklesIcon className="h-4 w-4" />
+                        KI-Assistent
+                      </Button>
                     </div>
                     
-                    {/* NEU: Content Composer statt einzelner Felder */}
+                    {/* Content Composer */}
                     <CampaignContentComposer
                       userId={user!.uid}
                       clientId={campaign.clientId}

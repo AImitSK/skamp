@@ -452,13 +452,84 @@ export default function NewPRCampaignPage() {
     }
   };
 
-  const handleAiGenerate = (result: any) => {
-    if (result.structured?.headline) {
-      setCampaignTitle(result.structured.headline);
+const handleAiGenerate = (result: any) => {
+  if (result.structured?.headline) {
+    setCampaignTitle(result.structured.headline);
+  }
+  setMainContent(result.content);
+  
+  // NEU: Erstelle AI-Sections aus strukturierten Daten
+  if (result.structured) {
+    const aiSections: BoilerplateSection[] = [];
+    
+    // Lead-Absatz
+    if (result.structured.leadParagraph && result.structured.leadParagraph !== 'Lead-Absatz fehlt') {
+      aiSections.push({
+        id: `ai-lead-${Date.now()}`,
+        boilerplateId: '',
+        position: 'custom',
+        order: 0,
+        isLocked: false,
+        isCollapsed: false,
+        type: 'ai-lead',
+        customTitle: 'Lead-Absatz',
+        aiContent: {
+          content: result.structured.leadParagraph
+        }
+      });
     }
-    setMainContent(result.content);
-    setShowAiModal(false);
-  };
+    
+    // Hauptabsätze
+    if (result.structured.bodyParagraphs && result.structured.bodyParagraphs.length > 0) {
+      result.structured.bodyParagraphs.forEach((paragraph: string, index: number) => {
+        if (paragraph && paragraph !== 'Haupttext der Pressemitteilung') {
+          aiSections.push({
+            id: `ai-body-${Date.now()}-${index}`,
+            boilerplateId: '',
+            position: 'custom',
+            order: index + 1,
+            isLocked: false,
+            isCollapsed: false,
+            type: 'ai-body',
+            customTitle: `Hauptabsatz ${index + 1}`,
+            aiContent: {
+              content: paragraph
+            }
+          });
+        }
+      });
+    }
+    
+    // Zitat
+    if (result.structured.quote && result.structured.quote.text) {
+      aiSections.push({
+        id: `ai-quote-${Date.now()}`,
+        boilerplateId: '',
+        position: 'custom',
+        order: aiSections.length,
+        isLocked: false,
+        isCollapsed: false,
+        type: 'ai-quote',
+        customTitle: 'Zitat',
+        aiContent: {
+          content: result.structured.quote.text,
+          metadata: {
+            person: result.structured.quote.person,
+            role: result.structured.quote.role,
+            company: result.structured.quote.company
+          }
+        }
+      });
+    }
+    
+    // Füge die AI-Sections zu den bestehenden hinzu
+    setBoilerplateSections([...boilerplateSections, ...aiSections]);
+  }
+  
+  setShowAiModal(false);
+};
+      
+
 
   const handleRemoveAsset = (assetId: string) => {
     setAttachedAssets(attachedAssets.filter(a =>
@@ -492,12 +563,6 @@ export default function NewPRCampaignPage() {
         
         <Heading>Neue PR-Kampagne</Heading>
       </div>
-
-      {validationErrors.length > 0 && (
-        <div className="mb-4">
-          <Alert type="error" message={validationErrors[0]} />
-        </div>
-      )}
 
       <form ref={formRef} onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -625,7 +690,18 @@ export default function NewPRCampaignPage() {
                     </Button>
                   </div>
                   
-                  {/* NEU: Content Composer mit Boilerplate-Props */}
+                  {/* Info-Box für KI-Nutzung */}
+                  <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <InformationCircleIcon className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <div className="text-sm text-blue-700">
+                        <p className="font-medium">Tipp: Nutze den KI-Assistenten!</p>
+                        <p className="mt-1">Der KI-Assistent erstellt automatisch alle Inhalte deiner Pressemitteilung: Titel, Lead-Absatz, Haupttext und Zitat. Diese erscheinen dann als verschiebbare Elemente, die du mit Textbausteinen kombinieren kannst.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Content Composer */}
                   <CampaignContentComposer
                     userId={user!.uid}
                     clientId={selectedCompanyId}
@@ -794,6 +870,13 @@ export default function NewPRCampaignPage() {
         </div>
       </form>
 
+      {/* Fehlermeldungen am Ende der Seite */}
+      {validationErrors.length > 0 && (
+        <div className="fixed bottom-4 right-4 max-w-md z-50 animate-shake">
+          <Alert type="error" message={validationErrors[0]} />
+        </div>
+      )}
+
       {/* Asset Selector Modal */}
       {user && selectedCompanyId && (
         <AssetSelectorModal
@@ -817,6 +900,19 @@ export default function NewPRCampaignPage() {
           }}
         />
       )}
+
+      {/* CSS für Animationen */}
+      <style jsx global>{`
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+          20%, 40%, 60%, 80% { transform: translateX(2px); }
+        }
+        
+        .animate-shake {
+          animation: shake 0.5s ease-in-out;
+        }
+      `}</style>
     </div>
   );
 }

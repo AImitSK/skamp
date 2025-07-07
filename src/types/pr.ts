@@ -24,14 +24,22 @@ export interface ApprovalData {
   approvedAt?: Timestamp;
 }
 
-// NEU: Struktur für Boilerplate-Sections in Kampagnen
+// AKTUALISIERT: Struktur für Boilerplate-Sections in Kampagnen
 export interface CampaignBoilerplateSection {
   id: string;
-  boilerplateId: string;
+  type?: 'boilerplate' | 'lead' | 'main' | 'quote'; // NEU: type für strukturierte Elemente
+  boilerplateId?: string; // JETZT OPTIONAL für strukturierte Elemente
   position: 'header' | 'footer' | 'custom';
   order: number;
   isLocked: boolean;
+  isCollapsed?: boolean; // NEU: optional
   customTitle?: string;
+  content?: string; // NEU: Für strukturierte Inhalte
+  metadata?: { // NEU: Für Zitat-Metadaten
+    person?: string;
+    role?: string;
+    company?: string;
+  };
 }
 
 export interface PRCampaign {

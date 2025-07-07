@@ -80,6 +80,7 @@ interface CampaignContentComposerProps {
   onFullContentChange: (fullContent: string) => void;
   onBoilerplateSectionsChange?: (sections: BoilerplateSection[]) => void;
   initialBoilerplateSections?: BoilerplateSection[];
+  hideMainContentField?: boolean;
 }
 
 // Folder Selector Dialog Component
@@ -243,7 +244,8 @@ export default function CampaignContentComposer({
   onMainContentChange,
   onFullContentChange,
   onBoilerplateSectionsChange,
-  initialBoilerplateSections = []
+  initialBoilerplateSections = [],
+  hideMainContentField = false
 }: CampaignContentComposerProps) {
   const [boilerplateSections, setBoilerplateSections] = useState<BoilerplateSection[]>(initialBoilerplateSections);
   const [processedContent, setProcessedContent] = useState('');
@@ -406,24 +408,26 @@ export default function CampaignContentComposer({
       </Field>
 
       {/* Main Content Editor - JETZT VOR BOILERPLATE */}
-      <Field>
-        <Label className="flex items-center">
-          Hauptinhalt der Pressemitteilung
-          <InfoTooltip 
-            content="Pflichtfeld: Verfassen Sie hier den individuellen Inhalt Ihrer Pressemitteilung. Nutzen Sie die Formatierungsoptionen für professionelle Gestaltung."
-            className="ml-1"
-          />
-        </Label>
-        <div className="mt-2 border rounded-lg">
-          <RichTextEditor
-            content={mainContent}
-            onChange={onMainContentChange}
-          />
-        </div>
-        <p className="mt-2 text-sm text-gray-500">
-          Schreibe hier den individuellen Inhalt deiner Pressemitteilung. Die Textbausteine werden automatisch an den entsprechenden Stellen eingefügt.
-        </p>
-      </Field>
+      {!hideMainContentField && (
+        <Field>
+          <Label className="flex items-center">
+            Hauptinhalt der Pressemitteilung
+            <InfoTooltip 
+              content="Pflichtfeld: Verfassen Sie hier den individuellen Inhalt Ihrer Pressemitteilung. Nutzen Sie die Formatierungsoptionen für professionelle Gestaltung."
+              className="ml-1"
+            />
+          </Label>
+          <div className="mt-2 border rounded-lg">
+            <RichTextEditor
+              content={mainContent}
+              onChange={onMainContentChange}
+            />
+          </div>
+          <p className="mt-2 text-sm text-gray-500">
+            Schreibe hier den individuellen Inhalt deiner Pressemitteilung. Die Textbausteine werden automatisch an den entsprechenden Stellen eingefügt.
+          </p>
+        </Field>
+      )}
 
       {/* Boilerplate Sections - JETZT NACH HAUPTINHALT */}
       <div className="bg-gray-50 rounded-lg p-4">

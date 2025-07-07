@@ -317,8 +317,8 @@ export async function POST(request: NextRequest) {
     // Strukturierte Ausgabe parsen
     const structured = parseStructuredOutput(generatedText);
 
-// HTML für Editor generieren mit verbesserter Formatierung
-const htmlContent = `
+    // HTML für Editor generieren mit verbesserter Formatierung
+    const htmlContent = `
 <p><strong>${structured.leadParagraph}</strong></p>
 
 ${structured.bodyParagraphs.map(p => `<p>${p}</p>`).join('\n\n')}
@@ -335,7 +335,8 @@ ${structured.bodyParagraphs.map(p => `<p>${p}</p>`).join('\n\n')}
 
     console.log('Structured press release generated successfully', { 
       headline: structured.headline,
-      bodyParagraphs: structured.bodyParagraphs.length,
+      leadLength: structured.leadParagraph?.length,
+      bodyParagraphs: structured.bodyParagraphs?.length,
       hasQuote: !!structured.quote.text,
       context: context,
       promptUsed: systemPrompt.substring(0, 200) + '...'
