@@ -14,7 +14,8 @@ import { Select } from "@/components/select";
 import { Checkbox } from "@/components/checkbox";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
 import CampaignContentComposer from '@/components/pr/campaign/CampaignContentComposer';
-import { 
+import {
+  PlusIcon,
   ArrowLeftIcon,
   BuildingOfficeIcon,
   UsersIcon,
@@ -25,25 +26,25 @@ import {
   DocumentIcon,
   SparklesIcon,
   InformationCircleIcon,
-  ExclamationTriangleIcon,
-  PlusIcon,
+  ArrowUpTrayIcon,
+  MagnifyingGlassIcon,
   PaperAirplaneIcon,
   ClockIcon,
   CheckCircleIcon,
   ExclamationCircleIcon,
-  ChatBubbleLeftRightIcon,
-  MagnifyingGlassIcon,
-  ArrowUpTrayIcon
+  ChatBubbleLeftRightIcon
 } from "@heroicons/react/20/solid";
 import { listsService } from "@/lib/firebase/lists-service";
 import { prService } from "@/lib/firebase/pr-service";
 import { mediaService } from "@/lib/firebase/media-service";
-import { PRCampaign } from "@/types/pr";
+import { companiesService } from "@/lib/firebase/crm-service";
 import { DistributionList } from "@/types/lists";
-import { CampaignAssetAttachment } from "@/types/pr";
-import { MediaAsset, MediaFolder } from "@/types/media";
-import { Input } from "@/components/input";
+import { CampaignAssetAttachment, PRCampaign } from "@/types/pr";
 import { BoilerplateSection } from "@/components/pr/campaign/IntelligentBoilerplateSection";
+import { MediaAsset, MediaFolder } from "@/types/media";
+import { Company } from "@/types/crm";
+import { Input } from "@/components/input";
+import { InfoTooltip } from "@/components/InfoTooltip";
 
 // Dynamic import für AI Modal
 import dynamic from 'next/dynamic';
@@ -51,44 +52,7 @@ const StructuredGenerationModal = dynamic(() => import('@/components/pr/ai/Struc
   ssr: false
 });
 
-// Alert Component
-function Alert({ 
-  type = 'info', 
-  title, 
-  message 
-}: { 
-  type?: 'info' | 'error';
-  title?: string;
-  message: string;
-}) {
-  const styles = {
-    info: 'bg-blue-50 text-blue-700',
-    error: 'bg-red-50 text-red-700'
-  };
-
-  const icons = {
-    info: InformationCircleIcon,
-    error: InformationCircleIcon
-  };
-
-  const Icon = icons[type];
-
-  return (
-    <div className={`rounded-md p-4 ${styles[type].split(' ')[0]}`}>
-      <div className="flex">
-        <div className="shrink-0">
-          <Icon aria-hidden="true" className={`size-5 ${type === 'error' ? 'text-red-400' : 'text-blue-400'}`} />
-        </div>
-        <div className="ml-3">
-          {title && <Text className={`font-medium ${styles[type].split(' ')[1]}`}>{title}</Text>}
-          <Text className={`text-sm ${styles[type].split(' ')[1]}`}>{message}</Text>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Helper function
+// Helper functions
 function formatDate(timestamp: any) {
   if (!timestamp) return '';
   const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -101,7 +65,6 @@ function formatDate(timestamp: any) {
   });
 }
 
-// Helper function
 function canEditCampaign(campaign: PRCampaign): { 
   canEdit: boolean; 
   reason?: string;
@@ -139,15 +102,126 @@ function canEditCampaign(campaign: PRCampaign): {
   }
 }
 
-// Asset Selector Modal
-function AssetSelectorModal({ 
-  isOpen, 
-  onClose, 
+// Alert Component
+function Alert({
+  type = 'info',
+  title,
+  message
+}: {
+  type?: 'info' | 'error';
+  title?: string;
+  message: string;
+}) {
+  const styles = {
+    info: 'bg-blue-50 text-blue-700',
+    error: 'bg-red-50 text-red-700'
+  };
+
+  const icons = {
+    info: InformationCircleIcon,
+    error: InformationCircleIcon
+  };
+
+  const Icon = icons[type];
+
+  return (
+    <div className={`rounded-md p-4 ${styles[type].split(' ')[0]}`}>
+      <div className="flex">
+        <div className="shrink-0">
+          <Icon aria-hidden="true" className={`size-5 ${type === 'error' ? 'text-red-400' : 'text-blue-400'}`} />
+        </div>
+        <div className="ml-3">
+          {title && <Text className={`font-medium ${styles[type].split(' ')[1]}`}>{title}</Text>}
+          <Text className={`text-sm ${styles[type].split(' ')[1]}`}>{message}</Text>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Approval Feedback Component
+function ApprovalFeedback({ campaign }: { campaign: PRCampaign }) {
+  if (!campaign.approvalRequired || !campaign.approvalData) {
+    return null;
+  }
+
+  const lastFeedback = campaign.approvalData.feedbackHistory
+    ?.filter(f => f.author === 'Kunde')
+    ?.slice(-1)[0];
+
+  if (campaign.status === 'changes_requested' && lastFeedback) {
+    return (
+      <div className="mb-6 bg-orange-50 border border-orange-200 rounded-lg p-4">
+        <div className="flex items-start">
+          <ExclamationCircleIcon className="h-5 w-5 text-orange-600 mt-0.5 mr-3 flex-shrink-0" />
+          <div className="flex-1">
+            <h3 className="text-sm font-medium text-orange-900">
+              Änderungen vom Kunden angefordert
+            </h3>
+            <div className="mt-2 text-sm text-orange-800">
+              <p className="font-medium">Feedback:</p>
+              <p className="mt-1 italic bg-orange-100 rounded p-2 border border-orange-200">
+                "{lastFeedback.comment}"
+              </p>
+              <p className="mt-2 text-xs text-orange-600 flex items-center gap-1">
+                <ChatBubbleLeftRightIcon className="h-3 w-3" />
+                {lastFeedback.requestedAt && formatDate(lastFeedback.requestedAt)}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (campaign.status === 'in_review') {
+    return (
+      <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="flex items-center">
+          <ClockIcon className="h-5 w-5 text-yellow-600 mr-3" />
+          <div className="flex-1">
+            <h3 className="text-sm font-medium text-yellow-900">
+              Warten auf Kundenfreigabe
+            </h3>
+            <p className="text-sm text-yellow-700 mt-1">
+              Diese Kampagne wurde zur Freigabe an den Kunden gesendet und wartet auf eine Rückmeldung.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (campaign.status === 'approved') {
+    return (
+      <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="flex items-center">
+          <CheckCircleIcon className="h-5 w-5 text-green-600 mr-3" />
+          <div className="flex-1">
+            <h3 className="text-sm font-medium text-green-900">
+              Vom Kunden freigegeben
+            </h3>
+            <p className="text-sm text-green-700 mt-1">
+              Diese Kampagne wurde vom Kunden freigegeben und kann versendet werden.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
+// Asset Selector Modal mit Fix für überlaufende Texte
+function AssetSelectorModal({
+  isOpen,
+  onClose,
   clientId,
   clientName,
   onAssetsSelected,
   userId
-}: { 
+}: {
   isOpen: boolean;
   onClose: () => void;
   clientId: string;
@@ -186,7 +260,7 @@ function AssetSelectorModal({
   const filteredAssets = useMemo(() => {
     if (!searchTerm) return assets;
     const search = searchTerm.toLowerCase();
-    return assets.filter(a => 
+    return assets.filter(a =>
       a.fileName.toLowerCase().includes(search) ||
       a.description?.toLowerCase().includes(search)
     );
@@ -281,13 +355,13 @@ function AssetSelectorModal({
                           }
                           setSelectedItems(newSelection);
                         }}
-                        className="mr-3"
+                        className="mr-3 shrink-0"
                       />
-                      <FolderIcon className="h-5 w-5 text-gray-400 mr-3" />
-                      <div className="flex-1">
-                        <p className="font-medium">{folder.name}</p>
+                      <FolderIcon className="h-5 w-5 text-gray-400 mr-3 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{folder.name}</p>
                         {folder.description && (
-                          <p className="text-sm text-gray-500">{folder.description}</p>
+                          <p className="text-sm text-gray-500 truncate">{folder.description}</p>
                         )}
                       </div>
                     </label>
@@ -317,18 +391,18 @@ function AssetSelectorModal({
                           }
                           setSelectedItems(newSelection);
                         }}
-                        className="mr-3"
+                        className="mr-3 shrink-0"
                       />
                       {asset.fileType?.startsWith('image/') ? (
-                        <img 
-                          src={asset.downloadUrl} 
+                        <img
+                          src={asset.downloadUrl}
                           alt={asset.fileName}
-                          className="h-10 w-10 object-cover rounded mr-3"
+                          className="h-10 w-10 object-cover rounded mr-3 shrink-0"
                         />
                       ) : (
-                        <DocumentIcon className="h-10 w-10 text-gray-400 mr-3" />
+                        <DocumentIcon className="h-10 w-10 text-gray-400 mr-3 shrink-0" />
                       )}
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">{asset.fileName}</p>
                         <p className="text-xs text-gray-500">
                           {asset.fileType?.split('/')[1]?.toUpperCase() || 'Datei'}
@@ -344,7 +418,7 @@ function AssetSelectorModal({
               <div className="text-center py-12">
                 <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <Text>Keine Medien für diesen Kunden gefunden</Text>
-                <Link 
+                <Link
                   href={`/dashboard/pr-tools/media-library?uploadFor=${clientId}`}
                   target="_blank"
                   className="inline-flex items-center mt-4 text-[#005fab] hover:text-[#004a8c]"
@@ -359,7 +433,7 @@ function AssetSelectorModal({
       </DialogBody>
       <DialogActions className="px-6 py-4">
         <Button plain onClick={onClose}>Abbrechen</Button>
-        <Button 
+        <Button
           onClick={handleConfirm}
           disabled={selectedItems.size === 0}
           className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
@@ -371,80 +445,6 @@ function AssetSelectorModal({
   );
 }
 
-// Approval Feedback Component
-function ApprovalFeedback({ campaign }: { campaign: PRCampaign }) {
-  if (!campaign.approvalRequired || !campaign.approvalData) {
-    return null;
-  }
-
-  const lastFeedback = campaign.approvalData.feedbackHistory
-    ?.filter(f => f.author === 'Kunde')
-    ?.slice(-1)[0];
-
-  if (campaign.status === 'changes_requested' && lastFeedback) {
-    return (
-      <div className="mb-6 bg-orange-50 border border-orange-200 rounded-lg p-4">
-        <div className="flex items-start">
-          <ExclamationCircleIcon className="h-5 w-5 text-orange-600 mt-0.5 mr-3 flex-shrink-0" />
-          <div className="flex-1">
-            <h3 className="text-sm font-medium text-orange-900">
-              Änderungen vom Kunden angefordert
-            </h3>
-            <div className="mt-2 text-sm text-orange-800">
-              <p className="font-medium">Feedback:</p>
-              <p className="mt-1 italic bg-orange-100 rounded p-2 border border-orange-200">
-                "{lastFeedback.comment}"
-              </p>
-              <p className="mt-2 text-xs text-orange-600 flex items-center gap-1">
-                <ChatBubbleLeftRightIcon className="h-3 w-3" />
-                {lastFeedback.requestedAt && formatDate(lastFeedback.requestedAt)}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (campaign.status === 'in_review') {
-    return (
-      <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-        <div className="flex items-center">
-          <ClockIcon className="h-5 w-5 text-yellow-600 mr-3" />
-          <div className="flex-1">
-            <h3 className="text-sm font-medium text-yellow-900">
-              Warten auf Kundenfreigabe
-            </h3>
-            <p className="text-sm text-yellow-700 mt-1">
-              Diese Kampagne wurde zur Freigabe an den Kunden gesendet und wartet auf eine Rückmeldung.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (campaign.status === 'approved') {
-    return (
-      <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
-        <div className="flex items-center">
-          <CheckCircleIcon className="h-5 w-5 text-green-600 mr-3" />
-          <div className="flex-1">
-            <h3 className="text-sm font-medium text-green-900">
-              Vom Kunden freigegeben
-            </h3>
-            <p className="text-sm text-green-700 mt-1">
-              Diese Kampagne wurde vom Kunden freigegeben und kann versendet werden.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return null;
-}
-
 export default function EditPRCampaignPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -454,15 +454,18 @@ export default function EditPRCampaignPage() {
 
   // Campaign State
   const [campaign, setCampaign] = useState<PRCampaign | null>(null);
-  const [availableLists, setAvailableLists] = useState<DistributionList[]>([]);
   
   // Form State
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [availableLists, setAvailableLists] = useState<DistributionList[]>([]);
+  const [selectedCompanyId, setSelectedCompanyId] = useState('');
   const [selectedListIds, setSelectedListIds] = useState<string[]>([]);
   const [campaignTitle, setCampaignTitle] = useState('');
-  const [mainContent, setMainContent] = useState('');
   const [pressReleaseContent, setPressReleaseContent] = useState(''); // Finaler HTML Content
-  const [attachedAssets, setAttachedAssets] = useState<CampaignAssetAttachment[]>([]);
   const [boilerplateSections, setBoilerplateSections] = useState<BoilerplateSection[]>([]);
+  const [attachedAssets, setAttachedAssets] = useState<CampaignAssetAttachment[]>([]);
+  const [approvalRequired, setApprovalRequired] = useState(false);
+  const [listSearchTerm, setListSearchTerm] = useState('');
   
   // UI State
   const [loading, setLoading] = useState(true);
@@ -489,8 +492,9 @@ export default function EditPRCampaignPage() {
     setError(null);
     
     try {
-      const [campaignData, listsData] = await Promise.all([
+      const [campaignData, companiesData, listsData] = await Promise.all([
         prService.getById(campaignId),
+        companiesService.getAll(user.uid),
         listsService.getAll(user.uid)
       ]);
 
@@ -500,22 +504,18 @@ export default function EditPRCampaignPage() {
       }
 
       setCampaign(campaignData);
+      setCompanies(companiesData);
       setAvailableLists(listsData);
       
       // Set form values
       setCampaignTitle(campaignData.title);
+      setSelectedCompanyId(campaignData.clientId || '');
+      setApprovalRequired(campaignData.approvalRequired || false);
+      
       if (campaignData.distributionListIds && campaignData.distributionListIds.length > 0) {
         setSelectedListIds(campaignData.distributionListIds);
       } else {
         setSelectedListIds([campaignData.distributionListId]);
-      }
-      
-      // Lade mainContent wenn vorhanden, sonst Fallback auf contentHtml
-      if (campaignData.mainContent !== undefined) {
-        setMainContent(campaignData.mainContent);
-      } else {
-        // Fallback für alte Kampagnen
-        setMainContent(campaignData.contentHtml);
       }
       
       // Lade Boilerplate Sections
@@ -527,29 +527,49 @@ export default function EditPRCampaignPage() {
       setAttachedAssets(campaignData.attachedAssets || []);
       
     } catch (err) {
+      console.error('Fehler beim Laden der Kampagne:', err);
       setError("Ein Fehler ist aufgetreten.");
     } finally {
       setLoading(false);
     }
   };
 
-  const selectedLists = useMemo(() => 
+  const selectedCompany = useMemo(() =>
+    companies.find(c => c.id === selectedCompanyId),
+    [companies, selectedCompanyId]
+  );
+
+  const selectedLists = useMemo(() =>
     availableLists.filter(list => selectedListIds.includes(list.id!)),
     [availableLists, selectedListIds]
   );
 
-  const totalRecipients = useMemo(() => 
+  const totalRecipients = useMemo(() =>
     selectedLists.reduce((sum, list) => sum + list.contactCount, 0),
     [selectedLists]
   );
+
+  // Gefilterte Listen basierend auf Suchbegriff
+  const filteredLists = useMemo(() => {
+    if (!listSearchTerm) return availableLists;
+    
+    const searchLower = listSearchTerm.toLowerCase();
+    return availableLists.filter(list => 
+      list.name.toLowerCase().includes(searchLower) ||
+      (list.description && list.description.toLowerCase().includes(searchLower))
+    );
+  }, [availableLists, listSearchTerm]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!campaign || !editStatus.canEdit) return;
-
+    
     // Validierung
     const errors: string[] = [];
+    if (!selectedCompanyId) {
+      errors.push('Bitte wählen Sie einen Kunden aus');
+    }
     if (selectedListIds.length === 0) {
       errors.push('Bitte wählen Sie mindestens einen Verteiler aus');
     }
@@ -569,26 +589,67 @@ export default function EditPRCampaignPage() {
     setSaving(true);
     
     try {
+      // Bereite die boilerplateSections für Firebase vor
+      const cleanedSections = boilerplateSections.map(section => {
+        const cleaned: any = {
+          id: section.id,
+          type: section.type,
+          position: section.position,
+          order: section.order,
+          isLocked: section.isLocked,
+          isCollapsed: section.isCollapsed
+        };
+        
+        // Nur definierte Werte hinzufügen
+        if (section.boilerplateId) cleaned.boilerplateId = section.boilerplateId;
+        if (section.content) cleaned.content = section.content;
+        if (section.metadata) cleaned.metadata = section.metadata;
+        if (section.customTitle) cleaned.customTitle = section.customTitle;
+        
+        return cleaned;
+      });
+
       const primaryList = selectedLists[0];
       
       const updatedData = {
         title: campaignTitle,
-        contentHtml: pressReleaseContent,
-        mainContent: mainContent,
-        boilerplateSections: boilerplateSections,
+        contentHtml: pressReleaseContent || '',
+        boilerplateSections: cleanedSections,
         distributionListId: primaryList.id!,
         distributionListName: primaryList.name,
         distributionListIds: selectedListIds,
         distributionListNames: selectedLists.map(l => l.name),
         recipientCount: totalRecipients,
+        clientId: selectedCompanyId,
+        clientName: selectedCompany?.name || '',
         attachedAssets: attachedAssets,
+        approvalRequired: approvalRequired,
+        updatedAt: new Date()
       };
+
+      // Entferne alle undefined Werte
+      const cleanedUpdateData = JSON.parse(JSON.stringify(updatedData));
+
+      console.log('Aktualisiere Kampagne mit bereinigten Daten:', cleanedUpdateData);
       
-      await prService.update(campaign.id!, updatedData);
+      await prService.update(campaign.id!, cleanedUpdateData);
+      
+      // Wenn approvalRequired gesetzt wurde und Status ist draft, dann Freigabe anfordern
+      if (approvalRequired && campaign.status === 'draft') {
+        await prService.requestApproval(campaign.id!);
+      }
+      
       router.push('/dashboard/pr-tools/campaigns');
-      
     } catch (error) {
-      setValidationErrors(['Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.']);
+      console.error('Fehler beim Speichern der Kampagne:', error);
+      
+      // Detailliertere Fehlermeldung
+      let errorMessage = 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.';
+      if (error instanceof Error) {
+        errorMessage = `Fehler: ${error.message}`;
+      }
+      
+      setValidationErrors([errorMessage]);
     } finally {
       setSaving(false);
     }
@@ -603,76 +664,89 @@ export default function EditPRCampaignPage() {
   };
 
   const handleAiGenerate = (result: any) => {
-    // Titel setzen
+    console.log('handleAiGenerate called with:', result);
+    
     if (result.structured?.headline) {
+      console.log('Setting campaign title to:', result.structured.headline);
       setCampaignTitle(result.structured.headline);
     }
     
-    // NEU: Strukturierte Elemente direkt in Boilerplate Sections umwandeln
+    // NEU: Erstelle AI-Sections aus strukturierten Daten
     if (result.structured) {
-      const newSections: BoilerplateSection[] = [];
-      let order = boilerplateSections.length;
+      console.log('Creating AI sections from structured data:', result.structured);
+      const aiSections: BoilerplateSection[] = [];
       
-      // Lead
-      if (result.structured.leadParagraph) {
-        newSections.push({
+      // Lead-Absatz
+      if (result.structured.leadParagraph && result.structured.leadParagraph !== 'Lead-Absatz fehlt') {
+        console.log('Adding lead section:', result.structured.leadParagraph);
+        aiSections.push({
           id: `ai-lead-${Date.now()}`,
           type: 'lead',
-          content: `<p><strong>${result.structured.leadParagraph}</strong></p>`,
           position: 'custom',
-          order: order++,
+          order: 0,
           isLocked: false,
           isCollapsed: false,
-          customTitle: 'Lead-Absatz (KI-generiert)'
+          customTitle: 'Lead-Absatz (KI-generiert)',
+          content: `<p><strong>${result.structured.leadParagraph}</strong></p>`
         });
       }
       
-      // Haupttext
+      // Hauptabsätze
       if (result.structured.bodyParagraphs && result.structured.bodyParagraphs.length > 0) {
+        console.log('Adding body paragraphs:', result.structured.bodyParagraphs.length);
         const mainContent = result.structured.bodyParagraphs
-          .map((p: string) => `<p>${p}</p>`)
+          .filter((paragraph: string) => paragraph && paragraph !== 'Haupttext der Pressemitteilung')
+          .map((paragraph: string) => `<p>${paragraph}</p>`)
           .join('\n\n');
-        
-        newSections.push({
-          id: `ai-main-${Date.now() + 1}`,
-          type: 'main',
-          content: mainContent,
-          position: 'custom',
-          order: order++,
-          isLocked: false,
-          isCollapsed: false,
-          customTitle: 'Haupttext (KI-generiert)'
-        });
+          
+        if (mainContent) {
+          aiSections.push({
+            id: `ai-main-${Date.now()}`,
+            type: 'main',
+            position: 'custom',
+            order: 1,
+            isLocked: false,
+            isCollapsed: false,
+            customTitle: 'Haupttext (KI-generiert)',
+            content: mainContent
+          });
+        }
       }
       
       // Zitat
       if (result.structured.quote && result.structured.quote.text) {
-        newSections.push({
-          id: `ai-quote-${Date.now() + 2}`,
+        console.log('Adding quote section:', result.structured.quote);
+        aiSections.push({
+          id: `ai-quote-${Date.now()}`,
           type: 'quote',
+          position: 'custom',
+          order: aiSections.length,
+          isLocked: false,
+          isCollapsed: false,
+          customTitle: 'Zitat (KI-generiert)',
           content: result.structured.quote.text,
           metadata: {
             person: result.structured.quote.person,
             role: result.structured.quote.role,
             company: result.structured.quote.company
-          },
-          position: 'custom',
-          order: order++,
-          isLocked: false,
-          isCollapsed: false,
-          customTitle: 'Zitat (KI-generiert)'
+          }
         });
       }
       
-      // Füge neue Sections zu bestehenden hinzu
-      setBoilerplateSections([...boilerplateSections, ...newSections]);
+      // Füge die AI-Sections zu den bestehenden hinzu
+      console.log('Current boilerplateSections:', boilerplateSections);
+      console.log('Adding AI sections:', aiSections);
+      const newSections = [...boilerplateSections, ...aiSections];
+      console.log('New sections total:', newSections);
+      setBoilerplateSections(newSections);
     }
     
+    console.log('Closing AI modal');
     setShowAiModal(false);
   };
 
   const handleRemoveAsset = (assetId: string) => {
-    setAttachedAssets(attachedAssets.filter(a => 
+    setAttachedAssets(attachedAssets.filter(a =>
       !((a.type === 'asset' && a.assetId === assetId) ||
         (a.type === 'folder' && a.folderId === assetId))
     ));
@@ -706,8 +780,8 @@ export default function EditPRCampaignPage() {
     <div>
       {/* Header */}
       <div className="mb-8">
-        <Link 
-          href="/dashboard/pr-tools/campaigns" 
+        <Link
+          href="/dashboard/pr-tools/campaigns"
           className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
         >
           <ArrowLeftIcon className="h-4 w-4 mr-1" />
@@ -723,231 +797,268 @@ export default function EditPRCampaignPage() {
 
       {/* Edit Warning */}
       {!editStatus.canEdit && (
-        <div className="mb-4">
+        <div className="mb-6 animate-shake">
           <Alert type="error" message={editStatus.reason || 'Diese Kampagne kann nicht bearbeitet werden.'} />
         </div>
       )}
 
+      {/* Fehlermeldungen oben auf der Seite */}
       {validationErrors.length > 0 && (
-        <div className="mb-4">
+        <div className="mb-6 animate-shake">
           <Alert type="error" message={validationErrors[0]} />
         </div>
       )}
 
       <form ref={formRef} onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Form */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg border p-6">
-              <fieldset disabled={!editStatus.canEdit}>
-                <FieldGroup>
-                  {/* Kunde (read-only) */}
-                  <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                    <div className="text-sm text-gray-600 mb-1">Kunde</div>
-                    <div className="flex items-center gap-3">
-                      <BuildingOfficeIcon className="h-5 w-5 text-gray-400" />
-                      <span className="font-medium text-gray-900">
-                        {campaign.clientName || 'Unbekannter Kunde'}
-                      </span>
-                    </div>
-                  </div>
+        {/* Main Form - volle Breite */}
+        <div className="bg-white rounded-lg border p-6">
+          <fieldset disabled={!editStatus.canEdit}>
+            <FieldGroup>
+              {/* Status Badge */}
+              <div className="mb-6 flex items-center justify-between">
+                <div>
+                  <span className="text-sm text-gray-500 mr-2">Status:</span>
+                  <Badge color={
+                    campaign.status === 'draft' ? 'zinc' :
+                    campaign.status === 'in_review' ? 'yellow' :
+                    campaign.status === 'changes_requested' ? 'orange' :
+                    campaign.status === 'approved' ? 'teal' :
+                    campaign.status === 'sent' ? 'green' :
+                    'zinc'
+                  }>
+                    {campaign.status === 'draft' && 'Entwurf'}
+                    {campaign.status === 'in_review' && 'In Prüfung'}
+                    {campaign.status === 'changes_requested' && 'Änderungen erbeten'}
+                    {campaign.status === 'approved' && 'Freigegeben'}
+                    {campaign.status === 'sent' && 'Versendet'}
+                  </Badge>
+                </div>
+              </div>
 
-                  {/* Verteiler */}
-                  <Field>
-                    <Label>Verteiler *</Label>
-                    <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3">
-                      {availableLists.map((list) => (
-                        <label key={list.id} className="flex items-center">
-                          <Checkbox
-                            checked={selectedListIds.includes(list.id!)}
-                            onChange={(checked) => {
-                              if (checked) {
-                                setSelectedListIds([...selectedListIds, list.id!]);
-                              } else {
-                                setSelectedListIds(selectedListIds.filter(id => id !== list.id));
-                              }
-                            }}
-                            className="mr-3"
-                          />
-                          <div className="flex-1">
-                            <span className="font-medium">{list.name}</span>
-                            <span className="text-sm text-gray-500 ml-2">
-                              ({list.contactCount} Kontakte)
-                            </span>
-                            {list.type === 'dynamic' && (
-                              <Badge color="blue" className="ml-2 text-xs">Dynamisch</Badge>
-                            )}
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-                    {selectedLists.length > 0 && (
-                      <p className="mt-2 text-sm text-gray-500">
-                        {totalRecipients.toLocaleString('de-DE')} Empfänger in {selectedLists.length} Listen
-                      </p>
-                    )}
-                  </Field>
+              {/* Kunde */}
+              <Field>
+                <Label className="flex items-center">
+                  Kunde
+                  <InfoTooltip 
+                    content="Der Kunde kann bei bestehenden Kampagnen nicht geändert werden."
+                    className="ml-1"
+                  />
+                </Label>
+                <div className="bg-gray-50 rounded-lg p-3 flex items-center gap-3">
+                  <BuildingOfficeIcon className="h-5 w-5 text-gray-400" />
+                  <span className="font-medium text-gray-900">
+                    {selectedCompany?.name || campaign.clientName || 'Unbekannter Kunde'}
+                  </span>
+                </div>
+              </Field>
 
-                  {/* Inhalt - Mit Content Composer */}
-                  <div className="border-t pt-6 mt-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-base font-semibold">Pressemitteilung *</h3>
-                      <Button
-                        type="button"
-                        onClick={() => setShowAiModal(true)}
-                        className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white whitespace-nowrap"
-                      >
-                        <SparklesIcon className="h-4 w-4" />
-                        KI-Assistent
-                      </Button>
-                    </div>
-                    
-                    {/* Content Composer */}
-                    <CampaignContentComposer
-                      userId={user!.uid}
-                      clientId={campaign.clientId}
-                      clientName={campaign.clientName}
-                      title={campaignTitle}
-                      onTitleChange={setCampaignTitle}
-                      mainContent={mainContent}
-                      onMainContentChange={setMainContent}
-                      onFullContentChange={setPressReleaseContent}
-                      onBoilerplateSectionsChange={setBoilerplateSections}
-                      initialBoilerplateSections={boilerplateSections}
+              {/* Verteiler */}
+              <Field>
+                <Label className="flex items-center">
+                  Verteiler
+                  <InfoTooltip 
+                    content="Pflichtfeld: Wählen Sie mindestens eine Verteilerliste aus. Die Pressemitteilung wird an alle Kontakte in den ausgewählten Listen gesendet."
+                    className="ml-1"
+                  />
+                </Label>
+                
+                {/* Suchfeld für Listen */}
+                <div className="mb-3">
+                  <div className="relative">
+                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      type="text"
+                      value={listSearchTerm}
+                      onChange={(e) => setListSearchTerm(e.target.value)}
+                      placeholder="Listen durchsuchen..."
+                      className="pl-9"
                     />
                   </div>
+                  {listSearchTerm && (
+                    <p className="mt-1 text-sm text-gray-500">
+                      {filteredLists.length} von {availableLists.length} Listen gefunden
+                    </p>
+                  )}
+                </div>
 
-                  {/* Medien */}
-                  <div className="border-t pt-6 mt-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-base font-semibold">Medien</h3>
-                      {campaign.clientId && (
-                        <Button
-                          type="button"
-                          onClick={() => setShowAssetSelector(true)}
-                          plain
-                          className="whitespace-nowrap"
-                        >
-                          <PlusIcon className="h-4 w-4 mr-1" />
-                          Medien hinzufügen
-                        </Button>
-                      )}
+                <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3">
+                  {filteredLists.length > 0 ? (
+                    filteredLists.map((list) => (
+                      <label key={list.id} className="flex items-center hover:bg-gray-50 rounded p-1">
+                        <Checkbox
+                          checked={selectedListIds.includes(list.id!)}
+                          onChange={(checked) => {
+                            if (checked) {
+                              setSelectedListIds([...selectedListIds, list.id!]);
+                            } else {
+                              setSelectedListIds(selectedListIds.filter(id => id !== list.id));
+                            }
+                          }}
+                          className="mr-3"
+                        />
+                        <div className="flex-1">
+                          <span className="font-medium">{list.name}</span>
+                          <span className="text-sm text-gray-500 ml-2">
+                            ({list.contactCount} Kontakte)
+                          </span>
+                          {list.type === 'dynamic' && (
+                            <Badge color="blue" className="ml-2 text-xs">Dynamisch</Badge>
+                          )}
+                          {list.description && (
+                            <p className="text-xs text-gray-500 mt-0.5">{list.description}</p>
+                          )}
+                        </div>
+                      </label>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <UsersIcon className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                      <p className="text-sm">
+                        {listSearchTerm 
+                          ? 'Keine Listen gefunden' 
+                          : 'Noch keine Verteiler erstellt'
+                        }
+                      </p>
                     </div>
-                    
-                    {attachedAssets.length > 0 ? (
-                      <div className="space-y-2">
-                        {attachedAssets.map((attachment) => (
-                          <div
-                            key={attachment.id}
-                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                          >
-                            <div className="flex items-center gap-3">
-                              {attachment.type === 'folder' ? (
-                                <FolderIcon className="h-5 w-5 text-gray-400" />
-                              ) : attachment.metadata.fileType?.startsWith('image/') ? (
-                                <img
-                                  src={attachment.metadata.thumbnailUrl}
-                                  alt={attachment.metadata.fileName}
-                                  className="h-8 w-8 object-cover rounded"
-                                />
-                              ) : (
-                                <DocumentIcon className="h-5 w-5 text-gray-400" />
-                              )}
-                              <div>
-                                <p className="font-medium text-sm">
-                                  {attachment.metadata.fileName || attachment.metadata.folderName}
-                                </p>
-                                {attachment.type === 'folder' && (
-                                  <Badge color="blue" className="text-xs">Ordner</Badge>
-                                )}
-                              </div>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveAsset(attachment.assetId || attachment.folderId || '')}
-                              className="text-red-600 hover:text-red-500"
-                            >
-                              <XMarkIcon className="h-4 w-4" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8 bg-gray-50 rounded-lg">
-                        <PhotoIcon className="h-10 w-10 text-gray-400 mx-auto mb-2" />
-                        <Text>Noch keine Medien angehängt</Text>
-                      </div>
-                    )}
-                  </div>
-                </FieldGroup>
-              </fieldset>
-            </div>
-          </div>
+                  )}
+                </div>
+                {selectedLists.length > 0 && (
+                  <p className="mt-2 text-sm text-gray-500">
+                    {totalRecipients.toLocaleString('de-DE')} Empfänger in {selectedLists.length} Listen
+                  </p>
+                )}
+              </Field>
 
-          {/* Sidebar */}
-          <div>
-            <div className="bg-white rounded-lg border p-6">
-              <h3 className="font-semibold mb-4">Kampagnen-Details</h3>
-              
-              <dl className="space-y-3 text-sm">
-                <div>
-                  <dt className="text-gray-500">Status</dt>
-                  <dd>
-                    <Badge color={
-                      campaign.status === 'draft' ? 'zinc' :
-                      campaign.status === 'in_review' ? 'yellow' :
-                      campaign.status === 'changes_requested' ? 'orange' :
-                      campaign.status === 'approved' ? 'teal' :
-                      campaign.status === 'sent' ? 'green' :
-                      'zinc'
-                    }>
-                      {campaign.status === 'draft' && 'Entwurf'}
-                      {campaign.status === 'in_review' && 'In Prüfung'}
-                      {campaign.status === 'changes_requested' && 'Änderungen erbeten'}
-                      {campaign.status === 'approved' && 'Freigegeben'}
-                      {campaign.status === 'sent' && 'Versendet'}
-                    </Badge>
-                  </dd>
+              {/* Inhalt */}
+              <div className="border-t pt-6 mt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base font-semibold flex items-center">
+                    Pressemitteilung
+                    <InfoTooltip 
+                      content="Pflichtfeld: Erstellen Sie hier den Inhalt Ihrer Pressemitteilung. Sie müssen einen Titel und Inhalt eingeben."
+                      className="ml-1"
+                    />
+                  </h3>
+                  <Button
+                    type="button"
+                    onClick={() => setShowAiModal(true)}
+                    className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white whitespace-nowrap"
+                  >
+                    <SparklesIcon className="h-4 w-4" />
+                    KI-Assistent
+                  </Button>
                 </div>
                 
-                <div>
-                  <dt className="text-gray-500">Kunde</dt>
-                  <dd className="font-medium">{campaign.clientName || 'Nicht zugeordnet'}</dd>
+                {/* Info-Box für KI-Nutzung */}
+                <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <InformationCircleIcon className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div className="text-sm text-blue-700">
+                      <p className="font-medium">Tipp: Nutze den KI-Assistenten!</p>
+                      <p className="mt-1">Der KI-Assistent erstellt automatisch alle Inhalte deiner Pressemitteilung: Titel, Lead-Absatz, Haupttext und Zitat. Diese erscheinen dann als verschiebbare Elemente, die du mit Textbausteinen kombinieren kannst.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Content Composer */}
+                <CampaignContentComposer
+                  key={`composer-${boilerplateSections.length}`}
+                  userId={user!.uid}
+                  clientId={selectedCompanyId}
+                  clientName={selectedCompany?.name}
+                  title={campaignTitle}
+                  onTitleChange={setCampaignTitle}
+                  mainContent=""
+                  onMainContentChange={() => {}}
+                  onFullContentChange={setPressReleaseContent}
+                  onBoilerplateSectionsChange={setBoilerplateSections}
+                  initialBoilerplateSections={boilerplateSections}
+                  hideMainContentField={true}
+                />
+              </div>
+
+              {/* Medien */}
+              <div className="border-t pt-6 mt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base font-semibold">Medien (optional)</h3>
+                  {selectedCompanyId && (
+                    <Button
+                      type="button"
+                      onClick={() => setShowAssetSelector(true)}
+                      plain
+                      className="whitespace-nowrap"
+                    >
+                      <PlusIcon />
+                      Medien hinzufügen
+                    </Button>
+                  )}
                 </div>
                 
-                <div>
-                  <dt className="text-gray-500">Verteiler</dt>
-                  <dd className="font-medium">
-                    {selectedLists.length > 0 ? (
-                      <>
-                        {selectedLists.length} Listen ({totalRecipients.toLocaleString('de-DE')} Empfänger)
-                      </>
-                    ) : (
-                      <span className="text-gray-400">Keine ausgewählt</span>
-                    )}
-                  </dd>
-                </div>
-                
-                <div>
-                  <dt className="text-gray-500">Medien</dt>
-                  <dd className="font-medium">
-                    {attachedAssets.length > 0 ? (
-                      `${attachedAssets.length} Medien`
-                    ) : (
-                      <span className="text-gray-400">Keine</span>
-                    )}
-                  </dd>
-                </div>
-                
-                {campaign.approvalRequired && (
-                  <div>
-                    <dt className="text-gray-500">Freigabe</dt>
-                    <dd className="font-medium text-orange-600">Erforderlich</dd>
+                {attachedAssets.length > 0 ? (
+                  <div className="space-y-2">
+                    {attachedAssets.map((attachment) => (
+                      <div
+                        key={attachment.id}
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                      >
+                        <div className="flex items-center gap-3">
+                          {attachment.type === 'folder' ? (
+                            <FolderIcon className="h-5 w-5 text-gray-400" />
+                          ) : attachment.metadata.fileType?.startsWith('image/') ? (
+                            <img
+                              src={attachment.metadata.thumbnailUrl}
+                              alt={attachment.metadata.fileName}
+                              className="h-8 w-8 object-cover rounded"
+                            />
+                          ) : (
+                            <DocumentIcon className="h-5 w-5 text-gray-400" />
+                          )}
+                          <div>
+                            <p className="font-medium text-sm">
+                              {attachment.metadata.fileName || attachment.metadata.folderName}
+                            </p>
+                            {attachment.type === 'folder' && (
+                              <Badge color="blue" className="text-xs">Ordner</Badge>
+                            )}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveAsset(attachment.assetId || attachment.folderId || '')}
+                          className="text-red-600 hover:text-red-500"
+                        >
+                          <XMarkIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 bg-gray-50 rounded-lg">
+                    <PhotoIcon className="h-10 w-10 text-gray-400 mx-auto mb-2" />
+                    <Text>Noch keine Medien angehängt</Text>
                   </div>
                 )}
-              </dl>
-            </div>
-          </div>
+              </div>
+
+              {/* Freigabe */}
+              <div className="border-t pt-6 mt-6">
+                <label className="flex items-start gap-3">
+                  <Checkbox
+                    checked={approvalRequired}
+                    onChange={setApprovalRequired}
+                    className="mt-1"
+                    disabled={campaign.status === 'sent' || campaign.status === 'archived'}
+                  />
+                  <div>
+                    <div className="font-medium">Freigabe vom Kunden erforderlich</div>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Wenn aktiviert, muss der Kunde die Pressemitteilung vor dem Versand freigeben.
+                    </p>
+                  </div>
+                </label>
+              </div>
+            </FieldGroup>
+          </fieldset>
         </div>
 
         <div className="mt-6 flex justify-end gap-3">
@@ -960,9 +1071,14 @@ export default function EditPRCampaignPage() {
               <Button
                 type="submit"
                 disabled={saving}
-                className="bg-[#005fab] hover:bg-[#004a8c] text-white"
+                className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
               >
-                {saving ? 'Speichert...' : 'Änderungen speichern'}
+                {saving ? 'Speichert...' : approvalRequired && campaign.status === 'draft' ? (
+                  <>
+                    <PaperAirplaneIcon className="h-4 w-4" />
+                    Freigabe anfordern
+                  </>
+                ) : 'Änderungen speichern'}
               </Button>
               
               {campaign.status === 'changes_requested' && (
@@ -970,9 +1086,9 @@ export default function EditPRCampaignPage() {
                   type="button"
                   onClick={handleResubmit}
                   disabled={saving}
-                  className="bg-orange-600 hover:bg-orange-500 text-white"
+                  className="bg-orange-600 hover:bg-orange-500 text-white whitespace-nowrap"
                 >
-                  <PaperAirplaneIcon />
+                  <PaperAirplaneIcon className="h-4 w-4" />
                   Erneut zur Freigabe senden
                 </Button>
               )}
@@ -982,12 +1098,12 @@ export default function EditPRCampaignPage() {
       </form>
 
       {/* Asset Selector Modal */}
-      {user && campaign.clientId && (
+      {user && selectedCompanyId && (
         <AssetSelectorModal
           isOpen={showAssetSelector}
           onClose={() => setShowAssetSelector(false)}
-          clientId={campaign.clientId}
-          clientName={campaign.clientName}
+          clientId={selectedCompanyId}
+          clientName={selectedCompany?.name}
           onAssetsSelected={setAttachedAssets}
           userId={user.uid}
         />
@@ -1000,10 +1116,23 @@ export default function EditPRCampaignPage() {
           onGenerate={handleAiGenerate}
           existingContent={{
             title: campaignTitle,
-            content: mainContent
+            content: ''
           }}
         />
       )}
+
+      {/* CSS für Animationen */}
+      <style jsx global>{`
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+          20%, 40%, 60%, 80% { transform: translateX(2px); }
+        }
+        
+        .animate-shake {
+          animation: shake 0.5s ease-in-out;
+        }
+      `}</style>
     </div>
   );
 }

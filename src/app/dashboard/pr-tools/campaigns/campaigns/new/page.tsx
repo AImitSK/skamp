@@ -85,7 +85,7 @@ function Alert({
   );
 }
 
-// Asset Selector Modal
+// Asset Selector Modal mit Fix für überlaufende Texte
 function AssetSelectorModal({
   isOpen,
   onClose,
@@ -227,13 +227,13 @@ function AssetSelectorModal({
                           }
                           setSelectedItems(newSelection);
                         }}
-                        className="mr-3"
+                        className="mr-3 shrink-0"
                       />
-                      <FolderIcon className="h-5 w-5 text-gray-400 mr-3" />
-                      <div className="flex-1">
-                        <p className="font-medium">{folder.name}</p>
+                      <FolderIcon className="h-5 w-5 text-gray-400 mr-3 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{folder.name}</p>
                         {folder.description && (
-                          <p className="text-sm text-gray-500">{folder.description}</p>
+                          <p className="text-sm text-gray-500 truncate">{folder.description}</p>
                         )}
                       </div>
                     </label>
@@ -263,18 +263,18 @@ function AssetSelectorModal({
                           }
                           setSelectedItems(newSelection);
                         }}
-                        className="mr-3"
+                        className="mr-3 shrink-0"
                       />
                       {asset.fileType?.startsWith('image/') ? (
                         <img
                           src={asset.downloadUrl}
                           alt={asset.fileName}
-                          className="h-10 w-10 object-cover rounded mr-3"
+                          className="h-10 w-10 object-cover rounded mr-3 shrink-0"
                         />
                       ) : (
-                        <DocumentIcon className="h-10 w-10 text-gray-400 mr-3" />
+                        <DocumentIcon className="h-10 w-10 text-gray-400 mr-3 shrink-0" />
                       )}
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">{asset.fileName}</p>
                         <p className="text-xs text-gray-500">
                           {asset.fileType?.split('/')[1]?.toUpperCase() || 'Datei'}
@@ -608,292 +608,237 @@ export default function NewPRCampaignPage() {
       )}
 
       <form ref={formRef} onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Form */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg border p-6">
-              <FieldGroup>
-                {/* Kunde */}
-                <Field>
-                  <Label className="flex items-center">
-                    Kunde
-                    <InfoTooltip 
-                      content="Pflichtfeld: Wählen Sie den Kunden aus, für den diese PR-Kampagne erstellt wird. Die Kampagne wird diesem Kunden zugeordnet."
-                      className="ml-1"
-                    />
-                  </Label>
-                  <Select
-                    value={selectedCompanyId}
-                    onChange={(e) => setSelectedCompanyId(e.target.value)}
-                    required
-                  >
-                    <option value="">Kunde auswählen...</option>
-                    {companies.map((company) => (
-                      <option key={company.id} value={company.id}>
-                        {company.name}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
+        {/* Main Form - jetzt volle Breite */}
+        <div className="bg-white rounded-lg border p-6">
+          <FieldGroup>
+            {/* Kunde */}
+            <Field>
+              <Label className="flex items-center">
+                Kunde
+                <InfoTooltip 
+                  content="Pflichtfeld: Wählen Sie den Kunden aus, für den diese PR-Kampagne erstellt wird. Die Kampagne wird diesem Kunden zugeordnet."
+                  className="ml-1"
+                />
+              </Label>
+              <Select
+                value={selectedCompanyId}
+                onChange={(e) => setSelectedCompanyId(e.target.value)}
+                required
+              >
+                <option value="">Kunde auswählen...</option>
+                {companies.map((company) => (
+                  <option key={company.id} value={company.id}>
+                    {company.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
 
-                {/* Verteiler */}
-                <Field>
-                  <Label className="flex items-center">
-                    Verteiler
-                    <InfoTooltip 
-                      content="Pflichtfeld: Wählen Sie mindestens eine Verteilerliste aus. Die Pressemitteilung wird an alle Kontakte in den ausgewählten Listen gesendet."
-                      className="ml-1"
-                    />
-                  </Label>
-                  
-                  {/* Suchfeld für Listen */}
-                  <div className="mb-3">
-                    <div className="relative">
-                      <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        type="text"
-                        value={listSearchTerm}
-                        onChange={(e) => setListSearchTerm(e.target.value)}
-                        placeholder="Listen durchsuchen..."
-                        className="pl-9"
-                      />
-                    </div>
-                    {listSearchTerm && (
-                      <p className="mt-1 text-sm text-gray-500">
-                        {filteredLists.length} von {availableLists.length} Listen gefunden
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3">
-                    {filteredLists.length > 0 ? (
-                      filteredLists.map((list) => (
-                        <label key={list.id} className="flex items-center hover:bg-gray-50 rounded p-1">
-                          <Checkbox
-                            checked={selectedListIds.includes(list.id!)}
-                            onChange={(checked) => {
-                              if (checked) {
-                                setSelectedListIds([...selectedListIds, list.id!]);
-                              } else {
-                                setSelectedListIds(selectedListIds.filter(id => id !== list.id));
-                              }
-                            }}
-                            className="mr-3"
-                          />
-                          <div className="flex-1">
-                            <span className="font-medium">{list.name}</span>
-                            <span className="text-sm text-gray-500 ml-2">
-                              ({list.contactCount} Kontakte)
-                            </span>
-                            {list.type === 'dynamic' && (
-                              <Badge color="blue" className="ml-2 text-xs">Dynamisch</Badge>
-                            )}
-                            {list.description && (
-                              <p className="text-xs text-gray-500 mt-0.5">{list.description}</p>
-                            )}
-                          </div>
-                        </label>
-                      ))
-                    ) : (
-                      <div className="text-center py-8 text-gray-500">
-                        <UsersIcon className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                        <p className="text-sm">
-                          {listSearchTerm 
-                            ? 'Keine Listen gefunden' 
-                            : 'Noch keine Verteiler erstellt'
-                          }
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                  {selectedLists.length > 0 && (
-                    <p className="mt-2 text-sm text-gray-500">
-                      {totalRecipients.toLocaleString('de-DE')} Empfänger in {selectedLists.length} Listen
-                    </p>
-                  )}
-                </Field>
-
-                {/* Inhalt */}
-                <div className="border-t pt-6 mt-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-base font-semibold flex items-center">
-                      Pressemitteilung
-                      <InfoTooltip 
-                        content="Pflichtfeld: Erstellen Sie hier den Inhalt Ihrer Pressemitteilung. Sie müssen einen Titel und Inhalt eingeben."
-                        className="ml-1"
-                      />
-                    </h3>
-                    <Button
-                      type="button"
-                      onClick={() => setShowAiModal(true)}
-                      className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white whitespace-nowrap"
-                    >
-                      <SparklesIcon className="h-4 w-4" />
-                      KI-Assistent
-                    </Button>
-                  </div>
-                  
-                  {/* Info-Box für KI-Nutzung */}
-                  <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="flex items-start gap-2">
-                      <InformationCircleIcon className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                      <div className="text-sm text-blue-700">
-                        <p className="font-medium">Tipp: Nutze den KI-Assistenten!</p>
-                        <p className="mt-1">Der KI-Assistent erstellt automatisch alle Inhalte deiner Pressemitteilung: Titel, Lead-Absatz, Haupttext und Zitat. Diese erscheinen dann als verschiebbare Elemente, die du mit Textbausteinen kombinieren kannst.</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Content Composer */}
-                  <CampaignContentComposer
-                    key={`composer-${boilerplateSections.length}`}
-                    userId={user!.uid}
-                    clientId={selectedCompanyId}
-                    clientName={selectedCompany?.name}
-                    title={campaignTitle}
-                    onTitleChange={setCampaignTitle}
-                    mainContent=""
-                    onMainContentChange={() => {}}
-                    onFullContentChange={setPressReleaseContent}
-                    onBoilerplateSectionsChange={setBoilerplateSections}
-                    initialBoilerplateSections={boilerplateSections}
-                    hideMainContentField={true}
+            {/* Verteiler */}
+            <Field>
+              <Label className="flex items-center">
+                Verteiler
+                <InfoTooltip 
+                  content="Pflichtfeld: Wählen Sie mindestens eine Verteilerliste aus. Die Pressemitteilung wird an alle Kontakte in den ausgewählten Listen gesendet."
+                  className="ml-1"
+                />
+              </Label>
+              
+              {/* Suchfeld für Listen */}
+              <div className="mb-3">
+                <div className="relative">
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    type="text"
+                    value={listSearchTerm}
+                    onChange={(e) => setListSearchTerm(e.target.value)}
+                    placeholder="Listen durchsuchen..."
+                    className="pl-9"
                   />
                 </div>
+                {listSearchTerm && (
+                  <p className="mt-1 text-sm text-gray-500">
+                    {filteredLists.length} von {availableLists.length} Listen gefunden
+                  </p>
+                )}
+              </div>
 
-                {/* Medien */}
-                <div className="border-t pt-6 mt-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-base font-semibold">Medien (optional)</h3>
-                    {selectedCompanyId && (
-                      <Button
-                        type="button"
-                        onClick={() => setShowAssetSelector(true)}
-                        plain
-                        className="whitespace-nowrap"
-                      >
-                        <PlusIcon />
-                        Medien hinzufügen
-                      </Button>
-                    )}
+              <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3">
+                {filteredLists.length > 0 ? (
+                  filteredLists.map((list) => (
+                    <label key={list.id} className="flex items-center hover:bg-gray-50 rounded p-1">
+                      <Checkbox
+                        checked={selectedListIds.includes(list.id!)}
+                        onChange={(checked) => {
+                          if (checked) {
+                            setSelectedListIds([...selectedListIds, list.id!]);
+                          } else {
+                            setSelectedListIds(selectedListIds.filter(id => id !== list.id));
+                          }
+                        }}
+                        className="mr-3"
+                      />
+                      <div className="flex-1">
+                        <span className="font-medium">{list.name}</span>
+                        <span className="text-sm text-gray-500 ml-2">
+                          ({list.contactCount} Kontakte)
+                        </span>
+                        {list.type === 'dynamic' && (
+                          <Badge color="blue" className="ml-2 text-xs">Dynamisch</Badge>
+                        )}
+                        {list.description && (
+                          <p className="text-xs text-gray-500 mt-0.5">{list.description}</p>
+                        )}
+                      </div>
+                    </label>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <UsersIcon className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                    <p className="text-sm">
+                      {listSearchTerm 
+                        ? 'Keine Listen gefunden' 
+                        : 'Noch keine Verteiler erstellt'
+                      }
+                    </p>
                   </div>
-                  
-                  {attachedAssets.length > 0 ? (
-                    <div className="space-y-2">
-                      {attachedAssets.map((attachment) => (
-                        <div
-                          key={attachment.id}
-                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                        >
-                          <div className="flex items-center gap-3">
-                            {attachment.type === 'folder' ? (
-                              <FolderIcon className="h-5 w-5 text-gray-400" />
-                            ) : attachment.metadata.fileType?.startsWith('image/') ? (
-                              <img
-                                src={attachment.metadata.thumbnailUrl}
-                                alt={attachment.metadata.fileName}
-                                className="h-8 w-8 object-cover rounded"
-                              />
-                            ) : (
-                              <DocumentIcon className="h-5 w-5 text-gray-400" />
-                            )}
-                            <div>
-                              <p className="font-medium text-sm">
-                                {attachment.metadata.fileName || attachment.metadata.folderName}
-                              </p>
-                              {attachment.type === 'folder' && (
-                                <Badge color="blue" className="text-xs">Ordner</Badge>
-                              )}
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveAsset(attachment.assetId || attachment.folderId || '')}
-                            className="text-red-600 hover:text-red-500"
-                          >
-                            <XMarkIcon className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 bg-gray-50 rounded-lg">
-                      <PhotoIcon className="h-10 w-10 text-gray-400 mx-auto mb-2" />
-                      <Text>Noch keine Medien angehängt</Text>
-                    </div>
-                  )}
-                </div>
+                )}
+              </div>
+              {selectedLists.length > 0 && (
+                <p className="mt-2 text-sm text-gray-500">
+                  {totalRecipients.toLocaleString('de-DE')} Empfänger in {selectedLists.length} Listen
+                </p>
+              )}
+            </Field>
 
-                {/* Freigabe */}
-                <div className="border-t pt-6 mt-6">
-                  <label className="flex items-start gap-3">
-                    <Checkbox
-                      checked={approvalRequired}
-                      onChange={setApprovalRequired}
-                      className="mt-1"
-                    />
-                    <div>
-                      <div className="font-medium">Freigabe vom Kunden erforderlich</div>
-                      <p className="text-sm text-gray-500 mt-1">
-                        Wenn aktiviert, muss der Kunde die Pressemitteilung vor dem Versand freigeben.
-                      </p>
-                    </div>
-                  </label>
-                </div>
-              </FieldGroup>
-            </div>
-          </div>
-
-          {/* Sidebar */}
-          <div>
-            <div className="bg-white rounded-lg border p-6">
-              <h3 className="font-semibold mb-4">Zusammenfassung</h3>
+            {/* Inhalt */}
+            <div className="border-t pt-6 mt-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-base font-semibold flex items-center">
+                  Pressemitteilung
+                  <InfoTooltip 
+                    content="Pflichtfeld: Erstellen Sie hier den Inhalt Ihrer Pressemitteilung. Sie müssen einen Titel und Inhalt eingeben."
+                    className="ml-1"
+                  />
+                </h3>
+                <Button
+                  type="button"
+                  onClick={() => setShowAiModal(true)}
+                  className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white whitespace-nowrap"
+                >
+                  <SparklesIcon className="h-4 w-4" />
+                  KI-Assistent
+                </Button>
+              </div>
               
-              <dl className="space-y-3 text-sm">
-                <div>
-                  <dt className="text-gray-500">Kunde</dt>
-                  <dd className="font-medium">
-                    {selectedCompany?.name || <span className="text-gray-400">Nicht ausgewählt</span>}
-                  </dd>
+              {/* Info-Box für KI-Nutzung */}
+              <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <InformationCircleIcon className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-blue-700">
+                    <p className="font-medium">Tipp: Nutze den KI-Assistenten!</p>
+                    <p className="mt-1">Der KI-Assistent erstellt automatisch alle Inhalte deiner Pressemitteilung: Titel, Lead-Absatz, Haupttext und Zitat. Diese erscheinen dann als verschiebbare Elemente, die du mit Textbausteinen kombinieren kannst.</p>
+                  </div>
                 </div>
-                
-                <div>
-                  <dt className="text-gray-500">Verteiler</dt>
-                  <dd className="font-medium">
-                    {selectedLists.length > 0 ? (
-                      <>
-                        {selectedLists.length} Listen ({totalRecipients.toLocaleString('de-DE')} Empfänger)
-                      </>
-                    ) : (
-                      <span className="text-gray-400">Keine ausgewählt</span>
-                    )}
-                  </dd>
-                </div>
-                
-                <div>
-                  <dt className="text-gray-500">Medien</dt>
-                  <dd className="font-medium">
-                    {attachedAssets.length > 0 ? (
-                      `${attachedAssets.length} Medien`
-                    ) : (
-                      <span className="text-gray-400">Keine</span>
-                    )}
-                  </dd>
-                </div>
-                
-                <div>
-                  <dt className="text-gray-500">Freigabe</dt>
-                  <dd className="font-medium">
-                    {approvalRequired ? (
-                      <span className="text-orange-600">Erforderlich</span>
-                    ) : (
-                      <span className="text-gray-400">Nicht erforderlich</span>
-                    )}
-                  </dd>
-                </div>
-              </dl>
+              </div>
+
+              {/* Content Composer */}
+              <CampaignContentComposer
+                key={`composer-${boilerplateSections.length}`}
+                userId={user!.uid}
+                clientId={selectedCompanyId}
+                clientName={selectedCompany?.name}
+                title={campaignTitle}
+                onTitleChange={setCampaignTitle}
+                mainContent=""
+                onMainContentChange={() => {}}
+                onFullContentChange={setPressReleaseContent}
+                onBoilerplateSectionsChange={setBoilerplateSections}
+                initialBoilerplateSections={boilerplateSections}
+                hideMainContentField={true}
+              />
             </div>
-          </div>
+
+            {/* Medien */}
+            <div className="border-t pt-6 mt-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-base font-semibold">Medien (optional)</h3>
+                {selectedCompanyId && (
+                  <Button
+                    type="button"
+                    onClick={() => setShowAssetSelector(true)}
+                    plain
+                    className="whitespace-nowrap"
+                  >
+                    <PlusIcon />
+                    Medien hinzufügen
+                  </Button>
+                )}
+              </div>
+              
+              {attachedAssets.length > 0 ? (
+                <div className="space-y-2">
+                  {attachedAssets.map((attachment) => (
+                    <div
+                      key={attachment.id}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                    >
+                      <div className="flex items-center gap-3">
+                        {attachment.type === 'folder' ? (
+                          <FolderIcon className="h-5 w-5 text-gray-400" />
+                        ) : attachment.metadata.fileType?.startsWith('image/') ? (
+                          <img
+                            src={attachment.metadata.thumbnailUrl}
+                            alt={attachment.metadata.fileName}
+                            className="h-8 w-8 object-cover rounded"
+                          />
+                        ) : (
+                          <DocumentIcon className="h-5 w-5 text-gray-400" />
+                        )}
+                        <div>
+                          <p className="font-medium text-sm">
+                            {attachment.metadata.fileName || attachment.metadata.folderName}
+                          </p>
+                          {attachment.type === 'folder' && (
+                            <Badge color="blue" className="text-xs">Ordner</Badge>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveAsset(attachment.assetId || attachment.folderId || '')}
+                        className="text-red-600 hover:text-red-500"
+                      >
+                        <XMarkIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-gray-50 rounded-lg">
+                  <PhotoIcon className="h-10 w-10 text-gray-400 mx-auto mb-2" />
+                  <Text>Noch keine Medien angehängt</Text>
+                </div>
+              )}
+            </div>
+
+            {/* Freigabe */}
+            <div className="border-t pt-6 mt-6">
+              <label className="flex items-start gap-3">
+                <Checkbox
+                  checked={approvalRequired}
+                  onChange={setApprovalRequired}
+                  className="mt-1"
+                />
+                <div>
+                  <div className="font-medium">Freigabe vom Kunden erforderlich</div>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Wenn aktiviert, muss der Kunde die Pressemitteilung vor dem Versand freigeben.
+                  </p>
+                </div>
+              </label>
+            </div>
+          </FieldGroup>
         </div>
 
         <div className="mt-6 flex justify-end gap-3">
