@@ -23,25 +23,39 @@ import { nanoid } from 'nanoid';
 
 export const prService = {
   
-  async create(campaignData: Omit<PRCampaign, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
-    // Konvertiere boilerplateSections zu einem speicherbaren Format
-    const dataToSave = {
-      ...campaignData,
-      // Stelle sicher, dass boilerplateSections serialisierbar ist
-      boilerplateSections: campaignData.boilerplateSections ? 
-        campaignData.boilerplateSections.map((section: any) => ({
+  // src/lib/firebase/pr-service.ts - KORRIGIERTER create() METHOD
+
+async create(campaignData: Omit<PRCampaign, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+  // Konvertiere boilerplateSections zu einem speicherbaren Format
+  const dataToSave = {
+    ...campaignData,
+    // Stelle sicher, dass boilerplateSections serialisierbar ist
+    boilerplateSections: campaignData.boilerplateSections ? 
+      campaignData.boilerplateSections.map((section: any) => {
+        const cleanSection: any = {
           id: section.id,
           type: section.type,
-          content: section.content,
-          metadata: section.metadata || undefined
-        })) : [],
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    };
-    
-    const docRef = await addDoc(collection(db, 'pr_campaigns'), dataToSave);
-    return docRef.id;
-  },
+          position: section.position,
+          order: section.order,
+          isLocked: section.isLocked,
+          isCollapsed: section.isCollapsed
+        };
+        
+        // Nur definierte Werte hinzufügen
+        if (section.boilerplateId) cleanSection.boilerplateId = section.boilerplateId;
+        if (section.content) cleanSection.content = section.content;
+        if (section.metadata) cleanSection.metadata = section.metadata;
+        if (section.customTitle) cleanSection.customTitle = section.customTitle;
+        
+        return cleanSection;
+      }) : [],
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  };
+  
+  const docRef = await addDoc(collection(db, 'pr_campaigns'), dataToSave);
+  return docRef.id;
+},
 
   async getById(campaignId: string): Promise<PRCampaign | null> {
     const docRef = doc(db, 'pr_campaigns', campaignId);

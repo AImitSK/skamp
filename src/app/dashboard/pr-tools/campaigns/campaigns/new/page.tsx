@@ -36,7 +36,7 @@ import { mediaService } from "@/lib/firebase/media-service";
 import { companiesService } from "@/lib/firebase/crm-service";
 import { DistributionList } from "@/types/lists";
 import { CampaignAssetAttachment } from "@/types/pr";
-import { BoilerplateSection } from "@/components/pr/campaign/IntelligentBoilerplateSection"; // Korrekter Import
+import { BoilerplateSection } from "@/components/pr/campaign/IntelligentBoilerplateSection";
 import { MediaAsset, MediaFolder } from "@/types/media";
 import { Company } from "@/types/crm";
 import { Input } from "@/components/input";
@@ -85,7 +85,7 @@ function Alert({
   );
 }
 
-// Asset Selector Modal (bleibt unverändert)
+// Asset Selector Modal
 function AssetSelectorModal({
   isOpen,
   onClose,
@@ -328,12 +328,11 @@ export default function NewPRCampaignPage() {
   const [selectedCompanyId, setSelectedCompanyId] = useState('');
   const [selectedListIds, setSelectedListIds] = useState<string[]>([]);
   const [campaignTitle, setCampaignTitle] = useState('');
-  const [mainContent, setMainContent] = useState('');
   const [pressReleaseContent, setPressReleaseContent] = useState(''); // Finaler HTML Content
-  const [boilerplateSections, setBoilerplateSections] = useState<BoilerplateSection[]>([]); // Korrigierter Typ
+  const [boilerplateSections, setBoilerplateSections] = useState<BoilerplateSection[]>([]);
   const [attachedAssets, setAttachedAssets] = useState<CampaignAssetAttachment[]>([]);
   const [approvalRequired, setApprovalRequired] = useState(false);
-  const [listSearchTerm, setListSearchTerm] = useState(''); // NEU: Suchbegriff für Listen
+  const [listSearchTerm, setListSearchTerm] = useState('');
   
   // UI State
   const [loading, setLoading] = useState(true);
@@ -418,12 +417,31 @@ export default function NewPRCampaignPage() {
     setSaving(true);
     
     try {
+      // Bereite die boilerplateSections für Firebase vor
+      const cleanedSections = boilerplateSections.map(section => {
+        const cleaned: any = {
+          id: section.id,
+          type: section.type,
+          position: section.position,
+          order: section.order,
+          isLocked: section.isLocked,
+          isCollapsed: section.isCollapsed
+        };
+        
+        // Nur definierte Werte hinzufügen
+        if (section.boilerplateId) cleaned.boilerplateId = section.boilerplateId;
+        if (section.content) cleaned.content = section.content;
+        if (section.metadata) cleaned.metadata = section.metadata;
+        if (section.customTitle) cleaned.customTitle = section.customTitle;
+        
+        return cleaned;
+      });
+
       const campaignData = {
         userId: user!.uid,
         title: campaignTitle,
-        contentHtml: pressReleaseContent,
-        mainContent: mainContent,
-        boilerplateSections: boilerplateSections, // NEU
+        contentHtml: pressReleaseContent || '',
+        boilerplateSections: cleanedSections,
         status: 'draft' as const,
         distributionListId: selectedListIds[0],
         distributionListName: selectedLists[0].name,
@@ -435,10 +453,17 @@ export default function NewPRCampaignPage() {
         attachedAssets: attachedAssets,
         approvalRequired: approvalRequired,
         scheduledAt: null,
-        sentAt: null
+        sentAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date()
       };
 
-      const newCampaignId = await prService.create(campaignData);
+      // Entferne alle undefined Werte
+      const cleanedCampaignData = JSON.parse(JSON.stringify(campaignData));
+
+      console.log('Speichere Kampagne mit bereinigten Daten:', cleanedCampaignData);
+      
+      const newCampaignId = await prService.create(cleanedCampaignData);
       
       if (approvalRequired) {
         await prService.requestApproval(newCampaignId);
@@ -446,90 +471,101 @@ export default function NewPRCampaignPage() {
       
       router.push('/dashboard/pr-tools/campaigns');
     } catch (error) {
-      setValidationErrors(['Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.']);
+      console.error('Fehler beim Speichern der Kampagne:', error);
+      
+      // Detailliertere Fehlermeldung
+      let errorMessage = 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.';
+      if (error instanceof Error) {
+        errorMessage = `Fehler: ${error.message}`;
+      }
+      
+      setValidationErrors([errorMessage]);
     } finally {
       setSaving(false);
     }
   };
 
-const handleAiGenerate = (result: any) => {
-  if (result.structured?.headline) {
-    setCampaignTitle(result.structured.headline);
-  }
-  setMainContent(result.content);
-  
-  // NEU: Erstelle AI-Sections aus strukturierten Daten
-  if (result.structured) {
-    const aiSections: BoilerplateSection[] = [];
+  const handleAiGenerate = (result: any) => {
+    console.log('handleAiGenerate called with:', result);
     
-    // Lead-Absatz
-    if (result.structured.leadParagraph && result.structured.leadParagraph !== 'Lead-Absatz fehlt') {
-      aiSections.push({
-        id: `ai-lead-${Date.now()}`,
-        boilerplateId: '',
-        position: 'custom',
-        order: 0,
-        isLocked: false,
-        isCollapsed: false,
-        type: 'ai-lead',
-        customTitle: 'Lead-Absatz',
-        aiContent: {
-          content: result.structured.leadParagraph
-        }
-      });
+    if (result.structured?.headline) {
+      console.log('Setting campaign title to:', result.structured.headline);
+      setCampaignTitle(result.structured.headline);
     }
     
-    // Hauptabsätze
-    if (result.structured.bodyParagraphs && result.structured.bodyParagraphs.length > 0) {
-      result.structured.bodyParagraphs.forEach((paragraph: string, index: number) => {
-        if (paragraph && paragraph !== 'Haupttext der Pressemitteilung') {
+    // NEU: Erstelle AI-Sections aus strukturierten Daten
+    if (result.structured) {
+      console.log('Creating AI sections from structured data:', result.structured);
+      const aiSections: BoilerplateSection[] = [];
+      
+      // Lead-Absatz
+      if (result.structured.leadParagraph && result.structured.leadParagraph !== 'Lead-Absatz fehlt') {
+        console.log('Adding lead section:', result.structured.leadParagraph);
+        aiSections.push({
+          id: `ai-lead-${Date.now()}`,
+          type: 'lead',
+          position: 'custom',
+          order: 0,
+          isLocked: false,
+          isCollapsed: false,
+          customTitle: 'Lead-Absatz (KI-generiert)',
+          content: `<p><strong>${result.structured.leadParagraph}</strong></p>`
+        });
+      }
+      
+      // Hauptabsätze
+      if (result.structured.bodyParagraphs && result.structured.bodyParagraphs.length > 0) {
+        console.log('Adding body paragraphs:', result.structured.bodyParagraphs.length);
+        const mainContent = result.structured.bodyParagraphs
+          .filter((paragraph: string) => paragraph && paragraph !== 'Haupttext der Pressemitteilung')
+          .map((paragraph: string) => `<p>${paragraph}</p>`)
+          .join('\n\n');
+          
+        if (mainContent) {
           aiSections.push({
-            id: `ai-body-${Date.now()}-${index}`,
-            boilerplateId: '',
+            id: `ai-main-${Date.now()}`,
+            type: 'main',
             position: 'custom',
-            order: index + 1,
+            order: 1,
             isLocked: false,
             isCollapsed: false,
-            type: 'ai-body',
-            customTitle: `Hauptabsatz ${index + 1}`,
-            aiContent: {
-              content: paragraph
-            }
+            customTitle: 'Haupttext (KI-generiert)',
+            content: mainContent
           });
         }
-      });
-    }
-    
-    // Zitat
-    if (result.structured.quote && result.structured.quote.text) {
-      aiSections.push({
-        id: `ai-quote-${Date.now()}`,
-        boilerplateId: '',
-        position: 'custom',
-        order: aiSections.length,
-        isLocked: false,
-        isCollapsed: false,
-        type: 'ai-quote',
-        customTitle: 'Zitat',
-        aiContent: {
+      }
+      
+      // Zitat
+      if (result.structured.quote && result.structured.quote.text) {
+        console.log('Adding quote section:', result.structured.quote);
+        aiSections.push({
+          id: `ai-quote-${Date.now()}`,
+          type: 'quote',
+          position: 'custom',
+          order: aiSections.length,
+          isLocked: false,
+          isCollapsed: false,
+          customTitle: 'Zitat (KI-generiert)',
           content: result.structured.quote.text,
           metadata: {
             person: result.structured.quote.person,
             role: result.structured.quote.role,
             company: result.structured.quote.company
           }
-        }
-      });
+        });
+      }
+      
+      // Füge die AI-Sections zu den bestehenden hinzu
+      console.log('Current boilerplateSections:', boilerplateSections);
+      console.log('Adding AI sections:', aiSections);
+      const newSections = [...boilerplateSections, ...aiSections];
+      console.log('New sections total:', newSections);
+      setBoilerplateSections(newSections);
     }
     
-    // Füge die AI-Sections zu den bestehenden hinzu
-    setBoilerplateSections([...boilerplateSections, ...aiSections]);
-  }
-  
-  setShowAiModal(false);
-};
-      
-
+    console.log('Closing AI modal');
+    setShowAiModal(false);
+  };
 
   const handleRemoveAsset = (assetId: string) => {
     setAttachedAssets(attachedAssets.filter(a =>
@@ -563,6 +599,13 @@ const handleAiGenerate = (result: any) => {
         
         <Heading>Neue PR-Kampagne</Heading>
       </div>
+
+      {/* Fehlermeldungen oben auf der Seite */}
+      {validationErrors.length > 0 && (
+        <div className="mb-6 animate-shake">
+          <Alert type="error" message={validationErrors[0]} />
+        </div>
+      )}
 
       <form ref={formRef} onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -676,7 +719,7 @@ const handleAiGenerate = (result: any) => {
                     <h3 className="text-base font-semibold flex items-center">
                       Pressemitteilung
                       <InfoTooltip 
-                        content="Pflichtfeld: Erstellen Sie hier den Inhalt Ihrer Pressemitteilung. Sie müssen einen Titel und Hauptinhalt eingeben."
+                        content="Pflichtfeld: Erstellen Sie hier den Inhalt Ihrer Pressemitteilung. Sie müssen einen Titel und Inhalt eingeben."
                         className="ml-1"
                       />
                     </h3>
@@ -708,11 +751,12 @@ const handleAiGenerate = (result: any) => {
                     clientName={selectedCompany?.name}
                     title={campaignTitle}
                     onTitleChange={setCampaignTitle}
-                    mainContent={mainContent}
-                    onMainContentChange={setMainContent}
+                    mainContent=""
+                    onMainContentChange={() => {}}
                     onFullContentChange={setPressReleaseContent}
                     onBoilerplateSectionsChange={setBoilerplateSections}
                     initialBoilerplateSections={boilerplateSections}
+                    hideMainContentField={true}
                   />
                 </div>
 
@@ -870,13 +914,6 @@ const handleAiGenerate = (result: any) => {
         </div>
       </form>
 
-      {/* Fehlermeldungen am Ende der Seite */}
-      {validationErrors.length > 0 && (
-        <div className="fixed bottom-4 right-4 max-w-md z-50 animate-shake">
-          <Alert type="error" message={validationErrors[0]} />
-        </div>
-      )}
-
       {/* Asset Selector Modal */}
       {user && selectedCompanyId && (
         <AssetSelectorModal
@@ -896,7 +933,7 @@ const handleAiGenerate = (result: any) => {
           onGenerate={handleAiGenerate}
           existingContent={{
             title: campaignTitle,
-            content: mainContent
+            content: ''
           }}
         />
       )}

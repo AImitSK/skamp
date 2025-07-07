@@ -283,7 +283,7 @@ export default function CampaignContentComposer({
 
       const composed = await processBoilerplates(
         boilerplateSections,
-        mainContent,
+        '', // mainContent ist jetzt immer leer
         context
       );
 
@@ -292,7 +292,7 @@ export default function CampaignContentComposer({
     };
 
     composeFullContent();
-  }, [boilerplateSections, mainContent, title, clientName]);
+  }, [boilerplateSections, title, clientName]); // mainContent entfernt
 
   // Generate PDF
   const generatePdf = async (targetFolderId?: string) => {

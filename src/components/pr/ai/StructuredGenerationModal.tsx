@@ -267,6 +267,11 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
   const [templates, setTemplates] = useState<AITemplate[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(true);
 
+  // DEBUG
+  useEffect(() => {
+    console.log('StructuredGenerationModal mounted with props:', { onClose, onGenerate, existingContent });
+  }, []);
+
   // Keyboard shortcuts
   useKeyboardShortcuts({
     onGenerate: handleGenerate,
@@ -370,7 +375,13 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
   }
 
   const handleUseResult = () => {
-    if (!generatedResult) return;
+    console.log('handleUseResult called');
+    console.log('generatedResult:', generatedResult);
+    
+    if (!generatedResult) {
+      console.error('No generatedResult available');
+      return;
+    }
 
     const result: GenerationResult = {
       headline: generatedResult.headline,
@@ -383,7 +394,15 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
       }
     };
 
-    onGenerate(result);
+    console.log('Calling onGenerate with result:', result);
+    
+    try {
+      onGenerate(result);
+      console.log('onGenerate called successfully');
+      // Modal wird automatisch durch parent component geschlossen
+    } catch (error) {
+      console.error('Error calling onGenerate:', error);
+    }
   };
 
   const handleTemplateSelect = (template: AITemplate) => {
@@ -602,7 +621,10 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
                     Neu generieren
                   </Button>
                   <Button 
-                    onClick={handleUseResult}
+                    onClick={() => {
+                      console.log('Text übernehmen button clicked');
+                      handleUseResult();
+                    }}
                     className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
                   >
                     <CheckCircleIcon className="h-4 w-4 mr-2" />

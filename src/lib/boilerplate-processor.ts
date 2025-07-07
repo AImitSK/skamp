@@ -36,25 +36,54 @@ export async function processBoilerplates(
   }
 
   // Add separator after headers if any exist
-  if (headerSections.length > 0 && (mainContent || customSections.length > 0)) {
+  if (headerSections.length > 0 && customSections.length > 0) {
     parts.push('<hr class="mt-12 mb-3 border-gray-300" />');
   }
 
-  // Add main content with custom sections
-  if (mainContent) {
-    parts.push(`<div class="main-content">${mainContent}</div>`);
-  }
-
-  // Add custom sections after main content
+  // Add custom sections (including AI-generated content and structured elements)
   for (const section of customSections) {
     if (section.boilerplate) {
+      // Traditional boilerplate
       const processed = processVariables(section.boilerplate.content, context);
       parts.push(`<div class="boilerplate-custom mt-4">${processed}</div>`);
+    } else if (section.content) {
+      // Structured content (lead, main, quote)
+      let content = `<div class="structured-content mt-4">`;
+      
+      // Handle different types of structured content
+      if (section.type === 'lead') {
+        content += `<div class="lead-paragraph font-semibold">${section.content}</div>`;
+      } else if (section.type === 'main') {
+        content += `<div class="main-content">${section.content}</div>`;
+      } else if (section.type === 'quote') {
+        content += `<div class="quote-block">`;
+        content += `<blockquote class="italic text-gray-700 border-l-4 border-blue-400 pl-4">`;
+        content += `"${section.content}"`;
+        content += `</blockquote>`;
+        
+        // Add attribution if available
+        if (section.metadata) {
+          const { person, role, company } = section.metadata;
+          content += `<p class="mt-2 text-sm text-gray-600">`;
+          content += `— ${person}`;
+          if (role) content += `, ${role}`;
+          if (company) content += ` bei ${company}`;
+          content += `</p>`;
+        }
+        
+        content += `</div>`;
+      } else {
+        // Fallback for other content
+        content += section.content;
+      }
+      
+      content += `</div>`;
+      parts.push(content);
     }
   }
 
   // Add separator before footers if any exist
-  if (footerSections.length > 0 && (parts.length > 0)) {
+  if (footerSections.length > 0 && parts.length > 0) {
     parts.push('<hr class="mt-12 mb-3 border-gray-300" />');
   }
 

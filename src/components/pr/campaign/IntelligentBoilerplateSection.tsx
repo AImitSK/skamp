@@ -16,8 +16,7 @@ import {
   LockOpenIcon,
   ChatBubbleBottomCenterTextIcon,
   NewspaperIcon,
-  DocumentDuplicateIcon,
-  SparklesIcon
+  DocumentDuplicateIcon
 } from '@heroicons/react/20/solid';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { boilerplatesService } from '@/lib/firebase/boilerplate-service';
@@ -202,6 +201,20 @@ export default function IntelligentBoilerplateSection({
   const [showInlineEditor, setShowInlineEditor] = useState<{ type: 'lead' | 'main' | 'quote'; editId?: string } | null>(null);
   const [selectedPosition, setSelectedPosition] = useState<'header' | 'footer' | 'custom'>('footer');
   const [loading, setLoading] = useState(true);
+  const [showElementDropdown, setShowElementDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Schließe Dropdown bei Klick außerhalb
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowElementDropdown(false);
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     loadBoilerplates();
@@ -537,48 +550,60 @@ export default function IntelligentBoilerplateSection({
         </h3>
         <div className="flex gap-2">
           {/* NEU: Dropdown für strukturierte Elemente */}
-          <div className="relative">
+          <div className="relative" ref={dropdownRef}>
             <Button
               type="button"
               plain
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
-                // Toggle dropdown
-                const dropdown = (e.currentTarget.nextElementSibling as HTMLElement);
-                dropdown.classList.toggle('hidden');
+                setShowElementDropdown(!showElementDropdown);
               }}
               className="text-sm"
             >
-              <SparklesIcon className="h-4 w-4 mr-1" />
+              <PlusIcon className="h-4 w-4 mr-1" />
               Element erstellen
-              <ChevronDownIcon className="h-4 w-4 ml-1" />
+              <ChevronDownIcon className={`h-4 w-4 ml-1 transition-transform ${showElementDropdown ? 'rotate-180' : ''}`} />
             </Button>
-            <div className="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border">
-              <button
-                type="button"
-                onClick={() => setShowInlineEditor({ type: 'lead' })}
-                className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-              >
-                <NewspaperIcon className="h-4 w-4 inline mr-2" />
-                Lead-Absatz
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowInlineEditor({ type: 'main' })}
-                className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-              >
-                <DocumentDuplicateIcon className="h-4 w-4 inline mr-2" />
-                Haupttext
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowInlineEditor({ type: 'quote' })}
-                className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-              >
-                <ChatBubbleBottomCenterTextIcon className="h-4 w-4 inline mr-2" />
-                Zitat
-              </button>
-            </div>
+            {showElementDropdown && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowInlineEditor({ type: 'lead' });
+                    setShowElementDropdown(false);
+                  }}
+                  className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                >
+                  <NewspaperIcon className="h-4 w-4 inline mr-2" />
+                  Lead-Absatz
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowInlineEditor({ type: 'main' });
+                    setShowElementDropdown(false);
+                  }}
+                  className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                >
+                  <DocumentDuplicateIcon className="h-4 w-4 inline mr-2" />
+                  Haupttext
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowInlineEditor({ type: 'quote' });
+                    setShowElementDropdown(false);
+                  }}
+                  className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                >
+                  <ChatBubbleBottomCenterTextIcon className="h-4 w-4 inline mr-2" />
+                  Zitat
+                </button>
+              </div>
+            )}
           </div>
 
           <Button
