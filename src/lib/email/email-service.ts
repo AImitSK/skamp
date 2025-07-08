@@ -1,7 +1,9 @@
-// src/lib/email/email-service.ts (ersetzt sendgrid-service.ts)
+// src/lib/email/email-service.ts - ERWEITERT
 import { PRCampaignEmail } from '@/types/email';
 import { PRCampaign } from '@/types/pr';
 import { Contact } from '@/types/crm';
+import { EmailDraft, TestEmailRequest, SendTestEmailResponse } from '@/types/email-composer';
+import { Timestamp } from 'firebase/firestore';
 
 export interface EmailSendResult {
   success: boolean;
@@ -28,6 +30,41 @@ export interface EmailPreviewData {
   };
 }
 
+export interface ValidationResult {
+  isValid: boolean;
+  errors: {
+    content?: string[];
+    subject?: string[];
+    sender?: string[];
+    recipients?: string[];
+  };
+  warnings?: {
+    content?: string[];
+    subject?: string[];
+  };
+}
+
+export interface ScheduleEmailRequest {
+  campaign: PRCampaign;
+  emailContent: PRCampaignEmail;
+  senderInfo: {
+    name: string;
+    title: string;
+    company: string;
+    phone?: string;
+    email?: string;
+  };
+  scheduledDate: Date;
+  timezone?: string;
+}
+
+export interface ScheduleEmailResult {
+  success: boolean;
+  jobId?: string;
+  scheduledFor: Date;
+  error?: string;
+}
+
 export class EmailService {
   
   /**
@@ -44,7 +81,7 @@ export class EmailService {
       email?: string;
     },
     contacts: Contact[],
-    mediaShareUrl?: string // NEU: Optional media share URL
+    mediaShareUrl?: string
   ): Promise<EmailSendResult> {
     
     // Kontakte zu Empfängern konvertieren
@@ -72,7 +109,7 @@ export class EmailService {
         recipients,
         campaignEmail: emailContent,
         senderInfo,
-        mediaShareUrl // NEU: Share-Link übergeben
+        mediaShareUrl
       }),
     });
 
@@ -82,6 +119,239 @@ export class EmailService {
     }
 
     return await response.json();
+  }
+
+  /**
+   * Test-Email versenden
+   */
+  async sendTestEmail(request: TestEmailRequest): Promise<SendTestEmailResponse> {
+    try {
+      console.log('📧 Sending test email to:', request.recipientEmail);
+
+      // Erstelle einen Test-Kontakt
+      const testContact: Contact = {
+        id: 'test-contact',
+        userId: '',
+        firstName: request.recipientName?.split(' ')[0] || 'Test',
+        lastName: request.recipientName?.split(' ')[1] || 'Empfänger',
+        email: request.recipientEmail,
+        companyName: 'Test Company',
+        companyId: '',
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now()
+      };
+
+      // Extrahiere Sender-Info aus dem Draft
+      const senderInfo = this.extractSenderInfo(request.draft);
+
+      // Erstelle Email-Content aus dem Draft
+      const emailContent = this.createEmailContent(request.draft, request.campaignId);
+
+      // Generiere Vorschau
+      const preview = this.generatePreview(testContact, emailContent, senderInfo);
+
+      // Sende über API Route
+      const response = await fetch('/api/email/test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          recipient: {
+            email: request.recipientEmail,
+            name: testContact.firstName + ' ' + testContact.lastName,
+            firstName: testContact.firstName,
+            lastName: testContact.lastName,
+            companyName: testContact.companyName
+          },
+          campaignEmail: emailContent,
+          senderInfo,
+          testMode: true
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        return {
+          success: false,
+          error: error.error || 'Test-Email konnte nicht gesendet werden'
+        };
+      }
+
+      const result = await response.json();
+
+      return {
+        success: true,
+        messageId: result.messageId,
+        preview: {
+          html: preview.html,
+          text: preview.text,
+          subject: preview.subject
+        }
+      };
+
+    } catch (error) {
+      console.error('❌ Error sending test email:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unbekannter Fehler'
+      };
+    }
+  }
+
+  /**
+   * Email-Content validieren
+   */
+  validateEmailContent(
+    emailContent: PRCampaignEmail,
+    senderInfo: any,
+    recipientCount: number
+  ): ValidationResult {
+    const errors: ValidationResult['errors'] = {};
+    const warnings: ValidationResult['warnings'] = {};
+
+    // Content-Validierung
+    const contentErrors: string[] = [];
+    const contentWarnings: string[] = [];
+
+    // Prüfe auf leere Felder
+    if (!emailContent.subject || emailContent.subject.trim().length === 0) {
+      contentErrors.push('Betreff darf nicht leer sein');
+    }
+
+    if (!emailContent.greeting || emailContent.greeting.trim().length === 0) {
+      contentErrors.push('Begrüßung fehlt');
+    }
+
+    if (!emailContent.introduction || emailContent.introduction.trim().length === 0) {
+      contentErrors.push('Einleitung fehlt');
+    }
+
+    if (!emailContent.pressReleaseHtml || emailContent.pressReleaseHtml.trim().length === 0) {
+      contentErrors.push('Pressemitteilung fehlt');
+    }
+
+    // Prüfe Betreff-Länge
+    if (emailContent.subject && emailContent.subject.length > 150) {
+      contentErrors.push('Betreff ist zu lang (max. 150 Zeichen)');
+    } else if (emailContent.subject && emailContent.subject.length < 10) {
+      contentWarnings.push('Betreff ist sehr kurz');
+    }
+
+    // Prüfe auf Spam-Trigger-Wörter
+    const spamWords = ['kostenlos', 'gratis', 'gewinn', 'klicken sie hier', 'jetzt kaufen'];
+    const subjectLower = emailContent.subject?.toLowerCase() || '';
+    const foundSpamWords = spamWords.filter(word => subjectLower.includes(word));
+    if (foundSpamWords.length > 0) {
+      contentWarnings.push(`Betreff enthält potenzielle Spam-Wörter: ${foundSpamWords.join(', ')}`);
+    }
+
+    // Prüfe auf fehlende Variablen
+    const requiredVariables = ['{{firstName}}', '{{lastName}}'];
+    const hasPersonalization = requiredVariables.some(variable => 
+      emailContent.greeting.includes(variable) || 
+      emailContent.introduction.includes(variable)
+    );
+    if (!hasPersonalization) {
+      contentWarnings.push('E-Mail enthält keine Personalisierung');
+    }
+
+    if (contentErrors.length > 0) errors.content = contentErrors;
+    if (contentWarnings.length > 0) warnings.content = contentWarnings;
+
+    // Absender-Validierung
+    const senderErrors: string[] = [];
+    
+    if (!senderInfo.name || senderInfo.name.trim().length === 0) {
+      senderErrors.push('Absender-Name fehlt');
+    }
+
+    if (!senderInfo.email || !this.isValidEmail(senderInfo.email)) {
+      senderErrors.push('Ungültige Absender-E-Mail-Adresse');
+    }
+
+    if (senderErrors.length > 0) errors.sender = senderErrors;
+
+    // Empfänger-Validierung
+    const recipientErrors: string[] = [];
+
+    if (recipientCount === 0) {
+      recipientErrors.push('Keine Empfänger ausgewählt');
+    } else if (recipientCount > 500) {
+      recipientErrors.push('Zu viele Empfänger (max. 500 pro Versand)');
+    }
+
+    if (recipientErrors.length > 0) errors.recipients = recipientErrors;
+
+    // Bestimme ob insgesamt valide
+    const isValid = Object.keys(errors).length === 0;
+
+    return {
+      isValid,
+      errors,
+      warnings: Object.keys(warnings).length > 0 ? warnings : undefined
+    };
+  }
+
+  /**
+   * Email-Versand planen
+   */
+  async scheduleEmail(request: ScheduleEmailRequest): Promise<ScheduleEmailResult> {
+    try {
+      console.log('📅 Scheduling email campaign for:', request.scheduledDate);
+
+      // Validiere Datum (mindestens 15 Minuten in der Zukunft)
+      const now = new Date();
+      const minScheduleTime = new Date(now.getTime() + 15 * 60 * 1000);
+      
+      if (request.scheduledDate < minScheduleTime) {
+        return {
+          success: false,
+          scheduledFor: request.scheduledDate,
+          error: 'Der Versand muss mindestens 15 Minuten in der Zukunft liegen'
+        };
+      }
+
+      // API Route aufrufen
+      const response = await fetch('/api/email/schedule', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          campaignId: request.campaign.id,
+          emailContent: request.emailContent,
+          senderInfo: request.senderInfo,
+          scheduledDate: request.scheduledDate.toISOString(),
+          timezone: request.timezone || 'Europe/Berlin'
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        return {
+          success: false,
+          scheduledFor: request.scheduledDate,
+          error: error.error || 'Planung fehlgeschlagen'
+        };
+      }
+
+      const result = await response.json();
+
+      return {
+        success: true,
+        jobId: result.jobId,
+        scheduledFor: new Date(result.scheduledFor)
+      };
+
+    } catch (error) {
+      console.error('❌ Error scheduling email:', error);
+      return {
+        success: false,
+        scheduledFor: request.scheduledDate,
+        error: error instanceof Error ? error.message : 'Unbekannter Fehler'
+      };
+    }
   }
 
   /**
@@ -97,7 +367,7 @@ export class EmailService {
       phone?: string;
       email?: string;
     },
-    mediaShareUrl?: string // NEU: Optional media share URL
+    mediaShareUrl?: string
   ): EmailPreviewData {
     
     const recipient = {
@@ -124,7 +394,7 @@ export class EmailService {
         month: 'long',
         year: 'numeric'
       }),
-      mediaShareUrl: mediaShareUrl || '' // NEU: Share-Link als Variable
+      mediaShareUrl: mediaShareUrl || ''
     };
 
     const html = this.buildPreviewHtml(campaignEmail, variables, mediaShareUrl);
@@ -143,10 +413,60 @@ export class EmailService {
   }
 
   /**
+   * Helper: Sender-Info aus Draft extrahieren
+   */
+  private extractSenderInfo(draft: EmailDraft) {
+    if (draft.sender.type === 'contact' && draft.sender.contactData) {
+      return {
+        name: draft.sender.contactData.name,
+        title: draft.sender.contactData.title || '',
+        company: draft.sender.contactData.company || '',
+        phone: draft.sender.contactData.phone,
+        email: draft.sender.contactData.email
+      };
+    } else if (draft.sender.type === 'manual' && draft.sender.manual) {
+      return {
+        name: draft.sender.manual.name,
+        title: draft.sender.manual.title || '',
+        company: draft.sender.manual.company || '',
+        phone: draft.sender.manual.phone,
+        email: draft.sender.manual.email
+      };
+    }
+
+    throw new Error('Keine gültigen Absender-Informationen gefunden');
+  }
+
+  /**
+   * Helper: Email-Content aus Draft erstellen
+   */
+  private createEmailContent(draft: EmailDraft, campaignTitle: string): PRCampaignEmail {
+    // Extrahiere die verschiedenen Teile aus dem HTML-Content
+    // Dies ist eine vereinfachte Version - in der Praxis würde man das HTML parsen
+    const content = draft.content.body;
+
+    return {
+      subject: draft.metadata.subject,
+      greeting: 'Sehr geehrte/r {{firstName}} {{lastName}},',
+      introduction: content,
+      pressReleaseHtml: `<h2>${campaignTitle}</h2><p>[Pressemitteilung wird hier eingefügt]</p>`,
+      closing: 'Mit freundlichen Grüßen',
+      signature: '{{senderName}}\n{{senderTitle}}\n{{senderCompany}}\n{{senderPhone}}\n{{senderEmail}}'
+    };
+  }
+
+  /**
+   * Helper: Email-Validierung
+   */
+  private isValidEmail(email: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
+
+  /**
    * Preview HTML aufbauen
    */
   private buildPreviewHtml(email: PRCampaignEmail, variables: Record<string, string>, mediaShareUrl?: string): string {
-    // NEU: Media Button HTML
     const mediaButtonHtml = mediaShareUrl ? `
             <div style="text-align: center; margin: 30px 0;">
                 <a href="${mediaShareUrl}" 

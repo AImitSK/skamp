@@ -56,7 +56,8 @@ export default function EmailEditor({
       attributes: {
         class: 'prose prose-sm max-w-none focus:outline-none min-h-[400px] px-4 py-4',
       }
-    }
+    },
+    immediatelyRender: false // SSR-Fix für TipTap
   });
 
   // Update editor content when prop changes

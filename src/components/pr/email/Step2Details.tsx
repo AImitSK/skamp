@@ -34,19 +34,11 @@ export default function Step2Details({
   validation,
   campaign
 }: Step2DetailsProps) {
-  // Berechne Gesamt-Empfängeranzahl wenn sich Listen oder manuelle Empfänger ändern
+  // Trigger Validierung bei jeder Änderung
   useEffect(() => {
-    // Diese Berechnung würde normalerweise die tatsächlichen Kontakte aus den Listen zählen
-    // Für jetzt nehmen wir an, dass recipientCount bereits korrekt gesetzt ist
-    const manualCount = recipients.manual.length;
-    const totalCount = (recipients.totalCount || 0) + manualCount;
-    const validCount = recipients.manual.filter(r => r.isValid !== false).length + (recipients.validCount || 0);
-    
-    onRecipientsChange({
-      totalCount,
-      validCount
-    });
-  }, [recipients.manual.length, recipients.listIds.length]);
+    // Diese Funktion wird automatisch aufgerufen wenn sich recipients ändern
+    // Die totalCount Berechnung erfolgt bereits im RecipientManager
+  }, [recipients, sender, metadata]);
 
   return (
     <div className="p-6">
@@ -69,9 +61,17 @@ export default function Step2Details({
           <RecipientManager
             selectedListIds={recipients.listIds}
             manualRecipients={recipients.manual}
-            onListsChange={(listIds, listNames) => 
-              onRecipientsChange({ listIds, listNames })
-            }
+            onListsChange={(listIds, listNames, totalFromLists) => {
+              // Berechne die Gesamtzahl korrekt
+              const totalCount = totalFromLists + recipients.manual.length;
+              
+              onRecipientsChange({ 
+                listIds, 
+                listNames,
+                totalCount: totalCount,
+                validCount: totalCount // Für jetzt nehmen wir an, alle sind valide
+              });
+            }}
             onAddManualRecipient={onAddManualRecipient}
             onRemoveManualRecipient={onRemoveManualRecipient}
             recipientCount={recipients.totalCount}

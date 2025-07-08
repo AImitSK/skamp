@@ -65,37 +65,68 @@ function composerReducer(state: EmailComposerState, action: ComposerAction): Ema
       };
 
     case 'UPDATE_RECIPIENTS':
+      // Berechne die neue totalCount korrekt
+      let newTotalCount = state.draft.recipients.totalCount;
+      
+      // Wenn listIds aktualisiert werden, müssen wir die totalCount neu berechnen
+      if (action.recipients.listIds !== undefined || action.recipients.manual !== undefined) {
+        // Anzahl der manuellen Empfänger
+        const manualCount = action.recipients.manual !== undefined 
+          ? action.recipients.manual.length 
+          : state.draft.recipients.manual.length;
+        
+        // Wenn totalCount explizit übergeben wird, nutze diese für Listen-Empfänger
+        // Ansonsten behalte die alte Anzahl
+        const listCount = action.recipients.totalCount !== undefined
+          ? action.recipients.totalCount - state.draft.recipients.manual.length
+          : state.draft.recipients.totalCount - state.draft.recipients.manual.length;
+        
+        newTotalCount = listCount + manualCount;
+      }
+      
       return {
         ...state,
         draft: {
           ...state.draft,
-          recipients: { ...state.draft.recipients, ...action.recipients },
+          recipients: { 
+            ...state.draft.recipients, 
+            ...action.recipients,
+            totalCount: action.recipients.totalCount !== undefined ? action.recipients.totalCount : newTotalCount
+          },
           updatedAt: Timestamp.now(),
           lastModifiedStep: 2
         }
       };
 
     case 'ADD_MANUAL_RECIPIENT':
+      const updatedManualRecipients = [...state.draft.recipients.manual, action.recipient];
+      // Berechne neue totalCount basierend auf Listen-Count + manuelle Empfänger
+      const listCount = state.draft.recipients.listIds.length > 0 ? (state.draft.recipients.totalCount - state.draft.recipients.manual.length) : 0;
       return {
         ...state,
         draft: {
           ...state.draft,
           recipients: {
             ...state.draft.recipients,
-            manual: [...state.draft.recipients.manual, action.recipient]
+            manual: updatedManualRecipients,
+            totalCount: listCount + updatedManualRecipients.length
           },
           updatedAt: Timestamp.now()
         }
       };
 
     case 'REMOVE_MANUAL_RECIPIENT':
+      const filteredManualRecipients = state.draft.recipients.manual.filter(r => r.id !== action.id);
+      // Berechne neue totalCount basierend auf Listen-Count + verbleibende manuelle Empfänger
+      const currentListCount = state.draft.recipients.listIds.length > 0 ? (state.draft.recipients.totalCount - state.draft.recipients.manual.length) : 0;
       return {
         ...state,
         draft: {
           ...state.draft,
           recipients: {
             ...state.draft.recipients,
-            manual: state.draft.recipients.manual.filter(r => r.id !== action.id)
+            manual: filteredManualRecipients,
+            totalCount: currentListCount + filteredManualRecipients.length
           },
           updatedAt: Timestamp.now()
         }
@@ -265,7 +296,7 @@ export default function EmailComposer({ campaign, onClose, onSent }: EmailCompos
       }
     }
     dispatch({ type: 'SET_STEP', step });
-  }, [state.currentStep]);
+  }, [state.currentStep, state.draft]);
 
   // Step-Validierung
   const validateStep = useCallback((step: ComposerStep): StepValidation[`step${ComposerStep}`] => {
@@ -285,7 +316,7 @@ export default function EmailComposer({ campaign, onClose, onSent }: EmailCompos
         const hasRecipients = state.draft.recipients.listIds.length > 0 || 
                              state.draft.recipients.manual.length > 0;
         const hasSender = (state.draft.sender.type === 'contact' && !!state.draft.sender.contactId) ||
-                         (state.draft.sender.type === 'manual' && !!state.draft.sender.manual);
+                         (state.draft.sender.type === 'manual' && !!state.draft.sender.manual?.name && !!state.draft.sender.manual?.email);
         const hasSubject = state.draft.metadata.subject.length >= DEFAULT_COMPOSER_CONFIG.validation.minSubjectLength;
 
         return {
@@ -305,6 +336,18 @@ export default function EmailComposer({ campaign, onClose, onSent }: EmailCompos
         return { isValid: false, errors: {} } as StepValidation['step1'];
     }
   }, [state.draft]);
+
+  // Validierung bei Änderungen triggern
+  useEffect(() => {
+    if (state.currentStep === 2) {
+      const validation = validateStep(2);
+      dispatch({ 
+        type: 'SET_VALIDATION', 
+        step: 2, 
+        validation 
+      });
+    }
+  }, [state.draft.recipients, state.draft.sender, state.draft.metadata, state.currentStep]);
 
   // Auto-Save Logik
   const autoSaveDraft = useCallback(async () => {
@@ -485,7 +528,18 @@ export default function EmailComposer({ campaign, onClose, onSent }: EmailCompos
             
             {state.currentStep < 3 && (
               <button
-                onClick={() => navigateToStep((state.currentStep + 1) as ComposerStep)}
+                onClick={() => {
+                  const validation = validateStep(state.currentStep);
+                  if (validation.isValid) {
+                    navigateToStep((state.currentStep + 1) as ComposerStep);
+                  } else {
+                    dispatch({ 
+                      type: 'SET_VALIDATION', 
+                      step: state.currentStep, 
+                      validation 
+                    });
+                  }
+                }}
                 className="px-4 py-2 bg-[#005fab] text-white rounded-lg hover:bg-[#004a8c]"
               >
                 Weiter

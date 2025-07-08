@@ -21,7 +21,7 @@ import {
 interface RecipientManagerProps {
   selectedListIds: string[];
   manualRecipients: ManualRecipient[];
-  onListsChange: (listIds: string[], listNames: string[]) => void;
+  onListsChange: (listIds: string[], listNames: string[], totalFromLists: number) => void;
   onAddManualRecipient: (recipient: Omit<ManualRecipient, 'id'>) => void;
   onRemoveManualRecipient: (id: string) => void;
   recipientCount: number;
@@ -76,17 +76,20 @@ export default function RecipientManager({
       newSelectedIds = [...selectedListIds, listId];
     }
 
-    const selectedNames = lists
-      .filter(list => newSelectedIds.includes(list.id!))
-      .map(list => list.name);
+    const selectedLists = lists.filter(list => newSelectedIds.includes(list.id!));
+    const selectedNames = selectedLists.map(list => list.name);
+    const totalFromLists = selectedLists.reduce((sum, list) => sum + (list.contactCount || 0), 0);
 
-    onListsChange(newSelectedIds, selectedNames);
+    onListsChange(newSelectedIds, selectedNames, totalFromLists);
   };
 
   // Berechne Gesamt-Empfänger aus Listen
   const listRecipientCount = lists
     .filter(list => selectedListIds.includes(list.id!))
     .reduce((sum, list) => sum + (list.contactCount || 0), 0);
+
+  // Berechne totale Empfänger (Listen + Manuelle)
+  const totalRecipientCount = listRecipientCount + manualRecipients.length;
 
   return (
     <div className="space-y-6">
@@ -229,7 +232,7 @@ export default function RecipientManager({
           </div>
           <div className="flex justify-between pt-2 border-t border-blue-200">
             <dt className="text-blue-700 font-medium">Gesamt:</dt>
-            <dd className="font-bold text-blue-900">{recipientCount} Empfänger</dd>
+            <dd className="font-bold text-blue-900">{totalRecipientCount} Empfänger</dd>
           </div>
         </dl>
       </div>
@@ -303,9 +306,8 @@ function AddRecipientModal({
 
   return (
     <Dialog open={isOpen} onClose={onClose}>
-      <div className="p-6">
-        <DialogTitle>Empfänger hinzufügen</DialogTitle>
-        <DialogBody className="-mx-6 px-6">{/* Negative margin kompensiert das padding */}
+      <DialogTitle className="px-6 pt-6">Empfänger hinzufügen</DialogTitle>
+      <DialogBody className="px-6 pb-2">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -366,7 +368,7 @@ function AddRecipientModal({
           </div>
         </div>
       </DialogBody>
-      <DialogActions>
+      <DialogActions className="px-6 pb-6">
         <Button plain onClick={onClose}>Abbrechen</Button>
         <Button onClick={handleSubmit}>
           <UserPlusIcon />

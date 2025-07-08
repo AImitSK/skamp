@@ -70,10 +70,10 @@ export default function VariablesModal({ isOpen, onClose, onInsert }: VariablesM
 
   return (
     <Dialog open={isOpen} onClose={onClose} size="2xl">
-      <div className="flex h-full flex-col">
-        <DialogTitle>E-Mail Variablen</DialogTitle>
+      <div className="flex h-full flex-col p-6">
+        <DialogTitle className="-mx-6 -mt-6 px-6 py-4 border-b">E-Mail Variablen</DialogTitle>
         
-        <DialogBody className="flex-1 overflow-hidden">
+        <DialogBody className="flex-1 overflow-hidden -mx-6 px-6 py-4">
           <div className="h-full flex flex-col">
             {/* Kategorie-Filter */}
             <div className="mb-4 flex gap-2 pb-4 border-b">
