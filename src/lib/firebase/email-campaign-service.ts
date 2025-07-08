@@ -17,6 +17,13 @@ import {
 import { PRCampaign } from '@/types/pr';
 import { Contact } from '@/types/crm';
 
+// Helper function to get the base URL with fallback
+const getBaseUrl = () => {
+  return process.env.NEXT_PUBLIC_APP_URL || 
+         process.env.NEXT_PUBLIC_BASE_URL || 
+         (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
+};
+
 export const emailCampaignService = {
 
   /**
@@ -141,7 +148,9 @@ export const emailCampaignService = {
             userId: campaign.userId
           });
 
-          mediaShareUrl = `${process.env.NEXT_PUBLIC_APP_URL}/share/${shareLink.shareId}`;
+          // KORRIGIERT: Verwende getBaseUrl() mit Fallback
+          const baseUrl = getBaseUrl();
+          mediaShareUrl = `${baseUrl}/share/${shareLink.shareId}`;
           console.log('✅ Media share link created:', mediaShareUrl);
           
         } catch (error) {

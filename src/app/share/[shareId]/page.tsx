@@ -1,4 +1,4 @@
-// src/app/share/[shareId]/page.tsx - Mit Branding-Integration
+// src/app/share/[shareId]/page.tsx - Mit Campaign-Support
 "use client";
 
 import { useState, useEffect } from "react";
@@ -19,7 +19,8 @@ import {
   PhoneIcon,
   EnvelopeIcon,
   GlobeAltIcon,
-  MapPinIcon
+  MapPinIcon,
+  NewspaperIcon
 } from "@heroicons/react/24/outline";
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
@@ -87,7 +88,11 @@ export default function SharePage() {
       // Lade Inhalte je nach Typ
       if (link.type === 'folder') {
         await loadFolderContent(link.targetId);
+      } else if (link.type === 'campaign') {
+        // NEU: Behandle Campaign-Typ
+        await loadCampaignContent(link);
       } else {
+        // Default: Single file
         await loadFileContent(link.targetId);
       }
 
@@ -99,13 +104,33 @@ export default function SharePage() {
     }
   };
 
+  // NEU: Lade Campaign-Medien
+  const loadCampaignContent = async (shareLink: ShareLink) => {
+    try {
+      console.log('Loading campaign content for shareLink:', shareLink);
+      
+      // Verwende die neue getCampaignMediaAssets Methode
+      const assets = await mediaService.getCampaignMediaAssets(shareLink);
+      
+      console.log('Loaded campaign assets:', assets.length);
+      setMediaItems(assets);
+      
+      if (assets.length === 0) {
+        setError('Keine Medien in dieser Kampagne gefunden.');
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden der Kampagnen-Medien:', error);
+      setError('Kampagnen-Medien konnten nicht geladen werden.');
+    }
+  };
+
   const loadFolderContent = async (folderId: string) => {
     try {
       // Lade Ordner-Info
       const folder = await mediaService.getFolder(folderId);
       setFolderInfo(folder);
 
-      // Lade alle Dateien im Ordner (spezielle Methode ohne userId-Filter)
+      // Lade alle Dateien im Ordner
       const assets = await mediaService.getMediaAssetsInFolder(folderId);
       setMediaItems(assets);
     } catch (error) {
@@ -214,6 +239,13 @@ export default function SharePage() {
     );
   }
 
+  // Bestimme den Content-Typ für die Anzeige
+  const getContentTypeDisplay = () => {
+    if (shareLink?.type === 'folder') return 'Ordner';
+    if (shareLink?.type === 'campaign') return 'Kampagnen-Medien';
+    return 'Datei';
+  };
+
   // Main Content
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -222,15 +254,20 @@ export default function SharePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <Heading level={1} className="text-2xl font-bold text-gray-900">
-                {shareLink?.title}
-              </Heading>
+              <div className="flex items-center gap-2 mb-2">
+                {shareLink?.type === 'campaign' && (
+                  <NewspaperIcon className="h-6 w-6 text-[#005fab]" />
+                )}
+                <Heading level={1} className="text-2xl font-bold text-gray-900">
+                  {shareLink?.title}
+                </Heading>
+              </div>
               {shareLink?.description && (
                 <Text className="mt-1 text-gray-600">{shareLink.description}</Text>
               )}
               <div className="mt-2 flex items-center text-sm text-gray-500">
                 <span>
-                  {shareLink?.type === 'folder' ? 'Ordner' : 'Datei'} • {mediaItems.length} {mediaItems.length === 1 ? 'Element' : 'Elemente'}
+                  {getContentTypeDisplay()} • {mediaItems.length} {mediaItems.length === 1 ? 'Element' : 'Elemente'}
                 </span>
               </div>
             </div>
@@ -262,7 +299,9 @@ export default function SharePage() {
               <PhotoIcon className="mx-auto h-16 w-16 text-gray-400" />
               <Heading level={3} className="mt-4 text-lg text-gray-900">Keine Inhalte</Heading>
               <Text className="text-gray-600 mt-2">
-                {shareLink?.type === 'folder' ? 'Dieser Ordner ist leer.' : 'Inhalt nicht verfügbar.'}
+                {shareLink?.type === 'folder' ? 'Dieser Ordner ist leer.' : 
+                 shareLink?.type === 'campaign' ? 'Diese Kampagne enthält keine Medien.' :
+                 'Inhalt nicht verfügbar.'}
               </Text>
             </div>
           ) : (
@@ -297,7 +336,7 @@ export default function SharePage() {
                         {asset.fileType.split('/')[1]?.toUpperCase() || 'FILE'}
                       </p>
                       
-                      {/* Actions - Besseres Layout */}
+                      {/* Actions */}
                       <div className="space-y-2">
                         <Link href={asset.downloadUrl} target="_blank" className="block">
                           <Button plain className="w-full text-xs py-2">

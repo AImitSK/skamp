@@ -24,7 +24,7 @@ import { nanoid } from 'nanoid';
 // ✅ ZENTRALER ORT FÜR DIE BASIS-URL MIT FALLBACK
 const getBaseUrl = () => {
   // Diese Funktion liest die Variable aus. Wenn sie nicht da ist, wird ein Standardwert verwendet.
-  return process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 };
 
 

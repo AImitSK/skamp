@@ -1,4 +1,4 @@
-// src/lib/firebase/media-service.ts - Mit CORS-Fix, automatischer Firma-Vererbung und erweiterten Share-Links
+// src/lib/firebase/media-service.ts - Vollständige korrigierte Version
 import {
   collection,
   doc,
@@ -19,18 +19,17 @@ import {
   deleteObject,
 } from 'firebase/storage';
 import { db, storage } from './client-init';
-// NEU: ShareLinkType importiert, um die neue Funktion zu unterstützen
 import { MediaAsset, MediaFolder, FolderBreadcrumb, ShareLink, ShareLinkType } from '@/types/media';
 
-// 🆕 Import der Folder-Utils für Firma-Vererbung
+// Import der Folder-Utils für Firma-Vererbung
 import { getRootFolderClientId } from '@/lib/utils/folder-utils';
 
-// 🚫 CORS-FIX: Optimierte Asset-Validation mit verbesserter CORS-Behandlung
+// CORS-FIX: Optimierte Asset-Validation mit verbesserter CORS-Behandlung
 async function validateAssetUrl(url: string, timeout = 3000): Promise<boolean> {
   try {
     console.log(`🔍 Validating asset URL: ${url}`);
     
-    // 🆕 Für Firebase Storage URLs: Grundvalidierung ohne fetch()
+    // Für Firebase Storage URLs: Grundvalidierung ohne fetch()
     if (url.includes('firebasestorage.googleapis.com')) {
       const hasValidStructure = url.includes('/o/') && url.includes('alt=media') && url.includes('token=');
       if (hasValidStructure) {
@@ -78,7 +77,6 @@ async function validateAssetUrl(url: string, timeout = 3000): Promise<boolean> {
 export const mediaService = {
   // === SHARE LINK OPERATIONS ===
   
-  // ERWEITERT: createShareLink akzeptiert jetzt assetIds und folderIds für Kampagnen
   async createShareLink(data: {
     targetId: string;
     type: ShareLinkType;
@@ -90,8 +88,8 @@ export const mediaService = {
       passwordRequired: string | null;
       watermarkEnabled: boolean;
     };
-    assetIds?: string[];  // NEU
-    folderIds?: string[]; // NEU
+    assetIds?: string[];  // Optional für Campaign-Support
+    folderIds?: string[]; // Optional für Campaign-Support
     userId: string;
   }): Promise<ShareLink> {
     try {
@@ -99,30 +97,47 @@ export const mediaService = {
         ? crypto.randomUUID().replace(/-/g, '').substring(0, 12)
         : Math.random().toString(36).substring(2, 14);
         
-const shareLink: Omit<ShareLink, 'id'> = {
-  shareId,
-  userId: data.userId,
-  targetId: data.targetId,
-  type: data.type,
-  title: data.title,
-  description: data.description,
-  settings: data.settings,
-  assetIds: data.assetIds,
-  folderIds: data.folderIds,
-  active: true,
-  accessCount: 0,
-  createdAt: serverTimestamp() as any,
-  updatedAt: serverTimestamp() as any
-  // ✅ Die Zeile für 'lastAccessedAt' wurde komplett entfernt.
-};
+      // Basis-Objekt mit nur den Pflichtfeldern
+      const shareLink: any = {
+        shareId,
+        userId: data.userId,
+        targetId: data.targetId,
+        type: data.type,
+        title: data.title,
+        settings: data.settings,
+        active: true,
+        accessCount: 0,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+
+      // Nur definierte Werte hinzufügen
+      if (data.description !== undefined && data.description !== null) {
+        shareLink.description = data.description;
+      }
+
+      // Nur hinzufügen wenn vorhanden (für Campaign-Support)
+      if (data.assetIds && data.assetIds.length > 0) {
+        shareLink.assetIds = data.assetIds;
+      }
+      if (data.folderIds && data.folderIds.length > 0) {
+        shareLink.folderIds = data.folderIds;
+      }
       
-      // Beachte: Der Collection-Name 'media_shares' aus der Originaldatei wird beibehalten.
+      console.log('Creating share link:', shareLink);
+      
       const docRef = await addDoc(collection(db, 'media_shares'), shareLink);
       
-      return {
+      const createdShareLink = {
         id: docRef.id,
         ...shareLink,
+        createdAt: shareLink.createdAt,
+        updatedAt: shareLink.updatedAt
       } as ShareLink;
+
+      console.log('Share link created successfully:', createdShareLink);
+      
+      return createdShareLink;
 
     } catch (error) {
       console.error("Fehler beim Erstellen des Share-Links:", error);
@@ -130,34 +145,52 @@ const shareLink: Omit<ShareLink, 'id'> = {
     }
   },
 
-  // NEU: Methode zum Laden von Campaign-Medien basierend auf einem ShareLink
+  // Methode zum Laden von Campaign-Medien basierend auf einem ShareLink
   async getCampaignMediaAssets(shareLink: ShareLink): Promise<MediaAsset[]> {
-    const allAssets: MediaAsset[] = [];
-    
-    // Lade direkte Assets
-    if (shareLink.assetIds && shareLink.assetIds.length > 0) {
-      const assetPromises = shareLink.assetIds.map(id => this.getMediaAssetById(id));
-      const assets = await Promise.all(assetPromises);
-      allAssets.push(...assets.filter(a => a !== null) as MediaAsset[]);
-    }
-    
-    // Lade Assets aus Folders
-    if (shareLink.folderIds && shareLink.folderIds.length > 0) {
-      for (const folderId of shareLink.folderIds) {
-        const folderAssets = await this.getMediaAssetsInFolder(folderId);
-        allAssets.push(...folderAssets);
+    try {
+      console.log('Loading campaign media assets for shareLink:', shareLink);
+      const allAssets: MediaAsset[] = [];
+      
+      // Lade direkte Assets
+      if (shareLink.assetIds && shareLink.assetIds.length > 0) {
+        console.log('Loading direct assets:', shareLink.assetIds.length);
+        const assetPromises = shareLink.assetIds.map(id => this.getMediaAssetById(id));
+        const assets = await Promise.all(assetPromises);
+        const validAssets = assets.filter(a => a !== null) as MediaAsset[];
+        console.log('Loaded direct assets:', validAssets.length);
+        allAssets.push(...validAssets);
       }
-    }
-    
-    // Deduplizierung (falls ein Asset direkt und in einem Ordner verlinkt ist)
-    const uniqueAssets = new Map<string, MediaAsset>();
-    allAssets.forEach(asset => {
-      if (asset.id) {
-        uniqueAssets.set(asset.id, asset);
+      
+      // Lade Assets aus Folders
+      if (shareLink.folderIds && shareLink.folderIds.length > 0) {
+        console.log('Loading folder assets from folders:', shareLink.folderIds.length);
+        for (const folderId of shareLink.folderIds) {
+          try {
+            const folderAssets = await this.getMediaAssetsInFolder(folderId);
+            console.log(`Loaded ${folderAssets.length} assets from folder ${folderId}`);
+            allAssets.push(...folderAssets);
+          } catch (error) {
+            console.error(`Error loading assets from folder ${folderId}:`, error);
+          }
+        }
       }
-    });
-    
-    return Array.from(uniqueAssets.values());
+      
+      // Deduplizierung (falls ein Asset direkt und in einem Ordner verlinkt ist)
+      const uniqueAssets = new Map<string, MediaAsset>();
+      allAssets.forEach(asset => {
+        if (asset.id) {
+          uniqueAssets.set(asset.id, asset);
+        }
+      });
+      
+      const finalAssets = Array.from(uniqueAssets.values());
+      console.log('Total unique campaign assets:', finalAssets.length);
+      
+      return finalAssets;
+    } catch (error) {
+      console.error('Error loading campaign media assets:', error);
+      throw error;
+    }
   },
 
   async getShareLinks(userId: string): Promise<ShareLink[]> {
@@ -183,7 +216,7 @@ const shareLink: Omit<ShareLink, 'id'> = {
       const q = query(
         collection(db, 'media_shares'),
         where('shareId', '==', shareId),
-        where('active', '==', true) // 'isActive' zu 'active' geändert gemäß Typdefinition
+        where('active', '==', true)
       );
       const snapshot = await getDocs(q);
       
@@ -220,7 +253,7 @@ const shareLink: Omit<ShareLink, 'id'> = {
     try {
       const docRef = doc(db, 'media_shares', shareLinkId);
       await updateDoc(docRef, {
-        active: false, // 'isActive' zu 'active'
+        active: false,
       });
     } catch (error) {
       console.error("Fehler beim Deaktivieren des Share-Links:", error);
@@ -238,7 +271,6 @@ const shareLink: Omit<ShareLink, 'id'> = {
     }
   },
 
-  // ... (restliche Methoden bleiben unverändert) ...
   // === FOLDER OPERATIONS ===
   
   async createFolder(folder: Omit<MediaFolder, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
@@ -316,7 +348,6 @@ const shareLink: Omit<ShareLink, 'id'> = {
     }
   },
 
-  // 🆕 NEUE METHODE: Rekursive Firma-Vererbung für Ordner-Inhalte
   async updateFolderClientInheritance(folderId: string, userId: string): Promise<void> {
     try {
       console.log(`🔄 Updating client inheritance for folder ${folderId}`);
@@ -490,9 +521,8 @@ const shareLink: Omit<ShareLink, 'id'> = {
     }
   },
 
-  // === MEDIA OPERATIONS (erweitert mit CORS-Fix und automatischer Firma-Vererbung) ===
+  // === MEDIA OPERATIONS ===
 
-  // 🔧 VERBESSERTES Asset-Upload mit automatischer CORS-Behandlung
   async uploadMedia(
     file: File,
     userId: string,
@@ -574,7 +604,7 @@ const shareLink: Omit<ShareLink, 'id'> = {
               
               const finalAsset = { id: docRef.id, ...assetData };
               
-              // 🆕 Sofortige Validation des neuen Assets
+              // Sofortige Validation des neuen Assets
               try {
                 const isValid = await validateAssetUrl(downloadUrl);
                 if (!isValid) {
@@ -647,7 +677,6 @@ const shareLink: Omit<ShareLink, 'id'> = {
     }
   },
 
-  // 🔧 FIXED: Verschiebt eine Datei UND passt automatisch die Firma-Vererbung an
   async moveAssetToFolder(assetId: string, newFolderId?: string, userId?: string): Promise<void> {
     try {
       console.log(`🔄 Moving asset ${assetId} to folder ${newFolderId || 'ROOT'}`);
@@ -663,7 +692,7 @@ const shareLink: Omit<ShareLink, 'id'> = {
         updateData.folderId = null;
       }
       
-      // 2. 🆕 AUTOMATISCHE FIRMA-VERERBUNG
+      // 2. AUTOMATISCHE FIRMA-VERERBUNG
       if (newFolderId && userId) {
         try {
           console.log('🏢 Calculating client inheritance...');
@@ -767,9 +796,8 @@ const shareLink: Omit<ShareLink, 'id'> = {
     }
   },
 
-  // === CLIENT/CUSTOMER MEDIA OPERATIONS (mit verbesserter Asset-Validation) ===
+  // === CLIENT/CUSTOMER MEDIA OPERATIONS ===
 
-  // 🆕 NEUE METHODE: Entfernt ein spezifisches defektes Asset
   async removeInvalidAsset(assetId: string, reason = 'Invalid asset detected'): Promise<void> {
     try {
       console.log(`🗑️ Removing invalid asset: ${assetId} (${reason})`);
@@ -803,7 +831,6 @@ const shareLink: Omit<ShareLink, 'id'> = {
     }
   },
 
-  // 🆕 NEUE METHODE: Batch-Bereinigung aller defekten Assets für einen Client
   async cleanupInvalidClientAssets(userId: string, clientId: string): Promise<{removed: number, errors: string[]}> {
     try {
       console.log(`🧹 Starting cleanup of invalid assets for client: ${clientId}`);
@@ -878,7 +905,6 @@ const shareLink: Omit<ShareLink, 'id'> = {
     }
   },
 
-  // 🆕 NEUE METHODE: Bereinigt defekte Assets automatisch
   async cleanupInvalidAssets(userId: string, assets: MediaAsset[]): Promise<MediaAsset[]> {
     try {
       console.log(`🧹 Starting cleanup of ${assets.length} assets...`);
@@ -959,7 +985,6 @@ const shareLink: Omit<ShareLink, 'id'> = {
     }
   },
 
-  // 🔧 VERBESSERTE getMediaByClientId mit optionaler Bereinigung defekter Assets
   async getMediaByClientId(userId: string, clientId: string, cleanupInvalid = false): Promise<{folders: MediaFolder[], assets: MediaAsset[], totalCount: number}> {
     try {
       console.log('🔍 DEBUG: Loading media for client:', clientId, '(User:', userId, ')');
@@ -1010,7 +1035,7 @@ const shareLink: Omit<ShareLink, 'id'> = {
       const allAssets = [...directAssets, ...folderAssets];
       console.log('📊 Total assets before validation:', allAssets.length);
 
-      // 5. 🆕 DEDUPLIZIERUNG: Entferne Duplikate basierend auf fileName
+      // 5. DEDUPLIZIERUNG: Entferne Duplikate basierend auf fileName
       const seenFileNames = new Set<string>();
       const deduplicatedAssets = allAssets.filter(asset => {
         if (seenFileNames.has(asset.fileName)) {
@@ -1023,7 +1048,7 @@ const shareLink: Omit<ShareLink, 'id'> = {
       
       console.log(`📊 After deduplication: ${deduplicatedAssets.length} unique assets`);
 
-      // 6. 🆕 EINFACHE Asset-Validation (nur downloadUrl-Check)
+      // 6. EINFACHE Asset-Validation (nur downloadUrl-Check)
       const validAssets = deduplicatedAssets.filter(asset => {
         if (!asset.downloadUrl) {
           console.warn(`❌ Asset ${asset.fileName} (${asset.id}) has no downloadUrl - removing`);
@@ -1032,7 +1057,7 @@ const shareLink: Omit<ShareLink, 'id'> = {
         return true;
       });
       
-      // 7. 🆕 OPTIONALE BEREINIGUNG: Entferne tatsächlich defekte Assets
+      // 7. OPTIONALE BEREINIGUNG: Entferne tatsächlich defekte Assets
       let finalAssets = validAssets;
       if (cleanupInvalid && validAssets.length <= 20) {
         console.log('🧹 Running deep cleanup for invalid assets...');
@@ -1095,7 +1120,6 @@ const shareLink: Omit<ShareLink, 'id'> = {
     }
   },
 
-  // 🆕 CONVENIENCE METHODE: Schnelle Bereinigung für ein bekanntes defektes Asset
   async quickCleanupAsset(assetId: string): Promise<boolean> {
     try {
       await this.removeInvalidAsset(assetId, 'Manual cleanup requested');
