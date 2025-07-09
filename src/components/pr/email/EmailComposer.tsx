@@ -346,17 +346,9 @@ export default function EmailComposer({ campaign, onClose, onSent }: EmailCompos
     }
   }, [state.draft]);
 
-  // Validierung bei Änderungen triggern
-  useEffect(() => {
-    if (state.currentStep === 2) {
-      const validation = validateStep(2);
-      dispatch({ 
-        type: 'SET_VALIDATION', 
-        step: 2, 
-        validation 
-      });
-    }
-  }, [state.draft.recipients, state.draft.sender, state.draft.metadata, state.currentStep]);
+  // ENTFERNT: Automatische Validierung bei Step 2
+  // Der folgende useEffect wurde entfernt, da er die Validierung
+  // automatisch beim Laden von Step 2 auslöste
 
   // ANGEPASST: Auto-Save Logik mit direktem emailComposerService
   const autoSaveDraft = useCallback(async () => {

@@ -153,16 +153,14 @@ export const emailComposerService = {
       ].filter(Boolean).join('\n');
     }
 
-    // Parse den HTML-Content um die Sektionen zu extrahieren
-    const { greeting, introduction, closing } = this.extractSectionsFromHtml(draft.content.body);
-
-    // Erstelle das finale Email-Objekt
+    // WICHTIG: Verwende den HTML-Content direkt, ohne die Formatierung zu zerstören
+    // Die introduction ist der gesamte HTML-Body aus dem Editor
     const emailContent: PRCampaignEmail = {
       subject: draft.metadata.subject,
-      greeting: greeting || 'Sehr geehrte Damen und Herren,',
-      introduction: introduction || draft.content.body,
+      greeting: '', // Wird im Email-Service aus dem HTML extrahiert
+      introduction: draft.content.body, // Behalte das komplette HTML
       pressReleaseHtml: campaign.contentHtml || '<p>[Pressemitteilung]</p>',
-      closing: closing || 'Mit freundlichen Grüßen',
+      closing: '', // Wird im Email-Service aus dem HTML extrahiert
       signature: senderSignature
     };
 
@@ -330,42 +328,37 @@ export const emailComposerService = {
   },
 
   /**
-   * Helper: Sektionen aus HTML extrahieren
+   * Helper: HTML für E-Mail vorbereiten
+   * Fügt CSS-Inline-Styles hinzu für bessere E-Mail-Client-Kompatibilität
    */
-  extractSectionsFromHtml(html: string): {
-    greeting?: string;
-    introduction?: string;
-    closing?: string;
-  } {
-    // Dies ist eine vereinfachte Implementierung
-    // In der Praxis würde man einen HTML-Parser verwenden
+  prepareHtmlForEmail(html: string): string {
+    // Ersetze Standard-Tags mit inline-styles für E-Mail-Kompatibilität
+    let emailHtml = html;
 
-    const lines = html
-      .replace(/<[^>]*>/g, '\n')
-      .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0);
-
-    if (lines.length === 0) {
-      return {};
-    }
-
-    // Annahme: Erste Zeile ist Begrüßung
-    const greeting = lines[0];
+    // Paragraphen
+    emailHtml = emailHtml.replace(/<p>/g, '<p style="margin: 0 0 1em 0; line-height: 1.6;">');
     
-    // Letzte Zeile ist Schlussformel
-    const closing = lines.length > 2 ? lines[lines.length - 1] : undefined;
+    // Überschriften
+    emailHtml = emailHtml.replace(/<h1>/g, '<h1 style="margin: 0 0 0.5em 0; font-size: 24px; font-weight: bold;">');
+    emailHtml = emailHtml.replace(/<h2>/g, '<h2 style="margin: 0 0 0.5em 0; font-size: 20px; font-weight: bold;">');
+    emailHtml = emailHtml.replace(/<h3>/g, '<h3 style="margin: 0 0 0.5em 0; font-size: 18px; font-weight: bold;">');
     
-    // Alles dazwischen ist Einleitung
-    const introduction = lines.length > 2 
-      ? lines.slice(1, -1).join('\n')
-      : lines.slice(1).join('\n');
+    // Listen
+    emailHtml = emailHtml.replace(/<ul>/g, '<ul style="margin: 0 0 1em 0; padding-left: 20px;">');
+    emailHtml = emailHtml.replace(/<ol>/g, '<ol style="margin: 0 0 1em 0; padding-left: 20px;">');
+    emailHtml = emailHtml.replace(/<li>/g, '<li style="margin: 0 0 0.5em 0;">');
+    
+    // Links
+    emailHtml = emailHtml.replace(/<a /g, '<a style="color: #005fab; text-decoration: underline;" ');
+    
+    // Blockquotes
+    emailHtml = emailHtml.replace(/<blockquote>/g, '<blockquote style="margin: 0 0 1em 0; padding-left: 20px; border-left: 3px solid #ccc;">');
 
-    return {
-      greeting,
-      introduction,
-      closing
-    };
+    // Zeilenumbrüche
+    emailHtml = emailHtml.replace(/<br>/g, '<br />');
+    emailHtml = emailHtml.replace(/<br\/>/g, '<br />');
+
+    return emailHtml;
   },
 
   /**

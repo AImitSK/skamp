@@ -7,6 +7,7 @@ import { EmailDraft, StepValidation } from '@/types/email-composer';
 import { Input } from '@/components/input';
 import { Button } from '@/components/button';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/dialog';
+import { InfoTooltip } from '@/components/InfoTooltip';
 import { emailService } from '@/lib/email/email-service';
 import { emailComposerService } from '@/lib/email/email-composer-service';
 import { emailCampaignService } from '@/lib/firebase/email-campaign-service';
@@ -234,10 +235,10 @@ export default function Step3Preview({
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-2">Vorschau & Versand</h3>
-          <p className="text-sm text-gray-600">
-            Überprüfen Sie Ihre E-Mail und senden Sie sie an {totalRecipients} Empfänger.
-          </p>
+          <div className="flex items-center gap-2">
+            <h3 className="text-lg font-semibold">Vorschau & Versand</h3>
+            <InfoTooltip content={`Überprüfen Sie Ihre E-Mail und senden Sie sie an ${totalRecipients} Empfänger`} />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

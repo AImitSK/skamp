@@ -1,10 +1,11 @@
 // src/components/pr/email/Step2Details.tsx
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { PRCampaign } from '@/types/pr';
 import { EmailDraft, ManualRecipient, SenderInfo, StepValidation } from '@/types/email-composer';
 import { Input } from '@/components/input';
+import { InfoTooltip } from '@/components/InfoTooltip';
 import { EnvelopeIcon, UserIcon, DocumentTextIcon } from '@heroicons/react/20/solid';
 import RecipientManager from '@/components/pr/email/RecipientManager';
 import SenderSelector from '@/components/pr/email/SenderSelector';
@@ -34,22 +35,56 @@ export default function Step2Details({
   validation,
   campaign
 }: Step2DetailsProps) {
-  // Trigger Validierung bei jeder Änderung
+  // Verwende useRef um zu tracken, ob wir bereits initialisiert haben
+  const hasInitialized = useRef(false);
+
+  // Vorauswahl der Kampagnen-Verteilerlisten beim ersten Laden
   useEffect(() => {
-    // Diese Funktion wird automatisch aufgerufen wenn sich recipients ändern
-    // Die totalCount Berechnung erfolgt bereits im RecipientManager
-  }, [recipients, sender, metadata]);
+    // Nur einmal beim ersten Laden ausführen und nur wenn keine Listen ausgewählt sind
+    if (!hasInitialized.current && recipients.listIds.length === 0) {
+      hasInitialized.current = true;
+      
+      // Prüfe ob die Kampagne Verteilerlisten hat
+      if (campaign.distributionListIds && campaign.distributionListIds.length > 0) {
+        console.log('📋 Vorauswahl der Kampagnen-Verteilerlisten:', campaign.distributionListIds);
+        
+        // Setze die Kampagnen-Verteilerlisten als vorausgewählt
+        onRecipientsChange({
+          listIds: campaign.distributionListIds,
+          listNames: campaign.distributionListNames || [],
+          totalCount: campaign.recipientCount || 0,
+          validCount: campaign.recipientCount || 0
+        });
+      }
+    }
+  }, [campaign, recipients.listIds.length, onRecipientsChange]);
 
   return (
     <div className="p-6">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
         <div>
-          <h3 className="text-lg font-semibold mb-2">Versand-Details festlegen</h3>
-          <p className="text-sm text-gray-600">
-            Wählen Sie die Empfänger aus Ihren Verteilerlisten und legen Sie den Absender fest.
-          </p>
+          <div className="flex items-center gap-2">
+            <h3 className="text-lg font-semibold">Versand-Details festlegen</h3>
+            <InfoTooltip content="Wählen Sie die Empfänger aus Ihren Verteilerlisten und legen Sie den Absender fest." />
+          </div>
         </div>
+
+        {/* Info-Box wenn Kampagnen-Listen vorausgewählt wurden */}
+        {campaign.distributionListIds && campaign.distributionListIds.length > 0 && (
+          <div className="bg-blue-50 rounded-lg p-4 flex items-start gap-3">
+            <svg className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div className="text-sm text-blue-900">
+              <p className="font-medium mb-1">Kampagnen-Verteilerlisten</p>
+              <p className="text-blue-800">
+                Die für diese Kampagne definierten Verteilerlisten wurden automatisch vorausgewählt. 
+                Sie können die Auswahl bei Bedarf anpassen.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Empfänger-Verwaltung */}
         <div className="border rounded-lg p-6">

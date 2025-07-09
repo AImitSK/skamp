@@ -6,6 +6,7 @@ import { PRCampaign } from '@/types/pr';
 import { EmailDraft, StepValidation, DEFAULT_COMPOSER_CONFIG } from '@/types/email-composer';
 import EmailEditor from '@/components/pr/email/EmailEditor';
 import VariablesModal from '@/components/pr/email/VariablesModal';
+import { InfoTooltip } from '@/components/InfoTooltip';
 import { InformationCircleIcon } from '@heroicons/react/20/solid';
 
 interface Step1ContentProps {
@@ -65,11 +66,10 @@ export default function Step1Content({
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-2">Anschreiben verfassen</h3>
-          <p className="text-sm text-gray-600">
-            Verfassen Sie Ihre E-Mail mit persönlicher Ansprache. Die Pressemitteilung wird automatisch 
-            aus der Kampagne übernommen und unterhalb Ihres Textes eingefügt.
-          </p>
+          <div className="flex items-center gap-2">
+            <h3 className="text-lg font-semibold">Anschreiben verfassen</h3>
+            <InfoTooltip content="Verfassen Sie Ihre E-Mail mit persönlicher Ansprache. Die Pressemitteilung wird automatisch aus der Kampagne übernommen und unterhalb Ihres Textes eingefügt." />
+          </div>
         </div>
 
         {/* Info-Box für Struktur */}
