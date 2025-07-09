@@ -39,11 +39,46 @@ export default function VariablesModal({ isOpen, onClose, onInsert }: VariablesM
 
   const handleCopy = async (variable: string) => {
     try {
-      await navigator.clipboard.writeText(variable);
+      // Moderne Clipboard API mit Fallback
+      if (navigator.clipboard && window.isSecureContext) {
+        // Moderne API (funktioniert in HTTPS/localhost)
+        await navigator.clipboard.writeText(variable);
+      } else {
+        // Fallback für HTTP oder ältere Browser
+        const textArea = document.createElement("textarea");
+        textArea.value = variable;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        textArea.style.top = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+          const successful = document.execCommand('copy');
+          if (!successful) {
+            throw new Error('Copy command failed');
+          }
+        } catch (err) {
+          console.error('Fallback copy failed:', err);
+          // Als letzter Ausweg: Zeige die Variable in einem Alert
+          alert(`Bitte kopieren Sie manuell: ${variable}`);
+          return;
+        } finally {
+          textArea.remove();
+        }
+      }
+
+      // Visuelles Feedback
       setCopiedVariable(variable);
+      console.log(`Variable ${variable} erfolgreich kopiert`);
+      
+      // Reset nach 2 Sekunden
       setTimeout(() => setCopiedVariable(null), 2000);
     } catch (error) {
       console.error('Fehler beim Kopieren:', error);
+      // Fallback: Zeige die Variable zum manuellen Kopieren
+      alert(`Bitte kopieren Sie manuell: ${variable}`);
     }
   };
 
@@ -124,7 +159,8 @@ export default function VariablesModal({ isOpen, onClose, onInsert }: VariablesM
                         {variables.map((variable) => (
                           <div
                             key={variable.key}
-                            className="group relative rounded-lg border bg-white p-4 hover:shadow-md transition-shadow"
+                            className="group relative rounded-lg border bg-white p-4 hover:shadow-md transition-shadow cursor-pointer"
+                            onClick={() => handleInsert(variable.key)}
                           >
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
@@ -155,8 +191,7 @@ export default function VariablesModal({ isOpen, onClose, onInsert }: VariablesM
                               </div>
                               
                               <div className="flex items-center gap-2 ml-4">
-                                <button
-                                  onClick={() => handleInsert(variable.key)}
+                                <div
                                   className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                                   title={onInsert ? "Variable einfügen" : "Variable kopieren"}
                                 >
@@ -165,7 +200,7 @@ export default function VariablesModal({ isOpen, onClose, onInsert }: VariablesM
                                   ) : (
                                     <ClipboardDocumentIcon className="h-5 w-5" />
                                   )}
-                                </button>
+                                </div>
                               </div>
                             </div>
                           </div>

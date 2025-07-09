@@ -484,19 +484,10 @@ export default function EmailComposer({ campaign, onClose, onSent }: EmailCompos
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header mit Progress */}
+      {/* Header mit Progress - OHNE Close Button */}
       <div className="border-b px-6 py-4">
-        <div className="flex items-center justify-between mb-4">
+        <div className="mb-4">
           <h2 className="text-2xl font-semibold">E-Mail-Versand: {campaign.title}</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            <span className="sr-only">Schließen</span>
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
         </div>
         
         <StepIndicator

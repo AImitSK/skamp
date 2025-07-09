@@ -22,6 +22,7 @@ export default function Step1Content({
   campaign 
 }: Step1ContentProps) {
   const [showVariablesModal, setShowVariablesModal] = useState(false);
+  const [variablesModalMode, setVariablesModalMode] = useState<'insert' | 'copy'>('insert');
   const [characterCount, setCharacterCount] = useState(0);
 
   // Berechne Zeichenanzahl ohne HTML-Tags
@@ -41,6 +42,18 @@ export default function Step1Content({
     if ((window as any).emailEditorInsertVariable) {
       (window as any).emailEditorInsertVariable(variable);
     }
+  }, []);
+
+  // Öffne Modal im Insert-Modus (vom Editor)
+  const openVariablesForInsert = useCallback(() => {
+    setVariablesModalMode('insert');
+    setShowVariablesModal(true);
+  }, []);
+
+  // Öffne Modal im Copy-Modus (vom Button)
+  const openVariablesForCopy = useCallback(() => {
+    setVariablesModalMode('copy');
+    setShowVariablesModal(true);
   }, []);
 
   // Fortschritts-Indikator für Mindestlänge
@@ -84,7 +97,7 @@ ich freue mich, Ihnen unsere neueste Pressemitteilung zukommen zu lassen...
 
 Mit freundlichen Grüßen
 {{senderName}}"
-            onOpenVariables={() => setShowVariablesModal(true)}
+            onOpenVariables={openVariablesForInsert}
             error={validation.errors.body}
           />
           
@@ -116,8 +129,9 @@ Mit freundlichen Grüßen
             </div>
             
             <button 
-              onClick={() => setShowVariablesModal(true)}
+              onClick={openVariablesForCopy}
               className="text-sm text-[#005fab] hover:text-[#004a8c] flex items-center gap-2"
+              title="Variablen zum Kopieren anzeigen"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
@@ -170,7 +184,7 @@ Mit freundlichen Grüßen
       <VariablesModal
         isOpen={showVariablesModal}
         onClose={() => setShowVariablesModal(false)}
-        onInsert={handleInsertVariable}
+        onInsert={variablesModalMode === 'insert' ? handleInsertVariable : undefined}
       />
     </div>
   );
