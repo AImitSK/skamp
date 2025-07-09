@@ -1,9 +1,10 @@
-// src/lib/email/email-service.ts - ERWEITERT
+// src/lib/email/email-service.ts - UPDATED WITH FIREBASE AUTH
 import { PRCampaignEmail } from '@/types/email';
 import { PRCampaign } from '@/types/pr';
 import { Contact } from '@/types/crm';
 import { EmailDraft, TestEmailRequest, SendTestEmailResponse } from '@/types/email-composer';
 import { Timestamp } from 'firebase/firestore';
+import { apiClient } from '@/lib/api/api-client';
 
 export interface EmailSendResult {
   success: boolean;
@@ -99,26 +100,13 @@ export class EmailService {
       throw new Error('Keine Kontakte mit E-Mail-Adressen gefunden');
     }
 
-    // API Route aufrufen
-    const response = await fetch('/api/sendgrid/send-pr-campaign', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        recipients,
-        campaignEmail: emailContent,
-        senderInfo,
-        mediaShareUrl
-      }),
+    // API Route mit authenticated fetch aufrufen
+    return await apiClient.post<EmailSendResult>('/api/sendgrid/send-pr-campaign', {
+      recipients,
+      campaignEmail: emailContent,
+      senderInfo,
+      mediaShareUrl
     });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'E-Mail-Versand fehlgeschlagen');
-    }
-
-    return await response.json();
   }
 
   /**
@@ -147,48 +135,21 @@ export class EmailService {
       // Erstelle Email-Content aus dem Draft
       const emailContent = this.createEmailContent(request.draft, request.campaignId);
 
-      // Generiere Vorschau
-      const preview = this.generatePreview(testContact, emailContent, senderInfo);
-
-      // Sende über API Route
-      const response = await fetch('/api/email/test', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      // Sende über API Route mit authenticated fetch
+      const result = await apiClient.post<SendTestEmailResponse>('/api/email/test', {
+        recipient: {
+          email: request.recipientEmail,
+          name: testContact.firstName + ' ' + testContact.lastName,
+          firstName: testContact.firstName,
+          lastName: testContact.lastName,
+          companyName: testContact.companyName
         },
-        body: JSON.stringify({
-          recipient: {
-            email: request.recipientEmail,
-            name: testContact.firstName + ' ' + testContact.lastName,
-            firstName: testContact.firstName,
-            lastName: testContact.lastName,
-            companyName: testContact.companyName
-          },
-          campaignEmail: emailContent,
-          senderInfo,
-          testMode: true
-        }),
+        campaignEmail: emailContent,
+        senderInfo,
+        testMode: true
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        return {
-          success: false,
-          error: error.error || 'Test-Email konnte nicht gesendet werden'
-        };
-      }
-
-      const result = await response.json();
-
-      return {
-        success: true,
-        messageId: result.messageId,
-        preview: {
-          html: preview.html,
-          text: preview.text,
-          subject: preview.subject
-        }
-      };
+      return result;
 
     } catch (error) {
       console.error('❌ Error sending test email:', error);
@@ -312,37 +273,16 @@ export class EmailService {
         };
       }
 
-      // API Route aufrufen
-      const response = await fetch('/api/email/schedule', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          campaignId: request.campaign.id,
-          emailContent: request.emailContent,
-          senderInfo: request.senderInfo,
-          scheduledDate: request.scheduledDate.toISOString(),
-          timezone: request.timezone || 'Europe/Berlin'
-        }),
+      // API Route mit authenticated fetch aufrufen
+      const result = await apiClient.post<ScheduleEmailResult>('/api/email/schedule', {
+        campaignId: request.campaign.id,
+        emailContent: request.emailContent,
+        senderInfo: request.senderInfo,
+        scheduledDate: request.scheduledDate.toISOString(),
+        timezone: request.timezone || 'Europe/Berlin'
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        return {
-          success: false,
-          scheduledFor: request.scheduledDate,
-          error: error.error || 'Planung fehlgeschlagen'
-        };
-      }
-
-      const result = await response.json();
-
-      return {
-        success: true,
-        jobId: result.jobId,
-        scheduledFor: new Date(result.scheduledFor)
-      };
+      return result;
 
     } catch (error) {
       console.error('❌ Error scheduling email:', error);

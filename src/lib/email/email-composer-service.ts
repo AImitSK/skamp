@@ -1,4 +1,4 @@
-// src/lib/firebase/email-composer-service.ts
+// src/lib/firebase/email-composer-service.ts - UPDATED WITH MULTI-TENANCY
 import {
   collection,
   doc,
@@ -12,7 +12,7 @@ import {
   serverTimestamp,
   Timestamp
 } from 'firebase/firestore';
-import { db } from './client-init';
+import { db } from '../firebase/client-init';
 import { 
   EmailDraft, 
   EmailVariables,
@@ -25,6 +25,7 @@ export interface EmailDraftDocument {
   id?: string;
   campaignId: string;
   userId: string;
+  organizationId: string; // NEU: Für Multi-Tenancy
   content: EmailDraft;
   version: number;
   createdAt: Timestamp;
@@ -39,7 +40,8 @@ export const emailComposerService = {
   async saveDraft(
     campaignId: string, 
     draft: EmailDraft,
-    userId: string
+    userId: string,
+    organizationId?: string // Optional für Backwards Compatibility
   ): Promise<SaveDraftResponse> {
     try {
       console.log('💾 Saving email draft for campaign:', campaignId);
@@ -53,6 +55,7 @@ export const emailComposerService = {
       const draftDocument: EmailDraftDocument = {
         campaignId,
         userId,
+        organizationId: organizationId || userId, // Fallback für Single-User
         content: draft,
         version,
         createdAt: existingDraft?.createdAt || Timestamp.now(),

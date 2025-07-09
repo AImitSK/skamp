@@ -14,6 +14,9 @@ import {
 } from '@/types/email-composer';
 import { useAuth } from '@/context/AuthContext';
 import { emailCampaignService } from '@/lib/firebase/email-campaign-service';
+import { apiClient } from '@/lib/api/api-client';
+import { emailService } from '@/lib/email/email-service';
+import { emailComposerService } from '@/lib/email/email-composer-service';
 import { Timestamp } from 'firebase/firestore';
 import { nanoid } from 'nanoid';
 
@@ -39,6 +42,7 @@ type ComposerAction =
   | { type: 'SET_ERROR'; field: string; error: string }
   | { type: 'CLEAR_ERROR'; field: string }
   | { type: 'LOAD_DRAFT'; draft: EmailDraft }
+  | { type: 'SET_LAST_SAVED'; timestamp: Date }
   | { type: 'RESET_DRAFT' };
 
 // Reducer für State Management
@@ -198,6 +202,12 @@ function composerReducer(state: EmailComposerState, action: ComposerAction): Ema
         isLoading: false
       };
 
+    case 'SET_LAST_SAVED':
+      return {
+        ...state,
+        lastSaved: action.timestamp
+      };
+
     case 'RESET_DRAFT':
       return createInitialState(state.draft.campaignId, state.draft.campaignTitle);
 
@@ -349,20 +359,26 @@ export default function EmailComposer({ campaign, onClose, onSent }: EmailCompos
     }
   }, [state.draft.recipients, state.draft.sender, state.draft.metadata, state.currentStep]);
 
-  // Auto-Save Logik
+  // Auto-Save Logik mit API
   const autoSaveDraft = useCallback(async () => {
     if (!DEFAULT_COMPOSER_CONFIG.autoSave.enabled || state.isSaving) return;
 
     dispatch({ type: 'SET_SAVING', isSaving: true });
     
     try {
-      // TODO: Implement actual save to Firebase
       console.log('Auto-saving draft...', state.draft);
-      // await emailComposerService.saveDraft(campaign.id!, state.draft);
       
-      // Simuliere Save
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // API Call zum Speichern des Drafts
+      const result = await apiClient.put<{
+        success: boolean;
+        draftId?: string;
+        lastSaved?: Date;
+      }>(`/api/email/drafts/${campaign.id}`, state.draft);
       
+      if (result.success) {
+        console.log('✅ Draft saved successfully');
+        dispatch({ type: 'SET_LAST_SAVED', timestamp: new Date() });
+      }
     } catch (error) {
       console.error('Auto-save failed:', error);
       dispatch({ type: 'SET_ERROR', field: 'autoSave', error: 'Automatisches Speichern fehlgeschlagen' });
@@ -388,18 +404,27 @@ export default function EmailComposer({ campaign, onClose, onSent }: EmailCompos
     };
   }, [state.draft]);
 
-  // Lade existierenden Draft beim Mount
+  // Lade existierenden Draft beim Mount mit API
   useEffect(() => {
     const loadDraft = async () => {
       dispatch({ type: 'SET_LOADING', isLoading: true });
       
       try {
-        // TODO: Implement actual load from Firebase
         console.log('Loading draft for campaign:', campaign.id);
-        // const existingDraft = await emailComposerService.loadDraft(campaign.id!);
-        // if (existingDraft) {
-        //   dispatch({ type: 'LOAD_DRAFT', draft: existingDraft });
-        // }
+        
+        // API Call zum Laden des Drafts
+        const result = await apiClient.get<{
+          success: boolean;
+          draft?: EmailDraft;
+          message?: string;
+        }>(`/api/email/drafts/${campaign.id}`);
+        
+        if (result.success && result.draft) {
+          dispatch({ type: 'LOAD_DRAFT', draft: result.draft });
+          console.log('✅ Draft loaded successfully');
+        } else {
+          console.log('📭 No existing draft found');
+        }
       } catch (error) {
         console.error('Failed to load draft:', error);
       } finally {

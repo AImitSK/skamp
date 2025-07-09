@@ -8,6 +8,9 @@ import { Input } from '@/components/input';
 import { Button } from '@/components/button';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/dialog';
 import { emailService } from '@/lib/email/email-service';
+import { emailComposerService } from '@/lib/email/email-composer-service';
+import { emailCampaignService } from '@/lib/firebase/email-campaign-service';
+import { apiClient } from '@/lib/api/api-client';
 import { 
   EyeIcon,
   PaperAirplaneIcon,
@@ -65,115 +68,29 @@ export default function Step3Preview({
       companyName: 'Beispiel GmbH'
     };
 
-    // Variablen ersetzen
-    const variables = {
-      firstName: sampleRecipient.firstName,
-      lastName: sampleRecipient.lastName,
-      companyName: sampleRecipient.companyName,
-      campaignTitle: campaign.title,
-      senderName: draft.sender.type === 'contact' 
-        ? draft.sender.contactData?.name || 'Ihr Name'
-        : draft.sender.manual?.name || 'Ihr Name',
-      senderTitle: draft.sender.type === 'contact'
-        ? draft.sender.contactData?.title || 'Ihre Position'
-        : draft.sender.manual?.title || 'Ihre Position',
-      senderCompany: draft.sender.type === 'contact'
-        ? draft.sender.contactData?.company || campaign.clientName
-        : draft.sender.manual?.company || campaign.clientName,
-      senderPhone: draft.sender.type === 'contact'
-        ? draft.sender.contactData?.phone || ''
-        : draft.sender.manual?.phone || '',
-      senderEmail: draft.sender.type === 'contact'
-        ? draft.sender.contactData?.email || ''
-        : draft.sender.manual?.email || ''
-    };
+    // Extrahiere Sender-Info
+    const senderInfo = draft.sender.type === 'contact' 
+      ? draft.sender.contactData 
+      : draft.sender.manual;
 
-    let content = draft.content.body;
-    Object.entries(variables).forEach(([key, value]) => {
-      const regex = new RegExp(`{{${key}}}`, 'g');
-      content = content.replace(regex, value || '');
-    });
+    // Erstelle Email-Content aus Draft
+    const emailContent = emailComposerService.mergeEmailFields(draft, campaign);
 
-    // Echte Pressemitteilung einfügen
-    const pressReleaseHtml = `
-      <div style="margin-top: 40px; padding: 20px; background-color: #f8f9fa; border-left: 4px solid #005fab;">
-        <h3 style="margin-top: 0; color: #333; font-size: 20px; margin-bottom: 16px;">
-          ${campaign.title}
-        </h3>
-        ${campaign.clientName ? `
-          <p style="color: #666; font-size: 14px; margin-bottom: 16px;">
-            <strong>Kunde:</strong> ${campaign.clientName}
-          </p>
-        ` : ''}
-        <div style="color: #444; line-height: 1.6;">
-          ${campaign.contentHtml || campaign.mainContent || '<p style="font-style: italic; color: #666;">[Pressemitteilung wird hier eingefügt]</p>'}
-        </div>
-        ${campaign.attachedAssets && campaign.attachedAssets.length > 0 ? `
-          <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #dee2e6;">
-            <h4 style="margin: 0 0 8px 0; color: #333; font-size: 14px;">
-              <span style="display: inline-block; margin-right: 4px;">📎</span>
-              Angehängte Medien (${campaign.attachedAssets.length})
-            </h4>
-            <p style="color: #666; font-size: 14px;">
-              ${campaign.attachedAssets.map(asset => asset.metadata.fileName || asset.metadata.folderName || 'Unbenannt').join(', ')}
-            </p>
-          </div>
-        ` : ''}
-        ${campaign.approvalData && campaign.approvalData.status === 'approved' ? `
-          <div style="margin-top: 16px; padding: 12px; background-color: #d4edda; border-radius: 4px;">
-            <p style="margin: 0; color: #155724; font-size: 14px;">
-              ✓ Vom Kunden freigegeben am ${new Date(campaign.approvalData.approvedAt!.seconds * 1000).toLocaleDateString('de-DE')}
-            </p>
-          </div>
-        ` : ''}
-      </div>
-    `;
+    // Generiere Vorschau mit emailService
+    const preview = emailService.generatePreview(
+      sampleRecipient as any,
+      emailContent,
+      {
+        name: senderInfo?.name || 'Ihr Name',
+        title: senderInfo?.title || '',
+        company: senderInfo?.company || campaign.clientName || '',
+        phone: senderInfo?.phone || '',
+        email: senderInfo?.email || ''
+      },
+      campaign.assetShareUrl
+    );
 
-    return `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-          body { 
-            margin: 0; 
-            padding: 20px; 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #f5f5f5;
-            line-height: 1.6;
-          }
-          .email-container {
-            max-width: 700px;
-            margin: 0 auto;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            overflow: hidden;
-          }
-          .email-content {
-            padding: 40px;
-          }
-          .email-content p {
-            margin: 0 0 16px 0;
-            line-height: 1.6;
-          }
-          @media (max-width: 640px) {
-            body { padding: 10px; }
-            .email-content { padding: 20px; }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="email-container">
-          <div class="email-content">
-            ${content}
-            ${pressReleaseHtml}
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
+    return preview.html;
   }, [draft, campaign]);
 
   // Test-Email validieren
@@ -190,7 +107,7 @@ export default function Step3Preview({
     return true;
   };
 
-  // Test-Email senden
+  // Test-Email senden mit API
   const handleSendTest = async () => {
     if (!validateTestEmail(testEmail)) return;
 
@@ -198,24 +115,32 @@ export default function Step3Preview({
     setTestSent(false);
 
     try {
-      // TODO: Implementiere echten Test-Versand
       console.log('Sending test email to:', testEmail);
-      console.log('Draft data:', draft);
       
-      // Simuliere API-Call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // API Call für Test-Email
+      const result = await emailService.sendTestEmail({
+        campaignId: campaign.id!,
+        recipientEmail: testEmail,
+        recipientName: 'Test Empfänger',
+        draft: draft
+      });
       
-      setTestSent(true);
-      setTimeout(() => setTestSent(false), 5000);
-    } catch (error) {
+      if (result.success) {
+        setTestSent(true);
+        setTimeout(() => setTestSent(false), 5000);
+        console.log('✅ Test email sent:', result.messageId);
+      } else {
+        setTestEmailError(result.error || 'Test-Versand fehlgeschlagen');
+      }
+    } catch (error: any) {
       console.error('Test email failed:', error);
-      setTestEmailError('Test-Versand fehlgeschlagen');
+      setTestEmailError(error.message || 'Test-Versand fehlgeschlagen');
     } finally {
       setSendingTest(false);
     }
   };
 
-  // Finaler Versand
+  // Finaler Versand mit API
   const handleFinalSend = async () => {
     if (sendMode === 'scheduled' && (!scheduledDate || !scheduledTime)) {
       alert('Bitte wählen Sie Datum und Uhrzeit für den geplanten Versand');
@@ -229,30 +154,69 @@ export default function Step3Preview({
     setSending(true);
     
     try {
+      // Merge Email-Felder
+      const emailContent = emailComposerService.mergeEmailFields(draft, campaign);
+      
+      // Extrahiere Sender-Info
+      const senderInfo = draft.sender.type === 'contact' 
+        ? draft.sender.contactData 
+        : draft.sender.manual;
+
+      if (!senderInfo) {
+        throw new Error('Keine Absender-Informationen gefunden');
+      }
+
       if (sendMode === 'scheduled') {
-        // TODO: Implementiere geplanten Versand
+        // Geplanter Versand
         const scheduledDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
         console.log('Scheduling email for:', scheduledDateTime);
-        console.log('Recipients:', totalRecipients);
-        console.log('Draft:', draft);
         
-        // Simuliere API-Call
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        const result = await emailService.scheduleEmail({
+          campaign,
+          emailContent,
+          senderInfo: {
+            name: senderInfo.name,
+            title: senderInfo.title || '',
+            company: senderInfo.company || campaign.clientName || '',
+            phone: senderInfo.phone,
+            email: senderInfo.email
+          },
+          scheduledDate: scheduledDateTime,
+          timezone: 'Europe/Berlin'
+        });
+        
+        if (result.success) {
+          console.log('✅ Email scheduled:', result.jobId);
+          alert(`E-Mail wurde für ${scheduledDateTime.toLocaleString('de-DE')} geplant!`);
+        } else {
+          throw new Error(result.error || 'Planung fehlgeschlagen');
+        }
       } else {
-        // TODO: Implementiere sofortigen Versand
+        // Sofortiger Versand über emailCampaignService
         console.log('Sending email now to', totalRecipients, 'recipients');
-        console.log('Draft:', draft);
         
-        // Simuliere API-Call
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        const result = await emailCampaignService.sendPRCampaign(
+          campaign,
+          emailContent,
+          {
+            name: senderInfo.name,
+            title: senderInfo.title || '',
+            company: senderInfo.company || campaign.clientName || '',
+            phone: senderInfo.phone,
+            email: senderInfo.email
+          }
+        );
+        
+        console.log('✅ Email sent:', result);
+        alert(`E-Mail wurde erfolgreich an ${result.success} Empfänger gesendet!`);
       }
       
       if (onSent) {
         onSent();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Send failed:', error);
-      alert('Versand fehlgeschlagen. Bitte versuchen Sie es erneut.');
+      alert(`Versand fehlgeschlagen: ${error.message || 'Unbekannter Fehler'}`);
     } finally {
       setSending(false);
       setShowConfirmDialog(false);

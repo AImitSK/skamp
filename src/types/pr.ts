@@ -1,4 +1,4 @@
-// src/types/pr.ts - VOLLSTÄNDIG mit Multi-List Support, Freigabe-Workflow und Boilerplate-Integration
+// src/types/pr.ts - VOLLSTÄNDIG mit Multi-List Support, Freigabe-Workflow, Boilerplate-Integration und Multi-Tenancy
 import { Timestamp } from 'firebase/firestore';
 
 // ERWEITERT: Neue Status für den Freigabe-Workflow hinzugefügt
@@ -45,6 +45,7 @@ export interface CampaignBoilerplateSection {
 export interface PRCampaign {
   id?: string;
   userId: string;
+  organizationId?: string; // NEU: Für Multi-Tenancy (optional für Backwards Compatibility)
   
   // Campaign Details
   title: string;
@@ -134,4 +135,33 @@ export interface PRQuote {
   role: string;
   company: string;
   text: string;
+}
+
+// NEU: Für die Migration - Helper Type mit required organizationId
+export interface PRCampaignWithOrg extends PRCampaign {
+  organizationId: string; // Required in multi-tenant context
+}
+
+// NEU: Helper function für Type Guards
+export function hasCampaignOrganization(campaign: PRCampaign): campaign is PRCampaignWithOrg {
+  return !!campaign.organizationId;
+}
+
+// NEU: Default-Werte für neue Kampagnen
+export function createDefaultPRCampaign(userId: string, organizationId?: string): Partial<PRCampaign> {
+  return {
+    userId,
+    organizationId: organizationId || userId, // Fallback für Single-User
+    status: 'draft',
+    title: '',
+    contentHtml: '',
+    distributionListId: '',
+    distributionListName: '',
+    distributionListIds: [],
+    distributionListNames: [],
+    recipientCount: 0,
+    approvalRequired: false,
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now()
+  };
 }

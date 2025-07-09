@@ -1,4 +1,4 @@
-// src/lib/firebase/email-scheduler-service.ts
+// src/lib/firebase/email-scheduler-service.ts - UPDATED WITH MULTI-TENANCY
 import {
   collection,
   doc,
@@ -13,7 +13,7 @@ import {
   Timestamp,
   deleteDoc
 } from 'firebase/firestore';
-import { db } from './client-init';
+import { db } from '../firebase/client-init';
 import { PRCampaign } from '@/types/pr';
 import { ScheduleEmailResponse } from '@/types/email-composer';
 import { nanoid } from 'nanoid';
@@ -24,6 +24,7 @@ export interface ScheduledEmail {
   campaignId: string;
   campaignTitle: string;
   userId: string;
+  organizationId: string; // NEU: Für Multi-Tenancy
   
   // Scheduling Details
   scheduledAt: Timestamp;
@@ -89,6 +90,7 @@ export interface CalendarEvent {
     recipientCount: number;
   };
   userId: string;
+  organizationId: string; // NEU: Für Multi-Tenancy
   createdAt: Timestamp;
 }
 
@@ -102,7 +104,8 @@ export const emailSchedulerService = {
     senderInfo: any,
     recipients: any,
     scheduledDate: Date,
-    timezone: string = 'Europe/Berlin'
+    timezone: string = 'Europe/Berlin',
+    organizationId?: string // Für Multi-Tenancy
   ): Promise<ScheduleEmailResponse> {
     try {
       console.log('📅 Scheduling email campaign:', campaign.title, 'for', scheduledDate);
@@ -128,6 +131,7 @@ export const emailSchedulerService = {
         campaignId: campaign.id!,
         campaignTitle: campaign.title,
         userId: campaign.userId,
+        organizationId: organizationId || campaign.organizationId || campaign.userId, // Multi-Tenancy Support
         scheduledAt: Timestamp.fromDate(scheduledDate),
         timezone,
         status: 'pending',
@@ -147,7 +151,8 @@ export const emailSchedulerService = {
         campaign,
         scheduledDate,
         recipients.totalCount,
-        docId
+        docId,
+        organizationId || campaign.userId
       );
 
       // Update mit Calendar Event ID
@@ -179,14 +184,19 @@ export const emailSchedulerService = {
   /**
    * Geplanten Email-Versand stornieren
    */
-  async cancelScheduledEmail(jobId: string): Promise<boolean> {
+  async cancelScheduledEmail(
+    jobId: string,
+    userId: string,
+    organizationId: string
+  ): Promise<boolean> {
     try {
       console.log('🚫 Cancelling scheduled email:', jobId);
 
-      // Finde das Dokument mit der Job-ID
+      // Finde das Dokument mit der Job-ID und prüfe Berechtigung
       const q = query(
         collection(db, 'scheduled_emails'),
         where('jobId', '==', jobId),
+        where('organizationId', '==', organizationId),
         where('status', '==', 'pending')
       );
 
@@ -221,27 +231,27 @@ export const emailSchedulerService = {
   },
 
   /**
-   * Alle geplanten Emails für einen Benutzer abrufen
+   * Alle geplanten Emails für eine Organization abrufen
    */
   async getScheduledEmails(
-    userId: string,
+    organizationId: string,
     status?: 'pending' | 'sent' | 'cancelled' | 'failed'
   ): Promise<ScheduledEmail[]> {
     try {
-      console.log('📋 Loading scheduled emails for user:', userId);
+      console.log('📋 Loading scheduled emails for organization:', organizationId);
 
       let q;
       if (status) {
         q = query(
           collection(db, 'scheduled_emails'),
-          where('userId', '==', userId),
+          where('organizationId', '==', organizationId),
           where('status', '==', status),
           orderBy('scheduledAt', 'asc')
         );
       } else {
         q = query(
           collection(db, 'scheduled_emails'),
-          where('userId', '==', userId),
+          where('organizationId', '==', organizationId),
           orderBy('scheduledAt', 'desc')
         );
       }
@@ -269,7 +279,8 @@ export const emailSchedulerService = {
     campaign: PRCampaign,
     scheduledDate: Date,
     recipientCount: number,
-    scheduledEmailId: string
+    scheduledEmailId: string,
+    organizationId: string
   ): Promise<string | null> {
     try {
       console.log('📆 Creating calendar entry for scheduled email');
@@ -286,6 +297,7 @@ export const emailSchedulerService = {
           recipientCount
         },
         userId: campaign.userId,
+        organizationId,
         createdAt: Timestamp.now()
       };
 
@@ -316,19 +328,31 @@ export const emailSchedulerService = {
   },
 
   /**
-   * Anstehende Emails für Ausführung abrufen
-   * (Wird vom Backend-Job verwendet)
+   * Anstehende Emails für Ausführung abrufen (für Backend-Job)
    */
-  async getPendingEmails(): Promise<ScheduledEmail[]> {
+  async getPendingEmails(organizationId?: string): Promise<ScheduledEmail[]> {
     try {
       const now = Timestamp.now();
       
-      const q = query(
-        collection(db, 'scheduled_emails'),
-        where('status', '==', 'pending'),
-        where('scheduledAt', '<=', now),
-        orderBy('scheduledAt', 'asc')
-      );
+      let q;
+      if (organizationId) {
+        // Für spezifische Organization
+        q = query(
+          collection(db, 'scheduled_emails'),
+          where('organizationId', '==', organizationId),
+          where('status', '==', 'pending'),
+          where('scheduledAt', '<=', now),
+          orderBy('scheduledAt', 'asc')
+        );
+      } else {
+        // Alle pending emails (für Admin/System)
+        q = query(
+          collection(db, 'scheduled_emails'),
+          where('status', '==', 'pending'),
+          where('scheduledAt', '<=', now),
+          orderBy('scheduledAt', 'asc')
+        );
+      }
 
       const querySnapshot = await getDocs(q);
       
@@ -416,7 +440,7 @@ export const emailSchedulerService = {
   /**
    * Statistiken für geplante Emails
    */
-  async getSchedulingStats(userId: string): Promise<{
+  async getSchedulingStats(organizationId: string): Promise<{
     pending: number;
     sent: number;
     failed: number;
@@ -425,7 +449,7 @@ export const emailSchedulerService = {
     nextScheduled?: Date;
   }> {
     try {
-      const emails = await this.getScheduledEmails(userId);
+      const emails = await this.getScheduledEmails(organizationId);
       
       const stats = {
         pending: 0,
