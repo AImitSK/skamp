@@ -14,7 +14,6 @@ import {
 } from '@/types/email-composer';
 import { useAuth } from '@/context/AuthContext';
 import { emailCampaignService } from '@/lib/firebase/email-campaign-service';
-import { apiClient } from '@/lib/api/api-client';
 import { emailService } from '@/lib/email/email-service';
 import { emailComposerService } from '@/lib/email/email-composer-service';
 import { Timestamp } from 'firebase/firestore';
@@ -359,21 +358,23 @@ export default function EmailComposer({ campaign, onClose, onSent }: EmailCompos
     }
   }, [state.draft.recipients, state.draft.sender, state.draft.metadata, state.currentStep]);
 
-  // Auto-Save Logik mit API
+  // ANGEPASST: Auto-Save Logik mit direktem emailComposerService
   const autoSaveDraft = useCallback(async () => {
     if (!DEFAULT_COMPOSER_CONFIG.autoSave.enabled || state.isSaving) return;
+    if (!user) return; // Stelle sicher, dass User eingeloggt ist
 
     dispatch({ type: 'SET_SAVING', isSaving: true });
     
     try {
       console.log('Auto-saving draft...', state.draft);
       
-      // API Call zum Speichern des Drafts
-      const result = await apiClient.put<{
-        success: boolean;
-        draftId?: string;
-        lastSaved?: Date;
-      }>(`/api/email/drafts/${campaign.id}`, state.draft);
+      // ANGEPASST: Nutze direkt den emailComposerService (client-side)
+      const result = await emailComposerService.saveDraft(
+        campaign.id!,
+        state.draft,
+        user.uid,
+        user.uid // organizationId = userId für jetzt
+      );
       
       if (result.success) {
         console.log('✅ Draft saved successfully');
@@ -385,7 +386,7 @@ export default function EmailComposer({ campaign, onClose, onSent }: EmailCompos
     } finally {
       dispatch({ type: 'SET_SAVING', isSaving: false });
     }
-  }, [campaign.id, state.draft, state.isSaving]);
+  }, [campaign.id, state.draft, state.isSaving, user]);
 
   // Trigger Auto-Save bei Änderungen
   useEffect(() => {
@@ -404,7 +405,7 @@ export default function EmailComposer({ campaign, onClose, onSent }: EmailCompos
     };
   }, [state.draft]);
 
-  // Lade existierenden Draft beim Mount mit API
+  // ANGEPASST: Lade existierenden Draft beim Mount mit direktem Service
   useEffect(() => {
     const loadDraft = async () => {
       dispatch({ type: 'SET_LOADING', isLoading: true });
@@ -412,15 +413,11 @@ export default function EmailComposer({ campaign, onClose, onSent }: EmailCompos
       try {
         console.log('Loading draft for campaign:', campaign.id);
         
-        // API Call zum Laden des Drafts
-        const result = await apiClient.get<{
-          success: boolean;
-          draft?: EmailDraft;
-          message?: string;
-        }>(`/api/email/drafts/${campaign.id}`);
+        // ANGEPASST: Nutze direkt den emailComposerService (client-side)
+        const draftDoc = await emailComposerService.loadDraft(campaign.id!);
         
-        if (result.success && result.draft) {
-          dispatch({ type: 'LOAD_DRAFT', draft: result.draft });
+        if (draftDoc) {
+          dispatch({ type: 'LOAD_DRAFT', draft: draftDoc.content });
           console.log('✅ Draft loaded successfully');
         } else {
           console.log('📭 No existing draft found');
@@ -432,8 +429,10 @@ export default function EmailComposer({ campaign, onClose, onSent }: EmailCompos
       }
     };
 
-    loadDraft();
-  }, [campaign.id]);
+    if (user && campaign.id) {
+      loadDraft();
+    }
+  }, [campaign.id, user]);
 
   // Step-spezifische Props
   const step1Props = {
