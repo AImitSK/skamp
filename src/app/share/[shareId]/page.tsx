@@ -1,4 +1,4 @@
-// src/app/share/[shareId]/page.tsx - Mit Campaign-Support
+// src/app/share/[shareId]/page.tsx - Mit Campaign-Support OHNE BRANDING
 "use client";
 
 import { useState, useEffect } from "react";
@@ -74,8 +74,8 @@ export default function SharePage() {
         return;
       }
 
-      // Lade Branding-Einstellungen
-      if (link.userId) {
+      // WICHTIG: Lade Branding NUR wenn es KEIN Campaign-Share ist
+      if (link.userId && link.type !== 'campaign') {
         try {
           const branding = await brandingService.getBrandingSettings(link.userId);
           setBrandingSettings(branding);
@@ -83,6 +83,9 @@ export default function SharePage() {
           console.error('Fehler beim Laden der Branding-Einstellungen:', brandingError);
           // Kein kritischer Fehler - fahre ohne Branding fort
         }
+      } else if (link.type === 'campaign') {
+        console.log('📎 Campaign share detected - branding disabled');
+        setBrandingSettings(null); // Explizit kein Branding für Kampagnen
       }
 
       // Lade Inhalte je nach Typ
@@ -272,18 +275,28 @@ export default function SharePage() {
               </div>
             </div>
             
-            {/* Logo oder Fallback */}
+            {/* Logo ODER minimales Label - abhängig vom Share-Typ */}
             <div className="text-right">
-              {brandingSettings?.logoUrl ? (
-                <img 
-                  src={brandingSettings.logoUrl} 
-                  alt={brandingSettings.companyName || 'Logo'} 
-                  className="h-12 w-auto object-contain"
-                />
+              {shareLink?.type === 'campaign' ? (
+                // KEIN Logo für Kampagnen - nur minimales Label
+                <div className="text-xs text-gray-400">
+                  Medien-Freigabe
+                </div>
               ) : (
+                // Normales Branding für andere Share-Typen
                 <>
-                  <div className="text-xs text-gray-400 mb-1">Freigabe-System</div>
-                  <div className="text-sm font-medium text-[#005fab]">SKAMP</div>
+                  {brandingSettings?.logoUrl ? (
+                    <img 
+                      src={brandingSettings.logoUrl} 
+                      alt={brandingSettings.companyName || 'Logo'} 
+                      className="h-12 w-auto object-contain"
+                    />
+                  ) : (
+                    <>
+                      <div className="text-xs text-gray-400 mb-1">Freigabe-System</div>
+                      <div className="text-sm font-medium text-[#005fab]">SKAMP</div>
+                    </>
+                  )}
                 </>
               )}
             </div>
@@ -362,79 +375,89 @@ export default function SharePage() {
         </div>
       </div>
 
-      {/* Footer mit Branding */}
+      {/* Footer mit Branding ODER minimal für Kampagnen */}
       <div className="bg-white border-t mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          {brandingSettings ? (
-            <div className="space-y-3">
-              {/* Firmeninfo-Zeile */}
-              <div className="flex flex-wrap items-center justify-center gap-2 text-sm text-gray-600">
-                {brandingSettings.companyName && (
-                  <span className="font-medium">{brandingSettings.companyName}</span>
-                )}
-                
-                {brandingSettings.address && (brandingSettings.address.street || brandingSettings.address.postalCode || brandingSettings.address.city) && (
-                  <>
-                    <span className="text-gray-400">|</span>
-                    <span className="flex items-center gap-1">
-                      <MapPinIcon className="h-4 w-4" />
-                      {[
-                        brandingSettings.address.street,
-                        brandingSettings.address.postalCode && brandingSettings.address.city 
-                          ? `${brandingSettings.address.postalCode} ${brandingSettings.address.city}`
-                          : brandingSettings.address.postalCode || brandingSettings.address.city
-                      ].filter(Boolean).join(', ')}
-                    </span>
-                  </>
-                )}
-                
-                {brandingSettings.phone && (
-                  <>
-                    <span className="text-gray-400">|</span>
-                    <span className="flex items-center gap-1">
-                      <PhoneIcon className="h-4 w-4" />
-                      {brandingSettings.phone}
-                    </span>
-                  </>
-                )}
-                
-                {brandingSettings.email && (
-                  <>
-                    <span className="text-gray-400">|</span>
-                    <span className="flex items-center gap-1">
-                      <EnvelopeIcon className="h-4 w-4" />
-                      {brandingSettings.email}
-                    </span>
-                  </>
-                )}
-                
-                {brandingSettings.website && (
-                  <>
-                    <span className="text-gray-400">|</span>
-                    <a 
-                      href={brandingSettings.website} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-[#005fab] hover:underline"
-                    >
-                      <GlobeAltIcon className="h-4 w-4" />
-                      {brandingSettings.website.replace(/^https?:\/\/(www\.)?/, '')}
-                    </a>
-                  </>
-                )}
-              </div>
-              
-              {/* Copyright-Zeile */}
-              {brandingSettings.showCopyright && (
-                <div className="text-center text-xs text-gray-500">
-                  <p>Copyright © {new Date().getFullYear()} SKAMP. Alle Rechte vorbehalten.</p>
-                </div>
-              )}
+          {shareLink?.type === 'campaign' ? (
+            // MINIMALER Footer für Kampagnen - KEIN Branding
+            <div className="text-center text-xs text-gray-400">
+              <p>© {new Date().getFullYear()} Alle Rechte vorbehalten.</p>
             </div>
           ) : (
-            <div className="text-center text-sm text-gray-500">
-              <p>Geteilt über SKAMP Marketing Suite</p>
-            </div>
+            // Normaler Footer mit Branding für andere Share-Typen
+            <>
+              {brandingSettings ? (
+                <div className="space-y-3">
+                  {/* Firmeninfo-Zeile */}
+                  <div className="flex flex-wrap items-center justify-center gap-2 text-sm text-gray-600">
+                    {brandingSettings.companyName && (
+                      <span className="font-medium">{brandingSettings.companyName}</span>
+                    )}
+                    
+                    {brandingSettings.address && (brandingSettings.address.street || brandingSettings.address.postalCode || brandingSettings.address.city) && (
+                      <>
+                        <span className="text-gray-400">|</span>
+                        <span className="flex items-center gap-1">
+                          <MapPinIcon className="h-4 w-4" />
+                          {[
+                            brandingSettings.address.street,
+                            brandingSettings.address.postalCode && brandingSettings.address.city 
+                              ? `${brandingSettings.address.postalCode} ${brandingSettings.address.city}`
+                              : brandingSettings.address.postalCode || brandingSettings.address.city
+                          ].filter(Boolean).join(', ')}
+                        </span>
+                      </>
+                    )}
+                    
+                    {brandingSettings.phone && (
+                      <>
+                        <span className="text-gray-400">|</span>
+                        <span className="flex items-center gap-1">
+                          <PhoneIcon className="h-4 w-4" />
+                          {brandingSettings.phone}
+                        </span>
+                      </>
+                    )}
+                    
+                    {brandingSettings.email && (
+                      <>
+                        <span className="text-gray-400">|</span>
+                        <span className="flex items-center gap-1">
+                          <EnvelopeIcon className="h-4 w-4" />
+                          {brandingSettings.email}
+                        </span>
+                      </>
+                    )}
+                    
+                    {brandingSettings.website && (
+                      <>
+                        <span className="text-gray-400">|</span>
+                        <a 
+                          href={brandingSettings.website} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-[#005fab] hover:underline"
+                        >
+                          <GlobeAltIcon className="h-4 w-4" />
+                          {brandingSettings.website.replace(/^https?:\/\/(www\.)?/, '')}
+                        </a>
+                      </>
+                    )}
+                  </div>
+                  
+                  {/* Copyright-Zeile */}
+                  {brandingSettings.showCopyright && (
+                    <div className="text-center text-xs text-gray-500">
+                      <p>Copyright © {new Date().getFullYear()} SKAMP. Alle Rechte vorbehalten.</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center text-sm text-gray-500">
+                  <p>Geteilt über SKAMP Marketing Suite</p>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
