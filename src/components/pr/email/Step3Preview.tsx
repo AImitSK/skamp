@@ -20,7 +20,10 @@ import {
   ComputerDesktopIcon,
   CheckCircleIcon,
   ExclamationCircleIcon,
-  CalendarIcon
+  CalendarIcon,
+  PaperClipIcon,
+  DocumentIcon,
+  InformationCircleIcon
 } from '@heroicons/react/20/solid';
 
 interface Step3PreviewProps {
@@ -34,6 +37,49 @@ interface Step3PreviewProps {
 
 type PreviewMode = 'desktop' | 'mobile';
 type SendMode = 'now' | 'scheduled';
+
+// Alert Component for consistent feedback
+interface AlertProps {
+  type: 'success' | 'error' | 'info';
+  message: string;
+  onClose?: () => void;
+}
+
+function Alert({ type, message, onClose }: AlertProps) {
+  const styles = {
+    success: 'bg-green-50 text-green-800 border-green-200',
+    error: 'bg-red-50 text-red-800 border-red-200',
+    info: 'bg-blue-50 text-blue-800 border-blue-200'
+  };
+
+  const icons = {
+    success: CheckCircleIcon,
+    error: ExclamationCircleIcon,
+    info: InformationCircleIcon
+  };
+
+  const Icon = icons[type];
+
+  return (
+    <div className={`rounded-md p-4 border ${styles[type]} flex items-start`}>
+      <Icon className={`h-5 w-5 ${type === 'success' ? 'text-green-400' : type === 'error' ? 'text-red-400' : 'text-blue-400'} mr-3 flex-shrink-0`} />
+      <div className="flex-1">
+        <p className="text-sm font-medium">{message}</p>
+      </div>
+      {onClose && (
+        <button
+          onClick={onClose}
+          className="ml-3 inline-flex text-gray-400 hover:text-gray-500"
+        >
+          <span className="sr-only">Schließen</span>
+          <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+          </svg>
+        </button>
+      )}
+    </div>
+  );
+}
 
 export default function Step3Preview({
   draft,
@@ -53,6 +99,9 @@ export default function Step3Preview({
   const [scheduledTime, setScheduledTime] = useState('');
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [sending, setSending] = useState(false);
+  
+  // State für Alerts
+  const [alert, setAlert] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
 
   // Berechne korrekte Empfänger-Zahlen
   const totalRecipients = draft.recipients.totalCount || 0;
@@ -144,7 +193,7 @@ export default function Step3Preview({
   // Finaler Versand mit API
   const handleFinalSend = async () => {
     if (sendMode === 'scheduled' && (!scheduledDate || !scheduledTime)) {
-      alert('Bitte wählen Sie Datum und Uhrzeit für den geplanten Versand');
+      setAlert({ type: 'error', message: 'Bitte wählen Sie Datum und Uhrzeit für den geplanten Versand' });
       return;
     }
 
@@ -171,6 +220,7 @@ export default function Step3Preview({
         // Geplanter Versand
         const scheduledDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
         console.log('Scheduling email for:', scheduledDateTime);
+        console.log('Including', draft.recipients.manual.length, 'manual recipients');
         
         const result = await emailService.scheduleEmail({
           campaign,
@@ -183,18 +233,27 @@ export default function Step3Preview({
             email: senderInfo.email
           },
           scheduledDate: scheduledDateTime,
-          timezone: 'Europe/Berlin'
-        });
+          timezone: 'Europe/Berlin',
+          manualRecipients: draft.recipients.manual // NEU: Manuelle Empfänger übergeben
+        } as any);
         
         if (result.success) {
           console.log('✅ Email scheduled:', result.jobId);
-          alert(`E-Mail wurde für ${scheduledDateTime.toLocaleString('de-DE')} geplant!`);
+          setAlert({ 
+            type: 'success', 
+            message: `E-Mail wurde für ${scheduledDateTime.toLocaleString('de-DE')} geplant!` 
+          });
+          setShowConfirmDialog(false);
+          if (onSent) {
+            setTimeout(() => onSent(), 2000); // Verzögerung für bessere UX
+          }
         } else {
           throw new Error(result.error || 'Planung fehlgeschlagen');
         }
       } else {
         // Sofortiger Versand über emailCampaignService
         console.log('Sending email now to', totalRecipients, 'recipients');
+        console.log('Including', draft.recipients.manual.length, 'manual recipients');
         
         const result = await emailCampaignService.sendPRCampaign(
           campaign,
@@ -205,22 +264,29 @@ export default function Step3Preview({
             company: senderInfo.company || campaign.clientName || '',
             phone: senderInfo.phone,
             email: senderInfo.email
-          }
+          },
+          draft.recipients.manual // NEU: Manuelle Empfänger übergeben
         );
         
         console.log('✅ Email sent:', result);
-        alert(`E-Mail wurde erfolgreich an ${result.success} Empfänger gesendet!`);
-      }
-      
-      if (onSent) {
-        onSent();
+        setAlert({ 
+          type: 'success', 
+          message: `E-Mail wurde erfolgreich an ${result.success} Empfänger gesendet!` 
+        });
+        setShowConfirmDialog(false);
+        if (onSent) {
+          setTimeout(() => onSent(), 2000); // Verzögerung für bessere UX
+        }
       }
     } catch (error: any) {
       console.error('Send failed:', error);
-      alert(`Versand fehlgeschlagen: ${error.message || 'Unbekannter Fehler'}`);
+      setAlert({ 
+        type: 'error', 
+        message: `Versand fehlgeschlagen: ${error.message || 'Unbekannter Fehler'}` 
+      });
+      setShowConfirmDialog(false);
     } finally {
       setSending(false);
-      setShowConfirmDialog(false);
     }
   };
 
@@ -229,6 +295,56 @@ export default function Step3Preview({
   minScheduleDate.setMinutes(minScheduleDate.getMinutes() + 15);
   const minDateString = minScheduleDate.toISOString().split('T')[0];
   const minTimeString = minScheduleDate.toTimeString().slice(0, 5);
+
+  // Helper-Funktion für Dateigrößen-Formatierung (entfernt, da keine Größe in attachedAssets)
+  const getFileTypeIcon = (fileType?: string) => {
+    // Später können hier verschiedene Icons basierend auf Dateityp zurückgegeben werden
+    return DocumentIcon;
+  };
+
+  // Extrahiere Anhang-Informationen aus der Kampagne
+  const attachments = useMemo(() => {
+    const attachmentList: Array<{
+      name: string;
+      type: string;
+      icon: typeof DocumentIcon;
+      description?: string;
+    }> = [];
+    
+    // Anhänge aus attachedAssets
+    if (campaign.attachedAssets && campaign.attachedAssets.length > 0) {
+      campaign.attachedAssets.forEach((attachment) => {
+        if (attachment.type === 'asset' && attachment.metadata.fileName) {
+          attachmentList.push({
+            name: attachment.metadata.fileName,
+            type: attachment.metadata.fileType || 'Dokument',
+            icon: DocumentIcon,
+            description: attachment.metadata.description
+          });
+        } else if (attachment.type === 'folder' && attachment.metadata.folderName) {
+          attachmentList.push({
+            name: attachment.metadata.folderName,
+            type: 'Ordner',
+            icon: DocumentIcon,
+            description: attachment.metadata.description
+          });
+        }
+      });
+    }
+    
+    // Falls keine attachedAssets vorhanden sind, aber ein contentHtml existiert,
+    // könnte die Pressemitteilung selbst als PDF angehängt werden
+    if (attachmentList.length === 0 && campaign.contentHtml) {
+      attachmentList.push({
+        name: `${campaign.title}.pdf`,
+        type: 'Pressemitteilung',
+        icon: DocumentIcon,
+        description: 'Generierte Pressemitteilung'
+      });
+    }
+    
+    return attachmentList;
+  }, [campaign]);
 
   return (
     <div className="p-6">
@@ -240,6 +356,17 @@ export default function Step3Preview({
             <InfoTooltip content={`Überprüfen Sie Ihre E-Mail und senden Sie sie an ${totalRecipients} Empfänger`} />
           </div>
         </div>
+
+        {/* Alert anzeigen falls vorhanden */}
+        {alert && (
+          <div className="mb-6">
+            <Alert 
+              type={alert.type} 
+              message={alert.message} 
+              onClose={() => setAlert(null)}
+            />
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Linke Spalte: Vorschau (60%) */}
@@ -281,6 +408,15 @@ export default function Step3Preview({
                 {draft.metadata.preheader && (
                   <div><strong>Vorschau:</strong> {draft.metadata.preheader}</div>
                 )}
+                {attachments.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <strong>Anhänge:</strong>
+                    <span className="flex items-center gap-1">
+                      <PaperClipIcon className="h-4 w-4 text-gray-500" />
+                      {attachments.length} {attachments.length === 1 ? 'Datei' : 'Dateien'}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Preview Frame */}
@@ -295,6 +431,35 @@ export default function Step3Preview({
                 />
               </div>
             </div>
+
+            {/* Anhang-Liste */}
+            {attachments.length > 0 && (
+              <div className="border rounded-lg p-4">
+                <h4 className="font-medium mb-3 flex items-center gap-2">
+                  <PaperClipIcon className="h-5 w-5 text-gray-500" />
+                  Anhänge ({attachments.length})
+                </h4>
+                <div className="space-y-2">
+                  {attachments.map((attachment, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <attachment.icon className="h-5 w-5 text-gray-400" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{attachment.name}</p>
+                          <p className="text-xs text-gray-500">
+                            {attachment.type}
+                            {attachment.description && ` • ${attachment.description}`}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-3">
+                  Diese Dateien werden automatisch an jede E-Mail angehängt.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Rechte Spalte: Versand-Optionen (40%) */}
@@ -354,7 +519,7 @@ export default function Step3Preview({
                 
                 <p className="text-sm text-gray-600">
                   Senden Sie eine Test-E-Mail um die Formatierung und Variablen zu überprüfen.
-                  Sie können beliebig viele Tests versenden.
+                  Die Test-E-Mail enthält alle Anhänge.
                 </p>
               </div>
             </div>
@@ -464,6 +629,12 @@ export default function Step3Preview({
                   <dt className="text-blue-700">Manuell hinzugefügt:</dt>
                   <dd className="font-medium text-blue-900">{manualRecipients}</dd>
                 </div>
+                {attachments.length > 0 && (
+                  <div className="flex justify-between">
+                    <dt className="text-blue-700">Anhänge:</dt>
+                    <dd className="font-medium text-blue-900">{attachments.length} Datei{attachments.length !== 1 ? 'en' : ''}</dd>
+                  </div>
+                )}
               </dl>
               
               {draft.recipients.listNames && draft.recipients.listNames.length > 0 && (
@@ -490,12 +661,13 @@ export default function Step3Preview({
         sendMode={sendMode}
         scheduledDateTime={sendMode === 'scheduled' ? `${scheduledDate} ${scheduledTime}` : ''}
         sending={sending}
+        attachmentCount={attachments.length}
       />
     </div>
   );
 }
 
-// Bestätigungs-Dialog Komponente
+// Bestätigungs-Dialog Komponente (erweitert um Anhang-Info)
 function ConfirmSendDialog({
   isOpen,
   onClose,
@@ -503,7 +675,8 @@ function ConfirmSendDialog({
   recipientCount,
   sendMode,
   scheduledDateTime,
-  sending
+  sending,
+  attachmentCount
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -512,6 +685,7 @@ function ConfirmSendDialog({
   sendMode: SendMode;
   scheduledDateTime: string;
   sending: boolean;
+  attachmentCount: number;
 }) {
   if (!isOpen) return null;
 
@@ -531,6 +705,11 @@ function ConfirmSendDialog({
                   : `Sie planen den Versand dieser E-Mail an ${recipientCount} Empfänger.`
                 }
               </p>
+              {attachmentCount > 0 && (
+                <p className="text-sm text-gray-600 mt-2">
+                  Die E-Mail enthält {attachmentCount} {attachmentCount === 1 ? 'Anhang' : 'Anhänge'}.
+                </p>
+              )}
               {sendMode === 'scheduled' && (
                 <p className="text-sm text-gray-600 mt-2">
                   Geplanter Versand: <strong>{scheduledDateTime}</strong>

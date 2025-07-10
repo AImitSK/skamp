@@ -80,7 +80,7 @@ export const emailCampaignService = {
   },
 
   /**
-   * PR-Kampagne per E-Mail versenden
+   * PR-Kampagne per E-Mail versenden - ERWEITERT für manuelle Empfänger
    */
   async sendPRCampaign(
     campaign: PRCampaign,
@@ -91,7 +91,13 @@ export const emailCampaignService = {
       company: string;
       phone?: string;
       email?: string;
-    }
+    },
+    manualRecipients?: Array<{ // NEU: Optional manuelle Empfänger
+      firstName: string;
+      lastName: string;
+      email: string;
+      companyName?: string;
+    }>
   ): Promise<{ success: number; failed: number; messageIds: string[] }> {
     
     console.log('🚀 Starting PR campaign send:', campaign.title);
@@ -101,6 +107,27 @@ export const emailCampaignService = {
       const contacts = await this.getCampaignContacts(campaign);
       
       console.log('📋 Found', contacts.length, 'contacts in distribution list(s)');
+      
+      // NEU: Manuelle Empfänger zu Kontakten konvertieren und hinzufügen
+      if (manualRecipients && manualRecipients.length > 0) {
+        console.log('➕ Adding', manualRecipients.length, 'manual recipients');
+        
+        const manualContacts: Contact[] = manualRecipients.map((recipient, index) => ({
+          id: `manual-${Date.now()}-${index}`,
+          userId: campaign.userId,
+          firstName: recipient.firstName,
+          lastName: recipient.lastName,
+          email: recipient.email,
+          companyName: recipient.companyName,
+          companyId: '',
+          createdAt: new Date() as any,
+          updatedAt: new Date() as any
+        }));
+        
+        // Füge manuelle Kontakte zur Liste hinzu
+        contacts.push(...manualContacts);
+        console.log('📊 Total contacts after adding manual:', contacts.length);
+      }
       
       if (contacts.length === 0) {
         throw new Error('Keine Kontakte in der Verteilerliste gefunden');
@@ -113,7 +140,7 @@ export const emailCampaignService = {
         throw new Error('Keine Kontakte mit E-Mail-Adressen gefunden');
       }
 
-      console.log('✉️ Prepared', contactsWithEmail.length, 'email recipients');
+      console.log('✉️ Prepared', contactsWithEmail.length, 'email recipients (including manual)');
 
       // 3. Media Share Link erstellen falls Medien angehängt sind
       let mediaShareUrl: string | undefined;

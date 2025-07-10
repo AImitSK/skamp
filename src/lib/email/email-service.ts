@@ -1,4 +1,4 @@
-// src/lib/email/email-service.ts - UPDATED WITH FIREBASE AUTH
+// src/lib/email/email-service.ts - UPDATED WITH MANUAL RECIPIENTS SUPPORT
 import { PRCampaignEmail } from '@/types/email';
 import { PRCampaign } from '@/types/pr';
 import { Contact } from '@/types/crm';
@@ -45,6 +45,7 @@ export interface ValidationResult {
   };
 }
 
+// ERWEITERT: Interface für Schedule-Request mit manuellen Empfängern
 export interface ScheduleEmailRequest {
   campaign: PRCampaign;
   emailContent: PRCampaignEmail;
@@ -57,6 +58,12 @@ export interface ScheduleEmailRequest {
   };
   scheduledDate: Date;
   timezone?: string;
+  manualRecipients?: Array<{ // NEU: Optional manuelle Empfänger
+    firstName: string;
+    lastName: string;
+    email: string;
+    companyName?: string;
+  }>;
 }
 
 export interface ScheduleEmailResult {
@@ -146,6 +153,7 @@ export class EmailService {
         },
         campaignEmail: emailContent,
         senderInfo,
+        campaignId: request.campaignId, // NEU: Campaign ID übergeben
         testMode: true
       });
 
@@ -255,7 +263,7 @@ export class EmailService {
   }
 
   /**
-   * Email-Versand planen
+   * Email-Versand planen - ERWEITERT für manuelle Empfänger
    */
   async scheduleEmail(request: ScheduleEmailRequest): Promise<ScheduleEmailResult> {
     try {
@@ -273,11 +281,28 @@ export class EmailService {
         };
       }
 
+      // NEU: Berechne die Gesamtzahl der Empfänger
+      const listRecipientCount = request.campaign.recipientCount || 0;
+      const manualRecipientCount = request.manualRecipients?.length || 0;
+      const totalRecipientCount = listRecipientCount + manualRecipientCount;
+
+      console.log('📊 Scheduling for:', {
+        listRecipients: listRecipientCount,
+        manualRecipients: manualRecipientCount,
+        total: totalRecipientCount
+      });
+
       // API Route mit authenticated fetch aufrufen
       const result = await apiClient.post<ScheduleEmailResult>('/api/email/schedule', {
         campaignId: request.campaign.id,
         emailContent: request.emailContent,
         senderInfo: request.senderInfo,
+        recipients: { // NEU: Strukturierte Empfänger-Info
+          listIds: request.campaign.distributionListIds || [request.campaign.distributionListId],
+          listNames: request.campaign.distributionListNames || [request.campaign.distributionListName],
+          manualRecipients: request.manualRecipients || [],
+          totalCount: totalRecipientCount
+        },
         scheduledDate: request.scheduledDate.toISOString(),
         timezone: request.timezone || 'Europe/Berlin'
       });
