@@ -1,21 +1,6 @@
 // src/app/api/email/schedule/route.ts - COMPLETE VERSION
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
-import { 
-  collection, 
-  doc, 
-  setDoc, 
-  getDoc, 
-  getDocs,
-  query,
-  where,
-  updateDoc,
-  Timestamp,
-  deleteDoc,
-  orderBy,
-  serverTimestamp
-} from 'firebase/firestore';
-import { db } from '@/lib/firebase/client-init';
 import { PRCampaign } from '@/types/pr';
 import { nanoid } from 'nanoid';
 
@@ -70,6 +55,8 @@ async function firestoreRequest(
     headers['Authorization'] = `Bearer ${token}`;
   }
   
+  console.log(`🔍 Firestore ${method} request to:`, url);
+  
   const response = await fetch(url, {
     method,
     headers,
@@ -78,6 +65,7 @@ async function firestoreRequest(
   
   if (!response.ok) {
     const error = await response.text();
+    console.error(`❌ Firestore request failed:`, error);
     throw new Error(`Firestore request failed: ${error}`);
   }
   
@@ -174,6 +162,10 @@ function convertToFirestoreValue(value: any): any {
   if (value instanceof Date) {
     return { timestampValue: value.toISOString() };
   }
+  // WICHTIG: Firestore Timestamp Objekte
+  if (value && typeof value.toDate === 'function') {
+    return { timestampValue: value.toDate().toISOString() };
+  }
   if (Array.isArray(value)) {
     return {
       arrayValue: {
@@ -199,7 +191,9 @@ async function scheduleEmailCampaign(
   recipients: any,
   scheduledDate: Date,
   timezone: string,
-  organizationId: string
+  organizationId: string,
+  userId: string, // NEU: userId als Parameter
+  token?: string  // Token als Parameter hinzugefügt
 ): Promise<{ success: boolean; jobId?: string; scheduledFor?: Date; calendarEventId?: string; error?: string }> {
   try {
     console.log('📅 Scheduling email campaign:', campaign.title, 'for', scheduledDate);
@@ -226,26 +220,27 @@ async function scheduleEmailCampaign(
       campaignTitle: campaign.title,
       userId: campaign.userId,
       organizationId: organizationId || campaign.organizationId || campaign.userId,
-      scheduledAt: Timestamp.fromDate(scheduledDate),
+      scheduledAt: scheduledDate,
       timezone,
       status: 'pending',
       emailContent,
       senderInfo,
       recipients,
       mediaShareUrl: campaign.assetShareUrl,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now()
+      createdAt: new Date(),
+      updatedAt: new Date()
     };
 
     console.log('📝 Saving scheduled email to Firestore...');
     
-    // Speichere in Firestore
-await firestoreRequest(
-  `scheduled_emails/${docId}`,
-  'PATCH',
-  convertToFirestoreDocument(scheduledEmail),
-  token
-);    
+    // Speichere in Firestore über REST API
+    await firestoreRequest(
+      `scheduled_emails?documentId=${docId}`,
+      'POST',
+      convertToFirestoreDocument(scheduledEmail),
+      token
+    );
+    
     console.log('✅ Scheduled email saved successfully');
 
     // Erstelle Kalender-Eintrag
@@ -253,11 +248,13 @@ await firestoreRequest(
     let calendarEventId: string | null = null;
     
     try {
+      calendarEventId = `cal_${Date.now()}_${nanoid(9)}`;
+      
       const calendarEvent = {
         title: `📧 E-Mail-Versand: ${campaign.title}`,
         description: `Geplanter E-Mail-Versand für PR-Kampagne "${campaign.title}" an ${recipients.totalCount} Empfänger.`,
-        startTime: Timestamp.fromDate(scheduledDate),
-        endTime: Timestamp.fromDate(new Date(scheduledDate.getTime() + 30 * 60 * 1000)), // +30 Minuten
+        startTime: scheduledDate,
+        endTime: new Date(scheduledDate.getTime() + 30 * 60 * 1000), // +30 Minuten
         type: 'email_campaign',
         metadata: {
           campaignId: campaign.id!,
@@ -265,24 +262,33 @@ await firestoreRequest(
           recipientCount: recipients.totalCount,
           jobId: jobId
         },
-        userId: campaign.userId,
-        organizationId,
-        createdAt: Timestamp.now()
+        userId: userId, // Verwende den übergebenen userId
+        organizationId: organizationId || userId, // Fallback auf userId
+        createdAt: new Date()
       };
 
-      const docRef = doc(collection(db, 'calendar_events'));
-      console.log('📝 Saving calendar event to:', docRef.path);
+      console.log('📝 Creating calendar event with ID:', calendarEventId);
       
-      await setDoc(docRef, calendarEvent);
-      calendarEventId = docRef.id;
+      // Erstelle Kalender-Eintrag über REST API
+      await firestoreRequest(
+        `calendar_events?documentId=${calendarEventId}`,
+        'POST',
+        convertToFirestoreDocument(calendarEvent),
+        token
+      );
 
-      console.log('✅ Calendar entry created:', docRef.id);
+      console.log('✅ Calendar entry created:', calendarEventId);
       
       // Update mit Calendar Event ID
-      await updateDoc(doc(db, 'scheduled_emails', docId), {
-        calendarEventId,
-        updatedAt: serverTimestamp()
-      });
+      await firestoreRequest(
+        `scheduled_emails/${docId}`,
+        'PATCH',
+        convertToFirestoreDocument({
+          calendarEventId,
+          updatedAt: new Date()
+        }),
+        token
+      );
       
     } catch (error) {
       console.error('❌ Error creating calendar entry:', error);
@@ -309,17 +315,28 @@ await firestoreRequest(
 export async function POST(request: NextRequest) {
   return withAuth(request, async (req, auth: AuthContext) => {
     try {
+      console.log('📅 POST /api/email/schedule - Start');
+      console.log('📋 Auth context:', {
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        hasToken: !!req.headers.get('authorization')
+      });
+      
       const data: ScheduleEmailRequest = await req.json();
       
       console.log('📅 Scheduling email for campaign:', data.campaignId);
-      console.log('📋 Auth context:', {
-        userId: auth.userId,
-        organizationId: auth.organizationId
-      });
 
       // Get user token for Firestore requests
       const authHeader = req.headers.get('authorization');
       const token = authHeader?.split('Bearer ')[1];
+      
+      if (!token) {
+        console.error('❌ No auth token found');
+        return NextResponse.json(
+          { error: 'Authentifizierung erforderlich' },
+          { status: 401 }
+        );
+      }
 
       // Validierung
       if (!data.campaignId) {
@@ -360,47 +377,28 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Kampagne laden - mit REST API oder client SDK
+      // Kampagne laden - nur mit REST API
       console.log('📄 Loading campaign:', data.campaignId);
       let campaign: PRCampaign;
       
-      try {
-        // Versuche zuerst mit REST API
-        const campaignDoc = await firestoreRequest(
-          `pr_campaigns/${data.campaignId}`,
-          'GET',
-          undefined,
-          token
+      const campaignDoc = await firestoreRequest(
+        `pr_campaigns/${data.campaignId}`,
+        'GET',
+        undefined,
+        token
+      );
+      
+      if (!campaignDoc.fields) {
+        return NextResponse.json(
+          { error: 'Kampagne nicht gefunden' },
+          { status: 404 }
         );
-        
-        if (!campaignDoc.fields) {
-          return NextResponse.json(
-            { error: 'Kampagne nicht gefunden' },
-            { status: 404 }
-          );
-        }
-        
-        campaign = {
-          ...convertFirestoreDocument(campaignDoc),
-          id: data.campaignId
-        };
-      } catch (restError) {
-        // Fallback zu client SDK
-        console.log('⚠️ REST API failed, using client SDK');
-        const campaignDoc = await getDoc(doc(db, 'pr_campaigns', data.campaignId));
-        
-        if (!campaignDoc.exists()) {
-          return NextResponse.json(
-            { error: 'Kampagne nicht gefunden' },
-            { status: 404 }
-          );
-        }
-
-        campaign = {
-          ...campaignDoc.data(),
-          id: campaignDoc.id
-        } as PRCampaign;
       }
+      
+      campaign = {
+        ...convertFirestoreDocument(campaignDoc),
+        id: data.campaignId
+      };
 
       console.log('✅ Campaign loaded:', campaign.title);
 
@@ -422,7 +420,9 @@ export async function POST(request: NextRequest) {
         data.recipients,
         scheduledDate,
         data.timezone || 'Europe/Berlin',
-        auth.organizationId
+        auth.organizationId,
+        auth.userId,  // NEU: userId übergeben
+        token  // Token übergeben
       );
 
       if (!result.success) {
@@ -479,113 +479,78 @@ export async function DELETE(request: NextRequest) {
       const token = authHeader?.split('Bearer ')[1];
 
       // Finde das Dokument mit der Job-ID und prüfe Berechtigung - über REST API
-      try {
-        const queryResponse = await firestoreQuery(
-          {
-            structuredQuery: {
-              from: [{ collectionId: 'scheduled_emails' }],
-              where: {
-                compositeFilter: {
-                  op: 'AND',
-                  filters: [
-                    {
-                      fieldFilter: {
-                        field: { fieldPath: 'jobId' },
-                        op: 'EQUAL',
-                        value: { stringValue: jobId }
-                      }
-                    },
-                    {
-                      fieldFilter: {
-                        field: { fieldPath: 'organizationId' },
-                        op: 'EQUAL',
-                        value: { stringValue: auth.organizationId }
-                      }
-                    },
-                    {
-                      fieldFilter: {
-                        field: { fieldPath: 'status' },
-                        op: 'EQUAL',
-                        value: { stringValue: 'pending' }
-                      }
+      const queryResponse = await firestoreQuery(
+        {
+          structuredQuery: {
+            from: [{ collectionId: 'scheduled_emails' }],
+            where: {
+              compositeFilter: {
+                op: 'AND',
+                filters: [
+                  {
+                    fieldFilter: {
+                      field: { fieldPath: 'jobId' },
+                      op: 'EQUAL',
+                      value: { stringValue: jobId }
                     }
-                  ]
-                }
-              },
-              limit: 1
-            }
-          },
-          token
-        );
-
-        if (!queryResponse[0]?.document) {
-          return NextResponse.json(
-            { error: 'Geplante E-Mail nicht gefunden oder bereits versendet' },
-            { status: 404 }
-          );
-        }
-
-        // Update über REST API
-        const docPath = queryResponse[0].document.name.split('/documents/')[1];
-        const scheduledEmail = convertFirestoreDocument(queryResponse[0].document);
-        
-        // Update Status auf 'cancelled'
-        await firestoreRequest(
-          docPath,
-          'PATCH',
-          convertToFirestoreDocument({
-            status: 'cancelled',
-            updatedAt: new Date()
-          }),
-          token
-        );
-
-        // Lösche Kalender-Eintrag wenn vorhanden
-        if (scheduledEmail.calendarEventId) {
-          try {
-            await deleteDoc(doc(db, 'calendar_events', scheduledEmail.calendarEventId));
-            console.log('✅ Calendar entry deleted');
-          } catch (error) {
-            console.error('⚠️ Could not delete calendar entry:', error);
+                  },
+                  {
+                    fieldFilter: {
+                      field: { fieldPath: 'organizationId' },
+                      op: 'EQUAL',
+                      value: { stringValue: auth.organizationId }
+                    }
+                  },
+                  {
+                    fieldFilter: {
+                      field: { fieldPath: 'status' },
+                      op: 'EQUAL',
+                      value: { stringValue: 'pending' }
+                    }
+                  }
+                ]
+              }
+            },
+            limit: 1
           }
-        }
+        },
+        token
+      );
 
-      } catch (restError) {
-        // Fallback zu client SDK
-        console.log('⚠️ REST API failed, using client SDK');
-        const q = query(
-          collection(db, 'scheduled_emails'),
-          where('jobId', '==', jobId),
-          where('organizationId', '==', auth.organizationId),
-          where('status', '==', 'pending')
+      if (!queryResponse[0]?.document) {
+        return NextResponse.json(
+          { error: 'Geplante E-Mail nicht gefunden oder bereits versendet' },
+          { status: 404 }
         );
+      }
 
-        const querySnapshot = await getDocs(q);
-        
-        if (querySnapshot.empty) {
-          return NextResponse.json(
-            { error: 'Geplante E-Mail nicht gefunden oder bereits versendet' },
-            { status: 404 }
-          );
-        }
-
-        const doc = querySnapshot.docs[0];
-        const scheduledEmail = doc.data();
-
-        // Update Status auf 'cancelled'
-        await updateDoc(doc.ref, {
+      // Update über REST API
+      const docPath = queryResponse[0].document.name.split('/documents/')[1];
+      const scheduledEmail = convertFirestoreDocument(queryResponse[0].document);
+      
+      // Update Status auf 'cancelled'
+      await firestoreRequest(
+        docPath,
+        'PATCH',
+        convertToFirestoreDocument({
           status: 'cancelled',
-          updatedAt: serverTimestamp()
-        });
+          updatedAt: new Date()
+        }),
+        token
+      );
 
-        // Lösche Kalender-Eintrag wenn vorhanden
-        if (scheduledEmail.calendarEventId) {
-          try {
-            await deleteDoc(doc(db, 'calendar_events', scheduledEmail.calendarEventId));
-            console.log('✅ Calendar entry deleted');
-          } catch (error) {
-            console.error('⚠️ Could not delete calendar entry:', error);
-          }
+      // Lösche Kalender-Eintrag wenn vorhanden
+      if (scheduledEmail.calendarEventId) {
+        try {
+          await firestoreRequest(
+            `calendar_events/${scheduledEmail.calendarEventId}`,
+            'DELETE',
+            undefined,
+            token
+          );
+          console.log('✅ Calendar entry deleted');
+        } catch (error) {
+          console.error('⚠️ Could not delete calendar entry:', error);
         }
       }
 
@@ -613,6 +578,13 @@ export async function DELETE(request: NextRequest) {
 export async function GET(request: NextRequest) {
   return withAuth(request, async (req, auth: AuthContext) => {
     try {
+      console.log('📋 GET /api/email/schedule - Start');
+      console.log('📋 Auth context:', {
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        hasToken: !!req.headers.get('authorization')
+      });
+      
       // Status-Filter aus Query-Parametern
       const { searchParams } = new URL(req.url);
       const status = searchParams.get('status') as any;
@@ -622,139 +594,92 @@ export async function GET(request: NextRequest) {
       // Get user token for Firestore requests
       const authHeader = req.headers.get('authorization');
       const token = authHeader?.split('Bearer ')[1];
-
-      // Versuche zuerst mit REST API
-      try {
-        let queryBody: any = {
-          structuredQuery: {
-            from: [{ collectionId: 'scheduled_emails' }],
-            where: {
-              fieldFilter: {
-                field: { fieldPath: 'organizationId' },
-                op: 'EQUAL',
-                value: { stringValue: auth.organizationId }
-              }
-            },
-            orderBy: [{
-              field: { fieldPath: 'scheduledAt' },
-              direction: 'DESCENDING'
-            }]
-          }
-        };
-
-        if (status) {
-          queryBody.structuredQuery.where = {
-            compositeFilter: {
-              op: 'AND',
-              filters: [
-                queryBody.structuredQuery.where,
-                {
-                  fieldFilter: {
-                    field: { fieldPath: 'status' },
-                    op: 'EQUAL',
-                    value: { stringValue: status }
-                  }
-                }
-              ]
-            }
-          };
-        }
-
-        const queryResponse = await firestoreQuery(queryBody, token);
-        
-        const scheduledEmails = queryResponse
-          .filter((result: any) => result.document)
-          .map((result: any) => ({
-            id: result.document.name.split('/').pop(),
-            ...convertFirestoreDocument(result.document)
-          }));
-
-        // Statistiken berechnen
-        const stats = {
-          pending: 0,
-          sent: 0,
-          failed: 0,
-          cancelled: 0,
-          processing: 0,
-          nextScheduled: undefined as Date | undefined
-        };
-
-        const now = new Date();
-
-        scheduledEmails.forEach((email: any) => {
-          if (email.status && email.status in stats && email.status !== 'processing') {
-            (stats as any)[email.status]++;
-          }
-          
-          if (email.status === 'pending' && email.scheduledAt) {
-            const scheduledDate = email.scheduledAt.toDate ? email.scheduledAt.toDate() : new Date(email.scheduledAt);
-            if (scheduledDate > now && (!stats.nextScheduled || scheduledDate < stats.nextScheduled)) {
-              stats.nextScheduled = scheduledDate;
-            }
-          }
-        });
-
-        return NextResponse.json({
-          success: true,
-          emails: scheduledEmails,
-          stats,
-          count: scheduledEmails.length
-        });
-
-      } catch (restError) {
-        // Fallback zu client SDK
-        console.log('⚠️ REST API failed, using client SDK');
-        
-        let q = query(
-          collection(db, 'scheduled_emails'),
-          where('organizationId', '==', auth.organizationId)
+      
+      if (!token) {
+        console.error('❌ No auth token found');
+        return NextResponse.json(
+          { error: 'Authentifizierung erforderlich' },
+          { status: 401 }
         );
+      }
 
-        if (status) {
-          q = query(q, where('status', '==', status));
+      // Nutze nur REST API
+      let queryBody: any = {
+        structuredQuery: {
+          from: [{ collectionId: 'scheduled_emails' }],
+          where: {
+            fieldFilter: {
+              field: { fieldPath: 'organizationId' },
+              op: 'EQUAL',
+              value: { stringValue: auth.organizationId }
+            }
+          }
+          // TEMPORÄR: orderBy entfernt bis Index erstellt ist
+          // orderBy: [{
+          //   field: { fieldPath: 'scheduledAt' },
+          //   direction: 'DESCENDING'
+          // }]
         }
+      };
 
-        q = query(q, orderBy('scheduledAt', 'desc'));
+      if (status) {
+        queryBody.structuredQuery.where = {
+          compositeFilter: {
+            op: 'AND',
+            filters: [
+              queryBody.structuredQuery.where,
+              {
+                fieldFilter: {
+                  field: { fieldPath: 'status' },
+                  op: 'EQUAL',
+                  value: { stringValue: status }
+                }
+              }
+            ]
+          }
+        };
+      }
 
-        const querySnapshot = await getDocs(q);
-        
-        const scheduledEmails = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
+      const queryResponse = await firestoreQuery(queryBody, token);
+      
+      const scheduledEmails = queryResponse
+        .filter((result: any) => result.document)
+        .map((result: any) => ({
+          id: result.document.name.split('/').pop(),
+          ...convertFirestoreDocument(result.document)
         }));
 
-        // Statistiken berechnen
-        const stats = {
-          pending: 0,
-          sent: 0,
-          failed: 0,
-          cancelled: 0,
-          processing: 0,
-          nextScheduled: undefined as Date | undefined
-        };
+      // Statistiken berechnen
+      const stats = {
+        pending: 0,
+        sent: 0,
+        failed: 0,
+        cancelled: 0,
+        processing: 0,
+        nextScheduled: undefined as Date | undefined
+      };
 
-        const now = new Date();
+      const now = new Date();
 
-        scheduledEmails.forEach((email: any) => {
-          if (email.status && email.status in stats && email.status !== 'processing') {
-            (stats as any)[email.status]++;
+      scheduledEmails.forEach((email: any) => {
+        if (email.status && email.status in stats && email.status !== 'processing') {
+          (stats as any)[email.status]++;
+        }
+        
+        if (email.status === 'pending' && email.scheduledAt) {
+          const scheduledDate = new Date(email.scheduledAt);
+          if (scheduledDate > now && (!stats.nextScheduled || scheduledDate < stats.nextScheduled)) {
+            stats.nextScheduled = scheduledDate;
           }
-          
-          if (email.status === 'pending' && email.scheduledAt) {
-            const scheduledDate = email.scheduledAt.toDate();
-            if (scheduledDate > now && (!stats.nextScheduled || scheduledDate < stats.nextScheduled)) {
-              stats.nextScheduled = scheduledDate;
-            }
-          }
-        });
+        }
+      });
 
-        return NextResponse.json({
-          success: true,
-          emails: scheduledEmails,
-          stats,
-          count: scheduledEmails.length
-        });
-      }
+      return NextResponse.json({
+        success: true,
+        emails: scheduledEmails,
+        stats,
+        count: scheduledEmails.length
+      });
 
     } catch (error: any) {
       console.error('❌ Get scheduled emails error:', error);
