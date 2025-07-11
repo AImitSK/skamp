@@ -4,6 +4,15 @@ import { PRCampaign } from '@/types/pr';
 import { CalendarEvent } from '@/types/calendar';
 import { taskService } from '@/lib/firebase/task-service';
 import { Task } from '@/types/tasks';
+import { 
+  collection, 
+  query, 
+  where, 
+  getDocs, 
+  Timestamp,
+  orderBy
+} from 'firebase/firestore';
+import { db } from '@/lib/firebase/client-init';
 
 
 export interface Notification {
@@ -173,6 +182,98 @@ export const getEventsForDateRange = async (
     console.error('⚠️ Fehler beim Laden der Tasks:', error);
   }
   
+  // NEU: Lade Kalender-Events aus der calendar_events Collection
+  try {
+    console.log('📅 Lade Kalender-Events...');
+    
+    // Query für calendar_events im Zeitraum
+    const calendarEventsRef = collection(db, 'calendar_events');
+    const q = query(
+      calendarEventsRef,
+      where('userId', '==', userId),
+      where('startTime', '>=', Timestamp.fromDate(startDate)),
+      where('startTime', '<=', Timestamp.fromDate(endDate)),
+      orderBy('startTime', 'asc')
+    );
+    
+    const querySnapshot = await getDocs(q);
+    console.log('📅 Gefundene Kalender-Events:', querySnapshot.size);
+    
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      console.log('📅 Kalender-Event:', data);
+      
+      // Konvertiere zu CalendarEvent
+      if (data.type === 'email_campaign' && data.metadata) {
+        events.push({
+          id: `calendar-${doc.id}`,
+          title: data.title,
+          date: data.startTime.toDate(),
+          endDate: data.endTime?.toDate(),
+          type: 'campaign_scheduled',
+          campaignId: data.metadata.campaignId,
+          metadata: {
+            campaignTitle: data.title.replace('📧 E-Mail-Versand: ', ''),
+            recipientCount: data.metadata.recipientCount,
+            scheduledEmailId: data.metadata.scheduledEmailId,
+            calendarEventId: doc.id
+          },
+          color: '#005fab',
+          priority: 'high'
+        });
+      }
+    });
+  } catch (error) {
+    console.error('⚠️ Fehler beim Laden der Kalender-Events:', error);
+  }
+  
+  // NEU: Lade auch scheduled_emails für zusätzliche Informationen
+  try {
+    console.log('📧 Lade geplante E-Mails...');
+    
+    const scheduledEmailsRef = collection(db, 'scheduled_emails');
+    const q = query(
+      scheduledEmailsRef,
+      where('userId', '==', userId),
+      where('status', '==', 'pending'),
+      where('scheduledAt', '>=', Timestamp.fromDate(startDate)),
+      where('scheduledAt', '<=', Timestamp.fromDate(endDate))
+    );
+    
+    const querySnapshot = await getDocs(q);
+    console.log('📧 Gefundene geplante E-Mails:', querySnapshot.size);
+    
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      
+      // Prüfe ob schon ein Event aus calendar_events existiert
+      const existingEvent = events.find(e => 
+        e.metadata?.scheduledEmailId === doc.id
+      );
+      
+      if (!existingEvent) {
+        // Füge Event hinzu falls noch nicht vorhanden
+        events.push({
+          id: `scheduled-email-${doc.id}`,
+          title: `📧 ${data.campaignTitle}`,
+          date: data.scheduledAt.toDate(),
+          type: 'campaign_scheduled',
+          campaignId: data.campaignId,
+          metadata: {
+            campaignTitle: data.campaignTitle,
+            recipientCount: data.recipients.totalCount,
+            scheduledEmailId: doc.id,
+            jobId: data.jobId
+          },
+          color: '#005fab',
+          priority: 'high'
+        });
+      }
+    });
+  } catch (error) {
+    console.error('⚠️ Fehler beim Laden der geplanten E-Mails:', error);
+  }
+  
   campaigns.forEach((campaign: PRCampaign) => {
     console.log('🔎 Prüfe Kampagne:', {
       id: campaign.id,
@@ -208,7 +309,7 @@ export const getEventsForDateRange = async (
       }
     }
     
-    // Geplante Kampagnen
+    // Nur alte geplante Kampagnen (vor der neuen Implementierung)
     if (campaign.scheduledAt && campaign.status === 'scheduled') {
       const scheduledDate = campaign.scheduledAt.toDate();
       console.log('📅 Geplante Kampagne gefunden:', {
@@ -217,7 +318,12 @@ export const getEventsForDateRange = async (
         inRange: scheduledDate >= startDate && scheduledDate <= endDate
       });
       
-      if (scheduledDate >= startDate && scheduledDate <= endDate) {
+      // Prüfe ob schon ein Event aus scheduled_emails existiert
+      const isDuplicate = events.some(e => 
+        e.campaignId === campaign.id && e.type === 'campaign_scheduled'
+      );
+      
+      if (!isDuplicate && scheduledDate >= startDate && scheduledDate <= endDate) {
         events.push({
           id: `campaign-scheduled-${campaign.id}`,
           title: `📤 ${campaign.title}`,
@@ -349,8 +455,13 @@ export const getEventsForDateRange = async (
     }
   });
   
-  console.log('✅ Finale Events:', events.length, events);
-  return events.sort((a, b) => a.date.getTime() - b.date.getTime());
+  // Entferne Duplikate basierend auf ID
+  const uniqueEvents = events.filter((event, index, self) =>
+    index === self.findIndex((e) => e.id === event.id)
+  );
+  
+  console.log('✅ Finale Events:', uniqueEvents.length, uniqueEvents);
+  return uniqueEvents.sort((a, b) => a.date.getTime() - b.date.getTime());
 };
 
 // Hilfsfunktion: Erstelle Event aus Kampagne

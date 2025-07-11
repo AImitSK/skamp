@@ -1,4 +1,4 @@
-// src/types/calendar.ts
+// src/types/calendar.ts - ERWEITERT MIT EMAIL SCHEDULING
 
 export interface CalendarEvent {
   id: string;
@@ -32,6 +32,12 @@ export interface CalendarEvent {
     startTime?: string; // Format: "HH:MM"
     endTime?: string;   // Format: "HH:MM"
     duration?: number;  // Dauer in Minuten (alternativ zu endTime)
+    
+    // NEU: Email-Scheduling spezifische Felder
+    scheduledEmailId?: string;  // ID des scheduled_emails Dokuments
+    jobId?: string;            // Job-ID für Stornierung
+    calendarEventId?: string;  // ID des calendar_events Dokuments
+    senderName?: string;       // Name des Absenders
   };
   
   // Styling
@@ -52,11 +58,11 @@ export interface CalendarFilter {
   showCampaigns: boolean;
   showApprovals: boolean;
   showTasks: boolean;
+  showScheduledEmails?: boolean; // NEU: Filter für geplante E-Mails
   clientId?: string | null;
   startDate?: Date;
   endDate?: Date;
   searchTerm?: string;
-  
 }
 
 export interface CalendarView {
@@ -82,6 +88,7 @@ export interface CalendarNotification {
 
 // Event Factory Functions
 export const EventFactories = {
+  // ERWEITERT: Unterscheide zwischen alten campaign_scheduled und neuen email_scheduled
   campaignScheduled: (campaign: any): CalendarEvent => ({
     id: `campaign-scheduled-${campaign.id}`,
     title: `📤 ${campaign.title}`,
@@ -92,6 +99,25 @@ export const EventFactories = {
       campaignTitle: campaign.title,
       clientName: campaign.clientName,
       recipientCount: campaign.recipientCount
+    },
+    color: '#005fab',
+    priority: 'high'
+  }),
+  
+  // NEU: Factory für geplante E-Mails aus scheduled_emails
+  emailScheduled: (scheduledEmail: any): CalendarEvent => ({
+    id: `email-scheduled-${scheduledEmail.id || scheduledEmail.jobId}`,
+    title: `📧 ${scheduledEmail.campaignTitle}`,
+    date: scheduledEmail.scheduledAt.toDate ? scheduledEmail.scheduledAt.toDate() : scheduledEmail.scheduledAt,
+    type: 'campaign_scheduled',
+    campaignId: scheduledEmail.campaignId,
+    metadata: {
+      campaignTitle: scheduledEmail.campaignTitle,
+      recipientCount: scheduledEmail.recipients?.totalCount || 0,
+      scheduledEmailId: scheduledEmail.id,
+      jobId: scheduledEmail.jobId,
+      calendarEventId: scheduledEmail.calendarEventId,
+      senderName: scheduledEmail.senderInfo?.name
     },
     color: '#005fab',
     priority: 'high'
@@ -142,7 +168,6 @@ export const EventFactories = {
     color: '#dc2626'
   }),
   
-  // NEU: Task Factory mit Zeitunterstützung
   task: (task: any): CalendarEvent => ({
     id: `task-${task.id}`,
     title: `📋 ${task.title}`,
@@ -187,3 +212,16 @@ export const EVENT_ICONS = {
   deadline: '🎯',
   follow_up: '📞'
 } as const;
+
+// NEU: Helper um zu prüfen ob ein Event eine geplante E-Mail ist
+export const isScheduledEmailEvent = (event: CalendarEvent): boolean => {
+  return event.type === 'campaign_scheduled' && 
+         !!(event.metadata?.scheduledEmailId || event.metadata?.jobId);
+};
+
+// NEU: Helper um zwischen alter und neuer Implementierung zu unterscheiden
+export const isLegacyScheduledCampaign = (event: CalendarEvent): boolean => {
+  return event.type === 'campaign_scheduled' && 
+         !event.metadata?.scheduledEmailId && 
+         !event.metadata?.jobId;
+};

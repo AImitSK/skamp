@@ -1,4 +1,4 @@
-// src/components/calendar/EventDetailsModal.tsx
+// src/components/calendar/EventDetailsModal.tsx - ERWEITERTE VERSION
 import { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/dialog';
 import { Field, Label, FieldGroup } from '@/components/fieldset';
@@ -15,13 +15,17 @@ import {
   CheckCircleIcon,
   DocumentTextIcon,
   InformationCircleIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  XCircleIcon,
+  EnvelopeIcon,
+  ClockIcon
 } from '@heroicons/react/20/solid';
 import { CalendarEvent, EVENT_ICONS } from '@/types/calendar';
 import Link from 'next/link';
 import { taskService } from '@/lib/firebase/task-service';
 import { Task, TaskPriority } from '@/types/tasks';
 import { Timestamp } from 'firebase/firestore';
+import { apiClient } from '@/lib/api/api-client';
 
 // Alert Component
 function Alert({ 
@@ -60,9 +64,16 @@ interface EventDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onTaskUpdated?: () => void;
+  onEmailCancelled?: () => void; // NEU: Callback für stornierte E-Mails
 }
 
-export function EventDetailsModal({ event, isOpen, onClose, onTaskUpdated }: EventDetailsModalProps) {
+export function EventDetailsModal({ 
+  event, 
+  isOpen, 
+  onClose, 
+  onTaskUpdated,
+  onEmailCancelled 
+}: EventDetailsModalProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [taskData, setTaskData] = useState<Task | null>(null);
   const [editForm, setEditForm] = useState({
@@ -79,6 +90,9 @@ export function EventDetailsModal({ event, isOpen, onClose, onTaskUpdated }: Eve
     message: string;
     onConfirm: () => void;
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+  
+  // NEU: State für E-Mail-Stornierung
+  const [cancellingEmail, setCancellingEmail] = useState(false);
 
   const showAlert = (type: 'info' | 'error', message: string) => {
     setAlert({ type, message });
@@ -175,6 +189,43 @@ export function EventDetailsModal({ event, isOpen, onClose, onTaskUpdated }: Eve
     }
   };
 
+  // NEU: Handler für E-Mail-Stornierung
+  const handleCancelScheduledEmail = () => {
+    const jobId = event?.metadata?.jobId;
+    
+    if (!jobId) {
+      showAlert('error', 'Job-ID für geplante E-Mail nicht gefunden');
+      return;
+    }
+
+    setConfirmDialog({
+      isOpen: true,
+      title: 'E-Mail-Versand stornieren',
+      message: 'Möchten Sie den geplanten E-Mail-Versand wirklich stornieren? Diese Aktion kann nicht rückgängig gemacht werden.',
+      onConfirm: async () => {
+        setCancellingEmail(true);
+        try {
+          // API-Call zum Stornieren mit explizitem Typ
+          const result = await apiClient.delete<{ success: boolean; message?: string; error?: string }>(
+            `/api/email/schedule?jobId=${jobId}`
+          );
+          
+          if (result.success) {
+            showAlert('info', result.message || 'E-Mail-Versand erfolgreich storniert');
+            onEmailCancelled?.();
+            onClose();
+          } else {
+            showAlert('error', result.error || 'Stornierung fehlgeschlagen');
+          }
+        } catch (error: any) {
+          showAlert('error', error.message || 'Fehler beim Stornieren der E-Mail');
+        } finally {
+          setCancellingEmail(false);
+        }
+      }
+    });
+  };
+
   if (!event) return null;
 
   const getStatusBadge = () => {
@@ -219,7 +270,7 @@ export function EventDetailsModal({ event, isOpen, onClose, onTaskUpdated }: Eve
           )}
 
           {isEditing && event.type === 'task' ? (
-            // Bearbeitungsmodus
+            // Bearbeitungsmodus für Tasks
             <form onSubmit={(e) => { e.preventDefault(); handleTaskUpdate(); }}>
               <DialogTitle>Aufgabe bearbeiten</DialogTitle>
               <DialogBody className="mt-4">
@@ -307,8 +358,59 @@ export function EventDetailsModal({ event, isOpen, onClose, onTaskUpdated }: Eve
                       month: 'long',
                       day: 'numeric'
                     })}
+                    {event.type === 'campaign_scheduled' && (
+                      <span className="ml-2">
+                        um {event.date.toLocaleTimeString('de-DE', {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })} Uhr
+                      </span>
+                    )}
                   </Text>
                 </div>
+
+                {/* NEU: Geplante E-Mail spezifische Infos */}
+                {event.type === 'campaign_scheduled' && (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <EnvelopeIcon className="h-4 w-4 text-gray-400" />
+                      <Text className="text-sm text-gray-600">
+                        Geplanter E-Mail-Versand
+                      </Text>
+                    </div>
+                    
+                    {event.metadata?.recipientCount && (
+                      <div className="flex items-center gap-2">
+                        <Text className="text-sm text-gray-600">Empfänger:</Text>
+                        <Text className="text-sm font-medium">{event.metadata.recipientCount}</Text>
+                      </div>
+                    )}
+                    
+                    {event.metadata?.jobId && (
+                      <div className="flex items-center gap-2">
+                        <Text className="text-sm text-gray-600">Job-ID:</Text>
+                        <Text className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
+                          {event.metadata.jobId}
+                        </Text>
+                      </div>
+                    )}
+                    
+                    <div className="p-3 bg-blue-50 rounded-lg">
+                      <div className="flex items-start gap-2">
+                        <InformationCircleIcon className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <Text className="text-sm text-blue-900 font-medium">
+                            E-Mail ist für den Versand geplant
+                          </Text>
+                          <Text className="text-sm text-blue-800 mt-1">
+                            Die E-Mail wird automatisch zur geplanten Zeit versendet, 
+                            sofern Sie den Versand nicht vorher stornieren.
+                          </Text>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 {/* Task-spezifische Infos */}
                 {event.type === 'task' && taskData && (
@@ -335,14 +437,6 @@ export function EventDetailsModal({ event, isOpen, onClose, onTaskUpdated }: Eve
                   </div>
                 )}
 
-                {/* Empfänger */}
-                {event.metadata?.recipientCount && (
-                  <div className="flex items-center gap-2">
-                    <Text className="text-sm text-gray-600">Empfänger:</Text>
-                    <Text className="text-sm">{event.metadata.recipientCount}</Text>
-                  </div>
-                )}
-
                 {/* Überfällig seit */}
                 {event.metadata?.daysOverdue && (
                   <div className="flex items-center gap-2">
@@ -355,8 +449,42 @@ export function EventDetailsModal({ event, isOpen, onClose, onTaskUpdated }: Eve
               </DialogBody>
 
               <DialogActions>
-                {/* Kampagnen-Buttons */}
-                {(event.type === 'campaign_scheduled' || event.type === 'campaign_sent') && event.campaignId && (
+                {/* NEU: Buttons für geplante E-Mails */}
+                {event.type === 'campaign_scheduled' && (
+                  <>
+                    {event.campaignId && (
+                      <Link href={`/dashboard/pr-tools/campaigns/campaigns/${event.campaignId}`}>
+                        <Button plain>
+                          <DocumentTextIcon />
+                          Kampagne anzeigen
+                        </Button>
+                      </Link>
+                    )}
+                    <Button 
+                      onClick={handleCancelScheduledEmail}
+                      disabled={cancellingEmail}
+                      className="bg-red-600 hover:bg-red-700 text-white whitespace-nowrap"
+                    >
+                      {cancellingEmail ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          Storniere...
+                        </>
+                      ) : (
+                        <>
+                          <XCircleIcon />
+                          Versand stornieren
+                        </>
+                      )}
+                    </Button>
+                  </>
+                )}
+                
+                {/* Andere Event-Typen Buttons */}
+                {(event.type === 'campaign_sent') && event.campaignId && (
                   <Link href={`/dashboard/pr-tools/campaigns/campaigns/${event.campaignId}`}>
                     <Button className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap">
                       Kampagne anzeigen
@@ -364,7 +492,6 @@ export function EventDetailsModal({ event, isOpen, onClose, onTaskUpdated }: Eve
                   </Link>
                 )}
                 
-                {/* Freigabe-Buttons */}
                 {(event.type === 'approval_pending' || event.type === 'approval_overdue') && (
                   <Link href="/dashboard/pr-tools/approvals">
                     <Button className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap">
@@ -377,7 +504,6 @@ export function EventDetailsModal({ event, isOpen, onClose, onTaskUpdated }: Eve
                 {event.type === 'task' && taskData && (
                   <>
                     {taskData.status === 'completed' ? (
-                      // Erledigte Tasks: Status links, Löschen-Button rechts
                       <div className="w-full flex items-center justify-between gap-4 p-3 bg-gray-50 rounded-lg">
                         <div className="flex items-center gap-2">
                           <CheckCircleIcon className="h-5 w-5 text-green-600" />
@@ -396,7 +522,6 @@ export function EventDetailsModal({ event, isOpen, onClose, onTaskUpdated }: Eve
                         </Button>
                       </div>
                     ) : (
-                      // Nicht erledigte Tasks: Alle Buttons
                       <>
                         <Button 
                           plain 
@@ -465,7 +590,7 @@ export function EventDetailsModal({ event, isOpen, onClose, onTaskUpdated }: Eve
               }}
               className="whitespace-nowrap"
             >
-              Löschen
+              Bestätigen
             </Button>
           </DialogActions>
         </div>

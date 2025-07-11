@@ -1,4 +1,4 @@
-// src/lib/firebase/email-scheduler-service.ts - UPDATED WITH MULTI-TENANCY
+// src/lib/email/email-scheduler-service.ts - UPDATED WITH MULTI-TENANCY
 import {
   collection,
   doc,
@@ -13,7 +13,13 @@ import {
   Timestamp,
   deleteDoc
 } from 'firebase/firestore';
-import { db } from '../firebase/client-init';
+// WICHTIG: Diese Datei wird sowohl client- als auch server-seitig verwendet
+// Daher darf sie keine "use client" directive haben
+import { getFirestore } from 'firebase/firestore';
+import { app } from '../firebase/client-init';
+
+// Firestore Instanz
+const db = getFirestore(app);
 import { PRCampaign } from '@/types/pr';
 import { ScheduleEmailResponse } from '@/types/email-composer';
 import { nanoid } from 'nanoid';
@@ -81,8 +87,8 @@ export interface CalendarEvent {
   id?: string;
   title: string;
   description: string;
-  startTime: Date;
-  endTime: Date;
+  startTime: Timestamp;
+  endTime: Timestamp;
   type: 'email_campaign';
   metadata: {
     campaignId: string;
@@ -90,7 +96,7 @@ export interface CalendarEvent {
     recipientCount: number;
   };
   userId: string;
-  organizationId: string; // NEU: Für Multi-Tenancy
+  organizationId: string;
   createdAt: Timestamp;
 }
 
@@ -122,8 +128,8 @@ export const emailSchedulerService = {
       }
 
       // Generiere eindeutige Job-ID
-      const jobId = `job_${nanoid(12)}`;
-      const docId = doc(collection(db, 'scheduled_emails')).id;
+      const jobId = `job_${Date.now()}_${nanoid(9)}`;
+      const docId = `scheduled_${Date.now()}_${nanoid(9)}`;
 
       // Erstelle Scheduled Email Dokument
       const scheduledEmail: ScheduledEmail = {
@@ -131,7 +137,7 @@ export const emailSchedulerService = {
         campaignId: campaign.id!,
         campaignTitle: campaign.title,
         userId: campaign.userId,
-        organizationId: organizationId || campaign.organizationId || campaign.userId, // Multi-Tenancy Support
+        organizationId: organizationId || campaign.organizationId || campaign.userId,
         scheduledAt: Timestamp.fromDate(scheduledDate),
         timezone,
         status: 'pending',
@@ -143,24 +149,33 @@ export const emailSchedulerService = {
         updatedAt: Timestamp.now()
       };
 
+      console.log('📝 Saving scheduled email to Firestore...');
+      
       // Speichere in Firestore
       await setDoc(doc(db, 'scheduled_emails', docId), scheduledEmail);
+      
+      console.log('✅ Scheduled email saved successfully');
 
       // Erstelle Kalender-Eintrag
+      console.log('📆 Attempting to create calendar entry...');
       const calendarEventId = await this.createCalendarEntry(
         campaign,
         scheduledDate,
         recipients.totalCount,
         docId,
-        organizationId || campaign.userId
+        organizationId || campaign.organizationId || campaign.userId
       );
 
       // Update mit Calendar Event ID
       if (calendarEventId) {
+        console.log('📝 Updating scheduled email with calendar event ID...');
         await updateDoc(doc(db, 'scheduled_emails', docId), {
           calendarEventId,
           updatedAt: serverTimestamp()
         });
+        console.log('✅ Calendar event ID saved to scheduled email');
+      } else {
+        console.warn('⚠️ No calendar event ID returned');
       }
 
       console.log('✅ Email campaign scheduled successfully:', jobId);
@@ -284,12 +299,19 @@ export const emailSchedulerService = {
   ): Promise<string | null> {
     try {
       console.log('📆 Creating calendar entry for scheduled email');
+      console.log('📅 Calendar entry details:', {
+        campaignId: campaign.id,
+        campaignTitle: campaign.title,
+        scheduledDate: scheduledDate.toISOString(),
+        recipientCount,
+        organizationId
+      });
 
       const calendarEvent: CalendarEvent = {
         title: `📧 E-Mail-Versand: ${campaign.title}`,
         description: `Geplanter E-Mail-Versand für PR-Kampagne "${campaign.title}" an ${recipientCount} Empfänger.`,
-        startTime: scheduledDate,
-        endTime: new Date(scheduledDate.getTime() + 30 * 60 * 1000), // +30 Minuten
+        startTime: Timestamp.fromDate(scheduledDate),
+        endTime: Timestamp.fromDate(new Date(scheduledDate.getTime() + 30 * 60 * 1000)), // +30 Minuten
         type: 'email_campaign',
         metadata: {
           campaignId: campaign.id!,
@@ -302,6 +324,8 @@ export const emailSchedulerService = {
       };
 
       const docRef = doc(collection(db, 'calendar_events'));
+      console.log('📝 Saving calendar event to:', docRef.path);
+      
       await setDoc(docRef, calendarEvent);
 
       console.log('✅ Calendar entry created:', docRef.id);
@@ -309,6 +333,10 @@ export const emailSchedulerService = {
 
     } catch (error) {
       console.error('❌ Error creating calendar entry:', error);
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
       return null;
     }
   },
