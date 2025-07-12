@@ -220,22 +220,35 @@ export default function Step3Preview({
         // Geplanter Versand
         const scheduledDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
         console.log('Scheduling email for:', scheduledDateTime);
-        console.log('Including', draft.recipients.manual.length, 'manual recipients');
+        
+        // WICHTIG: Erstelle eine modifizierte Campaign mit den Listen aus dem Draft
+        const campaignWithLists = {
+          ...campaign,
+          distributionListIds: draft.recipients.listIds,
+          distributionListNames: draft.recipients.listNames,
+          recipientCount: draft.recipients.totalCount
+        };
+        
+        console.log('📅 Campaign with lists:', {
+          listIds: campaignWithLists.distributionListIds,
+          listNames: campaignWithLists.distributionListNames,
+          totalCount: campaignWithLists.recipientCount
+        });
         
         const result = await emailService.scheduleEmail({
-          campaign,
+          campaign: campaignWithLists,
           emailContent,
           senderInfo: {
             name: senderInfo.name,
             title: senderInfo.title || '',
             company: senderInfo.company || campaign.clientName || '',
-            phone: senderInfo.phone,
-            email: senderInfo.email
+            phone: senderInfo.phone || '',
+            email: senderInfo.email || ''
           },
           scheduledDate: scheduledDateTime,
           timezone: 'Europe/Berlin',
-          manualRecipients: draft.recipients.manual // NEU: Manuelle Empfänger übergeben
-        } as any);
+          manualRecipients: draft.recipients.manual
+        });
         
         if (result.success) {
           console.log('✅ Email scheduled:', result.jobId);
@@ -245,7 +258,7 @@ export default function Step3Preview({
           });
           setShowConfirmDialog(false);
           if (onSent) {
-            setTimeout(() => onSent(), 2000); // Verzögerung für bessere UX
+            setTimeout(() => onSent(), 2000);
           }
         } else {
           throw new Error(result.error || 'Planung fehlgeschlagen');
@@ -262,10 +275,10 @@ export default function Step3Preview({
             name: senderInfo.name,
             title: senderInfo.title || '',
             company: senderInfo.company || campaign.clientName || '',
-            phone: senderInfo.phone,
-            email: senderInfo.email
+            phone: senderInfo.phone || '',
+            email: senderInfo.email || ''
           },
-          draft.recipients.manual // NEU: Manuelle Empfänger übergeben
+          draft.recipients.manual
         );
         
         console.log('✅ Email sent:', result);
@@ -275,7 +288,7 @@ export default function Step3Preview({
         });
         setShowConfirmDialog(false);
         if (onSent) {
-          setTimeout(() => onSent(), 2000); // Verzögerung für bessere UX
+          setTimeout(() => onSent(), 2000);
         }
       }
     } catch (error: any) {

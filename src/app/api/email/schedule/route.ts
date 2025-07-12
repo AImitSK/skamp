@@ -1,4 +1,4 @@
-// src/app/api/email/schedule/route.ts - COMPLETE VERSION
+// src/app/api/email/schedule/route.ts - FIXED VERSION WITH URL ENCODING
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
 import { PRCampaign } from '@/types/pr';
@@ -36,8 +36,8 @@ interface ScheduleEmailRequest {
   timezone?: string;
 }
 
-// Firestore REST API Helper
-const FIRESTORE_BASE_URL = `https://firestore.googleapis.com/v1/projects/${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}/databases/(default)/documents`;
+// Firestore REST API Helper - URL ENCODING FIX
+const FIRESTORE_BASE_URL = `https://firestore.googleapis.com/v1/projects/${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}/databases/%28default%29/documents`;
 
 async function firestoreRequest(
   path: string,
@@ -56,6 +56,9 @@ async function firestoreRequest(
   }
   
   console.log(`🔍 Firestore ${method} request to:`, url);
+  if (body && method !== 'GET') {
+    console.log('📝 Request body:', JSON.stringify(body, null, 2));
+  }
   
   const response = await fetch(url, {
     method,
@@ -63,18 +66,24 @@ async function firestoreRequest(
     body: body ? JSON.stringify(body) : undefined,
   });
   
+  const responseText = await response.text();
+  
   if (!response.ok) {
-    const error = await response.text();
-    console.error(`❌ Firestore request failed:`, error);
-    throw new Error(`Firestore request failed: ${error}`);
+    console.error(`❌ Firestore request failed:`, responseText);
+    throw new Error(`Firestore request failed: ${responseText}`);
   }
   
-  return response.json();
+  try {
+    return JSON.parse(responseText);
+  } catch (e) {
+    console.error('❌ Failed to parse response:', responseText);
+    throw new Error('Invalid JSON response from Firestore');
+  }
 }
 
-// Separate function for Firestore queries
+// Separate function for Firestore queries - URL ENCODING FIX
 async function firestoreQuery(body: any, token?: string) {
-  const url = `https://firestore.googleapis.com/v1/projects/${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}/databases/(default)/documents:runQuery`;
+  const url = `https://firestore.googleapis.com/v1/projects/${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}/databases/%28default%29/documents:runQuery`;
   
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
@@ -162,7 +171,7 @@ function convertToFirestoreValue(value: any): any {
   if (value instanceof Date) {
     return { timestampValue: value.toISOString() };
   }
-  // WICHTIG: Firestore Timestamp Objekte
+  // Handle Firestore Timestamp objects
   if (value && typeof value.toDate === 'function') {
     return { timestampValue: value.toDate().toISOString() };
   }
@@ -192,15 +201,18 @@ async function scheduleEmailCampaign(
   scheduledDate: Date,
   timezone: string,
   organizationId: string,
-  userId: string, // NEU: userId als Parameter
-  token?: string  // Token als Parameter hinzugefügt
+  userId: string,
+  token?: string
 ): Promise<{ success: boolean; jobId?: string; scheduledFor?: Date; calendarEventId?: string; error?: string }> {
   try {
     console.log('📅 Scheduling email campaign:', campaign.title, 'for', scheduledDate);
+    console.log('📧 Email content:', emailContent);
+    console.log('👤 Sender info:', senderInfo);
+    console.log('👥 Recipients:', recipients);
 
-    // Validiere Scheduling-Zeit
+    // Validate scheduling time
     const now = new Date();
-    const minScheduleTime = new Date(now.getTime() + 15 * 60 * 1000); // 15 Minuten
+    const minScheduleTime = new Date(now.getTime() + 15 * 60 * 1000); // 15 minutes
     
     if (scheduledDate < minScheduleTime) {
       return {
@@ -209,11 +221,11 @@ async function scheduleEmailCampaign(
       };
     }
 
-    // Generiere eindeutige Job-ID
+    // Generate unique job ID
     const jobId = `job_${Date.now()}_${nanoid(9)}`;
     const docId = `scheduled_${Date.now()}_${nanoid(9)}`;
 
-    // Erstelle Scheduled Email Dokument
+    // Create scheduled email document with ALL required fields
     const scheduledEmail = {
       jobId,
       campaignId: campaign.id!,
@@ -223,27 +235,69 @@ async function scheduleEmailCampaign(
       scheduledAt: scheduledDate,
       timezone,
       status: 'pending',
-      emailContent,
-      senderInfo,
-      recipients,
-      mediaShareUrl: campaign.assetShareUrl,
+      emailContent: {
+        subject: emailContent.subject || '',
+        greeting: emailContent.greeting || '',
+        introduction: emailContent.introduction || '',
+        pressReleaseHtml: emailContent.pressReleaseHtml || '',
+        closing: emailContent.closing || '',
+        signature: emailContent.signature || ''
+      },
+      senderInfo: {
+        name: senderInfo.name || '',
+        title: senderInfo.title || '',
+        company: senderInfo.company || '',
+        phone: senderInfo.phone || '',
+        email: senderInfo.email || ''
+      },
+      recipients: {
+        listIds: recipients.listIds || [],
+        listNames: recipients.listNames || [],
+        manualRecipients: recipients.manualRecipients || [],
+        totalCount: recipients.totalCount || 0
+      },
+      mediaShareUrl: campaign.assetShareUrl || '',
       createdAt: new Date(),
       updatedAt: new Date()
     };
 
     console.log('📝 Saving scheduled email to Firestore...');
+    console.log('📄 Document to save:', JSON.stringify(scheduledEmail, null, 2));
     
-    // Speichere in Firestore über REST API
-    await firestoreRequest(
-      `scheduled_emails?documentId=${docId}`,
-      'POST',
-      convertToFirestoreDocument(scheduledEmail),
-      token
-    );
+    // Save to Firestore via REST API - USING PATCH WITH DIRECT PATH
+    const firestoreDoc = convertToFirestoreDocument(scheduledEmail);
+    console.log('🔄 Converted Firestore document:', JSON.stringify(firestoreDoc, null, 2));
+    
+    // Verwende PATCH mit expliziten Feldpfaden
+    const createUrl = `scheduled_emails/${docId}`;
+    const fieldPaths = [
+      'jobId', 'campaignId', 'campaignTitle', 'userId', 'organizationId',
+      'scheduledAt', 'timezone', 'status', 'emailContent', 'senderInfo',
+      'recipients', 'mediaShareUrl', 'createdAt', 'updatedAt'
+    ];
+    const updateMask = fieldPaths.map(field => `updateMask.fieldPaths=${field}`).join('&');
+    const patchUrl = `${FIRESTORE_BASE_URL}/${createUrl}?${updateMask}`;
+    
+    const patchResponse = await fetch(patchUrl, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(firestoreDoc)
+    });
+    
+    if (!patchResponse.ok) {
+      const errorText = await patchResponse.text();
+      console.error('❌ Failed to create scheduled email:', errorText);
+      throw new Error(`Failed to create scheduled email: ${errorText}`);
+    }
+    
+    console.log('✅ Scheduled email created successfully');
     
     console.log('✅ Scheduled email saved successfully');
 
-    // Erstelle Kalender-Eintrag
+    // Create calendar entry
     console.log('📆 Attempting to create calendar entry...');
     let calendarEventId: string | null = null;
     
@@ -254,7 +308,7 @@ async function scheduleEmailCampaign(
         title: `📧 E-Mail-Versand: ${campaign.title}`,
         description: `Geplanter E-Mail-Versand für PR-Kampagne "${campaign.title}" an ${recipients.totalCount} Empfänger.`,
         startTime: scheduledDate,
-        endTime: new Date(scheduledDate.getTime() + 30 * 60 * 1000), // +30 Minuten
+        endTime: new Date(scheduledDate.getTime() + 30 * 60 * 1000), // +30 minutes
         type: 'email_campaign',
         metadata: {
           campaignId: campaign.id!,
@@ -262,14 +316,14 @@ async function scheduleEmailCampaign(
           recipientCount: recipients.totalCount,
           jobId: jobId
         },
-        userId: userId, // Verwende den übergebenen userId
-        organizationId: organizationId || userId, // Fallback auf userId
+        userId: userId,
+        organizationId: organizationId || userId,
         createdAt: new Date()
       };
 
       console.log('📝 Creating calendar event with ID:', calendarEventId);
       
-      // Erstelle Kalender-Eintrag über REST API
+      // Create calendar entry via REST API - USING POST with documentId
       await firestoreRequest(
         `calendar_events?documentId=${calendarEventId}`,
         'POST',
@@ -279,9 +333,13 @@ async function scheduleEmailCampaign(
 
       console.log('✅ Calendar entry created:', calendarEventId);
       
-      // Update mit Calendar Event ID
+      // Update with calendar event ID - USING PATCH WITH UPDATE MASK
+      const updateFields = ['calendarEventId', 'updatedAt'];
+      const updateMaskQuery = updateFields.map(field => `updateMask.fieldPaths=${field}`).join('&');
+      const updateUrl = `scheduled_emails/${docId}?${updateMaskQuery}`;
+      
       await firestoreRequest(
-        `scheduled_emails/${docId}`,
+        updateUrl,
         'PATCH',
         convertToFirestoreDocument({
           calendarEventId,
@@ -325,6 +383,7 @@ export async function POST(request: NextRequest) {
       const data: ScheduleEmailRequest = await req.json();
       
       console.log('📅 Scheduling email for campaign:', data.campaignId);
+      console.log('📧 Request data:', JSON.stringify(data, null, 2));
 
       // Get user token for Firestore requests
       const authHeader = req.headers.get('authorization');
@@ -338,7 +397,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Validierung
+      // Validation
       if (!data.campaignId) {
         return NextResponse.json(
           { error: 'Campaign ID fehlt' },
@@ -355,7 +414,7 @@ export async function POST(request: NextRequest) {
 
       const scheduledDate = new Date(data.scheduledDate);
       
-      // Validiere Datum
+      // Validate date
       if (isNaN(scheduledDate.getTime())) {
         return NextResponse.json(
           { error: 'Ungültiges Datum' },
@@ -363,7 +422,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Mindestzeit prüfen (15 Minuten)
+      // Check minimum time (15 minutes)
       const now = new Date();
       const minScheduleTime = new Date(now.getTime() + 15 * 60 * 1000);
       
@@ -377,7 +436,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Kampagne laden - nur mit REST API
+      // Load campaign
       console.log('📄 Loading campaign:', data.campaignId);
       let campaign: PRCampaign;
       
@@ -402,7 +461,7 @@ export async function POST(request: NextRequest) {
 
       console.log('✅ Campaign loaded:', campaign.title);
 
-      // Berechtigungsprüfung (mit Multi-Tenancy Support)
+      // Authorization check (with multi-tenancy support)
       const campaignOrgId = campaign.organizationId || campaign.userId;
       if (campaign.userId !== auth.userId && campaignOrgId !== auth.organizationId) {
         return NextResponse.json(
@@ -411,7 +470,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Email planen mit inline Funktion
+      // Schedule email with inline function
       console.log('📧 Calling scheduleEmailCampaign...');
       const result = await scheduleEmailCampaign(
         campaign,
@@ -421,8 +480,8 @@ export async function POST(request: NextRequest) {
         scheduledDate,
         data.timezone || 'Europe/Berlin',
         auth.organizationId,
-        auth.userId,  // NEU: userId übergeben
-        token  // Token übergeben
+        auth.userId,
+        token
       );
 
       if (!result.success) {
@@ -457,11 +516,11 @@ export async function POST(request: NextRequest) {
   });
 }
 
-// DELETE - Geplanten Versand stornieren
+// DELETE - Cancel scheduled send
 export async function DELETE(request: NextRequest) {
   return withAuth(request, async (req, auth: AuthContext) => {
     try {
-      // Job ID aus Query-Parametern
+      // Get job ID from query parameters
       const { searchParams } = new URL(req.url);
       const jobId = searchParams.get('jobId');
 
@@ -478,7 +537,7 @@ export async function DELETE(request: NextRequest) {
       const authHeader = req.headers.get('authorization');
       const token = authHeader?.split('Bearer ')[1];
 
-      // Finde das Dokument mit der Job-ID und prüfe Berechtigung - über REST API
+      // Find document with job ID and check authorization
       const queryResponse = await firestoreQuery(
         {
           structuredQuery: {
@@ -524,13 +583,16 @@ export async function DELETE(request: NextRequest) {
         );
       }
 
-      // Update über REST API
+      // Update via REST API
       const docPath = queryResponse[0].document.name.split('/documents/')[1];
       const scheduledEmail = convertFirestoreDocument(queryResponse[0].document);
       
-      // Update Status auf 'cancelled'
+      // Update status to 'cancelled' - WITH UPDATE MASK
+      const updateFields = ['status', 'updatedAt'];
+      const updateMaskQuery = updateFields.map(field => `updateMask.fieldPaths=${field}`).join('&');
+      
       await firestoreRequest(
-        docPath,
+        `${docPath}?${updateMaskQuery}`,
         'PATCH',
         convertToFirestoreDocument({
           status: 'cancelled',
@@ -539,7 +601,7 @@ export async function DELETE(request: NextRequest) {
         token
       );
 
-      // Lösche Kalender-Eintrag wenn vorhanden
+      // Delete calendar entry if present
       if (scheduledEmail.calendarEventId) {
         try {
           await firestoreRequest(
@@ -574,7 +636,7 @@ export async function DELETE(request: NextRequest) {
   });
 }
 
-// GET - Geplante Emails abrufen
+// GET - Retrieve scheduled emails
 export async function GET(request: NextRequest) {
   return withAuth(request, async (req, auth: AuthContext) => {
     try {
@@ -585,7 +647,7 @@ export async function GET(request: NextRequest) {
         hasToken: !!req.headers.get('authorization')
       });
       
-      // Status-Filter aus Query-Parametern
+      // Status filter from query parameters
       const { searchParams } = new URL(req.url);
       const status = searchParams.get('status') as any;
 
@@ -603,7 +665,7 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      // Nutze nur REST API
+      // Use REST API only
       let queryBody: any = {
         structuredQuery: {
           from: [{ collectionId: 'scheduled_emails' }],
@@ -614,11 +676,6 @@ export async function GET(request: NextRequest) {
               value: { stringValue: auth.organizationId }
             }
           }
-          // TEMPORÄR: orderBy entfernt bis Index erstellt ist
-          // orderBy: [{
-          //   field: { fieldPath: 'scheduledAt' },
-          //   direction: 'DESCENDING'
-          // }]
         }
       };
 
@@ -649,7 +706,20 @@ export async function GET(request: NextRequest) {
           ...convertFirestoreDocument(result.document)
         }));
 
-      // Statistiken berechnen
+      console.log('📧 Found scheduled emails:', scheduledEmails.length);
+      scheduledEmails.forEach((email: any) => {
+        console.log('📧 Email:', {
+          id: email.id,
+          jobId: email.jobId,
+          campaignTitle: email.campaignTitle,
+          status: email.status,
+          hasEmailContent: !!email.emailContent,
+          hasSenderInfo: !!email.senderInfo,
+          hasRecipients: !!email.recipients
+        });
+      });
+
+      // Calculate statistics
       const stats = {
         pending: 0,
         sent: 0,

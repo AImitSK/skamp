@@ -659,13 +659,14 @@ export default function CalendarDashboard() {
         />
       </div>
 
-      {/* Event Details Modal */}
-      <EventDetailsModal
-        event={selectedEvent}
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onTaskUpdated={handleDataRefresh}
-      />
+{/* Event Details Modal */}
+<EventDetailsModal
+  event={selectedEvent}
+  isOpen={modalOpen}
+  onClose={() => setModalOpen(false)}
+  onTaskUpdated={handleDataRefresh}
+  onEmailCancelled={handleDataRefresh} // NEU: Diesen Callback hinzufügen!
+/>
 
       {/* Quick Task Modal */}
       <QuickTaskModal

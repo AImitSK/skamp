@@ -9,7 +9,8 @@ import { Link } from './link'
 // Wir definieren die Styling-Regeln neu mit einfachen Tailwind-Klassen
 const styles = {
   // Basis-Styling, das für alle Buttons gilt
-  base: 'relative inline-flex items-center justify-center gap-x-2 rounded-lg border text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50',
+  // NEU: whitespace-nowrap hinzugefügt um Textumbruch zu verhindern
+  base: 'relative inline-flex items-center justify-center gap-x-2 rounded-lg border text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 whitespace-nowrap',
   
   // Größe und Padding
   sizing: 'px-4 py-2',
