@@ -26,6 +26,8 @@ import {
   DropdownLabel,
 } from "@/components/dropdown";
 import { Avatar } from "@/components/avatar";
+import { NotificationBadge } from "@/components/notifications/NotificationBadge";
+import { useNotifications } from "@/hooks/use-notifications";
 import {
   HomeIcon,
   BuildingOfficeIcon,
@@ -66,6 +68,7 @@ export default function DashboardLayout({
   const { user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const { unreadCount } = useNotifications();
 
   const handleLogout = async () => {
     try {
@@ -204,10 +207,15 @@ export default function DashboardLayout({
                 </DropdownItem>
                 <DropdownItem
                   href="/dashboard/communication/notifications"
-                  className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
+                  className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3 relative"
                 >
                   <BellIcon className="size-4 flex-shrink-0" />
-                  <DropdownLabel>Benachrichtigungen</DropdownLabel>
+                  <DropdownLabel className="flex-1">Benachrichtigungen</DropdownLabel>
+                  {unreadCount > 0 && (
+                    <span className="ml-auto inline-flex items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
                 </DropdownItem>
               </DropdownMenu>
             </Dropdown>
@@ -373,6 +381,13 @@ export default function DashboardLayout({
               <h1 className="text-base font-semibold text-zinc-950 dark:text-white">
                 SKAMP Marketing Suite
               </h1>
+              {/* Notification Badge in der Navbar für Mobile/Desktop */}
+              <div className="flex items-center gap-4">
+                <NotificationBadge 
+                  onClick={() => router.push('/dashboard/communication/notifications')}
+                  className="!text-zinc-950 dark:!text-white hover:!bg-zinc-100 dark:hover:!bg-zinc-800"
+                />
+              </div>
             </div>
           }
           sidebar={sidebarContent}

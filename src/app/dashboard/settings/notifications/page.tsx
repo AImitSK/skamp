@@ -1,28 +1,26 @@
-// src\app\dashboard\settings\notifications\page.tsx
+// src/app/dashboard/settings/notifications/page.tsx
 "use client";
 
 import { Heading } from "@/components/heading";
-import { Button } from "@/components/button";
-import { PencilIcon, RocketLaunchIcon } from "@heroicons/react/20/solid";
+import { NotificationSettings } from "@/components/notifications/NotificationSettings";
+import { BellIcon } from "@heroicons/react/20/solid";
 
-export default function PlaceholderPage() {
+export default function NotificationSettingsPage() {
   return (
-    <div className="md:flex md:items-center md:justify-between">
-      <div className="min-w-0 flex-1">
-        <Heading>Headline</Heading>
+    <div>
+      <div className="md:flex md:items-center md:justify-between mb-8">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-3">
+            <BellIcon className="h-8 w-8 text-gray-400" />
+            <Heading>Benachrichtigungen</Heading>
+          </div>
+        </div>
       </div>
-      <div className="mt-4 flex md:mt-0 md:ml-4">
-        <Button plain>
-          <PencilIcon className="size-4" />
-          Bearbeiten
-        </Button>
-        <button
-          type="button"
-          className="ml-3 inline-flex items-center gap-x-2 rounded-lg bg-[#005fab] px-4 py-2 text-sm font-semibold text-white hover:bg-[#004a8c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005fab]"
-        >
-          <RocketLaunchIcon className="size-4" />
-          Veröffentlichen
-        </button>
+
+      <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl">
+        <div className="px-4 py-6 sm:p-8">
+          <NotificationSettings />
+        </div>
       </div>
     </div>
   );
