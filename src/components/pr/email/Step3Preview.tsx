@@ -12,6 +12,8 @@ import { emailService } from '@/lib/email/email-service';
 import { emailComposerService } from '@/lib/email/email-composer-service';
 import { emailCampaignService } from '@/lib/firebase/email-campaign-service';
 import { apiClient } from '@/lib/api/api-client';
+import { db } from '@/lib/firebase/client-init';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { 
   EyeIcon,
   PaperAirplaneIcon,
@@ -190,6 +192,24 @@ export default function Step3Preview({
     }
   };
 
+  // Helper-Funktion um Kampagnen-Status zu aktualisieren
+  const updateCampaignStatus = async (status: string, additionalData?: any) => {
+    if (!campaign.id) return;
+    
+    try {
+      const campaignRef = doc(db, 'pr_campaigns', campaign.id);
+      await updateDoc(campaignRef, {
+        status,
+        updatedAt: serverTimestamp(),
+        ...additionalData
+      });
+      console.log(`✅ Campaign status updated to: ${status}`);
+    } catch (error) {
+      console.error('Failed to update campaign status:', error);
+      throw error;
+    }
+  };
+
   // Finaler Versand mit API
   const handleFinalSend = async () => {
     if (sendMode === 'scheduled' && (!scheduledDate || !scheduledTime)) {
@@ -252,6 +272,13 @@ export default function Step3Preview({
         
         if (result.success) {
           console.log('✅ Email scheduled:', result.jobId);
+          
+          // WICHTIG: Update Campaign Status auf "scheduled"
+          await updateCampaignStatus('scheduled', {
+            scheduledAt: scheduledDateTime,
+            emailJobId: result.jobId
+          });
+          
           setAlert({ 
             type: 'success', 
             message: `E-Mail wurde für ${scheduledDateTime.toLocaleString('de-DE')} geplant!` 
@@ -268,27 +295,43 @@ export default function Step3Preview({
         console.log('Sending email now to', totalRecipients, 'recipients');
         console.log('Including', draft.recipients.manual.length, 'manual recipients');
         
-        const result = await emailCampaignService.sendPRCampaign(
-          campaign,
-          emailContent,
-          {
-            name: senderInfo.name,
-            title: senderInfo.title || '',
-            company: senderInfo.company || campaign.clientName || '',
-            phone: senderInfo.phone || '',
-            email: senderInfo.email || ''
-          },
-          draft.recipients.manual
-        );
+        // WICHTIG: Update Campaign Status auf "sending" VOR dem Versand
+        await updateCampaignStatus('sending');
         
-        console.log('✅ Email sent:', result);
-        setAlert({ 
-          type: 'success', 
-          message: `E-Mail wurde erfolgreich an ${result.success} Empfänger gesendet!` 
-        });
-        setShowConfirmDialog(false);
-        if (onSent) {
-          setTimeout(() => onSent(), 2000);
+        try {
+          const result = await emailCampaignService.sendPRCampaign(
+            campaign,
+            emailContent,
+            {
+              name: senderInfo.name,
+              title: senderInfo.title || '',
+              company: senderInfo.company || campaign.clientName || '',
+              phone: senderInfo.phone || '',
+              email: senderInfo.email || ''
+            },
+            draft.recipients.manual
+          );
+          
+          console.log('✅ Email sent:', result);
+          
+          // WICHTIG: Update Campaign Status auf "sent" NACH erfolgreichem Versand
+          await updateCampaignStatus('sent', {
+            sentAt: serverTimestamp(),
+            actualRecipientCount: result.success
+          });
+          
+          setAlert({ 
+            type: 'success', 
+            message: `E-Mail wurde erfolgreich an ${result.success} Empfänger gesendet!` 
+          });
+          setShowConfirmDialog(false);
+          if (onSent) {
+            setTimeout(() => onSent(), 2000);
+          }
+        } catch (sendError) {
+          // Bei Fehler: Status zurück auf "draft" setzen
+          await updateCampaignStatus('draft');
+          throw sendError;
         }
       }
     } catch (error: any) {
@@ -359,6 +402,9 @@ export default function Step3Preview({
     return attachmentList;
   }, [campaign]);
 
+  // Prüfe ob Kampagne bereits versendet wurde oder geplant ist
+  const isDisabled = campaign.status === 'sent' || campaign.status === 'scheduled' || campaign.status === 'sending';
+
   return (
     <div className="p-6">
       <div className="max-w-7xl mx-auto">
@@ -377,6 +423,22 @@ export default function Step3Preview({
               type={alert.type} 
               message={alert.message} 
               onClose={() => setAlert(null)}
+            />
+          </div>
+        )}
+
+        {/* Status-Warnung wenn bereits versendet/geplant */}
+        {isDisabled && (
+          <div className="mb-6">
+            <Alert 
+              type="info" 
+              message={
+                campaign.status === 'sent' 
+                  ? 'Diese Kampagne wurde bereits versendet.' 
+                  : campaign.status === 'scheduled'
+                  ? 'Diese Kampagne ist bereits für den Versand geplant.'
+                  : 'Diese Kampagne wird gerade versendet.'
+              } 
             />
           </div>
         )}
@@ -500,10 +562,11 @@ export default function Step3Preview({
                       }}
                       placeholder="test@example.com"
                       className={testEmailError ? 'border-red-300' : ''}
+                      disabled={isDisabled}
                     />
                     <Button
                       onClick={handleSendTest}
-                      disabled={sendingTest}
+                      disabled={sendingTest || isDisabled}
                       className="whitespace-nowrap"
                     >
                       {sendingTest ? (
@@ -556,6 +619,7 @@ export default function Step3Preview({
                         checked={sendMode === 'now'}
                         onChange={(e) => setSendMode(e.target.value as SendMode)}
                         className="h-4 w-4 text-[#005fab] border-gray-300 focus:ring-[#005fab]"
+                        disabled={isDisabled}
                       />
                       <span className="ml-2">Jetzt senden</span>
                     </label>
@@ -566,6 +630,7 @@ export default function Step3Preview({
                         checked={sendMode === 'scheduled'}
                         onChange={(e) => setSendMode(e.target.value as SendMode)}
                         className="h-4 w-4 text-[#005fab] border-gray-300 focus:ring-[#005fab]"
+                        disabled={isDisabled}
                       />
                       <span className="ml-2">Versand planen</span>
                     </label>
@@ -585,6 +650,7 @@ export default function Step3Preview({
                         value={scheduledDate}
                         onChange={(e) => setScheduledDate(e.target.value)}
                         min={minDateString}
+                        disabled={isDisabled}
                       />
                     </div>
                     <div>
@@ -596,6 +662,7 @@ export default function Step3Preview({
                         type="time"
                         value={scheduledTime}
                         onChange={(e) => setScheduledTime(e.target.value)}
+                        disabled={isDisabled}
                       />
                     </div>
                     <p className="text-xs text-gray-500">
@@ -609,6 +676,7 @@ export default function Step3Preview({
                   <Button
                     onClick={handleFinalSend}
                     className="w-full"
+                    disabled={isDisabled}
                   >
                     {sendMode === 'now' ? (
                       <>
@@ -648,6 +716,16 @@ export default function Step3Preview({
                     <dd className="font-medium text-blue-900">{attachments.length} Datei{attachments.length !== 1 ? 'en' : ''}</dd>
                   </div>
                 )}
+                <div className="flex justify-between">
+                  <dt className="text-blue-700">Status:</dt>
+                  <dd className="font-medium text-blue-900">{
+                    campaign.status === 'draft' ? 'Entwurf' :
+                    campaign.status === 'scheduled' ? 'Geplant' :
+                    campaign.status === 'sending' ? 'Wird versendet' :
+                    campaign.status === 'sent' ? 'Versendet' :
+                    campaign.status
+                  }</dd>
+                </div>
               </dl>
               
               {draft.recipients.listNames && draft.recipients.listNames.length > 0 && (
