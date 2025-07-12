@@ -1,4 +1,4 @@
-// src/lib/email/email-scheduler-service.ts - UPDATED WITH MULTI-TENANCY
+// src/lib/email/email-scheduler-service.ts - UPDATED WITH NOTIFICATION INTEGRATION
 import {
   collection,
   doc,
@@ -23,6 +23,7 @@ const db = getFirestore(app);
 import { PRCampaign } from '@/types/pr';
 import { ScheduleEmailResponse } from '@/types/email-composer';
 import { nanoid } from 'nanoid';
+import { notificationsService } from '@/lib/firebase/notifications-service';
 
 export interface ScheduledEmail {
   id?: string;
@@ -400,7 +401,7 @@ export const emailSchedulerService = {
    */
   async markEmailAsSent(
     scheduledEmailId: string,
-    results?: { success: number; failed: number }
+    results?: { success: number; failed: number; bouncedEmails?: string[] }
   ): Promise<void> {
     try {
       const updates: any = {
@@ -416,6 +417,67 @@ export const emailSchedulerService = {
       await updateDoc(doc(db, 'scheduled_emails', scheduledEmailId), updates);
       
       console.log('✅ Marked email as sent:', scheduledEmailId);
+
+      // ========== NOTIFICATION INTEGRATION ==========
+      // Hole die vollständigen Daten für die Benachrichtigung
+      const docRef = doc(db, 'scheduled_emails', scheduledEmailId);
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists() && results) {
+        const scheduledEmail = docSnap.data() as ScheduledEmail;
+        
+        // Erfolgs-Benachrichtigung wenn E-Mails versendet wurden
+        if (results.success > 0) {
+          try {
+            await notificationsService.notifyEmailSent(
+              {
+                id: scheduledEmail.campaignId,
+                title: scheduledEmail.campaignTitle,
+                name: scheduledEmail.campaignTitle // Fallback
+              },
+              results.success,
+              scheduledEmail.userId
+            );
+            console.log('📬 Benachrichtigung gesendet: Geplante E-Mail-Kampagne erfolgreich versendet');
+          } catch (notificationError) {
+            console.error('Fehler beim Senden der Erfolgs-Benachrichtigung:', notificationError);
+          }
+        }
+
+        // Bounce-Benachrichtigungen
+        if (results.failed > 0 && results.bouncedEmails) {
+          try {
+            // Bei wenigen Bounces: Eine Benachrichtigung pro Bounce
+            if (results.bouncedEmails.length <= 5) {
+              for (const bouncedEmail of results.bouncedEmails) {
+                await notificationsService.notifyEmailBounced(
+                  {
+                    id: scheduledEmail.campaignId,
+                    title: scheduledEmail.campaignTitle,
+                    name: scheduledEmail.campaignTitle
+                  },
+                  bouncedEmail,
+                  scheduledEmail.userId
+                );
+              }
+            } else {
+              // Bei vielen Bounces: Eine aggregierte Benachrichtigung
+              await notificationsService.notifyEmailBounced(
+                {
+                  id: scheduledEmail.campaignId,
+                  title: scheduledEmail.campaignTitle,
+                  name: scheduledEmail.campaignTitle
+                },
+                `${results.bouncedEmails.length} E-Mails`,
+                scheduledEmail.userId
+              );
+            }
+            console.log(`📬 Benachrichtigung gesendet: ${results.failed} E-Mail Bounces`);
+          } catch (notificationError) {
+            console.error('Fehler beim Senden der Bounce-Benachrichtigungen:', notificationError);
+          }
+        }
+      }
 
     } catch (error) {
       console.error('❌ Error marking email as sent:', error);
@@ -454,6 +516,31 @@ export const emailSchedulerService = {
         updates.status = 'pending';
       } else {
         updates.status = 'failed';
+        
+        // ========== NOTIFICATION INTEGRATION: Failed Email ==========
+        // Sende eine Fehler-Benachrichtigung bei endgültigem Fehlschlag
+        const scheduledEmail = docSnap.data() as ScheduledEmail;
+        try {
+          // Verwende die generische create Methode für eine Fehler-Benachrichtigung
+          await notificationsService.create({
+            userId: scheduledEmail.userId,
+            type: 'EMAIL_BOUNCED', // Verwende EMAIL_BOUNCED als nächstbeste Option
+            title: 'E-Mail-Versand fehlgeschlagen',
+            message: `Der geplante Versand der Kampagne "${scheduledEmail.campaignTitle}" ist fehlgeschlagen. Fehler: ${errorMessage}`,
+            linkUrl: `/dashboard/schedule-mails/${scheduledEmail.campaignId}`,
+            linkType: 'campaign',
+            linkId: scheduledEmail.campaignId,
+            isRead: false,
+            metadata: {
+              campaignId: scheduledEmail.campaignId,
+              campaignTitle: scheduledEmail.campaignTitle,
+              bouncedEmail: `Fehler nach ${currentRetryCount + 1} Versuchen` // Nutze bouncedEmail statt errorMessage
+            }
+          });
+          console.log('📬 Benachrichtigung gesendet: E-Mail-Versand fehlgeschlagen');
+        } catch (notificationError) {
+          console.error('Fehler beim Senden der Fehler-Benachrichtigung:', notificationError);
+        }
       }
 
       await updateDoc(docRef, updates);

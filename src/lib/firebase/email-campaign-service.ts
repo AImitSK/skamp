@@ -1,4 +1,4 @@
-// src/lib/firebase/email-campaign-service.ts
+// src/lib/firebase/email-campaign-service.ts - UPDATED WITH NOTIFICATION INTEGRATION
 import {
   collection,
   doc,
@@ -16,6 +16,7 @@ import {
 } from '@/types/email';
 import { PRCampaign } from '@/types/pr';
 import { Contact } from '@/types/crm';
+import { notificationsService } from './notifications-service';
 
 // Helper function to get the base URL with fallback
 const getBaseUrl = () => {
@@ -216,6 +217,10 @@ export const emailCampaignService = {
         await updateDoc(doc(db, 'pr_campaigns', campaign.id!), updateData);
       }
 
+      // ========== NOTIFICATION INTEGRATION ==========
+      // Die Benachrichtigungen werden bereits im emailService.sendPRCampaign gehandhabt
+      // Hier könnten wir zusätzliche kampagnen-spezifische Benachrichtigungen hinzufügen
+      
       console.log('✅ Campaign send completed:', sendResult.summary);
 
       return {
@@ -235,6 +240,29 @@ export const emailCampaignService = {
         lastSendError: error instanceof Error ? error.message : 'Unknown error',
         updatedAt: serverTimestamp()
       });
+      
+      // ========== NOTIFICATION INTEGRATION: Send Failed ==========
+      // Benachrichtigung über fehlgeschlagenen Versand
+      try {
+        await notificationsService.create({
+          userId: campaign.userId,
+          type: 'EMAIL_BOUNCED', // Verwende EMAIL_BOUNCED als nächstbeste Option
+          title: 'Kampagnen-Versand fehlgeschlagen',
+          message: `Der Versand der Kampagne "${campaign.title}" ist fehlgeschlagen. Fehler: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
+          linkUrl: `/dashboard/pr-kampagnen/${campaign.id}`,
+          linkType: 'campaign',
+          linkId: campaign.id!,
+          isRead: false,
+          metadata: {
+            campaignId: campaign.id!,
+            campaignTitle: campaign.title,
+            bouncedEmail: 'Systemfehler beim Versand'
+          }
+        });
+        console.log('📬 Benachrichtigung gesendet: Kampagnen-Versand fehlgeschlagen');
+      } catch (notificationError) {
+        console.error('Fehler beim Senden der Fehler-Benachrichtigung:', notificationError);
+      }
       
       throw error;
     }
@@ -300,6 +328,9 @@ export const emailCampaignService = {
     // Mapping zwischen E-Mail und Kontakt erstellen
     const contactMap = new Map(contacts.map(c => [c.email, c]));
     
+    // Sammle Bounced E-Mails für Benachrichtigungen
+    const bouncedEmails: Array<{email: string, error?: string}> = [];
+    
     for (const result of sendResult.results) {
       const contact = contactMap.get(result.email);
       if (contact) {
@@ -327,6 +358,8 @@ export const emailCampaignService = {
 
         if (result.error) {
           sendData.errorMessage = result.error;
+          // Sammle für Bounce-Benachrichtigung
+          bouncedEmails.push({ email: result.email, error: result.error });
         }
 
         batch.set(sendDoc, sendData);
@@ -334,5 +367,10 @@ export const emailCampaignService = {
     }
     
     await batch.commit();
+    
+    // ========== NOTIFICATION INTEGRATION: Individual Bounces ==========
+    // Diese werden bereits im emailService gehandhabt, aber hier könnten wir
+    // zusätzliche detaillierte Benachrichtigungen für individuelle Bounces senden
+    // wenn das gewünscht ist
   }
 };

@@ -1,10 +1,11 @@
-// src/lib/email/email-service.ts - UPDATED WITH MANUAL RECIPIENTS SUPPORT
+// src/lib/email/email-service.ts - UPDATED WITH NOTIFICATION INTEGRATION
 import { PRCampaignEmail } from '@/types/email';
 import { PRCampaign } from '@/types/pr';
 import { Contact } from '@/types/crm';
 import { EmailDraft, TestEmailRequest, SendTestEmailResponse } from '@/types/email-composer';
 import { Timestamp } from 'firebase/firestore';
 import { apiClient } from '@/lib/api/api-client';
+import { notificationsService } from '@/lib/firebase/notifications-service';
 
 export interface EmailSendResult {
   success: boolean;
@@ -108,12 +109,59 @@ export class EmailService {
     }
 
     // API Route mit authenticated fetch aufrufen
-    return await apiClient.post<EmailSendResult>('/api/sendgrid/send-pr-campaign', {
+    const result = await apiClient.post<EmailSendResult>('/api/sendgrid/send-pr-campaign', {
       recipients,
       campaignEmail: emailContent,
       senderInfo,
       mediaShareUrl
     });
+
+    // ========== NOTIFICATION INTEGRATION: Email Sent Success ==========
+    if (result.summary.success > 0) {
+      try {
+        await notificationsService.notifyEmailSent(
+          campaign,
+          result.summary.success,
+          campaign.userId
+        );
+        console.log('📬 Benachrichtigung gesendet: E-Mail-Kampagne erfolgreich versendet');
+      } catch (notificationError) {
+        console.error('Fehler beim Senden der Erfolgs-Benachrichtigung:', notificationError);
+        // Fehler bei Benachrichtigung sollte den Hauptprozess nicht stoppen
+      }
+    }
+
+    // ========== NOTIFICATION INTEGRATION: Email Bounces ==========
+    // Prüfe ob es Bounces gab (failed emails)
+    const bouncedEmails = result.results.filter(r => r.status === 'failed');
+    if (bouncedEmails.length > 0) {
+      // Sende Benachrichtigung für jeden Bounce (oder aggregiert)
+      try {
+        // Option 1: Eine Benachrichtigung pro Bounce (für wenige Bounces)
+        if (bouncedEmails.length <= 5) {
+          for (const bounce of bouncedEmails) {
+            await notificationsService.notifyEmailBounced(
+              campaign,
+              bounce.email,
+              campaign.userId
+            );
+          }
+        } else {
+          // Option 2: Eine aggregierte Benachrichtigung für viele Bounces
+          await notificationsService.notifyEmailBounced(
+            campaign,
+            `${bouncedEmails.length} E-Mails`,
+            campaign.userId
+          );
+        }
+        console.log(`📬 Benachrichtigung gesendet: ${bouncedEmails.length} E-Mail Bounces`);
+      } catch (notificationError) {
+        console.error('Fehler beim Senden der Bounce-Benachrichtigungen:', notificationError);
+        // Fehler bei Benachrichtigung sollte den Hauptprozess nicht stoppen
+      }
+    }
+
+    return result;
   }
 
   /**
@@ -306,6 +354,35 @@ export class EmailService {
         scheduledDate: request.scheduledDate.toISOString(),
         timezone: request.timezone || 'Europe/Berlin'
       });
+
+      // ========== NOTIFICATION INTEGRATION: Scheduled Email (Optional) ==========
+      // Du könntest hier auch eine Benachrichtigung für geplante E-Mails hinzufügen
+      // wenn das gewünscht ist, z.B.:
+      /*
+      if (result.success) {
+        try {
+          // Erstelle eine Custom-Benachrichtigung für geplante E-Mails
+          await notificationsService.create({
+            userId: request.campaign.userId,
+            type: 'EMAIL_SENT_SUCCESS', // Oder ein neuer Typ 'EMAIL_SCHEDULED'
+            title: 'E-Mail-Kampagne geplant',
+            message: `Die Kampagne "${request.campaign.title}" wurde für ${request.scheduledDate.toLocaleString('de-DE')} geplant.`,
+            linkUrl: `/dashboard/schedule-mails/${request.campaign.id}`,
+            linkType: 'campaign',
+            linkId: request.campaign.id,
+            isRead: false,
+            metadata: {
+              campaignId: request.campaign.id,
+              campaignTitle: request.campaign.title,
+              recipientCount: totalRecipientCount,
+              scheduledDate: request.scheduledDate.toISOString()
+            }
+          });
+        } catch (notificationError) {
+          console.error('Fehler beim Senden der Planungs-Benachrichtigung:', notificationError);
+        }
+      }
+      */
 
       return result;
 

@@ -62,13 +62,19 @@ async function checkOverdueApprovals() {
       query(
         collection(db, 'pr_campaigns'),
         where('userId', '==', userId),
-        where('status', '==', 'pending_approval'),
-        where('approvalRequestedAt', '<=', Timestamp.fromDate(thresholdDate))
+        where('status', '==', 'in_review'), // KORRIGIERT: richtiger Status
+        where('approvalData.status', '!=', 'approved') // Nicht genehmigte
       )
     );
 
     for (const campaignDoc of campaignsSnapshot.docs) {
       const campaign = campaignDoc.data();
+      
+      // Prüfe ob die Kampagne tatsächlich überfällig ist
+      if (!campaign.updatedAt) continue;
+      
+      const lastUpdateDate = campaign.updatedAt.toDate();
+      if (lastUpdateDate > thresholdDate) continue; // Nicht überfällig
       
       // Check if we already sent a notification for this overdue campaign today
       const existingNotification = await getDocs(
@@ -84,8 +90,7 @@ async function checkOverdueApprovals() {
 
       if (existingNotification.empty) {
         // Calculate days overdue
-        const approvalRequestedAt = campaign.approvalRequestedAt.toDate();
-        const daysOverdue = Math.floor((Date.now() - approvalRequestedAt.getTime()) / (1000 * 60 * 60 * 24));
+        const daysOverdue = Math.floor((Date.now() - lastUpdateDate.getTime()) / (1000 * 60 * 60 * 24));
         
         // Create notification
         await addDoc(collection(db, 'notifications'), {
@@ -157,7 +162,7 @@ async function checkOverdueTasks() {
           collection(db, 'notifications'),
           where('userId', '==', task.userId),
           where('type', '==', 'TASK_OVERDUE'),
-          where('metadata.taskId', '==', taskDoc.id),
+          where('linkId', '==', taskDoc.id), // KORRIGIERT: linkId statt metadata.taskId
           where('createdAt', '>=', Timestamp.fromDate(getStartOfDay())),
           limit(1)
         )
@@ -175,8 +180,7 @@ async function checkOverdueTasks() {
           linkId: taskDoc.id,
           isRead: false,
           metadata: {
-            taskId: taskDoc.id,
-            taskName: task.title
+            taskName: task.title // KORRIGIERT: nur taskName
           },
           createdAt: serverTimestamp()
         });
@@ -216,13 +220,14 @@ async function checkExpiredMediaLinks() {
   const todayEnd = getEndOfDay();
   
   for (const userBatch of userBatches) {
+    // KORRIGIERT: Richtige Collection und Felder
     const shareLinksSnapshot = await getDocs(
       query(
-        collection(db, 'media_share_links'),
+        collection(db, 'media_shares'), // KORRIGIERT: richtige Collection
         where('userId', 'in', userBatch),
-        where('expiresAt', '>=', Timestamp.fromDate(todayStart)),
-        where('expiresAt', '<=', Timestamp.fromDate(todayEnd)),
-        where('isActive', '==', true)
+        where('settings.expiresAt', '>=', Timestamp.fromDate(todayStart)), // KORRIGIERT: verschachtelte Struktur
+        where('settings.expiresAt', '<=', Timestamp.fromDate(todayEnd)),
+        where('active', '==', true) // KORRIGIERT: 'active' statt 'isActive'
       )
     );
 
@@ -235,25 +240,27 @@ async function checkExpiredMediaLinks() {
           collection(db, 'notifications'),
           where('userId', '==', shareLink.userId),
           where('type', '==', 'MEDIA_LINK_EXPIRED'),
-          where('metadata.shareLinkId', '==', linkDoc.id),
+          where('linkId', '==', linkDoc.id), // KORRIGIERT: linkId statt metadata.shareLinkId
           limit(1)
         )
       );
 
       if (existingNotification.empty) {
+        // Bestimme den Asset-Namen
+        let assetName = shareLink.title || 'Unbekannte Datei';
+        
         // Create notification
         await addDoc(collection(db, 'notifications'), {
           userId: shareLink.userId,
           type: 'MEDIA_LINK_EXPIRED',
           title: 'Link abgelaufen',
-          message: `Der geteilte Link für "${shareLink.assetName}" ist heute abgelaufen.`,
-          linkUrl: `/dashboard/mediencenter/shares/${linkDoc.id}`,
+          message: `Der geteilte Link für "${assetName}" ist heute abgelaufen.`,
+          linkUrl: `/dashboard/mediencenter`, // KORRIGIERT: generischer Link
           linkType: 'media',
           linkId: linkDoc.id,
           isRead: false,
           metadata: {
-            shareLinkId: linkDoc.id,
-            mediaAssetName: shareLink.assetName
+            mediaAssetName: assetName // KORRIGIERT: nur mediaAssetName
           },
           createdAt: serverTimestamp()
         });

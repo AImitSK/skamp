@@ -1,4 +1,4 @@
-// src/lib/firebase/media-service.ts - Vollständige korrigierte Version
+// src/lib/firebase/media-service.ts - UPDATED WITH NOTIFICATION INTEGRATION
 import {
   collection,
   doc,
@@ -20,6 +20,7 @@ import {
 } from 'firebase/storage';
 import { db, storage } from './client-init';
 import { MediaAsset, MediaFolder, FolderBreadcrumb, ShareLink, ShareLinkType } from '@/types/media';
+import { notificationsService } from './notifications-service';
 
 // Import der Folder-Utils für Firma-Vererbung
 import { getRootFolderClientId } from '@/lib/utils/folder-utils';
@@ -225,6 +226,38 @@ export const mediaService = {
       const doc = snapshot.docs[0];
       const shareLink = { id: doc.id, ...doc.data() } as ShareLink;
       
+      // ========== NOTIFICATION INTEGRATION: First Access ==========
+      // Prüfe ob dies der erste Zugriff ist
+      const currentAccessCount = shareLink.accessCount || 0;
+      if (currentAccessCount === 0 && shareLink.userId) {
+        try {
+          // Hole mehr Details für die Benachrichtigung
+          let assetName = shareLink.title || 'Unbekannte Datei';
+          
+          // Versuche einen spezifischeren Namen zu bekommen basierend auf dem type
+          // Nutze targetId für alle Share-Link-Typen
+          if (shareLink.targetId) {
+            try {
+              const asset = await this.getMediaAssetById(shareLink.targetId);
+              if (asset) {
+                assetName = asset.fileName;
+              }
+            } catch (err) {
+              // Falls targetId kein Asset ist, verwende den Titel
+              console.log('Target is not an asset, using title');
+            }
+          }
+          
+          await notificationsService.notifyMediaAccessed(
+            { ...shareLink, assetName },
+            shareLink.userId
+          );
+          console.log('📬 Benachrichtigung gesendet: Erster Zugriff auf geteilten Link');
+        } catch (notificationError) {
+          console.error('Fehler beim Senden der Zugriffs-Benachrichtigung:', notificationError);
+        }
+      }
+      
       await this.incrementShareAccess(doc.id);
       
       return shareLink;
@@ -268,6 +301,22 @@ export const mediaService = {
     } catch (error) {
       console.error("Fehler beim Löschen des Share-Links:", error);
       throw error;
+    }
+  },
+
+  // ========== NOTIFICATION INTEGRATION: Track Downloads ==========
+  async trackMediaDownload(shareLink: ShareLink, assetName: string): Promise<void> {
+    try {
+      if (shareLink.userId) {
+        await notificationsService.notifyMediaDownloaded(
+          shareLink,
+          assetName,
+          shareLink.userId
+        );
+        console.log('📬 Benachrichtigung gesendet: Datei heruntergeladen');
+      }
+    } catch (notificationError) {
+      console.error('Fehler beim Senden der Download-Benachrichtigung:', notificationError);
     }
   },
 

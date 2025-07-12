@@ -1,4 +1,4 @@
-// src/lib/firebase/task-service.ts
+// src/lib/firebase/task-service.ts - UPDATED WITH NOTIFICATION INTEGRATION
 import {
   collection,
   doc,
@@ -15,6 +15,7 @@ import {
 } from 'firebase/firestore';
 import { db } from './client-init';
 import { Task } from '@/types/tasks';
+import { notificationsService } from './notifications-service';
 
 export const taskService = {
   /**
@@ -26,6 +27,11 @@ export const taskService = {
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
+    
+    // ========== NOTIFICATION INTEGRATION: Task mit Fälligkeitsdatum ==========
+    // Wenn die Task ein Fälligkeitsdatum in der Zukunft hat, könnten wir hier
+    // eine Erinnerung planen (optional für später)
+    
     return docRef.id;
   },
 
@@ -147,6 +153,37 @@ export const taskService = {
    */
   async update(taskId: string, data: Partial<Omit<Task, 'id' | 'userId'>>): Promise<void> {
     const docRef = doc(db, 'tasks', taskId);
+    
+    // ========== NOTIFICATION INTEGRATION: Check for overdue status ==========
+    // Hole die aktuelle Task um zu prüfen ob sie überfällig wird
+    const currentTask = await this.getById(taskId);
+    if (currentTask && data.dueDate && data.status !== 'completed') {
+      const newDueDate = data.dueDate instanceof Timestamp ? data.dueDate.toDate() : data.dueDate;
+      const now = new Date();
+      
+      // Wenn das neue Fälligkeitsdatum in der Vergangenheit liegt und die Task nicht erledigt ist
+      if (newDueDate < now && currentTask.status !== 'completed') {
+        try {
+          await notificationsService.create({
+            userId: currentTask.userId,
+            type: 'TASK_OVERDUE',
+            title: 'Task ist überfällig',
+            message: `Die Task "${currentTask.title}" ist jetzt überfällig.`,
+            linkUrl: `/dashboard/tasks/${taskId}`,
+            linkType: 'task',
+            linkId: taskId,
+            isRead: false,
+            metadata: {
+              taskName: currentTask.title
+            }
+          });
+          console.log('📬 Benachrichtigung gesendet: Task ist überfällig');
+        } catch (notificationError) {
+          console.error('Fehler beim Senden der Überfälligkeits-Benachrichtigung:', notificationError);
+        }
+      }
+    }
+    
     await updateDoc(docRef, {
       ...data,
       updatedAt: serverTimestamp(),
@@ -157,6 +194,10 @@ export const taskService = {
    * Markiert eine Aufgabe als erledigt
    */
   async markAsCompleted(taskId: string): Promise<void> {
+    // ========== NOTIFICATION INTEGRATION: Optional - Task completed ==========
+    // Hier könntest du eine Benachrichtigung für erledigte Tasks hinzufügen
+    // wenn das gewünscht ist
+    
     await this.update(taskId, {
       status: 'completed',
       completedAt: Timestamp.now()
@@ -217,5 +258,79 @@ export const taskService = {
       dueToday: 0,
       dueThisWeek: 0
     });
+  },
+
+  /**
+   * Prüft überfällige Tasks und sendet Benachrichtigungen
+   * Diese Methode wird vom Cron-Job aufgerufen
+   */
+  async checkAndNotifyOverdueTasks(userId: string): Promise<void> {
+    try {
+      console.log('🔍 Checking for overdue tasks for user:', userId);
+      
+      // Hole die Benachrichtigungseinstellungen
+      const settings = await notificationsService.getSettings(userId);
+      if (!settings.taskOverdue) {
+        console.log('ℹ️ Task overdue notifications disabled for user:', userId);
+        return;
+      }
+      
+      // Hole alle nicht-erledigten Tasks
+      const tasks = await this.getAll(userId);
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      // Filtere überfällige Tasks
+      const overdueTasks = tasks.filter(task => {
+        if (task.status === 'completed' || !task.dueDate) {
+          return false;
+        }
+        
+        const dueDate = task.dueDate.toDate();
+        // Task ist überfällig wenn Fälligkeitsdatum vor heute liegt
+        return dueDate < todayStart;
+      });
+      
+      console.log(`📊 Found ${overdueTasks.length} overdue tasks`);
+      
+      // Erstelle Benachrichtigungen für überfällige Tasks
+      for (const task of overdueTasks) {
+        // Prüfe ob wir heute schon eine Benachrichtigung für diese Task gesendet haben
+        const existingNotifications = await getDocs(
+          query(
+            collection(db, 'notifications'),
+            where('userId', '==', userId),
+            where('type', '==', 'TASK_OVERDUE'),
+            where('linkId', '==', task.id),
+            where('createdAt', '>=', Timestamp.fromDate(todayStart))
+          )
+        );
+        
+        if (existingNotifications.empty) {
+          // Keine Benachrichtigung heute, also senden
+          await notificationsService.create({
+            userId: userId,
+            type: 'TASK_OVERDUE',
+            title: 'Überfälliger Task',
+            message: `Dein Task "${task.title}" ist überfällig.`,
+            linkUrl: `/dashboard/tasks/${task.id}`,
+            linkType: 'task',
+            linkId: task.id!,
+            isRead: false,
+            metadata: {
+              taskName: task.title
+            }
+          });
+          
+          console.log(`📬 Benachrichtigung gesendet für überfällige Task: ${task.title}`);
+        } else {
+          console.log(`ℹ️ Benachrichtigung für Task "${task.title}" wurde heute bereits gesendet`);
+        }
+      }
+      
+    } catch (error) {
+      console.error('❌ Error checking overdue tasks:', error);
+      throw error;
+    }
   }
 };
