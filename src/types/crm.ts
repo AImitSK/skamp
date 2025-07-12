@@ -49,6 +49,18 @@ export const MEDIA_TYPES = [
   { value: 'other', label: 'Sonstiges' }
 ] as const;
 
+// NEU EINGEFÜGT: Standard-Presse-Tags
+export const STANDARD_PRESS_TAGS: { name: string, color: TagColor }[] = [
+    { name: 'National', color: 'blue' },
+    { name: 'Regional', color: 'green' },
+    { name: 'Local', color: 'yellow' },
+    { name: 'Trade', color: 'indigo' },
+    { name: 'Blog', color: 'purple' },
+    { name: 'Podcast', color: 'pink' },
+    { name: 'TV', color: 'red' },
+    { name: 'Radio', color: 'orange' },
+];
+
 // Standard Beats/Ressorts für Journalisten
 export const STANDARD_BEATS = [
   'Technologie',
@@ -502,23 +514,23 @@ export interface Boilerplate {
   userId: string;
   
   // Kunden-Zuordnung
-  clientId?: string;          // Optional: Spezifisch für einen Kunden
-  clientName?: string;        // Für bessere Performance beim Anzeigen
-  isGlobal: boolean;          // true = für alle Kunden, false = kundenspezifisch
+  clientId?: string;             // Optional: Spezifisch für einen Kunden
+  clientName?: string;           // Für bessere Performance beim Anzeigen
+  isGlobal: boolean;             // true = für alle Kunden, false = kundenspezifisch
   
   // Erweiterte Metadaten
-  description?: string;       // Kurze Beschreibung wann/wo verwendet
-  tags?: string[];           // Für bessere Suche
-  isFavorite?: boolean;      // Favoriten-Markierung
-  isArchived?: boolean;      // Soft-Delete
-  usageCount?: number;       // Verwendungszähler
-  lastUsedAt?: any;         // Firestore Timestamp
+  description?: string;          // Kurze Beschreibung wann/wo verwendet
+  tags?: string[];               // Für bessere Suche
+  isFavorite?: boolean;          // Favoriten-Markierung
+  isArchived?: boolean;          // Soft-Delete
+  usageCount?: number;           // Verwendungszähler
+  lastUsedAt?: any;              // Firestore Timestamp
   
   // Position im Editor
   defaultPosition?: 'top' | 'bottom' | 'signature' | 'custom';  // Wo soll es eingefügt werden
   
   // Reihenfolge für Sortierung
-  sortOrder?: number;        // Manuelle Sortierung innerhalb der Kategorie
+  sortOrder?: number;            // Manuelle Sortierung innerhalb der Kategorie
   
   // Timestamps
   createdAt?: any;
