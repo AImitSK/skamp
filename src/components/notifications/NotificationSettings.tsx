@@ -1,7 +1,7 @@
 // src/components/notifications/NotificationSettings.tsx
 
 import { useState, useEffect } from 'react';
-import { Switch } from '@/components/switch';
+import { SimpleSwitch } from './SimpleSwitch';
 import { Input } from '@/components/input';
 import { Button } from '@/components/button';
 import { Divider } from '@/components/divider';
@@ -154,12 +154,12 @@ export function NotificationSettings() {
     }
   ];
 
-  const handleToggle = (key: keyof NotificationSettingsState) => {
+  const handleToggle = (key: keyof NotificationSettingsState, checked: boolean) => {
     if (!localSettings) return;
     
     setLocalSettings(prev => ({
       ...prev!,
-      [key]: !prev![key]
+      [key]: checked
     }));
     setSaveSuccess(false);
   };
@@ -289,9 +289,9 @@ export function NotificationSettings() {
                         <span className="text-sm text-gray-500">Tage</span>
                       </div>
                     ) : (
-                      <Switch
+                      <SimpleSwitch
                         checked={localSettings[setting.key] as boolean}
-                        onChange={() => handleToggle(setting.key)}
+                        onChange={(checked) => handleToggle(setting.key, checked)}
                       />
                     )}
                   </div>

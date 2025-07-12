@@ -11,13 +11,15 @@ import {
   EyeIcon,
   ArrowDownTrayIcon,
   LinkIcon,
-  ClockIcon
+  ClockIcon,
+  TrashIcon
 } from '@heroicons/react/20/solid';
 import { Notification, NOTIFICATION_COLORS } from '@/types/notifications';
 
 interface NotificationItemProps {
   notification: Notification;
   onMarkAsRead: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
 const iconMap = {
@@ -58,7 +60,7 @@ function formatRelativeTime(date: Date): string {
   return 'gerade eben';
 }
 
-export function NotificationItem({ notification, onMarkAsRead }: NotificationItemProps) {
+export function NotificationItem({ notification, onMarkAsRead, onDelete }: NotificationItemProps) {
   const router = useRouter();
   const Icon = iconMap[notification.type];
   const colorClasses = NOTIFICATION_COLORS[notification.type];
@@ -66,7 +68,12 @@ export function NotificationItem({ notification, onMarkAsRead }: NotificationIte
   // Format timestamp
   const timeAgo = formatRelativeTime(notification.createdAt.toDate());
 
-  const handleClick = async () => {
+  const handleClick = async (e: React.MouseEvent) => {
+    // Verhindere Navigation wenn Delete-Button geklickt wurde
+    if ((e.target as HTMLElement).closest('.delete-button')) {
+      return;
+    }
+
     // Mark as read if not already
     if (!notification.isRead) {
       onMarkAsRead(notification.id);
@@ -76,6 +83,11 @@ export function NotificationItem({ notification, onMarkAsRead }: NotificationIte
     if (notification.linkUrl) {
       router.push(notification.linkUrl);
     }
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDelete(notification.id);
   };
 
   return (
@@ -114,9 +126,18 @@ export function NotificationItem({ notification, onMarkAsRead }: NotificationIte
               {notification.message}
             </p>
           </div>
-          <time className="flex-none text-xs text-gray-500 whitespace-nowrap">
-            {timeAgo}
-          </time>
+          <div className="flex items-center gap-2">
+            <time className="flex-none text-xs text-gray-500 whitespace-nowrap">
+              {timeAgo}
+            </time>
+            <button
+              onClick={handleDelete}
+              className="delete-button p-1 rounded hover:bg-gray-100 transition-colors group"
+              aria-label="Benachrichtigung löschen"
+            >
+              <TrashIcon className="h-4 w-4 text-gray-400 group-hover:text-red-500" />
+            </button>
+          </div>
         </div>
 
         {/* Additional metadata */}

@@ -18,6 +18,7 @@ export function NotificationList() {
     error, 
     markAsRead, 
     markAllAsRead,
+    deleteNotification,
     unreadCount 
   } = useNotifications();
   
@@ -133,6 +134,7 @@ export function NotificationList() {
               key={notification.id}
               notification={notification}
               onMarkAsRead={markAsRead}
+              onDelete={deleteNotification}
             />
           ))}
         </div>

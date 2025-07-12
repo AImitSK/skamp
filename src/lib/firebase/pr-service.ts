@@ -20,6 +20,7 @@ import { PRCampaign, CampaignAssetAttachment, ApprovalData } from '@/types/pr';
 import { mediaService } from './media-service';
 import { ShareLink, CreateShareLinkData } from '@/types/media'; 
 import { nanoid } from 'nanoid';
+import { notificationsService } from './notifications-service';
 
 // ✅ ZENTRALER ORT FÜR DIE BASIS-URL MIT FALLBACK
 const getBaseUrl = () => {
@@ -727,6 +728,22 @@ export const prService = {
         status: 'changes_requested',
         approvalDataStatus: 'commented'
       });
+      
+      // ========== NOTIFICATION INTEGRATION ==========
+      try {
+        const campaign = await this.getById(currentData.campaignId);
+        if (campaign) {
+          await notificationsService.notifyChangesRequested(
+            campaign,
+            author || 'Kunde',
+            campaign.userId
+          );
+          console.log('📬 Benachrichtigung gesendet: Änderungen erbeten');
+        }
+      } catch (notificationError) {
+        console.error('Fehler beim Senden der Benachrichtigung:', notificationError);
+        // Fehler bei Benachrichtigung sollte den Hauptprozess nicht stoppen
+      }
     }
   },
 
@@ -780,6 +797,28 @@ export const prService = {
         status: 'approved',
         approvalDataStatus: 'approved'
       });
+      
+      // ========== NOTIFICATION INTEGRATION ==========
+      try {
+        const campaign = await this.getById(currentData.campaignId);
+        if (campaign) {
+          // Hole den Namen des Genehmigers aus der letzten Feedback-Historie
+          // oder verwende 'Kunde' als Standard
+          const approverName = currentData.feedbackHistory?.length > 0 
+            ? currentData.feedbackHistory[currentData.feedbackHistory.length - 1].author || 'Kunde'
+            : 'Kunde';
+            
+          await notificationsService.notifyApprovalGranted(
+            campaign,
+            approverName,
+            campaign.userId
+          );
+          console.log('📬 Benachrichtigung gesendet: Freigabe erteilt');
+        }
+      } catch (notificationError) {
+        console.error('Fehler beim Senden der Benachrichtigung:', notificationError);
+        // Fehler bei Benachrichtigung sollte den Hauptprozess nicht stoppen
+      }
     }
   },
 

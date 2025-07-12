@@ -11,6 +11,7 @@ import {
   orderBy,
   limit,
   updateDoc,
+  deleteDoc,
   serverTimestamp,
   Timestamp,
   writeBatch,
@@ -34,10 +35,21 @@ class NotificationsService {
   // ========== CRUD Operations ==========
   
   /**
-   * Create a new notification
+   * Create a new notification (with validation)
+   * This is the ONLY way notifications should be created
    */
   async create(notification: CreateNotificationInput): Promise<string> {
     try {
+      // Additional validation before creating
+      if (!notification.userId || !notification.type || !notification.title || !notification.message) {
+        throw new Error('Missing required fields');
+      }
+
+      // Validate notification context
+      if (!this.validateNotificationContext(notification.type, notification.metadata)) {
+        throw new Error(`Invalid context for notification type: ${notification.type}`);
+      }
+
       const docRef = doc(collection(db, NOTIFICATIONS_COLLECTION));
       const notificationData: Notification = {
         ...notification,
@@ -47,6 +59,10 @@ class NotificationsService {
       };
       
       await setDoc(docRef, notificationData);
+      
+      // Log for monitoring
+      console.log(`Notification created: ${notification.type} for user ${notification.userId}`);
+      
       return docRef.id;
     } catch (error) {
       console.error('Error creating notification:', error);
@@ -110,8 +126,17 @@ class NotificationsService {
   }
 
   /**
-   * Mark all notifications as read for a user
+   * Delete a notification
    */
+  async delete(notificationId: string): Promise<void> {
+    try {
+      const docRef = doc(db, NOTIFICATIONS_COLLECTION, notificationId);
+      await deleteDoc(docRef);
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      throw error;
+    }
+  }
   async markAllAsRead(userId: string): Promise<void> {
     try {
       const q = query(
@@ -186,9 +211,31 @@ class NotificationsService {
 
   // ========== Trigger Methods ==========
   
-  /**
-   * Check if a notification type is enabled for a user
-   */
+  // Private method to validate notification creation context
+  private validateNotificationContext(type: NotificationType, metadata: any): boolean {
+    switch (type) {
+      case 'APPROVAL_GRANTED':
+      case 'CHANGES_REQUESTED':
+        return metadata?.campaignId && metadata?.senderName;
+      
+      case 'EMAIL_SENT_SUCCESS':
+      case 'EMAIL_BOUNCED':
+        return metadata?.campaignId;
+        
+      case 'MEDIA_FIRST_ACCESS':
+      case 'MEDIA_DOWNLOADED':
+        return metadata?.mediaAssetName;
+        
+      case 'OVERDUE_APPROVAL':
+      case 'TASK_OVERDUE':
+      case 'MEDIA_LINK_EXPIRED':
+        // System-generated, always valid in service context
+        return true;
+        
+      default:
+        return false;
+    }
+  }
   private async isNotificationEnabled(userId: string, type: NotificationType): Promise<boolean> {
     const settings = await this.getSettings(userId);
     

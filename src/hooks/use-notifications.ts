@@ -13,6 +13,7 @@ interface UseNotificationsReturn {
   error: string | null;
   markAsRead: (notificationId: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
+  deleteNotification: (notificationId: string) => Promise<void>;
   refresh: () => Promise<void>;
 }
 
@@ -78,7 +79,24 @@ export function useNotifications(): UseNotificationsReturn {
     }
   }, [user?.uid]);
 
-  // Subscribe to real-time updates
+  // Delete notification
+  const deleteNotification = useCallback(async (notificationId: string) => {
+    try {
+      await notificationsService.delete(notificationId);
+      
+      // Optimistic update
+      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+      
+      // Update unread count if the notification was unread
+      const notification = notifications.find(n => n.id === notificationId);
+      if (notification && !notification.isRead) {
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
+    } catch (err) {
+      console.error('Error deleting notification:', err);
+      setError('Fehler beim Löschen der Benachrichtigung');
+    }
+  }, [notifications]);
   useEffect(() => {
     if (!user?.uid) return;
 
@@ -118,6 +136,7 @@ export function useNotifications(): UseNotificationsReturn {
     error,
     markAsRead,
     markAllAsRead,
+    deleteNotification,
     refresh: loadNotifications
   };
 }
