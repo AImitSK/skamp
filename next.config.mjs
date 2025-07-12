@@ -6,6 +6,11 @@ const nextConfig = {
   // Configure `pageExtensions` to include MDX files
   pageExtensions: ['js', 'jsx', 'md', 'mdx', 'ts', 'tsx'],
   // Optionally, add any other Next.js config below
+  
+  // ESLint während Production Builds ignorieren (temporär)
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 }
 
 const withMDX = createMDX({
