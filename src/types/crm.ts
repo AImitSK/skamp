@@ -49,7 +49,6 @@ export const MEDIA_TYPES = [
   { value: 'other', label: 'Sonstiges' }
 ] as const;
 
-// NEU EINGEFÜGT: Standard-Presse-Tags
 export const STANDARD_PRESS_TAGS: { name: string, color: TagColor }[] = [
     { name: 'National', color: 'blue' },
     { name: 'Regional', color: 'green' },
@@ -111,22 +110,19 @@ export interface Company {
     zip?: string;
     country?: string;
   };
-  
-  // Media Info für detaillierte Medieninformationen
+
   mediaInfo?: {
-    mediaType?: string; // newspaper, magazine, online, etc.
-    circulation?: number; // Gesamtauflage
-    reach?: number; // Gesamtreichweite
+    mediaType?: string;
+    circulation?: number;
+    reach?: number;
     publicationType?: 'print' | 'online' | 'both';
     publicationFrequency?: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
     frequency?: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
     targetAudience?: string;
-    focusAreas?: string[]; // Allgemeine Schwerpunkte
-    
-    // NEU: Array von Publikationen
+    focusAreas?: string[];
     publications?: Publication[];
   };
-  
+
   description?: string;
   employees?: number;
   revenue?: number;
@@ -152,7 +148,7 @@ export interface Contact {
   position?: string;
   department?: string;
   companyId?: string;
-  companyName?: string; // Denormalisiert für Performance
+  companyName?: string;
   address?: {
     street?: string;
     city?: string;
@@ -160,27 +156,31 @@ export interface Contact {
     postalCode?: string;
     country?: string;
   };
-  
-  // Soziale Medien - GEÄNDERT: Gleiche Struktur wie Company
+
   socialMedia?: Array<{
     platform: SocialPlatform;
     url: string;
   }>;
-  
-  // Kommunikationspräferenzen
+
   communicationPreferences?: {
     preferredChannel?: 'email' | 'phone' | 'meeting' | 'social';
     bestTimeToContact?: string;
     doNotContact?: boolean;
     language?: string;
   };
-  
-  // Medien-spezifische Informationen (reduziert)
+
+  // ### HIER IST DIE KORREKTUR ###
   mediaInfo?: {
-    // NEU: Publikations-Zuordnung
-    publications?: string[]; // Array von Publikationsnamen
+    publications?: string[];
+    beat?: string;
+    expertise?: string[];
+    preferredContactTime?: string;
+    socialHandles?: {
+      twitter?: string;
+      linkedin?: string;
+    };
   };
-  
+
   birthday?: Date;
   notes?: string;
   photoUrl?: string;
@@ -188,8 +188,7 @@ export interface Contact {
   userId: string;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
-  
-  // Berechnete Felder
+
   lastContactDate?: Timestamp;
   totalInteractions?: number;
 }
@@ -203,8 +202,7 @@ export interface Tag {
   userId: string;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
-  
-  // Verwendungszähler
+
   contactCount?: number;
   companyCount?: number;
 }
@@ -217,26 +215,22 @@ export interface Communication {
   status: CommunicationStatus;
   subject?: string;
   content?: string;
-  
-  // Verknüpfungen
+
   contactId?: string;
-  contactName?: string; // Denormalisiert
+  contactName?: string;
   companyId?: string;
-  companyName?: string; // Denormalisiert
-  
-  // Zeitstempel
+  companyName?: string;
+
   date: Timestamp;
-  duration?: number; // in Minuten
-  
-  // Zusätzliche Metadaten
+  duration?: number;
+
   attachments?: {
     name: string;
     url: string;
     type: string;
     size: number;
   }[];
-  
-  // E-Mail spezifisch
+
   emailMetadata?: {
     messageId?: string;
     threadId?: string;
@@ -245,8 +239,7 @@ export interface Communication {
     cc?: string[];
     bcc?: string[];
   };
-  
-  // Meeting spezifisch
+
   meetingMetadata?: {
     location?: string;
     attendees?: string[];
@@ -254,15 +247,14 @@ export interface Communication {
     agenda?: string;
     minutes?: string;
   };
-  
-  // Task spezifisch
+
   taskMetadata?: {
     dueDate?: Timestamp;
     priority?: TaskPriority;
     assignedTo?: string;
     completedAt?: Timestamp;
   };
-  
+
   userId: string;
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
@@ -367,8 +359,7 @@ export interface UserPreferences {
   language?: string;
   timezone?: string;
   dateFormat?: string;
-  
-  // Benachrichtigungen
+
   notifications?: {
     email?: boolean;
     push?: boolean;
@@ -376,20 +367,18 @@ export interface UserPreferences {
     meetingReminders?: boolean;
     dailyDigest?: boolean;
   };
-  
-  // Dashboard
+
   dashboardLayout?: {
     widgets: string[];
     customWidgets?: any[];
   };
-  
-  // Listen-Ansichten
+
   defaultViews?: {
     companies?: 'grid' | 'list';
     contacts?: 'grid' | 'list';
     communications?: 'timeline' | 'list';
   };
-  
+
   updatedAt?: Timestamp;
 }
 
@@ -512,27 +501,22 @@ export interface Boilerplate {
   category: 'company' | 'contact' | 'legal' | 'product' | 'custom';
   content: string;
   userId: string;
-  
-  // Kunden-Zuordnung
-  clientId?: string;             // Optional: Spezifisch für einen Kunden
-  clientName?: string;           // Für bessere Performance beim Anzeigen
-  isGlobal: boolean;             // true = für alle Kunden, false = kundenspezifisch
-  
-  // Erweiterte Metadaten
-  description?: string;          // Kurze Beschreibung wann/wo verwendet
-  tags?: string[];               // Für bessere Suche
-  isFavorite?: boolean;          // Favoriten-Markierung
-  isArchived?: boolean;          // Soft-Delete
-  usageCount?: number;           // Verwendungszähler
-  lastUsedAt?: any;              // Firestore Timestamp
-  
-  // Position im Editor
-  defaultPosition?: 'top' | 'bottom' | 'signature' | 'custom';  // Wo soll es eingefügt werden
-  
-  // Reihenfolge für Sortierung
-  sortOrder?: number;            // Manuelle Sortierung innerhalb der Kategorie
-  
-  // Timestamps
+
+  clientId?: string;
+  clientName?: string;
+  isGlobal: boolean;
+
+  description?: string;
+  tags?: string[];
+  isFavorite?: boolean;
+  isArchived?: boolean;
+  usageCount?: number;
+  lastUsedAt?: any;
+
+  defaultPosition?: 'top' | 'bottom' | 'signature' | 'custom';
+
+  sortOrder?: number;
+
   createdAt?: any;
   updatedAt?: any;
 }
