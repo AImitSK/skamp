@@ -1,10 +1,21 @@
 // src/hooks/use-notifications.ts
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { usePathname } from 'next/navigation';
 import { notificationsService } from '@/lib/firebase/notifications-service';
 import { Notification, NotificationSettings } from '@/types/notifications';
 import { Unsubscribe } from 'firebase/firestore';
+import { 
+  collection, 
+  query, 
+  where, 
+  getDocs, 
+  Timestamp,
+  orderBy,
+  limit
+} from 'firebase/firestore';
+import { db } from '@/lib/firebase/client-init';
 
 interface UseNotificationsReturn {
   notifications: Notification[];
@@ -17,8 +28,32 @@ interface UseNotificationsReturn {
   refresh: () => Promise<void>;
 }
 
+// Helper function für überfällige Checks
+async function checkForOverdueItems(userId: string, settings: NotificationSettings | null) {
+  if (!settings) return;
+  
+  const checks = [];
+  
+  // Nur prüfen wenn aktiviert
+  if (settings.overdueApprovals) {
+    checks.push(checkOverdueApprovals(userId, settings.overdueApprovalDays || 3));
+  }
+  
+  if (settings.taskOverdue) {
+    checks.push(checkOverdueTasks(userId));
+  }
+  
+  if (checks.length > 0) {
+    await Promise.all(checks);
+  }
+}
+
 export function useNotifications(): UseNotificationsReturn {
   const { user } = useAuth();
+  const pathname = usePathname();
+  const lastCheckRef = useRef<number>(0);
+  const settingsRef = useRef<NotificationSettings | null>(null);
+  
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -97,6 +132,55 @@ export function useNotifications(): UseNotificationsReturn {
       setError('Fehler beim Löschen der Benachrichtigung');
     }
   }, [notifications]);
+
+  // Lade Settings einmalig
+  useEffect(() => {
+    if (!user?.uid) return;
+    
+    notificationsService.getSettings(user.uid).then(settings => {
+      settingsRef.current = settings;
+    }).catch(err => {
+      console.error('Error loading notification settings for checks:', err);
+    });
+  }, [user?.uid]);
+
+  // Check bei Route-Änderung
+  useEffect(() => {
+    if (!user?.uid) return;
+    
+    // Verhindere zu häufige Checks (max alle 5 Minuten)
+    const now = Date.now();
+    if (now - lastCheckRef.current < 5 * 60 * 1000) return;
+    
+    lastCheckRef.current = now;
+    checkForOverdueItems(user.uid, settingsRef.current).catch(err => {
+      console.error('Error checking for overdue items:', err);
+    });
+  }, [pathname, user?.uid]);
+
+  // Check wenn Tab aktiv wird
+  useEffect(() => {
+    if (!user?.uid) return;
+    
+    const handleFocus = () => {
+      const now = Date.now();
+      if (now - lastCheckRef.current < 5 * 60 * 1000) return;
+      
+      lastCheckRef.current = now;
+      checkForOverdueItems(user.uid, settingsRef.current).catch(err => {
+        console.error('Error checking for overdue items on focus:', err);
+      });
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleFocus);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleFocus);
+    };
+  }, [user?.uid]);
+
   useEffect(() => {
     if (!user?.uid) return;
 
@@ -199,4 +283,107 @@ export function useNotificationSettings(): UseNotificationSettingsReturn {
     error,
     updateSettings
   };
+}
+
+// Helper functions für überfällige Checks
+async function checkOverdueApprovals(userId: string, overdueDays: number) {
+  const thresholdDate = new Date();
+  thresholdDate.setDate(thresholdDate.getDate() - overdueDays);
+
+  const campaignsQuery = query(
+    collection(db, 'pr_campaigns'),
+    where('userId', '==', userId),
+    where('status', '==', 'in_review'),
+    where('updatedAt', '<=', Timestamp.fromDate(thresholdDate))
+  );
+
+  const snapshot = await getDocs(campaignsQuery);
+  
+  for (const doc of snapshot.docs) {
+    const campaign = doc.data();
+    
+    // Check if notification already exists today
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    
+    const existingQuery = query(
+      collection(db, 'notifications'),
+      where('userId', '==', userId),
+      where('type', '==', 'OVERDUE_APPROVAL'),
+      where('metadata.campaignId', '==', doc.id),
+      where('createdAt', '>=', Timestamp.fromDate(todayStart)),
+      limit(1)
+    );
+    
+    const existingNotifications = await getDocs(existingQuery);
+    
+    if (existingNotifications.empty) {
+      const daysOverdue = Math.floor(
+        (Date.now() - campaign.updatedAt.toDate().getTime()) / (1000 * 60 * 60 * 24)
+      );
+      
+      await notificationsService.create({
+        userId: userId,
+        type: 'OVERDUE_APPROVAL',
+        title: 'Überfällige Freigabe-Anfrage',
+        message: `Die Freigabe-Anfrage für "${campaign.title}" ist seit ${daysOverdue} Tagen überfällig.`,
+        linkUrl: `/dashboard/pr-kampagnen/${doc.id}`,
+        linkType: 'campaign',
+        linkId: doc.id,
+        isRead: false,
+        metadata: {
+          campaignId: doc.id,
+          campaignTitle: campaign.title,
+          daysOverdue: daysOverdue
+        }
+      });
+    }
+  }
+}
+
+async function checkOverdueTasks(userId: string) {
+  const now = Timestamp.now();
+  
+  const tasksQuery = query(
+    collection(db, 'tasks'),
+    where('userId', '==', userId),
+    where('status', '!=', 'completed'),
+    where('dueDate', '<=', now)
+  );
+
+  const snapshot = await getDocs(tasksQuery);
+  
+  for (const doc of snapshot.docs) {
+    const task = doc.data();
+    
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    
+    const existingQuery = query(
+      collection(db, 'notifications'),
+      where('userId', '==', userId),
+      where('type', '==', 'TASK_OVERDUE'),
+      where('linkId', '==', doc.id),
+      where('createdAt', '>=', Timestamp.fromDate(todayStart)),
+      limit(1)
+    );
+    
+    const existingNotifications = await getDocs(existingQuery);
+    
+    if (existingNotifications.empty) {
+      await notificationsService.create({
+        userId: userId,
+        type: 'TASK_OVERDUE',
+        title: 'Überfälliger Task',
+        message: `Dein Task "${task.title}" ist überfällig.`,
+        linkUrl: `/dashboard/tasks/${doc.id}`,
+        linkType: 'task',
+        linkId: doc.id,
+        isRead: false,
+        metadata: {
+          taskName: task.title
+        }
+      });
+    }
+  }
 }

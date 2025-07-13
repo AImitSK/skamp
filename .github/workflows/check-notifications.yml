@@ -1,0 +1,93 @@
+name: Check Overdue Notifications
+
+on:
+  # Zeitplan: Jede Stunde
+  schedule:
+    - cron: '0 * * * *'  # Minute 0 jeder Stunde
+  
+  # Manueller Trigger für Tests
+  workflow_dispatch:
+    inputs:
+      debug:
+        description: 'Debug-Modus aktivieren'
+        required: false
+        default: 'false'
+
+jobs:
+  check-notifications:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5  # Timeout nach 5 Minuten
+    
+    steps:
+      - name: Check overdue items
+        id: cron
+        env:
+          API_URL: ${{ secrets.API_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          echo "🕐 Starting notification check at $(date)"
+          
+          # Validierung ohne direkte secret-Referenzen
+          if [ -z "${API_URL}" ]; then
+            echo "❌ Error: API_URL secret is not set"
+            echo "Please add API_URL to your repository secrets"
+            exit 1
+          fi
+          
+          if [ -z "${CRON_SECRET}" ]; then
+            echo "❌ Error: CRON_SECRET secret is not set"
+            echo "Please add CRON_SECRET to your repository secrets"
+            exit 1
+          fi
+          
+          echo "✅ All required secrets are configured"
+          
+          # API Call mit Fehlerbehandlung
+          response=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X POST "${API_URL}/api/cron/check-notifications" \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            -H "Content-Type: application/json" \
+            -m 300)  # 5 Minuten Timeout
+          
+          # Response und HTTP Code trennen
+          body=$(echo "$response" | sed '$d')
+          http_code=$(echo "$response" | tail -n1 | cut -d: -f2)
+          
+          # Debug-Ausgabe wenn aktiviert
+          if [ "${{ github.event.inputs.debug }}" = "true" ]; then
+            echo "📝 Response body: $body"
+            echo "📊 HTTP code: $http_code"
+          fi
+          
+          # Prüfe ob erfolgreich
+          if [ "$http_code" = "200" ]; then
+            echo "✅ Notification check completed successfully"
+            echo "📄 Response: $body"
+            echo "status=success" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Notification check failed with status code $http_code"
+            echo "📄 Error response: $body"
+            echo "status=failed" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+      
+      - name: Log success
+        if: steps.cron.outputs.status == 'success'
+        run: |
+          echo "✅ All notification checks completed"
+          echo "📅 Next run scheduled in 1 hour"
+      
+      - name: Log failure
+        if: failure()
+        run: |
+          echo "❌ Notification check failed"
+          echo "🔍 Check the logs above for details"
+          echo "💡 Common issues:"
+          echo "   - Wrong API_URL or CRON_SECRET"
+          echo "   - API endpoint not accessible"
+          echo "   - Authentication failed"
+          echo ""
+          echo "📋 Setup checklist:"
+          echo "   1. Go to Settings → Secrets → Actions"
+          echo "   2. Add API_URL (e.g., https://your-app.vercel.app)"
+          echo "   3. Add CRON_SECRET (generate with: openssl rand -base64 32)"
+          echo "   4. Ensure the same CRON_SECRET is set in Vercel env vars"
