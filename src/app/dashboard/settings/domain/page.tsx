@@ -75,7 +75,7 @@ export default function DomainsPage() {
     try {
       setLoading(true);
       setError(null);
-      // User in Firebase Auth hat keine organizationId, wir nutzen die uid
+      // Use Firebase client SDK directly - it has the user's auth
       const organizationId = user.uid;
       const data = await domainService.getAll(organizationId);
       setDomains(data);
@@ -90,14 +90,41 @@ export default function DomainsPage() {
   const handleVerify = async (domainId: string) => {
     try {
       setVerifying(domainId);
-      const response = await apiClient.post<{ success: boolean }>('/api/email/domains/verify', { domainId });
+      setError(null);
+      
+      // Get domain data
+      const domain = domains.find(d => d.id === domainId);
+      if (!domain || !domain.sendgridDomainId) {
+        setError('Domain oder SendGrid ID nicht gefunden');
+        return;
+      }
+      
+      // Call API route with both IDs
+      const response = await apiClient.post<{
+        success: boolean;
+        status: string;
+        dnsRecords: any[];
+      }>('/api/email/domains/verify', { 
+        domainId,
+        sendgridDomainId: domain.sendgridDomainId
+      });
       
       if (response.success) {
+        // Update domain in Firestore directly from client
+        await domainService.updateVerificationStatus(
+          domainId,
+          response.status as any,
+          true
+        );
+        
+        await domainService.updateDnsRecords(domainId, response.dnsRecords);
+        
+        // Reload domains to get updated status
         await loadDomains();
       }
     } catch (error: any) {
       console.error('Verification error:', error);
-      setError('Verifizierung fehlgeschlagen');
+      setError(error.message || 'Verifizierung fehlgeschlagen');
     } finally {
       setVerifying(null);
     }
