@@ -1,33 +1,8 @@
 // src/app/api/email/domains/detect-provider/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth } from '@/lib/api/auth-middleware';
+import { dnsCheckerService } from '@/lib/email/dns-checker-service-edge';
 import { DetectProviderRequest, DetectProviderResponse } from '@/types/email-domains';
-
-// Force Node.js runtime
-export const runtime = 'nodejs';
-
-/**
- * Mock DNS Provider Detection für Edge Runtime
- */
-class MockDnsProviderDetector {
-  async detectDnsProvider(domain: string): Promise<string | null> {
-    console.log(`🔍 Mock detecting DNS provider for ${domain}`);
-    
-    // Simuliere Provider-Erkennung basierend auf Domain-Namen
-    const domainLower = domain.toLowerCase();
-    
-    // Einige heuristische Checks
-    if (domainLower.includes('ionos')) return 'ionos';
-    if (domainLower.includes('strato')) return 'strato';
-    if (domainLower.includes('gmail') || domainLower.includes('google')) return 'google';
-    
-    // Zufälliger Provider für Development
-    const providers = ['ionos', 'strato', 'cloudflare', 'hetzner', 'godaddy', null];
-    return providers[Math.floor(Math.random() * providers.length)];
-  }
-}
-
-const mockDetector = new MockDnsProviderDetector();
 
 /**
  * POST /api/email/domains/detect-provider
@@ -66,7 +41,7 @@ export async function POST(request: NextRequest) {
       console.log('🔍 Detecting DNS provider for:', domain);
 
       try {
-        const provider = await mockDetector.detectDnsProvider(domain);
+        const provider = await dnsCheckerService.detectDnsProvider(domain);
         
         console.log('✅ Provider detected:', provider || 'unknown');
 

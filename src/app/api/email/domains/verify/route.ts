@@ -5,7 +5,9 @@ import { domainService } from '@/lib/firebase/domain-service';
 import sgClient from '@sendgrid/client';
 
 // SendGrid konfigurieren
-sgClient.setApiKey(process.env.SENDGRID_API_KEY!);
+if (process.env.SENDGRID_API_KEY) {
+  sgClient.setApiKey(process.env.SENDGRID_API_KEY);
+}
 
 interface VerifyDomainRequest {
   domainId: string;
@@ -16,11 +18,8 @@ interface VerifyDomainRequest {
  * Verifizierungsstatus bei SendGrid prüfen und aktualisieren
  */
 export async function POST(request: NextRequest) {
-  // Die 'withAuth'-Funktion umschließt die Routenlogik, um die Authentifizierung zu gewährleisten.
-  // Sie erwartet die Anfrage und eine Callback-Funktion als Argumente, was den Fehler "Expected 2 arguments" behebt.
-  return withAuth(request, async (req: NextRequest, auth: AuthContext) => {
+  return withAuth(request, async (req, auth: AuthContext) => {
     try {
-      // Wichtig: 'req.json()' verwenden, das vom withAuth-Callback kommt.
       const { domainId }: VerifyDomainRequest = await req.json();
       
       if (!domainId) {
@@ -35,7 +34,7 @@ export async function POST(request: NextRequest) {
 
       console.log('🔍 Verifying domain:', domainId);
 
-      // Domain aus Firebase laden und Berechtigung prüfen
+      // Domain aus Firebase laden
       const domain = await domainService.getById(domainId);
       if (!domain || domain.organizationId !== auth.organizationId) {
         return NextResponse.json(
@@ -57,42 +56,45 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Schritt 1: Eine neue Validierungsprüfung bei SendGrid anstoßen.
-      try {
-        await sgClient.request({
-          method: 'POST',
-          url: `/v3/whitelabel/domains/${domain.sendgridDomainId}/validate`
-        });
-        console.log('✅ SendGrid validation triggered successfully.');
-      } catch (validateError: any) {
-        // Dieser Fehler ist nicht unbedingt kritisch, wenn die Domain bereits validiert wird.
-        console.warn('⚠️ Could not trigger SendGrid validation. This might be okay if a validation is already in progress.', validateError.response?.body || validateError.message);
-      }
-
-      // Schritt 2: Den aktuellen Status der Domain von SendGrid abrufen.
-      const [statusResponse, ] = await sgClient.request({
-          method: 'GET',
-          url: `/v3/whitelabel/domains/${domain.sendgridDomainId}`
+      // SendGrid Domain Status prüfen
+      const [response, ] = await sgClient.request({
+        method: 'GET',
+        url: `/v3/whitelabel/domains/${domain.sendgridDomainId}`
       });
 
-      const sendgridDomain = statusResponse.body as any;
+      const sendgridDomain = response.body as any;
       console.log('📊 SendGrid verification status:', sendgridDomain.valid ? 'valid' : 'invalid');
 
-      // DNS Records aus der Antwort extrahieren und aktualisieren
+      // DNS Records aktualisieren
       const updatedDnsRecords = [];
-      if (sendgridDomain.dns) {
-          const { mail_cname, dkim1, dkim2 } = sendgridDomain.dns;
-          if (mail_cname) {
-              updatedDnsRecords.push({ type: 'CNAME' as const, ...mail_cname });
-          }
-          if (dkim1) {
-              updatedDnsRecords.push({ type: 'CNAME' as const, ...dkim1 });
-          }
-          if (dkim2) {
-              updatedDnsRecords.push({ type: 'CNAME' as const, ...dkim2 });
-          }
-      }
       
+      if (sendgridDomain.dns.mail_cname) {
+        updatedDnsRecords.push({
+          type: 'CNAME' as const,
+          host: sendgridDomain.dns.mail_cname.host,
+          data: sendgridDomain.dns.mail_cname.data,
+          valid: sendgridDomain.dns.mail_cname.valid
+        });
+      }
+
+      if (sendgridDomain.dns.dkim1) {
+        updatedDnsRecords.push({
+          type: 'CNAME' as const,
+          host: sendgridDomain.dns.dkim1.host,
+          data: sendgridDomain.dns.dkim1.data,
+          valid: sendgridDomain.dns.dkim1.valid
+        });
+      }
+
+      if (sendgridDomain.dns.dkim2) {
+        updatedDnsRecords.push({
+          type: 'CNAME' as const,
+          host: sendgridDomain.dns.dkim2.host,
+          data: sendgridDomain.dns.dkim2.data,
+          valid: sendgridDomain.dns.dkim2.valid
+        });
+      }
+
       // Domain-Status in Firebase aktualisieren
       const newStatus = sendgridDomain.valid ? 'verified' : 'pending';
       await domainService.updateVerificationStatus(
@@ -101,8 +103,22 @@ export async function POST(request: NextRequest) {
         true // incrementAttempts
       );
 
-      // DNS Records in Firebase aktualisieren
+      // DNS Records aktualisieren
       await domainService.updateDnsRecords(domainId, updatedDnsRecords);
+
+      // Falls verifiziert, triggere auch DNS validate bei SendGrid
+      if (sendgridDomain.valid) {
+        try {
+          await sgClient.request({
+            method: 'POST',
+            url: `/v3/whitelabel/domains/${domain.sendgridDomainId}/validate`
+          });
+          console.log('✅ SendGrid validation triggered');
+        } catch (validateError) {
+          console.warn('⚠️ SendGrid validate failed:', validateError);
+          // Nicht kritisch, weitermachen
+        }
+      }
 
       return NextResponse.json({
         success: true,
@@ -110,14 +126,14 @@ export async function POST(request: NextRequest) {
         valid: sendgridDomain.valid,
         dnsRecords: updatedDnsRecords,
         details: {
-          mailCnameValid: sendgridDomain.dns?.mail_cname?.valid || false,
-          dkim1Valid: sendgridDomain.dns?.dkim1?.valid || false,
-          dkim2Valid: sendgridDomain.dns?.dkim2?.valid || false
+          mailCnameValid: sendgridDomain.dns.mail_cname?.valid || false,
+          dkim1Valid: sendgridDomain.dns.dkim1?.valid || false,
+          dkim2Valid: sendgridDomain.dns.dkim2?.valid || false
         }
       });
 
     } catch (error: any) {
-      console.error('❌ Verification error:', error.response?.body || error);
+      console.error('❌ Verification error:', error);
       
       // SendGrid-spezifische Fehler
       if (error.response?.status === 404) {
