@@ -1,14 +1,12 @@
 // src/app/api/email/domains/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
-import { domainService } from '@/lib/firebase/domain-service';
 import sgClient from '@sendgrid/client';
 
-// Force Node.js runtime
-export const runtime = 'nodejs';
-
 // SendGrid konfigurieren
-sgClient.setApiKey(process.env.SENDGRID_API_KEY!);
+if (process.env.SENDGRID_API_KEY) {
+  sgClient.setApiKey(process.env.SENDGRID_API_KEY);
+}
 
 interface RouteParams {
   params: {
@@ -18,7 +16,8 @@ interface RouteParams {
 
 /**
  * DELETE /api/email/domains/[id]
- * Domain löschen
+ * Domain bei SendGrid löschen
+ * Firestore-Löschung macht der Client
  */
 export async function DELETE(
   request: NextRequest,
@@ -38,44 +37,33 @@ export async function DELETE(
         );
       }
 
-      console.log('🗑️ Deleting domain:', domainId);
+      // Get SendGrid domain ID from request body
+      const body = await req.json().catch(() => ({}));
+      const sendgridDomainId = body.sendgridDomainId;
 
-      // Domain aus Firebase laden
-      const domain = await domainService.getById(domainId);
-      if (!domain || domain.organizationId !== auth.organizationId) {
-        return NextResponse.json(
-          { 
-            success: false,
-            error: 'Domain nicht gefunden' 
-          },
-          { status: 404 }
-        );
-      }
+      console.log('🗑️ Deleting domain from SendGrid:', sendgridDomainId);
 
       // Domain bei SendGrid löschen (falls vorhanden)
-      if (domain.sendgridDomainId) {
+      if (sendgridDomainId) {
         try {
           await sgClient.request({
             method: 'DELETE',
-            url: `/v3/whitelabel/domains/${domain.sendgridDomainId}`
+            url: `/v3/whitelabel/domains/${sendgridDomainId}`
           });
           console.log('✅ Domain deleted from SendGrid');
         } catch (sgError: any) {
           // 404 ist OK (Domain existiert nicht mehr bei SendGrid)
           if (sgError.response?.status !== 404) {
             console.error('⚠️ SendGrid deletion failed:', sgError);
-            // Trotzdem weitermachen und aus Firebase löschen
+            // Trotzdem success zurückgeben, damit Client aus Firebase löschen kann
           }
         }
       }
 
-      // Domain aus Firebase löschen
-      await domainService.delete(domainId);
-      console.log('✅ Domain deleted from Firebase');
-
+      // Client wird Domain aus Firebase löschen
       return NextResponse.json({
         success: true,
-        message: 'Domain erfolgreich gelöscht'
+        message: 'Domain kann jetzt aus Firebase gelöscht werden'
       });
 
     } catch (error: any) {
@@ -84,57 +72,6 @@ export async function DELETE(
         { 
           success: false,
           error: error.message || 'Domain konnte nicht gelöscht werden' 
-        },
-        { status: 500 }
-      );
-    }
-  });
-}
-
-/**
- * GET /api/email/domains/[id]
- * Einzelne Domain abrufen
- */
-export async function GET(
-  request: NextRequest,
-  { params }: RouteParams
-) {
-  return withAuth(request, async (req, auth: AuthContext) => {
-    try {
-      const domainId = params.id;
-      
-      if (!domainId) {
-        return NextResponse.json(
-          { 
-            success: false,
-            error: 'Domain ID ist erforderlich' 
-          },
-          { status: 400 }
-        );
-      }
-
-      const domain = await domainService.getById(domainId);
-      if (!domain || domain.organizationId !== auth.organizationId) {
-        return NextResponse.json(
-          { 
-            success: false,
-            error: 'Domain nicht gefunden' 
-          },
-          { status: 404 }
-        );
-      }
-
-      return NextResponse.json({
-        success: true,
-        domain
-      });
-
-    } catch (error: any) {
-      console.error('❌ Error fetching domain:', error);
-      return NextResponse.json(
-        { 
-          success: false,
-          error: 'Domain konnte nicht geladen werden' 
         },
         { status: 500 }
       );

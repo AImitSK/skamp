@@ -133,10 +133,35 @@ export default function DomainsPage() {
   const checkDnsStatus = async (domainId: string) => {
     try {
       setCheckingDns(domainId);
-      const response = await apiClient.post<{ success: boolean }>('/api/email/domains/check-dns', { domainId });
+      setError(null);
+      
+      // Get domain data
+      const domain = domains.find(d => d.id === domainId);
+      if (!domain || !domain.dnsRecords || domain.dnsRecords.length === 0) {
+        setError('Domain oder DNS Records nicht gefunden');
+        return;
+      }
+      
+      // Call API route with DNS records
+      const response = await apiClient.post<{
+        success: boolean;
+        results: any[];
+        allValid: boolean;
+      }>('/api/email/domains/check-dns', { 
+        domainId,
+        dnsRecords: domain.dnsRecords 
+      });
       
       if (response.success) {
-        await loadDomains();
+        // Update DNS check results in Firestore
+        await domainService.updateDnsCheckResults(domainId, response.results);
+        
+        // If all valid, trigger verification
+        if (response.allValid && domain.status !== 'verified') {
+          await handleVerify(domainId);
+        } else {
+          await loadDomains();
+        }
       }
     } catch (error: any) {
       console.error('DNS check error:', error);
@@ -152,8 +177,25 @@ export default function DomainsPage() {
     }
 
     try {
-      await apiClient.delete(`/api/email/domains/${domainId}`);
+      setError(null);
+      
+      // Get domain data
+      const domain = domains.find(d => d.id === domainId);
+      
+      // Call API to delete from SendGrid (if exists)
+      if (domain?.sendgridDomainId) {
+        try {
+          // Using POST endpoint for delete operation with body
+          await apiClient.delete(`/api/email/domains/${domainId}`);
+        } catch (apiError) {
+          console.warn('SendGrid deletion failed, continuing with Firebase deletion');
+        }
+      }
+      
+      // Delete from Firebase directly
+      await domainService.delete(domainId);
       await loadDomains();
+      
     } catch (error: any) {
       console.error('Delete error:', error);
       setError('Domain konnte nicht gelöscht werden');
