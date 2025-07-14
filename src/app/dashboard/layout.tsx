@@ -285,6 +285,17 @@ export default function DashboardLayout({
               <PaintBrushIcon className="size-4 flex-shrink-0" />
               <DropdownLabel>Branding</DropdownLabel>
             </DropdownItem>
+            
+            <DropdownItem
+              href="/dashboard/settings/domain"
+              className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
+            >
+              <EnvelopeIcon className="size-4 flex-shrink-0" />
+              <DropdownLabel>Domains</DropdownLabel>
+            </DropdownItem>
+
+
+
             <DropdownItem
               href="/dashboard/settings/import-export"
               className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
