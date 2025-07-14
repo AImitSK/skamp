@@ -6,27 +6,28 @@ import { CrmDataProvider } from "@/context/CrmDataContext";
 import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase/client-init";
-import { SidebarLayout } from "@/components/sidebar-layout";
+import { StackedLayout } from "@/components/stacked-layout";
 import {
   Sidebar,
-  SidebarHeader,
   SidebarBody,
-  SidebarFooter,
+  SidebarHeader,
   SidebarItem,
   SidebarLabel,
-  SidebarSection,
-  SidebarDivider,
 } from "@/components/sidebar";
+import {
+  Navbar,
+  NavbarItem,
+  NavbarSection,
+  NavbarSpacer,
+} from "@/components/navbar";
 import {
   Dropdown,
   DropdownButton,
   DropdownMenu,
   DropdownItem,
   DropdownDivider,
-  DropdownLabel,
 } from "@/components/dropdown";
 import { Avatar } from "@/components/avatar";
-import { NotificationBadge } from "@/components/notifications/NotificationBadge";
 import { useNotifications } from "@/hooks/use-notifications";
 import {
   HomeIcon,
@@ -48,7 +49,6 @@ import {
   BellAlertIcon,
   PaintBrushIcon,
   ArrowDownTrayIcon,
-  ArrowUpTrayIcon,
   UserIcon,
   DocumentCheckIcon,
   CreditCardIcon,
@@ -59,6 +59,9 @@ import {
 } from "@heroicons/react/20/solid";
 import { usePathname } from "next/navigation";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import React from "react";
+import clsx from 'clsx';
+
 
 export default function DashboardLayout({
   children,
@@ -79,332 +82,223 @@ export default function DashboardLayout({
     }
   };
 
-  const sidebarContent = (
-    <Sidebar>
-      <SidebarHeader>
-        <div className="flex items-center gap-3 px-2">
-          <img
-            src="/logo_skamp.svg"
-            alt="SKAMP Logo"
-            className="w-[120px] h-auto"
-          />
-        </div>
-      </SidebarHeader>
-      <SidebarBody className="mt-12">
-        <SidebarSection>
-          <nav className="flex flex-col gap-1">
-            {/* Dashboard */}
-            <SidebarItem
-              href="/dashboard"
-              current={pathname === '/dashboard'}
-              className="text-white hover:bg-[#0693e3] dark:hover:bg-zinc-800 transition-colors"
-            >
-              <HomeIcon className="size-5 text-white" />
-              <SidebarLabel className="text-white">Dashboard</SidebarLabel>
-            </SidebarItem>
+  const navigationItems = [
+    {
+      name: "Dashboard",
+      href: "/dashboard",
+      icon: HomeIcon,
+      current: pathname === '/dashboard',
+    },
+    {
+      name: "Kontakte",
+      icon: UserGroupIcon,
+      current: pathname.startsWith('/dashboard/contacts'),
+      children: [
+        { name: "Unternehmen", href: "/dashboard/contacts/crm?tab=companies", icon: BuildingOfficeIcon },
+        { name: "Personen", href: "/dashboard/contacts/crm?tab=contacts", icon: UserGroupIcon },
+        { name: "Listen", href: "/dashboard/contacts/lists", icon: QueueListIcon },
+      ],
+    },
+    {
+        name: "PR-Tools",
+        icon: MegaphoneIcon,
+        current: pathname.startsWith('/dashboard/pr-tools'),
+        children: [
+            { name: "Kampagnen", href: "/dashboard/pr-tools/campaigns", icon: MegaphoneIcon },
+            { name: "Freigaben", href: "/dashboard/pr-tools/approvals", icon: ShieldCheckIcon },
+            { name: "Kalender", href: "/dashboard/pr-tools/calendar", icon: CalendarDaysIcon },
+            { name: "Mediathek", href: "/dashboard/pr-tools/media-library", icon: PhotoIcon },
+            { name: "Boilerplates", href: "/dashboard/pr-tools/boilerplates", icon: DocumentTextIcon },
+        ],
+    },
+    {
+        name: "Kommunikation",
+        icon: EnvelopeIcon,
+        current: pathname.startsWith('/dashboard/communication'),
+        children: [
+            { name: "Kampagnen In-Box", href: "/dashboard/communication/inbox", icon: InboxIcon },
+            { name: "Benachrichtigungen", href: "/dashboard/communication/notifications", icon: BellIcon, notificationCount: unreadCount },
+        ],
+    },
+    {
+        name: "Academy",
+        icon: AcademicCapIcon,
+        current: pathname.startsWith('/dashboard/academy'),
+        children: [
+            { name: "Dokumentation", href: "/dashboard/academy/documentation", icon: BookOpenIcon },
+            { name: "Einsteiger Tutorials", href: "/dashboard/academy/tutorials", icon: AcademicCapIcon },
+            { name: "Blog", href: "/dashboard/academy/blog", icon: NewspaperIcon },
+        ],
+    },
+  ];
 
-            {/* Kontakte Dropdown */}
-            <Dropdown>
-              <DropdownButton
-                as={SidebarItem}
-                className="text-white hover:bg-[#0693e3] dark:hover:bg-zinc-800 transition-colors w-full"
-              >
-                <UserGroupIcon className="size-5 text-white" />
-                <SidebarLabel className="text-white flex-1">Kontakte</SidebarLabel>
-                <ChevronDownIcon className="size-4 text-white" />
-              </DropdownButton>
-              <DropdownMenu anchor="bottom end" className="min-w-48">
-                <DropdownItem
-                  href="/dashboard/contacts/crm?tab=companies"
-                  className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
-                >
-                  <BuildingOfficeIcon className="size-4 flex-shrink-0" />
-                  <DropdownLabel>Unternehmen</DropdownLabel>
-                </DropdownItem>
-                <DropdownItem
-                  href="/dashboard/contacts/crm?tab=contacts"
-                  className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
-                >
-                  <UserGroupIcon className="size-4 flex-shrink-0" />
-                  <DropdownLabel>Personen</DropdownLabel>
-                </DropdownItem>
-                <DropdownItem
-                  href="/dashboard/contacts/lists"
-                  className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
-                >
-                  <QueueListIcon className="size-4 flex-shrink-0" />
-                  <DropdownLabel>Listen</DropdownLabel>
-                </DropdownItem>
-              </DropdownMenu>
-            </Dropdown>
+  const settingsItems = [
+    { name: "Benachrichtigungen", href: "/dashboard/settings/notifications", icon: BellAlertIcon },
+    { name: "Branding", href: "/dashboard/settings/branding", icon: PaintBrushIcon },
+    { name: "Domains", href: "/dashboard/settings/domain", icon: EnvelopeIcon },
+    { name: "Import / Export", href: "/dashboard/settings/import-export", icon: ArrowDownTrayIcon },
+  ];
 
-            {/* PR-Tools Dropdown */}
-            <Dropdown>
-              <DropdownButton
-                as={SidebarItem}
-                className="text-white hover:bg-[#0693e3] dark:hover:bg-zinc-800 transition-colors w-full"
-              >
-                <MegaphoneIcon className="size-5 text-white" />
-                <SidebarLabel className="text-white flex-1">PR-Tools</SidebarLabel>
-                <ChevronDownIcon className="size-4 text-white" />
-              </DropdownButton>
-              <DropdownMenu anchor="bottom end" className="min-w-48">
-                <DropdownItem
-                  href="/dashboard/pr-tools/campaigns"
-                  className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
-                >
-                  <MegaphoneIcon className="size-4 flex-shrink-0" />
-                  <DropdownLabel>Kampagnen</DropdownLabel>
-                </DropdownItem>
-                <DropdownItem
-                  href="/dashboard/pr-tools/approvals"
-                  className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
-                >
-                  <ShieldCheckIcon className="size-4 flex-shrink-0" />
-                  <DropdownLabel>Freigaben</DropdownLabel>
-                </DropdownItem>
-                <DropdownItem
-                  href="/dashboard/pr-tools/calendar"
-                  className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
-                >
-                  <CalendarDaysIcon className="size-4 flex-shrink-0" />
-                  <DropdownLabel>Kalender</DropdownLabel>
-                </DropdownItem>
-                <DropdownItem
-                  href="/dashboard/pr-tools/media-library"
-                  className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
-                >
-                  <PhotoIcon className="size-4 flex-shrink-0" />
-                  <DropdownLabel>Mediathek</DropdownLabel>
-                </DropdownItem>
-                <DropdownItem
-                  href="/dashboard/pr-tools/boilerplates"
-                  className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
-                >
-                  <DocumentTextIcon className="size-4 flex-shrink-0" />
-                  <DropdownLabel>Boilerplates</DropdownLabel>
-                </DropdownItem>
-              </DropdownMenu>
-            </Dropdown>
+  const userMenuItems = [
+      { name: "Profil", href: "/dashboard/admin/profile", icon: UserIcon },
+      { name: "Vertrag", href: "/dashboard/admin/contract", icon: DocumentCheckIcon },
+      { name: "Abrechnung", href: "/dashboard/admin/billing", icon: CreditCardIcon },
+      { name: "Integrationen", href: "/dashboard/admin/integrations", icon: PuzzlePieceIcon },
+      { name: "API", href: "/dashboard/admin/api", icon: CodeBracketIcon },
+  ];
 
-            {/* Kommunikation Dropdown */}
-            <Dropdown>
-              <DropdownButton
-                as={SidebarItem}
-                className="text-white hover:bg-[#0693e3] dark:hover:bg-zinc-800 transition-colors w-full"
-              >
-                <EnvelopeIcon className="size-5 text-white" />
-                <SidebarLabel className="text-white flex-1">Kommunikation</SidebarLabel>
-                <ChevronDownIcon className="size-4 text-white" />
-              </DropdownButton>
-              <DropdownMenu anchor="bottom end" className="min-w-48">
-                <DropdownItem
-                  href="/dashboard/communication/inbox"
-                  className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
-                >
-                  <InboxIcon className="size-4 flex-shrink-0" />
-                  <DropdownLabel>Kampagnen In-Box</DropdownLabel>
-                </DropdownItem>
-                <DropdownItem
-                  href="/dashboard/communication/notifications"
-                  className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3 relative"
-                >
-                  <BellIcon className="size-4 flex-shrink-0" />
-                  <DropdownLabel className="flex-1">Benachrichtigungen</DropdownLabel>
-                  {unreadCount > 0 && (
-                    <span className="ml-auto inline-flex items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
-                      {unreadCount > 99 ? '99+' : unreadCount}
-                    </span>
-                  )}
-                </DropdownItem>
-              </DropdownMenu>
-            </Dropdown>
-
-            {/* Academy Dropdown */}
-            <Dropdown>
-              <DropdownButton
-                as={SidebarItem}
-                className="text-white hover:bg-[#0693e3] dark:hover:bg-zinc-800 transition-colors w-full"
-              >
-                <AcademicCapIcon className="size-5 text-white" />
-                <SidebarLabel className="text-white flex-1">Academy</SidebarLabel>
-                <ChevronDownIcon className="size-4 text-white" />
-              </DropdownButton>
-              <DropdownMenu anchor="bottom end" className="min-w-48">
-                <DropdownItem
-                  href="/dashboard/academy/documentation"
-                  className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
-                >
-                  <BookOpenIcon className="size-4 flex-shrink-0" />
-                  <DropdownLabel>Dokumentation</DropdownLabel>
-                </DropdownItem>
-                <DropdownItem
-                  href="/dashboard/academy/tutorials"
-                  className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
-                >
-                  <AcademicCapIcon className="size-4 flex-shrink-0" />
-                  <DropdownLabel>Einsteiger Tutorials</DropdownLabel>
-                </DropdownItem>
-                <DropdownItem
-                  href="/dashboard/academy/blog"
-                  className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
-                >
-                  <NewspaperIcon className="size-4 flex-shrink-0" />
-                  <DropdownLabel>Blog</DropdownLabel>
-                </DropdownItem>
-              </DropdownMenu>
-            </Dropdown>
-          </nav>
-        </SidebarSection>
-      </SidebarBody>
-
-      <SidebarFooter>
-
-        {/* Einstellungen Dropdown */}
-        <Dropdown>
-          <DropdownButton
-            as={SidebarItem}
-            className="text-white hover:bg-[#0693e3] dark:hover:bg-zinc-800 transition-colors w-full"
-          >
-            <Cog6ToothIcon className="size-5 text-white" />
-            <SidebarLabel className="text-white flex-1">Einstellungen</SidebarLabel>
-            <ChevronDownIcon className="size-4 text-white" />
-          </DropdownButton>
-          <DropdownMenu anchor="top end" className="min-w-48">
-            <DropdownItem
-              href="/dashboard/settings/notifications"
-              className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
-            >
-              <BellAlertIcon className="size-4 flex-shrink-0" />
-              <DropdownLabel>Benachrichtigungen</DropdownLabel>
-            </DropdownItem>
-            <DropdownItem
-              href="/dashboard/settings/branding"
-              className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
-            >
-              <PaintBrushIcon className="size-4 flex-shrink-0" />
-              <DropdownLabel>Branding</DropdownLabel>
-            </DropdownItem>
-            
-            <DropdownItem
-              href="/dashboard/settings/domain"
-              className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
-            >
-              <EnvelopeIcon className="size-4 flex-shrink-0" />
-              <DropdownLabel>Domains</DropdownLabel>
-            </DropdownItem>
-
-
-
-            <DropdownItem
-              href="/dashboard/settings/import-export"
-              className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
-            >
-              <ArrowDownTrayIcon className="size-4 flex-shrink-0" />
-              <DropdownLabel>Import / Export</DropdownLabel>
-            </DropdownItem>
-          </DropdownMenu>
-        </Dropdown>
-        <SidebarDivider />
-
-        <Dropdown>
-          <DropdownButton
-            as={SidebarItem}
-            className="hover:bg-[#0693e3] dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-          >
-            <Avatar
-              src={user?.photoURL || undefined}
-              initials={
-                user?.displayName
-                  ? user.displayName.split(" ").map((n) => n[0]).join("").toUpperCase()
-                  : user?.email?.[0].toUpperCase()
-              }
-              className="size-8"
-            />
-            <SidebarLabel className="flex-1">
-              <div className="flex flex-col">
-                <span className="truncate text-white">
-                  {user?.displayName || user?.email?.split("@")[0]}
-                </span>
-                <span className="text-xs text-[#ffffff] dark:text-[#ffffff] truncate">
-                  {user?.email}
-                </span>
-              </div>
-            </SidebarLabel>
-            <ChevronDownIcon className="size-4 text-white" />
-          </DropdownButton>
-          <DropdownMenu anchor="top end" className="min-w-56">
-            <DropdownItem
-              href="/dashboard/admin/profile"
-              className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
-            >
-              <UserIcon className="size-4 flex-shrink-0" />
-              <DropdownLabel>Profil</DropdownLabel>
-            </DropdownItem>
-            <DropdownItem
-              href="/dashboard/admin/contract"
-              className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
-            >
-              <DocumentCheckIcon className="size-4 flex-shrink-0" />
-              <DropdownLabel>Vertrag</DropdownLabel>
-            </DropdownItem>
-            <DropdownItem
-              href="/dashboard/admin/billing"
-              className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
-            >
-              <CreditCardIcon className="size-4 flex-shrink-0" />
-              <DropdownLabel>Abrechnung</DropdownLabel>
-            </DropdownItem>
-            <DropdownItem
-              href="/dashboard/admin/integrations"
-              className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
-            >
-              <PuzzlePieceIcon className="size-4 flex-shrink-0" />
-              <DropdownLabel>Integrationen</DropdownLabel>
-            </DropdownItem>
-            <DropdownItem
-              href="/dashboard/admin/api"
-              className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
-            >
-              <CodeBracketIcon className="size-4 flex-shrink-0" />
-              <DropdownLabel>API</DropdownLabel>
-            </DropdownItem>
-            <DropdownDivider />
-            <DropdownItem
-              onClick={handleLogout}
-              className="hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-3"
-            >
-              <ArrowRightOnRectangleIcon className="size-4 flex-shrink-0" />
-              <DropdownLabel>Abmelden</DropdownLabel>
-            </DropdownItem>
-          </DropdownMenu>
-        </Dropdown>
-      </SidebarFooter>
-    </Sidebar>
-  );
 
   return (
     <ProtectedRoute>
       <CrmDataProvider>
-        <SidebarLayout
+        <StackedLayout
           navbar={
-            <div className="flex items-center justify-between px-4">
-              <h1 className="text-base font-semibold text-zinc-950 dark:text-white">
-                SKAMP Marketing Suite
-              </h1>
-              {/* Notification Badge in der Navbar für Mobile/Desktop */}
-              <div className="flex items-center gap-4">
-                <NotificationBadge 
-                  onClick={() => router.push('/dashboard/communication/notifications')}
-                  className="!text-zinc-950 dark:!text-white hover:!bg-zinc-100 dark:hover:!bg-zinc-800"
-                />
-              </div>
-            </div>
+            <Navbar>
+                <a href="/dashboard" className="flex-shrink-0">
+                    <img
+                        src="/logo_skamp.svg"
+                        alt="SKAMP Logo"
+                        className="h-10 w-auto max-w-[150px]"
+                    />
+                </a>
+              <NavbarSection className="ml-4 flex items-center gap-x-6">
+                {navigationItems.map((item) =>
+                  item.children ? (
+                    <Dropdown key={item.name}>
+                      <DropdownButton as={NavbarItem} className={clsx('!border-transparent', item.current && 'bg-zinc-100 dark:bg-zinc-800/50')}>
+                        <item.icon className="size-5 flex-shrink-0" />
+                        <span>{item.name}</span>
+                        <ChevronDownIcon className="size-4" />
+                      </DropdownButton>
+                      <DropdownMenu>
+                        {item.children.map((child) => (
+                          <DropdownItem href={child.href} key={child.name} className="flex cursor-pointer items-center gap-x-3 py-2 px-3 hover:bg-zinc-100 dark:hover:bg-zinc-800/50">
+                            <child.icon className="size-4 flex-shrink-0" />
+                            <span>{child.name}</span>
+                            {child.notificationCount && child.notificationCount > 0 && (
+                               <span className="ml-auto inline-flex items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
+                                 {child.notificationCount > 99 ? '99+' : child.notificationCount}
+                               </span>
+                            )}
+                          </DropdownItem>
+                        ))}
+                      </DropdownMenu>
+                    </Dropdown>
+                  ) : (
+                    <NavbarItem key={item.name} href={item.href} className={clsx('!border-transparent', item.current && 'bg-zinc-100 dark:bg-zinc-800/50')}>
+                      <item.icon className="size-5" />
+                      {item.name}
+                    </NavbarItem>
+                  )
+                )}
+              </NavbarSection>
+              <NavbarSpacer />
+              <NavbarSection className="flex items-center gap-x-4">
+                <NavbarItem href="/dashboard/communication/notifications" aria-label="Benachrichtigungen" className="relative !border-transparent">
+                    <BellIcon className="size-6" />
+                    {unreadCount > 0 && (
+                        <span className="absolute top-1.5 right-1.5 inline-flex items-center justify-center rounded-full bg-red-500 size-2" />
+                    )}
+                </NavbarItem>
+                <Dropdown>
+                    <DropdownButton as={NavbarItem} aria-label="Einstellungen" className="!border-transparent">
+                        <Cog6ToothIcon className="size-6" />
+                    </DropdownButton>
+                    <DropdownMenu anchor="bottom end">
+                        {settingsItems.map(item => (
+                            <DropdownItem href={item.href} key={item.name} className="flex cursor-pointer items-center gap-x-3 py-2 px-3 hover:bg-zinc-100 dark:hover:bg-zinc-800/50">
+                                <item.icon className="size-4 flex-shrink-0" />
+                                <span>{item.name}</span>
+                            </DropdownItem>
+                        ))}
+                    </DropdownMenu>
+                </Dropdown>
+
+                <Dropdown>
+                  <DropdownButton className="focus:outline-none bg-transparent rounded-full p-0">
+                    <Avatar
+                      src={user?.photoURL || undefined}
+                      initials={
+                          user?.displayName?.split(" ").map((n) => n[0]).join("").toUpperCase() || 
+                          user?.email?.[0].toUpperCase()
+                      }
+                      className="size-9"
+                    />
+                  </DropdownButton>
+                  <DropdownMenu anchor="bottom end">
+                    <DropdownItem href="/dashboard/admin/profile" className="cursor-pointer py-2 px-3 hover:bg-zinc-100 dark:hover:bg-zinc-800/50">
+                        <div className="flex items-center gap-x-3">
+                            <UserIcon className="size-4 flex-shrink-0" />
+                            <div className="flex flex-col">
+                                <span className="font-medium">{user?.displayName || user?.email?.split("@")[0]}</span>
+                                <span className="text-xs text-zinc-500 dark:text-zinc-400">{user?.email}</span>
+                            </div>
+                        </div>
+                    </DropdownItem>
+                    <DropdownDivider />
+                    {userMenuItems.map(item => (
+                        <DropdownItem href={item.href} key={item.name} className="flex cursor-pointer items-center gap-x-3 py-2 px-3 hover:bg-zinc-100 dark:hover:bg-zinc-800/50">
+                            <item.icon className="size-4 flex-shrink-0" />
+                            <span>{item.name}</span>
+                        </DropdownItem>
+                    ))}
+                    <DropdownDivider />
+                    <DropdownItem onClick={handleLogout} className="flex cursor-pointer items-center gap-x-3 py-2 px-3 hover:bg-zinc-100 dark:hover:bg-zinc-800/50">
+                      <ArrowRightOnRectangleIcon className="size-4 flex-shrink-0" />
+                      <span>Abmelden</span>
+                    </DropdownItem>
+                  </DropdownMenu>
+                </Dropdown>
+              </NavbarSection>
+            </Navbar>
           }
-          sidebar={sidebarContent}
+          sidebar={
+            <Sidebar>
+                <SidebarHeader>
+                    <a href="/dashboard">
+                        <img
+                            src="/logo_skamp.svg"
+                            alt="SKAMP Logo"
+                            className="h-10 w-auto max-w-[150px]"
+                        />
+                    </a>
+                </SidebarHeader>
+                <SidebarBody>
+                    {navigationItems.map(item => (
+                        item.children ? (
+                            <Dropdown key={item.name}>
+                                <DropdownButton as={SidebarItem} current={item.current}>
+                                    <item.icon className="size-5" />
+                                    <SidebarLabel>{item.name}</SidebarLabel>
+                                    <ChevronDownIcon className="size-4" />
+                                </DropdownButton>
+                                <DropdownMenu>
+                                    {item.children.map(child => (
+                                        <DropdownItem href={child.href} key={child.name} className="flex cursor-pointer items-center gap-x-3 py-2 px-3 hover:bg-zinc-100 dark:hover:bg-zinc-800/50">
+                                            <child.icon className="size-4 flex-shrink-0" />
+                                            <span>{child.name}</span>
+                                            {child.notificationCount && child.notificationCount > 0 && (
+                                               <span className="ml-auto inline-flex items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
+                                                 {child.notificationCount > 99 ? '99+' : child.notificationCount}
+                                               </span>
+                                            )}
+                                        </DropdownItem>
+                                    ))}
+                                </DropdownMenu>
+                            </Dropdown>
+                        ) : (
+                            <SidebarItem href={item.href} key={item.name} current={item.current}>
+                                <item.icon className="size-5" />
+                                <SidebarLabel>{item.name}</SidebarLabel>
+                            </SidebarItem>
+                        )
+                    ))}
+                </SidebarBody>
+            </Sidebar>
+          }
         >
           {children}
-        </SidebarLayout>
+        </StackedLayout>
       </CrmDataProvider>
     </ProtectedRoute>
   );
