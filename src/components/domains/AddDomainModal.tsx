@@ -25,6 +25,7 @@ import {
 import { apiClient } from '@/lib/api/api-client';
 import { DnsRecord, EmailDomain } from '@/types/email-domains';
 import { providerGuides, genericGuide } from '@/lib/domain-providers/provider-guides';
+import { domainService } from '@/lib/firebase/domain-service';
 
 // Alert Component
 function Alert({ 
@@ -65,6 +66,7 @@ export function AddDomainModal({
     existingDomain ? 'dns' : 'input'
   );
   const [domain, setDomain] = useState(existingDomain?.domain || '');
+  const [domainId, setDomainId] = useState<string | null>(existingDomain?.id || null);
   const [selectedProvider, setSelectedProvider] = useState<string>('');
   const [detectedProvider, setDetectedProvider] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -140,15 +142,38 @@ export function AddDomainModal({
       setLoading(true);
       setError(null);
       
-      // DNS Records von SendGrid generieren
+      // DNS Records von SendGrid generieren (nur SendGrid, kein Firebase)
       const response = await apiClient.post<{
         success: boolean;
-        domainId: string;
+        sendgridDomainId: number;
         dnsRecords: DnsRecord[];
+        domainData: any;
       }>('/api/email/domains', { 
         domain: domain.toLowerCase(),
         provider: selectedProvider 
       });
+      
+      // Jetzt Firebase direkt vom Client
+      try {
+        const domainId = await domainService.create(response.domainData);
+        
+        // SendGrid ID und DNS Records updaten
+        await domainService.update(domainId, {
+          sendgridDomainId: response.sendgridDomainId,
+          dnsRecords: response.dnsRecords,
+          detectedProvider: selectedProvider
+        });
+        
+        console.log('✅ Domain saved to Firebase:', domainId);
+        
+        // Domain ID für spätere Updates speichern
+        setDomainId(domainId);
+      } catch (fbError) {
+        console.error('Firebase error:', fbError);
+        setError('Domain konnte nicht gespeichert werden');
+        setLoading(false);
+        return;
+      }
       
       setDnsRecords(response.dnsRecords);
       setStep('dns');

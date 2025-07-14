@@ -158,7 +158,7 @@ export default function DashboardLayout({
                     <img
                         src="/logo_skamp.svg"
                         alt="SKAMP Logo"
-                        className="h-10 w-auto max-w-[150px]"
+                        className="h-10 w-auto max-w-[100px]"
                     />
                 </a>
               <NavbarSection className="ml-4 flex items-center gap-x-6">
@@ -214,16 +214,17 @@ export default function DashboardLayout({
                     </DropdownMenu>
                 </Dropdown>
 
-                <Dropdown>
-                  <DropdownButton className="focus:outline-none bg-transparent rounded-full p-0">
-                    <Avatar
-                      src={user?.photoURL || undefined}
-                      initials={
-                          user?.displayName?.split(" ").map((n) => n[0]).join("").toUpperCase() || 
-                          user?.email?.[0].toUpperCase()
-                      }
-                      className="size-9"
-                    />
+<Dropdown>
+                <DropdownButton className="bg-[#f4f4f5] hover:bg-[#f4f4f5] rounded-full p-0 focus:outline-none focus:ring-2 focus:ring-[#f4f4f5] focus:ring-opacity-100">
+                  <Avatar
+                    src={user?.photoURL || undefined}
+                    initials={
+                      user?.displayName?.split(" ").map((n) => n[0]).join("").toUpperCase() || 
+                      user?.email?.[0].toUpperCase()
+                    }
+                    className="size-9"
+                  />
+
                   </DropdownButton>
                   <DropdownMenu anchor="bottom end">
                     <DropdownItem href="/dashboard/admin/profile" className="cursor-pointer py-2 px-3 hover:bg-zinc-100 dark:hover:bg-zinc-800/50">

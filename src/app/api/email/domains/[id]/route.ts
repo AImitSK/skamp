@@ -4,6 +4,9 @@ import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
 import { domainService } from '@/lib/firebase/domain-service';
 import sgClient from '@sendgrid/client';
 
+// Force Node.js runtime
+export const runtime = 'nodejs';
+
 // SendGrid konfigurieren
 sgClient.setApiKey(process.env.SENDGRID_API_KEY!);
 

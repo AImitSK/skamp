@@ -5,6 +5,9 @@ import { domainService } from '@/lib/firebase/domain-service';
 import { CreateDomainRequest, CreateDomainResponse, DnsRecord } from '@/types/email-domains';
 import sgClient from '@sendgrid/client';
 
+// Force Node.js runtime
+export const runtime = 'nodejs';
+
 // SendGrid konfigurieren
 sgClient.setApiKey(process.env.SENDGRID_API_KEY!);
 
@@ -116,7 +119,8 @@ export async function POST(request: NextRequest) {
       // SendGrid Domain ID separat updaten
       await domainService.update(domainId, {
         sendgridDomainId: sendgridDomain.id,
-        dnsRecords
+        dnsRecords,
+        detectedProvider: data.provider
       });
 
       console.log('💾 Domain saved to Firebase:', domainId);
