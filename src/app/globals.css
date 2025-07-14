@@ -3,3 +3,17 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Fix für Avatar-Dropdown-Menü Abstände */
+.avatar-dropdown-menu a {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  width: 100% !important;
+}
+
+/* Entfernt die Navbar-spezifischen Icon-Styles im Avatar-Dropdown */
+.avatar-dropdown-menu [data-slot="icon"] {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}

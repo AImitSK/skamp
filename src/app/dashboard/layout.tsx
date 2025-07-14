@@ -166,7 +166,6 @@ export default function DashboardLayout({
                   item.children ? (
                     <Dropdown key={item.name}>
                       <DropdownButton as={NavbarItem} className={clsx('!border-transparent', item.current && 'bg-zinc-100 dark:bg-zinc-800/50')}>
-                        <item.icon className="size-5 flex-shrink-0" />
                         <span>{item.name}</span>
                         <ChevronDownIcon className="size-4" />
                       </DropdownButton>
@@ -186,7 +185,6 @@ export default function DashboardLayout({
                     </Dropdown>
                   ) : (
                     <NavbarItem key={item.name} href={item.href} className={clsx('!border-transparent', item.current && 'bg-zinc-100 dark:bg-zinc-800/50')}>
-                      <item.icon className="size-5" />
                       {item.name}
                     </NavbarItem>
                   )
@@ -201,10 +199,10 @@ export default function DashboardLayout({
                     )}
                 </NavbarItem>
                 <Dropdown>
-                    <DropdownButton as={NavbarItem} aria-label="Einstellungen" className="!border-transparent">
+                  <DropdownButton as={NavbarItem} aria-label="Einstellungen" className="!border-transparent !bg-transparent hover:!bg-transparent">
                         <Cog6ToothIcon className="size-6" />
                     </DropdownButton>
-                    <DropdownMenu anchor="bottom end">
+                    <DropdownMenu anchor="bottom end" className="avatar-dropdown-menu">
                         {settingsItems.map(item => (
                             <DropdownItem href={item.href} key={item.name} className="flex cursor-pointer items-center gap-x-3 py-2 px-3 hover:bg-zinc-100 dark:hover:bg-zinc-800/50">
                                 <item.icon className="size-4 flex-shrink-0" />
@@ -214,19 +212,18 @@ export default function DashboardLayout({
                     </DropdownMenu>
                 </Dropdown>
 
-<Dropdown>
-                <DropdownButton className="bg-[#f4f4f5] hover:bg-[#f4f4f5] rounded-full p-0 focus:outline-none focus:ring-2 focus:ring-[#f4f4f5] focus:ring-opacity-100">
-                  <Avatar
-                    src={user?.photoURL || undefined}
-                    initials={
-                      user?.displayName?.split(" ").map((n) => n[0]).join("").toUpperCase() || 
-                      user?.email?.[0].toUpperCase()
-                    }
-                    className="size-9"
-                  />
-
+                <Dropdown>
+                  <DropdownButton className="!bg-transparent hover:!bg-transparent dark:!bg-transparent dark:hover:!bg-transparent rounded-full p-0 focus:outline-none transition-opacity">
+                    <Avatar
+                      src={user?.photoURL || undefined}
+                      initials={
+                        user?.displayName?.split(" ").map((n) => n[0]).join("").toUpperCase() || 
+                        user?.email?.[0].toUpperCase()
+                      }
+                      className="size-9"
+                    />
                   </DropdownButton>
-                  <DropdownMenu anchor="bottom end">
+                  <DropdownMenu anchor="bottom end" className="avatar-dropdown-menu">
                     <DropdownItem href="/dashboard/admin/profile" className="cursor-pointer py-2 px-3 hover:bg-zinc-100 dark:hover:bg-zinc-800/50">
                         <div className="flex items-center gap-x-3">
                             <UserIcon className="size-4 flex-shrink-0" />
