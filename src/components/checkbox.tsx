@@ -61,18 +61,18 @@ export function Checkbox({
         // Hover-Effekt
         'group-hover:border-gray-400',
         // Focus-Ring
-        'group-focus-visible:ring-2 group-focus-visible:ring-blue-500 group-focus-visible:ring-offset-2',
+        'group-focus-visible:ring-2 group-focus-visible:ring-[#0660ab] group-focus-visible:ring-offset-2',
         // Checked State
-        'group-data-[checked]:border-blue-600 group-data-[checked]:bg-blue-600',
+        'group-data-[checked]:border-[#dedc00] group-data-[checked]:bg-[#dedc00]',
         // Indeterminate State
-        'group-data-[indeterminate]:border-blue-600 group-data-[indeterminate]:bg-blue-600',
+        'group-data-[indeterminate]:border-[#dedc00] group-data-[indeterminate]:bg-[#dedc00]',
         // Disabled State
         'group-data-[disabled]:cursor-not-allowed group-data-[disabled]:opacity-50',
         // Dark Mode
         'dark:border-gray-600 dark:bg-gray-800',
         'dark:group-hover:border-gray-500',
-        'dark:group-data-[checked]:border-blue-500 dark:group-data-[checked]:bg-blue-500',
-        'dark:group-data-[indeterminate]:border-blue-500 dark:group-data-[indeterminate]:bg-blue-500'
+        'dark:group-data-[checked]:border-[#dedc00] dark:group-data-[checked]:bg-[#dedc00]',
+        'dark:group-data-[indeterminate]:border-[#dedc00] dark:group-data-[indeterminate]:bg-[#dedc00]'
       )}>
         <svg
           className="h-3.5 w-3.5 text-white opacity-0 group-data-[checked]:opacity-100 group-data-[indeterminate]:opacity-100"
