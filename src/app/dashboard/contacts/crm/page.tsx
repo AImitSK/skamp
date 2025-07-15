@@ -737,16 +737,15 @@ export default function ContactsPage() {
           )}
         </Text>
         
-        {/* Bulk Delete Button */}
+        {/* Bulk Delete Link */}
         {((activeTab === 'companies' && selectedCompanyIds.size > 0) || 
           (activeTab === 'contacts' && selectedContactIds.size > 0)) && (
-          <Button
+          <button
             onClick={handleBulkDelete}
-            className="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-2"
+            className="text-sm text-red-600 hover:text-red-700 underline"
           >
-            <TrashIcon className="h-4 w-4 mr-2" />
             {activeTab === 'companies' ? selectedCompanyIds.size : selectedContactIds.size} Löschen
-          </Button>
+          </button>
         )}
       </div>
 
@@ -758,7 +757,7 @@ export default function ContactsPage() {
             {/* Header */}
             <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
               <div className="flex items-center">
-                <div className="flex items-center flex-1 min-w-0">
+                <div className="flex items-center w-[30%]">
                   <Checkbox
                     checked={activeTab === 'companies' 
                       ? paginatedCompanies.length > 0 && paginatedCompanies.every(c => selectedCompanyIds.has(c.id!))
@@ -774,16 +773,15 @@ export default function ContactsPage() {
                     {activeTab === 'companies' ? 'Firma' : 'Name'}
                   </span>
                 </div>
-                <div className="hidden md:block w-48 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                <div className="hidden md:block w-[30%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   {activeTab === 'companies' ? 'Branche' : 'Position'}
                 </div>
-                <div className="hidden lg:block w-64 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                <div className="hidden lg:block w-[30%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Tags
                 </div>
-                <div className="hidden xl:block w-32 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right">
+                <div className="hidden xl:block flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right pr-14">
                   Kontakt
                 </div>
-                <div className="w-10 ml-4"></div>
               </div>
             </div>
 
@@ -793,7 +791,7 @@ export default function ContactsPage() {
                 paginatedCompanies.map((company) => (
                   <div key={company.id} className="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                     <div className="flex items-center">
-                      <div className="flex items-center flex-1 min-w-0">
+                      <div className="flex items-center w-[30%]">
                         <Checkbox
                           checked={selectedCompanyIds.has(company.id!)}
                           onChange={(checked: boolean) => {
@@ -806,8 +804,8 @@ export default function ContactsPage() {
                             setSelectedCompanyIds(newIds);
                           }}
                         />
-                        <div className="ml-4">
-                          <Link href={`/dashboard/contacts/crm/companies/${company.id}`} className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-primary">
+                        <div className="ml-4 min-w-0 flex-1">
+                          <Link href={`/dashboard/contacts/crm/companies/${company.id}`} className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-primary truncate block">
                             {company.name}
                           </Link>
                           <div className="text-sm text-zinc-500 dark:text-zinc-400">
@@ -816,13 +814,13 @@ export default function ContactsPage() {
                         </div>
                       </div>
                       
-                      <div className="hidden md:block w-48 text-sm text-zinc-500 dark:text-zinc-400">
+                      <div className="hidden md:block w-[30%] text-sm text-zinc-500 dark:text-zinc-400">
                         {company.industry || '—'}
                       </div>
                       
-                      <div className="hidden lg:block w-64">
+                      <div className="hidden lg:block w-[30%]">
                         {company.tagIds && company.tagIds.length > 0 ? (
-                          <div className="flex gap-1.5">
+                          <div className="flex gap-1.5 flex-wrap">
                             {company.tagIds.slice(0, 2).map(tagId => {
                               const tag = tags.find(t => t.id === tagId);
                               return tag ? (
@@ -842,7 +840,7 @@ export default function ContactsPage() {
                         )}
                       </div>
                       
-                      <div className="hidden xl:flex items-center gap-4 w-32 justify-end text-sm">
+                      <div className="hidden xl:flex items-center gap-4 flex-1 justify-end pr-14 text-sm">
                         {company.website && (
                           <a href={company.website} target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-primary dark:text-zinc-400">
                             <GlobeAltIcon className="h-4 w-4" />
@@ -891,7 +889,7 @@ export default function ContactsPage() {
                 paginatedContacts.map((contact) => (
                   <div key={contact.id} className="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                     <div className="flex items-center">
-                      <div className="flex items-center flex-1 min-w-0">
+                      <div className="flex items-center w-[30%]">
                         <Checkbox
                           checked={selectedContactIds.has(contact.id!)}
                           onChange={(checked: boolean) => {
@@ -904,23 +902,29 @@ export default function ContactsPage() {
                             setSelectedContactIds(newIds);
                           }}
                         />
-                        <div className="ml-4">
-                          <Link href={`/dashboard/contacts/crm/contacts/${contact.id}`} className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-primary">
+                        <div className="ml-4 min-w-0 flex-1">
+                          <Link href={`/dashboard/contacts/crm/contacts/${contact.id}`} className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-primary truncate block">
                             {contact.firstName} {contact.lastName}
                           </Link>
-                          <div className="text-sm text-zinc-500 dark:text-zinc-400">
-                            {contact.companyName || '—'}
-                          </div>
+                          {contact.companyName && (
+                            <div className="text-sm text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+                              <BuildingOfficeIcon className="h-3.5 w-3.5 flex-shrink-0" />
+                              <span className="truncate">{contact.companyName}</span>
+                            </div>
+                          )}
+                          {!contact.companyName && (
+                            <div className="text-sm text-zinc-500 dark:text-zinc-400">—</div>
+                          )}
                         </div>
                       </div>
                       
-                      <div className="hidden md:block w-48 text-sm text-zinc-500 dark:text-zinc-400">
+                      <div className="hidden md:block w-[30%] text-sm text-zinc-500 dark:text-zinc-400">
                         {contact.position || '—'}
                       </div>
                       
-                      <div className="hidden lg:block w-64">
+                      <div className="hidden lg:block w-[30%]">
                         {contact.tagIds && contact.tagIds.length > 0 ? (
-                          <div className="flex gap-1.5">
+                          <div className="flex gap-1.5 flex-wrap">
                             {contact.tagIds.slice(0, 2).map(tagId => {
                               const tag = tags.find(t => t.id === tagId);
                               return tag ? (
@@ -940,7 +944,7 @@ export default function ContactsPage() {
                         )}
                       </div>
                       
-                      <div className="hidden xl:flex items-center gap-4 w-32 justify-end text-sm">
+                      <div className="hidden xl:flex items-center gap-4 flex-1 justify-end pr-14 text-sm">
                         {contact.email && (
                           <a href={`mailto:${contact.email}`} className="text-zinc-500 hover:text-primary dark:text-zinc-400">
                             <EnvelopeIcon className="h-4 w-4" />
