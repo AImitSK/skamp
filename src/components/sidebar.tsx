@@ -79,7 +79,7 @@ export const SidebarItem = forwardRef(function SidebarItem(
     ...props
   }: { current?: boolean; className?: string; children: React.ReactNode } & (
     | Omit<Headless.ButtonProps, 'as' | 'className'>
-    | Omit<Headless.ButtonProps<typeof Link>, 'as' | 'className'>
+    | Omit<React.ComponentPropsWithoutRef<typeof Link>, 'className'>
   ),
   ref: React.ForwardedRef<HTMLAnchorElement | HTMLButtonElement>
 ) {
@@ -117,15 +117,14 @@ export const SidebarItem = forwardRef(function SidebarItem(
         />
       )}
       {'href' in props ? (
-        <Headless.CloseButton
-          as={Link}
+        <Link
           {...props}
           className={classes}
           data-current={current ? 'true' : undefined}
-          ref={ref}
+          ref={ref as React.ForwardedRef<HTMLAnchorElement>}
         >
           <TouchTarget>{children}</TouchTarget>
-        </Headless.CloseButton>
+        </Link>
       ) : (
         <Headless.Button
           {...props}

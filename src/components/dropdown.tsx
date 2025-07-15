@@ -11,6 +11,51 @@ export function Dropdown(props: Headless.MenuProps) {
   return <Headless.Menu {...props} />
 }
 
+export function HoverDropdown({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="relative group">
+      {children}
+    </div>
+  )
+}
+
+export function HoverDropdownTrigger({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={className}>
+      {children}
+    </div>
+  )
+}
+
+export function HoverDropdownMenu({
+  className,
+  children,
+  ...props
+}: { className?: string; children: React.ReactNode } & React.ComponentPropsWithoutRef<'div'>) {
+  return (
+    <div
+      {...props}
+      className={clsx(
+        className,
+        // Positioning
+        'absolute left-0 top-full mt-1',
+        // Base styles
+        'w-max min-w-[320px] max-w-md rounded-xl p-1',
+        // Invisible by default, visible on hover
+        'invisible opacity-0 transition-all duration-200',
+        'group-hover:visible group-hover:opacity-100',
+        // Visual styles
+        'bg-white/95 backdrop-blur-xl dark:bg-zinc-800/95',
+        'shadow-xl ring-1 ring-zinc-950/10 dark:ring-white/10',
+        // Z-index to appear above content
+        'z-50'
+      )}
+    >
+      {children}
+    </div>
+  )
+}
+
 export function DropdownButton<T extends React.ElementType = typeof Button>({
   as = Button,
   ...props
@@ -31,19 +76,17 @@ export function DropdownMenu({
       className={clsx(
         className,
         // Anchor positioning
-        '[--anchor-gap:--spacing(2)] [--anchor-padding:--spacing(1)] data-[anchor~=end]:[--anchor-offset:6px] data-[anchor~=start]:[--anchor-offset:-6px] sm:data-[anchor~=end]:[--anchor-offset:4px] sm:data-[anchor~=start]:[--anchor-offset:-4px]',
-        // Base styles
-        'isolate w-max rounded-xl p-1',
+        '[--anchor-gap:var(--spacing-2)] [--anchor-padding:var(--spacing-1)]',
+        // Base styles - feste Breite statt volle Seitenbreite
+        'isolate w-max min-w-[320px] max-w-md rounded-xl p-1',
         // Invisible border that is only visible in `forced-colors` mode for accessibility purposes
         'outline outline-transparent focus:outline-hidden',
         // Handle scrolling when menu won't fit in viewport
         'overflow-y-auto',
         // Popover background
-        'bg-white/75 backdrop-blur-xl dark:bg-zinc-800/75',
-        // Shadows
-        'shadow-lg ring-1 ring-zinc-950/10 dark:ring-white/10 dark:ring-inset',
-        // Define grid at the menu level if subgrid is supported
-        'supports-[grid-template-columns:subgrid]:grid supports-[grid-template-columns:subgrid]:grid-cols-[auto_1fr_1.5rem_0.5rem_auto]',
+        'bg-white/95 backdrop-blur-xl dark:bg-zinc-800/95',
+        // Shadows - stärkere Schatten für mehr Tiefe
+        'shadow-xl ring-1 ring-zinc-950/10 dark:ring-white/10',
         // Transitions
         'transition data-leave:duration-100 data-leave:ease-in data-closed:data-leave:opacity-0'
       )}
@@ -53,36 +96,63 @@ export function DropdownMenu({
 
 export function DropdownItem({
   className,
+  description,
+  icon: Icon,
+  children,
   ...props
-}: { className?: string } & (
-  | Omit<Headless.MenuItemProps<'button'>, 'as' | 'className'>
-  | Omit<Headless.MenuItemProps<typeof Link>, 'as' | 'className'>
+}: { 
+  className?: string; 
+  description?: string;
+  icon?: React.ComponentType<{ className?: string }>;
+  children?: React.ReactNode;
+} & (
+  | Omit<Headless.MenuItemProps<'button'>, 'as' | 'className' | 'children'>
+  | Omit<Headless.MenuItemProps<typeof Link>, 'as' | 'className' | 'children'>
 )) {
   let classes = clsx(
     className,
-    // Base styles
-    'group cursor-default rounded-lg px-3.5 py-2.5 focus:outline-hidden sm:px-3 sm:py-1.5',
-    // Text styles
-    'text-left text-base/6 text-zinc-950 sm:text-sm/6 dark:text-white forced-colors:text-[CanvasText]',
-    // Focus
-    'data-focus:bg-blue-500 data-focus:text-white',
+    // Base styles - größere Padding für mehr Raum
+    'group relative flex gap-x-4 rounded-lg p-3 focus:outline-hidden',
+    // Hover state
+    'hover:bg-zinc-50 dark:hover:bg-zinc-800/50',
+    // Focus state
+    'data-focus:bg-zinc-100 dark:data-focus:bg-zinc-800',
     // Disabled state
     'data-disabled:opacity-50',
     // Forced colors mode
-    'forced-color-adjust-none forced-colors:data-focus:bg-[Highlight] forced-colors:data-focus:text-[HighlightText] forced-colors:data-focus:*:data-[slot=icon]:text-[HighlightText]',
-    // Use subgrid when available but fallback to an explicit grid layout if not
-    'col-span-full grid grid-cols-[auto_1fr_1.5rem_0.5rem_auto] items-center supports-[grid-template-columns:subgrid]:grid-cols-subgrid',
-    // Icons - UPDATED mit gap
-    '*:data-[slot=icon]:col-start-1 *:data-[slot=icon]:row-start-1 *:data-[slot=icon]:mr-3 *:data-[slot=icon]:-ml-0.5 *:data-[slot=icon]:size-5 sm:*:data-[slot=icon]:mr-2.5 sm:*:data-[slot=icon]:size-4',
-    '*:data-[slot=icon]:text-zinc-500 data-focus:*:data-[slot=icon]:text-white dark:*:data-[slot=icon]:text-zinc-400 dark:data-focus:*:data-[slot=icon]:text-white',
-    // Avatar
-    '*:data-[slot=avatar]:mr-2.5 *:data-[slot=avatar]:-ml-1 *:data-[slot=avatar]:size-6 sm:*:data-[slot=avatar]:mr-2 sm:*:data-[slot=avatar]:size-5'
+    'forced-color-adjust-none forced-colors:data-focus:bg-[Highlight] forced-colors:data-focus:text-[HighlightText]'
+  )
+
+  const content = (
+    <>
+      {/* Icon container mit Hintergrund */}
+      {Icon && (
+        <div className="mt-1 flex size-10 flex-none items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800 transition-colors duration-200">
+          <Icon className="size-5 text-zinc-600 group-hover:text-[#dedc00] dark:text-zinc-400 dark:group-hover:text-[#dedc00] transition-colors duration-200" />
+        </div>
+      )}
+      {/* Text content */}
+      <div className="flex-auto">
+        <div className="text-sm font-semibold text-zinc-900 dark:text-white flex items-center gap-2">
+          {children}
+        </div>
+        {description && (
+          <div className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+            {description}
+          </div>
+        )}
+      </div>
+    </>
   )
 
   return 'href' in props ? (
-    <Headless.MenuItem as={Link} {...props} className={classes} />
+    <Headless.MenuItem as={Link} {...props} className={classes}>
+      {content}
+    </Headless.MenuItem>
   ) : (
-    <Headless.MenuItem as="button" type="button" {...props} className={classes} />
+    <Headless.MenuItem as="button" type="button" {...props} className={classes}>
+      {content}
+    </Headless.MenuItem>
   )
 }
 
