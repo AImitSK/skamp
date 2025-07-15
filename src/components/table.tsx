@@ -1,3 +1,4 @@
+// src/components/table.tsx
 'use client'
 
 import clsx from 'clsx'
@@ -5,11 +6,12 @@ import type React from 'react'
 import { createContext, useContext, useState } from 'react'
 import { Link } from './link'
 
-const TableContext = createContext<{ bleed: boolean; dense: boolean; grid: boolean; striped: boolean }>({
+const TableContext = createContext<{ bleed: boolean; dense: boolean; grid: boolean; striped: boolean; noBorder?: boolean }>({
   bleed: false,
   dense: false,
   grid: false,
   striped: false,
+  noBorder: false,
 })
 
 export function Table({
@@ -17,12 +19,13 @@ export function Table({
   dense = false,
   grid = false,
   striped = false,
+  noBorder = false,
   className,
   children,
   ...props
-}: { bleed?: boolean; dense?: boolean; grid?: boolean; striped?: boolean } & React.ComponentPropsWithoutRef<'div'>) {
+}: { bleed?: boolean; dense?: boolean; grid?: boolean; striped?: boolean; noBorder?: boolean } & React.ComponentPropsWithoutRef<'div'>) {
   return (
-    <TableContext.Provider value={{ bleed, dense, grid, striped } as React.ContextType<typeof TableContext>}>
+    <TableContext.Provider value={{ bleed, dense, grid, striped, noBorder } as React.ContextType<typeof TableContext>}>
       <div className="flow-root">
         <div {...props} className={clsx(className, '-mx-(--gutter) overflow-x-auto whitespace-nowrap')}>
           <div className={clsx('inline-block min-w-full align-middle', !bleed && 'sm:px-(--gutter)')}>
@@ -75,14 +78,15 @@ export function TableRow({
 }
 
 export function TableHeader({ className, ...props }: React.ComponentPropsWithoutRef<'th'>) {
-  let { bleed, grid } = useContext(TableContext)
+  let { bleed, grid, noBorder } = useContext(TableContext)
 
   return (
     <th
       {...props}
       className={clsx(
         className,
-        'border-b border-b-zinc-950/10 px-4 py-2 font-medium first:pl-(--gutter,--spacing(2)) last:pr-(--gutter,--spacing(2)) dark:border-b-white/10',
+        'px-4 py-2 font-medium first:pl-(--gutter,--spacing(2)) last:pr-(--gutter,--spacing(2))',
+        !noBorder && 'border-b border-b-zinc-950/10 dark:border-b-white/10',
         grid && 'border-l border-l-zinc-950/5 first:border-l-0 dark:border-l-white/5',
         !bleed && 'sm:first:pl-1 sm:last:pr-1'
       )}

@@ -1,7 +1,7 @@
 // src/app/dashboard/contacts/crm/page.tsx
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from "@/context/AuthContext";
@@ -10,10 +10,13 @@ import { Text } from "@/components/text";
 import { Button } from "@/components/button";
 import { Badge } from "@/components/badge";
 import { Checkbox } from "@/components/checkbox";
-import { Input } from "@/components/input";
+import { SearchInput } from "@/components/search-input";
+import { SearchableFilter } from "@/components/searchable-filter";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/table";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from "@/components/dropdown";
+import { Popover, Transition } from '@headlessui/react';
+import * as Headless from '@headlessui/react';
 import { 
   PlusIcon, 
   MagnifyingGlassIcon, 
@@ -28,19 +31,184 @@ import {
   InformationCircleIcon,
   ExclamationTriangleIcon,
   ChevronLeftIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  FunnelIcon,
+  ListBulletIcon,
+  Squares2X2Icon
 } from "@heroicons/react/20/solid";
 import { companiesService, contactsService, tagsService } from "@/lib/firebase/crm-service";
 import { Company, Contact, Tag, companyTypeLabels, CompanyType } from "@/types/crm";
 import CompanyModal from "./CompanyModal";
 import ContactModal from "./ContactModal";
 import ImportModal from "./ImportModal";
-import { MultiSelectDropdown } from "@/components/MultiSelectDropdown";
 import Papa from 'papaparse';
+import clsx from 'clsx';
 
 type TabType = 'companies' | 'contacts';
+type ViewMode = 'grid' | 'list';
 
-// Alert Component using Catalyst patterns
+// ViewToggle Component
+function ViewToggle({ value, onChange, className }: { value: ViewMode; onChange: (value: ViewMode) => void; className?: string }) {
+  return (
+    <div className={clsx('inline-flex rounded-lg border border-zinc-300 dark:border-zinc-600', className)}>
+      <button
+        onClick={() => onChange('list')}
+        className={clsx(
+          'flex items-center justify-center p-2 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-l-lg',
+          value === 'list'
+            ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white'
+            : 'bg-white text-zinc-600 hover:text-zinc-900 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100'
+        )}
+        aria-label="List view"
+      >
+        <ListBulletIcon className="h-5 w-5" />
+      </button>
+      
+      <button
+        onClick={() => onChange('grid')}
+        className={clsx(
+          'flex items-center justify-center p-2 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-r-lg border-l border-zinc-300 dark:border-zinc-600',
+          value === 'grid'
+            ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white'
+            : 'bg-white text-zinc-600 hover:text-zinc-900 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100'
+        )}
+        aria-label="Grid view"
+      >
+        <Squares2X2Icon className="h-5 w-5" />
+      </button>
+    </div>
+  );
+}
+
+// FilterPopover Component
+interface FilterOption {
+  id: string;
+  label: string;
+  type: 'select' | 'multiselect';
+  options: { value: string; label: string }[];
+}
+
+function FilterPopover({ 
+  filters, 
+  values, 
+  onChange, 
+  onReset, 
+  className 
+}: { 
+  filters: FilterOption[]; 
+  values: Record<string, string | string[]>; 
+  onChange: (filterId: string, value: string | string[]) => void; 
+  onReset: () => void; 
+  className?: string 
+}) {
+  const activeFiltersCount = Object.values(values).filter(v => 
+    Array.isArray(v) ? v.length > 0 : !!v
+  ).length;
+
+  return (
+    <Popover className={clsx('relative', className)}>
+      {({ open }) => (
+        <>
+          <Popover.Button
+            className={clsx(
+              'inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 h-10',
+              activeFiltersCount > 0
+                ? 'border-primary bg-primary/5 text-primary hover:bg-primary/10'
+                : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+            )}
+          >
+            <FunnelIcon className="h-5 w-5" />
+            <span>Filter</span>
+            {activeFiltersCount > 0 && (
+              <Badge color="blue" className="ml-1 -mr-1">
+                {activeFiltersCount}
+              </Badge>
+            )}
+          </Popover.Button>
+
+          <Transition
+            as={Fragment}
+            enter="transition ease-out duration-200"
+            enterFrom="opacity-0 translate-y-1"
+            enterTo="opacity-100 translate-y-0"
+            leave="transition ease-in duration-150"
+            leaveFrom="opacity-100 translate-y-0"
+            leaveTo="opacity-0 translate-y-1"
+          >
+            <Popover.Panel className="absolute left-0 z-10 mt-2 w-80 origin-top-left rounded-lg bg-white p-4 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-zinc-800 dark:ring-white/10">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-zinc-900 dark:text-white">Filter</h3>
+                  {activeFiltersCount > 0 && (
+                    <button
+                      onClick={onReset}
+                      className="text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                    >
+                      Zurücksetzen
+                    </button>
+                  )}
+                </div>
+
+                {filters.map((filter) => (
+                  <div key={filter.id}>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                      {filter.label}
+                    </label>
+                    {filter.type === 'multiselect' ? (
+                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {filter.options.map((option) => {
+                          const currentValues = (values[filter.id] as string[]) || [];
+                          const isChecked = currentValues.includes(option.value);
+                          
+                          return (
+                            <label
+                              key={option.value}
+                              className="flex items-center gap-2 cursor-pointer"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={(e) => {
+                                  const newValues = e.target.checked
+                                    ? [...currentValues, option.value]
+                                    : currentValues.filter(v => v !== option.value);
+                                  onChange(filter.id, newValues);
+                                }}
+                                className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
+                              />
+                              <span className="text-sm text-zinc-700 dark:text-zinc-300">
+                                {option.label}
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <select
+                        value={(values[filter.id] as string) || ''}
+                        onChange={(e) => onChange(filter.id, e.target.value)}
+                        className="mt-1 block w-full rounded-md border-zinc-300 py-2 pl-3 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-zinc-600 dark:bg-zinc-700"
+                      >
+                        <option value="">Alle</option>
+                        {filter.options.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </Popover.Panel>
+          </Transition>
+        </>
+      )}
+    </Popover>
+  );
+}
+
+// Alert Component
 function Alert({ 
   type = 'info', 
   title, 
@@ -130,6 +298,7 @@ export default function ContactsPage() {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(25);
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
 
   // Filter States
   const [selectedTypes, setSelectedTypes] = useState<CompanyType[]>([]);
@@ -376,21 +545,246 @@ export default function ContactsPage() {
       )}
 
       {/* Header */}
-      <div className="md:flex md:items-center md:justify-between">
-        <div className="min-w-0 flex-1">
-          <Heading level={1}>Kontakte</Heading>
+      <div className="mb-6">
+        <Heading level={1}>Kontakte</Heading>
+      </div>
+
+      {/* Tabs */}
+      <div className="mb-6">
+        <div className="border-0 border-zinc-200 dark:border-zinc-700">
+          <nav aria-label="Tabs" className="-mb-px flex space-x-8">
+            <button
+              onClick={() => handleTabChange('companies')}
+              className={`group inline-flex items-center border-b-2 px-1 py-4 text-sm font-medium transition-colors ${
+                activeTab === 'companies'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300'
+              }`}
+            >
+              <BuildingOfficeIcon
+                className={`mr-2 -ml-0.5 size-5 ${
+                  activeTab === 'companies' ? 'text-primary' : 'text-zinc-400 group-hover:text-zinc-500 dark:text-zinc-500 dark:group-hover:text-zinc-400'
+                }`}
+              />
+              <span>Firmen ({companies.length})</span>
+            </button>
+            <button
+              onClick={() => handleTabChange('contacts')}
+              className={`group inline-flex items-center border-b-2 px-1 py-4 text-sm font-medium transition-colors ${
+                activeTab === 'contacts'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300'
+              }`}
+            >
+              <UserIcon
+                className={`mr-2 -ml-0.5 size-5 ${
+                  activeTab === 'contacts' ? 'text-primary' : 'text-zinc-400 group-hover:text-zinc-500 dark:text-zinc-500 dark:group-hover:text-zinc-400'
+                }`}
+              />
+              <span>Personen ({contacts.length})</span>
+            </button>
+          </nav>
         </div>
-        <div className="mt-4 flex md:mt-0 md:ml-4 gap-3">
-          <Button plain onClick={() => setShowImportModal(true)}>
-            <ArrowUpTrayIcon />
-            Import
-          </Button>
-          <Button plain onClick={handleExport}>
-            <ArrowDownTrayIcon />
-            Export
-          </Button>
+      </div>
+
+      {/* Compact Toolbar */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2">
+          {/* Search Input */}
+          <SearchInput
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder={`${activeTab === 'companies' ? 'Firmen' : 'Personen'} durchsuchen...`}
+            className="flex-1"
+          />
+
+          {/* Filter Button - nur Icon */}
+          <Popover className="relative">
+            {({ open }) => {
+              const activeFiltersCount = activeTab === 'companies'
+                ? (selectedTypes.length + selectedCompanyTagIds.length)
+                : (selectedContactCompanyIds.length + selectedContactTagIds.length);
+              
+              const filters: Array<{
+                id: string;
+                label: string;
+                type: 'select' | 'multiselect';
+                options: { value: string; label: string }[];
+              }> = activeTab === 'companies'
+                ? [
+                    {
+                      id: 'types',
+                      label: 'Typ',
+                      type: 'multiselect' as const,
+                      options: Object.entries(companyTypeLabels).map(([value, label]) => ({ value, label }))
+                    },
+                    {
+                      id: 'tags',
+                      label: 'Tags',
+                      type: 'multiselect' as const,
+                      options: tagOptions.map(tag => ({ value: tag.id!, label: tag.name }))
+                    }
+                  ]
+                : [
+                    {
+                      id: 'companies',
+                      label: 'Firma',
+                      type: 'multiselect' as const,
+                      options: companyOptions
+                    },
+                    {
+                      id: 'tags',
+                      label: 'Tags',
+                      type: 'multiselect' as const,
+                      options: tagOptions.map(tag => ({ value: tag.id!, label: tag.name }))
+                    }
+                  ];
+              
+              const values: Record<string, string | string[]> = activeTab === 'companies'
+                ? { types: selectedTypes, tags: selectedCompanyTagIds }
+                : { companies: selectedContactCompanyIds, tags: selectedContactTagIds };
+              
+              const onChange = (filterId: string, value: string | string[]) => {
+                if (activeTab === 'companies') {
+                  if (filterId === 'types') setSelectedTypes(value as CompanyType[]);
+                  if (filterId === 'tags') setSelectedCompanyTagIds(value as string[]);
+                } else {
+                  if (filterId === 'companies') setSelectedContactCompanyIds(value as string[]);
+                  if (filterId === 'tags') setSelectedContactTagIds(value as string[]);
+                }
+              };
+              
+              const onReset = () => {
+                if (activeTab === 'companies') {
+                  setSelectedTypes([]);
+                  setSelectedCompanyTagIds([]);
+                } else {
+                  setSelectedContactCompanyIds([]);
+                  setSelectedContactTagIds([]);
+                }
+              };
+              
+              return (
+                <>
+                  <Popover.Button
+                    className={clsx(
+                      'inline-flex items-center justify-center rounded-lg border p-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 h-10 w-10',
+                      activeFiltersCount > 0
+                        ? 'border-primary bg-primary/5 text-primary hover:bg-primary/10'
+                        : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+                    )}
+                    aria-label="Filter"
+                  >
+                    <FunnelIcon className="h-5 w-5" />
+                    {activeFiltersCount > 0 && (
+                      <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-white">
+                        {activeFiltersCount}
+                      </span>
+                    )}
+                  </Popover.Button>
+                  
+                  <Transition
+                    as={Fragment}
+                    enter="transition ease-out duration-200"
+                    enterFrom="opacity-0 translate-y-1"
+                    enterTo="opacity-100 translate-y-0"
+                    leave="transition ease-in duration-150"
+                    leaveFrom="opacity-100 translate-y-0"
+                    leaveTo="opacity-0 translate-y-1"
+                  >
+                    <Popover.Panel className="absolute left-0 z-10 mt-2 w-80 origin-top-left rounded-lg bg-white p-4 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-zinc-800 dark:ring-white/10">
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-sm font-medium text-zinc-900 dark:text-white">Filter</h3>
+                          {activeFiltersCount > 0 && (
+                            <button
+                              onClick={onReset}
+                              className="text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                            >
+                              Zurücksetzen
+                            </button>
+                          )}
+                        </div>
+
+                        {filters.map((filter) => (
+                          <div key={filter.id}>
+                            {filter.type === 'multiselect' && filter.options.length > 10 ? (
+                              // Use SearchableFilter for large datasets
+                              <SearchableFilter
+                                label={filter.label}
+                                options={filter.options}
+                                selectedValues={Array.isArray(values[filter.id as keyof typeof values]) ? values[filter.id as keyof typeof values] as string[] : []}
+                                onChange={(newValues) => onChange(filter.id, newValues)}
+                                placeholder={`${filter.label} suchen...`}
+                              />
+                            ) : (
+                              // Keep existing UI for small datasets
+                              <>
+                                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                                  {filter.label}
+                                </label>
+                                {filter.type === 'multiselect' ? (
+                                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                                    {filter.options.map((option) => {
+                                      const currentValues = values[filter.id as keyof typeof values];
+                                      const currentValuesArray = Array.isArray(currentValues) ? currentValues : [];
+                                      const isChecked = currentValuesArray.includes(option.value);
+                                      
+                                      return (
+                                        <label
+                                          key={option.value}
+                                          className="flex items-center gap-2 cursor-pointer"
+                                        >
+                                          <input
+                                            type="checkbox"
+                                            checked={isChecked}
+                                            onChange={(e) => {
+                                              const newValues = e.target.checked
+                                                ? [...currentValuesArray, option.value]
+                                                : currentValuesArray.filter(v => v !== option.value);
+                                              onChange(filter.id, newValues);
+                                            }}
+                                            className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
+                                          />
+                                          <span className="text-sm text-zinc-700 dark:text-zinc-300">
+                                            {option.label}
+                                          </span>
+                                        </label>
+                                      );
+                                    })}
+                                  </div>
+                                ) : (
+                                  <select
+                                    value={(values[filter.id as keyof typeof values] as string) || ''}
+                                    onChange={(e) => onChange(filter.id, e.target.value)}
+                                    className="mt-1 block w-full rounded-md border-zinc-300 py-2 pl-3 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-zinc-600 dark:bg-zinc-700"
+                                  >
+                                    <option value="">Alle</option>
+                                    {filter.options.map((option) => (
+                                      <option key={option.value} value={option.value}>
+                                        {option.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </Popover.Panel>
+                  </Transition>
+                </>
+              );
+            }}
+          </Popover>
+
+          {/* View Toggle */}
+          <ViewToggle value={viewMode} onChange={setViewMode} />
+
+          {/* Add Button */}
           <Button 
-            className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+            className="bg-zinc-900 hover:bg-zinc-800 text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-zinc-900 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 h-10 px-6"
             onClick={() => {
               if (activeTab === 'companies') {
                 setSelectedCompany(null);
@@ -401,163 +795,347 @@ export default function ContactsPage() {
               }
             }}
           >
-            <PlusIcon />
             {activeTab === 'companies' ? 'Firma hinzufügen' : 'Person hinzufügen'}
           </Button>
-        </div>
-      </div>
 
-      {/* Tabs */}
-      <div className="mt-8">
-        <div className="border-b border-gray-200">
-          <nav aria-label="Tabs" className="-mb-px flex space-x-8">
-            <button
-              onClick={() => handleTabChange('companies')}
-              className={`group inline-flex items-center border-b-2 px-1 py-4 text-sm font-medium ${
-                activeTab === 'companies'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-              }`}
+          {/* Actions Button - nur 3 Punkte */}
+          <Popover className="relative">
+            <Popover.Button className="inline-flex items-center justify-center p-2 text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:text-zinc-300 dark:hover:bg-zinc-800">
+              <EllipsisVerticalIcon className="h-5 w-5" />
+            </Popover.Button>
+            
+            <Transition
+              as={Fragment}
+              enter="transition ease-out duration-200"
+              enterFrom="opacity-0 translate-y-1"
+              enterTo="opacity-100 translate-y-0"
+              leave="transition ease-in duration-150"
+              leaveFrom="opacity-100 translate-y-0"
+              leaveTo="opacity-0 translate-y-1"
             >
-              <BuildingOfficeIcon
-                className={`mr-2 -ml-0.5 size-5 ${
-                  activeTab === 'companies' ? 'text-primary' : 'text-gray-400 group-hover:text-gray-500'
-                }`}
-              />
-              <span>Firmen ({companies.length})</span>
-            </button>
-            <button
-              onClick={() => handleTabChange('contacts')}
-              className={`group inline-flex items-center border-b-2 px-1 py-4 text-sm font-medium ${
-                activeTab === 'contacts'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-              }`}
-            >
-              <UserIcon
-                className={`mr-2 -ml-0.5 size-5 ${
-                  activeTab === 'contacts' ? 'text-primary' : 'text-gray-400 group-hover:text-gray-500'
-                }`}
-              />
-              <span>Personen ({contacts.length})</span>
-            </button>
-          </nav>
+              <Popover.Panel className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-zinc-800 dark:ring-white/10">
+                <div className="py-1">
+                  <button
+                    onClick={() => setShowImportModal(true)}
+                    className="flex w-full items-center gap-3 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                  >
+                    <ArrowUpTrayIcon className="h-5 w-5" />
+                    Import
+                  </button>
+                  <button
+                    onClick={handleExport}
+                    className="flex w-full items-center gap-3 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                  >
+                    <ArrowDownTrayIcon className="h-5 w-5" />
+                    Export
+                  </button>
+                  {((activeTab === 'companies' && selectedCompanyIds.size > 0) || 
+                    (activeTab === 'contacts' && selectedContactIds.size > 0)) && (
+                    <>
+                      <div className="border-t border-zinc-200 dark:border-zinc-700 my-1"></div>
+                      <button
+                        onClick={handleBulkDelete}
+                        className="flex w-full items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      >
+                        <TrashIcon className="h-5 w-5" />
+                        Auswahl löschen ({activeTab === 'companies' ? selectedCompanyIds.size : selectedContactIds.size})
+                      </button>
+                    </>
+                  )}
+                </div>
+              </Popover.Panel>
+            </Transition>
+          </Popover>
         </div>
       </div>
 
-      {/* Search and Filters */}
-      <div className="mt-6">
-        <div className="flex flex-col sm:flex-row gap-3">
-          {/* Search Input */}
-          <div className="relative flex-1">
-            <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-5 text-gray-400 z-10" />
-            <Input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder={`${activeTab === 'companies' ? 'Firmen' : 'Personen'} durchsuchen...`}
-              className="pl-10"
-            />
-          </div>
-          
-          {/* Filters for Companies */}
-          {activeTab === 'companies' && (
-            <>
-              <div className="w-full sm:w-auto">
-                <MultiSelectDropdown 
-                  placeholder="Nach Typ filtern..." 
-                  options={Object.entries(companyTypeLabels).map(([value, label]) => ({ value, label }))} 
-                  selectedValues={selectedTypes} 
-                  onChange={(values) => setSelectedTypes(values as CompanyType[])}
-                />
-              </div>
-              <div className="w-full sm:w-auto">
-                <MultiSelectDropdown 
-                  placeholder="Nach Tags filtern..." 
-                  options={tagOptions.map(tag => ({ value: tag.id!, label: tag.name }))} 
-                  selectedValues={selectedCompanyTagIds} 
-                  onChange={(values) => setSelectedCompanyTagIds(values)}
-                />
-              </div>
-            </>
-          )}
-
-          {/* Filters for Contacts */}
-          {activeTab === 'contacts' && (
-            <>
-              <div className="w-full sm:w-auto">
-                <MultiSelectDropdown 
-                  placeholder="Nach Firma filtern..." 
-                  options={companyOptions} 
-                  selectedValues={selectedContactCompanyIds} 
-                  onChange={(values) => setSelectedContactCompanyIds(values)}
-                />
-              </div>
-              <div className="w-full sm:w-auto">
-                <MultiSelectDropdown 
-                  placeholder="Nach Tags filtern..." 
-                  options={tagOptions.map(tag => ({ value: tag.id!, label: tag.name }))} 
-                  selectedValues={selectedContactTagIds} 
-                  onChange={(values) => setSelectedContactTagIds(values)}
-                />
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Results Info and Bulk Actions */}
-      <div className="mt-4 flex items-center justify-between">
-        <Text>
+      {/* Results Info */}
+      <div className="mb-4 pt-4">
+        <Text className="text-sm text-zinc-600 dark:text-zinc-400">
           {activeTab === 'companies' 
             ? `${filteredCompanies.length} von ${companies.length} Firmen`
             : `${filteredContacts.length} von ${contacts.length} Kontakten`}
-        </Text>
-        
-        <div className="flex min-h-10 items-center gap-4">
           {((activeTab === 'companies' && selectedCompanyIds.size > 0) || 
             (activeTab === 'contacts' && selectedContactIds.size > 0)) && (
-            <>
-              <Text>
-                {activeTab === 'companies' ? selectedCompanyIds.size : selectedContactIds.size} ausgewählt
-              </Text>
-              <Button color="zinc" onClick={handleBulkDelete}>
-                <TrashIcon />
-                Löschen
-              </Button>
-            </>
+            <span className="ml-2">
+              • {activeTab === 'companies' ? selectedCompanyIds.size : selectedContactIds.size} ausgewählt
+            </span>
           )}
-        </div>
+        </Text>
       </div>
 
-      {/* Table */}
-      <div className="mt-8">
-        {activeTab === 'companies' ? (
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableHeader>
-                  <Checkbox
-                    checked={paginatedCompanies.length > 0 && paginatedCompanies.every(c => selectedCompanyIds.has(c.id!))}
-                    indeterminate={paginatedCompanies.some(c => selectedCompanyIds.has(c.id!)) && !paginatedCompanies.every(c => selectedCompanyIds.has(c.id!))}
-                    onChange={(checked) => handleSelectAllCompanies(checked)}
-                  />
-                </TableHeader>
-                <TableHeader>Name</TableHeader>
-                <TableHeader>Typ</TableHeader>
-                <TableHeader>Publikationen</TableHeader>
-                <TableHeader>Tags</TableHeader>
-                <TableHeader>Website</TableHeader>
-                <TableHeader>Telefon</TableHeader>
-                <TableHeader>
-                  <span className="sr-only">Aktionen</span>
-                </TableHeader>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {paginatedCompanies.map((company) => (
-                <TableRow key={company.id} className="hover:bg-gray-50">
-                  <TableCell>
+      {/* Table or Grid View */}
+      <div>
+        {viewMode === 'list' ? (
+          // List View (Table)
+          activeTab === 'companies' ? (
+            <Table noBorder>
+              <TableHead>
+                <TableRow>
+                  <TableHeader>
+                    <Checkbox
+                      checked={paginatedCompanies.length > 0 && paginatedCompanies.every(c => selectedCompanyIds.has(c.id!))}
+                      indeterminate={paginatedCompanies.some(c => selectedCompanyIds.has(c.id!)) && !paginatedCompanies.every(c => selectedCompanyIds.has(c.id!))}
+                      onChange={(checked) => handleSelectAllCompanies(checked)}
+                    />
+                  </TableHeader>
+                  <TableHeader>Name</TableHeader>
+                  <TableHeader>Typ</TableHeader>
+                  <TableHeader>Publikationen</TableHeader>
+                  <TableHeader>Tags</TableHeader>
+                  <TableHeader>Website</TableHeader>
+                  <TableHeader>Telefon</TableHeader>
+                  <TableHeader>
+                    <span className="sr-only">Aktionen</span>
+                  </TableHeader>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {paginatedCompanies.map((company) => (
+                  <TableRow key={company.id} className="hover:bg-gray-50">
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedCompanyIds.has(company.id!)}
+                        onChange={(checked) => {
+                          const newIds = new Set(selectedCompanyIds);
+                          if (checked) {
+                            newIds.add(company.id!);
+                          } else {
+                            newIds.delete(company.id!);
+                          }
+                          setSelectedCompanyIds(newIds);
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      <Link href={`/dashboard/contacts/crm/companies/${company.id}`} className="text-primary hover:text-primary-hover">
+                        {company.name}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <Badge color="zinc">{companyTypeLabels[company.type]}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {company.mediaInfo?.publications && company.mediaInfo.publications.length > 0 ? (
+                        <div className="flex gap-1 flex-wrap">
+                          {company.mediaInfo.publications.slice(0, 2).map((pub) => (
+                            <Badge key={pub.id} color="blue" className="text-xs">
+                              {pub.name}
+                            </Badge>
+                          ))}
+                          {company.mediaInfo.publications.length > 2 && (
+                            <Text className="text-xs text-gray-400">+{company.mediaInfo.publications.length - 2}</Text>
+                          )}
+                        </div>
+                      ) : (
+                        <Text>—</Text>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {company.tagIds && company.tagIds.length > 0 ? (
+                        <div className="flex gap-1 flex-wrap">
+                          {company.tagIds.slice(0, 3).map(tagId => {
+                            const tag = tags.find(t => t.id === tagId);
+                            return tag ? <Badge key={tag.id} color={tag.color as any} className="text-xs">{tag.name}</Badge> : null;
+                          })}
+                          {company.tagIds.length > 3 && (
+                            <Text className="text-xs text-gray-400">+{company.tagIds.length - 3}</Text>
+                          )}
+                        </div>
+                      ) : (
+                        <Text>—</Text>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {company.website ? (
+                        <a href={company.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary-hover truncate block max-w-xs">
+                          {company.website.replace(/^https?:\/\/(www\.)?/, '')}
+                        </a>
+                      ) : (
+                        <Text>—</Text>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {company.phone ? (
+                        <a href={`tel:${company.phone}`} className="text-primary hover:text-primary-hover">
+                          {company.phone}
+                        </a>
+                      ) : (
+                        <Text>—</Text>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Dropdown>
+                        <DropdownButton plain className="p-1 hover:bg-zinc-100 rounded dark:hover:bg-zinc-700">
+                          <EllipsisVerticalIcon className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+                        </DropdownButton>
+                        <DropdownMenu anchor="bottom end">
+                          <DropdownItem href={`/dashboard/contacts/crm/companies/${company.id}`}>
+                            Anzeigen
+                          </DropdownItem>
+                          <DropdownItem 
+                            onClick={() => {
+                              setSelectedCompany(company);
+                              setShowCompanyModal(true);
+                            }}
+                          >
+                            Bearbeiten
+                          </DropdownItem>
+                          <DropdownDivider />
+                          <DropdownItem 
+                            onClick={() => handleDelete(company.id!, company.name, 'company')}
+                          >
+                            <span className="text-red-600">Löschen</span>
+                          </DropdownItem>
+                        </DropdownMenu>
+                      </Dropdown>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <Table noBorder>
+              <TableHead>
+                <TableRow>
+                  <TableHeader>
+                    <Checkbox
+                      checked={paginatedContacts.length > 0 && paginatedContacts.every(c => selectedContactIds.has(c.id!))}
+                      indeterminate={paginatedContacts.some(c => selectedContactIds.has(c.id!)) && !paginatedContacts.every(c => selectedContactIds.has(c.id!))}
+                      onChange={(checked) => handleSelectAllContacts(checked)}
+                    />
+                  </TableHeader>
+                  <TableHeader>Name</TableHeader>
+                  <TableHeader>Firma</TableHeader>
+                  <TableHeader>Publikationen</TableHeader>
+                  <TableHeader>Tags</TableHeader>
+                  <TableHeader>Position</TableHeader>
+                  <TableHeader>E-Mail</TableHeader>
+                  <TableHeader>Telefon</TableHeader>
+                  <TableHeader>
+                    <span className="sr-only">Aktionen</span>
+                  </TableHeader>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {paginatedContacts.map((contact) => (
+                  <TableRow key={contact.id} className="hover:bg-gray-50">
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedContactIds.has(contact.id!)}
+                        onChange={(checked) => {
+                          const newIds = new Set(selectedContactIds);
+                          if (checked) {
+                            newIds.add(contact.id!);
+                          } else {
+                            newIds.delete(contact.id!);
+                          }
+                          setSelectedContactIds(newIds);
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      <Link href={`/dashboard/contacts/crm/contacts/${contact.id}`} className="text-primary hover:text-primary-hover">
+                        {contact.firstName} {contact.lastName}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      {contact.companyName || <Text>—</Text>}
+                    </TableCell>
+                    <TableCell>
+                      {contact.mediaInfo?.publications && contact.mediaInfo.publications.length > 0 ? (
+                        <div className="flex gap-1 flex-wrap">
+                          {contact.mediaInfo.publications.slice(0, 2).map((pubName) => (
+                            <Badge key={pubName} color="blue" className="text-xs">
+                              {pubName}
+                            </Badge>
+                          ))}
+                          {contact.mediaInfo.publications.length > 2 && (
+                            <Text className="text-xs text-gray-400">+{contact.mediaInfo.publications.length - 2}</Text>
+                          )}
+                        </div>
+                      ) : (
+                        <Text>—</Text>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {contact.tagIds && contact.tagIds.length > 0 ? (
+                        <div className="flex gap-1 flex-wrap">
+                          {contact.tagIds.slice(0, 3).map(tagId => {
+                            const tag = tags.find(t => t.id === tagId);
+                            return tag ? <Badge key={tag.id} color={tag.color as any} className="text-xs">{tag.name}</Badge> : null;
+                          })}
+                          {contact.tagIds.length > 3 && (
+                            <Text className="text-xs text-gray-400">+{contact.tagIds.length - 3}</Text>
+                          )}
+                        </div>
+                      ) : (
+                        <Text>—</Text>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {contact.position || <Text>—</Text>}
+                    </TableCell>
+                    <TableCell>
+                      {contact.email ? (
+                        <a href={`mailto:${contact.email}`} className="text-primary hover:text-primary-hover">
+                          {contact.email}
+                        </a>
+                      ) : (
+                        <Text>—</Text>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {contact.phone ? (
+                        <a href={`tel:${contact.phone}`} className="text-primary hover:text-primary-hover">
+                          {contact.phone}
+                        </a>
+                      ) : (
+                        <Text>—</Text>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Dropdown>
+                        <DropdownButton plain className="p-1 hover:bg-zinc-100 rounded dark:hover:bg-zinc-700">
+                          <EllipsisVerticalIcon className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+                        </DropdownButton>
+                        <DropdownMenu anchor="bottom end">
+                          <DropdownItem href={`/dashboard/contacts/crm/contacts/${contact.id}`}>
+                            Anzeigen
+                          </DropdownItem>
+                          <DropdownItem 
+                            onClick={() => {
+                              setSelectedContact(contact);
+                              setShowContactModal(true);
+                            }}
+                          >
+                            Bearbeiten
+                          </DropdownItem>
+                          <DropdownDivider />
+                          <DropdownItem 
+                            onClick={() => handleDelete(contact.id!, `${contact.firstName} ${contact.lastName}`, 'contact')}
+                          >
+                            <span className="text-red-600">Löschen</span>
+                          </DropdownItem>
+                        </DropdownMenu>
+                      </Dropdown>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )
+        ) : (
+          // Grid View
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {activeTab === 'companies' ? (
+              paginatedCompanies.map((company) => (
+                <div
+                  key={company.id}
+                  className="relative rounded-lg border border-zinc-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md dark:border-zinc-700 dark:bg-zinc-800"
+                >
+                  {/* Checkbox */}
+                  <div className="absolute top-4 right-4">
                     <Checkbox
                       checked={selectedCompanyIds.has(company.id!)}
                       onChange={(checked) => {
@@ -570,126 +1148,89 @@ export default function ContactsPage() {
                         setSelectedCompanyIds(newIds);
                       }}
                     />
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    <Link href={`/dashboard/contacts/crm/companies/${company.id}`} className="text-primary hover:text-primary-hover">
-                      {company.name}
-                    </Link>
-                  </TableCell>
-                  <TableCell>
-                    <Badge color="zinc">{companyTypeLabels[company.type]}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    {company.mediaInfo?.publications && company.mediaInfo.publications.length > 0 ? (
-                      <div className="flex gap-1 flex-wrap">
-                        {company.mediaInfo.publications.slice(0, 2).map((pub) => (
-                          <Badge key={pub.id} color="blue" className="text-xs">
-                            {pub.name}
-                          </Badge>
-                        ))}
-                        {company.mediaInfo.publications.length > 2 && (
-                          <Text className="text-xs text-gray-400">+{company.mediaInfo.publications.length - 2}</Text>
-                        )}
-                      </div>
-                    ) : (
-                      <Text>—</Text>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {company.tagIds && company.tagIds.length > 0 ? (
-                      <div className="flex gap-1 flex-wrap">
-                        {company.tagIds.slice(0, 3).map(tagId => {
-                          const tag = tags.find(t => t.id === tagId);
-                          return tag ? <Badge key={tag.id} color={tag.color as any} className="text-xs">{tag.name}</Badge> : null;
-                        })}
-                        {company.tagIds.length > 3 && (
-                          <Text className="text-xs text-gray-400">+{company.tagIds.length - 3}</Text>
-                        )}
-                      </div>
-                    ) : (
-                      <Text>—</Text>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {company.website ? (
-                      <a href={company.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary-hover truncate block max-w-xs">
-                        {company.website.replace(/^https?:\/\/(www\.)?/, '')}
-                      </a>
-                    ) : (
-                      <Text>—</Text>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {company.phone ? (
-                      <a href={`tel:${company.phone}`} className="text-primary hover:text-primary-hover">
-                        {company.phone}
-                      </a>
-                    ) : (
-                      <Text>—</Text>
-                    )}
-                  </TableCell>
-                  <TableCell>
+                  </div>
+
+                  {/* Company Info */}
+                  <div className="pr-8">
+                    <h3 className="text-lg font-semibold text-zinc-900 dark:text-white">
+                      <Link href={`/dashboard/contacts/crm/companies/${company.id}`} className="hover:text-primary">
+                        {company.name}
+                      </Link>
+                    </h3>
+                    <div className="mt-2 space-y-2">
+                      <Badge color="zinc">{companyTypeLabels[company.type]}</Badge>
+                      {company.industry && (
+                        <p className="text-sm text-zinc-600 dark:text-zinc-400">{company.industry}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Tags */}
+                  {company.tagIds && company.tagIds.length > 0 && (
+                    <div className="mt-4 flex flex-wrap gap-1">
+                      {company.tagIds.slice(0, 3).map(tagId => {
+                        const tag = tags.find(t => t.id === tagId);
+                        return tag ? <Badge key={tag.id} color={tag.color as any} className="text-xs">{tag.name}</Badge> : null;
+                      })}
+                      {company.tagIds.length > 3 && (
+                        <span className="text-xs text-zinc-400">+{company.tagIds.length - 3}</span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="mt-4 flex items-center justify-between border-t border-zinc-100 pt-4 dark:border-zinc-700">
+                    <div className="flex gap-3">
+                      {company.website && (
+                        <a
+                          href={company.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary hover:text-primary-hover"
+                        >
+                          Website
+                        </a>
+                      )}
+                      {company.phone && (
+                        <a href={`tel:${company.phone}`} className="text-sm text-primary hover:text-primary-hover">
+                          Anrufen
+                        </a>
+                      )}
+                    </div>
                     <Dropdown>
-                      <DropdownButton plain className="p-2 hover:bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-                        <EllipsisVerticalIcon className="h-5 w-5 text-gray-700" />
+                      <DropdownButton plain className="p-1 hover:bg-zinc-100 rounded dark:hover:bg-zinc-700">
+                        <EllipsisVerticalIcon className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
                       </DropdownButton>
-                      <DropdownMenu anchor="bottom end" className="bg-white shadow-lg rounded-lg">
-                        <DropdownItem href={`/dashboard/contacts/crm/companies/${company.id}`} className="hover:bg-gray-50">
-                          <EyeIcon className="text-gray-500" />
+                      <DropdownMenu anchor="bottom end">
+                        <DropdownItem href={`/dashboard/contacts/crm/companies/${company.id}`}>
+                          <EyeIcon />
                           Anzeigen
                         </DropdownItem>
-                        <DropdownItem 
-                          onClick={() => {
-                            setSelectedCompany(company);
-                            setShowCompanyModal(true);
-                          }}
-                          className="hover:bg-gray-50"
-                        >
-                          <PencilIcon className="text-gray-500" />
+                        <DropdownItem onClick={() => {
+                          setSelectedCompany(company);
+                          setShowCompanyModal(true);
+                        }}>
+                          <PencilIcon />
                           Bearbeiten
                         </DropdownItem>
                         <DropdownDivider />
-                        <DropdownItem 
-                          onClick={() => handleDelete(company.id!, company.name, 'company')}
-                          className="hover:bg-red-50"
-                        >
-                          <TrashIcon className="text-red-500" />
+                        <DropdownItem onClick={() => handleDelete(company.id!, company.name, 'company')}>
+                          <TrashIcon />
                           <span className="text-red-600">Löschen</span>
                         </DropdownItem>
                       </DropdownMenu>
                     </Dropdown>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : (
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableHeader>
-                  <Checkbox
-                    checked={paginatedContacts.length > 0 && paginatedContacts.every(c => selectedContactIds.has(c.id!))}
-                    indeterminate={paginatedContacts.some(c => selectedContactIds.has(c.id!)) && !paginatedContacts.every(c => selectedContactIds.has(c.id!))}
-                    onChange={(checked) => handleSelectAllContacts(checked)}
-                  />
-                </TableHeader>
-                <TableHeader>Name</TableHeader>
-                <TableHeader>Firma</TableHeader>
-                <TableHeader>Publikationen</TableHeader>
-                <TableHeader>Tags</TableHeader>
-                <TableHeader>Position</TableHeader>
-                <TableHeader>E-Mail</TableHeader>
-                <TableHeader>Telefon</TableHeader>
-                <TableHeader>
-                  <span className="sr-only">Aktionen</span>
-                </TableHeader>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {paginatedContacts.map((contact) => (
-                <TableRow key={contact.id} className="hover:bg-gray-50">
-                  <TableCell>
+                  </div>
+                </div>
+              ))
+            ) : (
+              paginatedContacts.map((contact) => (
+                <div
+                  key={contact.id}
+                  className="relative rounded-lg border border-zinc-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md dark:border-zinc-700 dark:bg-zinc-800"
+                >
+                  {/* Checkbox */}
+                  <div className="absolute top-4 right-4">
                     <Checkbox
                       checked={selectedContactIds.has(contact.id!)}
                       onChange={(checked) => {
@@ -702,102 +1243,83 @@ export default function ContactsPage() {
                         setSelectedContactIds(newIds);
                       }}
                     />
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    <Link href={`/dashboard/contacts/crm/contacts/${contact.id}`} className="text-primary hover:text-primary-hover">
-                      {contact.firstName} {contact.lastName}
-                    </Link>
-                  </TableCell>
-                  <TableCell>
-                    {contact.companyName || <Text>—</Text>}
-                  </TableCell>
-                  <TableCell>
-                    {contact.mediaInfo?.publications && contact.mediaInfo.publications.length > 0 ? (
-                      <div className="flex gap-1 flex-wrap">
-                        {contact.mediaInfo.publications.slice(0, 2).map((pubName) => (
-                          <Badge key={pubName} color="blue" className="text-xs">
-                            {pubName}
-                          </Badge>
-                        ))}
-                        {contact.mediaInfo.publications.length > 2 && (
-                          <Text className="text-xs text-gray-400">+{contact.mediaInfo.publications.length - 2}</Text>
-                        )}
-                      </div>
-                    ) : (
-                      <Text>—</Text>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {contact.tagIds && contact.tagIds.length > 0 ? (
-                      <div className="flex gap-1 flex-wrap">
-                        {contact.tagIds.slice(0, 3).map(tagId => {
-                          const tag = tags.find(t => t.id === tagId);
-                          return tag ? <Badge key={tag.id} color={tag.color as any} className="text-xs">{tag.name}</Badge> : null;
-                        })}
-                        {contact.tagIds.length > 3 && (
-                          <Text className="text-xs text-gray-400">+{contact.tagIds.length - 3}</Text>
-                        )}
-                      </div>
-                    ) : (
-                      <Text>—</Text>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {contact.position || <Text>—</Text>}
-                  </TableCell>
-                  <TableCell>
-                    {contact.email ? (
-                      <a href={`mailto:${contact.email}`} className="text-primary hover:text-primary-hover">
-                        {contact.email}
-                      </a>
-                    ) : (
-                      <Text>—</Text>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {contact.phone ? (
-                      <a href={`tel:${contact.phone}`} className="text-primary hover:text-primary-hover">
-                        {contact.phone}
-                      </a>
-                    ) : (
-                      <Text>—</Text>
-                    )}
-                  </TableCell>
-                  <TableCell>
+                  </div>
+
+                  {/* Contact Info */}
+                  <div className="pr-8">
+                    <h3 className="text-lg font-semibold text-zinc-900 dark:text-white">
+                      <Link href={`/dashboard/contacts/crm/contacts/${contact.id}`} className="hover:text-primary">
+                        {contact.firstName} {contact.lastName}
+                      </Link>
+                    </h3>
+                    <div className="mt-2 space-y-1">
+                      {contact.position && (
+                        <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{contact.position}</p>
+                      )}
+                      {contact.companyName && (
+                        <p className="text-sm text-zinc-600 dark:text-zinc-400">{contact.companyName}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Tags */}
+                  {contact.tagIds && contact.tagIds.length > 0 && (
+                    <div className="mt-4 flex flex-wrap gap-1">
+                      {contact.tagIds.slice(0, 3).map(tagId => {
+                        const tag = tags.find(t => t.id === tagId);
+                        return tag ? <Badge key={tag.id} color={tag.color as any} className="text-xs">{tag.name}</Badge> : null;
+                      })}
+                      {contact.tagIds.length > 3 && (
+                        <span className="text-xs text-zinc-400">+{contact.tagIds.length - 3}</span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="mt-4 flex items-center justify-between border-t border-zinc-100 pt-4 dark:border-zinc-700">
+                    <div className="flex gap-3">
+                      {contact.email && (
+                        <a
+                          href={`mailto:${contact.email}`}
+                          className="text-sm text-primary hover:text-primary-hover"
+                        >
+                          E-Mail
+                        </a>
+                      )}
+                      {contact.phone && (
+                        <a href={`tel:${contact.phone}`} className="text-sm text-primary hover:text-primary-hover">
+                          Anrufen
+                        </a>
+                      )}
+                    </div>
                     <Dropdown>
-                      <DropdownButton plain className="p-2 hover:bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
-                        <EllipsisVerticalIcon className="h-5 w-5 text-gray-700" />
+                      <DropdownButton plain className="p-1 hover:bg-zinc-100 rounded dark:hover:bg-zinc-700">
+                        <EllipsisVerticalIcon className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
                       </DropdownButton>
-                      <DropdownMenu anchor="bottom end" className="bg-white shadow-lg rounded-lg">
-                        <DropdownItem href={`/dashboard/contacts/crm/contacts/${contact.id}`} className="hover:bg-gray-50">
-                          <EyeIcon className="text-gray-500" />
+                      <DropdownMenu anchor="bottom end">
+                        <DropdownItem href={`/dashboard/contacts/crm/contacts/${contact.id}`}>
+                          <EyeIcon />
                           Anzeigen
                         </DropdownItem>
-                        <DropdownItem 
-                          onClick={() => {
-                            setSelectedContact(contact);
-                            setShowContactModal(true);
-                          }}
-                          className="hover:bg-gray-50"
-                        >
-                          <PencilIcon className="text-gray-500" />
+                        <DropdownItem onClick={() => {
+                          setSelectedContact(contact);
+                          setShowContactModal(true);
+                        }}>
+                          <PencilIcon />
                           Bearbeiten
                         </DropdownItem>
                         <DropdownDivider />
-                        <DropdownItem 
-                          onClick={() => handleDelete(contact.id!, `${contact.firstName} ${contact.lastName}`, 'contact')}
-                          className="hover:bg-red-50"
-                        >
-                          <TrashIcon className="text-red-500" />
+                        <DropdownItem onClick={() => handleDelete(contact.id!, `${contact.firstName} ${contact.lastName}`, 'contact')}>
+                          <TrashIcon />
                           <span className="text-red-600">Löschen</span>
                         </DropdownItem>
                       </DropdownMenu>
                     </Dropdown>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         )}
       </div>
 
