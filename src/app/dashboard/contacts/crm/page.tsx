@@ -805,10 +805,10 @@ export default function ContactsPage() {
                           }}
                         />
                         <div className="ml-4 min-w-0 flex-1">
-                          <Link href={`/dashboard/contacts/crm/companies/${company.id}`} className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-primary truncate block">
+                          <Link href={`/dashboard/contacts/crm/companies/${company.id}`} className="text-xs font-semibold text-zinc-900 dark:text-white hover:text-primary truncate block">
                             {company.name}
                           </Link>
-                          <div className="text-sm text-zinc-500 dark:text-zinc-400">
+                          <div className="text-xs text-zinc-500 dark:text-zinc-400">
                             {companyTypeLabels[company.type]}
                           </div>
                         </div>
@@ -907,7 +907,7 @@ export default function ContactsPage() {
                             {contact.firstName} {contact.lastName}
                           </Link>
                           {contact.companyName && (
-                            <div className="text-sm text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+                            <div className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
                               <BuildingOfficeIcon className="h-3.5 w-3.5 flex-shrink-0" />
                               <span className="truncate">{contact.companyName}</span>
                             </div>
