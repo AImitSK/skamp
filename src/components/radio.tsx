@@ -17,7 +17,7 @@ export function Radio({ value, className, ...props }: RadioProps<'input'>) {
         // Basic layout
         'group relative flex cursor-pointer rounded-lg bg-white p-4 text-zinc-900 shadow-sm transition',
         // Pseudos
-        'focus:outline-none data-[focus]:outline-1 data-[focus]:outline-white data-[focus]:ring-2 data-[focus]:ring-[#005fab]'
+        'focus:outline-none data-[focus]:outline-1 data-[focus]:outline-white data-[focus]:ring-2 data-[focus]:ring-primary'
       )}
     >
       {/* Der eigentliche Radio-Kreis */}

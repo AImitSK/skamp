@@ -57,6 +57,9 @@ import {
   ArrowRightOnRectangleIcon,
   ChevronDownIcon,
   Bars3Icon,
+  TableCellsIcon,
+  BriefcaseIcon,
+  ArchiveBoxIcon,
   XMarkIcon
 } from "@heroicons/react/24/outline";
 import { usePathname } from "next/navigation";
@@ -87,114 +90,145 @@ export default function DashboardLayout({
   };
 
   const navigationItems = [
-    {
-      name: "Kontakte",
-      icon: UserGroupIcon,
-      current: pathname.startsWith('/dashboard/contacts'),
-      children: [
+  {
+    name: "Kontakte",
+    icon: UserGroupIcon,
+    current: pathname.startsWith('/dashboard/contacts'),
+    children: [
+      { 
+        name: "Unternehmen", 
+        href: "/dashboard/contacts/crm?tab=companies", 
+        icon: BuildingOfficeIcon,
+        description: "Verwalte deine Unternehmenskontakte und Kunden"
+      },
+      { 
+        name: "Personen", 
+        href: "/dashboard/contacts/crm?tab=contacts", 
+        icon: UserGroupIcon,
+        description: "Alle Journalisten und Ansprechpartner im Überblick"
+      },
+      { 
+        name: "Listen", 
+        href: "/dashboard/contacts/lists", 
+        icon: QueueListIcon,
+        description: "Erstelle und verwalte deine Verteilerlisten"
+      },
+    ],
+  },
+  {
+    name: "Bibliothek",
+    icon: ArchiveBoxIcon, // NEUES ICON
+    current: pathname.startsWith('/dashboard/library'),
+    children: [
+      { 
+        name: "Publikationen", 
+        href: "/dashboard/library/publications", 
+        icon: NewspaperIcon, // NEUES ICON
+        description: "Alle Publikationen und deren Metriken verwalten."
+      },
+      { 
+        name: "Werbemittel", 
+        href: "/dashboard/library/advertisements", 
+        icon: PhotoIcon, // NEUES ICON
+        description: "Werbemittel und deren Spezifikationen organisieren."
+      },
+      { 
+        name: "Mediadaten", 
+        href: "/dashboard/library/media-kits", 
+        icon: BriefcaseIcon, // NEUES ICON
+        description: "Media Kits für verschiedene Unternehmen erstellen."
+      },
+      { 
+        name: "Strategische Übersichten", 
+        href: "/dashboard/library/overview", 
+        icon: TableCellsIcon, // NEUES ICON
+        description: "Zusammenfassende Ansichten aller Bibliotheksinhalte."
+      },
+    ],
+  },
+  {
+    name: "PR-Tools",
+    icon: MegaphoneIcon,
+    current: pathname.startsWith('/dashboard/pr-tools'),
+    children: [
         { 
-          name: "Unternehmen", 
-          href: "/dashboard/contacts/crm?tab=companies", 
-          icon: BuildingOfficeIcon,
-          description: "Verwalte deine Unternehmenskontakte und Kunden"
+          name: "Kampagnen", 
+          href: "/dashboard/pr-tools/campaigns", 
+          icon: MegaphoneIcon,
+          description: "Plane und versende deine PR-Kampagnen"
         },
         { 
-          name: "Personen", 
-          href: "/dashboard/contacts/crm?tab=contacts", 
-          icon: UserGroupIcon,
-          description: "Alle Journalisten und Ansprechpartner im Überblick"
+          name: "Freigaben", 
+          href: "/dashboard/pr-tools/approvals", 
+          icon: ShieldCheckIcon,
+          description: "Verwalte Freigabeprozesse für deine Kampagnen"
         },
         { 
-          name: "Listen", 
-          href: "/dashboard/contacts/lists", 
-          icon: QueueListIcon,
-          description: "Erstelle und verwalte deine Verteilerlisten"
+          name: "Kalender", 
+          href: "/dashboard/pr-tools/calendar", 
+          icon: CalendarDaysIcon,
+          description: "Behalte den Überblick über alle Termine"
         },
-      ],
-    },
-    {
-        name: "PR-Tools",
-        icon: MegaphoneIcon,
-        current: pathname.startsWith('/dashboard/pr-tools'),
-        children: [
-            { 
-              name: "Kampagnen", 
-              href: "/dashboard/pr-tools/campaigns", 
-              icon: MegaphoneIcon,
-              description: "Plane und versende deine PR-Kampagnen"
-            },
-            { 
-              name: "Freigaben", 
-              href: "/dashboard/pr-tools/approvals", 
-              icon: ShieldCheckIcon,
-              description: "Verwalte Freigabeprozesse für deine Kampagnen"
-            },
-            { 
-              name: "Kalender", 
-              href: "/dashboard/pr-tools/calendar", 
-              icon: CalendarDaysIcon,
-              description: "Behalte den Überblick über alle Termine"
-            },
-            { 
-              name: "Mediathek", 
-              href: "/dashboard/pr-tools/media-library", 
-              icon: PhotoIcon,
-              description: "Zentrale Verwaltung aller Medieninhalte"
-            },
-            { 
-              name: "Boilerplates", 
-              href: "/dashboard/pr-tools/boilerplates", 
-              icon: DocumentTextIcon,
-              description: "Wiederverwendbare Textbausteine"
-            },
-        ],
-    },
-    {
-        name: "Kommunikation",
-        icon: EnvelopeIcon,
-        current: pathname.startsWith('/dashboard/communication'),
-        children: [
-            { 
-              name: "Kampagnen In-Box", 
-              href: "/dashboard/communication/inbox", 
-              icon: InboxIcon,
-              description: "Eingehende Nachrichten zu deinen Kampagnen"
-            },
-            { 
-              name: "Benachrichtigungen", 
-              href: "/dashboard/communication/notifications", 
-              icon: BellIcon, 
-              notificationCount: unreadCount,
-              description: "Alle wichtigen Updates auf einen Blick"
-            },
-        ],
-    },
-    {
-        name: "Academy",
-        icon: AcademicCapIcon,
-        current: pathname.startsWith('/dashboard/academy'),
-        children: [
-            { 
-              name: "Dokumentation", 
-              href: "/dashboard/academy/documentation", 
-              icon: BookOpenIcon,
-              description: "Detaillierte Anleitungen und Hilfe"
-            },
-            { 
-              name: "Einsteiger Tutorials", 
-              href: "/dashboard/academy/tutorials", 
-              icon: AcademicCapIcon,
-              description: "Lerne SKAMP Schritt für Schritt kennen"
-            },
-            { 
-              name: "Blog", 
-              href: "/dashboard/academy/blog", 
-              icon: NewspaperIcon,
-              description: "Neuigkeiten und Best Practices"
-            },
-        ],
-    },
-  ];
+        { 
+          name: "Mediathek", 
+          href: "/dashboard/pr-tools/media-library", 
+          icon: PhotoIcon,
+          description: "Zentrale Verwaltung aller Medieninhalte"
+        },
+        { 
+          name: "Boilerplates", 
+          href: "/dashboard/pr-tools/boilerplates", 
+          icon: DocumentTextIcon,
+          description: "Wiederverwendbare Textbausteine"
+        },
+    ],
+  },
+  {
+    name: "Kommunikation",
+    icon: EnvelopeIcon,
+    current: pathname.startsWith('/dashboard/communication'),
+    children: [
+        { 
+          name: "Kampagnen In-Box", 
+          href: "/dashboard/communication/inbox", 
+          icon: InboxIcon,
+          description: "Eingehende Nachrichten zu deinen Kampagnen"
+        },
+        { 
+          name: "Benachrichtigungen", 
+          href: "/dashboard/communication/notifications", 
+          icon: BellIcon, 
+          notificationCount: unreadCount,
+          description: "Alle wichtigen Updates auf einen Blick"
+        },
+    ],
+  },
+  {
+    name: "Academy",
+    icon: AcademicCapIcon,
+    current: pathname.startsWith('/dashboard/academy'),
+    children: [
+        { 
+          name: "Dokumentation", 
+          href: "/dashboard/academy/documentation", 
+          icon: BookOpenIcon,
+          description: "Detaillierte Anleitungen und Hilfe"
+        },
+        { 
+          name: "Einsteiger Tutorials", 
+          href: "/dashboard/academy/tutorials", 
+          icon: AcademicCapIcon,
+          description: "Lerne SKAMP Schritt für Schritt kennen"
+        },
+        { 
+          name: "Blog", 
+          href: "/dashboard/academy/blog", 
+          icon: NewspaperIcon,
+          description: "Neuigkeiten und Best Practices"
+        },
+    ],
+  },
+];
 
   const settingsItems = [
     { 
@@ -383,8 +417,7 @@ export default function DashboardLayout({
               <NavbarSection className="hidden lg:flex ml-4 items-center gap-x-6">
                 {navigationItems.map((item) => (
                   <Dropdown key={item.name}>
-                    <DropdownButton as={NavbarItem} className={clsx('!border-transparent', item.current && 'bg-zinc-100 dark:bg-zinc-800/50')}>
-                      <span>{item.name}</span>
+                      <DropdownButton as={NavbarItem} className={clsx('!border-transparent', item.current && 'bg-zinc-100 dark:bg-zinc-800/50 rounded-md')}>                      <span>{item.name}</span>
                       <ChevronDownIcon className="size-4" />
                     </DropdownButton>
                     <DropdownMenu>

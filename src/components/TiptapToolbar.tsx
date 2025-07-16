@@ -110,7 +110,7 @@ export const TiptapToolbar = ({ editor }: ToolbarProps) => {
             value={getCurrentHeading()}
             onChange={(e) => setHeading(Number(e.target.value))}
             onMouseDown={(e) => e.stopPropagation()}
-            className="px-3 py-1.5 pr-8 text-sm border border-zinc-300 rounded-md hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none bg-white"
+            className="px-3 py-1.5 pr-8 text-sm border border-zinc-300 rounded-md hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-primary appearance-none bg-white"
           >
             {headingOptions.map(option => (
               <option key={option.value} value={option.value}>

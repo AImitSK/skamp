@@ -80,7 +80,7 @@ export function TagInput({ selectedTagIds, availableTags, onChange, onCreateTag 
           onChange={(e) => setSearchTerm(e.target.value)}
           onFocus={() => setIsOpen(true)}
           placeholder="Tags hinzufügen..."
-          className="w-full rounded-md border border-zinc-300 py-2 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full rounded-md border border-zinc-300 py-2 px-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         />
 
         {/* Dropdown */}
@@ -138,7 +138,7 @@ export function TagInput({ selectedTagIds, availableTags, onChange, onCreateTag 
                   type="button"
                   onClick={handleCreateTag}
                   disabled={isCreating}
-                  className="w-full rounded bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
+                  className="w-full rounded bg-primary px-3 py-1 text-xs font-medium text-white hover:bg-primary disabled:opacity-50"
                 >
                   {isCreating ? 'Erstelle...' : 'Tag erstellen'}
                 </button>

@@ -55,7 +55,7 @@ export function MultiSelectDropdown({
           <div 
             className={clsx(
               "flex flex-wrap items-center gap-2 rounded-md border border-zinc-300 p-2 min-h-[42px] bg-white transition-colors duration-150",
-              "focus-within:border-[#005fab] focus-within:ring-1 focus-within:ring-[#005fab]"
+              "focus-within:border-primary focus-within:ring-1 focus-within:ring-primary"
             )}
           >
             {/* Ausgewählte Elemente als Badges */}
@@ -106,7 +106,7 @@ export function MultiSelectDropdown({
                   className={({ active }) =>
                     clsx(
                       'relative cursor-default select-none py-2 px-4', // Einheitliches Padding
-                      active ? 'bg-[#005fab] text-white' : 'text-gray-900'
+                      active ? 'bg-primary text-white' : 'text-gray-900'
                     )
                   }
                   value={option.value}

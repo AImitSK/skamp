@@ -20,7 +20,7 @@ export const Textarea = forwardRef(function Textarea(
         className,
         'relative block w-full',
         'before:absolute before:inset-px before:rounded-lg before:bg-white before:shadow-sm dark:before:hidden',
-        'after:pointer-events-none after:absolute after:inset-0 after:rounded-lg after:ring-transparent after:ring-inset sm:focus-within:after:ring-2 sm:focus-within:after:ring-blue-500',
+        'after:pointer-events-none after:absolute after:inset-0 after:rounded-lg after:ring-transparent after:ring-inset sm:focus-within:after:ring-2 sm:focus-within:after:ring-primary',
       ])}
     >
       <Headless.Textarea
@@ -34,7 +34,7 @@ export const Textarea = forwardRef(function Textarea(
           'text-base/6 text-zinc-950 placeholder:text-zinc-500 sm:text-sm/6 dark:text-white dark:border-white/10 dark:bg-zinc-800',
           
           // Fokus-Styling
-          'focus:outline-none focus:border-indigo-500',
+          'focus:outline-none focus:border-primary',
           
           // Resizable-Klasse
           resizable ? 'resize-y' : 'resize-none',

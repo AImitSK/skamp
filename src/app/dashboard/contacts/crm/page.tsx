@@ -805,7 +805,7 @@ export default function ContactsPage() {
                           }}
                         />
                         <div className="ml-4 min-w-0 flex-1">
-                          <Link href={`/dashboard/contacts/crm/companies/${company.id}`} className="text-xs font-semibold text-zinc-900 dark:text-white hover:text-primary truncate block">
+                          <Link href={`/dashboard/contacts/crm/companies/${company.id}`} className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-primary truncate block">
                             {company.name}
                           </Link>
                           <div className="text-xs text-zinc-500 dark:text-zinc-400">

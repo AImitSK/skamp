@@ -191,7 +191,7 @@ export function FocusAreasInput({
           onKeyDown={handleKeyDown}
           onFocus={handleFocus}
           placeholder={placeholder}
-          className="w-full px-3 py-2 text-sm border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:border-transparent"
+          className="w-full px-3 py-2 text-sm border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
         />
         
         {/* Add Button */}
@@ -199,7 +199,7 @@ export function FocusAreasInput({
           <button
             type="button"
             onClick={() => addArea(inputValue)}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-[#005fab] hover:text-[#0693e3]"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-primary hover:text-[#0693e3]"
             title="Hinzufügen"
           >
             <PlusIcon className="h-5 w-5" />
