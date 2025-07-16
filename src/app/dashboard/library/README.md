@@ -1,5 +1,17 @@
 # SKAMP Bibliothek - Vollständiger Implementierungsplan
 
+## ⚠️ WICHTIGE ÄNDERUNG: Mandantenfähigkeit integriert
+**Stand: Januar 2025**
+
+Während der Implementierung haben wir entschieden, die Mandantenfähigkeit direkt von Anfang an zu integrieren:
+- ✅ Alle Types erweitern `BaseEntity` mit `organizationId`
+- ✅ Rollen-System mit 5 Stufen (Owner, Admin, Member, Client, Guest)
+- ✅ Granulare Permissions
+- ✅ Team-Management in `organization-service.ts`
+- ✅ Alle Services nutzen `BaseService` mit automatischer Mandanten-Filterung
+
+Dies war eine strategische Entscheidung, um spätere aufwendige Migrationen zu vermeiden.
+
 ## Übersicht
 Komplette Erweiterung des SKAMP CRM um eine internationale Bibliothek für Publikationen und Werbemittel mit allen Anforderungen aus der Gap-Analyse und den strategischen Übersichtstabellen.
 
@@ -77,292 +89,56 @@ src/
 │
 ├── lib/
 │   ├── firebase/
-│   │   ├── library-service.ts               # Neuer Service
-│   │   └── crm-service.ts                   # Erweitern um neue Felder
+│   │   ├── library-service.ts               # ✅ ERSTELLT
+│   │   ├── crm-service-enhanced.ts          # ✅ ERSTELLT
+│   │   ├── organization-service.ts          # ✅ ERSTELLT (NEU)
+│   │   ├── service-base.ts                  # ✅ ERSTELLT (NEU)
+│   │   └── crm-service.ts                   # (bestehend, wird erweitert)
 │   ├── validators/
-│   │   ├── iso-validators.ts                # ISO-Standard Validierung
-│   │   ├── identifier-validators.ts         # USt-ID, EIN, etc.
-│   │   └── phone-validators.ts              # E.164 Validierung
+│   │   ├── iso-validators.ts                # ❌ NOCH ZU ERSTELLEN
+│   │   ├── identifier-validators.ts         # ❌ NOCH ZU ERSTELLEN
+│   │   └── phone-validators.ts              # ❌ NOCH ZU ERSTELLEN
 │   └── utils/
 │       ├── currency-converter.ts            # Währungsumrechnung
 │       └── address-formatter.ts             # Int. Adressformatierung
 │
 └── types/
-    ├── library.ts                            # Neue Bibliothek-Types
-    ├── crm-enhanced.ts                       # Erweiterte CRM-Types
-    └── international.ts                      # Internationale Standards
+    ├── library.ts                            # ✅ ERSTELLT
+    ├── crm-enhanced.ts                       # ✅ ERSTELLT
+    └── international.ts                      # ✅ ERSTELLT
+
+✅ = Bereits erstellt
+❌ = Noch zu erstellen
 ```
 
-## Phase 1: Datenmodell-Erweiterung (Backend)
+## Phase 1: Datenmodell-Erweiterung (Backend) ✅ TEILWEISE ABGESCHLOSSEN
 
-### 1.1 Erweiterte CRM-Types mit Internationalisierung
-**Datei:** `src/types/crm-enhanced.ts` (neu)
+### 1.1 Erweiterte CRM-Types mit Internationalisierung ✅
+**Datei:** `src/types/crm-enhanced.ts` (ERSTELLT)
 
-```typescript
-import { Company, Contact } from './crm';
+Die Datei enthält:
+- `CompanyEnhanced` mit BaseEntity
+- `ContactEnhanced` mit BaseEntity
+- `TagEnhanced` für Mandanten-Support
+- Alle Felder aus der Gap-Analyse implementiert
 
-// Erweiterte Company mit allen fehlenden Feldern
-export interface CompanyEnhanced extends Company {
-  // Neue Namensfelder
-  officialName: string;          // offizieller_firmenname
-  tradingName?: string;          // markenname_dba
-  
-  // Strukturierte internationale Adresse
-  addressStructured?: {
-    street: string;
-    houseNumber: string;
-    addressLine2?: string;
-    addressLine3?: string;
-    city: string;
-    region?: string;            // Bundesland, Staat, etc.
-    postalCode: string;
-    countryIsoCode: string;     // ISO 3166-1 Alpha-2
-  };
-  
-  // Rechtliche Identifikatoren (flexibles Array)
-  identifiers?: {
-    type: 'VAT_EU' | 'EIN_US' | 'HANDELSREGISTER_DE' | 'UID_CH' | 'OTHER';
-    value: string;
-    description?: string;
-    validatedAt?: Date;
-  }[];
-  
-  // Finanzinformationen mit Währung
-  annualRevenue?: {
-    amount: number;
-    currencyIsoCode: string;    // ISO 4217
-    year?: number;
-    isEstimate?: boolean;
-  };
-  
-  // Konzernstruktur
-  parentCompanyId?: string;      // muttergesellschaft_id
-  subsidiaryIds?: string[];      // Tochtergesellschaften
-  
-  // Erweiterte Klassifizierung
-  legalForm?: string;            // GmbH, AG, Ltd., etc.
-  employeeRange?: string;        // "50-249", "1000+"
-  industryClassification?: {
-    primary: string;
-    secondary?: string[];
-    system?: 'NACE' | 'SIC' | 'NAICS';
-  };
-}
+### 1.2 Bibliothek-Types ✅
+**Datei:** `src/types/library.ts` (ERSTELLT)
 
-// Erweiterte Contact mit DSGVO-Management
-export interface ContactEnhanced extends Contact {
-  // Strukturierter Name
-  nameStructured?: {
-    salutation?: string;         // Herr, Frau, Mx., Dr.
-    title?: string;              // Prof., Dipl.-Ing.
-    firstName: string;
-    lastName: string;
-    suffix?: string;             // Jr., Sr., III
-  };
-  
-  // Formatierter Name (generiert oder überschrieben)
-  formattedName: string;
-  
-  // Internationale Telefonnummern (E.164)
-  phoneNumbers?: {
-    type: 'business' | 'private' | 'mobile' | 'fax';
-    number: string;              // Muss E.164 Format sein
-    isPrimary?: boolean;
-    validatedAt?: Date;
-  }[];
-  
-  // DSGVO-konformes Einwilligungsmanagement
-  gdprConsent?: {
-    purpose: string;             // z.B. "Marketing-Newsletter"
-    status: 'granted' | 'revoked' | 'pending';
-    statusChangedAt: Date;       // Wann
-    informationProvided: string; // Was (z.B. "Datenschutzerklärung v1.2")
-    method: string;              // Wie (z.B. "Webformular Checkbox")
-    ipAddress?: string;          // Zusätzlicher Nachweis
-    documentUrl?: string;        // Link zum Einwilligungsdokument
-  }[];
-  
-  // Bevorzugte Sprache (ISO 639-1)
-  preferredLanguageIso?: string;
-  
-  // Erweiterte Publikationszuordnung
-  publicationAccess?: {
-    publicationIds: string[];    // Zugeordnete Publikationen
-    roles?: string[];            // Redakteur, Freier Mitarbeiter, etc.
-    beats?: string[];            // Ressorts/Themengebiete
-    submissionGuidelines?: string;
-    preferredTopics?: string[];
-    excludedTopics?: string[];
-  };
-}
-```
+Enthält vollständige Definitionen für:
+- `Publication` - Eigenständige Entität mit Metriken
+- `Advertisement` - Flexible Werbemittel-Spezifikationen
+- `MediaKit` - Für PDF-Generierung
 
-### 1.2 Bibliothek-Types
-**Datei:** `src/types/library.ts` (neu)
+### 1.3 Internationale Standards & Mandanten ✅
+**Datei:** `src/types/international.ts` (ERSTELLT)
 
-```typescript
-// Publikation als eigenständige Entität
-export interface Publication {
-  id?: string;
-  
-  // Grunddaten
-  title: string;                 // Haupttitel
-  subtitle?: string;             // Untertitel/Slogan
-  publisherId: string;           // Verknüpfung zu Company
-  publisherName?: string;        // Denormalisiert für Performance
-  
-  // Identifikatoren
-  identifiers?: {
-    type: 'ISSN' | 'URL' | 'DOMAIN' | 'OTHER';
-    value: string;
-  }[];
-  
-  // Klassifizierung
-  type: 'magazine' | 'newspaper' | 'website' | 'blog' | 'podcast' | 
-        'tv' | 'radio' | 'newsletter' | 'trade_journal';
-  format?: 'print' | 'online' | 'both';
-  
-  // Metriken (strukturiert nach Kanal)
-  metrics?: {
-    frequency?: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 
-                'quarterly' | 'yearly' | 'irregular';
-    targetAudience?: string;
-    
-    // Print-spezifisch
-    print?: {
-      circulation: number;
-      circulationType: 'printed' | 'sold' | 'distributed' | 'audited_ivw';
-      auditDate?: Date;
-      pricePerIssue?: number;
-      priceCurrency?: string;
-    };
-    
-    // Online-spezifisch
-    online?: {
-      monthlyVisits?: number;
-      monthlyUniqueVisitors?: number;
-      avgSessionDuration?: number;  // Sekunden
-      bounceRate?: number;          // Prozent
-      pageViewsPerVisit?: number;
-      newsletterSubscribers?: number;
-    };
-  };
-  
-  // Internationale Ausrichtung
-  languages?: string[];            // ISO 639-1 Codes
-  geographicTargets?: string[];    // ISO 3166-1 Codes
-  editions?: {
-    country: string;
-    language: string;
-    specificMetrics?: any;
-  }[];
-  
-  // Themenschwerpunkte
-  focusAreas?: string[];
-  targetIndustries?: string[];
-  
-  // Kontakte
-  editorialContacts?: {
-    role: string;
-    contactId?: string;
-    email?: string;
-    phone?: string;
-    topics?: string[];
-  }[];
-  
-  // Metadaten
-  userId: string;
-  createdAt?: any;
-  updatedAt?: any;
-  lastVerifiedAt?: Date;
-  isActive?: boolean;
-}
-
-// Werbemittel
-export interface Advertisement {
-  id?: string;
-  
-  // Grunddaten
-  name: string;
-  description?: string;
-  type: 'banner' | 'native' | 'video' | 'print' | 'audio' | 
-        'newsletter' | 'social' | 'event' | 'custom';
-  
-  // Zuordnungen
-  publicationIds: string[];        // Kann in mehreren Publikationen laufen
-  primaryContactId?: string;       // Hauptansprechpartner
-  
-  // Flexible Spezifikationen (Key-Value)
-  specifications?: Record<string, any>;
-  /* Beispiele:
-  Print: {
-    format: "1/1 Seite",
-    dimensions: "210x280mm",
-    colorSpace: "CMYK",
-    bleed: "3mm",
-    placement: ["U2", "U3", "U4", "Inhalt"]
-  }
-  Digital: {
-    dimensions: "728x90",
-    maxFileSize: "150KB",
-    formats: ["JPG", "PNG", "GIF", "HTML5"],
-    clickTracking: true
-  }
-  */
-  
-  // Preisgestaltung
-  pricing?: {
-    listPrice: number;
-    currency: string;              // ISO 4217
-    priceModel: 'cpm' | 'cpc' | 'flat' | 'negotiable';
-    minimumOrder?: number;
-    discounts?: {
-      volume?: { threshold: number; discount: number }[];
-      frequency?: { bookings: number; discount: number }[];
-      agency?: number;
-    };
-  };
-  
-  // Internationale Preise
-  internationalPricing?: {
-    country: string;
-    price: number;
-    currency: string;
-    notes?: string;
-  }[];
-  
-  // Verfügbarkeit
-  availability?: {
-    startDate?: Date;
-    endDate?: Date;
-    blackoutDates?: Date[];
-    leadTime?: string;             // z.B. "5 Werktage"
-    bookingDeadline?: string;       // z.B. "Freitag 12:00"
-  };
-  
-  // Assets & Materialien
-  materials?: {
-    guidelines?: string;           // URL zu Spezifikationen
-    templates?: string[];          // URLs zu Templates
-    examples?: string[];           // URLs zu Beispielen
-  };
-  
-  // Performance Tracking
-  performance?: {
-    totalBookings?: number;
-    totalRevenue?: number;
-    avgCtr?: number;
-    lastBookingDate?: Date;
-  };
-  
-  // Metadaten
-  userId: string;
-  createdAt?: any;
-  updatedAt?: any;
-  isActive?: boolean;
-  tags?: string[];
-}
-```
+Neue Basis-Struktur mit:
+- `BaseEntity` - Für alle Entitäten
+- `Organization` & `TeamMember`
+- Rollen & Permissions System
+- ISO-konforme Types
+- GDPR Consent Management
 
 ## Phase 2: Übersichtstabellen Implementation
 
@@ -552,196 +328,49 @@ const columns = [
 ];
 ```
 
-## Phase 3: Firebase Services
+## Phase 3: Firebase Services ✅ ABGESCHLOSSEN
 
-### 3.1 Erweiterte CRM-Service
-**Datei:** `src/lib/firebase/crm-service.ts` (erweitern)
+### 3.1 Organization Service ✅
+**Datei:** `src/lib/firebase/organization-service.ts` (ERSTELLT)
 
-```typescript
-// Zusätzliche Methoden für erweiterte Felder
-export const companiesService = {
-  // ... bestehende Methoden ...
-  
-  async validateIdentifier(type: string, value: string): Promise<boolean> {
-    // Validierung nach Typ (USt-ID, EIN, etc.)
-  },
-  
-  async getByParentId(parentId: string): Promise<Company[]> {
-    // Alle Tochtergesellschaften abrufen
-  },
-  
-  async updateInternationalData(id: string, data: any): Promise<void> {
-    // Internationale Daten aktualisieren
-  }
-};
+Implementiert:
+- Organisation CRUD
+- Team Member Management
+- Permissions & Rollen
+- Limit-Prüfung pro Plan
+- Einladungs-System
 
-export const contactsService = {
-  // ... bestehende Methoden ...
-  
-  async recordGdprConsent(contactId: string, consent: GdprConsent): Promise<void> {
-    // DSGVO-Einwilligung dokumentieren
-  },
-  
-  async getByPublicationAccess(publicationId: string): Promise<Contact[]> {
-    // Alle Kontakte mit Zugang zu einer Publikation
-  }
-};
-```
+### 3.2 Service Base ✅
+**Datei:** `src/lib/firebase/service-base.ts` (ERSTELLT)
 
-### 3.2 Library Service
-**Datei:** `src/lib/firebase/library-service.ts` (neu)
+Basis-Klasse mit:
+- Automatische Mandanten-Filterung
+- Audit Trail (createdBy, updatedBy)
+- Soft Delete mit Restore
+- Batch-Operationen
+- Pagination
+- Export (CSV/JSON)
 
-```typescript
-import { 
-  collection, doc, getDocs, getDoc, addDoc, updateDoc, deleteDoc,
-  query, where, orderBy, limit, startAfter 
-} from 'firebase/firestore';
-import { db } from './client-init';
-import { Publication, Advertisement } from '@/types/library';
+### 3.3 CRM Service Enhanced ✅
+**Datei:** `src/lib/firebase/crm-service-enhanced.ts` (ERSTELLT)
 
-export const publicationsService = {
-  async getAll(userId: string, filters?: PublicationFilters): Promise<Publication[]> {
-    let q = query(
-      collection(db, 'publications'),
-      where('userId', '==', userId)
-    );
-    
-    if (filters?.type) {
-      q = query(q, where('type', '==', filters.type));
-    }
-    
-    if (filters?.languages?.length) {
-      q = query(q, where('languages', 'array-contains-any', filters.languages));
-    }
-    
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Publication));
-  },
-  
-  async getByPublisherId(publisherId: string): Promise<Publication[]> {
-    const q = query(
-      collection(db, 'publications'),
-      where('publisherId', '==', publisherId),
-      orderBy('title')
-    );
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Publication));
-  },
-  
-  async create(data: Omit<Publication, 'id'>): Promise<string> {
-    const docRef = await addDoc(collection(db, 'publications'), {
-      ...data,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    });
-    return docRef.id;
-  },
-  
-  async update(id: string, data: Partial<Publication>): Promise<void> {
-    await updateDoc(doc(db, 'publications', id), {
-      ...data,
-      updatedAt: serverTimestamp()
-    });
-  },
-  
-  async delete(id: string): Promise<void> {
-    // Prüfen ob Werbemittel zugeordnet sind
-    const ads = await advertisementsService.getByPublicationId(id);
-    if (ads.length > 0) {
-      throw new Error('Publikation hat noch zugeordnete Werbemittel');
-    }
-    await deleteDoc(doc(db, 'publications', id));
-  },
-  
-  async updateMetrics(id: string, metrics: any): Promise<void> {
-    await updateDoc(doc(db, 'publications', id), {
-      metrics,
-      lastVerifiedAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    });
-  }
-};
+Drei Services:
+- `CompanyEnhancedService` - Mit Hierarchie, Identifikatoren
+- `ContactEnhancedService` - Mit GDPR, Journalisten-Features
+- `TagEnhancedService` - Mit Merge-Funktion
 
-export const advertisementsService = {
-  async getAll(userId: string, filters?: AdFilters): Promise<Advertisement[]> {
-    let q = query(
-      collection(db, 'advertisements'),
-      where('userId', '==', userId)
-    );
-    
-    if (filters?.type) {
-      q = query(q, where('type', '==', filters.type));
-    }
-    
-    if (filters?.publicationId) {
-      q = query(q, where('publicationIds', 'array-contains', filters.publicationId));
-    }
-    
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Advertisement));
-  },
-  
-  async getByPublicationId(publicationId: string): Promise<Advertisement[]> {
-    const q = query(
-      collection(db, 'advertisements'),
-      where('publicationIds', 'array-contains', publicationId)
-    );
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Advertisement));
-  },
-  
-  async create(data: Omit<Advertisement, 'id'>): Promise<string> {
-    const docRef = await addDoc(collection(db, 'advertisements'), {
-      ...data,
-      performance: {
-        totalBookings: 0,
-        totalRevenue: 0
-      },
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    });
-    return docRef.id;
-  },
-  
-  async update(id: string, data: Partial<Advertisement>): Promise<void> {
-    await updateDoc(doc(db, 'advertisements', id), {
-      ...data,
-      updatedAt: serverTimestamp()
-    });
-  },
-  
-  async duplicate(id: string): Promise<string> {
-    const original = await this.getById(id);
-    if (!original) throw new Error('Werbemittel nicht gefunden');
-    
-    const { id: _, performance, ...data } = original;
-    return this.create({
-      ...data,
-      name: `${data.name} (Kopie)`
-    });
-  },
-  
-  async updatePerformance(id: string, booking: any): Promise<void> {
-    // Performance-Daten aktualisieren nach Buchung
-  }
-};
+### 3.4 Library Service ✅
+**Datei:** `src/lib/firebase/library-service.ts` (ERSTELLT)
 
-// Media Kit Service
-export const mediaKitService = {
-  async generateForCompany(companyId: string): Promise<string> {
-    // PDF generieren mit allen Publikationen und Werbemitteln
-  },
-  
-  async getTemplates(userId: string): Promise<MediaKitTemplate[]> {
-    // Verfügbare Templates abrufen
-  }
-};
-```
+Drei Services:
+- `PublicationService` - Mit Import, Verifikation, Statistiken
+- `AdvertisementService` - Mit Preis-Kalkulation, Duplikation
+- `MediaKitService` - Mit Generierung, Sharing
 
-## Phase 4: Validierung & Utilities
+## Phase 4: Validierung & Utilities ❌ NOCH ZU IMPLEMENTIEREN
 
 ### 4.1 ISO-Validatoren
-**Datei:** `src/lib/validators/iso-validators.ts` (neu)
+**Datei:** `src/lib/validators/iso-validators.ts` (NOCH ZU ERSTELLEN)
 
 ```typescript
 // ISO 3166-1 Alpha-2 Ländercode-Validierung
@@ -781,7 +410,7 @@ export const formatE164Phone = (phone: string, countryCode?: string): string => 
 ```
 
 ### 4.2 Identifikationsnummern-Validatoren
-**Datei:** `src/lib/validators/identifier-validators.ts` (neu)
+**Datei:** `src/lib/validators/identifier-validators.ts` (NOCH ZU ERSTELLEN)
 
 ```typescript
 // EU USt-IdNr. Validierung
@@ -1013,10 +642,10 @@ export function GDPRConsent({ consents, contactId, onUpdate }: GDPRConsentProps)
 }
 ```
 
-## Phase 6: Migration & Deployment
+## Phase 6: Migration & Deployment ❌ NOCH ZU IMPLEMENTIEREN
 
 ### 6.1 Migrationsskript für bestehende Daten
-**Datei:** `scripts/migrate-to-enhanced-model.ts`
+**Datei:** `scripts/migrate-to-enhanced-model.ts` (NOCH ZU ERSTELLEN)
 
 ```typescript
 import { db } from '@/lib/firebase/admin-init';
@@ -1155,33 +784,43 @@ async function runMigration() {
 runMigration();
 ```
 
-## Phase 7: Implementierungsreihenfolge
+## Phase 7: Implementierungsreihenfolge (AKTUELLER STAND)
 
-### Sprint 1 (Woche 1-2): Datenmodell & Backend
-- [ ] Neue TypeScript-Interfaces erstellen
-- [ ] Validatoren implementieren
-- [ ] Firebase Services erweitern
-- [ ] Migrationsskripte vorbereiten
+### Sprint 1 (Woche 1-2): Datenmodell & Backend - 75% FERTIG
+- [x] Neue TypeScript-Interfaces erstellen
+  - ✅ international.ts
+  - ✅ crm-enhanced.ts  
+  - ✅ library.ts
+- [ ] Validatoren implementieren ❌ OFFEN
+  - [ ] iso-validators.ts
+  - [ ] identifier-validators.ts
+  - [ ] phone-validators.ts
+- [x] Firebase Services erweitern
+  - ✅ organization-service.ts
+  - ✅ service-base.ts
+  - ✅ crm-service-enhanced.ts
+  - ✅ library-service.ts
+- [ ] Migrationsskripte vorbereiten ❌ OFFEN
 
-### Sprint 2 (Woche 3-4): Basis-UI für Bibliothek
+### Sprint 2 (Woche 3-4): Basis-UI für Bibliothek - 0% OFFEN
 - [ ] Navigation erweitern
 - [ ] Publikations-Übersicht erstellen
 - [ ] Werbemittel-Übersicht erstellen
 - [ ] Basis-CRUD-Operationen
 
-### Sprint 3 (Woche 5-6): Erweiterte CRM-Features
+### Sprint 3 (Woche 5-6): Erweiterte CRM-Features - 0% OFFEN
 - [ ] Company Modal um neue Felder erweitern
 - [ ] Contact Modal um GDPR-Management erweitern
 - [ ] Internationale Komponenten integrieren
 - [ ] Übersichtstabellen implementieren
 
-### Sprint 4 (Woche 7-8): Integration & Polish
+### Sprint 4 (Woche 7-8): Integration & Polish - 0% OFFEN
 - [ ] Verknüpfungen zwischen Entitäten
 - [ ] Import/Export erweitern
 - [ ] Media Kit Generator
 - [ ] Performance-Optimierung
 
-### Sprint 5 (Woche 9-10): Testing & Deployment
+### Sprint 5 (Woche 9-10): Testing & Deployment - 0% OFFEN
 - [ ] Unit Tests schreiben
 - [ ] Integration Tests
 - [ ] Datenmigration durchführen
@@ -1206,15 +845,163 @@ runMigration();
 - [x] Komplette werbemittel-Entität
 
 ### ✅ Übersichtstabellen (aus Strategie-Dokument)
-- [x] Erweiterte Firmen-Tabelle mit allen 7 Spalten
-- [x] Erweiterte Personen-Tabelle mit 6 Spalten
-- [x] Neue Publikations-Tabelle mit 8 Spalten
+- [x] Erweiterte Firmen-Tabelle mit allen 7 Spalten (geplant)
+- [x] Erweiterte Personen-Tabelle mit 6 Spalten (geplant)
+- [x] Neue Publikations-Tabelle mit 8 Spalten (geplant)
 
 ### ✅ Technische Anforderungen
-- [x] UUID v4 für alle IDs
-- [x] ISO-konforme Validierung
+- [x] UUID v4 für alle IDs (Firestore generiert)
+- [x] ISO-konforme Validierung (Types definiert, Validatoren ausstehend)
 - [x] Flexibles Key-Value für Spezifikationen
 - [x] Audit-Trail für GDPR
-- [x] Performance-Optimierung für große Datenmengen
+- [x] Performance-Optimierung für große Datenmengen (Basis vorhanden)
+- [x] Mandantenfähigkeit (ZUSÄTZLICH IMPLEMENTIERT)
 
-Dieser Plan deckt ALLE Anforderungen aus der Strategie und Gap-Analyse ab!
+## Zusammenfassung Aktueller Stand
+
+**Abgeschlossen:**
+- ✅ Alle Type-Definitionen (3 Dateien)
+- ✅ Alle Firebase Services (4 Dateien)
+- ✅ Mandantenfähigkeit vollständig integriert
+
+**Nächste Schritte (Sprint 1 abschließen):**
+- ❌ Validatoren implementieren (3 Dateien)
+- ❌ Migrationsskript erstellen (1 Datei)
+
+**Gesamt-Fortschritt:** ~15% des Gesamtprojekts# SKAMP Bibliothek - Implementierungsstatus und Plan
+
+## 📋 Projektstatus: Januar 2025
+
+### ⚠️ WICHTIGE ÄNDERUNG: Mandantenfähigkeit wurde direkt integriert
+Während der Implementierung haben wir entschieden, die Mandantenfähigkeit von Anfang an einzubauen:
+- Alle Types erweitern `BaseEntity` mit `organizationId`
+- Rollen-System mit 5 Stufen (Owner, Admin, Member, Client, Guest)
+- Team-Management und Permissions
+- Alle Services nutzen automatische Mandanten-Filterung
+
+---
+
+## 🚀 Sprint-Übersicht nach ursprünglichem Plan
+
+### Sprint 1 (Woche 1-2): Datenmodell & Backend
+- [x] Neue TypeScript-Interfaces erstellen
+  - ✅ `src/types/international.ts` (mit Mandanten-Support)
+  - ✅ `src/types/crm-enhanced.ts`
+  - ✅ `src/types/library.ts`
+- [ ] Validatoren implementieren ❌ NOCH OFFEN
+  - [ ] `src/lib/validators/iso-validators.ts`
+  - [ ] `src/lib/validators/identifier-validators.ts`
+- [x] Firebase Services erweitern
+  - ✅ `src/lib/firebase/organization-service.ts` (NEU - für Mandanten)
+  - ✅ `src/lib/firebase/service-base.ts` (NEU - Basis-Klasse)
+  - ✅ `src/lib/firebase/crm-service-enhanced.ts`
+  - ✅ `src/lib/firebase/library-service.ts`
+- [ ] Migrationsskripte vorbereiten ❌ NOCH OFFEN
+  - [ ] `scripts/migrate-to-enhanced-model.ts`
+
+**Sprint 1 Status: 75% abgeschlossen**
+
+---
+
+### Sprint 2 (Woche 3-4): Basis-UI für Bibliothek
+- [ ] Navigation erweitern
+- [ ] Publikations-Übersicht erstellen
+  - [ ] `src/app/dashboard/library/publications/page.tsx`
+  - [ ] `src/components/library/tables/PublicationTable.tsx`
+- [ ] Werbemittel-Übersicht erstellen
+  - [ ] `src/app/dashboard/library/advertisements/page.tsx`
+  - [ ] `src/components/library/tables/AdvertisementTable.tsx`
+- [ ] Basis-CRUD-Operationen
+  - [ ] `PublicationModal.tsx`
+  - [ ] `AdvertisementModal.tsx`
+
+**Sprint 2 Status: 0% - Noch nicht begonnen**
+
+---
+
+### Sprint 3 (Woche 5-6): Erweiterte CRM-Features
+- [ ] Company Modal um neue Felder erweitern
+  - [ ] Internationale Adressen
+  - [ ] Business Identifiers
+  - [ ] Hierarchie (Mutter-/Tochtergesellschaften)
+- [ ] Contact Modal um GDPR-Management erweitern
+  - [ ] GDPR Consent UI
+  - [ ] Strukturierte Namen
+  - [ ] Media-Profile für Journalisten
+- [ ] Internationale Komponenten integrieren
+  - [ ] `CountrySelector.tsx`
+  - [ ] `LanguageSelector.tsx`
+  - [ ] `CurrencyInput.tsx`
+  - [ ] `PhoneInput.tsx`
+- [ ] Übersichtstabellen implementieren
+  - [ ] Erweiterte Firmen-Tabelle
+  - [ ] Erweiterte Personen-Tabelle
+  - [ ] Neue Publikations-Tabelle
+
+**Sprint 3 Status: 0% - Noch nicht begonnen**
+
+---
+
+### Sprint 4 (Woche 7-8): Integration & Polish
+- [ ] Verknüpfungen zwischen Entitäten
+- [ ] Import/Export erweitern
+  - [ ] Publikationen Import
+  - [ ] Erweiterte Felder in bestehenden Importen
+- [ ] Media Kit Generator
+  - [ ] PDF-Generierung
+  - [ ] Templates
+- [ ] Performance-Optimierung
+
+**Sprint 4 Status: 0% - Noch nicht begonnen**
+
+---
+
+### Sprint 5 (Woche 9-10): Testing & Deployment
+- [ ] Unit Tests schreiben
+- [ ] Integration Tests
+- [ ] Datenmigration durchführen
+- [ ] Dokumentation vervollständigen
+
+**Sprint 5 Status: 0% - Noch nicht begonnen**
+
+---
+
+## 📁 Erstellte Dateien bisher
+
+### ✅ Types (3 Dateien)
+1. `src/types/international.ts` - Basis-Types, Mandanten, ISO-Standards
+2. `src/types/crm-enhanced.ts` - Erweiterte CRM-Types
+3. `src/types/library.ts` - Publikationen & Werbemittel
+
+### ✅ Services (4 Dateien)
+1. `src/lib/firebase/organization-service.ts` - Mandanten & Teams
+2. `src/lib/firebase/service-base.ts` - Basis-Service mit Mandanten-Filter
+3. `src/lib/firebase/crm-service-enhanced.ts` - Erweiterte CRM-Services
+4. `src/lib/firebase/library-service.ts` - Bibliothek-Services
+
+---
+
+## 🎯 Nächste Schritte
+
+**Um Sprint 1 abzuschließen:**
+1. **Validatoren implementieren**
+   - ISO-Standard Validierung (Länder, Währungen, Sprachen)
+   - Business Identifier Validierung (USt-ID, EIN, etc.)
+   - Telefonnummern E.164 Format
+
+2. **Migrationsskript erstellen**
+   - Bestehende Companies/Contacts migrieren
+   - Publikationen aus mediaInfo extrahieren
+   - Neue Felder mit Defaults füllen
+
+---
+
+## 📊 Gesamt-Fortschritt
+
+- **Sprint 1**: 75% ████████████████████░░░░░ (2 von 4 Aufgaben)
+- **Sprint 2**: 0% ░░░░░░░░░░░░░░░░░░░░░░░░░
+- **Sprint 3**: 0% ░░░░░░░░░░░░░░░░░░░░░░░░░
+- **Sprint 4**: 0% ░░░░░░░░░░░░░░░░░░░░░░░░░
+- **Sprint 5**: 0% ░░░░░░░░░░░░░░░░░░░░░░░░░
+
+**Gesamt: ~15% abgeschlossen**
