@@ -199,11 +199,6 @@ export abstract class BaseService<T extends BaseEntity> {
     try {
       const constraints: QueryConstraint[] = [];
 
-      // Soft Delete Filter
-      if (!options.includeDeleted) {
-        constraints.push(where('deletedAt', '==', null));
-      }
-
       // Sortierung
       if (options.orderBy) {
         constraints.push(
@@ -226,10 +221,17 @@ export abstract class BaseService<T extends BaseEntity> {
       const q = this.getBaseQuery(organizationId, constraints);
       const snapshot = await getDocs(q);
 
-      return snapshot.docs.map(doc => ({
+      const documents = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       } as T));
+
+      // Client-seitige Filterung für Soft Delete
+      if (!options.includeDeleted) {
+        return documents.filter(doc => !doc.deletedAt);
+      }
+
+      return documents;
     } catch (error) {
       console.error(`Error fetching all ${this.collectionName}:`, error);
       return [];
@@ -246,11 +248,6 @@ export abstract class BaseService<T extends BaseEntity> {
   ): Promise<PaginationResult<T>> {
     try {
       const constraints: QueryConstraint[] = [];
-
-      // Soft Delete Filter
-      if (!options.includeDeleted) {
-        constraints.push(where('deletedAt', '==', null));
-      }
 
       // Sortierung
       if (options.orderBy) {
@@ -274,10 +271,15 @@ export abstract class BaseService<T extends BaseEntity> {
 
       const docs = snapshot.docs;
       const hasMore = docs.length > pageSize;
-      const data = docs.slice(0, pageSize).map(doc => ({
+      let data = docs.slice(0, pageSize).map(doc => ({
         id: doc.id,
         ...doc.data()
       } as T));
+
+      // Client-seitige Filterung für Soft Delete
+      if (!options.includeDeleted) {
+        data = data.filter(doc => !doc.deletedAt);
+      }
 
       return {
         data,
@@ -300,11 +302,6 @@ export abstract class BaseService<T extends BaseEntity> {
   ): Promise<T[]> {
     try {
       const constraints: QueryConstraint[] = [];
-
-      // Soft Delete Filter
-      if (!options.includeDeleted) {
-        constraints.push(where('deletedAt', '==', null));
-      }
 
       // Dynamische Filter
       Object.entries(filters).forEach(([field, value]) => {
@@ -337,10 +334,17 @@ export abstract class BaseService<T extends BaseEntity> {
       const q = this.getBaseQuery(organizationId, constraints);
       const snapshot = await getDocs(q);
 
-      return snapshot.docs.map(doc => ({
+      const documents = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       } as T));
+
+      // Client-seitige Filterung für Soft Delete
+      if (!options.includeDeleted) {
+        return documents.filter(doc => !doc.deletedAt);
+      }
+
+      return documents;
     } catch (error) {
       console.error(`Error searching ${this.collectionName}:`, error);
       return [];
@@ -469,10 +473,6 @@ export abstract class BaseService<T extends BaseEntity> {
     try {
       const constraints: QueryConstraint[] = [];
 
-      if (!includeDeleted) {
-        constraints.push(where('deletedAt', '==', null));
-      }
-
       // Filter anwenden
       Object.entries(filters).forEach(([field, value]) => {
         if (value !== undefined && value !== null) {
@@ -483,6 +483,12 @@ export abstract class BaseService<T extends BaseEntity> {
       const q = this.getBaseQuery(organizationId, constraints);
       const snapshot = await getDocs(q);
       
+      // Client-seitige Filterung für Soft Delete
+      if (!includeDeleted) {
+        const documents = snapshot.docs.map(doc => doc.data());
+        return documents.filter(doc => !doc.deletedAt).length;
+      }
+
       return snapshot.size;
     } catch (error) {
       console.error(`Error counting ${this.collectionName}:`, error);

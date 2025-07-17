@@ -53,6 +53,7 @@ export default function PublicationsPage() {
   const [filterVerified, setFilterVerified] = useState<boolean | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedPublication, setSelectedPublication] = useState<Publication | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -69,7 +70,9 @@ export default function PublicationsPage() {
 
     try {
       setLoading(true);
+      console.log('Loading publications for user:', user.uid);
       const data = await publicationService.getAll(user.uid);
+      console.log('Loaded publications:', data.length, data);
       setPublications(data);
     } catch (error) {
       console.error("Error loading publications:", error);
@@ -149,10 +152,13 @@ export default function PublicationsPage() {
             <ArrowDownTrayIcon className="h-4 w-4" />
             Importieren
           </Button>
-  <Button onClick={() => setIsModalOpen(true)}> {/* <-- onClick hinzufügen */}
-    <PlusIcon className="h-4 w-4" />
-    Neue Publikation
-  </Button>
+          <Button onClick={() => {
+            setSelectedPublication(null);
+            setIsModalOpen(true);
+          }}>
+            <PlusIcon className="h-4 w-4" />
+            Neue Publikation
+          </Button>
         </div>
       </div>
 
@@ -294,12 +300,15 @@ export default function PublicationsPage() {
                     </div>
                   </td>
                   <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                    <Link
-                      href={`/dashboard/library/publications/${pub.id}`}
+                    <button
+                      onClick={() => {
+                        setSelectedPublication(pub);
+                        setIsModalOpen(true);
+                      }}
                       className="text-[#005fab] hover:text-[#004a8c]"
                     >
                       Bearbeiten
-                    </Link>
+                    </button>
                   </td>
                 </tr>
               ))
@@ -341,15 +350,24 @@ export default function PublicationsPage() {
           </div>
         </div>
       </div>
-          {/* Modal hier einfügen */}
-    <PublicationModal
-      isOpen={isModalOpen}
-      onClose={() => setIsModalOpen(false)}
-      onSuccess={() => {
-        setIsModalOpen(false);
-        loadPublications(); // Lädt die Liste neu
-      }}
-    />
+
+      {/* Modal */}
+      <PublicationModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedPublication(null);
+        }}
+        publication={selectedPublication || undefined}
+        onSuccess={async () => {
+          setIsModalOpen(false);
+          setSelectedPublication(null);
+          // Kleine Verzögerung, damit Firebase die Daten vollständig schreibt
+          setTimeout(() => {
+            loadPublications();
+          }, 500);
+        }}
+      />
     </div>
   );
 }
