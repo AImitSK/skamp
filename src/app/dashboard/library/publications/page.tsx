@@ -8,6 +8,7 @@ import type { Publication } from "@/types/library";
 import { Heading } from "@/components/heading";
 import { Button } from "@/components/button";
 import { Badge } from "@/components/badge";
+import { PublicationModal } from "./PublicationModal"; 
 import { 
   PlusIcon, 
   MagnifyingGlassIcon,
@@ -51,6 +52,7 @@ export default function PublicationsPage() {
   const [filterType, setFilterType] = useState<string>("all");
   const [filterVerified, setFilterVerified] = useState<boolean | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -147,10 +149,10 @@ export default function PublicationsPage() {
             <ArrowDownTrayIcon className="h-4 w-4" />
             Importieren
           </Button>
-          <Button>
-            <PlusIcon className="h-4 w-4" />
-            Neue Publikation
-          </Button>
+  <Button onClick={() => setIsModalOpen(true)}> {/* <-- onClick hinzufügen */}
+    <PlusIcon className="h-4 w-4" />
+    Neue Publikation
+  </Button>
         </div>
       </div>
 
@@ -339,6 +341,15 @@ export default function PublicationsPage() {
           </div>
         </div>
       </div>
+          {/* Modal hier einfügen */}
+    <PublicationModal
+      isOpen={isModalOpen}
+      onClose={() => setIsModalOpen(false)}
+      onSuccess={() => {
+        setIsModalOpen(false);
+        loadPublications(); // Lädt die Liste neu
+      }}
+    />
     </div>
   );
 }

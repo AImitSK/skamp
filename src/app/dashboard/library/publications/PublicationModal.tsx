@@ -260,16 +260,13 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess }: Pu
 
   return (
     <Dialog open={isOpen} onClose={onClose} className="sm:max-w-4xl">
+      <div className="p-6"> 
+
       <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-4">
         <h3 className="text-lg font-medium leading-6 text-gray-900">
           {publication ? 'Publikation bearbeiten' : 'Neue Publikation'}
         </h3>
-        <button
-          onClick={onClose}
-          className="rounded-md text-gray-400 hover:text-gray-500"
-        >
-          <XMarkIcon className="h-6 w-6" />
-        </button>
+        
       </div>
 
       {/* Tab Navigation */}
@@ -672,6 +669,7 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess }: Pu
           </Button>
         </div>
       </form>
+          </div>
     </Dialog>
   );
 }
