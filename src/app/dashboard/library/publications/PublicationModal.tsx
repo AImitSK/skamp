@@ -4,20 +4,13 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { publicationService } from "@/lib/firebase/library-service";
-import type { Publication, PublicationFormData } from "@/types/library";
+import type { Publication, PublicationType, PublicationFormat, PublicationFrequency } from "@/types/library";
 import type { BaseEntity } from "@/types/international";
 import { Dialog } from "@/components/dialog";
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
 import { Textarea } from "@/components/textarea";
 import { Select } from "@/components/select";
-import { 
-  getAvailableCountries, 
-  getAvailableLanguages,
-  getAvailableCurrencies,
-  type CountryCode,
-  type LanguageCode
-} from "@/lib/validators/iso-validators";
 import { 
   CheckIcon,
   XMarkIcon,
@@ -62,13 +55,46 @@ const circulationTypes = [
   { value: 'audited_ivw', label: 'IVW geprüft' }
 ];
 
+// Mock-Daten für ISO-Validatoren (da diese noch nicht implementiert sind)
+const getAvailableCountries = (lang: string) => [
+  { code: 'DE', name: 'Deutschland', isEu: true },
+  { code: 'AT', name: 'Österreich', isEu: true },
+  { code: 'CH', name: 'Schweiz', isEu: false },
+  { code: 'US', name: 'USA', isEu: false },
+  { code: 'GB', name: 'Großbritannien', isEu: false },
+  { code: 'FR', name: 'Frankreich', isEu: true },
+];
+
+const getAvailableLanguages = () => [
+  { code: 'de', name: 'Deutsch' },
+  { code: 'en', name: 'Englisch' },
+  { code: 'fr', name: 'Französisch' },
+  { code: 'es', name: 'Spanisch' },
+  { code: 'it', name: 'Italienisch' },
+];
+
 export function PublicationModal({ isOpen, onClose, publication, onSuccess }: PublicationModalProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'basic' | 'metrics' | 'identifiers'>('basic');
   
   // Form State
-  const [formData, setFormData] = useState<PublicationFormData>({
+  const [formData, setFormData] = useState<{
+    title: string;
+    publisherId: string;
+    publisherName: string;
+    type: PublicationType;
+    format: PublicationFormat;
+    languages: string[];
+    geographicTargets: string[];
+    focusAreas: string[];
+    verified: boolean;
+    status: 'active' | 'inactive' | 'discontinued' | 'planned';
+    metrics: {
+      frequency: PublicationFrequency;
+    };
+    geographicScope: 'local' | 'regional' | 'national' | 'international' | 'global';
+  }>({
     title: '',
     publisherId: '',
     publisherName: '',
@@ -173,13 +199,13 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess }: Pu
 
     setLoading(true);
     try {
-      // Bereite Daten vor
-      const publicationData: PublicationFormData = {
+      // Bereite Daten vor - ohne organizationId, da es über Context kommt
+      const publicationData: Omit<Publication, keyof BaseEntity | 'organizationId'> = {
         ...formData,
         focusAreas: focusAreasInput.split(',').map(s => s.trim()).filter(Boolean),
         metrics: {
           ...formData.metrics,
-          frequency: (metrics.frequency || 'daily') as any,
+          frequency: (metrics.frequency || 'daily') as PublicationFrequency,
           print: metrics.print.circulation ? {
             circulation: parseInt(metrics.print.circulation),
             circulationType: metrics.print.circulationType
@@ -197,16 +223,18 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess }: Pu
         }))
       };
 
-const data = publicationData; // Explizite Zuweisung
-      
       if (publication?.id) {
-        // Update
-        const updateData = { ...data } as Partial<Publication>;
-        await publicationService.update(user.uid, publication.id, updateData);
+        // Update - übergebe nur die geänderten Felder
+        await publicationService.update(publication.id, publicationData as any, {
+          organizationId: user.uid,
+          userId: user.uid
+        });
       } else {
-        // Create
-        const createData = { ...data } as Omit<Publication, keyof BaseEntity>;
-        await publicationService.create(user.uid, createData);
+        // Create - BaseService fügt organizationId automatisch hinzu
+        await publicationService.create(publicationData as any, {
+          organizationId: user.uid,
+          userId: user.uid
+        });
       }
 
       onSuccess();
@@ -361,12 +389,12 @@ const data = publicationData; // Explizite Zuweisung
                   <label key={lang.code} className="flex items-center space-x-2">
                     <input
                       type="checkbox"
-                      checked={formData.languages.includes(lang.code as LanguageCode)}
+                      checked={formData.languages.includes(lang.code)}
                       onChange={(e) => {
                         if (e.target.checked) {
                           setFormData({ 
                             ...formData, 
-                            languages: [...formData.languages, lang.code as LanguageCode] 
+                            languages: [...formData.languages, lang.code] 
                           });
                         } else {
                           setFormData({ 
@@ -392,12 +420,12 @@ const data = publicationData; // Explizite Zuweisung
                   <label key={country.code} className="flex items-center space-x-2">
                     <input
                       type="checkbox"
-                      checked={formData.geographicTargets.includes(country.code as CountryCode)}
+                      checked={formData.geographicTargets.includes(country.code)}
                       onChange={(e) => {
                         if (e.target.checked) {
                           setFormData({ 
                             ...formData, 
-                            geographicTargets: [...formData.geographicTargets, country.code as CountryCode] 
+                            geographicTargets: [...formData.geographicTargets, country.code] 
                           });
                         } else {
                           setFormData({ 
