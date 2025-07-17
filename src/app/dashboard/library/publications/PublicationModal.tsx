@@ -199,24 +199,43 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess }: Pu
 
     setLoading(true);
     try {
+      // Bereite Metriken vor
+      const preparedMetrics: any = {
+        ...formData.metrics,
+        frequency: (metrics.frequency || 'daily') as PublicationFrequency
+      };
+
+      // Nur Print-Metriken hinzufügen, wenn vorhanden
+      if (metrics.print.circulation) {
+        preparedMetrics.print = {
+          circulation: parseInt(metrics.print.circulation),
+          circulationType: metrics.print.circulationType
+        };
+      }
+
+      // Nur Online-Metriken hinzufügen, wenn vorhanden
+      if (metrics.online.monthlyUniqueVisitors) {
+        preparedMetrics.online = {
+          monthlyUniqueVisitors: parseInt(metrics.online.monthlyUniqueVisitors)
+        };
+        
+        if (metrics.online.monthlyPageViews) {
+          preparedMetrics.online.monthlyPageViews = parseInt(metrics.online.monthlyPageViews);
+        }
+        if (metrics.online.avgSessionDuration) {
+          preparedMetrics.online.avgSessionDuration = parseFloat(metrics.online.avgSessionDuration);
+        }
+        if (metrics.online.bounceRate) {
+          preparedMetrics.online.bounceRate = parseFloat(metrics.online.bounceRate);
+        }
+      }
+
       // Bereite Daten vor - ohne organizationId, da es über Context kommt
       const publicationData: Omit<Publication, keyof BaseEntity | 'organizationId'> = {
         ...formData,
+        publisherId: formData.publisherId || user.uid, // Fallback auf userId wenn kein Publisher
         focusAreas: focusAreasInput.split(',').map(s => s.trim()).filter(Boolean),
-        metrics: {
-          ...formData.metrics,
-          frequency: (metrics.frequency || 'daily') as PublicationFrequency,
-          print: metrics.print.circulation ? {
-            circulation: parseInt(metrics.print.circulation),
-            circulationType: metrics.print.circulationType
-          } : undefined,
-          online: metrics.online.monthlyUniqueVisitors ? {
-            monthlyUniqueVisitors: parseInt(metrics.online.monthlyUniqueVisitors),
-            monthlyPageViews: metrics.online.monthlyPageViews ? parseInt(metrics.online.monthlyPageViews) : undefined,
-            avgSessionDuration: metrics.online.avgSessionDuration ? parseFloat(metrics.online.avgSessionDuration) : undefined,
-            bounceRate: metrics.online.bounceRate ? parseFloat(metrics.online.bounceRate) : undefined
-          } : undefined
-        },
+        metrics: preparedMetrics,
         identifiers: identifiers.filter(id => id.value).map(id => ({
           type: id.type,
           value: id.value
