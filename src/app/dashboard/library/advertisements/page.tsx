@@ -15,6 +15,7 @@ import { SearchInput } from "@/components/search-input";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from "@/components/dropdown";
 import { Popover, Transition } from '@headlessui/react';
+import { AdvertisementModal } from "./AdvertisementModal";
 import { 
   PlusIcon, 
   FunnelIcon,
@@ -851,26 +852,23 @@ export default function AdvertisementsPage() {
         </div>
       </div>
 
-      {/* Modal Placeholder */}
+      {/* Advertisement Modal */}
       {showAdModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full">
-            <h2 className="text-lg font-semibold mb-4">
-              {selectedAd ? 'Werbemittel bearbeiten' : 'Neues Werbemittel'}
-            </h2>
-            <p className="text-gray-500 mb-4">
-              AdvertisementModal wird separat implementiert
-            </p>
-            <div className="flex justify-end gap-2">
-              <Button plain onClick={() => {
-                setShowAdModal(false);
-                setSelectedAd(null);
-              }}>
-                Schließen
-              </Button>
-            </div>
-          </div>
-        </div>
+        <AdvertisementModal
+          isOpen={showAdModal}
+          onClose={() => {
+            setShowAdModal(false);
+            setSelectedAd(null);
+          }}
+          advertisement={selectedAd}
+          publications={publications}
+          onSuccess={async () => {
+            setShowAdModal(false);
+            setSelectedAd(null);
+            await loadData();
+            showAlert('success', selectedAd ? 'Werbemittel aktualisiert' : 'Werbemittel erstellt');
+          }}
+        />
       )}
 
       {/* Confirm Dialog */}

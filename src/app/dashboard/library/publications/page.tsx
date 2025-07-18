@@ -9,15 +9,71 @@ import { Heading } from "@/components/heading";
 import { Button } from "@/components/button";
 import { Badge } from "@/components/badge";
 import { PublicationModal } from "./PublicationModal"; 
+import PublicationImportModal from "./PublicationImportModal";
 import { 
   PlusIcon, 
   MagnifyingGlassIcon,
   FunnelIcon,
+  ArrowUpTrayIcon,
   ArrowDownTrayIcon,
   CheckBadgeIcon,
-  GlobeAltIcon
+  GlobeAltIcon,
+  EllipsisVerticalIcon,
+  InformationCircleIcon,
+  CheckIcon,
+  XMarkIcon,
+  ExclamationTriangleIcon
 } from "@heroicons/react/20/solid";
 import Link from "next/link";
+import { Popover, Transition } from '@headlessui/react';
+import { Fragment } from 'react';
+import Papa from 'papaparse';
+
+// Alert Component
+function Alert({ 
+  type = 'info', 
+  title, 
+  message 
+}: { 
+  type?: 'info' | 'success' | 'error' | 'warning';
+  title?: string;
+  message: string;
+}) {
+  const styles = {
+    info: 'bg-blue-50 text-blue-700',
+    success: 'bg-green-50 text-green-700',
+    error: 'bg-red-50 text-red-700',
+    warning: 'bg-yellow-50 text-yellow-700'
+  };
+
+  const icons = {
+    info: InformationCircleIcon,
+    success: CheckIcon,
+    error: XMarkIcon,
+    warning: ExclamationTriangleIcon
+  };
+
+  const Icon = icons[type];
+
+  return (
+    <div className={`rounded-md p-4 ${styles[type].split(' ')[0]}`}>
+      <div className="flex">
+        <div className="shrink-0">
+          <Icon aria-hidden="true" className={`size-5 ${
+            type === 'error' ? 'text-red-400' : 
+            type === 'success' ? 'text-green-400' : 
+            type === 'warning' ? 'text-yellow-400' :
+            'text-blue-400'
+          }`} />
+        </div>
+        <div className="ml-3">
+          {title && <p className={`text-sm font-medium ${styles[type].split(' ')[1]}`}>{title}</p>}
+          <p className={`text-sm ${styles[type].split(' ')[1]}`}>{message}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // Labels für Publikationstypen
 const publicationTypeLabels: Record<string, string> = {
@@ -54,6 +110,8 @@ export default function PublicationsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedPublication, setSelectedPublication] = useState<Publication | null>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'error' | 'warning'; title?: string; message: string } | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -76,6 +134,7 @@ export default function PublicationsPage() {
       setPublications(data);
     } catch (error) {
       console.error("Error loading publications:", error);
+      showAlert('error', 'Fehler beim Laden der Publikationen');
     } finally {
       setLoading(false);
     }
@@ -122,6 +181,51 @@ export default function PublicationsPage() {
     return `${targets.slice(0, 3).join(", ")} +${targets.length - 3}`;
   };
 
+  const showAlert = (type: 'info' | 'success' | 'error' | 'warning', message: string, title?: string) => {
+    setAlert({ type, message, title });
+    setTimeout(() => setAlert(null), 5000);
+  };
+
+  const handleExport = () => {
+    if (filteredPublications.length === 0) {
+      showAlert('warning', 'Keine Publikationen zum Exportieren vorhanden');
+      return;
+    }
+
+    try {
+      const exportData = filteredPublications.map(pub => ({
+        "Titel": pub.title,
+        "Verlag": pub.publisherName || '',
+        "Typ": publicationTypeLabels[pub.type] || pub.type,
+        "Format": pub.format || '',
+        "Website": pub.websiteUrl || '',
+        "Sprachen": pub.languages?.join(', ') || '',
+        "Länder": pub.geographicTargets?.join(', ') || '',
+        "Auflage": pub.metrics?.print?.circulation || '',
+        "Online Besucher": pub.metrics?.online?.monthlyUniqueVisitors || '',
+        "Themenschwerpunkte": pub.focusAreas?.join(', ') || '',
+        "Frequenz": pub.metrics?.frequency ? frequencyLabels[pub.metrics.frequency] : '',
+        "Zielgruppe": pub.metrics?.targetAudience || '',
+        "Verifiziert": pub.verified ? 'Ja' : 'Nein',
+        "Status": pub.status
+      }));
+
+      const csv = Papa.unparse(exportData);
+      const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute('download', `publikationen_export_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      showAlert('success', `${filteredPublications.length} Publikationen exportiert`);
+    } catch (error) {
+      console.error('Export error:', error);
+      showAlert('error', 'Fehler beim Export');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -135,6 +239,11 @@ export default function PublicationsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Alert */}
+      {alert && (
+        <Alert type={alert.type} title={alert.title} message={alert.message} />
+      )}
+
       {/* Header */}
       <div className="md:flex md:items-center md:justify-between">
         <div className="min-w-0 flex-1">
@@ -148,10 +257,43 @@ export default function PublicationsPage() {
             <FunnelIcon className="h-4 w-4" />
             Filter
           </Button>
-          <Button plain>
-            <ArrowDownTrayIcon className="h-4 w-4" />
-            Importieren
-          </Button>
+          
+          {/* Actions Dropdown */}
+          <Popover className="relative">
+            <Popover.Button className="inline-flex items-center justify-center p-2 text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:text-zinc-300 dark:hover:bg-zinc-800">
+              <EllipsisVerticalIcon className="h-5 w-5" />
+            </Popover.Button>
+            
+            <Transition
+              as={Fragment}
+              enter="transition ease-out duration-200"
+              enterFrom="opacity-0 translate-y-1"
+              enterTo="opacity-100 translate-y-0"
+              leave="transition ease-in duration-150"
+              leaveFrom="opacity-100 translate-y-0"
+              leaveTo="opacity-0 translate-y-1"
+            >
+              <Popover.Panel className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-zinc-800 dark:ring-white/10">
+                <div className="py-1">
+                  <button
+                    onClick={() => setShowImportModal(true)}
+                    className="flex w-full items-center gap-3 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                  >
+                    <ArrowUpTrayIcon className="h-5 w-5" />
+                    Import
+                  </button>
+                  <button
+                    onClick={handleExport}
+                    className="flex w-full items-center gap-3 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                  >
+                    <ArrowDownTrayIcon className="h-5 w-5" />
+                    Export
+                  </button>
+                </div>
+              </Popover.Panel>
+            </Transition>
+          </Popover>
+
           <Button onClick={() => {
             setSelectedPublication(null);
             setIsModalOpen(true);
@@ -351,7 +493,7 @@ export default function PublicationsPage() {
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Publication Modal */}
       <PublicationModal
         isOpen={isModalOpen}
         onClose={() => {
@@ -368,6 +510,18 @@ export default function PublicationsPage() {
           }, 500);
         }}
       />
+
+      {/* Import Modal */}
+      {showImportModal && (
+        <PublicationImportModal
+          onClose={() => setShowImportModal(false)}
+          onImportSuccess={() => {
+            setShowImportModal(false);
+            loadPublications();
+            showAlert('success', 'Import erfolgreich abgeschlossen');
+          }}
+        />
+      )}
     </div>
   );
 }
