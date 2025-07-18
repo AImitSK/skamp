@@ -8,7 +8,7 @@ import { Button } from "@/components/button";
 import { Checkbox } from "@/components/checkbox";
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from "@/components/dropdown";
 import { companyTypeLabels } from "@/types/crm";
-import { CompanyEnhanced, COMPANY_STATUS_OPTIONS, LIFECYCLE_STAGE_OPTIONS } from "@/types/crm-enhanced";
+import { CompanyEnhanced, COMPANY_STATUS_OPTIONS, LIFECYCLE_STAGE_OPTIONS, CompanyEnhancedListView } from "@/types/crm-enhanced";
 import { getCurrencyInfo } from "@/lib/validators/iso-validators";
 import {
   EllipsisVerticalIcon,
@@ -77,6 +77,7 @@ export function EnhancedCompanyTable({
       default: return 'zinc';
     }
   };
+
 
   if (viewMode === 'detailed') {
     return (

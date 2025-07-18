@@ -18,7 +18,7 @@ import { CountryCode, LanguageCode } from "@/types/international";
 import { TagInput } from "@/components/tag-input";
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { CountrySelector } from "@/components/country-selector";
-import { LanguageSelector } from "@/components/language-selector";
+import { LanguageSelector, LanguageSelectorMulti } from "@/components/language-selector";
 import { PhoneInput } from "@/components/phone-input";
 import { 
   PlusIcon, 
@@ -1255,9 +1255,9 @@ export default function ContactModalEnhanced({
                   </Field>
                 </div>
 
-                <Field>
+<Field>
                   <Label>Sprachen</Label>
-                  <LanguageSelector
+                  <LanguageSelectorMulti
                     value={formData.personalInfo?.languages || []}
                     onChange={(languages) => setFormData({
                       ...formData,

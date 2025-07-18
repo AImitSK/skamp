@@ -36,10 +36,16 @@ import {
   Squares2X2Icon,
   PhoneIcon,
   EnvelopeIcon,
-  GlobeAltIcon
+  GlobeAltIcon,
+  TagIcon,
+  CurrencyEuroIcon,
+  UsersIcon,
+  MapPinIcon,
+  CalendarIcon
 } from "@heroicons/react/20/solid";
 import { companiesService, contactsService, tagsService } from "@/lib/firebase/crm-service";
-import { Company, Contact, Tag, companyTypeLabels, CompanyType, CompanyEnhanced } from "@/types/crm";
+import { Company, Contact, Tag, companyTypeLabels, CompanyType } from "@/types/crm";
+import { CompanyEnhanced } from "@/types/crm-enhanced";
 import CompanyModal from "./CompanyModal";
 import ContactModal from "./ContactModal";
 import ImportModal from "./ImportModal";
@@ -185,9 +191,9 @@ export default function ContactsPage() {
   const [selectedContactCompanyIds, setSelectedContactCompanyIds] = useState<string[]>([]);
   const [selectedContactTagIds, setSelectedContactTagIds] = useState<string[]>([]);
 
-  // 3. State für enhanced companies hinzufügen (nach den anderen States):
+ // 3. State für enhanced companies hinzufügen (nach den anderen States):
   const [enhancedCompanies, setEnhancedCompanies] = useState<CompanyEnhanced[]>([]);
-  const [useEnhancedView, setUseEnhancedView] = useState(false);
+  const [useEnhancedView, setUseEnhancedView] = useState(false); // Back to false until Firebase rules are updated
 
   // Alert Management
   const showAlert = useCallback((type: 'info' | 'success' | 'warning' | 'error', title: string, message?: string) => {
@@ -209,25 +215,21 @@ export default function ContactsPage() {
     if (user) {
       loadData();
     }
-  }, [user, useEnhancedView]); // Dependency on useEnhancedView added to reload data when toggled
+  }, [user]); 
 
   // 4. loadData Funktion erweitern:
   const loadData = async () => {
     if (!user) return;
     setLoading(true);
     try {
-      const [companiesData, contactsData, tagsData] = await Promise.all([
+      const [companiesData, contactsData, tagsData, enhancedData] = await Promise.all([
         companiesService.getAll(user.uid),
         contactsService.getAll(user.uid),
-        tagsService.getAll(user.uid)
+        tagsService.getAll(user.uid),
+        companyServiceEnhanced.getAll(user.uid) // Always load enhanced data
       ]);
       
-      // Lade auch enhanced companies wenn aktiviert
-      if (useEnhancedView) {
-        const enhancedData = await companyServiceEnhanced.getAll(user.uid);
-        setEnhancedCompanies(enhancedData);
-      }
-      
+      setEnhancedCompanies(enhancedData);
       setCompanies(companiesData);
       setContacts(contactsData);
       setTags(tagsData);
@@ -290,6 +292,34 @@ export default function ContactsPage() {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return filteredCompanies.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredCompanies, currentPage, itemsPerPage]);
+
+  const paginatedEnhancedCompanies = useMemo(() => {
+      return paginatedCompanies.map(c => {
+          const enhanced = enhancedCompanies.find(ec => ec.id === c.id);
+          if (enhanced) {
+              return enhanced;
+          }
+          
+          // Fallback: Create a structure that matches the enhanced view as much as possible
+          return {
+              ...c,
+              id: c.id!,
+              organizationId: user!.uid,
+              createdBy: user!.uid,
+              name: c.name,
+              type: c.type,
+              officialName: c.name,
+              mainAddress: (c as any).address ? {
+                  city: (c as any).address.city || '',
+                  countryCode: 'DE' // Default country
+              } : undefined,
+              industryClassification: c.industry ? { primary: c.industry } : undefined,
+              contactCount: contacts.filter(contact => contact.companyId === c.id).length,
+              lastContactDate: undefined, // No easy way to calculate this for fallback
+              // Ensure other required fields from CompanyEnhanced are present with default values if needed
+          } as CompanyEnhanced;
+      });
+  }, [paginatedCompanies, enhancedCompanies, contacts, user]);
 
   const paginatedContacts = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -672,17 +702,6 @@ export default function ContactsPage() {
 
           {/* View Toggle */}
           <ViewToggle value={viewMode} onChange={setViewMode} />
-          
-          {/* 5. Toggle für Enhanced View hinzufügen (nach dem ViewToggle): */}
-          {activeTab === 'companies' && (
-            <Button
-              plain
-              onClick={() => setUseEnhancedView(!useEnhancedView)}
-              className="text-sm"
-            >
-              {useEnhancedView ? 'Basis-Ansicht' : 'Erweiterte Ansicht'}
-            </Button>
-          )}
 
           {/* Add Button */}
           <Button 
@@ -780,91 +799,173 @@ export default function ContactsPage() {
       {/* 6. Tabellen-Rendering anpassen: */}
       <div>
         {viewMode === 'list' ? (
-          activeTab === 'companies' && useEnhancedView ? (
-            <EnhancedCompanyTable
-              companies={paginatedCompanies.map(c => {
-                // Konvertiere zu enhanced format für Anzeige
-                const enhanced = enhancedCompanies.find(ec => ec.id === c.id);
-                if (enhanced) return enhanced;
-                
-                // Fallback: Basis-Konvertierung
-                return {
-                  ...c,
-                  id: c.id!,
-                  organizationId: user!.uid,
-                  createdBy: user!.uid,
-                  name: c.name,
-                  type: c.type,
-                  officialName: c.name,
-                  // @ts-ignore - address might not be on base Company type
-                  mainAddress: c.address ? {
-                    // @ts-ignore
-                    street: c.address.street || '',
-                    // @ts-ignore
-                    city: c.address.city || '',
-                    // @ts-ignore
-                    postalCode: c.address.zip || '',
-                    // @ts-ignore
-                    region: c.address.state,
-                    countryCode: 'DE'
-                  } : undefined,
-                  // @ts-ignore
-                  phones: c.phone ? [{ type: 'business', number: c.phone, isPrimary: true }] : [],
-                  // @ts-ignore
-                  emails: c.email ? [{ type: 'general', email: c.email, isPrimary: true }] : [],
-                  industryClassification: c.industry ? { primary: c.industry } : undefined,
-                  tagIds: c.tagIds,
-                  status: 'active',
-                  lifecycleStage: 'customer'
-                } as CompanyEnhanced;
-              })}
-              selectedIds={selectedCompanyIds}
-              onSelectAll={handleSelectAllCompanies}
-              onSelectOne={(id, checked) => {
-                const newIds = new Set(selectedCompanyIds);
-                if (checked) {
-                  newIds.add(id);
-                } else {
-                  newIds.delete(id);
-                }
-                setSelectedCompanyIds(newIds);
-              }}
-              onEdit={(company) => {
-                const originalCompany = companies.find(c => c.id === company.id);
-                if (originalCompany) {
-                  setSelectedCompany(originalCompany);
-                  setShowCompanyModal(true);
-                }
-              }}
-              onDelete={(company) => handleDelete(company.id!, company.name, 'company')}
-              onView={(company) => router.push(`/dashboard/contacts/crm/companies/${company.id}`)}
-              tags={new Map(tags.map(t => [t.id!, { name: t.name, color: t.color as any }]))}
-              viewMode={'compact'}
-            />
+          activeTab === 'companies' ? (
+            <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm overflow-hidden">
+              {/* Header */}
+              <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
+                <div className="flex items-center">
+                  <div className="flex items-center w-[25%]">
+                    <Checkbox
+                      checked={paginatedCompanies.length > 0 && selectedCompanyIds.size === paginatedCompanies.length}
+                      indeterminate={selectedCompanyIds.size > 0 && selectedCompanyIds.size < paginatedCompanies.length}
+                      onChange={(checked: boolean) => handleSelectAllCompanies(checked)}
+                    />
+                    <span className="ml-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                      Firmenname / Typ
+                    </span>
+                  </div>
+                  <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Branche
+                  </div>
+                  <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Ort & Land
+                  </div>
+                  <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Website
+                  </div>
+                  <div className="w-[10%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-center">
+                    # Personen
+                  </div>
+                  <div className="flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right pr-14">
+                    Zuletzt kontaktiert
+                  </div>
+                </div>
+              </div>
+
+              {/* Body */}
+              <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                {paginatedEnhancedCompanies.map((company) => (
+                  <div key={company.id} className="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                    <div className="flex items-center">
+                      {/* Company Name & Type */}
+                      <div className="flex items-center w-[25%]">
+                        <Checkbox
+                          checked={selectedCompanyIds.has(company.id!)}
+                          onChange={(checked: boolean) => {
+                                const newIds = new Set(selectedCompanyIds);
+                                if (checked) newIds.add(company.id!);
+                                else newIds.delete(company.id!);
+                                setSelectedCompanyIds(newIds);
+                            }}
+                        />
+                        <div className="ml-4 min-w-0 flex-1">
+                          <button
+                            onClick={() => router.push(`/dashboard/contacts/crm/companies/${company.id}`)}
+                            className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-primary truncate block text-left"
+                          >
+                            {company.officialName || company.name}
+                          </button>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge color="zinc" className="text-xs whitespace-nowrap">
+                              {companyTypeLabels[company.type]}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Industry */}
+                      <div className="w-[15%] text-sm text-zinc-500 dark:text-zinc-400 truncate">
+                        {company.industryClassification?.primary || '—'}
+                      </div>
+
+                      {/* Location */}
+                      <div className="w-[20%]">
+                        {company.mainAddress ? (
+                          <div className="text-sm text-zinc-600 dark:text-zinc-400">
+                            {company.mainAddress.city && company.mainAddress.countryCode ? 
+                              `${company.mainAddress.city}, ${company.mainAddress.countryCode}` : 
+                              '—'
+                            }
+                          </div>
+                        ) : (
+                          <span className="text-sm text-zinc-400">—</span>
+                        )}
+                      </div>
+
+                      {/* Website */}
+                      <div className="w-[15%]">
+                        {company.website ? (
+                          <a
+                            href={company.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-primary hover:text-primary-hover truncate block"
+                            title={company.website}
+                          >
+                            {company.website.replace(/^https?:\/\/(www\.)?/, '')}
+                          </a>
+                        ) : (
+                          <span className="text-sm text-zinc-400">—</span>
+                        )}
+                      </div>
+
+                      {/* Contact Count */}
+                      <div className="w-[10%] text-center">
+                        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                          {(company as any).contactCount || 0}
+                        </span>
+                      </div>
+
+                      {/* Last Contact */}
+                      <div className="flex items-center gap-4 flex-1 justify-end pr-14 text-sm">
+                        {(company as any).lastContactDate ? (
+                          <span className="text-zinc-600 dark:text-zinc-400">
+                            {new Date((company as any).lastContactDate.toDate()).toLocaleDateString('de-DE')}
+                          </span>
+                        ) : (
+                          <span className="text-zinc-400">Nie</span>
+                        )}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="ml-4">
+                        <Dropdown>
+                          <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700">
+                            <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                          </DropdownButton>
+                          <DropdownMenu anchor="bottom end">
+                            <DropdownItem onClick={() => router.push(`/dashboard/contacts/crm/companies/${company.id}`)}>
+                              Anzeigen
+                            </DropdownItem>
+                            <DropdownItem onClick={() => {
+                                const originalCompany = companies.find(c => c.id === company.id);
+                                if (originalCompany) {
+                                    setSelectedCompany(originalCompany);
+                                    setShowCompanyModal(true);
+                                }
+                            }}>
+                              Bearbeiten
+                            </DropdownItem>
+                            <DropdownDivider />
+                            <DropdownItem onClick={() => handleDelete(company.id!, company.name, 'company')}>
+                              <span className="text-red-600">Löschen</span>
+                            </DropdownItem>
+                          </DropdownMenu>
+                        </Dropdown>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           ) : (
-            // Original Modern List View (Vercel-Style)
+            // Original List View for Contacts (unchanged)
             <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm overflow-hidden">
               {/* Header */}
               <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
                 <div className="flex items-center">
                   <div className="flex items-center w-[30%]">
                     <Checkbox
-                      checked={activeTab === 'companies' 
-                        ? paginatedCompanies.length > 0 && paginatedCompanies.every(c => selectedCompanyIds.has(c.id!))
-                        : paginatedContacts.length > 0 && paginatedContacts.every(c => selectedContactIds.has(c.id!))
-                      }
-                      indeterminate={activeTab === 'companies'
-                        ? paginatedCompanies.some(c => selectedCompanyIds.has(c.id!)) && !paginatedCompanies.every(c => selectedCompanyIds.has(c.id!))
-                        : paginatedContacts.some(c => selectedContactIds.has(c.id!)) && !paginatedContacts.every(c => selectedContactIds.has(c.id!))
-                      }
-                      onChange={(checked: boolean) => activeTab === 'companies' ? handleSelectAllCompanies(checked) : handleSelectAllContacts(checked)}
+                      checked={paginatedContacts.length > 0 && paginatedContacts.every(c => selectedContactIds.has(c.id!))}
+                      indeterminate={paginatedContacts.some(c => selectedContactIds.has(c.id!)) && !paginatedContacts.every(c => selectedContactIds.has(c.id!))}
+                      onChange={(checked: boolean) => handleSelectAllContacts(checked)}
                     />
                     <span className="ml-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                      {activeTab === 'companies' ? 'Firma' : 'Name'}
+                      Name
                     </span>
                   </div>
                   <div className="hidden md:block w-[30%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                    {activeTab === 'companies' ? 'Branche' : 'Position'}
+                    Position
                   </div>
                   <div className="hidden lg:block w-[30%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                     Tags
@@ -877,106 +978,7 @@ export default function ContactsPage() {
 
               {/* Body */}
               <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                {activeTab === 'companies' ? (
-                  paginatedCompanies.map((company) => (
-                    <div key={company.id} className="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
-                      <div className="flex items-center">
-                        <div className="flex items-center w-[30%]">
-                          <Checkbox
-                            checked={selectedCompanyIds.has(company.id!)}
-                            onChange={(checked: boolean) => {
-                              const newIds = new Set(selectedCompanyIds);
-                              if (checked) {
-                                newIds.add(company.id!);
-                              } else {
-                                newIds.delete(company.id!);
-                              }
-                              setSelectedCompanyIds(newIds);
-                            }}
-                          />
-                          <div className="ml-4 min-w-0 flex-1">
-                            <Link href={`/dashboard/contacts/crm/companies/${company.id}`} className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-primary truncate block">
-                              {company.name}
-                            </Link>
-                            <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                              {companyTypeLabels[company.type]}
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="hidden md:block w-[30%] text-sm text-zinc-500 dark:text-zinc-400">
-                          {company.industry || '—'}
-                        </div>
-                        
-                        <div className="hidden lg:block w-[30%]">
-                          {company.tagIds && company.tagIds.length > 0 ? (
-                            <div className="flex gap-1.5 flex-wrap">
-                              {company.tagIds.slice(0, 2).map(tagId => {
-                                const tag = tags.find(t => t.id === tagId);
-                                return tag ? (
-                                  <Badge key={tag.id} color={tag.color as any} className="text-xs">
-                                    {tag.name}
-                                  </Badge>
-                                ) : null;
-                              })}
-                              {company.tagIds.length > 2 && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-500">
-                                  +{company.tagIds.length - 2}
-                                </span>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-sm text-zinc-400">—</span>
-                          )}
-                        </div>
-                        
-                        <div className="hidden xl:flex items-center gap-4 flex-1 justify-end pr-14 text-sm">
-                          {company.website && (
-                            <a href={company.website} target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-primary dark:text-zinc-400">
-                              <GlobeAltIcon className="h-4 w-4" />
-                            </a>
-                          )}
-                          {company.phone && (
-                            <a href={`tel:${company.phone}`} className="text-zinc-500 hover:text-primary dark:text-zinc-400">
-                              <PhoneIcon className="h-4 w-4" />
-                            </a>
-                          )}
-                          {!company.website && !company.phone && (
-                            <span className="text-zinc-400">—</span>
-                          )}
-                        </div>
-                        
-                        <div className="ml-4">
-                          <Dropdown>
-                            <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-[#0660ab] focus:ring-offset-2">
-                              <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
-                            </DropdownButton>
-                            <DropdownMenu anchor="bottom end">
-                              <DropdownItem href={`/dashboard/contacts/crm/companies/${company.id}`}>
-                                Anzeigen
-                              </DropdownItem>
-                              <DropdownItem 
-                                onClick={() => {
-                                  setSelectedCompany(company);
-                                  setShowCompanyModal(true);
-                                }}
-                              >
-                                Bearbeiten
-                              </DropdownItem>
-                              <DropdownDivider />
-                              <DropdownItem 
-                                onClick={() => handleDelete(company.id!, company.name, 'company')}
-                              >
-                                <span className="text-red-600">Löschen</span>
-                              </DropdownItem>
-                            </DropdownMenu>
-                          </Dropdown>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  paginatedContacts.map((contact) => (
+                  {paginatedContacts.map((contact) => (
                     <div key={contact.id} className="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                       <div className="flex items-center">
                         <div className="flex items-center w-[30%]">
@@ -1078,8 +1080,7 @@ export default function ContactsPage() {
                         </div>
                       </div>
                     </div>
-                  ))
-                )}
+                  ))}
               </div>
             </div>
           )

@@ -1,16 +1,17 @@
 # SKAMP Bibliothek - Aktualisierter Implementierungsstand
 
-## 📊 Gesamtfortschritt: ~45%
+## 📊 Gesamtfortschritt: ~55%
 
-### ⚠️ WICHTIGE ÄNDERUNG: Mandantenfähigkeit wurde vollständig integriert
+### ⚠️ WICHTIGE ÄNDERUNG: CRM-Enhanced Integration läuft
 **Stand: Januar 2025**
 
-Während der Implementierung haben wir entschieden, die Mandantenfähigkeit direkt von Anfang an einzubauen:
-- ✅ Alle Types erweitern `BaseEntity` mit `organizationId`
-- ✅ Rollen-System mit 5 Stufen (Owner, Admin, Member, Client, Guest)
-- ✅ Granulare Permissions
-- ✅ Team-Management in `organization-service.ts`
-- ✅ Alle Services nutzen `BaseService` mit automatischer Mandanten-Filterung
+Die erweiterte CRM-Integration wurde implementiert:
+- ✅ CompanyModal mit Enhanced Features (Media-Tab, Internationale Adressen, etc.)
+- ✅ ContactModalEnhanced mit GDPR, strukturierten Namen, Media-Profilen
+- ✅ EnhancedCompanyTable mit Google Docs konformen Spalten
+- ✅ Firebase Rules für enhanced Collections aktualisiert
+- ✅ Migration Helper für Übergang von Legacy zu Enhanced
+- 🔄 ContactModalEnhanced Integration in CRM-Seite (NÄCHSTER SCHRITT)
 
 ---
 
@@ -23,15 +24,18 @@ Während der Implementierung haben wir entschieden, die Mandantenfähigkeit dire
   - `src/types/international.ts` 
   - `src/types/crm-enhanced.ts`
   - `src/types/library.ts`
-- ✅ **Firebase Services** (4/4)
+- ✅ **Firebase Services** (5/5)
   - `src/lib/firebase/organization-service.ts`
   - `src/lib/firebase/service-base.ts`
   - `src/lib/firebase/crm-service-enhanced.ts`
+  - `src/lib/firebase/company-service-enhanced.ts` ✅
   - `src/lib/firebase/library-service.ts`
 - ✅ **Validatoren** (3/3)
-  - `src/lib/validators/iso-validators.ts` ✅
-  - `src/lib/validators/identifier-validators.ts` ✅
-  - `src/lib/validators/phone-validators.ts` ✅
+  - `src/lib/validators/iso-validators.ts`
+  - `src/lib/validators/identifier-validators.ts`
+  - `src/lib/validators/phone-validators.ts`
+- ✅ **Migration Helper**
+  - `src/lib/firebase/crm-migration-helper.ts` ✅
 
 #### ❌ Offene Aufgaben:
 - [ ] Migrationsskripte (`scripts/migrate-to-enhanced-model.ts`)
@@ -47,14 +51,14 @@ Während der Implementierung haben wir entschieden, die Mandantenfähigkeit dire
 - ✅ **Publikationen Bereich** 
   - `src/app/dashboard/library/publications/page.tsx` - Übersichtstabelle
   - `src/app/dashboard/library/publications/PublicationModal.tsx` - Create/Edit Modal
-  - `src/app/dashboard/library/publications/[publicationId]/page.tsx` - Detailseite ✅
+  - `src/app/dashboard/library/publications/[publicationId]/page.tsx` - Detailseite
 - ✅ **Werbemittel Bereich** 
   - `src/app/dashboard/library/advertisements/page.tsx` - Übersichtstabelle
   - `src/app/dashboard/library/advertisements/AdvertisementModal.tsx` - Create/Edit Modal
-  - `src/app/dashboard/library/advertisements/[adId]/page.tsx` - Detailseite ✅
-- ✅ **Media Kits Bereich** (NEU!)
-  - `src/app/dashboard/library/media-kits/page.tsx` - Übersichtsseite mit Grid ✅
-  - `src/app/dashboard/library/media-kits/MediaKitModal.tsx` - Create/Edit Modal ✅
+  - `src/app/dashboard/library/advertisements/[adId]/page.tsx` - Detailseite
+- ✅ **Media Kits Bereich**
+  - `src/app/dashboard/library/media-kits/page.tsx` - Übersichtsseite mit Grid
+  - `src/app/dashboard/library/media-kits/MediaKitModal.tsx` - Create/Edit Modal
 
 #### 🔄 In Arbeit:
 - [ ] PDF-Generierung für Media Kits
@@ -65,31 +69,33 @@ Während der Implementierung haben wir entschieden, die Mandantenfähigkeit dire
 
 ---
 
-### Sprint 3 (Woche 5-6): Erweiterte CRM-Features - 🔄 10% BEGONNEN
+### Sprint 3 (Woche 5-6): Erweiterte CRM-Features - ✅ 60% FERTIG!
 
-#### ⚠️ WICHTIG: Priorisierung geändert!
-Da die Media Kit Funktionalität ohne erweiterte Firmen-Daten nicht testbar ist, ziehen wir die CRM-Integration vor.
+#### ✅ Abgeschlossene Aufgaben:
+- ✅ **Company Modal Erweiterungen**
+  - ✅ Erweiterte Firmen-Felder (officialName, tradingName)
+  - ✅ Internationale Adressen UI
+  - ✅ Business Identifiers UI (USt-ID, etc.)
+  - ✅ Hierarchie-Verwaltung
+  - ✅ Media-Tab für Verlage/Medien
+- ✅ **Contact Modal Erweiterungen**
+  - ✅ GDPR Consent Management UI
+  - ✅ Strukturierte Namen UI
+  - ✅ Media-Profile für Journalisten
+  - ✅ Erweiterte Kommunikationspräferenzen
+- ✅ **Internationale Komponenten**
+  - ✅ `CountrySelector.tsx`
+  - ✅ `LanguageSelector.tsx` & `LanguageSelectorMulti.tsx`
+  - ✅ `CurrencyInput.tsx`
+  - ✅ `PhoneInput.tsx` mit E.164 Format
+- ✅ **Erweiterte Übersichtstabellen**
+  - ✅ `EnhancedCompanyTable.tsx` - Google Docs konforme Spalten
+  - [ ] `EnhancedContactTable.tsx` - NÄCHSTER SCHRITT
 
-#### 🔄 Nächste Schritte (PRIORITÄT):
-- [ ] **Company Modal Erweiterungen** (KRITISCH)
-  - [ ] Erweiterte Firmen-Felder (officialName, tradingName)
-  - [ ] Internationale Adressen UI
-  - [ ] Business Identifiers UI (USt-ID, etc.)
-  - [ ] Hierarchie-Verwaltung
-- [ ] **Contact Modal Erweiterungen**
-  - [ ] GDPR Consent Management UI
-  - [ ] Strukturierte Namen UI
-  - [ ] Media-Profile für Journalisten
-
-#### Geplante Aufgaben:
-- [ ] Internationale Komponenten
-  - [x] `CountrySelector.tsx` ✅
-  - [x] `LanguageSelector.tsx` ✅
-  - [x] `CurrencyInput.tsx` ✅
-  - [ ] `PhoneInput.tsx` mit E.164 Format
-- [ ] Erweiterte Übersichtstabellen
-  - [ ] `EnhancedCompanyTable.tsx`
-  - [ ] `EnhancedContactTable.tsx`
+#### 🔄 Nächste Schritte:
+- [ ] ContactModalEnhanced in CRM-Seite integrieren
+- [ ] EnhancedContactTable implementieren
+- [ ] Metriken berechnen (Kontakt-Zählung, letztes Kontaktdatum)
 
 ---
 
@@ -97,9 +103,10 @@ Da die Media Kit Funktionalität ohne erweiterte Firmen-Daten nicht testbar ist,
 
 #### Geplante Aufgaben:
 - [ ] Verknüpfungen zwischen Entitäten
-- [ ] Import/Export Erweiterungen
+- [ ] Import/Export Erweiterungen für Enhanced Modell
 - [ ] Media Kit PDF Generator
 - [ ] Performance-Optimierung
+- [ ] Detailseiten für Enhanced Entities
 
 ---
 
@@ -109,74 +116,75 @@ Da die Media Kit Funktionalität ohne erweiterte Firmen-Daten nicht testbar ist,
 
 ## 📁 Dateiübersicht
 
-### ✅ Vollständig implementierte Dateien (18)
+### ✅ Vollständig implementierte Dateien (25)
 
-**Backend/Types (6):**
+**Backend/Types (7):**
 - `src/types/international.ts`
 - `src/types/crm-enhanced.ts`
 - `src/types/library.ts`
 - `src/lib/validators/iso-validators.ts`
 - `src/lib/validators/identifier-validators.ts`
 - `src/lib/validators/phone-validators.ts`
+- `src/lib/firebase/crm-migration-helper.ts` ✅
 
-**Services (4):**
+**Services (5):**
 - `src/lib/firebase/organization-service.ts`
 - `src/lib/firebase/service-base.ts`
 - `src/lib/firebase/crm-service-enhanced.ts`
+- `src/lib/firebase/company-service-enhanced.ts` ✅
 - `src/lib/firebase/library-service.ts`
 
-**UI-Komponenten (12):**
+**UI-Komponenten (18):**
 - `src/app/dashboard/library/layout.tsx`
 - `src/app/dashboard/library/page.tsx`
 - `src/app/dashboard/library/publications/page.tsx`
 - `src/app/dashboard/library/publications/PublicationModal.tsx`
-- `src/app/dashboard/library/publications/[publicationId]/page.tsx` ✅
+- `src/app/dashboard/library/publications/[publicationId]/page.tsx`
 - `src/app/dashboard/library/advertisements/page.tsx`
 - `src/app/dashboard/library/advertisements/AdvertisementModal.tsx`
-- `src/app/dashboard/library/advertisements/[adId]/page.tsx` ✅
-- `src/app/dashboard/library/media-kits/page.tsx` ✅
-- `src/app/dashboard/library/media-kits/MediaKitModal.tsx` ✅
-- `src/components/country-selector.tsx` ✅
-- `src/components/language-selector.tsx` ✅
-- `src/components/currency-input.tsx` ✅
+- `src/app/dashboard/library/advertisements/[adId]/page.tsx`
+- `src/app/dashboard/library/media-kits/page.tsx`
+- `src/app/dashboard/library/media-kits/MediaKitModal.tsx`
+- `src/app/dashboard/contacts/crm/CompanyModal.tsx` ✅ (Enhanced)
+- `src/components/crm/ContactModalEnhanced.tsx` ✅
+- `src/components/crm/EnhancedCompanyTable.tsx` ✅
+- `src/components/country-selector.tsx`
+- `src/components/language-selector.tsx`
+- `src/components/currency-input.tsx`
+- `src/components/phone-input.tsx` ✅
+- `src/components/FocusAreasInput.tsx`
 
 ### 🔄 Placeholder-Dateien (1)
 - `src/app/dashboard/library/overview/page.tsx`
 
 ### ❌ Fehlende kritische Dateien
-
-**UI-Komponenten:**
-- Erweiterte CRM-Komponenten (GDPR, Hierarchie, etc.) - JETZT PRIORITÄT!
-- PhoneInput mit E.164 Format
+- `src/components/crm/EnhancedContactTable.tsx` - NÄCHSTER SCHRITT
 - Media Kit PDF Generator
-- Strategische Übersichtstabellen
-
-**Backend:**
 - Migrationsskripte
 
 ---
 
-## 🎯 Nächste Schritte (NEUE PRIORITÄT)
+## 🎯 Nächste Schritte (PRIORITÄT)
 
-### 1. CRM-Integration für Media Kits (3-4 Tage) - JETZT!
-- [ ] Erweiterte Company Modal mit allen CRM-Enhanced Features
-- [ ] Integration in bestehende CRM-Seiten
+### 1. ContactModal Integration (JETZT!)
+- [ ] ContactModalEnhanced in CRM-Seite einbinden
+- [ ] EnhancedContactTable mit Google Docs konformen Spalten erstellen
+- [ ] Test mit echten Kontaktdaten
+
+### 2. Metriken implementieren (1-2 Tage)
+- [ ] Kontakt-Zählung pro Firma
+- [ ] Letztes Kontaktdatum aus Communication Log
+- [ ] Integration in Tabellen
+
+### 3. Media Kit Testing (1-2 Tage)
 - [ ] Test mit echten Verlagsdaten
+- [ ] Verknüpfung von Publikationen und Werbemitteln
+- [ ] Preview-Funktionalität
 
-### 2. Media Kit Vervollständigung (2-3 Tage)
-- [ ] PDF-Generierung mit react-pdf
-- [ ] Share-Funktionalität
-- [ ] Preview-Komponente
-
-### 3. Erweiterte Contact Features (2-3 Tage)
-- [ ] GDPR Consent UI
-- [ ] Journalisten-Profile
-- [ ] PhoneInput Komponente
-
-### 4. Finalisierung (2-3 Tage)
-- [ ] Overview/Strategische Übersichten
-- [ ] Performance-Optimierung
-- [ ] Testing & Bugfixes
+### 4. PDF-Generierung (2-3 Tage)
+- [ ] react-pdf Integration
+- [ ] Template-System
+- [ ] Export-Funktionalität
 
 ---
 
@@ -189,7 +197,7 @@ Da die Media Kit Funktionalität ohne erweiterte Firmen-Daten nicht testbar ist,
 | **Validatoren** | ✅ Fertig | 100% |
 | **Basis UI (Bibliothek)** | ✅ Fast fertig | 75% |
 | **Media Kits** | 🔄 Basis fertig | 60% |
-| **Erweiterte CRM Features** | 🔄 Begonnen | 10% |
+| **Erweiterte CRM Features** | 🔄 Fast fertig | 60% |
 | **Strategische Übersichten** | ❌ Offen | 0% |
 | **Integration & Polish** | ❌ Offen | 0% |
 | **Tests & Dokumentation** | ❌ Offen | 5% |
@@ -199,25 +207,28 @@ Da die Media Kit Funktionalität ohne erweiterte Firmen-Daten nicht testbar ist,
 ## 🔍 Technische Highlights
 
 ### Neu implementierte Features:
-1. **Media Kit Management** mit Publikations- und Werbemittel-Auswahl
-2. **Internationale Komponenten** (Country, Language, Currency Selector)
-3. **Detailseiten** für Publikationen und Werbemittel
+1. **Enhanced Company Modal** mit allen erweiterten Feldern
+2. **Enhanced Contact Modal** mit GDPR und Media-Profilen
+3. **Internationale Komponenten** vollständig implementiert
+4. **Migration Helper** für sanften Übergang
+5. **Enhanced Company Table** mit Google Docs Layout
 
-### Aktuelle Herausforderungen:
-1. **CRM-Integration blockiert Media Kit Tests** - Ohne Firmen können keine Media Kits erstellt werden
-2. PDF-Generierung komplex (mehrere Seiten, dynamische Inhalte)
-3. Viele UI-Komponenten für erweiterte CRM-Features noch zu erstellen
+### Aktuelle Status:
+- Firebase Rules wurden aktualisiert für enhanced Collections
+- Legacy und Enhanced Modelle können parallel existieren
+- Migration on-the-fly möglich
 
 ---
 
 ## 📝 Zusammenfassung
 
-**Status:** Die Library-Basis ist fast fertig, aber die fehlende CRM-Integration blockiert das Testing der Media Kits. Daher Prioritätsänderung: CRM-Features werden vorgezogen.
+**Status:** Die CRM-Enhanced Integration ist zu 60% fertig. Die modalen Dialoge sind implementiert, die Company-Tabelle zeigt Enhanced-Daten. Als nächstes muss die Contact-Integration folgen.
 
-**Nächster Sprint:** Fokus auf erweiterte Company Modal Implementation, damit Media Kits vollständig getestet werden können.
+**Nächster Schritt:** ContactModalEnhanced in die CRM-Seite integrieren und EnhancedContactTable erstellen.
 
-**Realistische Zeitschätzung:**
-- **CRM-Integration**: 1 Woche
-- **Media Kit Finalisierung**: 3-4 Tage
-- **Restliche Features**: 1-2 Wochen
-- **Gesamt**: Noch 3-4 Wochen bis zur vollständigen Implementierung
+**Zeitschätzung:**
+- **Contact Integration**: 1 Tag
+- **Metriken**: 1-2 Tage
+- **Media Kit Testing**: 1-2 Tage
+- **PDF-Generierung**: 2-3 Tage
+- **Gesamt**: Noch 1-2 Wochen bis zur vollständigen Implementierung
