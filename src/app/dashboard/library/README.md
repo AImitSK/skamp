@@ -1,17 +1,17 @@
 # SKAMP Bibliothek - Aktualisierter Implementierungsstand
 
-## 📊 Gesamtfortschritt: ~55%
+## 📊 Gesamtfortschritt: ~60%
 
-### ⚠️ WICHTIGE ÄNDERUNG: CRM-Enhanced Integration läuft
+### ⚠️ WICHTIGER STATUS: Enhanced CRM Integration läuft!
 **Stand: Januar 2025**
 
-Die erweiterte CRM-Integration wurde implementiert:
-- ✅ CompanyModal mit Enhanced Features (Media-Tab, Internationale Adressen, etc.)
-- ✅ ContactModalEnhanced mit GDPR, strukturierten Namen, Media-Profilen
-- ✅ EnhancedCompanyTable mit Google Docs konformen Spalten
+Die erweiterte CRM-Integration wurde erfolgreich implementiert:
+- ✅ CompanyModal mit Enhanced Features (komplett)
+- ✅ EnhancedCompanyTable in CRM-Übersicht integriert
 - ✅ Firebase Rules für enhanced Collections aktualisiert
-- ✅ Migration Helper für Übergang von Legacy zu Enhanced
-- 🔄 ContactModalEnhanced Integration in CRM-Seite (NÄCHSTER SCHRITT)
+- ✅ Migration Helper implementiert
+- 🔄 ContactModalEnhanced erstellt (Integration ausstehend)
+- 🔄 Personen-Tabelle muss noch auf Enhanced umgestellt werden
 
 ---
 
@@ -28,14 +28,14 @@ Die erweiterte CRM-Integration wurde implementiert:
   - `src/lib/firebase/organization-service.ts`
   - `src/lib/firebase/service-base.ts`
   - `src/lib/firebase/crm-service-enhanced.ts`
-  - `src/lib/firebase/company-service-enhanced.ts` ✅
+  - `src/lib/firebase/company-service-enhanced.ts`
   - `src/lib/firebase/library-service.ts`
 - ✅ **Validatoren** (3/3)
   - `src/lib/validators/iso-validators.ts`
   - `src/lib/validators/identifier-validators.ts`
   - `src/lib/validators/phone-validators.ts`
 - ✅ **Migration Helper**
-  - `src/lib/firebase/crm-migration-helper.ts` ✅
+  - `src/lib/firebase/crm-migration-helper.ts`
 
 #### ❌ Offene Aufgaben:
 - [ ] Migrationsskripte (`scripts/migrate-to-enhanced-model.ts`)
@@ -69,44 +69,65 @@ Die erweiterte CRM-Integration wurde implementiert:
 
 ---
 
-### Sprint 3 (Woche 5-6): Erweiterte CRM-Features - ✅ 60% FERTIG!
+### Sprint 3 (Woche 5-6): Erweiterte CRM-Features - ✅ 70% FERTIG!
 
 #### ✅ Abgeschlossene Aufgaben:
-- ✅ **Company Modal Erweiterungen**
-  - ✅ Erweiterte Firmen-Felder (officialName, tradingName)
-  - ✅ Internationale Adressen UI
-  - ✅ Business Identifiers UI (USt-ID, etc.)
-  - ✅ Hierarchie-Verwaltung
+- ✅ **Company Modal Erweiterungen** (KOMPLETT)
+  - ✅ Alle erweiterten Felder implementiert
   - ✅ Media-Tab für Verlage/Medien
-- ✅ **Contact Modal Erweiterungen**
-  - ✅ GDPR Consent Management UI
-  - ✅ Strukturierte Namen UI
+  - ✅ Internationale Features
+  - ✅ In CRM-Übersicht integriert
+- ✅ **Enhanced Company Table**
+  - ✅ Implementiert mit Google Docs konformen Spalten
+  - ✅ In CRM-Übersicht integriert
+  - ✅ Fallback für Legacy-Daten
+- ✅ **ContactModalEnhanced** (erstellt aber nicht integriert)
+  - ✅ Alle Tabs implementiert (General, Communication, Media, Professional, GDPR, Personal)
+  - ✅ GDPR Consent Management
   - ✅ Media-Profile für Journalisten
-  - ✅ Erweiterte Kommunikationspräferenzen
-- ✅ **Internationale Komponenten**
+- ✅ **Internationale Komponenten** (ALLE)
   - ✅ `CountrySelector.tsx`
   - ✅ `LanguageSelector.tsx` & `LanguageSelectorMulti.tsx`
   - ✅ `CurrencyInput.tsx`
   - ✅ `PhoneInput.tsx` mit E.164 Format
-- ✅ **Erweiterte Übersichtstabellen**
-  - ✅ `EnhancedCompanyTable.tsx` - Google Docs konforme Spalten
-  - [ ] `EnhancedContactTable.tsx` - NÄCHSTER SCHRITT
+- ✅ **Helper Komponenten**
+  - ✅ `SearchableFilter.tsx` für große Datensätze
+  - ✅ `FocusAreasInput.tsx`
 
-#### 🔄 Nächste Schritte:
-- [ ] ContactModalEnhanced in CRM-Seite integrieren
-- [ ] EnhancedContactTable implementieren
-- [ ] Metriken berechnen (Kontakt-Zählung, letztes Kontaktdatum)
+#### 🔄 Aktuelle Aufgaben:
+- [ ] **ContactModalEnhanced Integration** (NÄCHSTER SCHRITT!)
+  - [ ] In CRM-Seite einbinden
+  - [ ] Legacy ContactModal ersetzen
+- [ ] **EnhancedContactTable**
+  - [ ] Implementieren analog zu EnhancedCompanyTable
+  - [ ] Google Docs konforme Spalten
+- [ ] **Import/Export Anpassungen**
+  - [ ] Import für Enhanced Modell
+  - [ ] Export mit erweiterten Feldern
+
+#### ❌ Noch offen:
+- [ ] **Detailseiten Anpassungen**
+  - [ ] Company-Detailseite für Enhanced Modell
+  - [ ] Contact-Detailseite für Enhanced Modell
+  - [ ] Bibliotheks-Verknüpfungen zeigen
 
 ---
 
-### Sprint 4 (Woche 7-8): Integration & Polish - ❌ 0% NOCH NICHT BEGONNEN
+### Sprint 4 (Woche 7-8): Integration & Polish - 🔄 15% BEGONNEN
 
-#### Geplante Aufgaben:
-- [ ] Verknüpfungen zwischen Entitäten
-- [ ] Import/Export Erweiterungen für Enhanced Modell
-- [ ] Media Kit PDF Generator
+#### ✅ Teilweise erledigt:
+- ✅ Basis-Verknüpfungen (Company ↔ Contact)
+- ✅ Enhanced Datenmodell in Übersicht
+
+#### 🔄 In Arbeit:
+- [ ] Bibliothek ↔ CRM Verknüpfungen
+- [ ] Media Kit Builder mit CRM-Daten
+- [ ] Detailseiten-Updates
+
+#### ❌ Noch nicht begonnen:
 - [ ] Performance-Optimierung
-- [ ] Detailseiten für Enhanced Entities
+- [ ] Batch-Operationen
+- [ ] Advanced Filtering
 
 ---
 
@@ -116,49 +137,26 @@ Die erweiterte CRM-Integration wurde implementiert:
 
 ## 📁 Dateiübersicht
 
-### ✅ Vollständig implementierte Dateien (25)
+### ✅ Vollständig implementierte Dateien (28+)
 
 **Backend/Types (7):**
-- `src/types/international.ts`
-- `src/types/crm-enhanced.ts`
-- `src/types/library.ts`
-- `src/lib/validators/iso-validators.ts`
-- `src/lib/validators/identifier-validators.ts`
-- `src/lib/validators/phone-validators.ts`
-- `src/lib/firebase/crm-migration-helper.ts` ✅
+- Alle Typen und Validatoren ✅
 
 **Services (5):**
-- `src/lib/firebase/organization-service.ts`
-- `src/lib/firebase/service-base.ts`
-- `src/lib/firebase/crm-service-enhanced.ts`
-- `src/lib/firebase/company-service-enhanced.ts` ✅
-- `src/lib/firebase/library-service.ts`
+- Alle Services implementiert ✅
 
-**UI-Komponenten (18):**
-- `src/app/dashboard/library/layout.tsx`
-- `src/app/dashboard/library/page.tsx`
-- `src/app/dashboard/library/publications/page.tsx`
-- `src/app/dashboard/library/publications/PublicationModal.tsx`
-- `src/app/dashboard/library/publications/[publicationId]/page.tsx`
-- `src/app/dashboard/library/advertisements/page.tsx`
-- `src/app/dashboard/library/advertisements/AdvertisementModal.tsx`
-- `src/app/dashboard/library/advertisements/[adId]/page.tsx`
-- `src/app/dashboard/library/media-kits/page.tsx`
-- `src/app/dashboard/library/media-kits/MediaKitModal.tsx`
-- `src/app/dashboard/contacts/crm/CompanyModal.tsx` ✅ (Enhanced)
-- `src/components/crm/ContactModalEnhanced.tsx` ✅
-- `src/components/crm/EnhancedCompanyTable.tsx` ✅
-- `src/components/country-selector.tsx`
-- `src/components/language-selector.tsx`
-- `src/components/currency-input.tsx`
-- `src/components/phone-input.tsx` ✅
-- `src/components/FocusAreasInput.tsx`
+**UI-Komponenten (20+):**
+- Bibliothek komplett ✅
+- CRM Enhanced Modals ✅
+- Internationale Komponenten ✅
+- Helper Komponenten ✅
 
-### 🔄 Placeholder-Dateien (1)
-- `src/app/dashboard/library/overview/page.tsx`
+### 🔄 Teilweise implementierte Dateien
+- `src/app/dashboard/contacts/crm/page.tsx` - Enhanced Companies integriert, Contacts fehlt
+- `src/app/dashboard/contacts/crm/ImportModal.tsx` - Braucht Enhanced Support
 
 ### ❌ Fehlende kritische Dateien
-- `src/components/crm/EnhancedContactTable.tsx` - NÄCHSTER SCHRITT
+- `src/components/crm/EnhancedContactTable.tsx`
 - Media Kit PDF Generator
 - Migrationsskripte
 
@@ -166,20 +164,20 @@ Die erweiterte CRM-Integration wurde implementiert:
 
 ## 🎯 Nächste Schritte (PRIORITÄT)
 
-### 1. ContactModal Integration (JETZT!)
+### 1. Contact Integration abschließen (1-2 Tage)
 - [ ] ContactModalEnhanced in CRM-Seite einbinden
-- [ ] EnhancedContactTable mit Google Docs konformen Spalten erstellen
-- [ ] Test mit echten Kontaktdaten
+- [ ] EnhancedContactTable implementieren
+- [ ] Import/Export anpassen
 
-### 2. Metriken implementieren (1-2 Tage)
-- [ ] Kontakt-Zählung pro Firma
-- [ ] Letztes Kontaktdatum aus Communication Log
-- [ ] Integration in Tabellen
+### 2. Detailseiten aktualisieren (2-3 Tage)
+- [ ] Company-Detailseite erweitern
+- [ ] Contact-Detailseite erweitern
+- [ ] Bibliotheks-Verknüpfungen anzeigen
 
-### 3. Media Kit Testing (1-2 Tage)
-- [ ] Test mit echten Verlagsdaten
-- [ ] Verknüpfung von Publikationen und Werbemitteln
-- [ ] Preview-Funktionalität
+### 3. Bibliothek-CRM Integration (2-3 Tage)
+- [ ] Publikationen ↔ Contacts verknüpfen
+- [ ] Media Kits mit CRM-Daten befüllen
+- [ ] Cross-Referenzen in beiden Bereichen
 
 ### 4. PDF-Generierung (2-3 Tage)
 - [ ] react-pdf Integration
@@ -197,38 +195,46 @@ Die erweiterte CRM-Integration wurde implementiert:
 | **Validatoren** | ✅ Fertig | 100% |
 | **Basis UI (Bibliothek)** | ✅ Fast fertig | 75% |
 | **Media Kits** | 🔄 Basis fertig | 60% |
-| **Erweiterte CRM Features** | 🔄 Fast fertig | 60% |
-| **Strategische Übersichten** | ❌ Offen | 0% |
-| **Integration & Polish** | ❌ Offen | 0% |
+| **Erweiterte CRM Features** | 🔄 Companies fertig, Contacts offen | 70% |
+| **Integration & Verknüpfungen** | 🔄 Begonnen | 15% |
 | **Tests & Dokumentation** | ❌ Offen | 5% |
 
 ---
 
-## 🔍 Technische Highlights
+## 🔍 Technische Details
 
-### Neu implementierte Features:
-1. **Enhanced Company Modal** mit allen erweiterten Feldern
-2. **Enhanced Contact Modal** mit GDPR und Media-Profilen
-3. **Internationale Komponenten** vollständig implementiert
-4. **Migration Helper** für sanften Übergang
-5. **Enhanced Company Table** mit Google Docs Layout
+### Aktueller Status Enhanced CRM:
+- **Companies**: Vollständig auf Enhanced umgestellt ✅
+  - Modal mit allen Features
+  - Tabelle mit Enhanced-Daten
+  - Fallback für Legacy-Daten
+- **Contacts**: Modal fertig, Integration fehlt 🔄
+  - ContactModalEnhanced komplett implementiert
+  - Muss noch in CRM-Seite integriert werden
+  - Tabelle fehlt noch
 
-### Aktuelle Status:
-- Firebase Rules wurden aktualisiert für enhanced Collections
-- Legacy und Enhanced Modelle können parallel existieren
-- Migration on-the-fly möglich
+### Offene Integration-Punkte:
+1. **Import/Export**: Muss für Enhanced Modell angepasst werden
+2. **Detailseiten**: Zeigen noch nicht alle Enhanced-Felder
+3. **Bibliotheks-Verknüpfungen**: Noch nicht in CRM sichtbar
+4. **Metriken**: Kontakt-Zählung, letztes Kontaktdatum fehlen
+
+### Firebase Status:
+- Rules aktualisiert für enhanced Collections ✅
+- Legacy und Enhanced können parallel existieren ✅
+- Migration Helper vorhanden ✅
 
 ---
 
 ## 📝 Zusammenfassung
 
-**Status:** Die CRM-Enhanced Integration ist zu 60% fertig. Die modalen Dialoge sind implementiert, die Company-Tabelle zeigt Enhanced-Daten. Als nächstes muss die Contact-Integration folgen.
+**Gesamtstatus:** Die Enhanced CRM Integration ist für Companies abgeschlossen. Contacts sind vorbereitet aber noch nicht integriert. Die Bibliothek ist funktionsfähig aber noch nicht mit dem CRM verknüpft.
 
-**Nächster Schritt:** ContactModalEnhanced in die CRM-Seite integrieren und EnhancedContactTable erstellen.
+**Kritischer nächster Schritt:** ContactModalEnhanced Integration und EnhancedContactTable Implementation.
 
-**Zeitschätzung:**
-- **Contact Integration**: 1 Tag
-- **Metriken**: 1-2 Tage
-- **Media Kit Testing**: 1-2 Tage
-- **PDF-Generierung**: 2-3 Tage
-- **Gesamt**: Noch 1-2 Wochen bis zur vollständigen Implementierung
+**Zeitschätzung bis Feature-Complete:**
+- Contact Integration: 1-2 Tage
+- Detailseiten: 2-3 Tage  
+- Bibliothek-Integration: 2-3 Tage
+- PDF & Polish: 3-4 Tage
+- **Gesamt**: ~2 Wochen
