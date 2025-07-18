@@ -45,15 +45,14 @@ import {
 } from "@heroicons/react/20/solid";
 import { companiesService, contactsService, tagsService } from "@/lib/firebase/crm-service";
 import { Company, Contact, Tag, companyTypeLabels, CompanyType } from "@/types/crm";
-import { CompanyEnhanced } from "@/types/crm-enhanced";
+import { CompanyEnhanced, ContactEnhanced } from "@/types/crm-enhanced";
 import CompanyModal from "./CompanyModal";
-import ContactModal from "./ContactModal";
+import ContactModalEnhanced from "@/components/crm/ContactModalEnhanced";
 import ImportModal from "./ImportModal";
 import Papa from 'papaparse';
 import clsx from 'clsx';
-// 1. Import der Enhanced Company Table hinzufügen:
 import { EnhancedCompanyTable } from "@/components/crm/EnhancedCompanyTable";
-// 2. Import des enhanced service hinzufügen:
+import { EnhancedContactTable } from "@/components/crm/EnhancedContactTable";
 import { companyServiceEnhanced } from "@/lib/firebase/company-service-enhanced";
 
 type TabType = 'companies' | 'contacts';
@@ -191,9 +190,9 @@ export default function ContactsPage() {
   const [selectedContactCompanyIds, setSelectedContactCompanyIds] = useState<string[]>([]);
   const [selectedContactTagIds, setSelectedContactTagIds] = useState<string[]>([]);
 
- // 3. State für enhanced companies hinzufügen (nach den anderen States):
   const [enhancedCompanies, setEnhancedCompanies] = useState<CompanyEnhanced[]>([]);
-  const [useEnhancedView, setUseEnhancedView] = useState(false); // Back to false until Firebase rules are updated
+  const [enhancedContacts, setEnhancedContacts] = useState<ContactEnhanced[]>([]);
+  const [useEnhancedView, setUseEnhancedView] = useState(false);
 
   // Alert Management
   const showAlert = useCallback((type: 'info' | 'success' | 'warning' | 'error', title: string, message?: string) => {
@@ -217,19 +216,19 @@ export default function ContactsPage() {
     }
   }, [user]); 
 
-  // 4. loadData Funktion erweitern:
   const loadData = async () => {
     if (!user) return;
     setLoading(true);
     try {
-      const [companiesData, contactsData, tagsData, enhancedData] = await Promise.all([
+      const [companiesData, contactsData, tagsData, enhancedCompData] = await Promise.all([
         companiesService.getAll(user.uid),
         contactsService.getAll(user.uid),
         tagsService.getAll(user.uid),
-        companyServiceEnhanced.getAll(user.uid) // Always load enhanced data
+        companyServiceEnhanced.getAll(user.uid)
       ]);
       
-      setEnhancedCompanies(enhancedData);
+      setEnhancedCompanies(enhancedCompData);
+      setEnhancedContacts([]); // Vorerst leer, nutzen Legacy-Daten
       setCompanies(companiesData);
       setContacts(contactsData);
       setTags(tagsData);
@@ -325,6 +324,81 @@ export default function ContactsPage() {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return filteredContacts.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredContacts, currentPage, itemsPerPage]);
+
+  const paginatedEnhancedContacts = useMemo(() => {
+    return paginatedContacts.map(c => {
+      const enhanced = enhancedContacts.find(ec => ec.id === c.id);
+      if (enhanced) {
+        return enhanced;
+      }
+      
+      // Fallback: Create enhanced structure from legacy contact
+      return {
+        ...c,
+        id: c.id!,
+        organizationId: user!.uid,
+        createdBy: user!.uid,
+        name: {
+          firstName: c.firstName,
+          lastName: c.lastName
+        },
+        displayName: `${c.firstName} ${c.lastName}`,
+        emails: c.email ? [{
+          type: 'business' as const,
+          email: c.email,
+          isPrimary: true
+        }] : [],
+        phones: c.phone ? [{
+          type: 'business' as const,
+          number: c.phone,
+          isPrimary: true
+        }] : [],
+        status: 'active' as const,
+        mediaProfile: c.mediaInfo ? {
+          isJournalist: true,
+          publicationIds: c.mediaInfo.publications || [],
+          beats: c.mediaInfo.expertise || []
+        } : undefined,
+        lastActivityAt: c.lastContactDate
+      } as ContactEnhanced;
+    });
+  }, [paginatedContacts, enhancedContacts, user]);
+
+  // Create maps for efficient lookup
+  const tagsMap = useMemo(() => {
+    const map = new Map<string, { name: string; color: string }>();
+    tags.forEach(tag => {
+      if (tag.id) {
+        map.set(tag.id, { name: tag.name, color: tag.color });
+      }
+    });
+    return map;
+  }, [tags]);
+
+  const companiesMap = useMemo(() => {
+    const map = new Map<string, { name: string; type: string }>();
+    companies.forEach(company => {
+      if (company.id) {
+        map.set(company.id, { name: company.name, type: company.type });
+      }
+    });
+    return map;
+  }, [companies]);
+
+  const publicationsMap = useMemo(() => {
+    const map = new Map<string, { name: string; type: string }>();
+    // For now, we'll extract publications from companies with mediaInfo
+    companies.forEach(company => {
+      if (company.mediaInfo?.publications) {
+        company.mediaInfo.publications.forEach(pub => {
+          if (pub.id) {
+            map.set(pub.id, { name: pub.name, type: pub.type });
+          }
+        });
+      }
+    });
+    return map;
+  }, [companies]);
 
   // Selection Handlers
   const handleSelectAllCompanies = (checked: boolean) => {
@@ -796,7 +870,7 @@ export default function ContactsPage() {
         )}
       </div>
 
-      {/* 6. Tabellen-Rendering anpassen: */}
+      {/* Tabellen-Rendering */}
       <div>
         {viewMode === 'list' ? (
           activeTab === 'companies' ? (
@@ -949,140 +1023,34 @@ export default function ContactsPage() {
               </div>
             </div>
           ) : (
-            // Original List View for Contacts (unchanged)
-            <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm overflow-hidden">
-              {/* Header */}
-              <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
-                <div className="flex items-center">
-                  <div className="flex items-center w-[30%]">
-                    <Checkbox
-                      checked={paginatedContacts.length > 0 && paginatedContacts.every(c => selectedContactIds.has(c.id!))}
-                      indeterminate={paginatedContacts.some(c => selectedContactIds.has(c.id!)) && !paginatedContacts.every(c => selectedContactIds.has(c.id!))}
-                      onChange={(checked: boolean) => handleSelectAllContacts(checked)}
-                    />
-                    <span className="ml-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                      Name
-                    </span>
-                  </div>
-                  <div className="hidden md:block w-[30%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                    Position
-                  </div>
-                  <div className="hidden lg:block w-[30%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                    Tags
-                  </div>
-                  <div className="hidden xl:block flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right pr-14">
-                    Kontakt
-                  </div>
-                </div>
-              </div>
-
-              {/* Body */}
-              <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                  {paginatedContacts.map((contact) => (
-                    <div key={contact.id} className="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
-                      <div className="flex items-center">
-                        <div className="flex items-center w-[30%]">
-                          <Checkbox
-                            checked={selectedContactIds.has(contact.id!)}
-                            onChange={(checked: boolean) => {
-                              const newIds = new Set(selectedContactIds);
-                              if (checked) {
-                                newIds.add(contact.id!);
-                              } else {
-                                newIds.delete(contact.id!);
-                              }
-                              setSelectedContactIds(newIds);
-                            }}
-                          />
-                          <div className="ml-4 min-w-0 flex-1">
-                            <Link href={`/dashboard/contacts/crm/contacts/${contact.id}`} className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-primary truncate block">
-                              {contact.firstName} {contact.lastName}
-                            </Link>
-                            {contact.companyName && (
-                              <div className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
-                                <BuildingOfficeIcon className="h-3.5 w-3.5 flex-shrink-0" />
-                                <span className="truncate">{contact.companyName}</span>
-                              </div>
-                            )}
-                            {!contact.companyName && (
-                              <div className="text-sm text-zinc-500 dark:text-zinc-400">—</div>
-                            )}
-                          </div>
-                        </div>
-                        
-                        <div className="hidden md:block w-[30%] text-sm text-zinc-500 dark:text-zinc-400">
-                          {contact.position || '—'}
-                        </div>
-                        
-                        <div className="hidden lg:block w-[30%]">
-                          {contact.tagIds && contact.tagIds.length > 0 ? (
-                            <div className="flex gap-1.5 flex-wrap">
-                              {contact.tagIds.slice(0, 2).map(tagId => {
-                                const tag = tags.find(t => t.id === tagId);
-                                return tag ? (
-                                  <Badge key={tag.id} color={tag.color as any} className="text-xs">
-                                    {tag.name}
-                                  </Badge>
-                                ) : null;
-                              })}
-                              {contact.tagIds.length > 2 && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-500">
-                                  +{contact.tagIds.length - 2}
-                                </span>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-sm text-zinc-400">—</span>
-                          )}
-                        </div>
-                        
-                        <div className="hidden xl:flex items-center gap-4 flex-1 justify-end pr-14 text-sm">
-                          {contact.email && (
-                            <a href={`mailto:${contact.email}`} className="text-zinc-500 hover:text-primary dark:text-zinc-400">
-                              <EnvelopeIcon className="h-4 w-4" />
-                            </a>
-                          )}
-                          {contact.phone && (
-                            <a href={`tel:${contact.phone}`} className="text-zinc-500 hover:text-primary dark:text-zinc-400">
-                              <PhoneIcon className="h-4 w-4" />
-                            </a>
-                          )}
-                          {!contact.email && !contact.phone && (
-                            <span className="text-zinc-400">—</span>
-                          )}
-                        </div>
-                        
-                        <div className="ml-4">
-                          <Dropdown>
-                            <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-[#0660ab] focus:ring-offset-2">
-                              <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
-                            </DropdownButton>
-                            <DropdownMenu anchor="bottom end">
-                              <DropdownItem href={`/dashboard/contacts/crm/contacts/${contact.id}`}>
-                                Anzeigen
-                              </DropdownItem>
-                              <DropdownItem 
-                                onClick={() => {
-                                  setSelectedContact(contact);
-                                  setShowContactModal(true);
-                                }}
-                              >
-                                Bearbeiten
-                              </DropdownItem>
-                              <DropdownDivider />
-                              <DropdownItem 
-                                onClick={() => handleDelete(contact.id!, `${contact.firstName} ${contact.lastName}`, 'contact')}
-                              >
-                                <span className="text-red-600">Löschen</span>
-                              </DropdownItem>
-                            </DropdownMenu>
-                          </Dropdown>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </div>
+            // Enhanced Contact Table
+            <EnhancedContactTable
+              contacts={paginatedEnhancedContacts}
+              selectedIds={selectedContactIds}
+              onSelectAll={handleSelectAllContacts}
+              onSelectOne={(id, checked) => {
+                const newIds = new Set(selectedContactIds);
+                if (checked) {
+                  newIds.add(id);
+                } else {
+                  newIds.delete(id);
+                }
+                setSelectedContactIds(newIds);
+              }}
+              onView={(contact) => router.push(`/dashboard/contacts/crm/contacts/${contact.id}`)}
+              onEdit={(contact) => {
+                const originalContact = contacts.find(c => c.id === contact.id);
+                if (originalContact) {
+                  setSelectedContact(originalContact);
+                  setShowContactModal(true);
+                }
+              }}
+              onDelete={(contact) => handleDelete(contact.id!, contact.displayName, 'contact')}
+              tags={tagsMap}
+              companies={companiesMap}
+              publications={publicationsMap}
+              viewMode="compact"
+            />
           )
         ) : (
           // Grid View
@@ -1352,18 +1320,24 @@ export default function ContactsPage() {
       )}
       
       {showContactModal && (
-        <ContactModal 
+        <ContactModalEnhanced 
           contact={selectedContact} 
           companies={companies} 
           onClose={() => {
             setShowContactModal(false);
             setSelectedContact(null);
           }} 
-          onSave={() => {
-            loadData();
-            showAlert('success', selectedContact ? 'Kontakt aktualisiert' : 'Kontakt erstellt');
+          onSave={async () => {
+            try {
+              await loadData();
+              showAlert('success', selectedContact ? 'Kontakt aktualisiert' : 'Kontakt erstellt');
+            } catch (error) {
+              console.error('Error after save:', error);
+              showAlert('error', 'Fehler beim Speichern', 'Bitte prüfen Sie die Konsole für Details.');
+            }
           }} 
           userId={user?.uid || ''}
+          organizationId={user?.uid || ''}
         />
       )}
       

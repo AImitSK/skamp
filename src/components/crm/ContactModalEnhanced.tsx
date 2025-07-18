@@ -378,7 +378,7 @@ export default function ContactModalEnhanced({
     setFormData({ ...formData, gdprConsents: updatedConsents });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validation
@@ -406,46 +406,72 @@ export default function ContactModalEnhanced({
       const dataToSave: Partial<Contact> = {
         firstName: formData.name!.firstName,
         lastName: formData.name!.lastName,
-        email: formData.emails?.find(e => e.isPrimary)?.email || formData.emails?.[0]?.email,
-        phone: formData.phones?.find(p => p.isPrimary)?.number || formData.phones?.[0]?.number,
-        position: formData.position,
-        department: formData.department,
-        companyId: formData.companyId,
-        companyName: formData.companyName,
+        email: formData.emails?.find(e => e.isPrimary)?.email || formData.emails?.[0]?.email || '',
+        phone: formData.phones?.find(p => p.isPrimary)?.number || formData.phones?.[0]?.number || '',
+        position: formData.position || '',
+        department: formData.department || '',
+        companyId: formData.companyId || '',
+        companyName: formData.companyName || '',
         
         socialMedia: formData.socialProfiles?.map(sp => ({
           platform: sp.platform as SocialPlatform,
           url: sp.url
-        })),
+        })) || [],
         
-        communicationPreferences: {
-          preferredChannel: formData.communicationPreferences?.preferredChannel === 'messaging' ? 'meeting' :
-                           formData.communicationPreferences?.preferredChannel === 'mail' ? 'email' :
-                           formData.communicationPreferences?.preferredChannel,
-          doNotContact: formData.communicationPreferences?.doNotContact,
-          language: formData.communicationPreferences?.preferredLanguage
-        },
+        communicationPreferences: formData.communicationPreferences ? (() => {
+          const prefs: any = {
+            preferredChannel: formData.communicationPreferences.preferredChannel === 'messaging' ? 'meeting' :
+                             formData.communicationPreferences.preferredChannel === 'mail' ? 'email' :
+                             formData.communicationPreferences.preferredChannel || 'email',
+            doNotContact: formData.communicationPreferences.doNotContact || false
+          };
+          if (formData.communicationPreferences.preferredLanguage) {
+            prefs.language = formData.communicationPreferences.preferredLanguage;
+          }
+          return prefs;
+        })() : undefined,
         
         mediaInfo: formData.mediaProfile?.isJournalist ? {
-          publications: formData.mediaProfile.publicationIds,
-          expertise: formData.mediaProfile.beats
+          publications: formData.mediaProfile.publicationIds || [],
+          expertise: formData.mediaProfile.beats || []
         } : undefined,
         
         birthday: formData.personalInfo?.birthday,
-        notes: formData.personalInfo?.notes,
-        photoUrl: formData.photoUrl,
+        notes: formData.personalInfo?.notes || '',
+        photoUrl: formData.photoUrl || '',
         tagIds: formData.tagIds || []
       };
       
+      // Remove undefined values to prevent Firebase errors
+      const cleanedData = JSON.parse(JSON.stringify(dataToSave, (key, value) => 
+        value === undefined ? null : value
+      ));
+      
+      // Debug logging
+      console.log('Saving contact data:', cleanedData);
+      console.log('UserId:', userId);
+      
       if (contact?.id) {
-        await contactsService.update(contact.id, dataToSave);
+        await contactsService.update(contact.id, cleanedData);
       } else {
-        await contactsService.create({ ...dataToSave as Omit<Contact, 'id'>, userId });
+        // Ensure userId is set for create
+        const createData = {
+          ...cleanedData,
+          userId: userId
+        } as Omit<Contact, 'id'> & { userId: string };
+        
+        console.log('Creating contact with data:', createData);
+        await contactsService.create(createData);
       }
       onSave();
       onClose();
     } catch (error) {
-      setValidationErrors(['Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.']);
+      console.error('Error saving contact:', error);
+      if (error instanceof Error) {
+        setValidationErrors([`Fehler: ${error.message}`]);
+      } else {
+        setValidationErrors(['Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.']);
+      }
     } finally {
       setLoading(false);
     }
