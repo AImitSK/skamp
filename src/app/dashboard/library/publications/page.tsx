@@ -20,9 +20,9 @@ import {
   GlobeAltIcon,
   EllipsisVerticalIcon,
   InformationCircleIcon,
+  ExclamationTriangleIcon,
   CheckIcon,
-  XMarkIcon,
-  ExclamationTriangleIcon
+  XMarkIcon
 } from "@heroicons/react/20/solid";
 import Link from "next/link";
 import { Popover, Transition } from '@headlessui/react';

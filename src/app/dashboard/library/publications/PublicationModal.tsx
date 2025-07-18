@@ -5,17 +5,21 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { publicationService } from "@/lib/firebase/library-service";
 import type { Publication, PublicationType, PublicationFormat, PublicationFrequency } from "@/types/library";
-import type { BaseEntity } from "@/types/international";
+import type { BaseEntity, CountryCode, LanguageCode } from "@/types/international";
 import { Dialog } from "@/components/dialog";
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
 import { Textarea } from "@/components/textarea";
 import { Select } from "@/components/select";
+import { LanguageSelectorMulti } from "@/components/language-selector";
+import { CountrySelectorMulti } from "@/components/country-selector";
 import { 
   CheckIcon,
   XMarkIcon,
   PlusIcon,
-  TrashIcon
+  TrashIcon,
+  GlobeAltIcon,
+  LanguageIcon
 } from "@heroicons/react/20/solid";
 
 interface PublicationModalProps {
@@ -34,16 +38,22 @@ const publicationTypes = [
   { value: 'podcast', label: 'Podcast' },
   { value: 'tv', label: 'TV' },
   { value: 'radio', label: 'Radio' },
-  { value: 'other', label: 'Sonstiges' }
+  { value: 'trade_journal', label: 'Fachzeitschrift' },
+  { value: 'press_agency', label: 'Nachrichtenagentur' },
+  { value: 'social_media', label: 'Social Media' }
 ];
 
 const frequencies = [
+  { value: 'continuous', label: 'Durchgehend' },
+  { value: 'multiple_daily', label: 'Mehrmals täglich' },
   { value: 'daily', label: 'Täglich' },
   { value: 'weekly', label: 'Wöchentlich' },
   { value: 'biweekly', label: '14-tägig' },
   { value: 'monthly', label: 'Monatlich' },
+  { value: 'bimonthly', label: 'Zweimonatlich' },
   { value: 'quarterly', label: 'Quartalsweise' },
-  { value: 'yearly', label: 'Jährlich' },
+  { value: 'biannual', label: 'Halbjährlich' },
+  { value: 'annual', label: 'Jährlich' },
   { value: 'irregular', label: 'Unregelmäßig' }
 ];
 
@@ -55,22 +65,12 @@ const circulationTypes = [
   { value: 'audited_ivw', label: 'IVW geprüft' }
 ];
 
-// Mock-Daten für ISO-Validatoren (da diese noch nicht implementiert sind)
-const getAvailableCountries = (lang: string) => [
-  { code: 'DE', name: 'Deutschland', isEu: true },
-  { code: 'AT', name: 'Österreich', isEu: true },
-  { code: 'CH', name: 'Schweiz', isEu: false },
-  { code: 'US', name: 'USA', isEu: false },
-  { code: 'GB', name: 'Großbritannien', isEu: false },
-  { code: 'FR', name: 'Frankreich', isEu: true },
-];
-
-const getAvailableLanguages = () => [
-  { code: 'de', name: 'Deutsch' },
-  { code: 'en', name: 'Englisch' },
-  { code: 'fr', name: 'Französisch' },
-  { code: 'es', name: 'Spanisch' },
-  { code: 'it', name: 'Italienisch' },
+const geographicScopes = [
+  { value: 'local', label: 'Lokal' },
+  { value: 'regional', label: 'Regional' },
+  { value: 'national', label: 'National' },
+  { value: 'international', label: 'International' },
+  { value: 'global', label: 'Global' }
 ];
 
 export function PublicationModal({ isOpen, onClose, publication, onSuccess }: PublicationModalProps) {
@@ -81,21 +81,29 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess }: Pu
   // Form State
   const [formData, setFormData] = useState<{
     title: string;
+    subtitle: string;
     publisherId: string;
     publisherName: string;
     type: PublicationType;
     format: PublicationFormat;
-    languages: string[];
-    geographicTargets: string[];
+    languages: LanguageCode[];
+    geographicTargets: CountryCode[];
     focusAreas: string[];
     verified: boolean;
     status: 'active' | 'inactive' | 'discontinued' | 'planned';
     metrics: {
       frequency: PublicationFrequency;
+      targetAudience?: string;
+      targetAgeGroup?: string;
+      targetGender?: 'all' | 'predominantly_male' | 'predominantly_female';
     };
     geographicScope: 'local' | 'regional' | 'national' | 'international' | 'global';
+    websiteUrl?: string;
+    publicNotes?: string;
+    internalNotes?: string;
   }>({
     title: '',
+    subtitle: '',
     publisherId: '',
     publisherName: '',
     type: 'website',
@@ -110,33 +118,50 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess }: Pu
     },
     geographicScope: 'national'
   });
-  
-  // Zusätzliche Felder die nicht in PublicationFormData sind
-  const [website, setWebsite] = useState('');
-  const [notes, setNotes] = useState('');
 
   // Metriken State
   const [metrics, setMetrics] = useState({
-    frequency: '',
+    frequency: 'daily' as PublicationFrequency,
+    targetAudience: '',
+    targetAgeGroup: '',
+    targetGender: 'all' as 'all' | 'predominantly_male' | 'predominantly_female',
     print: {
       circulation: '',
-      circulationType: 'distributed' as 'distributed' | 'sold' | 'printed' | 'subscribers' | 'audited_ivw'
+      circulationType: 'distributed' as 'distributed' | 'sold' | 'printed' | 'subscribers' | 'audited_ivw',
+      pricePerIssue: '',
+      subscriptionPriceMonthly: '',
+      subscriptionPriceAnnual: '',
+      pageCount: '',
+      paperFormat: ''
     },
     online: {
       monthlyUniqueVisitors: '',
       monthlyPageViews: '',
       avgSessionDuration: '',
-      bounceRate: ''
+      bounceRate: '',
+      registeredUsers: '',
+      paidSubscribers: '',
+      newsletterSubscribers: '',
+      domainAuthority: '',
+      hasPaywall: false,
+      hasMobileApp: false
     }
   });
 
   // Identifikatoren State
   const [identifiers, setIdentifiers] = useState<Array<{ 
     type: 'ISSN' | 'ISBN' | 'DOI' | 'URL' | 'DOMAIN' | 'SOCIAL_HANDLE' | 'OTHER'; 
-    value: string 
+    value: string;
+    description?: string;
   }>>([
     { type: 'ISSN', value: '' }
   ]);
+
+  // Social Media URLs
+  const [socialMediaUrls, setSocialMediaUrls] = useState<Array<{
+    platform: string;
+    url: string;
+  }>>([]);
 
   // Focus Areas als Array von Strings
   const [focusAreasInput, setFocusAreasInput] = useState('');
@@ -146,36 +171,55 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess }: Pu
       // Lade bestehende Publikation
       setFormData({
         title: publication.title,
+        subtitle: publication.subtitle || '',
         publisherId: publication.publisherId || '',
         publisherName: publication.publisherName || '',
         type: publication.type,
         format: publication.format || 'online',
-        languages: publication.languages || [],
-        geographicTargets: publication.geographicTargets || [],
+        languages: publication.languages as LanguageCode[] || [],
+        geographicTargets: publication.geographicTargets as CountryCode[] || [],
         focusAreas: publication.focusAreas || [],
         verified: publication.verified || false,
         status: publication.status,
-        metrics: publication.metrics,
-        geographicScope: publication.geographicScope
+        metrics: {
+          frequency: publication.metrics.frequency,
+          targetAudience: publication.metrics.targetAudience,
+          targetAgeGroup: publication.metrics.targetAgeGroup,
+          targetGender: publication.metrics.targetGender
+        },
+        geographicScope: publication.geographicScope,
+        websiteUrl: publication.websiteUrl,
+        publicNotes: publication.publicNotes,
+        internalNotes: publication.internalNotes
       });
-      
-      // Zusätzliche Felder
-      setWebsite(''); // Publication hat kein website Feld
-      setNotes(''); // Publication hat kein notes Feld
 
       // Metriken
       if (publication.metrics) {
         setMetrics({
-          frequency: publication.metrics.frequency || '',
+          frequency: publication.metrics.frequency || 'daily',
+          targetAudience: publication.metrics.targetAudience || '',
+          targetAgeGroup: publication.metrics.targetAgeGroup || '',
+          targetGender: publication.metrics.targetGender || 'all',
           print: {
             circulation: publication.metrics.print?.circulation?.toString() || '',
-            circulationType: publication.metrics.print?.circulationType || 'distributed'
+            circulationType: publication.metrics.print?.circulationType || 'distributed',
+            pricePerIssue: publication.metrics.print?.pricePerIssue?.amount.toString() || '',
+            subscriptionPriceMonthly: publication.metrics.print?.subscriptionPrice?.monthly?.amount.toString() || '',
+            subscriptionPriceAnnual: publication.metrics.print?.subscriptionPrice?.annual?.amount.toString() || '',
+            pageCount: publication.metrics.print?.pageCount?.toString() || '',
+            paperFormat: publication.metrics.print?.paperFormat || ''
           },
           online: {
             monthlyUniqueVisitors: publication.metrics.online?.monthlyUniqueVisitors?.toString() || '',
             monthlyPageViews: publication.metrics.online?.monthlyPageViews?.toString() || '',
             avgSessionDuration: publication.metrics.online?.avgSessionDuration?.toString() || '',
-            bounceRate: publication.metrics.online?.bounceRate?.toString() || ''
+            bounceRate: publication.metrics.online?.bounceRate?.toString() || '',
+            registeredUsers: publication.metrics.online?.registeredUsers?.toString() || '',
+            paidSubscribers: publication.metrics.online?.paidSubscribers?.toString() || '',
+            newsletterSubscribers: publication.metrics.online?.newsletterSubscribers?.toString() || '',
+            domainAuthority: publication.metrics.online?.domainAuthority?.toString() || '',
+            hasPaywall: publication.metrics.online?.hasPaywall || false,
+            hasMobileApp: publication.metrics.online?.hasMobileApp || false
           }
         });
       }
@@ -184,8 +228,14 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess }: Pu
       if (publication.identifiers) {
         setIdentifiers(publication.identifiers.map(id => ({
           type: id.type,
-          value: id.value
+          value: id.value,
+          description: id.description
         })));
+      }
+
+      // Social Media URLs
+      if (publication.socialMediaUrls) {
+        setSocialMediaUrls(publication.socialMediaUrls);
       }
 
       // Focus Areas
@@ -199,24 +249,76 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess }: Pu
 
     setLoading(true);
     try {
+      // Helper function to remove undefined values
+      const removeUndefined = (obj: any): any => {
+        const newObj: any = {};
+        Object.keys(obj).forEach(key => {
+          if (obj[key] === undefined) return;
+          if (obj[key] === null) return;
+          if (typeof obj[key] === 'object' && !Array.isArray(obj[key]) && obj[key] !== null) {
+            const cleaned = removeUndefined(obj[key]);
+            if (Object.keys(cleaned).length > 0) {
+              newObj[key] = cleaned;
+            }
+          } else {
+            newObj[key] = obj[key];
+          }
+        });
+        return newObj;
+      };
+
       // Bereite Metriken vor
       const preparedMetrics: any = {
-        ...formData.metrics,
-        frequency: (metrics.frequency || 'daily') as PublicationFrequency
+        frequency: metrics.frequency,
+        targetAudience: metrics.targetAudience || undefined,
+        targetAgeGroup: metrics.targetAgeGroup || undefined,
+        targetGender: metrics.targetGender !== 'all' ? metrics.targetGender : undefined
       };
 
       // Nur Print-Metriken hinzufügen, wenn vorhanden
-      if (metrics.print.circulation) {
+      if ((formData.format === 'print' || formData.format === 'both') && metrics.print.circulation) {
         preparedMetrics.print = {
           circulation: parseInt(metrics.print.circulation),
           circulationType: metrics.print.circulationType
         };
+        
+        if (metrics.print.pricePerIssue) {
+          preparedMetrics.print.pricePerIssue = {
+            amount: parseFloat(metrics.print.pricePerIssue),
+            currency: 'EUR' // Default currency
+          };
+        }
+        
+        if (metrics.print.subscriptionPriceMonthly || metrics.print.subscriptionPriceAnnual) {
+          preparedMetrics.print.subscriptionPrice = {};
+          if (metrics.print.subscriptionPriceMonthly) {
+            preparedMetrics.print.subscriptionPrice.monthly = {
+              amount: parseFloat(metrics.print.subscriptionPriceMonthly),
+              currency: 'EUR'
+            };
+          }
+          if (metrics.print.subscriptionPriceAnnual) {
+            preparedMetrics.print.subscriptionPrice.annual = {
+              amount: parseFloat(metrics.print.subscriptionPriceAnnual),
+              currency: 'EUR'
+            };
+          }
+        }
+        
+        if (metrics.print.pageCount) {
+          preparedMetrics.print.pageCount = parseInt(metrics.print.pageCount);
+        }
+        if (metrics.print.paperFormat) {
+          preparedMetrics.print.paperFormat = metrics.print.paperFormat;
+        }
       }
 
       // Nur Online-Metriken hinzufügen, wenn vorhanden
-      if (metrics.online.monthlyUniqueVisitors) {
+      if ((formData.format === 'online' || formData.format === 'both') && metrics.online.monthlyUniqueVisitors) {
         preparedMetrics.online = {
-          monthlyUniqueVisitors: parseInt(metrics.online.monthlyUniqueVisitors)
+          monthlyUniqueVisitors: parseInt(metrics.online.monthlyUniqueVisitors),
+          hasPaywall: metrics.online.hasPaywall,
+          hasMobileApp: metrics.online.hasMobileApp
         };
         
         if (metrics.online.monthlyPageViews) {
@@ -228,29 +330,56 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess }: Pu
         if (metrics.online.bounceRate) {
           preparedMetrics.online.bounceRate = parseFloat(metrics.online.bounceRate);
         }
+        if (metrics.online.registeredUsers) {
+          preparedMetrics.online.registeredUsers = parseInt(metrics.online.registeredUsers);
+        }
+        if (metrics.online.paidSubscribers) {
+          preparedMetrics.online.paidSubscribers = parseInt(metrics.online.paidSubscribers);
+        }
+        if (metrics.online.newsletterSubscribers) {
+          preparedMetrics.online.newsletterSubscribers = parseInt(metrics.online.newsletterSubscribers);
+        }
+        if (metrics.online.domainAuthority) {
+          preparedMetrics.online.domainAuthority = parseInt(metrics.online.domainAuthority);
+        }
       }
 
-      // Bereite Daten vor - ohne organizationId, da es über Context kommt
-      const publicationData: Omit<Publication, keyof BaseEntity | 'organizationId'> = {
-        ...formData,
-        publisherId: formData.publisherId || user.uid, // Fallback auf userId wenn kein Publisher
+      // Bereite Daten vor
+      const publicationData: any = {
+        title: formData.title,
+        subtitle: formData.subtitle || undefined,
+        publisherId: formData.publisherId || user.uid,
+        publisherName: formData.publisherName || undefined,
+        type: formData.type,
+        format: formData.format,
+        languages: formData.languages,
+        geographicTargets: formData.geographicTargets,
+        geographicScope: formData.geographicScope,
         focusAreas: focusAreasInput.split(',').map(s => s.trim()).filter(Boolean),
         metrics: preparedMetrics,
         identifiers: identifiers.filter(id => id.value).map(id => ({
           type: id.type,
-          value: id.value
-        }))
+          value: id.value,
+          description: id.description || undefined
+        })),
+        socialMediaUrls: socialMediaUrls.filter(s => s.url),
+        verified: formData.verified,
+        status: formData.status,
+        websiteUrl: formData.websiteUrl || undefined,
+        publicNotes: formData.publicNotes || undefined,
+        internalNotes: formData.internalNotes || undefined
       };
 
+      // Clean the object to remove any remaining undefined values
+      const cleanedData = removeUndefined(publicationData);
+
       if (publication?.id) {
-        // Update - übergebe nur die geänderten Felder
-        await publicationService.update(publication.id, publicationData as any, {
+        await publicationService.update(publication.id, cleanedData, {
           organizationId: user.uid,
           userId: user.uid
         });
       } else {
-        // Create - BaseService fügt organizationId automatisch hinzu
-        await publicationService.create(publicationData as any, {
+        await publicationService.create(cleanedData, {
           organizationId: user.uid,
           userId: user.uid
         });
@@ -274,421 +403,645 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess }: Pu
     setIdentifiers(identifiers.filter((_, i) => i !== index));
   };
 
-  const countries = getAvailableCountries('de');
-  const languages = getAvailableLanguages();
+  const addSocialMedia = () => {
+    setSocialMediaUrls([...socialMediaUrls, { platform: '', url: '' }]);
+  };
+
+  const removeSocialMedia = (index: number) => {
+    setSocialMediaUrls(socialMediaUrls.filter((_, i) => i !== index));
+  };
 
   return (
     <Dialog open={isOpen} onClose={onClose} className="sm:max-w-4xl">
       <div className="p-6"> 
+        <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-4">
+          <h3 className="text-lg font-medium leading-6 text-gray-900">
+            {publication ? 'Publikation bearbeiten' : 'Neue Publikation'}
+          </h3>
+        </div>
 
-      <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-4">
-        <h3 className="text-lg font-medium leading-6 text-gray-900">
-          {publication ? 'Publikation bearbeiten' : 'Neue Publikation'}
-        </h3>
-        
-      </div>
+        {/* Tab Navigation */}
+        <div className="border-b border-gray-200 mb-6">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setActiveTab('basic')}
+              className={`${
+                activeTab === 'basic' 
+                  ? 'border-[#005fab] text-[#005fab]' 
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm`}
+            >
+              Grunddaten
+            </button>
+            <button
+              onClick={() => setActiveTab('metrics')}
+              className={`${
+                activeTab === 'metrics' 
+                  ? 'border-[#005fab] text-[#005fab]' 
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm`}
+            >
+              Metriken
+            </button>
+            <button
+              onClick={() => setActiveTab('identifiers')}
+              className={`${
+                activeTab === 'identifiers' 
+                  ? 'border-[#005fab] text-[#005fab]' 
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm`}
+            >
+              Identifikatoren & Links
+            </button>
+          </nav>
+        </div>
 
-      {/* Tab Navigation */}
-      <div className="border-b border-gray-200 mb-6">
-        <nav className="-mb-px flex space-x-8">
-          <button
-            onClick={() => setActiveTab('basic')}
-            className={`${
-              activeTab === 'basic' 
-                ? 'border-[#005fab] text-[#005fab]' 
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm`}
-          >
-            Grunddaten
-          </button>
-          <button
-            onClick={() => setActiveTab('metrics')}
-            className={`${
-              activeTab === 'metrics' 
-                ? 'border-[#005fab] text-[#005fab]' 
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm`}
-          >
-            Metriken
-          </button>
-          <button
-            onClick={() => setActiveTab('identifiers')}
-            className={`${
-              activeTab === 'identifiers' 
-                ? 'border-[#005fab] text-[#005fab]' 
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm`}
-          >
-            Identifikatoren
-          </button>
-        </nav>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Grunddaten Tab */}
-        {activeTab === 'basic' && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Titel der Publikation *
-                </label>
-                <Input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Verlag
-                </label>
-                <Input
-                  type="text"
-                  value={formData.publisherName}
-                  onChange={(e) => setFormData({ ...formData, publisherName: e.target.value })}
-                  placeholder="Name des Verlags"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Typ *
-                </label>
-                <Select
-                  value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
-                >
-                  {publicationTypes.map(type => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Format
-                </label>
-                <Select
-                  value={formData.format}
-                  onChange={(e) => setFormData({ ...formData, format: e.target.value as 'print' | 'online' | 'both' })}
-                >
-                  <option value="print">Print</option>
-                  <option value="online">Digital</option>
-                  <option value="both">Print & Digital</option>
-                </Select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Website
-              </label>
-              <Input
-                type="url"
-                value={website}
-                onChange={(e) => setWebsite(e.target.value)}
-                placeholder="https://..."
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Sprachen
-              </label>
-              <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-2">
-                {languages.map(lang => (
-                  <label key={lang.code} className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={formData.languages.includes(lang.code)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setFormData({ 
-                            ...formData, 
-                            languages: [...formData.languages, lang.code] 
-                          });
-                        } else {
-                          setFormData({ 
-                            ...formData, 
-                            languages: formData.languages.filter(l => l !== lang.code) 
-                          });
-                        }
-                      }}
-                      className="rounded border-gray-300"
-                    />
-                    <span className="text-sm">{lang.name}</span>
+        <form onSubmit={handleSubmit} className="space-y-6 max-h-[60vh] overflow-y-auto">
+          {/* Grunddaten Tab */}
+          {activeTab === 'basic' && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Titel der Publikation *
                   </label>
-                ))}
+                  <Input
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    required
+                    placeholder="z.B. Süddeutsche Zeitung"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Untertitel / Claim
+                  </label>
+                  <Input
+                    type="text"
+                    value={formData.subtitle}
+                    onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
+                    placeholder="z.B. Die große Tageszeitung"
+                  />
+                </div>
               </div>
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Geografische Zielgebiete
-              </label>
-              <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-2">
-                {countries.map(country => (
-                  <label key={country.code} className="flex items-center space-x-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Verlag / Medienhaus
+                  </label>
+                  <Input
+                    type="text"
+                    value={formData.publisherName}
+                    onChange={(e) => setFormData({ ...formData, publisherName: e.target.value })}
+                    placeholder="Name des Verlags"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Website
+                  </label>
+                  <Input
+                    type="url"
+                    value={formData.websiteUrl}
+                    onChange={(e) => setFormData({ ...formData, websiteUrl: e.target.value })}
+                    placeholder="https://..."
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Typ *
+                  </label>
+                  <Select
+                    value={formData.type}
+                    onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
+                  >
+                    {publicationTypes.map(type => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Format
+                  </label>
+                  <Select
+                    value={formData.format}
+                    onChange={(e) => setFormData({ ...formData, format: e.target.value as PublicationFormat })}
+                  >
+                    <option value="print">Print</option>
+                    <option value="online">Digital</option>
+                    <option value="both">Print & Digital</option>
+                    <option value="broadcast">Broadcast</option>
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Reichweite
+                  </label>
+                  <Select
+                    value={formData.geographicScope}
+                    onChange={(e) => setFormData({ ...formData, geographicScope: e.target.value as any })}
+                  >
+                    {geographicScopes.map(scope => (
+                      <option key={scope.value} value={scope.value}>
+                        {scope.label}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <LanguageIcon className="inline h-4 w-4 mr-1" />
+                  Sprachen *
+                </label>
+                <LanguageSelectorMulti
+                  value={formData.languages}
+                  onChange={(languages) => setFormData({ ...formData, languages })}
+                  placeholder="Sprachen auswählen..."
+                  multiple
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <GlobeAltIcon className="inline h-4 w-4 mr-1" />
+                  Geografische Zielgebiete *
+                </label>
+                <CountrySelectorMulti
+                  value={formData.geographicTargets}
+                  onChange={(countries) => setFormData({ ...formData, geographicTargets: countries })}
+                  placeholder="Länder auswählen..."
+                  multiple
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Themenbereiche (kommagetrennt)
+                </label>
+                <Input
+                  type="text"
+                  value={focusAreasInput}
+                  onChange={(e) => setFocusAreasInput(e.target.value)}
+                  placeholder="Wirtschaft, Technologie, Politik..."
+                />
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Status
+                  </label>
+                  <Select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                  >
+                    <option value="active">Aktiv</option>
+                    <option value="inactive">Inaktiv</option>
+                    <option value="discontinued">Eingestellt</option>
+                    <option value="planned">Geplant</option>
+                  </Select>
+                </div>
+                <div className="flex items-end">
+                  <label className="flex items-center">
                     <input
                       type="checkbox"
-                      checked={formData.geographicTargets.includes(country.code)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setFormData({ 
-                            ...formData, 
-                            geographicTargets: [...formData.geographicTargets, country.code] 
-                          });
-                        } else {
-                          setFormData({ 
-                            ...formData, 
-                            geographicTargets: formData.geographicTargets.filter(c => c !== country.code) 
-                          });
-                        }
-                      }}
-                      className="rounded border-gray-300"
+                      checked={formData.verified}
+                      onChange={(e) => setFormData({ ...formData, verified: e.target.checked })}
+                      className="h-4 w-4 text-[#005fab] focus:ring-[#005fab] border-gray-300 rounded"
                     />
-                    <span className="text-sm">
-                      {country.name} {country.isEu && <span className="text-gray-500">(EU)</span>}
+                    <span className="ml-2 block text-sm text-gray-900">
+                      Publikation ist verifiziert
                     </span>
                   </label>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Themenbereiche (kommagetrennt)
-              </label>
-              <Input
-                type="text"
-                value={focusAreasInput}
-                onChange={(e) => setFocusAreasInput(e.target.value)}
-                placeholder="Wirtschaft, Technologie, Politik..."
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Notizen
-              </label>
-              <Textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={3}
-              />
-            </div>
-
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="verified"
-                checked={formData.verified}
-                onChange={(e) => setFormData({ ...formData, verified: e.target.checked })}
-                className="h-4 w-4 text-[#005fab] focus:ring-[#005fab] border-gray-300 rounded"
-              />
-              <label htmlFor="verified" className="ml-2 block text-sm text-gray-900">
-                Publikation ist verifiziert
-              </label>
-            </div>
-          </div>
-        )}
-
-        {/* Metriken Tab */}
-        {activeTab === 'metrics' && (
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Erscheinungsfrequenz
-              </label>
-              <Select
-                value={metrics.frequency}
-                onChange={(e) => setMetrics({ ...metrics, frequency: e.target.value })}
-              >
-                <option value="">Bitte wählen...</option>
-                {frequencies.map(freq => (
-                  <option key={freq.value} value={freq.value}>
-                    {freq.label}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-            {/* Print Metriken */}
-            {(formData.format === 'print' || formData.format === 'both') && (
-              <div className="border rounded-lg p-4 space-y-4">
-                <h4 className="font-medium text-gray-900">Print-Metriken</h4>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Auflage
-                    </label>
-                    <Input
-                      type="number"
-                      value={metrics.print.circulation}
-                      onChange={(e) => setMetrics({
-                        ...metrics,
-                        print: { ...metrics.print, circulation: e.target.value }
-                      })}
-                      placeholder="50000"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Auflagentyp
-                    </label>
-                    <Select
-                      value={metrics.print.circulationType}
-                      onChange={(e) => setMetrics({
-                        ...metrics,
-                        print: { ...metrics.print, circulationType: e.target.value as any }
-                      })}
-                    >
-                      {circulationTypes.map(type => (
-                        <option key={type.value} value={type.value}>
-                          {type.label}
-                        </option>
-                      ))}
-                    </Select>
-                  </div>
                 </div>
               </div>
-            )}
 
-            {/* Online Metriken */}
-            {(formData.format === 'online' || formData.format === 'both') && (
-              <div className="border rounded-lg p-4 space-y-4">
-                <h4 className="font-medium text-gray-900">Online-Metriken</h4>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Monatliche Unique Visitors
-                    </label>
-                    <Input
-                      type="number"
-                      value={metrics.online.monthlyUniqueVisitors}
-                      onChange={(e) => setMetrics({
-                        ...metrics,
-                        online: { ...metrics.online, monthlyUniqueVisitors: e.target.value }
-                      })}
-                      placeholder="100000"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Monatliche Page Views
-                    </label>
-                    <Input
-                      type="number"
-                      value={metrics.online.monthlyPageViews}
-                      onChange={(e) => setMetrics({
-                        ...metrics,
-                        online: { ...metrics.online, monthlyPageViews: e.target.value }
-                      })}
-                      placeholder="500000"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Ø Sitzungsdauer (Minuten)
-                    </label>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      value={metrics.online.avgSessionDuration}
-                      onChange={(e) => setMetrics({
-                        ...metrics,
-                        online: { ...metrics.online, avgSessionDuration: e.target.value }
-                      })}
-                      placeholder="3.5"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Bounce Rate (%)
-                    </label>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      value={metrics.online.bounceRate}
-                      onChange={(e) => setMetrics({
-                        ...metrics,
-                        online: { ...metrics.online, bounceRate: e.target.value }
-                      })}
-                      placeholder="45.5"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Identifikatoren Tab */}
-        {activeTab === 'identifiers' && (
-          <div className="space-y-4">
-            {identifiers.map((identifier, index) => (
-              <div key={index} className="flex gap-2">
-                <Select
-                  value={identifier.type}
-                  onChange={(e) => {
-                    const updated = [...identifiers];
-                    updated[index] = { ...updated[index], type: e.target.value as any };
-                    setIdentifiers(updated);
-                  }}
-                  className="w-1/3"
-                >
-                  <option value="ISSN">ISSN</option>
-                  <option value="ISBN">ISBN</option>
-                  <option value="DOI">DOI</option>
-                  <option value="URL">URL</option>
-                  <option value="DOMAIN">Domain</option>
-                  <option value="SOCIAL_HANDLE">Social Handle</option>
-                  <option value="OTHER">Sonstiges</option>
-                </Select>
-                <Input
-                  type="text"
-                  value={identifier.value}
-                  onChange={(e) => {
-                    const updated = [...identifiers];
-                    updated[index].value = e.target.value;
-                    setIdentifiers(updated);
-                  }}
-                  placeholder="Wert eingeben..."
-                  className="flex-1"
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Öffentliche Notizen (für Media Kit)
+                </label>
+                <Textarea
+                  value={formData.publicNotes}
+                  onChange={(e) => setFormData({ ...formData, publicNotes: e.target.value })}
+                  rows={2}
+                  placeholder="Informationen für externe Verwendung..."
                 />
-                <Button
-                  type="button"
-                  plain
-                  onClick={() => removeIdentifier(index)}
-                  disabled={identifiers.length === 1}
-                >
-                  <TrashIcon className="h-5 w-5" />
-                </Button>
               </div>
-            ))}
-            <Button type="button" plain onClick={addIdentifier}>
-              <PlusIcon className="h-4 w-4 mr-1" />
-              Identifikator hinzufügen
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Interne Notizen
+                </label>
+                <Textarea
+                  value={formData.internalNotes}
+                  onChange={(e) => setFormData({ ...formData, internalNotes: e.target.value })}
+                  rows={2}
+                  placeholder="Interne Anmerkungen..."
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Metriken Tab */}
+          {activeTab === 'metrics' && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Erscheinungsfrequenz
+                  </label>
+                  <Select
+                    value={metrics.frequency}
+                    onChange={(e) => setMetrics({ ...metrics, frequency: e.target.value as PublicationFrequency })}
+                  >
+                    {frequencies.map(freq => (
+                      <option key={freq.value} value={freq.value}>
+                        {freq.label}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Zielgruppe
+                  </label>
+                  <Input
+                    type="text"
+                    value={metrics.targetAudience}
+                    onChange={(e) => setMetrics({ ...metrics, targetAudience: e.target.value })}
+                    placeholder="z.B. Entscheider, Fachpublikum..."
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Altersgruppe
+                  </label>
+                  <Input
+                    type="text"
+                    value={metrics.targetAgeGroup}
+                    onChange={(e) => setMetrics({ ...metrics, targetAgeGroup: e.target.value })}
+                    placeholder="z.B. 25-49, 50+"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Geschlechterverteilung
+                  </label>
+                  <Select
+                    value={metrics.targetGender}
+                    onChange={(e) => setMetrics({ ...metrics, targetGender: e.target.value as any })}
+                  >
+                    <option value="all">Ausgeglichen</option>
+                    <option value="predominantly_male">Überwiegend männlich</option>
+                    <option value="predominantly_female">Überwiegend weiblich</option>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Print Metriken */}
+              {(formData.format === 'print' || formData.format === 'both') && (
+                <div className="border rounded-lg p-4 space-y-4">
+                  <h4 className="font-medium text-gray-900">Print-Metriken</h4>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Auflage
+                      </label>
+                      <Input
+                        type="number"
+                        value={metrics.print.circulation}
+                        onChange={(e) => setMetrics({
+                          ...metrics,
+                          print: { ...metrics.print, circulation: e.target.value }
+                        })}
+                        placeholder="50000"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Auflagentyp
+                      </label>
+                      <Select
+                        value={metrics.print.circulationType}
+                        onChange={(e) => setMetrics({
+                          ...metrics,
+                          print: { ...metrics.print, circulationType: e.target.value as any }
+                        })}
+                      >
+                        {circulationTypes.map(type => (
+                          <option key={type.value} value={type.value}>
+                            {type.label}
+                          </option>
+                        ))}
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Preis pro Ausgabe (€)
+                      </label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={metrics.print.pricePerIssue}
+                        onChange={(e) => setMetrics({
+                          ...metrics,
+                          print: { ...metrics.print, pricePerIssue: e.target.value }
+                        })}
+                        placeholder="3.50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Abo-Preis Monat (€)
+                      </label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={metrics.print.subscriptionPriceMonthly}
+                        onChange={(e) => setMetrics({
+                          ...metrics,
+                          print: { ...metrics.print, subscriptionPriceMonthly: e.target.value }
+                        })}
+                        placeholder="29.90"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Format
+                      </label>
+                      <Input
+                        type="text"
+                        value={metrics.print.paperFormat}
+                        onChange={(e) => setMetrics({
+                          ...metrics,
+                          print: { ...metrics.print, paperFormat: e.target.value }
+                        })}
+                        placeholder="z.B. A4, Tabloid"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Seitenanzahl
+                      </label>
+                      <Input
+                        type="number"
+                        value={metrics.print.pageCount}
+                        onChange={(e) => setMetrics({
+                          ...metrics,
+                          print: { ...metrics.print, pageCount: e.target.value }
+                        })}
+                        placeholder="64"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Online Metriken */}
+              {(formData.format === 'online' || formData.format === 'both') && (
+                <div className="border rounded-lg p-4 space-y-4">
+                  <h4 className="font-medium text-gray-900">Online-Metriken</h4>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Monatliche Unique Visitors
+                      </label>
+                      <Input
+                        type="number"
+                        value={metrics.online.monthlyUniqueVisitors}
+                        onChange={(e) => setMetrics({
+                          ...metrics,
+                          online: { ...metrics.online, monthlyUniqueVisitors: e.target.value }
+                        })}
+                        placeholder="100000"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Monatliche Page Views
+                      </label>
+                      <Input
+                        type="number"
+                        value={metrics.online.monthlyPageViews}
+                        onChange={(e) => setMetrics({
+                          ...metrics,
+                          online: { ...metrics.online, monthlyPageViews: e.target.value }
+                        })}
+                        placeholder="500000"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Ø Sitzungsdauer (Minuten)
+                      </label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        value={metrics.online.avgSessionDuration}
+                        onChange={(e) => setMetrics({
+                          ...metrics,
+                          online: { ...metrics.online, avgSessionDuration: e.target.value }
+                        })}
+                        placeholder="3.5"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Bounce Rate (%)
+                      </label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        value={metrics.online.bounceRate}
+                        onChange={(e) => setMetrics({
+                          ...metrics,
+                          online: { ...metrics.online, bounceRate: e.target.value }
+                        })}
+                        placeholder="45.5"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Registrierte Nutzer
+                      </label>
+                      <Input
+                        type="number"
+                        value={metrics.online.registeredUsers}
+                        onChange={(e) => setMetrics({
+                          ...metrics,
+                          online: { ...metrics.online, registeredUsers: e.target.value }
+                        })}
+                        placeholder="50000"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Newsletter-Abonnenten
+                      </label>
+                      <Input
+                        type="number"
+                        value={metrics.online.newsletterSubscribers}
+                        onChange={(e) => setMetrics({
+                          ...metrics,
+                          online: { ...metrics.online, newsletterSubscribers: e.target.value }
+                        })}
+                        placeholder="25000"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-6 pt-2">
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={metrics.online.hasPaywall}
+                        onChange={(e) => setMetrics({
+                          ...metrics,
+                          online: { ...metrics.online, hasPaywall: e.target.checked }
+                        })}
+                        className="h-4 w-4 text-[#005fab] focus:ring-[#005fab] border-gray-300 rounded"
+                      />
+                      <span className="ml-2 text-sm">Hat Paywall</span>
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={metrics.online.hasMobileApp}
+                        onChange={(e) => setMetrics({
+                          ...metrics,
+                          online: { ...metrics.online, hasMobileApp: e.target.checked }
+                        })}
+                        className="h-4 w-4 text-[#005fab] focus:ring-[#005fab] border-gray-300 rounded"
+                      />
+                      <span className="ml-2 text-sm">Hat Mobile App</span>
+                    </label>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Identifikatoren Tab */}
+          {activeTab === 'identifiers' && (
+            <div className="space-y-6">
+              <div>
+                <h4 className="font-medium text-gray-900 mb-3">Identifikatoren</h4>
+                <div className="space-y-2">
+                  {identifiers.map((identifier, index) => (
+                    <div key={index} className="flex gap-2">
+                      <Select
+                        value={identifier.type}
+                        onChange={(e) => {
+                          const updated = [...identifiers];
+                          updated[index] = { ...updated[index], type: e.target.value as any };
+                          setIdentifiers(updated);
+                        }}
+                        className="w-1/3"
+                      >
+                        <option value="ISSN">ISSN</option>
+                        <option value="ISBN">ISBN</option>
+                        <option value="DOI">DOI</option>
+                        <option value="URL">URL</option>
+                        <option value="DOMAIN">Domain</option>
+                        <option value="SOCIAL_HANDLE">Social Handle</option>
+                        <option value="OTHER">Sonstiges</option>
+                      </Select>
+                      <Input
+                        type="text"
+                        value={identifier.value}
+                        onChange={(e) => {
+                          const updated = [...identifiers];
+                          updated[index].value = e.target.value;
+                          setIdentifiers(updated);
+                        }}
+                        placeholder="Wert eingeben..."
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        plain
+                        onClick={() => removeIdentifier(index)}
+                        disabled={identifiers.length === 1}
+                      >
+                        <TrashIcon className="h-5 w-5" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button type="button" plain onClick={addIdentifier}>
+                    <PlusIcon className="h-4 w-4 mr-1" />
+                    Identifikator hinzufügen
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-medium text-gray-900 mb-3">Social Media Profile</h4>
+                <div className="space-y-2">
+                  {socialMediaUrls.map((social, index) => (
+                    <div key={index} className="flex gap-2">
+                      <Input
+                        type="text"
+                        value={social.platform}
+                        onChange={(e) => {
+                          const updated = [...socialMediaUrls];
+                          updated[index].platform = e.target.value;
+                          setSocialMediaUrls(updated);
+                        }}
+                        placeholder="Platform (z.B. Twitter)"
+                        className="w-1/3"
+                      />
+                      <Input
+                        type="url"
+                        value={social.url}
+                        onChange={(e) => {
+                          const updated = [...socialMediaUrls];
+                          updated[index].url = e.target.value;
+                          setSocialMediaUrls(updated);
+                        }}
+                        placeholder="https://..."
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        plain
+                        onClick={() => removeSocialMedia(index)}
+                      >
+                        <TrashIcon className="h-5 w-5" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button type="button" plain onClick={addSocialMedia}>
+                    <PlusIcon className="h-4 w-4 mr-1" />
+                    Social Media hinzufügen
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Buttons */}
+          <div className="flex justify-end space-x-3 pt-6 border-t">
+            <Button plain onClick={onClose}>
+              Abbrechen
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Speichern...' : publication ? 'Aktualisieren' : 'Erstellen'}
             </Button>
           </div>
-        )}
-
-        {/* Buttons */}
-        <div className="flex justify-end space-x-3 pt-6 border-t">
-          <Button plain onClick={onClose}>
-            Abbrechen
-          </Button>
-          <Button type="submit" disabled={loading}>
-            {loading ? 'Speichern...' : publication ? 'Aktualisieren' : 'Erstellen'}
-          </Button>
-        </div>
-      </form>
-          </div>
+        </form>
+      </div>
     </Dialog>
   );
 }

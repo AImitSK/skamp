@@ -276,84 +276,169 @@ export function AdvertisementModal({
     }
   }, [advertisement]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
     setLoading(true);
     try {
-      // Bereite Daten vor
-      const advertisementData: Omit<Advertisement, keyof BaseEntity | 'organizationId'> = {
-        ...formData,
+      // Helper function to remove undefined values
+      const removeUndefined = (obj: any): any => {
+        const newObj: any = {};
+        Object.keys(obj).forEach(key => {
+          if (obj[key] === undefined) return;
+          if (obj[key] === null) return;
+          if (typeof obj[key] === 'object' && !Array.isArray(obj[key]) && obj[key] !== null) {
+            const cleaned = removeUndefined(obj[key]);
+            if (Object.keys(cleaned).length > 0) {
+              newObj[key] = cleaned;
+            }
+          } else {
+            newObj[key] = obj[key];
+          }
+        });
+        return newObj;
+      };
+
+      // Build specifications object
+      const specifications: any = {};
+      
+      if (format) {
+        specifications.format = format;
+      }
+      
+      if (position.length > 0) {
+        specifications.position = position;
+      }
+
+      // Print specs
+      if (formData.type === 'print_ad') {
+        const ps: any = { colorSpace: printSpecs.colorSpace };
+        if (printSpecs.dimensions) ps.dimensions = printSpecs.dimensions;
+        if (printSpecs.bleed) ps.bleed = printSpecs.bleed;
+        if (printSpecs.resolution) ps.resolution = printSpecs.resolution;
+        if (printSpecs.fileFormats.length > 0) ps.fileFormats = printSpecs.fileFormats;
+        if (printSpecs.maxInkCoverage > 0) ps.maxInkCoverage = printSpecs.maxInkCoverage;
+        specifications.printSpecs = ps;
+      }
+
+      // Digital specs
+      if (['display_banner', 'native_ad', 'newsletter_ad', 'social_media_ad'].includes(formData.type)) {
+        const ds: any = {
+          animated: digitalSpecs.animated,
+          clickTracking: digitalSpecs.clickTracking,
+          thirdPartyTracking: digitalSpecs.thirdPartyTracking
+        };
+        if (digitalSpecs.dimensions.length > 0) ds.dimensions = digitalSpecs.dimensions;
+        if (digitalSpecs.maxFileSize) ds.maxFileSize = digitalSpecs.maxFileSize;
+        if (digitalSpecs.fileFormats.length > 0) ds.fileFormats = digitalSpecs.fileFormats;
+        if (digitalSpecs.maxAnimationLength > 0) ds.maxAnimationLength = digitalSpecs.maxAnimationLength;
+        specifications.digitalSpecs = ds;
+      }
+
+      // Video specs
+      if (formData.type === 'video_ad') {
+        specifications.videoSpecs = videoSpecs;
+      }
+
+      // Custom specs
+      const customSpecsObj = customSpecs
+        .filter(s => s.key && s.value)
+        .reduce((acc, s) => ({ ...acc, [s.key]: s.value }), {});
+      
+      if (Object.keys(customSpecsObj).length > 0) {
+        specifications.customSpecs = customSpecsObj;
+      }
+
+      // Build pricing object
+      const pricingData: any = {
+        listPrice: pricing.listPrice,
+        priceModel: pricing.priceModel
+      };
+
+      if (pricing.priceUnit) {
+        pricingData.priceUnit = pricing.priceUnit;
+      }
+
+      if (pricing.minimumOrder.quantity > 0) {
+        pricingData.minimumOrder = pricing.minimumOrder;
+      }
+
+      // Discounts
+      const discounts: any = {};
+      if (volumeDiscounts.length > 0) discounts.volume = volumeDiscounts;
+      if (pricing.agencyDiscount > 0) discounts.agency = pricing.agencyDiscount;
+      if (pricing.earlyBooking.daysInAdvance > 0) discounts.earlyBooking = pricing.earlyBooking;
+      
+      if (Object.keys(discounts).length > 0) {
+        pricingData.discounts = discounts;
+      }
+
+      // Surcharges
+      const validSurcharges = surcharges
+        .filter(s => s.type && s.amount > 0)
+        .map(s => {
+          const surcharge: any = {
+            type: s.type,
+            amount: s.isPercentage ? s.amount : { amount: s.amount, currency: pricing.listPrice.currency }
+          };
+          if (s.description) surcharge.description = s.description;
+          return surcharge;
+        });
+      
+      if (validSurcharges.length > 0) {
+        pricingData.surcharges = validSurcharges;
+      }
+
+      // Build availability object
+      const availabilityData: any = {
+        bookingDeadline: {
+          days: availability.bookingDeadlineDays,
+          type: availability.bookingDeadlineType
+        }
+      };
+
+      if (availability.bookingDeadlineTime) {
+        availabilityData.bookingDeadline.time = availability.bookingDeadlineTime;
+      }
+      
+      if (availability.bookingDeadlineNotes) {
+        availabilityData.bookingDeadline.notes = availability.bookingDeadlineNotes;
+      }
+
+      // Build final data object
+      const advertisementData: any = {
+        name: formData.name,
+        type: formData.type,
+        status: formData.status,
+        publicationIds: formData.publicationIds,
         publicationNames: formData.publicationIds.map(id => 
           publications.find(p => p.id === id)?.title || ''
         ).filter(Boolean),
-        specifications: {
-          format,
-          position: position.length > 0 ? position : undefined,
-          printSpecs: formData.type === 'print_ad' ? {
-            dimensions: printSpecs.dimensions || undefined,
-            bleed: printSpecs.bleed || undefined,
-            colorSpace: printSpecs.colorSpace,
-            resolution: printSpecs.resolution || undefined,
-            fileFormats: printSpecs.fileFormats.length > 0 ? printSpecs.fileFormats : undefined,
-            maxInkCoverage: printSpecs.maxInkCoverage > 0 ? printSpecs.maxInkCoverage : undefined
-          } : undefined,
-          digitalSpecs: ['display_banner', 'native_ad', 'newsletter_ad', 'social_media_ad'].includes(formData.type) 
-            ? {
-                dimensions: digitalSpecs.dimensions.length > 0 ? digitalSpecs.dimensions : undefined,
-                maxFileSize: digitalSpecs.maxFileSize || undefined,
-                fileFormats: digitalSpecs.fileFormats.length > 0 ? digitalSpecs.fileFormats : undefined,
-                animated: digitalSpecs.animated,
-                maxAnimationLength: digitalSpecs.maxAnimationLength > 0 ? digitalSpecs.maxAnimationLength : undefined,
-                clickTracking: digitalSpecs.clickTracking,
-                thirdPartyTracking: digitalSpecs.thirdPartyTracking
-              } : undefined,
-          videoSpecs: formData.type === 'video_ad' ? videoSpecs : undefined,
-          customSpecs: customSpecs
-            .filter(s => s.key && s.value)
-            .reduce((acc, s) => ({ ...acc, [s.key]: s.value }), {})
-        },
-        pricing: {
-          listPrice: pricing.listPrice,
-          priceModel: pricing.priceModel,
-          priceUnit: pricing.priceUnit || undefined,
-          minimumOrder: pricing.minimumOrder.quantity > 0 ? pricing.minimumOrder : undefined,
-          discounts: {
-            volume: volumeDiscounts.length > 0 ? volumeDiscounts : undefined,
-            agency: pricing.agencyDiscount > 0 ? pricing.agencyDiscount : undefined,
-            earlyBooking: pricing.earlyBooking.daysInAdvance > 0 ? pricing.earlyBooking : undefined
-          },
-          surcharges: surcharges
-            .filter(s => s.type && s.amount > 0)
-            .map(s => ({
-              type: s.type,
-              amount: s.isPercentage ? s.amount : { amount: s.amount, currency: pricing.listPrice.currency },
-              description: s.description || undefined
-            }))
-        },
-        availability: {
-          bookingDeadline: {
-            days: availability.bookingDeadlineDays,
-            type: availability.bookingDeadlineType,
-            time: availability.bookingDeadlineTime || undefined,
-            notes: availability.bookingDeadlineNotes || undefined
-          }
-        },
-        materials: {},
-        primaryContactId: undefined,
-        salesContactIds: undefined
+        specifications,
+        pricing: pricingData,
+        availability: availabilityData,
+        materials: {}
       };
+
+      // Add optional fields
+      if (formData.displayName) advertisementData.displayName = formData.displayName;
+      if (formData.description) advertisementData.description = formData.description;
+      if (formData.publicNotes) advertisementData.publicNotes = formData.publicNotes;
+      if (formData.internalNotes) advertisementData.internalNotes = formData.internalNotes;
+
+      // Clean the object to remove any remaining undefined values
+      const cleanedData = removeUndefined(advertisementData);
 
       if (advertisement?.id) {
         // Update
-        await advertisementService.update(advertisement.id, advertisementData as any, {
+        await advertisementService.update(advertisement.id, cleanedData, {
           organizationId: user.uid,
           userId: user.uid
         });
       } else {
         // Create
-        await advertisementService.create(advertisementData as any, {
+        await advertisementService.create(cleanedData, {
           organizationId: user.uid,
           userId: user.uid
         });
