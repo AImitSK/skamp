@@ -10,27 +10,82 @@ import { Select } from "@/components/select";
 import { Button } from "@/components/button";
 import { Badge } from "@/components/badge";
 import { Text } from "@/components/text";
+import { Checkbox } from "@/components/checkbox";
 import { companiesService, tagsService } from "@/lib/firebase/crm-service";
 import { Company, CompanyType, Tag, TagColor, SocialPlatform, socialPlatformLabels } from "@/types/crm";
+import { CompanyEnhanced, COMPANY_STATUS_OPTIONS, LIFECYCLE_STAGE_OPTIONS } from "@/types/crm-enhanced";
+import { CountryCode, LanguageCode, CurrencyCode } from "@/types/international";
 import { TagInput } from "@/components/tag-input";
 import { FocusAreasInput } from "@/components/FocusAreasInput";
 import { InfoTooltip } from "@/components/InfoTooltip";
+import { CountrySelector } from "@/components/country-selector";
+import { LanguageSelector } from "@/components/language-selector";
+import { CurrencyInput } from "@/components/currency-input";
+import { PhoneInput } from "@/components/phone-input";
 import { 
   PlusIcon, 
   TrashIcon, 
   DocumentTextIcon,
-  InformationCircleIcon
+  InformationCircleIcon,
+  BuildingOfficeIcon,
+  ScaleIcon,
+  GlobeAltIcon,
+  BanknotesIcon,
+  BuildingOffice2Icon,
+  NewspaperIcon
 } from "@heroicons/react/20/solid";
-import countries from 'i18n-iso-countries';
-import de from 'i18n-iso-countries/langs/de.json';
+import clsx from "clsx";
 
-// Länderliste vorbereiten
-countries.registerLocale(de);
-const countryObject = countries.getNames('de', { select: 'official' });
-const countryList = Object.entries(countryObject).map(([code, name]) => ({
-  code,
-  name
-})).sort((a, b) => a.name.localeCompare(b.name));
+// Tab Definition
+type TabId = 'general' | 'legal' | 'international' | 'financial' | 'corporate' | 'media';
+
+interface TabConfig {
+  id: TabId;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  description: string;
+  visible?: (formData: Partial<CompanyEnhanced>) => boolean;
+}
+
+const TABS: TabConfig[] = [
+  { 
+    id: 'general', 
+    label: 'Allgemein', 
+    icon: BuildingOfficeIcon,
+    description: 'Basis-Informationen zur Firma' 
+  },
+  { 
+    id: 'legal', 
+    label: 'Rechtliches', 
+    icon: ScaleIcon,
+    description: 'Offizieller Name, Identifikatoren, Rechtsform' 
+  },
+  { 
+    id: 'international', 
+    label: 'International', 
+    icon: GlobeAltIcon,
+    description: 'Adressen, Telefonnummern, Sprachen' 
+  },
+  { 
+    id: 'financial', 
+    label: 'Finanzen', 
+    icon: BanknotesIcon,
+    description: 'Umsatz, Währung, Finanzkennzahlen' 
+  },
+  { 
+    id: 'corporate', 
+    label: 'Konzern', 
+    icon: BuildingOffice2Icon,
+    description: 'Muttergesellschaft, Tochterunternehmen' 
+  },
+  { 
+    id: 'media', 
+    label: 'Medien', 
+    icon: NewspaperIcon,
+    description: 'Publikationen und Medien-Informationen',
+    visible: (formData) => ['publisher', 'media_house', 'agency'].includes(formData.type!)
+  }
+];
 
 // Publication Typen
 const PUBLICATION_TYPES = [
@@ -59,6 +114,36 @@ const PUBLICATION_FREQUENCIES = [
   { value: 'quarterly', label: 'Vierteljährlich' },
   { value: 'yearly', label: 'Jährlich' },
   { value: 'irregular', label: 'Unregelmäßig' },
+];
+
+// Business Identifier Types
+const IDENTIFIER_TYPES = [
+  { value: 'VAT_EU', label: 'USt-IdNr. (EU)' },
+  { value: 'EIN_US', label: 'EIN (US)' },
+  { value: 'COMPANY_REG_DE', label: 'Handelsregister (DE)' },
+  { value: 'COMPANY_REG_UK', label: 'Companies House (UK)' },
+  { value: 'UID_CH', label: 'UID (CH)' },
+  { value: 'SIREN_FR', label: 'SIREN (FR)' },
+  { value: 'DUNS', label: 'D-U-N-S' },
+  { value: 'LEI', label: 'LEI' },
+  { value: 'OTHER', label: 'Sonstige' }
+];
+
+// Legal Forms
+const LEGAL_FORMS = [
+  { value: 'GmbH', label: 'GmbH' },
+  { value: 'AG', label: 'AG' },
+  { value: 'KG', label: 'KG' },
+  { value: 'OHG', label: 'OHG' },
+  { value: 'GbR', label: 'GbR' },
+  { value: 'UG', label: 'UG (haftungsbeschränkt)' },
+  { value: 'Ltd', label: 'Ltd.' },
+  { value: 'Inc', label: 'Inc.' },
+  { value: 'LLC', label: 'LLC' },
+  { value: 'SA', label: 'SA' },
+  { value: 'SAS', label: 'SAS' },
+  { value: 'BV', label: 'BV' },
+  { value: 'Other', label: 'Sonstige' }
 ];
 
 // Alert Component
@@ -117,23 +202,45 @@ interface Publication {
 }
 
 export default function CompanyModal({ company, onClose, onSave, userId }: CompanyModalProps) {
-  const [formData, setFormData] = useState<Partial<Company>>({
+  const [activeTab, setActiveTab] = useState<TabId>('general');
+  const [formData, setFormData] = useState<Partial<CompanyEnhanced>>({
+    // Basic fields
     name: '',
     type: 'customer',
-    industry: '',
     website: '',
-    phone: '',
-    email: '',
-    address: {
+    
+    // Enhanced fields
+    officialName: '',
+    tradingName: '',
+    legalForm: '',
+    status: 'active',
+    lifecycleStage: 'lead',
+    
+    // Address
+    mainAddress: {
       street: '',
-      street2: '',
       city: '',
-      zip: '',
-      country: 'Deutschland'
+      postalCode: '',
+      region: '',
+      countryCode: 'DE' as CountryCode
     },
-    notes: '',
-    tagIds: [],
+    
+    // Arrays
+    addresses: [],
+    phones: [],
+    emails: [],
+    identifiers: [],
     socialMedia: [],
+    tagIds: [],
+    
+    // Financial
+    financial: {
+      annualRevenue: undefined,
+      employees: undefined,
+      fiscalYearEnd: undefined
+    },
+    
+    // Media
     mediaInfo: {
       circulation: 0,
       reach: 0,
@@ -141,35 +248,70 @@ export default function CompanyModal({ company, onClose, onSave, userId }: Compa
       publicationFrequency: 'daily',
       mediaType: 'mixed',
       publications: []
-    }
+    },
+    
+    // Industry
+    industryClassification: {
+      primary: ''
+    },
+    
+    // Other
+    internalNotes: '',
+    description: ''
   });
+  
   const [loading, setLoading] = useState(false);
   const [tags, setTags] = useState<Tag[]>([]);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]); // For parent company selection
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (company) {
+      // Map old company format to enhanced format
       setFormData({
         ...company,
+        officialName: company.name,
+        mainAddress: {
+          street: company.address?.street || '',
+          city: company.address?.city || '',
+          postalCode: company.address?.zip || '',
+          region: company.address?.state || '',
+          countryCode: 'DE' as CountryCode
+        },
+        phones: company.phone ? [{ 
+          type: 'business' as const, 
+          number: company.phone, 
+          isPrimary: true 
+        }] : [],
+        emails: company.email ? [{
+          type: 'general' as const,
+          email: company.email,
+          isPrimary: true
+        }] : [],
+        financial: {
+          annualRevenue: company.revenue ? { amount: company.revenue, currency: 'EUR' as CurrencyCode } : undefined,
+          employees: company.employees || undefined,
+          fiscalYearEnd: undefined
+        },
         tagIds: company.tagIds || [],
         socialMedia: company.socialMedia || [],
-        address: {
-          country: 'Deutschland',
-          ...(company.address || {}),
-        },
-        mediaInfo: {
+        mediaInfo: company.mediaInfo || {
           circulation: 0,
           reach: 0,
           focusAreas: [],
           publicationFrequency: 'daily',
           mediaType: 'mixed',
-          publications: [],
-          ...(company.mediaInfo || {}),
+          publications: []
+        },
+        internalNotes: company.notes || '',
+        industryClassification: {
+          primary: company.industry || ''
         }
       });
     }
     loadTags();
+    loadCompanies();
   }, [company]);
 
   const loadTags = async () => {
@@ -177,6 +319,16 @@ export default function CompanyModal({ company, onClose, onSave, userId }: Compa
     try {
       const userTags = await tagsService.getAll(userId);
       setTags(userTags);
+    } catch (error) {
+      // Silent error handling
+    }
+  };
+
+  const loadCompanies = async () => {
+    if (!userId) return;
+    try {
+      const userCompanies = await companiesService.getAll(userId);
+      setCompanies(userCompanies.filter(c => c.id !== company?.id));
     } catch (error) {
       // Silent error handling
     }
@@ -192,6 +344,15 @@ export default function CompanyModal({ company, onClose, onSave, userId }: Compa
     }
   };
 
+  // Tab visibility check
+  const isTabVisible = (tab: TabConfig): boolean => {
+    if (!tab.visible) return true;
+    return tab.visible(formData);
+  };
+
+  const visibleTabs = TABS.filter(isTabVisible);
+
+  // Handler functions
   const handleSocialMediaChange = (index: number, field: 'platform' | 'url', value: string) => {
     const updatedSocialMedia = [...(formData.socialMedia || [])];
     updatedSocialMedia[index] = { ...updatedSocialMedia[index], [field]: value };
@@ -207,8 +368,48 @@ export default function CompanyModal({ company, onClose, onSave, userId }: Compa
     const updatedSocialMedia = (formData.socialMedia || []).filter((_, i) => i !== index);
     setFormData({ ...formData, socialMedia: updatedSocialMedia });
   };
-  
-  const handleMediaInfoChange = (field: keyof NonNullable<Company['mediaInfo']>, value: any) => {
+
+  // Phone handlers
+  const addPhoneField = () => {
+    const newPhone = { type: 'business' as const, number: '', isPrimary: false };
+    setFormData({ ...formData, phones: [...(formData.phones || []), newPhone] });
+  };
+
+  const removePhoneField = (index: number) => {
+    const updatedPhones = (formData.phones || []).filter((_, i) => i !== index);
+    setFormData({ ...formData, phones: updatedPhones });
+  };
+
+  // Email handlers
+  const addEmailField = () => {
+    const newEmail = { type: 'general' as const, email: '', isPrimary: false };
+    setFormData({ ...formData, emails: [...(formData.emails || []), newEmail] });
+  };
+
+  const removeEmailField = (index: number) => {
+    const updatedEmails = (formData.emails || []).filter((_, i) => i !== index);
+    setFormData({ ...formData, emails: updatedEmails });
+  };
+
+  // Identifier handlers
+  const addIdentifier = () => {
+    const newIdentifier = { 
+      type: 'VAT_EU' as const, 
+      value: '', 
+      issuingAuthority: 'DE',
+      validFrom: undefined,
+      validUntil: undefined
+    };
+    setFormData({ ...formData, identifiers: [...(formData.identifiers || []), newIdentifier] });
+  };
+
+  const removeIdentifier = (index: number) => {
+    const updatedIdentifiers = (formData.identifiers || []).filter((_, i) => i !== index);
+    setFormData({ ...formData, identifiers: updatedIdentifiers });
+  };
+
+  // Media handlers
+  const handleMediaInfoChange = (field: keyof NonNullable<CompanyEnhanced['mediaInfo']>, value: any) => {
     setFormData(prev => ({
       ...prev,
       mediaInfo: {
@@ -246,12 +447,12 @@ export default function CompanyModal({ company, onClose, onSave, userId }: Compa
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validierung
+    // Validation
     const errors: string[] = [];
     if (!formData.name?.trim()) {
       errors.push('Firmenname ist erforderlich');
     }
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    if (formData.emails?.some(e => e.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.email))) {
       errors.push('Ungültige E-Mail-Adresse');
     }
     if (formData.website && !/^https?:\/\/.+\..+/.test(formData.website)) {
@@ -267,7 +468,31 @@ export default function CompanyModal({ company, onClose, onSave, userId }: Compa
     setLoading(true);
     
     try {
-      const dataToSave = { ...formData, tagIds: formData.tagIds || [], socialMedia: formData.socialMedia || [] };
+      // For now, we'll save to the old format
+      // TODO: Update service to handle enhanced format
+      const dataToSave: Partial<Company> = {
+        name: formData.name!,
+        type: formData.type as CompanyType,
+        industry: formData.industryClassification?.primary,
+        website: formData.website,
+        phone: formData.phones?.find(p => p.isPrimary)?.number || '',
+        email: formData.emails?.find(e => e.isPrimary)?.email || '',
+        address: {
+          street: formData.mainAddress?.street,
+          street2: '',
+          city: formData.mainAddress?.city,
+          zip: formData.mainAddress?.postalCode,
+          state: formData.mainAddress?.region,
+          country: formData.mainAddress?.countryCode
+        },
+        employees: formData.financial?.employees || undefined,
+        revenue: formData.financial?.annualRevenue?.amount || undefined,
+        notes: formData.internalNotes,
+        tagIds: formData.tagIds || [],
+        socialMedia: formData.socialMedia || [],
+        mediaInfo: formData.mediaInfo
+      };
+      
       if (company?.id) {
         await companiesService.update(company.id, dataToSave);
       } else {
@@ -285,93 +510,656 @@ export default function CompanyModal({ company, onClose, onSave, userId }: Compa
   const isMediaCompany = ['publisher', 'media_house', 'agency'].includes(formData.type!);
 
   return (
-    <Dialog open={true} onClose={onClose} size="3xl">
+    <Dialog open={true} onClose={onClose} size="5xl">
       <form ref={formRef} onSubmit={handleSubmit}>
         <DialogTitle className="px-6 py-4 text-lg font-semibold">
           {company ? 'Firma bearbeiten' : 'Neue Firma hinzufügen'}
         </DialogTitle>
         
-        <DialogBody className="p-6 max-h-[70vh] overflow-y-auto">
+        <DialogBody className="p-0">
           {validationErrors.length > 0 && (
-            <div className="mb-4">
+            <div className="px-6 pt-4">
               <Alert type="error" message={validationErrors[0]} />
             </div>
           )}
 
-          <FieldGroup>
-            <Field>
-              <Label>Firmenname *</Label>
-              <Input 
-                value={formData.name} 
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })} 
-                required 
-                autoFocus
-              />
-            </Field>
+          {/* Tab Navigation */}
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+              {visibleTabs.map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveTab(tab.id)}
+                    className={clsx(
+                      'group inline-flex items-center border-b-2 py-4 px-1 text-sm font-medium whitespace-nowrap',
+                      activeTab === tab.id
+                        ? 'border-[#005fab] text-[#005fab]'
+                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                    )}
+                  >
+                    <Icon
+                      className={clsx(
+                        'mr-2 h-5 w-5',
+                        activeTab === tab.id ? 'text-[#005fab]' : 'text-gray-400 group-hover:text-gray-500'
+                      )}
+                    />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field>
-                <Label>Typ</Label>
-                <Select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value as CompanyType })}>
-                  <option value="customer">Kunde</option>
-                  <option value="supplier">Lieferant</option>
-                  <option value="partner">Partner</option>
-                  <option value="publisher">Verlag</option>
-                  <option value="media_house">Medienhaus</option>
-                  <option value="agency">Agentur</option>
-                  <option value="other">Sonstiges</option>
-                </Select>
-              </Field>
-              <Field>
-                <Label>
-                  Branche
-                  {isMediaCompany && (
-                    <InfoTooltip content="Bei Medienunternehmen wird die Branche durch den Typ definiert" className="ml-1.5 inline-flex align-text-top" />
+          {/* Tab Content */}
+          <div className="px-6 py-6 max-h-[60vh] overflow-y-auto">
+            {/* General Tab */}
+            {activeTab === 'general' && (
+              <FieldGroup>
+                <Field>
+                  <Label>Anzeigename *</Label>
+                  <Input 
+                    value={formData.name} 
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })} 
+                    required 
+                    autoFocus
+                  />
+                  <Text className="text-xs text-gray-500 mt-1">
+                    Der Name, wie er in Listen und Übersichten angezeigt wird
+                  </Text>
+                </Field>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Field>
+                    <Label>Typ</Label>
+                    <Select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value as CompanyType })}>
+                      <option value="customer">Kunde</option>
+                      <option value="supplier">Lieferant</option>
+                      <option value="partner">Partner</option>
+                      <option value="publisher">Verlag</option>
+                      <option value="media_house">Medienhaus</option>
+                      <option value="agency">Agentur</option>
+                      <option value="other">Sonstiges</option>
+                    </Select>
+                  </Field>
+                  <Field>
+                    <Label>
+                      Branche
+                      {isMediaCompany && (
+                        <InfoTooltip content="Bei Medienunternehmen wird die Branche durch den Typ definiert" className="ml-1.5 inline-flex align-text-top" />
+                      )}
+                    </Label>
+                    <Input 
+                      value={formData.industryClassification?.primary || ''} 
+                      onChange={(e) => setFormData({ 
+                        ...formData, 
+                        industryClassification: { 
+                          ...formData.industryClassification,
+                          primary: e.target.value 
+                        }
+                      })} 
+                      placeholder={isMediaCompany ? "—" : "z.B. IT, Handel, Industrie"}
+                      disabled={isMediaCompany}
+                    />
+                  </Field>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Field>
+                    <Label>Status</Label>
+                    <Select 
+                      value={formData.status} 
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                    >
+                      {COMPANY_STATUS_OPTIONS.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </Select>
+                  </Field>
+                  <Field>
+                    <Label>Lifecycle Stage</Label>
+                    <Select 
+                      value={formData.lifecycleStage} 
+                      onChange={(e) => setFormData({ ...formData, lifecycleStage: e.target.value as any })}
+                    >
+                      {LIFECYCLE_STAGE_OPTIONS.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </Select>
+                  </Field>
+                </div>
+
+                <Field>
+                  <Label>Website</Label>
+                  <Input 
+                    type="url" 
+                    value={formData.website || ''} 
+                    onChange={(e) => setFormData({ ...formData, website: e.target.value })} 
+                    placeholder="https://..."
+                  />
+                </Field>
+
+                {/* Tags */}
+                <Field>
+                  <Label>Tags</Label>
+                  <TagInput 
+                    selectedTagIds={formData.tagIds || []} 
+                    availableTags={tags} 
+                    onChange={(tagIds) => setFormData({ ...formData, tagIds })} 
+                    onCreateTag={handleCreateTag} 
+                  />
+                </Field>
+
+                {/* Notes */}
+                <Field>
+                  <Label>Interne Notizen</Label>
+                  <Textarea 
+                    value={formData.internalNotes || ''} 
+                    onChange={(e) => setFormData({ ...formData, internalNotes: e.target.value })} 
+                    rows={3}
+                    placeholder="Notizen, die nicht für Kunden sichtbar sind..." 
+                  />
+                </Field>
+
+                <Field>
+                  <Label>Öffentliche Beschreibung</Label>
+                  <Textarea 
+                    value={formData.description || ''} 
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })} 
+                    rows={3}
+                    placeholder="Beschreibung, die in Media Kits verwendet werden kann..." 
+                  />
+                </Field>
+              </FieldGroup>
+            )}
+
+            {/* Legal Tab */}
+            {activeTab === 'legal' && (
+              <FieldGroup>
+                <Field>
+                  <Label>
+                    Offizieller Firmenname
+                    <InfoTooltip content="Name laut Handelsregister oder offiziellen Dokumenten" className="ml-1.5 inline-flex align-text-top" />
+                  </Label>
+                  <Input 
+                    value={formData.officialName || ''} 
+                    onChange={(e) => setFormData({ ...formData, officialName: e.target.value })}
+                    placeholder="z.B. Example GmbH" 
+                  />
+                </Field>
+
+                <Field>
+                  <Label>
+                    Handelsname (DBA)
+                    <InfoTooltip content="Falls anders als offizieller Name" className="ml-1.5 inline-flex align-text-top" />
+                  </Label>
+                  <Input 
+                    value={formData.tradingName || ''} 
+                    onChange={(e) => setFormData({ ...formData, tradingName: e.target.value })}
+                    placeholder="z.B. Example" 
+                  />
+                </Field>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Field>
+                    <Label>Rechtsform</Label>
+                    <Select 
+                      value={formData.legalForm || ''} 
+                      onChange={(e) => setFormData({ ...formData, legalForm: e.target.value })}
+                    >
+                      <option value="">Bitte wählen...</option>
+                      {LEGAL_FORMS.map(form => (
+                        <option key={form.value} value={form.value}>{form.label}</option>
+                      ))}
+                    </Select>
+                  </Field>
+                  <Field>
+                    <Label>Gründungsdatum</Label>
+                    <Input 
+                      type="date" 
+                      value={formData.foundedDate ? new Date(formData.foundedDate).toISOString().split('T')[0] : ''} 
+                      onChange={(e) => setFormData({ ...formData, foundedDate: e.target.value ? new Date(e.target.value) : undefined })} 
+                    />
+                  </Field>
+                </div>
+
+                {/* Business Identifiers */}
+                <div className="space-y-4 rounded-md border p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-medium text-gray-900">
+                      Geschäftliche Kennungen
+                      <InfoTooltip content="USt-ID, Handelsregister, etc." className="ml-1.5 inline-flex align-text-top" />
+                    </div>
+                    <Button type="button" onClick={addIdentifier} plain className="text-sm">
+                      <PlusIcon className="h-4 w-4" />
+                      Kennung hinzufügen
+                    </Button>
+                  </div>
+                  
+                  {formData.identifiers && formData.identifiers.length > 0 ? (
+                    <div className="space-y-2">
+                      {formData.identifiers.map((identifier, index) => (
+                        <div key={index} className="space-y-2 p-3 border rounded-lg">
+                          <div className="grid grid-cols-12 gap-2 items-center">
+                            <div className="col-span-3">
+                              <Select 
+                                value={identifier.type} 
+                                onChange={(e) => {
+                                  const updated = [...formData.identifiers!];
+                                  updated[index].type = e.target.value as any;
+                                  setFormData({ ...formData, identifiers: updated });
+                                }}
+                              >
+                                {IDENTIFIER_TYPES.map(type => (
+                                  <option key={type.value} value={type.value}>{type.label}</option>
+                                ))}
+                              </Select>
+                            </div>
+                            <div className="col-span-6">
+                              <Input 
+                                value={identifier.value} 
+                                onChange={(e) => {
+                                  const updated = [...formData.identifiers!];
+                                  updated[index].value = e.target.value;
+                                  setFormData({ ...formData, identifiers: updated });
+                                }}
+                                placeholder="Wert eingeben..." 
+                              />
+                            </div>
+                            <div className="col-span-2">
+                              <Input
+                                value={identifier.issuingAuthority || ''}
+                                onChange={(e) => {
+                                  const updated = [...formData.identifiers!];
+                                  updated[index].issuingAuthority = e.target.value;
+                                  setFormData({ ...formData, identifiers: updated });
+                                }}
+                                placeholder="Land/Behörde"
+                              />
+                            </div>
+                            <div className="col-span-1">
+                              <Button type="button" plain onClick={() => removeIdentifier(index)}>
+                                <TrashIcon className="h-5 w-5 text-red-500" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <Text className="text-sm text-gray-500">Keine Kennungen hinzugefügt</Text>
                   )}
-                </Label>
-                <Input 
-                  value={formData.industry || ''} 
-                  onChange={(e) => setFormData({ ...formData, industry: e.target.value })} 
-                  placeholder={isMediaCompany ? "—" : "z.B. IT, Handel, Industrie"}
-                  disabled={isMediaCompany}
-                />
-              </Field>
-            </div>
+                </div>
+              </FieldGroup>
+            )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field>
-                <Label>Website</Label>
-                <Input 
-                  type="url" 
-                  value={formData.website || ''} 
-                  onChange={(e) => setFormData({ ...formData, website: e.target.value })} 
-                  placeholder="https://..."
-                />
-              </Field>
-              <Field>
-                <Label>Telefon</Label>
-                <Input 
-                  type="tel" 
-                  value={formData.phone || ''} 
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })} 
-                  placeholder="+49 123 456789"
-                />
-              </Field>
-            </div>
+            {/* International Tab */}
+            {activeTab === 'international' && (
+              <FieldGroup>
+                {/* Main Address */}
+                <div className="space-y-4 rounded-md border p-4">
+                  <div className="text-sm font-medium text-gray-900">Hauptadresse</div>
+                  
+                  <Field>
+                    <Label>Straße und Hausnummer</Label>
+                    <Input 
+                      value={formData.mainAddress?.street || ''} 
+                      onChange={(e) => setFormData({ 
+                        ...formData, 
+                        mainAddress: { ...formData.mainAddress!, street: e.target.value }
+                      })} 
+                      placeholder="Musterstraße 123" 
+                    />
+                  </Field>
+                  
+                  <div className="grid grid-cols-3 gap-4">
+                    <Field>
+                      <Label>PLZ</Label>
+                      <Input 
+                        value={formData.mainAddress?.postalCode || ''} 
+                        onChange={(e) => setFormData({ 
+                          ...formData, 
+                          mainAddress: { ...formData.mainAddress!, postalCode: e.target.value }
+                        })} 
+                        placeholder="12345" 
+                      />
+                    </Field>
+                    <Field className="col-span-2">
+                      <Label>Stadt</Label>
+                      <Input 
+                        value={formData.mainAddress?.city || ''} 
+                        onChange={(e) => setFormData({ 
+                          ...formData, 
+                          mainAddress: { ...formData.mainAddress!, city: e.target.value }
+                        })} 
+                        placeholder="Berlin" 
+                      />
+                    </Field>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <Field>
+                      <Label>Bundesland/Region</Label>
+                      <Input 
+                        value={formData.mainAddress?.region || ''} 
+                        onChange={(e) => setFormData({ 
+                          ...formData, 
+                          mainAddress: { ...formData.mainAddress!, region: e.target.value }
+                        })} 
+                        placeholder="Bayern" 
+                      />
+                    </Field>
+                    <Field>
+                      <Label>Land</Label>
+                      <CountrySelector
+                        value={formData.mainAddress?.countryCode}
+                        onChange={(country) => setFormData({ 
+                          ...formData, 
+                          mainAddress: { ...formData.mainAddress!, countryCode: country as CountryCode }
+                        })}
+                        showCommonOnly={true}
+                      />
+                    </Field>
+                  </div>
+                </div>
 
-            <Field>
-              <Label>E-Mail</Label>
-              <Input 
-                type="email" 
-                value={formData.email || ''} 
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })} 
-                placeholder="info@firma.de"
-              />
-            </Field>
-            
-            {isMediaCompany && (
-              <>
-                {/* Publikationen */}
+                {/* Phone Numbers */}
+                <div className="space-y-4 rounded-md border p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-medium text-gray-900">Telefonnummern</div>
+                    <Button type="button" onClick={addPhoneField} plain className="text-sm">
+                      <PlusIcon className="h-4 w-4" />
+                      Nummer hinzufügen
+                    </Button>
+                  </div>
+                  
+                  {formData.phones && formData.phones.length > 0 ? (
+                    <div className="space-y-3">
+                      {formData.phones.map((phone, index) => (
+                        <div key={index} className="space-y-2">
+                          <div className="grid grid-cols-12 gap-2 items-start">
+                            <div className="col-span-3">
+                              <Select 
+                                value={phone.type} 
+                                onChange={(e) => {
+                                  const updated = [...formData.phones!];
+                                  updated[index].type = e.target.value as any;
+                                  setFormData({ ...formData, phones: updated });
+                                }}
+                              >
+                                <option value="business">Geschäftlich</option>
+                                <option value="mobile">Mobil</option>
+                                <option value="fax">Fax</option>
+                                <option value="private">Privat</option>
+                                <option value="other">Sonstige</option>
+                              </Select>
+                            </div>
+                            <div className="col-span-7">
+                              <PhoneInput
+                                value={phone.number}
+                                onChange={(value) => {
+                                  const updated = [...formData.phones!];
+                                  updated[index].number = value || '';
+                                  setFormData({ ...formData, phones: updated });
+                                }}
+                                defaultCountry={formData.mainAddress?.countryCode || 'DE'}
+                              />
+                            </div>
+                            <div className="col-span-1 flex items-center pt-2">
+                              <Checkbox
+                                checked={phone.isPrimary}
+                                onChange={(checked) => {
+                                  const updated = [...formData.phones!];
+                                  // Ensure only one primary
+                                  updated.forEach((p, i) => {
+                                    p.isPrimary = i === index && checked;
+                                  });
+                                  setFormData({ ...formData, phones: updated });
+                                }}
+                                aria-label="Primär"
+                              />
+                            </div>
+                            <div className="col-span-1 pt-2">
+                              <Button type="button" plain onClick={() => removePhoneField(index)}>
+                                <TrashIcon className="h-5 w-5 text-red-500" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <Text className="text-sm text-gray-500">Keine Telefonnummern hinzugefügt</Text>
+                  )}
+                </div>
+
+                {/* Email Addresses */}
+                <div className="space-y-4 rounded-md border p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-medium text-gray-900">E-Mail-Adressen</div>
+                    <Button type="button" onClick={addEmailField} plain className="text-sm">
+                      <PlusIcon className="h-4 w-4" />
+                      E-Mail hinzufügen
+                    </Button>
+                  </div>
+                  
+                  {formData.emails && formData.emails.length > 0 ? (
+                    <div className="space-y-2">
+                      {formData.emails.map((email, index) => (
+                        <div key={index} className="grid grid-cols-12 gap-2 items-center">
+                          <div className="col-span-3">
+                            <Select 
+                              value={email.type} 
+                              onChange={(e) => {
+                                const updated = [...formData.emails!];
+                                updated[index].type = e.target.value as any;
+                                setFormData({ ...formData, emails: updated });
+                              }}
+                            >
+                              <option value="general">Allgemein</option>
+                              <option value="support">Support</option>
+                              <option value="sales">Vertrieb</option>
+                              <option value="billing">Buchhaltung</option>
+                              <option value="press">Presse</option>
+                            </Select>
+                          </div>
+                          <div className="col-span-7">
+                            <Input 
+                              type="email"
+                              value={email.email} 
+                              onChange={(e) => {
+                                const updated = [...formData.emails!];
+                                updated[index].email = e.target.value;
+                                setFormData({ ...formData, emails: updated });
+                              }}
+                              placeholder="email@firma.de" 
+                            />
+                          </div>
+                          <div className="col-span-1 flex items-center">
+                            <Checkbox
+                              checked={email.isPrimary}
+                              onChange={(checked) => {
+                                const updated = [...formData.emails!];
+                                // Ensure only one primary
+                                updated.forEach((e, i) => {
+                                  e.isPrimary = i === index && checked;
+                                });
+                                setFormData({ ...formData, emails: updated });
+                              }}
+                              aria-label="Primär"
+                            />
+                          </div>
+                          <div className="col-span-1">
+                            <Button type="button" plain onClick={() => removeEmailField(index)}>
+                              <TrashIcon className="h-5 w-5 text-red-500" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <Text className="text-sm text-gray-500">Keine E-Mail-Adressen hinzugefügt</Text>
+                  )}
+                </div>
+
+                {/* Social Media */}
+                <div className="space-y-4 rounded-md border p-4">
+                  <div className="text-sm font-medium text-gray-900">Social Media Profile</div>
+                  {(formData.socialMedia || []).map((profile, index) => (
+                    <div key={index} className="grid grid-cols-12 gap-2 items-center">
+                      <div className="col-span-5">
+                        <Select 
+                          value={profile.platform} 
+                          onChange={(e) => handleSocialMediaChange(index, 'platform', e.target.value)}
+                        >
+                          {Object.entries(socialPlatformLabels).map(([key, label]) => (
+                            <option key={key} value={key}>{label}</option>
+                          ))}
+                        </Select>
+                      </div>
+                      <div className="col-span-6">
+                        <Input 
+                          value={profile.url} 
+                          onChange={(e) => handleSocialMediaChange(index, 'url', e.target.value)} 
+                          placeholder="https://..." 
+                        />
+                      </div>
+                      <div className="col-span-1">
+                        <Button type="button" plain onClick={() => removeSocialMediaField(index)}>
+                          <TrashIcon className="h-5 w-5 text-red-500" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  <Button type="button" onClick={addSocialMediaField} plain className="w-full">
+                    <PlusIcon className="h-4 w-4" />
+                    Profil hinzufügen
+                  </Button>
+                </div>
+              </FieldGroup>
+            )}
+
+            {/* Financial Tab */}
+            {activeTab === 'financial' && (
+              <FieldGroup>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Field>
+                    <Label>Jahresumsatz</Label>
+                    <CurrencyInput
+                      value={formData.financial?.annualRevenue?.amount}
+                      onChange={(value) => setFormData({ 
+                        ...formData, 
+                        financial: { 
+                          ...formData.financial!, 
+                          annualRevenue: value ? { amount: value, currency: 'EUR' as CurrencyCode } : undefined
+                        }
+                      })}
+                      currency={'EUR'}
+                      placeholder="0,00"
+                    />
+                  </Field>
+                  <Field>
+                    <Label>Mitarbeiterzahl</Label>
+                    <Input 
+                      type="number" 
+                      value={formData.financial?.employees || ''} 
+                      onChange={(e) => setFormData({ 
+                        ...formData, 
+                        financial: { 
+                          ...formData.financial!, 
+                          employees: e.target.value ? parseInt(e.target.value) : undefined
+                        }
+                      })}
+                      placeholder="0" 
+                    />
+                  </Field>
+                </div>
+
+                <Field>
+                  <Label>Geschäftsjahresende</Label>
+                  <Input 
+                    type="text" 
+                    value={formData.financial?.fiscalYearEnd || ''} 
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      financial: { 
+                        ...formData.financial!, 
+                        fiscalYearEnd: e.target.value || undefined
+                      }
+                    })} 
+                    placeholder="31.12."
+                  />
+                  <Text className="text-xs text-gray-500 mt-1">
+                    Format: TT.MM. (z.B. 31.12. für 31. Dezember)
+                  </Text>
+                </Field>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Field>
+                    <Label>Kreditrating</Label>
+                    <Input 
+                      value={formData.financial?.creditRating || ''} 
+                      onChange={(e) => setFormData({ 
+                        ...formData, 
+                        financial: { ...formData.financial!, creditRating: e.target.value || undefined }
+                      })}
+                      placeholder="AAA, BB+, etc." 
+                    />
+                  </Field>
+                </div>
+              </FieldGroup>
+            )}
+
+            {/* Corporate Tab */}
+            {activeTab === 'corporate' && (
+              <FieldGroup>
+                <Field>
+                  <Label>
+                    Muttergesellschaft
+                    <InfoTooltip content="Direkte Muttergesellschaft dieses Unternehmens" className="ml-1.5 inline-flex align-text-top" />
+                  </Label>
+                  <Select 
+                    value={formData.parentCompanyId || ''} 
+                    onChange={(e) => setFormData({ ...formData, parentCompanyId: e.target.value || undefined })}
+                  >
+                    <option value="">Keine Muttergesellschaft</option>
+                    {companies.map(comp => (
+                      <option key={comp.id} value={comp.id}>{comp.name}</option>
+                    ))}
+                  </Select>
+                </Field>
+
+                <Field>
+                  <Label>
+                    Oberste Muttergesellschaft
+                    <InfoTooltip content="Oberste Muttergesellschaft in der Konzernstruktur" className="ml-1.5 inline-flex align-text-top" />
+                  </Label>
+                  <Select 
+                    value={formData.ultimateParentId || ''} 
+                    onChange={(e) => setFormData({ ...formData, ultimateParentId: e.target.value || undefined })}
+                  >
+                    <option value="">Keine oberste Muttergesellschaft</option>
+                    {companies.map(comp => (
+                      <option key={comp.id} value={comp.id}>{comp.name}</option>
+                    ))}
+                  </Select>
+                </Field>
+
+                {/* TODO: Subsidiary selection would need a more complex UI */}
+                <div className="rounded-md bg-gray-50 p-4">
+                  <Text className="text-sm text-gray-600">
+                    Tochtergesellschaften können nach dem Speichern über die Konzernstruktur-Ansicht verwaltet werden.
+                  </Text>
+                </div>
+              </FieldGroup>
+            )}
+
+            {/* Media Tab (only for media companies) */}
+            {activeTab === 'media' && isMediaCompany && (
+              <FieldGroup>
+                {/* Publications */}
                 <div className="space-y-4 rounded-md border p-4">
                   <div className="flex items-center justify-between">
                     <div className="text-sm font-medium text-gray-900">
@@ -480,115 +1268,74 @@ export default function CompanyModal({ company, onClose, onSave, userId }: Compa
                     </div>
                   )}
                 </div>
-              </>
-            )}
-            
-            {/* Adresse */}
-            <div className="space-y-2 rounded-md border p-4">
-              <div className="text-sm font-medium text-gray-900">Adresse</div>
-              <Field>
-                <Label className="sr-only">Straße und Hausnummer</Label>
-                <Input 
-                  value={formData.address?.street || ''} 
-                  onChange={(e) => setFormData({ ...formData, address: { ...(formData.address || {}), street: e.target.value }})} 
-                  placeholder="Straße und Hausnummer" 
-                />
-              </Field>
-              <Field>
-                <Label className="sr-only">Adresszeile 2</Label>
-                <Input 
-                  value={formData.address?.street2 || ''} 
-                  onChange={(e) => setFormData({ ...formData, address: { ...(formData.address || {}), street2: e.target.value }})} 
-                  placeholder="Adresszeile 2" 
-                />
-              </Field>
-              <div className="grid grid-cols-3 gap-4">
-                <Field>
-                  <Label className="sr-only">PLZ</Label>
-                  <Input 
-                    value={formData.address?.zip || ''} 
-                    onChange={(e) => setFormData({ ...formData, address: { ...(formData.address || {}), zip: e.target.value }})} 
-                    placeholder="PLZ" 
-                  />
-                </Field>
-                <Field className="col-span-2">
-                  <Label className="sr-only">Stadt</Label>
-                  <Input 
-                    value={formData.address?.city || ''} 
-                    onChange={(e) => setFormData({ ...formData, address: { ...(formData.address || {}), city: e.target.value }})} 
-                    placeholder="Stadt" 
-                  />
-                </Field>
-              </div>
-              <Field>
-                <Label className="sr-only">Land</Label>
-                <Select 
-                  value={formData.address?.country || 'Deutschland'} 
-                  onChange={(e) => setFormData({ ...formData, address: { ...(formData.address || {}), country: e.target.value }})}
-                >
-                  {countryList.map(({ code, name }) => (
-                    <option key={code} value={name}>{name}</option>
-                  ))}
-                </Select>
-              </Field>
-            </div>
 
-            {/* Social Media */}
-            <div className="space-y-4 rounded-md border p-4">
-              <div className="text-sm font-medium text-gray-900">Social Media Profile</div>
-              {(formData.socialMedia || []).map((profile, index) => (
-                <div key={index} className="grid grid-cols-12 gap-2 items-center">
-                  <div className="col-span-5">
-                    <Select 
-                      value={profile.platform} 
-                      onChange={(e) => handleSocialMediaChange(index, 'platform', e.target.value)}
-                    >
-                      {Object.entries(socialPlatformLabels).map(([key, label]) => (
-                        <option key={key} value={key}>{label}</option>
-                      ))}
-                    </Select>
-                  </div>
-                  <div className="col-span-6">
-                    <Input 
-                      value={profile.url} 
-                      onChange={(e) => handleSocialMediaChange(index, 'url', e.target.value)} 
-                      placeholder="https://..." 
-                    />
-                  </div>
-                  <div className="col-span-1">
-                    <Button type="button" plain onClick={() => removeSocialMediaField(index)}>
-                      <TrashIcon className="h-5 w-5 text-red-500" />
-                    </Button>
+                {/* Online Metrics */}
+                <div className="space-y-4 rounded-md border p-4">
+                  <div className="text-sm font-medium text-gray-900">Online-Metriken</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Field>
+                      <Label>Monatliche Seitenaufrufe</Label>
+                      <Input 
+                        type="number"
+                        value={formData.mediaInfo?.onlineMetrics?.monthlyPageViews || ''}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          mediaInfo: {
+                            ...formData.mediaInfo!,
+                            onlineMetrics: {
+                              ...formData.mediaInfo?.onlineMetrics,
+                              monthlyPageViews: e.target.value ? parseInt(e.target.value) : undefined
+                            }
+                          }
+                        })}
+                        placeholder="0"
+                      />
+                    </Field>
+                    <Field>
+                      <Label>Monatliche Unique Visitors</Label>
+                      <Input 
+                        type="number"
+                        value={formData.mediaInfo?.onlineMetrics?.monthlyUniqueVisitors || ''}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          mediaInfo: {
+                            ...formData.mediaInfo!,
+                            onlineMetrics: {
+                              ...formData.mediaInfo?.onlineMetrics,
+                              monthlyUniqueVisitors: e.target.value ? parseInt(e.target.value) : undefined
+                            }
+                          }
+                        })}
+                        placeholder="0"
+                      />
+                    </Field>
                   </div>
                 </div>
-              ))}
-              <Button type="button" onClick={addSocialMediaField} plain className="w-full">
-                <PlusIcon className="h-4 w-4" />
-                Profil hinzufügen
-              </Button>
-            </div>
 
-            {/* Tags */}
-            <Field>
-              <Label>Tags</Label>
-              <TagInput 
-                selectedTagIds={formData.tagIds || []} 
-                availableTags={tags} 
-                onChange={(tagIds) => setFormData({ ...formData, tagIds })} 
-                onCreateTag={handleCreateTag} 
-              />
-            </Field>
-
-            {/* Notizen */}
-            <Field>
-              <Label>Notizen</Label>
-              <Textarea 
-                value={formData.notes || ''} 
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })} 
-                rows={3} 
-              />
-            </Field>
-          </FieldGroup>
+                {/* Audience Demographics */}
+                <div className="space-y-4 rounded-md border p-4">
+                  <div className="text-sm font-medium text-gray-900">Zielgruppen-Demografie</div>
+                  <Field>
+                    <Label>Zielgruppen-Interessen</Label>
+                    <FocusAreasInput
+                      value={formData.mediaInfo?.audienceDemographics?.interests || []}
+                      onChange={(interests) => setFormData({
+                        ...formData,
+                        mediaInfo: {
+                          ...formData.mediaInfo!,
+                          audienceDemographics: {
+                            ...formData.mediaInfo?.audienceDemographics,
+                            interests
+                          }
+                        }
+                      })}
+                      placeholder="Interesse hinzufügen..."
+                    />
+                  </Field>
+                </div>
+              </FieldGroup>
+            )}
+          </div>
         </DialogBody>
 
         <DialogActions className="px-6 py-4">

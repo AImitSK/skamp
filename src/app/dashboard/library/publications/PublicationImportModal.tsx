@@ -1,1047 +1,854 @@
-// src/app/dashboard/library/publications/PublicationModal.tsx
+// src/app/dashboard/library/publications/PublicationImportModal.tsx
 "use client";
 
-import { useState, useEffect } from "react";
-import { useAuth } from "@/context/AuthContext";
-import { publicationService } from "@/lib/firebase/library-service";
-import type { Publication, PublicationType, PublicationFormat, PublicationFrequency } from "@/types/library";
-import type { BaseEntity, CountryCode, LanguageCode } from "@/types/international";
-import { Dialog } from "@/components/dialog";
-import { Button } from "@/components/button";
-import { Input } from "@/components/input";
-import { Textarea } from "@/components/textarea";
-import { Select } from "@/components/select";
-import { LanguageSelectorMulti } from "@/components/language-selector";
-import { CountrySelectorMulti } from "@/components/country-selector";
-import { 
-  CheckIcon,
-  XMarkIcon,
-  PlusIcon,
-  TrashIcon,
-  GlobeAltIcon,
-  LanguageIcon
-} from "@heroicons/react/20/solid";
+import { useState, useEffect, useMemo } from 'react';
+import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/dialog';
+import { Button } from '@/components/button';
+import { Badge } from '@/components/badge';
+import { Text } from '@/components/text';
+import { Select } from '@/components/select';
+import { Checkbox } from '@/components/checkbox';
+import { Field, Label, FieldGroup, Description } from '@/components/fieldset';
+import Papa from 'papaparse';
+import * as XLSX from 'xlsx';
+import { publicationService } from '@/lib/firebase/library-service';
+import { companiesService } from '@/lib/firebase/crm-service';
+import { Publication, PublicationType, PUBLICATION_TYPE_LABELS } from '@/types/library';
+import { Company } from '@/types/crm';
+import { useAuth } from '@/context/AuthContext';
+import {
+  InformationCircleIcon,
+  ArrowUpTrayIcon,
+  DocumentArrowDownIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  ExclamationTriangleIcon,
+  ArrowRightIcon,
+  ArrowLeftIcon
+} from '@heroicons/react/20/solid';
 
-interface PublicationModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  publication?: Publication;
-  onSuccess: () => void;
-}
-
-const publicationTypes = [
-  { value: 'newspaper', label: 'Zeitung' },
-  { value: 'magazine', label: 'Magazin' },
-  { value: 'website', label: 'Website' },
-  { value: 'blog', label: 'Blog' },
-  { value: 'newsletter', label: 'Newsletter' },
-  { value: 'podcast', label: 'Podcast' },
-  { value: 'tv', label: 'TV' },
-  { value: 'radio', label: 'Radio' },
-  { value: 'trade_journal', label: 'Fachzeitschrift' },
-  { value: 'press_agency', label: 'Nachrichtenagentur' },
-  { value: 'social_media', label: 'Social Media' }
-];
-
-const frequencies = [
-  { value: 'continuous', label: 'Durchgehend' },
-  { value: 'multiple_daily', label: 'Mehrmals täglich' },
-  { value: 'daily', label: 'Täglich' },
-  { value: 'weekly', label: 'Wöchentlich' },
-  { value: 'biweekly', label: '14-tägig' },
-  { value: 'monthly', label: 'Monatlich' },
-  { value: 'bimonthly', label: 'Zweimonatlich' },
-  { value: 'quarterly', label: 'Quartalsweise' },
-  { value: 'biannual', label: 'Halbjährlich' },
-  { value: 'annual', label: 'Jährlich' },
-  { value: 'irregular', label: 'Unregelmäßig' }
-];
-
-const circulationTypes = [
-  { value: 'distributed', label: 'Verbreitete Auflage' },
-  { value: 'sold', label: 'Verkaufte Auflage' },
-  { value: 'printed', label: 'Gedruckte Auflage' },
-  { value: 'subscribers', label: 'Abonnenten' },
-  { value: 'audited_ivw', label: 'IVW geprüft' }
-];
-
-const geographicScopes = [
-  { value: 'local', label: 'Lokal' },
-  { value: 'regional', label: 'Regional' },
-  { value: 'national', label: 'National' },
-  { value: 'international', label: 'International' },
-  { value: 'global', label: 'Global' }
-];
-
-export function PublicationModal({ isOpen, onClose, publication, onSuccess }: PublicationModalProps) {
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'basic' | 'metrics' | 'identifiers'>('basic');
-  
-  // Form State
-  const [formData, setFormData] = useState<{
-    title: string;
-    subtitle: string;
-    publisherId: string;
-    publisherName: string;
-    type: PublicationType;
-    format: PublicationFormat;
-    languages: LanguageCode[];
-    geographicTargets: CountryCode[];
-    focusAreas: string[];
-    verified: boolean;
-    status: 'active' | 'inactive' | 'discontinued' | 'planned';
-    metrics: {
-      frequency: PublicationFrequency;
-      targetAudience?: string;
-      targetAgeGroup?: string;
-      targetGender?: 'all' | 'predominantly_male' | 'predominantly_female';
-    };
-    geographicScope: 'local' | 'regional' | 'national' | 'international' | 'global';
-    websiteUrl?: string;
-    publicNotes?: string;
-    internalNotes?: string;
-  }>({
-    title: '',
-    subtitle: '',
-    publisherId: '',
-    publisherName: '',
-    type: 'website',
-    format: 'online',
-    languages: [],
-    geographicTargets: [],
-    focusAreas: [],
-    verified: false,
-    status: 'active',
-    metrics: {
-      frequency: 'daily'
-    },
-    geographicScope: 'national'
-  });
-
-  // Metriken State
-  const [metrics, setMetrics] = useState({
-    frequency: 'daily' as PublicationFrequency,
-    targetAudience: '',
-    targetAgeGroup: '',
-    targetGender: 'all' as 'all' | 'predominantly_male' | 'predominantly_female',
-    print: {
-      circulation: '',
-      circulationType: 'distributed' as 'distributed' | 'sold' | 'printed' | 'subscribers' | 'audited_ivw',
-      pricePerIssue: '',
-      subscriptionPriceMonthly: '',
-      subscriptionPriceAnnual: '',
-      pageCount: '',
-      paperFormat: ''
-    },
-    online: {
-      monthlyUniqueVisitors: '',
-      monthlyPageViews: '',
-      avgSessionDuration: '',
-      bounceRate: '',
-      registeredUsers: '',
-      paidSubscribers: '',
-      newsletterSubscribers: '',
-      domainAuthority: '',
-      hasPaywall: false,
-      hasMobileApp: false
-    }
-  });
-
-  // Identifikatoren State
-  const [identifiers, setIdentifiers] = useState<Array<{ 
-    type: 'ISSN' | 'ISBN' | 'DOI' | 'URL' | 'DOMAIN' | 'SOCIAL_HANDLE' | 'OTHER'; 
-    value: string;
-    description?: string;
-  }>>([
-    { type: 'ISSN', value: '' }
-  ]);
-
-  // Social Media URLs
-  const [socialMediaUrls, setSocialMediaUrls] = useState<Array<{
-    platform: string;
-    url: string;
-  }>>([]);
-
-  // Focus Areas als Array von Strings
-  const [focusAreasInput, setFocusAreasInput] = useState('');
-
-  useEffect(() => {
-    if (publication) {
-      // Lade bestehende Publikation
-      setFormData({
-        title: publication.title,
-        subtitle: publication.subtitle || '',
-        publisherId: publication.publisherId || '',
-        publisherName: publication.publisherName || '',
-        type: publication.type,
-        format: publication.format || 'online',
-        languages: publication.languages as LanguageCode[] || [],
-        geographicTargets: publication.geographicTargets as CountryCode[] || [],
-        focusAreas: publication.focusAreas || [],
-        verified: publication.verified || false,
-        status: publication.status,
-        metrics: {
-          frequency: publication.metrics.frequency,
-          targetAudience: publication.metrics.targetAudience,
-          targetAgeGroup: publication.metrics.targetAgeGroup,
-          targetGender: publication.metrics.targetGender
-        },
-        geographicScope: publication.geographicScope,
-        websiteUrl: publication.websiteUrl,
-        publicNotes: publication.publicNotes,
-        internalNotes: publication.internalNotes
-      });
-
-      // Metriken
-      if (publication.metrics) {
-        setMetrics({
-          frequency: publication.metrics.frequency || 'daily',
-          targetAudience: publication.metrics.targetAudience || '',
-          targetAgeGroup: publication.metrics.targetAgeGroup || '',
-          targetGender: publication.metrics.targetGender || 'all',
-          print: {
-            circulation: publication.metrics.print?.circulation?.toString() || '',
-            circulationType: publication.metrics.print?.circulationType || 'distributed',
-            pricePerIssue: publication.metrics.print?.pricePerIssue?.amount.toString() || '',
-            subscriptionPriceMonthly: publication.metrics.print?.subscriptionPrice?.monthly?.amount.toString() || '',
-            subscriptionPriceAnnual: publication.metrics.print?.subscriptionPrice?.annual?.amount.toString() || '',
-            pageCount: publication.metrics.print?.pageCount?.toString() || '',
-            paperFormat: publication.metrics.print?.paperFormat || ''
-          },
-          online: {
-            monthlyUniqueVisitors: publication.metrics.online?.monthlyUniqueVisitors?.toString() || '',
-            monthlyPageViews: publication.metrics.online?.monthlyPageViews?.toString() || '',
-            avgSessionDuration: publication.metrics.online?.avgSessionDuration?.toString() || '',
-            bounceRate: publication.metrics.online?.bounceRate?.toString() || '',
-            registeredUsers: publication.metrics.online?.registeredUsers?.toString() || '',
-            paidSubscribers: publication.metrics.online?.paidSubscribers?.toString() || '',
-            newsletterSubscribers: publication.metrics.online?.newsletterSubscribers?.toString() || '',
-            domainAuthority: publication.metrics.online?.domainAuthority?.toString() || '',
-            hasPaywall: publication.metrics.online?.hasPaywall || false,
-            hasMobileApp: publication.metrics.online?.hasMobileApp || false
-          }
-        });
-      }
-
-      // Identifikatoren
-      if (publication.identifiers) {
-        setIdentifiers(publication.identifiers.map(id => ({
-          type: id.type,
-          value: id.value,
-          description: id.description
-        })));
-      }
-
-      // Social Media URLs
-      if (publication.socialMediaUrls) {
-        setSocialMediaUrls(publication.socialMediaUrls);
-      }
-
-      // Focus Areas
-      setFocusAreasInput(publication.focusAreas?.join(', ') || '');
-    }
-  }, [publication]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-
-    setLoading(true);
-    try {
-      // Helper function to remove undefined values
-      const removeUndefined = (obj: any): any => {
-        const newObj: any = {};
-        Object.keys(obj).forEach(key => {
-          if (obj[key] === undefined) return;
-          if (obj[key] === null) return;
-          if (typeof obj[key] === 'object' && !Array.isArray(obj[key]) && obj[key] !== null) {
-            const cleaned = removeUndefined(obj[key]);
-            if (Object.keys(cleaned).length > 0) {
-              newObj[key] = cleaned;
-            }
-          } else {
-            newObj[key] = obj[key];
-          }
-        });
-        return newObj;
-      };
-
-      // Bereite Metriken vor
-      const preparedMetrics: any = {
-        frequency: metrics.frequency,
-        targetAudience: metrics.targetAudience || undefined,
-        targetAgeGroup: metrics.targetAgeGroup || undefined,
-        targetGender: metrics.targetGender !== 'all' ? metrics.targetGender : undefined
-      };
-
-      // Nur Print-Metriken hinzufügen, wenn vorhanden
-      if ((formData.format === 'print' || formData.format === 'both') && metrics.print.circulation) {
-        preparedMetrics.print = {
-          circulation: parseInt(metrics.print.circulation),
-          circulationType: metrics.print.circulationType
-        };
-        
-        if (metrics.print.pricePerIssue) {
-          preparedMetrics.print.pricePerIssue = {
-            amount: parseFloat(metrics.print.pricePerIssue),
-            currency: 'EUR' // Default currency
-          };
-        }
-        
-        if (metrics.print.subscriptionPriceMonthly || metrics.print.subscriptionPriceAnnual) {
-          preparedMetrics.print.subscriptionPrice = {};
-          if (metrics.print.subscriptionPriceMonthly) {
-            preparedMetrics.print.subscriptionPrice.monthly = {
-              amount: parseFloat(metrics.print.subscriptionPriceMonthly),
-              currency: 'EUR'
-            };
-          }
-          if (metrics.print.subscriptionPriceAnnual) {
-            preparedMetrics.print.subscriptionPrice.annual = {
-              amount: parseFloat(metrics.print.subscriptionPriceAnnual),
-              currency: 'EUR'
-            };
-          }
-        }
-        
-        if (metrics.print.pageCount) {
-          preparedMetrics.print.pageCount = parseInt(metrics.print.pageCount);
-        }
-        if (metrics.print.paperFormat) {
-          preparedMetrics.print.paperFormat = metrics.print.paperFormat;
-        }
-      }
-
-      // Nur Online-Metriken hinzufügen, wenn vorhanden
-      if ((formData.format === 'online' || formData.format === 'both') && metrics.online.monthlyUniqueVisitors) {
-        preparedMetrics.online = {
-          monthlyUniqueVisitors: parseInt(metrics.online.monthlyUniqueVisitors),
-          hasPaywall: metrics.online.hasPaywall,
-          hasMobileApp: metrics.online.hasMobileApp
-        };
-        
-        if (metrics.online.monthlyPageViews) {
-          preparedMetrics.online.monthlyPageViews = parseInt(metrics.online.monthlyPageViews);
-        }
-        if (metrics.online.avgSessionDuration) {
-          preparedMetrics.online.avgSessionDuration = parseFloat(metrics.online.avgSessionDuration);
-        }
-        if (metrics.online.bounceRate) {
-          preparedMetrics.online.bounceRate = parseFloat(metrics.online.bounceRate);
-        }
-        if (metrics.online.registeredUsers) {
-          preparedMetrics.online.registeredUsers = parseInt(metrics.online.registeredUsers);
-        }
-        if (metrics.online.paidSubscribers) {
-          preparedMetrics.online.paidSubscribers = parseInt(metrics.online.paidSubscribers);
-        }
-        if (metrics.online.newsletterSubscribers) {
-          preparedMetrics.online.newsletterSubscribers = parseInt(metrics.online.newsletterSubscribers);
-        }
-        if (metrics.online.domainAuthority) {
-          preparedMetrics.online.domainAuthority = parseInt(metrics.online.domainAuthority);
-        }
-      }
-
-      // Bereite Daten vor
-      const publicationData: any = {
-        title: formData.title,
-        subtitle: formData.subtitle || undefined,
-        publisherId: formData.publisherId || user.uid,
-        publisherName: formData.publisherName || undefined,
-        type: formData.type,
-        format: formData.format,
-        languages: formData.languages,
-        geographicTargets: formData.geographicTargets,
-        geographicScope: formData.geographicScope,
-        focusAreas: focusAreasInput.split(',').map(s => s.trim()).filter(Boolean),
-        metrics: preparedMetrics,
-        identifiers: identifiers.filter(id => id.value).map(id => ({
-          type: id.type,
-          value: id.value,
-          description: id.description || undefined
-        })),
-        socialMediaUrls: socialMediaUrls.filter(s => s.url),
-        verified: formData.verified,
-        status: formData.status,
-        websiteUrl: formData.websiteUrl || undefined,
-        publicNotes: formData.publicNotes || undefined,
-        internalNotes: formData.internalNotes || undefined
-      };
-
-      // Clean the object to remove any remaining undefined values
-      const cleanedData = removeUndefined(publicationData);
-
-      if (publication?.id) {
-        await publicationService.update(publication.id, cleanedData, {
-          organizationId: user.uid,
-          userId: user.uid
-        });
-      } else {
-        await publicationService.create(cleanedData, {
-          organizationId: user.uid,
-          userId: user.uid
-        });
-      }
-
-      onSuccess();
-      onClose();
-    } catch (error) {
-      console.error("Error saving publication:", error);
-      alert("Fehler beim Speichern der Publikation");
-    } finally {
-      setLoading(false);
-    }
+// Alert Component
+function Alert({ 
+  type = 'info', 
+  title, 
+  message 
+}: { 
+  type?: 'info' | 'success' | 'error' | 'warning';
+  title?: string;
+  message: string;
+}) {
+  const styles = {
+    info: 'bg-blue-50 text-blue-700',
+    success: 'bg-green-50 text-green-700',
+    error: 'bg-red-50 text-red-700',
+    warning: 'bg-yellow-50 text-yellow-700'
   };
 
-  const addIdentifier = () => {
-    setIdentifiers([...identifiers, { type: 'URL', value: '' }]);
+  const icons = {
+    info: InformationCircleIcon,
+    success: CheckCircleIcon,
+    error: XCircleIcon,
+    warning: ExclamationTriangleIcon
   };
 
-  const removeIdentifier = (index: number) => {
-    setIdentifiers(identifiers.filter((_, i) => i !== index));
-  };
-
-  const addSocialMedia = () => {
-    setSocialMediaUrls([...socialMediaUrls, { platform: '', url: '' }]);
-  };
-
-  const removeSocialMedia = (index: number) => {
-    setSocialMediaUrls(socialMediaUrls.filter((_, i) => i !== index));
-  };
+  const Icon = icons[type];
 
   return (
-    <Dialog open={isOpen} onClose={onClose} className="sm:max-w-4xl">
-      <div className="p-6"> 
-        <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-4">
-          <h3 className="text-lg font-medium leading-6 text-gray-900">
-            {publication ? 'Publikation bearbeiten' : 'Neue Publikation'}
-          </h3>
+    <div className={`rounded-md p-4 ${styles[type].split(' ')[0]}`}>
+      <div className="flex">
+        <div className="shrink-0">
+          <Icon aria-hidden="true" className={`size-5 ${
+            type === 'error' ? 'text-red-400' : 
+            type === 'success' ? 'text-green-400' : 
+            type === 'warning' ? 'text-yellow-400' :
+            'text-blue-400'
+          }`} />
         </div>
-
-        {/* Tab Navigation */}
-        <div className="border-b border-gray-200 mb-6">
-          <nav className="-mb-px flex space-x-8">
-            <button
-              onClick={() => setActiveTab('basic')}
-              className={`${
-                activeTab === 'basic' 
-                  ? 'border-[#005fab] text-[#005fab]' 
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm`}
-            >
-              Grunddaten
-            </button>
-            <button
-              onClick={() => setActiveTab('metrics')}
-              className={`${
-                activeTab === 'metrics' 
-                  ? 'border-[#005fab] text-[#005fab]' 
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm`}
-            >
-              Metriken
-            </button>
-            <button
-              onClick={() => setActiveTab('identifiers')}
-              className={`${
-                activeTab === 'identifiers' 
-                  ? 'border-[#005fab] text-[#005fab]' 
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm`}
-            >
-              Identifikatoren & Links
-            </button>
-          </nav>
+        <div className="ml-3">
+          {title && <Text className={`font-medium ${styles[type].split(' ')[1]}`}>{title}</Text>}
+          <Text className={`text-sm ${styles[type].split(' ')[1]}`}>{message}</Text>
         </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6 max-h-[60vh] overflow-y-auto">
-          {/* Grunddaten Tab */}
-          {activeTab === 'basic' && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Titel der Publikation *
-                  </label>
-                  <Input
-                    type="text"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    required
-                    placeholder="z.B. Süddeutsche Zeitung"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Untertitel / Claim
-                  </label>
-                  <Input
-                    type="text"
-                    value={formData.subtitle}
-                    onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
-                    placeholder="z.B. Die große Tageszeitung"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Verlag / Medienhaus
-                  </label>
-                  <Input
-                    type="text"
-                    value={formData.publisherName}
-                    onChange={(e) => setFormData({ ...formData, publisherName: e.target.value })}
-                    placeholder="Name des Verlags"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Website
-                  </label>
-                  <Input
-                    type="url"
-                    value={formData.websiteUrl}
-                    onChange={(e) => setFormData({ ...formData, websiteUrl: e.target.value })}
-                    placeholder="https://..."
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Typ *
-                  </label>
-                  <Select
-                    value={formData.type}
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
-                  >
-                    {publicationTypes.map(type => (
-                      <option key={type.value} value={type.value}>
-                        {type.label}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Format
-                  </label>
-                  <Select
-                    value={formData.format}
-                    onChange={(e) => setFormData({ ...formData, format: e.target.value as PublicationFormat })}
-                  >
-                    <option value="print">Print</option>
-                    <option value="online">Digital</option>
-                    <option value="both">Print & Digital</option>
-                    <option value="broadcast">Broadcast</option>
-                  </Select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Reichweite
-                  </label>
-                  <Select
-                    value={formData.geographicScope}
-                    onChange={(e) => setFormData({ ...formData, geographicScope: e.target.value as any })}
-                  >
-                    {geographicScopes.map(scope => (
-                      <option key={scope.value} value={scope.value}>
-                        {scope.label}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  <LanguageIcon className="inline h-4 w-4 mr-1" />
-                  Sprachen *
-                </label>
-                <LanguageSelectorMulti
-                  value={formData.languages}
-                  onChange={(languages) => setFormData({ ...formData, languages })}
-                  placeholder="Sprachen auswählen..."
-                  multiple
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  <GlobeAltIcon className="inline h-4 w-4 mr-1" />
-                  Geografische Zielgebiete *
-                </label>
-                <CountrySelectorMulti
-                  value={formData.geographicTargets}
-                  onChange={(countries) => setFormData({ ...formData, geographicTargets: countries })}
-                  placeholder="Länder auswählen..."
-                  multiple
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Themenbereiche (kommagetrennt)
-                </label>
-                <Input
-                  type="text"
-                  value={focusAreasInput}
-                  onChange={(e) => setFocusAreasInput(e.target.value)}
-                  placeholder="Wirtschaft, Technologie, Politik..."
-                />
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Status
-                  </label>
-                  <Select
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                  >
-                    <option value="active">Aktiv</option>
-                    <option value="inactive">Inaktiv</option>
-                    <option value="discontinued">Eingestellt</option>
-                    <option value="planned">Geplant</option>
-                  </Select>
-                </div>
-                <div className="flex items-end">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.verified}
-                      onChange={(e) => setFormData({ ...formData, verified: e.target.checked })}
-                      className="h-4 w-4 text-[#005fab] focus:ring-[#005fab] border-gray-300 rounded"
-                    />
-                    <span className="ml-2 block text-sm text-gray-900">
-                      Publikation ist verifiziert
-                    </span>
-                  </label>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Öffentliche Notizen (für Media Kit)
-                </label>
-                <Textarea
-                  value={formData.publicNotes}
-                  onChange={(e) => setFormData({ ...formData, publicNotes: e.target.value })}
-                  rows={2}
-                  placeholder="Informationen für externe Verwendung..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Interne Notizen
-                </label>
-                <Textarea
-                  value={formData.internalNotes}
-                  onChange={(e) => setFormData({ ...formData, internalNotes: e.target.value })}
-                  rows={2}
-                  placeholder="Interne Anmerkungen..."
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Metriken Tab */}
-          {activeTab === 'metrics' && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Erscheinungsfrequenz
-                  </label>
-                  <Select
-                    value={metrics.frequency}
-                    onChange={(e) => setMetrics({ ...metrics, frequency: e.target.value as PublicationFrequency })}
-                  >
-                    {frequencies.map(freq => (
-                      <option key={freq.value} value={freq.value}>
-                        {freq.label}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Zielgruppe
-                  </label>
-                  <Input
-                    type="text"
-                    value={metrics.targetAudience}
-                    onChange={(e) => setMetrics({ ...metrics, targetAudience: e.target.value })}
-                    placeholder="z.B. Entscheider, Fachpublikum..."
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Altersgruppe
-                  </label>
-                  <Input
-                    type="text"
-                    value={metrics.targetAgeGroup}
-                    onChange={(e) => setMetrics({ ...metrics, targetAgeGroup: e.target.value })}
-                    placeholder="z.B. 25-49, 50+"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Geschlechterverteilung
-                  </label>
-                  <Select
-                    value={metrics.targetGender}
-                    onChange={(e) => setMetrics({ ...metrics, targetGender: e.target.value as any })}
-                  >
-                    <option value="all">Ausgeglichen</option>
-                    <option value="predominantly_male">Überwiegend männlich</option>
-                    <option value="predominantly_female">Überwiegend weiblich</option>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Print Metriken */}
-              {(formData.format === 'print' || formData.format === 'both') && (
-                <div className="border rounded-lg p-4 space-y-4">
-                  <h4 className="font-medium text-gray-900">Print-Metriken</h4>
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Auflage
-                      </label>
-                      <Input
-                        type="number"
-                        value={metrics.print.circulation}
-                        onChange={(e) => setMetrics({
-                          ...metrics,
-                          print: { ...metrics.print, circulation: e.target.value }
-                        })}
-                        placeholder="50000"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Auflagentyp
-                      </label>
-                      <Select
-                        value={metrics.print.circulationType}
-                        onChange={(e) => setMetrics({
-                          ...metrics,
-                          print: { ...metrics.print, circulationType: e.target.value as any }
-                        })}
-                      >
-                        {circulationTypes.map(type => (
-                          <option key={type.value} value={type.value}>
-                            {type.label}
-                          </option>
-                        ))}
-                      </Select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Preis pro Ausgabe (€)
-                      </label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={metrics.print.pricePerIssue}
-                        onChange={(e) => setMetrics({
-                          ...metrics,
-                          print: { ...metrics.print, pricePerIssue: e.target.value }
-                        })}
-                        placeholder="3.50"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Abo-Preis Monat (€)
-                      </label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={metrics.print.subscriptionPriceMonthly}
-                        onChange={(e) => setMetrics({
-                          ...metrics,
-                          print: { ...metrics.print, subscriptionPriceMonthly: e.target.value }
-                        })}
-                        placeholder="29.90"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Format
-                      </label>
-                      <Input
-                        type="text"
-                        value={metrics.print.paperFormat}
-                        onChange={(e) => setMetrics({
-                          ...metrics,
-                          print: { ...metrics.print, paperFormat: e.target.value }
-                        })}
-                        placeholder="z.B. A4, Tabloid"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Seitenanzahl
-                      </label>
-                      <Input
-                        type="number"
-                        value={metrics.print.pageCount}
-                        onChange={(e) => setMetrics({
-                          ...metrics,
-                          print: { ...metrics.print, pageCount: e.target.value }
-                        })}
-                        placeholder="64"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Online Metriken */}
-              {(formData.format === 'online' || formData.format === 'both') && (
-                <div className="border rounded-lg p-4 space-y-4">
-                  <h4 className="font-medium text-gray-900">Online-Metriken</h4>
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Monatliche Unique Visitors
-                      </label>
-                      <Input
-                        type="number"
-                        value={metrics.online.monthlyUniqueVisitors}
-                        onChange={(e) => setMetrics({
-                          ...metrics,
-                          online: { ...metrics.online, monthlyUniqueVisitors: e.target.value }
-                        })}
-                        placeholder="100000"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Monatliche Page Views
-                      </label>
-                      <Input
-                        type="number"
-                        value={metrics.online.monthlyPageViews}
-                        onChange={(e) => setMetrics({
-                          ...metrics,
-                          online: { ...metrics.online, monthlyPageViews: e.target.value }
-                        })}
-                        placeholder="500000"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Ø Sitzungsdauer (Minuten)
-                      </label>
-                      <Input
-                        type="number"
-                        step="0.1"
-                        value={metrics.online.avgSessionDuration}
-                        onChange={(e) => setMetrics({
-                          ...metrics,
-                          online: { ...metrics.online, avgSessionDuration: e.target.value }
-                        })}
-                        placeholder="3.5"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Bounce Rate (%)
-                      </label>
-                      <Input
-                        type="number"
-                        step="0.1"
-                        value={metrics.online.bounceRate}
-                        onChange={(e) => setMetrics({
-                          ...metrics,
-                          online: { ...metrics.online, bounceRate: e.target.value }
-                        })}
-                        placeholder="45.5"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Registrierte Nutzer
-                      </label>
-                      <Input
-                        type="number"
-                        value={metrics.online.registeredUsers}
-                        onChange={(e) => setMetrics({
-                          ...metrics,
-                          online: { ...metrics.online, registeredUsers: e.target.value }
-                        })}
-                        placeholder="50000"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Newsletter-Abonnenten
-                      </label>
-                      <Input
-                        type="number"
-                        value={metrics.online.newsletterSubscribers}
-                        onChange={(e) => setMetrics({
-                          ...metrics,
-                          online: { ...metrics.online, newsletterSubscribers: e.target.value }
-                        })}
-                        placeholder="25000"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-6 pt-2">
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={metrics.online.hasPaywall}
-                        onChange={(e) => setMetrics({
-                          ...metrics,
-                          online: { ...metrics.online, hasPaywall: e.target.checked }
-                        })}
-                        className="h-4 w-4 text-[#005fab] focus:ring-[#005fab] border-gray-300 rounded"
-                      />
-                      <span className="ml-2 text-sm">Hat Paywall</span>
-                    </label>
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={metrics.online.hasMobileApp}
-                        onChange={(e) => setMetrics({
-                          ...metrics,
-                          online: { ...metrics.online, hasMobileApp: e.target.checked }
-                        })}
-                        className="h-4 w-4 text-[#005fab] focus:ring-[#005fab] border-gray-300 rounded"
-                      />
-                      <span className="ml-2 text-sm">Hat Mobile App</span>
-                    </label>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Identifikatoren Tab */}
-          {activeTab === 'identifiers' && (
-            <div className="space-y-6">
-              <div>
-                <h4 className="font-medium text-gray-900 mb-3">Identifikatoren</h4>
-                <div className="space-y-2">
-                  {identifiers.map((identifier, index) => (
-                    <div key={index} className="flex gap-2">
-                      <Select
-                        value={identifier.type}
-                        onChange={(e) => {
-                          const updated = [...identifiers];
-                          updated[index] = { ...updated[index], type: e.target.value as any };
-                          setIdentifiers(updated);
-                        }}
-                        className="w-1/3"
-                      >
-                        <option value="ISSN">ISSN</option>
-                        <option value="ISBN">ISBN</option>
-                        <option value="DOI">DOI</option>
-                        <option value="URL">URL</option>
-                        <option value="DOMAIN">Domain</option>
-                        <option value="SOCIAL_HANDLE">Social Handle</option>
-                        <option value="OTHER">Sonstiges</option>
-                      </Select>
-                      <Input
-                        type="text"
-                        value={identifier.value}
-                        onChange={(e) => {
-                          const updated = [...identifiers];
-                          updated[index].value = e.target.value;
-                          setIdentifiers(updated);
-                        }}
-                        placeholder="Wert eingeben..."
-                        className="flex-1"
-                      />
-                      <Button
-                        type="button"
-                        plain
-                        onClick={() => removeIdentifier(index)}
-                        disabled={identifiers.length === 1}
-                      >
-                        <TrashIcon className="h-5 w-5" />
-                      </Button>
-                    </div>
-                  ))}
-                  <Button type="button" plain onClick={addIdentifier}>
-                    <PlusIcon className="h-4 w-4 mr-1" />
-                    Identifikator hinzufügen
-                  </Button>
-                </div>
-              </div>
-
-              <div>
-                <h4 className="font-medium text-gray-900 mb-3">Social Media Profile</h4>
-                <div className="space-y-2">
-                  {socialMediaUrls.map((social, index) => (
-                    <div key={index} className="flex gap-2">
-                      <Input
-                        type="text"
-                        value={social.platform}
-                        onChange={(e) => {
-                          const updated = [...socialMediaUrls];
-                          updated[index].platform = e.target.value;
-                          setSocialMediaUrls(updated);
-                        }}
-                        placeholder="Platform (z.B. Twitter)"
-                        className="w-1/3"
-                      />
-                      <Input
-                        type="url"
-                        value={social.url}
-                        onChange={(e) => {
-                          const updated = [...socialMediaUrls];
-                          updated[index].url = e.target.value;
-                          setSocialMediaUrls(updated);
-                        }}
-                        placeholder="https://..."
-                        className="flex-1"
-                      />
-                      <Button
-                        type="button"
-                        plain
-                        onClick={() => removeSocialMedia(index)}
-                      >
-                        <TrashIcon className="h-5 w-5" />
-                      </Button>
-                    </div>
-                  ))}
-                  <Button type="button" plain onClick={addSocialMedia}>
-                    <PlusIcon className="h-4 w-4 mr-1" />
-                    Social Media hinzufügen
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Buttons */}
-          <div className="flex justify-end space-x-3 pt-6 border-t">
-            <Button plain onClick={onClose}>
-              Abbrechen
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Speichern...' : publication ? 'Aktualisieren' : 'Erstellen'}
-            </Button>
-          </div>
-        </form>
       </div>
+    </div>
+  );
+}
+
+interface PublicationImportModalProps {
+  onClose: () => void;
+  onImportSuccess: () => void;
+}
+
+// Mapping-Definitionen für automatische Erkennung
+const FIELD_MAPPINGS = {
+  title: ['titel', 'title', 'name', 'publikation', 'publication', 'medium', 'medienname'],
+  subtitle: ['untertitel', 'subtitle', 'claim', 'slogan'],
+  publisherName: ['verlag', 'publisher', 'herausgeber', 'medienhaus', 'company'],
+  type: ['typ', 'type', 'art', 'kategorie', 'category'],
+  format: ['format', 'kanal', 'channel'],
+  websiteUrl: ['website', 'url', 'webseite', 'homepage', 'link'],
+  languages: ['sprache', 'sprachen', 'language', 'languages'],
+  countries: ['land', 'länder', 'country', 'countries', 'markt', 'märkte'],
+  circulation: ['auflage', 'circulation', 'reichweite', 'print auflage'],
+  uniqueVisitors: ['unique visitors', 'besucher', 'monthly visitors', 'online reichweite'],
+  focusAreas: ['themen', 'topics', 'schwerpunkte', 'focus', 'ressorts', 'bereiche'],
+  frequency: ['frequenz', 'frequency', 'erscheinung', 'rhythm', 'periodizität'],
+  targetAudience: ['zielgruppe', 'target', 'audience', 'leserschaft'],
+  industry: ['branche', 'industry', 'sektor', 'sector']
+};
+
+// Template für CSV-Download
+const CSV_TEMPLATE = `Titel,Verlag,Typ,Format,Website,Sprachen,Länder,Auflage,Online Besucher,Themenschwerpunkte,Frequenz,Zielgruppe
+Beispiel Magazin,Beispiel Verlag GmbH,magazine,print,https://example.com,"de,en","DE,AT,CH",50000,,"Wirtschaft,Politik",monthly,Führungskräfte
+Online Portal,Digital Media AG,website,online,https://portal.com,de,DE,,250000,"Technologie,Innovation",continuous,IT-Professionals`;
+
+type Step = 'upload' | 'mapping' | 'import';
+
+export default function PublicationImportModal({ onClose, onImportSuccess }: PublicationImportModalProps) {
+  const { user } = useAuth();
+  const [currentStep, setCurrentStep] = useState<Step>('upload');
+  
+  // Step 1: Upload
+  const [file, setFile] = useState<File | null>(null);
+  const [selectedPublisherId, setSelectedPublisherId] = useState<string>('');
+  const [publishers, setPublishers] = useState<Company[]>([]);
+  
+  // Step 2: Mapping
+  const [headers, setHeaders] = useState<string[]>([]);
+  const [previewData, setPreviewData] = useState<any[]>([]);
+  const [fieldMappings, setFieldMappings] = useState<Record<string, string>>({});
+  const [autoMappingApplied, setAutoMappingApplied] = useState(false);
+  
+  // Step 3: Import
+  const [isImporting, setIsImporting] = useState(false);
+  const [importOptions, setImportOptions] = useState({
+    updateExisting: false,
+    skipInvalid: true,
+    defaultLanguage: 'de',
+    defaultCountry: 'DE'
+  });
+  const [importResults, setImportResults] = useState<{
+    created: number;
+    updated: number;
+    skipped: number;
+    errors: { row: number; error: string }[];
+  } | null>(null);
+  
+  const [error, setError] = useState('');
+
+  // Lade Verlage
+  useEffect(() => {
+    const loadPublishers = async () => {
+      if (!user) return;
+      try {
+        const allCompanies = await companiesService.getAll(user.uid);
+        // Filtere nach Verlagen (type = 'partner' oder alle)
+        const publisherCompanies = allCompanies.filter(c => 
+          c.type === 'partner' || c.industry?.toLowerCase().includes('verlag') || 
+          c.industry?.toLowerCase().includes('medien')
+        );
+        setPublishers(publisherCompanies);
+      } catch (err) {
+        console.error('Error loading publishers:', err);
+      }
+    };
+    loadPublishers();
+  }, [user]);
+
+  // Datei-Handler
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const selectedFile = e.target.files[0];
+      setFile(selectedFile);
+      setError('');
+      setImportResults(null);
+    }
+  };
+
+  // Template Download
+  const downloadTemplate = () => {
+    const blob = new Blob([CSV_TEMPLATE], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'publikationen_import_vorlage.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Automatisches Mapping
+  const applyAutoMapping = () => {
+    const newMappings: Record<string, string> = {};
+    
+    headers.forEach(header => {
+      const headerLower = header.toLowerCase().trim();
+      
+      // Durchsuche alle Feld-Mappings
+      Object.entries(FIELD_MAPPINGS).forEach(([field, variants]) => {
+        if (variants.some(variant => headerLower.includes(variant))) {
+          newMappings[field] = header;
+        }
+      });
+    });
+    
+    setFieldMappings(newMappings);
+    setAutoMappingApplied(true);
+  };
+
+  // Parse Datei für Vorschau
+  const parseFileForPreview = async () => {
+    if (!file) return;
+    
+    setError('');
+    
+    if (file.name.endsWith('.csv')) {
+      // CSV Parsing
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        preview: 5, // Nur erste 5 Zeilen für Vorschau
+        complete: (results) => {
+          if (results.meta.fields) {
+            setHeaders(results.meta.fields);
+            setPreviewData(results.data);
+            setCurrentStep('mapping');
+          }
+        },
+        error: (err) => {
+          setError(`CSV-Parsing-Fehler: ${err.message}`);
+        }
+      });
+    } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+      // Excel Parsing
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 }) as any[][];
+          
+          if (jsonData.length > 0) {
+            const headers = jsonData[0].map(h => String(h || ''));
+            setHeaders(headers);
+            
+            // Konvertiere zu Objekt-Format für Vorschau
+            const preview = jsonData.slice(1, 6).map(row => {
+              const obj: any = {};
+              headers.forEach((header, index) => {
+                obj[header] = row[index] || '';
+              });
+              return obj;
+            });
+            setPreviewData(preview);
+            setCurrentStep('mapping');
+          }
+        } catch (err) {
+          setError(`Excel-Parsing-Fehler: ${err}`);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+  };
+
+  // Schritt 1 -> 2
+  const handleNextToMapping = () => {
+    if (!file || !selectedPublisherId) {
+      setError('Bitte wählen Sie eine Datei und einen Verlag aus.');
+      return;
+    }
+    parseFileForPreview();
+  };
+
+  // Schritt 2 -> 3
+  const handleNextToImport = () => {
+    if (!fieldMappings.title) {
+      setError('Bitte mappen Sie mindestens das Feld "Titel".');
+      return;
+    }
+    setCurrentStep('import');
+  };
+
+  // Import durchführen
+  const handleImport = async () => {
+    if (!file || !user || !selectedPublisherId) return;
+    
+    setIsImporting(true);
+    setError('');
+    
+    const parsePromise = new Promise<any[]>((resolve, reject) => {
+      if (file.name.endsWith('.csv')) {
+        Papa.parse(file, {
+          header: true,
+          skipEmptyLines: true,
+          complete: (results) => resolve(results.data),
+          error: reject
+        });
+      } else {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const data = new Uint8Array(e.target?.result as ArrayBuffer);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+            resolve(jsonData);
+          } catch (err) {
+            reject(err);
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      }
+    });
+    
+    try {
+      const data = await parsePromise;
+      const selectedPublisher = publishers.find(p => p.id === selectedPublisherId);
+      
+      // Konvertiere Daten basierend auf Mapping
+      const publications = data.map(row => {
+        const pub: Partial<Publication> = {
+          publisherId: selectedPublisherId,
+          publisherName: selectedPublisher?.name,
+          status: 'active',
+          organizationId: user.uid
+        };
+        
+        // Mappe Felder
+        Object.entries(fieldMappings).forEach(([field, sourceColumn]) => {
+          const value = row[sourceColumn];
+          if (!value) return;
+          
+          switch (field) {
+            case 'title':
+              pub.title = String(value).trim();
+              break;
+            case 'subtitle':
+              pub.subtitle = String(value).trim();
+              break;
+            case 'type':
+              // Versuche Typ zu erkennen
+              const typeStr = String(value).toLowerCase();
+              pub.type = Object.keys(PUBLICATION_TYPE_LABELS).find(key => 
+                typeStr.includes(key) || PUBLICATION_TYPE_LABELS[key as PublicationType].toLowerCase().includes(typeStr)
+              ) as PublicationType || 'magazine';
+              break;
+            case 'format':
+              const formatStr = String(value).toLowerCase();
+              if (formatStr.includes('online') || formatStr.includes('digital')) {
+                pub.format = 'online';
+              } else if (formatStr.includes('print')) {
+                pub.format = 'print';
+              } else if (formatStr.includes('both') || formatStr.includes('beides')) {
+                pub.format = 'both';
+              } else if (formatStr.includes('broadcast') || formatStr.includes('tv') || formatStr.includes('radio')) {
+                pub.format = 'broadcast';
+              } else {
+                pub.format = 'print'; // Default
+              }
+              break;
+            case 'websiteUrl':
+              pub.websiteUrl = String(value).trim();
+              break;
+            case 'languages':
+              // Sprachen können komma-getrennt sein
+              pub.languages = String(value).split(/[,;]/).map(l => l.trim()).filter(Boolean) as any[];
+              break;
+            case 'countries':
+              // Länder können komma-getrennt sein
+              pub.geographicTargets = String(value).split(/[,;]/).map(c => c.trim().toUpperCase()).filter(Boolean) as any[];
+              break;
+            case 'circulation':
+              const circ = parseInt(String(value).replace(/\D/g, ''));
+              if (!isNaN(circ)) {
+                pub.metrics = {
+                  ...pub.metrics,
+                  frequency: 'monthly', // Default
+                  print: {
+                    circulation: circ,
+                    circulationType: 'printed'
+                  }
+                };
+              }
+              break;
+            case 'uniqueVisitors':
+              const visitors = parseInt(String(value).replace(/\D/g, ''));
+              if (!isNaN(visitors)) {
+                pub.metrics = {
+                  ...pub.metrics,
+                  frequency: pub.metrics?.frequency || 'monthly',
+                  online: {
+                    monthlyUniqueVisitors: visitors
+                  }
+                };
+              }
+              break;
+            case 'focusAreas':
+              pub.focusAreas = String(value).split(/[,;]/).map(f => f.trim()).filter(Boolean);
+              break;
+            case 'targetAudience':
+              if (pub.metrics) {
+                pub.metrics.targetAudience = String(value).trim();
+              } else {
+                pub.metrics = {
+                  frequency: 'monthly',
+                  targetAudience: String(value).trim()
+                };
+              }
+              break;
+          }
+        });
+        
+        // Setze Defaults
+        if (!pub.languages || pub.languages.length === 0) {
+          pub.languages = [importOptions.defaultLanguage] as any[];
+        }
+        if (!pub.geographicTargets || pub.geographicTargets.length === 0) {
+          pub.geographicTargets = [importOptions.defaultCountry] as any[];
+        }
+        if (!pub.focusAreas) {
+          pub.focusAreas = [];
+        }
+        if (!pub.geographicScope) {
+          pub.geographicScope = 'national';
+        }
+        if (!pub.metrics) {
+          pub.metrics = { frequency: 'monthly' };
+        }
+        
+        return pub;
+      });
+      
+      // Import durchführen
+      const results = await publicationService.import(
+        publications,
+        { organizationId: user.uid, userId: user.uid },
+        {
+          duplicateCheck: true,
+          updateExisting: importOptions.updateExisting,
+          defaultPublisherId: selectedPublisherId
+        }
+      );
+      
+      setImportResults(results);
+      
+      if (results.created > 0 || results.updated > 0) {
+        setTimeout(() => {
+          onImportSuccess();
+          onClose();
+        }, 2000);
+      }
+    } catch (err) {
+      console.error('Import error:', err);
+      setError('Fehler beim Import. Bitte überprüfen Sie das Dateiformat.');
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  // Schritt-Navigation
+  const canProceed = useMemo(() => {
+    switch (currentStep) {
+      case 'upload':
+        return file && selectedPublisherId;
+      case 'mapping':
+        return fieldMappings.title;
+      case 'import':
+        return true;
+      default:
+        return false;
+    }
+  }, [currentStep, file, selectedPublisherId, fieldMappings]);
+
+  return (
+    <Dialog open={true} onClose={onClose} size="2xl">
+      <DialogTitle className="px-6 py-4 text-lg font-semibold">
+        Publikationen importieren
+      </DialogTitle>
+      
+      <DialogBody className="p-6">
+        {/* Fortschritts-Anzeige */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
+            {['upload', 'mapping', 'import'].map((step, index) => (
+              <div key={step} className="flex items-center">
+                <div className={`
+                  flex h-10 w-10 items-center justify-center rounded-full
+                  ${currentStep === step ? 'bg-primary text-white' : 
+                    ['upload', 'mapping', 'import'].indexOf(currentStep) > index ? 
+                    'bg-green-500 text-white' : 'bg-gray-200 text-gray-600'}
+                `}>
+                  {['upload', 'mapping', 'import'].indexOf(currentStep) > index ? (
+                    <CheckCircleIcon className="h-6 w-6" />
+                  ) : (
+                    index + 1
+                  )}
+                </div>
+                {index < 2 && (
+                  <div className={`
+                    h-1 w-24 mx-2
+                    ${['upload', 'mapping', 'import'].indexOf(currentStep) > index ? 
+                      'bg-green-500' : 'bg-gray-200'}
+                  `} />
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-between mt-2">
+            <Text className="text-sm text-gray-600">Datei-Upload</Text>
+            <Text className="text-sm text-gray-600">Spalten zuordnen</Text>
+            <Text className="text-sm text-gray-600">Import</Text>
+          </div>
+        </div>
+
+        {/* Step 1: Upload */}
+        {currentStep === 'upload' && (
+          <div className="space-y-6">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <Text className="text-sm text-gray-600">
+                  Laden Sie eine CSV- oder Excel-Datei mit Ihren Publikationsdaten hoch.
+                </Text>
+                <Button
+                  plain
+                  onClick={downloadTemplate}
+                  className="text-sm"
+                >
+                  <DocumentArrowDownIcon className="h-4 w-4 mr-1" />
+                  Vorlage herunterladen
+                </Button>
+              </div>
+              
+              <div className="flex items-center justify-center w-full">
+                <label htmlFor="file-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <ArrowUpTrayIcon className="w-8 h-8 mb-3 text-gray-400" />
+                    <Text className="mb-2 text-sm text-gray-500">
+                      <span className="font-semibold">Klicken Sie hier</span> oder ziehen Sie eine Datei hierher
+                    </Text>
+                    <Text className="text-xs text-gray-500">CSV oder Excel-Datei (max. 10MB)</Text>
+                  </div>
+                  <input 
+                    id="file-upload" 
+                    type="file" 
+                    accept=".csv,.xlsx,.xls" 
+                    onChange={handleFileChange} 
+                    className="hidden" 
+                  />
+                </label>
+              </div>
+              
+              {file && (
+                <div className="mt-2 p-3 bg-green-50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <CheckCircleIcon className="h-5 w-5 text-green-600" />
+                    <Text className="text-sm text-green-800">
+                      Ausgewählte Datei: <span className="font-medium">{file.name}</span>
+                    </Text>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <FieldGroup>
+              <Field>
+                <Label>Verlag auswählen *</Label>
+                <Select
+                  value={selectedPublisherId}
+                  onChange={(e) => setSelectedPublisherId(e.target.value)}
+                >
+                  <option value="">-- Bitte wählen --</option>
+                  {publishers.map(publisher => (
+                    <option key={publisher.id} value={publisher.id}>
+                      {publisher.name}
+                    </option>
+                  ))}
+                </Select>
+                <Description>
+                  Alle importierten Publikationen werden diesem Verlag zugeordnet.
+                </Description>
+              </Field>
+            </FieldGroup>
+
+            <Alert
+              type="info"
+              title="Unterstützte Formate"
+              message="CSV (komma- oder semikolon-getrennt) und Excel-Dateien (.xlsx, .xls). Die erste Zeile muss die Spaltenüberschriften enthalten."
+            />
+          </div>
+        )}
+
+        {/* Step 2: Mapping */}
+        {currentStep === 'mapping' && (
+          <div className="space-y-6">
+            {!autoMappingApplied && (
+              <div className="flex items-center justify-between">
+                <Text className="text-sm text-gray-600">
+                  Ordnen Sie die Spalten Ihrer Datei den Publikationsfeldern zu.
+                </Text>
+                <Button
+                  plain
+                  onClick={applyAutoMapping}
+                  className="text-sm"
+                >
+                  <CheckCircleIcon className="h-4 w-4 mr-1" />
+                  Automatisch zuordnen
+                </Button>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { field: 'title', label: 'Titel *', required: true },
+                { field: 'subtitle', label: 'Untertitel' },
+                { field: 'type', label: 'Typ' },
+                { field: 'format', label: 'Format' },
+                { field: 'websiteUrl', label: 'Website' },
+                { field: 'languages', label: 'Sprachen' },
+                { field: 'countries', label: 'Länder' },
+                { field: 'circulation', label: 'Auflage (Print)' },
+                { field: 'uniqueVisitors', label: 'Online-Besucher' },
+                { field: 'focusAreas', label: 'Themenschwerpunkte' },
+                { field: 'frequency', label: 'Frequenz' },
+                { field: 'targetAudience', label: 'Zielgruppe' }
+              ].map(({ field, label, required }) => (
+                <Field key={field}>
+                  <Label>
+                    {label}
+                    {required && <span className="text-red-500 ml-1">*</span>}
+                  </Label>
+                  <Select
+                    value={fieldMappings[field] || ''}
+                    onChange={(e) => setFieldMappings({
+                      ...fieldMappings,
+                      [field]: e.target.value
+                    })}
+                  >
+                    <option value="">-- Nicht zugeordnet --</option>
+                    {headers.map(header => (
+                      <option key={header} value={header}>
+                        {header}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+              ))}
+            </div>
+
+            {/* Vorschau */}
+            {previewData.length > 0 && (
+              <div className="mt-6">
+                <h4 className="text-sm font-medium text-gray-900 mb-3">Datenvorschau (erste 5 Zeilen)</h4>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 border">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        {Object.entries(fieldMappings).filter(([_, source]) => source).map(([field, source]) => (
+                          <th key={field} className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                            {field}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {previewData.map((row, index) => (
+                        <tr key={index}>
+                          {Object.entries(fieldMappings).filter(([_, source]) => source).map(([field, source]) => (
+                            <td key={field} className="px-3 py-2 text-sm text-gray-900">
+                              {row[source] || '-'}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Step 3: Import */}
+        {currentStep === 'import' && !importResults && (
+          <div className="space-y-6">
+            <Text className="text-sm text-gray-600">
+              Überprüfen Sie die Import-Einstellungen und starten Sie den Import.
+            </Text>
+
+            <FieldGroup>
+              <div className="space-y-3">
+                <label className="flex items-center gap-2">
+                  <Checkbox
+                    checked={importOptions.updateExisting}
+                    onChange={(checked) => setImportOptions({
+                      ...importOptions,
+                      updateExisting: checked
+                    })}
+                  />
+                  <span className="text-sm">Existierende Publikationen aktualisieren</span>
+                </label>
+
+                <label className="flex items-center gap-2">
+                  <Checkbox
+                    checked={importOptions.skipInvalid}
+                    onChange={(checked) => setImportOptions({
+                      ...importOptions,
+                      skipInvalid: checked
+                    })}
+                  />
+                  <span className="text-sm">Ungültige Einträge überspringen</span>
+                </label>
+              </div>
+
+              <Field>
+                <Label>Standard-Sprache</Label>
+                <Select
+                  value={importOptions.defaultLanguage}
+                  onChange={(e) => setImportOptions({
+                    ...importOptions,
+                    defaultLanguage: e.target.value
+                  })}
+                >
+                  <option value="de">Deutsch</option>
+                  <option value="en">Englisch</option>
+                  <option value="fr">Französisch</option>
+                  <option value="it">Italienisch</option>
+                </Select>
+                <Description>Wird verwendet, wenn keine Sprache angegeben ist.</Description>
+              </Field>
+
+              <Field>
+                <Label>Standard-Land</Label>
+                <Select
+                  value={importOptions.defaultCountry}
+                  onChange={(e) => setImportOptions({
+                    ...importOptions,
+                    defaultCountry: e.target.value
+                  })}
+                >
+                  <option value="DE">Deutschland</option>
+                  <option value="AT">Österreich</option>
+                  <option value="CH">Schweiz</option>
+                  <option value="US">USA</option>
+                  <option value="GB">Großbritannien</option>
+                </Select>
+                <Description>Wird verwendet, wenn kein Land angegeben ist.</Description>
+              </Field>
+            </FieldGroup>
+
+            <Alert
+              type="info"
+              title="Import-Prozess"
+              message="Der Import kann je nach Datenmenge einige Sekunden dauern. Duplikate werden automatisch erkannt."
+            />
+          </div>
+        )}
+
+        {/* Import-Ergebnisse */}
+        {importResults && (
+          <div className="space-y-4">
+            <div className="text-center py-8">
+              <CheckCircleIcon className="h-16 w-16 text-green-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Import abgeschlossen!</h3>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div className="bg-green-50 rounded-lg p-4 text-center">
+                <Text className="text-2xl font-bold text-green-600">{importResults.created}</Text>
+                <Text className="text-sm text-green-800">Erstellt</Text>
+              </div>
+              <div className="bg-blue-50 rounded-lg p-4 text-center">
+                <Text className="text-2xl font-bold text-blue-600">{importResults.updated}</Text>
+                <Text className="text-sm text-blue-800">Aktualisiert</Text>
+              </div>
+              <div className="bg-yellow-50 rounded-lg p-4 text-center">
+                <Text className="text-2xl font-bold text-yellow-600">{importResults.skipped}</Text>
+                <Text className="text-sm text-yellow-800">Übersprungen</Text>
+              </div>
+            </div>
+
+            {importResults.errors.length > 0 && (
+              <div className="mt-4">
+                <Alert
+                  type="warning"
+                  title={`${importResults.errors.length} Fehler beim Import`}
+                  message="Folgende Zeilen konnten nicht importiert werden:"
+                />
+                <div className="mt-2 max-h-40 overflow-y-auto">
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    {importResults.errors.map((error, index) => (
+                      <li key={index}>
+                        Zeile {error.row}: {error.error}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {error && (
+          <Alert type="error" message={error} />
+        )}
+      </DialogBody>
+      
+      <DialogActions className="px-6 py-4">
+        {currentStep === 'upload' && (
+          <>
+            <Button plain onClick={onClose}>Abbrechen</Button>
+            <Button 
+              onClick={handleNextToMapping}
+              disabled={!canProceed}
+              className="bg-zinc-900 hover:bg-zinc-800 text-white whitespace-nowrap dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100"
+            >
+              Weiter
+              <ArrowRightIcon className="ml-2 h-4 w-4" />
+            </Button>
+          </>
+        )}
+        
+        {currentStep === 'mapping' && (
+          <>
+            <Button plain onClick={() => setCurrentStep('upload')}>
+              <ArrowLeftIcon className="mr-2 h-4 w-4" />
+              Zurück
+            </Button>
+            <Button 
+              onClick={handleNextToImport}
+              disabled={!canProceed}
+              className="bg-zinc-900 hover:bg-zinc-800 text-white whitespace-nowrap dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100"
+            >
+              Weiter
+              <ArrowRightIcon className="ml-2 h-4 w-4" />
+            </Button>
+          </>
+        )}
+        
+        {currentStep === 'import' && !importResults && (
+          <>
+            <Button plain onClick={() => setCurrentStep('mapping')} disabled={isImporting}>
+              <ArrowLeftIcon className="mr-2 h-4 w-4" />
+              Zurück
+            </Button>
+            <Button 
+              onClick={handleImport}
+              disabled={isImporting}
+              className="bg-zinc-900 hover:bg-zinc-800 text-white whitespace-nowrap dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100"
+            >
+              {isImporting ? 'Importiere...' : 'Import starten'}
+            </Button>
+          </>
+        )}
+        
+        {importResults && (
+          <Button 
+            onClick={onClose}
+            className="bg-zinc-900 hover:bg-zinc-800 text-white whitespace-nowrap dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100"
+          >
+            Fertig
+          </Button>
+        )}
+      </DialogActions>
     </Dialog>
   );
 }
