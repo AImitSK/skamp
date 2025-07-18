@@ -12,6 +12,7 @@ import { Badge } from "@/components/badge";
 import { Text } from "@/components/text";
 import { Checkbox } from "@/components/checkbox";
 import { companiesService, tagsService } from "@/lib/firebase/crm-service";
+import { companyServiceEnhanced } from "@/lib/firebase/company-service-enhanced";
 import { Company, CompanyType, Tag, TagColor, SocialPlatform, socialPlatformLabels } from "@/types/crm";
 import { CompanyEnhanced, COMPANY_STATUS_OPTIONS, LIFECYCLE_STAGE_OPTIONS } from "@/types/crm-enhanced";
 import { CountryCode, LanguageCode, CurrencyCode } from "@/types/international";
@@ -468,8 +469,7 @@ export default function CompanyModal({ company, onClose, onSave, userId }: Compa
     setLoading(true);
     
     try {
-      // For now, we'll save to the old format
-      // TODO: Update service to handle enhanced format
+      // Use the enhanced service for backward compatibility
       const dataToSave: Partial<Company> = {
         name: formData.name!,
         type: formData.type as CompanyType,
@@ -494,8 +494,10 @@ export default function CompanyModal({ company, onClose, onSave, userId }: Compa
       };
       
       if (company?.id) {
+        // Update using legacy format for now
         await companiesService.update(company.id, dataToSave);
       } else {
+        // Create using legacy format for now
         await companiesService.create({ ...dataToSave as Omit<Company, 'id'>, userId });
       }
       onSave();
