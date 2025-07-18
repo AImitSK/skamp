@@ -4,7 +4,9 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { publicationService } from "@/lib/firebase/library-service";
+import { companiesService } from "@/lib/firebase/crm-service";
 import type { Publication, PublicationType, PublicationFormat, PublicationFrequency } from "@/types/library";
+import type { Company } from "@/types/crm";
 import type { BaseEntity, CountryCode, LanguageCode } from "@/types/international";
 import { Dialog } from "@/components/dialog";
 import { Button } from "@/components/button";
@@ -19,7 +21,9 @@ import {
   PlusIcon,
   TrashIcon,
   GlobeAltIcon,
-  LanguageIcon
+  LanguageIcon,
+  BuildingOfficeIcon,
+  InformationCircleIcon
 } from "@heroicons/react/20/solid";
 
 interface PublicationModalProps {
@@ -27,6 +31,41 @@ interface PublicationModalProps {
   onClose: () => void;
   publication?: Publication;
   onSuccess: () => void;
+  preselectedPublisherId?: string; // Für Vorauswahl wenn von Company-Modal kommend
+}
+
+// Alert Component
+function Alert({ 
+  type = 'info', 
+  message 
+}: { 
+  type?: 'info' | 'warning';
+  message: string;
+}) {
+  const styles = {
+    info: 'bg-blue-50 text-blue-700',
+    warning: 'bg-yellow-50 text-yellow-700'
+  };
+
+  const icons = {
+    info: InformationCircleIcon,
+    warning: InformationCircleIcon
+  };
+
+  const Icon = icons[type];
+
+  return (
+    <div className={`rounded-md p-4 ${styles[type].split(' ')[0]}`}>
+      <div className="flex">
+        <div className="shrink-0">
+          <Icon aria-hidden="true" className={`size-5 ${type === 'warning' ? 'text-yellow-400' : 'text-blue-400'}`} />
+        </div>
+        <div className="ml-3">
+          <p className={`text-sm ${styles[type].split(' ')[1]}`}>{message}</p>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 const publicationTypes = [
@@ -73,9 +112,11 @@ const geographicScopes = [
   { value: 'global', label: 'Global' }
 ];
 
-export function PublicationModal({ isOpen, onClose, publication, onSuccess }: PublicationModalProps) {
+export function PublicationModal({ isOpen, onClose, publication, onSuccess, preselectedPublisherId }: PublicationModalProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [publishers, setPublishers] = useState<Company[]>([]);
+  const [loadingPublishers, setLoadingPublishers] = useState(true);
   const [activeTab, setActiveTab] = useState<'basic' | 'metrics' | 'identifiers'>('basic');
   
   // Form State
@@ -166,6 +207,25 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess }: Pu
   // Focus Areas als Array von Strings
   const [focusAreasInput, setFocusAreasInput] = useState('');
 
+  // Load publishers on mount
+  useEffect(() => {
+    loadPublishers();
+  }, [user]);
+
+  // Set preselected publisher if provided
+  useEffect(() => {
+    if (preselectedPublisherId && publishers.length > 0) {
+      const publisher = publishers.find(p => p.id === preselectedPublisherId);
+      if (publisher) {
+        setFormData(prev => ({
+          ...prev,
+          publisherId: preselectedPublisherId,
+          publisherName: publisher.name
+        }));
+      }
+    }
+  }, [preselectedPublisherId, publishers]);
+
   useEffect(() => {
     if (publication) {
       // Lade bestehende Publikation
@@ -243,37 +303,96 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess }: Pu
     }
   }, [publication]);
 
+  const loadPublishers = async () => {
+    if (!user) return;
+    
+    try {
+      setLoadingPublishers(true);
+      const allCompanies = await companiesService.getAll(user.uid);
+      // Filter nur Verlage, Medienhäuser und Partner
+      const publisherCompanies = allCompanies.filter(company => 
+        ['publisher', 'media_house', 'partner'].includes(company.type)
+      );
+      setPublishers(publisherCompanies);
+    } catch (error) {
+      console.error("Error loading publishers:", error);
+    } finally {
+      setLoadingPublishers(false);
+    }
+  };
+
+  const handlePublisherChange = (publisherId: string) => {
+    const selectedPublisher = publishers.find(p => p.id === publisherId);
+    setFormData({
+      ...formData,
+      publisherId,
+      publisherName: selectedPublisher?.name || ''
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+
+    // Validierung
+    if (!formData.publisherId) {
+      alert("Bitte wählen Sie einen Verlag aus.");
+      return;
+    }
 
     setLoading(true);
     try {
       // Helper function to remove undefined values
       const removeUndefined = (obj: any): any => {
-        const newObj: any = {};
-        Object.keys(obj).forEach(key => {
-          if (obj[key] === undefined) return;
-          if (obj[key] === null) return;
-          if (typeof obj[key] === 'object' && !Array.isArray(obj[key]) && obj[key] !== null) {
-            const cleaned = removeUndefined(obj[key]);
-            if (Object.keys(cleaned).length > 0) {
-              newObj[key] = cleaned;
+        if (obj === null || obj === undefined) {
+          return undefined;
+        }
+        
+        if (Array.isArray(obj)) {
+          return obj.map(removeUndefined).filter(item => item !== undefined);
+        }
+        
+        if (typeof obj === 'object' && obj !== null) {
+          const newObj: any = {};
+          Object.keys(obj).forEach(key => {
+            const value = obj[key];
+            if (value !== undefined && value !== null) {
+              if (typeof value === 'object' && !Array.isArray(value)) {
+                const cleaned = removeUndefined(value);
+                if (cleaned !== undefined && Object.keys(cleaned).length > 0) {
+                  newObj[key] = cleaned;
+                }
+              } else if (Array.isArray(value)) {
+                const cleaned = removeUndefined(value);
+                if (cleaned.length > 0) {
+                  newObj[key] = cleaned;
+                }
+              } else {
+                newObj[key] = value;
+              }
             }
-          } else {
-            newObj[key] = obj[key];
-          }
-        });
-        return newObj;
+          });
+          return newObj;
+        }
+        
+        return obj;
       };
 
       // Bereite Metriken vor
       const preparedMetrics: any = {
-        frequency: metrics.frequency,
-        targetAudience: metrics.targetAudience || undefined,
-        targetAgeGroup: metrics.targetAgeGroup || undefined,
-        targetGender: metrics.targetGender !== 'all' ? metrics.targetGender : undefined
+        frequency: metrics.frequency
       };
+      
+      // Nur optionale Felder hinzufügen wenn vorhanden
+      if (metrics.targetAudience) {
+        preparedMetrics.targetAudience = metrics.targetAudience;
+      }
+      if (metrics.targetAgeGroup) {
+        preparedMetrics.targetAgeGroup = metrics.targetAgeGroup;
+      }
+      if (metrics.targetGender && metrics.targetGender !== 'all') {
+        preparedMetrics.targetGender = metrics.targetGender;
+      }
 
       // Nur Print-Metriken hinzufügen, wenn vorhanden
       if ((formData.format === 'print' || formData.format === 'both') && metrics.print.circulation) {
@@ -347,9 +466,8 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess }: Pu
       // Bereite Daten vor
       const publicationData: any = {
         title: formData.title,
-        subtitle: formData.subtitle || undefined,
-        publisherId: formData.publisherId || user.uid,
-        publisherName: formData.publisherName || undefined,
+        publisherId: formData.publisherId,
+        publisherName: formData.publisherName,
         type: formData.type,
         format: formData.format,
         languages: formData.languages,
@@ -357,18 +475,34 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess }: Pu
         geographicScope: formData.geographicScope,
         focusAreas: focusAreasInput.split(',').map(s => s.trim()).filter(Boolean),
         metrics: preparedMetrics,
-        identifiers: identifiers.filter(id => id.value).map(id => ({
-          type: id.type,
-          value: id.value,
-          description: id.description || undefined
-        })),
+        identifiers: identifiers.filter(id => id.value).map(id => {
+          const identifier: any = {
+            type: id.type,
+            value: id.value
+          };
+          if (id.description) {
+            identifier.description = id.description;
+          }
+          return identifier;
+        }),
         socialMediaUrls: socialMediaUrls.filter(s => s.url),
         verified: formData.verified,
-        status: formData.status,
-        websiteUrl: formData.websiteUrl || undefined,
-        publicNotes: formData.publicNotes || undefined,
-        internalNotes: formData.internalNotes || undefined
+        status: formData.status
       };
+      
+      // Optionale Felder nur hinzufügen wenn vorhanden
+      if (formData.subtitle) {
+        publicationData.subtitle = formData.subtitle;
+      }
+      if (formData.websiteUrl) {
+        publicationData.websiteUrl = formData.websiteUrl;
+      }
+      if (formData.publicNotes) {
+        publicationData.publicNotes = formData.publicNotes;
+      }
+      if (formData.internalNotes) {
+        publicationData.internalNotes = formData.internalNotes;
+      }
 
       // Clean the object to remove any remaining undefined values
       const cleanedData = removeUndefined(publicationData);
@@ -486,18 +620,51 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess }: Pu
                 </div>
               </div>
 
+              {/* Publisher Dropdown */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <BuildingOfficeIcon className="inline h-4 w-4 mr-1" />
+                  Verlag / Medienhaus *
+                </label>
+                {loadingPublishers ? (
+                  <div className="animate-pulse">
+                    <div className="h-10 bg-gray-200 rounded"></div>
+                  </div>
+                ) : publishers.length === 0 ? (
+                  <div>
+                    <Alert 
+                      type="warning" 
+                      message="Keine Verlage oder Medienhäuser gefunden. Bitte legen Sie zuerst eine Firma vom Typ 'Verlag', 'Medienhaus' oder 'Partner' im CRM an."
+                    />
+                    <Button
+                      type="button"
+                      plain
+                      onClick={() => window.location.href = '/dashboard/contacts/crm?tab=companies'}
+                      className="mt-2 text-sm"
+                    >
+                      Zum CRM →
+                    </Button>
+                  </div>
+                ) : (
+                  <Select
+                    value={formData.publisherId}
+                    onChange={(e) => handlePublisherChange(e.target.value)}
+                    required
+                  >
+                    <option value="">Bitte wählen...</option>
+                    {publishers.map(publisher => (
+                      <option key={publisher.id} value={publisher.id}>
+                        {publisher.name}
+                        {publisher.type === 'publisher' && ' (Verlag)'}
+                        {publisher.type === 'media_house' && ' (Medienhaus)'}
+                        {publisher.type === 'partner' && ' (Partner)'}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Verlag / Medienhaus
-                  </label>
-                  <Input
-                    type="text"
-                    value={formData.publisherName}
-                    onChange={(e) => setFormData({ ...formData, publisherName: e.target.value })}
-                    placeholder="Name des Verlags"
-                  />
-                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Website
@@ -508,6 +675,21 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess }: Pu
                     onChange={(e) => setFormData({ ...formData, websiteUrl: e.target.value })}
                     placeholder="https://..."
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Reichweite
+                  </label>
+                  <Select
+                    value={formData.geographicScope}
+                    onChange={(e) => setFormData({ ...formData, geographicScope: e.target.value as any })}
+                  >
+                    {geographicScopes.map(scope => (
+                      <option key={scope.value} value={scope.value}>
+                        {scope.label}
+                      </option>
+                    ))}
+                  </Select>
                 </div>
               </div>
 
@@ -543,17 +725,16 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess }: Pu
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Reichweite
+                    Status
                   </label>
                   <Select
-                    value={formData.geographicScope}
-                    onChange={(e) => setFormData({ ...formData, geographicScope: e.target.value as any })}
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
                   >
-                    {geographicScopes.map(scope => (
-                      <option key={scope.value} value={scope.value}>
-                        {scope.label}
-                      </option>
-                    ))}
+                    <option value="active">Aktiv</option>
+                    <option value="inactive">Inaktiv</option>
+                    <option value="discontinued">Eingestellt</option>
+                    <option value="planned">Geplant</option>
                   </Select>
                 </div>
               </div>
@@ -596,34 +777,16 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess }: Pu
                 />
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Status
-                  </label>
-                  <Select
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                  >
-                    <option value="active">Aktiv</option>
-                    <option value="inactive">Inaktiv</option>
-                    <option value="discontinued">Eingestellt</option>
-                    <option value="planned">Geplant</option>
-                  </Select>
-                </div>
-                <div className="flex items-end">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.verified}
-                      onChange={(e) => setFormData({ ...formData, verified: e.target.checked })}
-                      className="h-4 w-4 text-[#005fab] focus:ring-[#005fab] border-gray-300 rounded"
-                    />
-                    <span className="ml-2 block text-sm text-gray-900">
-                      Publikation ist verifiziert
-                    </span>
-                  </label>
-                </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={formData.verified}
+                  onChange={(e) => setFormData({ ...formData, verified: e.target.checked })}
+                  className="h-4 w-4 text-[#005fab] focus:ring-[#005fab] border-gray-300 rounded"
+                />
+                <label className="ml-2 block text-sm text-gray-900">
+                  Publikation ist verifiziert
+                </label>
               </div>
 
               <div>
@@ -1036,7 +1199,7 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess }: Pu
             <Button plain onClick={onClose}>
               Abbrechen
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading || !formData.publisherId}>
               {loading ? 'Speichern...' : publication ? 'Aktualisieren' : 'Erstellen'}
             </Button>
           </div>

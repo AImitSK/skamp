@@ -54,6 +54,9 @@ import clsx from 'clsx';
 import { EnhancedCompanyTable } from "@/components/crm/EnhancedCompanyTable";
 import { EnhancedContactTable } from "@/components/crm/EnhancedContactTable";
 import { companyServiceEnhanced } from "@/lib/firebase/company-service-enhanced";
+import { Timestamp } from 'firebase/firestore';
+import { CountryCode } from '@/types/international';
+import { COMPANY_STATUS_OPTIONS, LIFECYCLE_STAGE_OPTIONS } from '@/types/crm-enhanced';
 
 type TabType = 'companies' | 'contacts';
 type ViewMode = 'grid' | 'list';
@@ -292,11 +295,44 @@ export default function ContactsPage() {
     return filteredCompanies.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredCompanies, currentPage, itemsPerPage]);
 
-  const paginatedEnhancedCompanies = useMemo(() => {
+const paginatedEnhancedCompanies = useMemo(() => {
       return paginatedCompanies.map(c => {
           const enhanced = enhancedCompanies.find(ec => ec.id === c.id);
+          
+          // Berechne die Anzahl der zugeordneten Kontakte
+          const contactCount = contacts.filter(contact => contact.companyId === c.id).length;
+          
+          // Finde das letzte Kontaktdatum
+          const companyContacts = contacts.filter(contact => contact.companyId === c.id);
+          let lastContactDate = undefined;
+          if (companyContacts.length > 0) {
+              // Hier könntest du die lastActivityAt oder createdAt der Kontakte nutzen
+              // Für jetzt nutzen wir das createdAt des neuesten Kontakts
+              const sortedContacts = companyContacts.sort((a, b) => {
+                  // Handle both Date and Timestamp types
+                  const getTime = (date: any): number => {
+                      if (!date) return 0;
+                      if (date instanceof Date) return date.getTime();
+                      if (date instanceof Timestamp) return date.toDate().getTime();
+                      if (date.toDate && typeof date.toDate === 'function') return date.toDate().getTime();
+                      return new Date(date).getTime();
+                  };
+                  
+                  const dateA = getTime(a.createdAt);
+                  const dateB = getTime(b.createdAt);
+                  return dateB - dateA;
+              });
+              if (sortedContacts[0]?.createdAt) {
+                  lastContactDate = sortedContacts[0].createdAt;
+              }
+          }
+          
           if (enhanced) {
-              return enhanced;
+              return {
+                  ...enhanced,
+                  contactCount,
+                  lastContactDate
+              };
           }
           
           // Fallback: Create a structure that matches the enhanced view as much as possible
@@ -308,13 +344,16 @@ export default function ContactsPage() {
               name: c.name,
               type: c.type,
               officialName: c.name,
-              mainAddress: (c as any).address ? {
-                  city: (c as any).address.city || '',
-                  countryCode: 'DE' // Default country
+              mainAddress: c.address ? {
+                  street: c.address.street || '',
+                  city: c.address.city || '',
+                  postalCode: c.address.zip || '',
+                  region: c.address.state || '',
+                  countryCode: (c.address.country || 'DE') as CountryCode
               } : undefined,
               industryClassification: c.industry ? { primary: c.industry } : undefined,
-              contactCount: contacts.filter(contact => contact.companyId === c.id).length,
-              lastContactDate: undefined, // No easy way to calculate this for fallback
+              contactCount,
+              lastContactDate,
               // Ensure other required fields from CompanyEnhanced are present with default values if needed
           } as CompanyEnhanced;
       });

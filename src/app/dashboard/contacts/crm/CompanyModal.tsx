@@ -13,9 +13,11 @@ import { Text } from "@/components/text";
 import { Checkbox } from "@/components/checkbox";
 import { companiesService, tagsService } from "@/lib/firebase/crm-service";
 import { companyServiceEnhanced } from "@/lib/firebase/company-service-enhanced";
+import { publicationService, advertisementService, mediaKitService } from "@/lib/firebase/library-service";
 import { Company, CompanyType, Tag, TagColor, SocialPlatform, socialPlatformLabels } from "@/types/crm";
 import { CompanyEnhanced, COMPANY_STATUS_OPTIONS, LIFECYCLE_STAGE_OPTIONS } from "@/types/crm-enhanced";
 import { CountryCode, LanguageCode, CurrencyCode } from "@/types/international";
+import { Publication, Advertisement, MediaKit } from "@/types/library";
 import { TagInput } from "@/components/tag-input";
 import { FocusAreasInput } from "@/components/FocusAreasInput";
 import { InfoTooltip } from "@/components/InfoTooltip";
@@ -33,9 +35,14 @@ import {
   GlobeAltIcon,
   BanknotesIcon,
   BuildingOffice2Icon,
-  NewspaperIcon
+  NewspaperIcon,
+  BookOpenIcon,
+  MegaphoneIcon,
+  DocumentDuplicateIcon
 } from "@heroicons/react/20/solid";
 import clsx from "clsx";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 // Tab Definition
 type TabId = 'general' | 'legal' | 'international' | 'financial' | 'corporate' | 'media';
@@ -86,35 +93,6 @@ const TABS: TabConfig[] = [
     description: 'Publikationen und Medien-Informationen',
     visible: (formData) => ['publisher', 'media_house', 'agency'].includes(formData.type!)
   }
-];
-
-// Publication Typen
-const PUBLICATION_TYPES = [
-  { value: 'newspaper', label: 'Tageszeitung' },
-  { value: 'magazine', label: 'Magazin' },
-  { value: 'online', label: 'Online-Medium' },
-  { value: 'blog', label: 'Blog' },
-  { value: 'podcast', label: 'Podcast' },
-  { value: 'tv', label: 'TV-Sender' },
-  { value: 'radio', label: 'Radio' },
-  { value: 'newsletter', label: 'Newsletter' },
-  { value: 'trade_journal', label: 'Fachzeitschrift' },
-];
-
-const PUBLICATION_FORMATS = [
-  { value: 'print', label: 'Print' },
-  { value: 'online', label: 'Online' },
-  { value: 'both', label: 'Print & Online' },
-];
-
-const PUBLICATION_FREQUENCIES = [
-  { value: 'daily', label: 'Täglich' },
-  { value: 'weekly', label: 'Wöchentlich' },
-  { value: 'biweekly', label: '14-tägig' },
-  { value: 'monthly', label: 'Monatlich' },
-  { value: 'quarterly', label: 'Vierteljährlich' },
-  { value: 'yearly', label: 'Jährlich' },
-  { value: 'irregular', label: 'Unregelmäßig' },
 ];
 
 // Business Identifier Types
@@ -191,18 +169,8 @@ interface CompanyModalProps {
   userId: string;
 }
 
-interface Publication {
-  id: string;
-  name: string;
-  type: string;
-  format: string;
-  frequency: string;
-  focusAreas: string[];
-  circulation?: number;
-  reach?: number;
-}
-
 export default function CompanyModal({ company, onClose, onSave, userId }: CompanyModalProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabId>('general');
   const [formData, setFormData] = useState<Partial<CompanyEnhanced>>({
     // Basic fields
@@ -241,16 +209,6 @@ export default function CompanyModal({ company, onClose, onSave, userId }: Compa
       fiscalYearEnd: undefined
     },
     
-    // Media
-    mediaInfo: {
-      circulation: 0,
-      reach: 0,
-      focusAreas: [],
-      publicationFrequency: 'daily',
-      mediaType: 'mixed',
-      publications: []
-    },
-    
     // Industry
     industryClassification: {
       primary: ''
@@ -266,6 +224,12 @@ export default function CompanyModal({ company, onClose, onSave, userId }: Compa
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]); // For parent company selection
   const formRef = useRef<HTMLFormElement>(null);
+
+  // Library data for media companies
+  const [linkedPublications, setLinkedPublications] = useState<Publication[]>([]);
+  const [linkedAdvertisements, setLinkedAdvertisements] = useState<Advertisement[]>([]);
+  const [linkedMediaKits, setLinkedMediaKits] = useState<MediaKit[]>([]);
+  const [loadingLibraryData, setLoadingLibraryData] = useState(false);
 
   useEffect(() => {
     if (company) {
@@ -297,19 +261,16 @@ export default function CompanyModal({ company, onClose, onSave, userId }: Compa
         },
         tagIds: company.tagIds || [],
         socialMedia: company.socialMedia || [],
-        mediaInfo: company.mediaInfo || {
-          circulation: 0,
-          reach: 0,
-          focusAreas: [],
-          publicationFrequency: 'daily',
-          mediaType: 'mixed',
-          publications: []
-        },
         internalNotes: company.notes || '',
         industryClassification: {
           primary: company.industry || ''
         }
       });
+
+      // Load linked library data for media companies
+      if (company.id && ['publisher', 'media_house', 'agency'].includes(company.type)) {
+        loadLibraryData(company.id);
+      }
     }
     loadTags();
     loadCompanies();
@@ -332,6 +293,37 @@ export default function CompanyModal({ company, onClose, onSave, userId }: Compa
       setCompanies(userCompanies.filter(c => c.id !== company?.id));
     } catch (error) {
       // Silent error handling
+    }
+  };
+
+  const loadLibraryData = async (companyId: string) => {
+    if (!userId) return;
+    
+    setLoadingLibraryData(true);
+    try {
+      // Load publications
+      const publications = await publicationService.getByPublisherId(companyId, userId);
+      setLinkedPublications(publications);
+
+      // Load advertisements (filter by publications of this company)
+      if (publications.length > 0) {
+        const publicationIds = publications.map(p => p.id!).filter(Boolean);
+        const allAds = await advertisementService.getAll(userId);
+        const companyAds = allAds.filter(ad => 
+          ad.publicationIds.some(pubId => publicationIds.includes(pubId))
+        );
+        setLinkedAdvertisements(companyAds);
+      } else {
+        setLinkedAdvertisements([]);
+      }
+
+      // Load media kits
+      const mediaKits = await mediaKitService.getByCompanyId(companyId, userId);
+      setLinkedMediaKits(mediaKits);
+    } catch (error) {
+      console.error('Error loading library data:', error);
+    } finally {
+      setLoadingLibraryData(false);
     }
   };
 
@@ -409,42 +401,6 @@ export default function CompanyModal({ company, onClose, onSave, userId }: Compa
     setFormData({ ...formData, identifiers: updatedIdentifiers });
   };
 
-  // Media handlers
-  const handleMediaInfoChange = (field: keyof NonNullable<CompanyEnhanced['mediaInfo']>, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      mediaInfo: {
-        ...prev.mediaInfo,
-        [field]: value,
-      }
-    }));
-  };
-
-  const addPublication = () => {
-    const newPublication: Publication = {
-      id: Date.now().toString(),
-      name: '',
-      type: 'magazine',
-      format: 'print',
-      frequency: 'monthly',
-      focusAreas: []
-    };
-    
-    const currentPublications = formData.mediaInfo?.publications || [];
-    handleMediaInfoChange('publications', [...currentPublications, newPublication]);
-  };
-
-  const updatePublication = (index: number, field: keyof Publication, value: any) => {
-    const publications = [...(formData.mediaInfo?.publications || [])];
-    publications[index] = { ...publications[index], [field]: value };
-    handleMediaInfoChange('publications', publications);
-  };
-
-  const removePublication = (index: number) => {
-    const publications = (formData.mediaInfo?.publications || []).filter((_, i) => i !== index);
-    handleMediaInfoChange('publications', publications);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -489,8 +445,7 @@ export default function CompanyModal({ company, onClose, onSave, userId }: Compa
         revenue: formData.financial?.annualRevenue?.amount || undefined,
         notes: formData.internalNotes,
         tagIds: formData.tagIds || [],
-        socialMedia: formData.socialMedia || [],
-        mediaInfo: formData.mediaInfo
+        socialMedia: formData.socialMedia || []
       };
       
       if (company?.id) {
@@ -1158,184 +1113,256 @@ export default function CompanyModal({ company, onClose, onSave, userId }: Compa
               </FieldGroup>
             )}
 
-            {/* Media Tab (only for media companies) */}
+            {/* Media Tab (simplified - only shows linked items) */}
             {activeTab === 'media' && isMediaCompany && (
-              <FieldGroup>
-                {/* Publications */}
+              <div className="space-y-6">
+                {/* Info Alert */}
+                <Alert 
+                  type="info" 
+                  title="Medien-Verwaltung"
+                  message="Publikationen, Werbemittel und Media Kits werden jetzt zentral im Bibliotheks-Bereich verwaltet. Hier sehen Sie alle verknüpften Elemente." 
+                />
+
+                {/* Publikationen */}
                 <div className="space-y-4 rounded-md border p-4">
                   <div className="flex items-center justify-between">
-                    <div className="text-sm font-medium text-gray-900">
-                      Publikationen
-                      <InfoTooltip content="Fügen Sie hier alle Publikationen hinzu, die von diesem Medienunternehmen herausgegeben werden" className="ml-1.5 inline-flex align-text-top" />
+                    <div className="flex items-center gap-2">
+                      <BookOpenIcon className="h-5 w-5 text-gray-400" />
+                      <div className="text-sm font-medium text-gray-900">
+                        Publikationen
+                        <InfoTooltip content="Alle Publikationen dieses Verlags/Medienhauses" className="ml-1.5 inline-flex align-text-top" />
+                      </div>
                     </div>
-                    <Button type="button" onClick={addPublication} plain className="text-sm">
+                    <Button 
+                      type="button"
+                      plain 
+                      onClick={() => {
+                        // Save current form state if needed
+                        const publisherId = company?.id;
+                        router.push(`/dashboard/library/publications/new${publisherId ? `?publisherId=${publisherId}` : ''}`);
+                      }}
+                      className="text-sm"
+                    >
                       <PlusIcon className="h-4 w-4" />
-                      Publikation hinzufügen
+                      Neue Publikation
                     </Button>
                   </div>
                   
-                  {formData.mediaInfo?.publications && formData.mediaInfo.publications.length > 0 ? (
-                    <div className="space-y-4">
-                      {formData.mediaInfo.publications.map((pub, index) => (
-                        <div key={pub.id} className="border rounded-lg p-4 bg-white space-y-3">
-                          <div className="flex items-start justify-between">
-                            <div className="flex items-center gap-2">
-                              <DocumentTextIcon className="h-5 w-5 text-gray-400" />
-                              <span className="font-medium text-sm">Publikation {index + 1}</span>
+                  {loadingLibraryData ? (
+                    <div className="flex items-center justify-center py-4">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                    </div>
+                  ) : linkedPublications.length > 0 ? (
+                    <div className="space-y-2">
+                      {linkedPublications.slice(0, 5).map((pub) => (
+                        <div key={pub.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div>
+                            <div className="font-medium text-sm">{pub.title}</div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge color="zinc" className="text-xs">
+                                {pub.type === 'magazine' ? 'Magazin' :
+                                 pub.type === 'newspaper' ? 'Zeitung' :
+                                 pub.type === 'website' ? 'Website' :
+                                 pub.type === 'blog' ? 'Blog' :
+                                 pub.type === 'newsletter' ? 'Newsletter' :
+                                 pub.type === 'podcast' ? 'Podcast' :
+                                 pub.type === 'tv' ? 'TV' :
+                                 pub.type === 'radio' ? 'Radio' :
+                                 pub.type === 'trade_journal' ? 'Fachzeitschrift' :
+                                 pub.type === 'press_agency' ? 'Nachrichtenagentur' :
+                                 pub.type === 'social_media' ? 'Social Media' :
+                                 pub.type}
+                              </Badge>
+                              {pub.verified && (
+                                <Badge color="green" className="text-xs">
+                                  Verifiziert
+                                </Badge>
+                              )}
                             </div>
-                            <Button 
-                              type="button" 
-                              plain 
-                              onClick={() => removePublication(index)}
-                              className="text-red-500 hover:text-red-700"
-                            >
-                              <TrashIcon className="h-4 w-4" />
-                            </Button>
                           </div>
-                          
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <Field>
-                              <Label>Name der Publikation *</Label>
-                              <Input 
-                                value={pub.name} 
-                                onChange={(e) => updatePublication(index, 'name', e.target.value)}
-                                placeholder="z.B. Tech Today"
-                              />
-                            </Field>
-                            <Field>
-                              <Label>Typ</Label>
-                              <Select 
-                                value={pub.type} 
-                                onChange={(e) => updatePublication(index, 'type', e.target.value)}
-                              >
-                                {PUBLICATION_TYPES.map(pt => (
-                                  <option key={pt.value} value={pt.value}>{pt.label}</option>
-                                ))}
-                              </Select>
-                            </Field>
-                          </div>
-                          
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            <Field>
-                              <Label>Format</Label>
-                              <Select 
-                                value={pub.format} 
-                                onChange={(e) => updatePublication(index, 'format', e.target.value)}
-                              >
-                                {PUBLICATION_FORMATS.map(pf => (
-                                  <option key={pf.value} value={pf.value}>{pf.label}</option>
-                                ))}
-                              </Select>
-                            </Field>
-                            <Field>
-                              <Label>Erscheinungsweise</Label>
-                              <Select 
-                                value={pub.frequency} 
-                                onChange={(e) => updatePublication(index, 'frequency', e.target.value)}
-                              >
-                                {PUBLICATION_FREQUENCIES.map(pf => (
-                                  <option key={pf.value} value={pf.value}>{pf.label}</option>
-                                ))}
-                              </Select>
-                            </Field>
-                            <Field>
-                              <Label>Auflage/Reichweite</Label>
-                              <Input 
-                                type="number" 
-                                value={pub.circulation || pub.reach || ''} 
-                                onChange={(e) => updatePublication(index, pub.format === 'print' ? 'circulation' : 'reach', parseInt(e.target.value, 10))}
-                                placeholder="100000"
-                              />
-                            </Field>
-                          </div>
-                          
-                          <Field>
-                            <Label>
-                              Themenschwerpunkte
-                              <InfoTooltip content="Fügen Sie die Hauptthemen dieser Publikation hinzu" className="ml-1.5 inline-flex align-text-top" />
-                            </Label>
-                            <FocusAreasInput 
-                              value={pub.focusAreas || []} 
-                              onChange={(areas) => updatePublication(index, 'focusAreas', areas)}
-                              placeholder="Schwerpunkt hinzufügen..."
-                            />
-                          </Field>
+                          <Link
+                            href={`/dashboard/library/publications/${pub.id}`}
+                            className="text-sm text-primary hover:text-primary-hover"
+                          >
+                            Anzeigen
+                          </Link>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
-                      <DocumentTextIcon className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                      <Text>Noch keine Publikationen hinzugefügt</Text>
-                    </div>
+                    <Text className="text-sm text-gray-500 text-center py-4">
+                      Noch keine Publikationen verknüpft
+                    </Text>
+                  )}
+                  
+                  {linkedPublications.length > 5 && (
+                    <Link
+                      href={`/dashboard/library/publications?publisherId=${company?.id}`}
+                      className="block text-sm text-primary hover:text-primary-hover text-center pt-2"
+                    >
+                      Alle {linkedPublications.length} Publikationen anzeigen →
+                    </Link>
                   )}
                 </div>
 
-                {/* Online Metrics */}
+                {/* Werbemittel */}
                 <div className="space-y-4 rounded-md border p-4">
-                  <div className="text-sm font-medium text-gray-900">Online-Metriken</div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Field>
-                      <Label>Monatliche Seitenaufrufe</Label>
-                      <Input 
-                        type="number"
-                        value={formData.mediaInfo?.onlineMetrics?.monthlyPageViews || ''}
-                        onChange={(e) => setFormData({
-                          ...formData,
-                          mediaInfo: {
-                            ...formData.mediaInfo!,
-                            onlineMetrics: {
-                              ...formData.mediaInfo?.onlineMetrics,
-                              monthlyPageViews: e.target.value ? parseInt(e.target.value) : undefined
-                            }
-                          }
-                        })}
-                        placeholder="0"
-                      />
-                    </Field>
-                    <Field>
-                      <Label>Monatliche Unique Visitors</Label>
-                      <Input 
-                        type="number"
-                        value={formData.mediaInfo?.onlineMetrics?.monthlyUniqueVisitors || ''}
-                        onChange={(e) => setFormData({
-                          ...formData,
-                          mediaInfo: {
-                            ...formData.mediaInfo!,
-                            onlineMetrics: {
-                              ...formData.mediaInfo?.onlineMetrics,
-                              monthlyUniqueVisitors: e.target.value ? parseInt(e.target.value) : undefined
-                            }
-                          }
-                        })}
-                        placeholder="0"
-                      />
-                    </Field>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <MegaphoneIcon className="h-5 w-5 text-gray-400" />
+                      <div className="text-sm font-medium text-gray-900">
+                        Werbemittel
+                        <InfoTooltip content="Verfügbare Werbeplätze und -formate" className="ml-1.5 inline-flex align-text-top" />
+                      </div>
+                    </div>
+                    <Button 
+                      type="button"
+                      plain 
+                      onClick={() => {
+                        const publisherId = company?.id;
+                        router.push(`/dashboard/library/advertisements/new${publisherId ? `?publisherId=${publisherId}` : ''}`);
+                      }}
+                      className="text-sm"
+                    >
+                      <PlusIcon className="h-4 w-4" />
+                      Neues Werbemittel
+                    </Button>
                   </div>
+                  
+                  {loadingLibraryData ? (
+                    <div className="flex items-center justify-center py-4">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                    </div>
+                  ) : linkedAdvertisements.length > 0 ? (
+                    <div className="space-y-2">
+                      {linkedAdvertisements.slice(0, 5).map((ad) => (
+                        <div key={ad.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div>
+                            <div className="font-medium text-sm">{ad.name}</div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge color="blue" className="text-xs">
+                                {ad.type === 'display_banner' ? 'Display Banner' :
+                                 ad.type === 'native_ad' ? 'Native Ad' :
+                                 ad.type === 'video_ad' ? 'Video' :
+                                 ad.type === 'print_ad' ? 'Print' :
+                                 ad.type === 'audio_spot' ? 'Audio' :
+                                 ad.type === 'newsletter_ad' ? 'Newsletter' :
+                                 ad.type === 'social_media_ad' ? 'Social Media' :
+                                 ad.type === 'advertorial' ? 'Advertorial' :
+                                 ad.type === 'event_sponsoring' ? 'Event' :
+                                 ad.type === 'content_partnership' ? 'Content' :
+                                 ad.type}
+                              </Badge>
+                              <Badge color={ad.status === 'active' ? 'green' : 'zinc'} className="text-xs">
+                                {ad.status === 'active' ? 'Aktiv' :
+                                 ad.status === 'draft' ? 'Entwurf' :
+                                 ad.status === 'paused' ? 'Pausiert' :
+                                 'Eingestellt'}
+                              </Badge>
+                            </div>
+                          </div>
+                          <Link
+                            href={`/dashboard/library/advertisements/${ad.id}`}
+                            className="text-sm text-primary hover:text-primary-hover"
+                          >
+                            Anzeigen
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <Text className="text-sm text-gray-500 text-center py-4">
+                      Noch keine Werbemittel verknüpft
+                    </Text>
+                  )}
+                  
+                  {linkedAdvertisements.length > 5 && (
+                    <Link
+                      href={`/dashboard/library/advertisements?publisherId=${company?.id}`}
+                      className="block text-sm text-primary hover:text-primary-hover text-center pt-2"
+                    >
+                      Alle {linkedAdvertisements.length} Werbemittel anzeigen →
+                    </Link>
+                  )}
                 </div>
 
-                {/* Audience Demographics */}
+                {/* Media Kits */}
                 <div className="space-y-4 rounded-md border p-4">
-                  <div className="text-sm font-medium text-gray-900">Zielgruppen-Demografie</div>
-                  <Field>
-                    <Label>Zielgruppen-Interessen</Label>
-                    <FocusAreasInput
-                      value={formData.mediaInfo?.audienceDemographics?.interests || []}
-                      onChange={(interests) => setFormData({
-                        ...formData,
-                        mediaInfo: {
-                          ...formData.mediaInfo!,
-                          audienceDemographics: {
-                            ...formData.mediaInfo?.audienceDemographics,
-                            interests
-                          }
-                        }
-                      })}
-                      placeholder="Interesse hinzufügen..."
-                    />
-                  </Field>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <DocumentDuplicateIcon className="h-5 w-5 text-gray-400" />
+                      <div className="text-sm font-medium text-gray-900">
+                        Media Kits
+                        <InfoTooltip content="Zusammenstellungen für Werbetreibende" className="ml-1.5 inline-flex align-text-top" />
+                      </div>
+                    </div>
+                    <Button 
+                      type="button"
+                      plain 
+                      onClick={() => {
+                        const publisherId = company?.id;
+                        router.push(`/dashboard/library/media-kits/new${publisherId ? `?companyId=${publisherId}` : ''}`);
+                      }}
+                      className="text-sm"
+                    >
+                      <PlusIcon className="h-4 w-4" />
+                      Neues Media Kit
+                    </Button>
+                  </div>
+                  
+                  {loadingLibraryData ? (
+                    <div className="flex items-center justify-center py-4">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                    </div>
+                  ) : linkedMediaKits.length > 0 ? (
+                    <div className="space-y-2">
+                      {linkedMediaKits.slice(0, 5).map((kit) => (
+                        <div key={kit.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div>
+                            <div className="font-medium text-sm">{kit.name}</div>
+                            <div className="text-xs text-gray-500">Version {kit.version}</div>
+                          </div>
+                          <Link
+                            href={`/dashboard/library/media-kits/${kit.id}`}
+                            className="text-sm text-primary hover:text-primary-hover"
+                          >
+                            Anzeigen
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <Text className="text-sm text-gray-500 text-center py-4">
+                      Noch keine Media Kits erstellt
+                    </Text>
+                  )}
+                  
+                  {linkedMediaKits.length > 5 && (
+                    <Link
+                      href={`/dashboard/library/media-kits?companyId=${company?.id}`}
+                      className="block text-sm text-primary hover:text-primary-hover text-center pt-2"
+                    >
+                      Alle {linkedMediaKits.length} Media Kits anzeigen →
+                    </Link>
+                  )}
                 </div>
-              </FieldGroup>
+
+                {/* Quick Stats */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-gray-50 rounded-lg p-4 text-center">
+                    <div className="text-2xl font-bold text-gray-900">{linkedPublications.length}</div>
+                    <div className="text-sm text-gray-600">Publikationen</div>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-4 text-center">
+                    <div className="text-2xl font-bold text-gray-900">{linkedAdvertisements.length}</div>
+                    <div className="text-sm text-gray-600">Werbemittel</div>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-4 text-center">
+                    <div className="text-2xl font-bold text-gray-900">{linkedMediaKits.length}</div>
+                    <div className="text-sm text-gray-600">Media Kits</div>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </DialogBody>
