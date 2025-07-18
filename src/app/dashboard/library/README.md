@@ -1,6 +1,6 @@
 # SKAMP Bibliothek - Aktualisierter Implementierungsstand
 
-## 📊 Gesamtfortschritt: ~35%
+## 📊 Gesamtfortschritt: ~45%
 
 ### ⚠️ WICHTIGE ÄNDERUNG: Mandantenfähigkeit wurde vollständig integriert
 **Stand: Januar 2025**
@@ -28,7 +28,7 @@ Während der Implementierung haben wir entschieden, die Mandantenfähigkeit dire
   - `src/lib/firebase/service-base.ts`
   - `src/lib/firebase/crm-service-enhanced.ts`
   - `src/lib/firebase/library-service.ts`
-- ✅ **Validatoren** (2/3)
+- ✅ **Validatoren** (3/3)
   - `src/lib/validators/iso-validators.ts` ✅
   - `src/lib/validators/identifier-validators.ts` ✅
   - `src/lib/validators/phone-validators.ts` ✅
@@ -38,46 +38,55 @@ Während der Implementierung haben wir entschieden, die Mandantenfähigkeit dire
 
 ---
 
-### Sprint 2 (Woche 3-4): Basis-UI für Bibliothek - 🔄 45% IN ARBEIT
+### Sprint 2 (Woche 3-4): Basis-UI für Bibliothek - ✅ 75% ABGESCHLOSSEN
 
 #### ✅ Abgeschlossene Aufgaben:
 - ✅ **Navigation & Layout**
   - `src/app/dashboard/library/layout.tsx` - Tab-Navigation implementiert
   - `src/app/dashboard/library/page.tsx` - Dashboard mit Statistiken
-- ✅ **Publikationen Bereich** (teilweise)
+- ✅ **Publikationen Bereich** 
   - `src/app/dashboard/library/publications/page.tsx` - Übersichtstabelle
   - `src/app/dashboard/library/publications/PublicationModal.tsx` - Create/Edit Modal
-- ✅ **Werbemittel Bereich** (teilweise)
+  - `src/app/dashboard/library/publications/[publicationId]/page.tsx` - Detailseite ✅
+- ✅ **Werbemittel Bereich** 
   - `src/app/dashboard/library/advertisements/page.tsx` - Übersichtstabelle
   - `src/app/dashboard/library/advertisements/AdvertisementModal.tsx` - Create/Edit Modal
+  - `src/app/dashboard/library/advertisements/[adId]/page.tsx` - Detailseite ✅
+- ✅ **Media Kits Bereich** (NEU!)
+  - `src/app/dashboard/library/media-kits/page.tsx` - Übersichtsseite mit Grid ✅
+  - `src/app/dashboard/library/media-kits/MediaKitModal.tsx` - Create/Edit Modal ✅
 
 #### 🔄 In Arbeit:
-- [ ] Detailseiten für Publikationen (`[publicationId]/page.tsx`)
-- [ ] Detailseiten für Werbemittel (`[adId]/page.tsx`)
-- [ ] Import-Funktionalität für Publikationen
+- [ ] PDF-Generierung für Media Kits
+- [ ] Share-Funktionalität für Media Kits
 
 #### ❌ Noch nicht begonnen:
-- [ ] Media Kits Bereich (nur Placeholder vorhanden)
 - [ ] Overview/Strategische Übersichten (nur Placeholder)
 
 ---
 
-### Sprint 3 (Woche 5-6): Erweiterte CRM-Features - ❌ 0% NOCH NICHT BEGONNEN
+### Sprint 3 (Woche 5-6): Erweiterte CRM-Features - 🔄 10% BEGONNEN
 
-#### Geplante Aufgaben:
-- [ ] Company Modal Erweiterungen
+#### ⚠️ WICHTIG: Priorisierung geändert!
+Da die Media Kit Funktionalität ohne erweiterte Firmen-Daten nicht testbar ist, ziehen wir die CRM-Integration vor.
+
+#### 🔄 Nächste Schritte (PRIORITÄT):
+- [ ] **Company Modal Erweiterungen** (KRITISCH)
+  - [ ] Erweiterte Firmen-Felder (officialName, tradingName)
   - [ ] Internationale Adressen UI
-  - [ ] Business Identifiers UI
+  - [ ] Business Identifiers UI (USt-ID, etc.)
   - [ ] Hierarchie-Verwaltung
-- [ ] Contact Modal Erweiterungen
+- [ ] **Contact Modal Erweiterungen**
   - [ ] GDPR Consent Management UI
   - [ ] Strukturierte Namen UI
   - [ ] Media-Profile für Journalisten
+
+#### Geplante Aufgaben:
 - [ ] Internationale Komponenten
-  - [ ] `CountrySelector.tsx`
-  - [ ] `LanguageSelector.tsx`
-  - [ ] `CurrencyInput.tsx`
-  - [ ] `PhoneInput.tsx`
+  - [x] `CountrySelector.tsx` ✅
+  - [x] `LanguageSelector.tsx` ✅
+  - [x] `CurrencyInput.tsx` ✅
+  - [ ] `PhoneInput.tsx` mit E.164 Format
 - [ ] Erweiterte Übersichtstabellen
   - [ ] `EnhancedCompanyTable.tsx`
   - [ ] `EnhancedContactTable.tsx`
@@ -89,7 +98,7 @@ Während der Implementierung haben wir entschieden, die Mandantenfähigkeit dire
 #### Geplante Aufgaben:
 - [ ] Verknüpfungen zwischen Entitäten
 - [ ] Import/Export Erweiterungen
-- [ ] Media Kit Generator
+- [ ] Media Kit PDF Generator
 - [ ] Performance-Optimierung
 
 ---
@@ -100,7 +109,7 @@ Während der Implementierung haben wir entschieden, die Mandantenfähigkeit dire
 
 ## 📁 Dateiübersicht
 
-### ✅ Vollständig implementierte Dateien (13)
+### ✅ Vollständig implementierte Dateien (18)
 
 **Backend/Types (6):**
 - `src/types/international.ts`
@@ -116,26 +125,30 @@ Während der Implementierung haben wir entschieden, die Mandantenfähigkeit dire
 - `src/lib/firebase/crm-service-enhanced.ts`
 - `src/lib/firebase/library-service.ts`
 
-**UI-Komponenten (7):**
+**UI-Komponenten (12):**
 - `src/app/dashboard/library/layout.tsx`
 - `src/app/dashboard/library/page.tsx`
 - `src/app/dashboard/library/publications/page.tsx`
 - `src/app/dashboard/library/publications/PublicationModal.tsx`
+- `src/app/dashboard/library/publications/[publicationId]/page.tsx` ✅
 - `src/app/dashboard/library/advertisements/page.tsx`
 - `src/app/dashboard/library/advertisements/AdvertisementModal.tsx`
-- `src/app/dashboard/library/API.md` (Dokumentation)
+- `src/app/dashboard/library/advertisements/[adId]/page.tsx` ✅
+- `src/app/dashboard/library/media-kits/page.tsx` ✅
+- `src/app/dashboard/library/media-kits/MediaKitModal.tsx` ✅
+- `src/components/country-selector.tsx` ✅
+- `src/components/language-selector.tsx` ✅
+- `src/components/currency-input.tsx` ✅
 
-### 🔄 Placeholder-Dateien (2)
-- `src/app/dashboard/library/media-kits/page.tsx`
+### 🔄 Placeholder-Dateien (1)
 - `src/app/dashboard/library/overview/page.tsx`
 
 ### ❌ Fehlende kritische Dateien
 
 **UI-Komponenten:**
-- Internationale Input-Komponenten (Country, Language, Currency, Phone)
-- Erweiterte CRM-Komponenten (GDPR, Hierarchie, etc.)
-- Detailseiten für Publikationen und Werbemittel
-- Media Kit Generator
+- Erweiterte CRM-Komponenten (GDPR, Hierarchie, etc.) - JETZT PRIORITÄT!
+- PhoneInput mit E.164 Format
+- Media Kit PDF Generator
 - Strategische Übersichtstabellen
 
 **Backend:**
@@ -143,28 +156,27 @@ Während der Implementierung haben wir entschieden, die Mandantenfähigkeit dire
 
 ---
 
-## 🎯 Nächste Schritte (Priorität)
+## 🎯 Nächste Schritte (NEUE PRIORITÄT)
 
-### 1. Sprint 2 abschließen (1-2 Tage)
-- [ ] Detailseiten für Publikationen implementieren
-- [ ] Detailseiten für Werbemittel implementieren
-- [ ] Import-Funktionalität für Publikationen
+### 1. CRM-Integration für Media Kits (3-4 Tage) - JETZT!
+- [ ] Erweiterte Company Modal mit allen CRM-Enhanced Features
+- [ ] Integration in bestehende CRM-Seiten
+- [ ] Test mit echten Verlagsdaten
 
-### 2. Internationale Komponenten (2-3 Tage)
-- [ ] CountrySelector mit ISO-Validierung
-- [ ] LanguageSelector
-- [ ] CurrencyInput
-- [ ] PhoneInput mit E.164 Format
+### 2. Media Kit Vervollständigung (2-3 Tage)
+- [ ] PDF-Generierung mit react-pdf
+- [ ] Share-Funktionalität
+- [ ] Preview-Komponente
 
-### 3. Media Kits Basis (2-3 Tage)
-- [ ] Media Kit Übersichtsseite
-- [ ] Media Kit Generator (Basis)
-- [ ] PDF-Export vorbereiten
-
-### 4. CRM-Integration beginnen (3-4 Tage)
+### 3. Erweiterte Contact Features (2-3 Tage)
 - [ ] GDPR Consent UI
-- [ ] Erweiterte Firmen-/Kontakt-Modals
-- [ ] Verknüpfungen zwischen Publikationen und Kontakten
+- [ ] Journalisten-Profile
+- [ ] PhoneInput Komponente
+
+### 4. Finalisierung (2-3 Tage)
+- [ ] Overview/Strategische Übersichten
+- [ ] Performance-Optimierung
+- [ ] Testing & Bugfixes
 
 ---
 
@@ -175,9 +187,9 @@ Während der Implementierung haben wir entschieden, die Mandantenfähigkeit dire
 | **Datenmodell & Types** | ✅ Fertig | 100% |
 | **Backend Services** | ✅ Fertig | 100% |
 | **Validatoren** | ✅ Fertig | 100% |
-| **Basis UI (Bibliothek)** | 🔄 In Arbeit | 45% |
-| **Erweiterte CRM Features** | ❌ Offen | 0% |
-| **Media Kits** | ❌ Offen | 0% |
+| **Basis UI (Bibliothek)** | ✅ Fast fertig | 75% |
+| **Media Kits** | 🔄 Basis fertig | 60% |
+| **Erweiterte CRM Features** | 🔄 Begonnen | 10% |
 | **Strategische Übersichten** | ❌ Offen | 0% |
 | **Integration & Polish** | ❌ Offen | 0% |
 | **Tests & Dokumentation** | ❌ Offen | 5% |
@@ -186,41 +198,26 @@ Während der Implementierung haben wir entschieden, die Mandantenfähigkeit dire
 
 ## 🔍 Technische Highlights
 
-### Implementierte Features:
-1. **Vollständige Mandantenfähigkeit** mit Rollen & Permissions
-2. **ISO-konforme Validatoren** für Länder, Währungen, Sprachen
-3. **Business Identifier Validierung** (VAT, EIN, etc.)
-4. **E.164 Phone Number Validation**
-5. **Basis-CRUD für Publikationen und Werbemittel**
-6. **Responsive Tab-Navigation** für Library-Bereich
-7. **Erweiterte Filter & Suche** in Übersichten
-8. **Soft Delete & Audit Trail** in allen Services
+### Neu implementierte Features:
+1. **Media Kit Management** mit Publikations- und Werbemittel-Auswahl
+2. **Internationale Komponenten** (Country, Language, Currency Selector)
+3. **Detailseiten** für Publikationen und Werbemittel
 
-### Technische Schulden:
-1. Media Kit PDF-Generierung noch nicht implementiert
-2. Batch-Import für große Datenmengen optimieren
-3. Caching-Strategie für häufige Queries
-4. Volltext-Suche über Publikationen
+### Aktuelle Herausforderungen:
+1. **CRM-Integration blockiert Media Kit Tests** - Ohne Firmen können keine Media Kits erstellt werden
+2. PDF-Generierung komplex (mehrere Seiten, dynamische Inhalte)
+3. Viele UI-Komponenten für erweiterte CRM-Features noch zu erstellen
 
 ---
 
 ## 📝 Zusammenfassung
 
-**Positiv:**
-- Solide technische Basis mit Types & Services ✅
-- Mandantenfähigkeit von Anfang an integriert ✅
-- Alle Validatoren implementiert ✅
-- Basis-UI für Publikationen & Werbemittel funktioniert ✅
+**Status:** Die Library-Basis ist fast fertig, aber die fehlende CRM-Integration blockiert das Testing der Media Kits. Daher Prioritätsänderung: CRM-Features werden vorgezogen.
 
-**Herausforderungen:**
-- UI-Implementierung dauert länger als geplant
-- Viele internationale Komponenten noch zu erstellen
-- Media Kit Generator komplex (PDF-Generierung)
-- CRM-Integration steht noch aus
+**Nächster Sprint:** Fokus auf erweiterte Company Modal Implementation, damit Media Kits vollständig getestet werden können.
 
 **Realistische Zeitschätzung:**
-- **Abschluss Sprint 2**: 1 Woche
-- **Sprint 3 (CRM)**: 2 Wochen
-- **Sprint 4 (Integration)**: 1-2 Wochen
-- **Sprint 5 (Testing)**: 1 Woche
-- **Gesamt**: Noch 5-6 Wochen bis zur vollständigen Implementierung
+- **CRM-Integration**: 1 Woche
+- **Media Kit Finalisierung**: 3-4 Tage
+- **Restliche Features**: 1-2 Wochen
+- **Gesamt**: Noch 3-4 Wochen bis zur vollständigen Implementierung
