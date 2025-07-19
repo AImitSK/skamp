@@ -153,19 +153,15 @@ export default function ImportModalEnhanced({ onClose, onImportSuccess }: Import
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Sample CSV templates
-  // Helper function to parse dates safely
-  const parseDate = (dateStr: string): Date | null => {
-    if (!dateStr || dateStr.trim() === '') return null;
-    
-    // Clean the date string
-    dateStr = dateStr.trim();
+  // Helper function to parse dates
+  const parseDate = (dateStr: string): Date | undefined => {
+    if (!dateStr) return undefined;
     
     // Try different date formats
     const formats = [
       /^(\d{2})\.(\d{2})\.(\d{4})$/, // DD.MM.YYYY
       /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/, // D.M.YYYY
       /^(\d{4})-(\d{2})-(\d{2})$/, // YYYY-MM-DD
-      /^(\d{2})\/(\d{2})\/(\d{4})$/, // DD/MM/YYYY
     ];
     
     for (const format of formats) {
@@ -177,21 +173,11 @@ export default function ImportModalEnhanced({ onClose, onImportSuccess }: Import
           year = parseInt(match[1]);
           month = parseInt(match[2]) - 1; // JS months are 0-based
           day = parseInt(match[3]);
-        } else if (format === formats[3]) {
-          // DD/MM/YYYY format
-          day = parseInt(match[1]);
-          month = parseInt(match[2]) - 1;
-          year = parseInt(match[3]);
         } else {
           // DD.MM.YYYY format
           day = parseInt(match[1]);
           month = parseInt(match[2]) - 1; // JS months are 0-based
           year = parseInt(match[3]);
-        }
-        
-        // Validate the values
-        if (year < 1900 || year > 2100 || month < 0 || month > 11 || day < 1 || day > 31) {
-          return null;
         }
         
         const date = new Date(year, month, day);
@@ -202,7 +188,9 @@ export default function ImportModalEnhanced({ onClose, onImportSuccess }: Import
       }
     }
     
-    return null; // Return null instead of undefined
+    // Try native parsing as last resort
+    const date = new Date(dateStr);
+    return isNaN(date.getTime()) ? undefined : date;
   };
 
   const companySampleCSV = `Firmenname*,Offizieller Firmenname,Handelsname,Typ*,Branche,Status,Lifecycle Stage,Rechtsform,Gründungsjahr,Website,Beschreibung,Interne Notizen,Straße,PLZ,Stadt,Bundesland,Land (ISO),Telefon 1,Telefon Typ 1,Telefon 2,Telefon Typ 2,E-Mail 1,E-Mail Typ 1,E-Mail 2,E-Mail Typ 2,USt-IdNr,Handelsregister,Jahresumsatz,Währung,Mitarbeiterzahl,Geschäftsjahresende,Muttergesellschaft,LinkedIn,Twitter,Facebook,Instagram,YouTube,Xing,Tags
@@ -399,24 +387,12 @@ Peter,Müller,Herr,Prof.,Chefredakteur,Redaktion,Tech Magazin,active,p.mueller@t
         preferredLanguage: (row["Bevorzugte Sprache"] || 'de') as LanguageCode
       } : undefined,
       
-      // Personal info - only create if there's actual data
-      personalInfo: (row["Geburtstag"] || row["Interessen"] || row["Notizen"]) ? (() => {
-        const info: any = {};
-        const parsedDate = parseDate(row["Geburtstag"]);
-        if (parsedDate) {
-          info.birthday = parsedDate;
-        }
-        if (row["Interessen"]) {
-          const interests = row["Interessen"].split(';').map((i: string) => i.trim()).filter((i: string) => i.length > 0);
-          if (interests.length > 0) {
-            info.interests = interests;
-          }
-        }
-        if (row["Notizen"] && row["Notizen"].trim()) {
-          info.notes = row["Notizen"].trim();
-        }
-        return Object.keys(info).length > 0 ? info : null;
-      })() : null
+      // Personal info
+      personalInfo: row["Geburtstag"] || row["Interessen"] || row["Notizen"] ? {
+        birthday: row["Geburtstag"] ? parseDate(row["Geburtstag"]) : undefined,
+        interests: row["Interessen"] ? row["Interessen"].split(';').map((i: string) => i.trim()) : undefined,
+        notes: row["Notizen"] || undefined
+      } : undefined
     };
 
     // Parse emails
@@ -535,51 +511,17 @@ Peter,Müller,Herr,Prof.,Chefredakteur,Redaktion,Tech Magazin,active,p.mueller@t
     if (contact.socialProfiles?.length === 0) delete contact.socialProfiles;
     if (contact.gdprConsents?.length === 0) delete contact.gdprConsents;
     
-    // Clean up personalInfo - remove undefined fields
+    // Clean up personalInfo if all fields are undefined
     if (contact.personalInfo) {
-      const cleanedPersonalInfo: any = {};
-      if (contact.personalInfo.birthday !== undefined) {
-        cleanedPersonalInfo.birthday = contact.personalInfo.birthday;
-      }
-      if (contact.personalInfo.birthplace !== undefined) {
-        cleanedPersonalInfo.birthplace = contact.personalInfo.birthplace;
-      }
-      if (contact.personalInfo.nationality !== undefined) {
-        cleanedPersonalInfo.nationality = contact.personalInfo.nationality;
-      }
-      if (contact.personalInfo.languages !== undefined && contact.personalInfo.languages.length > 0) {
-        cleanedPersonalInfo.languages = contact.personalInfo.languages;
-      }
-      if (contact.personalInfo.interests !== undefined && contact.personalInfo.interests.length > 0) {
-        cleanedPersonalInfo.interests = contact.personalInfo.interests;
-      }
-      if (contact.personalInfo.notes !== undefined && contact.personalInfo.notes !== '') {
-        cleanedPersonalInfo.notes = contact.personalInfo.notes;
-      }
-      
-      // Only keep personalInfo if it has at least one field
-      if (Object.keys(cleanedPersonalInfo).length > 0) {
-        contact.personalInfo = cleanedPersonalInfo;
-      } else {
+      const hasContent = Object.values(contact.personalInfo).some(v => v !== undefined);
+      if (!hasContent) {
         delete contact.personalInfo;
       }
     }
     
-    // Clean up communicationPreferences
-    if (contact.communicationPreferences) {
-      const cleanedPrefs: any = {};
-      if (contact.communicationPreferences.preferredChannel !== undefined) {
-        cleanedPrefs.preferredChannel = contact.communicationPreferences.preferredChannel;
-      }
-      if (contact.communicationPreferences.preferredLanguage !== undefined) {
-        cleanedPrefs.preferredLanguage = contact.communicationPreferences.preferredLanguage;
-      }
-      
-      if (Object.keys(cleanedPrefs).length > 0) {
-        contact.communicationPreferences = cleanedPrefs;
-      } else {
-        delete contact.communicationPreferences;
-      }
+    // Clean up communicationPreferences if undefined
+    if (contact.communicationPreferences && !contact.communicationPreferences.preferredChannel && !contact.communicationPreferences.preferredLanguage) {
+      delete contact.communicationPreferences;
     }
 
     return contact;

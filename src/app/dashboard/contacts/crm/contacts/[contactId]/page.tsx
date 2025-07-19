@@ -13,7 +13,8 @@ import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
 import { Button } from "@/components/button";
 import { Badge } from "@/components/badge";
-import ContactModal from "@/app/dashboard/contacts/crm/ContactModal"; 
+import ContactModalEnhanced from "@/components/crm/ContactModalEnhanced";
+import ContactModal from "src/app/dashboard/contacts/crm/ImportModalEnhanced"; 
 import {
   ArrowLeftIcon,
   UserIcon,
@@ -633,20 +634,7 @@ export default function ContactDetailPage() {
         </div>
       </div>
 
-      {/* Edit Modal */}
-      {showEditModal && (
-        <ContactModal
-          contact={contact}
-          companies={companies}
-          userId={user!.uid}
-          onClose={() => setShowEditModal(false)}
-          onSave={() => {
-            setShowEditModal(false);
-            loadData();
-            showAlert('success', 'Person aktualisiert', 'Die Kontaktdaten wurden erfolgreich aktualisiert.');
-          }}
-        />
-      )}
+
     </>
   );
 }
