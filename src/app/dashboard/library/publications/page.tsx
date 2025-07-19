@@ -1,79 +1,40 @@
 // src/app/dashboard/library/publications/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
+import Link from 'next/link';
 import { useAuth } from "@/context/AuthContext";
 import { publicationService } from "@/lib/firebase/library-service";
 import type { Publication } from "@/types/library";
 import { Heading } from "@/components/heading";
+import { Text } from "@/components/text";
 import { Button } from "@/components/button";
 import { Badge } from "@/components/badge";
-import { PublicationModal } from "./PublicationModal"; 
+import { Checkbox } from "@/components/checkbox";
+import { SearchInput } from "@/components/search-input";
+import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
+import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from "@/components/dropdown";
+import { Popover, Transition } from '@headlessui/react';
+import { PublicationModal } from "./PublicationModal";
 import PublicationImportModal from "./PublicationImportModal";
 import { 
   PlusIcon, 
-  MagnifyingGlassIcon,
   FunnelIcon,
-  ArrowUpTrayIcon,
   ArrowDownTrayIcon,
+  ArrowUpTrayIcon,
+  EllipsisVerticalIcon,
+  PencilIcon,
+  TrashIcon,
+  DocumentDuplicateIcon,
   CheckBadgeIcon,
   GlobeAltIcon,
-  EllipsisVerticalIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
   InformationCircleIcon,
-  ExclamationTriangleIcon,
-  CheckIcon,
-  XMarkIcon
+  ExclamationTriangleIcon
 } from "@heroicons/react/20/solid";
-import Link from "next/link";
-import { Popover, Transition } from '@headlessui/react';
-import { Fragment } from 'react';
 import Papa from 'papaparse';
-
-// Alert Component
-function Alert({ 
-  type = 'info', 
-  title, 
-  message 
-}: { 
-  type?: 'info' | 'success' | 'error' | 'warning';
-  title?: string;
-  message: string;
-}) {
-  const styles = {
-    info: 'bg-blue-50 text-blue-700',
-    success: 'bg-green-50 text-green-700',
-    error: 'bg-red-50 text-red-700',
-    warning: 'bg-yellow-50 text-yellow-700'
-  };
-
-  const icons = {
-    info: InformationCircleIcon,
-    success: CheckIcon,
-    error: XMarkIcon,
-    warning: ExclamationTriangleIcon
-  };
-
-  const Icon = icons[type];
-
-  return (
-    <div className={`rounded-md p-4 ${styles[type].split(' ')[0]}`}>
-      <div className="flex">
-        <div className="shrink-0">
-          <Icon aria-hidden="true" className={`size-5 ${
-            type === 'error' ? 'text-red-400' : 
-            type === 'success' ? 'text-green-400' : 
-            type === 'warning' ? 'text-yellow-400' :
-            'text-blue-400'
-          }`} />
-        </div>
-        <div className="ml-3">
-          {title && <p className={`text-sm font-medium ${styles[type].split(' ')[1]}`}>{title}</p>}
-          <p className={`text-sm ${styles[type].split(' ')[1]}`}>{message}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
+import clsx from 'clsx';
 
 // Labels für Publikationstypen
 const publicationTypeLabels: Record<string, string> = {
@@ -85,110 +46,279 @@ const publicationTypeLabels: Record<string, string> = {
   podcast: "Podcast",
   tv: "TV",
   radio: "Radio",
-  other: "Sonstiges"
+  trade_journal: "Fachzeitschrift",
+  press_agency: "Nachrichtenagentur",
+  social_media: "Social Media"
 };
 
 // Labels für Frequenz
 const frequencyLabels: Record<string, string> = {
+  continuous: "Durchgehend",
+  multiple_daily: "Mehrmals täglich",
   daily: "Täglich",
-  weekly: "Wöchentlich", 
+  weekly: "Wöchentlich",
   biweekly: "14-tägig",
   monthly: "Monatlich",
+  bimonthly: "Zweimonatlich",
   quarterly: "Quartalsweise",
-  yearly: "Jährlich",
+  biannual: "Halbjährlich",
+  annual: "Jährlich",
   irregular: "Unregelmäßig"
 };
+
+// Alert Component
+function Alert({ 
+  type = 'info', 
+  title, 
+  message, 
+  action 
+}: { 
+  type?: 'info' | 'success' | 'warning' | 'error';
+  title: string;
+  message?: string;
+  action?: { label: string; onClick: () => void };
+}) {
+  const styles = {
+    info: 'bg-blue-50 text-blue-700',
+    success: 'bg-green-50 text-green-700',
+    warning: 'bg-yellow-50 text-yellow-700',
+    error: 'bg-red-50 text-red-700'
+  };
+
+  const icons = {
+    info: InformationCircleIcon,
+    success: InformationCircleIcon,
+    warning: ExclamationTriangleIcon,
+    error: ExclamationTriangleIcon
+  };
+
+  const Icon = icons[type];
+
+  return (
+    <div className={`rounded-md p-4 ${styles[type].split(' ')[0]}`}>
+      <div className="flex">
+        <div className="shrink-0">
+          <Icon aria-hidden="true" className={`size-5 ${type === 'info' || type === 'success' ? 'text-blue-400' : type === 'warning' ? 'text-yellow-400' : 'text-red-400'}`} />
+        </div>
+        <div className="ml-3 flex-1 md:flex md:justify-between">
+          <div>
+            <Text className={`font-medium ${styles[type].split(' ')[1]}`}>{title}</Text>
+            {message && <Text className={`mt-2 ${styles[type].split(' ')[1]}`}>{message}</Text>}
+          </div>
+          {action && (
+            <p className="mt-3 text-sm md:mt-0 md:ml-6">
+              <button
+                onClick={action.onClick}
+                className={`font-medium whitespace-nowrap ${styles[type].split(' ')[1]} hover:opacity-80`}
+              >
+                {action.label}
+                <span aria-hidden="true"> →</span>
+              </button>
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function PublicationsPage() {
   const { user } = useAuth();
   const [publications, setPublications] = useState<Publication[]>([]);
-  const [filteredPublications, setFilteredPublications] = useState<Publication[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState<string>("all");
-  const [filterVerified, setFilterVerified] = useState<boolean | null>(null);
-  const [showFilters, setShowFilters] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  const [selectedPubIds, setSelectedPubIds] = useState<Set<string>>(new Set());
+  const [showPublicationModal, setShowPublicationModal] = useState(false);
   const [selectedPublication, setSelectedPublication] = useState<Publication | null>(null);
   const [showImportModal, setShowImportModal] = useState(false);
-  const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'error' | 'warning'; title?: string; message: string } | null>(null);
+  
+  const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string } | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    type?: 'danger' | 'warning';
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(25);
+
+  // Filter States
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
+  const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
+  const [selectedVerified, setSelectedVerified] = useState<string>('all');
+
+  // Alert Management
+  const showAlert = useCallback((type: 'info' | 'success' | 'warning' | 'error', title: string, message?: string) => {
+    setAlert({ type, title, message });
+    setTimeout(() => setAlert(null), 5000);
+  }, []);
 
   useEffect(() => {
     if (user) {
-      loadPublications();
+      loadData();
     }
   }, [user]);
 
-  useEffect(() => {
-    filterPublications();
-  }, [publications, searchTerm, filterType, filterVerified]);
-
-  const loadPublications = async () => {
+  const loadData = async () => {
     if (!user) return;
-
+    setLoading(true);
     try {
-      setLoading(true);
-      console.log('Loading publications for user:', user.uid);
-      const data = await publicationService.getAll(user.uid);
-      console.log('Loaded publications:', data.length, data);
-      setPublications(data);
+      const pubsData = await publicationService.getAll(user.uid);
+      setPublications(pubsData);
     } catch (error) {
-      console.error("Error loading publications:", error);
-      showAlert('error', 'Fehler beim Laden der Publikationen');
+      showAlert('error', 'Fehler beim Laden', 'Die Daten konnten nicht geladen werden.');
     } finally {
       setLoading(false);
     }
   };
 
-  const filterPublications = () => {
-    let filtered = [...publications];
+  // Filtered Data
+  const filteredPublications = useMemo(() => {
+    return publications.filter(pub => {
+      // Search
+      const searchMatch = pub.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          pub.publisherName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          pub.focusAreas?.some(area => area.toLowerCase().includes(searchTerm.toLowerCase()));
+      if (!searchMatch) return false;
+      
+      // Type Filter
+      const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(pub.type);
+      if (!typeMatch) return false;
+      
+      // Language Filter
+      const langMatch = selectedLanguages.length === 0 || 
+                        pub.languages?.some(lang => selectedLanguages.includes(lang));
+      if (!langMatch) return false;
+      
+      // Country Filter
+      const countryMatch = selectedCountries.length === 0 || 
+                           pub.geographicTargets?.some(country => selectedCountries.includes(country));
+      if (!countryMatch) return false;
+      
+      // Verified Filter
+      if (selectedVerified !== 'all') {
+        const isVerified = pub.verified === true;
+        if (selectedVerified === 'verified' && !isVerified) return false;
+        if (selectedVerified === 'unverified' && isVerified) return false;
+      }
 
-    // Suchfilter
-    if (searchTerm) {
-      filtered = filtered.filter(pub => 
-        pub.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        pub.publisherName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        pub.focusAreas?.some(area => area.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
+      return true;
+    });
+  }, [publications, searchTerm, selectedTypes, selectedLanguages, selectedCountries, selectedVerified]);
+
+  // Paginated Data
+  const paginatedPublications = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredPublications.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredPublications, currentPage, itemsPerPage]);
+
+  // Get unique values for filters
+  const availableLanguages = useMemo(() => {
+    const langs = new Set<string>();
+    publications.forEach(pub => {
+      pub.languages?.forEach(lang => langs.add(lang));
+    });
+    return Array.from(langs).sort();
+  }, [publications]);
+
+  const availableCountries = useMemo(() => {
+    const countries = new Set<string>();
+    publications.forEach(pub => {
+      pub.geographicTargets?.forEach(country => countries.add(country));
+    });
+    return Array.from(countries).sort();
+  }, [publications]);
+
+  // Selection Handlers
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedPubIds(new Set(paginatedPublications.map(pub => pub.id!)));
+    } else {
+      setSelectedPubIds(new Set());
     }
-
-    // Typ-Filter
-    if (filterType !== "all") {
-      filtered = filtered.filter(pub => pub.type === filterType);
-    }
-
-    // Verifiziert-Filter
-    if (filterVerified !== null) {
-      filtered = filtered.filter(pub => pub.verified === filterVerified);
-    }
-
-    setFilteredPublications(filtered);
   };
 
-  const formatMetric = (pub: Publication): string => {
-    if (pub.metrics?.print?.circulation) {
-      return `${pub.metrics.print.circulation.toLocaleString('de-DE')} Auflage`;
+  // Delete Functions
+  const handleDelete = async (id: string, title: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Publikation löschen',
+      message: `Möchten Sie "${title}" wirklich löschen?`,
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          await publicationService.softDelete(id, {
+            organizationId: user?.uid || '',
+            userId: user?.uid || ''
+          });
+          showAlert('success', `${title} wurde gelöscht`);
+          await loadData();
+        } catch (error) {
+          showAlert('error', 'Fehler beim Löschen');
+        }
+      }
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    const count = selectedPubIds.size;
+    if (count === 0) return;
+    
+    setConfirmDialog({
+      isOpen: true,
+      title: `${count} Publikationen löschen`,
+      message: `Möchten Sie wirklich ${count} Publikationen unwiderruflich löschen?`,
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          await Promise.all(Array.from(selectedPubIds).map(id => 
+            publicationService.softDelete(id, {
+              organizationId: user?.uid || '',
+              userId: user?.uid || ''
+            })
+          ));
+          showAlert('success', `${count} Publikationen gelöscht`);
+          await loadData();
+          setSelectedPubIds(new Set());
+        } catch (error) {
+          showAlert('error', 'Fehler beim Löschen');
+        }
+      }
+    });
+  };
+
+  // Duplicate Function
+  const handleDuplicate = async (pub: Publication) => {
+    try {
+      const duplicated = {
+        ...pub,
+        title: `${pub.title} (Kopie)`,
+        verified: false,
+        status: 'inactive' as const
+      };
+      delete duplicated.id;
+      
+      await publicationService.create(duplicated, {
+        organizationId: user?.uid || '',
+        userId: user?.uid || ''
+      });
+      
+      showAlert('success', 'Publikation dupliziert');
+      await loadData();
+    } catch (error) {
+      showAlert('error', 'Fehler beim Duplizieren');
     }
-    if (pub.metrics?.online?.monthlyUniqueVisitors) {
-      return `${pub.metrics.online.monthlyUniqueVisitors.toLocaleString('de-DE')} UV/Monat`;
-    }
-    return "—";
   };
 
-  const formatGeoTargets = (targets?: string[]): string => {
-    if (!targets || targets.length === 0) return "—";
-    if (targets.length <= 3) return targets.join(", ");
-    return `${targets.slice(0, 3).join(", ")} +${targets.length - 3}`;
-  };
-
-  const showAlert = (type: 'info' | 'success' | 'error' | 'warning', message: string, title?: string) => {
-    setAlert({ type, message, title });
-    setTimeout(() => setAlert(null), 5000);
-  };
-
+  // Export Function
   const handleExport = () => {
     if (filteredPublications.length === 0) {
-      showAlert('warning', 'Keine Publikationen zum Exportieren vorhanden');
+      showAlert('warning', 'Keine Daten zum Exportieren');
       return;
     }
 
@@ -214,16 +344,25 @@ export default function PublicationsPage() {
       const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.setAttribute('download', `publikationen_export_${new Date().toISOString().split('T')[0]}.csv`);
+      link.setAttribute('download', `publikationen-export.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       
-      showAlert('success', `${filteredPublications.length} Publikationen exportiert`);
+      showAlert('success', 'Export erfolgreich');
     } catch (error) {
-      console.error('Export error:', error);
-      showAlert('error', 'Fehler beim Export');
+      showAlert('error', 'Export fehlgeschlagen');
     }
+  };
+
+  const formatMetric = (pub: Publication): string => {
+    if (pub.metrics?.print?.circulation) {
+      return `${pub.metrics.print.circulation.toLocaleString('de-DE')} Auflage`;
+    }
+    if (pub.metrics?.online?.monthlyUniqueVisitors) {
+      return `${pub.metrics.online.monthlyUniqueVisitors.toLocaleString('de-DE')} UV/Monat`;
+    }
+    return "—";
   };
 
   if (loading) {
@@ -237,30 +376,208 @@ export default function PublicationsPage() {
     );
   }
 
+  const totalPages = Math.ceil(filteredPublications.length / itemsPerPage);
+
   return (
-    <div className="space-y-6">
+    <div>
       {/* Alert */}
       {alert && (
-        <Alert type={alert.type} title={alert.title} message={alert.message} />
+        <div className="mb-4">
+          <Alert type={alert.type} title={alert.title} message={alert.message} />
+        </div>
       )}
 
       {/* Header */}
-      <div className="md:flex md:items-center md:justify-between">
-        <div className="min-w-0 flex-1">
-          <Heading>Publikationen</Heading>
-          <p className="mt-1 text-sm text-gray-500">
-            {publications.length} Publikationen in Ihrer Bibliothek
-          </p>
-        </div>
-        <div className="mt-4 flex md:mt-0 md:ml-4 space-x-2">
-          <Button plain onClick={() => setShowFilters(!showFilters)}>
-            <FunnelIcon className="h-4 w-4" />
-            Filter
-          </Button>
-          
-          {/* Actions Dropdown */}
+      <div className="mb-6">
+        <Heading level={1}>Publikationen</Heading>
+        <Text className="mt-1 text-sm text-gray-500">
+          {publications.length} Publikationen in Ihrer Bibliothek
+        </Text>
+      </div>
+
+      {/* Toolbar */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2">
+          {/* Search Input */}
+          <SearchInput
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Publikationen durchsuchen..."
+            className="flex-1"
+          />
+
+          {/* Filter Button */}
           <Popover className="relative">
-            <Popover.Button className="inline-flex items-center justify-center p-2 text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:text-zinc-300 dark:hover:bg-zinc-800">
+            {({ open }) => {
+              const activeFiltersCount = selectedTypes.length + selectedLanguages.length + 
+                                       selectedCountries.length + (selectedVerified !== 'all' ? 1 : 0);
+              
+              return (
+                <>
+                  <Popover.Button
+                    className={clsx(
+                      'inline-flex items-center justify-center rounded-lg border p-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2 h-10 w-10',
+                      activeFiltersCount > 0
+                        ? 'border-[#005fab] bg-[#005fab]/5 text-[#005fab] hover:bg-[#005fab]/10'
+                        : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+                    )}
+                    aria-label="Filter"
+                  >
+                    <FunnelIcon className="h-5 w-5" />
+                    {activeFiltersCount > 0 && (
+                      <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#005fab] text-xs font-medium text-white">
+                        {activeFiltersCount}
+                      </span>
+                    )}
+                  </Popover.Button>
+                  
+                  <Transition
+                    as={Fragment}
+                    enter="transition ease-out duration-200"
+                    enterFrom="opacity-0 translate-y-1"
+                    enterTo="opacity-100 translate-y-0"
+                    leave="transition ease-in duration-150"
+                    leaveFrom="opacity-100 translate-y-0"
+                    leaveTo="opacity-0 translate-y-1"
+                  >
+                    <Popover.Panel className="absolute left-0 z-10 mt-2 w-80 origin-top-left rounded-lg bg-white p-4 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-zinc-800 dark:ring-white/10">
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-sm font-medium text-zinc-900 dark:text-white">Filter</h3>
+                          {activeFiltersCount > 0 && (
+                            <button
+                              onClick={() => {
+                                setSelectedTypes([]);
+                                setSelectedLanguages([]);
+                                setSelectedCountries([]);
+                                setSelectedVerified('all');
+                              }}
+                              className="text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                            >
+                              Zurücksetzen
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Type Filter */}
+                        <div>
+                          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                            Typ
+                          </label>
+                          <div className="space-y-2 max-h-40 overflow-y-auto">
+                            {Object.entries(publicationTypeLabels).map(([value, label]) => (
+                              <label key={value} className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedTypes.includes(value)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedTypes([...selectedTypes, value]);
+                                    } else {
+                                      setSelectedTypes(selectedTypes.filter(t => t !== value));
+                                    }
+                                  }}
+                                  className="h-4 w-4 rounded border-zinc-300 text-[#005fab] focus:ring-[#005fab]"
+                                />
+                                <span className="text-sm text-zinc-700 dark:text-zinc-300">{label}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Language Filter */}
+                        {availableLanguages.length > 0 && (
+                          <div>
+                            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                              Sprache
+                            </label>
+                            <div className="space-y-2 max-h-40 overflow-y-auto">
+                              {availableLanguages.map(lang => (
+                                <label key={lang} className="flex items-center gap-2 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedLanguages.includes(lang)}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setSelectedLanguages([...selectedLanguages, lang]);
+                                      } else {
+                                        setSelectedLanguages(selectedLanguages.filter(l => l !== lang));
+                                      }
+                                    }}
+                                    className="h-4 w-4 rounded border-zinc-300 text-[#005fab] focus:ring-[#005fab]"
+                                  />
+                                  <span className="text-sm text-zinc-700 dark:text-zinc-300">{lang}</span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Country Filter */}
+                        {availableCountries.length > 0 && (
+                          <div>
+                            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                              Land
+                            </label>
+                            <div className="space-y-2 max-h-40 overflow-y-auto">
+                              {availableCountries.map(country => (
+                                <label key={country} className="flex items-center gap-2 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedCountries.includes(country)}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setSelectedCountries([...selectedCountries, country]);
+                                      } else {
+                                        setSelectedCountries(selectedCountries.filter(c => c !== country));
+                                      }
+                                    }}
+                                    className="h-4 w-4 rounded border-zinc-300 text-[#005fab] focus:ring-[#005fab]"
+                                  />
+                                  <span className="text-sm text-zinc-700 dark:text-zinc-300">{country}</span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Verified Filter */}
+                        <div>
+                          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                            Status
+                          </label>
+                          <select
+                            value={selectedVerified}
+                            onChange={(e) => setSelectedVerified(e.target.value)}
+                            className="mt-1 block w-full rounded-md border-zinc-300 py-2 pl-3 pr-10 text-sm focus:border-[#005fab] focus:outline-none focus:ring-1 focus:ring-[#005fab] dark:border-zinc-600 dark:bg-zinc-700"
+                          >
+                            <option value="all">Alle</option>
+                            <option value="verified">Verifiziert</option>
+                            <option value="unverified">Nicht verifiziert</option>
+                          </select>
+                        </div>
+                      </div>
+                    </Popover.Panel>
+                  </Transition>
+                </>
+              );
+            }}
+          </Popover>
+
+          {/* Add Button */}
+          <Button 
+            className="bg-zinc-900 hover:bg-zinc-800 text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-zinc-900 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 h-10 px-6"
+            onClick={() => {
+              setSelectedPublication(null);
+              setShowPublicationModal(true);
+            }}
+          >
+            Publikation hinzufügen
+          </Button>
+
+          {/* Actions Button */}
+          <Popover className="relative">
+            <Popover.Button className="inline-flex items-center justify-center p-2 text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2 dark:text-zinc-300 dark:hover:bg-zinc-800">
               <EllipsisVerticalIcon className="h-5 w-5" />
             </Popover.Button>
             
@@ -289,227 +606,253 @@ export default function PublicationsPage() {
                     <ArrowDownTrayIcon className="h-5 w-5" />
                     Export
                   </button>
+                  {selectedPubIds.size > 0 && (
+                    <>
+                      <div className="border-t border-zinc-200 dark:border-zinc-700 my-1"></div>
+                      <button
+                        onClick={handleBulkDelete}
+                        className="flex w-full items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      >
+                        <TrashIcon className="h-5 w-5" />
+                        Auswahl löschen ({selectedPubIds.size})
+                      </button>
+                    </>
+                  )}
                 </div>
               </Popover.Panel>
             </Transition>
           </Popover>
-
-          <Button onClick={() => {
-            setSelectedPublication(null);
-            setIsModalOpen(true);
-          }}>
-            <PlusIcon className="h-4 w-4" />
-            Neue Publikation
-          </Button>
         </div>
       </div>
 
-      {/* Suchleiste */}
-      <div className="max-w-md">
-        <div className="relative">
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-            <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
-          </div>
-          <input
-            type="search"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="block w-full rounded-md border-0 py-1.5 pl-10 pr-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-[#005fab] sm:text-sm sm:leading-6"
-            placeholder="Publikationen durchsuchen..."
-          />
-        </div>
+      {/* Results Info */}
+      <div className="mb-4 flex items-center justify-between">
+        <Text className="text-sm text-zinc-600 dark:text-zinc-400">
+          {filteredPublications.length} von {publications.length} Publikationen
+          {selectedPubIds.size > 0 && (
+            <span className="ml-2">• {selectedPubIds.size} ausgewählt</span>
+          )}
+        </Text>
+        
+        {selectedPubIds.size > 0 && (
+          <button
+            onClick={handleBulkDelete}
+            className="text-sm text-red-600 hover:text-red-700 underline"
+          >
+            {selectedPubIds.size} Löschen
+          </button>
+        )}
       </div>
 
-      {/* Filter-Bereich */}
-      {showFilters && (
-        <div className="bg-gray-50 px-4 py-3 rounded-lg space-y-3">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Typ
-              </label>
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-[#005fab] sm:text-sm"
-              >
-                <option value="all">Alle Typen</option>
-                {Object.entries(publicationTypeLabels).map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
-                ))}
-              </select>
+      {/* Table */}
+      <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm overflow-hidden">
+        {/* Header */}
+        <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
+          <div className="flex items-center">
+            <div className="flex items-center w-[25%]">
+              <Checkbox
+                checked={paginatedPublications.length > 0 && paginatedPublications.every(pub => selectedPubIds.has(pub.id!))}
+                indeterminate={paginatedPublications.some(pub => selectedPubIds.has(pub.id!)) && !paginatedPublications.every(pub => selectedPubIds.has(pub.id!))}
+                onChange={handleSelectAll}
+              />
+              <span className="ml-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                Titel
+              </span>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Status
-              </label>
-              <select
-                value={filterVerified === null ? "all" : filterVerified ? "verified" : "unverified"}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setFilterVerified(value === "all" ? null : value === "verified");
-                }}
-                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-[#005fab] sm:text-sm"
-              >
-                <option value="all">Alle</option>
-                <option value="verified">Verifiziert</option>
-                <option value="unverified">Nicht verifiziert</option>
-              </select>
+            <div className="hidden md:block w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+              Verlag
+            </div>
+            <div className="hidden lg:block w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+              Typ
+            </div>
+            <div className="hidden lg:block w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+              Metrik
+            </div>
+            <div className="hidden xl:block w-[10%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+              Frequenz
+            </div>
+            <div className="hidden xl:block flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+              Zielgebiet
             </div>
           </div>
         </div>
-      )}
 
-      {/* Tabelle */}
-      <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-        <table className="min-w-full divide-y divide-gray-300">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
-                Titel der Publikation
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
-                Verlag
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
-                Typ
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
-                Metrik (Print/Online)
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
-                Frequenz
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
-                Sprache(n)
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
-                Geografisches Zielgebiet
-              </th>
-              <th className="relative px-6 py-3">
-                <span className="sr-only">Aktionen</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200 bg-white">
-            {filteredPublications.length === 0 ? (
-              <tr>
-                <td colSpan={8} className="px-6 py-12 text-center text-sm text-gray-500">
-                  Keine Publikationen gefunden
-                </td>
-              </tr>
-            ) : (
-              filteredPublications.map((pub) => (
-                <tr key={pub.id} className="hover:bg-gray-50">
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <div className="flex items-center">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
-                          <Link 
-                            href={`/dashboard/library/publications/${pub.id}`}
-                            className="hover:text-[#005fab]"
-                          >
-                            {pub.title}
-                          </Link>
+        {/* Body */}
+        <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
+          {paginatedPublications.length === 0 ? (
+            <div className="px-6 py-12 text-center text-sm text-zinc-500">
+              Keine Publikationen gefunden
+            </div>
+          ) : (
+            paginatedPublications.map((pub) => (
+              <div key={pub.id} className="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                <div className="flex items-center">
+                  <div className="flex items-center w-[25%]">
+                    <Checkbox
+                      checked={selectedPubIds.has(pub.id!)}
+                      onChange={(checked: boolean) => {
+                        const newIds = new Set(selectedPubIds);
+                        if (checked) {
+                          newIds.add(pub.id!);
+                        } else {
+                          newIds.delete(pub.id!);
+                        }
+                        setSelectedPubIds(newIds);
+                      }}
+                    />
+                    <div className="ml-4 min-w-0 flex-1">
+                      <Link 
+                        href={`/dashboard/library/publications/${pub.id}`} 
+                        className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-[#005fab] truncate block"
+                      >
+                        {pub.title}
+                      </Link>
+                      {pub.verified && (
+                        <div className="flex items-center mt-1">
+                          <CheckBadgeIcon className="h-4 w-4 text-green-500 mr-1" />
+                          <span className="text-xs text-green-600">Verifiziert</span>
                         </div>
-                        {pub.verified && (
-                          <CheckBadgeIcon className="mt-1 h-4 w-4 text-green-500" />
-                        )}
-                      </div>
+                      )}
                     </div>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+                  </div>
+                  
+                  <div className="hidden md:block w-[20%] text-sm text-zinc-600 dark:text-zinc-400">
                     {pub.publisherName || "—"}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm">
-                    <Badge color="zinc">
+                  </div>
+                  
+                  <div className="hidden lg:block w-[15%]">
+                    <Badge color="zinc" className="text-xs">
                       {publicationTypeLabels[pub.type] || pub.type}
                     </Badge>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+                  </div>
+                  
+                  <div className="hidden lg:block w-[15%] text-sm text-zinc-600 dark:text-zinc-400">
                     {formatMetric(pub)}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+                  </div>
+                  
+                  <div className="hidden xl:block w-[10%] text-sm text-zinc-600 dark:text-zinc-400">
                     {pub.metrics?.frequency ? frequencyLabels[pub.metrics.frequency] : "—"}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
-                    {pub.languages?.join(", ") || "—"}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
-                    <div className="flex items-center">
-                      <GlobeAltIcon className="mr-1 h-4 w-4 text-gray-400" />
-                      {formatGeoTargets(pub.geographicTargets)}
+                  </div>
+                  
+                  <div className="hidden xl:block flex-1">
+                    <div className="flex items-center text-sm text-zinc-600 dark:text-zinc-400">
+                      <GlobeAltIcon className="mr-1 h-4 w-4 text-zinc-400" />
+                      {pub.geographicTargets?.slice(0, 2).join(", ") || "—"}
+                      {pub.geographicTargets && pub.geographicTargets.length > 2 && (
+                        <span className="ml-1">+{pub.geographicTargets.length - 2}</span>
+                      )}
                     </div>
-                  </td>
-                  <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                    <button
-                      onClick={() => {
-                        setSelectedPublication(pub);
-                        setIsModalOpen(true);
-                      }}
-                      className="text-[#005fab] hover:text-[#004a8c]"
-                    >
-                      Bearbeiten
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                  </div>
+                  
+                  <div className="ml-4">
+                    <Dropdown>
+                      <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2">
+                        <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                      </DropdownButton>
+                      <DropdownMenu anchor="bottom end">
+                        <DropdownItem href={`/dashboard/library/publications/${pub.id}`}>
+                          Anzeigen
+                        </DropdownItem>
+                        <DropdownItem 
+                          onClick={() => {
+                            setSelectedPublication(pub);
+                            setShowPublicationModal(true);
+                          }}
+                        >
+                          <PencilIcon />
+                          Bearbeiten
+                        </DropdownItem>
+                        <DropdownItem onClick={() => handleDuplicate(pub)}>
+                          <DocumentDuplicateIcon />
+                          Duplizieren
+                        </DropdownItem>
+                        <DropdownDivider />
+                        <DropdownItem 
+                          onClick={() => handleDelete(pub.id!, pub.title)}
+                        >
+                          <TrashIcon />
+                          <span className="text-red-600">Löschen</span>
+                        </DropdownItem>
+                      </DropdownMenu>
+                    </Dropdown>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
-      {/* Statistiken */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <dt className="text-sm font-medium text-gray-500 truncate">
-              Verifizierte Publikationen
-            </dt>
-            <dd className="mt-1 text-3xl font-semibold text-gray-900">
-              {publications.filter(p => p.verified).length}
-            </dd>
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <nav className="mt-6 flex items-center justify-between border-t border-gray-200 px-4 sm:px-0 pt-4">
+          <div className="-mt-px flex w-0 flex-1">
+            <Button
+              plain
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeftIcon />
+              Zurück
+            </Button>
           </div>
-        </div>
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <dt className="text-sm font-medium text-gray-500 truncate">
-              Abgedeckte Länder
-            </dt>
-            <dd className="mt-1 text-3xl font-semibold text-gray-900">
-              {new Set(publications.flatMap(p => p.geographicTargets || [])).size}
-            </dd>
+          <div className="hidden md:-mt-px md:flex">
+            {(() => {
+              const pages = [];
+              const maxVisible = 7;
+              let start = Math.max(1, currentPage - 3);
+              let end = Math.min(totalPages, start + maxVisible - 1);
+              
+              if (end - start < maxVisible - 1) {
+                start = Math.max(1, end - maxVisible + 1);
+              }
+              
+              for (let i = start; i <= end; i++) {
+                pages.push(
+                  <Button
+                    key={i}
+                    plain
+                    onClick={() => setCurrentPage(i)}
+                    className={currentPage === i ? 'font-semibold text-[#005fab]' : ''}
+                  >
+                    {i}
+                  </Button>
+                );
+              }
+              
+              return pages;
+            })()}
           </div>
-        </div>
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <dt className="text-sm font-medium text-gray-500 truncate">
-              Verschiedene Typen
-            </dt>
-            <dd className="mt-1 text-3xl font-semibold text-gray-900">
-              {new Set(publications.map(p => p.type)).size}
-            </dd>
+          <div className="-mt-px flex w-0 flex-1 justify-end">
+            <Button
+              plain
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Weiter
+              <ChevronRightIcon />
+            </Button>
           </div>
-        </div>
-      </div>
+        </nav>
+      )}
 
       {/* Publication Modal */}
-      <PublicationModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setSelectedPublication(null);
-        }}
-        publication={selectedPublication || undefined}
-        onSuccess={async () => {
-          setIsModalOpen(false);
-          setSelectedPublication(null);
-          // Kleine Verzögerung, damit Firebase die Daten vollständig schreibt
-          setTimeout(() => {
-            loadPublications();
-          }, 500);
-        }}
-      />
+      {showPublicationModal && (
+        <PublicationModal
+          isOpen={showPublicationModal}
+          onClose={() => {
+            setShowPublicationModal(false);
+            setSelectedPublication(null);
+          }}
+          publication={selectedPublication || undefined}
+          onSuccess={async () => {
+            setShowPublicationModal(false);
+            setSelectedPublication(null);
+            await loadData();
+            showAlert('success', selectedPublication ? 'Publikation aktualisiert' : 'Publikation erstellt');
+          }}
+        />
+      )}
 
       {/* Import Modal */}
       {showImportModal && (
@@ -517,11 +860,52 @@ export default function PublicationsPage() {
           onClose={() => setShowImportModal(false)}
           onImportSuccess={() => {
             setShowImportModal(false);
-            loadPublications();
+            loadData();
             showAlert('success', 'Import erfolgreich abgeschlossen');
           }}
         />
       )}
+
+      {/* Confirm Dialog */}
+      <Dialog
+        open={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+      >
+        <div className="p-6">
+          <div className="sm:flex sm:items-start">
+            <div className={`mx-auto flex h-12 w-12 shrink-0 items-center justify-center rounded-full sm:mx-0 sm:h-10 sm:w-10 ${
+              confirmDialog.type === 'danger' ? 'bg-red-100' : 'bg-yellow-100'
+            }`}>
+              <ExclamationTriangleIcon className={`h-6 w-6 ${
+                confirmDialog.type === 'danger' ? 'text-red-600' : 'text-yellow-600'
+              }`} />
+            </div>
+            <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+              <DialogTitle>{confirmDialog.title}</DialogTitle>
+              <DialogBody className="mt-2">
+                <Text>{confirmDialog.message}</Text>
+              </DialogBody>
+            </div>
+          </div>
+          <DialogActions className="mt-5 sm:mt-4">
+            <Button
+              plain
+              onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+            >
+              Abbrechen
+            </Button>
+            <Button
+              color="zinc"
+              onClick={() => {
+                confirmDialog.onConfirm();
+                setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+              }}
+            >
+              {confirmDialog.type === 'danger' ? 'Löschen' : 'Bestätigen'}
+            </Button>
+          </DialogActions>
+        </div>
+      </Dialog>
     </div>
   );
 }

@@ -7,8 +7,6 @@ import Link from "next/link";
 import { 
   BookOpenIcon, 
   NewspaperIcon, 
-  DocumentTextIcon,
-  ChartBarIcon,
   BuildingLibraryIcon 
 } from "@heroicons/react/24/outline";
 
@@ -37,18 +35,6 @@ const tabs: Tab[] = [
     href: "/dashboard/library/advertisements",
     icon: NewspaperIcon,
     description: "Anzeigenformate & Spezifikationen"
-  },
-  {
-    name: "Mediadaten",
-    href: "/dashboard/library/media-kits",
-    icon: DocumentTextIcon,
-    description: "Media Kits & Rate Cards"
-  },
-  {
-    name: "Übersichten",
-    href: "/dashboard/library/overview",
-    icon: ChartBarIcon,
-    description: "Strategische Auswertungen"
   }
 ];
 
@@ -85,7 +71,7 @@ export default function LibraryLayout({
               Bibliothek
             </h1>
             <p className="mt-1 text-sm text-gray-500">
-              {currentTab?.description || "Verwalten Sie Publikationen, Werbemittel und Mediadaten"}
+              {currentTab?.description || "Verwalten Sie Publikationen und Werbemittel"}
             </p>
           </div>
         </div>

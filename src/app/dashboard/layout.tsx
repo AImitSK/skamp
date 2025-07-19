@@ -133,14 +133,8 @@ export default function DashboardLayout({
         description: "Werbemittel und deren Spezifikationen organisieren."
       },
       { 
-        name: "Mediadaten", 
-        href: "/dashboard/library/media-kits", 
-        icon: BriefcaseIcon, // NEUES ICON
-        description: "Media Kits für verschiedene Unternehmen erstellen."
-      },
-      { 
         name: "Strategische Übersichten", 
-        href: "/dashboard/library/overview", 
+        href: "/dashboard/library/", 
         icon: TableCellsIcon, // NEUES ICON
         description: "Zusammenfassende Ansichten aller Bibliotheksinhalte."
       },

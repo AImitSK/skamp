@@ -13,6 +13,7 @@ import { Button } from "@/components/button";
 import { Input } from "@/components/input";
 import { Textarea } from "@/components/textarea";
 import { Select } from "@/components/select";
+import { Badge } from "@/components/badge";
 import { LanguageSelectorMulti } from "@/components/language-selector";
 import { CountrySelectorMulti } from "@/components/country-selector";
 import { 
@@ -31,7 +32,7 @@ interface PublicationModalProps {
   onClose: () => void;
   publication?: Publication;
   onSuccess: () => void;
-  preselectedPublisherId?: string; // Für Vorauswahl wenn von Company-Modal kommend
+  preselectedPublisherId?: string;
 }
 
 // Alert Component
@@ -112,6 +113,69 @@ const geographicScopes = [
   { value: 'global', label: 'Global' }
 ];
 
+// Tag Input Component
+function TagInput({ 
+  value, 
+  onChange, 
+  placeholder 
+}: { 
+  value: string[];
+  onChange: (tags: string[]) => void;
+  placeholder?: string;
+}) {
+  const [inputValue, setInputValue] = useState('');
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      addTag();
+    } else if (e.key === 'Backspace' && inputValue === '' && value.length > 0) {
+      // Remove last tag
+      onChange(value.slice(0, -1));
+    }
+  };
+
+  const addTag = () => {
+    const tag = inputValue.trim();
+    if (tag && !value.includes(tag)) {
+      onChange([...value, tag]);
+      setInputValue('');
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    onChange(value.filter(tag => tag !== tagToRemove));
+  };
+
+  return (
+    <div className="min-h-[42px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 focus-within:border-[#005fab] focus-within:ring-1 focus-within:ring-[#005fab]">
+      <div className="flex flex-wrap gap-2 items-center">
+        {value.map((tag, index) => (
+          <Badge key={index} color="blue" className="inline-flex items-center gap-1 pl-2 pr-1 py-1">
+            <span className="text-xs">{tag}</span>
+            <button
+              type="button"
+              onClick={() => removeTag(tag)}
+              className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-blue-600 hover:text-white transition-colors"
+            >
+              <XMarkIcon className="h-3 w-3" />
+            </button>
+          </Badge>
+        ))}
+        <input
+          type="text"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={addTag}
+          placeholder={value.length === 0 ? placeholder : ''}
+          className="flex-1 min-w-[120px] outline-none text-sm"
+        />
+      </div>
+    </div>
+  );
+}
+
 export function PublicationModal({ isOpen, onClose, publication, onSuccess, preselectedPublisherId }: PublicationModalProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -140,7 +204,6 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess, pres
     };
     geographicScope: 'local' | 'regional' | 'national' | 'international' | 'global';
     websiteUrl?: string;
-    publicNotes?: string;
     internalNotes?: string;
   }>({
     title: '',
@@ -204,9 +267,6 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess, pres
     url: string;
   }>>([]);
 
-  // Focus Areas als Array von Strings
-  const [focusAreasInput, setFocusAreasInput] = useState('');
-
   // Load publishers on mount
   useEffect(() => {
     loadPublishers();
@@ -249,7 +309,6 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess, pres
         },
         geographicScope: publication.geographicScope,
         websiteUrl: publication.websiteUrl,
-        publicNotes: publication.publicNotes,
         internalNotes: publication.internalNotes
       });
 
@@ -297,9 +356,6 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess, pres
       if (publication.socialMediaUrls) {
         setSocialMediaUrls(publication.socialMediaUrls);
       }
-
-      // Focus Areas
-      setFocusAreasInput(publication.focusAreas?.join(', ') || '');
     }
   }, [publication]);
 
@@ -404,7 +460,7 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess, pres
         if (metrics.print.pricePerIssue) {
           preparedMetrics.print.pricePerIssue = {
             amount: parseFloat(metrics.print.pricePerIssue),
-            currency: 'EUR' // Default currency
+            currency: 'EUR'
           };
         }
         
@@ -473,7 +529,7 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess, pres
         languages: formData.languages,
         geographicTargets: formData.geographicTargets,
         geographicScope: formData.geographicScope,
-        focusAreas: focusAreasInput.split(',').map(s => s.trim()).filter(Boolean),
+        focusAreas: formData.focusAreas,
         metrics: preparedMetrics,
         identifiers: identifiers.filter(id => id.value).map(id => {
           const identifier: any = {
@@ -496,9 +552,6 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess, pres
       }
       if (formData.websiteUrl) {
         publicationData.websiteUrl = formData.websiteUrl;
-      }
-      if (formData.publicNotes) {
-        publicationData.publicNotes = formData.publicNotes;
       }
       if (formData.internalNotes) {
         publicationData.internalNotes = formData.internalNotes;
@@ -590,7 +643,7 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess, pres
           </nav>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6 max-h-[60vh] overflow-y-auto">
+        <form onSubmit={handleSubmit} className="space-y-6 max-h-[60vh] overflow-y-auto pr-4">
           {/* Grunddaten Tab */}
           {activeTab === 'basic' && (
             <div className="space-y-4">
@@ -767,14 +820,16 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess, pres
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Themenbereiche (kommagetrennt)
+                  Themenbereiche
                 </label>
-                <Input
-                  type="text"
-                  value={focusAreasInput}
-                  onChange={(e) => setFocusAreasInput(e.target.value)}
-                  placeholder="Wirtschaft, Technologie, Politik..."
+                <TagInput
+                  value={formData.focusAreas}
+                  onChange={(tags) => setFormData({ ...formData, focusAreas: tags })}
+                  placeholder="Tippen Sie und drücken Sie Enter..."
                 />
+                <p className="mt-1 text-xs text-gray-500">
+                  Geben Sie Themenbereiche ein und drücken Sie Enter oder Komma
+                </p>
               </div>
 
               <div className="flex items-center">
@@ -787,18 +842,6 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess, pres
                 <label className="ml-2 block text-sm text-gray-900">
                   Publikation ist verifiziert
                 </label>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Öffentliche Notizen (für Media Kit)
-                </label>
-                <Textarea
-                  value={formData.publicNotes}
-                  onChange={(e) => setFormData({ ...formData, publicNotes: e.target.value })}
-                  rows={2}
-                  placeholder="Informationen für externe Verwendung..."
-                />
               </div>
 
               <div>
@@ -1111,7 +1154,7 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess, pres
                           updated[index] = { ...updated[index], type: e.target.value as any };
                           setIdentifiers(updated);
                         }}
-                        className="w-1/3"
+                        className="w-40"
                       >
                         <option value="ISSN">ISSN</option>
                         <option value="ISBN">ISBN</option>
@@ -1163,7 +1206,7 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess, pres
                           setSocialMediaUrls(updated);
                         }}
                         placeholder="Platform (z.B. Twitter)"
-                        className="w-1/3"
+                        className="w-40"
                       />
                       <Input
                         type="url"

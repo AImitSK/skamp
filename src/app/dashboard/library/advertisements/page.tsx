@@ -818,40 +818,6 @@ export default function AdvertisementsPage() {
         </nav>
       )}
 
-      {/* Statistics */}
-      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <dt className="text-sm font-medium text-gray-500 truncate">
-              Aktive Werbemittel
-            </dt>
-            <dd className="mt-1 text-3xl font-semibold text-gray-900">
-              {advertisements.filter(ad => ad.status === 'active').length}
-            </dd>
-          </div>
-        </div>
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <dt className="text-sm font-medium text-gray-500 truncate">
-              Verschiedene Typen
-            </dt>
-            <dd className="mt-1 text-3xl font-semibold text-gray-900">
-              {new Set(advertisements.map(ad => ad.type)).size}
-            </dd>
-          </div>
-        </div>
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <dt className="text-sm font-medium text-gray-500 truncate">
-              Abgedeckte Publikationen
-            </dt>
-            <dd className="mt-1 text-3xl font-semibold text-gray-900">
-              {new Set(advertisements.flatMap(ad => ad.publicationIds)).size}
-            </dd>
-          </div>
-        </div>
-      </div>
-
       {/* Advertisement Modal */}
       {showAdModal && (
         <AdvertisementModal
