@@ -30,7 +30,7 @@ import { BaseEntity, GdprConsent, BusinessIdentifier, InternationalAddress } fro
 
 class CompanyEnhancedService extends BaseService<CompanyEnhanced> {
   constructor() {
-    super('companies');
+    super('companies_enhanced'); // CHANGED: Using companies_enhanced collection
   }
 
   /**
@@ -214,7 +214,7 @@ class CompanyEnhancedService extends BaseService<CompanyEnhanced> {
     try {
       // Lade alle Kontakte für Zählung
       const contactsQuery = query(
-        collection(db, 'contacts'),
+        collection(db, 'contacts_enhanced'), // CHANGED: Using contacts_enhanced
         where('organizationId', '==', organizationId),
         where('deletedAt', '==', null)
       );
@@ -257,12 +257,14 @@ class CompanyEnhancedService extends BaseService<CompanyEnhanced> {
     updated: number;
     skipped: number;
     errors: { row: number; error: string }[];
+    warnings: { row: number; warning: string }[];
   }> {
     const results = {
       created: 0,
       updated: 0,
       skipped: 0,
-      errors: [] as { row: number; error: string }[]
+      errors: [] as { row: number; error: string }[],
+      warnings: [] as { row: number; warning: string }[]
     };
 
     for (let i = 0; i < companies.length; i++) {
@@ -277,12 +279,45 @@ class CompanyEnhancedService extends BaseService<CompanyEnhanced> {
           continue;
         }
 
+        // Warnung für fehlende empfohlene Felder
+        if (!company.type) {
+          results.warnings.push({
+            row: i + 1,
+            warning: 'Firmentyp fehlt, Standard "other" wird verwendet'
+          });
+        }
+
         // Duplikat-Prüfung
         if (options.duplicateCheck) {
-          const existing = await this.findDuplicate(
-            company,
-            context.organizationId
-          );
+          // Inline duplicate check
+          let existing = null;
+          
+          // Suche nach gleichen Identifikatoren
+          if (company.identifiers?.length) {
+            for (const identifier of company.identifiers) {
+              const matches = await this.searchByIdentifier(
+                identifier,
+                context.organizationId
+              );
+              if (matches.length > 0) {
+                existing = matches[0];
+                break;
+              }
+            }
+          }
+
+          // Suche nach gleichem Namen
+          if (!existing) {
+            const name = company.officialName || company.name;
+            if (name) {
+              const matches = await this.search(context.organizationId, {
+                name
+              });
+              if (matches.length > 0) {
+                existing = matches[0];
+              }
+            }
+          }
 
           if (existing) {
             if (options.updateExisting && existing.id) {
@@ -290,6 +325,10 @@ class CompanyEnhancedService extends BaseService<CompanyEnhanced> {
               results.updated++;
             } else {
               results.skipped++;
+              results.warnings.push({
+                row: i + 1,
+                warning: `Firma "${company.name || company.officialName}" existiert bereits und wurde übersprungen`
+              });
             }
             continue;
           }
@@ -307,40 +346,6 @@ class CompanyEnhancedService extends BaseService<CompanyEnhanced> {
     }
 
     return results;
-  }
-
-  /**
-   * Findet mögliche Duplikate
-   */
-  private async findDuplicate(
-    company: Partial<CompanyEnhanced>,
-    organizationId: string
-  ): Promise<CompanyEnhanced | null> {
-    // Suche nach gleichen Identifikatoren
-    if (company.identifiers?.length) {
-      for (const identifier of company.identifiers) {
-        const matches = await this.searchByIdentifier(
-          identifier,
-          organizationId
-        );
-        if (matches.length > 0) {
-          return matches[0];
-        }
-      }
-    }
-
-    // Suche nach gleichem Namen
-    const name = company.officialName || company.name;
-    if (name) {
-      const matches = await this.search(organizationId, {
-        name
-      });
-      if (matches.length > 0) {
-        return matches[0];
-      }
-    }
-
-    return null;
   }
 
   /**
@@ -367,7 +372,7 @@ class CompanyEnhancedService extends BaseService<CompanyEnhanced> {
 
 class ContactEnhancedService extends BaseService<ContactEnhanced> {
   constructor() {
-    super('contacts');
+    super('contacts_enhanced'); // CHANGED: Using contacts_enhanced collection
   }
 
   /**
@@ -635,7 +640,7 @@ class ContactEnhancedService extends BaseService<ContactEnhanced> {
       }
 
       const companiesQuery = query(
-        collection(db, 'companies'),
+        collection(db, 'companies_enhanced'), // CHANGED: Using companies_enhanced
         where('organizationId', '==', organizationId),
         where('__name__', 'in', companyIds.slice(0, 10)) // Firestore Limit
       );
@@ -682,12 +687,14 @@ class ContactEnhancedService extends BaseService<ContactEnhanced> {
     updated: number;
     skipped: number;
     errors: { row: number; error: string }[];
+    warnings: { row: number; warning: string }[];
   }> {
     const results = {
       created: 0,
       updated: 0,
       skipped: 0,
-      errors: [] as { row: number; error: string }[]
+      errors: [] as { row: number; error: string }[],
+      warnings: [] as { row: number; warning: string }[]
     };
 
     for (let i = 0; i < contacts.length; i++) {
@@ -703,6 +710,14 @@ class ContactEnhancedService extends BaseService<ContactEnhanced> {
           continue;
         }
 
+        // Warnung für fehlende E-Mail
+        if (!contact.emails || contact.emails.length === 0) {
+          results.warnings.push({
+            row: i + 1,
+            warning: 'Keine E-Mail-Adresse angegeben'
+          });
+        }
+
         // Default Company zuweisen falls gewünscht
         if (options.defaultCompanyId && !contact.companyId) {
           contact.companyId = options.defaultCompanyId;
@@ -710,10 +725,34 @@ class ContactEnhancedService extends BaseService<ContactEnhanced> {
 
         // Duplikat-Prüfung
         if (options.duplicateCheck) {
-          const existing = await this.findDuplicate(
-            contact,
-            context.organizationId
-          );
+          // Inline duplicate check
+          let existing = null;
+          
+          // Suche nach gleicher E-Mail
+          if (contact.emails?.length) {
+            const primaryEmail = contact.emails.find(e => e.isPrimary) || contact.emails[0];
+            if (primaryEmail) {
+              const matches = await this.searchByEmail(
+                primaryEmail.email,
+                context.organizationId
+              );
+              if (matches.length > 0) {
+                existing = matches[0];
+              }
+            }
+          }
+
+          // Suche nach gleichem Namen in gleicher Firma
+          if (!existing && contact.name && contact.companyId) {
+            const all = await this.search(context.organizationId, {
+              companyId: contact.companyId
+            });
+            
+            existing = all.find(c => 
+              c.name.firstName === contact.name!.firstName &&
+              c.name.lastName === contact.name!.lastName
+            );
+          }
 
           if (existing) {
             if (options.updateExisting && existing.id) {
@@ -721,6 +760,10 @@ class ContactEnhancedService extends BaseService<ContactEnhanced> {
               results.updated++;
             } else {
               results.skipped++;
+              results.warnings.push({
+                row: i + 1,
+                warning: `Kontakt "${contact.displayName || `${contact.name.firstName} ${contact.name.lastName}`}" existiert bereits und wurde übersprungen`
+              });
             }
             continue;
           }
@@ -738,46 +781,6 @@ class ContactEnhancedService extends BaseService<ContactEnhanced> {
     }
 
     return results;
-  }
-
-  /**
-   * Findet mögliche Duplikate
-   */
-  private async findDuplicate(
-    contact: Partial<ContactEnhanced>,
-    organizationId: string
-  ): Promise<ContactEnhanced | null> {
-    // Suche nach gleicher E-Mail
-    if (contact.emails?.length) {
-      const primaryEmail = contact.emails.find(e => e.isPrimary) || contact.emails[0];
-      if (primaryEmail) {
-        const matches = await this.searchByEmail(
-          primaryEmail.email,
-          organizationId
-        );
-        if (matches.length > 0) {
-          return matches[0];
-        }
-      }
-    }
-
-    // Suche nach gleichem Namen in gleicher Firma
-    if (contact.name && contact.companyId) {
-      const all = await this.search(organizationId, {
-        companyId: contact.companyId
-      });
-      
-      const match = all.find(c => 
-        c.name.firstName === contact.name!.firstName &&
-        c.name.lastName === contact.name!.lastName
-      );
-      
-      if (match) {
-        return match;
-      }
-    }
-
-    return null;
   }
 
   /**
@@ -828,12 +831,12 @@ class TagEnhancedService extends BaseService<TagEnhanced> {
       // Zähle Verwendungen
       const [companies, contacts] = await Promise.all([
         getDocs(query(
-          collection(db, 'companies'),
+          collection(db, 'companies_enhanced'), // CHANGED: Using companies_enhanced
           where('organizationId', '==', organizationId),
           where('deletedAt', '==', null)
         )),
         getDocs(query(
-          collection(db, 'contacts'),
+          collection(db, 'contacts_enhanced'), // CHANGED: Using contacts_enhanced
           where('organizationId', '==', organizationId),
           where('deletedAt', '==', null)
         ))
@@ -894,7 +897,7 @@ class TagEnhancedService extends BaseService<TagEnhanced> {
       
       // Update Companies
       const companiesQuery = query(
-        collection(db, 'companies'),
+        collection(db, 'companies_enhanced'), // CHANGED: Using companies_enhanced
         where('organizationId', '==', context.organizationId),
         where('tagIds', 'array-contains', sourceTagId)
       );
@@ -914,7 +917,7 @@ class TagEnhancedService extends BaseService<TagEnhanced> {
 
       // Update Contacts
       const contactsQuery = query(
-        collection(db, 'contacts'),
+        collection(db, 'contacts_enhanced'), // CHANGED: Using contacts_enhanced
         where('organizationId', '==', context.organizationId),
         where('tagIds', 'array-contains', sourceTagId)
       );

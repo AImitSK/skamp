@@ -16,6 +16,9 @@ import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dia
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from "@/components/dropdown";
 import { Popover, Transition } from '@headlessui/react';
 import * as Headless from '@headlessui/react';
+import ImportModalEnhanced from "./ImportModalEnhanced";
+import { exportCompaniesToCSV, exportContactsToCSV, downloadCSV } from "@/lib/utils/exportUtils";
+import { CurrencyCode } from '@/types/international';
 import { 
   PlusIcon, 
   MagnifyingGlassIcon, 
@@ -57,6 +60,8 @@ import { companyServiceEnhanced } from "@/lib/firebase/company-service-enhanced"
 import { Timestamp } from 'firebase/firestore';
 import { CountryCode } from '@/types/international';
 import { COMPANY_STATUS_OPTIONS, LIFECYCLE_STAGE_OPTIONS } from '@/types/crm-enhanced';
+import { companiesEnhancedService, contactsEnhancedService } from "@/lib/firebase/crm-service-enhanced";
+
 
 type TabType = 'companies' | 'contacts';
 type ViewMode = 'grid' | 'list';
@@ -219,21 +224,95 @@ export default function ContactsPage() {
     }
   }, [user]); 
 
-  const loadData = async () => {
+ const loadData = async () => {
     if (!user) return;
     setLoading(true);
     try {
-      const [companiesData, contactsData, tagsData, enhancedCompData] = await Promise.all([
+      // Lade Legacy-Daten
+      const [companiesData, contactsData, tagsData] = await Promise.all([
         companiesService.getAll(user.uid),
         contactsService.getAll(user.uid),
-        tagsService.getAll(user.uid),
-        companyServiceEnhanced.getAll(user.uid)
+        tagsService.getAll(user.uid)
       ]);
       
+      // Lade Enhanced-Daten
+      const [enhancedCompData, enhancedContactsData] = await Promise.all([
+        companiesEnhancedService.getAll(user.uid),
+        contactsEnhancedService.getAll(user.uid)
+      ]);
+      
+      // Merge Legacy und Enhanced Companies
+      const mergedCompanies = [...companiesData];
+      
+      // Füge Enhanced Companies hinzu, die nicht in Legacy existieren
+      enhancedCompData.forEach(enhancedCompany => {
+        const existsInLegacy = companiesData.some(c => c.id === enhancedCompany.id);
+        if (!existsInLegacy) {
+          // Konvertiere Enhanced zu Legacy-Format für die Anzeige
+          const legacyFormat: Company = {
+            id: enhancedCompany.id!,
+            name: enhancedCompany.name,
+            type: enhancedCompany.type,
+            industry: enhancedCompany.industryClassification?.primary || '',
+            website: enhancedCompany.website || '',
+            phone: enhancedCompany.phones?.[0]?.number || '',
+            email: enhancedCompany.emails?.[0]?.email || '',
+            address: {
+              street: enhancedCompany.mainAddress?.street || '',
+              street2: '',
+              city: enhancedCompany.mainAddress?.city || '',
+              zip: enhancedCompany.mainAddress?.postalCode || '',
+              state: enhancedCompany.mainAddress?.region || '',
+              country: enhancedCompany.mainAddress?.countryCode || ''
+            },
+            employees: enhancedCompany.financial?.employees,
+            revenue: enhancedCompany.financial?.annualRevenue?.amount,
+            notes: enhancedCompany.internalNotes || '',
+            tagIds: enhancedCompany.tagIds || [],
+            socialMedia: enhancedCompany.socialMedia || [],
+            userId: enhancedCompany.organizationId || enhancedCompany.createdBy || user.uid,
+            createdAt: enhancedCompany.createdAt,
+            updatedAt: enhancedCompany.updatedAt
+          };
+          mergedCompanies.push(legacyFormat);
+        }
+      });
+      
+      // Merge Legacy und Enhanced Contacts
+      const mergedContacts = [...contactsData];
+      
+      // Füge Enhanced Contacts hinzu, die nicht in Legacy existieren
+      enhancedContactsData.forEach(enhancedContact => {
+        const existsInLegacy = contactsData.some(c => c.id === enhancedContact.id);
+        if (!existsInLegacy) {
+          // Konvertiere Enhanced zu Legacy-Format für die Anzeige
+          const legacyFormat: Contact = {
+            id: enhancedContact.id!,
+            firstName: enhancedContact.name.firstName,
+            lastName: enhancedContact.name.lastName,
+            email: enhancedContact.emails?.[0]?.email || '',
+            phone: enhancedContact.phones?.[0]?.number || '',
+            position: enhancedContact.position || '',
+            companyId: enhancedContact.companyId,
+            companyName: enhancedContact.companyName,
+            notes: enhancedContact.personalInfo?.notes || '',
+            tagIds: enhancedContact.tagIds || [],
+            socialMedia: enhancedContact.socialProfiles?.map(p => ({
+              platform: p.platform as any,
+              url: p.url
+            })) || [],
+            userId: enhancedContact.organizationId || enhancedContact.createdBy || user.uid,
+            createdAt: enhancedContact.createdAt,
+            updatedAt: enhancedContact.updatedAt
+          };
+          mergedContacts.push(legacyFormat);
+        }
+      });
+      
       setEnhancedCompanies(enhancedCompData);
-      setEnhancedContacts([]); // Vorerst leer, nutzen Legacy-Daten
-      setCompanies(companiesData);
-      setContacts(contactsData);
+      setEnhancedContacts(enhancedContactsData);
+      setCompanies(mergedCompanies);
+      setContacts(mergedContacts);
       setTags(tagsData);
     } catch (error) {
       showAlert('error', 'Fehler beim Laden', 'Die Daten konnten nicht geladen werden.');
@@ -508,49 +587,152 @@ const paginatedEnhancedCompanies = useMemo(() => {
   };
 
   // Export Function
+  // Export Function mit Enhanced Data
   const handleExport = () => {
-    const data = activeTab === 'companies' ? filteredCompanies : filteredContacts;
-    const filename = activeTab === 'companies' ? 'firmen-export.csv' : 'kontakte-export.csv';
-
-    if (data.length === 0) {
-      showAlert('warning', 'Keine Daten zum Exportieren');
-      return;
-    }
+    const isCompaniesTab = activeTab === 'companies';
+    const filename = isCompaniesTab ? 'firmen-export.csv' : 'kontakte-export.csv';
 
     try {
-      let csv;
-      if (activeTab === 'companies') {
-        const companyData = (data as Company[]).map(company => ({
-          "Firmenname": company.name,
-          "Typ": companyTypeLabels[company.type],
-          "Branche": company.industry || '',
-          "Website": company.website || '',
-          "Telefon": company.phone || '',
-        }));
-        csv = Papa.unparse(companyData);
+      let csvContent: string;
+      
+      if (isCompaniesTab) {
+        // Check if we have enhanced data
+        const hasEnhancedData = enhancedCompanies.length > 0;
+        
+        if (hasEnhancedData) {
+          // Export enhanced companies
+          const exportData = filteredCompanies.map(company => {
+            const enhanced = enhancedCompanies.find(ec => ec.id === company.id);
+            return enhanced || {
+              ...company,
+              id: company.id!,
+              organizationId: user!.uid,
+              createdBy: user!.uid,
+              name: company.name,
+              type: company.type,
+              officialName: company.name,
+              mainAddress: company.address ? {
+                street: company.address.street || '',
+                city: company.address.city || '',
+                postalCode: company.address.zip || '',
+                region: company.address.state || '',
+                countryCode: (company.address.country || 'DE') as CountryCode
+              } : undefined,
+              industryClassification: company.industry ? { primary: company.industry } : undefined,
+              financial: {
+                annualRevenue: company.revenue ? { amount: company.revenue, currency: 'EUR' as CurrencyCode } : undefined,
+                employees: company.employees
+              },
+              phones: company.phone ? [{
+                type: 'business' as const,
+                number: company.phone,
+                isPrimary: true
+              }] : [],
+              emails: company.email ? [{
+                type: 'general' as const,
+                email: company.email,
+                isPrimary: true
+              }] : [],
+              socialMedia: company.socialMedia || [],
+              tagIds: company.tagIds || [],
+              internalNotes: company.notes,
+              website: company.website
+            } as CompanyEnhanced;
+          });
+          
+          csvContent = exportCompaniesToCSV(exportData, tagsMap, {
+            includeIds: false,
+            includeTimestamps: false,
+            includeTags: true
+          });
+        } else {
+          // Fallback to legacy export
+          const companyData = filteredCompanies.map(company => ({
+            "Firmenname": company.name,
+            "Typ": companyTypeLabels[company.type],
+            "Branche": company.industry || '',
+            "Website": company.website || '',
+            "Telefon": company.phone || '',
+            "E-Mail": company.email || '',
+            "Straße": company.address?.street || '',
+            "PLZ": company.address?.zip || '',
+            "Stadt": company.address?.city || '',
+            "Bundesland": company.address?.state || '',
+            "Mitarbeiter": company.employees || '',
+            "Umsatz": company.revenue || '',
+            "Notizen": company.notes || ''
+          }));
+          csvContent = Papa.unparse(companyData);
+        }
       } else {
-        const contactData = (data as Contact[]).map(contact => ({
-          "Vorname": contact.firstName,
-          "Nachname": contact.lastName,
-          "Firma": contact.companyName || '',
-          "Position": contact.position || '',
-          "E-Mail": contact.email || '',
-          "Telefon": contact.phone || '',
-        }));
-        csv = Papa.unparse(contactData);
+        // Export contacts
+        const hasEnhancedData = enhancedContacts.length > 0;
+        
+        if (hasEnhancedData) {
+          // Export enhanced contacts
+          const exportData = filteredContacts.map(contact => {
+            const enhanced = enhancedContacts.find(ec => ec.id === contact.id);
+            return enhanced || {
+              ...contact,
+              id: contact.id!,
+              organizationId: user!.uid,
+              createdBy: user!.uid,
+              name: {
+                firstName: contact.firstName,
+                lastName: contact.lastName
+              },
+              displayName: `${contact.firstName} ${contact.lastName}`,
+              emails: contact.email ? [{
+                type: 'business' as const,
+                email: contact.email,
+                isPrimary: true
+              }] : [],
+              phones: contact.phone ? [{
+                type: 'business' as const,
+                number: contact.phone,
+                isPrimary: true
+              }] : [],
+              status: 'active' as const,
+              position: contact.position,
+              companyName: contact.companyName,
+              tagIds: contact.tagIds || [],
+              socialMedia: contact.socialMedia || [],
+              personalInfo: {
+                notes: contact.notes
+              }
+            } as ContactEnhanced;
+          });
+          
+          csvContent = exportContactsToCSV(exportData, companiesMap, tagsMap, {
+            includeIds: false,
+            includeTimestamps: false,
+            includeTags: true
+          });
+        } else {
+          // Fallback to legacy export
+          const contactData = filteredContacts.map(contact => ({
+            "Vorname": contact.firstName,
+            "Nachname": contact.lastName,
+            "Firma": contact.companyName || '',
+            "Position": contact.position || '',
+            "E-Mail": contact.email || '',
+            "Telefon": contact.phone || '',
+            "Notizen": contact.notes || ''
+          }));
+          csvContent = Papa.unparse(contactData);
+        }
       }
-      
-      const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.setAttribute('download', filename);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      showAlert('success', 'Export erfolgreich');
+
+      if (!csvContent || filteredCompanies.length === 0 && filteredContacts.length === 0) {
+        showAlert('warning', 'Keine Daten zum Exportieren');
+        return;
+      }
+
+      downloadCSV(csvContent, filename);
+      showAlert('success', `Export erfolgreich: ${filename}`);
     } catch (error) {
-      showAlert('error', 'Export fehlgeschlagen');
+      console.error('Export error:', error);
+      showAlert('error', 'Export fehlgeschlagen', 'Bitte prüfen Sie die Konsole für Details.');
     }
   };
 
@@ -1381,8 +1563,7 @@ const paginatedEnhancedCompanies = useMemo(() => {
       )}
       
       {showImportModal && (
-        <ImportModal 
-          activeTab={activeTab} 
+        <ImportModalEnhanced 
           onClose={() => setShowImportModal(false)} 
           onImportSuccess={() => {
             setShowImportModal(false);
