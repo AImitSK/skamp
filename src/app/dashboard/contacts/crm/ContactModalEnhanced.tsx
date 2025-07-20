@@ -1,4 +1,4 @@
-// src/components/crm/ContactModalEnhanced.tsx
+// src/app/dashboard/contacts/crm/ContactModalEnhanced.tsx
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -12,11 +12,10 @@ import { Badge } from "@/components/badge";
 import { Text } from "@/components/text";
 import { Checkbox } from "@/components/checkbox";
 import { Radio, RadioGroup } from "@/components/radio";
-import { contactsService, companiesService, tagsService } from "@/lib/firebase/crm-service";
-import { contactsEnhancedService } from "@/lib/firebase/crm-service-enhanced";
+import { contactsEnhancedService, companiesEnhancedService, tagsEnhancedService } from "@/lib/firebase/crm-service-enhanced";
 import { publicationService } from "@/lib/firebase/library-service";
-import { Contact, Company, Tag, TagColor, SocialPlatform, socialPlatformLabels } from "@/types/crm";
-import { ContactEnhanced, CONTACT_STATUS_OPTIONS, COMMUNICATION_CHANNELS, MEDIA_TYPES, SUBMISSION_FORMATS } from "@/types/crm-enhanced";
+import { Tag, TagColor, SocialPlatform, socialPlatformLabels } from "@/types/crm";
+import { ContactEnhanced, CompanyEnhanced, CONTACT_STATUS_OPTIONS, COMMUNICATION_CHANNELS, MEDIA_TYPES, SUBMISSION_FORMATS } from "@/types/crm-enhanced";
 import { CountryCode, LanguageCode } from "@/types/international";
 import { Publication } from "@/types/library";
 import { TagInput } from "@/components/tag-input";
@@ -126,8 +125,8 @@ function Alert({
 }
 
 interface ContactModalEnhancedProps {
-  contact: Contact | null;
-  companies: Company[];
+  contact: ContactEnhanced | null;
+  companies: CompanyEnhanced[];
   onClose: () => void;
   onSave: () => void;
   userId: string;
@@ -176,55 +175,42 @@ export default function ContactModalEnhanced({
   const [tags, setTags] = useState<Tag[]>([]);
   const [publications, setPublications] = useState<Publication[]>([]);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
-  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [selectedCompany, setSelectedCompany] = useState<CompanyEnhanced | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (contact) {
-      // Convert legacy contact to enhanced format
-      const enhancedData: Partial<ContactEnhanced> = {
-        name: {
-          firstName: contact.firstName,
-          lastName: contact.lastName,
+      // Directly use enhanced contact data
+      setFormData({
+        ...contact,
+        // Ensure required fields have defaults
+        name: contact.name || {
+          firstName: '',
+          lastName: '',
           salutation: '',
           title: ''
         },
-        displayName: `${contact.firstName} ${contact.lastName}`,
-        position: contact.position,
-        companyId: contact.companyId,
-        companyName: contact.companyName,
-        status: 'active',
-        emails: contact.email ? [{
-          type: 'business',
-          email: contact.email,
-          isPrimary: true
-        }] : [],
-        phones: contact.phone ? [{
-          type: 'business',
-          number: contact.phone,
-          isPrimary: true
-        }] : [],
-        socialProfiles: contact.socialMedia?.map(sm => ({
-          platform: sm.platform,
-          url: sm.url
-        })) || [],
+        displayName: contact.displayName || `${contact.name?.firstName || ''} ${contact.name?.lastName || ''}`,
+        status: contact.status || 'active',
+        emails: contact.emails || [],
+        phones: contact.phones || [],
+        addresses: contact.addresses || [],
+        socialProfiles: contact.socialProfiles || [],
         tagIds: contact.tagIds || [],
-        personalInfo: {
-          notes: contact.notes
-        },
-        communicationPreferences: {
+        communicationPreferences: contact.communicationPreferences || {
           preferredLanguage: 'de' as LanguageCode
         },
-        mediaProfile: {
+        mediaProfile: contact.mediaProfile || {
           isJournalist: false,
           publicationIds: [],
           beats: [],
           mediaTypes: [],
           preferredFormats: []
-        }
-      };
-      
-      setFormData(enhancedData);
+        },
+        professionalInfo: contact.professionalInfo || {},
+        personalInfo: contact.personalInfo || {},
+        gdprConsents: contact.gdprConsents || []
+      });
       
       if (contact.companyId) {
         const company = companies.find(c => c.id === contact.companyId);
@@ -234,13 +220,16 @@ export default function ContactModalEnhanced({
     
     loadTags();
     loadPublications();
-  }, [contact, companies]);
+  }, [contact, companies, formData.companyId, organizationId]);
 
   const loadTags = async () => {
     if (!organizationId) return;
     try {
-      const orgTags = await tagsService.getAll(organizationId);
-      setTags(orgTags);
+      const orgTags = await tagsEnhancedService.getAll(organizationId);
+      setTags(orgTags.map(tag => ({
+        ...tag,
+        userId: organizationId
+      })));
     } catch (error) {
       console.error('Error loading tags:', error);
     }
@@ -249,8 +238,15 @@ export default function ContactModalEnhanced({
   const loadPublications = async () => {
     if (!organizationId) return;
     try {
-      const pubs = await publicationService.getAll(organizationId);
-      setPublications(pubs);
+      // Wenn eine Firma ausgewählt ist, lade nur deren Publikationen
+      if (formData.companyId) {
+        const pubs = await publicationService.getByPublisherId(formData.companyId, organizationId);
+        setPublications(pubs);
+      } else {
+        // Sonst lade alle Publikationen
+        const pubs = await publicationService.getAll(organizationId);
+        setPublications(pubs);
+      }
     } catch (error) {
       console.error('Error loading publications:', error);
     }
@@ -258,7 +254,14 @@ export default function ContactModalEnhanced({
 
   const handleCreateTag = async (name: string, color: TagColor): Promise<string> => {
     try {
-      const tagId = await tagsService.create({ name, color, userId: organizationId });
+      const tagId = await tagsEnhancedService.create(
+        { 
+          name, 
+          color,
+          organizationId: organizationId
+        },
+        { organizationId: organizationId, userId: userId }
+      );
       await loadTags();
       return tagId;
     } catch (error) {
@@ -383,11 +386,10 @@ export default function ContactModalEnhanced({
       id: `consent_${purpose.toLowerCase()}_${Date.now()}`,
       purpose,
       status: granted ? 'granted' as const : 'revoked' as const,
-      method: 'webform' as const,  // KORRIGIERT: 'form' zu 'webform' geändert
+      method: 'webform' as const,
       legalBasis: 'consent' as const,
       informationProvided: 'Via CRM',
       privacyPolicyVersion: '1.0'
-      // grantedAt und revokedAt werden vom Service automatisch als Timestamp gesetzt
     };
 
     if (existingIndex >= 0) {
@@ -430,36 +432,20 @@ export default function ContactModalEnhanced({
         status: formData.status || 'active'
       };
 
+      const context = { organizationId: userId, userId: userId };
+
       if (contact?.id) {
         // Update existing contact
-        try {
-          // Prüfe zuerst, ob der Contact in der enhanced Collection existiert
-          const enhancedContact = await contactsEnhancedService.getById(contact.id, userId);
-          
-          if (!enhancedContact) {
-            // Contact existiert nicht in enhanced Collection
-            setValidationErrors([
-              'Dieser Kontakt muss zuerst migriert werden. Bitte kontaktieren Sie den Support oder erstellen Sie den Kontakt neu.'
-            ]);
-            setLoading(false);
-            return;
-          }
-          
-          // Update in enhanced collection
-          await contactsEnhancedService.update(
-            contact.id, 
-            dataToSave,
-            { organizationId: userId, userId: userId }
-          );
-        } catch (error) {
-          console.error('Error updating contact:', error);
-          throw error;
-        }
+        await contactsEnhancedService.update(
+          contact.id, 
+          dataToSave,
+          context
+        );
       } else {
-        // Create new contact - always in enhanced collection
+        // Create new contact
         await contactsEnhancedService.create(
           dataToSave as Omit<ContactEnhanced, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy' | 'deletedAt' | 'deletedBy'>,
-          { organizationId: userId, userId: userId }  // Verwende userId für beide!
+          context
         );
       }
       
@@ -666,12 +652,14 @@ export default function ContactModalEnhanced({
                 {/* Tags */}
                 <Field>
                   <Label>Tags</Label>
-                  <TagInput 
-                    selectedTagIds={formData.tagIds || []} 
-                    availableTags={tags} 
-                    onChange={(tagIds) => setFormData({ ...formData, tagIds })} 
-                    onCreateTag={handleCreateTag} 
-                  />
+                  <div className="relative z-10">
+                    <TagInput 
+                      selectedTagIds={formData.tagIds || []} 
+                      availableTags={tags} 
+                      onChange={(tagIds) => setFormData({ ...formData, tagIds })} 
+                      onCreateTag={handleCreateTag} 
+                    />
+                  </div>
                 </Field>
               </FieldGroup>
             )}
@@ -735,7 +723,7 @@ export default function ContactModalEnhanced({
                           </div>
                           <div className="col-span-1">
                             <Button type="button" plain onClick={() => removeEmailField(index)}>
-                              <TrashIcon className="h-5 w-5 text-red-500" />
+                              <TrashIcon className="h-5 w-5 text-zinc-500 hover:text-zinc-700" />
                             </Button>
                           </div>
                         </div>
@@ -803,7 +791,7 @@ export default function ContactModalEnhanced({
                           </div>
                           <div className="col-span-1 pt-2">
                             <Button type="button" plain onClick={() => removePhoneField(index)}>
-                              <TrashIcon className="h-5 w-5 text-red-500" />
+                              <TrashIcon className="h-5 w-5 text-zinc-500 hover:text-zinc-700" />
                             </Button>
                           </div>
                         </div>
@@ -855,7 +843,7 @@ export default function ContactModalEnhanced({
                           </div>
                           <div className="col-span-1">
                             <Button type="button" plain onClick={() => removeSocialProfile(index)}>
-                              <TrashIcon className="h-5 w-5 text-red-500" />
+                              <TrashIcon className="h-5 w-5 text-zinc-500 hover:text-zinc-700" />
                             </Button>
                           </div>
                         </div>
@@ -911,59 +899,90 @@ export default function ContactModalEnhanced({
 
             {/* Media Tab (nur sichtbar wenn Journalist) */}
             {activeTab === 'media' && formData.mediaProfile?.isJournalist && (
-              <FieldGroup>
+              <div className="space-y-6">
+                {/* Info Section */}
+                <Alert 
+                  type="info" 
+                  message="Konfigurieren Sie hier das Medienprofil für Journalisten und Redakteure."
+                />
+
                 {/* Publikationen */}
-                <Field>
-                  <Label>
-                    Publikationen
-                    <InfoTooltip content="Wählen Sie die Publikationen aus, für die dieser Journalist arbeitet" className="ml-1.5 inline-flex align-text-top" />
-                  </Label>
-                  <div className="space-y-2 max-h-60 overflow-y-auto border rounded-lg p-2">
-                    {publications.length > 0 ? (
-                      publications.map((pub) => (
-                        <label key={pub.id} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                          <Checkbox
-                            checked={formData.mediaProfile?.publicationIds?.includes(pub.id!) || false}
-                            onChange={(checked) => {
-                              const currentIds = formData.mediaProfile?.publicationIds || [];
-                              const newIds = checked 
-                                ? [...currentIds, pub.id!]
-                                : currentIds.filter(id => id !== pub.id);
-                              setFormData({
-                                ...formData,
-                                mediaProfile: {
-                                  ...formData.mediaProfile!,
-                                  publicationIds: newIds
-                                }
-                              });
-                            }}
-                          />
-                          <div className="flex-1">
-                            <div className="font-medium text-sm">{pub.title}</div>
-                            <div className="text-xs text-gray-500">
-                              {pub.type} • {pub.format}
-                            </div>
-                          </div>
-                        </label>
-                      ))
-                    ) : (
-                      <Text className="text-sm text-gray-500 text-center py-4">
-                        Keine Publikationen verfügbar
-                      </Text>
-                    )}
+                <div className="space-y-4 rounded-md border p-4">
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-medium text-gray-900">Publikationen</h3>
+                    <p className="text-xs text-gray-500">
+                      {formData.companyId ? 
+                        'Wählen Sie die Publikationen dieser Firma aus, für die der Journalist arbeitet.' :
+                        'Wählen Sie zuerst eine Firma aus, um deren Publikationen anzuzeigen.'
+                      }
+                    </p>
                   </div>
-                </Field>
+                  
+                  {formData.companyId ? (
+                    <div className="max-h-60 overflow-y-auto rounded-lg border bg-gray-50 p-2">
+                      {publications.length > 0 ? (
+                        <div className="space-y-1">
+                          {publications.map((pub) => (
+                            <label key={pub.id} className="flex items-center gap-3 rounded-md p-2 hover:bg-white cursor-pointer transition-colors">
+                              <Checkbox
+                                checked={formData.mediaProfile?.publicationIds?.includes(pub.id!) || false}
+                                onChange={(checked) => {
+                                  const currentIds = formData.mediaProfile?.publicationIds || [];
+                                  const newIds = checked 
+                                    ? [...currentIds, pub.id!]
+                                    : currentIds.filter(id => id !== pub.id);
+                                  setFormData({
+                                    ...formData,
+                                    mediaProfile: {
+                                      ...formData.mediaProfile!,
+                                      publicationIds: newIds
+                                    }
+                                  });
+                                }}
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="font-medium text-sm text-gray-900">{pub.title}</div>
+                                <div className="text-xs text-gray-500">
+                                  {pub.type === 'magazine' ? 'Magazin' :
+                                   pub.type === 'newspaper' ? 'Zeitung' :
+                                   pub.type === 'website' ? 'Website' :
+                                   pub.type === 'blog' ? 'Blog' :
+                                   pub.type === 'trade_journal' ? 'Fachzeitschrift' :
+                                   pub.type} • {pub.format === 'print' ? 'Print' : pub.format === 'online' ? 'Online' : 'Print & Online'}
+                                </div>
+                              </div>
+                              {pub.verified && (
+                                <Badge color="green" className="text-xs">Verifiziert</Badge>
+                              )}
+                            </label>
+                          ))}
+                        </div>
+                      ) : (
+                        <Text className="text-sm text-gray-500 text-center py-4">
+                          Diese Firma hat noch keine Publikationen.
+                        </Text>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="rounded-lg bg-amber-50 p-4">
+                      <Text className="text-sm text-amber-800">
+                        Bitte wählen Sie zuerst eine Firma im Tab "Allgemein" aus.
+                      </Text>
+                    </div>
+                  )}
+                </div>
 
                 {/* Ressorts/Beats */}
-                <Field>
-                  <Label>
-                    Ressorts/Themengebiete
-                    <InfoTooltip content="Themen, über die dieser Journalist berichtet" className="ml-1.5 inline-flex align-text-top" />
-                  </Label>
-                  <div className="space-y-2">
+                <div className="space-y-4 rounded-md border p-4">
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-medium text-gray-900">Ressorts & Themengebiete</h3>
+                    <p className="text-xs text-gray-500">Über welche Themen berichtet dieser Journalist?</p>
+                  </div>
+                  
+                  <div className="space-y-3">
                     <div className="flex gap-2">
                       <Input 
-                        placeholder="Ressort hinzufügen..." 
+                        placeholder="z.B. Technologie, Wirtschaft, Politik..." 
                         onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => {
                           if (e.key === 'Enter') {
                             e.preventDefault();
@@ -976,91 +995,112 @@ export default function ContactModalEnhanced({
                       <Button 
                         type="button"
                         plain
-                        onClick={(e: React.MouseEvent<HTMLButtonElement>) => {  // KORRIGIERT: Expliziter Typ für e
+                        onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                           const input = e.currentTarget.previousElementSibling as HTMLInputElement;
                           addBeat(input.value);
                           input.value = '';
                         }}
+                        className="whitespace-nowrap"
                       >
                         Hinzufügen
                       </Button>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      {formData.mediaProfile?.beats?.map((beat) => (
-                        <Badge key={beat} color="blue">
-                          {beat}
-                          <button
-                            type="button"
-                            onClick={() => removeBeat(beat)}
-                            className="ml-1.5 hover:text-blue-800"
-                          >
-                            ×
-                          </button>
-                        </Badge>
+                    
+                    {formData.mediaProfile?.beats?.length ? (
+                      <div className="flex flex-wrap gap-2">
+                        {formData.mediaProfile.beats.map((beat) => (
+                          <Badge key={beat} color="blue">
+                            {beat}
+                            <button
+                              type="button"
+                              onClick={() => removeBeat(beat)}
+                              className="ml-1.5 hover:text-blue-800"
+                            >
+                              ×
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <Text className="text-xs text-gray-500">Noch keine Ressorts hinzugefügt</Text>
+                    )}
+                  </div>
+                </div>
+
+                {/* Medientypen & Formate in zwei Spalten */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Media Types */}
+                  <div className="space-y-4 rounded-md border p-4">
+                    <div className="space-y-1">
+                      <h3 className="text-sm font-medium text-gray-900">Medientypen</h3>
+                      <p className="text-xs text-gray-500">In welchen Medien arbeitet der Journalist?</p>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      {MEDIA_TYPES.map(type => (
+                        <label key={type.value} className="flex items-center gap-2 text-sm">
+                          <Checkbox
+                            checked={formData.mediaProfile?.mediaTypes?.includes(type.value) || false}
+                            onChange={(checked) => {
+                              const current = formData.mediaProfile?.mediaTypes || [];
+                              const updated = checked 
+                                ? [...current, type.value]
+                                : current.filter(t => t !== type.value);
+                              setFormData({
+                                ...formData,
+                                mediaProfile: {
+                                  ...formData.mediaProfile!,
+                                  mediaTypes: updated
+                                }
+                              });
+                            }}
+                          />
+                          <span>{type.label}</span>
+                        </label>
                       ))}
                     </div>
                   </div>
-                </Field>
 
-                {/* Media Types */}
-                <Field>
-                  <Label>Medientypen</Label>
-                  <div className="space-y-2">
-                    {MEDIA_TYPES.map(type => (
-                      <label key={type.value} className="flex items-center gap-2">
-                        <Checkbox
-                          checked={formData.mediaProfile?.mediaTypes?.includes(type.value) || false}
-                          onChange={(checked) => {
-                            const current = formData.mediaProfile?.mediaTypes || [];
-                            const updated = checked 
-                              ? [...current, type.value]
-                              : current.filter(t => t !== type.value);
-                            setFormData({
-                              ...formData,
-                              mediaProfile: {
-                                ...formData.mediaProfile!,
-                                mediaTypes: updated
-                              }
-                            });
-                          }}
-                        />
-                        <span>{type.label}</span>
-                      </label>
-                    ))}
+                  {/* Submission Formats */}
+                  <div className="space-y-4 rounded-md border p-4">
+                    <div className="space-y-1">
+                      <h3 className="text-sm font-medium text-gray-900">Bevorzugte Formate</h3>
+                      <p className="text-xs text-gray-500">Welche Inhaltsformate werden bevorzugt?</p>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      {SUBMISSION_FORMATS.map(format => (
+                        <label key={format.value} className="flex items-center gap-2 text-sm">
+                          <Checkbox
+                            checked={formData.mediaProfile?.preferredFormats?.includes(format.value) || false}
+                            onChange={(checked) => {
+                              const current = formData.mediaProfile?.preferredFormats || [];
+                              const updated = checked 
+                                ? [...current, format.value]
+                                : current.filter(f => f !== format.value);
+                              setFormData({
+                                ...formData,
+                                mediaProfile: {
+                                  ...formData.mediaProfile!,
+                                  preferredFormats: updated
+                                }
+                              });
+                            }}
+                          />
+                          <span>{format.label}</span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
-                </Field>
-
-                {/* Submission Formats */}
-                <Field>
-                  <Label>Bevorzugte Formate</Label>
-                  <div className="space-y-2">
-                    {SUBMISSION_FORMATS.map(format => (
-                      <label key={format.value} className="flex items-center gap-2">
-                        <Checkbox
-                          checked={formData.mediaProfile?.preferredFormats?.includes(format.value) || false}
-                          onChange={(checked) => {
-                            const current = formData.mediaProfile?.preferredFormats || [];
-                            const updated = checked 
-                              ? [...current, format.value]
-                              : current.filter(f => f !== format.value);
-                            setFormData({
-                              ...formData,
-                              mediaProfile: {
-                                ...formData.mediaProfile!,
-                                preferredFormats: updated
-                              }
-                            });
-                          }}
-                        />
-                        <span>{format.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </Field>
+                </div>
 
                 {/* Submission Guidelines */}
-                <Field>
-                  <Label>Einreichungs-Richtlinien</Label>
+                <div className="space-y-4 rounded-md border p-4">
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-medium text-gray-900">Einreichungs-Richtlinien</h3>
+                    <p className="text-xs text-gray-500">Spezielle Anforderungen oder Hinweise für die Kontaktaufnahme</p>
+                  </div>
+                  
                   <Textarea 
                     value={formData.mediaProfile?.submissionGuidelines || ''} 
                     onChange={(e) => setFormData({ 
@@ -1071,10 +1111,10 @@ export default function ContactModalEnhanced({
                       }
                     })} 
                     rows={3}
-                    placeholder="Spezielle Anforderungen für Einreichungen..." 
+                    placeholder="z.B. Bevorzugte Kontaktzeiten, spezielle Anforderungen an Pressemitteilungen, Deadlines..." 
                   />
-                </Field>
-              </FieldGroup>
+                </div>
+              </div>
             )}
 
             {/* Professional Tab */}
