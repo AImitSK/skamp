@@ -225,6 +225,7 @@ export interface StructuredName {
   middleName?: string;
   lastName: string;
   suffix?: string; // Jr., Sr., III, etc.
+  academicTitle?: string; // Prof. Dr., Dr. med., etc.
   
   // Spezielle Formate
   preferredName?: string; // Rufname
@@ -309,6 +310,8 @@ export interface GdprConsent {
   id: string;
   purpose: string; // z.B. "Marketing-Newsletter", "Telefonische Kontaktaufnahme"
   status: 'granted' | 'revoked' | 'pending';
+
+  
   
   // Wann
   grantedAt?: Timestamp;
@@ -330,6 +333,7 @@ export interface GdprConsent {
   confirmationSentAt?: Timestamp;
   confirmedAt?: Timestamp;
   confirmationToken?: string;
+
 }
 
 // ========================================

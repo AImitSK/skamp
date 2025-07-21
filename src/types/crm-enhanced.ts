@@ -144,6 +144,8 @@ export interface CompanyEnhanced extends BaseEntity {
 export interface ContactEnhanced extends BaseEntity {
   // Strukturierter Name
   name: StructuredName;
+
+  internalNotes?: string; // Interne Notizen (nicht für Kunden sichtbar)
   
   // Formatierter Anzeigename (generiert oder manuell)
   displayName: string;
