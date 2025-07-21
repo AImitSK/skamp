@@ -5,9 +5,12 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from "@/context/AuthContext";
-import { companiesService, contactsService, tagsService } from "@/lib/firebase/crm-service";
+import { companiesEnhancedService, contactsEnhancedService, tagsEnhancedService } from "@/lib/firebase/crm-service-enhanced";
+import { publicationService, advertisementService } from "@/lib/firebase/library-service";
 import { listsService } from "@/lib/firebase/lists-service";
-import { Company, Contact, Tag, companyTypeLabels, socialPlatformLabels } from "@/types/crm";
+import { CompanyEnhanced, ContactEnhanced, COMPANY_STATUS_OPTIONS, LIFECYCLE_STAGE_OPTIONS } from "@/types/crm-enhanced";
+import { Tag, companyTypeLabels, socialPlatformLabels } from "@/types/crm";
+import { Publication, Advertisement } from "@/types/library";
 import { DistributionList } from "@/types/lists";
 import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
@@ -15,6 +18,7 @@ import { Button } from "@/components/button";
 import { Badge } from "@/components/badge";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
 import CompanyModal from '@/app/dashboard/contacts/crm/CompanyModal';
+import CompanyMediaSection from "@/components/crm/CompanyMediaSection";
 import {
   ArrowLeftIcon,
   BuildingOfficeIcon,
@@ -36,8 +40,45 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   ExclamationTriangleIcon,
-  InformationCircleIcon
+  InformationCircleIcon,
+  CurrencyEuroIcon,
+  ScaleIcon,
+  BuildingOffice2Icon,
+  IdentificationIcon,
+  BanknotesIcon
 } from "@heroicons/react/20/solid";
+import clsx from "clsx";
+
+// Helper functions
+const formatDate = (timestamp: any) => {
+  if (!timestamp) return 'Unbekannt';
+  const date = timestamp.toDate ? timestamp.toDate() : timestamp;
+  return new Date(date).toLocaleDateString('de-DE', {
+    day: '2-digit',
+    month: 'long', 
+    year: 'numeric'
+  });
+};
+
+const formatCurrency = (amount?: number, currency: string = 'EUR') => {
+  if (!amount) return '—';
+  return new Intl.NumberFormat('de-DE', {
+    style: 'currency',
+    currency: currency
+  }).format(amount);
+};
+
+const getPrimaryEmail = (emails?: Array<{ email: string; isPrimary?: boolean }>): string => {
+  if (!emails || emails.length === 0) return '';
+  const primary = emails.find(e => e.isPrimary);
+  return primary?.email || emails[0].email;
+};
+
+const getPrimaryPhone = (phones?: Array<{ number: string; isPrimary?: boolean }>): string => {
+  if (!phones || phones.length === 0) return '';
+  const primary = phones.find(p => p.isPrimary);
+  return primary?.number || phones[0].number;
+};
 
 // Social Media Icons Component
 const SocialMediaIcon = ({ platform }: { platform: string }) => {
@@ -128,28 +169,20 @@ function Alert({
   );
 }
 
-// Helper functions
-function formatDate(timestamp: any) {
-  if (!timestamp || !timestamp.toDate) return 'Unbekannt';
-  return timestamp.toDate().toLocaleDateString('de-DE', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric'
-  });
-}
-
 // InfoCard Component
 function InfoCard({ 
   title, 
   icon: Icon, 
-  children 
+  children,
+  className = ""
 }: { 
   title: string; 
   icon: React.ComponentType<{ className?: string }>;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="rounded-lg border bg-white overflow-hidden">
+    <div className={clsx("rounded-lg border bg-white overflow-hidden", className)}>
       <div className="px-4 py-3 border-b bg-gray-50">
         <h3 className="font-semibold text-lg flex items-center gap-2">
           <Icon className="h-5 w-5 text-gray-500" />
@@ -163,90 +196,6 @@ function InfoCard({
   );
 }
 
-// Publication Card Component
-function PublicationCard({ publication, contactCount }: { publication: any; contactCount: number }) {
-  const formatLabels: Record<string, string> = {
-    'print': 'Print',
-    'online': 'Online',
-    'both': 'Print & Online'
-  };
-
-  const typeLabels: Record<string, string> = {
-    'newspaper': 'Tageszeitung',
-    'magazine': 'Magazin',
-    'online': 'Online-Medium',
-    'blog': 'Blog',
-    'podcast': 'Podcast',
-    'tv': 'TV-Sender',
-    'radio': 'Radio',
-    'newsletter': 'Newsletter',
-    'trade_journal': 'Fachzeitschrift'
-  };
-
-  const frequencyLabels: Record<string, string> = {
-    'daily': 'Täglich',
-    'weekly': 'Wöchentlich',
-    'biweekly': '14-tägig',
-    'monthly': 'Monatlich',
-    'quarterly': 'Vierteljährlich',
-    'yearly': 'Jährlich',
-    'irregular': 'Unregelmäßig'
-  };
-
-  const totalReach = publication.circulation || publication.reach || 0;
-  const maxReach = 1000000;
-  const reachPercentage = Math.min((totalReach / maxReach) * 100, 100);
-
-  return (
-    <div className="border rounded-lg p-4 bg-white hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between mb-3">
-        <div>
-          <h4 className="font-semibold text-lg">{publication.name}</h4>
-          <div className="flex items-center gap-2 mt-1">
-            <Badge color="blue" className="text-xs whitespace-nowrap">{typeLabels[publication.type] || publication.type}</Badge>
-            <Badge color="green" className="text-xs whitespace-nowrap">{formatLabels[publication.format] || publication.format}</Badge>
-            <Badge color="purple" className="text-xs whitespace-nowrap">{frequencyLabels[publication.frequency] || publication.frequency}</Badge>
-          </div>
-        </div>
-        <div className="text-right">
-          <div className="text-sm text-gray-500">Kontakte</div>
-          <div className="text-xl font-semibold text-gray-900">{contactCount}</div>
-        </div>
-      </div>
-
-      {publication.focusAreas && publication.focusAreas.length > 0 && (
-        <div className="mb-3">
-          <div className="text-sm text-gray-600 mb-1">Themenschwerpunkte:</div>
-          <div className="flex flex-wrap gap-1">
-            {publication.focusAreas.map((area: string, index: number) => (
-              <Badge key={index} color="zinc" className="text-xs whitespace-nowrap">
-                {area}
-              </Badge>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {totalReach > 0 && (
-        <div>
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-sm text-gray-600">
-              {publication.format === 'print' ? 'Auflage' : 'Reichweite'}
-            </span>
-            <span className="text-sm font-medium">{totalReach.toLocaleString('de-DE')}</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
-              className="bg-[#005fab] h-2 rounded-full transition-all duration-500"
-              style={{ width: `${reachPercentage}%` }}
-            />
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 export default function CompanyDetailPage() {
   const { user } = useAuth();
   const params = useParams();
@@ -254,10 +203,14 @@ export default function CompanyDetailPage() {
   const companyId = params.companyId as string;
 
   // States
-  const [company, setCompany] = useState<Company | null>(null);
-  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [company, setCompany] = useState<CompanyEnhanced | null>(null);
+  const [contacts, setContacts] = useState<ContactEnhanced[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [lists, setLists] = useState<DistributionList[]>([]);
+  const [publications, setPublications] = useState<Publication[]>([]);
+  const [advertisements, setAdvertisements] = useState<Advertisement[]>([]);
+  const [parentCompany, setParentCompany] = useState<CompanyEnhanced | null>(null);
+  const [subsidiaries, setSubsidiaries] = useState<CompanyEnhanced[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -276,39 +229,86 @@ export default function CompanyDetailPage() {
     setError(null);
     
     try {
-      const companyData = await companiesService.getById(companyId);
+      // Load company
+      const companyData = await companiesEnhancedService.getById(companyId, user.uid);
       if (companyData) {
         setCompany(companyData);
         
-        const [contactsData, allLists] = await Promise.all([
-          contactsService.getByCompanyId(companyId),
-          listsService.getAll(user.uid)
+        // Load related data in parallel
+        const [allContacts, allLists, tagsData] = await Promise.all([
+          contactsEnhancedService.getAll(user.uid),
+          listsService.getAll(user.uid),
+          companyData.tagIds && companyData.tagIds.length > 0 
+            ? tagsEnhancedService.getAllAsLegacyTags(user.uid).then(allTags => 
+                allTags.filter(tag => companyData.tagIds?.includes(tag.id!))
+              )
+            : Promise.resolve([])
         ]);
         
+        // Filter contacts for this company
+        const contactsData = allContacts.filter(contact => contact.companyId === companyId);
         setContacts(contactsData);
+        setTags(tagsData);
 
-        const companyLists = allLists.filter(list => {
+        // Filter lists that contain this company
+        const companyLists = allLists.filter((list: DistributionList) => {
           if (list.type === 'static' && list.contactIds) {
-            return contactsData.some(contact => list.contactIds?.includes(contact.id!));
+            return contactsData.some((contact: ContactEnhanced) => list.contactIds?.includes(contact.id!));
           } else if (list.type === 'dynamic' && list.filters) {
             if (list.filters.companyTypes?.includes(companyData.type)) return true;
-            if (list.filters.industries?.includes(companyData.industry!)) return true;
-            if (list.filters.countries?.includes(companyData.address?.country!)) return true;
+            if (list.filters.industries?.includes(companyData.industryClassification?.primary!)) return true;
+            if (list.filters.countries?.includes(companyData.mainAddress?.countryCode!)) return true;
           }
           return false;
         });
         
         setLists(companyLists);
 
-        if (companyData.tagIds && companyData.tagIds.length > 0) {
-          const tagsData = await tagsService.getByIds(companyData.tagIds);
-          setTags(tagsData);
+        // Load publications for media companies
+        if (['publisher', 'media_house', 'agency'].includes(companyData.type)) {
+          const [pubs, ads] = await Promise.all([
+            publicationService.getByPublisherId(companyId, user.uid),
+            advertisementService.getAll(user.uid)
+          ]);
+          setPublications(pubs);
+          
+          // Filter advertisements for this company's publications
+          const companyAds = ads.filter(ad => 
+            ad.publicationIds.some(pubId => 
+              pubs.some(pub => pub.id === pubId)
+            )
+          );
+          setAdvertisements(companyAds);
+        }
+
+        // Load parent company if exists
+        if (companyData.parentCompanyId) {
+          try {
+            const parent = await companiesEnhancedService.getById(companyData.parentCompanyId, user.uid);
+            setParentCompany(parent);
+          } catch (err) {
+            console.error('Error loading parent company:', err);
+          }
+        }
+
+        // Load subsidiaries if exists
+        if (companyData.subsidiaryIds && companyData.subsidiaryIds.length > 0) {
+          try {
+            const subsPromises = companyData.subsidiaryIds.map(id => 
+              companiesEnhancedService.getById(id, user.uid)
+            );
+            const subs = await Promise.all(subsPromises);
+            setSubsidiaries(subs.filter(Boolean) as CompanyEnhanced[]);
+          } catch (err) {
+            console.error('Error loading subsidiaries:', err);
+          }
         }
       } else {
         setError("Firma nicht gefunden.");
       }
     } catch (err: any) {
       setError("Fehler beim Laden der Daten.");
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -318,15 +318,36 @@ export default function CompanyDetailPage() {
     loadData();
   }, [loadData]);
 
+  // Helper function to get status/lifecycle labels
+  const getStatusLabel = (status?: string) => {
+    return COMPANY_STATUS_OPTIONS.find(opt => opt.value === status)?.label || status || 'Unbekannt';
+  };
+
+  const getLifecycleLabel = (stage?: string) => {
+    return LIFECYCLE_STAGE_OPTIONS.find(opt => opt.value === stage)?.label || stage || 'Unbekannt';
+  };
+
   // Helper function to count contacts per publication
-  const getContactsPerPublication = (publicationName: string) => {
-    return contacts.filter(contact => 
-      contact.mediaInfo?.publications?.includes(publicationName)
-    ).length;
+  const getContactsPerPublication = (publicationId: string) => {
+    // This would need to be implemented based on your contact-publication relationship
+    return 0; // Placeholder
+  };
+
+  // Get last contact date
+  const getLastContactDate = () => {
+    if (contacts.length === 0) return null;
+    
+    // Sort by createdAt and return the most recent
+    const sorted = contacts.sort((a, b) => {
+      const dateA = a.createdAt?.toDate?.() || new Date(0);
+      const dateB = b.createdAt?.toDate?.() || new Date(0);
+      return dateB.getTime() - dateA.getTime();
+    });
+    
+    return sorted[0]?.createdAt;
   };
 
   const isMediaCompany = company && ['publisher', 'media_house', 'agency'].includes(company.type);
-  const publicationCount = company?.mediaInfo?.publications?.length || 0;
 
   // Loading state
   if (loading) {
@@ -392,11 +413,24 @@ export default function CompanyDetailPage() {
           <div className="flex items-center justify-between">
             <div>
               <Heading>{company.name}</Heading>
-              <div className="flex items-center justify-between">
-                <div>
-                  <Badge color="zinc" className="whitespace-nowrap">{companyTypeLabels[company.type]}</Badge>
-                </div>
-                {company.industry && <Text>{company.industry}</Text>}
+              {company.officialName && company.officialName !== company.name && (
+                <Text className="text-gray-600">{company.officialName}</Text>
+              )}
+              <div className="flex items-center gap-2 mt-2">
+                <Badge color="zinc" className="whitespace-nowrap">{companyTypeLabels[company.type]}</Badge>
+                {company.status && (
+                  <Badge 
+                    color={company.status === 'active' ? 'green' : company.status === 'inactive' ? 'yellow' : 'zinc'}
+                    className="whitespace-nowrap"
+                  >
+                    {getStatusLabel(company.status)}
+                  </Badge>
+                )}
+                {company.lifecycleStage && (
+                  <Badge color="blue" className="whitespace-nowrap">
+                    {getLifecycleLabel(company.lifecycleStage)}
+                  </Badge>
+                )}
               </div>
             </div>
             <Button 
@@ -411,11 +445,97 @@ export default function CompanyDetailPage() {
 
         {/* Main content grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left column */}
+          {/* Left column - 2/3 width */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Contact data */}
+            {/* Main Information */}
+            <InfoCard title="Allgemeine Informationen" icon={BuildingOfficeIcon}>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  {company.tradingName && (
+                    <div>
+                      <Text className="text-sm font-medium text-gray-500">Handelsname</Text>
+                      <Text>{company.tradingName}</Text>
+                    </div>
+                  )}
+                  {company.legalForm && (
+                    <div>
+                      <Text className="text-sm font-medium text-gray-500">Rechtsform</Text>
+                      <Text>{company.legalForm}</Text>
+                    </div>
+                  )}
+                  {company.industryClassification?.primary && (
+                    <div>
+                      <Text className="text-sm font-medium text-gray-500">Branche</Text>
+                      <Text>{company.industryClassification.primary}</Text>
+                    </div>
+                  )}
+                  {company.foundedDate && (
+                    <div>
+                      <Text className="text-sm font-medium text-gray-500">Gründungsdatum</Text>
+                      <Text>{formatDate(company.foundedDate)}</Text>
+                    </div>
+                  )}
+                </div>
+                {company.description && (
+                  <div>
+                    <Text className="text-sm font-medium text-gray-500">Beschreibung</Text>
+                    <Text className="mt-1">{company.description}</Text>
+                  </div>
+                )}
+              </div>
+            </InfoCard>
+
+            {/* Contact Data */}
             <InfoCard title="Kontaktdaten" icon={PhoneIcon}>
               <div className="space-y-3">
+                {company.emails && company.emails.length > 0 && (
+                  <div>
+                    <Text className="text-sm font-medium text-gray-500 mb-2">E-Mail-Adressen</Text>
+                    {company.emails.map((email, index) => (
+                      <div key={index} className="flex items-center gap-3 mb-1">
+                        <EnvelopeIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                        <a 
+                          href={`mailto:${email.email}`}
+                          className="text-[#005fab] hover:text-[#004a8c] hover:underline"
+                        >
+                          {email.email}
+                        </a>
+                        <Badge color="zinc" className="text-xs">
+                          {email.type === 'general' ? 'Allgemein' : 
+                           email.type === 'support' ? 'Support' :
+                           email.type === 'sales' ? 'Vertrieb' :
+                           email.type === 'billing' ? 'Buchhaltung' :
+                           email.type === 'press' ? 'Presse' : email.type}
+                        </Badge>
+                        {email.isPrimary && <Badge color="green" className="text-xs">Primär</Badge>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {company.phones && company.phones.length > 0 && (
+                  <div>
+                    <Text className="text-sm font-medium text-gray-500 mb-2">Telefonnummern</Text>
+                    {company.phones.map((phone, index) => (
+                      <div key={index} className="flex items-center gap-3 mb-1">
+                        <PhoneIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                        <a 
+                          href={`tel:${phone.number}`}
+                          className="text-[#005fab] hover:text-[#004a8c] hover:underline"
+                        >
+                          {phone.number}
+                        </a>
+                        <Badge color="zinc" className="text-xs">
+                          {phone.type === 'business' ? 'Geschäftlich' :
+                           phone.type === 'mobile' ? 'Mobil' :
+                           phone.type === 'fax' ? 'Fax' : phone.type}
+                        </Badge>
+                        {phone.isPrimary && <Badge color="green" className="text-xs">Primär</Badge>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
                 {company.website && (
                   <div className="flex items-center gap-3">
                     <GlobeAltIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
@@ -429,48 +549,27 @@ export default function CompanyDetailPage() {
                     </a>
                   </div>
                 )}
-                {company.email && (
-                  <div className="flex items-center gap-3">
-                    <EnvelopeIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                    <a 
-                      href={`mailto:${company.email}`}
-                      className="text-[#005fab] hover:text-[#004a8c] hover:underline"
-                    >
-                      {company.email}
-                    </a>
-                  </div>
-                )}
-                {company.phone && (
-                  <div className="flex items-center gap-3">
-                    <PhoneIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                    <a 
-                      href={`tel:${company.phone}`}
-                      className="text-[#005fab] hover:text-[#004a8c] hover:underline"
-                    >
-                      {company.phone}
-                    </a>
-                  </div>
-                )}
-                {!company.website && !company.email && !company.phone && (
-                  <Text>Keine Kontaktdaten hinterlegt</Text>
+                
+                {(!company.emails?.length && !company.phones?.length && !company.website) && (
+                  <Text className="text-gray-500">Keine Kontaktdaten hinterlegt</Text>
                 )}
               </div>
             </InfoCard>
 
             {/* Address */}
             <InfoCard title="Adresse" icon={MapPinIcon}>
-              {company.address?.street || company.address?.city ? (
+              {company.mainAddress ? (
                 <div className="space-y-1">
-                  {company.address.street && <p>{company.address.street}</p>}
-                  {company.address.street2 && <p>{company.address.street2}</p>}
-                  {(company.address.zip || company.address.city) && (
-                    <p>{company.address.zip} {company.address.city}</p>
+                  {company.mainAddress.street && <p>{company.mainAddress.street}</p>}
+                  {(company.mainAddress.postalCode || company.mainAddress.city) && (
+                    <p>{company.mainAddress.postalCode} {company.mainAddress.city}</p>
                   )}
-                  {company.address.country && <p>{company.address.country}</p>}
+                  {company.mainAddress.region && <p>{company.mainAddress.region}</p>}
+                  {company.mainAddress.countryCode && <p>{company.mainAddress.countryCode}</p>}
                   <div className="mt-3">
                     <a 
                       href={`https://maps.google.com/?q=${encodeURIComponent(
-                        `${company.address.street || ''} ${company.address.city || ''} ${company.address.country || ''}`
+                        `${company.mainAddress.street || ''} ${company.mainAddress.city || ''} ${company.mainAddress.countryCode || ''}`
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -482,9 +581,114 @@ export default function CompanyDetailPage() {
                   </div>
                 </div>
               ) : (
-                <Text>Keine Adresse hinterlegt</Text>
+                <Text className="text-gray-500">Keine Adresse hinterlegt</Text>
               )}
             </InfoCard>
+
+            {/* Business Identifiers */}
+            {company.identifiers && company.identifiers.length > 0 && (
+              <InfoCard title="Geschäftliche Kennungen" icon={IdentificationIcon}>
+                <div className="space-y-2">
+                  {company.identifiers.map((identifier, index) => (
+                    <div key={index} className="flex items-start justify-between py-2 border-b last:border-0">
+                      <div>
+                        <Text className="font-medium">
+                          {identifier.type === 'VAT_EU' ? 'USt-IdNr. (EU)' :
+                           identifier.type === 'EIN_US' ? 'EIN (US)' :
+                           identifier.type === 'COMPANY_REG_DE' ? 'Handelsregister (DE)' :
+                           identifier.type === 'COMPANY_REG_UK' ? 'Companies House (UK)' :
+                           identifier.type === 'UID_CH' ? 'UID (CH)' :
+                           identifier.type === 'SIREN_FR' ? 'SIREN (FR)' :
+                           identifier.type === 'DUNS' ? 'D-U-N-S' :
+                           identifier.type === 'LEI' ? 'LEI' : identifier.type}
+                        </Text>
+                        <Text className="text-sm text-gray-600">{identifier.value}</Text>
+                      </div>
+                      {identifier.issuingAuthority && (
+                        <Badge color="zinc" className="text-xs">{identifier.issuingAuthority}</Badge>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </InfoCard>
+            )}
+
+            {/* Financial Information */}
+            {company.financial && (
+              <InfoCard title="Finanzen" icon={BanknotesIcon}>
+                <div className="grid grid-cols-2 gap-4">
+                  {company.financial.annualRevenue && (
+                    <div>
+                      <Text className="text-sm font-medium text-gray-500">Jahresumsatz</Text>
+                      <Text className="text-lg font-semibold">
+                        {formatCurrency(
+                          company.financial.annualRevenue.amount,
+                          company.financial.annualRevenue.currency
+                        )}
+                      </Text>
+                    </div>
+                  )}
+                  {company.financial.employees !== undefined && (
+                    <div>
+                      <Text className="text-sm font-medium text-gray-500">Mitarbeiterzahl</Text>
+                      <Text className="text-lg font-semibold">{company.financial.employees.toLocaleString('de-DE')}</Text>
+                    </div>
+                  )}
+                  {company.financial.creditRating && (
+                    <div>
+                      <Text className="text-sm font-medium text-gray-500">Kreditrating</Text>
+                      <Text className="text-lg font-semibold">{company.financial.creditRating}</Text>
+                    </div>
+                  )}
+                  {company.financial.fiscalYearEnd && (
+                    <div>
+                      <Text className="text-sm font-medium text-gray-500">Geschäftsjahresende</Text>
+                      <Text>{company.financial.fiscalYearEnd}</Text>
+                    </div>
+                  )}
+                </div>
+              </InfoCard>
+            )}
+
+            {/* Corporate Structure */}
+            {(company.parentCompanyId || company.subsidiaryIds?.length) && (
+              <InfoCard title="Konzernstruktur" icon={BuildingOffice2Icon}>
+                <div className="space-y-4">
+                  {parentCompany && (
+                    <div>
+                      <Text className="text-sm font-medium text-gray-500 mb-2">Muttergesellschaft</Text>
+                      <Link
+                        href={`/dashboard/contacts/crm/companies/${parentCompany.id}`}
+                        className="flex items-center gap-2 text-[#005fab] hover:text-[#004a8c] hover:underline"
+                      >
+                        <BuildingOffice2Icon className="h-5 w-5" />
+                        {parentCompany.name}
+                      </Link>
+                    </div>
+                  )}
+                  
+                  {subsidiaries.length > 0 && (
+                    <div>
+                      <Text className="text-sm font-medium text-gray-500 mb-2">
+                        Tochtergesellschaften ({subsidiaries.length})
+                      </Text>
+                      <div className="space-y-1">
+                        {subsidiaries.map((sub) => (
+                          <Link
+                            key={sub.id}
+                            href={`/dashboard/contacts/crm/companies/${sub.id}`}
+                            className="flex items-center gap-2 text-[#005fab] hover:text-[#004a8c] hover:underline"
+                          >
+                            <BuildingOffice2Icon className="h-4 w-4" />
+                            {sub.name}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </InfoCard>
+            )}
 
             {/* Social Media */}
             {company.socialMedia && company.socialMedia.length > 0 && (
@@ -521,73 +725,118 @@ export default function CompanyDetailPage() {
               <div className="p-4">
                 {contacts.length > 0 ? (
                   <div className="space-y-3">
-                    {contacts.map(contact => {
-                      const contactPublications = contact.mediaInfo?.publications || [];
-                      
-                      return (
-                        <div key={contact.id} className="flex items-start justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                          <div className="flex-1">
-                            <Link 
-                              href={`/dashboard/contacts/crm/contacts/${contact.id}`} 
-                              className="text-[#005fab] hover:text-[#004a8c] hover:underline font-medium"
-                            >
-                              {contact.firstName} {contact.lastName}
-                            </Link>
-                            {contact.position && (
-                              <span className="text-sm text-zinc-500 ml-2">• {contact.position}</span>
-                            )}
-                            {contactPublications.length > 0 && (
-                              <div className="mt-1 flex flex-wrap gap-1">
-                                {contactPublications.map((pubName, idx) => (
-                                  <Badge key={idx} color="blue" className="text-xs whitespace-nowrap">
-                                    {pubName}
-                                  </Badge>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 ml-4">
-                            {contact.email && (
-                              <a 
-                                href={`mailto:${contact.email}`}
-                                className="text-gray-400 hover:text-[#005fab] transition-colors"
-                                title="E-Mail senden"
-                              >
-                                <EnvelopeIcon className="h-5 w-5" />
-                              </a>
-                            )}
-                            {contact.phone && (
-                              <a 
-                                href={`tel:${contact.phone}`}
-                                className="text-gray-400 hover:text-[#005fab] transition-colors"
-                                title="Anrufen"
-                              >
-                                <PhoneIcon className="h-5 w-5" />
-                              </a>
-                            )}
-                          </div>
+                    {contacts.map(contact => (
+                      <div key={contact.id} className="flex items-start justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                        <div className="flex-1">
+                          <Link 
+                            href={`/dashboard/contacts/crm/contacts/${contact.id}`} 
+                            className="text-[#005fab] hover:text-[#004a8c] hover:underline font-medium"
+                          >
+                            {contact.displayName}
+                          </Link>
+                          {contact.position && (
+                            <span className="text-sm text-zinc-500 ml-2">• {contact.position}</span>
+                          )}
+                          {contact.mediaProfile?.isJournalist && (
+                            <Badge color="purple" className="text-xs ml-2">Journalist</Badge>
+                          )}
                         </div>
-                      );
-                    })}
+                        <div className="flex items-center gap-2 ml-4">
+                          {getPrimaryEmail(contact.emails) && (
+                            <a 
+                              href={`mailto:${getPrimaryEmail(contact.emails)}`}
+                              className="text-gray-400 hover:text-[#005fab] transition-colors"
+                              title="E-Mail senden"
+                            >
+                              <EnvelopeIcon className="h-5 w-5" />
+                            </a>
+                          )}
+                          {getPrimaryPhone(contact.phones) && (
+                            <a 
+                              href={`tel:${getPrimaryPhone(contact.phones)}`}
+                              className="text-gray-400 hover:text-[#005fab] transition-colors"
+                              title="Anrufen"
+                            >
+                              <PhoneIcon className="h-5 w-5" />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 ) : (
                   <div className="text-center py-8">
                     <UsersIcon className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                    <Text>Keine Kontakte vorhanden</Text>
+                    <Text className="text-gray-500">Keine Kontakte vorhanden</Text>
                   </div>
                 )}
               </div>
             </div>
 
+            {/* Publications for Media Companies */}
+            {isMediaCompany && publications.length > 0 && (
+              <div className="rounded-lg border bg-white overflow-hidden">
+                <div className="px-6 py-4 border-b bg-gray-50">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-xl flex items-center gap-2">
+                      <NewspaperIcon className="h-6 w-6 text-gray-500" />
+                      Publikationen
+                      <Badge color="blue" className="ml-2">{publications.length}</Badge>
+                    </h3>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {publications.map(publication => {
+                      const adCount = advertisements.filter(ad => 
+                        ad.publicationIds.includes(publication.id!)
+                      ).length;
+                      
+                      return (
+                        <div key={publication.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                          <div className="flex items-start justify-between mb-3">
+                            <div>
+                              <h4 className="font-semibold text-lg">{publication.title}</h4>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge color="blue" className="text-xs whitespace-nowrap">
+                                  {publication.type}
+                                </Badge>
+                                {publication.verified && (
+                                  <Badge color="green" className="text-xs whitespace-nowrap">
+                                    Verifiziert
+                                  </Badge>
+                                )}
+                                {adCount > 0 && (
+                                  <Badge color="purple" className="text-xs whitespace-nowrap">
+                                    {adCount} Werbemittel
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                            <Link
+                              href={`/dashboard/library/publications/${publication.id}`}
+                              className="text-sm text-primary hover:text-primary-hover ml-4"
+                            >
+                              Anzeigen
+                            </Link>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Notes */}
-            {company.notes && (
-              <InfoCard title="Notizen" icon={DocumentTextIcon}>
-                <p className="whitespace-pre-wrap text-gray-700">{company.notes}</p>
+            {company.internalNotes && (
+              <InfoCard title="Interne Notizen" icon={DocumentTextIcon}>
+                <p className="whitespace-pre-wrap text-gray-700">{company.internalNotes}</p>
               </InfoCard>
             )}
           </div>
 
-          {/* Right column */}
+          {/* Right column - 1/3 width */}
           <div className="space-y-6">
             {/* Details */}
             <InfoCard title="Details" icon={InformationCircleIcon}>
@@ -606,6 +855,15 @@ export default function CompanyDetailPage() {
                     <span className="ml-2">{formatDate(company.updatedAt)}</span>
                   </div>
                 </div>
+                {getLastContactDate() && (
+                  <div className="flex items-center gap-3">
+                    <UsersIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                    <div>
+                      <span className="text-gray-600">Letzter Kontakt:</span>
+                      <span className="ml-2">{formatDate(getLastContactDate())}</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </InfoCard>
 
@@ -655,41 +913,12 @@ export default function CompanyDetailPage() {
           </div>
         </div>
 
-        {/* Publications Section */}
-        {isMediaCompany && publicationCount > 0 && (
-          <div className="mt-8">
-            <div className="rounded-lg border bg-white overflow-hidden">
-              <div className="px-6 py-4 border-b bg-gray-50">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-xl flex items-center gap-2">
-                    <NewspaperIcon className="h-6 w-6 text-gray-500" />
-                    Publikationen
-                    <Badge color="blue" className="ml-2">{publicationCount}</Badge>
-                  </h3>
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
-                    <div>
-                      Gesamtauflage: <span className="font-semibold">
-                        {company.mediaInfo?.publications?.reduce((sum, pub) => 
-                          sum + (pub.circulation || pub.reach || 0), 0
-                        ).toLocaleString('de-DE')}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {company.mediaInfo?.publications?.map(publication => (
-                    <PublicationCard 
-                      key={publication.id}
-                      publication={publication}
-                      contactCount={getContactsPerPublication(publication.name)}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+        {/* Media Section at the bottom */}
+        {company.id && (
+          <CompanyMediaSection 
+            companyId={company.id} 
+            companyName={company.name} 
+          />
         )}
       </div>
 

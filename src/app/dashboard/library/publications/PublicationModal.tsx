@@ -3,10 +3,10 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { publicationService } from "@/lib/firebase/library-service";
-import { companiesService } from "@/lib/firebase/crm-service";
+import { companiesEnhancedService } from "@/lib/firebase/crm-service-enhanced";
+import type { CompanyEnhanced } from "@/types/crm-enhanced";
 import type { Publication, PublicationType, PublicationFormat, PublicationFrequency } from "@/types/library";
-import type { Company } from "@/types/crm";
+import { publicationService } from "@/lib/firebase/library-service";
 import type { BaseEntity, CountryCode, LanguageCode } from "@/types/international";
 import { Dialog } from "@/components/dialog";
 import { Button } from "@/components/button";
@@ -16,6 +16,7 @@ import { Select } from "@/components/select";
 import { Badge } from "@/components/badge";
 import { LanguageSelectorMulti } from "@/components/language-selector";
 import { CountrySelectorMulti } from "@/components/country-selector";
+
 import { 
   CheckIcon,
   XMarkIcon,
@@ -179,8 +180,8 @@ function TagInput({
 export function PublicationModal({ isOpen, onClose, publication, onSuccess, preselectedPublisherId }: PublicationModalProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [publishers, setPublishers] = useState<Company[]>([]);
-  const [loadingPublishers, setLoadingPublishers] = useState(true);
+const [publishers, setPublishers] = useState<CompanyEnhanced[]>([]);
+const [loadingPublishers, setLoadingPublishers] = useState(true);
   const [activeTab, setActiveTab] = useState<'basic' | 'metrics' | 'identifiers'>('basic');
   
   // Form State
@@ -359,23 +360,34 @@ export function PublicationModal({ isOpen, onClose, publication, onSuccess, pres
     }
   }, [publication]);
 
-  const loadPublishers = async () => {
-    if (!user) return;
+const loadPublishers = async () => {
+  if (!user) return;
+  
+  try {
+    setLoadingPublishers(true);
+    console.log('Loading companies for user:', user.uid); // Debug
     
-    try {
-      setLoadingPublishers(true);
-      const allCompanies = await companiesService.getAll(user.uid);
-      // Filter nur Verlage, Medienhäuser und Partner
-      const publisherCompanies = allCompanies.filter(company => 
-        ['publisher', 'media_house', 'partner'].includes(company.type)
-      );
+    const allCompanies = await companiesEnhancedService.getAll(user.uid);
+    console.log('All companies loaded:', allCompanies); // Debug
+    
+    const publisherCompanies = allCompanies.filter(company => 
+      ['publisher', 'media_house', 'partner'].includes(company.type)
+    );
+    console.log('Filtered publisher companies:', publisherCompanies); // Debug
+    
+    // Temporär: Falls keine Publisher gefunden, zeige alle Firmen
+    if (publisherCompanies.length === 0 && allCompanies.length > 0) {
+      console.warn('No publishers found, showing all companies as fallback');
+      setPublishers(allCompanies);
+    } else {
       setPublishers(publisherCompanies);
-    } catch (error) {
-      console.error("Error loading publishers:", error);
-    } finally {
-      setLoadingPublishers(false);
     }
-  };
+  } catch (error) {
+    console.error("Error loading publishers:", error);
+  } finally {
+    setLoadingPublishers(false);
+  }
+};
 
   const handlePublisherChange = (publisherId: string) => {
     const selectedPublisher = publishers.find(p => p.id === publisherId);

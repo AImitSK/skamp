@@ -5,16 +5,16 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from "@/context/AuthContext";
-import { contactsService, tagsService, companiesService } from "@/lib/firebase/crm-service";
+import { contactsEnhancedService, companiesEnhancedService, tagsEnhancedService } from "@/lib/firebase/crm-service-enhanced";
 import { listsService } from "@/lib/firebase/lists-service";
-import { Contact, Tag, Company, socialPlatformLabels } from "@/types/crm";
+import { ContactEnhanced, CompanyEnhanced, CONTACT_STATUS_OPTIONS, COMMUNICATION_CHANNELS } from "@/types/crm-enhanced";
+import { Tag, socialPlatformLabels } from "@/types/crm";
 import { DistributionList } from "@/types/lists";
 import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
 import { Button } from "@/components/button";
 import { Badge } from "@/components/badge";
-import ContactModalEnhanced from "@/components/crm/ContactModalEnhanced";
-import ContactModal from "src/app/dashboard/contacts/crm/ImportModalEnhanced"; 
+import ContactModalEnhanced from "@/app/dashboard/contacts/crm/ContactModalEnhanced";
 import {
   ArrowLeftIcon,
   UserIcon,
@@ -30,15 +30,54 @@ import {
   PencilIcon,
   ListBulletIcon,
   LinkIcon,
-  BriefcaseIcon,
   CheckCircleIcon,
   XCircleIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon,
-  ChatBubbleLeftRightIcon
+  ChatBubbleLeftRightIcon,
+  NewspaperIcon,
+  LanguageIcon,
+  CakeIcon,
+  AcademicCapIcon,
+  BriefcaseIcon,
+  IdentificationIcon,
+  CheckBadgeIcon
 } from "@heroicons/react/20/solid";
+import clsx from 'clsx';
 
-// Social Media Icon Component
+// Helper functions
+const formatDate = (timestamp: any) => {
+  if (!timestamp) return 'Unbekannt';
+  const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+  return date.toLocaleDateString('de-DE', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric'
+  });
+};
+
+const formatBirthday = (date: any) => {
+  if (!date) return '';
+  const birthday = date instanceof Date ? date : new Date(date);
+  return birthday.toLocaleDateString('de-DE', {
+    day: '2-digit',
+    month: 'long'
+  });
+};
+
+const getPrimaryEmail = (emails?: Array<{ email: string; isPrimary?: boolean; type?: string }>): { email: string; type?: string } | null => {
+  if (!emails || emails.length === 0) return null;
+  const primary = emails.find(e => e.isPrimary);
+  return primary || emails[0];
+};
+
+const getPrimaryPhone = (phones?: Array<{ number: string; isPrimary?: boolean; type?: string }>): { number: string; type?: string } | null => {
+  if (!phones || phones.length === 0) return null;
+  const primary = phones.find(p => p.isPrimary);
+  return primary || phones[0];
+};
+
+// Social Media Icons Component
 const SocialMediaIcon = ({ platform }: { platform: string }) => {
   const icons: Record<string, JSX.Element> = {
     linkedin: (
@@ -127,126 +166,30 @@ function Alert({
   );
 }
 
-// Helper functions
-function formatDate(timestamp: any) {
-  if (!timestamp || !timestamp.toDate) return 'Unbekannt';
-  return timestamp.toDate().toLocaleDateString('de-DE', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric'
-  });
-}
-
 // InfoCard Component
 function InfoCard({ 
   title, 
   icon: Icon, 
   children,
-  badge 
+  className = ""
 }: { 
   title: string; 
   icon: React.ComponentType<{ className?: string }>;
   children: React.ReactNode;
-  badge?: number;
+  className?: string;
 }) {
   return (
-    <div className="rounded-lg border bg-white overflow-hidden">
+    <div className={clsx("rounded-lg border bg-white overflow-hidden", className)}>
       <div className="px-4 py-3 border-b bg-gray-50">
         <h3 className="font-semibold text-lg flex items-center gap-2">
           <Icon className="h-5 w-5 text-gray-500" />
           {title}
-          {badge !== undefined && (
-            <Badge color="blue" className="ml-auto">{badge}</Badge>
-          )}
         </h3>
       </div>
       <div className="p-4">
         {children}
       </div>
     </div>
-  );
-}
-
-// Publication Info Component
-function PublicationInfo({ contact, company }: { contact: Contact; company: Company | null }) {
-  if (!company || !['publisher', 'media_house', 'agency'].includes(company.type)) {
-    return null;
-  }
-
-  const contactPublications = contact.mediaInfo?.publications || [];
-  const companyPublications = company.mediaInfo?.publications || [];
-
-  if (contactPublications.length === 0) {
-    return null;
-  }
-
-  const fullPublications = contactPublications.map(pubName => 
-    companyPublications.find(pub => pub.name === pubName)
-  ).filter(Boolean);
-
-  const typeLabels: Record<string, string> = {
-    'newspaper': 'Tageszeitung',
-    'magazine': 'Magazin',
-    'online': 'Online-Medium',
-    'blog': 'Blog',
-    'podcast': 'Podcast',
-    'tv': 'TV-Sender',
-    'radio': 'Radio',
-    'newsletter': 'Newsletter',
-    'trade_journal': 'Fachzeitschrift'
-  };
-
-  const formatLabels: Record<string, string> = {
-    'print': 'Print',
-    'online': 'Online',
-    'both': 'Print & Online'
-  };
-
-  const frequencyLabels: Record<string, string> = {
-    'daily': 'Täglich',
-    'weekly': 'Wöchentlich',
-    'biweekly': '14-tägig',
-    'monthly': 'Monatlich',
-    'quarterly': 'Vierteljährlich',
-    'yearly': 'Jährlich',
-    'irregular': 'Unregelmäßig'
-  };
-
-  return (
-    <InfoCard title="Publikationen" icon={DocumentTextIcon} badge={fullPublications.length}>
-      <div className="space-y-3">
-        {fullPublications.map((pub: any, index) => (
-          <div key={index} className="border rounded-lg p-3 hover:bg-gray-50 transition-colors">
-            <div className="font-medium text-gray-900 mb-1">{pub.name}</div>
-            <div className="flex flex-wrap gap-2 mb-2">
-              <Badge color="blue" className="text-xs whitespace-nowrap">{typeLabels[pub.type] || pub.type}</Badge>
-              <Badge color="green" className="text-xs whitespace-nowrap">{formatLabels[pub.format] || pub.format}</Badge>
-              <Badge color="purple" className="text-xs whitespace-nowrap">{frequencyLabels[pub.frequency] || pub.frequency}</Badge>
-            </div>
-            {pub.focusAreas && pub.focusAreas.length > 0 && (
-              <div className="mt-2">
-                <div className="text-xs text-gray-600 mb-1">Themenschwerpunkte:</div>
-                <div className="flex flex-wrap gap-1">
-                  {pub.focusAreas.map((area: string, idx: number) => (
-                    <Badge key={idx} color="zinc" className="text-xs whitespace-nowrap">
-                      {area}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-            {(pub.circulation || pub.reach) && (
-              <div className="mt-2 text-xs text-gray-600">
-                {pub.format === 'print' ? 'Auflage' : 'Reichweite'}: {' '}
-                <span className="font-medium text-gray-900">
-                  {(pub.circulation || pub.reach).toLocaleString('de-DE')}
-                </span>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </InfoCard>
   );
 }
 
@@ -257,11 +200,11 @@ export default function ContactDetailPage() {
   const contactId = params.contactId as string;
 
   // States
-  const [contact, setContact] = useState<Contact | null>(null);
-  const [company, setCompany] = useState<Company | null>(null);
+  const [contact, setContact] = useState<ContactEnhanced | null>(null);
+  const [company, setCompany] = useState<CompanyEnhanced | null>(null);
   const [tags, setTags] = useState<Tag[]>([]);
   const [lists, setLists] = useState<DistributionList[]>([]);
-  const [companies, setCompanies] = useState<Company[]>([]);
+  const [companies, setCompanies] = useState<CompanyEnhanced[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -273,32 +216,39 @@ export default function ContactDetailPage() {
     setTimeout(() => setAlert(null), 5000);
   }, []);
 
+  // Data Loading
   const loadData = useCallback(async () => {
     if (!user || !contactId) return;
     setLoading(true);
     setError(null);
     
     try {
-      const [contactData, companiesData, allLists] = await Promise.all([
-        contactsService.getById(contactId),
-        companiesService.getAll(user.uid),
-        listsService.getAll(user.uid)
-      ]);
-
+      // Load contact
+      const contactData = await contactsEnhancedService.getById(contactId, user.uid);
       if (contactData) {
         setContact(contactData);
-        setCompanies(companiesData);
         
+        // Load related data in parallel
+        const [companiesData, allLists, tagsData] = await Promise.all([
+          companiesEnhancedService.getAll(user.uid),
+          listsService.getAll(user.uid),
+          contactData.tagIds && contactData.tagIds.length > 0 
+            ? tagsEnhancedService.getAllAsLegacyTags(user.uid).then(allTags => 
+                allTags.filter(tag => contactData.tagIds?.includes(tag.id!))
+              )
+            : Promise.resolve([])
+        ]);
+        
+        setCompanies(companiesData);
+        setTags(tagsData);
+        
+        // Find company
         if (contactData.companyId) {
           const contactCompany = companiesData.find(c => c.id === contactData.companyId);
           setCompany(contactCompany || null);
         }
         
-        if (contactData.tagIds && contactData.tagIds.length > 0) {
-          const tagsData = await tagsService.getByIds(contactData.tagIds);
-          setTags(tagsData);
-        }
-        
+        // Filter lists that contain this contact
         const contactLists = allLists.filter(list => {
           if (list.type === 'static' && list.contactIds) {
             return list.contactIds.includes(contactId);
@@ -310,8 +260,9 @@ export default function ContactDetailPage() {
       } else {
         setError("Kontakt nicht gefunden.");
       }
-    } catch (err) {
+    } catch (err: any) {
       setError("Fehler beim Laden der Daten.");
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -320,6 +271,16 @@ export default function ContactDetailPage() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Helper function to get status label
+  const getStatusLabel = (status?: string) => {
+    return CONTACT_STATUS_OPTIONS.find(opt => opt.value === status)?.label || status || 'Unbekannt';
+  };
+
+  // Helper function to get channel label
+  const getChannelLabel = (channel?: string) => {
+    return COMMUNICATION_CHANNELS.find(ch => ch.value === channel)?.label || channel || '';
+  };
 
   // Loading state
   if (loading) {
@@ -361,6 +322,9 @@ export default function ContactDetailPage() {
     );
   }
 
+  const primaryEmail = getPrimaryEmail(contact.emails);
+  const primaryPhone = getPrimaryPhone(contact.phones);
+
   return (
     <>
       <div className="p-6 md:p-8">
@@ -384,10 +348,29 @@ export default function ContactDetailPage() {
           
           <div className="flex items-center justify-between">
             <div>
-              <Heading>{contact.firstName} {contact.lastName}</Heading>
-              <div className="flex items-center gap-3 mt-1">
-                {contact.position && <Badge color="zinc" className="whitespace-nowrap">{contact.position}</Badge>}
+              <Heading>{contact.displayName}</Heading>
+              {contact.name.academicTitle && (
+                <Text className="text-gray-600">{contact.name.academicTitle}</Text>
+              )}
+              <div className="flex items-center gap-3 mt-2">
+                {contact.position && (
+                  <Badge color="zinc" className="whitespace-nowrap">{contact.position}</Badge>
+                )}
                 {contact.companyName && <Text>{contact.companyName}</Text>}
+                {contact.status && contact.status !== 'active' && (
+                  <Badge 
+                    color={contact.status === 'inactive' ? 'yellow' : 'red'}
+                    className="whitespace-nowrap"
+                  >
+                    {getStatusLabel(contact.status)}
+                  </Badge>
+                )}
+                {contact.mediaProfile?.isJournalist && (
+                  <Badge color="purple" className="whitespace-nowrap">
+                    <NewspaperIcon className="h-3 w-3 mr-1 inline" />
+                    Journalist
+                  </Badge>
+                )}
               </div>
             </div>
             <Button 
@@ -402,35 +385,104 @@ export default function ContactDetailPage() {
 
         {/* Main content grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left column */}
+          {/* Left column - 2/3 width */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Contact data */}
+            {/* Contact Data */}
             <InfoCard title="Kontaktdaten" icon={PhoneIcon}>
-              <div className="space-y-3">
-                {contact.email && (
-                  <div className="flex items-center gap-3">
-                    <EnvelopeIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                    <a 
-                      href={`mailto:${contact.email}`}
-                      className="text-[#005fab] hover:text-[#004a8c] hover:underline"
-                    >
-                      {contact.email}
-                    </a>
+              <div className="space-y-4">
+                {/* Emails */}
+                {contact.emails && contact.emails.length > 0 && (
+                  <div>
+                    <Text className="text-sm font-medium text-gray-500 mb-2">E-Mail-Adressen</Text>
+                    <div className="space-y-2">
+                      {contact.emails.map((email, index) => (
+                        <div key={index} className="flex items-center gap-3">
+                          <EnvelopeIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                          <a 
+                            href={`mailto:${email.email}`}
+                            className="text-[#005fab] hover:text-[#004a8c] hover:underline"
+                          >
+                            {email.email}
+                          </a>
+                          <div className="flex gap-2">
+                            {email.type && (
+                              <Badge color="zinc" className="text-xs">
+                                {email.type === 'business' ? 'Geschäftlich' : 
+                                 email.type === 'private' ? 'Privat' : 'Sonstige'}
+                              </Badge>
+                            )}
+                            {email.isPrimary && <Badge color="green" className="text-xs">Primär</Badge>}
+                            {email.isVerified && <CheckBadgeIcon className="h-4 w-4 text-green-500" />}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
-                {contact.phone && (
-                  <div className="flex items-center gap-3">
-                    <PhoneIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                    <a 
-                      href={`tel:${contact.phone}`}
-                      className="text-[#005fab] hover:text-[#004a8c] hover:underline"
-                    >
-                      {contact.phone}
-                    </a>
+
+                {/* Phones */}
+                {contact.phones && contact.phones.length > 0 && (
+                  <div>
+                    <Text className="text-sm font-medium text-gray-500 mb-2">Telefonnummern</Text>
+                    <div className="space-y-2">
+                      {contact.phones.map((phone, index) => (
+                        <div key={index} className="flex items-center gap-3">
+                          <PhoneIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                          <a 
+                            href={`tel:${phone.number}`}
+                            className="text-[#005fab] hover:text-[#004a8c] hover:underline"
+                          >
+                            {phone.number}
+                          </a>
+                          <div className="flex gap-2">
+                            {phone.type && (
+                              <Badge color="zinc" className="text-xs">
+                                {phone.type === 'business' ? 'Geschäftlich' :
+                                 phone.type === 'mobile' ? 'Mobil' :
+                                 phone.type === 'private' ? 'Privat' :
+                                 phone.type === 'fax' ? 'Fax' : phone.type}
+                              </Badge>
+                            )}
+                            {phone.isPrimary && <Badge color="green" className="text-xs">Primär</Badge>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
-                {!contact.email && !contact.phone && (
-                  <Text>Keine Kontaktdaten hinterlegt</Text>
+
+                {/* Addresses */}
+                {contact.addresses && contact.addresses.length > 0 && (
+                  <div>
+                    <Text className="text-sm font-medium text-gray-500 mb-2">Adressen</Text>
+                    <div className="space-y-3">
+                      {contact.addresses.map((addr, index) => (
+                        <div key={index} className="border rounded-lg p-3">
+                          <div className="flex items-start gap-3">
+                            <MapPinIcon className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                            <div className="flex-1">
+                              <Badge color="zinc" className="text-xs mb-2">
+                                {addr.type === 'business' ? 'Geschäftlich' : 
+                                 addr.type === 'private' ? 'Privat' : 'Sonstige'}
+                              </Badge>
+                              <div className="text-sm">
+                                {addr.address.street && <p>{addr.address.street}</p>}
+                                {(addr.address.postalCode || addr.address.city) && (
+                                  <p>{addr.address.postalCode} {addr.address.city}</p>
+                                )}
+                                {addr.address.region && <p>{addr.address.region}</p>}
+                                {addr.address.countryCode && <p>{addr.address.countryCode}</p>}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {(!contact.emails?.length && !contact.phones?.length && !contact.addresses?.length) && (
+                  <Text className="text-gray-500">Keine Kontaktdaten hinterlegt</Text>
                 )}
               </div>
             </InfoCard>
@@ -446,8 +498,14 @@ export default function ContactDetailPage() {
                     >
                       {company.name}
                     </Link>
-                    {company.industry && (
-                      <p className="text-sm text-gray-600 mt-1">{company.industry}</p>
+                    {contact.position && (
+                      <p className="text-sm font-medium text-gray-700 mt-1">{contact.position}</p>
+                    )}
+                    {contact.department && (
+                      <p className="text-sm text-gray-600">{contact.department}</p>
+                    )}
+                    {company.industryClassification?.primary && (
+                      <p className="text-sm text-gray-600 mt-2">{company.industryClassification.primary}</p>
                     )}
                     <div className="flex items-center gap-4 mt-3 text-sm">
                       {company.website && (
@@ -461,13 +519,13 @@ export default function ContactDetailPage() {
                           Website
                         </a>
                       )}
-                      {company.phone && (
+                      {getPrimaryPhone(company.phones) && (
                         <a 
-                          href={`tel:${company.phone}`}
+                          href={`tel:${getPrimaryPhone(company.phones)?.number}`}
                           className="text-gray-600 hover:text-[#005fab] flex items-center gap-1"
                         >
                           <PhoneIcon className="h-4 w-4" />
-                          {company.phone}
+                          {getPrimaryPhone(company.phones)?.number}
                         </a>
                       )}
                     </div>
@@ -483,75 +541,218 @@ export default function ContactDetailPage() {
               </InfoCard>
             )}
 
+            {/* Media Profile for Journalists */}
+            {contact.mediaProfile?.isJournalist && (
+              <InfoCard title="Medien-Profil" icon={NewspaperIcon}>
+                <div className="space-y-4">
+                  {contact.mediaProfile.beats && contact.mediaProfile.beats.length > 0 && (
+                    <div>
+                      <Text className="text-sm font-medium text-gray-500 mb-2">Ressorts / Themenbereiche</Text>
+                      <div className="flex flex-wrap gap-2">
+                        {contact.mediaProfile.beats.map((beat, index) => (
+                          <Badge key={index} color="blue" className="whitespace-nowrap">{beat}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {contact.mediaProfile.preferredTopics && contact.mediaProfile.preferredTopics.length > 0 && (
+                    <div>
+                      <Text className="text-sm font-medium text-gray-500 mb-2">Bevorzugte Themen</Text>
+                      <div className="flex flex-wrap gap-2">
+                        {contact.mediaProfile.preferredTopics.map((topic, index) => (
+                          <Badge key={index} color="green" className="whitespace-nowrap">{topic}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {contact.mediaProfile.excludedTopics && contact.mediaProfile.excludedTopics.length > 0 && (
+                    <div>
+                      <Text className="text-sm font-medium text-gray-500 mb-2">Ausgeschlossene Themen</Text>
+                      <div className="flex flex-wrap gap-2">
+                        {contact.mediaProfile.excludedTopics.map((topic, index) => (
+                          <Badge key={index} color="red" className="whitespace-nowrap">{topic}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {contact.mediaProfile.influence && (
+                    <div className="grid grid-cols-3 gap-4 pt-2">
+                      {contact.mediaProfile.influence.score !== undefined && (
+                        <div className="text-center">
+                          <Text className="text-sm text-gray-500">Einfluss-Score</Text>
+                          <Text className="text-lg font-semibold">{contact.mediaProfile.influence.score}/100</Text>
+                        </div>
+                      )}
+                      {contact.mediaProfile.influence.reach !== undefined && (
+                        <div className="text-center">
+                          <Text className="text-sm text-gray-500">Reichweite</Text>
+                          <Text className="text-lg font-semibold">{contact.mediaProfile.influence.reach.toLocaleString('de-DE')}</Text>
+                        </div>
+                      )}
+                      {contact.mediaProfile.influence.engagement !== undefined && (
+                        <div className="text-center">
+                          <Text className="text-sm text-gray-500">Engagement</Text>
+                          <Text className="text-lg font-semibold">{contact.mediaProfile.influence.engagement}%</Text>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {contact.mediaProfile.submissionGuidelines && (
+                    <div>
+                      <Text className="text-sm font-medium text-gray-500 mb-1">Einreichungsrichtlinien</Text>
+                      <Text className="text-sm text-gray-700">{contact.mediaProfile.submissionGuidelines}</Text>
+                    </div>
+                  )}
+                </div>
+              </InfoCard>
+            )}
+
             {/* Social Media */}
-            {contact.socialMedia && contact.socialMedia.length > 0 && (
+            {contact.socialProfiles && contact.socialProfiles.length > 0 && (
               <InfoCard title="Social Media" icon={LinkIcon}>
                 <div className="flex flex-wrap gap-3">
-                  {contact.socialMedia.map((social, index) => (
+                  {contact.socialProfiles.map((social, index) => (
                     <a
                       key={index}
                       href={social.url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                      title={socialPlatformLabels[social.platform]}
                     >
                       <div className="text-gray-700">
                         <SocialMediaIcon platform={social.platform} />
                       </div>
-                      <span className="text-sm font-medium">{socialPlatformLabels[social.platform]}</span>
+                      <span className="text-sm font-medium">{social.platform}</span>
+                      {social.verified && <CheckBadgeIcon className="h-4 w-4 text-blue-500" />}
                     </a>
                   ))}
                 </div>
               </InfoCard>
             )}
 
-            {/* Publications */}
-            <PublicationInfo contact={contact} company={company} />
-
-            {/* Communication preferences */}
+            {/* Communication Preferences */}
             {contact.communicationPreferences && (
               <InfoCard title="Kommunikationspräferenzen" icon={ChatBubbleLeftRightIcon}>
-                <div className="space-y-2 text-sm">
+                <div className="space-y-3 text-sm">
                   {contact.communicationPreferences.preferredChannel && (
-                    <div>
-                      <span className="text-gray-600">Bevorzugter Kanal:</span>
-                      <span className="ml-2 font-medium">
-                        {contact.communicationPreferences.preferredChannel === 'email' && 'E-Mail'}
-                        {contact.communicationPreferences.preferredChannel === 'phone' && 'Telefon'}
-                        {contact.communicationPreferences.preferredChannel === 'meeting' && 'Meeting'}
-                        {contact.communicationPreferences.preferredChannel === 'social' && 'Social Media'}
-                      </span>
+                    <div className="flex items-center justify-between">
+                      <Text className="text-gray-600">Bevorzugter Kanal:</Text>
+                      <Badge color="blue">
+                        {getChannelLabel(contact.communicationPreferences.preferredChannel)}
+                      </Badge>
                     </div>
                   )}
-                  {contact.communicationPreferences.bestTimeToContact && (
-                    <div>
-                      <span className="text-gray-600">Beste Zeit:</span>
-                      <span className="ml-2 font-medium">{contact.communicationPreferences.bestTimeToContact}</span>
+                  
+                  {contact.communicationPreferences.preferredLanguage && (
+                    <div className="flex items-center justify-between">
+                      <Text className="text-gray-600">Bevorzugte Sprache:</Text>
+                      <div className="flex items-center gap-2">
+                        <LanguageIcon className="h-4 w-4 text-gray-400" />
+                        <Text className="font-medium">{contact.communicationPreferences.preferredLanguage}</Text>
+                      </div>
                     </div>
                   )}
-                  {contact.communicationPreferences.language && (
+                  
+                  {contact.communicationPreferences.preferredTime && (
                     <div>
-                      <span className="text-gray-600">Sprache:</span>
-                      <span className="ml-2 font-medium">{contact.communicationPreferences.language}</span>
+                      <Text className="text-gray-600 mb-2">Beste Kontaktzeiten:</Text>
+                      <div className="ml-4 space-y-1">
+                        {contact.communicationPreferences.preferredTime.bestDays && (
+                          <div>
+                            <Text className="text-xs text-gray-500">Tage:</Text>
+                            <div className="flex gap-1 mt-1">
+                              {['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].map(day => (
+                                <Badge 
+                                  key={day} 
+                                  color={contact.communicationPreferences?.preferredTime?.bestDays?.includes(day as any) ? 'blue' : 'zinc'}
+                                  className="text-xs"
+                                >
+                                  {day === 'mon' ? 'Mo' : day === 'tue' ? 'Di' : day === 'wed' ? 'Mi' : 
+                                   day === 'thu' ? 'Do' : day === 'fri' ? 'Fr' : day === 'sat' ? 'Sa' : 'So'}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {contact.communicationPreferences.preferredTime.bestHours && (
+                          <div>
+                            <Text className="text-xs text-gray-500">Zeit:</Text>
+                            <Text className="font-medium">
+                              {contact.communicationPreferences.preferredTime.bestHours.from} - {contact.communicationPreferences.preferredTime.bestHours.to}
+                            </Text>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
+                  
                   {contact.communicationPreferences.doNotContact && (
-                    <div className="text-red-600 font-medium">⚠️ Nicht kontaktieren</div>
+                    <div className="bg-red-50 rounded-lg p-3">
+                      <div className="flex items-center gap-2 text-red-700">
+                        <ExclamationTriangleIcon className="h-5 w-5" />
+                        <Text className="font-medium">Nicht kontaktieren</Text>
+                      </div>
+                      {contact.communicationPreferences.doNotContactUntil && (
+                        <Text className="text-sm text-red-600 mt-1">
+                          Bis: {formatDate(contact.communicationPreferences.doNotContactUntil)}
+                        </Text>
+                      )}
+                      {contact.communicationPreferences.doNotContactReason && (
+                        <Text className="text-sm text-red-600 mt-1">
+                          Grund: {contact.communicationPreferences.doNotContactReason}
+                        </Text>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </InfoCard>
+            )}
+
+            {/* Professional Info */}
+            {contact.professionalInfo && (
+              <InfoCard title="Berufliche Informationen" icon={BriefcaseIcon}>
+                <div className="space-y-4">
+                  {contact.professionalInfo.education && contact.professionalInfo.education.length > 0 && (
+                    <div>
+                      <Text className="text-sm font-medium text-gray-500 mb-2">
+                        <AcademicCapIcon className="h-4 w-4 inline mr-1" />
+                        Ausbildung
+                      </Text>
+                      <div className="space-y-2">
+                        {contact.professionalInfo.education.map((edu, index) => (
+                          <div key={index} className="text-sm">
+                            <Text className="font-medium">{edu.degree}</Text>
+                            <Text className="text-gray-600">{edu.institution}</Text>
+                            {edu.year && <Text className="text-gray-500">{edu.year}</Text>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {contact.professionalInfo.biography && (
+                    <div>
+                      <Text className="text-sm font-medium text-gray-500 mb-2">Biografie</Text>
+                      <Text className="text-sm text-gray-700 whitespace-pre-wrap">{contact.professionalInfo.biography}</Text>
+                    </div>
                   )}
                 </div>
               </InfoCard>
             )}
 
             {/* Notes */}
-            {contact.notes && (
-              <InfoCard title="Notizen" icon={DocumentTextIcon}>
-                <p className="whitespace-pre-wrap text-gray-700">{contact.notes}</p>
+            {contact.internalNotes && (
+              <InfoCard title="Interne Notizen" icon={DocumentTextIcon}>
+                <p className="whitespace-pre-wrap text-gray-700">{contact.internalNotes}</p>
               </InfoCard>
             )}
           </div>
 
-          {/* Right column */}
+          {/* Right column - 1/3 width */}
           <div className="space-y-6">
             {/* Details */}
             <InfoCard title="Details" icon={InformationCircleIcon}>
@@ -559,33 +760,65 @@ export default function ContactDetailPage() {
                 <div className="flex items-center gap-3">
                   <CalendarIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
                   <div>
-                    <span className="text-gray-600">Erstellt:</span>
-                    <span className="ml-2">{formatDate(contact.createdAt)}</span>
+                    <Text className="text-gray-600">Erstellt:</Text>
+                    <Text className="ml-2">{formatDate(contact.createdAt)}</Text>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <ClockIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
                   <div>
-                    <span className="text-gray-600">Aktualisiert:</span>
-                    <span className="ml-2">{formatDate(contact.updatedAt)}</span>
+                    <Text className="text-gray-600">Aktualisiert:</Text>
+                    <Text className="ml-2">{formatDate(contact.updatedAt)}</Text>
                   </div>
                 </div>
-                {contact.birthday && (
+                {contact.personalInfo?.birthday && (
                   <div className="flex items-center gap-3">
-                    <CalendarIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                    <CakeIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
                     <div>
-                      <span className="text-gray-600">Geburtstag:</span>
-                      <span className="ml-2">
-                        {new Date(contact.birthday).toLocaleDateString('de-DE', {
-                          day: '2-digit',
-                          month: 'long'
-                        })}
-                      </span>
+                      <Text className="text-gray-600">Geburtstag:</Text>
+                      <Text className="ml-2">{formatBirthday(contact.personalInfo.birthday)}</Text>
+                    </div>
+                  </div>
+                )}
+                {contact.personalInfo?.languages && contact.personalInfo.languages.length > 0 && (
+                  <div className="flex items-start gap-3">
+                    <LanguageIcon className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <Text className="text-gray-600">Sprachen:</Text>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {contact.personalInfo.languages.map((lang, index) => (
+                          <Badge key={index} color="zinc" className="text-xs">{lang}</Badge>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
               </div>
             </InfoCard>
+
+            {/* Personal Info */}
+            {contact.personalInfo && (contact.personalInfo.interests?.length || contact.personalInfo.notes) && (
+              <InfoCard title="Persönliche Informationen" icon={UserIcon}>
+                <div className="space-y-3">
+                  {contact.personalInfo.interests && contact.personalInfo.interests.length > 0 && (
+                    <div>
+                      <Text className="text-sm font-medium text-gray-500 mb-2">Interessen</Text>
+                      <div className="flex flex-wrap gap-2">
+                        {contact.personalInfo.interests.map((interest, index) => (
+                          <Badge key={index} color="purple" className="whitespace-nowrap">{interest}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {contact.personalInfo.notes && (
+                    <div>
+                      <Text className="text-sm font-medium text-gray-500 mb-1">Persönliche Notizen</Text>
+                      <Text className="text-sm text-gray-700">{contact.personalInfo.notes}</Text>
+                    </div>
+                  )}
+                </div>
+              </InfoCard>
+            )}
 
             {/* Tags */}
             {tags.length > 0 && (
@@ -593,6 +826,31 @@ export default function ContactDetailPage() {
                 <div className="flex flex-wrap gap-2">
                   {tags.map(tag => (
                     <Badge key={tag.id} color={tag.color as any} className="whitespace-nowrap">{tag.name}</Badge>
+                  ))}
+                </div>
+              </InfoCard>
+            )}
+
+            {/* GDPR Consents */}
+            {contact.gdprConsents && contact.gdprConsents.length > 0 && (
+              <InfoCard title="DSGVO Einwilligungen" icon={CheckBadgeIcon}>
+                <div className="space-y-2">
+                  {contact.gdprConsents.map((consent, index) => (
+                    <div key={index} className="text-sm">
+                      <div className="flex items-center justify-between">
+                        <Text className="font-medium">{consent.type}</Text>
+                        {consent.given ? (
+                          <CheckCircleIcon className="h-5 w-5 text-green-500" />
+                        ) : (
+                          <XCircleIcon className="h-5 w-5 text-red-500" />
+                        )}
+                      </div>
+                      {consent.givenAt && (
+                        <Text className="text-xs text-gray-500">
+                          {consent.given ? 'Erteilt' : 'Widerrufen'}: {formatDate(consent.givenAt)}
+                        </Text>
+                      )}
+                    </div>
                   ))}
                 </div>
               </InfoCard>
@@ -634,7 +892,21 @@ export default function ContactDetailPage() {
         </div>
       </div>
 
-
+      {/* Edit Modal */}
+      {showEditModal && (
+        <ContactModalEnhanced
+          contact={contact}
+          companies={companies}
+          userId={user!.uid}
+          organizationId={user!.uid}
+          onClose={() => setShowEditModal(false)}
+          onSave={() => {
+            setShowEditModal(false);
+            loadData();
+            showAlert('success', 'Kontakt aktualisiert', 'Die Kontaktdaten wurden erfolgreich aktualisiert.');
+          }}
+        />
+      )}
     </>
   );
 }

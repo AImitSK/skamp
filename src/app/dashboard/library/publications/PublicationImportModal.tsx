@@ -12,9 +12,9 @@ import { Field, Label, FieldGroup, Description } from '@/components/fieldset';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import { publicationService } from '@/lib/firebase/library-service';
-import { companiesService } from '@/lib/firebase/crm-service';
+import { companiesEnhancedService } from "@/lib/firebase/crm-service-enhanced";
 import { Publication, PublicationType, PUBLICATION_TYPE_LABELS } from '@/types/library';
-import { Company } from '@/types/crm';
+import type { CompanyEnhanced } from "@/types/crm-enhanced";
 import { useAuth } from '@/context/AuthContext';
 import {
   InformationCircleIcon,
@@ -110,7 +110,9 @@ export default function PublicationImportModal({ onClose, onImportSuccess }: Pub
   // Step 1: Upload
   const [file, setFile] = useState<File | null>(null);
   const [selectedPublisherId, setSelectedPublisherId] = useState<string>('');
-  const [publishers, setPublishers] = useState<Company[]>([]);
+  const [publishers, setPublishers] = useState<CompanyEnhanced[]>([]);
+  const [loadingPublishers, setLoadingPublishers] = useState(false);
+
   
   // Step 2: Mapping
   const [headers, setHeaders] = useState<string[]>([]);
@@ -135,24 +137,40 @@ export default function PublicationImportModal({ onClose, onImportSuccess }: Pub
   
   const [error, setError] = useState('');
 
-  // Lade Verlage
+  // Lade Verlage beim Mount
   useEffect(() => {
-    const loadPublishers = async () => {
-      if (!user) return;
-      try {
-        const allCompanies = await companiesService.getAll(user.uid);
-        // Filtere nach Verlagen (type = 'partner' oder alle)
-        const publisherCompanies = allCompanies.filter(c => 
-          c.type === 'partner' || c.industry?.toLowerCase().includes('verlag') || 
-          c.industry?.toLowerCase().includes('medien')
-        );
-        setPublishers(publisherCompanies);
-      } catch (err) {
-        console.error('Error loading publishers:', err);
-      }
-    };
     loadPublishers();
   }, [user]);
+
+  // Lade Verlage
+  const loadPublishers = async () => {
+    if (!user) return;
+    
+    try {
+      setLoadingPublishers(true);
+      console.log('Loading companies for user:', user.uid); // Debug
+      
+      const allCompanies = await companiesEnhancedService.getAll(user.uid);
+      console.log('All companies loaded:', allCompanies); // Debug
+      
+      const publisherCompanies = allCompanies.filter(company => 
+        ['publisher', 'media_house', 'partner'].includes(company.type)
+      );
+      console.log('Filtered publisher companies:', publisherCompanies); // Debug
+      
+      // Temporär: Falls keine Publisher gefunden, zeige alle Firmen
+      if (publisherCompanies.length === 0 && allCompanies.length > 0) {
+        console.warn('No publishers found, showing all companies as fallback');
+        setPublishers(allCompanies);
+      } else {
+        setPublishers(publisherCompanies);
+      }
+    } catch (error) {
+      console.error("Error loading publishers:", error);
+    } finally {
+      setLoadingPublishers(false);
+    }
+  };
 
   // Datei-Handler
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -552,17 +570,38 @@ export default function PublicationImportModal({ onClose, onImportSuccess }: Pub
             <FieldGroup>
               <Field>
                 <Label>Verlag auswählen *</Label>
-                <Select
-                  value={selectedPublisherId}
-                  onChange={(e) => setSelectedPublisherId(e.target.value)}
-                >
-                  <option value="">-- Bitte wählen --</option>
-                  {publishers.map(publisher => (
-                    <option key={publisher.id} value={publisher.id}>
-                      {publisher.name}
-                    </option>
-                  ))}
-                </Select>
+                {loadingPublishers ? (
+                  <div className="animate-pulse">
+                    <div className="h-10 bg-gray-200 rounded"></div>
+                  </div>
+                ) : publishers.length === 0 ? (
+                  <div>
+                    <Alert 
+                      type="warning" 
+                      message="Keine Verlage oder Medienhäuser gefunden. Bitte legen Sie zuerst eine Firma vom Typ 'Verlag', 'Medienhaus' oder 'Partner' im CRM an."
+                    />
+                    <Button
+                      type="button"
+                      plain
+                      onClick={() => window.location.href = '/dashboard/contacts/crm?tab=companies'}
+                      className="mt-2 text-sm"
+                    >
+                      Zum CRM →
+                    </Button>
+                  </div>
+                ) : (
+                  <Select
+                    value={selectedPublisherId}
+                    onChange={(e) => setSelectedPublisherId(e.target.value)}
+                  >
+                    <option value="">-- Bitte wählen --</option>
+                    {publishers.map(publisher => (
+                      <option key={publisher.id} value={publisher.id}>
+                        {publisher.name}
+                      </option>
+                    ))}
+                  </Select>
+                )}
                 <Description>
                   Alle importierten Publikationen werden diesem Verlag zugeordnet.
                 </Description>
