@@ -1,7 +1,7 @@
 // src/app/dashboard/contacts/crm/ContactModalEnhanced.tsx
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
 import { Field, Label, FieldGroup } from "@/components/fieldset";
 import { Input } from "@/components/input";
@@ -178,6 +178,7 @@ export default function ContactModalEnhanced({
   const [selectedCompany, setSelectedCompany] = useState<CompanyEnhanced | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
+  // Initialize form data when contact changes
   useEffect(() => {
     if (contact) {
       // Directly use enhanced contact data
@@ -219,23 +220,24 @@ export default function ContactModalEnhanced({
     }
     
     loadTags();
+  }, [contact, companies, organizationId]); // Removed formData.companyId from dependencies!
+
+  // Load publications when component mounts or companyId changes
+  useEffect(() => {
     loadPublications();
-  }, [contact, companies, formData.companyId, organizationId]);
+  }, [formData.companyId, organizationId]);
 
   const loadTags = async () => {
     if (!organizationId) return;
     try {
-      const orgTags = await tagsEnhancedService.getAll(organizationId);
-      setTags(orgTags.map(tag => ({
-        ...tag,
-        userId: organizationId
-      })));
+      const orgTags = await tagsEnhancedService.getAllAsLegacyTags(organizationId);
+      setTags(orgTags);
     } catch (error) {
       console.error('Error loading tags:', error);
     }
   };
 
-  const loadPublications = async () => {
+  const loadPublications = useCallback(async () => {
     if (!organizationId) return;
     try {
       // Wenn eine Firma ausgewählt ist, lade nur deren Publikationen
@@ -250,7 +252,7 @@ export default function ContactModalEnhanced({
     } catch (error) {
       console.error('Error loading publications:', error);
     }
-  };
+  }, [formData.companyId, organizationId]);
 
   const handleCreateTag = async (name: string, color: TagColor): Promise<string> => {
     try {
@@ -270,25 +272,15 @@ export default function ContactModalEnhanced({
   };
 
   const handleCompanyChange = (companyId: string) => {
-    setFormData({ ...formData, companyId });
+    const company = companyId ? companies.find(c => c.id === companyId) : null;
     
-    if (companyId) {
-      const company = companies.find(c => c.id === companyId);
-      setSelectedCompany(company || null);
-      
-      if (company) {
-        setFormData(prev => ({
-          ...prev,
-          companyName: company.name
-        }));
-      }
-    } else {
-      setSelectedCompany(null);
-      setFormData(prev => ({
-        ...prev,
-        companyName: undefined
-      }));
-    }
+    setSelectedCompany(company || null);
+    
+    setFormData(prev => ({
+      ...prev,
+      companyId: companyId,
+      companyName: company?.name || ''
+    }));
   };
 
   // Tab visibility check

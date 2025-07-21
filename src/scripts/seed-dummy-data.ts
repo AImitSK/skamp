@@ -1,326 +1,309 @@
-// src/scripts/seed-dummy-data.ts
-import { companiesService, contactsService, tagsService } from '@/lib/firebase/crm-service';
-import { Company, Contact, Tag, CompanyType } from '@/types/crm';
+// src/scripts/seed-dummy-data-enhanced.ts
+import { companiesEnhancedService, contactsEnhancedService, tagsEnhancedService } from '@/lib/firebase/crm-service-enhanced';
+import { CompanyEnhanced, ContactEnhanced } from '@/types/crm-enhanced';
+import { Tag, CompanyType } from '@/types/crm';
+import { CountryCode, CurrencyCode, LanguageCode } from '@/types/international';
 
-// Dummy-Daten für Firmen
-const dummyCompanies: Omit<Company, 'id' | 'createdAt' | 'updatedAt'>[] = [
+// Dummy-Daten für Firmen (Enhanced)
+const dummyCompanies: Partial<CompanyEnhanced>[] = [
   {
     name: 'Süddeutsche Zeitung',
+    officialName: 'Süddeutsche Zeitung GmbH',
     type: 'publisher' as CompanyType,
-    industry: 'Medien & Verlage',
     website: 'https://www.sueddeutsche.de',
-    email: 'redaktion@sueddeutsche.de',
-    phone: '+49 89 21830',
-    address: {
+    description: 'Eine der größten überregionalen Tageszeitungen Deutschlands',
+    
+    // Address
+    mainAddress: {
       street: 'Hultschiner Straße 8',
       city: 'München',
-      zip: '81677',
-      state: 'Bayern',
-      country: 'Deutschland'
+      postalCode: '81677',
+      region: 'Bayern',
+      countryCode: 'DE' as CountryCode
     },
-    employees: 1200,
-    revenue: 380000000,
-    notes: 'Eine der größten überregionalen Tageszeitungen Deutschlands',
-    tagIds: [],
+    
+    // Contact info
+    phones: [
+      { type: 'business', number: '+49 89 21830', isPrimary: true }
+    ],
+    emails: [
+      { type: 'general', email: 'redaktion@sueddeutsche.de', isPrimary: true }
+    ],
+    
+    // Financial
+    financial: {
+      annualRevenue: { amount: 380000000, currency: 'EUR' as CurrencyCode },
+      employees: 1200
+    },
+    
+    // Industry
+    industryClassification: {
+      primary: 'Medien & Verlage'
+    },
+    
+    // Media info
     mediaInfo: {
       circulation: 367000,
       reach: 1200000,
-      publicationFrequency: 'daily',
-      mediaType: 'print',
-      focusAreas: ['Politik', 'Wirtschaft', 'Kultur', 'Sport'],
-      publications: [
-        {
-          id: 'sz-print',
-          name: 'Süddeutsche Zeitung Print',
-          type: 'newspaper',
-          format: 'print',
-          frequency: 'daily',
-          focusAreas: ['Politik', 'Wirtschaft', 'Kultur']
-        },
-        {
-          id: 'sz-online',
-          name: 'SZ.de',
-          type: 'online',
-          format: 'online',
-          frequency: 'daily',
-          focusAreas: ['Nachrichten', 'Digital', 'Lifestyle']
-        }
-      ]
+      publicationFrequency: 'daily' as any,
+      mediaType: 'print' as any,
+      focusAreas: ['Politik', 'Wirtschaft', 'Kultur', 'Sport']
     },
+    
+    // Social
     socialMedia: [
       { platform: 'twitter', url: 'https://twitter.com/sz' },
       { platform: 'facebook', url: 'https://facebook.com/sueddeutsche' }
     ],
-    userId: ''
+    
+    // Status
+    status: 'active',
+    lifecycleStage: 'customer'
   },
   {
     name: 'Der Spiegel',
+    officialName: 'SPIEGEL-Verlag Rudolf Augstein GmbH & Co. KG',
     type: 'publisher' as CompanyType,
-    industry: 'Medien & Verlage',
     website: 'https://www.spiegel.de',
-    email: 'spiegel@spiegel.de',
-    phone: '+49 40 30070',
-    address: {
+    description: 'Deutschlands reichweitenstärkstes Nachrichtenmagazin',
+    
+    mainAddress: {
       street: 'Ericusspitze 1',
       city: 'Hamburg',
-      zip: '20457',
-      state: 'Hamburg',
-      country: 'Deutschland'
+      postalCode: '20457',
+      region: 'Hamburg',
+      countryCode: 'DE' as CountryCode
     },
-    employees: 1000,
-    revenue: 320000000,
-    notes: 'Deutschlands reichweitenstärkstes Nachrichtenmagazin',
-    tagIds: [],
+    
+    phones: [
+      { type: 'business', number: '+49 40 30070', isPrimary: true }
+    ],
+    emails: [
+      { type: 'general', email: 'spiegel@spiegel.de', isPrimary: true }
+    ],
+    
+    financial: {
+      annualRevenue: { amount: 320000000, currency: 'EUR' as CurrencyCode },
+      employees: 1000
+    },
+    
+    industryClassification: {
+      primary: 'Medien & Verlage'
+    },
+    
     mediaInfo: {
       circulation: 695000,
       reach: 6100000,
-      publicationFrequency: 'weekly',
-      mediaType: 'mixed',
-      focusAreas: ['Politik', 'Wirtschaft', 'Gesellschaft', 'Wissenschaft'],
-      publications: [
-        {
-          id: 'spiegel-magazin',
-          name: 'DER SPIEGEL',
-          type: 'magazine',
-          format: 'print',
-          frequency: 'weekly',
-          focusAreas: ['Investigativ', 'Politik', 'Wirtschaft']
-        },
-        {
-          id: 'spiegel-online',
-          name: 'SPIEGEL ONLINE',
-          type: 'online',
-          format: 'online',
-          frequency: 'daily',
-          focusAreas: ['Nachrichten', 'Politik', 'Panorama']
-        }
-      ]
+      publicationFrequency: 'weekly' as any,
+      mediaType: 'mixed' as any,
+      focusAreas: ['Politik', 'Wirtschaft', 'Gesellschaft', 'Wissenschaft']
     },
+    
     socialMedia: [
       { platform: 'twitter', url: 'https://twitter.com/derspiegel' },
       { platform: 'linkedin', url: 'https://linkedin.com/company/der-spiegel' }
     ],
-    userId: ''
-  },
-  {
-    name: 'Handelsblatt',
-    type: 'publisher' as CompanyType,
-    industry: 'Wirtschaftsmedien',
-    website: 'https://www.handelsblatt.com',
-    email: 'info@handelsblatt.com',
-    phone: '+49 211 8870',
-    address: {
-      street: 'Toulouser Allee 27',
-      city: 'Düsseldorf',
-      zip: '40476',
-      state: 'Nordrhein-Westfalen',
-      country: 'Deutschland'
-    },
-    employees: 800,
-    revenue: 250000000,
-    notes: 'Führende Wirtschafts- und Finanzzeitung',
-    tagIds: [],
-    mediaInfo: {
-      circulation: 127000,
-      reach: 750000,
-      publicationFrequency: 'daily',
-      mediaType: 'print',
-      focusAreas: ['Wirtschaft', 'Finanzen', 'Unternehmen', 'Politik'],
-      publications: [
-        {
-          id: 'hb-print',
-          name: 'Handelsblatt Print',
-          type: 'newspaper',
-          format: 'print',
-          frequency: 'daily',
-          focusAreas: ['Wirtschaft', 'Börse', 'Unternehmen']
-        }
-      ]
-    },
-    userId: ''
+    
+    status: 'active',
+    lifecycleStage: 'customer'
   },
   {
     name: 'Tech Innovations GmbH',
+    officialName: 'Tech Innovations Gesellschaft mit beschränkter Haftung',
     type: 'customer' as CompanyType,
-    industry: 'Technologie',
     website: 'https://www.tech-innovations.de',
-    email: 'info@tech-innovations.de',
-    phone: '+49 30 123456',
-    address: {
+    description: 'Spezialist für KI-Lösungen und Cloud-Services',
+    
+    mainAddress: {
       street: 'Friedrichstraße 123',
       city: 'Berlin',
-      zip: '10117',
-      state: 'Berlin',
-      country: 'Deutschland'
+      postalCode: '10117',
+      region: 'Berlin',
+      countryCode: 'DE' as CountryCode
     },
-    employees: 250,
-    revenue: 45000000,
-    notes: 'Spezialist für KI-Lösungen und Cloud-Services',
-    tagIds: [],
+    
+    phones: [
+      { type: 'business', number: '+49 30 123456', isPrimary: true }
+    ],
+    emails: [
+      { type: 'general', email: 'info@tech-innovations.de', isPrimary: true }
+    ],
+    
+    financial: {
+      annualRevenue: { amount: 45000000, currency: 'EUR' as CurrencyCode },
+      employees: 250
+    },
+    
+    industryClassification: {
+      primary: 'Technologie'
+    },
+    
     socialMedia: [
       { platform: 'linkedin', url: 'https://linkedin.com/company/tech-innovations' }
     ],
-    userId: ''
-  },
-  {
-    name: 'PR Agentur München',
-    type: 'agency' as CompanyType,
-    industry: 'PR & Kommunikation',
-    website: 'https://www.pr-agentur-muenchen.de',
-    email: 'kontakt@pr-agentur-muenchen.de',
-    phone: '+49 89 987654',
-    address: {
-      street: 'Maximilianstraße 50',
-      city: 'München',
-      zip: '80538',
-      state: 'Bayern',
-      country: 'Deutschland'
-    },
-    employees: 35,
-    revenue: 4500000,
-    notes: 'Full-Service PR-Agentur mit Schwerpunkt Tech und Startups',
-    tagIds: [],
-    userId: ''
+    
+    status: 'active',
+    lifecycleStage: 'customer',
+    legalForm: 'GmbH',
+    foundedDate: new Date(2015, 0, 1)
   }
 ];
 
-// Dummy-Daten für Kontakte
-const dummyContacts: Omit<Contact, 'id' | 'createdAt' | 'updatedAt'>[] = [
+// Dummy-Daten für Kontakte (Enhanced)
+const dummyContacts: Partial<ContactEnhanced>[] = [
   {
-    firstName: 'Anna',
-    lastName: 'Schmidt',
-    email: 'a.schmidt@sueddeutsche.de',
-    phone: '+49 89 2183 1234',
+    name: {
+      salutation: 'Frau',
+      firstName: 'Anna',
+      lastName: 'Schmidt'
+    },
+    displayName: 'Anna Schmidt',
+    
+    // Professional
     position: 'Leiterin Wirtschaftsredaktion',
     department: 'Wirtschaft',
-    companyId: '', // Wird später gesetzt
     companyName: 'Süddeutsche Zeitung',
-    notes: 'Schwerpunkt: Digitalisierung und Startups',
-    tagIds: [],
-    mediaInfo: {
-      publications: ['Süddeutsche Zeitung Print', 'SZ.de'],
-      expertise: ['Wirtschaft', 'Digitalisierung', 'Startups', 'Technologie']
+    
+    // Contact info
+    emails: [
+      { type: 'business', email: 'a.schmidt@sueddeutsche.de', isPrimary: true }
+    ],
+    phones: [
+      { type: 'business', number: '+49 89 2183 1234', isPrimary: true }
+    ],
+    
+    // Media profile
+    mediaProfile: {
+      isJournalist: true,
+      publicationIds: [],
+      beats: ['Wirtschaft', 'Digitalisierung', 'Startups', 'Technologie'],
+      preferredTopics: ['Digitalisierung', 'Startups']
     },
+    
+    // Communication
     communicationPreferences: {
       preferredChannel: 'email',
-      bestTimeToContact: '09:00-11:00',
-      doNotContact: false,
-      language: 'de'
+      preferredLanguage: 'de' as LanguageCode,
+      preferredTime: {
+        timezone: 'Europe/Berlin',
+        bestHours: { from: '09:00', to: '11:00' }
+      }
     },
-    socialMedia: [
+    
+    // Social
+    socialProfiles: [
       { platform: 'twitter', url: 'https://twitter.com/aschmidt_sz' },
       { platform: 'linkedin', url: 'https://linkedin.com/in/anna-schmidt-sz' }
     ],
-    userId: ''
+    
+    // Personal
+    personalInfo: {
+      notes: 'Schwerpunkt: Digitalisierung und Startups'
+    },
+    
+    status: 'active'
   },
   {
-    firstName: 'Thomas',
-    lastName: 'Müller',
-    email: 't.mueller@spiegel.de',
-    phone: '+49 40 3007 2345',
+    name: {
+      salutation: 'Herr',
+      title: 'Dr.',
+      firstName: 'Thomas',
+      lastName: 'Müller'
+    },
+    displayName: 'Dr. Thomas Müller',
+    
     position: 'Redakteur Politik',
     department: 'Politik',
-    companyId: '', // Wird später gesetzt
     companyName: 'Der Spiegel',
-    notes: 'Experte für Bundespolitik und EU-Themen',
-    tagIds: [],
-    mediaInfo: {
-      publications: ['DER SPIEGEL', 'SPIEGEL ONLINE'],
-      expertise: ['Politik', 'EU', 'Bundespolitik', 'Wahlen']
+    
+    emails: [
+      { type: 'business', email: 't.mueller@spiegel.de', isPrimary: true }
+    ],
+    phones: [
+      { type: 'business', number: '+49 40 3007 2345', isPrimary: true }
+    ],
+    
+    mediaProfile: {
+      isJournalist: true,
+      publicationIds: [],
+      beats: ['Politik', 'EU', 'Bundespolitik', 'Wahlen']
     },
+    
     communicationPreferences: {
       preferredChannel: 'phone',
-      bestTimeToContact: '14:00-16:00',
-      doNotContact: false,
-      language: 'de'
+      preferredLanguage: 'de' as LanguageCode,
+      preferredTime: {
+        timezone: 'Europe/Berlin',
+        bestHours: { from: '14:00', to: '16:00' }
+      }
     },
-    userId: ''
+    
+    personalInfo: {
+      notes: 'Experte für Bundespolitik und EU-Themen'
+    },
+    
+    status: 'active'
   },
   {
-    firstName: 'Julia',
-    lastName: 'Weber',
-    email: 'j.weber@handelsblatt.com',
-    phone: '+49 211 8870 3456',
-    position: 'Finanzjournalistin',
-    department: 'Finanzen',
-    companyId: '', // Wird später gesetzt
-    companyName: 'Handelsblatt',
-    notes: 'Fokus auf Börse und Kapitalmärkte',
-    tagIds: [],
-    mediaInfo: {
-      publications: ['Handelsblatt Print'],
-      expertise: ['Börse', 'Kapitalmärkte', 'Banken', 'Fintech']
+    name: {
+      salutation: 'Herr',
+      firstName: 'Michael',
+      lastName: 'Bauer'
     },
-    communicationPreferences: {
-      preferredChannel: 'email',
-      doNotContact: false,
-      language: 'de'
-    },
-    socialMedia: [
-      { platform: 'twitter', url: 'https://twitter.com/jweber_hb' }
-    ],
-    userId: ''
-  },
-  {
-    firstName: 'Michael',
-    lastName: 'Bauer',
-    email: 'm.bauer@tech-innovations.de',
-    phone: '+49 30 123456 100',
+    displayName: 'Michael Bauer',
+    
     position: 'CEO',
     department: 'Geschäftsführung',
-    companyId: '', // Wird später gesetzt
     companyName: 'Tech Innovations GmbH',
-    notes: 'Gründer und Visionär, sehr PR-affin',
-    tagIds: [],
+    
+    emails: [
+      { type: 'business', email: 'm.bauer@tech-innovations.de', isPrimary: true }
+    ],
+    phones: [
+      { type: 'business', number: '+49 30 123456 100', isPrimary: true }
+    ],
+    
     communicationPreferences: {
-      preferredChannel: 'meeting',
-      doNotContact: false,
-      language: 'de'
+      preferredChannel: 'messaging',
+      preferredLanguage: 'de' as LanguageCode
     },
-    socialMedia: [
+    
+    socialProfiles: [
       { platform: 'linkedin', url: 'https://linkedin.com/in/michael-bauer-tech' }
     ],
-    userId: ''
-  },
-  {
-    firstName: 'Sarah',
-    lastName: 'Fischer',
-    email: 's.fischer@pr-agentur-muenchen.de',
-    phone: '+49 89 987654 20',
-    position: 'Senior Account Manager',
-    department: 'Kundenbetreuung',
-    companyId: '', // Wird später gesetzt
-    companyName: 'PR Agentur München',
-    notes: 'Betreut Tech-Kunden, sehr gute Medienkontakte',
-    tagIds: [],
-    communicationPreferences: {
-      preferredChannel: 'email',
-      doNotContact: false,
-      language: 'de'
+    
+    personalInfo: {
+      notes: 'Gründer und Visionär, sehr PR-affin'
     },
-    userId: ''
+    
+    status: 'active'
   }
 ];
 
-// Dummy Tags
+// Dummy Tags (bleibt gleich)
 const dummyTags: Omit<Tag, 'id'>[] = [
-  { name: 'Wichtig', color: 'red', userId: '' },
-  { name: 'Medien', color: 'blue', userId: '' },
-  { name: 'Kunde', color: 'green', userId: '' },
-  { name: 'Partner', color: 'purple', userId: '' },
-  { name: 'Newsletter', color: 'yellow', userId: '' }
+  { name: 'Wichtig', color: 'red', userId: '', createdAt: undefined, updatedAt: undefined },
+  { name: 'Medien', color: 'blue', userId: '', createdAt: undefined, updatedAt: undefined },
+  { name: 'Kunde', color: 'green', userId: '', createdAt: undefined, updatedAt: undefined },
+  { name: 'Partner', color: 'purple', userId: '', createdAt: undefined, updatedAt: undefined },
+  { name: 'Newsletter', color: 'yellow', userId: '', createdAt: undefined, updatedAt: undefined }
 ];
 
 // Funktion zum Seeden der Daten
-export async function seedDummyData(userId: string) {
+export async function seedDummyDataEnhanced(userId: string) {
   try {
-    console.log('Starting to seed dummy data...');
+    console.log('Starting to seed enhanced dummy data...');
+    
+    const context = { organizationId: userId, userId };
     
     // Tags erstellen
     console.log('Creating tags...');
     const tagIds: string[] = [];
     for (const tagData of dummyTags) {
-      const tagId = await tagsService.create({ ...tagData, userId });
+      const tagId = await tagsEnhancedService.create(
+        { ...tagData, organizationId: userId },
+        context
+      );
       tagIds.push(tagId);
       console.log(`Created tag: ${tagData.name}`);
     }
@@ -335,13 +318,12 @@ export async function seedDummyData(userId: string) {
         .sort(() => 0.5 - Math.random())
         .slice(0, Math.floor(Math.random() * 3) + 1);
       
-      const companyId = await companiesService.create({
+      const companyId = await companiesEnhancedService.create({
         ...companyData,
-        tagIds: randomTags,
-        userId
-      });
+        tagIds: randomTags
+      } as any, context);
       
-      companyIdMap.set(companyData.name, companyId);
+      companyIdMap.set(companyData.name!, companyId);
       console.log(`Created company: ${companyData.name}`);
     }
     
@@ -355,28 +337,27 @@ export async function seedDummyData(userId: string) {
         .sort(() => 0.5 - Math.random())
         .slice(0, Math.floor(Math.random() * 2) + 1);
       
-      await contactsService.create({
+      await contactsEnhancedService.create({
         ...contactData,
         companyId,
-        tagIds: randomTags,
-        userId
-      });
+        tagIds: randomTags
+      } as any, context);
       
-      console.log(`Created contact: ${contactData.firstName} ${contactData.lastName}`);
+      console.log(`Created contact: ${contactData.displayName}`);
     }
     
-    console.log('\n✅ Dummy data seeding completed successfully!');
+    console.log('\n✅ Enhanced dummy data seeding completed successfully!');
     console.log(`Created ${dummyTags.length} tags, ${dummyCompanies.length} companies, and ${dummyContacts.length} contacts.`);
     
   } catch (error) {
-    console.error('❌ Error seeding dummy data:', error);
+    console.error('❌ Error seeding enhanced dummy data:', error);
     throw error;
   }
 }
 
-// Beispiel-Verwendung (in einer React-Komponente oder einer Seite):
+// Beispiel-Verwendung in einer React-Komponente:
 /*
-import { seedDummyData } from '@/scripts/seed-dummy-data';
+import { seedDummyDataEnhanced } from '@/scripts/seed-dummy-data-enhanced';
 import { useAuth } from '@/context/AuthContext';
 
 // In einer Komponente:
@@ -385,14 +366,19 @@ const { user } = useAuth();
 const handleSeedData = async () => {
   if (user) {
     try {
-      await seedDummyData(user.uid);
-      alert('Dummy-Daten erfolgreich angelegt!');
+      await seedDummyDataEnhanced(user.uid);
+      alert('Enhanced Dummy-Daten erfolgreich angelegt!');
+      // Seite neu laden oder Daten aktualisieren
+      window.location.reload();
     } catch (error) {
+      console.error(error);
       alert('Fehler beim Anlegen der Dummy-Daten');
     }
   }
 };
 
 // Button zum Auslösen:
-<button onClick={handleSeedData}>Dummy-Daten anlegen</button>
+<Button onClick={handleSeedData} color="zinc">
+  Test-Daten anlegen
+</Button>
 */

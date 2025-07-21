@@ -391,6 +391,21 @@ class ContactEnhancedService extends BaseService<ContactEnhanced> {
     if (!data.displayName) {
       data.displayName = this.formatDisplayName(data.name);
     }
+    
+    // Clean personalInfo to remove any undefined values
+    if (data.personalInfo) {
+      const cleanedPersonalInfo: any = {};
+      for (const [key, value] of Object.entries(data.personalInfo)) {
+        if (value !== undefined && value !== null) {
+          cleanedPersonalInfo[key] = value;
+        }
+      }
+      if (Object.keys(cleanedPersonalInfo).length > 0) {
+        data.personalInfo = cleanedPersonalInfo;
+      } else {
+        delete data.personalInfo;
+      }
+    }
 
     return super.create(data, context);
   }
@@ -812,19 +827,49 @@ interface TagEnhanced extends BaseEntity {
   // Verwendungs-Statistiken
   contactCount?: number;
   companyCount?: number;
+  
+  // Für Kompatibilität mit altem Tag Type
+  userId?: string; // Optional für Rückwärtskompatibilität
 }
 
 class TagEnhancedService extends BaseService<TagEnhanced> {
   constructor() {
     super('tags');
   }
+  
+  /**
+   * Get all tags as enhanced format
+   */
+  async getAll(organizationId: string, options?: QueryOptions): Promise<TagEnhanced[]> {
+    return super.getAll(organizationId, options);
+  }
+  
+  /**
+   * Get all tags converted to legacy Tag format for compatibility
+   */
+  async getAllAsLegacyTags(organizationId: string, options?: QueryOptions): Promise<Tag[]> {
+    const enhancedTags = await this.getAll(organizationId, options);
+    
+    // Convert TagEnhanced to Tag for compatibility
+    return enhancedTags.map(tag => ({
+      id: tag.id,
+      name: tag.name,
+      color: tag.color,
+      description: tag.description,
+      userId: tag.createdBy || organizationId, // Map createdBy to userId for compatibility
+      createdAt: tag.createdAt,
+      updatedAt: tag.updatedAt,
+      contactCount: tag.contactCount,
+      companyCount: tag.companyCount
+    })) as Tag[];
+  }
 
   /**
-   * Lädt Tags mit Verwendungs-Zählung
+   * Lädt Tags mit Verwendungs-Zählung (Legacy Format)
    */
   async getWithUsageCount(
     organizationId: string
-  ): Promise<TagEnhanced[]> {
+  ): Promise<Tag[]> {
     try {
       const tags = await this.getAll(organizationId);
       
@@ -861,12 +906,18 @@ class TagEnhancedService extends BaseService<TagEnhanced> {
         });
       });
 
-      // Erweitere Tags mit Zählungen
+      // Erweitere Tags mit Zählungen und konvertiere zu Tag type
       return tags.map(tag => ({
-        ...tag,
+        id: tag.id,
+        name: tag.name,
+        color: tag.color,
+        description: tag.description,
+        userId: tag.createdBy || organizationId, // Map for compatibility
+        createdAt: tag.createdAt,
+        updatedAt: tag.updatedAt,
         companyCount: tag.id ? (tagUsage.get(tag.id)?.companies || 0) : 0,
         contactCount: tag.id ? (tagUsage.get(tag.id)?.contacts || 0) : 0
-      }));
+      })) as Tag[];
     } catch (error) {
       console.error('Error loading tags with usage:', error);
       return [];

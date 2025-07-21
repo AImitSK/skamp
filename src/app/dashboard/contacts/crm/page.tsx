@@ -231,10 +231,10 @@ export default function ContactsPage() {
     if (!user) return;
     setLoading(true);
     try {
-      const [companiesData, contactsData, tagsData] = await Promise.all([
+const [companiesData, contactsData, tagsData] = await Promise.all([
         companiesEnhancedService.getAll(user.uid),
         contactsEnhancedService.getAll(user.uid),
-        tagsEnhancedService.getAll(user.uid)
+        tagsEnhancedService.getAllAsLegacyTags(user.uid)
       ]);
       
       setCompanies(companiesData);
@@ -458,9 +458,11 @@ export default function ContactsPage() {
     : Math.ceil(filteredContacts.length / itemsPerPage);
 
   // Berechne Contact Count für Companies
-  const getContactCount = (companyId: string) => {
-    return contacts.filter(contact => contact.companyId === companyId).length;
-  };
+const getContactCount = (companyId: string) => {
+  const count = contacts.filter(contact => contact.companyId === companyId).length;
+  console.log(`Company ${companyId} has ${count} contacts`);
+  return count;
+};
 
   // Get last contact date
   const getLastContactDate = (companyId: string) => {

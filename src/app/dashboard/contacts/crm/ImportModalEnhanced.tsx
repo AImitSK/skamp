@@ -153,9 +153,9 @@ export default function ImportModalEnhanced({ onClose, onImportSuccess }: Import
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Sample CSV templates
-  // Helper function to parse dates
+// Helper function to parse dates
   const parseDate = (dateStr: string): Date | undefined => {
-    if (!dateStr) return undefined;
+    if (!dateStr || dateStr.trim() === '') return undefined;
     
     // Try different date formats
     const formats = [
@@ -191,6 +191,26 @@ export default function ImportModalEnhanced({ onClose, onImportSuccess }: Import
     // Try native parsing as last resort
     const date = new Date(dateStr);
     return isNaN(date.getTime()) ? undefined : date;
+  };
+
+  // Helper function to clean undefined values from objects
+  const cleanObject = (obj: any): any => {
+    const cleaned: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (value !== undefined && value !== null && value !== '') {
+        if (typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
+          const cleanedValue = cleanObject(value);
+          if (Object.keys(cleanedValue).length > 0) {
+            cleaned[key] = cleanedValue;
+          }
+        } else if (Array.isArray(value) && value.length > 0) {
+          cleaned[key] = value;
+        } else {
+          cleaned[key] = value;
+        }
+      }
+    }
+    return cleaned;
   };
 
   const companySampleCSV = `Firmenname*,Offizieller Firmenname,Handelsname,Typ*,Branche,Status,Lifecycle Stage,Rechtsform,Gründungsjahr,Website,Beschreibung,Interne Notizen,Straße,PLZ,Stadt,Bundesland,Land (ISO),Telefon 1,Telefon Typ 1,Telefon 2,Telefon Typ 2,E-Mail 1,E-Mail Typ 1,E-Mail 2,E-Mail Typ 2,USt-IdNr,Handelsregister,Jahresumsatz,Währung,Mitarbeiterzahl,Geschäftsjahresende,Muttergesellschaft,LinkedIn,Twitter,Facebook,Instagram,YouTube,Xing,Tags
