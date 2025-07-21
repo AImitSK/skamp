@@ -645,11 +645,17 @@ export default function CompanyModal({ company, onClose, onSave, userId }: Compa
                       ))}
                     </Select>
                   </Field>
+
                   <Field>
                     <Label>Gründungsdatum</Label>
                     <Input 
                       type="date" 
-                      value={formData.foundedDate ? new Date(formData.foundedDate).toISOString().split('T')[0] : ''} 
+                      value={formData.foundedDate ? 
+                        (formData.foundedDate instanceof Date ? 
+                          formData.foundedDate.toISOString().split('T')[0] : 
+                          (formData.foundedDate as any).toDate?.().toISOString().split('T')[0] || ''
+                        ) : ''
+                      } 
                       onChange={(e) => setFormData({ ...formData, foundedDate: e.target.value ? new Date(e.target.value) : undefined })} 
                     />
                   </Field>

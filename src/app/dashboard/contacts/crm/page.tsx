@@ -46,22 +46,16 @@ import {
   MapPinIcon,
   CalendarIcon
 } from "@heroicons/react/20/solid";
-import { companiesService, contactsService, tagsService } from "@/lib/firebase/crm-service";
-import { Company, Contact, Tag, companyTypeLabels, CompanyType } from "@/types/crm";
+import { companiesEnhancedService, contactsEnhancedService, tagsEnhancedService } from "@/lib/firebase/crm-service-enhanced";
+import { Tag, companyTypeLabels, CompanyType } from "@/types/crm";
 import { CompanyEnhanced, ContactEnhanced } from "@/types/crm-enhanced";
 import CompanyModal from "./CompanyModal";
-import ContactModalEnhanced from "@/components/crm/ContactModalEnhanced";
-import ImportModal from "./ImportModal";
+import ContactModalEnhanced from "./ContactModalEnhanced";
 import Papa from 'papaparse';
 import clsx from 'clsx';
-import { EnhancedCompanyTable } from "@/components/crm/EnhancedCompanyTable";
-import { EnhancedContactTable } from "@/components/crm/EnhancedContactTable";
-import { companyServiceEnhanced } from "@/lib/firebase/company-service-enhanced";
 import { Timestamp } from 'firebase/firestore';
 import { CountryCode } from '@/types/international';
 import { COMPANY_STATUS_OPTIONS, LIFECYCLE_STAGE_OPTIONS } from '@/types/crm-enhanced';
-import { companiesEnhancedService, contactsEnhancedService } from "@/lib/firebase/crm-service-enhanced";
-
 
 type TabType = 'companies' | 'contacts';
 type ViewMode = 'grid' | 'list';
@@ -155,6 +149,19 @@ function Alert({
   );
 }
 
+// Helper functions für Enhanced Data
+const getPrimaryEmail = (emails?: Array<{ email: string; isPrimary?: boolean }>): string => {
+  if (!emails || emails.length === 0) return '';
+  const primary = emails.find(e => e.isPrimary);
+  return primary?.email || emails[0].email;
+};
+
+const getPrimaryPhone = (phones?: Array<{ number: string; isPrimary?: boolean }>): string => {
+  if (!phones || phones.length === 0) return '';
+  const primary = phones.find(p => p.isPrimary);
+  return primary?.number || phones[0].number;
+};
+
 export default function ContactsPage() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
@@ -163,8 +170,8 @@ export default function ContactsPage() {
   const initialTab = searchParams.get('tab') === 'contacts' ? 'contacts' : 'companies';
   
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [companies, setCompanies] = useState<CompanyEnhanced[]>([]);
+  const [contacts, setContacts] = useState<ContactEnhanced[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -175,8 +182,8 @@ export default function ContactsPage() {
   const [showCompanyModal, setShowCompanyModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
-  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
-  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [selectedCompany, setSelectedCompany] = useState<CompanyEnhanced | null>(null);
+  const [selectedContact, setSelectedContact] = useState<ContactEnhanced | null>(null);
   
   const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string } | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -197,10 +204,6 @@ export default function ContactsPage() {
   const [selectedCompanyTagIds, setSelectedCompanyTagIds] = useState<string[]>([]);
   const [selectedContactCompanyIds, setSelectedContactCompanyIds] = useState<string[]>([]);
   const [selectedContactTagIds, setSelectedContactTagIds] = useState<string[]>([]);
-
-  const [enhancedCompanies, setEnhancedCompanies] = useState<CompanyEnhanced[]>([]);
-  const [enhancedContacts, setEnhancedContacts] = useState<ContactEnhanced[]>([]);
-  const [useEnhancedView, setUseEnhancedView] = useState(false);
 
   // Alert Management
   const showAlert = useCallback((type: 'info' | 'success' | 'warning' | 'error', title: string, message?: string) => {
@@ -224,95 +227,18 @@ export default function ContactsPage() {
     }
   }, [user]); 
 
- const loadData = async () => {
+  const loadData = async () => {
     if (!user) return;
     setLoading(true);
     try {
-      // Lade Legacy-Daten
       const [companiesData, contactsData, tagsData] = await Promise.all([
-        companiesService.getAll(user.uid),
-        contactsService.getAll(user.uid),
-        tagsService.getAll(user.uid)
-      ]);
-      
-      // Lade Enhanced-Daten
-      const [enhancedCompData, enhancedContactsData] = await Promise.all([
         companiesEnhancedService.getAll(user.uid),
-        contactsEnhancedService.getAll(user.uid)
+        contactsEnhancedService.getAll(user.uid),
+        tagsEnhancedService.getAll(user.uid)
       ]);
       
-      // Merge Legacy und Enhanced Companies
-      const mergedCompanies = [...companiesData];
-      
-      // Füge Enhanced Companies hinzu, die nicht in Legacy existieren
-      enhancedCompData.forEach(enhancedCompany => {
-        const existsInLegacy = companiesData.some(c => c.id === enhancedCompany.id);
-        if (!existsInLegacy) {
-          // Konvertiere Enhanced zu Legacy-Format für die Anzeige
-          const legacyFormat: Company = {
-            id: enhancedCompany.id!,
-            name: enhancedCompany.name,
-            type: enhancedCompany.type,
-            industry: enhancedCompany.industryClassification?.primary || '',
-            website: enhancedCompany.website || '',
-            phone: enhancedCompany.phones?.[0]?.number || '',
-            email: enhancedCompany.emails?.[0]?.email || '',
-            address: {
-              street: enhancedCompany.mainAddress?.street || '',
-              street2: '',
-              city: enhancedCompany.mainAddress?.city || '',
-              zip: enhancedCompany.mainAddress?.postalCode || '',
-              state: enhancedCompany.mainAddress?.region || '',
-              country: enhancedCompany.mainAddress?.countryCode || ''
-            },
-            employees: enhancedCompany.financial?.employees,
-            revenue: enhancedCompany.financial?.annualRevenue?.amount,
-            notes: enhancedCompany.internalNotes || '',
-            tagIds: enhancedCompany.tagIds || [],
-            socialMedia: enhancedCompany.socialMedia || [],
-            userId: enhancedCompany.organizationId || enhancedCompany.createdBy || user.uid,
-            createdAt: enhancedCompany.createdAt,
-            updatedAt: enhancedCompany.updatedAt
-          };
-          mergedCompanies.push(legacyFormat);
-        }
-      });
-      
-      // Merge Legacy und Enhanced Contacts
-      const mergedContacts = [...contactsData];
-      
-      // Füge Enhanced Contacts hinzu, die nicht in Legacy existieren
-      enhancedContactsData.forEach(enhancedContact => {
-        const existsInLegacy = contactsData.some(c => c.id === enhancedContact.id);
-        if (!existsInLegacy) {
-          // Konvertiere Enhanced zu Legacy-Format für die Anzeige
-          const legacyFormat: Contact = {
-            id: enhancedContact.id!,
-            firstName: enhancedContact.name.firstName,
-            lastName: enhancedContact.name.lastName,
-            email: enhancedContact.emails?.[0]?.email || '',
-            phone: enhancedContact.phones?.[0]?.number || '',
-            position: enhancedContact.position || '',
-            companyId: enhancedContact.companyId,
-            companyName: enhancedContact.companyName,
-            notes: enhancedContact.personalInfo?.notes || '',
-            tagIds: enhancedContact.tagIds || [],
-            socialMedia: enhancedContact.socialProfiles?.map(p => ({
-              platform: p.platform as any,
-              url: p.url
-            })) || [],
-            userId: enhancedContact.organizationId || enhancedContact.createdBy || user.uid,
-            createdAt: enhancedContact.createdAt,
-            updatedAt: enhancedContact.updatedAt
-          };
-          mergedContacts.push(legacyFormat);
-        }
-      });
-      
-      setEnhancedCompanies(enhancedCompData);
-      setEnhancedContacts(enhancedContactsData);
-      setCompanies(mergedCompanies);
-      setContacts(mergedContacts);
+      setCompanies(companiesData);
+      setContacts(contactsData);
       setTags(tagsData);
     } catch (error) {
       showAlert('error', 'Fehler beim Laden', 'Die Daten konnten nicht geladen werden.');
@@ -336,7 +262,7 @@ export default function ContactsPage() {
   const filteredCompanies = useMemo(() => {
     return companies.filter(company => {
       const searchMatch = company.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          company.industry?.toLowerCase().includes(searchTerm.toLowerCase());
+                          company.industryClassification?.primary?.toLowerCase().includes(searchTerm.toLowerCase());
       if (!searchMatch) return false;
       
       const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(company.type);
@@ -352,8 +278,8 @@ export default function ContactsPage() {
 
   const filteredContacts = useMemo(() => {
     return contacts.filter(contact => {
-      const searchMatch = `${contact.firstName} ${contact.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          contact.email?.toLowerCase().includes(searchTerm.toLowerCase());
+      const searchMatch = contact.displayName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          getPrimaryEmail(contact.emails).toLowerCase().includes(searchTerm.toLowerCase());
       if (!searchMatch) return false;
 
       const companyMatch = selectedContactCompanyIds.length === 0 || 
@@ -374,115 +300,12 @@ export default function ContactsPage() {
     return filteredCompanies.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredCompanies, currentPage, itemsPerPage]);
 
-const paginatedEnhancedCompanies = useMemo(() => {
-      return paginatedCompanies.map(c => {
-          const enhanced = enhancedCompanies.find(ec => ec.id === c.id);
-          
-          // Berechne die Anzahl der zugeordneten Kontakte
-          const contactCount = contacts.filter(contact => contact.companyId === c.id).length;
-          
-          // Finde das letzte Kontaktdatum
-          const companyContacts = contacts.filter(contact => contact.companyId === c.id);
-          let lastContactDate = undefined;
-          if (companyContacts.length > 0) {
-              // Hier könntest du die lastActivityAt oder createdAt der Kontakte nutzen
-              // Für jetzt nutzen wir das createdAt des neuesten Kontakts
-              const sortedContacts = companyContacts.sort((a, b) => {
-                  // Handle both Date and Timestamp types
-                  const getTime = (date: any): number => {
-                      if (!date) return 0;
-                      if (date instanceof Date) return date.getTime();
-                      if (date instanceof Timestamp) return date.toDate().getTime();
-                      if (date.toDate && typeof date.toDate === 'function') return date.toDate().getTime();
-                      return new Date(date).getTime();
-                  };
-                  
-                  const dateA = getTime(a.createdAt);
-                  const dateB = getTime(b.createdAt);
-                  return dateB - dateA;
-              });
-              if (sortedContacts[0]?.createdAt) {
-                  lastContactDate = sortedContacts[0].createdAt;
-              }
-          }
-          
-          if (enhanced) {
-              return {
-                  ...enhanced,
-                  contactCount,
-                  lastContactDate
-              };
-          }
-          
-          // Fallback: Create a structure that matches the enhanced view as much as possible
-          return {
-              ...c,
-              id: c.id!,
-              organizationId: user!.uid,
-              createdBy: user!.uid,
-              name: c.name,
-              type: c.type,
-              officialName: c.name,
-              mainAddress: c.address ? {
-                  street: c.address.street || '',
-                  city: c.address.city || '',
-                  postalCode: c.address.zip || '',
-                  region: c.address.state || '',
-                  countryCode: (c.address.country || 'DE') as CountryCode
-              } : undefined,
-              industryClassification: c.industry ? { primary: c.industry } : undefined,
-              contactCount,
-              lastContactDate,
-              // Ensure other required fields from CompanyEnhanced are present with default values if needed
-          } as CompanyEnhanced;
-      });
-  }, [paginatedCompanies, enhancedCompanies, contacts, user]);
-
   const paginatedContacts = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return filteredContacts.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredContacts, currentPage, itemsPerPage]);
 
-  const paginatedEnhancedContacts = useMemo(() => {
-    return paginatedContacts.map(c => {
-      const enhanced = enhancedContacts.find(ec => ec.id === c.id);
-      if (enhanced) {
-        return enhanced;
-      }
-      
-      // Fallback: Create enhanced structure from legacy contact
-      return {
-        ...c,
-        id: c.id!,
-        organizationId: user!.uid,
-        createdBy: user!.uid,
-        name: {
-          firstName: c.firstName,
-          lastName: c.lastName
-        },
-        displayName: `${c.firstName} ${c.lastName}`,
-        emails: c.email ? [{
-          type: 'business' as const,
-          email: c.email,
-          isPrimary: true
-        }] : [],
-        phones: c.phone ? [{
-          type: 'business' as const,
-          number: c.phone,
-          isPrimary: true
-        }] : [],
-        status: 'active' as const,
-        mediaProfile: c.mediaInfo ? {
-          isJournalist: true,
-          publicationIds: c.mediaInfo.publications || [],
-          beats: c.mediaInfo.expertise || []
-        } : undefined,
-        lastActivityAt: c.lastContactDate
-      } as ContactEnhanced;
-    });
-  }, [paginatedContacts, enhancedContacts, user]);
-
-  // Create maps for efficient lookup
+  // Maps für Tags und Companies
   const tagsMap = useMemo(() => {
     const map = new Map<string, { name: string; color: string }>();
     tags.forEach(tag => {
@@ -498,21 +321,6 @@ const paginatedEnhancedCompanies = useMemo(() => {
     companies.forEach(company => {
       if (company.id) {
         map.set(company.id, { name: company.name, type: company.type });
-      }
-    });
-    return map;
-  }, [companies]);
-
-  const publicationsMap = useMemo(() => {
-    const map = new Map<string, { name: string; type: string }>();
-    // For now, we'll extract publications from companies with mediaInfo
-    companies.forEach(company => {
-      if (company.mediaInfo?.publications) {
-        company.mediaInfo.publications.forEach(pub => {
-          if (pub.id) {
-            map.set(pub.id, { name: pub.name, type: pub.type });
-          }
-        });
       }
     });
     return map;
@@ -548,10 +356,18 @@ const paginatedEnhancedCompanies = useMemo(() => {
       type: 'danger',
       onConfirm: async () => {
         const ids = activeTab === 'companies' ? Array.from(selectedCompanyIds) : Array.from(selectedContactIds);
-        const service = activeTab === 'companies' ? companiesService : contactsService;
         
         try {
-          await Promise.all(ids.map(id => service.delete(id)));
+          // Use Firebase deleteDoc directly
+          const { deleteDoc, doc } = await import('firebase/firestore');
+          const { db } = await import('@/lib/firebase/client-init');
+          
+          const collectionName = activeTab === 'companies' ? 'companies_enhanced' : 'contacts_enhanced';
+          
+          await Promise.all(ids.map(id => 
+            deleteDoc(doc(db, collectionName, id))
+          ));
+          
           showAlert('success', `${count} ${type} gelöscht`);
           await loadData();
           if (activeTab === 'companies') {
@@ -575,8 +391,13 @@ const paginatedEnhancedCompanies = useMemo(() => {
       type: 'danger',
       onConfirm: async () => {
         try {
-          const service = type === 'company' ? companiesService : contactsService;
-          await service.delete(id);
+          // Use Firebase deleteDoc directly
+          const { deleteDoc, doc } = await import('firebase/firestore');
+          const { db } = await import('@/lib/firebase/client-init');
+          
+          const collectionName = type === 'company' ? 'companies_enhanced' : 'contacts_enhanced';
+          await deleteDoc(doc(db, collectionName, id));
+          
           showAlert('success', `${name} wurde gelöscht`);
           await loadData();
         } catch (error) {
@@ -587,7 +408,6 @@ const paginatedEnhancedCompanies = useMemo(() => {
   };
 
   // Export Function
-  // Export Function mit Enhanced Data
   const handleExport = () => {
     const isCompaniesTab = activeTab === 'companies';
     const filename = isCompaniesTab ? 'firmen-export.csv' : 'kontakte-export.csv';
@@ -596,134 +416,20 @@ const paginatedEnhancedCompanies = useMemo(() => {
       let csvContent: string;
       
       if (isCompaniesTab) {
-        // Check if we have enhanced data
-        const hasEnhancedData = enhancedCompanies.length > 0;
-        
-        if (hasEnhancedData) {
-          // Export enhanced companies
-          const exportData = filteredCompanies.map(company => {
-            const enhanced = enhancedCompanies.find(ec => ec.id === company.id);
-            return enhanced || {
-              ...company,
-              id: company.id!,
-              organizationId: user!.uid,
-              createdBy: user!.uid,
-              name: company.name,
-              type: company.type,
-              officialName: company.name,
-              mainAddress: company.address ? {
-                street: company.address.street || '',
-                city: company.address.city || '',
-                postalCode: company.address.zip || '',
-                region: company.address.state || '',
-                countryCode: (company.address.country || 'DE') as CountryCode
-              } : undefined,
-              industryClassification: company.industry ? { primary: company.industry } : undefined,
-              financial: {
-                annualRevenue: company.revenue ? { amount: company.revenue, currency: 'EUR' as CurrencyCode } : undefined,
-                employees: company.employees
-              },
-              phones: company.phone ? [{
-                type: 'business' as const,
-                number: company.phone,
-                isPrimary: true
-              }] : [],
-              emails: company.email ? [{
-                type: 'general' as const,
-                email: company.email,
-                isPrimary: true
-              }] : [],
-              socialMedia: company.socialMedia || [],
-              tagIds: company.tagIds || [],
-              internalNotes: company.notes,
-              website: company.website
-            } as CompanyEnhanced;
-          });
-          
-          csvContent = exportCompaniesToCSV(exportData, tagsMap, {
-            includeIds: false,
-            includeTimestamps: false,
-            includeTags: true
-          });
-        } else {
-          // Fallback to legacy export
-          const companyData = filteredCompanies.map(company => ({
-            "Firmenname": company.name,
-            "Typ": companyTypeLabels[company.type],
-            "Branche": company.industry || '',
-            "Website": company.website || '',
-            "Telefon": company.phone || '',
-            "E-Mail": company.email || '',
-            "Straße": company.address?.street || '',
-            "PLZ": company.address?.zip || '',
-            "Stadt": company.address?.city || '',
-            "Bundesland": company.address?.state || '',
-            "Mitarbeiter": company.employees || '',
-            "Umsatz": company.revenue || '',
-            "Notizen": company.notes || ''
-          }));
-          csvContent = Papa.unparse(companyData);
-        }
+        csvContent = exportCompaniesToCSV(filteredCompanies, tagsMap, {
+          includeIds: false,
+          includeTimestamps: false,
+          includeTags: true
+        });
       } else {
-        // Export contacts
-        const hasEnhancedData = enhancedContacts.length > 0;
-        
-        if (hasEnhancedData) {
-          // Export enhanced contacts
-          const exportData = filteredContacts.map(contact => {
-            const enhanced = enhancedContacts.find(ec => ec.id === contact.id);
-            return enhanced || {
-              ...contact,
-              id: contact.id!,
-              organizationId: user!.uid,
-              createdBy: user!.uid,
-              name: {
-                firstName: contact.firstName,
-                lastName: contact.lastName
-              },
-              displayName: `${contact.firstName} ${contact.lastName}`,
-              emails: contact.email ? [{
-                type: 'business' as const,
-                email: contact.email,
-                isPrimary: true
-              }] : [],
-              phones: contact.phone ? [{
-                type: 'business' as const,
-                number: contact.phone,
-                isPrimary: true
-              }] : [],
-              status: 'active' as const,
-              position: contact.position,
-              companyName: contact.companyName,
-              tagIds: contact.tagIds || [],
-              socialMedia: contact.socialMedia || [],
-              personalInfo: {
-                notes: contact.notes
-              }
-            } as ContactEnhanced;
-          });
-          
-          csvContent = exportContactsToCSV(exportData, companiesMap, tagsMap, {
-            includeIds: false,
-            includeTimestamps: false,
-            includeTags: true
-          });
-        } else {
-          // Fallback to legacy export
-          const contactData = filteredContacts.map(contact => ({
-            "Vorname": contact.firstName,
-            "Nachname": contact.lastName,
-            "Firma": contact.companyName || '',
-            "Position": contact.position || '',
-            "E-Mail": contact.email || '',
-            "Telefon": contact.phone || '',
-            "Notizen": contact.notes || ''
-          }));
-          csvContent = Papa.unparse(contactData);
-        }
+        csvContent = exportContactsToCSV(filteredContacts, companiesMap, tagsMap, {
+          includeIds: false,
+          includeTimestamps: false,
+          includeTags: true
+        });
       }
 
-      if (!csvContent || filteredCompanies.length === 0 && filteredContacts.length === 0) {
+      if (!csvContent || (filteredCompanies.length === 0 && filteredContacts.length === 0)) {
         showAlert('warning', 'Keine Daten zum Exportieren');
         return;
       }
@@ -750,6 +456,26 @@ const paginatedEnhancedCompanies = useMemo(() => {
   const totalPages = activeTab === 'companies' 
     ? Math.ceil(filteredCompanies.length / itemsPerPage)
     : Math.ceil(filteredContacts.length / itemsPerPage);
+
+  // Berechne Contact Count für Companies
+  const getContactCount = (companyId: string) => {
+    return contacts.filter(contact => contact.companyId === companyId).length;
+  };
+
+  // Get last contact date
+  const getLastContactDate = (companyId: string) => {
+    const companyContacts = contacts.filter(contact => contact.companyId === companyId);
+    if (companyContacts.length === 0) return null;
+    
+    // Sort by createdAt and return the most recent
+    const sorted = companyContacts.sort((a, b) => {
+      const dateA = a.createdAt?.toDate?.() || new Date(0);
+      const dateB = b.createdAt?.toDate?.() || new Date(0);
+      return dateB.getTime() - dateA.getTime();
+    });
+    
+    return sorted[0]?.createdAt;
+  };
 
   return (
     <div>
@@ -1129,7 +855,7 @@ const paginatedEnhancedCompanies = useMemo(() => {
 
               {/* Body */}
               <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                {paginatedEnhancedCompanies.map((company) => (
+                {paginatedCompanies.map((company) => (
                   <div key={company.id} className="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                     <div className="flex items-center">
                       {/* Company Name & Type */}
@@ -1137,18 +863,18 @@ const paginatedEnhancedCompanies = useMemo(() => {
                         <Checkbox
                           checked={selectedCompanyIds.has(company.id!)}
                           onChange={(checked: boolean) => {
-                                const newIds = new Set(selectedCompanyIds);
-                                if (checked) newIds.add(company.id!);
-                                else newIds.delete(company.id!);
-                                setSelectedCompanyIds(newIds);
-                            }}
+                            const newIds = new Set(selectedCompanyIds);
+                            if (checked) newIds.add(company.id!);
+                            else newIds.delete(company.id!);
+                            setSelectedCompanyIds(newIds);
+                          }}
                         />
                         <div className="ml-4 min-w-0 flex-1">
                           <button
                             onClick={() => router.push(`/dashboard/contacts/crm/companies/${company.id}`)}
                             className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-primary truncate block text-left"
                           >
-                            {company.officialName || company.name}
+                            {company.name}
                           </button>
                           <div className="flex items-center gap-2 mt-1">
                             <Badge color="zinc" className="text-xs whitespace-nowrap">
@@ -1197,19 +923,22 @@ const paginatedEnhancedCompanies = useMemo(() => {
                       {/* Contact Count */}
                       <div className="w-[10%] text-center">
                         <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                          {(company as any).contactCount || 0}
+                          {getContactCount(company.id!)}
                         </span>
                       </div>
 
                       {/* Last Contact */}
                       <div className="flex items-center gap-4 flex-1 justify-end pr-14 text-sm">
-                        {(company as any).lastContactDate ? (
-                          <span className="text-zinc-600 dark:text-zinc-400">
-                            {new Date((company as any).lastContactDate.toDate()).toLocaleDateString('de-DE')}
-                          </span>
-                        ) : (
-                          <span className="text-zinc-400">Nie</span>
-                        )}
+                        {(() => {
+                          const lastContact = getLastContactDate(company.id!);
+                          return lastContact ? (
+                            <span className="text-zinc-600 dark:text-zinc-400">
+                              {new Date(lastContact.toDate()).toLocaleDateString('de-DE')}
+                            </span>
+                          ) : (
+                            <span className="text-zinc-400">Nie</span>
+                          );
+                        })()}
                       </div>
 
                       {/* Actions */}
@@ -1223,11 +952,8 @@ const paginatedEnhancedCompanies = useMemo(() => {
                               Anzeigen
                             </DropdownItem>
                             <DropdownItem onClick={() => {
-                                const originalCompany = companies.find(c => c.id === company.id);
-                                if (originalCompany) {
-                                    setSelectedCompany(originalCompany);
-                                    setShowCompanyModal(true);
-                                }
+                              setSelectedCompany(company);
+                              setShowCompanyModal(true);
                             }}>
                               Bearbeiten
                             </DropdownItem>
@@ -1244,34 +970,154 @@ const paginatedEnhancedCompanies = useMemo(() => {
               </div>
             </div>
           ) : (
-            // Enhanced Contact Table
-            <EnhancedContactTable
-              contacts={paginatedEnhancedContacts}
-              selectedIds={selectedContactIds}
-              onSelectAll={handleSelectAllContacts}
-              onSelectOne={(id, checked) => {
-                const newIds = new Set(selectedContactIds);
-                if (checked) {
-                  newIds.add(id);
-                } else {
-                  newIds.delete(id);
-                }
-                setSelectedContactIds(newIds);
-              }}
-              onView={(contact) => router.push(`/dashboard/contacts/crm/contacts/${contact.id}`)}
-              onEdit={(contact) => {
-                const originalContact = contacts.find(c => c.id === contact.id);
-                if (originalContact) {
-                  setSelectedContact(originalContact);
-                  setShowContactModal(true);
-                }
-              }}
-              onDelete={(contact) => handleDelete(contact.id!, contact.displayName, 'contact')}
-              tags={tagsMap}
-              companies={companiesMap}
-              publications={publicationsMap}
-              viewMode="compact"
-            />
+            // Contacts Table mit Enhanced Data
+            <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm overflow-hidden">
+              {/* Header */}
+              <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
+                <div className="flex items-center">
+                  <div className="flex items-center w-[30%]">
+                    <Checkbox
+                      checked={paginatedContacts.length > 0 && selectedContactIds.size === paginatedContacts.length}
+                      indeterminate={selectedContactIds.size > 0 && selectedContactIds.size < paginatedContacts.length}
+                      onChange={(checked: boolean) => handleSelectAllContacts(checked)}
+                    />
+                    <span className="ml-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                      Name
+                    </span>
+                  </div>
+                  <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Firma / Position
+                  </div>
+                  <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    E-Mail
+                  </div>
+                  <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Telefon
+                  </div>
+                  <div className="flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Tags
+                  </div>
+                  <div className="w-[80px]"></div>
+                </div>
+              </div>
+
+              {/* Body */}
+              <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                {paginatedContacts.map((contact) => (
+                  <div key={contact.id} className="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                    <div className="flex items-center">
+                      {/* Name */}
+                      <div className="flex items-center w-[30%]">
+                        <Checkbox
+                          checked={selectedContactIds.has(contact.id!)}
+                          onChange={(checked: boolean) => {
+                            const newIds = new Set(selectedContactIds);
+                            if (checked) newIds.add(contact.id!);
+                            else newIds.delete(contact.id!);
+                            setSelectedContactIds(newIds);
+                          }}
+                        />
+                        <div className="ml-4 min-w-0 flex-1">
+                          <button
+                            onClick={() => router.push(`/dashboard/contacts/crm/contacts/${contact.id}`)}
+                            className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-primary truncate block text-left"
+                          >
+                            {contact.displayName}
+                          </button>
+                          {contact.mediaProfile?.isJournalist && (
+                            <Badge color="purple" className="text-xs mt-1">
+                              Journalist
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Company & Position */}
+                      <div className="w-[20%]">
+                        {contact.companyName && (
+                          <div className="text-sm font-medium text-zinc-700 dark:text-zinc-300 truncate">
+                            {contact.companyName}
+                          </div>
+                        )}
+                        {contact.position && (
+                          <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
+                            {contact.position}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Email */}
+                      <div className="w-[20%]">
+                        {getPrimaryEmail(contact.emails) ? (
+                          <a
+                            href={`mailto:${getPrimaryEmail(contact.emails)}`}
+                            className="text-sm text-primary hover:text-primary-hover truncate block"
+                          >
+                            {getPrimaryEmail(contact.emails)}
+                          </a>
+                        ) : (
+                          <span className="text-sm text-zinc-400">—</span>
+                        )}
+                      </div>
+
+                      {/* Phone */}
+                      <div className="w-[15%]">
+                        {getPrimaryPhone(contact.phones) ? (
+                          <a
+                            href={`tel:${getPrimaryPhone(contact.phones)}`}
+                            className="text-sm text-primary hover:text-primary-hover"
+                          >
+                            {getPrimaryPhone(contact.phones)}
+                          </a>
+                        ) : (
+                          <span className="text-sm text-zinc-400">—</span>
+                        )}
+                      </div>
+
+                      {/* Tags */}
+                      <div className="flex-1">
+                        <div className="flex flex-wrap gap-1">
+                          {contact.tagIds?.slice(0, 3).map(tagId => {
+                            const tag = tags.find(t => t.id === tagId);
+                            return tag ? <Badge key={tag.id} color={tag.color as any} className="text-xs">{tag.name}</Badge> : null;
+                          })}
+                          {contact.tagIds && contact.tagIds.length > 3 && (
+                            <span className="text-xs text-zinc-400">+{contact.tagIds.length - 3}</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="w-[80px] flex justify-end">
+                        <Dropdown>
+                          <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700">
+                            <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                          </DropdownButton>
+                          <DropdownMenu anchor="bottom end">
+                            <DropdownItem onClick={() => router.push(`/dashboard/contacts/crm/contacts/${contact.id}`)}>
+                              <EyeIcon />
+                              Anzeigen
+                            </DropdownItem>
+                            <DropdownItem onClick={() => {
+                              setSelectedContact(contact);
+                              setShowContactModal(true);
+                            }}>
+                              <PencilIcon />
+                              Bearbeiten
+                            </DropdownItem>
+                            <DropdownDivider />
+                            <DropdownItem onClick={() => handleDelete(contact.id!, contact.displayName, 'contact')}>
+                              <TrashIcon />
+                              <span className="text-red-600">Löschen</span>
+                            </DropdownItem>
+                          </DropdownMenu>
+                        </Dropdown>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           )
         ) : (
           // Grid View
@@ -1307,8 +1153,8 @@ const paginatedEnhancedCompanies = useMemo(() => {
                     </h3>
                     <div className="mt-2 space-y-2">
                       <Badge color="zinc">{companyTypeLabels[company.type]}</Badge>
-                      {company.industry && (
-                        <p className="text-sm text-zinc-600 dark:text-zinc-400">{company.industry}</p>
+                      {company.industryClassification?.primary && (
+                        <p className="text-sm text-zinc-600 dark:text-zinc-400">{company.industryClassification.primary}</p>
                       )}
                     </div>
                   </div>
@@ -1339,8 +1185,8 @@ const paginatedEnhancedCompanies = useMemo(() => {
                           Website
                         </a>
                       )}
-                      {company.phone && (
-                        <a href={`tel:${company.phone}`} className="text-sm text-primary hover:text-primary-hover">
+                      {getPrimaryPhone(company.phones) && (
+                        <a href={`tel:${getPrimaryPhone(company.phones)}`} className="text-sm text-primary hover:text-primary-hover">
                           Anrufen
                         </a>
                       )}
@@ -1397,7 +1243,7 @@ const paginatedEnhancedCompanies = useMemo(() => {
                   <div className="pr-8">
                     <h3 className="text-lg font-semibold text-zinc-900 dark:text-white">
                       <Link href={`/dashboard/contacts/crm/contacts/${contact.id}`} className="hover:text-primary">
-                        {contact.firstName} {contact.lastName}
+                        {contact.displayName}
                       </Link>
                     </h3>
                     <div className="mt-2 space-y-1">
@@ -1426,16 +1272,16 @@ const paginatedEnhancedCompanies = useMemo(() => {
                   {/* Actions */}
                   <div className="mt-4 flex items-center justify-between border-t border-zinc-100 pt-4 dark:border-zinc-700">
                     <div className="flex gap-3">
-                      {contact.email && (
+                      {getPrimaryEmail(contact.emails) && (
                         <a
-                          href={`mailto:${contact.email}`}
+                          href={`mailto:${getPrimaryEmail(contact.emails)}`}
                           className="text-sm text-primary hover:text-primary-hover"
                         >
                           E-Mail
                         </a>
                       )}
-                      {contact.phone && (
-                        <a href={`tel:${contact.phone}`} className="text-sm text-primary hover:text-primary-hover">
+                      {getPrimaryPhone(contact.phones) && (
+                        <a href={`tel:${getPrimaryPhone(contact.phones)}`} className="text-sm text-primary hover:text-primary-hover">
                           Anrufen
                         </a>
                       )}
@@ -1457,7 +1303,7 @@ const paginatedEnhancedCompanies = useMemo(() => {
                           Bearbeiten
                         </DropdownItem>
                         <DropdownDivider />
-                        <DropdownItem onClick={() => handleDelete(contact.id!, `${contact.firstName} ${contact.lastName}`, 'contact')}>
+                        <DropdownItem onClick={() => handleDelete(contact.id!, contact.displayName, 'contact')}>
                           <TrashIcon />
                           <span className="text-red-600">Löschen</span>
                         </DropdownItem>
@@ -1471,7 +1317,7 @@ const paginatedEnhancedCompanies = useMemo(() => {
         )}
       </div>
 
-      {/* Pagination */}
+     {/* Pagination */}
       {totalPages > 1 && (
         <nav className="mt-6 flex items-center justify-between border-t border-gray-200 px-4 sm:px-0 pt-4">
           <div className="-mt-px flex w-0 flex-1">
@@ -1535,6 +1381,8 @@ const paginatedEnhancedCompanies = useMemo(() => {
           onSave={() => {
             loadData();
             showAlert('success', selectedCompany ? 'Firma aktualisiert' : 'Firma erstellt');
+            setShowCompanyModal(false);
+            setSelectedCompany(null);
           }} 
           userId={user?.uid || ''}
         />
@@ -1552,6 +1400,8 @@ const paginatedEnhancedCompanies = useMemo(() => {
             try {
               await loadData();
               showAlert('success', selectedContact ? 'Kontakt aktualisiert' : 'Kontakt erstellt');
+              setShowContactModal(false);
+              setSelectedContact(null);
             } catch (error) {
               console.error('Error after save:', error);
               showAlert('error', 'Fehler beim Speichern', 'Bitte prüfen Sie die Konsole für Details.');
@@ -1607,6 +1457,7 @@ const paginatedEnhancedCompanies = useMemo(() => {
                 confirmDialog.onConfirm();
                 setConfirmDialog(prev => ({ ...prev, isOpen: false }));
               }}
+              className={confirmDialog.type === 'danger' ? 'bg-red-600 hover:bg-red-700 text-white' : ''}
             >
               {confirmDialog.type === 'danger' ? 'Löschen' : 'Bestätigen'}
             </Button>
