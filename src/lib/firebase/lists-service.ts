@@ -15,9 +15,10 @@ import {
   limit,
 } from 'firebase/firestore';
 import { db } from './client-init';
-import { contactsService, companiesService } from './crm-service';
+// GEÄNDERT: Import der enhanced services
+import { contactsEnhancedService, companiesEnhancedService } from './crm-service-enhanced';
 import { DistributionList, ListFilters, ListUsage, ListMetrics } from '@/types/lists';
-import { Contact, Company } from '@/types/crm';
+import { ContactEnhanced, CompanyEnhanced } from '@/types/crm-enhanced';
 
 export const listsService = {
   // --- CRUD Operationen ---
@@ -114,7 +115,7 @@ export const listsService = {
 
   // --- Listen-Logik ---
 
-  async getContacts(list: DistributionList): Promise<Contact[]> {
+  async getContacts(list: DistributionList): Promise<ContactEnhanced[]> {
     if (list.type === 'static' && list.contactIds) {
       return await this.getContactsByIds(list.contactIds);
     } else if (list.type === 'dynamic' && list.filters) {
@@ -123,7 +124,7 @@ export const listsService = {
     return [];
   },
 
-  async getContactsPreview(list: DistributionList, maxCount: number = 10): Promise<Contact[]> {
+  async getContactsPreview(list: DistributionList, maxCount: number = 10): Promise<ContactEnhanced[]> {
     const allContacts = await this.getContacts(list);
     return allContacts.slice(0, maxCount);
   },
@@ -140,23 +141,30 @@ export const listsService = {
 
   // --- Filter-basierte Kontaktsuche ---
 
-  async getContactsByFilters(filters: ListFilters, userId: string): Promise<Contact[]> {
-    // Basis: Alle Kontakte des Users
-    let allContacts = await contactsService.getAll(userId);
+  async getContactsByFilters(filters: ListFilters, userId: string): Promise<ContactEnhanced[]> {
+    // GEÄNDERT: organizationId statt userId verwenden
+    // Hier nehmen wir an, dass userId === organizationId (für Einzelnutzer)
+    // In einer Multi-Tenant-Umgebung müsste dies angepasst werden
+    const organizationId = userId;
+    
+    // Basis: Alle Kontakte der Organisation
+    let allContacts = await contactsEnhancedService.getAll(organizationId);
     
     // Alle Firmen für erweiterte Filter
-    let allCompanies: Company[] = [];
+    let allCompanies: CompanyEnhanced[] = [];
     if (filters.companyTypes || filters.industries || filters.countries || 
         filters.publicationFormat || filters.publicationFocusAreas || 
         filters.minCirculation || filters.publicationNames) {
-      allCompanies = await companiesService.getAll(userId);
+      allCompanies = await companiesEnhancedService.getAll(organizationId);
     }
 
     // Filter anwenden
     return allContacts.filter(contact => {
-      // E-Mail-Filter
-      if (filters.hasEmail && !contact.email) return false;
-      if (filters.hasPhone && !contact.phone) return false;
+      // E-Mail-Filter - GEÄNDERT: Prüfe emails Array
+      if (filters.hasEmail && (!contact.emails || contact.emails.length === 0)) return false;
+      
+      // Telefon-Filter - GEÄNDERT: Prüfe phones Array
+      if (filters.hasPhone && (!contact.phones || contact.phones.length === 0)) return false;
 
       // Tag-Filter
       if (filters.tagIds && filters.tagIds.length > 0) {
@@ -173,51 +181,20 @@ export const listsService = {
         }
       }
 
-      // Publikations-Filter für Kontakte
-      if (contact.mediaInfo?.publications && contact.mediaInfo.publications.length > 0) {
-        // Wenn Publikationsfilter gesetzt sind, prüfe ob der Kontakt passende Publikationen hat
-        if (filters.publicationNames && filters.publicationNames.length > 0) {
-          const hasMatchingPublication = contact.mediaInfo.publications.some(pubName =>
-            filters.publicationNames!.includes(pubName)
+      // GEÄNDERT: Publikations-Filter für erweiterte Kontakte
+      if (contact.mediaProfile?.publicationIds && contact.mediaProfile.publicationIds.length > 0) {
+        // Beats-Filter (Ressorts)
+        if (filters.beats && filters.beats.length > 0) {
+          const hasMatchingBeat = contact.mediaProfile.beats?.some(beat =>
+            filters.beats!.includes(beat)
           );
-          if (!hasMatchingPublication) return false;
+          if (!hasMatchingBeat) return false;
         }
         
-        // Prüfe publikationsspezifische Filter über die Firma
-        if (contact.companyId && allCompanies.length > 0) {
-          const company = allCompanies.find(c => c.id === contact.companyId);
-          if (company?.mediaInfo?.publications) {
-            // Finde die Publikationen, denen der Kontakt zugeordnet ist
-            const contactPublications = company.mediaInfo.publications.filter(pub =>
-              contact.mediaInfo?.publications?.includes(pub.name)
-            );
-            
-            if (contactPublications.length > 0) {
-              // Format-Filter
-              if (filters.publicationFormat) {
-                const hasMatchingFormat = contactPublications.some(pub =>
-                  pub.format === filters.publicationFormat
-                );
-                if (!hasMatchingFormat) return false;
-              }
-              
-              // Themenschwerpunkte-Filter
-              if (filters.publicationFocusAreas && filters.publicationFocusAreas.length > 0) {
-                const hasMatchingFocus = contactPublications.some(pub =>
-                  pub.focusAreas?.some(area => filters.publicationFocusAreas!.includes(area))
-                );
-                if (!hasMatchingFocus) return false;
-              }
-              
-              // Auflagen-Filter
-              if (filters.minCirculation && filters.minCirculation > 0) {
-                const hasMatchingCirculation = contactPublications.some(pub =>
-                  (pub.circulation || pub.reach || 0) >= filters.minCirculation!
-                );
-                if (!hasMatchingCirculation) return false;
-              }
-            }
-          }
+        // Wenn Publikationsfilter gesetzt sind, prüfe ob der Kontakt passende Publikationen hat
+        if (filters.publicationNames && filters.publicationNames.length > 0) {
+          // TODO: Hier müsste man eigentlich die Publication-Entitäten laden
+          // Für jetzt überspringen wir diese Prüfung
         }
       }
 
@@ -232,17 +209,65 @@ export const listsService = {
             }
           }
 
-          // Branchen-Filter
+          // Branchen-Filter - GEÄNDERT: Prüfe industryClassification
           if (filters.industries && filters.industries.length > 0) {
-            if (!company.industry || !filters.industries.includes(company.industry)) {
+            const companyIndustry = company.industryClassification?.primary;
+            if (!companyIndustry || !filters.industries.includes(companyIndustry)) {
               return false;
             }
           }
 
-          // Länder-Filter
+          // Länder-Filter - GEÄNDERT: Prüfe mainAddress.countryCode
           if (filters.countries && filters.countries.length > 0) {
-            if (!company.address?.country || !filters.countries.includes(company.address.country)) {
+            if (!company.mainAddress?.countryCode || 
+                !filters.countries.includes(company.mainAddress.countryCode)) {
               return false;
+            }
+          }
+
+          // Media-spezifische Filter
+          if (company.mediaInfo) {
+            // Media Focus Filter
+            if (filters.mediaFocus && filters.mediaFocus.length > 0) {
+              const hasMatchingFocus = company.mediaInfo.focusAreas?.some(area =>
+                filters.mediaFocus!.includes(area)
+              );
+              if (!hasMatchingFocus) return false;
+            }
+
+            // Publikations-Filter
+            if (company.mediaInfo.publications && company.mediaInfo.publications.length > 0) {
+              // Format-Filter
+              if (filters.publicationFormat) {
+                const hasMatchingFormat = company.mediaInfo.publications.some(pub =>
+                  pub.format === filters.publicationFormat
+                );
+                if (!hasMatchingFormat) return false;
+              }
+              
+              // Themenschwerpunkte-Filter
+              if (filters.publicationFocusAreas && filters.publicationFocusAreas.length > 0) {
+                const hasMatchingFocus = company.mediaInfo.publications.some(pub =>
+                  pub.focusAreas?.some(area => filters.publicationFocusAreas!.includes(area))
+                );
+                if (!hasMatchingFocus) return false;
+              }
+              
+              // Auflagen-Filter
+              if (filters.minCirculation && filters.minCirculation > 0) {
+                const hasMatchingCirculation = company.mediaInfo.publications.some(pub =>
+                  (pub.circulation || pub.reach || 0) >= filters.minCirculation!
+                );
+                if (!hasMatchingCirculation) return false;
+              }
+
+              // Publikationsnamen-Filter
+              if (filters.publicationNames && filters.publicationNames.length > 0) {
+                const hasMatchingPublication = company.mediaInfo.publications.some(pub =>
+                  filters.publicationNames!.includes(pub.name)
+                );
+                if (!hasMatchingPublication) return false;
+              }
             }
           }
         }
@@ -263,19 +288,19 @@ export const listsService = {
     });
   },
 
-  async getContactsByIds(contactIds: string[]): Promise<Contact[]> {
+  async getContactsByIds(contactIds: string[]): Promise<ContactEnhanced[]> {
     if (contactIds.length === 0) return [];
     
     // TODO: Optimieren mit batch-Abfragen für große Listen
     const contacts = await Promise.all(
       contactIds.map(async (id) => {
-        const docRef = doc(db, 'contacts', id);
+        const docRef = doc(db, 'contacts_enhanced', id);
         const docSnap = await getDoc(docRef);
-        return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } as Contact : null;
+        return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } as ContactEnhanced : null;
       })
     );
     
-    return contacts.filter(Boolean) as Contact[];
+    return contacts.filter(Boolean) as ContactEnhanced[];
   },
 
   // --- Listen-Wartung ---
@@ -384,7 +409,7 @@ export const listsService = {
     return await this.create(duplicatedList);
   },
 
-  async exportContacts(listId: string): Promise<Contact[]> {
+  async exportContacts(listId: string): Promise<ContactEnhanced[]> {
     const list = await this.getById(listId);
     if (!list) throw new Error('Liste nicht gefunden');
     

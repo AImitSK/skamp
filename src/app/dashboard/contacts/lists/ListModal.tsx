@@ -16,7 +16,9 @@ import { MultiSelectDropdown } from "@/components/MultiSelectDropdown";
 import { listsService } from "@/lib/firebase/lists-service";
 import { useCrmData } from "@/context/CrmDataContext";
 import { DistributionList, ListFilters } from "@/types/lists";
-import { Contact, CompanyType, companyTypeLabels } from "@/types/crm";
+import { ContactEnhanced, CompanyEnhanced } from "@/types/crm-enhanced";
+import { Company, Contact, companyTypeLabels } from "@/types/crm";
+import { COUNTRY_NAMES, LANGUAGE_NAMES } from "@/types/international";
 import ContactSelectorModal from "./ContactSelectorModal";
 import {
   InformationCircleIcon,
@@ -27,7 +29,9 @@ import {
   EnvelopeIcon,
   PhoneIcon,
   DocumentTextIcon,
-  FunnelIcon
+  FunnelIcon,
+  LanguageIcon,
+  NewspaperIcon
 } from "@heroicons/react/20/solid";
 
 // Alert Component
@@ -83,24 +87,68 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
   
   const [isContactSelectorOpen, setIsContactSelectorOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [previewContacts, setPreviewContacts] = useState<Contact[]>([]);
+  const [previewContacts, setPreviewContacts] = useState<ContactEnhanced[]>([]);
   const [previewCount, setPreviewCount] = useState(0);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const formRef = useRef<HTMLFormElement>(null);
 
-  // Extract unique values for filters
+  // GEÄNDERT: Erweiterte CompanyTypes für Medien
+  const extendedCompanyTypeLabels = {
+    ...companyTypeLabels,
+    'publisher': 'Verlag',
+    'media_house': 'Medienhaus',
+    'agency': 'Agentur'
+  };
+
+  // GEÄNDERT: Extract unique values mit Enhanced Model
   const availableIndustries = useMemo(() => 
-    Array.from(new Set(companies.map(c => c.industry).filter((item): item is string => !!item))).sort(), 
+    Array.from(new Set(
+      companies
+        .map(c => {
+          // Check if it's an enhanced company
+          if ('industryClassification' in c) {
+            return (c as any).industryClassification?.primary;
+          } else {
+            return (c as Company).industry;
+          }
+        })
+        .filter((item): item is string => !!item)
+    )).sort(), 
     [companies]
   );
   
   const availableCountries = useMemo(() => 
-    Array.from(new Set(companies.map(c => c.address?.country).filter((item): item is string => !!item))).sort(), 
+    Array.from(new Set(
+      companies
+        .map(c => {
+          // Check if it's an enhanced company
+          if ('mainAddress' in c) {
+            return (c as any).mainAddress?.countryCode;
+          } else {
+            return (c as Company).address?.country;
+          }
+        })
+        .filter((item): item is string => !!item)
+    )).sort(), 
     [companies]
   );
 
-  // Extract publications data
+  // GEÄNDERT: Sprachen aus Kontakten extrahieren
+  const availableLanguages = useMemo(() => {
+    const languages = new Set<string>();
+    contacts.forEach(contact => {
+      if ('communicationPreferences' in contact) {
+        const enhanced = contact as any;
+        if (enhanced.communicationPreferences?.preferredLanguage) {
+          languages.add(enhanced.communicationPreferences.preferredLanguage);
+        }
+      }
+    });
+    return Array.from(languages).sort();
+  }, [contacts]);
+
+  // Extract publications data (bleibt gleich, da mediaInfo noch vorhanden)
   const availablePublications = useMemo(() => {
     const pubs: { name: string; format: string; focusAreas: string[]; circulation?: number }[] = [];
     companies.forEach(company => {
@@ -130,6 +178,20 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
     });
     return Array.from(areas).sort();
   }, [availablePublications]);
+
+  // GEÄNDERT: Beats aus Journalisten-Profilen extrahieren
+  const availableBeats = useMemo(() => {
+    const beats = new Set<string>();
+    contacts.forEach(contact => {
+      if ('mediaProfile' in contact) {
+        const enhanced = contact as any;
+        if (enhanced.mediaProfile?.beats) {
+          enhanced.mediaProfile.beats.forEach((beat: string) => beats.add(beat));
+        }
+      }
+    });
+    return Array.from(beats).sort();
+  }, [contacts]);
 
   useEffect(() => {
     if (list) {
@@ -245,6 +307,23 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
     { value: 'custom', label: 'Benutzerdefiniert' }
   ];
 
+  // GEÄNDERT: Formatiere Namen für Enhanced Contacts
+  const formatContactName = (contact: Contact | ContactEnhanced) => {
+    if ('name' in contact && typeof contact.name === 'object') {
+      // Enhanced Contact
+      const enhanced = contact as ContactEnhanced;
+      const parts = [];
+      if (enhanced.name.title) parts.push(enhanced.name.title);
+      if (enhanced.name.firstName) parts.push(enhanced.name.firstName);
+      if (enhanced.name.lastName) parts.push(enhanced.name.lastName);
+      return parts.join(' ') || enhanced.displayName;
+    } else {
+      // Legacy Contact
+      const legacy = contact as Contact;
+      return `${legacy.firstName} ${legacy.lastName}`;
+    }
+  };
+
   return (
     <>
       <Dialog open={true} onClose={onClose} size="5xl">
@@ -343,9 +422,9 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
                           <MultiSelectDropdown 
                             label="Firmentypen" 
                             placeholder="Alle Typen" 
-                            options={Object.entries(companyTypeLabels).map(([value, label]) => ({ value, label }))} 
+                            options={Object.entries(extendedCompanyTypeLabels).map(([value, label]) => ({ value, label }))} 
                             selectedValues={formData.filters?.companyTypes || []} 
-                            onChange={(values) => handleFilterChange('companyTypes', values as CompanyType[])}
+                            onChange={(values) => handleFilterChange('companyTypes', values)}
                           />
                           
                           <MultiSelectDropdown 
@@ -367,7 +446,10 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
                           <MultiSelectDropdown 
                             label="Länder" 
                             placeholder="Alle Länder" 
-                            options={availableCountries.map(c => ({ value: c, label: c }))} 
+                            options={availableCountries.map(c => ({ 
+                              value: c, 
+                              label: COUNTRY_NAMES[c] || c 
+                            }))} 
                             selectedValues={formData.filters?.countries || []} 
                             onChange={(values) => handleFilterChange('countries', values)}
                           />
@@ -404,6 +486,40 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
                               </label>
                             </div>
                           </div>
+
+                          {/* NEU: Sprachen-Filter - Temporär entfernt bis ListFilters erweitert ist */}
+                          {/* availableLanguages.length > 0 && (
+                            <MultiSelectDropdown 
+                              label="Bevorzugte Sprachen" 
+                              placeholder="Alle Sprachen" 
+                              options={availableLanguages.map(lang => ({ 
+                                value: lang, 
+                                label: LANGUAGE_NAMES[lang] || lang 
+                              }))} 
+                              selectedValues={formData.filters?.languages || []} 
+                              onChange={(values) => handleFilterChange('languages', values)}
+                            />
+                          ) */}
+                        </div>
+                      </div>
+
+                      {/* NEU: Journalisten-Filter */}
+                      <div className="space-y-4 rounded-md border p-4 bg-gray-50">
+                        <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+                          <NewspaperIcon className="h-5 w-5 text-gray-400" />
+                          Journalisten-Filter
+                        </div>
+                        
+                        <div className="space-y-4">
+                          {availableBeats.length > 0 && (
+                            <MultiSelectDropdown 
+                              label="Ressorts/Beats" 
+                              placeholder="Alle Ressorts" 
+                              options={availableBeats.map(beat => ({ value: beat, label: beat }))} 
+                              selectedValues={formData.filters?.beats || []} 
+                              onChange={(values) => handleFilterChange('beats', values)}
+                            />
+                          )}
                         </div>
                       </div>
                       
@@ -498,19 +614,33 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
                         >
                           <div>
                             <div className="font-medium text-sm text-gray-800">
-                              {contact.firstName} {contact.lastName}
+                              {formatContactName(contact)}
                             </div>
                             <div className="text-xs text-gray-500">
                               {contact.position && `${contact.position} • `}
                               {contact.companyName || 'Keine Firma'}
                             </div>
+                            {'mediaProfile' in contact && (contact as any).mediaProfile?.isJournalist && (
+                              <div className="text-xs text-blue-600 mt-0.5">
+                                <NewspaperIcon className="h-3 w-3 inline mr-1" />
+                                Journalist
+                                {(contact as any).mediaProfile.beats?.length ? ` • ${(contact as any).mediaProfile.beats.join(', ')}` : ''}
+                              </div>
+                            )}
                           </div>
                           <div className="flex items-center gap-1">
-                            {contact.email && (
+                            {(('emails' in contact && contact.emails && contact.emails.length > 0) || 
+                              ('email' in contact && contact.email)) && (
                               <EnvelopeIcon className="h-3 w-3 text-[#005fab]" title="Hat E-Mail" />
                             )}
-                            {contact.phone && (
+                            {(('phones' in contact && contact.phones && contact.phones.length > 0) || 
+                              ('phone' in contact && contact.phone)) && (
                               <PhoneIcon className="h-3 w-3 text-green-600" title="Hat Telefon" />
+                            )}
+                            {'communicationPreferences' in contact && (contact as any).communicationPreferences?.preferredLanguage && (
+                              <span className="text-xs text-gray-500" title={`Sprache: ${LANGUAGE_NAMES[(contact as any).communicationPreferences.preferredLanguage] || (contact as any).communicationPreferences.preferredLanguage}`}>
+                                {(contact as any).communicationPreferences.preferredLanguage.toUpperCase()}
+                              </span>
                             )}
                           </div>
                         </div>

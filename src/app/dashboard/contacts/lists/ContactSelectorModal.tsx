@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/checkbox";
 import { Text } from "@/components/text";
 import { useCrmData } from "@/context/CrmDataContext";
 import { Contact } from "@/types/crm";
+import { ContactEnhanced } from "@/types/crm-enhanced";
 import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
 
 interface ContactSelectorModalProps {
@@ -26,12 +27,44 @@ export default function ContactSelectorModal({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(initialSelectedIds));
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Helper function to get contact name
+  const getContactName = (contact: Contact | ContactEnhanced): string => {
+    if ('name' in contact && typeof contact.name === 'object') {
+      // Enhanced Contact
+      const enhanced = contact as ContactEnhanced;
+      const parts = [];
+      if (enhanced.name.firstName) parts.push(enhanced.name.firstName);
+      if (enhanced.name.lastName) parts.push(enhanced.name.lastName);
+      return parts.join(' ') || enhanced.displayName;
+    } else {
+      // Legacy Contact
+      const legacy = contact as Contact;
+      return `${legacy.firstName} ${legacy.lastName}`;
+    }
+  };
+
+  // Helper function to get contact email
+  const getContactEmail = (contact: Contact | ContactEnhanced): string | undefined => {
+    if ('emails' in contact && Array.isArray(contact.emails)) {
+      // Enhanced Contact
+      const primaryEmail = contact.emails.find(e => e.isPrimary);
+      return primaryEmail?.email || contact.emails[0]?.email;
+    } else {
+      // Legacy Contact
+      return (contact as Contact).email;
+    }
+  };
+
   const filteredContacts = useMemo(() => {
     if (!searchTerm) return allContacts;
-    return allContacts.filter(contact => 
-      `${contact.firstName} ${contact.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      contact.email?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    
+    const searchLower = searchTerm.toLowerCase();
+    return allContacts.filter(contact => {
+      const name = getContactName(contact).toLowerCase();
+      const email = getContactEmail(contact)?.toLowerCase() || '';
+      
+      return name.includes(searchLower) || email.includes(searchLower);
+    });
   }, [allContacts, searchTerm]);
   
   const handleToggleSelection = (contactId: string) => {
@@ -87,11 +120,15 @@ export default function ContactSelectorModal({
                   className="text-[#005fab] focus:ring-[#005fab]"
                 />
                 <div className="flex-1">
-                  <p className="font-medium">{contact.firstName} {contact.lastName}</p>
+                  <p className="font-medium">{getContactName(contact)}</p>
                   <p className="text-sm text-gray-500">
                     {contact.position}
                     {contact.companyName && ` bei ${contact.companyName}`}
                   </p>
+                  {/* Show email if available */}
+                  {getContactEmail(contact) && (
+                    <p className="text-sm text-gray-400">{getContactEmail(contact)}</p>
+                  )}
                 </div>
               </div>
             ))}

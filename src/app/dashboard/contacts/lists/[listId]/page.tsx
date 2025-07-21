@@ -8,7 +8,8 @@ import { useAuth } from "@/context/AuthContext";
 import { listsService } from "@/lib/firebase/lists-service";
 import { tagsService } from "@/lib/firebase/crm-service";
 import { DistributionList } from "@/types/lists";
-import { Contact, companyTypeLabels, Tag } from "@/types/crm";
+import { Contact, ContactEnhanced, companyTypeLabels, Tag } from "@/types/crm-enhanced";
+import { COUNTRY_NAMES } from "@/types/international";
 import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
 import { Button } from "@/components/button";
@@ -34,7 +35,8 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   ExclamationTriangleIcon,
-  InformationCircleIcon
+  InformationCircleIcon,
+  NewspaperIcon
 } from "@heroicons/react/20/solid";
 
 // Alert Component
@@ -130,6 +132,47 @@ function formatDate(timestamp: any) {
   });
 }
 
+// Helper function to format contact names
+function formatContactName(contact: Contact | ContactEnhanced): string {
+  if ('name' in contact && typeof contact.name === 'object') {
+    // Enhanced Contact
+    const enhanced = contact as ContactEnhanced;
+    const parts = [];
+    if (enhanced.name.title) parts.push(enhanced.name.title);
+    if (enhanced.name.firstName) parts.push(enhanced.name.firstName);
+    if (enhanced.name.lastName) parts.push(enhanced.name.lastName);
+    return parts.join(' ') || enhanced.displayName;
+  } else {
+    // Legacy Contact
+    const legacy = contact as Contact;
+    return `${legacy.firstName} ${legacy.lastName}`;
+  }
+}
+
+// Helper function to get contact email
+function getContactEmail(contact: Contact | ContactEnhanced): string | undefined {
+  if ('emails' in contact && Array.isArray(contact.emails)) {
+    // Enhanced Contact
+    const primaryEmail = contact.emails.find(e => e.isPrimary);
+    return primaryEmail?.email || contact.emails[0]?.email;
+  } else {
+    // Legacy Contact
+    return (contact as Contact).email;
+  }
+}
+
+// Helper function to get contact phone
+function getContactPhone(contact: Contact | ContactEnhanced): string | undefined {
+  if ('phones' in contact && Array.isArray(contact.phones)) {
+    // Enhanced Contact
+    const primaryPhone = contact.phones.find(p => p.isPrimary);
+    return primaryPhone?.number || contact.phones[0]?.number;
+  } else {
+    // Legacy Contact
+    return (contact as Contact).phone;
+  }
+}
+
 export default function ListDetailPage() {
   const { user } = useAuth();
   const params = useParams();
@@ -137,13 +180,21 @@ export default function ListDetailPage() {
   const listId = params.listId as string;
 
   const [list, setList] = useState<DistributionList | null>(null);
-  const [contactsInList, setContactsInList] = useState<Contact[]>([]);
+  const [contactsInList, setContactsInList] = useState<(Contact | ContactEnhanced)[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string } | null>(null);
+
+  // Extended company type labels
+  const extendedCompanyTypeLabels = {
+    ...companyTypeLabels,
+    'publisher': 'Verlag',
+    'media_house': 'Medienhaus',
+    'agency': 'Agentur'
+  };
 
   // Alert Management
   const showAlert = useCallback((type: 'info' | 'success' | 'warning' | 'error', title: string, message?: string) => {
@@ -232,16 +283,18 @@ export default function ListDetailPage() {
     
     // Firmentypen
     if (key === 'companyTypes' && Array.isArray(value)) {
-      const extendedTypeLabels: { [key: string]: string } = {
-        ...companyTypeLabels,
-        'publisher': 'Verlag',
-        'media_house': 'Medienhaus',
-        'agency': 'Agentur'
-      };
-      const typeLabels = value.map(type => extendedTypeLabels[type] || type);
+      const typeLabels = value.map(type => extendedCompanyTypeLabels[type as keyof typeof extendedCompanyTypeLabels] || type);
       if (typeLabels.length === 0) return '—';
       if (typeLabels.length <= 3) return typeLabels.join(', ');
       return `${typeLabels.slice(0, 3).join(', ')} (+${typeLabels.length - 3} weitere)`;
+    }
+
+    // Länder - mit lesbaren Namen
+    if (key === 'countries' && Array.isArray(value)) {
+      const countryNames = value.map(code => COUNTRY_NAMES[code] || code);
+      if (countryNames.length === 0) return '—';
+      if (countryNames.length <= 3) return countryNames.join(', ');
+      return `${countryNames.slice(0, 3).join(', ')} (+${countryNames.length - 3} weitere)`;
     }
     
     // Publikationsformat
@@ -282,7 +335,9 @@ export default function ListDetailPage() {
       publicationFormat: DocumentTextIcon,
       publicationFocusAreas: DocumentTextIcon,
       minCirculation: DocumentTextIcon,
-      publicationNames: DocumentTextIcon
+      publicationNames: DocumentTextIcon,
+      beats: NewspaperIcon,
+      mediaFocus: DocumentTextIcon
     };
     return iconMap[key] || FunnelIcon;
   };
@@ -299,7 +354,9 @@ export default function ListDetailPage() {
       publicationFormat: 'Publikationsformat',
       publicationFocusAreas: 'Themenschwerpunkte',
       minCirculation: 'Mindestauflage',
-      publicationNames: 'Publikationen'
+      publicationNames: 'Publikationen',
+      beats: 'Ressorts',
+      mediaFocus: 'Medienschwerpunkte'
     };
     return labelMap[key] || key;
   };
@@ -421,8 +478,14 @@ export default function ListDetailPage() {
                               href={`/dashboard/contacts/crm/contacts/${contact.id}`} 
                               className="text-[#005fab] hover:text-[#004a8c] hover:underline"
                             >
-                              {contact.firstName} {contact.lastName}
+                              {formatContactName(contact)}
                             </Link>
+                            {'mediaProfile' in contact && (contact as any).mediaProfile?.isJournalist && (
+                              <Badge color="blue" className="ml-2 text-xs">
+                                <NewspaperIcon className="h-3 w-3 inline mr-1" />
+                                Journalist
+                              </Badge>
+                            )}
                           </TableCell>
                           <TableCell>{contact.position || <Text>—</Text>}</TableCell>
                           <TableCell>
@@ -439,25 +502,25 @@ export default function ListDetailPage() {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              {contact.email && (
+                              {getContactEmail(contact) && (
                                 <a 
-                                  href={`mailto:${contact.email}`}
+                                  href={`mailto:${getContactEmail(contact)}`}
                                   className="text-[#005fab] hover:text-[#004a8c]"
-                                  title={contact.email}
+                                  title={getContactEmail(contact)}
                                 >
                                   <EnvelopeIcon className="h-4 w-4" />
                                 </a>
                               )}
-                              {contact.phone && (
+                              {getContactPhone(contact) && (
                                 <a 
-                                  href={`tel:${contact.phone}`}
+                                  href={`tel:${getContactPhone(contact)}`}
                                   className="text-[#005fab] hover:text-[#004a8c]"
-                                  title={contact.phone}
+                                  title={getContactPhone(contact)}
                                 >
                                   <PhoneIcon className="h-4 w-4" />
                                 </a>
                               )}
-                              {!contact.email && !contact.phone && (
+                              {!getContactEmail(contact) && !getContactPhone(contact) && (
                                 <Text>—</Text>
                               )}
                             </div>
@@ -530,7 +593,6 @@ export default function ListDetailPage() {
                 <ul className="space-y-3">
                   {Object.entries(list.filters).map(([key, value]) => {
                     if (!value || (Array.isArray(value) && value.length === 0)) return null;
-                    if (key === 'beats' || key === 'mediaFocus') return null;
                     
                     const Icon = getFilterIcon(key);
                     return (

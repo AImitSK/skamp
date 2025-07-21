@@ -1,6 +1,6 @@
 // src/types/crm-enhanced.ts
 import { Timestamp } from 'firebase/firestore';
-import { Company, Contact } from './crm';
+import { Company } from './crm';
 import {
   BaseEntity,
   InternationalAddress,
@@ -377,3 +377,60 @@ export const SUBMISSION_FORMATS = [
   { value: 'interview', label: 'Interview' },
   { value: 'guest_article', label: 'Gastbeitrag' }
 ] as const;
+
+
+// Ergänzungen für src/types/crm-enhanced.ts
+// Diese Definitionen sollten am Ende der Datei hinzugefügt werden
+
+// ========================================
+// Legacy Compatibility Exports
+// ========================================
+
+// Company Type Labels (für UI)
+export const companyTypeLabels = {
+  customer: 'Kunde',
+  supplier: 'Lieferant',
+  partner: 'Partner',
+  competitor: 'Wettbewerber',
+  investor: 'Investor',
+  lead: 'Lead',
+  publisher: 'Verlag',
+  media_house: 'Medienhaus',
+  agency: 'Agentur',
+  other: 'Sonstige'
+} as const;
+
+// Re-export types that are used in multiple places
+export type CompanyType = 'customer' | 'supplier' | 'partner' | 'competitor' | 'investor' | 'lead' | 'publisher' | 'media_house' | 'agency' | 'other';
+
+// Tag Color Type (für Kompatibilität)
+export type TagColor = 'zinc' | 'red' | 'orange' | 'amber' | 'yellow' | 'lime' | 'green' | 'emerald' | 'teal' | 'cyan' | 'sky' | 'blue' | 'indigo' | 'violet' | 'purple' | 'fuchsia' | 'pink' | 'rose';
+
+// Legacy Tag Type (für Rückwärtskompatibilität)
+export interface Tag {
+  id?: string;
+  name: string;
+  color: TagColor;
+  description?: string;
+  userId: string;
+  createdAt?: any;
+  updatedAt?: any;
+  contactCount?: number;
+  companyCount?: number;
+}
+
+// Legacy Contact Type (für Rückwärtskompatibilität)
+export interface Contact {
+  id?: string;
+  firstName: string;
+  lastName: string;
+  email?: string;
+  phone?: string;
+  position?: string;
+  companyId?: string;
+  companyName?: string;
+  tagIds?: string[];
+  createdAt?: any;
+  updatedAt?: any;
+  userId: string;
+}
