@@ -831,7 +831,7 @@ export default function ContactDetailPage() {
               </InfoCard>
             )}
 
-            {/* GDPR Consents */}
+            {/* GDPR Consents 
             {contact.gdprConsents && contact.gdprConsents.length > 0 && (
               <InfoCard title="DSGVO Einwilligungen" icon={CheckBadgeIcon}>
                 <div className="space-y-2">
@@ -855,6 +855,8 @@ export default function ContactDetailPage() {
                 </div>
               </InfoCard>
             )}
+
+*/}
 
             {/* Distribution lists */}
             {lists.length > 0 && (
