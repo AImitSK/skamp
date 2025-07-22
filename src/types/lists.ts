@@ -1,4 +1,5 @@
 // src/types/lists.ts
+
 import { Timestamp } from 'firebase/firestore';
 import { 
   PublicationType, 
@@ -270,7 +271,7 @@ export const LIST_CATEGORY_COLORS: Record<ListCategory, string> = {
   'customers': 'blue',
   'partners': 'green',
   'leads': 'amber',
-  'custom': 'gray'
+  'custom': 'zinc' // 'zinc' wird anstelle von 'gray' verwendet, um mit badge.tsx kompatibel zu sein
 };
 
 // Maximale Anzahl von Kontakten pro Liste (für Performance)
@@ -378,3 +379,55 @@ export function getFilterSummary(filters: ListFilters): string[] {
   
   return summary;
 }
+
+
+// ========================================
+// Listenvorlagen für den Setup-Wizard (KORRIGIERT)
+// ========================================
+
+export interface ListTemplateFilters {
+  tagIds?: string[];
+}
+
+export interface ListTemplate {
+  name: string;
+  description: string;
+  // HIER IST DIE KORREKTUR:
+  // Wir verwenden den exakten Typ 'ListCategory', den auch DistributionList nutzt.
+  category: ListCategory; 
+  color: string;
+  filters: ListTemplateFilters;
+}
+
+/**
+ * Eine Liste von vordefinierten, intelligenten Listen-Vorlagen für das Setup.
+ */
+export const LIST_TEMPLATES: ListTemplate[] = [
+  {
+    name: 'Tech-Presse',
+    description: 'Alle Journalisten, die über Technologie, Startups oder KI schreiben.',
+    category: 'press', // 'press' ist ein gültiger Wert in ListCategory
+    color: 'blue',
+    filters: {
+      tagIds: ['Journalist', 'Tech'],
+    },
+  },
+  {
+    name: 'Wirtschaftsjournalisten',
+    description: 'Journalisten mit Fokus auf Wirtschaft, Finanzen und Business-Themen.',
+    category: 'press', // 'press' ist ein gültiger Wert
+    color: 'emerald',
+    filters: {
+      tagIds: ['Journalist', 'Wirtschaft'],
+    },
+  },
+  {
+    name: 'Alle Pressekontakte',
+    description: 'Eine umfassende Liste aller Kontakte mit dem Tag "Presse".',
+    category: 'press', // 'press' ist ein gültiger Wert
+    color: 'zinc',
+    filters: {
+      tagIds: ['Presse'],
+    },
+  },
+];

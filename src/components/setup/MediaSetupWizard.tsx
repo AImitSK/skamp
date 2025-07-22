@@ -9,7 +9,8 @@ import { Checkbox } from "@/components/checkbox";
 import { companiesService, contactsService, tagsService } from "@/lib/firebase/crm-service";
 import { listsService } from "@/lib/firebase/lists-service";
 import { STANDARD_PRESS_TAGS, STANDARD_BEATS } from "@/types/crm";
-import { LIST_TEMPLATES } from "@/types/lists";
+// Wichtig: Importiere sowohl die Konstante als auch den Typ
+import { LIST_TEMPLATES, ListTemplate } from "@/types/lists";
 import { CheckCircleIcon, NewspaperIcon, UsersIcon, TagIcon, QueueListIcon } from "@heroicons/react/20/solid";
 
 interface MediaSetupWizardProps {
@@ -169,7 +170,8 @@ export default function MediaSetupWizard({ onClose, onComplete, userId }: MediaS
           // Filter mit echten Tag-IDs befüllen
           const filters = { ...listTemplate.filters };
           if (filters.tagIds) {
-            filters.tagIds = filters.tagIds.map(tagName => {
+            // KORREKTUR: Typ für 'tagName' hinzugefügt
+            filters.tagIds = filters.tagIds.map((tagName: string) => {
               // Wenn es schon eine ID ist, beibehalten, sonst auflösen
               return createdTagIds.get(tagName) || tagName;
             }).filter(Boolean);
@@ -247,7 +249,8 @@ export default function MediaSetupWizard({ onClose, onComplete, userId }: MediaS
                       if (checked) {
                         setSelectedTags([...selectedTags, tag.name]);
                       } else {
-                        setSelectedTags(selectedTags.filter(t => t !== tag.name));
+                        // KORREKTUR: Typ für 't' hinzugefügt
+                        setSelectedTags(selectedTags.filter((t: string) => t !== tag.name));
                       }
                     }}
                   />
@@ -301,7 +304,8 @@ export default function MediaSetupWizard({ onClose, onComplete, userId }: MediaS
               Diese Listen werden automatisch mit passenden Kontakten befüllt, basierend auf deren Tags und Eigenschaften.
             </p>
             <div className="space-y-3">
-              {LIST_TEMPLATES.filter(t => t.category === 'press').map(template => (
+              {/* KORREKTUR: Typ für 't' und 'template' hinzugefügt */}
+              {LIST_TEMPLATES.filter((t: ListTemplate) => t.category === 'press').map((template: ListTemplate) => (
                 <label key={template.name} className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
                   <Checkbox
                     checked={selectedLists.includes(template.name)}
@@ -309,7 +313,8 @@ export default function MediaSetupWizard({ onClose, onComplete, userId }: MediaS
                       if (checked) {
                         setSelectedLists([...selectedLists, template.name]);
                       } else {
-                        setSelectedLists(selectedLists.filter(l => l !== template.name));
+                        // KORREKTUR: Typ für 'l' hinzugefügt
+                        setSelectedLists(selectedLists.filter((l: string) => l !== template.name));
                       }
                     }}
                   />
