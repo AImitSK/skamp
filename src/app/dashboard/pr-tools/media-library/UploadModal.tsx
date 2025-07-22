@@ -8,7 +8,6 @@ import { Select } from "@/components/select";
 import { Button } from "@/components/button";
 import { Badge } from "@/components/badge";
 import { Text } from "@/components/text";
-import { useAuth } from "@/context/AuthContext";
 import { useCrmData } from "@/context/CrmDataContext";
 import { mediaService } from "@/lib/firebase/media-service";
 import { 
@@ -58,6 +57,8 @@ interface UploadModalProps {
   currentFolderId?: string;
   folderName?: string;
   preselectedClientId?: string;
+  organizationId: string; // NEW: Required for multi-tenancy
+  userId: string; // NEW: Required for tracking who uploads
 }
 
 export default function UploadModal({ 
@@ -65,9 +66,10 @@ export default function UploadModal({
   onUploadSuccess, 
   currentFolderId,
   folderName,
-  preselectedClientId
+  preselectedClientId,
+  organizationId, // NEW
+  userId // NEW
 }: UploadModalProps) {
-  const { user } = useAuth();
   const { companies } = useCrmData();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -116,7 +118,9 @@ export default function UploadModal({
   };
 
   const handleUpload = async () => {
-    if (!user || selectedFiles.length === 0) return;
+    if (selectedFiles.length === 0) return;
+
+    console.log('🔍 Upload starting with organizationId:', organizationId, 'userId:', userId);
 
     setUploading(true);
     setUploadProgress({});
@@ -127,15 +131,19 @@ export default function UploadModal({
         
         const uploadedAsset = await mediaService.uploadMedia(
           file,
-          user.uid,
+          organizationId, // CHANGED: Use organizationId instead of user.uid
           currentFolderId,
           (progress) => {
             setUploadProgress(prev => ({
               ...prev,
               [fileKey]: progress
             }));
-          }
+          },
+          3, // retryCount
+          { userId } // NEW: Pass userId in context
         );
+        
+        console.log('Upload completed, asset:', uploadedAsset);
 
         if (selectedClientId && uploadedAsset.id) {
           await mediaService.updateAsset(uploadedAsset.id, {

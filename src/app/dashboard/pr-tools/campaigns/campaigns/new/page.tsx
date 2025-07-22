@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from "@/context/AuthContext";
+import { teamMemberService } from "@/lib/firebase/organization-service";
 import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
 import { Button } from "@/components/button";
@@ -14,6 +15,8 @@ import { Select } from "@/components/select";
 import { Checkbox } from "@/components/checkbox";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
 import CampaignContentComposer from '@/components/pr/campaign/CampaignContentComposer';
+import { CustomerSelector } from "@/components/pr/CustomerSelector";
+import { ListSelector } from "@/components/pr/ListSelector";
 import {
   PlusIcon,
   ArrowLeftIcon,
@@ -33,12 +36,10 @@ import {
 import { listsService } from "@/lib/firebase/lists-service";
 import { prService } from "@/lib/firebase/pr-service";
 import { mediaService } from "@/lib/firebase/media-service";
-import { companiesService } from "@/lib/firebase/crm-service";
 import { DistributionList } from "@/types/lists";
 import { CampaignAssetAttachment } from "@/types/pr";
 import { BoilerplateSection } from "@/components/pr/campaign/IntelligentBoilerplateSection";
 import { MediaAsset, MediaFolder } from "@/types/media";
-import { Company } from "@/types/crm";
 import { Input } from "@/components/input";
 import { InfoTooltip } from "@/components/InfoTooltip";
 
@@ -321,18 +322,20 @@ export default function NewPRCampaignPage() {
   const { user } = useAuth();
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
 
   // Form State
-  const [companies, setCompanies] = useState<Company[]>([]);
   const [availableLists, setAvailableLists] = useState<DistributionList[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState('');
-  const [selectedListIds, setSelectedListIds] = useState<string[]>([]);
+  const [selectedCompanyName, setSelectedCompanyName] = useState('');
+  const [selectedListId, setSelectedListId] = useState('');
+  const [selectedListName, setSelectedListName] = useState('');
+  const [recipientCount, setRecipientCount] = useState(0);
   const [campaignTitle, setCampaignTitle] = useState('');
   const [pressReleaseContent, setPressReleaseContent] = useState(''); // Finaler HTML Content
   const [boilerplateSections, setBoilerplateSections] = useState<BoilerplateSection[]>([]);
   const [attachedAssets, setAttachedAssets] = useState<CampaignAssetAttachment[]>([]);
   const [approvalRequired, setApprovalRequired] = useState(false);
-  const [listSearchTerm, setListSearchTerm] = useState('');
   
   // UI State
   const [loading, setLoading] = useState(true);
@@ -341,21 +344,40 @@ export default function NewPRCampaignPage() {
   const [showAiModal, setShowAiModal] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
+  // Load OrganizationId
   useEffect(() => {
-    if (user) {
-      loadData();
-    }
+    const loadOrganizationId = async () => {
+      if (!user) return;
+      
+      try {
+        const orgs = await teamMemberService.getUserOrganizations(user.uid);
+        if (orgs.length > 0) {
+          setOrganizationId(orgs[0].organization.id!);
+        } else {
+          // Fallback auf userId für Backwards Compatibility
+          setOrganizationId(user.uid);
+        }
+      } catch (error) {
+        console.error('Organization loading failed, using userId as fallback:', error);
+        // Direkt userId verwenden wenn Permissions fehlen
+        setOrganizationId(user.uid);
+      }
+    };
+    
+    loadOrganizationId();
   }, [user]);
 
+  useEffect(() => {
+    if (user && organizationId) {
+      loadData();
+    }
+  }, [user, organizationId]);
+
   const loadData = async () => {
-    if (!user) return;
+    if (!user || !organizationId) return;
     setLoading(true);
     try {
-      const [companiesData, listsData] = await Promise.all([
-        companiesService.getAll(user.uid),
-        listsService.getAll(user.uid)
-      ]);
-      setCompanies(companiesData);
+      const listsData = await listsService.getAll(organizationId);
       setAvailableLists(listsData);
     } catch (error) {
       console.error('Fehler beim Laden:', error);
@@ -363,32 +385,6 @@ export default function NewPRCampaignPage() {
       setLoading(false);
     }
   };
-
-  const selectedCompany = useMemo(() =>
-    companies.find(c => c.id === selectedCompanyId),
-    [companies, selectedCompanyId]
-  );
-
-  const selectedLists = useMemo(() =>
-    availableLists.filter(list => selectedListIds.includes(list.id!)),
-    [availableLists, selectedListIds]
-  );
-
-  const totalRecipients = useMemo(() =>
-    selectedLists.reduce((sum, list) => sum + list.contactCount, 0),
-    [selectedLists]
-  );
-
-  // Gefilterte Listen basierend auf Suchbegriff
-  const filteredLists = useMemo(() => {
-    if (!listSearchTerm) return availableLists;
-    
-    const searchLower = listSearchTerm.toLowerCase();
-    return availableLists.filter(list => 
-      list.name.toLowerCase().includes(searchLower) ||
-      (list.description && list.description.toLowerCase().includes(searchLower))
-    );
-  }, [availableLists, listSearchTerm]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -398,8 +394,8 @@ export default function NewPRCampaignPage() {
     if (!selectedCompanyId) {
       errors.push('Bitte wählen Sie einen Kunden aus');
     }
-    if (selectedListIds.length === 0) {
-      errors.push('Bitte wählen Sie mindestens einen Verteiler aus');
+    if (!selectedListId) {
+      errors.push('Bitte wählen Sie einen Verteiler aus');
     }
     if (!campaignTitle.trim()) {
       errors.push('Titel ist erforderlich');
@@ -439,17 +435,16 @@ export default function NewPRCampaignPage() {
 
       const campaignData = {
         userId: user!.uid,
+        organizationId: organizationId!, // NEU: Organization Support
         title: campaignTitle,
         contentHtml: pressReleaseContent || '',
         boilerplateSections: cleanedSections,
         status: 'draft' as const,
-        distributionListId: selectedListIds[0],
-        distributionListName: selectedLists[0].name,
-        distributionListIds: selectedListIds,
-        distributionListNames: selectedLists.map(l => l.name),
-        recipientCount: totalRecipients,
+        distributionListId: selectedListId,
+        distributionListName: selectedListName,
+        recipientCount: recipientCount,
         clientId: selectedCompanyId,
-        clientName: selectedCompany?.name || '',
+        clientName: selectedCompanyName,
         attachedAssets: attachedAssets,
         approvalRequired: approvalRequired,
         scheduledAt: null,
@@ -611,7 +606,7 @@ export default function NewPRCampaignPage() {
         {/* Main Form - jetzt volle Breite */}
         <div className="bg-white rounded-lg border p-6">
           <FieldGroup>
-            {/* Kunde */}
+            {/* Kunde - mit CustomerSelector */}
             <Field>
               <Label className="flex items-center">
                 Kunde
@@ -620,95 +615,36 @@ export default function NewPRCampaignPage() {
                   className="ml-1"
                 />
               </Label>
-              <Select
+              <CustomerSelector
                 value={selectedCompanyId}
-                onChange={(e) => setSelectedCompanyId(e.target.value)}
+                onChange={(companyId, companyName) => {
+                  setSelectedCompanyId(companyId);
+                  setSelectedCompanyName(companyName);
+                }}
                 required
-              >
-                <option value="">Kunde auswählen...</option>
-                {companies.map((company) => (
-                  <option key={company.id} value={company.id}>
-                    {company.name}
-                  </option>
-                ))}
-              </Select>
+              />
             </Field>
 
-            {/* Verteiler */}
+            {/* Verteiler - mit ListSelector */}
             <Field>
               <Label className="flex items-center">
                 Verteiler
                 <InfoTooltip 
-                  content="Pflichtfeld: Wählen Sie mindestens eine Verteilerliste aus. Die Pressemitteilung wird an alle Kontakte in den ausgewählten Listen gesendet."
+                  content="Pflichtfeld: Wählen Sie eine Verteilerliste aus. Die Pressemitteilung wird an alle Kontakte in dieser Liste gesendet."
                   className="ml-1"
                 />
               </Label>
-              
-              {/* Suchfeld für Listen */}
-              <div className="mb-3">
-                <div className="relative">
-                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    type="text"
-                    value={listSearchTerm}
-                    onChange={(e) => setListSearchTerm(e.target.value)}
-                    placeholder="Listen durchsuchen..."
-                    className="pl-9"
-                  />
-                </div>
-                {listSearchTerm && (
-                  <p className="mt-1 text-sm text-gray-500">
-                    {filteredLists.length} von {availableLists.length} Listen gefunden
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3">
-                {filteredLists.length > 0 ? (
-                  filteredLists.map((list) => (
-                    <label key={list.id} className="flex items-center hover:bg-gray-50 rounded p-1">
-                      <Checkbox
-                        checked={selectedListIds.includes(list.id!)}
-                        onChange={(checked) => {
-                          if (checked) {
-                            setSelectedListIds([...selectedListIds, list.id!]);
-                          } else {
-                            setSelectedListIds(selectedListIds.filter(id => id !== list.id));
-                          }
-                        }}
-                        className="mr-3"
-                      />
-                      <div className="flex-1">
-                        <span className="font-medium">{list.name}</span>
-                        <span className="text-sm text-gray-500 ml-2">
-                          ({list.contactCount} Kontakte)
-                        </span>
-                        {list.type === 'dynamic' && (
-                          <Badge color="blue" className="ml-2 text-xs">Dynamisch</Badge>
-                        )}
-                        {list.description && (
-                          <p className="text-xs text-gray-500 mt-0.5">{list.description}</p>
-                        )}
-                      </div>
-                    </label>
-                  ))
-                ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <UsersIcon className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                    <p className="text-sm">
-                      {listSearchTerm 
-                        ? 'Keine Listen gefunden' 
-                        : 'Noch keine Verteiler erstellt'
-                      }
-                    </p>
-                  </div>
-                )}
-              </div>
-              {selectedLists.length > 0 && (
-                <p className="mt-2 text-sm text-gray-500">
-                  {totalRecipients.toLocaleString('de-DE')} Empfänger in {selectedLists.length} Listen
-                </p>
-              )}
+              <ListSelector
+                value={selectedListId}
+                onChange={(listId, listName, contactCount) => {
+                  setSelectedListId(listId);
+                  setSelectedListName(listName);
+                  setRecipientCount(contactCount);
+                }}
+                lists={availableLists}
+                loading={false}
+                required
+              />
             </Field>
 
             {/* Inhalt */}
@@ -747,7 +683,7 @@ export default function NewPRCampaignPage() {
                 key={`composer-${boilerplateSections.length}`}
                 userId={user!.uid}
                 clientId={selectedCompanyId}
-                clientName={selectedCompany?.name}
+                clientName={selectedCompanyName}
                 title={campaignTitle}
                 onTitleChange={setCampaignTitle}
                 mainContent=""
@@ -866,7 +802,7 @@ export default function NewPRCampaignPage() {
           isOpen={showAssetSelector}
           onClose={() => setShowAssetSelector(false)}
           clientId={selectedCompanyId}
-          clientName={selectedCompany?.name}
+          clientName={selectedCompanyName}
           onAssetsSelected={setAttachedAssets}
           userId={user.uid}
         />

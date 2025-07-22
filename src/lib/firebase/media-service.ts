@@ -1,4 +1,4 @@
-// src/lib/firebase/media-service.ts - UPDATED WITH NOTIFICATION INTEGRATION
+// src/lib/firebase/media-service.ts - ENHANCED WITH MULTI-TENANCY SUPPORT
 import {
   collection,
   doc,
@@ -11,6 +11,7 @@ import {
   orderBy,
   serverTimestamp,
   getDoc,
+  Timestamp,
 } from 'firebase/firestore';
 import {
   ref,
@@ -21,9 +22,23 @@ import {
 import { db, storage } from './client-init';
 import { MediaAsset, MediaFolder, FolderBreadcrumb, ShareLink, ShareLinkType } from '@/types/media';
 import { notificationsService } from './notifications-service';
+import { BaseEntity } from '@/types/international';
 
 // Import der Folder-Utils für Firma-Vererbung
 import { getRootFolderClientId } from '@/lib/utils/folder-utils';
+
+// Enhanced Media Types mit BaseEntity
+interface MediaAssetEnhanced extends BaseEntity, Omit<MediaAsset, 'userId'> {
+  // userId wird durch organizationId ersetzt (von BaseEntity)
+}
+
+interface MediaFolderEnhanced extends BaseEntity, Omit<MediaFolder, 'userId'> {
+  // userId wird durch organizationId ersetzt (von BaseEntity)
+}
+
+interface ShareLinkEnhanced extends BaseEntity, Omit<ShareLink, 'userId'> {
+  // userId wird durch organizationId ersetzt (von BaseEntity)
+}
 
 // CORS-FIX: Optimierte Asset-Validation mit verbesserter CORS-Behandlung
 async function validateAssetUrl(url: string, timeout = 3000): Promise<boolean> {
@@ -89,19 +104,21 @@ export const mediaService = {
       passwordRequired: string | null;
       watermarkEnabled: boolean;
     };
-    assetIds?: string[];  // Optional für Campaign-Support
-    folderIds?: string[]; // Optional für Campaign-Support
-    userId: string;
+    assetIds?: string[];
+    folderIds?: string[];
+    organizationId: string; // CHANGED: von userId zu organizationId
+    createdBy: string; // NEW: wer hat es erstellt (userId)
   }): Promise<ShareLink> {
     try {
       const shareId = self.crypto?.randomUUID?.() 
         ? crypto.randomUUID().replace(/-/g, '').substring(0, 12)
         : Math.random().toString(36).substring(2, 14);
         
-      // Basis-Objekt mit nur den Pflichtfeldern
+      // Basis-Objekt mit Multi-Tenancy Support
       const shareLink: any = {
         shareId,
-        userId: data.userId,
+        organizationId: data.organizationId, // CHANGED
+        createdBy: data.createdBy, // NEW
         targetId: data.targetId,
         type: data.type,
         title: data.title,
@@ -133,7 +150,9 @@ export const mediaService = {
         id: docRef.id,
         ...shareLink,
         createdAt: shareLink.createdAt,
-        updatedAt: shareLink.updatedAt
+        updatedAt: shareLink.updatedAt,
+        // Map back to old interface for compatibility
+        userId: shareLink.createdBy
       } as ShareLink;
 
       console.log('Share link created successfully:', createdShareLink);
@@ -194,18 +213,23 @@ export const mediaService = {
     }
   },
 
-  async getShareLinks(userId: string): Promise<ShareLink[]> {
+  async getShareLinks(organizationId: string): Promise<ShareLink[]> {
     try {
       const q = query(
         collection(db, 'media_shares'),
-        where('userId', '==', userId),
+        where('organizationId', '==', organizationId), // CHANGED
         orderBy('createdAt', 'desc')
       );
       const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as ShareLink));
+      return snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          // Map back for compatibility
+          userId: data.createdBy || data.organizationId
+        } as ShareLink;
+      });
     } catch (error) {
       console.error("Fehler beim Laden der Share-Links:", error);
       throw error;
@@ -224,12 +248,18 @@ export const mediaService = {
       if (snapshot.empty) return null;
       
       const doc = snapshot.docs[0];
-      const shareLink = { id: doc.id, ...doc.data() } as ShareLink;
+      const data = doc.data();
+      const shareLink = { 
+        id: doc.id, 
+        ...data,
+        // Map back for compatibility
+        userId: data.createdBy || data.organizationId
+      } as ShareLink;
       
       // ========== NOTIFICATION INTEGRATION: First Access ==========
       // Prüfe ob dies der erste Zugriff ist
       const currentAccessCount = shareLink.accessCount || 0;
-      if (currentAccessCount === 0 && shareLink.userId) {
+      if (currentAccessCount === 0 && data.createdBy) { // Use createdBy for notifications
         try {
           // Hole mehr Details für die Benachrichtigung
           let assetName = shareLink.title || 'Unbekannte Datei';
@@ -250,7 +280,7 @@ export const mediaService = {
           
           await notificationsService.notifyMediaAccessed(
             { ...shareLink, assetName },
-            shareLink.userId
+            data.createdBy // Use createdBy for notifications
           );
           console.log('📬 Benachrichtigung gesendet: Erster Zugriff auf geteilten Link');
         } catch (notificationError) {
@@ -287,6 +317,7 @@ export const mediaService = {
       const docRef = doc(db, 'media_shares', shareLinkId);
       await updateDoc(docRef, {
         active: false,
+        updatedAt: serverTimestamp()
       });
     } catch (error) {
       console.error("Fehler beim Deaktivieren des Share-Links:", error);
@@ -307,11 +338,16 @@ export const mediaService = {
   // ========== NOTIFICATION INTEGRATION: Track Downloads ==========
   async trackMediaDownload(shareLink: ShareLink, assetName: string): Promise<void> {
     try {
-      if (shareLink.userId) {
+      // Extract createdBy from the share link
+      const docRef = doc(db, 'media_shares', shareLink.id!);
+      const docSnap = await getDoc(docRef);
+      const createdBy = docSnap.data()?.createdBy;
+      
+      if (createdBy) {
         await notificationsService.notifyMediaDownloaded(
           shareLink,
           assetName,
-          shareLink.userId
+          createdBy
         );
         console.log('📬 Benachrichtigung gesendet: Datei heruntergeladen');
       }
@@ -322,10 +358,11 @@ export const mediaService = {
 
   // === FOLDER OPERATIONS ===
   
-  async createFolder(folder: Omit<MediaFolder, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+  async createFolder(folder: Omit<MediaFolder, 'id' | 'createdAt' | 'updatedAt'>, context: { organizationId: string; userId: string }): Promise<string> {
     try {
       const folderData: any = {
-        userId: folder.userId,
+        organizationId: context.organizationId, // CHANGED
+        createdBy: context.userId, // NEW
         name: folder.name,
         ...(folder.description && { description: folder.description }),
         ...(folder.color && { color: folder.color }),
@@ -345,30 +382,35 @@ export const mediaService = {
     }
   },
 
-  async getFolders(userId: string, parentFolderId?: string): Promise<MediaFolder[]> {
+  async getFolders(organizationId: string, parentFolderId?: string): Promise<MediaFolder[]> {
     try {
-      console.log('Loading folders for userId:', userId, 'parentFolderId:', parentFolderId);
+      console.log('Loading folders for organizationId:', organizationId, 'parentFolderId:', parentFolderId);
       let q;
 
       if (parentFolderId === undefined) {
         q = query(
           collection(db, 'media_folders'),
-          where('userId', '==', userId)
+          where('organizationId', '==', organizationId) // CHANGED
         );
       } else {
         q = query(
           collection(db, 'media_folders'),
-          where('userId', '==', userId),
+          where('organizationId', '==', organizationId), // CHANGED
           where('parentFolderId', '==', parentFolderId)
         );
       }
 
       const snapshot = await getDocs(q);
       console.log('Raw folders from Firestore:', snapshot.docs.length);
-      const folders = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as MediaFolder));
+      const folders = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          // Map back for compatibility
+          userId: data.createdBy || data.organizationId
+        } as MediaFolder;
+      });
       
       const filteredFolders = folders
         .filter(folder => parentFolderId === undefined ? !folder.parentFolderId : folder.parentFolderId === parentFolderId)
@@ -388,7 +430,13 @@ export const mediaService = {
       const docSnap = await getDoc(docRef);
       
       if (docSnap.exists()) {
-        return { id: docSnap.id, ...docSnap.data() } as MediaFolder;
+        const data = docSnap.data();
+        return { 
+          id: docSnap.id, 
+          ...data,
+          // Map back for compatibility
+          userId: data.createdBy || data.organizationId
+        } as MediaFolder;
       }
       return null;
     } catch (error) {
@@ -397,12 +445,12 @@ export const mediaService = {
     }
   },
 
-  async updateFolderClientInheritance(folderId: string, userId: string): Promise<void> {
+  async updateFolderClientInheritance(folderId: string, organizationId: string): Promise<void> {
     try {
       console.log(`🔄 Updating client inheritance for folder ${folderId}`);
       
       // 1. Lade alle Ordner für Vererbungs-Berechnung
-      const allFolders = await this.getAllFoldersForUser(userId);
+      const allFolders = await this.getAllFoldersForOrganization(organizationId);
       
       // 2. Finde den Ordner und berechne seine neue vererbte clientId
       const folder = await this.getFolder(folderId);
@@ -445,7 +493,7 @@ export const mediaService = {
       if (subfolders.length > 0) {
         await Promise.all(
           subfolders.map(subfolder => 
-            this.updateFolderClientInheritance(subfolder.id!, userId)
+            this.updateFolderClientInheritance(subfolder.id!, organizationId)
           )
         );
         console.log(`✅ Recursively updated ${subfolders.length} subfolders`);
@@ -459,21 +507,34 @@ export const mediaService = {
     }
   },
 
-  async getAllFoldersForUser(userId: string): Promise<MediaFolder[]> {
+  async getAllFoldersForOrganization(organizationId: string): Promise<MediaFolder[]> {
     try {
       const q = query(
         collection(db, 'media_folders'),
-        where('userId', '==', userId)
+        where('organizationId', '==', organizationId) // CHANGED
       );
       const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as MediaFolder));
+      return snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          // Map back for compatibility
+          userId: data.createdBy || data.organizationId
+        } as MediaFolder;
+      });
     } catch (error) {
       console.error("Fehler beim Laden aller Ordner:", error);
       throw error;
     }
+  },
+
+  // Legacy wrapper for compatibility
+  async getAllFoldersForUser(userId: string): Promise<MediaFolder[]> {
+    // This should ideally get the organizationId from the user
+    // For now, using userId as fallback
+    console.warn('⚠️ getAllFoldersForUser is deprecated, use getAllFoldersForOrganization');
+    return this.getAllFoldersForOrganization(userId);
   },
 
   async updateFolder(folderId: string, updates: Partial<MediaFolder>): Promise<void> {
@@ -574,10 +635,11 @@ export const mediaService = {
 
   async uploadMedia(
     file: File,
-    userId: string,
+    organizationId: string, // CHANGED
     folderId?: string,
     onProgress?: (progress: number) => void,
-    retryCount = 3
+    retryCount = 3,
+    context?: { userId: string } // NEW: optional context for createdBy
   ): Promise<MediaAsset> {
     try {
       console.log('📤 Starting upload for:', file.name, 'Size:', file.size);
@@ -585,7 +647,7 @@ export const mediaService = {
       // Cleaner Dateiname für Firebase Storage
       const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
       const timestamp = Date.now();
-      const storagePath = `users/${userId}/media/${timestamp}_${cleanFileName}`;
+      const storagePath = `organizations/${organizationId}/media/${timestamp}_${cleanFileName}`; // CHANGED path
       
       console.log('🗂️ Upload path:', storagePath);
       
@@ -598,7 +660,7 @@ export const mediaService = {
           customMetadata: {
             'Access-Control-Allow-Origin': '*',
             'uploaded': new Date().toISOString(),
-            'uploader': userId
+            'organizationId': organizationId // CHANGED
           }
         });
 
@@ -620,7 +682,7 @@ export const mediaService = {
             )) {
               console.log(`🔄 Retrying upload... (${retryCount} attempts left)`);
               setTimeout(() => {
-                this.uploadMedia(file, userId, folderId, onProgress, retryCount - 1)
+                this.uploadMedia(file, organizationId, folderId, onProgress, retryCount - 1, context)
                   .then(resolve)
                   .catch(reject);
               }, 1000);
@@ -636,22 +698,28 @@ export const mediaService = {
               console.log('🔗 Download URL obtained');
 
               // Asset-Metadaten mit erweiterten Informationen
-              const assetData: Omit<MediaAsset, 'id'> = {
-                userId,
+              const assetData: any = {
+                organizationId, // CHANGED
+                createdBy: context?.userId || organizationId, // NEW
                 fileName: file.name,
                 fileType: file.type,
                 storagePath,
                 downloadUrl,
                 ...(folderId && { folderId }),
-                createdAt: serverTimestamp() as any,
-                updatedAt: serverTimestamp() as any,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
               };
 
               console.log('💾 Saving metadata to Firestore...');
               const docRef = await addDoc(collection(db, 'media_assets'), assetData);
               console.log('✅ Metadata saved with ID:', docRef.id);
               
-              const finalAsset = { id: docRef.id, ...assetData };
+              const finalAsset = { 
+                id: docRef.id, 
+                ...assetData,
+                // Map back for compatibility
+                userId: assetData.createdBy || assetData.organizationId
+              } as MediaAsset;
               
               // Sofortige Validation des neuen Assets
               try {
@@ -679,30 +747,35 @@ export const mediaService = {
     }
   },
 
-  async getMediaAssets(userId: string, folderId?: string): Promise<MediaAsset[]> {
+  async getMediaAssets(organizationId: string, folderId?: string): Promise<MediaAsset[]> {
     try {
-      console.log('Loading media assets for userId:', userId, 'folderId:', folderId);
+      console.log('Loading media assets for organizationId:', organizationId, 'folderId:', folderId);
       let q;
       
       if (folderId === undefined) {
         q = query(
           collection(db, 'media_assets'),
-          where('userId', '==', userId)
+          where('organizationId', '==', organizationId) // CHANGED
         );
       } else {
         q = query(
           collection(db, 'media_assets'),
-          where('userId', '==', userId),
+          where('organizationId', '==', organizationId), // CHANGED
           where('folderId', '==', folderId)
         );
       }
 
       const snapshot = await getDocs(q);
       console.log('Raw media assets from Firestore:', snapshot.docs.length);
-      const assets = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as MediaAsset));
+      const assets = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          // Map back for compatibility
+          userId: data.createdBy || data.organizationId
+        } as MediaAsset;
+      });
       
       const filteredAssets = assets
         .filter(asset => {
@@ -726,12 +799,14 @@ export const mediaService = {
     }
   },
 
-  async moveAssetToFolder(assetId: string, newFolderId?: string, userId?: string): Promise<void> {
+  async moveAssetToFolder(assetId: string, newFolderId?: string, organizationId?: string): Promise<void> {
     try {
       console.log(`🔄 Moving asset ${assetId} to folder ${newFolderId || 'ROOT'}`);
       
       const docRef = doc(db, 'media_assets', assetId);
-      const updateData: any = {};
+      const updateData: any = {
+        updatedAt: serverTimestamp()
+      };
       
       // 1. Folder-ID setzen/entfernen
       if (newFolderId) {
@@ -742,7 +817,7 @@ export const mediaService = {
       }
       
       // 2. AUTOMATISCHE FIRMA-VERERBUNG
-      if (newFolderId && userId) {
+      if (newFolderId && organizationId) {
         try {
           console.log('🏢 Calculating client inheritance...');
           
@@ -750,7 +825,7 @@ export const mediaService = {
           const targetFolder = await this.getFolder(newFolderId);
           if (targetFolder) {
             // Lade alle Ordner für Vererbungs-Berechnung
-            const allFolders = await this.getAllFoldersForUser(userId);
+            const allFolders = await this.getAllFoldersForOrganization(organizationId);
             
             // Berechne vererbte Firma-ID
             const inheritedClientId = await getRootFolderClientId(targetFolder, allFolders);
@@ -789,7 +864,9 @@ export const mediaService = {
     try {
       const docRef = doc(db, 'media_assets', assetId);
       
-      const updateData: any = {};
+      const updateData: any = {
+        updatedAt: serverTimestamp()
+      };
       
       if (updates.fileName !== undefined) updateData.fileName = updates.fileName;
       if (updates.description !== undefined) updateData.description = updates.description;
@@ -812,7 +889,13 @@ export const mediaService = {
       const docSnap = await getDoc(docRef);
       
       if (docSnap.exists()) {
-        return { id: docSnap.id, ...docSnap.data() } as MediaAsset;
+        const data = docSnap.data();
+        return { 
+          id: docSnap.id, 
+          ...data,
+          // Map back for compatibility
+          userId: data.createdBy || data.organizationId
+        } as MediaAsset;
       }
       return null;
     } catch (error) {
@@ -829,10 +912,15 @@ export const mediaService = {
       );
       
       const snapshot = await getDocs(q);
-      const assets = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as MediaAsset));
+      const assets = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          // Map back for compatibility
+          userId: data.createdBy || data.organizationId
+        } as MediaAsset;
+      });
       
       return assets.sort((a, b) => {
         const aTime = a.createdAt?.seconds || 0;
@@ -880,12 +968,12 @@ export const mediaService = {
     }
   },
 
-  async cleanupInvalidClientAssets(userId: string, clientId: string): Promise<{removed: number, errors: string[]}> {
+  async cleanupInvalidClientAssets(organizationId: string, clientId: string): Promise<{removed: number, errors: string[]}> {
     try {
       console.log(`🧹 Starting cleanup of invalid assets for client: ${clientId}`);
       
       // Lade alle Assets für diesen Client
-      const result = await this.getMediaByClientId(userId, clientId, false);
+      const result = await this.getMediaByClientId(organizationId, clientId, false);
       const assets = result.assets;
       
       if (assets.length === 0) {
@@ -954,7 +1042,7 @@ export const mediaService = {
     }
   },
 
-  async cleanupInvalidAssets(userId: string, assets: MediaAsset[]): Promise<MediaAsset[]> {
+  async cleanupInvalidAssets(organizationId: string, assets: MediaAsset[]): Promise<MediaAsset[]> {
     try {
       console.log(`🧹 Starting cleanup of ${assets.length} assets...`);
       
@@ -1034,20 +1122,20 @@ export const mediaService = {
     }
   },
 
-  async getMediaByClientId(userId: string, clientId: string, cleanupInvalid = false): Promise<{folders: MediaFolder[], assets: MediaAsset[], totalCount: number}> {
+  async getMediaByClientId(organizationId: string, clientId: string, cleanupInvalid = false): Promise<{folders: MediaFolder[], assets: MediaAsset[], totalCount: number}> {
     try {
-      console.log('🔍 DEBUG: Loading media for client:', clientId, '(User:', userId, ')');
+      console.log('🔍 DEBUG: Loading media for client:', clientId, '(Organization:', organizationId, ')');
       
       // 1. Lade Ordner und Assets parallel
       const [foldersSnapshot, assetsSnapshot] = await Promise.all([
         getDocs(query(
           collection(db, 'media_folders'),
-          where('userId', '==', userId),
+          where('organizationId', '==', organizationId), // CHANGED
           where('clientId', '==', clientId)
         )),
         getDocs(query(
           collection(db, 'media_assets'),
-          where('userId', '==', userId),
+          where('organizationId', '==', organizationId), // CHANGED
           where('clientId', '==', clientId)
         ))
       ]);
@@ -1058,15 +1146,25 @@ export const mediaService = {
       });
 
       // 2. Konvertiere zu Objekten
-      const folders = foldersSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as MediaFolder));
+      const folders = foldersSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          // Map back for compatibility
+          userId: data.createdBy || data.organizationId
+        } as MediaFolder;
+      });
 
-      const directAssets = assetsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as MediaAsset));
+      const directAssets = assetsSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          // Map back for compatibility
+          userId: data.createdBy || data.organizationId
+        } as MediaAsset;
+      });
 
       // 3. Lade Assets aus Ordnern (falls vorhanden)
       let folderAssets: MediaAsset[] = [];
@@ -1110,7 +1208,7 @@ export const mediaService = {
       let finalAssets = validAssets;
       if (cleanupInvalid && validAssets.length <= 20) {
         console.log('🧹 Running deep cleanup for invalid assets...');
-        finalAssets = await this.cleanupInvalidAssets(userId, validAssets);
+        finalAssets = await this.cleanupInvalidAssets(organizationId, validAssets);
       } else if (cleanupInvalid) {
         console.log(`ℹ️ Skipping deep cleanup for ${validAssets.length} assets (too many for performance)`);
       }

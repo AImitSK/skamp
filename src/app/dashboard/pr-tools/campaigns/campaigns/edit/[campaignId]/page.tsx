@@ -1,19 +1,21 @@
 // src/app/dashboard/pr-tools/campaigns/campaigns/edit/[campaignId]/page.tsx
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
-import { useRouter, useParams } from 'next/navigation';
+import { useState, useEffect, useRef } from "react";
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from "@/context/AuthContext";
+import { teamMemberService } from "@/lib/firebase/organization-service";
 import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
 import { Button } from "@/components/button";
 import { Badge } from "@/components/badge";
 import { Field, Label, FieldGroup } from "@/components/fieldset";
-import { Select } from "@/components/select";
 import { Checkbox } from "@/components/checkbox";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
 import CampaignContentComposer from '@/components/pr/campaign/CampaignContentComposer';
+import { CustomerSelector } from "@/components/pr/CustomerSelector";
+import { ListSelector } from "@/components/pr/ListSelector";
 import {
   PlusIcon,
   ArrowLeftIcon,
@@ -29,20 +31,16 @@ import {
   ArrowUpTrayIcon,
   MagnifyingGlassIcon,
   PaperAirplaneIcon,
-  ClockIcon,
-  CheckCircleIcon,
-  ExclamationCircleIcon,
-  ChatBubbleLeftRightIcon
+  ExclamationTriangleIcon,
+  CheckCircleIcon
 } from "@heroicons/react/20/solid";
 import { listsService } from "@/lib/firebase/lists-service";
 import { prService } from "@/lib/firebase/pr-service";
 import { mediaService } from "@/lib/firebase/media-service";
-import { companiesService } from "@/lib/firebase/crm-service";
 import { DistributionList } from "@/types/lists";
 import { CampaignAssetAttachment, PRCampaign } from "@/types/pr";
 import { BoilerplateSection } from "@/components/pr/campaign/IntelligentBoilerplateSection";
 import { MediaAsset, MediaFolder } from "@/types/media";
-import { Company } from "@/types/crm";
 import { Input } from "@/components/input";
 import { InfoTooltip } from "@/components/InfoTooltip";
 
@@ -52,74 +50,26 @@ const StructuredGenerationModal = dynamic(() => import('@/components/pr/ai/Struc
   ssr: false
 });
 
-// Helper functions
-function formatDate(timestamp: any) {
-  if (!timestamp) return '';
-  const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-  return date.toLocaleString('de-DE', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-}
-
-function canEditCampaign(campaign: PRCampaign): { 
-  canEdit: boolean; 
-  reason?: string;
-} {
-  if (campaign.status === 'sent' || campaign.status === 'archived') {
-    return { 
-      canEdit: false, 
-      reason: 'Versendete oder archivierte Kampagnen können nicht bearbeitet werden.' 
-    };
-  }
-
-  if (!campaign.approvalRequired) {
-    return { canEdit: true };
-  }
-
-  switch (campaign.status) {
-    case 'draft':
-    case 'changes_requested':
-      return { canEdit: true };
-      
-    case 'in_review':
-      return { 
-        canEdit: false, 
-        reason: 'Die Kampagne befindet sich in der Kundenprüfung und kann nicht bearbeitet werden.' 
-      };
-      
-    case 'approved':
-      return { 
-        canEdit: false, 
-        reason: 'Die Kampagne wurde bereits freigegeben. Erstellen Sie eine Kopie für weitere Änderungen.' 
-      };
-      
-    default:
-      return { canEdit: true };
-  }
-}
-
 // Alert Component
 function Alert({
   type = 'info',
   title,
   message
 }: {
-  type?: 'info' | 'error';
+  type?: 'info' | 'error' | 'success';
   title?: string;
   message: string;
 }) {
   const styles = {
     info: 'bg-blue-50 text-blue-700',
-    error: 'bg-red-50 text-red-700'
+    error: 'bg-red-50 text-red-700',
+    success: 'bg-green-50 text-green-700'
   };
 
   const icons = {
     info: InformationCircleIcon,
-    error: InformationCircleIcon
+    error: ExclamationTriangleIcon,
+    success: CheckCircleIcon
   };
 
   const Icon = icons[type];
@@ -128,7 +78,7 @@ function Alert({
     <div className={`rounded-md p-4 ${styles[type].split(' ')[0]}`}>
       <div className="flex">
         <div className="shrink-0">
-          <Icon aria-hidden="true" className={`size-5 ${type === 'error' ? 'text-red-400' : 'text-blue-400'}`} />
+          <Icon aria-hidden="true" className={`size-5 ${type === 'error' ? 'text-red-400' : type === 'success' ? 'text-green-400' : 'text-blue-400'}`} />
         </div>
         <div className="ml-3">
           {title && <Text className={`font-medium ${styles[type].split(' ')[1]}`}>{title}</Text>}
@@ -139,88 +89,15 @@ function Alert({
   );
 }
 
-// Approval Feedback Component
-function ApprovalFeedback({ campaign }: { campaign: PRCampaign }) {
-  if (!campaign.approvalRequired || !campaign.approvalData) {
-    return null;
-  }
-
-  const lastFeedback = campaign.approvalData.feedbackHistory
-    ?.filter(f => f.author === 'Kunde')
-    ?.slice(-1)[0];
-
-  if (campaign.status === 'changes_requested' && lastFeedback) {
-    return (
-      <div className="mb-6 bg-orange-50 border border-orange-200 rounded-lg p-4">
-        <div className="flex items-start">
-          <ExclamationCircleIcon className="h-5 w-5 text-orange-600 mt-0.5 mr-3 flex-shrink-0" />
-          <div className="flex-1">
-            <h3 className="text-sm font-medium text-orange-900">
-              Änderungen vom Kunden angefordert
-            </h3>
-            <div className="mt-2 text-sm text-orange-800">
-              <p className="font-medium">Feedback:</p>
-              <p className="mt-1 italic bg-orange-100 rounded p-2 border border-orange-200">
-                "{lastFeedback.comment}"
-              </p>
-              <p className="mt-2 text-xs text-orange-600 flex items-center gap-1">
-                <ChatBubbleLeftRightIcon className="h-3 w-3" />
-                {lastFeedback.requestedAt && formatDate(lastFeedback.requestedAt)}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (campaign.status === 'in_review') {
-    return (
-      <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-        <div className="flex items-center">
-          <ClockIcon className="h-5 w-5 text-yellow-600 mr-3" />
-          <div className="flex-1">
-            <h3 className="text-sm font-medium text-yellow-900">
-              Warten auf Kundenfreigabe
-            </h3>
-            <p className="text-sm text-yellow-700 mt-1">
-              Diese Kampagne wurde zur Freigabe an den Kunden gesendet und wartet auf eine Rückmeldung.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (campaign.status === 'approved') {
-    return (
-      <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
-        <div className="flex items-center">
-          <CheckCircleIcon className="h-5 w-5 text-green-600 mr-3" />
-          <div className="flex-1">
-            <h3 className="text-sm font-medium text-green-900">
-              Vom Kunden freigegeben
-            </h3>
-            <p className="text-sm text-green-700 mt-1">
-              Diese Kampagne wurde vom Kunden freigegeben und kann versendet werden.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return null;
-}
-
-// Asset Selector Modal mit Fix für überlaufende Texte
+// Asset Selector Modal
 function AssetSelectorModal({
   isOpen,
   onClose,
   clientId,
   clientName,
   onAssetsSelected,
-  userId
+  userId,
+  currentAssets = []
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -228,6 +105,7 @@ function AssetSelectorModal({
   clientName?: string;
   onAssetsSelected: (assets: CampaignAssetAttachment[]) => void;
   userId: string;
+  currentAssets?: CampaignAssetAttachment[];
 }) {
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [folders, setFolders] = useState<MediaFolder[]>([]);
@@ -240,6 +118,21 @@ function AssetSelectorModal({
       loadClientMedia();
     }
   }, [isOpen, clientId]);
+
+  useEffect(() => {
+    // Pre-select current assets
+    if (currentAssets.length > 0) {
+      const preSelected = new Set<string>();
+      currentAssets.forEach(attachment => {
+        if (attachment.type === 'asset' && attachment.assetId) {
+          preSelected.add(attachment.assetId);
+        } else if (attachment.type === 'folder' && attachment.folderId) {
+          preSelected.add(attachment.folderId);
+        }
+      });
+      setSelectedItems(preSelected);
+    }
+  }, [currentAssets]);
 
   const loadClientMedia = async () => {
     setLoading(true);
@@ -257,14 +150,10 @@ function AssetSelectorModal({
     }
   };
 
-  const filteredAssets = useMemo(() => {
-    if (!searchTerm) return assets;
-    const search = searchTerm.toLowerCase();
-    return assets.filter(a =>
-      a.fileName.toLowerCase().includes(search) ||
-      a.description?.toLowerCase().includes(search)
-    );
-  }, [assets, searchTerm]);
+  const filteredAssets = assets.filter(a =>
+    !searchTerm || a.fileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    a.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleConfirm = () => {
     const attachments: CampaignAssetAttachment[] = [];
@@ -451,21 +340,21 @@ export default function EditPRCampaignPage() {
   const params = useParams();
   const campaignId = params.campaignId as string;
   const formRef = useRef<HTMLFormElement>(null);
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
 
-  // Campaign State
-  const [campaign, setCampaign] = useState<PRCampaign | null>(null);
-  
   // Form State
-  const [companies, setCompanies] = useState<Company[]>([]);
+  const [campaign, setCampaign] = useState<PRCampaign | null>(null);
   const [availableLists, setAvailableLists] = useState<DistributionList[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState('');
-  const [selectedListIds, setSelectedListIds] = useState<string[]>([]);
+  const [selectedCompanyName, setSelectedCompanyName] = useState('');
+  const [selectedListId, setSelectedListId] = useState('');
+  const [selectedListName, setSelectedListName] = useState('');
+  const [recipientCount, setRecipientCount] = useState(0);
   const [campaignTitle, setCampaignTitle] = useState('');
-  const [pressReleaseContent, setPressReleaseContent] = useState(''); // Finaler HTML Content
+  const [pressReleaseContent, setPressReleaseContent] = useState('');
   const [boilerplateSections, setBoilerplateSections] = useState<BoilerplateSection[]>([]);
   const [attachedAssets, setAttachedAssets] = useState<CampaignAssetAttachment[]>([]);
   const [approvalRequired, setApprovalRequired] = useState(false);
-  const [listSearchTerm, setListSearchTerm] = useState('');
   
   // UI State
   const [loading, setLoading] = useState(true);
@@ -473,105 +362,97 @@ export default function EditPRCampaignPage() {
   const [showAssetSelector, setShowAssetSelector] = useState(false);
   const [showAiModal, setShowAiModal] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [alert, setAlert] = useState<{ type: 'info' | 'error' | 'success'; message: string } | null>(null);
 
-  const editStatus = useMemo(() => 
-    campaign ? canEditCampaign(campaign) : { canEdit: true },
-    [campaign]
-  );
+  // Load OrganizationId
+  useEffect(() => {
+    const loadOrganizationId = async () => {
+      if (!user) return;
+      
+      try {
+        const orgs = await teamMemberService.getUserOrganizations(user.uid);
+        if (orgs.length > 0) {
+          setOrganizationId(orgs[0].organization.id!);
+        } else {
+          setOrganizationId(user.uid);
+        }
+      } catch (error) {
+        console.warn('Organization loading failed, using userId as fallback:', error);
+        setOrganizationId(user.uid);
+      }
+    };
+    
+    loadOrganizationId();
+  }, [user]);
 
   useEffect(() => {
-    if (user && campaignId) {
+    if (user && organizationId && campaignId) {
       loadCampaignData();
     }
-  }, [user, campaignId]);
+  }, [user, organizationId, campaignId]);
 
   const loadCampaignData = async () => {
-    if (!user || !campaignId) return;
-    setLoading(true);
-    setError(null);
+    if (!user || !organizationId || !campaignId) return;
     
+    setLoading(true);
     try {
-      const [campaignData, companiesData, listsData] = await Promise.all([
-        prService.getById(campaignId),
-        companiesService.getAll(user.uid),
-        listsService.getAll(user.uid)
-      ]);
-
+      // Load campaign
+      const campaignData = await prService.getById(campaignId);
       if (!campaignData) {
-        setError("Kampagne nicht gefunden.");
+        setAlert({ type: 'error', message: 'Kampagne nicht gefunden' });
         return;
       }
-
-      setCampaign(campaignData);
-      setCompanies(companiesData);
-      setAvailableLists(listsData);
       
-      // Set form values
+      setCampaign(campaignData);
+      
+      // Set form data
       setCampaignTitle(campaignData.title);
+      setPressReleaseContent(campaignData.contentHtml);
+      
+      // Convert CampaignBoilerplateSection to BoilerplateSection
+      const convertedSections: BoilerplateSection[] = (campaignData.boilerplateSections || []).map(section => ({
+        id: section.id,
+        type: section.type || 'custom' as any, // Fallback wenn type undefined ist
+        position: section.position,
+        order: section.order,
+        isLocked: section.isLocked || false,
+        isCollapsed: section.isCollapsed || false,
+        boilerplateId: section.boilerplateId,
+        content: section.content,
+        metadata: section.metadata,
+        customTitle: section.customTitle
+      }));
+      setBoilerplateSections(convertedSections);
+      
       setSelectedCompanyId(campaignData.clientId || '');
+      setSelectedCompanyName(campaignData.clientName || '');
+      setSelectedListId(campaignData.distributionListId);
+      setSelectedListName(campaignData.distributionListName);
+      setRecipientCount(campaignData.recipientCount);
+      setAttachedAssets(campaignData.attachedAssets || []);
       setApprovalRequired(campaignData.approvalRequired || false);
       
-      if (campaignData.distributionListIds && campaignData.distributionListIds.length > 0) {
-        setSelectedListIds(campaignData.distributionListIds);
-      } else {
-        setSelectedListIds([campaignData.distributionListId]);
-      }
-      
-      // Lade Boilerplate Sections
-      if (campaignData.boilerplateSections) {
-        setBoilerplateSections(campaignData.boilerplateSections as BoilerplateSection[]);
-      }
-      
-      setPressReleaseContent(campaignData.contentHtml);
-      setAttachedAssets(campaignData.attachedAssets || []);
-      
-    } catch (err) {
-      console.error('Fehler beim Laden der Kampagne:', err);
-      setError("Ein Fehler ist aufgetreten.");
+      // Load lists
+      const listsData = await listsService.getAll(organizationId);
+      setAvailableLists(listsData);
+    } catch (error) {
+      console.error('Fehler beim Laden:', error);
+      setAlert({ type: 'error', message: 'Fehler beim Laden der Kampagne' });
     } finally {
       setLoading(false);
     }
   };
 
-  const selectedCompany = useMemo(() =>
-    companies.find(c => c.id === selectedCompanyId),
-    [companies, selectedCompanyId]
-  );
-
-  const selectedLists = useMemo(() =>
-    availableLists.filter(list => selectedListIds.includes(list.id!)),
-    [availableLists, selectedListIds]
-  );
-
-  const totalRecipients = useMemo(() =>
-    selectedLists.reduce((sum, list) => sum + list.contactCount, 0),
-    [selectedLists]
-  );
-
-  // Gefilterte Listen basierend auf Suchbegriff
-  const filteredLists = useMemo(() => {
-    if (!listSearchTerm) return availableLists;
-    
-    const searchLower = listSearchTerm.toLowerCase();
-    return availableLists.filter(list => 
-      list.name.toLowerCase().includes(searchLower) ||
-      (list.description && list.description.toLowerCase().includes(searchLower))
-    );
-  }, [availableLists, listSearchTerm]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!campaign || !editStatus.canEdit) return;
     
     // Validierung
     const errors: string[] = [];
     if (!selectedCompanyId) {
       errors.push('Bitte wählen Sie einen Kunden aus');
     }
-    if (selectedListIds.length === 0) {
-      errors.push('Bitte wählen Sie mindestens einen Verteiler aus');
+    if (!selectedListId) {
+      errors.push('Bitte wählen Sie einen Verteiler aus');
     }
     if (!campaignTitle.trim()) {
       errors.push('Titel ist erforderlich');
@@ -609,41 +490,33 @@ export default function EditPRCampaignPage() {
         return cleaned;
       });
 
-      const primaryList = selectedLists[0];
-      
-      const updatedData = {
+      const updateData = {
         title: campaignTitle,
         contentHtml: pressReleaseContent || '',
         boilerplateSections: cleanedSections,
-        distributionListId: primaryList.id!,
-        distributionListName: primaryList.name,
-        distributionListIds: selectedListIds,
-        distributionListNames: selectedLists.map(l => l.name),
-        recipientCount: totalRecipients,
+        distributionListId: selectedListId,
+        distributionListName: selectedListName,
+        recipientCount: recipientCount,
         clientId: selectedCompanyId,
-        clientName: selectedCompany?.name || '',
+        clientName: selectedCompanyName,
         attachedAssets: attachedAssets,
-        approvalRequired: approvalRequired,
-        updatedAt: new Date()
+        approvalRequired: approvalRequired
       };
 
-      // Entferne alle undefined Werte
-      const cleanedUpdateData = JSON.parse(JSON.stringify(updatedData));
-
-      console.log('Aktualisiere Kampagne mit bereinigten Daten:', cleanedUpdateData);
+      console.log('Aktualisiere Kampagne mit Daten:', updateData);
       
-      await prService.update(campaign.id!, cleanedUpdateData);
+      await prService.update(campaignId, updateData);
       
-      // Wenn approvalRequired gesetzt wurde und Status ist draft, dann Freigabe anfordern
-      if (approvalRequired && campaign.status === 'draft') {
-        await prService.requestApproval(campaign.id!);
-      }
+      setAlert({ type: 'success', message: 'Kampagne erfolgreich gespeichert' });
       
-      router.push('/dashboard/pr-tools/campaigns');
+      // Nach kurzer Verzögerung zur Detail-Seite
+      setTimeout(() => {
+        router.push(`/dashboard/pr-tools/campaigns/campaigns/${campaignId}`);
+      }, 1500);
+      
     } catch (error) {
       console.error('Fehler beim Speichern der Kampagne:', error);
       
-      // Detailliertere Fehlermeldung
       let errorMessage = 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.';
       if (error instanceof Error) {
         errorMessage = `Fehler: ${error.message}`;
@@ -655,30 +528,17 @@ export default function EditPRCampaignPage() {
     }
   };
 
-  const handleResubmit = async () => {
-    if (!campaign) return;
-    
-    await handleSubmit(new Event('submit') as any);
-    await prService.resubmitForApproval(campaign.id!);
-    router.push('/dashboard/pr-tools/approvals');
-  };
-
   const handleAiGenerate = (result: any) => {
-    console.log('handleAiGenerate called with:', result);
-    
     if (result.structured?.headline) {
-      console.log('Setting campaign title to:', result.structured.headline);
       setCampaignTitle(result.structured.headline);
     }
     
-    // NEU: Erstelle AI-Sections aus strukturierten Daten
+    // Erstelle AI-Sections aus strukturierten Daten
     if (result.structured) {
-      console.log('Creating AI sections from structured data:', result.structured);
       const aiSections: BoilerplateSection[] = [];
       
       // Lead-Absatz
       if (result.structured.leadParagraph && result.structured.leadParagraph !== 'Lead-Absatz fehlt') {
-        console.log('Adding lead section:', result.structured.leadParagraph);
         aiSections.push({
           id: `ai-lead-${Date.now()}`,
           type: 'lead',
@@ -693,7 +553,6 @@ export default function EditPRCampaignPage() {
       
       // Hauptabsätze
       if (result.structured.bodyParagraphs && result.structured.bodyParagraphs.length > 0) {
-        console.log('Adding body paragraphs:', result.structured.bodyParagraphs.length);
         const mainContent = result.structured.bodyParagraphs
           .filter((paragraph: string) => paragraph && paragraph !== 'Haupttext der Pressemitteilung')
           .map((paragraph: string) => `<p>${paragraph}</p>`)
@@ -715,7 +574,6 @@ export default function EditPRCampaignPage() {
       
       // Zitat
       if (result.structured.quote && result.structured.quote.text) {
-        console.log('Adding quote section:', result.structured.quote);
         aiSections.push({
           id: `ai-quote-${Date.now()}`,
           type: 'quote',
@@ -734,14 +592,10 @@ export default function EditPRCampaignPage() {
       }
       
       // Füge die AI-Sections zu den bestehenden hinzu
-      console.log('Current boilerplateSections:', boilerplateSections);
-      console.log('Adding AI sections:', aiSections);
       const newSections = [...boilerplateSections, ...aiSections];
-      console.log('New sections total:', newSections);
       setBoilerplateSections(newSections);
     }
     
-    console.log('Closing AI modal');
     setShowAiModal(false);
   };
 
@@ -763,15 +617,14 @@ export default function EditPRCampaignPage() {
     );
   }
 
-  if (error || !campaign) {
+  if (!campaign) {
     return (
-      <div className="p-8">
-        <Alert type="error" message={error || 'Kampagne nicht gefunden'} />
-        <div className="mt-4">
-          <Link href="/dashboard/pr-tools/campaigns">
-            <Button plain>Zurück zur Übersicht</Button>
-          </Link>
-        </div>
+      <div className="text-center py-12">
+        <ExclamationTriangleIcon className="h-12 w-12 text-red-500 mx-auto mb-4" />
+        <Heading level={2}>Kampagne nicht gefunden</Heading>
+        <Button href="/dashboard/pr-tools/campaigns" className="mt-4">
+          Zurück zur Übersicht
+        </Button>
       </div>
     );
   }
@@ -781,28 +634,27 @@ export default function EditPRCampaignPage() {
       {/* Header */}
       <div className="mb-8">
         <Link
-          href="/dashboard/pr-tools/campaigns"
+          href={`/dashboard/pr-tools/campaigns/campaigns/${campaignId}`}
           className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
         >
           <ArrowLeftIcon className="h-4 w-4 mr-1" />
-          Zurück zur Übersicht
+          Zurück zur Kampagne
         </Link>
         
         <Heading>Kampagne bearbeiten</Heading>
-        <Text className="mt-1">Du bearbeitest: "{campaign.title}"</Text>
+        <Text className="mt-2 text-gray-600">
+          Bearbeiten Sie die Details Ihrer PR-Kampagne
+        </Text>
       </div>
 
-      {/* Approval Feedback */}
-      <ApprovalFeedback campaign={campaign} />
-
-      {/* Edit Warning */}
-      {!editStatus.canEdit && (
-        <div className="mb-6 animate-shake">
-          <Alert type="error" message={editStatus.reason || 'Diese Kampagne kann nicht bearbeitet werden.'} />
+      {/* Alerts */}
+      {alert && (
+        <div className="mb-6 animate-fade-in">
+          <Alert type={alert.type} message={alert.message} />
         </div>
       )}
 
-      {/* Fehlermeldungen oben auf der Seite */}
+      {/* Fehlermeldungen */}
       {validationErrors.length > 0 && (
         <div className="mb-6 animate-shake">
           <Alert type="error" message={validationErrors[0]} />
@@ -810,290 +662,184 @@ export default function EditPRCampaignPage() {
       )}
 
       <form ref={formRef} onSubmit={handleSubmit}>
-        {/* Main Form - volle Breite */}
+        {/* Main Form */}
         <div className="bg-white rounded-lg border p-6">
-          <fieldset disabled={!editStatus.canEdit}>
-            <FieldGroup>
-              {/* Status Badge */}
-              <div className="mb-6 flex items-center justify-between">
-                <div>
-                  <span className="text-sm text-gray-500 mr-2">Status:</span>
-                  <Badge color={
-                    campaign.status === 'draft' ? 'zinc' :
-                    campaign.status === 'in_review' ? 'yellow' :
-                    campaign.status === 'changes_requested' ? 'orange' :
-                    campaign.status === 'approved' ? 'teal' :
-                    campaign.status === 'sent' ? 'green' :
-                    'zinc'
-                  }>
-                    {campaign.status === 'draft' && 'Entwurf'}
-                    {campaign.status === 'in_review' && 'In Prüfung'}
-                    {campaign.status === 'changes_requested' && 'Änderungen erbeten'}
-                    {campaign.status === 'approved' && 'Freigegeben'}
-                    {campaign.status === 'sent' && 'Versendet'}
-                  </Badge>
-                </div>
+          <FieldGroup>
+            {/* Kunde */}
+            <Field>
+              <Label className="flex items-center">
+                Kunde
+                <InfoTooltip 
+                  content="Pflichtfeld: Wählen Sie den Kunden aus, für den diese PR-Kampagne erstellt wird."
+                  className="ml-1"
+                />
+              </Label>
+              <CustomerSelector
+                value={selectedCompanyId}
+                onChange={(companyId, companyName) => {
+                  setSelectedCompanyId(companyId);
+                  setSelectedCompanyName(companyName);
+                }}
+                required
+              />
+            </Field>
+
+            {/* Verteiler */}
+            <Field>
+              <Label className="flex items-center">
+                Verteiler
+                <InfoTooltip 
+                  content="Pflichtfeld: Wählen Sie eine Verteilerliste aus."
+                  className="ml-1"
+                />
+              </Label>
+              <ListSelector
+                value={selectedListId}
+                onChange={(listId, listName, contactCount) => {
+                  setSelectedListId(listId);
+                  setSelectedListName(listName);
+                  setRecipientCount(contactCount);
+                }}
+                lists={availableLists}
+                loading={false}
+                required
+              />
+            </Field>
+
+            {/* Inhalt */}
+            <div className="border-t pt-6 mt-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-base font-semibold flex items-center">
+                  Pressemitteilung
+                  <InfoTooltip 
+                    content="Pflichtfeld: Bearbeiten Sie den Inhalt Ihrer Pressemitteilung."
+                    className="ml-1"
+                  />
+                </h3>
+                <Button
+                  type="button"
+                  onClick={() => setShowAiModal(true)}
+                  className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white whitespace-nowrap"
+                >
+                  <SparklesIcon className="h-4 w-4" />
+                  KI-Assistent
+                </Button>
               </div>
 
-              {/* Kunde */}
-              <Field>
-                <Label className="flex items-center">
-                  Kunde
-                  <InfoTooltip 
-                    content="Der Kunde kann bei bestehenden Kampagnen nicht geändert werden."
-                    className="ml-1"
-                  />
-                </Label>
-                <div className="bg-gray-50 rounded-lg p-3 flex items-center gap-3">
-                  <BuildingOfficeIcon className="h-5 w-5 text-gray-400" />
-                  <span className="font-medium text-gray-900">
-                    {selectedCompany?.name || campaign.clientName || 'Unbekannter Kunde'}
-                  </span>
-                </div>
-              </Field>
+              {/* Content Composer */}
+              <CampaignContentComposer
+                key={`composer-${boilerplateSections.length}`}
+                userId={user!.uid}
+                clientId={selectedCompanyId}
+                clientName={selectedCompanyName}
+                title={campaignTitle}
+                onTitleChange={setCampaignTitle}
+                mainContent=""
+                onMainContentChange={() => {}}
+                onFullContentChange={setPressReleaseContent}
+                onBoilerplateSectionsChange={setBoilerplateSections}
+                initialBoilerplateSections={boilerplateSections}
+                hideMainContentField={true}
+              />
+            </div>
 
-              {/* Verteiler */}
-              <Field>
-                <Label className="flex items-center">
-                  Verteiler
-                  <InfoTooltip 
-                    content="Pflichtfeld: Wählen Sie mindestens eine Verteilerliste aus. Die Pressemitteilung wird an alle Kontakte in den ausgewählten Listen gesendet."
-                    className="ml-1"
-                  />
-                </Label>
-                
-                {/* Suchfeld für Listen */}
-                <div className="mb-3">
-                  <div className="relative">
-                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
-                      type="text"
-                      value={listSearchTerm}
-                      onChange={(e) => setListSearchTerm(e.target.value)}
-                      placeholder="Listen durchsuchen..."
-                      className="pl-9"
-                    />
-                  </div>
-                  {listSearchTerm && (
-                    <p className="mt-1 text-sm text-gray-500">
-                      {filteredLists.length} von {availableLists.length} Listen gefunden
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3">
-                  {filteredLists.length > 0 ? (
-                    filteredLists.map((list) => (
-                      <label key={list.id} className="flex items-center hover:bg-gray-50 rounded p-1">
-                        <Checkbox
-                          checked={selectedListIds.includes(list.id!)}
-                          onChange={(checked) => {
-                            if (checked) {
-                              setSelectedListIds([...selectedListIds, list.id!]);
-                            } else {
-                              setSelectedListIds(selectedListIds.filter(id => id !== list.id));
-                            }
-                          }}
-                          className="mr-3"
-                        />
-                        <div className="flex-1">
-                          <span className="font-medium">{list.name}</span>
-                          <span className="text-sm text-gray-500 ml-2">
-                            ({list.contactCount} Kontakte)
-                          </span>
-                          {list.type === 'dynamic' && (
-                            <Badge color="blue" className="ml-2 text-xs">Dynamisch</Badge>
-                          )}
-                          {list.description && (
-                            <p className="text-xs text-gray-500 mt-0.5">{list.description}</p>
-                          )}
-                        </div>
-                      </label>
-                    ))
-                  ) : (
-                    <div className="text-center py-8 text-gray-500">
-                      <UsersIcon className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                      <p className="text-sm">
-                        {listSearchTerm 
-                          ? 'Keine Listen gefunden' 
-                          : 'Noch keine Verteiler erstellt'
-                        }
-                      </p>
-                    </div>
-                  )}
-                </div>
-                {selectedLists.length > 0 && (
-                  <p className="mt-2 text-sm text-gray-500">
-                    {totalRecipients.toLocaleString('de-DE')} Empfänger in {selectedLists.length} Listen
-                  </p>
-                )}
-              </Field>
-
-              {/* Inhalt */}
-              <div className="border-t pt-6 mt-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-base font-semibold flex items-center">
-                    Pressemitteilung
-                    <InfoTooltip 
-                      content="Pflichtfeld: Erstellen Sie hier den Inhalt Ihrer Pressemitteilung. Sie müssen einen Titel und Inhalt eingeben."
-                      className="ml-1"
-                    />
-                  </h3>
+            {/* Medien */}
+            <div className="border-t pt-6 mt-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-base font-semibold">Medien (optional)</h3>
+                {selectedCompanyId && (
                   <Button
                     type="button"
-                    onClick={() => setShowAiModal(true)}
-                    className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white whitespace-nowrap"
+                    onClick={() => setShowAssetSelector(true)}
+                    plain
+                    className="whitespace-nowrap"
                   >
-                    <SparklesIcon className="h-4 w-4" />
-                    KI-Assistent
+                    <PlusIcon className="h-4 w-4" />
+                    Medien bearbeiten
                   </Button>
-                </div>
-                
-                {/* Info-Box für KI-Nutzung */}
-                <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-start gap-2">
-                    <InformationCircleIcon className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                    <div className="text-sm text-blue-700">
-                      <p className="font-medium">Tipp: Nutze den KI-Assistenten!</p>
-                      <p className="mt-1">Der KI-Assistent erstellt automatisch alle Inhalte deiner Pressemitteilung: Titel, Lead-Absatz, Haupttext und Zitat. Diese erscheinen dann als verschiebbare Elemente, die du mit Textbausteinen kombinieren kannst.</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Content Composer */}
-                <CampaignContentComposer
-                  key={`composer-${boilerplateSections.length}`}
-                  userId={user!.uid}
-                  clientId={selectedCompanyId}
-                  clientName={selectedCompany?.name}
-                  title={campaignTitle}
-                  onTitleChange={setCampaignTitle}
-                  mainContent=""
-                  onMainContentChange={() => {}}
-                  onFullContentChange={setPressReleaseContent}
-                  onBoilerplateSectionsChange={setBoilerplateSections}
-                  initialBoilerplateSections={boilerplateSections}
-                  hideMainContentField={true}
-                />
-              </div>
-
-              {/* Medien */}
-              <div className="border-t pt-6 mt-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-base font-semibold">Medien (optional)</h3>
-                  {selectedCompanyId && (
-                    <Button
-                      type="button"
-                      onClick={() => setShowAssetSelector(true)}
-                      plain
-                      className="whitespace-nowrap"
-                    >
-                      <PlusIcon />
-                      Medien hinzufügen
-                    </Button>
-                  )}
-                </div>
-                
-                {attachedAssets.length > 0 ? (
-                  <div className="space-y-2">
-                    {attachedAssets.map((attachment) => (
-                      <div
-                        key={attachment.id}
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                      >
-                        <div className="flex items-center gap-3">
-                          {attachment.type === 'folder' ? (
-                            <FolderIcon className="h-5 w-5 text-gray-400" />
-                          ) : attachment.metadata.fileType?.startsWith('image/') ? (
-                            <img
-                              src={attachment.metadata.thumbnailUrl}
-                              alt={attachment.metadata.fileName}
-                              className="h-8 w-8 object-cover rounded"
-                            />
-                          ) : (
-                            <DocumentIcon className="h-5 w-5 text-gray-400" />
-                          )}
-                          <div>
-                            <p className="font-medium text-sm">
-                              {attachment.metadata.fileName || attachment.metadata.folderName}
-                            </p>
-                            {attachment.type === 'folder' && (
-                              <Badge color="blue" className="text-xs">Ordner</Badge>
-                            )}
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveAsset(attachment.assetId || attachment.folderId || '')}
-                          className="text-red-600 hover:text-red-500"
-                        >
-                          <XMarkIcon className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 bg-gray-50 rounded-lg">
-                    <PhotoIcon className="h-10 w-10 text-gray-400 mx-auto mb-2" />
-                    <Text>Noch keine Medien angehängt</Text>
-                  </div>
                 )}
               </div>
+              
+              {attachedAssets.length > 0 ? (
+                <div className="space-y-2">
+                  {attachedAssets.map((attachment) => (
+                    <div
+                      key={attachment.id}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                    >
+                      <div className="flex items-center gap-3">
+                        {attachment.type === 'folder' ? (
+                          <FolderIcon className="h-5 w-5 text-gray-400" />
+                        ) : attachment.metadata.fileType?.startsWith('image/') ? (
+                          <img
+                            src={attachment.metadata.thumbnailUrl}
+                            alt={attachment.metadata.fileName}
+                            className="h-8 w-8 object-cover rounded"
+                          />
+                        ) : (
+                          <DocumentIcon className="h-5 w-5 text-gray-400" />
+                        )}
+                        <div>
+                          <p className="font-medium text-sm">
+                            {attachment.metadata.fileName || attachment.metadata.folderName}
+                          </p>
+                          {attachment.type === 'folder' && (
+                            <Badge color="blue" className="text-xs">Ordner</Badge>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveAsset(attachment.assetId || attachment.folderId || '')}
+                        className="text-red-600 hover:text-red-500"
+                      >
+                        <XMarkIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-gray-50 rounded-lg">
+                  <PhotoIcon className="h-10 w-10 text-gray-400 mx-auto mb-2" />
+                  <Text>Noch keine Medien angehängt</Text>
+                </div>
+              )}
+            </div>
 
-              {/* Freigabe */}
-              <div className="border-t pt-6 mt-6">
-                <label className="flex items-start gap-3">
-                  <Checkbox
-                    checked={approvalRequired}
-                    onChange={setApprovalRequired}
-                    className="mt-1"
-                    disabled={campaign.status === 'sent' || campaign.status === 'archived'}
-                  />
-                  <div>
-                    <div className="font-medium">Freigabe vom Kunden erforderlich</div>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Wenn aktiviert, muss der Kunde die Pressemitteilung vor dem Versand freigeben.
-                    </p>
-                  </div>
-                </label>
-              </div>
-            </FieldGroup>
-          </fieldset>
+            {/* Freigabe */}
+            <div className="border-t pt-6 mt-6">
+              <label className="flex items-start gap-3">
+                <Checkbox
+                  checked={approvalRequired}
+                  onChange={setApprovalRequired}
+                  className="mt-1"
+                />
+                <div>
+                  <div className="font-medium">Freigabe vom Kunden erforderlich</div>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Wenn aktiviert, muss der Kunde die Pressemitteilung vor dem Versand freigeben.
+                  </p>
+                </div>
+              </label>
+            </div>
+          </FieldGroup>
         </div>
 
         <div className="mt-6 flex justify-end gap-3">
-          <Button type="button" plain onClick={() => router.push('/dashboard/pr-tools/campaigns')}>
+          <Button 
+            type="button" 
+            plain 
+            href={`/dashboard/pr-tools/campaigns/campaigns/${campaignId}`}
+          >
             Abbrechen
           </Button>
-          
-          {editStatus.canEdit && (
-            <>
-              <Button
-                type="submit"
-                disabled={saving}
-                className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
-              >
-                {saving ? 'Speichert...' : approvalRequired && campaign.status === 'draft' ? (
-                  <>
-                    <PaperAirplaneIcon className="h-4 w-4" />
-                    Freigabe anfordern
-                  </>
-                ) : 'Änderungen speichern'}
-              </Button>
-              
-              {campaign.status === 'changes_requested' && (
-                <Button
-                  type="button"
-                  onClick={handleResubmit}
-                  disabled={saving}
-                  className="bg-orange-600 hover:bg-orange-500 text-white whitespace-nowrap"
-                >
-                  <PaperAirplaneIcon className="h-4 w-4" />
-                  Erneut zur Freigabe senden
-                </Button>
-              )}
-            </>
-          )}
+          <Button
+            type="submit"
+            disabled={saving}
+            className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
+          >
+            {saving ? 'Speichert...' : 'Änderungen speichern'}
+          </Button>
         </div>
       </form>
 
@@ -1103,9 +849,10 @@ export default function EditPRCampaignPage() {
           isOpen={showAssetSelector}
           onClose={() => setShowAssetSelector(false)}
           clientId={selectedCompanyId}
-          clientName={selectedCompany?.name}
+          clientName={selectedCompanyName}
           onAssetsSelected={setAttachedAssets}
           userId={user.uid}
+          currentAssets={attachedAssets}
         />
       )}
 
@@ -1116,7 +863,7 @@ export default function EditPRCampaignPage() {
           onGenerate={handleAiGenerate}
           existingContent={{
             title: campaignTitle,
-            content: ''
+            content: pressReleaseContent
           }}
         />
       )}
@@ -1129,8 +876,17 @@ export default function EditPRCampaignPage() {
           20%, 40%, 60%, 80% { transform: translateX(2px); }
         }
         
+        @keyframes fade-in {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        
         .animate-shake {
           animation: shake 0.5s ease-in-out;
+        }
+        
+        .animate-fade-in {
+          animation: fade-in 0.3s ease-out;
         }
       `}</style>
     </div>

@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useCrmData } from "@/context/CrmDataContext";
 import { mediaService } from "@/lib/firebase/media-service";
 import { MediaAsset, MediaFolder, FolderBreadcrumb } from "@/types/media";
+import { teamMemberService } from "@/lib/firebase/organization-service";
 import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
 import { Button } from "@/components/button";
@@ -116,6 +117,10 @@ export default function MediathekPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
+  // Multi-Tenancy State
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  
   const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
   const [folders, setFolders] = useState<MediaFolder[]>([]);
   const [allFolders, setAllFolders] = useState<MediaFolder[]>([]);
@@ -177,6 +182,37 @@ export default function MediathekPage() {
     return allFolders.find(f => f.id === asset.folderId);
   };
 
+  // === MULTI-TENANCY INITIALIZATION ===
+  useEffect(() => {
+    async function initializeOrganization() {
+      if (!user) return;
+      
+      try {
+        console.log('🔍 Initializing organization for user:', user.uid);
+        const orgs = await teamMemberService.getUserOrganizations(user.uid);
+        console.log('🔍 Found organizations:', orgs);
+        
+        if (orgs.length > 0) {
+          setOrganizationId(orgs[0].organization.id);
+          setCurrentUserId(user.uid);
+          console.log('✅ Set organizationId:', orgs[0].organization.id);
+        } else {
+          // Fallback für Legacy-User
+          console.log('⚠️ No organizations found, using userId as fallback:', user.uid);
+          setOrganizationId(user.uid);
+          setCurrentUserId(user.uid);
+        }
+      } catch (error) {
+        console.error('Error loading organization:', error);
+        // Fallback
+        setOrganizationId(user.uid);
+        setCurrentUserId(user.uid);
+      }
+    }
+
+    initializeOrganization();
+  }, [user]);
+
   // URL-Parameter Handler
   useEffect(() => {
     const uploadFor = searchParams.get('uploadFor');
@@ -195,18 +231,24 @@ export default function MediathekPage() {
   }, [searchParams, companies, router]);
 
   useEffect(() => {
-    if (user) {
+    if (organizationId) {
       loadData();
     }
-  }, [user, currentFolderId]);
+  }, [organizationId, currentFolderId]);
 
   const loadData = async () => {
-    if (!user) return;
+    if (!organizationId) {
+      console.warn('⚠️ loadData called without organizationId');
+      return;
+    }
+    
+    console.log('📁 Loading data for organizationId:', organizationId);
     setLoading(true);
+    
     try {
       const [foldersData, assetsData] = await Promise.all([
-        mediaService.getFolders(user.uid, currentFolderId),
-        mediaService.getMediaAssets(user.uid, currentFolderId)
+        mediaService.getFolders(organizationId, currentFolderId),
+        mediaService.getMediaAssets(organizationId, currentFolderId)
       ]);
       
       setFolders(foldersData);
@@ -237,7 +279,7 @@ export default function MediathekPage() {
 
   // FOLDER DRAG & DROP HANDLERS
   const handleFolderMove = useCallback(async (folderId: string, targetFolderId: string) => {
-    if (!user) return;
+    if (!organizationId) return;
     
     try {
       setMoving(true);
@@ -248,7 +290,7 @@ export default function MediathekPage() {
         parentFolderId: targetFolderId
       });
       
-      await mediaService.updateFolderClientInheritance(folderId, user.uid);
+      await mediaService.updateFolderClientInheritance(folderId, organizationId);
       await loadData();
       
       showAlert('success', 'Ordner verschoben');
@@ -261,7 +303,7 @@ export default function MediathekPage() {
       setDraggedFolder(null);
       setDragOverFolder(null);
     }
-  }, [user]);
+  }, [organizationId]);
 
   const handleFolderDragStart = (folder: MediaFolder) => {
     setDraggedFolder(folder);
@@ -331,14 +373,14 @@ export default function MediathekPage() {
   };
 
   const handleBulkMove = async (targetFolderId?: string) => {
-    if (selectedAssets.size === 0) return;
+    if (selectedAssets.size === 0 || !organizationId) return;
 
     try {
       setMoving(true);
       
       await Promise.all(
         Array.from(selectedAssets).map(assetId => 
-          mediaService.moveAssetToFolder(assetId, targetFolderId, user?.uid)
+          mediaService.moveAssetToFolder(assetId, targetFolderId, organizationId)
         )
       );
       
@@ -432,7 +474,7 @@ export default function MediathekPage() {
       assetsToMove = [draggedAsset.id];
     }
 
-    if (assetsToMove.length === 0) return;
+    if (assetsToMove.length === 0 || !organizationId) return;
 
     const currentAssets = mediaAssets.filter(asset => assetsToMove.includes(asset.id!));
     const alreadyInFolder = currentAssets.some(asset => asset.folderId === targetFolder.id);
@@ -447,7 +489,7 @@ export default function MediathekPage() {
       if (count > 1) {
         await handleBulkMove(targetFolder.id);
       } else {
-        await mediaService.moveAssetToFolder(assetsToMove[0], targetFolder.id, user?.uid);
+        await mediaService.moveAssetToFolder(assetsToMove[0], targetFolder.id, organizationId);
         await loadData();
         showAlert('success', 'Datei verschoben');
       }
@@ -478,7 +520,9 @@ export default function MediathekPage() {
           parentFolderId: undefined
         });
         
-        await mediaService.updateFolderClientInheritance(folderId, user!.uid);
+        if (organizationId) {
+          await mediaService.updateFolderClientInheritance(folderId, organizationId);
+        }
         await loadData();
         showAlert('success', 'Ordner in Root verschoben');
         
@@ -500,7 +544,7 @@ export default function MediathekPage() {
       assetsToMove = [draggedAsset.id];
     }
 
-    if (assetsToMove.length === 0) return;
+    if (assetsToMove.length === 0 || !organizationId) return;
 
     const currentAssets = mediaAssets.filter(asset => 
       assetsToMove.includes(asset.id!) && asset.folderId
@@ -516,12 +560,12 @@ export default function MediathekPage() {
       if (count > 1) {
         await Promise.all(
           currentAssets.map(asset => 
-            mediaService.moveAssetToFolder(asset.id!, undefined, user?.uid)
+            mediaService.moveAssetToFolder(asset.id!, undefined, organizationId)
           )
         );
         clearSelection();
       } else {
-        await mediaService.moveAssetToFolder(currentAssets[0].id!, undefined, user?.uid);
+        await mediaService.moveAssetToFolder(currentAssets[0].id!, undefined, organizationId);
       }
       
       await loadData();
@@ -548,7 +592,7 @@ export default function MediathekPage() {
   };
 
   const handleSaveFolder = async (folderData: Omit<MediaFolder, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => {
-    if (!user) return;
+    if (!organizationId || !currentUserId) return;
     
     try {
       if (editingFolder) {
@@ -556,8 +600,11 @@ export default function MediathekPage() {
       } else {
         await mediaService.createFolder({
           ...folderData,
-          userId: user.uid,
+          userId: organizationId, // For compatibility
           parentFolderId: currentFolderId,
+        }, {
+          organizationId,
+          userId: currentUserId
         });
       }
       await loadData();
@@ -851,11 +898,11 @@ export default function MediathekPage() {
                     </DropdownButton>
                     <DropdownMenu anchor="bottom end" className="bg-white shadow-lg rounded-lg">
                       <DropdownItem onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleEditAsset(asset); }} className="hover:bg-gray-50">
-                        <PencilIcon className="text-gray-500" />
+                        <PencilIcon className="h-4 w-4 text-gray-500" />
                         Details bearbeiten
                       </DropdownItem>
                       <DropdownItem onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleShareAsset(asset); }} className="hover:bg-gray-50">
-                        <ShareIcon className="text-gray-500" />
+                        <ShareIcon className="h-4 w-4 text-gray-500" />
                         Teilen
                       </DropdownItem>
                       <DropdownDivider />
@@ -863,7 +910,7 @@ export default function MediathekPage() {
                         onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleDeleteAsset(asset); }}
                         className="hover:bg-red-50"
                       >
-                        <TrashIcon className="text-red-500" />
+                        <TrashIcon className="h-4 w-4 text-red-500" />
                         <span className="text-red-600">Löschen</span>
                       </DropdownItem>
                     </DropdownMenu>
@@ -963,16 +1010,16 @@ export default function MediathekPage() {
                   </DropdownButton>
                   <DropdownMenu anchor="bottom end" className="bg-white shadow-lg rounded-lg">
                     <DropdownItem onClick={() => handleEditFolder(folder)} className="hover:bg-gray-50">
-                      <PencilIcon className="text-gray-500" />
+                      <PencilIcon className="h-4 w-4 text-gray-500" />
                       Bearbeiten
                     </DropdownItem>
                     <DropdownItem onClick={() => handleShareFolder(folder)} className="hover:bg-gray-50">
-                      <ShareIcon className="text-gray-500" />
+                      <ShareIcon className="h-4 w-4 text-gray-500" />
                       Teilen
                     </DropdownItem>
                     <DropdownDivider />
                     <DropdownItem onClick={() => handleDeleteFolder(folder)} className="hover:bg-red-50">
-                      <TrashIcon className="text-red-500" />
+                      <TrashIcon className="h-4 w-4 text-red-500" />
                       <span className="text-red-600">Löschen</span>
                     </DropdownItem>
                   </DropdownMenu>
@@ -1039,20 +1086,20 @@ export default function MediathekPage() {
                   </DropdownButton>
                   <DropdownMenu anchor="bottom end" className="bg-white shadow-lg rounded-lg">
                     <DropdownItem href={asset.downloadUrl} target="_blank" className="hover:bg-gray-50">
-                      <EyeIcon className="text-gray-500" />
+                      <EyeIcon className="h-4 w-4 text-gray-500" />
                       Ansehen
                     </DropdownItem>
                     <DropdownItem onClick={() => handleEditAsset(asset)} className="hover:bg-gray-50">
-                      <PencilIcon className="text-gray-500" />
+                      <PencilIcon className="h-4 w-4 text-gray-500" />
                       Details bearbeiten
                     </DropdownItem>
                     <DropdownItem onClick={() => handleShareAsset(asset)} className="hover:bg-gray-50">
-                      <ShareIcon className="text-gray-500" />
+                      <ShareIcon className="h-4 w-4 text-gray-500" />
                       Teilen
                     </DropdownItem>
                     <DropdownDivider />
                     <DropdownItem onClick={() => handleDeleteAsset(asset)} className="hover:bg-red-50">
-                      <TrashIcon className="text-red-500" />
+                      <TrashIcon className="h-4 w-4 text-red-500" />
                       <span className="text-red-600">Löschen</span>
                     </DropdownItem>
                   </DropdownMenu>
@@ -1073,6 +1120,17 @@ export default function MediathekPage() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto"></div>
           <Text className="mt-4">Lade Mediathek...</Text>
+        </div>
+      </div>
+    );
+  }
+
+  if (!organizationId) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <ExclamationTriangleIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <Text className="text-gray-600">Keine Organisation gefunden</Text>
         </div>
       </div>
     );
@@ -1107,15 +1165,15 @@ export default function MediathekPage() {
             disabled={draggedFolder !== null}
             className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005fab]"
           >
-            <FolderPlusIcon />
+            <FolderPlusIcon className="h-4 w-4" />
             Ordner anlegen
           </Button>
           <Button 
             onClick={handleUploadModalOpen}
-            disabled={draggedFolder !== null}
+            disabled={draggedFolder !== null || !organizationId}
             className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005fab]"
           >
-            <PlusIcon />
+            <PlusIcon className="h-4 w-4" />
             Dateien hochladen
           </Button>
         </div>
@@ -1189,7 +1247,7 @@ export default function MediathekPage() {
                 Auswahl aufheben
               </Button>
               <Button color="zinc" onClick={handleBulkDelete}>
-                <TrashIcon />
+                <TrashIcon className="h-4 w-4" />
                 Löschen
               </Button>
             </>
@@ -1213,11 +1271,11 @@ export default function MediathekPage() {
             </Text>
             <div className="mt-6 flex justify-center gap-3">
               <Button plain onClick={handleCreateFolder}>
-                <FolderPlusIcon />
+                <FolderPlusIcon className="h-4 w-4" />
                 Ordner erstellen
               </Button>
               <Button onClick={handleUploadModalOpen} className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap">
-                <PlusIcon />
+                <PlusIcon className="h-4 w-4" />
                 Dateien hochladen
               </Button>
             </div>
@@ -1240,7 +1298,7 @@ export default function MediathekPage() {
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
             >
-              <ChevronLeftIcon />
+              <ChevronLeftIcon className="h-4 w-4" />
               Zurück
             </Button>
           </div>
@@ -1278,20 +1336,22 @@ export default function MediathekPage() {
               disabled={currentPage === totalPages}
             >
               Weiter
-              <ChevronRightIcon />
+              <ChevronRightIcon className="h-4 w-4" />
             </Button>
           </div>
         </nav>
       )}
 
-      {/* Modals */}
-      {showUploadModal && (
+      {/* Modals - Only render when organizationId is available */}
+      {showUploadModal && organizationId && currentUserId && (
         <UploadModal 
           onClose={handleUploadModalClose}
           onUploadSuccess={loadData}
           currentFolderId={currentFolderId}
           folderName={getCurrentFolderName()}
           preselectedClientId={preselectedClientId}
+          organizationId={organizationId}
+          userId={currentUserId}
         />
       )}
       
@@ -1308,12 +1368,14 @@ export default function MediathekPage() {
         />
       )}
 
-      {showShareModal && sharingTarget && (
+      {showShareModal && sharingTarget && organizationId && currentUserId && (
         <ShareModal
           target={sharingTarget.target}
           type={sharingTarget.type}
           onClose={handleCloseShareModal}
           onSuccess={loadData}
+          organizationId={organizationId}
+          userId={currentUserId}
         />
       )}
 

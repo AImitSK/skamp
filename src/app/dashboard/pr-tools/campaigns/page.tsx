@@ -776,29 +776,29 @@ export default function PRCampaignsPage() {
                         <DropdownMenu anchor="bottom end">
                           {campaign.status === 'sent' && (
                             <DropdownItem href={`/dashboard/pr-tools/campaigns/campaigns/${campaign.id}/analytics`}>
-                              <ChartBarIcon />
+                              <ChartBarIcon className="h-4 w-4" />
                               Analytics
                             </DropdownItem>
                           )}
                           <DropdownItem href={`/dashboard/pr-tools/campaigns/campaigns/${campaign.id}`}>
-                            <EyeIcon />
+                            <EyeIcon className="h-4 w-4" />
                             Vorschau
                           </DropdownItem>
                           {(campaign.status === 'draft' || campaign.status === 'changes_requested') && (
                             <DropdownItem href={`/dashboard/pr-tools/campaigns/campaigns/edit/${campaign.id}`}>
-                              <PencilIcon />
+                              <PencilIcon className="h-4 w-4" />
                               Bearbeiten
                             </DropdownItem>
                           )}
                           {(campaign.status === 'draft' || campaign.status === 'approved') && (
                             <DropdownItem onClick={() => setShowSendModal(campaign)}>
-                              <PaperAirplaneIcon />
+                              <PaperAirplaneIcon className="h-4 w-4" />
                               Versenden
                             </DropdownItem>
                           )}
                           <DropdownDivider />
                           <DropdownItem onClick={() => handleDelete(campaign.id!, campaign.title)}>
-                            <TrashIcon />
+                            <TrashIcon className="h-4 w-4" />
                             <span className="text-red-600">Löschen</span>
                           </DropdownItem>
                         </DropdownMenu>

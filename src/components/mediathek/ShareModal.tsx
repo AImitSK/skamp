@@ -10,7 +10,6 @@ import { Button } from "@/components/button";
 import { Checkbox } from "@/components/checkbox";
 import { Text } from "@/components/text";
 import { MediaFolder, MediaAsset } from "@/types/media";
-import { useAuth } from "@/context/AuthContext";
 import { mediaService } from "@/lib/firebase/media-service";
 import { 
   LinkIcon, 
@@ -24,6 +23,8 @@ interface ShareModalProps {
   type: 'folder' | 'file';
   onClose: () => void;
   onSuccess?: () => void;
+  organizationId: string; // NEW: Required for multi-tenancy
+  userId: string; // NEW: Required for tracking who creates the share
 }
 
 interface CreatedShareLink {
@@ -40,9 +41,10 @@ export default function ShareModal({
   target, 
   type, 
   onClose, 
-  onSuccess 
+  onSuccess,
+  organizationId, // NEW
+  userId // NEW
 }: ShareModalProps) {
-  const { user } = useAuth();
   
   const defaultTitle = type === 'folder' 
     ? (target as MediaFolder).name 
@@ -57,12 +59,13 @@ export default function ShareModal({
   const [copied, setCopied] = useState(false);
 
   const handleCreateLink = async () => {
-    if (!user || !title.trim()) return;
+    if (!title.trim()) return;
 
     setCreating(true);
     try {
-      const shareData: any = {
-        userId: user.uid,
+      const shareData = {
+        organizationId, // NEW: Use organizationId
+        createdBy: userId, // NEW: Track who created it
         type,
         targetId: target.id!,
         title: title.trim(),
@@ -70,16 +73,12 @@ export default function ShareModal({
         settings: {
           downloadAllowed,
           showFileList: type === 'folder',
+          expiresAt: null,
+          passwordRequired: passwordRequired.trim() || null,
+          watermarkEnabled: false,
         },
+        description: description.trim() || undefined,
       };
-
-      if (description.trim()) {
-        shareData.description = description.trim();
-      }
-      
-      if (passwordRequired.trim()) {
-        shareData.settings.passwordRequired = passwordRequired.trim();
-      }
 
       // createShareLink gibt ein ShareLink Objekt zurück
       const result = await mediaService.createShareLink(shareData);
@@ -176,12 +175,12 @@ export default function ShareModal({
                   >
                     {copied ? (
                       <>
-                        <CheckIcon />
+                        <CheckIcon className="h-4 w-4" />
                         Kopiert!
                       </>
                     ) : (
                       <>
-                        <ClipboardDocumentIcon />
+                        <ClipboardDocumentIcon className="h-4 w-4" />
                         Kopieren
                       </>
                     )}

@@ -18,7 +18,7 @@ import {
 import { db } from './client-init';
 import { PRCampaign, CampaignAssetAttachment, ApprovalData } from '@/types/pr';
 import { mediaService } from './media-service';
-import { ShareLink, CreateShareLinkData } from '@/types/media'; 
+import { ShareLink } from '@/types/media'; 
 import { nanoid } from 'nanoid';
 import { notificationsService } from './notifications-service';
 
@@ -380,10 +380,11 @@ export const prService = {
       }
     });
     
-    // Erstelle Share-Link Daten gemäß der `CreateShareLinkData` Definition
-    const shareData: CreateShareLinkData = {
-      userId: campaign.userId,
-      type: 'campaign', // Eindeutig als Kampagne definieren
+    // Erstelle Share-Link Daten - FIXED für Multi-Tenancy
+    const shareData = {
+      organizationId: campaign.organizationId || campaign.userId, // Use organizationId if available
+      createdBy: campaign.userId, // Track who created it
+      type: 'campaign' as const, // Eindeutig als Kampagne definieren
       targetId: campaign.id!, // Die Kampagnen-ID ist das Hauptziel
       title: `Pressematerial: ${campaign.title}`,
       description: campaign.clientName 

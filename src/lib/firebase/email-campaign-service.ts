@@ -1,4 +1,4 @@
-// src/lib/firebase/email-campaign-service.ts - UPDATED FOR ENHANCED CONTACTS
+// src/lib/firebase/email-campaign-service.ts - UPDATED FOR ENHANCED CONTACTS & MULTI-TENANCY
 import {
   collection,
   doc,
@@ -135,7 +135,7 @@ export const emailCampaignService = {
         
         const manualContacts: ContactEnhanced[] = manualRecipients.map((recipient, index) => ({
           id: `manual-${Date.now()}-${index}`,
-          organizationId: campaign.userId, // Using userId as organizationId for now
+          organizationId: campaign.organizationId || campaign.userId, // Use organizationId if available
           createdBy: campaign.userId,
           name: {
             firstName: recipient.firstName,
@@ -186,7 +186,7 @@ export const emailCampaignService = {
             .filter(a => a.type === 'folder' && a.folderId)
             .map(a => a.folderId!);
 
-          // Erstelle Share-Link mit mediaService
+          // Erstelle Share-Link mit mediaService - FIXED für Multi-Tenancy
           const shareLink = await mediaService.createShareLink({
             targetId: campaign.id!, // Verwende Campaign ID als Target
             type: 'campaign', // Neuer Typ für Kampagnen-Medien
@@ -200,7 +200,8 @@ export const emailCampaignService = {
             },
             assetIds, // Die gesammelten Asset-IDs
             folderIds, // Die gesammelten Folder-IDs
-            userId: campaign.userId
+            organizationId: campaign.organizationId || campaign.userId, // FIXED: Use organizationId
+            createdBy: campaign.userId // FIXED: Add createdBy
           });
 
           // KORRIGIERT: Verwende getBaseUrl() mit Fallback
