@@ -5,14 +5,12 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { 
   publicationService, 
-  advertisementService,
-  mediaKitService 
+  advertisementService
 } from "@/lib/firebase/library-service";
-import type { Publication, Advertisement, MediaKit } from "@/types/library";
+import type { Publication, Advertisement } from "@/types/library";
 import { 
   BookOpenIcon, 
   NewspaperIcon, 
-  DocumentTextIcon,
   GlobeAltIcon,
   UserGroupIcon,
   ChartBarIcon,
@@ -34,11 +32,6 @@ interface LibraryStats {
     total: number;
     withPricing: number;
     averagePrice: number;
-  };
-  mediaKits: {
-    total: number;
-    generated: number;
-    lastGenerated?: Date;
   };
   coverage: {
     countries: string[];
@@ -145,14 +138,6 @@ export default function LibraryDashboard() {
           advertisements.filter((ad: Advertisement) => ad.pricing?.listPrice).length || 0
       };
 
-      // Media Kit Stats
-      const mediaKits = await mediaKitService.getAll(user.uid);
-      const kitStats = {
-        total: mediaKits.length,
-        generated: 0, // Vorerst 0, da wir kein Feld haben um zu prüfen ob generiert
-        lastGenerated: undefined
-      };
-
       // Coverage Stats
       const countries = new Set<string>();
       const languages = new Set<string>();
@@ -173,7 +158,6 @@ export default function LibraryDashboard() {
       setStats({
         publications: publicationStats,
         advertisements: adStats,
-        mediaKits: kitStats,
         coverage: {
           countries: Array.from(countries),
           languages: Array.from(languages),
@@ -230,7 +214,7 @@ export default function LibraryDashboard() {
         <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
           Übersicht
         </h3>
-        <dl className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <dl className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           <StatCard
             title="Publikationen"
             value={stats?.publications.total || 0}
@@ -244,12 +228,6 @@ export default function LibraryDashboard() {
             value={stats?.advertisements.total || 0}
             icon={NewspaperIcon}
             href="/dashboard/library/advertisements"
-          />
-          <StatCard
-            title="Mediadaten"
-            value={stats?.mediaKits.total || 0}
-            icon={DocumentTextIcon}
-            href="/dashboard/library/media-kits"
           />
           <StatCard
             title="Gesamtreichweite"
@@ -382,28 +360,6 @@ export default function LibraryDashboard() {
           </div>
         </div>
       )}
-
-      {/* Quick Actions */}
-      <div className="flex flex-wrap gap-4">
-        <Link href="/dashboard/library/publications">
-          <Button>
-            <BookOpenIcon className="h-4 w-4 mr-2" />
-            Neue Publikation
-          </Button>
-        </Link>
-        <Link href="/dashboard/library/media-kits">
-          <Button plain>
-            <DocumentTextIcon className="h-4 w-4 mr-2" />
-            Media Kit erstellen
-          </Button>
-        </Link>
-        <Link href="/dashboard/library/overview">
-          <Button plain>
-            <ChartBarIcon className="h-4 w-4 mr-2" />
-            Strategische Übersicht
-          </Button>
-        </Link>
-      </div>
     </div>
   );
 }

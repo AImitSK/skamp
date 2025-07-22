@@ -434,3 +434,119 @@ export interface Contact {
   updatedAt?: any;
   userId: string;
 }
+
+// Füge diese Definitionen am Ende von src/types/crm-enhanced.ts hinzu
+
+// ========================================
+// Boilerplate Enhanced mit Mandantenfähigkeit
+// ========================================
+
+export interface BoilerplateEnhanced extends BaseEntity {
+  // Basis-Felder
+  name: string;
+  content: string; // HTML Content
+  category: 'company' | 'contact' | 'legal' | 'product' | 'custom';
+  
+  // Beschreibung & Meta
+  description?: string;
+  tags?: string[];
+  
+  // Scope & Ownership
+  isGlobal: boolean; // Für alle Kunden verfügbar
+  clientId?: string; // Wenn kundenspezifisch
+  clientName?: string; // Denormalisiert für Performance
+  
+  // Position & Verwendung
+  defaultPosition?: 'top' | 'bottom' | 'signature' | 'custom';
+  usageCount?: number;
+  lastUsedAt?: Timestamp;
+  
+  // Favoriten-Markierung
+  isFavorite?: boolean;
+  
+  // Versionierung (für zukünftige Erweiterung)
+  version?: number;
+  previousVersionId?: string;
+  
+  // Sprache & Internationalisierung
+  language?: LanguageCode;
+  translations?: {
+    [key in LanguageCode]?: {
+      name: string;
+      content: string;
+      description?: string;
+    };
+  };
+  
+  // Erweiterte Metadaten
+  metadata?: {
+    requiredFields?: string[]; // z.B. ['{{company_name}}', '{{contact_email}}']
+    compatibleWith?: string[]; // z.B. ['press_release', 'newsletter', 'email']
+    restrictions?: {
+      minLength?: number;
+      maxLength?: number;
+      allowedFormats?: string[];
+    };
+  };
+  
+  // SEO & Analytics
+  seoKeywords?: string[];
+  trackingEnabled?: boolean;
+  
+  // Workflow & Genehmigung
+  requiresApproval?: boolean;
+  approvedBy?: string;
+  approvedAt?: Timestamp;
+  
+  // Aktiv/Inaktiv Status
+  isActive?: boolean;
+  deactivatedAt?: Timestamp;
+  deactivatedReason?: string;
+}
+
+// Legacy Boilerplate Type für Backwards Compatibility
+export interface Boilerplate {
+  id?: string;
+  name: string;
+  content: string;
+  category: 'company' | 'contact' | 'legal' | 'product' | 'custom';
+  description?: string;
+  isGlobal: boolean;
+  clientId?: string;
+  clientName?: string;
+  userId: string;
+  tags?: string[];
+  isFavorite?: boolean;
+  defaultPosition?: 'top' | 'bottom' | 'signature' | 'custom';
+  usageCount?: number;
+  lastUsedAt?: any;
+  createdAt?: any;
+  updatedAt?: any;
+}
+
+// Helper Types für Boilerplates
+export interface BoilerplateFormData extends Omit<BoilerplateEnhanced, keyof BaseEntity> {}
+
+export interface BoilerplateListView extends BoilerplateEnhanced {
+  // Zusätzliche berechnete Felder für Listen
+  usedInCampaigns?: number;
+  lastUsedCampaignName?: string;
+  sharedWithTeams?: number;
+}
+
+// Kategorie Labels
+export const BOILERPLATE_CATEGORY_LABELS: Record<string, string> = {
+  company: 'Unternehmensbeschreibung',
+  contact: 'Kontaktinformationen',
+  legal: 'Rechtliche Hinweise',
+  product: 'Produktbeschreibung',
+  custom: 'Sonstige'
+};
+
+// Position Labels
+export const BOILERPLATE_POSITION_LABELS: Record<string, string> = {
+  top: 'Oben',
+  bottom: 'Unten',
+  signature: 'Signatur',
+  custom: 'Benutzerdefiniert'
+};

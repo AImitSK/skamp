@@ -7,9 +7,11 @@ import Link from 'next/link';
 import { useAuth } from "@/context/AuthContext";
 import { listsService } from "@/lib/firebase/lists-service";
 import { tagsService } from "@/lib/firebase/crm-service";
+import { publicationService } from "@/lib/firebase/library-service";
 import { DistributionList } from "@/types/lists";
 import { Contact, ContactEnhanced, companyTypeLabels, Tag } from "@/types/crm-enhanced";
-import { COUNTRY_NAMES } from "@/types/international";
+import { Publication, PUBLICATION_TYPE_LABELS, PUBLICATION_FREQUENCY_LABELS } from "@/types/library";
+import { COUNTRY_NAMES, LANGUAGE_NAMES } from "@/types/international";
 import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
 import { Button } from "@/components/button";
@@ -36,7 +38,10 @@ import {
   XCircleIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon,
-  NewspaperIcon
+  NewspaperIcon,
+  ChartBarIcon,
+  LanguageIcon,
+  SparklesIcon
 } from "@heroicons/react/20/solid";
 
 // Alert Component
@@ -182,6 +187,7 @@ export default function ListDetailPage() {
   const [list, setList] = useState<DistributionList | null>(null);
   const [contactsInList, setContactsInList] = useState<(Contact | ContactEnhanced)[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
+  const [publications, setPublications] = useState<Publication[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -207,14 +213,16 @@ export default function ListDetailPage() {
     setLoading(true);
     setError(null);
     try {
-      const [listData, userTags] = await Promise.all([
+      const [listData, userTags, allPublications] = await Promise.all([
         listsService.getById(listId),
-        tagsService.getAll(user.uid)
+        tagsService.getAll(user.uid),
+        publicationService.getAll(user.uid)
       ]);
       
       if (listData) {
         setList(listData);
         setTags(userTags);
+        setPublications(allPublications);
         const contactsData = await listsService.getContacts(listData);
         setContactsInList(contactsData);
       } else {
@@ -297,21 +305,6 @@ export default function ListDetailPage() {
       return `${countryNames.slice(0, 3).join(', ')} (+${countryNames.length - 3} weitere)`;
     }
     
-    // Publikationsformat
-    if (key === 'publicationFormat' && value) {
-      const formatLabels: { [key: string]: string } = {
-        'print': 'Print',
-        'online': 'Online',
-        'both': 'Print & Online'
-      };
-      return formatLabels[value] || value;
-    }
-    
-    // Mindestauflage
-    if (key === 'minCirculation' && typeof value === 'number') {
-      return value.toLocaleString('de-DE');
-    }
-    
     // Arrays
     if (Array.isArray(value)) {
       if (value.length === 0) return '—';
@@ -320,6 +313,85 @@ export default function ListDetailPage() {
     }
     
     if (typeof value === 'boolean') return value ? 'Ja' : 'Nein';
+    return String(value || '—');
+  };
+
+  const renderPublicationFilterValue = (key: string, value: any): string => {
+    // Publikations-IDs
+    if (key === 'publicationIds' && Array.isArray(value)) {
+      const pubNames = value.map(pubId => {
+        const pub = publications.find(p => p.id === pubId);
+        return pub ? pub.title : pubId;
+      });
+      if (pubNames.length === 0) return '—';
+      if (pubNames.length <= 2) return pubNames.join(', ');
+      return `${pubNames.slice(0, 2).join(', ')} (+${pubNames.length - 2} weitere)`;
+    }
+
+    // Publikationstypen
+    if (key === 'types' && Array.isArray(value)) {
+      const typeLabels = value.map(type => PUBLICATION_TYPE_LABELS[type as keyof typeof PUBLICATION_TYPE_LABELS] || type);
+      return typeLabels.join(', ');
+    }
+
+    // Frequenzen
+    if (key === 'frequencies' && Array.isArray(value)) {
+      const freqLabels = value.map(freq => PUBLICATION_FREQUENCY_LABELS[freq as keyof typeof PUBLICATION_FREQUENCY_LABELS] || freq);
+      return freqLabels.join(', ');
+    }
+
+    // Geografische Reichweite
+    if (key === 'geographicScopes' && Array.isArray(value)) {
+      const scopeLabels: Record<string, string> = {
+        'local': 'Lokal',
+        'regional': 'Regional',
+        'national': 'National',
+        'international': 'International',
+        'global': 'Global'
+      };
+      return value.map(scope => scopeLabels[scope] || scope).join(', ');
+    }
+
+    // Sprachen
+    if (key === 'languages' && Array.isArray(value)) {
+      const langNames = value.map(code => LANGUAGE_NAMES[code] || code);
+      return langNames.join(', ');
+    }
+
+    // Verlage
+    if (key === 'publisherIds' && Array.isArray(value)) {
+      // Hier könnten wir die Verlagsnamen laden, vorerst nur IDs
+      return `${value.length} Verlage`;
+    }
+
+    // Metriken
+    if (key === 'minPrintCirculation' || key === 'maxPrintCirculation' || 
+        key === 'minOnlineVisitors' || key === 'maxOnlineVisitors') {
+      return value.toLocaleString('de-DE');
+    }
+
+    // Status
+    if (key === 'status' && Array.isArray(value)) {
+      const statusLabels: Record<string, string> = {
+        'active': 'Aktiv',
+        'inactive': 'Inaktiv',
+        'discontinued': 'Eingestellt'
+      };
+      return value.map(s => statusLabels[s] || s).join(', ');
+    }
+
+    // Boolean
+    if (key === 'onlyVerified' && typeof value === 'boolean') {
+      return value ? 'Nur verifizierte' : 'Alle';
+    }
+
+    // Arrays allgemein
+    if (Array.isArray(value)) {
+      if (value.length === 0) return '—';
+      if (value.length <= 3) return value.join(', ');
+      return `${value.slice(0, 3).join(', ')} (+${value.length - 3})`;
+    }
+
     return String(value || '—');
   };
 
@@ -332,14 +404,32 @@ export default function ListDetailPage() {
       positions: UsersIcon,
       hasEmail: EnvelopeIcon,
       hasPhone: PhoneIcon,
-      publicationFormat: DocumentTextIcon,
-      publicationFocusAreas: DocumentTextIcon,
-      minCirculation: DocumentTextIcon,
-      publicationNames: DocumentTextIcon,
       beats: NewspaperIcon,
-      mediaFocus: DocumentTextIcon
+      publications: DocumentTextIcon
     };
     return iconMap[key] || FunnelIcon;
+  };
+
+  const getPublicationFilterIcon = (key: string) => {
+    const iconMap: { [key: string]: any } = {
+      publicationIds: DocumentTextIcon,
+      types: NewspaperIcon,
+      formats: DocumentTextIcon,
+      frequencies: ClockIcon,
+      countries: GlobeAltIcon,
+      geographicScopes: GlobeAltIcon,
+      languages: LanguageIcon,
+      focusAreas: TagIcon,
+      targetIndustries: BuildingOfficeIcon,
+      minPrintCirculation: ChartBarIcon,
+      maxPrintCirculation: ChartBarIcon,
+      minOnlineVisitors: ChartBarIcon,
+      maxOnlineVisitors: ChartBarIcon,
+      onlyVerified: CheckCircleIcon,
+      status: ListBulletIcon,
+      publisherIds: BuildingOfficeIcon
+    };
+    return iconMap[key] || DocumentTextIcon;
   };
 
   const getFilterLabel = (key: string) => {
@@ -351,12 +441,30 @@ export default function ListDetailPage() {
       positions: 'Positionen',
       hasEmail: 'Mit E-Mail',
       hasPhone: 'Mit Telefon',
-      publicationFormat: 'Publikationsformat',
-      publicationFocusAreas: 'Themenschwerpunkte',
-      minCirculation: 'Mindestauflage',
-      publicationNames: 'Publikationen',
       beats: 'Ressorts',
-      mediaFocus: 'Medienschwerpunkte'
+      publications: 'Publikationen'
+    };
+    return labelMap[key] || key;
+  };
+
+  const getPublicationFilterLabel = (key: string) => {
+    const labelMap: { [key: string]: string } = {
+      publicationIds: 'Spezifische Publikationen',
+      types: 'Publikationstypen',
+      formats: 'Formate',
+      frequencies: 'Erscheinungsweise',
+      countries: 'Zielländer',
+      geographicScopes: 'Reichweite',
+      languages: 'Sprachen',
+      focusAreas: 'Themenschwerpunkte',
+      targetIndustries: 'Zielbranchen',
+      minPrintCirculation: 'Min. Druckauflage',
+      maxPrintCirculation: 'Max. Druckauflage',
+      minOnlineVisitors: 'Min. Online-Besucher',
+      maxOnlineVisitors: 'Max. Online-Besucher',
+      onlyVerified: 'Verifizierung',
+      status: 'Status',
+      publisherIds: 'Verlage'
     };
     return labelMap[key] || key;
   };
@@ -460,20 +568,19 @@ export default function ListDetailPage() {
               </div>
               
               <div className="overflow-x-auto">
-                <Table>
+                <Table className="pl-6">
                   <TableHead>
                     <TableRow>
-                      <TableHeader>Name</TableHeader>
+                      <TableHeader className="pl-6">Name</TableHeader>
                       <TableHeader>Position</TableHeader>
                       <TableHeader>Firma</TableHeader>
-                      <TableHeader>Kontakt</TableHeader>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {contactsInList.length > 0 ? (
                       contactsInList.map(contact => (
                         <TableRow key={contact.id} className="hover:bg-gray-50">
-                          <TableCell className="font-medium">
+                          <TableCell className="font-medium pl-6">
                             <Link 
                               href={`/dashboard/contacts/crm/contacts/${contact.id}`} 
                               className="text-[#005fab] hover:text-[#004a8c] hover:underline"
@@ -500,36 +607,11 @@ export default function ListDetailPage() {
                               <Text>—</Text>
                             )}
                           </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              {getContactEmail(contact) && (
-                                <a 
-                                  href={`mailto:${getContactEmail(contact)}`}
-                                  className="text-[#005fab] hover:text-[#004a8c]"
-                                  title={getContactEmail(contact)}
-                                >
-                                  <EnvelopeIcon className="h-4 w-4" />
-                                </a>
-                              )}
-                              {getContactPhone(contact) && (
-                                <a 
-                                  href={`tel:${getContactPhone(contact)}`}
-                                  className="text-[#005fab] hover:text-[#004a8c]"
-                                  title={getContactPhone(contact)}
-                                >
-                                  <PhoneIcon className="h-4 w-4" />
-                                </a>
-                              )}
-                              {!getContactEmail(contact) && !getContactPhone(contact) && (
-                                <Text>—</Text>
-                              )}
-                            </div>
-                          </TableCell>
                         </TableRow>
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={4} className="text-center py-12">
+                        <TableCell colSpan={3} className="text-center py-12">
                           <UsersIcon className="mx-auto h-12 w-12 text-gray-300 mb-3" />
                           <Text>Diese Liste enthält keine Kontakte.</Text>
                           {list.type === 'dynamic' && (
@@ -588,29 +670,65 @@ export default function ListDetailPage() {
             </InfoCard>
             
             {/* Aktive Filter */}
-            {list.type === 'dynamic' && list.filters && Object.values(list.filters).some(v => v && (!Array.isArray(v) || v.length > 0)) && (
-              <InfoCard title="Aktive Filter" icon={FunnelIcon}>
-                <ul className="space-y-3">
-                  {Object.entries(list.filters).map(([key, value]) => {
-                    if (!value || (Array.isArray(value) && value.length === 0)) return null;
-                    
-                    const Icon = getFilterIcon(key);
-                    return (
-                      <li key={key} className="flex items-start gap-3">
-                        <Icon className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
-                        <div className="flex-1">
-                          <div className="font-medium text-sm text-gray-700">
-                            {getFilterLabel(key)}
-                          </div>
-                          <div className="text-sm text-gray-600 mt-0.5">
-                            {renderFilterValue(key, value)}
-                          </div>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </InfoCard>
+            {list.type === 'dynamic' && list.filters && (
+              <>
+                {/* Basis-Filter */}
+                {Object.entries(list.filters).some(([key, value]) => 
+                  key !== 'publications' && value && (!Array.isArray(value) || value.length > 0)
+                ) && (
+                  <InfoCard title="Basis-Filter" icon={FunnelIcon}>
+                    <ul className="space-y-3">
+                      {Object.entries(list.filters).map(([key, value]) => {
+                        if (key === 'publications') return null;
+                        if (!value || (Array.isArray(value) && value.length === 0)) return null;
+                        
+                        const Icon = getFilterIcon(key);
+                        return (
+                          <li key={key} className="flex items-start gap-3">
+                            <Icon className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                            <div className="flex-1">
+                              <div className="font-medium text-sm text-gray-700">
+                                {getFilterLabel(key)}
+                              </div>
+                              <div className="text-sm text-gray-600 mt-0.5">
+                                {renderFilterValue(key, value)}
+                              </div>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </InfoCard>
+                )}
+
+                {/* Publikations-Filter */}
+                {list.filters.publications && Object.entries(list.filters.publications).some(([_, value]) => 
+                  value && (!Array.isArray(value) || value.length > 0)
+                ) && (
+                  <InfoCard title="Publikations-Filter" icon={NewspaperIcon}>
+                    <ul className="space-y-3">
+                      {Object.entries(list.filters.publications).map(([key, value]) => {
+                        if (!value || (Array.isArray(value) && value.length === 0)) return null;
+                        
+                        const Icon = getPublicationFilterIcon(key);
+                        return (
+                          <li key={key} className="flex items-start gap-3">
+                            <Icon className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                            <div className="flex-1">
+                              <div className="font-medium text-sm text-gray-700">
+                                {getPublicationFilterLabel(key)}
+                              </div>
+                              <div className="text-sm text-gray-600 mt-0.5">
+                                {renderPublicationFilterValue(key, value)}
+                              </div>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </InfoCard>
+                )}
+              </>
             )}
           </div>
         </div>

@@ -2,10 +2,13 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import { Field, Label, Description } from '@/components/fieldset';
 import { Input } from '@/components/input';
 import { Button } from '@/components/button';
 import { Badge } from '@/components/badge';
+import { listsService } from '@/lib/firebase/lists-service';
+import { teamMemberService } from '@/lib/firebase/organization-service';
 import { DistributionList } from '@/types/lists';
 import { 
   MagnifyingGlassIcon, 
@@ -21,7 +24,7 @@ import clsx from 'clsx';
 interface ListSelectorProps {
   value: string;
   onChange: (listId: string, listName: string, contactCount: number) => void;
-  lists: DistributionList[];
+  lists?: DistributionList[]; // Optional, falls von außen übergeben
   loading?: boolean;
   required?: boolean;
   label?: string;
@@ -36,7 +39,7 @@ interface ListSelectorProps {
 export function ListSelector({
   value,
   onChange,
-  lists,
+  lists: externalLists,
   loading = false,
   required = true,
   label = "Verteiler auswählen",
@@ -47,12 +50,61 @@ export function ListSelector({
   showStats = true,
   showQuickAdd = true
 }: ListSelectorProps) {
+  const { user } = useAuth();
+  const [internalLists, setInternalLists] = useState<DistributionList[]>([]);
+  const [loadingLists, setLoadingLists] = useState(!externalLists);
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   
   // Use ref to prevent onChange from being called during render
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
+  
+  // Verwende externe Listen wenn verfügbar, sonst interne
+  const lists = externalLists || internalLists;
+  
+  // Lade OrganizationId
+  useEffect(() => {
+    const loadOrganizationId = async () => {
+      if (!user || externalLists) return;
+      
+      try {
+        const orgs = await teamMemberService.getUserOrganizations(user.uid);
+        if (orgs.length > 0) {
+          setOrganizationId(orgs[0].organization.id!);
+        } else {
+          // Fallback auf userId für Backwards Compatibility
+          setOrganizationId(user.uid);
+        }
+      } catch (error) {
+        console.error('Error loading organization:', error);
+        setOrganizationId(user.uid);
+      }
+    };
+    
+    loadOrganizationId();
+  }, [user, externalLists]);
+  
+  // Lade Listen nur wenn keine externen Listen übergeben wurden
+  useEffect(() => {
+    const loadLists = async () => {
+      if (!organizationId || externalLists) return;
+      
+      setLoadingLists(true);
+      try {
+        // listsService verwendet intern userId, aber wir können das später anpassen
+        const listsData = await listsService.getAll(organizationId);
+        setInternalLists(listsData);
+      } catch (error) {
+        console.error('Error loading lists:', error);
+      } finally {
+        setLoadingLists(false);
+      }
+    };
+    
+    loadLists();
+  }, [organizationId, externalLists]);
   
   // Selected list info
   const selectedList = useMemo(() => 
@@ -68,7 +120,8 @@ export function ListSelector({
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
       filtered = filtered.filter(list => 
-        list.name.toLowerCase().includes(search)
+        list.name.toLowerCase().includes(search) ||
+        list.description?.toLowerCase().includes(search)
       );
     }
     
@@ -110,7 +163,7 @@ export function ListSelector({
   }, [disabled]);
 
   // Render loading state
-  if (loading) {
+  if (loading || loadingLists) {
     return (
       <Field className={className}>
         <Label>
@@ -253,6 +306,11 @@ export function ListSelector({
                                       Statisch
                                     </Badge>
                                   )}
+                                  {list.description && (
+                                    <span className="text-xs text-gray-400 truncate">
+                                      {list.description}
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                               {isSelected && (
@@ -297,11 +355,15 @@ export function ListSelector({
                 {selectedList.contactCount} Empfänger
                 {selectedList.type === 'dynamic' && ' • Diese Liste wird automatisch aktualisiert'}
               </p>
+              {selectedList.description && (
+                <p className="text-gray-500 mt-1">{selectedList.description}</p>
+              )}
             </div>
             <div className="ml-4">
               <a
                 href={`/dashboard/contacts/lists/${selectedList.id}`}
                 target="_blank"
+                rel="noopener noreferrer"
                 className="text-xs text-indigo-600 hover:text-indigo-500"
               >
                 Liste ansehen →

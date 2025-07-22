@@ -17,8 +17,10 @@ import {
 import { db } from './client-init';
 // GEÄNDERT: Import der enhanced services
 import { contactsEnhancedService, companiesEnhancedService } from './crm-service-enhanced';
+import { publicationService } from './library-service';
 import { DistributionList, ListFilters, ListUsage, ListMetrics } from '@/types/lists';
 import { ContactEnhanced, CompanyEnhanced } from '@/types/crm-enhanced';
+import { Publication } from '@/types/library';
 
 export const listsService = {
   // --- CRUD Operationen ---
@@ -142,19 +144,96 @@ export const listsService = {
   // --- Filter-basierte Kontaktsuche ---
 
   async getContactsByFilters(filters: ListFilters, userId: string): Promise<ContactEnhanced[]> {
-    // GEÄNDERT: organizationId statt userId verwenden
-    // Hier nehmen wir an, dass userId === organizationId (für Einzelnutzer)
-    // In einer Multi-Tenant-Umgebung müsste dies angepasst werden
     const organizationId = userId;
     
     // Basis: Alle Kontakte der Organisation
     let allContacts = await contactsEnhancedService.getAll(organizationId);
     
+    // Lade Publikationen wenn Publikations-Filter gesetzt sind
+    let publications: Publication[] = [];
+    let publicationIdToContactIds = new Map<string, Set<string>>();
+    
+    if (filters.publications) {
+      // Lade alle Publikationen der Organisation
+      publications = await publicationService.searchPublications(organizationId, {
+        // Direkte Filter
+        publisherIds: filters.publications.publisherIds,
+        types: filters.publications.types,
+        formats: filters.publications.formats,
+        languages: filters.publications.languages,
+        countries: filters.publications.countries,
+        focusAreas: filters.publications.focusAreas,
+        status: filters.publications.status,
+        
+        // Metrik-Filter
+        minCirculation: filters.publications.minPrintCirculation,
+        minUniqueVisitors: filters.publications.minOnlineVisitors,
+      });
+      
+      // Filter nach spezifischen Publikations-IDs
+      if (filters.publications.publicationIds?.length) {
+        publications = publications.filter(pub => 
+          pub.id && filters.publications!.publicationIds!.includes(pub.id)
+        );
+      }
+      
+      // Erweiterte Filterung für Eigenschaften, die searchPublications nicht abdeckt
+      if (filters.publications.frequencies?.length) {
+        publications = publications.filter(pub => 
+          filters.publications!.frequencies!.includes(pub.metrics.frequency)
+        );
+      }
+      
+      if (filters.publications.geographicScopes?.length) {
+        publications = publications.filter(pub => 
+          filters.publications!.geographicScopes!.includes(pub.geographicScope)
+        );
+      }
+      
+      if (filters.publications.targetIndustries?.length) {
+        publications = publications.filter(pub => 
+          pub.targetIndustries?.some(industry => 
+            filters.publications!.targetIndustries!.includes(industry)
+          )
+        );
+      }
+      
+      if (filters.publications.maxPrintCirculation) {
+        publications = publications.filter(pub => 
+          (pub.metrics.print?.circulation || 0) <= filters.publications!.maxPrintCirculation!
+        );
+      }
+      
+      if (filters.publications.maxOnlineVisitors) {
+        publications = publications.filter(pub => 
+          (pub.metrics.online?.monthlyUniqueVisitors || 0) <= filters.publications!.maxOnlineVisitors!
+        );
+      }
+      
+      if (filters.publications.onlyVerified) {
+        publications = publications.filter(pub => pub.verified === true);
+      }
+      
+      // Sammle alle Kontakt-IDs die mit diesen Publikationen verknüpft sind
+      for (const pub of publications) {
+        const contactIds = new Set<string>();
+        
+        // Redaktionelle Kontakte der Publikation
+        if (pub.editorialContacts) {
+          for (const editorial of pub.editorialContacts) {
+            if (editorial.contactId) {
+              contactIds.add(editorial.contactId);
+            }
+          }
+        }
+        
+        publicationIdToContactIds.set(pub.id!, contactIds);
+      }
+    }
+    
     // Alle Firmen für erweiterte Filter
     let allCompanies: CompanyEnhanced[] = [];
-    if (filters.companyTypes || filters.industries || filters.countries || 
-        filters.publicationFormat || filters.publicationFocusAreas || 
-        filters.minCirculation || filters.publicationNames) {
+    if (filters.companyTypes || filters.industries || filters.countries) {
       allCompanies = await companiesEnhancedService.getAll(organizationId);
     }
 
@@ -181,159 +260,43 @@ export const listsService = {
         }
       }
 
-      // Publikations-Filter für erweiterte Kontakte
-      if (contact.mediaProfile?.publicationIds && contact.mediaProfile.publicationIds.length > 0) {
-        // Beats-Filter (Ressorts)
-        if (filters.beats && filters.beats.length > 0) {
-          const hasMatchingBeat = contact.mediaProfile.beats?.some(beat =>
-            filters.beats!.includes(beat)
+      // Beats-Filter (Ressorts für Journalisten)
+      if (filters.beats && filters.beats.length > 0) {
+        const hasMatchingBeat = contact.mediaProfile?.beats?.some(beat =>
+          filters.beats!.includes(beat)
+        );
+        if (!hasMatchingBeat) return false;
+      }
+      
+      // Publikations-Filter
+      if (filters.publications && publications.length > 0) {
+        let matchesPublication = false;
+        
+        // Prüfe ob Kontakt Journalist ist und mit einer der gefilterten Publikationen verknüpft ist
+        if (contact.mediaProfile?.publicationIds) {
+          const contactPubIds = contact.mediaProfile.publicationIds;
+          matchesPublication = contactPubIds.some(pubId => 
+            publications.some(pub => pub.id === pubId)
           );
-          if (!hasMatchingBeat) return false;
         }
         
-        // Wenn Publikationsfilter gesetzt sind, müssen wir die über die Company prüfen
-        if ((filters.publicationNames && filters.publicationNames.length > 0) ||
-            (filters.publicationFormat) ||
-            (filters.publicationFocusAreas && filters.publicationFocusAreas.length > 0) ||
-            (filters.minCirculation && filters.minCirculation > 0)) {
-          
-          // Finde die Company des Kontakts
-          if (contact.companyId && allCompanies.length > 0) {
-            const company = allCompanies.find(c => c.id === contact.companyId);
-            if (company?.mediaInfo?.publications) {
-              // Prüfe ob irgendeine Publikation der Company den Filtern entspricht
-              const matchingPublications = company.mediaInfo.publications.filter(pub => {
-                // Name Filter
-                if (filters.publicationNames && filters.publicationNames.length > 0) {
-                  if (!filters.publicationNames.includes(pub.name)) return false;
-                }
-                
-                // Format Filter
-                if (filters.publicationFormat) {
-                  if (pub.format !== filters.publicationFormat) return false;
-                }
-                
-                // Focus Areas Filter
-                if (filters.publicationFocusAreas && filters.publicationFocusAreas.length > 0) {
-                  if (!pub.focusAreas?.some(area => filters.publicationFocusAreas!.includes(area))) return false;
-                }
-                
-                // Circulation Filter
-                if (filters.minCirculation && filters.minCirculation > 0) {
-                  if ((pub.circulation || pub.reach || 0) < filters.minCirculation) return false;
-                }
-                
-                return true;
-              });
-              
-              // Wenn keine passende Publikation gefunden wurde, filtere den Kontakt aus
-              if (matchingPublications.length === 0) return false;
-            } else {
-              // Company hat keine Publikationen, filtere aus wenn Publikationsfilter gesetzt sind
-              return false;
+        // Prüfe ob Kontakt als redaktioneller Kontakt in einer Publikation gelistet ist
+        if (!matchesPublication && contact.id) {
+          // Konvertiere Map zu Array für bessere Kompatibilität
+          const entries = Array.from(publicationIdToContactIds.entries());
+          for (const [pubId, contactIds] of entries) {
+            if (contactIds.has(contact.id)) {
+              matchesPublication = true;
+              break;
             }
-          } else {
-            // Kontakt hat keine Company, filtere aus wenn Publikationsfilter gesetzt sind
-            return false;
           }
         }
+        
+        // Wenn Publikations-Filter gesetzt sind aber Kontakt keine Übereinstimmung hat
+        if (!matchesPublication) return false;
       }
 
       // Firmen-bezogene Filter
-      if (contact.companyId && allCompanies.length > 0) {
-        const company = allCompanies.find(c => c.id === contact.companyId);
-        if (company) {
-          // Firmentyp-Filter
-          if (filters.companyTypes && filters.companyTypes.length > 0) {
-            if (!filters.companyTypes.includes(company.type as any)) {
-              return false;
-            }
-          }
-
-          // Branchen-Filter
-          if (filters.industries && filters.industries.length > 0) {
-            const companyIndustry = company.industryClassification?.primary;
-            if (!companyIndustry || !filters.industries.includes(companyIndustry)) {
-              return false;
-            }
-          }
-
-          // Länder-Filter
-          if (filters.countries && filters.countries.length > 0) {
-            if (!company.mainAddress?.countryCode || 
-                !filters.countries.includes(company.mainAddress.countryCode)) {
-              return false;
-            }
-          }
-
-          // Media-spezifische Filter
-          if (company.mediaInfo) {
-            // Media Focus Filter
-            if (filters.mediaFocus && filters.mediaFocus.length > 0) {
-              const hasMatchingFocus = company.mediaInfo.focusAreas?.some(area =>
-                filters.mediaFocus!.includes(area)
-              );
-              if (!hasMatchingFocus) return false;
-            }
-
-            // Publikations-Filter
-            if (company.mediaInfo.publications && company.mediaInfo.publications.length > 0) {
-              // Format-Filter
-              if (filters.publicationFormat) {
-                const hasMatchingFormat = company.mediaInfo.publications.some(pub =>
-                  pub.format === filters.publicationFormat
-                );
-                if (!hasMatchingFormat) return false;
-              }
-              
-              // Themenschwerpunkte-Filter
-              if (filters.publicationFocusAreas && filters.publicationFocusAreas.length > 0) {
-                const hasMatchingFocus = company.mediaInfo.publications.some(pub =>
-                  pub.focusAreas?.some(area => filters.publicationFocusAreas!.includes(area))
-                );
-                if (!hasMatchingFocus) return false;
-              }
-              
-              // Auflagen-Filter
-              if (filters.minCirculation && filters.minCirculation > 0) {
-                const hasMatchingCirculation = company.mediaInfo.publications.some(pub =>
-                  (pub.circulation || pub.reach || 0) >= filters.minCirculation!
-                );
-                if (!hasMatchingCirculation) return false;
-              }
-
-              // Publikationsnamen-Filter
-              if (filters.publicationNames && filters.publicationNames.length > 0) {
-                const hasMatchingPublication = company.mediaInfo.publications.some(pub =>
-                  filters.publicationNames!.includes(pub.name)
-                );
-                if (!hasMatchingPublication) return false;
-              }
-            } else {
-              // Company hat keine Publikationen
-              // Wenn Publikationsfilter gesetzt sind, filtere diesen Kontakt aus
-              if ((filters.publicationNames && filters.publicationNames.length > 0) ||
-                  (filters.publicationFormat) ||
-                  (filters.publicationFocusAreas && filters.publicationFocusAreas.length > 0) ||
-                  (filters.minCirculation && filters.minCirculation > 0)) {
-                return false;
-              }
-            }
-          }
-        }
-      } else {
-        // Kontakt hat keine Company
-        // Wenn firmen-spezifische Filter gesetzt sind, filtere aus
-        if ((filters.companyTypes && filters.companyTypes.length > 0) ||
-            (filters.industries && filters.industries.length > 0) ||
-            (filters.countries && filters.countries.length > 0) ||
-            (filters.publicationNames && filters.publicationNames.length > 0) ||
-            (filters.publicationFormat) ||
-            (filters.publicationFocusAreas && filters.publicationFocusAreas.length > 0) ||
-            (filters.minCirculation && filters.minCirculation > 0)) {
-          return false;
-        }
-      }
       if (contact.companyId && allCompanies.length > 0) {
         const company = allCompanies.find(c => c.id === contact.companyId);
         if (company) {
@@ -359,52 +322,14 @@ export const listsService = {
               return false;
             }
           }
-
-          // Media-spezifische Filter
-          if (company.mediaInfo) {
-            // Media Focus Filter
-            if (filters.mediaFocus && filters.mediaFocus.length > 0) {
-              const hasMatchingFocus = company.mediaInfo.focusAreas?.some(area =>
-                filters.mediaFocus!.includes(area)
-              );
-              if (!hasMatchingFocus) return false;
-            }
-
-            // Publikations-Filter
-            if (company.mediaInfo.publications && company.mediaInfo.publications.length > 0) {
-              // Format-Filter
-              if (filters.publicationFormat) {
-                const hasMatchingFormat = company.mediaInfo.publications.some(pub =>
-                  pub.format === filters.publicationFormat
-                );
-                if (!hasMatchingFormat) return false;
-              }
-              
-              // Themenschwerpunkte-Filter
-              if (filters.publicationFocusAreas && filters.publicationFocusAreas.length > 0) {
-                const hasMatchingFocus = company.mediaInfo.publications.some(pub =>
-                  pub.focusAreas?.some(area => filters.publicationFocusAreas!.includes(area))
-                );
-                if (!hasMatchingFocus) return false;
-              }
-              
-              // Auflagen-Filter
-              if (filters.minCirculation && filters.minCirculation > 0) {
-                const hasMatchingCirculation = company.mediaInfo.publications.some(pub =>
-                  (pub.circulation || pub.reach || 0) >= filters.minCirculation!
-                );
-                if (!hasMatchingCirculation) return false;
-              }
-
-              // Publikationsnamen-Filter
-              if (filters.publicationNames && filters.publicationNames.length > 0) {
-                const hasMatchingPublication = company.mediaInfo.publications.some(pub =>
-                  filters.publicationNames!.includes(pub.name)
-                );
-                if (!hasMatchingPublication) return false;
-              }
-            }
-          }
+        }
+      } else {
+        // Kontakt hat keine Company
+        // Wenn firmen-spezifische Filter gesetzt sind, filtere aus
+        if ((filters.companyTypes && filters.companyTypes.length > 0) ||
+            (filters.industries && filters.industries.length > 0) ||
+            (filters.countries && filters.countries.length > 0)) {
+          return false;
         }
       }
 

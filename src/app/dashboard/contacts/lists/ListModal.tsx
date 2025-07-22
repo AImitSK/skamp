@@ -13,6 +13,7 @@ import { Text } from "@/components/text";
 import { Radio, RadioGroup, RadioField } from "@/components/radio";
 import { Checkbox } from "@/components/checkbox";
 import { MultiSelectDropdown } from "@/components/MultiSelectDropdown";
+import PublicationFilterSection from "@/components/listen/PublicationFilterSection";
 import { listsService } from "@/lib/firebase/lists-service";
 import { useCrmData } from "@/context/CrmDataContext";
 import { DistributionList, ListFilters } from "@/types/lists";
@@ -101,7 +102,7 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
     'agency': 'Agentur'
   };
 
-// Extract unique values from Enhanced Model
+  // Extract unique values from Enhanced Model
   const availableIndustries = useMemo(() => 
     Array.from(new Set(
       companies
@@ -133,37 +134,6 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
     });
     return Array.from(languages).sort();
   }, [contacts]);
-
-  // Extract publications data (bleibt gleich, da mediaInfo noch vorhanden)
-  const availablePublications = useMemo(() => {
-    const pubs: { name: string; format: string; focusAreas: string[]; circulation?: number }[] = [];
-    companies.forEach(company => {
-      if (company.mediaInfo?.publications) {
-        company.mediaInfo.publications.forEach(pub => {
-          pubs.push({
-            name: pub.name,
-            format: pub.format,
-            focusAreas: pub.focusAreas || [],
-            circulation: pub.circulation || pub.reach
-          });
-        });
-      }
-    });
-    return pubs;
-  }, [companies]);
-
-  const uniquePublicationNames = useMemo(() => 
-    Array.from(new Set(availablePublications.map(p => p.name))).sort(),
-    [availablePublications]
-  );
-
-  const allFocusAreas = useMemo(() => {
-    const areas = new Set<string>();
-    availablePublications.forEach(pub => {
-      pub.focusAreas.forEach(area => areas.add(area));
-    });
-    return Array.from(areas).sort();
-  }, [availablePublications]);
 
   // GEÄNDERT: Beats aus Journalisten-Profilen extrahieren
   const availableBeats = useMemo(() => {
@@ -509,53 +479,20 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
                         </div>
                       </div>
                       
-                      {/* Publikationen Filter */}
+                      {/* NEU: Publikations-Filter mit neuer Komponente */}
                       <div className="space-y-4 rounded-md border p-4 bg-gray-50">
                         <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
                           <DocumentTextIcon className="h-5 w-5 text-gray-400" />
-                          Publikationen-Filter
+                          Publikations-Filter
                         </div>
                         
-                        <div className="space-y-4">
-                          <Field>
-                            <Label>Format</Label>
-                            <Select 
-                              value={formData.filters?.publicationFormat || ''} 
-                              onChange={(e) => handleFilterChange('publicationFormat', e.target.value || undefined)}
-                            >
-                              <option value="">Alle Formate</option>
-                              <option value="print">Print</option>
-                              <option value="online">Online</option>
-                              <option value="both">Print & Online</option>
-                            </Select>
-                          </Field>
-                          
-                          <MultiSelectDropdown 
-                            label="Themenschwerpunkte" 
-                            placeholder="Alle Schwerpunkte" 
-                            options={allFocusAreas.map(f => ({ value: f, label: f }))} 
-                            selectedValues={formData.filters?.publicationFocusAreas || []} 
-                            onChange={(values) => handleFilterChange('publicationFocusAreas', values)}
-                          />
-                          
-                          <Field>
-                            <Label>Auflage größer als</Label>
-                            <Input 
-                              type="number" 
-                              value={formData.filters?.minCirculation || ''} 
-                              onChange={(e) => handleFilterChange('minCirculation', e.target.value ? parseInt(e.target.value) : undefined)}
-                              placeholder="z.B. 10000"
-                            />
-                          </Field>
-                          
-                          <MultiSelectDropdown 
-                            label="Name der Publikation" 
-                            placeholder="Alle Publikationen" 
-                            options={uniquePublicationNames.map(n => ({ value: n, label: n }))} 
-                            selectedValues={formData.filters?.publicationNames || []} 
-                            onChange={(values) => handleFilterChange('publicationNames', values)}
-                          />
-                        </div>
+                        <PublicationFilterSection
+                          filters={formData.filters?.publications}
+                          organizationId={userId}
+                          onChange={(publicationFilters) => 
+                            handleFilterChange('publications', publicationFilters)
+                          }
+                        />
                       </div>
                     </div>
                   )}

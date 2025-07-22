@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useCrmData } from '@/context/CrmDataContext';
+import { useAuth } from '@/context/AuthContext';
 import { Field, Label, Description } from '@/components/fieldset';
 import { Select } from '@/components/select';
 import { Input } from '@/components/input';
@@ -16,7 +16,9 @@ import {
   ExclamationCircleIcon
 } from '@heroicons/react/20/solid';
 import clsx from 'clsx';
-import { companyTypeLabels } from '@/types/crm-enhanced';
+import { companyTypeLabels, CompanyEnhanced } from '@/types/crm-enhanced';
+import { companiesEnhancedService } from '@/lib/firebase/crm-service-enhanced';
+import { teamMemberService } from '@/lib/firebase/organization-service';
 
 interface CustomerSelectorProps {
   value: string;
@@ -49,9 +51,49 @@ export function CustomerSelector({
   showQuickAdd = true,
   filterByHasMedia = false
 }: CustomerSelectorProps) {
-  const { companies, loading: loadingCompanies } = useCrmData();
+  const { user } = useAuth();
+  const [companies, setCompanies] = useState<CompanyEnhanced[]>([]);
+  const [loadingCompanies, setLoadingCompanies] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
+  
+  // Lade OrganizationId
+  useEffect(() => {
+    const loadOrganizationId = async () => {
+      if (!user) return;
+      
+      try {
+        const orgs = await teamMemberService.getUserOrganizations(user.uid);
+        if (orgs.length > 0) {
+          setOrganizationId(orgs[0].organization.id!);
+        }
+      } catch (error) {
+        console.error('Error loading organization:', error);
+      }
+    };
+    
+    loadOrganizationId();
+  }, [user]);
+  
+  // Lade Companies mit dem neuen Service
+  useEffect(() => {
+    const loadCompanies = async () => {
+      if (!organizationId) return;
+      
+      setLoadingCompanies(true);
+      try {
+        const companiesData = await companiesEnhancedService.getAll(organizationId);
+        setCompanies(companiesData);
+      } catch (error) {
+        console.error('Error loading companies:', error);
+      } finally {
+        setLoadingCompanies(false);
+      }
+    };
+    
+    loadCompanies();
+  }, [organizationId]);
   
   // Selected company info
   const selectedCompany = useMemo(() => 
@@ -68,6 +110,8 @@ export function CustomerSelector({
       const search = searchTerm.toLowerCase();
       filtered = filtered.filter(company => 
         company.name.toLowerCase().includes(search) ||
+        company.officialName?.toLowerCase().includes(search) ||
+        company.tradingName?.toLowerCase().includes(search) ||
         company.industryClassification?.primary?.toLowerCase().includes(search) ||
         company.website?.toLowerCase().includes(search)
       );
@@ -348,7 +392,41 @@ export function CompactCustomerSelector({
   onChange: (customerId: string, customerName: string) => void;
   className?: string;
 }) {
-  const { companies } = useCrmData();
+  const { user } = useAuth();
+  const [companies, setCompanies] = useState<CompanyEnhanced[]>([]);
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
+  
+  useEffect(() => {
+    const loadOrganizationId = async () => {
+      if (!user) return;
+      
+      try {
+        const orgs = await teamMemberService.getUserOrganizations(user.uid);
+        if (orgs.length > 0) {
+          setOrganizationId(orgs[0].organization.id!);
+        }
+      } catch (error) {
+        console.error('Error loading organization:', error);
+      }
+    };
+    
+    loadOrganizationId();
+  }, [user]);
+  
+  useEffect(() => {
+    const loadCompanies = async () => {
+      if (!organizationId) return;
+      
+      try {
+        const companiesData = await companiesEnhancedService.getAll(organizationId);
+        setCompanies(companiesData);
+      } catch (error) {
+        console.error('Error loading companies:', error);
+      }
+    };
+    
+    loadCompanies();
+  }, [organizationId]);
   
   const sortedCompanies = useMemo(() => 
     [...companies].sort((a, b) => a.name.localeCompare(b.name)),
@@ -397,18 +475,54 @@ export function CustomerBadge({
   showIcon?: boolean;
   className?: string;
 }) {
-  const { companies } = useCrmData();
+  const { user } = useAuth();
+  const [company, setCompany] = useState<CompanyEnhanced | null>(null);
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
   
-  const company = customerName 
+  useEffect(() => {
+    const loadOrganizationId = async () => {
+      if (!user) return;
+      
+      try {
+        const orgs = await teamMemberService.getUserOrganizations(user.uid);
+        if (orgs.length > 0) {
+          setOrganizationId(orgs[0].organization.id!);
+        }
+      } catch (error) {
+        console.error('Error loading organization:', error);
+      }
+    };
+    
+    loadOrganizationId();
+  }, [user]);
+  
+  useEffect(() => {
+    const loadCompany = async () => {
+      if (!organizationId || !customerId) return;
+      
+      try {
+        const companyData = await companiesEnhancedService.getById(customerId, organizationId);
+        setCompany(companyData);
+      } catch (error) {
+        console.error('Error loading company:', error);
+      }
+    };
+    
+    if (!customerName) {
+      loadCompany();
+    }
+  }, [organizationId, customerId, customerName]);
+  
+  const displayCompany = customerName 
     ? { name: customerName } 
-    : companies.find(c => c.id === customerId);
+    : company;
   
-  if (!company) return null;
+  if (!displayCompany) return null;
   
   return (
     <Badge color="blue" className={clsx("inline-flex items-center", className)}>
       {showIcon && <BuildingOfficeIcon className="h-3 w-3 mr-1" />}
-      {company.name}
+      {displayCompany.name}
     </Badge>
   );
 }

@@ -1,4 +1,4 @@
-// src/lib/firebase/pr-service.ts - FINALE, VOLLSTÄNDIGE VERSION
+// src/lib/firebase/pr-service.ts - FINALE, VOLLSTÄNDIGE VERSION mit Multi-Tenancy
 import {
   collection,
   doc,
@@ -28,15 +28,15 @@ const getBaseUrl = () => {
   return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 };
 
-
 export const prService = {
   
-  // src/lib/firebase/pr-service.ts - KORRIGIERTER create() METHOD
-
+  // ERWEITERT mit organizationId Support
   async create(campaignData: Omit<PRCampaign, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     // Konvertiere boilerplateSections zu einem speicherbaren Format
     const dataToSave = {
       ...campaignData,
+      // Stelle sicher dass organizationId gesetzt ist (fallback auf userId für backwards compatibility)
+      organizationId: campaignData.organizationId || campaignData.userId,
       // Stelle sicher, dass boilerplateSections serialisierbar ist
       boilerplateSections: campaignData.boilerplateSections ? 
         campaignData.boilerplateSections.map((section: any) => {
@@ -75,12 +75,15 @@ export const prService = {
     return null;
   },
 
-  async getAll(userId: string): Promise<PRCampaign[]> {
+  // ERWEITERT: Unterstützt jetzt organizationId ODER userId
+  async getAll(userOrOrgId: string, useOrganizationId: boolean = false): Promise<PRCampaign[]> {
     try {
+      const fieldName = useOrganizationId ? 'organizationId' : 'userId';
+      
       // Mit orderBy für chronologische Sortierung
       const q = query(
         collection(db, 'pr_campaigns'),
-        where('userId', '==', userId),
+        where(fieldName, '==', userOrOrgId),
         orderBy('createdAt', 'desc')
       );
       
@@ -93,9 +96,10 @@ export const prService = {
       // Fallback ohne orderBy falls Index fehlt
       if (error.code === 'failed-precondition') {
         console.warn('Firestore Index fehlt, verwende Fallback ohne orderBy');
+        const fieldName = useOrganizationId ? 'organizationId' : 'userId';
         const q = query(
           collection(db, 'pr_campaigns'),
-          where('userId', '==', userId)
+          where(fieldName, '==', userOrOrgId)
         );
         const snapshot = await getDocs(q);
         const campaigns = snapshot.docs.map(doc => ({
@@ -113,10 +117,17 @@ export const prService = {
     }
   },
 
-  async getByStatus(userId: string, status: string): Promise<PRCampaign[]> {
+  // NEU: Spezialisierte Methode für Organization-basierte Abfragen
+  async getAllByOrganization(organizationId: string): Promise<PRCampaign[]> {
+    return this.getAll(organizationId, true);
+  },
+
+  // ERWEITERT: Unterstützt jetzt organizationId ODER userId
+  async getByStatus(userOrOrgId: string, status: string, useOrganizationId: boolean = false): Promise<PRCampaign[]> {
+    const fieldName = useOrganizationId ? 'organizationId' : 'userId';
     const q = query(
       collection(db, 'pr_campaigns'),
-      where('userId', '==', userId),
+      where(fieldName, '==', userOrOrgId),
       where('status', '==', status)
     );
     const snapshot = await getDocs(q);
@@ -232,7 +243,8 @@ export const prService = {
     await updateDoc(docRef, updateData);
   },
 
-  async getStats(userId: string): Promise<{
+  // ERWEITERT: Unterstützt jetzt organizationId ODER userId
+  async getStats(userOrOrgId: string, useOrganizationId: boolean = false): Promise<{
     total: number;
     drafts: number;
     scheduled: number;
@@ -244,7 +256,9 @@ export const prService = {
     totalRecipients: number;
     totalAssetsShared: number;
   }> {
-    const campaigns = await this.getAll(userId);
+    const campaigns = useOrganizationId 
+      ? await this.getAllByOrganization(userOrOrgId)
+      : await this.getAll(userOrOrgId);
     
     return campaigns.reduce((acc, campaign) => {
       acc.total++;
@@ -270,8 +284,11 @@ export const prService = {
     });
   },
 
-  async search(userId: string, searchTerm: string): Promise<PRCampaign[]> {
-    const allCampaigns = await this.getAll(userId);
+  // ERWEITERT: Unterstützt jetzt organizationId ODER userId
+  async search(userOrOrgId: string, searchTerm: string, useOrganizationId: boolean = false): Promise<PRCampaign[]> {
+    const allCampaigns = useOrganizationId 
+      ? await this.getAllByOrganization(userOrOrgId)
+      : await this.getAll(userOrOrgId);
     const term = searchTerm.toLowerCase();
     
     return allCampaigns.filter(campaign => 
@@ -504,6 +521,7 @@ export const prService = {
       shareId,
       campaignId,
       userId: campaign.userId,
+      organizationId: campaign.organizationId || campaign.userId, // NEU: Mit organizationId
       campaignTitle: campaign.title,
       campaignContent: campaign.contentHtml,
       clientName: campaign.clientName,
@@ -568,6 +586,7 @@ export const prService = {
       return {
         id: shareData.campaignId,
         userId: shareData.userId,
+        organizationId: shareData.organizationId, // NEU: Mit organizationId
         title: shareData.campaignTitle,
         contentHtml: shareData.campaignContent,
         clientName: shareData.clientName,
@@ -872,12 +891,14 @@ export const prService = {
 
   /**
    * Holt alle Kampagnen, die eine Freigabe benötigen
+   * ERWEITERT: Unterstützt jetzt organizationId ODER userId
    */
-  async getApprovalCampaigns(userId: string): Promise<PRCampaign[]> {
+  async getApprovalCampaigns(userOrOrgId: string, useOrganizationId: boolean = false): Promise<PRCampaign[]> {
     try {
+      const fieldName = useOrganizationId ? 'organizationId' : 'userId';
       const q = query(
         collection(db, 'pr_campaigns'),
-        where('userId', '==', userId),
+        where(fieldName, '==', userOrOrgId),
         where('approvalRequired', '==', true)
       );
       

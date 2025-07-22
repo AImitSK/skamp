@@ -782,41 +782,42 @@ export default function ListsPage() {
                             <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
                           </DropdownButton>
                           <DropdownMenu anchor="bottom end">
-                            <DropdownItem href={`/dashboard/contacts/lists/${list.id}`}>
-                              <EyeIcon />
-                              Anzeigen
-                            </DropdownItem>
-                            <DropdownItem href={`/dashboard/contacts/lists/${list.id}/analytics`}>
-                              <ChartBarIcon />
-                              Statistiken
-                            </DropdownItem>
-                            <DropdownItem onClick={() => {
-                              setEditingList(list);
-                              setShowCreateModal(true);
-                            }}>
-                              <PencilIcon />
-                              Bearbeiten
-                            </DropdownItem>
-                            <DropdownItem onClick={() => handleDuplicateList(list.id!, list.name)}>
-                              <DocumentDuplicateIcon />
-                              Duplizieren
-                            </DropdownItem>
-                            {list.type === 'dynamic' && (
-                              <DropdownItem onClick={() => handleRefreshList(list.id!)}>
-                                <ArrowPathIcon />
-                                Aktualisieren
-                              </DropdownItem>
-                            )}
-                            <DropdownItem onClick={() => handleExportList(list)}>
-                              <ArrowDownTrayIcon />
-                              Exportieren
-                            </DropdownItem>
-                            <DropdownDivider />
-                            <DropdownItem onClick={() => handleDeleteList(list.id!, list.name)}>
-                              <TrashIcon />
-                              <span className="text-red-600">Löschen</span>
-                            </DropdownItem>
-                          </DropdownMenu>
+  <DropdownItem href={`/dashboard/contacts/lists/${list.id}`}>
+    <EyeIcon className="h-4 w-4" />
+    Anzeigen
+  </DropdownItem>
+  <DropdownItem href={`/dashboard/contacts/lists/${list.id}/analytics`}>
+    <ChartBarIcon className="h-4 w-4" />
+    Statistiken
+  </DropdownItem>
+  <DropdownItem onClick={() => {
+    setEditingList(list);
+    setShowCreateModal(true);
+  }}>
+    <PencilIcon className="h-4 w-4" />
+    Bearbeiten
+  </DropdownItem>
+  <DropdownItem onClick={() => handleDuplicateList(list.id!, list.name)}>
+    <DocumentDuplicateIcon className="h-4 w-4" />
+    Duplizieren
+  </DropdownItem>
+  {list.type === 'dynamic' && (
+    <DropdownItem onClick={() => handleRefreshList(list.id!)}>
+      <ArrowPathIcon className="h-4 w-4" />
+      Aktualisieren
+    </DropdownItem>
+  )}
+  <DropdownItem onClick={() => handleExportList(list)}>
+    <ArrowDownTrayIcon className="h-4 w-4" />
+    Exportieren
+  </DropdownItem>
+  <DropdownDivider />
+  <DropdownItem onClick={() => handleDeleteList(list.id!, list.name)}>
+    <TrashIcon className="h-4 w-4" />
+    <span className="text-red-600">Löschen</span>
+  </DropdownItem>
+</DropdownMenu>
+
                         </Dropdown>
                       </div>
                     </div>

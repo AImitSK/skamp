@@ -1,276 +1,380 @@
-// src/types/lists.ts - Erweitert um neue Publikations-Filter
+// src/types/lists.ts
 import { Timestamp } from 'firebase/firestore';
-// KORRIGIERT: CompanyType wird jetzt aus der crm-Typdatei importiert
-import { CompanyType, TagColor } from './crm';
+import { 
+  PublicationType, 
+  PublicationFormat, 
+  PublicationFrequency 
+} from '@/types/library';
+import { CountryCode, LanguageCode } from '@/types/international';
 
-// Erweiterte Company-Types für Medien
-export type ExtendedCompanyType = CompanyType | 'publisher' | 'media_house' | 'agency';
+// ========================================
+// Verteilerlisten Types
+// ========================================
 
-// Filter-Kriterien für dynamische Listen
-export interface ListFilters {
-  // Firmen-Filter
-  companyTypes?: ExtendedCompanyType[];
-  industries?: string[];
-  countries?: string[];
-  
-  // Kontakt-Filter
-  tagIds?: string[];
-  positions?: string[];
-  hasEmail?: boolean;
-  hasPhone?: boolean;
-  
-  // Spezielle Filter für Presse
-  mediaOutlets?: string[]; // Bestimmte Verlage
-  beats?: string[]; // Ressorts (Tech, Business, etc.)
-  
-  // NEU: Medienschwerpunkte-Filter
-  mediaFocus?: string[]; // Aus Company.mediaFocus extrahierte Schwerpunkte
-  
-  // NEU: Publikations-spezifische Filter
-  publicationFormat?: 'print' | 'online' | 'both'; // Format der Publikation
-  publicationFocusAreas?: string[]; // Themenschwerpunkte der Publikationen
-  minCirculation?: number; // Minimale Auflage/Reichweite
-  publicationNames?: string[]; // Spezifische Publikationsnamen
-  
-  // Datum-Filter
-  createdAfter?: Date;
-  createdBefore?: Date;
-  lastContactAfter?: Date;
-}
+export type ListType = 'dynamic' | 'static';
+export type ListCategory = 'press' | 'customers' | 'partners' | 'leads' | 'custom';
 
-// Hauptdatenstruktur für Verteilerlisten
+// Haupt-Interface für Verteilerlisten
 export interface DistributionList {
   id?: string;
   name: string;
   description?: string;
+  type: ListType;
+  category?: ListCategory;
+  color?: string; // für UI
   
-  // Liste-Typ
-  type: 'dynamic' | 'static';
-  
-  // Dynamische Listen: Filter-basiert
+  // Für dynamische Listen
   filters?: ListFilters;
   
-  // Statische Listen: Manuell ausgewählte Kontakte
+  // Für statische Listen
   contactIds?: string[];
   
-  // Metadata
+  // Metadaten
   contactCount: number;
-  lastUpdated?: Timestamp;
-  
-  // Kategorisierung
-  category?: 'press' | 'customers' | 'partners' | 'leads' | 'custom';
-  color?: TagColor;
-  
-  // Benutzer-Zuordnung
-  userId: string;
+  userId: string; // Owner der Liste
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
+  lastUpdated?: Timestamp; // Wann wurden die Kontakte zuletzt aktualisiert
 }
 
-// Verwendungsprotokoll für Listen
-export interface ListUsage {
-  id?: string;
-  listId: string;
-  toolType: 'pr_campaign' | 'newsletter' | 'email_marketing' | 'social_media' | 'event';
-  campaignId?: string;
-  campaignName: string;
-  recipientCount: number;
-  usedAt: Timestamp;
-  userId: string;
+// Filter-Definitionen für dynamische Listen
+export interface ListFilters {
+  // Bestehende Filter
+  companyTypes?: string[];
+  industries?: string[];
+  countries?: CountryCode[];
+  tagIds?: string[];
+  positions?: string[];
+  hasEmail?: boolean;
+  hasPhone?: boolean;
+  createdAfter?: Date;
+  createdBefore?: Date;
+  
+  // Medien-spezifische Filter (für Journalisten)
+  beats?: string[]; // Ressorts/Themengebiete der Journalisten
+  
+  // NEU: Erweiterte Publikations-Filter
+  publications?: {
+    // Direkte Publikations-Auswahl
+    publicationIds?: string[]; // Spezifische Publikationen
+    
+    // Publikations-Eigenschaften
+    types?: PublicationType[]; // magazine, newspaper, website, etc.
+    formats?: PublicationFormat[]; // print, online, both, broadcast
+    frequencies?: PublicationFrequency[]; // daily, weekly, monthly, etc.
+    
+    // Geografisch
+    countries?: CountryCode[]; // Zielländer der Publikation
+    geographicScopes?: ('local' | 'regional' | 'national' | 'international' | 'global')[];
+    languages?: LanguageCode[]; // Publikationssprachen
+    
+    // Thematisch
+    focusAreas?: string[]; // Themenschwerpunkte
+    targetIndustries?: string[]; // Zielbranchen (für Fachpublikationen)
+    
+    // Metriken
+    minPrintCirculation?: number; // Mindest-Druckauflage
+    maxPrintCirculation?: number; // Maximal-Druckauflage
+    minOnlineVisitors?: number; // Mindest-Unique Visitors/Monat
+    maxOnlineVisitors?: number; // Maximal-Unique Visitors/Monat
+    
+    // Status & Qualität
+    onlyVerified?: boolean; // Nur verifizierte Publikationen
+    status?: ('active' | 'inactive' | 'discontinued')[];
+    
+    // Verlage
+    publisherIds?: string[]; // Bestimmte Verlage/Medienhäuser
+  };
 }
 
-// Performance-Metriken für Listen
-export interface ListMetrics {
-  id?: string;
-  listId: string;
+// Helper Type für UI-Komponenten
+export interface PublicationFilterOptions {
+  publications: {
+    id: string;
+    title: string;
+    type: PublicationType;
+    format: PublicationFormat;
+    publisherName?: string;
+    circulation?: number;
+    onlineVisitors?: number;
+    focusAreas: string[];
+  }[];
   
-  // Kampagnen-Metriken
-  totalCampaigns: number;
-  last30DaysCampaigns: number;
-  
-  // E-Mail-Metriken (wenn verfügbar)
-  averageOpenRate?: number;
-  averageClickRate?: number;
-  averageResponseRate?: number;
-  
-  // Kontakt-Aktivität
-  activeContacts: number; // Kontakte mit Aktivität in letzten 90 Tagen
-  
-  // Letzte Aktualisierung
-  lastCalculated: Timestamp;
-  userId: string;
+  // Aggregierte Optionen für Dropdown-Menüs
+  availableTypes: PublicationType[];
+  availableFormats: PublicationFormat[];
+  availableFocusAreas: string[];
+  availableLanguages: LanguageCode[];
+  availableCountries: CountryCode[];
+  availablePublishers: { id: string; name: string; }[];
 }
 
-// Vorgefertigte Presse-Tags
-export const PRESS_TAGS = [
-  { name: 'Presse', color: 'blue' as TagColor },
-  { name: 'Journalist', color: 'green' as TagColor },
-  { name: 'Redakteur', color: 'purple' as TagColor },
-  { name: 'Chefredakteur', color: 'red' as TagColor },
-  { name: 'Freier Journalist', color: 'orange' as TagColor },
-  { name: 'Blogger', color: 'pink' as TagColor },
-  { name: 'Influencer', color: 'yellow' as TagColor },
-  { name: 'Moderator', color: 'cyan' as TagColor },
-  { name: 'Pressesprecher', color: 'indigo' as TagColor }
-] as const;
-
-// Ressort/Beat-Kategorien
-export const PRESS_BEATS = [
-  'Technologie',
-  'Wirtschaft',
-  'Politik',
-  'Wissenschaft',
-  'Gesundheit',
-  'Umwelt',
-  'Sport',
-  'Kultur',
-  'Lifestyle',
-  'Automobile',
-  'Immobilien',
-  'Bildung',
-  'Startups',
-  'Finanzen',
-  'Marketing',
-  'Digitalisierung'
-] as const;
-
-// NEU: Häufige Medienschwerpunkte (als Beispiele/Vorschläge)
-export const COMMON_MEDIA_FOCUS = [
-  // Technologie & Digital
-  'Künstliche Intelligenz',
-  'Cybersecurity',
-  'Cloud Computing',
-  'Blockchain',
-  'IoT',
-  'Robotik',
-  'Software',
-  'Hardware',
+// Für die Filter-UI Komponente
+export interface PublicationFilterConfig {
+  // Basis-Filter
+  showDirectSelection?: boolean; // Dropdown für spezifische Publikationen
+  showTypeFilter?: boolean;
+  showFormatFilter?: boolean;
   
-  // Wirtschaft & Business
-  'Startup',
-  'Mittelstand',
-  'Börse',
-  'Fintech',
-  'E-Commerce',
-  'Handel',
-  'Logistik',
-  'Immobilien',
+  // Erweiterte Filter
+  showGeographicFilters?: boolean;
+  showThematicFilters?: boolean;
+  showMetricFilters?: boolean;
+  showQualityFilters?: boolean;
   
-  // Branchen
-  'Automotive',
-  'Gesundheitswesen',
-  'Bildung',
-  'Energie',
-  'Nachhaltigkeit',
-  'Tourismus',
-  'Mode',
-  'Food & Beverage',
-  
-  // Gesellschaft
-  'Politik',
-  'Kultur',
-  'Sport',
-  'Lifestyle',
-  'Familie',
-  'Reise',
-  'Entertainment',
-  'Gaming'
-] as const;
-
-// Template für Listen-Erstellung
-export interface ListTemplate {
-  name: string;
-  description: string;
-  category: DistributionList['category'];
-  color: TagColor;
-  filters: ListFilters;
+  // Vordefinierte Filter-Sets
+  presets?: {
+    name: string;
+    description: string;
+    filters: ListFilters['publications'];
+  }[];
 }
 
-// Vordefinierte Listen-Templates
-export const LIST_TEMPLATES: ListTemplate[] = [
+// Beispiel-Presets für häufige Anwendungsfälle
+export const PUBLICATION_FILTER_PRESETS = [
   {
-    name: 'Tech-Presse',
-    description: 'Alle Journalisten mit Fokus auf Technologie',
-    category: 'press',
-    color: 'blue',
+    name: 'Große Printmedien',
+    description: 'Tageszeitungen und Magazine mit hoher Auflage',
     filters: {
-      tagIds: ['presse'], // Wird zur Laufzeit aufgelöst
-      beats: ['Technologie', 'Digitalisierung', 'Startups'],
-      mediaFocus: ['Künstliche Intelligenz', 'Software', 'Cloud Computing'], // NEU
-      publicationFocusAreas: ['Künstliche Intelligenz', 'Software', 'Cloud Computing'] // NEU
+      types: ['newspaper', 'magazine'] as PublicationType[],
+      formats: ['print', 'both'] as PublicationFormat[],
+      minPrintCirculation: 50000
     }
   },
   {
-    name: 'Wirtschaftsjournalisten',
-    description: 'Redakteure aus dem Wirtschaftsressort',
-    category: 'press',
-    color: 'green',
+    name: 'Fachpresse Technik',
+    description: 'Technische Fachzeitschriften und -portale',
     filters: {
-      tagIds: ['presse'],
-      beats: ['Wirtschaft', 'Finanzen'],
-      mediaFocus: ['Börse', 'Mittelstand', 'Fintech'], // NEU
-      publicationFocusAreas: ['Börse', 'Mittelstand', 'Fintech'] // NEU
+      types: ['trade_journal', 'website'] as PublicationType[],
+      targetIndustries: ['Technologie', 'IT', 'Industrie'],
+      onlyVerified: true
     }
   },
   {
-    name: 'Nachhaltigkeits-Medien',
-    description: 'Verlage und Journalisten mit Fokus auf Nachhaltigkeit', // NEU
-    category: 'press',
-    color: 'emerald',
+    name: 'Regionale Medien',
+    description: 'Lokale und regionale Publikationen',
     filters: {
-      companyTypes: ['publisher', 'media_house'],
-      mediaFocus: ['Nachhaltigkeit', 'Energie', 'Umwelt'],
-      publicationFocusAreas: ['Nachhaltigkeit', 'Energie', 'Umwelt'] // NEU
+      geographicScopes: ['local', 'regional'] as ('local' | 'regional')[],
+      types: ['newspaper', 'website'] as PublicationType[]
     }
   },
   {
-    name: 'Aktive Kunden',
-    description: 'Kunden mit Aktivität in den letzten 90 Tagen',
-    category: 'customers',
-    color: 'purple',
+    name: 'Online-Reichweite',
+    description: 'Reichweitenstarke Online-Medien',
     filters: {
-      companyTypes: ['customer'],
-      lastContactAfter: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
-    }
-  },
-  {
-    name: 'Newsletter-Abonnenten',
-    description: 'Alle Kontakte mit E-Mail für Newsletter',
-    category: 'custom',
-    color: 'orange',
-    filters: {
-      hasEmail: true,
-      tagIds: ['newsletter'] // Wird zur Laufzeit aufgelöst
+      formats: ['online', 'both'] as PublicationFormat[],
+      minOnlineVisitors: 100000
     }
   }
 ];
 
-// Props für UI-Komponenten
-export interface ListBuilderProps {
-  initialList?: Partial<DistributionList>;
-  onSave: (list: Omit<DistributionList, 'id' | 'contactCount' | 'createdAt' | 'updatedAt'>) => Promise<void>;
-  onCancel: () => void;
+// ========================================
+// Tracking & Analytics
+// ========================================
+
+// Verwendungs-Tracking für Listen
+export interface ListUsage {
+  id?: string;
+  listId: string;
+  campaignId?: string;
+  campaignName?: string;
+  contactCount: number; // Anzahl der Kontakte zum Zeitpunkt der Verwendung
+  usedAt: Timestamp;
+  usedBy: string; // userId
+  type: 'email' | 'export' | 'integration' | 'other';
+  details?: {
+    emailProvider?: string;
+    exportFormat?: string;
+    integrationName?: string;
+  };
 }
 
-export interface ListPreviewProps {
-  filters?: ListFilters;
-  contactIds?: string[];
-  maxPreview?: number;
+// Aggregierte Metriken für Listen
+export interface ListMetrics {
+  id?: string;
+  listId: string;
+  
+  // Verwendungs-Statistiken
+  totalCampaigns: number;
+  last30DaysCampaigns: number;
+  totalEmailsSent?: number;
+  totalExports?: number;
+  
+  // Kontakt-Statistiken
+  activeContacts: number; // Kontakte mit kürzlicher Aktivität
+  bounceRate?: number;
+  unsubscribeRate?: number;
+  
+  // Performance
+  avgOpenRate?: number;
+  avgClickRate?: number;
+  avgResponseTime?: number; // Bei Presse-Listen
+  
+  // Zeitstempel
+  lastUsed?: Timestamp;
+  lastCalculated: Timestamp;
+  
+  // Für Mandantenfähigkeit
+  userId: string;
 }
 
-export interface ListCardProps {
+// ========================================
+// UI Helper Types
+// ========================================
+
+// Für Listen-Übersicht
+export interface ListSummary {
   list: DistributionList;
   metrics?: ListMetrics;
-  onEdit: (list: DistributionList) => void;
-  onDelete: (listId: string) => void;
-  onUse: (list: DistributionList) => void;
+  recentUsage?: ListUsage[];
+  tags?: string[]; // Abgeleitete Tags aus Filtern
 }
 
-// Hilfsfunktionen für Type Guards
-export const isStaticList = (list: DistributionList): list is DistributionList & { contactIds: string[] } => {
-  return list.type === 'static' && !!list.contactIds;
+// Für Listen-Export
+export interface ListExportOptions {
+  format: 'csv' | 'xlsx' | 'json' | 'vcf';
+  fields: string[]; // Welche Kontakt-Felder exportieren
+  includeCompanyData?: boolean;
+  includeMetrics?: boolean;
+  dateFormat?: string;
+  encoding?: 'utf-8' | 'iso-8859-1';
+}
+
+// Für Listen-Import (statische Listen)
+export interface ListImportOptions {
+  updateExisting?: boolean; // Bestehende Kontakte aktualisieren
+  skipInvalid?: boolean; // Ungültige Einträge überspringen
+  mappings?: Record<string, string>; // CSV-Spalte zu Kontakt-Feld
+}
+
+// ========================================
+// Constants
+// ========================================
+
+export const LIST_CATEGORY_LABELS: Record<ListCategory, string> = {
+  'press': 'Presse',
+  'customers': 'Kunden',
+  'partners': 'Partner',
+  'leads': 'Leads',
+  'custom': 'Benutzerdefiniert'
 };
 
-export const isDynamicList = (list: DistributionList): list is DistributionList & { filters: ListFilters } => {
-  return list.type === 'dynamic' && !!list.filters;
+export const LIST_TYPE_LABELS: Record<ListType, string> = {
+  'dynamic': 'Dynamisch',
+  'static': 'Statisch'
 };
+
+// Standard-Farben für Listen-Kategorien
+export const LIST_CATEGORY_COLORS: Record<ListCategory, string> = {
+  'press': 'purple',
+  'customers': 'blue',
+  'partners': 'green',
+  'leads': 'amber',
+  'custom': 'gray'
+};
+
+// Maximale Anzahl von Kontakten pro Liste (für Performance)
+export const MAX_CONTACTS_PER_LIST = 50000;
+
+// Standard-Export-Felder
+export const DEFAULT_EXPORT_FIELDS = [
+  'name',
+  'email',
+  'phone',
+  'position',
+  'companyName',
+  'tags'
+];
+
+// ========================================
+// Validation
+// ========================================
+
+export const LIST_VALIDATION = {
+  name: { required: true, minLength: 3, maxLength: 100 },
+  description: { maxLength: 500 },
+  filters: {
+    minFilters: 1, // Mindestens ein Filter für dynamische Listen
+    maxTagIds: 20,
+    maxCompanyTypes: 10
+  }
+};
+
+// ========================================
+// Type Guards
+// ========================================
+
+export function isDynamicList(list: DistributionList): list is DistributionList & { filters: ListFilters } {
+  return list.type === 'dynamic' && !!list.filters;
+}
+
+export function isStaticList(list: DistributionList): list is DistributionList & { contactIds: string[] } {
+  return list.type === 'static' && !!list.contactIds;
+}
+
+export function hasPublicationFilters(filters: ListFilters): boolean {
+  return !!filters.publications && Object.keys(filters.publications).length > 0;
+}
+
+// ========================================
+// Filter Helpers
+// ========================================
+
+export function getActiveFilterCount(filters: ListFilters): number {
+  let count = 0;
+  
+  // Basis-Filter
+  if (filters.companyTypes?.length) count++;
+  if (filters.industries?.length) count++;
+  if (filters.countries?.length) count++;
+  if (filters.tagIds?.length) count++;
+  if (filters.positions?.length) count++;
+  if (filters.hasEmail !== undefined) count++;
+  if (filters.hasPhone !== undefined) count++;
+  if (filters.createdAfter) count++;
+  if (filters.createdBefore) count++;
+  if (filters.beats?.length) count++;
+  
+  // Publikations-Filter
+  if (filters.publications) {
+    const pubFilters = filters.publications;
+    if (pubFilters.publicationIds?.length) count++;
+    if (pubFilters.types?.length) count++;
+    if (pubFilters.formats?.length) count++;
+    if (pubFilters.frequencies?.length) count++;
+    if (pubFilters.countries?.length) count++;
+    if (pubFilters.geographicScopes?.length) count++;
+    if (pubFilters.languages?.length) count++;
+    if (pubFilters.focusAreas?.length) count++;
+    if (pubFilters.targetIndustries?.length) count++;
+    if (pubFilters.minPrintCirculation) count++;
+    if (pubFilters.maxPrintCirculation) count++;
+    if (pubFilters.minOnlineVisitors) count++;
+    if (pubFilters.maxOnlineVisitors) count++;
+    if (pubFilters.onlyVerified) count++;
+    if (pubFilters.status?.length) count++;
+    if (pubFilters.publisherIds?.length) count++;
+  }
+  
+  return count;
+}
+
+export function getFilterSummary(filters: ListFilters): string[] {
+  const summary: string[] = [];
+  
+  if (filters.companyTypes?.length) {
+    summary.push(`${filters.companyTypes.length} Firmentypen`);
+  }
+  
+  if (filters.publications?.types?.length) {
+    summary.push(`${filters.publications.types.length} Publikationstypen`);
+  }
+  
+  if (filters.publications?.minPrintCirculation) {
+    summary.push(`Auflage ≥ ${filters.publications.minPrintCirculation.toLocaleString()}`);
+  }
+  
+  // ... weitere Zusammenfassungen
+  
+  return summary;
+}

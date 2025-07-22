@@ -2,12 +2,14 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/button";
 import { Badge } from "@/components/badge";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
 import { Checkbox } from "@/components/checkbox";
+import { teamMemberService } from "@/lib/firebase/organization-service";
 import { boilerplatesService } from "@/lib/firebase/boilerplate-service";
-import { Boilerplate } from "@/types/crm";
+import { Boilerplate, BOILERPLATE_CATEGORY_LABELS } from "@/types/crm-enhanced";
 import { 
   DocumentTextIcon, 
   PlusIcon, 
@@ -35,15 +37,6 @@ interface CampaignBoilerplateSelectorProps {
   onInsertToEditor?: (content: string, position: 'top' | 'bottom' | 'cursor') => void;
 }
 
-// Kategorie-Labels
-const CATEGORY_LABELS: Record<string, string> = {
-  company: 'Unternehmensbeschreibung',
-  contact: 'Kontaktinformationen', 
-  legal: 'Rechtliche Hinweise',
-  product: 'Produktbeschreibung',
-  custom: 'Sonstige'
-};
-
 // Preview Modal
 function BoilerplatePreviewModal({ 
   boilerplate, 
@@ -70,7 +63,7 @@ function BoilerplatePreviewModal({
         <div className="space-y-4">
           <div>
             <label className="text-sm font-medium text-gray-700">Kategorie</label>
-            <p className="mt-1">{CATEGORY_LABELS[boilerplate.category]}</p>
+            <p className="mt-1">{BOILERPLATE_CATEGORY_LABELS[boilerplate.category]}</p>
           </div>
           
           {boilerplate.description && (
@@ -117,6 +110,8 @@ export default function CampaignBoilerplateSelector({
   onBoilerplatesChange,
   onInsertToEditor 
 }: CampaignBoilerplateSelectorProps) {
+  const { user } = useAuth();
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [structuredBoilerplates, setStructuredBoilerplates] = useState<{
     global: Record<string, Boilerplate[]>;
     client: Record<string, Boilerplate[]>;
@@ -131,9 +126,31 @@ export default function CampaignBoilerplateSelector({
   const [previewBoilerplate, setPreviewBoilerplate] = useState<Boilerplate | null>(null);
   const [activeTab, setActiveTab] = useState<'favorites' | 'global' | 'client'>('favorites');
 
+  // Lade OrganizationId
   useEffect(() => {
-    loadBoilerplates();
-  }, [clientId]);
+    const loadOrganizationId = async () => {
+      if (!user) return;
+      
+      try {
+        const orgs = await teamMemberService.getUserOrganizations(user.uid);
+        if (orgs.length > 0) {
+          setOrganizationId(orgs[0].organization.id!);
+        }
+      } catch (error) {
+        console.error('Error loading organization:', error);
+        // Fallback auf userId für Backwards Compatibility
+        setOrganizationId(userId);
+      }
+    };
+    
+    loadOrganizationId();
+  }, [user, userId]);
+
+  useEffect(() => {
+    if (organizationId) {
+      loadBoilerplates();
+    }
+  }, [clientId, organizationId]);
 
   useEffect(() => {
     // Lade die ausgewählten Boilerplates
@@ -145,9 +162,12 @@ export default function CampaignBoilerplateSelector({
   }, [selectedBoilerplateIds]);
 
   const loadBoilerplates = async () => {
+    if (!organizationId) return;
+    
     setLoading(true);
     try {
-      const data = await boilerplatesService.getForCampaignEditor(userId, clientId);
+      // Verwende organizationId statt userId
+      const data = await boilerplatesService.getForCampaignEditor(organizationId, clientId);
       setStructuredBoilerplates(data);
       
       // Expandiere Kategorien mit bereits ausgewählten Boilerplates
@@ -537,7 +557,7 @@ export default function CampaignBoilerplateSelector({
                   {activeTab === 'global' && (
                     Object.entries(filteredBoilerplates.global).length > 0 ? (
                       Object.entries(filteredBoilerplates.global).map(([category, bps]) =>
-                        renderBoilerplateGroup(bps, `global-${category}`, CATEGORY_LABELS[category] || category)
+                        renderBoilerplateGroup(bps, `global-${category}`, BOILERPLATE_CATEGORY_LABELS[category] || category)
                       )
                     ) : (
                       <div className="text-center py-8 text-gray-500">
@@ -550,7 +570,7 @@ export default function CampaignBoilerplateSelector({
                   {activeTab === 'client' && (
                     Object.entries(filteredBoilerplates.client).length > 0 ? (
                       Object.entries(filteredBoilerplates.client).map(([category, bps]) =>
-                        renderBoilerplateGroup(bps, `client-${category}`, CATEGORY_LABELS[category] || category, true)
+                        renderBoilerplateGroup(bps, `client-${category}`, BOILERPLATE_CATEGORY_LABELS[category] || category, true)
                       )
                     ) : (
                       <div className="text-center py-8 text-gray-500">
