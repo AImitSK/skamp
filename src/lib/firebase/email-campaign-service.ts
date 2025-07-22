@@ -1,4 +1,4 @@
-// src/lib/firebase/email-campaign-service.ts - UPDATED WITH NOTIFICATION INTEGRATION
+// src/lib/firebase/email-campaign-service.ts - UPDATED FOR ENHANCED CONTACTS
 import {
   collection,
   doc,
@@ -15,7 +15,7 @@ import {
   PRCampaignEmail
 } from '@/types/email';
 import { PRCampaign } from '@/types/pr';
-import { Contact } from '@/types/crm';
+import { ContactEnhanced } from '@/types/crm-enhanced';
 import { notificationsService } from './notifications-service';
 
 // Helper function to get the base URL with fallback
@@ -23,6 +23,18 @@ const getBaseUrl = () => {
   return process.env.NEXT_PUBLIC_APP_URL || 
          process.env.NEXT_PUBLIC_BASE_URL || 
          (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
+};
+
+// Helper function to get primary email from ContactEnhanced
+const getPrimaryEmail = (contact: ContactEnhanced): string | undefined => {
+  if (!contact.emails || contact.emails.length === 0) return undefined;
+  const primary = contact.emails.find(e => e.isPrimary);
+  return primary?.email || contact.emails[0].email;
+};
+
+// Helper function to get display name from ContactEnhanced
+const getContactDisplayName = (contact: ContactEnhanced): string => {
+  return contact.displayName || `${contact.name.firstName} ${contact.name.lastName}`;
 };
 
 export const emailCampaignService = {
@@ -46,7 +58,7 @@ export const emailCampaignService = {
     console.log('🔍 Generating preview for campaign:', campaign.title);
     
     try {
-      // 1. Kontakte aus der Verteilerliste laden - KORRIGIERT: getContacts verwenden
+      // 1. Kontakte aus der Verteilerliste laden
       const contacts = await this.getCampaignContacts(campaign);
       
       if (contacts.length === 0) {
@@ -54,9 +66,9 @@ export const emailCampaignService = {
       }
 
       // 2. Vorschau-Kontakt auswählen
-      let previewContact: Contact;
+      let previewContact: ContactEnhanced;
       if (previewContactEmail) {
-        previewContact = contacts.find(c => c.email === previewContactEmail) || contacts[0];
+        previewContact = contacts.find(c => getPrimaryEmail(c) === previewContactEmail) || contacts[0];
       } else {
         previewContact = contacts[0];
       }
@@ -65,10 +77,18 @@ export const emailCampaignService = {
         throw new Error('Keine Kontakte für Vorschau verfügbar');
       }
       
-      console.log('👤 Using preview contact:', previewContact.firstName, previewContact.lastName);
+      console.log('👤 Using preview contact:', getContactDisplayName(previewContact));
 
-      // 3. Preview über Email Service generieren
-      const preview = emailService.generatePreview(previewContact, emailContent, senderInfo);
+      // 3. Preview über Email Service generieren - ANPASSUNG NÖTIG im emailService
+      // Für jetzt erstellen wir ein kompatibles Objekt
+      const contactForPreview = {
+        firstName: previewContact.name.firstName,
+        lastName: previewContact.name.lastName,
+        email: getPrimaryEmail(previewContact),
+        companyName: previewContact.companyName
+      };
+
+      const preview = emailService.generatePreview(contactForPreview as any, emailContent, senderInfo);
       
       console.log('✅ Preview generated successfully');
       
@@ -109,20 +129,27 @@ export const emailCampaignService = {
       
       console.log('📋 Found', contacts.length, 'contacts in distribution list(s)');
       
-      // NEU: Manuelle Empfänger zu Kontakten konvertieren und hinzufügen
+      // NEU: Manuelle Empfänger zu ContactEnhanced konvertieren und hinzufügen
       if (manualRecipients && manualRecipients.length > 0) {
         console.log('➕ Adding', manualRecipients.length, 'manual recipients');
         
-        const manualContacts: Contact[] = manualRecipients.map((recipient, index) => ({
+        const manualContacts: ContactEnhanced[] = manualRecipients.map((recipient, index) => ({
           id: `manual-${Date.now()}-${index}`,
-          userId: campaign.userId,
-          firstName: recipient.firstName,
-          lastName: recipient.lastName,
-          email: recipient.email,
+          organizationId: campaign.userId, // Using userId as organizationId for now
+          createdBy: campaign.userId,
+          name: {
+            firstName: recipient.firstName,
+            lastName: recipient.lastName
+          },
+          displayName: `${recipient.firstName} ${recipient.lastName}`,
+          emails: [{
+            type: 'business',
+            email: recipient.email,
+            isPrimary: true
+          }],
           companyName: recipient.companyName,
-          companyId: '',
-          createdAt: new Date() as any,
-          updatedAt: new Date() as any
+          createdAt: serverTimestamp() as any,
+          updatedAt: serverTimestamp() as any
         }));
         
         // Füge manuelle Kontakte zur Liste hinzu
@@ -135,7 +162,7 @@ export const emailCampaignService = {
       }
 
       // 2. Nur Kontakte mit E-Mail-Adressen
-      const contactsWithEmail = contacts.filter(contact => contact.email);
+      const contactsWithEmail = contacts.filter(contact => getPrimaryEmail(contact));
       
       if (contactsWithEmail.length === 0) {
         throw new Error('Keine Kontakte mit E-Mail-Adressen gefunden');
@@ -188,12 +215,22 @@ export const emailCampaignService = {
       }
 
       // 4. E-Mails über Email Service (API Route) versenden
+      // Konvertiere ContactEnhanced zu kompatiblem Format für emailService
+      const contactsForEmail = contactsWithEmail.map(contact => ({
+        id: contact.id,
+        firstName: contact.name.firstName,
+        lastName: contact.name.lastName,
+        email: getPrimaryEmail(contact)!,
+        companyName: contact.companyName,
+        position: contact.position
+      }));
+
       console.log('📤 Sending emails via API...');
       const sendResult = await emailService.sendPRCampaign(
         campaign,
         emailContent,
         senderInfo,
-        contactsWithEmail,
+        contactsForEmail as any, // Temporärer Cast bis emailService auch updated ist
         mediaShareUrl // Pass the share URL
       );
 
@@ -217,10 +254,6 @@ export const emailCampaignService = {
         await updateDoc(doc(db, 'pr_campaigns', campaign.id!), updateData);
       }
 
-      // ========== NOTIFICATION INTEGRATION ==========
-      // Die Benachrichtigungen werden bereits im emailService.sendPRCampaign gehandhabt
-      // Hier könnten wir zusätzliche kampagnen-spezifische Benachrichtigungen hinzufügen
-      
       console.log('✅ Campaign send completed:', sendResult.summary);
 
       return {
@@ -241,7 +274,6 @@ export const emailCampaignService = {
         updatedAt: serverTimestamp()
       });
       
-      // ========== NOTIFICATION INTEGRATION: Send Failed ==========
       // Benachrichtigung über fehlgeschlagenen Versand
       try {
         await notificationsService.create({
@@ -271,11 +303,11 @@ export const emailCampaignService = {
   /**
    * Hilfsfunktion: Kontakte aus den Verteilerlisten einer Kampagne laden
    */
-  async getCampaignContacts(campaign: PRCampaign): Promise<Contact[]> {
+  async getCampaignContacts(campaign: PRCampaign): Promise<ContactEnhanced[]> {
     console.log('📋 Loading contacts for campaign:', campaign.title);
     
     try {
-      const allContacts: Contact[] = [];
+      const allContacts: ContactEnhanced[] = [];
       const contactIds = new Set<string>(); // Für Deduplizierung
       
       // Multi-List Support: Lade Kontakte aus allen Listen
@@ -292,7 +324,7 @@ export const emailCampaignService = {
           continue;
         }
         
-        // KORRIGIERT: Verwende getContacts statt getListContacts
+        // Verwende getContacts - gibt jetzt ContactEnhanced[] zurück
         const contacts = await listsService.getContacts(list);
         console.log('👥 Found', contacts.length, 'contacts in list:', list.name);
         
@@ -319,28 +351,30 @@ export const emailCampaignService = {
    */
   async saveSendResults(
     campaignId: string,
-    contacts: Contact[],
+    contacts: ContactEnhanced[],
     sendResult: any,
     userId: string
   ): Promise<void> {
     const batch = writeBatch(db);
     
     // Mapping zwischen E-Mail und Kontakt erstellen
-    const contactMap = new Map(contacts.map(c => [c.email, c]));
-    
-    // Sammle Bounced E-Mails für Benachrichtigungen
-    const bouncedEmails: Array<{email: string, error?: string}> = [];
+    const contactMap = new Map<string, ContactEnhanced>();
+    for (const contact of contacts) {
+      const email = getPrimaryEmail(contact);
+      if (email) {
+        contactMap.set(email, contact);
+      }
+    }
     
     for (const result of sendResult.results) {
       const contact = contactMap.get(result.email);
       if (contact) {
         const sendDoc = doc(collection(db, 'email_campaign_sends'));
         
-        // KORRIGIERT: Verwende campaignId statt campaignTitle
         const sendData: Omit<EmailCampaignSend, 'id'> = {
-          campaignId, // KORRIGIERT
+          campaignId,
           recipientEmail: result.email,
-          recipientName: `${contact.firstName} ${contact.lastName}`,
+          recipientName: getContactDisplayName(contact!),
           status: result.status === 'sent' ? 'sent' : 'failed',
           userId: userId,
           createdAt: serverTimestamp() as any,
@@ -358,8 +392,6 @@ export const emailCampaignService = {
 
         if (result.error) {
           sendData.errorMessage = result.error;
-          // Sammle für Bounce-Benachrichtigung
-          bouncedEmails.push({ email: result.email, error: result.error });
         }
 
         batch.set(sendDoc, sendData);
@@ -367,10 +399,5 @@ export const emailCampaignService = {
     }
     
     await batch.commit();
-    
-    // ========== NOTIFICATION INTEGRATION: Individual Bounces ==========
-    // Diese werden bereits im emailService gehandhabt, aber hier könnten wir
-    // zusätzliche detaillierte Benachrichtigungen für individuelle Bounces senden
-    // wenn das gewünscht ist
   }
 };
