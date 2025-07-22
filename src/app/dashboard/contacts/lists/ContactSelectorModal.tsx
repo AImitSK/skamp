@@ -8,7 +8,6 @@ import { Input } from "@/components/input";
 import { Checkbox } from "@/components/checkbox";
 import { Text } from "@/components/text";
 import { useCrmData } from "@/context/CrmDataContext";
-import { Contact } from "@/types/crm";
 import { ContactEnhanced } from "@/types/crm-enhanced";
 import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
 
@@ -28,31 +27,23 @@ export default function ContactSelectorModal({
   const [searchTerm, setSearchTerm] = useState("");
 
   // Helper function to get contact name
-  const getContactName = (contact: Contact | ContactEnhanced): string => {
-    if ('name' in contact && typeof contact.name === 'object') {
-      // Enhanced Contact
-      const enhanced = contact as ContactEnhanced;
-      const parts = [];
-      if (enhanced.name.firstName) parts.push(enhanced.name.firstName);
-      if (enhanced.name.lastName) parts.push(enhanced.name.lastName);
-      return parts.join(' ') || enhanced.displayName;
-    } else {
-      // Legacy Contact
-      const legacy = contact as Contact;
-      return `${legacy.firstName} ${legacy.lastName}`;
+  const getContactName = (contact: ContactEnhanced): string => {
+    if (contact.displayName) {
+      return contact.displayName;
     }
+    const parts = [];
+    if (contact.name.firstName) parts.push(contact.name.firstName);
+    if (contact.name.lastName) parts.push(contact.name.lastName);
+    return parts.join(' ');
   };
 
   // Helper function to get contact email
-  const getContactEmail = (contact: Contact | ContactEnhanced): string | undefined => {
-    if ('emails' in contact && Array.isArray(contact.emails)) {
-      // Enhanced Contact
+  const getContactEmail = (contact: ContactEnhanced): string | undefined => {
+    if (contact.emails && contact.emails.length > 0) {
       const primaryEmail = contact.emails.find(e => e.isPrimary);
       return primaryEmail?.email || contact.emails[0]?.email;
-    } else {
-      // Legacy Contact
-      return (contact as Contact).email;
     }
+    return undefined;
   };
 
   const filteredContacts = useMemo(() => {

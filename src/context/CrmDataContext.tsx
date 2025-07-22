@@ -3,12 +3,12 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useAuth } from './AuthContext';
-import { Company, Contact, Tag } from '@/types/crm';
-import { companiesService, contactsService, tagsService } from '@/lib/firebase/crm-service';
+import { CompanyEnhanced, ContactEnhanced, Tag } from '@/types/crm-enhanced';
+import { companiesEnhancedService, contactsEnhancedService, tagsEnhancedService } from '@/lib/firebase/crm-service-enhanced';
 
 interface CrmDataContextType {
-  companies: Company[];
-  contacts: Contact[];
+  companies: CompanyEnhanced[];
+  contacts: ContactEnhanced[];
   tags: Tag[];
   loading: boolean;
   error: Error | null;
@@ -19,8 +19,8 @@ const CrmDataContext = createContext<CrmDataContextType | undefined>(undefined);
 
 export function CrmDataProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [companies, setCompanies] = useState<CompanyEnhanced[]>([]);
+  const [contacts, setContacts] = useState<ContactEnhanced[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -34,9 +34,9 @@ export function CrmDataProvider({ children }: { children: ReactNode }) {
     setError(null);
     try {
       const [companiesData, contactsData, tagsData] = await Promise.all([
-        companiesService.getAll(user.uid),
-        contactsService.getAll(user.uid),
-        tagsService.getAll(user.uid),
+        companiesEnhancedService.getAll(user.uid),
+        contactsEnhancedService.getAll(user.uid),
+        tagsEnhancedService.getAllAsLegacyTags(user.uid),
       ]);
       setCompanies(companiesData);
       setContacts(contactsData);

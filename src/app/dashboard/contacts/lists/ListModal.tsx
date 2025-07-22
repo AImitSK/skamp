@@ -101,18 +101,11 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
     'agency': 'Agentur'
   };
 
-  // GEÄNDERT: Extract unique values mit Enhanced Model
+// Extract unique values from Enhanced Model
   const availableIndustries = useMemo(() => 
     Array.from(new Set(
       companies
-        .map(c => {
-          // Check if it's an enhanced company
-          if ('industryClassification' in c) {
-            return (c as any).industryClassification?.primary;
-          } else {
-            return (c as Company).industry;
-          }
-        })
+        .map(c => c.industryClassification?.primary)
         .filter((item): item is string => !!item)
     )).sort(), 
     [companies]
@@ -121,14 +114,7 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
   const availableCountries = useMemo(() => 
     Array.from(new Set(
       companies
-        .map(c => {
-          // Check if it's an enhanced company
-          if ('mainAddress' in c) {
-            return (c as any).mainAddress?.countryCode;
-          } else {
-            return (c as Company).address?.country;
-          }
-        })
+        .map(c => c.mainAddress?.countryCode)
         .filter((item): item is string => !!item)
     )).sort(), 
     [companies]
