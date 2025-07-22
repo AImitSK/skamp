@@ -1,27 +1,4 @@
-// Simplified Activity Type
-interface EmailActivity {
-  email: string;
-  type: 'sent' | 'delivered' | 'opened' | 'clicked' | 'bounced' | 'failed';
-  timestamp?: any;
-  metadata?: {
-    userAgent?: string;
-    location?: string;
-    clickedUrl?: string;
-    failureReason?: string;
-  };
-}
-
-// Format relative time
-function formatRelativeTime(date: Date): string {
-  const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-  
-  if (diffInSeconds < 60) return 'vor wenigen Sekunden';
-  if (diffInSeconds < 3600) return `vor ${Math.floor(diffInSeconds / 60)} Minuten`;
-  if (diffInSeconds < 86400) return `vor ${Math.floor(diffInSeconds / 3600)} Stunden`;
-  if (diffInSeconds < 2592000) return `vor ${Math.floor(diffInSeconds / 86400)} Tagen`;
-  return date.toLocaleDateString('de-DE');
-}// src/app/dashboard/pr-tools/campaigns/campaigns/[campaignId]/analytics/page.tsx
+// Die Direktive "use client" muss die allererste Zeile in der Datei sein.
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -33,7 +10,7 @@ import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
 import { Button } from "@/components/button";
 import { Badge } from "@/components/badge";
-import { 
+import {
   ArrowLeftIcon,
   EnvelopeIcon,
   EnvelopeOpenIcon,
@@ -59,18 +36,55 @@ import { PRCampaign } from "@/types/pr";
 import { EmailCampaignSend } from "@/types/email";
 import { CompanyEnhanced } from "@/types/crm-enhanced";
 
-// Metric Card Component
-function MetricCard({ 
-  title, 
-  value, 
-  percentage, 
-  icon: Icon, 
+// Vereinfachter Aktivitätstyp
+interface EmailActivity {
+  email: string;
+  type: 'sent' | 'delivered' | 'opened' | 'clicked' | 'bounced' | 'failed';
+  timestamp?: any;
+  metadata?: {
+    userAgent?: string;
+    location?: string;
+    clickedUrl?: string;
+    failureReason?: string;
+  };
+}
+
+// Hilfsfunktion zur Formatierung des Datums
+function formatDate(timestamp: any) {
+  if (!timestamp || !timestamp.toDate) return '—';
+  return timestamp.toDate().toLocaleDateString('de-DE', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+// Hilfsfunktion zur Formatierung der relativen Zeit
+function formatRelativeTime(date: Date): string {
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (diffInSeconds < 60) return 'vor wenigen Sekunden';
+  if (diffInSeconds < 3600) return `vor ${Math.floor(diffInSeconds / 60)} Minuten`;
+  if (diffInSeconds < 86400) return `vor ${Math.floor(diffInSeconds / 3600)} Stunden`;
+  if (diffInSeconds < 2592000) return `vor ${Math.floor(diffInSeconds / 86400)} Tagen`;
+  return date.toLocaleDateString('de-DE');
+}
+
+// Metrik-Karten Komponente
+function MetricCard({
+  title,
+  value,
+  percentage,
+  icon: Icon,
   color = 'gray',
-  detail 
-}: { 
-  title: string; 
-  value: number; 
-  percentage?: number; 
+  detail
+}: {
+  title: string;
+  value: number;
+  percentage?: number;
   icon: React.ElementType;
   color?: string;
   detail?: string;
@@ -107,7 +121,7 @@ function MetricCard({
   );
 }
 
-// Activity Item Component
+// Aktivitäts-Item Komponente
 function ActivityItem({ activity }: { activity: EmailActivity }) {
   const getActivityIcon = () => {
     switch (activity.type) {
@@ -179,9 +193,9 @@ function ActivityItem({ activity }: { activity: EmailActivity }) {
         </div>
         {activity.metadata?.clickedUrl && (
           <div className="mt-1">
-            <a 
-              href={activity.metadata.clickedUrl} 
-              target="_blank" 
+            <a
+              href={activity.metadata.clickedUrl}
+              target="_blank"
               rel="noopener noreferrer"
               className="text-sm text-blue-600 hover:text-blue-700 truncate block"
             >
@@ -199,14 +213,14 @@ function ActivityItem({ activity }: { activity: EmailActivity }) {
   );
 }
 
-// Export function
+// Export Funktion
 function exportAnalytics(campaign: PRCampaign, sends: EmailCampaignSend[], activities: EmailActivity[]) {
-  // Create CSV content
+  // Erstelle CSV-Inhalt
   const headers = ['E-Mail', 'Status', 'Versendet', 'Zugestellt', 'Geöffnet', 'Geklickt', 'Fehlgeschlagen', 'Abgewiesen'];
-  
-  // Group activities by email
+
+  // Gruppiere Aktivitäten nach E-Mail
   const emailStats = new Map<string, any>();
-  
+
   activities.forEach(activity => {
     if (!emailStats.has(activity.email)) {
       emailStats.set(activity.email, {
@@ -221,29 +235,29 @@ function exportAnalytics(campaign: PRCampaign, sends: EmailCampaignSend[], activ
         lastActivity: null
       });
     }
-    
+
     const stats = emailStats.get(activity.email);
     stats[activity.type] = true;
-    
+
     if (activity.type === 'sent') {
       stats.sentAt = activity.timestamp?.toDate?.() || null;
     }
-    
+
     const activityDate = activity.timestamp?.toDate?.() || null;
     if (!stats.lastActivity || (activityDate && activityDate > stats.lastActivity)) {
       stats.lastActivity = activityDate;
     }
   });
-  
-  // Create CSV rows
+
+  // Erstelle CSV-Zeilen
   const rows = Array.from(emailStats.values()).map(stats => {
-    const status = stats.failed ? 'Fehlgeschlagen' : 
-                   stats.bounced ? 'Abgewiesen' :
-                   stats.clicked ? 'Geklickt' :
-                   stats.opened ? 'Geöffnet' :
-                   stats.delivered ? 'Zugestellt' :
-                   stats.sent ? 'Versendet' : 'Unbekannt';
-    
+    const status = stats.failed ? 'Fehlgeschlagen' :
+      stats.bounced ? 'Abgewiesen' :
+        stats.clicked ? 'Geklickt' :
+          stats.opened ? 'Geöffnet' :
+            stats.delivered ? 'Zugestellt' :
+              stats.sent ? 'Versendet' : 'Unbekannt';
+
     return [
       stats.email,
       status,
@@ -255,10 +269,10 @@ function exportAnalytics(campaign: PRCampaign, sends: EmailCampaignSend[], activ
       stats.bounced ? 'Ja' : 'Nein'
     ];
   });
-  
-  // Combine headers and rows
+
+  // Kombiniere Kopfzeilen und Zeilen
   const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
-  
+
   // Download
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
@@ -283,11 +297,11 @@ export default function CampaignAnalyticsPage() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'opened' | 'clicked' | 'bounced' | 'failed'>('all');
 
-  // Load OrganizationId
+  // Lade OrganizationId
   useEffect(() => {
     const loadOrganizationId = async () => {
       if (!user) return;
-      
+
       try {
         const orgs = await teamMemberService.getUserOrganizations(user.uid);
         if (orgs.length > 0) {
@@ -300,30 +314,27 @@ export default function CampaignAnalyticsPage() {
         setOrganizationId(user.uid);
       }
     };
-    
+
     loadOrganizationId();
   }, [user]);
 
-  useEffect(() => {
-    if (campaignId && user && organizationId) {
-      loadAnalyticsData();
-    }
-  }, [campaignId, user, organizationId]);
-
-  const loadAnalyticsData = async () => {
+  const loadAnalyticsData = useCallback(async () => {
+    if (!campaignId || !user || !organizationId) return;
+    
     setLoading(true);
     setError(null);
-    
+
     try {
-      // Load campaign
+      // Lade Kampagne
       const campaignData = await prService.getById(campaignId);
       if (!campaignData) {
         setError('Kampagne nicht gefunden');
+        setLoading(false);
         return;
       }
       setCampaign(campaignData);
 
-      // Load company if exists
+      // Lade Unternehmen, falls vorhanden
       if (campaignData.clientId && organizationId) {
         try {
           const companyData = await companiesEnhancedService.getById(organizationId, campaignData.clientId);
@@ -333,8 +344,8 @@ export default function CampaignAnalyticsPage() {
         }
       }
 
-      // For now, use mock data since emailService doesn't exist
-      // In a real implementation, this would load from Firebase
+      // Vorerst Mock-Daten verwenden, da emailService nicht existiert
+      // In einer echten Implementierung würde dies aus Firebase geladen
       const mockSends: EmailCampaignSend[] = [{
         id: 'send-1',
         campaignId: campaignId,
@@ -346,19 +357,78 @@ export default function CampaignAnalyticsPage() {
       }];
       setSends(mockSends);
 
-      // Mock activities
+      // Mock-Aktivitäten
       const mockActivities: EmailActivity[] = campaignData.recipientCount > 0 ? [
         {
-          email: 'example@email.com',
+          email: 'max.mustermann@beispiel.de',
           type: 'sent',
-          timestamp: new Date()
+          timestamp: { toDate: () => new Date(Date.now() - 2 * 60 * 1000) } // vor 2 Minuten
         },
         {
-          email: 'example@email.com', 
+          email: 'max.mustermann@beispiel.de',
           type: 'delivered',
-          timestamp: new Date()
+          timestamp: { toDate: () => new Date(Date.now() - 1 * 60 * 1000) } // vor 1 Minute
+        },
+        {
+          email: 'erika.mustermann@beispiel.de',
+          type: 'sent',
+          timestamp: { toDate: () => new Date(Date.now() - 5 * 3600 * 1000) } // vor 5 Stunden
+        },
+        {
+          email: 'erika.mustermann@beispiel.de',
+          type: 'delivered',
+          timestamp: { toDate: () => new Date(Date.now() - 5 * 3600 * 1000) }
+        },
+        {
+          email: 'erika.mustermann@beispiel.de',
+          type: 'opened',
+          timestamp: { toDate: () => new Date(Date.now() - 4 * 3600 * 1000) }, // vor 4 Stunden
+          metadata: { userAgent: 'Desktop Chrome', location: 'Berlin, Germany' }
+        },
+        {
+          email: 'john.doe@example.com',
+          type: 'sent',
+          timestamp: { toDate: () => new Date(Date.now() - 2 * 86400 * 1000) } // vor 2 Tagen
+        },
+         {
+          email: 'john.doe@example.com',
+          type: 'delivered',
+          timestamp: { toDate: () => new Date(Date.now() - 2 * 86400 * 1000) }
+        },
+        {
+          email: 'john.doe@example.com',
+          type: 'opened',
+          timestamp: { toDate: () => new Date(Date.now() - 1 * 86400 * 1000) },
+           metadata: { userAgent: 'Mobile Safari', location: 'Munich, Germany' }
+        },
+        {
+          email: 'john.doe@example.com',
+          type: 'clicked',
+          timestamp: { toDate: () => new Date(Date.now() - 1 * 86400 * 1000 + 5000) },
+          metadata: { clickedUrl: 'https://deine-website.de/pressemitteilung', userAgent: 'Mobile Safari', location: 'Munich, Germany' }
+        },
+        {
+          email: 'bounce@example.com',
+          type: 'sent',
+          timestamp: { toDate: () => new Date(Date.now() - 3 * 86400 * 1000) }
+        },
+        {
+          email: 'bounce@example.com',
+          type: 'bounced',
+          timestamp: { toDate: () => new Date(Date.now() - 3 * 86400 * 1000 + 2000) },
+          metadata: { failureReason: 'Mailbox does not exist' }
+        },
+        {
+          email: 'fail@example.com',
+          type: 'failed',
+          timestamp: { toDate: () => new Date(Date.now() - 4 * 86400 * 1000) },
+           metadata: { failureReason: 'Invalid API Key' }
         }
       ] : [];
+      
+      // Aktivitäten nach Zeitstempel sortieren (neueste zuerst)
+      mockActivities.sort((a, b) => (b.timestamp?.toDate() || 0) - (a.timestamp?.toDate() || 0));
+
       setActivities(mockActivities);
     } catch (error) {
       console.error('Error loading analytics:', error);
@@ -366,7 +436,12 @@ export default function CampaignAnalyticsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [campaignId, user, organizationId]);
+
+
+  useEffect(() => {
+    loadAnalyticsData();
+  }, [loadAnalyticsData]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -377,42 +452,44 @@ export default function CampaignAnalyticsPage() {
     }
   };
 
-  // Calculate metrics
+  // Berechne Metriken
   const metrics = useCallback(() => {
-    const emailSet = new Set<string>();
-    let delivered = 0;
-    let opened = 0;
-    let clicked = 0;
-    let bounced = 0;
-    let failed = 0;
+    const deliveredEmails = new Set<string>();
+    const openedEmails = new Set<string>();
+    const clickedEmails = new Set<string>();
+    const bouncedEmails = new Set<string>();
+    const failedEmails = new Set<string>();
 
     activities.forEach(activity => {
-      emailSet.add(activity.email);
-      if (activity.type === 'delivered') delivered++;
-      if (activity.type === 'opened') opened++;
-      if (activity.type === 'clicked') clicked++;
-      if (activity.type === 'bounced') bounced++;
-      if (activity.type === 'failed') failed++;
+        if (activity.type === 'delivered') deliveredEmails.add(activity.email);
+        if (activity.type === 'opened') openedEmails.add(activity.email);
+        if (activity.type === 'clicked') clickedEmails.add(activity.email);
+        if (activity.type === 'bounced') bouncedEmails.add(activity.email);
+        if (activity.type === 'failed') failedEmails.add(activity.email);
     });
 
-    const totalRecipients = campaign?.recipientCount || emailSet.size;
-    const sent = campaign?.recipientCount || 0; // Use campaign recipient count
+    const sent = campaign?.recipientCount || 0;
+    const delivered = deliveredEmails.size;
+    const opened = openedEmails.size;
+    const clicked = clickedEmails.size;
+    const bounced = bouncedEmails.size;
+    const failed = failedEmails.size;
 
     return {
-      sent,
-      delivered,
-      opened,
-      clicked,
-      bounced,
-      failed,
-      openRate: sent > 0 ? (opened / sent) * 100 : 0,
-      clickRate: sent > 0 ? (clicked / sent) * 100 : 0,
-      bounceRate: sent > 0 ? (bounced / sent) * 100 : 0,
-      deliveryRate: sent > 0 ? (delivered / sent) * 100 : 0,
+        sent,
+        delivered,
+        opened,
+        clicked,
+        bounced,
+        failed,
+        deliveryRate: sent > 0 ? (delivered / sent) * 100 : 0,
+        openRate: delivered > 0 ? (opened / delivered) * 100 : 0, // Open-Rate oft bezogen auf Zugestellte
+        clickRate: opened > 0 ? (clicked / opened) * 100 : 0, // Click-Through-Rate oft bezogen auf Geöffnete
+        bounceRate: sent > 0 ? (bounced / sent) * 100 : 0,
     };
-  }, [campaign, sends, activities]);
+  }, [campaign, activities]);
 
-  // Filter activities
+  // Filter Aktivitäten
   const filteredActivities = activities.filter(activity => {
     if (filter === 'all') return true;
     return activity.type === filter;
@@ -448,20 +525,20 @@ export default function CampaignAnalyticsPage() {
     <div className="max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <Button 
-          plain 
+        <Button
+          plain
           href={`/dashboard/pr-tools/campaigns/campaigns/${campaignId}`}
           className="mb-4"
         >
           <ArrowLeftIcon className="h-4 w-4" />
           Zurück zur Kampagne
         </Button>
-        
-        <div className="flex items-start justify-between">
+
+        <div className="flex flex-col md:flex-row items-start justify-between gap-4">
           <div>
             <Heading level={1}>Kampagnen-Analytics</Heading>
-            <div className="flex items-center gap-4 mt-2">
-              <Text className="text-gray-600">{campaign.title}</Text>
+            <div className="flex items-center flex-wrap gap-x-4 gap-y-2 mt-2">
+              <Text className="text-gray-600 font-semibold">{campaign.title}</Text>
               {company && (
                 <div className="flex items-center gap-2 text-sm text-gray-500">
                   <BuildingOfficeIcon className="h-4 w-4" />
@@ -470,8 +547,8 @@ export default function CampaignAnalyticsPage() {
               )}
             </div>
           </div>
-          
-          <div className="flex items-center gap-3">
+
+          <div className="flex items-center gap-3 flex-shrink-0">
             <Button
               plain
               onClick={handleRefresh}
@@ -512,6 +589,7 @@ export default function CampaignAnalyticsPage() {
           percentage={stats.openRate}
           icon={EnvelopeOpenIcon}
           color="blue"
+          detail={`von ${stats.delivered} zugestellten`}
         />
         <MetricCard
           title="Geklickt"
@@ -519,6 +597,7 @@ export default function CampaignAnalyticsPage() {
           percentage={stats.clickRate}
           icon={CursorArrowRaysIcon}
           color="indigo"
+          detail={`von ${stats.opened} geöffneten`}
         />
         <MetricCard
           title="Abgewiesen"
@@ -539,14 +618,14 @@ export default function CampaignAnalyticsPage() {
       {/* Activity Feed */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-200">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <h2 className="text-lg font-semibold">Aktivitätsverlauf</h2>
             <div className="flex items-center gap-2">
               <Badge color="zinc">{filteredActivities.length} Aktivitäten</Badge>
               <select
                 value={filter}
                 onChange={(e) => setFilter(e.target.value as any)}
-                className="text-sm border-gray-300 rounded-md"
+                className="text-sm border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
               >
                 <option value="all">Alle Aktivitäten</option>
                 <option value="opened">Nur Öffnungen</option>
@@ -557,8 +636,8 @@ export default function CampaignAnalyticsPage() {
             </div>
           </div>
         </div>
-        
-        <div className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+
+        <div className="divide-y divide-gray-200 max-h-[450px] overflow-y-auto">
           {filteredActivities.length > 0 ? (
             filteredActivities.map((activity, index) => (
               <div key={`${activity.email}-${activity.type}-${index}`} className="px-6">
@@ -568,7 +647,7 @@ export default function CampaignAnalyticsPage() {
           ) : (
             <div className="px-6 py-12 text-center">
               <ChartBarIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <Text>Keine Aktivitäten gefunden</Text>
+              <Text>Keine Aktivitäten für diesen Filter gefunden</Text>
             </div>
           )}
         </div>
@@ -597,16 +676,4 @@ export default function CampaignAnalyticsPage() {
       )}
     </div>
   );
-}
-
-// Helper function to format date
-function formatDate(timestamp: any) {
-  if (!timestamp || !timestamp.toDate) return '—';
-  return timestamp.toDate().toLocaleDateString('de-DE', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
 }
