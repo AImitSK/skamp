@@ -16,6 +16,7 @@ import {
   ExclamationCircleIcon
 } from '@heroicons/react/20/solid';
 import clsx from 'clsx';
+import { companyTypeLabels } from '@/types/crm-enhanced';
 
 interface CustomerSelectorProps {
   value: string;
@@ -67,15 +68,17 @@ export function CustomerSelector({
       const search = searchTerm.toLowerCase();
       filtered = filtered.filter(company => 
         company.name.toLowerCase().includes(search) ||
-        company.industry?.toLowerCase().includes(search) ||
+        company.industryClassification?.primary?.toLowerCase().includes(search) ||
         company.website?.toLowerCase().includes(search)
       );
     }
     
     // Media filter
     if (filterByHasMedia) {
-      // TODO: Implement when media stats are available
-      // filtered = filtered.filter(company => company.mediaCount > 0);
+      // Filter for companies with media info
+      filtered = filtered.filter(company => 
+        company.mediaInfo?.publications && company.mediaInfo.publications.length > 0
+      );
     }
     
     // Sort alphabetically
@@ -154,9 +157,9 @@ export function CustomerSelector({
                   <div className="font-medium text-gray-900 truncate">
                     {selectedCompany.name}
                   </div>
-                  {selectedCompany.industry && (
+                  {selectedCompany.industryClassification?.primary && (
                     <div className="text-xs text-gray-500 truncate">
-                      {selectedCompany.industry}
+                      {selectedCompany.industryClassification.primary}
                     </div>
                   )}
                 </div>
@@ -221,6 +224,7 @@ export function CustomerSelector({
                   <ul className="py-1">
                     {filteredCompanies.map((company) => {
                       const isSelected = company.id === value;
+                      const publicationCount = company.mediaInfo?.publications?.length || 0;
                       
                       return (
                         <li key={company.id}>
@@ -241,9 +245,9 @@ export function CustomerSelector({
                                   {company.name}
                                 </div>
                                 <div className="flex items-center gap-2 mt-1">
-                                  {company.industry && (
+                                  {company.industryClassification?.primary && (
                                     <span className="text-xs text-gray-500">
-                                      {company.industry}
+                                      {company.industryClassification.primary}
                                     </span>
                                   )}
                                   {company.type && (
@@ -251,16 +255,13 @@ export function CustomerSelector({
                                       color="blue"
                                       className="text-xs"
                                     >
-                                      {company.type}
+                                      {companyTypeLabels[company.type] || company.type}
                                     </Badge>
                                   )}
-                                  {showStats && (
-                                    <>
-                                      {/* TODO: Add media count when available */}
-                                      {/* <span className="text-xs text-gray-400">
-                                        {company.mediaCount || 0} Medien
-                                      </span> */}
-                                    </>
+                                  {showStats && publicationCount > 0 && (
+                                    <span className="text-xs text-gray-400">
+                                      {publicationCount} Publikation{publicationCount !== 1 ? 'en' : ''}
+                                    </span>
                                   )}
                                 </div>
                               </div>
@@ -302,15 +303,16 @@ export function CustomerSelector({
           <div className="flex items-start justify-between">
             <div className="text-sm">
               <p className="font-medium text-gray-900">{selectedCompany.name}</p>
-              {/* TODO: Add contact count when available */}
-              {/* <p className="text-gray-600 mt-1">
-                X Kontakte
-              </p> */}
-              {/* TODO: Add media stats */}
-              {/* <p className="text-gray-600">
-                {selectedCompany.mediaCount || 0} Medien • 
-                {selectedCompany.folderCount || 0} Ordner
-              </p> */}
+              {selectedCompany.industryClassification?.primary && (
+                <p className="text-gray-600 mt-1">
+                  Branche: {selectedCompany.industryClassification.primary}
+                </p>
+              )}
+              {selectedCompany.mediaInfo?.publications && (
+                <p className="text-gray-600">
+                  {selectedCompany.mediaInfo.publications.length} Publikation{selectedCompany.mediaInfo.publications.length !== 1 ? 'en' : ''}
+                </p>
+              )}
             </div>
             <div className="ml-4">
               <Button
