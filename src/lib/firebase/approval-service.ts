@@ -13,7 +13,8 @@ import {
   limit,
   updateDoc,
   increment,
-  arrayUnion
+  arrayUnion,
+  addDoc
 } from 'firebase/firestore';
 import { db } from './client-init';
 import { BaseService, QueryOptions, FilterOptions } from './service-base';
@@ -63,30 +64,15 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         order: r.order || index
       }));
 
-      // Erstelle initiale Historie
-      const history: ApprovalHistoryEntry[] = [{
-        id: nanoid(),
-        timestamp: serverTimestamp() as Timestamp,
-        action: 'created',
-        userId: context.userId,
-        actorName: 'System',
-        details: {
-          newStatus: 'draft'
-        }
-      }];
-
-      // Approval-Daten vorbereiten
-      const approvalData: Omit<ApprovalEnhanced, 'id'> = {
+      // Approval-Daten vorbereiten - mit leerem history Array
+      const approvalData = {
         ...data,
         organizationId: context.organizationId,
         createdBy: context.userId,
-        createdAt: serverTimestamp() as Timestamp,
-        updatedAt: serverTimestamp() as Timestamp,
         shareId,
         recipients,
         status: 'draft',
-        requestedAt: serverTimestamp() as Timestamp,
-        history,
+        history: [], // Leeres Array statt serverTimestamp
         analytics: {
           totalViews: 0,
           uniqueViews: 0
@@ -100,7 +86,48 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         version: 1
       };
 
-      return super.create(approvalData as any, context);
+      // Entferne undefined Felder
+      Object.keys(approvalData).forEach(key => {
+        if ((approvalData as any)[key] === undefined) {
+          delete (approvalData as any)[key];
+        }
+      });
+
+      // Erstelle das Dokument direkt ohne BaseService
+      const docRef = await addDoc(collection(db, this.collectionName), {
+        ...approvalData,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        requestedAt: serverTimestamp()
+      });
+      
+      const approvalId = docRef.id;
+      
+      // Füge initiale Historie nach der Erstellung hinzu
+      // Verwende ein zweistufiges Update um serverTimestamp zu vermeiden
+      const historyEntry = {
+        id: nanoid(),
+        timestamp: new Date(), // Temporärer Timestamp
+        action: 'created',
+        userId: context.userId,
+        actorName: 'System',
+        details: {
+          newStatus: 'draft'
+        }
+      };
+      
+      // Erst die Historie mit normalem Date hinzufügen
+      await updateDoc(doc(db, this.collectionName, approvalId), {
+        history: [historyEntry]
+      });
+      
+      // Dann den Timestamp updaten
+      await updateDoc(doc(db, this.collectionName, approvalId), {
+        'history.0.timestamp': serverTimestamp()
+      });
+      
+      console.log('Created approval with ID:', approvalId);
+      return approvalId;
     } catch (error) {
       console.error('Error creating approval:', error);
       throw new Error('Fehler beim Erstellen der Freigabe');
@@ -125,9 +152,9 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       }
 
       // Update Status und Historie
-      const historyEntry: ApprovalHistoryEntry = {
+      const historyEntry = {
         id: nanoid(),
-        timestamp: serverTimestamp() as Timestamp,
+        timestamp: new Date(),
         action: 'sent_for_approval',
         userId: context.userId,
         actorName: 'System',
@@ -137,10 +164,13 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         }
       };
 
+      // Füge den neuen History-Eintrag zum bestehenden Array hinzu
+      const updatedHistory = [...(approval.history || []), historyEntry];
+
       await this.update(approvalId, {
         status: 'pending',
         requestedAt: serverTimestamp() as Timestamp,
-        history: arrayUnion(historyEntry) as any,
+        history: updatedHistory as any,
         notifications: {
           ...approval.notifications,
           requested: {
@@ -390,7 +420,11 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
     options: QueryOptions = {}
   ): Promise<ApprovalListView[]> {
     try {
+      console.log('searchEnhanced called with:', { organizationId, filters });
+      
       let approvals = await this.getAll(organizationId, options);
+      
+      console.log('Raw approvals loaded:', approvals.length);
 
       // Client-seitige Filterung
       if (filters.search) {
@@ -437,13 +471,14 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
 
       // Erweitere mit berechneten Feldern
       const enhancedApprovals = approvals.map(approval => {
-        const pendingCount = approval.recipients.filter(r => r.status === 'pending').length;
-        const approvedCount = approval.recipients.filter(r => r.status === 'approved').length;
-        const totalRequired = approval.recipients.filter(r => r.isRequired).length || approval.recipients.length;
+        const recipients = approval.recipients || [];
+        const pendingCount = recipients.filter(r => r.status === 'pending').length;
+        const approvedCount = recipients.filter(r => r.status === 'approved').length;
+        const totalRequired = recipients.filter(r => r.isRequired).length || recipients.length;
         
         const progressPercentage = totalRequired > 0 ? Math.round((approvedCount / totalRequired) * 100) : 0;
         
-        const isOverdue = approval.options.expiresAt && 
+        const isOverdue = approval.options?.expiresAt && 
           approval.status === 'pending' && 
           approval.options.expiresAt.toDate() < new Date();
 
@@ -461,6 +496,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         return enhancedApprovals.filter(a => a.isOverdue === filters.isOverdue);
       }
 
+      console.log('Enhanced approvals returned:', enhancedApprovals.length);
       return enhancedApprovals;
     } catch (error) {
       console.error('Error in enhanced approval search:', error);
@@ -487,7 +523,8 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         campaignTitle: campaign.title,
         clientId: campaign.clientId,
         clientName: campaign.clientName || 'Unbekannt',
-        clientEmail: undefined, // TODO: Client E-Mail muss im PRCampaign Model ergänzt werden
+        // clientEmail ist optional, also nur setzen wenn vorhanden
+        ...(campaign.clientId ? {} : {}), // Placeholder für zukünftige clientEmail
         recipients: recipients.map((r, index) => ({
           ...r,
           id: nanoid(10),
@@ -523,7 +560,9 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         organizationId: context.organizationId
       };
 
-      return await this.create(approvalData, context);
+      const approvalId = await this.create(approvalData, context);
+      console.log('Created approval with ID:', approvalId);
+      return approvalId;
     } catch (error) {
       console.error('Error creating approval from campaign:', error);
       throw error;

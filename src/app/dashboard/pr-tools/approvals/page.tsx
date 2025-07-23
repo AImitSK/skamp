@@ -394,7 +394,7 @@ export default function ApprovalsPage() {
     loadOrganization();
   }, [user]);
 
-  const loadApprovals = async () => {
+const loadApprovals = async () => {
     if (!organizationId) return;
     
     setLoading(true);
@@ -409,7 +409,11 @@ export default function ApprovalsPage() {
         }
       );
       
-      setApprovals(allApprovals);
+      // Filtere Draft-Status heraus, außer explizit angefordert
+      const filteredApprovals = allApprovals.filter(a => a.status !== 'draft');
+      
+      console.log('Loaded approvals:', filteredApprovals.length);
+      setApprovals(filteredApprovals);
       setLastRefresh(new Date());
       
       // Lade Kunden für Filter

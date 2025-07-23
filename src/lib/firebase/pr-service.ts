@@ -539,7 +539,7 @@ export const prService = {
     return { assets, folders, total: assets + folders };
   },
 
-  // === NEUE ENHANCED APPROVAL FUNKTIONEN ===
+// === NEUE ENHANCED APPROVAL FUNKTIONEN ===
 
   /**
    * Startet den Freigabeprozess mit dem Enhanced Approval Service
@@ -577,15 +577,19 @@ export const prService = {
         throw new Error('Fehler beim Erstellen der Freigabe');
       }
 
-      // Sende zur Freigabe - SPÄTER, wenn echte E-Mail-Adressen vorhanden sind
-      // await approvalService.sendForApproval(approvalId, context);
-      console.log('⚠️ Freigabe erstellt, aber keine E-Mail gesendet (keine echte Empfänger-E-Mail)');
+      // Sende zur Freigabe - setze Status auf pending
+      await approvalService.update(approvalId, {
+        status: 'pending',
+        requestedAt: serverTimestamp() as Timestamp
+      }, context);
+      
+      console.log('⚠️ Freigabe erstellt, E-Mail-Versand folgt später');
 
       // Update Kampagne mit Approval-Daten
       const approvalData: ApprovalData = {
         shareId: approval.shareId,
         status: 'pending',
-        feedbackHistory: [],
+        feedbackHistory: []
       };
 
       await this.update(campaignId, {

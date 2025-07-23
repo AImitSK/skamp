@@ -505,9 +505,26 @@ export default function EditPRCampaignPage() {
 
       console.log('Aktualisiere Kampagne mit Daten:', updateData);
       
-      await prService.update(campaignId, updateData);
+ await prService.update(campaignId, updateData);
       
-      setAlert({ type: 'success', message: 'Kampagne erfolgreich gespeichert' });
+      // Wenn Freigabe erforderlich ist und noch keine Share-ID existiert, erstelle Freigabe
+      if (approvalRequired && campaign && !campaign.approvalData?.shareId) {
+        try {
+          console.log('Erstelle neue Freigabe für bestehende Kampagne...');
+          const shareId = await prService.requestApproval(campaignId);
+          if (shareId) {
+            console.log('Freigabe erfolgreich erstellt:', shareId);
+            setAlert({ type: 'success', message: 'Kampagne gespeichert und Freigabe angefordert' });
+          } else {
+            setAlert({ type: 'success', message: 'Kampagne gespeichert (Freigabe konnte nicht erstellt werden)' });
+          }
+        } catch (error) {
+          console.error('Fehler beim Erstellen der Freigabe:', error);
+          setAlert({ type: 'success', message: 'Kampagne gespeichert (Freigabe konnte nicht erstellt werden)' });
+        }
+      } else {
+        setAlert({ type: 'success', message: 'Kampagne erfolgreich gespeichert' });
+      }
       
       // Nach kurzer Verzögerung zur Detail-Seite
       setTimeout(() => {
