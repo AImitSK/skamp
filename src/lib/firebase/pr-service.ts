@@ -1,4 +1,4 @@
-// src/lib/firebase/pr-service.ts - FINALE, VOLLSTÄNDIGE VERSION mit Multi-Tenancy
+// src/lib/firebase/pr-service.ts - FINALE, VOLLSTÄNDIGE VERSION mit Multi-Tenancy und Enhanced Approval Integration
 import {
   collection,
   doc,
@@ -21,6 +21,8 @@ import { mediaService } from './media-service';
 import { ShareLink } from '@/types/media'; 
 import { nanoid } from 'nanoid';
 import { notificationsService } from './notifications-service';
+import { approvalService } from './approval-service';
+import { ApprovalRecipient } from '@/types/approvals';
 
 // ✅ ZENTRALER ORT FÜR DIE BASIS-URL MIT FALLBACK
 const getBaseUrl = () => {
@@ -160,7 +162,20 @@ export const prService = {
       }
     }
     
-    // Lösche auch den Approval Share wenn vorhanden
+    // NEU: Lösche auch Enhanced Approval wenn vorhanden
+    if (campaign?.approvalData?.shareId && campaign.organizationId) {
+      try {
+        // Finde die Enhanced Approval
+        const approval = await approvalService.getByShareId(campaign.approvalData.shareId);
+        if (approval?.id) {
+          await approvalService.hardDelete(approval.id, campaign.organizationId);
+        }
+      } catch (error) {
+        console.warn('Fehler beim Löschen der Enhanced Approval:', error);
+      }
+    }
+    
+    // Lösche auch den Legacy Approval Share wenn vorhanden
     if (campaign?.approvalData?.shareId) {
       try {
         const q = query(
@@ -173,7 +188,7 @@ export const prService = {
           await deleteDoc(snapshot.docs[0].ref);
         }
       } catch (error) {
-        console.warn('Fehler beim Löschen des Approval Shares:', error);
+        console.warn('Fehler beim Löschen des Legacy Approval Shares:', error);
       }
     }
     
@@ -186,6 +201,7 @@ export const prService = {
     // NEU: Sammle Share-Links zum Löschen
     const shareLinksToDelete: string[] = [];
     const approvalSharesToDelete: string[] = [];
+    const enhancedApprovalsToDelete: { id: string; organizationId: string }[] = [];
     
     for (const id of campaignIds) {
       const campaign = await this.getById(id);
@@ -194,6 +210,17 @@ export const prService = {
       }
       if (campaign?.approvalData?.shareId) {
         approvalSharesToDelete.push(campaign.approvalData.shareId);
+        
+        // NEU: Sammle Enhanced Approvals
+        if (campaign.organizationId) {
+          const approval = await approvalService.getByShareId(campaign.approvalData.shareId);
+          if (approval?.id) {
+            enhancedApprovalsToDelete.push({ 
+              id: approval.id, 
+              organizationId: campaign.organizationId 
+            });
+          }
+        }
       }
       
       const docRef = doc(db, 'pr_campaigns', id);
@@ -211,7 +238,16 @@ export const prService = {
       }
     }
     
-    // Lösche Approval Shares
+    // NEU: Lösche Enhanced Approvals
+    for (const approval of enhancedApprovalsToDelete) {
+      try {
+        await approvalService.hardDelete(approval.id, approval.organizationId);
+      } catch (error) {
+        console.warn('Fehler beim Löschen der Enhanced Approval:', error);
+      }
+    }
+    
+    // Lösche Legacy Approval Shares
     for (const shareId of approvalSharesToDelete) {
       try {
         const q = query(
@@ -224,7 +260,7 @@ export const prService = {
           await deleteDoc(snapshot.docs[0].ref);
         }
       } catch (error) {
-        console.warn('Fehler beim Löschen des Approval Shares:', error);
+        console.warn('Fehler beim Löschen des Legacy Approval Shares:', error);
       }
     }
   },
@@ -503,10 +539,10 @@ export const prService = {
     return { assets, folders, total: assets + folders };
   },
 
-  // === NEUE FREIGABE-WORKFLOW FUNKTIONEN (mit media_shares Pattern) ===
+  // === NEUE ENHANCED APPROVAL FUNKTIONEN ===
 
   /**
-   * Startet den Freigabeprozess für eine Kampagne (ERWEITERT)
+   * Startet den Freigabeprozess mit dem Enhanced Approval Service
    */
   async requestApproval(campaignId: string): Promise<string> {
     const campaign = await this.getById(campaignId);
@@ -514,23 +550,76 @@ export const prService = {
       throw new Error('Kampagne nicht gefunden');
     }
 
-    // Generiere eine eindeutige, URL-sichere Share-ID
-    const shareId = nanoid(10);
-    
-    // Erstelle separaten Share-Link Eintrag mit ALLEN Kampagnen-Daten
+    // Prüfe ob organizationId vorhanden ist
+    const organizationId = campaign.organizationId || campaign.userId;
+    const context = { organizationId, userId: campaign.userId };
+
+    // Erstelle Empfänger aus Campaign-Daten
+    // TODO: Später könnten hier echte Kundencontacts geladen werden
+    const recipients: Omit<ApprovalRecipient, 'id' | 'status' | 'notificationsSent'>[] = [{
+      email: `kunde-${campaign.clientId}@example.com`, // Temporäre E-Mail bis echte Kontakte verknüpft sind
+      name: campaign.clientName || 'Kunde',
+      role: 'approver',
+      isRequired: true
+    }];
+
+    try {
+      // Erstelle Enhanced Approval
+      const approvalId = await approvalService.createFromCampaign(
+        campaign,
+        recipients,
+        context
+      );
+
+      // Hole die erstellte Approval für die shareId
+      const approval = await approvalService.getById(approvalId, organizationId);
+      if (!approval) {
+        throw new Error('Fehler beim Erstellen der Freigabe');
+      }
+
+      // Sende zur Freigabe - SPÄTER, wenn echte E-Mail-Adressen vorhanden sind
+      // await approvalService.sendForApproval(approvalId, context);
+      console.log('⚠️ Freigabe erstellt, aber keine E-Mail gesendet (keine echte Empfänger-E-Mail)');
+
+      // Update Kampagne mit Approval-Daten
+      const approvalData: ApprovalData = {
+        shareId: approval.shareId,
+        status: 'pending',
+        feedbackHistory: [],
+      };
+
+      await this.update(campaignId, {
+        status: 'in_review',
+        approvalRequired: true,
+        approvalData
+      });
+
+      // Erstelle auch Legacy Share für Rückwärtskompatibilität
+      await this.createLegacyApprovalShare(campaign, approval.shareId);
+
+      return approval.shareId;
+    } catch (error) {
+      console.error('Fehler beim Erstellen der Freigabe:', error);
+      // Werfe den Fehler nicht weiter, damit die Kampagne trotzdem gespeichert wird
+      // Die Kampagne bleibt im Draft-Status
+      return '';
+    }
+  },
+
+  /**
+   * Erstellt Legacy Approval Share für Rückwärtskompatibilität
+   */
+  async createLegacyApprovalShare(campaign: PRCampaign, shareId: string): Promise<void> {
     const approvalShareData: any = {
       shareId,
-      campaignId,
+      campaignId: campaign.id,
       userId: campaign.userId,
-      organizationId: campaign.organizationId || campaign.userId, // NEU: Mit organizationId
+      organizationId: campaign.organizationId || campaign.userId,
       campaignTitle: campaign.title,
       campaignContent: campaign.contentHtml,
       clientName: campaign.clientName,
       clientId: campaign.clientId,
-      
-      // NEU: Speichere auch die angehängten Assets
       attachedAssets: campaign.attachedAssets || [],
-      
       status: 'pending',
       feedbackHistory: [],
       createdAt: serverTimestamp(),
@@ -538,33 +627,38 @@ export const prService = {
       isActive: true
     };
 
-    console.log('Creating approval share with data:', approvalShareData);
-    
-    const docRef = await addDoc(collection(db, 'pr_approval_shares'), approvalShareData);
-    console.log('Created approval share with ID:', docRef.id);
-
-    // Update Kampagne mit Status und approvalData
-    const approvalData: ApprovalData = {
-      shareId,
-      status: 'pending',
-      feedbackHistory: [],
-    };
-
-    await this.update(campaignId, {
-      status: 'in_review',
-      approvalRequired: true,
-      approvalData
-    });
-
-    return shareId;
+    await addDoc(collection(db, 'pr_approval_shares'), approvalShareData);
   },
 
   /**
-   * Findet eine Kampagne anhand der Share-ID (ERWEITERT mit Assets)
+   * Findet eine Kampagne anhand der Share-ID (mit Enhanced Approval)
    */
   async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
     try {
-      // Hole Share-Link Dokument direkt
+      // Versuche zuerst Enhanced Approval zu finden
+      const approval = await approvalService.getByShareId(shareId);
+      if (approval) {
+        // Lade die zugehörige Kampagne
+        const campaign = await this.getById(approval.campaignId);
+        if (campaign) {
+          // Aktualisiere Approval-Daten aus Enhanced Approval
+          campaign.approvalData = {
+            shareId: approval.shareId,
+            status: this.mapEnhancedToLegacyStatus(approval.status),
+            feedbackHistory: approval.history
+              .filter(h => h.action === 'commented' || h.action === 'changes_requested')
+              .map(h => ({
+                comment: h.details.comment || '',
+                requestedAt: h.timestamp,
+                author: h.actorName
+              })),
+            approvedAt: approval.approvedAt
+          };
+          return campaign;
+        }
+      }
+
+      // Fallback zu Legacy-Methode
       const q = query(
         collection(db, 'pr_approval_shares'),
         where('shareId', '==', shareId),
@@ -581,21 +675,18 @@ export const prService = {
       const shareDoc = snapshot.docs[0];
       const shareData = shareDoc.data();
       
-      console.log('Found approval share:', shareData);
+      console.log('Found legacy approval share:', shareData);
       
       // Konstruiere Kampagnen-Objekt aus Share-Daten
       return {
         id: shareData.campaignId,
         userId: shareData.userId,
-        organizationId: shareData.organizationId, // NEU: Mit organizationId
+        organizationId: shareData.organizationId,
         title: shareData.campaignTitle,
         contentHtml: shareData.campaignContent,
         clientName: shareData.clientName,
         clientId: shareData.clientId,
-        
-        // NEU: Inkludiere die angehängten Assets
         attachedAssets: shareData.attachedAssets || [],
-        
         status: shareData.status === 'approved' ? 'approved' : 
                 shareData.status === 'commented' ? 'changes_requested' : 
                 'in_review',
@@ -620,7 +711,7 @@ export const prService = {
   },
 
   /**
-   * Sendet eine überarbeitete Kampagne erneut zur Freigabe (ERWEITERT)
+   * Sendet eine überarbeitete Kampagne erneut zur Freigabe
    */
   async resubmitForApproval(campaignId: string): Promise<void> {
     console.log('Resubmitting campaign for approval:', campaignId);
@@ -630,7 +721,33 @@ export const prService = {
       throw new Error('Kampagne oder Freigabe-Daten nicht gefunden');
     }
 
-    // Update pr_approval_shares mit aktuellen Kampagnen-Daten
+    const organizationId = campaign.organizationId || campaign.userId;
+    const context = { organizationId, userId: campaign.userId };
+
+    // Prüfe ob Enhanced Approval existiert
+    const approval = await approvalService.getByShareId(campaign.approvalData.shareId);
+    if (approval && approval.id) {
+      // Update Enhanced Approval
+      await approvalService.update(approval.id, {
+        status: 'pending',
+        content: {
+          html: campaign.contentHtml,
+          plainText: approvalService['stripHtml'](campaign.contentHtml),
+          subject: campaign.title
+        },
+        attachedAssets: campaign.attachedAssets?.map(asset => ({
+          assetId: asset.assetId || asset.folderId || '',
+          type: asset.type as 'file' | 'folder',
+          name: asset.metadata?.fileName || asset.metadata?.folderName || 'Unbekannt',
+          metadata: asset.metadata
+        }))
+      }, context);
+
+      // Sende erneut
+      await approvalService.sendForApproval(approval.id, context);
+    }
+
+    // Update auch Legacy Share
     const q = query(
       collection(db, 'pr_approval_shares'),
       where('shareId', '==', campaign.approvalData.shareId),
@@ -638,30 +755,21 @@ export const prService = {
     );
     
     const snapshot = await getDocs(q);
-    if (snapshot.empty) {
-      throw new Error('Freigabe-Share nicht gefunden');
+    if (!snapshot.empty) {
+      const docRef = snapshot.docs[0].ref;
+      await updateDoc(docRef, {
+        status: 'pending',
+        campaignTitle: campaign.title,
+        campaignContent: campaign.contentHtml,
+        attachedAssets: campaign.attachedAssets || [],
+        updatedAt: serverTimestamp(),
+        feedbackHistory: [...(campaign.approvalData.feedbackHistory || []), {
+          comment: '--- Kampagne wurde überarbeitet und erneut zur Freigabe eingereicht ---',
+          requestedAt: Timestamp.now(),
+          author: 'System'
+        }]
+      });
     }
-    
-    const docRef = snapshot.docs[0].ref;
-    
-    // Reset auf pending, aber behalte die Feedback-Historie
-    // UND aktualisiere die Kampagnen-Inhalte (falls geändert)
-    await updateDoc(docRef, {
-      status: 'pending',
-      
-      // NEU: Aktualisiere auch die Kampagnen-Daten
-      campaignTitle: campaign.title,
-      campaignContent: campaign.contentHtml,
-      attachedAssets: campaign.attachedAssets || [],
-      
-      updatedAt: serverTimestamp(),
-      // Optional: Füge eine Notiz zur Historie hinzu
-      feedbackHistory: [...(campaign.approvalData.feedbackHistory || []), {
-        comment: '--- Kampagne wurde überarbeitet und erneut zur Freigabe eingereicht ---',
-        requestedAt: Timestamp.now(),
-        author: 'System'
-      }]
-    });
     
     // Update die Kampagne
     const updatedApprovalData: ApprovalData = {
@@ -688,7 +796,15 @@ export const prService = {
   async submitFeedback(shareId: string, feedback: string, author: string = 'Kunde'): Promise<void> {
     console.log('🔍 submitFeedback called with:', { shareId, feedback, author });
     
-    // Update im pr_approval_shares Dokument
+    // Versuche Enhanced Approval zu verwenden
+    const approval = await approvalService.getByShareId(shareId);
+    if (approval) {
+      // Finde den ersten Empfänger (TODO: Später über E-Mail identifizieren)
+      const recipientEmail = approval.recipients[0]?.email || 'unknown@example.com';
+      await approvalService.requestChanges(shareId, recipientEmail, feedback);
+    }
+    
+    // Update auch Legacy Share
     const q = query(
       collection(db, 'pr_approval_shares'),
       where('shareId', '==', shareId),
@@ -773,7 +889,15 @@ export const prService = {
   async approveCampaign(shareId: string): Promise<void> {
     console.log('approveCampaign called with shareId:', shareId);
     
-    // Update im pr_approval_shares Dokument
+    // Versuche Enhanced Approval zu verwenden
+    const approval = await approvalService.getByShareId(shareId);
+    if (approval) {
+      // Finde den ersten Empfänger (TODO: Später über E-Mail identifizieren)
+      const recipientEmail = approval.recipients[0]?.email || 'unknown@example.com';
+      await approvalService.submitDecision(shareId, recipientEmail, 'approved');
+    }
+    
+    // Update auch Legacy Share
     const q = query(
       collection(db, 'pr_approval_shares'),
       where('shareId', '==', shareId),
@@ -848,6 +972,14 @@ export const prService = {
   async markApprovalAsViewed(shareId: string): Promise<void> {
     console.log('markApprovalAsViewed called with shareId:', shareId);
     
+    // Versuche Enhanced Approval zu verwenden
+    const approval = await approvalService.getByShareId(shareId);
+    if (approval) {
+      const recipientEmail = approval.recipients[0]?.email;
+      await approvalService.markAsViewed(shareId, recipientEmail);
+    }
+    
+    // Update auch Legacy Share
     const q = query(
       collection(db, 'pr_approval_shares'),
       where('shareId', '==', shareId),
@@ -963,5 +1095,26 @@ export const prService = {
     }
 
     return { canSend: true };
+  },
+
+  /**
+   * Hilfsfunktion: Mappt Enhanced Status zu Legacy Status
+   */
+  mapEnhancedToLegacyStatus(enhancedStatus: string): 'pending' | 'viewed' | 'commented' | 'approved' {
+    switch (enhancedStatus) {
+      case 'pending':
+        return 'pending';
+      case 'in_review':
+      case 'viewed':
+        return 'viewed';
+      case 'changes_requested':
+      case 'commented':
+        return 'commented';
+      case 'approved':
+      case 'completed':
+        return 'approved';
+      default:
+        return 'pending';
+    }
   }
 };

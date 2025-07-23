@@ -453,32 +453,53 @@ export default function NewPRCampaignPage() {
         updatedAt: new Date()
       };
 
-      // Entferne alle undefined Werte
-      const cleanedCampaignData = JSON.parse(JSON.stringify(campaignData));
 
-      console.log('Speichere Kampagne mit bereinigten Daten:', cleanedCampaignData);
-      
-      const newCampaignId = await prService.create(cleanedCampaignData);
-      
-      if (approvalRequired) {
-        await prService.requestApproval(newCampaignId);
-      }
-      
-      router.push('/dashboard/pr-tools/campaigns');
-    } catch (error) {
-      console.error('Fehler beim Speichern der Kampagne:', error);
-      
-      // Detailliertere Fehlermeldung
-      let errorMessage = 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.';
-      if (error instanceof Error) {
-        errorMessage = `Fehler: ${error.message}`;
-      }
-      
-      setValidationErrors([errorMessage]);
-    } finally {
-      setSaving(false);
+
+// Entferne alle undefined Werte
+const cleanedCampaignData = JSON.parse(JSON.stringify(campaignData));
+
+console.log('Speichere Kampagne mit bereinigten Daten:', cleanedCampaignData);
+
+const newCampaignId = await prService.create(cleanedCampaignData);
+console.log('✅ Kampagne erstellt mit ID:', newCampaignId);
+
+if (approvalRequired) {
+  try {
+    const shareId = await prService.requestApproval(newCampaignId);
+    if (shareId) {
+      console.log('✅ Freigabe erstellt mit Share ID:', shareId);
+    } else {
+      console.warn('⚠️ Freigabe konnte nicht erstellt werden, Kampagne wurde trotzdem gespeichert');
     }
-  };
+  } catch (approvalError) {
+    console.error('Fehler beim Erstellen der Freigabe:', approvalError);
+    // Zeige Warnung, aber navigiere trotzdem
+    setValidationErrors(['Die Kampagne wurde gespeichert, aber die Freigabe konnte nicht erstellt werden.']);
+    // Warte kurz, damit der User die Nachricht sieht
+    setTimeout(() => {
+      router.push('/dashboard/pr-tools/campaigns');
+    }, 2000);
+    return; // beendet die Funktion hier, um doppelte Navigation zu vermeiden
+  }
+}
+
+// Erfolgreiche Navigation
+router.push('/dashboard/pr-tools/campaigns');
+
+} catch (error) {
+  console.error('Fehler beim Speichern der Kampagne:', error);
+
+  // Detailliertere Fehlermeldung
+  let errorMessage = 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.';
+  if (error instanceof Error) {
+    errorMessage = `Fehler: ${error.message}`;
+  }
+
+  setValidationErrors([errorMessage]);
+} finally {
+  setSaving(false);
+}
+};
 
   const handleAiGenerate = (result: any) => {
     console.log('handleAiGenerate called with:', result);
