@@ -190,26 +190,69 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
   }
 
   /**
-   * Lädt Freigabe by Share ID (für öffentlichen Zugriff)
-   */
-  async getByShareId(shareId: string): Promise<ApprovalEnhanced | null> {
-    try {
-      const q = query(
-        collection(db, this.collectionName),
-        where('shareId', '==', shareId),
-        limit(1)
-      );
+ * Lädt Freigabe by Share ID (für öffentlichen Zugriff)
+ */
+async getByShareId(shareId: string): Promise<ApprovalEnhanced | null> {
+  try {
+    const q = query(
+      collection(db, this.collectionName),
+      where('shareId', '==', shareId),
+      limit(1)
+    );
 
-      const snapshot = await getDocs(q);
-      if (snapshot.empty) return null;
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) return null;
 
-      const doc = snapshot.docs[0];
-      return { id: doc.id, ...doc.data() } as ApprovalEnhanced;
-    } catch (error) {
-      console.error('Error fetching by share ID:', error);
-      return null;
+    const doc = snapshot.docs[0];
+    const data = doc.data();
+    
+    // Stelle sicher, dass history ein Array ist
+    if (data.history && !Array.isArray(data.history)) {
+      data.history = [];
     }
+    
+    // Stelle sicher, dass recipients ein Array ist
+    if (data.recipients && !Array.isArray(data.recipients)) {
+      data.recipients = [];
+    }
+    
+    // Stelle sicher, dass attachedAssets ein Array ist
+    if (data.attachedAssets && !Array.isArray(data.attachedAssets)) {
+      data.attachedAssets = [];
+    }
+    
+    return { id: doc.id, ...data } as ApprovalEnhanced;
+  } catch (error) {
+    console.error('Error fetching by share ID:', error);
+    return null;
   }
+}
+
+// Zusätzlich sollte auch die getById Methode angepasst werden:
+async getById(id: string, organizationId: string): Promise<ApprovalEnhanced | null> {
+  try {
+    const doc = await super.getById(id, organizationId);
+    if (!doc) return null;
+    
+    // Stelle sicher, dass Arrays wirklich Arrays sind
+    if (doc.history && !Array.isArray(doc.history)) {
+      doc.history = [];
+    }
+    
+    if (doc.recipients && !Array.isArray(doc.recipients)) {
+      doc.recipients = [];
+    }
+    
+    if (doc.attachedAssets && !Array.isArray(doc.attachedAssets)) {
+      doc.attachedAssets = [];
+    }
+    
+    return doc;
+  } catch (error) {
+    console.error('Error getting approval by ID:', error);
+    return null;
+  }
+}
 
   /**
    * Markiert Freigabe als angesehen

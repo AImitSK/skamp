@@ -1,18 +1,17 @@
 // src/app/dashboard/pr-tools/approvals/page.tsx
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
 import Link from 'next/link';
 import { useAuth } from "@/context/AuthContext";
 import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
 import { Button } from "@/components/button";
 import { Badge } from "@/components/badge";
-import { Input } from "@/components/input";
-import { Select } from "@/components/select";
+import { SearchInput } from "@/components/search-input";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from "@/components/dropdown";
-import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/table";
+import { Popover, Transition } from '@headlessui/react';
 import { 
   MagnifyingGlassIcon,
   CheckBadgeIcon,
@@ -32,9 +31,7 @@ import {
   ExclamationTriangleIcon,
   FunnelIcon,
   XMarkIcon,
-  CalendarIcon,
   BuildingOfficeIcon,
-  UserIcon,
   ChevronLeftIcon,
   ChevronRightIcon
 } from "@heroicons/react/20/solid";
@@ -64,10 +61,10 @@ function Alert({
   action?: { label: string; onClick: () => void };
 }) {
   const styles = {
-    info: 'bg-blue-50 text-blue-700 border-blue-200',
-    success: 'bg-green-50 text-green-700 border-green-200',
-    warning: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-    error: 'bg-red-50 text-red-700 border-red-200'
+    info: 'bg-blue-50 text-blue-700',
+    success: 'bg-green-50 text-green-700',
+    warning: 'bg-yellow-50 text-yellow-700',
+    error: 'bg-red-50 text-red-700'
   };
 
   const icons = {
@@ -80,7 +77,7 @@ function Alert({
   const Icon = icons[type];
 
   return (
-    <div className={`rounded-lg border p-4 ${styles[type]}`}>
+    <div className={`rounded-md p-4 ${styles[type].split(' ')[0]}`}>
       <div className="flex">
         <div className="shrink-0">
           <Icon aria-hidden="true" className={`size-5 ${type === 'info' || type === 'success' ? 'text-blue-400' : type === 'warning' ? 'text-yellow-400' : 'text-red-400'}`} />
@@ -88,7 +85,7 @@ function Alert({
         <div className="ml-3 flex-1 md:flex md:justify-between">
           <div>
             <Text className={`font-medium ${styles[type].split(' ')[1]}`}>{title}</Text>
-            {message && <Text className={`mt-2 text-sm ${styles[type].split(' ')[1]}`}>{message}</Text>}
+            {message && <Text className={`mt-2 ${styles[type].split(' ')[1]}`}>{message}</Text>}
           </div>
           {action && (
             <p className="mt-3 text-sm md:mt-0 md:ml-6">
@@ -247,121 +244,15 @@ function FeedbackHistoryModal({
   );
 }
 
-// Filter Bar Component
-function FilterBar({
-  filters,
-  onFiltersChange,
-  clients,
-  onClearFilters
-}: {
-  filters: ApprovalFilters;
-  onFiltersChange: (filters: ApprovalFilters) => void;
-  clients: Array<{ id: string; name: string }>;
-  onClearFilters: () => void;
-}) {
-  const hasActiveFilters = filters.status?.length || filters.clientIds?.length || 
-                          filters.priority?.length || filters.isOverdue !== undefined;
-
-  return (
-    <div className="bg-white border-b border-gray-200 py-4">
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-2">
-          <FunnelIcon className="h-5 w-5 text-gray-400" />
-          <Text className="font-medium text-gray-700">Filter:</Text>
-        </div>
-
-        {/* Status Filter */}
-        <Select
-          value={filters.status?.[0] || ''}
-          onChange={(e) => {
-            const value = e.target.value;
-            onFiltersChange({
-              ...filters,
-              status: value ? [value as ApprovalStatus] : undefined
-            });
-          }}
-          className="w-40"
-        >
-          <option value="">Alle Status</option>
-          {Object.entries(APPROVAL_STATUS_CONFIG).map(([value, config]) => (
-            <option key={value} value={value}>{config.label}</option>
-          ))}
-        </Select>
-
-        {/* Client Filter */}
-        <Select
-          value={filters.clientIds?.[0] || ''}
-          onChange={(e) => {
-            const value = e.target.value;
-            onFiltersChange({
-              ...filters,
-              clientIds: value ? [value] : undefined
-            });
-          }}
-          className="w-48"
-        >
-          <option value="">Alle Kunden</option>
-          {clients.map(client => (
-            <option key={client.id} value={client.id}>{client.name}</option>
-          ))}
-        </Select>
-
-        {/* Priority Filter */}
-        <Select
-          value={filters.priority?.[0] || ''}
-          onChange={(e) => {
-            const value = e.target.value;
-            onFiltersChange({
-              ...filters,
-              priority: value ? [value] : undefined
-            });
-          }}
-          className="w-40"
-        >
-          <option value="">Alle Prioritäten</option>
-          {PRIORITY_OPTIONS.map(option => (
-            <option key={option.value} value={option.value}>{option.label}</option>
-          ))}
-        </Select>
-
-        {/* Overdue Filter */}
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={filters.isOverdue === true}
-            onChange={(e) => {
-              onFiltersChange({
-                ...filters,
-                isOverdue: e.target.checked ? true : undefined
-              });
-            }}
-            className="rounded border-gray-300 text-[#005fab] focus:ring-[#005fab]"
-          />
-          <Text className="text-sm text-gray-700">Nur überfällige</Text>
-        </label>
-
-        {/* Clear Filters */}
-        {hasActiveFilters && (
-          <Button
-            plain
-            onClick={onClearFilters}
-            className="ml-auto"
-          >
-            <XMarkIcon />
-            Filter zurücksetzen
-          </Button>
-        )}
-      </div>
-    </div>
-  );
-}
-
 export default function ApprovalsPage() {
   const { user } = useAuth();
   const [approvals, setApprovals] = useState<ApprovalListView[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filters, setFilters] = useState<ApprovalFilters>({});
+  const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
+  const [selectedClients, setSelectedClients] = useState<string[]>([]);
+  const [selectedPriorities, setSelectedPriorities] = useState<string[]>([]);
+  const [showOverdueOnly, setShowOverdueOnly] = useState(false);
   const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string } | null>(null);
   const [selectedApproval, setSelectedApproval] = useState<ApprovalEnhanced | null>(null);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
@@ -394,25 +285,27 @@ export default function ApprovalsPage() {
     loadOrganization();
   }, [user]);
 
-const loadApprovals = async () => {
+  const loadApprovals = async () => {
     if (!organizationId) return;
     
     setLoading(true);
     setIsRefreshing(true);
     try {
-      // Lade Freigaben mit Filtern
-      const allApprovals = await approvalService.searchEnhanced(
-        organizationId,
-        {
-          ...filters,
-          search: searchTerm
-        }
-      );
+      // Erstelle Filter
+      const filters: ApprovalFilters = {
+        search: searchTerm,
+        status: selectedStatus.length > 0 ? selectedStatus as ApprovalStatus[] : undefined,
+        clientIds: selectedClients.length > 0 ? selectedClients : undefined,
+        priority: selectedPriorities.length > 0 ? selectedPriorities : undefined,
+        isOverdue: showOverdueOnly ? true : undefined
+      };
       
-      // Filtere Draft-Status heraus, außer explizit angefordert
+      // Lade Freigaben mit Filtern
+      const allApprovals = await approvalService.searchEnhanced(organizationId, filters);
+      
+      // Filtere Draft-Status heraus
       const filteredApprovals = allApprovals.filter(a => a.status !== 'draft');
       
-      console.log('Loaded approvals:', filteredApprovals.length);
       setApprovals(filteredApprovals);
       setLastRefresh(new Date());
       
@@ -449,7 +342,7 @@ const loadApprovals = async () => {
     if (organizationId) {
       loadApprovals();
     }
-  }, [organizationId, filters, searchTerm]);
+  }, [organizationId, selectedStatus, selectedClients, selectedPriorities, showOverdueOnly, searchTerm]);
 
   // Auto-Refresh alle 30 Sekunden
   useEffect(() => {
@@ -502,7 +395,7 @@ const loadApprovals = async () => {
 
   const getStatusBadge = (status: ApprovalStatus) => {
     const config = APPROVAL_STATUS_CONFIG[status];
-    const colorMap: Record<string, any> = {
+    const colorMap: Record<string, 'zinc' | 'indigo' | 'blue' | 'green' | 'yellow' | 'red' | 'orange' | 'purple'> = {
       'gray': 'zinc',
       'indigo': 'indigo',
       'yellow': 'yellow',
@@ -512,14 +405,22 @@ const loadApprovals = async () => {
       'orange': 'orange',
       'purple': 'purple'
     };
-    return <Badge color={colorMap[config.color] || config.color}>{config.label}</Badge>;
+    return <Badge color={colorMap[config.color] || 'zinc'}>{config.label}</Badge>;
   };
 
   const getPriorityBadge = (priority?: string) => {
     if (!priority) return null;
     const option = PRIORITY_OPTIONS.find(o => o.value === priority);
     if (!option) return null;
-    return <Badge color={option.color as any}>{option.label}</Badge>;
+    
+    const priorityColorMap: Record<string, 'zinc' | 'blue' | 'orange' | 'red'> = {
+      'gray': 'zinc',
+      'blue': 'blue',
+      'orange': 'orange',
+      'red': 'red'
+    };
+    
+    return <Badge color={priorityColorMap[option.color] || 'zinc'}>{option.label}</Badge>;
   };
 
   const formatDate = (timestamp: any) => {
@@ -543,162 +444,6 @@ const loadApprovals = async () => {
     });
   };
 
-  // Table columns configuration
-  const columns = [
-    {
-      key: 'title',
-      label: 'Kampagne',
-      render: (approval: ApprovalListView) => (
-        <div>
-          <Link 
-            href={`/dashboard/pr-tools/campaigns/campaigns/${approval.campaignId}`} 
-            className="text-[#005fab] hover:text-[#004a8c] font-medium"
-          >
-            {approval.title}
-          </Link>
-          <div className="mt-1 flex items-center gap-4 text-sm text-gray-500">
-            {approval.clientName && (
-              <div className="flex items-center gap-1">
-                <BuildingOfficeIcon className="h-3 w-3" />
-                {approval.clientName}
-              </div>
-            )}
-            {approval.attachedAssets && approval.attachedAssets.length > 0 && (
-              <div className="flex items-center gap-1">
-                <PhotoIcon className="h-3 w-3" />
-                {approval.attachedAssets.length} Medien
-              </div>
-            )}
-          </div>
-        </div>
-      )
-    },
-    {
-      key: 'status',
-      label: 'Status',
-      render: (approval: ApprovalListView) => (
-        <div className="flex items-center gap-2">
-          {getStatusBadge(approval.status)}
-          {approval.priority && getPriorityBadge(approval.priority)}
-          {approval.isOverdue && (
-            <Badge color="red">Überfällig</Badge>
-          )}
-        </div>
-      )
-    },
-    {
-      key: 'progress',
-      label: 'Fortschritt',
-      render: (approval: ApprovalListView) => (
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <div className="w-24 bg-gray-200 rounded-full h-2">
-              <div 
-                className={clsx(
-                  "h-2 rounded-full transition-all",
-                  approval.status === 'approved' ? 'bg-green-600' :
-                  approval.status === 'rejected' ? 'bg-red-600' :
-                  approval.progressPercentage > 50 ? 'bg-blue-600' :
-                  approval.progressPercentage > 0 ? 'bg-yellow-600' :
-                  'bg-gray-400'
-                )}
-                style={{ width: `${approval.progressPercentage}%` }}
-              />
-            </div>
-            <Text className="text-sm text-gray-600">
-              {approval.progressPercentage}%
-            </Text>
-          </div>
-          <Text className="text-xs text-gray-500">
-            {approval.approvedCount} von {approval.recipients.length} Empfängern
-          </Text>
-        </div>
-      )
-    },
-    {
-      key: 'activity',
-      label: 'Letzte Aktivität',
-      render: (approval: ApprovalListView) => (
-        <div className="text-sm">
-          <div className="text-gray-900">{formatDate(approval.updatedAt)}</div>
-          {approval.history && approval.history.length > 0 && (
-            <div className="text-gray-500 flex items-center gap-1 mt-1">
-              <ChatBubbleLeftRightIcon className="h-3 w-3" />
-              {approval.history.length} Aktion{approval.history.length !== 1 ? 'en' : ''}
-            </div>
-          )}
-        </div>
-      )
-    },
-    {
-      key: 'actions',
-      label: '',
-      render: (approval: ApprovalListView) => (
-        <Dropdown>
-          <DropdownButton plain className="p-2 hover:bg-gray-100 rounded-lg">
-            <EllipsisVerticalIcon className="h-5 w-5 text-gray-700" />
-          </DropdownButton>
-          <DropdownMenu anchor="bottom end" className="bg-white shadow-lg rounded-lg">
-            <DropdownItem 
-              href={`/freigabe/${approval.shareId}`}
-              target="_blank"
-              className="hover:bg-gray-50"
-            >
-              <EyeIcon className="text-gray-500" />
-              Freigabe-Link öffnen
-            </DropdownItem>
-            <DropdownItem 
-              onClick={() => handleCopyLink(approval.shareId)}
-              className="hover:bg-gray-50"
-            >
-              <LinkIcon className="text-gray-500" />
-              Link kopieren
-            </DropdownItem>
-            <DropdownDivider />
-            <DropdownItem 
-              href={`/dashboard/pr-tools/campaigns/campaigns/${approval.campaignId}`}
-              className="hover:bg-gray-50"
-            >
-              <DocumentTextIcon className="text-gray-500" />
-              Kampagne anzeigen
-            </DropdownItem>
-            <DropdownItem 
-              onClick={() => handleViewFeedback(approval)}
-              className="hover:bg-gray-50"
-            >
-              <ChatBubbleLeftRightIcon className="text-gray-500" />
-              Feedback-Historie
-            </DropdownItem>
-            {(approval.status === 'pending' || approval.status === 'in_review') && (
-              <>
-                <DropdownDivider />
-                <DropdownItem 
-                  onClick={() => handleSendReminder(approval)}
-                  className="hover:bg-gray-50"
-                >
-                  <ClockIcon className="text-gray-500" />
-                  Erinnerung senden
-                </DropdownItem>
-              </>
-            )}
-            {approval.status === 'changes_requested' && (
-              <>
-                <DropdownDivider />
-                <DropdownItem 
-                  onClick={() => handleResubmit(approval)}
-                  className="hover:bg-gray-50"
-                >
-                  <ArrowPathIcon className="text-gray-500" />
-                  Erneut senden
-                </DropdownItem>
-              </>
-            )}
-          </DropdownMenu>
-        </Dropdown>
-      )
-    }
-  ];
-
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(25);
@@ -715,6 +460,7 @@ const loadApprovals = async () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [approvals]);
+  
   const stats = useMemo(() => {
     const pending = approvals.filter(a => a.status === 'pending' || a.status === 'in_review').length;
     const changesRequested = approvals.filter(a => a.status === 'changes_requested').length;
@@ -724,10 +470,12 @@ const loadApprovals = async () => {
     return { pending, changesRequested, approved, overdue };
   }, [approvals]);
 
-  const clearFilters = () => {
-    setFilters({});
-    setSearchTerm("");
-  };
+  const statusOptions = Object.entries(APPROVAL_STATUS_CONFIG).map(([value, config]) => ({
+    value,
+    label: config.label
+  }));
+
+  const activeFiltersCount = selectedStatus.length + selectedClients.length + selectedPriorities.length + (showOverdueOnly ? 1 : 0);
 
   if (loading) {
     return (
@@ -753,7 +501,7 @@ const loadApprovals = async () => {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <Heading>Freigaben-Center</Heading>
+            <Heading level={1}>Freigaben-Center</Heading>
             <Text className="mt-1 text-gray-600">
               Verwalten Sie alle Kampagnen-Freigaben an einem Ort
             </Text>
@@ -825,93 +573,265 @@ const loadApprovals = async () => {
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-        <div className="p-4">
-          <div className="relative">
-            <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-5 text-gray-400" />
-            <Input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Kampagnen durchsuchen..."
-              className="pl-10"
-            />
-          </div>
+      {/* Toolbar */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2">
+          {/* Search Input */}
+          <SearchInput
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Kampagnen durchsuchen..."
+            className="flex-1"
+          />
+
+          {/* Filter Button */}
+          <Popover className="relative">
+            <Popover.Button
+              className={clsx(
+                'inline-flex items-center justify-center rounded-lg border p-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 h-10 w-10',
+                activeFiltersCount > 0
+                  ? 'border-primary bg-primary/5 text-primary hover:bg-primary/10'
+                  : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+              )}
+              aria-label="Filter"
+            >
+              <FunnelIcon className="h-5 w-5" />
+              {activeFiltersCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-white">
+                  {activeFiltersCount}
+                </span>
+              )}
+            </Popover.Button>
+            
+            <Transition
+              as={Fragment}
+              enter="transition ease-out duration-200"
+              enterFrom="opacity-0 translate-y-1"
+              enterTo="opacity-100 translate-y-0"
+              leave="transition ease-in duration-150"
+              leaveFrom="opacity-100 translate-y-0"
+              leaveTo="opacity-0 translate-y-1"
+            >
+              <Popover.Panel className="absolute left-0 z-10 mt-2 w-80 origin-top-left rounded-lg bg-white p-4 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-zinc-800 dark:ring-white/10">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-medium text-zinc-900 dark:text-white">Filter</h3>
+                    {activeFiltersCount > 0 && (
+                      <button
+                        onClick={() => {
+                          setSelectedStatus([]);
+                          setSelectedClients([]);
+                          setSelectedPriorities([]);
+                          setShowOverdueOnly(false);
+                        }}
+                        className="text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                      >
+                        Zurücksetzen
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Status Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                      Status
+                    </label>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {statusOptions.map((option) => {
+                        const isChecked = selectedStatus.includes(option.value);
+                        return (
+                          <label
+                            key={option.value}
+                            className="flex items-center gap-2 cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={(e) => {
+                                const newValues = e.target.checked
+                                  ? [...selectedStatus, option.value]
+                                  : selectedStatus.filter(v => v !== option.value);
+                                setSelectedStatus(newValues);
+                              }}
+                              className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
+                            />
+                            <span className="text-sm text-zinc-700 dark:text-zinc-300">
+                              {option.label}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Client Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                      Kunde
+                    </label>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {clients.map((client) => {
+                        const isChecked = selectedClients.includes(client.id);
+                        return (
+                          <label
+                            key={client.id}
+                            className="flex items-center gap-2 cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={(e) => {
+                                const newValues = e.target.checked
+                                  ? [...selectedClients, client.id]
+                                  : selectedClients.filter(v => v !== client.id);
+                                setSelectedClients(newValues);
+                              }}
+                              className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
+                            />
+                            <span className="text-sm text-zinc-700 dark:text-zinc-300">
+                              {client.name}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Priority Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                      Priorität
+                    </label>
+                    <div className="space-y-2">
+                      {PRIORITY_OPTIONS.map((option) => {
+                        const isChecked = selectedPriorities.includes(option.value);
+                        return (
+                          <label
+                            key={option.value}
+                            className="flex items-center gap-2 cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={(e) => {
+                                const newValues = e.target.checked
+                                  ? [...selectedPriorities, option.value]
+                                  : selectedPriorities.filter(v => v !== option.value);
+                                setSelectedPriorities(newValues);
+                              }}
+                              className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
+                            />
+                            <span className="text-sm text-zinc-700 dark:text-zinc-300">
+                              {option.label}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Overdue Filter */}
+                  <div>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={showOverdueOnly}
+                        onChange={(e) => setShowOverdueOnly(e.target.checked)}
+                        className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
+                      />
+                      <span className="text-sm text-zinc-700 dark:text-zinc-300">
+                        Nur überfällige anzeigen
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              </Popover.Panel>
+            </Transition>
+          </Popover>
         </div>
-        
-        {/* Filter Bar */}
-        <FilterBar
-          filters={filters}
-          onFiltersChange={setFilters}
-          clients={clients}
-          onClearFilters={clearFilters}
-        />
+      </div>
+
+      {/* Results Info */}
+      <div className="mb-4">
+        <Text className="text-sm text-zinc-600 dark:text-zinc-400">
+          {approvals.length} Freigabe{approvals.length !== 1 ? 'n' : ''}
+        </Text>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm overflow-hidden">
         {approvals.length === 0 ? (
           <div className="text-center py-12">
             <CheckBadgeIcon className="mx-auto h-12 w-12 text-gray-400" />
             <Heading level={3} className="mt-2">Keine Freigaben gefunden</Heading>
             <Text className="mt-1">
-              {searchTerm || Object.keys(filters).length > 0
+              {searchTerm || activeFiltersCount > 0
                 ? "Versuchen Sie andere Suchkriterien" 
                 : "Noch keine Kampagnen zur Freigabe eingereicht"}
             </Text>
           </div>
         ) : (
           <>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableHeader>Kampagne</TableHeader>
-                  <TableHeader>Status</TableHeader>
-                  <TableHeader>Fortschritt</TableHeader>
-                  <TableHeader>Letzte Aktivität</TableHeader>
-                  <TableHeader>
-                    <span className="sr-only">Aktionen</span>
-                  </TableHeader>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {paginatedApprovals.map((approval) => (
-                  <TableRow key={approval.id}>
-                    <TableCell>
-                      <div>
-                        <Link 
-                          href={`/dashboard/pr-tools/campaigns/campaigns/${approval.campaignId}`} 
-                          className="text-[#005fab] hover:text-[#004a8c] font-medium"
-                        >
-                          {approval.title}
-                        </Link>
-                        <div className="mt-1 flex items-center gap-4 text-sm text-gray-500">
-                          {approval.clientName && (
-                            <div className="flex items-center gap-1">
-                              <BuildingOfficeIcon className="h-3 w-3" />
-                              {approval.clientName}
-                            </div>
-                          )}
-                          {approval.attachedAssets && approval.attachedAssets.length > 0 && (
-                            <div className="flex items-center gap-1">
-                              <PhotoIcon className="h-3 w-3" />
-                              {approval.attachedAssets.length} Medien
-                            </div>
-                          )}
-                        </div>
+            {/* Table Header */}
+            <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
+              <div className="flex items-center">
+                <div className="w-[35%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Kampagne
+                </div>
+                <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Status
+                </div>
+                <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Fortschritt
+                </div>
+                <div className="flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right pr-14">
+                  Letzte Aktivität
+                </div>
+              </div>
+            </div>
+
+            {/* Table Body */}
+            <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
+              {paginatedApprovals.map((approval) => (
+                <div key={approval.id} className="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                  <div className="flex items-center">
+                    {/* Kampagne */}
+                    <div className="w-[35%] min-w-0">
+                      <Link 
+                        href={`/dashboard/pr-tools/campaigns/campaigns/${approval.campaignId}`} 
+                        className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-primary truncate block"
+                      >
+                        {approval.title}
+                      </Link>
+                      <div className="mt-1 flex items-center gap-4 text-sm text-gray-500">
+                        {approval.clientName && (
+                          <div className="flex items-center gap-1">
+                            <BuildingOfficeIcon className="h-3 w-3" />
+                            {approval.clientName}
+                          </div>
+                        )}
+                        {approval.attachedAssets && approval.attachedAssets.length > 0 && (
+                          <div className="flex items-center gap-1">
+                            <PhotoIcon className="h-3 w-3" />
+                            {approval.attachedAssets.length} Medien
+                          </div>
+                        )}
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
+                    </div>
+
+                    {/* Status */}
+                    <div className="w-[15%]">
+                      <div className="flex flex-wrap items-center gap-1">
                         {getStatusBadge(approval.status)}
                         {approval.priority && getPriorityBadge(approval.priority)}
                         {approval.isOverdue && (
-                          <Badge color="red">Überfällig</Badge>
+                          <Badge color="red" className="text-xs">Überfällig</Badge>
                         )}
                       </div>
-                    </TableCell>
-                    <TableCell>
+                    </div>
+
+                    {/* Fortschritt */}
+                    <div className="w-[20%]">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <div className="w-24 bg-gray-200 rounded-full h-2">
@@ -935,52 +855,52 @@ const loadApprovals = async () => {
                           {approval.approvedCount} von {approval.recipients.length} Empfängern
                         </Text>
                       </div>
-                    </TableCell>
-                    <TableCell>
+                    </div>
+
+                    {/* Letzte Aktivität */}
+                    <div className="flex-1 text-right pr-14">
                       <div className="text-sm">
                         <div className="text-gray-900">{formatDate(approval.updatedAt)}</div>
                         {approval.history && approval.history.length > 0 && (
-                          <div className="text-gray-500 flex items-center gap-1 mt-1">
+                          <div className="text-gray-500 flex items-center gap-1 mt-1 justify-end">
                             <ChatBubbleLeftRightIcon className="h-3 w-3" />
                             {approval.history.length} Aktion{approval.history.length !== 1 ? 'en' : ''}
                           </div>
                         )}
                       </div>
-                    </TableCell>
-                    <TableCell>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="ml-4">
                       <Dropdown>
-                        <DropdownButton plain className="p-2 hover:bg-gray-100 rounded-lg">
-                          <EllipsisVerticalIcon className="h-5 w-5 text-gray-700" />
+                        <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700">
+                          <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
                         </DropdownButton>
-                        <DropdownMenu anchor="bottom end" className="bg-white shadow-lg rounded-lg">
+                        <DropdownMenu anchor="bottom end">
                           <DropdownItem 
                             href={`/freigabe/${approval.shareId}`}
                             target="_blank"
-                            className="hover:bg-gray-50"
                           >
-                            <EyeIcon className="text-gray-500" />
+                            <EyeIcon className="h-4 w-4" />
                             Freigabe-Link öffnen
                           </DropdownItem>
                           <DropdownItem 
                             onClick={() => handleCopyLink(approval.shareId)}
-                            className="hover:bg-gray-50"
                           >
-                            <LinkIcon className="text-gray-500" />
+                            <LinkIcon className="h-4 w-4" />
                             Link kopieren
                           </DropdownItem>
                           <DropdownDivider />
                           <DropdownItem 
                             href={`/dashboard/pr-tools/campaigns/campaigns/${approval.campaignId}`}
-                            className="hover:bg-gray-50"
                           >
-                            <DocumentTextIcon className="text-gray-500" />
+                            <DocumentTextIcon className="h-4 w-4" />
                             Kampagne anzeigen
                           </DropdownItem>
                           <DropdownItem 
                             onClick={() => handleViewFeedback(approval)}
-                            className="hover:bg-gray-50"
                           >
-                            <ChatBubbleLeftRightIcon className="text-gray-500" />
+                            <ChatBubbleLeftRightIcon className="h-4 w-4" />
                             Feedback-Historie
                           </DropdownItem>
                           {(approval.status === 'pending' || approval.status === 'in_review') && (
@@ -988,9 +908,8 @@ const loadApprovals = async () => {
                               <DropdownDivider />
                               <DropdownItem 
                                 onClick={() => handleSendReminder(approval)}
-                                className="hover:bg-gray-50"
                               >
-                                <ClockIcon className="text-gray-500" />
+                                <ClockIcon className="h-4 w-4" />
                                 Erinnerung senden
                               </DropdownItem>
                             </>
@@ -1000,57 +919,77 @@ const loadApprovals = async () => {
                               <DropdownDivider />
                               <DropdownItem 
                                 onClick={() => handleResubmit(approval)}
-                                className="hover:bg-gray-50"
                               >
-                                <ArrowPathIcon className="text-gray-500" />
+                                <ArrowPathIcon className="h-4 w-4" />
                                 Erneut senden
                               </DropdownItem>
                             </>
                           )}
                         </DropdownMenu>
                       </Dropdown>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <nav className="flex items-center justify-between border-t border-gray-200 px-4 py-3 sm:px-6">
-                <div className="hidden sm:block">
-                  <Text className="text-sm text-gray-700">
-                    Zeige <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> bis{' '}
-                    <span className="font-medium">
-                      {Math.min(currentPage * pageSize, approvals.length)}
-                    </span>{' '}
-                    von <span className="font-medium">{approvals.length}</span> Ergebnissen
-                  </Text>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex flex-1 justify-between sm:justify-end">
-                  <Button
-                    plain
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    disabled={currentPage === 1}
-                    className="mr-3"
-                  >
-                    <ChevronLeftIcon />
-                    Zurück
-                  </Button>
-                  <Button
-                    plain
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    disabled={currentPage === totalPages}
-                  >
-                    Weiter
-                    <ChevronRightIcon />
-                  </Button>
-                </div>
-              </nav>
-            )}
+              ))}
+            </div>
           </>
         )}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <nav className="mt-6 flex items-center justify-between border-t border-gray-200 px-4 sm:px-0 pt-4">
+          <div className="-mt-px flex w-0 flex-1">
+            <Button
+              plain
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="whitespace-nowrap"
+            >
+              <ChevronLeftIcon />
+              Zurück
+            </Button>
+          </div>
+          <div className="hidden md:-mt-px md:flex">
+            {(() => {
+              const pages = [];
+              const maxVisible = 7;
+              let start = Math.max(1, currentPage - 3);
+              let end = Math.min(totalPages, start + maxVisible - 1);
+              
+              if (end - start < maxVisible - 1) {
+                start = Math.max(1, end - maxVisible + 1);
+              }
+              
+              for (let i = start; i <= end; i++) {
+                pages.push(
+                  <Button
+                    key={i}
+                    plain
+                    onClick={() => setCurrentPage(i)}
+                    className={currentPage === i ? 'font-semibold text-[#005fab]' : ''}
+                  >
+                    {i}
+                  </Button>
+                );
+              }
+              
+              return pages;
+            })()}
+          </div>
+          <div className="-mt-px flex w-0 flex-1 justify-end">
+            <Button
+              plain
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="whitespace-nowrap"
+            >
+              Weiter
+              <ChevronRightIcon />
+            </Button>
+          </div>
+        </nav>
+      )}
 
       {/* Feedback History Modal */}
       {showFeedbackModal && selectedApproval && (

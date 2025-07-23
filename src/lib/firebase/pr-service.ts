@@ -634,85 +634,90 @@ export const prService = {
     await addDoc(collection(db, 'pr_approval_shares'), approvalShareData);
   },
 
-  /**
-   * Findet eine Kampagne anhand der Share-ID (mit Enhanced Approval)
-   */
-  async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
-    try {
-      // Versuche zuerst Enhanced Approval zu finden
-      const approval = await approvalService.getByShareId(shareId);
-      if (approval) {
-        // Lade die zugehörige Kampagne
-        const campaign = await this.getById(approval.campaignId);
-        if (campaign) {
-          // Aktualisiere Approval-Daten aus Enhanced Approval
-          campaign.approvalData = {
-            shareId: approval.shareId,
-            status: this.mapEnhancedToLegacyStatus(approval.status),
-            feedbackHistory: approval.history
-              .filter(h => h.action === 'commented' || h.action === 'changes_requested')
-              .map(h => ({
-                comment: h.details.comment || '',
-                requestedAt: h.timestamp,
-                author: h.actorName
-              })),
-            approvedAt: approval.approvedAt
-          };
-          return campaign;
-        }
-      }
+// Ersetze die getCampaignByShareId Methode in pr-service.ts mit dieser korrigierten Version:
 
-      // Fallback zu Legacy-Methode
-      const q = query(
-        collection(db, 'pr_approval_shares'),
-        where('shareId', '==', shareId),
-        where('isActive', '==', true),
-        limit(1)
-      );
-      
-      const snapshot = await getDocs(q);
-      if (snapshot.empty) {
-        console.log('No approval share found for shareId:', shareId);
-        return null;
+/**
+ * Findet eine Kampagne anhand der Share-ID (mit Enhanced Approval)
+ */
+async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
+  try {
+    // Versuche zuerst Enhanced Approval zu finden
+    const approval = await approvalService.getByShareId(shareId);
+    if (approval) {
+      // Lade die zugehörige Kampagne
+      const campaign = await this.getById(approval.campaignId);
+      if (campaign) {
+        // Stelle sicher, dass history ein Array ist
+        const history = Array.isArray(approval.history) ? approval.history : [];
+        
+        // Aktualisiere Approval-Daten aus Enhanced Approval
+        campaign.approvalData = {
+          shareId: approval.shareId,
+          status: this.mapEnhancedToLegacyStatus(approval.status),
+          feedbackHistory: history
+            .filter(h => h.action === 'commented' || h.action === 'changes_requested')
+            .map(h => ({
+              comment: h.details?.comment || '',
+              requestedAt: h.timestamp,
+              author: h.actorName
+            })),
+          approvedAt: approval.approvedAt
+        };
+        return campaign;
       }
-      
-      const shareDoc = snapshot.docs[0];
-      const shareData = shareDoc.data();
-      
-      console.log('Found legacy approval share:', shareData);
-      
-      // Konstruiere Kampagnen-Objekt aus Share-Daten
-      return {
-        id: shareData.campaignId,
-        userId: shareData.userId,
-        organizationId: shareData.organizationId,
-        title: shareData.campaignTitle,
-        contentHtml: shareData.campaignContent,
-        clientName: shareData.clientName,
-        clientId: shareData.clientId,
-        attachedAssets: shareData.attachedAssets || [],
-        status: shareData.status === 'approved' ? 'approved' : 
-                shareData.status === 'commented' ? 'changes_requested' : 
-                'in_review',
-        approvalRequired: true,
-        approvalData: {
-          shareId: shareData.shareId,
-          status: shareData.status,
-          feedbackHistory: shareData.feedbackHistory || [],
-          approvedAt: shareData.approvedAt
-        },
-        // Minimal-Daten für Type-Kompatibilität
-        distributionListId: '',
-        distributionListName: '',
-        recipientCount: 0,
-        createdAt: shareData.createdAt,
-        updatedAt: shareData.updatedAt
-      } as PRCampaign;
-    } catch (error) {
-      console.error('Fehler beim Laden der Freigabe:', error);
+    }
+
+    // Fallback zu Legacy-Methode
+    const q = query(
+      collection(db, 'pr_approval_shares'),
+      where('shareId', '==', shareId),
+      where('isActive', '==', true),
+      limit(1)
+    );
+    
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+      console.log('No approval share found for shareId:', shareId);
       return null;
     }
-  },
+    
+    const shareDoc = snapshot.docs[0];
+    const shareData = shareDoc.data();
+    
+    console.log('Found legacy approval share:', shareData);
+    
+    // Konstruiere Kampagnen-Objekt aus Share-Daten
+    return {
+      id: shareData.campaignId,
+      userId: shareData.userId,
+      organizationId: shareData.organizationId,
+      title: shareData.campaignTitle,
+      contentHtml: shareData.campaignContent,
+      clientName: shareData.clientName,
+      clientId: shareData.clientId,
+      attachedAssets: shareData.attachedAssets || [],
+      status: shareData.status === 'approved' ? 'approved' : 
+              shareData.status === 'commented' ? 'changes_requested' : 
+              'in_review',
+      approvalRequired: true,
+      approvalData: {
+        shareId: shareData.shareId,
+        status: shareData.status,
+        feedbackHistory: shareData.feedbackHistory || [],
+        approvedAt: shareData.approvedAt
+      },
+      // Minimal-Daten für Type-Kompatibilität
+      distributionListId: '',
+      distributionListName: '',
+      recipientCount: 0,
+      createdAt: shareData.createdAt,
+      updatedAt: shareData.updatedAt
+    } as PRCampaign;
+  } catch (error) {
+    console.error('Fehler beim Laden der Freigabe:', error);
+    return null;
+  }
+},
 
   /**
    * Sendet eine überarbeitete Kampagne erneut zur Freigabe
