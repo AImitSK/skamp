@@ -12,6 +12,7 @@ import { Field, Label, FieldGroup } from "@/components/fieldset";
 import { brandingService } from "@/lib/firebase/branding-service";
 import { mediaService } from "@/lib/firebase/media-service";
 import { BrandingSettings } from "@/types/branding";
+import { teamMemberService } from "@/lib/firebase/organization-service";
 import { 
   BuildingOfficeIcon,
   PhotoIcon,
@@ -67,6 +68,7 @@ export default function BrandingPage() {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [organizationId, setOrganizationId] = useState<string>('');
   
   const [formData, setFormData] = useState<Partial<BrandingSettings>>({
     companyName: '',
@@ -82,18 +84,59 @@ export default function BrandingPage() {
     showCopyright: true
   });
 
+  // Lade OrganizationId
   useEffect(() => {
-    if (user) {
-      loadBrandingSettings();
-    }
+    const loadOrganization = async () => {
+      if (!user) return;
+      
+      console.log('🟢 Loading organization for user:', user.uid);
+      
+      try {
+        const orgs = await teamMemberService.getUserOrganizations(user.uid);
+        console.log('🟢 Organizations found:', orgs);
+        
+        if (orgs.length > 0) {
+          const orgId = orgs[0].organization.id;
+          setOrganizationId(orgId);
+          console.log('🟢 Setting organizationId:', orgId);
+        } else {
+          // Fallback auf userId
+          const fallbackId = user.uid;
+          setOrganizationId(fallbackId);
+          console.log('🟢 Using userId as fallback:', fallbackId);
+        }
+      } catch (error) {
+        console.error('Error loading organization:', error);
+        // Fallback auf userId
+        const fallbackId = user.uid;
+        setOrganizationId(fallbackId);
+        console.log('🟢 Error fallback - using userId:', fallbackId);
+      }
+    };
+    
+    loadOrganization();
   }, [user]);
 
+  // Lade Branding Settings wenn organizationId verfügbar ist
+  useEffect(() => {
+    if (user && organizationId) {
+      loadBrandingSettings();
+    }
+  }, [user, organizationId]);
+
   const loadBrandingSettings = async () => {
-    if (!user) return;
+    if (!user || !organizationId) return;
     
     try {
       setLoading(true);
-      const settings = await brandingService.getBrandingSettings(user.uid);
+      
+      console.log('🟢 Loading branding settings for organizationId:', organizationId);
+      
+      // Versuche Migration wenn nötig
+      await brandingService.migrateFromUserToOrg(user.uid, organizationId);
+      
+      // Lade Settings mit organizationId
+      const settings = await brandingService.getBrandingSettings(organizationId);
       
       if (settings) {
         setFormData({
@@ -142,7 +185,7 @@ export default function BrandingPage() {
       // Wir verwenden einen speziellen Ordner für Branding
       const asset = await mediaService.uploadMedia(
         file,
-        user.uid,
+        organizationId, // Verwende organizationId statt userId
         undefined, // Kein Ordner = Root, aber wir markieren es speziell
         (progress) => {
           console.log(`Upload-Fortschritt: ${progress}%`);
@@ -172,11 +215,17 @@ export default function BrandingPage() {
   };
 
   const handleRemoveLogo = async () => {
-    if (!user) return;
+    console.log('🟢 handleRemoveLogo called with:', { user: !!user, organizationId });
+    
+    if (!user || !organizationId) {
+      console.error('❌ Cannot remove logo: missing user or organizationId');
+      showAlert('error', 'Bitte warten Sie, bis die Daten geladen sind');
+      return;
+    }
     
     try {
       // Verwende den Service zum Entfernen
-      await brandingService.removeLogo(user.uid);
+      await brandingService.removeLogo({ organizationId, userId: user.uid });
       
       // Update lokalen State
       setFormData(prev => ({
@@ -184,6 +233,8 @@ export default function BrandingPage() {
         logoUrl: undefined,
         logoAssetId: undefined
       }));
+      
+      showAlert('success', 'Logo erfolgreich entfernt');
     } catch (error) {
       console.error('Fehler beim Entfernen des Logos:', error);
       showAlert('error', 'Fehler beim Entfernen des Logos');
@@ -193,7 +244,17 @@ export default function BrandingPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user) return;
+    console.log('🟢 handleSubmit called with:', { 
+      user: !!user, 
+      organizationId,
+      organizationIdType: typeof organizationId 
+    });
+    
+    if (!user || !organizationId) {
+      console.error('❌ Cannot submit: missing user or organizationId');
+      showAlert('error', 'Bitte warten Sie, bis die Daten geladen sind');
+      return;
+    }
 
     // Validierung
     const validation = brandingService.validateBrandingSettings(formData);
@@ -206,10 +267,12 @@ export default function BrandingPage() {
     setSaving(true);
     
     try {
-      await brandingService.updateBrandingSettings(user.uid, {
-        ...formData,
-        userId: user.uid
-      });
+      console.log('🟢 Saving branding settings with context:', { organizationId, userId: user.uid });
+      
+      await brandingService.updateBrandingSettings(
+        formData,
+        { organizationId: organizationId, userId: user.uid }
+      );
       
       showAlert('success', 'Branding-Einstellungen erfolgreich gespeichert');
     } catch (error) {
@@ -440,7 +503,7 @@ export default function BrandingPage() {
             </Button>
             <Button
               type="submit"
-              disabled={saving}
+              disabled={saving || !organizationId}
               className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
             >
               {saving ? 'Wird gespeichert...' : 'Speichern'}

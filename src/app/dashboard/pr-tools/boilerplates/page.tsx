@@ -5,8 +5,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { boilerplatesService } from "@/lib/firebase/boilerplate-service";
 import { companiesService } from "@/lib/firebase/crm-service";
-import { Boilerplate } from "@/types/crm";
-import { Company } from "@/types/crm";
+import { Boilerplate, CompanyEnhanced } from "@/types/crm-enhanced";
 import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
 import { Button } from "@/components/button";
@@ -51,7 +50,7 @@ const POSITION_LABELS: Record<string, string> = {
 export default function BoilerplatesPage() {
   const { user } = useAuth();
   const [boilerplates, setBoilerplates] = useState<Boilerplate[]>([]);
-  const [companies, setCompanies] = useState<Company[]>([]);
+  const [companies, setCompanies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingBoilerplate, setEditingBoilerplate] = useState<Boilerplate | null>(null);
@@ -61,24 +60,46 @@ export default function BoilerplatesPage() {
   const [showStats, setShowStats] = useState(false);
   const [stats, setStats] = useState<any>(null);
 
+  // Verwende userId als organizationId (temporär)
+  const organizationId = user?.uid || '';
+
   useEffect(() => {
-    if (user) {
+    if (user && organizationId) {
       loadData();
     }
-  }, [user]);
+  }, [user, organizationId]);
 
   const loadData = async () => {
-    if (!user) return;
+    if (!user || !organizationId) return;
+    
+    console.log('🟢 Loading boilerplates for organizationId:', organizationId);
+    
     setLoading(true);
     try {
-      const [boilerplatesData, companiesData, statsData] = await Promise.all([
-        boilerplatesService.getAll(user.uid),
-        companiesService.getAll(user.uid),
-        boilerplatesService.getStats(user.uid)
+      // Versuche Migration wenn nötig
+      await boilerplatesService.migrateFromUserToOrg(user.uid, organizationId);
+      
+      // Lade Boilerplates und Stats
+      const [boilerplatesData, statsData] = await Promise.all([
+        boilerplatesService.getAll(organizationId),
+        boilerplatesService.getStats(organizationId)
       ]);
+      
+      console.log('🟢 Boilerplates loaded:', boilerplatesData.length);
+      
       setBoilerplates(boilerplatesData);
-      setCompanies(companiesData);
       setStats(statsData);
+      
+      // Versuche Companies zu laden, aber ignoriere Fehler
+      try {
+        const companiesData = await companiesService.getAll(organizationId);
+        console.log('🟢 Companies loaded:', companiesData.length);
+        setCompanies(companiesData);
+      } catch (error) {
+        console.warn('Companies konnten nicht geladen werden:', error);
+        // Setze leeres Array, damit die App weiter funktioniert
+        setCompanies([]);
+      }
     } catch (error) {
       console.error("Fehler beim Laden:", error);
     } finally {
@@ -127,6 +148,8 @@ export default function BoilerplatesPage() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!id) return;
+    
     if (window.confirm("Möchten Sie diesen Textbaustein wirklich löschen?")) {
       await boilerplatesService.delete(id);
       await loadData();
@@ -134,19 +157,29 @@ export default function BoilerplatesPage() {
   };
 
   const handleArchive = async (id: string) => {
-    await boilerplatesService.archive(id);
+    if (!organizationId || !id) return;
+    
+    await boilerplatesService.archive(id, { organizationId, userId: user!.uid });
     await loadData();
   };
 
   const handleToggleFavorite = async (id: string) => {
-    await boilerplatesService.toggleFavorite(id);
+    if (!organizationId || !id) return;
+    
+    await boilerplatesService.toggleFavorite(id, { organizationId, userId: user!.uid });
     await loadData();
   };
 
   const handleDuplicate = async (boilerplate: Boilerplate) => {
+    if (!organizationId || !boilerplate.id) return;
+    
     const newName = prompt("Name für die Kopie:", `${boilerplate.name} (Kopie)`);
     if (newName) {
-      await boilerplatesService.duplicate(boilerplate.id!, newName);
+      await boilerplatesService.duplicate(
+        boilerplate.id, 
+        newName, 
+        { organizationId, userId: user!.uid }
+      );
       await loadData();
     }
   };
@@ -225,7 +258,9 @@ export default function BoilerplatesPage() {
               <option value="all">Alle Kunden</option>
               <option value="global">Nur globale</option>
               {companies.map(company => (
-                <option key={company.id} value={company.id}>{company.name}</option>
+                <option key={company.id} value={company.id}>
+                  {company.name}
+                </option>
               ))}
             </Select>
           </div>
@@ -276,7 +311,7 @@ export default function BoilerplatesPage() {
                 <TableRow key={bp.id} className="hover:bg-gray-50">
                   <TableCell>
                     <button
-                      onClick={() => handleToggleFavorite(bp.id!)}
+                      onClick={() => bp.id && handleToggleFavorite(bp.id)}
                       className="text-gray-400 hover:text-yellow-500"
                     >
                       {bp.isFavorite ? (
@@ -301,9 +336,15 @@ export default function BoilerplatesPage() {
                   </TableCell>
                   <TableCell>
                     {bp.isGlobal ? (
-                      <Text>—</Text>
+                      <Badge color="blue" className="inline-flex items-center gap-1">
+                        <GlobeAltIcon className="h-3 w-3" />
+                        Global
+                      </Badge>
                     ) : (
-                      <Text>{bp.clientName || 'Kunde'}</Text>
+                      <Badge color="orange" className="inline-flex items-center gap-1">
+                        <BuildingOfficeIcon className="h-3 w-3" />
+                        {bp.clientName || 'Kunde'}
+                      </Badge>
                     )}
                   </TableCell>
                   <TableCell>
@@ -339,7 +380,7 @@ export default function BoilerplatesPage() {
                           <DocumentDuplicateIcon className="text-gray-500" />
                           Duplizieren
                         </DropdownItem>
-                        <DropdownItem onClick={() => handleToggleFavorite(bp.id!)} className="hover:bg-gray-50">
+                        <DropdownItem onClick={() => bp.id && handleToggleFavorite(bp.id)} className="hover:bg-gray-50">
                           {bp.isFavorite ? (
                             <>
                               <StarIconOutline className="text-gray-500" />
@@ -353,11 +394,11 @@ export default function BoilerplatesPage() {
                           )}
                         </DropdownItem>
                         <DropdownDivider />
-                        <DropdownItem onClick={() => handleArchive(bp.id!)} className="hover:bg-gray-50">
+                        <DropdownItem onClick={() => bp.id && handleArchive(bp.id)} className="hover:bg-gray-50">
                           <ArchiveBoxIcon className="text-gray-500" />
                           Archivieren
                         </DropdownItem>
-                        <DropdownItem onClick={() => handleDelete(bp.id!)} className="hover:bg-red-50">
+                        <DropdownItem onClick={() => bp.id && handleDelete(bp.id)} className="hover:bg-red-50">
                           <TrashIcon className="text-red-500" />
                           <span className="text-red-600">Löschen</span>
                         </DropdownItem>
@@ -380,6 +421,7 @@ export default function BoilerplatesPage() {
             handleCloseModal();
             loadData();
           }}
+          organizationId={organizationId}
           userId={user!.uid}
         />
       )}

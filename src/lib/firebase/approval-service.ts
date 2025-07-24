@@ -135,6 +135,35 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
   }
 
   /**
+   * Lädt alle Entitäten einer Organisation (überschrieben für Array-Sicherheit)
+   */
+  async getAll(
+    organizationId: string,
+    options: QueryOptions = {}
+  ): Promise<ApprovalEnhanced[]> {
+    try {
+      const approvals = await super.getAll(organizationId, options);
+      
+      // Stelle sicher, dass alle Arrays wirklich Arrays sind
+      return approvals.map(approval => {
+        if (!Array.isArray(approval.recipients)) {
+          approval.recipients = [];
+        }
+        if (!Array.isArray(approval.history)) {
+          approval.history = [];
+        }
+        if (approval.attachedAssets && !Array.isArray(approval.attachedAssets)) {
+          approval.attachedAssets = [];
+        }
+        return approval;
+      });
+    } catch (error) {
+      console.error('Error loading approvals:', error);
+      return [];
+    }
+  }
+
+  /**
    * Sendet Freigabe-Anfrage an Empfänger
    */
   async sendForApproval(
@@ -190,69 +219,71 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
   }
 
   /**
- * Lädt Freigabe by Share ID (für öffentlichen Zugriff)
- */
-async getByShareId(shareId: string): Promise<ApprovalEnhanced | null> {
-  try {
-    const q = query(
-      collection(db, this.collectionName),
-      where('shareId', '==', shareId),
-      limit(1)
-    );
+   * Lädt Freigabe by Share ID (für öffentlichen Zugriff)
+   */
+  async getByShareId(shareId: string): Promise<ApprovalEnhanced | null> {
+    try {
+      const q = query(
+        collection(db, this.collectionName),
+        where('shareId', '==', shareId),
+        limit(1)
+      );
 
-    const snapshot = await getDocs(q);
-    if (snapshot.empty) return null;
+      const snapshot = await getDocs(q);
+      if (snapshot.empty) return null;
 
-    const doc = snapshot.docs[0];
-    const data = doc.data();
-    
-    // Stelle sicher, dass history ein Array ist
-    if (data.history && !Array.isArray(data.history)) {
-      data.history = [];
+      const doc = snapshot.docs[0];
+      const data = doc.data();
+      
+      // Stelle sicher, dass history ein Array ist
+      if (data.history && !Array.isArray(data.history)) {
+        data.history = [];
+      }
+      
+      // Stelle sicher, dass recipients ein Array ist
+      if (data.recipients && !Array.isArray(data.recipients)) {
+        data.recipients = [];
+      }
+      
+      // Stelle sicher, dass attachedAssets ein Array ist
+      if (data.attachedAssets && !Array.isArray(data.attachedAssets)) {
+        data.attachedAssets = [];
+      }
+      
+      return { id: doc.id, ...data } as ApprovalEnhanced;
+    } catch (error) {
+      console.error('Error fetching by share ID:', error);
+      return null;
     }
-    
-    // Stelle sicher, dass recipients ein Array ist
-    if (data.recipients && !Array.isArray(data.recipients)) {
-      data.recipients = [];
-    }
-    
-    // Stelle sicher, dass attachedAssets ein Array ist
-    if (data.attachedAssets && !Array.isArray(data.attachedAssets)) {
-      data.attachedAssets = [];
-    }
-    
-    return { id: doc.id, ...data } as ApprovalEnhanced;
-  } catch (error) {
-    console.error('Error fetching by share ID:', error);
-    return null;
   }
-}
 
-// Zusätzlich sollte auch die getById Methode angepasst werden:
-async getById(id: string, organizationId: string): Promise<ApprovalEnhanced | null> {
-  try {
-    const doc = await super.getById(id, organizationId);
-    if (!doc) return null;
-    
-    // Stelle sicher, dass Arrays wirklich Arrays sind
-    if (doc.history && !Array.isArray(doc.history)) {
-      doc.history = [];
+  /**
+   * Lädt Freigabe by ID mit Organisation Check
+   */
+  async getById(id: string, organizationId: string): Promise<ApprovalEnhanced | null> {
+    try {
+      const doc = await super.getById(id, organizationId);
+      if (!doc) return null;
+      
+      // Stelle sicher, dass Arrays wirklich Arrays sind
+      if (doc.history && !Array.isArray(doc.history)) {
+        doc.history = [];
+      }
+      
+      if (doc.recipients && !Array.isArray(doc.recipients)) {
+        doc.recipients = [];
+      }
+      
+      if (doc.attachedAssets && !Array.isArray(doc.attachedAssets)) {
+        doc.attachedAssets = [];
+      }
+      
+      return doc;
+    } catch (error) {
+      console.error('Error getting approval by ID:', error);
+      return null;
     }
-    
-    if (doc.recipients && !Array.isArray(doc.recipients)) {
-      doc.recipients = [];
-    }
-    
-    if (doc.attachedAssets && !Array.isArray(doc.attachedAssets)) {
-      doc.attachedAssets = [];
-    }
-    
-    return doc;
-  } catch (error) {
-    console.error('Error getting approval by ID:', error);
-    return null;
   }
-}
 
   /**
    * Markiert Freigabe als angesehen
@@ -299,15 +330,22 @@ async getById(id: string, organizationId: string): Promise<ApprovalEnhanced | nu
         }
       }
 
-      // Historie-Eintrag
+      // Historie-Eintrag - serverTimestamp kann nicht in arrayUnion verwendet werden
       const historyEntry: ApprovalHistoryEntry = {
         id: nanoid(),
-        timestamp: serverTimestamp() as Timestamp,
+        timestamp: Timestamp.now(), // Verwende Timestamp.now() statt serverTimestamp()
         action: 'viewed',
         actorName: recipientEmail || 'Anonym',
-        actorEmail: recipientEmail,
+        actorEmail: recipientEmail || undefined, // Stelle sicher, dass es undefined ist, nicht null
         details: metadata || {}
       };
+
+      // Entferne undefined Felder aus dem historyEntry
+      Object.keys(historyEntry).forEach(key => {
+        if ((historyEntry as any)[key] === undefined) {
+          delete (historyEntry as any)[key];
+        }
+      });
 
       updates.history = arrayUnion(historyEntry);
 
@@ -364,10 +402,10 @@ async getById(id: string, organizationId: string): Promise<ApprovalEnhanced | nu
         }
       }
 
-      // Historie-Eintrag
+      // Historie-Eintrag - serverTimestamp kann nicht in arrayUnion verwendet werden
       const historyEntry: ApprovalHistoryEntry = {
         id: nanoid(),
-        timestamp: serverTimestamp() as Timestamp,
+        timestamp: Timestamp.now(), // Verwende Timestamp.now() statt serverTimestamp()
         action: decision,
         recipientId: recipient.id,
         actorName: recipient.name,
@@ -391,6 +429,84 @@ async getById(id: string, organizationId: string): Promise<ApprovalEnhanced | nu
       }
     } catch (error) {
       console.error('Error submitting decision:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Genehmigt oder lehnt Freigabe ab - Public Access Version
+   */
+  async submitDecisionPublic(
+    shareId: string,
+    decision: 'approved' | 'rejected',
+    comment?: string,
+    authorName?: string,
+    inlineComments?: any[]
+  ): Promise<void> {
+    try {
+      console.log('📝 submitDecisionPublic called with:', { shareId, decision });
+      
+      const approval = await this.getByShareId(shareId);
+      if (!approval || !approval.id) {
+        throw new Error('Freigabe nicht gefunden');
+      }
+      
+      console.log('📝 Current approval status:', approval.status);
+
+      // Für öffentlichen Zugriff: Update ohne Empfänger-Validierung
+      const updates: any = {
+        updatedAt: serverTimestamp()
+      };
+
+      // Bestimme neuen Status
+      const newStatus = decision === 'approved' ? 'approved' : 'rejected';
+      updates.status = newStatus;
+      
+      console.log('📝 Setting new status:', newStatus);
+      
+      if (newStatus === 'approved') {
+        updates.approvedAt = serverTimestamp();
+      } else if (newStatus === 'rejected') {
+        updates.rejectedAt = serverTimestamp();
+      }
+
+      // Historie-Eintrag
+      const historyEntry: ApprovalHistoryEntry = {
+        id: nanoid(),
+        timestamp: Timestamp.now(),
+        action: decision,
+        actorName: authorName || 'Kunde',
+        actorEmail: 'public-access@freigabe.system',
+        details: {
+          previousStatus: approval.status,
+          newStatus,
+          comment,
+          changes: inlineComments ? { inlineComments, publicAccess: true } : { publicAccess: true }
+        }
+      };
+
+      // Entferne undefined Felder
+      if (!inlineComments) {
+        delete (historyEntry as any).inlineComments;
+      }
+      if (!comment) {
+        delete historyEntry.details.comment;
+      }
+
+      updates.history = arrayUnion(historyEntry);
+      
+      console.log('📝 Updating document with:', updates);
+
+      await updateDoc(doc(db, this.collectionName, approval.id), updates);
+      
+      console.log('📝 Update completed');
+
+      // Benachrichtigungen senden
+      if (newStatus !== approval.status) {
+        await this.sendStatusChangeNotification(approval, newStatus);
+      }
+    } catch (error) {
+      console.error('Error submitting decision (public):', error);
       throw error;
     }
   }
@@ -425,10 +541,10 @@ async getById(id: string, organizationId: string): Promise<ApprovalEnhanced | nu
         updatedAt: serverTimestamp()
       };
 
-      // Historie
+      // Historie - serverTimestamp kann nicht in arrayUnion verwendet werden
       const historyEntry: ApprovalHistoryEntry = {
         id: nanoid(),
-        timestamp: serverTimestamp() as Timestamp,
+        timestamp: Timestamp.now(), // Verwende Timestamp.now() statt serverTimestamp()
         action: 'changes_requested',
         recipientId: recipient.id,
         actorName: recipient.name,
@@ -450,6 +566,56 @@ async getById(id: string, organizationId: string): Promise<ApprovalEnhanced | nu
       await this.sendStatusChangeNotification(approval, 'changes_requested');
     } catch (error) {
       console.error('Error requesting changes:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fordert Änderungen an - Public Access Version (ohne E-Mail-Validierung)
+   */
+  async requestChangesPublic(
+    shareId: string,
+    recipientEmail: string,
+    comment: string,
+    authorName?: string,
+    inlineComments?: any[]
+  ): Promise<void> {
+    try {
+      const approval = await this.getByShareId(shareId);
+      if (!approval || !approval.id) {
+        throw new Error('Freigabe nicht gefunden');
+      }
+
+      // Für öffentlichen Zugriff: Update ohne Empfänger-Validierung
+      const updates: any = {
+        status: 'changes_requested',
+        updatedAt: serverTimestamp()
+      };
+
+      // Historie - serverTimestamp kann nicht in arrayUnion verwendet werden
+      const historyEntry: ApprovalHistoryEntry = {
+        id: nanoid(),
+        timestamp: Timestamp.now(),
+        action: 'changes_requested',
+        actorName: authorName || 'Kunde',
+        actorEmail: recipientEmail || 'public-access@freigabe.system',
+        details: {
+          comment,
+          previousStatus: approval.status,
+          newStatus: 'changes_requested',
+          changes: inlineComments ? { inlineComments, publicAccess: true } : { publicAccess: true }
+        },
+        inlineComments
+      };
+
+      updates.history = arrayUnion(historyEntry);
+
+      await updateDoc(doc(db, this.collectionName, approval.id), updates);
+      
+      // Benachrichtigung senden
+      await this.sendStatusChangeNotification(approval, 'changes_requested');
+    } catch (error) {
+      console.error('Error requesting changes (public):', error);
       throw error;
     }
   }
@@ -514,7 +680,9 @@ async getById(id: string, organizationId: string): Promise<ApprovalEnhanced | nu
 
       // Erweitere mit berechneten Feldern
       const enhancedApprovals = approvals.map(approval => {
-        const recipients = approval.recipients || [];
+        // Stelle sicher, dass recipients ein Array ist
+        const recipients = Array.isArray(approval.recipients) ? approval.recipients : [];
+        
         const pendingCount = recipients.filter(r => r.status === 'pending').length;
         const approvedCount = recipients.filter(r => r.status === 'approved').length;
         const totalRequired = recipients.filter(r => r.isRequired).length || recipients.length;
@@ -527,6 +695,7 @@ async getById(id: string, organizationId: string): Promise<ApprovalEnhanced | nu
 
         return {
           ...approval,
+          recipients, // Stelle sicher, dass recipients immer ein Array ist
           pendingCount,
           approvedCount,
           progressPercentage,
@@ -712,10 +881,10 @@ async getById(id: string, organizationId: string): Promise<ApprovalEnhanced | nu
       // Sende Benachrichtigungen
       await this.sendNotifications(approval, 'reminder');
 
-      // Historie-Eintrag
+      // Historie-Eintrag - serverTimestamp kann nicht in arrayUnion verwendet werden
       const historyEntry: ApprovalHistoryEntry = {
         id: nanoid(),
-        timestamp: serverTimestamp() as Timestamp,
+        timestamp: Timestamp.now(), // Verwende Timestamp.now() statt serverTimestamp()
         action: 'reminder_sent',
         userId: context.userId,
         actorName: 'System',

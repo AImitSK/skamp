@@ -15,28 +15,45 @@ import { db } from './client-init';
 import { BrandingSettings } from '@/types/branding';
 
 export const brandingService = {
-  // Hole Branding-Einstellungen für einen User
-  async getBrandingSettings(userId: string): Promise<BrandingSettings | null> {
+  /**
+   * Hole Branding-Einstellungen für eine Organisation
+   * Fallback auf userId für Rückwärtskompatibilität
+   */
+  async getBrandingSettings(organizationId: string): Promise<BrandingSettings | null> {
     try {
-      // Versuche zuerst das Dokument direkt mit der userId zu holen
-      const docRef = doc(db, 'branding_settings', userId);
-      const docSnap = await getDoc(docRef);
+      if (!organizationId) {
+        console.error('getBrandingSettings: organizationId is required');
+        return null;
+      }
+
+      // Versuche zuerst mit organizationId (neues Schema)
+      const orgDocRef = doc(db, 'branding_settings', organizationId);
+      const orgDocSnap = await getDoc(orgDocRef);
       
-      if (docSnap.exists()) {
-        return { id: docSnap.id, ...docSnap.data() } as BrandingSettings;
+      if (orgDocSnap.exists()) {
+        return { id: orgDocSnap.id, ...orgDocSnap.data() } as BrandingSettings;
       }
       
-      // Fallback: Query nach userId (für Rückwärtskompatibilität)
-      const q = query(
+      // Fallback 1: Query nach organizationId
+      const orgQuery = query(
         collection(db, 'branding_settings'),
-        where('userId', '==', userId),
+        where('organizationId', '==', organizationId),
         limit(1)
       );
-      const snapshot = await getDocs(q);
+      const orgSnapshot = await getDocs(orgQuery);
       
-      if (!snapshot.empty) {
-        const doc = snapshot.docs[0];
+      if (!orgSnapshot.empty) {
+        const doc = orgSnapshot.docs[0];
         return { id: doc.id, ...doc.data() } as BrandingSettings;
+      }
+      
+      // Fallback 2: Legacy userId (für Migration)
+      const userDocRef = doc(db, 'branding_settings', organizationId); // organizationId könnte userId sein
+      const userDocSnap = await getDoc(userDocRef);
+      
+      if (userDocSnap.exists() && userDocSnap.data().userId) {
+        // Legacy Dokument gefunden
+        return { id: userDocSnap.id, ...userDocSnap.data() } as BrandingSettings;
       }
       
       return null;
@@ -46,16 +63,28 @@ export const brandingService = {
     }
   },
 
-  // Erstelle neue Branding-Einstellungen
-  async createBrandingSettings(settings: Omit<BrandingSettings, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+  /**
+   * Erstelle neue Branding-Einstellungen
+   */
+  async createBrandingSettings(
+    settings: Omit<BrandingSettings, 'id' | 'createdAt' | 'updatedAt'>,
+    context: { organizationId: string; userId: string }
+  ): Promise<string> {
     try {
-      // Verwende userId als Document ID für einfacheren Zugriff
-      const docRef = doc(db, 'branding_settings', settings.userId);
+      if (!context.organizationId) {
+        throw new Error('createBrandingSettings: organizationId is required');
+      }
+
+      // Verwende organizationId als Document ID
+      const docRef = doc(db, 'branding_settings', context.organizationId);
       
       await setDoc(docRef, {
         ...settings,
+        organizationId: context.organizationId,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
+        createdBy: context.userId,
+        updatedBy: context.userId
       });
       
       return docRef.id;
@@ -65,13 +94,21 @@ export const brandingService = {
     }
   },
 
-  // Update Branding-Einstellungen
+  /**
+   * Update Branding-Einstellungen
+   */
   async updateBrandingSettings(
-    userId: string, 
-    updates: Partial<BrandingSettings>
+    updates: Partial<BrandingSettings>,
+    context: { organizationId: string; userId: string }
   ): Promise<void> {
     try {
-      const docRef = doc(db, 'branding_settings', userId);
+      if (!context.organizationId) {
+        throw new Error('updateBrandingSettings: organizationId is required');
+      }
+
+      console.log('Updating branding settings for org:', context.organizationId);
+
+      const docRef = doc(db, 'branding_settings', context.organizationId);
       
       // Filtere undefined Werte heraus
       const cleanedUpdates = Object.entries(updates).reduce((acc, [key, value]) => {
@@ -89,15 +126,18 @@ export const brandingService = {
         await updateDoc(docRef, {
           ...cleanedUpdates,
           updatedAt: serverTimestamp(),
+          updatedBy: context.userId
         });
       } else {
         // Erstelle neues Dokument wenn es noch nicht existiert
         await setDoc(docRef, {
           ...cleanedUpdates,
-          userId,
+          organizationId: context.organizationId,
           showCopyright: updates.showCopyright ?? true,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
+          createdBy: context.userId,
+          updatedBy: context.userId
         });
       }
     } catch (error) {
@@ -106,14 +146,21 @@ export const brandingService = {
     }
   },
 
-  // Lösche Logo Asset ID (wenn Logo gelöscht wird)
-  async removeLogo(userId: string): Promise<void> {
+  /**
+   * Lösche Logo Asset ID (wenn Logo gelöscht wird)
+   */
+  async removeLogo(context: { organizationId: string; userId: string }): Promise<void> {
     try {
-      const docRef = doc(db, 'branding_settings', userId);
+      if (!context.organizationId) {
+        throw new Error('removeLogo: organizationId is required');
+      }
+
+      const docRef = doc(db, 'branding_settings', context.organizationId);
       await updateDoc(docRef, {
-        logoUrl: null,      // Verwende null statt undefined
-        logoAssetId: null,  // Verwende null statt undefined
-        updatedAt: serverTimestamp()
+        logoUrl: null,
+        logoAssetId: null,
+        updatedAt: serverTimestamp(),
+        updatedBy: context.userId
       });
     } catch (error) {
       console.error('Fehler beim Entfernen des Logos:', error);
@@ -121,7 +168,9 @@ export const brandingService = {
     }
   },
 
-  // Validiere Branding-Einstellungen
+  /**
+   * Validiere Branding-Einstellungen
+   */
   validateBrandingSettings(settings: Partial<BrandingSettings>): { 
     isValid: boolean; 
     errors: Record<string, string> 
@@ -156,5 +205,43 @@ export const brandingService = {
       isValid: Object.keys(errors).length === 0,
       errors
     };
+  },
+
+  /**
+   * Migration von alten Branding-Einstellungen (userId -> organizationId)
+   */
+  async migrateFromUserToOrg(
+    userId: string,
+    organizationId: string
+  ): Promise<void> {
+    try {
+      if (!userId || !organizationId) {
+        console.warn('Migration skipped: missing userId or organizationId');
+        return;
+      }
+
+      // Hole alte Einstellungen mit userId
+      const oldDocRef = doc(db, 'branding_settings', userId);
+      const oldDocSnap = await getDoc(oldDocRef);
+      
+      if (oldDocSnap.exists()) {
+        const oldData = oldDocSnap.data();
+        
+        // Erstelle neue Einstellungen mit organizationId
+        await setDoc(doc(db, 'branding_settings', organizationId), {
+          ...oldData,
+          organizationId,
+          userId: undefined, // Entferne userId
+          createdBy: oldData.userId || userId,
+          updatedBy: userId,
+          updatedAt: serverTimestamp()
+        });
+        
+        console.log('Branding settings migrated from user to organization');
+      }
+    } catch (error) {
+      console.error('Error migrating branding settings:', error);
+      // Nicht werfen, da Migration optional ist
+    }
   }
 };

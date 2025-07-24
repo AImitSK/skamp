@@ -3,7 +3,8 @@ import { Timestamp } from 'firebase/firestore';
 
 export interface BrandingSettings {
   id?: string;
-  userId: string;
+  userId?: string; // Legacy - wird zu organizationId migriert
+  organizationId?: string; // Multi-Tenancy
   
   // Firmeninformationen
   companyName: string;
@@ -24,9 +25,11 @@ export interface BrandingSettings {
   // Anzeigeoptionen
   showCopyright: boolean; // Standard: true
   
-  // Timestamps
+  // Timestamps & Tracking
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
+  createdBy?: string; // User ID des Erstellers
+  updatedBy?: string; // User ID des letzten Bearbeiters
 }
 
 // Validierungsregeln

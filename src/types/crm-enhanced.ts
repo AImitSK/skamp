@@ -514,14 +514,33 @@ export interface Boilerplate {
   isGlobal: boolean;
   clientId?: string;
   clientName?: string;
-  userId: string;
+  userId?: string; // Optional für Legacy Support
+  organizationId?: string; // Multi-Tenancy
+  createdBy?: string; // User ID des Erstellers
+  updatedBy?: string; // User ID des letzten Bearbeiters
   tags?: string[];
-  isFavorite?: boolean;
   defaultPosition?: 'top' | 'bottom' | 'signature' | 'custom';
+  sortOrder?: number;
+  isArchived?: boolean;
+  isFavorite?: boolean;
   usageCount?: number;
   lastUsedAt?: any;
   createdAt?: any;
   updatedAt?: any;
+}
+
+// Boilerplate Create Data - ohne IDs
+export interface BoilerplateCreateData {
+  name: string;
+  content: string;
+  category: 'company' | 'contact' | 'legal' | 'product' | 'custom';
+  description?: string;
+  isGlobal?: boolean;
+  clientId?: string;
+  clientName?: string;
+  tags?: string[];
+  defaultPosition?: 'top' | 'bottom' | 'signature' | 'custom';
+  sortOrder?: number;
 }
 
 // Helper Types für Boilerplates

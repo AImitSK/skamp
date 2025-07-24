@@ -14,6 +14,7 @@ import {
   writeBatch,
   Timestamp,
   limit,
+  arrayUnion
 } from 'firebase/firestore';
 import { db } from './client-init';
 import { PRCampaign, CampaignAssetAttachment, ApprovalData } from '@/types/pr';
@@ -522,8 +523,11 @@ export const prService = {
   },
 
   /**
-   * Prüft ob eine Kampagne Assets hat
+   * Einfacher HTML-Stripper (Helper-Funktion)
    */
+  stripHtml(html: string): string {
+    return html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+  },
   hasAssets(campaign: PRCampaign): boolean {
     return (campaign.attachedAssets?.length || 0) > 0;
   },
@@ -545,6 +549,8 @@ export const prService = {
    * Startet den Freigabeprozess mit dem Enhanced Approval Service
    */
   async requestApproval(campaignId: string): Promise<string> {
+    console.log('🔵 requestApproval called for campaign:', campaignId);
+    
     const campaign = await this.getById(campaignId);
     if (!campaign) {
       throw new Error('Kampagne nicht gefunden');
@@ -553,6 +559,8 @@ export const prService = {
     // Prüfe ob organizationId vorhanden ist
     const organizationId = campaign.organizationId || campaign.userId;
     const context = { organizationId, userId: campaign.userId };
+
+    console.log('🔵 Context:', context);
 
     // Erstelle Empfänger aus Campaign-Daten
     // TODO: Später könnten hier echte Kundencontacts geladen werden
@@ -571,11 +579,15 @@ export const prService = {
         context
       );
 
+      console.log('🔵 Created Enhanced Approval with ID:', approvalId);
+
       // Hole die erstellte Approval für die shareId
       const approval = await approvalService.getById(approvalId, organizationId);
       if (!approval) {
         throw new Error('Fehler beim Erstellen der Freigabe');
       }
+
+      console.log('🔵 Approval shareId:', approval.shareId);
 
       // Sende zur Freigabe - setze Status auf pending
       await approvalService.update(approvalId, {
@@ -598,12 +610,16 @@ export const prService = {
         approvalData
       });
 
+      console.log('🔵 Updated campaign with approval data');
+
       // Erstelle auch Legacy Share für Rückwärtskompatibilität
       await this.createLegacyApprovalShare(campaign, approval.shareId);
 
+      console.log('🔵 Created legacy approval share');
+
       return approval.shareId;
     } catch (error) {
-      console.error('Fehler beim Erstellen der Freigabe:', error);
+      console.error('❌ Fehler beim Erstellen der Freigabe:', error);
       // Werfe den Fehler nicht weiter, damit die Kampagne trotzdem gespeichert wird
       // Die Kampagne bleibt im Draft-Status
       return '';
@@ -641,11 +657,17 @@ export const prService = {
  */
 async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
   try {
+    console.log('🔍 getCampaignByShareId called with shareId:', shareId);
+    
     // Versuche zuerst Enhanced Approval zu finden
     const approval = await approvalService.getByShareId(shareId);
+    console.log('🔍 Enhanced Approval found:', !!approval);
+    
     if (approval) {
       // Lade die zugehörige Kampagne
       const campaign = await this.getById(approval.campaignId);
+      console.log('🔍 Campaign found:', !!campaign);
+      
       if (campaign) {
         // Stelle sicher, dass history ein Array ist
         const history = Array.isArray(approval.history) ? approval.history : [];
@@ -667,6 +689,8 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
       }
     }
 
+    console.log('🔍 Falling back to legacy method');
+    
     // Fallback zu Legacy-Methode
     const q = query(
       collection(db, 'pr_approval_shares'),
@@ -736,12 +760,12 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
     // Prüfe ob Enhanced Approval existiert
     const approval = await approvalService.getByShareId(campaign.approvalData.shareId);
     if (approval && approval.id) {
-      // Update Enhanced Approval
+      // Update Enhanced Approval - setze Status zurück auf draft, dann auf pending
       await approvalService.update(approval.id, {
-        status: 'pending',
+        status: 'draft', // Erst auf draft zurücksetzen
         content: {
           html: campaign.contentHtml,
-          plainText: approvalService['stripHtml'](campaign.contentHtml),
+          plainText: this.stripHtml(campaign.contentHtml),
           subject: campaign.title
         },
         attachedAssets: campaign.attachedAssets?.map(asset => ({
@@ -752,8 +776,24 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
         }))
       }, context);
 
-      // Sende erneut
+      // Jetzt können wir es erneut senden
       await approvalService.sendForApproval(approval.id, context);
+      
+      // Füge Historie-Eintrag hinzu
+      const historyEntry = {
+        id: nanoid(),
+        timestamp: Timestamp.now(),
+        action: 'resubmitted',
+        userId: context.userId,
+        actorName: 'System',
+        details: {
+          comment: 'Kampagne wurde überarbeitet und erneut zur Freigabe eingereicht'
+        }
+      };
+      
+      await updateDoc(doc(db, 'approvals', approval.id), {
+        history: arrayUnion(historyEntry)
+      });
     }
 
     // Update auch Legacy Share
@@ -808,9 +848,50 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
     // Versuche Enhanced Approval zu verwenden
     const approval = await approvalService.getByShareId(shareId);
     if (approval) {
-      // Finde den ersten Empfänger (TODO: Später über E-Mail identifizieren)
-      const recipientEmail = approval.recipients[0]?.email || 'unknown@example.com';
-      await approvalService.requestChanges(shareId, recipientEmail, feedback);
+      console.log('🔍 Enhanced Approval recipients:', approval.recipients);
+      
+      // Für Legacy/Public Access: Verwende den ersten Empfänger oder erstelle einen temporären
+      let recipientEmail = approval.recipients[0]?.email;
+      
+      // Wenn keine E-Mail gefunden wird oder es eine generierte E-Mail ist,
+      // verwende eine Public-Access E-Mail
+      if (!recipientEmail || recipientEmail.includes('kunde-')) {
+        recipientEmail = 'public-access@freigabe.system';
+        console.log('🔍 Using public access email:', recipientEmail);
+      } else {
+        console.log('🔍 Using recipient email:', recipientEmail);
+      }
+      
+      // Verwende requestChanges mit öffentlichem Zugriff
+      try {
+        await approvalService.requestChangesPublic(shareId, recipientEmail, feedback, author);
+      } catch (error) {
+        console.error('🔍 Error with requestChangesPublic, trying direct update:', error);
+        
+        // Fallback: Direkte Aktualisierung ohne Empfänger-Validierung
+        if (approval.id && approval.organizationId) {
+          const historyEntry = {
+            id: nanoid(),
+            timestamp: Timestamp.now(),
+            action: 'changes_requested' as const,
+            actorName: author,
+            actorEmail: 'public-access@freigabe.system',
+            details: {
+              comment: feedback,
+              previousStatus: approval.status,
+              newStatus: 'changes_requested' as const
+            }
+          };
+          
+          await updateDoc(doc(db, 'approvals', approval.id), {
+            status: 'changes_requested',
+            updatedAt: serverTimestamp(),
+            history: arrayUnion(historyEntry)
+          });
+          
+          console.log('🔍 Updated via direct method');
+        }
+      }
     }
     
     // Update auch Legacy Share
@@ -901,9 +982,22 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
     // Versuche Enhanced Approval zu verwenden
     const approval = await approvalService.getByShareId(shareId);
     if (approval) {
-      // Finde den ersten Empfänger (TODO: Später über E-Mail identifizieren)
-      const recipientEmail = approval.recipients[0]?.email || 'unknown@example.com';
-      await approvalService.submitDecision(shareId, recipientEmail, 'approved');
+      console.log('🔍 Using Enhanced Approval for approval');
+      
+      // Für öffentlichen Zugriff: Verwende submitDecisionPublic
+      try {
+        await approvalService.submitDecisionPublic(shareId, 'approved', undefined, 'Kunde');
+        console.log('🔍 Approved via public method');
+      } catch (error) {
+        console.error('🔍 Error with public approval:', error);
+        
+        // Fallback: Versuche mit dem ersten Empfänger
+        if (approval.recipients && approval.recipients.length > 0) {
+          const recipientEmail = approval.recipients[0].email;
+          await approvalService.submitDecision(shareId, recipientEmail, 'approved');
+          console.log('🔍 Approved via recipient method');
+        }
+      }
     }
     
     // Update auch Legacy Share

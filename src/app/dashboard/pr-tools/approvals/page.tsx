@@ -274,11 +274,17 @@ export default function ApprovalsPage() {
     const loadOrganization = async () => {
       if (!user) return;
       
+      console.log('🟢 Loading organization for user:', user.uid);
+      
       const orgs = await teamMemberService.getUserOrganizations(user.uid);
+      console.log('🟢 Organizations found:', orgs);
+      
       if (orgs.length > 0) {
         setOrganizationId(orgs[0].organization.id);
+        console.log('🟢 Using organizationId:', orgs[0].organization.id);
       } else {
         setOrganizationId(user.uid); // Fallback
+        console.log('🟢 Using userId as fallback:', user.uid);
       }
     };
     
@@ -286,7 +292,12 @@ export default function ApprovalsPage() {
   }, [user]);
 
   const loadApprovals = async () => {
-    if (!organizationId) return;
+    if (!organizationId) {
+      console.log('🟡 No organizationId yet, skipping load');
+      return;
+    }
+    
+    console.log('🟢 Loading approvals for organizationId:', organizationId);
     
     setLoading(true);
     setIsRefreshing(true);
@@ -300,11 +311,29 @@ export default function ApprovalsPage() {
         isOverdue: showOverdueOnly ? true : undefined
       };
       
+      console.log('🟢 Calling searchEnhanced with filters:', filters);
+      
       // Lade Freigaben mit Filtern
       const allApprovals = await approvalService.searchEnhanced(organizationId, filters);
       
+      console.log('🟢 Approvals loaded:', allApprovals.length, 'approvals');
+      console.log('🟢 Approval statuses:', JSON.stringify(allApprovals.map(a => ({ 
+        id: a.id, 
+        title: a.title, 
+        status: a.status,
+        shareId: a.shareId 
+      })), null, 2));
+      
       // Filtere Draft-Status heraus
       const filteredApprovals = allApprovals.filter(a => a.status !== 'draft');
+      
+      console.log('🟢 Filtered approvals (excluding drafts):', filteredApprovals.length, 'approvals');
+      console.log('🟢 Filtered approval statuses:', JSON.stringify(filteredApprovals.map(a => ({ 
+        id: a.id, 
+        title: a.title, 
+        status: a.status,
+        shareId: a.shareId 
+      })), null, 2));
       
       setApprovals(filteredApprovals);
       setLastRefresh(new Date());
@@ -330,7 +359,7 @@ export default function ApprovalsPage() {
         showAlert('success', 'Daten aktualisiert');
       }
     } catch (error) {
-      console.error('Error loading approvals:', error);
+      console.error('❌ Error loading approvals:', error);
       showAlert('error', 'Fehler beim Laden', 'Die Freigaben konnten nicht geladen werden.');
     } finally {
       setLoading(false);
