@@ -1,15 +1,30 @@
 // src/lib/boilerplate-processor.ts
-import { BoilerplateSection } from '@/components/pr/campaign/IntelligentBoilerplateSection';
+import { Boilerplate } from '@/types/crm-enhanced';
+
+// Simplified BoilerplateSection type without position
+export interface BoilerplateSection {
+  id: string;
+  boilerplate?: Boilerplate;
+  content?: string;
+  type?: 'lead' | 'main' | 'quote' | 'boilerplate';
+  metadata?: {
+    person?: string;
+    role?: string;
+    company?: string;
+  };
+  order: number;
+  isCollapsed?: boolean;
+}
 
 export async function processBoilerplates(
   sections: BoilerplateSection[],
   mainContent: string,
   context: any
 ): Promise<string> {
-  // Group sections by position
-  const headerSections = sections.filter(s => s.position === 'header' && !s.isCollapsed).sort((a, b) => a.order - b.order);
-  const customSections = sections.filter(s => s.position === 'custom' && !s.isCollapsed).sort((a, b) => a.order - b.order);
-  const footerSections = sections.filter(s => s.position === 'footer' && !s.isCollapsed).sort((a, b) => a.order - b.order);
+  // Simply sort sections by order - no more position grouping
+  const activeSections = sections
+    .filter(s => !s.isCollapsed)
+    .sort((a, b) => a.order - b.order);
 
   const parts: string[] = [];
 
@@ -27,25 +42,12 @@ export async function processBoilerplates(
     parts.push(`<p class="text-sm text-gray-600 mb-6">${formattedDate}</p>`);
   }
 
-  // Add header sections
-  for (const section of headerSections) {
-    if (section.boilerplate) {
-      const processed = processVariables(section.boilerplate.content, context);
-      parts.push(`<div class="boilerplate-header">${processed}</div>`);
-    }
-  }
-
-  // Add separator after headers if any exist
-  if (headerSections.length > 0 && customSections.length > 0) {
-    parts.push('<hr class="mt-12 mb-3 border-gray-300" />');
-  }
-
-  // Add custom sections (including AI-generated content and structured elements)
-  for (const section of customSections) {
+  // Process all sections in order
+  for (const section of activeSections) {
     if (section.boilerplate) {
       // Traditional boilerplate
       const processed = processVariables(section.boilerplate.content, context);
-      parts.push(`<div class="boilerplate-custom mt-4">${processed}</div>`);
+      parts.push(`<div class="boilerplate-section mt-4">${processed}</div>`);
     } else if (section.content) {
       // Structured content (lead, main, quote)
       let content = `<div class="structured-content mt-4">`;
@@ -79,19 +81,6 @@ export async function processBoilerplates(
       
       content += `</div>`;
       parts.push(content);
-    }
-  }
-
-  // Add separator before footers if any exist
-  if (footerSections.length > 0 && parts.length > 0) {
-    parts.push('<hr class="mt-12 mb-3 border-gray-300" />');
-  }
-
-  // Add footer sections
-  for (const section of footerSections) {
-    if (section.boilerplate) {
-      const processed = processVariables(section.boilerplate.content, context);
-      parts.push(`<div class="boilerplate-footer">${processed}</div>`);
     }
   }
 

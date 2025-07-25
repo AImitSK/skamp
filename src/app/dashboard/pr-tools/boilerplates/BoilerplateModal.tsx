@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { boilerplatesService } from "@/lib/firebase/boilerplate-service";
-import { companiesService } from "@/lib/firebase/crm-service";
+import { companiesEnhancedService } from "@/lib/firebase/crm-service-enhanced";
 import { Boilerplate, BoilerplateCreateData } from "@/types/crm-enhanced";
 import { Dialog, DialogActions, DialogBody, DialogTitle } from "@/components/dialog";
 import { Button } from "@/components/button";
@@ -246,21 +246,12 @@ export default function BoilerplateModal({
   const loadCompanies = async () => {
     try {
       console.log('Loading companies for organizationId:', organizationId);
-      const companiesData = await companiesService.getAll(organizationId);
+      const companiesData = await companiesEnhancedService.getAll(organizationId);
       console.log('Loaded companies:', companiesData);
       setCompanies(companiesData);
     } catch (error) {
       console.error("Fehler beim Laden der Companies:", error);
-      // Fallback: Versuche es mit userId
-      try {
-        console.log('Trying with userId as fallback:', userId);
-        const companiesData = await companiesService.getAll(userId);
-        console.log('Loaded companies with userId:', companiesData);
-        setCompanies(companiesData);
-      } catch (fallbackError) {
-        console.error("Auch mit userId konnten keine Companies geladen werden:", fallbackError);
-        setCompanies([]);
-      }
+      setCompanies([]);
     }
   };
 
@@ -416,7 +407,7 @@ export default function BoilerplateModal({
                     Textbaustein ist für alle Kunden verfügbar
                   </Description>
                   <Switch
-                    checked={formData.isGlobal === true}
+                    checked={formData.isGlobal}
                     onChange={(checked) => {
                       console.log('Switch changed to:', checked);
                       setFormData({ 
@@ -426,10 +417,11 @@ export default function BoilerplateModal({
                         clientName: checked ? undefined : formData.clientName
                       });
                     }}
+                    color="dark/zinc"
                   />
                 </SwitchField>
 
-                {formData.isGlobal === false && (
+                {!formData.isGlobal && (
                   <Field>
                     <Label>Kunde</Label>
                     <Select
