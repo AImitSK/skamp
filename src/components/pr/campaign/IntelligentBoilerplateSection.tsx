@@ -20,7 +20,7 @@ import {
 } from '@heroicons/react/20/solid';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { boilerplatesService } from '@/lib/firebase/boilerplate-service';
-import { Boilerplate } from '@/types/crm';
+import { Boilerplate } from '@/types/crm-enhanced'; // GEÄNDERT: Import aus crm-enhanced
 import clsx from 'clsx';
 import { RichTextEditor } from '@/components/RichTextEditor';
 
