@@ -1,8 +1,8 @@
-// src/app/dashboard/pr-tools/campaigns/campaigns/edit/[campaignId]/page.tsx
+// src/app/dashboard/pr-tools/campaigns/campaigns/new/page.tsx
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { useParams, useRouter } from 'next/navigation';
+import { useState, useEffect, useMemo, useRef } from "react";
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from "@/context/AuthContext";
 import { teamMemberService } from "@/lib/firebase/organization-service";
@@ -11,6 +11,7 @@ import { Text } from "@/components/text";
 import { Button } from "@/components/button";
 import { Badge } from "@/components/badge";
 import { Field, Label, FieldGroup } from "@/components/fieldset";
+import { Select } from "@/components/select";
 import { Checkbox } from "@/components/checkbox";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
 import CampaignContentComposer from '@/components/pr/campaign/CampaignContentComposer';
@@ -30,15 +31,13 @@ import {
   InformationCircleIcon,
   ArrowUpTrayIcon,
   MagnifyingGlassIcon,
-  PaperAirplaneIcon,
-  ExclamationTriangleIcon,
-  CheckCircleIcon
+  PaperAirplaneIcon
 } from "@heroicons/react/20/solid";
 import { listsService } from "@/lib/firebase/lists-service";
 import { prService } from "@/lib/firebase/pr-service";
 import { mediaService } from "@/lib/firebase/media-service";
 import { DistributionList } from "@/types/lists";
-import { CampaignAssetAttachment, PRCampaign } from "@/types/pr";
+import { CampaignAssetAttachment } from "@/types/pr";
 import { BoilerplateSection } from "@/components/pr/campaign/IntelligentBoilerplateSection";
 import { MediaAsset, MediaFolder } from "@/types/media";
 import { Input } from "@/components/input";
@@ -56,20 +55,18 @@ function Alert({
   title,
   message
 }: {
-  type?: 'info' | 'error' | 'success';
+  type?: 'info' | 'error';
   title?: string;
   message: string;
 }) {
   const styles = {
     info: 'bg-blue-50 text-blue-700',
-    error: 'bg-red-50 text-red-700',
-    success: 'bg-green-50 text-green-700'
+    error: 'bg-red-50 text-red-700'
   };
 
   const icons = {
     info: InformationCircleIcon,
-    error: ExclamationTriangleIcon,
-    success: CheckCircleIcon
+    error: InformationCircleIcon
   };
 
   const Icon = icons[type];
@@ -78,7 +75,7 @@ function Alert({
     <div className={`rounded-md p-4 ${styles[type].split(' ')[0]}`}>
       <div className="flex">
         <div className="shrink-0">
-          <Icon aria-hidden="true" className={`size-5 ${type === 'error' ? 'text-red-400' : type === 'success' ? 'text-green-400' : 'text-blue-400'}`} />
+          <Icon aria-hidden="true" className={`size-5 ${type === 'error' ? 'text-red-400' : 'text-blue-400'}`} />
         </div>
         <div className="ml-3">
           {title && <Text className={`font-medium ${styles[type].split(' ')[1]}`}>{title}</Text>}
@@ -89,15 +86,14 @@ function Alert({
   );
 }
 
-// Asset Selector Modal
+// Asset Selector Modal mit Fix für überlaufende Texte
 function AssetSelectorModal({
   isOpen,
   onClose,
   clientId,
   clientName,
   onAssetsSelected,
-  userId,
-  currentAssets = []
+  userId
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -105,7 +101,6 @@ function AssetSelectorModal({
   clientName?: string;
   onAssetsSelected: (assets: CampaignAssetAttachment[]) => void;
   userId: string;
-  currentAssets?: CampaignAssetAttachment[];
 }) {
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [folders, setFolders] = useState<MediaFolder[]>([]);
@@ -118,21 +113,6 @@ function AssetSelectorModal({
       loadClientMedia();
     }
   }, [isOpen, clientId]);
-
-  useEffect(() => {
-    // Pre-select current assets
-    if (currentAssets.length > 0) {
-      const preSelected = new Set<string>();
-      currentAssets.forEach(attachment => {
-        if (attachment.type === 'asset' && attachment.assetId) {
-          preSelected.add(attachment.assetId);
-        } else if (attachment.type === 'folder' && attachment.folderId) {
-          preSelected.add(attachment.folderId);
-        }
-      });
-      setSelectedItems(preSelected);
-    }
-  }, [currentAssets]);
 
   const loadClientMedia = async () => {
     setLoading(true);
@@ -150,10 +130,14 @@ function AssetSelectorModal({
     }
   };
 
-  const filteredAssets = assets.filter(a =>
-    !searchTerm || a.fileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    a.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredAssets = useMemo(() => {
+    if (!searchTerm) return assets;
+    const search = searchTerm.toLowerCase();
+    return assets.filter(a =>
+      a.fileName.toLowerCase().includes(search) ||
+      a.description?.toLowerCase().includes(search)
+    );
+  }, [assets, searchTerm]);
 
   const handleConfirm = () => {
     const attachments: CampaignAssetAttachment[] = [];
@@ -334,16 +318,13 @@ function AssetSelectorModal({
   );
 }
 
-export default function EditPRCampaignPage() {
+export default function NewPRCampaignPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const params = useParams();
-  const campaignId = params.campaignId as string;
   const formRef = useRef<HTMLFormElement>(null);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
 
   // Form State
-  const [campaign, setCampaign] = useState<PRCampaign | null>(null);
   const [availableLists, setAvailableLists] = useState<DistributionList[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState('');
   const [selectedCompanyName, setSelectedCompanyName] = useState('');
@@ -362,7 +343,6 @@ export default function EditPRCampaignPage() {
   const [showAssetSelector, setShowAssetSelector] = useState(false);
   const [showAiModal, setShowAiModal] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
-  const [alert, setAlert] = useState<{ type: 'info' | 'error' | 'success'; message: string } | null>(null);
 
   // Load OrganizationId
   useEffect(() => {
@@ -377,7 +357,7 @@ export default function EditPRCampaignPage() {
           setOrganizationId(user.uid);
         }
       } catch (error) {
-        console.warn('Organization loading failed, using userId as fallback:', error);
+        console.error('Organization loading failed, using userId as fallback:', error);
         setOrganizationId(user.uid);
       }
     };
@@ -386,58 +366,19 @@ export default function EditPRCampaignPage() {
   }, [user]);
 
   useEffect(() => {
-    if (user && organizationId && campaignId) {
-      loadCampaignData();
+    if (user && organizationId) {
+      loadData();
     }
-  }, [user, organizationId, campaignId]);
+  }, [user, organizationId]);
 
-  const loadCampaignData = async () => {
-    if (!user || !organizationId || !campaignId) return;
-    
+  const loadData = async () => {
+    if (!user || !organizationId) return;
     setLoading(true);
     try {
-      // Load campaign
-      const campaignData = await prService.getById(campaignId);
-      if (!campaignData) {
-        setAlert({ type: 'error', message: 'Kampagne nicht gefunden' });
-        return;
-      }
-      
-      setCampaign(campaignData);
-      
-      // Set form data
-      setCampaignTitle(campaignData.title);
-      setPressReleaseContent(campaignData.contentHtml);
-      
-      // Convert CampaignBoilerplateSection to BoilerplateSection
-      const convertedSections: BoilerplateSection[] = (campaignData.boilerplateSections || []).map(section => ({
-        id: section.id,
-        type: section.type || 'custom' as any, // Fallback wenn type undefined ist
-        position: section.position,
-        order: section.order,
-        isLocked: section.isLocked || false,
-        isCollapsed: section.isCollapsed || false,
-        boilerplateId: section.boilerplateId,
-        content: section.content,
-        metadata: section.metadata,
-        customTitle: section.customTitle
-      }));
-      setBoilerplateSections(convertedSections);
-      
-      setSelectedCompanyId(campaignData.clientId || '');
-      setSelectedCompanyName(campaignData.clientName || '');
-      setSelectedListId(campaignData.distributionListId);
-      setSelectedListName(campaignData.distributionListName);
-      setRecipientCount(campaignData.recipientCount);
-      setAttachedAssets(campaignData.attachedAssets || []);
-      setApprovalRequired(campaignData.approvalRequired || false);
-      
-      // Load lists
       const listsData = await listsService.getAll(organizationId);
       setAvailableLists(listsData);
     } catch (error) {
       console.error('Fehler beim Laden:', error);
-      setAlert({ type: 'error', message: 'Fehler beim Laden der Kampagne' });
     } finally {
       setLoading(false);
     }
@@ -470,75 +411,126 @@ export default function EditPRCampaignPage() {
     setSaving(true);
     
     try {
-      // Bereite die boilerplateSections für Firebase vor
-      const cleanedSections = boilerplateSections.map(section => {
+      // Bereite die boilerplateSections für Firebase vor (ohne position)
+      const cleanedSections = boilerplateSections.map((section, index) => {
         const cleaned: any = {
           id: section.id,
           type: section.type,
-          position: section.position,
-          order: section.order,
-          isLocked: section.isLocked,
-          isCollapsed: section.isCollapsed
+          order: section.order ?? index, // Fallback auf index wenn order fehlt
+          isLocked: section.isLocked || false,
+          isCollapsed: section.isCollapsed || false
         };
         
         // Nur definierte Werte hinzufügen
-        if (section.boilerplateId) cleaned.boilerplateId = section.boilerplateId;
-        if (section.content) cleaned.content = section.content;
-        if (section.metadata) cleaned.metadata = section.metadata;
-        if (section.customTitle) cleaned.customTitle = section.customTitle;
+        if (section.boilerplateId !== undefined) cleaned.boilerplateId = section.boilerplateId;
+        if (section.content !== undefined) cleaned.content = section.content;
+        if (section.metadata !== undefined) cleaned.metadata = section.metadata;
+        if (section.customTitle !== undefined) cleaned.customTitle = section.customTitle;
         
         return cleaned;
       });
 
-      const updateData = {
+      const campaignData: any = {
+        userId: user!.uid,
+        organizationId: organizationId!,
         title: campaignTitle,
         contentHtml: pressReleaseContent || '',
         boilerplateSections: cleanedSections,
+        status: 'draft' as const,
         distributionListId: selectedListId,
         distributionListName: selectedListName,
         recipientCount: recipientCount,
         clientId: selectedCompanyId,
         clientName: selectedCompanyName,
         attachedAssets: attachedAssets,
-        approvalRequired: approvalRequired
+        approvalRequired: approvalRequired,
+        createdAt: new Date(),
+        updatedAt: new Date()
       };
 
-      console.log('Aktualisiere Kampagne mit Daten:', updateData);
-      
- await prService.update(campaignId, updateData);
-      
-      // Wenn Freigabe erforderlich ist und noch keine Share-ID existiert, erstelle Freigabe
-      if (approvalRequired && campaign && !campaign.approvalData?.shareId) {
-        try {
-          console.log('Erstelle neue Freigabe für bestehende Kampagne...');
-          const shareId = await prService.requestApproval(campaignId);
-          if (shareId) {
-            console.log('Freigabe erfolgreich erstellt:', shareId);
-            setAlert({ type: 'success', message: 'Kampagne gespeichert und Freigabe angefordert' });
-          } else {
-            setAlert({ type: 'success', message: 'Kampagne gespeichert (Freigabe konnte nicht erstellt werden)' });
-          }
-        } catch (error) {
-          console.error('Fehler beim Erstellen der Freigabe:', error);
-          setAlert({ type: 'success', message: 'Kampagne gespeichert (Freigabe konnte nicht erstellt werden)' });
+      // Entferne alle undefined/null Werte rekursiv
+      const removeUndefinedDeep = (obj: any): any => {
+        if (obj === null || obj === undefined) return null;
+        if (obj instanceof Date) return obj;
+        if (Array.isArray(obj)) {
+          return obj.map(item => removeUndefinedDeep(item));
         }
-      } else {
-        setAlert({ type: 'success', message: 'Kampagne erfolgreich gespeichert' });
+        if (typeof obj === 'object') {
+          const cleaned: any = {};
+          for (const key in obj) {
+            if (obj.hasOwnProperty(key) && obj[key] !== undefined) {
+              const cleanedValue = removeUndefinedDeep(obj[key]);
+              if (cleanedValue !== undefined) {
+                cleaned[key] = cleanedValue;
+              }
+            }
+          }
+          return cleaned;
+        }
+        return obj;
+      };
+
+      const cleanedCampaignData = removeUndefinedDeep(campaignData);
+
+      console.log('Speichere Kampagne mit bereinigten Daten:', cleanedCampaignData);
+      
+      // Debug: Finde undefined Werte
+      const findUndefined = (obj: any, path: string = ''): void => {
+        if (obj === undefined) {
+          console.error(`Found undefined at path: ${path}`);
+          return;
+        }
+        if (obj === null || obj instanceof Date) return;
+        if (Array.isArray(obj)) {
+          obj.forEach((item, index) => {
+            findUndefined(item, `${path}[${index}]`);
+          });
+        } else if (typeof obj === 'object') {
+          Object.keys(obj).forEach(key => {
+            findUndefined(obj[key], path ? `${path}.${key}` : key);
+          });
+        }
+      };
+      
+      console.log('🔍 Checking for undefined values...');
+      findUndefined(cleanedCampaignData);
+      
+      // Zusätzliche Sicherheit: Verwende structuredClone statt JSON parse/stringify
+      const finalCampaignData = structuredClone ? structuredClone(cleanedCampaignData) : JSON.parse(JSON.stringify(cleanedCampaignData));
+
+      const newCampaignId = await prService.create(finalCampaignData);
+      console.log('✅ Kampagne erstellt mit ID:', newCampaignId);
+
+      if (approvalRequired) {
+        try {
+          const shareId = await prService.requestApproval(newCampaignId);
+          if (shareId) {
+            console.log('✅ Freigabe erstellt mit Share ID:', shareId);
+          } else {
+            console.warn('⚠️ Freigabe konnte nicht erstellt werden, Kampagne wurde trotzdem gespeichert');
+          }
+        } catch (approvalError) {
+          console.error('Fehler beim Erstellen der Freigabe:', approvalError);
+          // Zeige Warnung, aber navigiere trotzdem
+          setValidationErrors(['Die Kampagne wurde gespeichert, aber die Freigabe konnte nicht erstellt werden.']);
+          setTimeout(() => {
+            router.push('/dashboard/pr-tools/campaigns');
+          }, 2000);
+          return;
+        }
       }
-      
-      // Nach kurzer Verzögerung zur Detail-Seite
-      setTimeout(() => {
-        router.push(`/dashboard/pr-tools/campaigns/campaigns/${campaignId}`);
-      }, 1500);
-      
+
+      // Erfolgreiche Navigation
+      router.push('/dashboard/pr-tools/campaigns');
+
     } catch (error) {
       console.error('Fehler beim Speichern der Kampagne:', error);
-      
+
       let errorMessage = 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.';
       if (error instanceof Error) {
         errorMessage = `Fehler: ${error.message}`;
       }
-      
+
       setValidationErrors([errorMessage]);
     } finally {
       setSaving(false);
@@ -546,21 +538,26 @@ export default function EditPRCampaignPage() {
   };
 
   const handleAiGenerate = (result: any) => {
+    console.log('handleAiGenerate called with:', result);
+    
     if (result.structured?.headline) {
+      console.log('Setting campaign title to:', result.structured.headline);
       setCampaignTitle(result.structured.headline);
     }
     
-    // Erstelle AI-Sections aus strukturierten Daten
+    // Erstelle AI-Sections aus strukturierten Daten (ohne position)
     if (result.structured) {
+      console.log('Creating AI sections from structured data:', result.structured);
       const aiSections: BoilerplateSection[] = [];
+      let order = boilerplateSections.length;
       
       // Lead-Absatz
       if (result.structured.leadParagraph && result.structured.leadParagraph !== 'Lead-Absatz fehlt') {
+        console.log('Adding lead section:', result.structured.leadParagraph);
         aiSections.push({
           id: `ai-lead-${Date.now()}`,
           type: 'lead',
-          position: 'custom',
-          order: 0,
+          order: order++,
           isLocked: false,
           isCollapsed: false,
           customTitle: 'Lead-Absatz (KI-generiert)',
@@ -570,6 +567,7 @@ export default function EditPRCampaignPage() {
       
       // Hauptabsätze
       if (result.structured.bodyParagraphs && result.structured.bodyParagraphs.length > 0) {
+        console.log('Adding body paragraphs:', result.structured.bodyParagraphs.length);
         const mainContent = result.structured.bodyParagraphs
           .filter((paragraph: string) => paragraph && paragraph !== 'Haupttext der Pressemitteilung')
           .map((paragraph: string) => `<p>${paragraph}</p>`)
@@ -579,8 +577,7 @@ export default function EditPRCampaignPage() {
           aiSections.push({
             id: `ai-main-${Date.now()}`,
             type: 'main',
-            position: 'custom',
-            order: 1,
+            order: order++,
             isLocked: false,
             isCollapsed: false,
             customTitle: 'Haupttext (KI-generiert)',
@@ -591,11 +588,11 @@ export default function EditPRCampaignPage() {
       
       // Zitat
       if (result.structured.quote && result.structured.quote.text) {
+        console.log('Adding quote section:', result.structured.quote);
         aiSections.push({
           id: `ai-quote-${Date.now()}`,
           type: 'quote',
-          position: 'custom',
-          order: aiSections.length,
+          order: order++,
           isLocked: false,
           isCollapsed: false,
           customTitle: 'Zitat (KI-generiert)',
@@ -609,10 +606,14 @@ export default function EditPRCampaignPage() {
       }
       
       // Füge die AI-Sections zu den bestehenden hinzu
+      console.log('Current boilerplateSections:', boilerplateSections);
+      console.log('Adding AI sections:', aiSections);
       const newSections = [...boilerplateSections, ...aiSections];
+      console.log('New sections total:', newSections);
       setBoilerplateSections(newSections);
     }
     
+    console.log('Closing AI modal');
     setShowAiModal(false);
   };
 
@@ -628,20 +629,8 @@ export default function EditPRCampaignPage() {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto"></div>
-          <Text className="mt-4">Lade Kampagne...</Text>
+          <Text className="mt-4">Lade Daten...</Text>
         </div>
-      </div>
-    );
-  }
-
-  if (!campaign) {
-    return (
-      <div className="text-center py-12">
-        <ExclamationTriangleIcon className="h-12 w-12 text-red-500 mx-auto mb-4" />
-        <Heading level={2}>Kampagne nicht gefunden</Heading>
-        <Button href="/dashboard/pr-tools/campaigns" className="mt-4">
-          Zurück zur Übersicht
-        </Button>
       </div>
     );
   }
@@ -651,27 +640,17 @@ export default function EditPRCampaignPage() {
       {/* Header */}
       <div className="mb-8">
         <Link
-          href={`/dashboard/pr-tools/campaigns/campaigns/${campaignId}`}
+          href="/dashboard/pr-tools/campaigns"
           className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
         >
           <ArrowLeftIcon className="h-4 w-4 mr-1" />
-          Zurück zur Kampagne
+          Zurück zur Übersicht
         </Link>
         
-        <Heading>Kampagne bearbeiten</Heading>
-        <Text className="mt-2 text-gray-600">
-          Bearbeiten Sie die Details Ihrer PR-Kampagne
-        </Text>
+        <Heading>Neue PR-Kampagne</Heading>
       </div>
 
-      {/* Alerts */}
-      {alert && (
-        <div className="mb-6 animate-fade-in">
-          <Alert type={alert.type} message={alert.message} />
-        </div>
-      )}
-
-      {/* Fehlermeldungen */}
+      {/* Fehlermeldungen oben auf der Seite */}
       {validationErrors.length > 0 && (
         <div className="mb-6 animate-shake">
           <Alert type="error" message={validationErrors[0]} />
@@ -687,7 +666,7 @@ export default function EditPRCampaignPage() {
               <Label className="flex items-center">
                 Kunde
                 <InfoTooltip 
-                  content="Pflichtfeld: Wählen Sie den Kunden aus, für den diese PR-Kampagne erstellt wird."
+                  content="Pflichtfeld: Wählen Sie den Kunden aus, für den diese PR-Kampagne erstellt wird. Die Kampagne wird diesem Kunden zugeordnet."
                   className="ml-1"
                 />
               </Label>
@@ -706,7 +685,7 @@ export default function EditPRCampaignPage() {
               <Label className="flex items-center">
                 Verteiler
                 <InfoTooltip 
-                  content="Pflichtfeld: Wählen Sie eine Verteilerliste aus."
+                  content="Pflichtfeld: Wählen Sie eine Verteilerliste aus. Die Pressemitteilung wird an alle Kontakte in dieser Liste gesendet."
                   className="ml-1"
                 />
               </Label>
@@ -729,7 +708,7 @@ export default function EditPRCampaignPage() {
                 <h3 className="text-base font-semibold flex items-center">
                   Pressemitteilung
                   <InfoTooltip 
-                    content="Pflichtfeld: Bearbeiten Sie den Inhalt Ihrer Pressemitteilung."
+                    content="Pflichtfeld: Erstellen Sie hier den Inhalt Ihrer Pressemitteilung. Sie müssen einen Titel und Inhalt eingeben."
                     className="ml-1"
                   />
                 </h3>
@@ -741,6 +720,17 @@ export default function EditPRCampaignPage() {
                   <SparklesIcon className="h-4 w-4" />
                   KI-Assistent
                 </Button>
+              </div>
+              
+              {/* Info-Box für KI-Nutzung */}
+              <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <InformationCircleIcon className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-blue-700">
+                    <p className="font-medium">Tipp: Nutze den KI-Assistenten!</p>
+                    <p className="mt-1">Der KI-Assistent erstellt automatisch alle Inhalte deiner Pressemitteilung: Titel, Lead-Absatz, Haupttext und Zitat. Diese erscheinen dann als verschiebbare Elemente, die du mit Textbausteinen kombinieren kannst.</p>
+                  </div>
+                </div>
               </div>
 
               {/* Content Composer */}
@@ -772,7 +762,7 @@ export default function EditPRCampaignPage() {
                     className="whitespace-nowrap"
                   >
                     <PlusIcon className="h-4 w-4" />
-                    Medien bearbeiten
+                    Medien hinzufügen
                   </Button>
                 )}
               </div>
@@ -843,11 +833,7 @@ export default function EditPRCampaignPage() {
         </div>
 
         <div className="mt-6 flex justify-end gap-3">
-          <Button 
-            type="button" 
-            plain 
-            href={`/dashboard/pr-tools/campaigns/campaigns/${campaignId}`}
-          >
+          <Button type="button" plain onClick={() => router.push('/dashboard/pr-tools/campaigns')}>
             Abbrechen
           </Button>
           <Button
@@ -855,7 +841,12 @@ export default function EditPRCampaignPage() {
             disabled={saving}
             className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
           >
-            {saving ? 'Speichert...' : 'Änderungen speichern'}
+            {saving ? 'Speichert...' : approvalRequired ? (
+              <>
+                <PaperAirplaneIcon className="h-4 w-4" />
+                Freigabe anfordern
+              </>
+            ) : 'Als Entwurf speichern'}
           </Button>
         </div>
       </form>
@@ -869,7 +860,6 @@ export default function EditPRCampaignPage() {
           clientName={selectedCompanyName}
           onAssetsSelected={setAttachedAssets}
           userId={user.uid}
-          currentAssets={attachedAssets}
         />
       )}
 
@@ -880,7 +870,7 @@ export default function EditPRCampaignPage() {
           onGenerate={handleAiGenerate}
           existingContent={{
             title: campaignTitle,
-            content: pressReleaseContent
+            content: ''
           }}
         />
       )}
@@ -893,17 +883,8 @@ export default function EditPRCampaignPage() {
           20%, 40%, 60%, 80% { transform: translateX(2px); }
         }
         
-        @keyframes fade-in {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
         .animate-shake {
           animation: shake 0.5s ease-in-out;
-        }
-        
-        .animate-fade-in {
-          animation: fade-in 0.3s ease-out;
         }
       `}</style>
     </div>

@@ -332,7 +332,7 @@ export default function NewPRCampaignPage() {
   const [selectedListName, setSelectedListName] = useState('');
   const [recipientCount, setRecipientCount] = useState(0);
   const [campaignTitle, setCampaignTitle] = useState('');
-  const [pressReleaseContent, setPressReleaseContent] = useState(''); // Finaler HTML Content
+  const [pressReleaseContent, setPressReleaseContent] = useState('');
   const [boilerplateSections, setBoilerplateSections] = useState<BoilerplateSection[]>([]);
   const [attachedAssets, setAttachedAssets] = useState<CampaignAssetAttachment[]>([]);
   const [approvalRequired, setApprovalRequired] = useState(false);
@@ -354,12 +354,10 @@ export default function NewPRCampaignPage() {
         if (orgs.length > 0) {
           setOrganizationId(orgs[0].organization.id!);
         } else {
-          // Fallback auf userId für Backwards Compatibility
           setOrganizationId(user.uid);
         }
       } catch (error) {
         console.error('Organization loading failed, using userId as fallback:', error);
-        // Direkt userId verwenden wenn Permissions fehlen
         setOrganizationId(user.uid);
       }
     };
@@ -413,29 +411,28 @@ export default function NewPRCampaignPage() {
     setSaving(true);
     
     try {
-      // Bereite die boilerplateSections für Firebase vor
-      const cleanedSections = boilerplateSections.map(section => {
+      // Bereite die boilerplateSections für Firebase vor (ohne position)
+      const cleanedSections = boilerplateSections.map((section, index) => {
         const cleaned: any = {
           id: section.id,
           type: section.type,
-          position: section.position,
-          order: section.order,
-          isLocked: section.isLocked,
-          isCollapsed: section.isCollapsed
+          order: section.order ?? index, // Fallback auf index wenn order fehlt
+          isLocked: section.isLocked || false,
+          isCollapsed: section.isCollapsed || false
         };
         
         // Nur definierte Werte hinzufügen
-        if (section.boilerplateId) cleaned.boilerplateId = section.boilerplateId;
-        if (section.content) cleaned.content = section.content;
-        if (section.metadata) cleaned.metadata = section.metadata;
-        if (section.customTitle) cleaned.customTitle = section.customTitle;
+        if (section.boilerplateId !== undefined) cleaned.boilerplateId = section.boilerplateId;
+        if (section.content !== undefined) cleaned.content = section.content;
+        if (section.metadata !== undefined) cleaned.metadata = section.metadata;
+        if (section.customTitle !== undefined) cleaned.customTitle = section.customTitle;
         
         return cleaned;
       });
 
-      const campaignData = {
+      const campaignData: any = {
         userId: user!.uid,
-        organizationId: organizationId!, // NEU: Organization Support
+        organizationId: organizationId!,
         title: campaignTitle,
         contentHtml: pressReleaseContent || '',
         boilerplateSections: cleanedSections,
@@ -447,59 +444,74 @@ export default function NewPRCampaignPage() {
         clientName: selectedCompanyName,
         attachedAssets: attachedAssets,
         approvalRequired: approvalRequired,
-        scheduledAt: null,
-        sentAt: null,
         createdAt: new Date(),
         updatedAt: new Date()
       };
 
+      // Entferne alle undefined/null Werte rekursiv
+      const removeUndefinedDeep = (obj: any): any => {
+        if (obj === null || obj === undefined) return null;
+        if (obj instanceof Date) return obj;
+        if (Array.isArray(obj)) {
+          return obj.map(item => removeUndefinedDeep(item));
+        }
+        if (typeof obj === 'object') {
+          const cleaned: any = {};
+          for (const key in obj) {
+            if (obj.hasOwnProperty(key) && obj[key] !== undefined) {
+              const cleanedValue = removeUndefinedDeep(obj[key]);
+              if (cleanedValue !== undefined) {
+                cleaned[key] = cleanedValue;
+              }
+            }
+          }
+          return cleaned;
+        }
+        return obj;
+      };
 
+      const cleanedCampaignData = removeUndefinedDeep(campaignData);
 
-// Entferne alle undefined Werte
-const cleanedCampaignData = JSON.parse(JSON.stringify(campaignData));
+      console.log('Speichere Kampagne mit bereinigten Daten:', cleanedCampaignData);
 
-console.log('Speichere Kampagne mit bereinigten Daten:', cleanedCampaignData);
+      const newCampaignId = await prService.create(cleanedCampaignData);
+      console.log('✅ Kampagne erstellt mit ID:', newCampaignId);
 
-const newCampaignId = await prService.create(cleanedCampaignData);
-console.log('✅ Kampagne erstellt mit ID:', newCampaignId);
+      if (approvalRequired) {
+        try {
+          const shareId = await prService.requestApproval(newCampaignId);
+          if (shareId) {
+            console.log('✅ Freigabe erstellt mit Share ID:', shareId);
+          } else {
+            console.warn('⚠️ Freigabe konnte nicht erstellt werden, Kampagne wurde trotzdem gespeichert');
+          }
+        } catch (approvalError) {
+          console.error('Fehler beim Erstellen der Freigabe:', approvalError);
+          // Zeige Warnung, aber navigiere trotzdem
+          setValidationErrors(['Die Kampagne wurde gespeichert, aber die Freigabe konnte nicht erstellt werden.']);
+          setTimeout(() => {
+            router.push('/dashboard/pr-tools/campaigns');
+          }, 2000);
+          return;
+        }
+      }
 
-if (approvalRequired) {
-  try {
-    const shareId = await prService.requestApproval(newCampaignId);
-    if (shareId) {
-      console.log('✅ Freigabe erstellt mit Share ID:', shareId);
-    } else {
-      console.warn('⚠️ Freigabe konnte nicht erstellt werden, Kampagne wurde trotzdem gespeichert');
-    }
-  } catch (approvalError) {
-    console.error('Fehler beim Erstellen der Freigabe:', approvalError);
-    // Zeige Warnung, aber navigiere trotzdem
-    setValidationErrors(['Die Kampagne wurde gespeichert, aber die Freigabe konnte nicht erstellt werden.']);
-    // Warte kurz, damit der User die Nachricht sieht
-    setTimeout(() => {
+      // Erfolgreiche Navigation
       router.push('/dashboard/pr-tools/campaigns');
-    }, 2000);
-    return; // beendet die Funktion hier, um doppelte Navigation zu vermeiden
-  }
-}
 
-// Erfolgreiche Navigation
-router.push('/dashboard/pr-tools/campaigns');
+    } catch (error) {
+      console.error('Fehler beim Speichern der Kampagne:', error);
 
-} catch (error) {
-  console.error('Fehler beim Speichern der Kampagne:', error);
+      let errorMessage = 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.';
+      if (error instanceof Error) {
+        errorMessage = `Fehler: ${error.message}`;
+      }
 
-  // Detailliertere Fehlermeldung
-  let errorMessage = 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.';
-  if (error instanceof Error) {
-    errorMessage = `Fehler: ${error.message}`;
-  }
-
-  setValidationErrors([errorMessage]);
-} finally {
-  setSaving(false);
-}
-};
+      setValidationErrors([errorMessage]);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleAiGenerate = (result: any) => {
     console.log('handleAiGenerate called with:', result);
@@ -509,10 +521,11 @@ router.push('/dashboard/pr-tools/campaigns');
       setCampaignTitle(result.structured.headline);
     }
     
-    // NEU: Erstelle AI-Sections aus strukturierten Daten
+    // Erstelle AI-Sections aus strukturierten Daten (ohne position)
     if (result.structured) {
       console.log('Creating AI sections from structured data:', result.structured);
       const aiSections: BoilerplateSection[] = [];
+      let order = boilerplateSections.length;
       
       // Lead-Absatz
       if (result.structured.leadParagraph && result.structured.leadParagraph !== 'Lead-Absatz fehlt') {
@@ -520,8 +533,7 @@ router.push('/dashboard/pr-tools/campaigns');
         aiSections.push({
           id: `ai-lead-${Date.now()}`,
           type: 'lead',
-          position: 'custom',
-          order: 0,
+          order: order++,
           isLocked: false,
           isCollapsed: false,
           customTitle: 'Lead-Absatz (KI-generiert)',
@@ -541,8 +553,7 @@ router.push('/dashboard/pr-tools/campaigns');
           aiSections.push({
             id: `ai-main-${Date.now()}`,
             type: 'main',
-            position: 'custom',
-            order: 1,
+            order: order++,
             isLocked: false,
             isCollapsed: false,
             customTitle: 'Haupttext (KI-generiert)',
@@ -557,8 +568,7 @@ router.push('/dashboard/pr-tools/campaigns');
         aiSections.push({
           id: `ai-quote-${Date.now()}`,
           type: 'quote',
-          position: 'custom',
-          order: aiSections.length,
+          order: order++,
           isLocked: false,
           isCollapsed: false,
           customTitle: 'Zitat (KI-generiert)',
@@ -624,10 +634,10 @@ router.push('/dashboard/pr-tools/campaigns');
       )}
 
       <form ref={formRef} onSubmit={handleSubmit}>
-        {/* Main Form - jetzt volle Breite */}
+        {/* Main Form */}
         <div className="bg-white rounded-lg border p-6">
           <FieldGroup>
-            {/* Kunde - mit CustomerSelector */}
+            {/* Kunde */}
             <Field>
               <Label className="flex items-center">
                 Kunde
@@ -646,7 +656,7 @@ router.push('/dashboard/pr-tools/campaigns');
               />
             </Field>
 
-            {/* Verteiler - mit ListSelector */}
+            {/* Verteiler */}
             <Field>
               <Label className="flex items-center">
                 Verteiler
@@ -727,7 +737,7 @@ router.push('/dashboard/pr-tools/campaigns');
                     plain
                     className="whitespace-nowrap"
                   >
-                    <PlusIcon />
+                    <PlusIcon className="h-4 w-4" />
                     Medien hinzufügen
                   </Button>
                 )}

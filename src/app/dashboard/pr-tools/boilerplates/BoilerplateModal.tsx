@@ -8,12 +8,17 @@ import { Boilerplate, BoilerplateCreateData } from "@/types/crm-enhanced";
 import { Dialog, DialogActions, DialogBody, DialogTitle } from "@/components/dialog";
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
-import { Textarea } from "@/components/textarea";
 import { Select } from "@/components/select";
-import { Switch } from "@/components/switch";
+import { Switch, SwitchField } from "@/components/switch";
 import { Field, Label, Description, Fieldset } from "@/components/fieldset";
 import { Text } from "@/components/text";
 import { Badge } from "@/components/badge";
+import { LanguageSelector } from "@/components/language-selector";
+import { RichTextEditor } from "@/components/RichTextEditor";
+import { FocusAreasInput } from "@/components/FocusAreasInput";
+import { InfoTooltip } from "@/components/InfoTooltip";
+import type { LanguageCode } from "@/types/international";
+import VariablesModal from "@/components/pr/email/VariablesModal";
 
 // Kategorie-Optionen
 const CATEGORY_OPTIONS = [
@@ -24,12 +29,64 @@ const CATEGORY_OPTIONS = [
   { value: 'custom', label: 'Sonstige' }
 ];
 
-// Positions-Optionen
-const POSITION_OPTIONS = [
-  { value: 'top', label: 'Am Anfang des Textes' },
-  { value: 'bottom', label: 'Am Ende des Textes' },
-  { value: 'signature', label: 'Als E-Mail-Signatur' },
-  { value: 'custom', label: 'Manuelle Platzierung' }
+// Boilerplate-spezifische Variablen
+const BOILERPLATE_VARIABLES = [
+  {
+    key: '{{company_name}}',
+    label: 'Firmenname',
+    description: 'Der Name des Unternehmens',
+    example: 'SKAMP GmbH',
+    category: 'company' as const,
+    isRequired: false
+  },
+  {
+    key: '{{contact_name}}',
+    label: 'Kontaktname',
+    description: 'Vollständiger Name des Kontakts',
+    example: 'Max Mustermann',
+    category: 'contact' as const,
+    isRequired: false
+  },
+  {
+    key: '{{contact_firstname}}',
+    label: 'Vorname',
+    description: 'Vorname des Kontakts',
+    example: 'Max',
+    category: 'contact' as const,
+    isRequired: false
+  },
+  {
+    key: '{{contact_lastname}}',
+    label: 'Nachname',
+    description: 'Nachname des Kontakts',
+    example: 'Mustermann',
+    category: 'contact' as const,
+    isRequired: false
+  },
+  {
+    key: '{{contact_position}}',
+    label: 'Position',
+    description: 'Position/Titel des Kontakts',
+    example: 'Geschäftsführer',
+    category: 'contact' as const,
+    isRequired: false
+  },
+  {
+    key: '{{current_date}}',
+    label: 'Aktuelles Datum',
+    description: 'Das heutige Datum',
+    example: '25. Juli 2025',
+    category: 'system' as const,
+    isRequired: false
+  },
+  {
+    key: '{{current_year}}',
+    label: 'Aktuelles Jahr',
+    description: 'Das aktuelle Jahr',
+    example: '2025',
+    category: 'system' as const,
+    isRequired: false
+  }
 ];
 
 interface BoilerplateModalProps {
@@ -49,9 +106,10 @@ export default function BoilerplateModal({
 }: BoilerplateModalProps) {
   const [saving, setSaving] = useState(false);
   const [companies, setCompanies] = useState<any[]>([]);
-  const [tagInput, setTagInput] = useState('');
+  const [showVariablesModal, setShowVariablesModal] = useState(false);
+  const [richTextContent, setRichTextContent] = useState('');
   
-  const [formData, setFormData] = useState<BoilerplateCreateData>({
+  const [formData, setFormData] = useState<BoilerplateCreateData & { language?: LanguageCode }>({
     name: '',
     content: '',
     category: 'custom',
@@ -60,8 +118,7 @@ export default function BoilerplateModal({
     clientId: undefined,
     clientName: undefined,
     tags: [],
-    defaultPosition: 'custom',
-    sortOrder: 999
+    language: 'de' as LanguageCode
   });
 
   useEffect(() => {
@@ -77,9 +134,9 @@ export default function BoilerplateModal({
         clientId: boilerplate.clientId,
         clientName: boilerplate.clientName,
         tags: boilerplate.tags || [],
-        defaultPosition: boilerplate.defaultPosition || 'custom',
-        sortOrder: boilerplate.sortOrder || 999
+        language: ((boilerplate as any).language || 'de') as LanguageCode
       });
+      setRichTextContent(boilerplate.content);
     }
   }, [boilerplate]);
 
@@ -89,7 +146,6 @@ export default function BoilerplateModal({
       setCompanies(companiesData);
     } catch (error) {
       console.warn("Companies konnten nicht geladen werden:", error);
-      // Setze leeres Array, damit die App weiter funktioniert
       setCompanies([]);
     }
   };
@@ -104,45 +160,37 @@ export default function BoilerplateModal({
     });
   };
 
-  const handleAddTag = () => {
-    if (tagInput.trim() && !formData.tags?.includes(tagInput.trim())) {
-      setFormData({
-        ...formData,
-        tags: [...(formData.tags || []), tagInput.trim()]
-      });
-      setTagInput('');
+  const handleVariableInsert = (variable: string) => {
+    // Insert variable at cursor position in TipTap
+    if ((window as any).emailEditorInsertVariable) {
+      (window as any).emailEditorInsertVariable(variable);
     }
-  };
-
-  const handleRemoveTag = (tag: string) => {
-    setFormData({
-      ...formData,
-      tags: formData.tags?.filter(t => t !== tag) || []
-    });
   };
 
   const handleSubmit = async () => {
-    if (!formData.name.trim() || !formData.content.trim()) {
+    if (!formData.name.trim() || !richTextContent.trim()) {
       alert('Bitte füllen Sie Name und Inhalt aus.');
       return;
     }
-
-    console.log('🟢 Submitting boilerplate with data:', formData);
-    console.log('🟢 Context:', { organizationId, userId });
 
     setSaving(true);
     
     try {
       const context = { organizationId, userId };
+      const dataToSave: any = {
+        ...formData,
+        content: richTextContent
+      };
+      
+      // Entferne language wenn es nicht unterstützt wird
+      if (!('language' in formData)) {
+        delete dataToSave.language;
+      }
       
       if (boilerplate?.id) {
-        // Update
-        console.log('🟢 Updating boilerplate:', boilerplate.id);
-        await boilerplatesService.update(boilerplate.id, formData, context);
+        await boilerplatesService.update(boilerplate.id, dataToSave, context);
       } else {
-        // Create
-        console.log('🟢 Creating new boilerplate');
-        await boilerplatesService.create(formData, context);
+        await boilerplatesService.create(dataToSave, context);
       }
       
       onSave();
@@ -155,187 +203,182 @@ export default function BoilerplateModal({
   };
 
   return (
-    <Dialog open={true} onClose={onClose} size="5xl">
-      <div className="px-6 py-4 border-b">
-        <DialogTitle>
-          {boilerplate ? 'Textbaustein bearbeiten' : 'Neuer Textbaustein'}
-        </DialogTitle>
-        <Text className="mt-1 text-sm text-gray-600">
-          Erstellen Sie wiederverwendbare Textbausteine für Ihre Kommunikation
-        </Text>
-      </div>
+    <>
+      <Dialog open={true} onClose={onClose} size="5xl">
+        <div className="px-6 py-4 border-b">
+          <DialogTitle>
+            {boilerplate ? 'Textbaustein bearbeiten' : 'Neuer Textbaustein'}
+          </DialogTitle>
+          <Text className="mt-1 text-sm text-gray-600">
+            Erstellen Sie wiederverwendbare Textbausteine für Ihre Kommunikation
+          </Text>
+        </div>
 
-      <DialogBody className="p-6">
-        <div className="space-y-6">
-          {/* Name und Kategorie */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field>
-              <Label>Name *</Label>
-              <Input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="z.B. Standardbeschreibung Unternehmen"
-                required
-              />
-            </Field>
-
-            <Field>
-              <Label>Kategorie *</Label>
-              <Select
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
-              >
-                {CATEGORY_OPTIONS.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-          </div>
-
-          {/* Beschreibung */}
-          <Field>
-            <Label>Beschreibung</Label>
-            <Input
-              type="text"
-              value={formData.description || ''}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Kurze Beschreibung des Inhalts"
-            />
-          </Field>
-
-          {/* Inhalt */}
-          <Field>
-            <Label>Inhalt *</Label>
-            <Textarea
-              value={formData.content}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              placeholder="Geben Sie hier den Text ein..."
-              rows={10}
-              required
-            />
-            <Description>
-              Sie können Platzhalter wie {`{{company_name}}`}, {`{{contact_name}}`} verwenden
-            </Description>
-          </Field>
-
-          {/* Kunde und Sichtbarkeit */}
-          <Fieldset>
-            <div className="space-y-4">
-              <Field className="flex items-center justify-between">
-                <div>
-                  <Label>Global verfügbar</Label>
-                  <Description>
-                    Für alle Kunden sichtbar
-                  </Description>
-                </div>
-                <Switch
-                  checked={formData.isGlobal !== false}
-                  onChange={(checked) => setFormData({ 
-                    ...formData, 
-                    isGlobal: checked,
-                    clientId: checked ? undefined : formData.clientId,
-                    clientName: checked ? undefined : formData.clientName
-                  })}
+        <DialogBody className="p-6">
+          <div className="space-y-6">
+            {/* Name und Kategorie */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Field>
+                <Label>Name *</Label>
+                <Input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="z.B. Standardbeschreibung Unternehmen"
+                  required
                 />
               </Field>
 
-              {!formData.isGlobal && (
-                <Field>
-                  <Label>Kunde</Label>
-                  <Select
-                    value={formData.clientId || ''}
-                    onChange={(e) => handleClientChange(e.target.value)}
-                  >
-                    <option value="">Bitte wählen...</option>
-                    {companies.map(company => (
-                      <option key={company.id} value={company.id}>
-                        {company.name}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-              )}
-            </div>
-          </Fieldset>
+              <Field>
+                <Label>Kategorie *</Label>
+                <Select
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
+                >
+                  {CATEGORY_OPTIONS.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
 
-          {/* Position */}
-          <Field>
-            <Label>Standard-Position</Label>
-            <Select
-              value={formData.defaultPosition || 'custom'}
-              onChange={(e) => setFormData({ ...formData, defaultPosition: e.target.value as any })}
-            >
-              {POSITION_OPTIONS.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </Select>
-          </Field>
-
-          {/* Tags */}
-          <Field>
-            <Label>Tags</Label>
-            <div className="space-y-2">
-              <div className="flex gap-2">
-                <Input
-                  type="text"
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
-                  placeholder="Tag hinzufügen..."
-                  className="flex-1"
+              <Field>
+                <Label>
+                  Sprache *
+                  <InfoTooltip 
+                    content="Wählen Sie die Sprache des Textbausteins. Dies hilft bei der Organisation und Filterung."
+                    className="ml-1 inline-block"
+                  />
+                </Label>
+                <LanguageSelector
+                  value={formData.language || 'de'}
+                  onChange={(lang) => setFormData({ ...formData, language: lang || 'de' })}
+                  placeholder="Sprache wählen..."
+                  showNative={false}
                 />
-                <Button type="button" plain onClick={handleAddTag}>
-                  Hinzufügen
+              </Field>
+            </div>
+
+            {/* Beschreibung */}
+            <Field>
+              <Label>Beschreibung</Label>
+              <Input
+                type="text"
+                value={formData.description || ''}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Kurze Beschreibung des Inhalts"
+              />
+            </Field>
+
+            {/* Rich Text Editor */}
+            <Field>
+              <div className="flex items-center justify-between mb-2">
+                <Label>Inhalt *</Label>
+                <Button
+                  type="button"
+                  plain
+                  onClick={() => setShowVariablesModal(true)}
+                  className="text-sm"
+                >
+                  Variablen einfügen
                 </Button>
               </div>
-              
-              {formData.tags && formData.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {formData.tags.map((tag, index) => (
-                    <Badge 
-                      key={index} 
-                      color="zinc"
-                      className="cursor-pointer"
-                      onClick={() => handleRemoveTag(tag)}
+              <RichTextEditor
+                content={richTextContent}
+                onChange={setRichTextContent}
+              />
+              <Description className="mt-2">
+                Formatieren Sie Ihren Text mit der Toolbar. Nutzen Sie Variablen für dynamische Inhalte.
+              </Description>
+            </Field>
+
+            {/* Kunde und Sichtbarkeit */}
+            <Fieldset>
+              <div className="space-y-4">
+                <SwitchField>
+                  <Label>Global verfügbar</Label>
+                  <Description>
+                    Textbaustein ist für alle Kunden verfügbar
+                  </Description>
+                  <Switch
+                    checked={formData.isGlobal !== false}
+                    onChange={(checked) => setFormData({ 
+                      ...formData, 
+                      isGlobal: checked,
+                      clientId: checked ? undefined : formData.clientId,
+                      clientName: checked ? undefined : formData.clientName
+                    })}
+                    color="blue"
+                  />
+                </SwitchField>
+
+                {!formData.isGlobal && (
+                  <Field>
+                    <Label>Kunde</Label>
+                    <Select
+                      value={formData.clientId || ''}
+                      onChange={(e) => handleClientChange(e.target.value)}
                     >
-                      {tag} ×
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-          </Field>
+                      <option value="">Bitte wählen...</option>
+                      {companies.map(company => (
+                        <option key={company.id} value={company.id}>
+                          {company.name}
+                        </option>
+                      ))}
+                    </Select>
+                    <Description>
+                      Dieser Textbaustein ist nur für den ausgewählten Kunden sichtbar
+                    </Description>
+                  </Field>
+                )}
+              </div>
+            </Fieldset>
 
-          {/* Sortierung */}
-          <Field>
-            <Label>Sortierreihenfolge</Label>
-            <Input
-              type="number"
-              value={formData.sortOrder || 999}
-              onChange={(e) => setFormData({ ...formData, sortOrder: parseInt(e.target.value) || 999 })}
-              min="0"
-              step="10"
-            />
-            <Description>
-              Niedrigere Zahlen erscheinen weiter oben
-            </Description>
-          </Field>
-        </div>
-      </DialogBody>
+            {/* Tags */}
+            <Field>
+              <Label>
+                Tags
+                <InfoTooltip 
+                  content="Fügen Sie Tags hinzu, um Textbausteine besser zu organisieren und zu finden."
+                  className="ml-1 inline-block"
+                />
+              </Label>
+              <FocusAreasInput
+                value={formData.tags || []}
+                onChange={(tags) => setFormData({ ...formData, tags })}
+                placeholder="Tag hinzufügen..."
+                suggestions={[
+                  'Newsletter', 'Pressemitteilung', 'Social Media', 'E-Mail',
+                  'Webseite', 'Blog', 'Produktbeschreibung', 'FAQ',
+                  'Allgemeine Geschäftsbedingungen', 'Datenschutz',
+                  'Impressum', 'Über uns', 'Kontakt', 'Service'
+                ]}
+              />
+            </Field>
+          </div>
+        </DialogBody>
 
-      <DialogActions className="px-6 py-4">
-        <Button plain onClick={onClose} disabled={saving}>
-          Abbrechen
-        </Button>
-        <Button onClick={handleSubmit} disabled={saving} className="bg-[#005fab] hover:bg-[#004a8c] text-white">
-          {saving ? 'Speichern...' : 'Speichern'}
-        </Button>
-      </DialogActions>
-    </Dialog>
+        <DialogActions className="px-6 py-4">
+          <Button plain onClick={onClose} disabled={saving}>
+            Abbrechen
+          </Button>
+          <Button 
+            onClick={handleSubmit} 
+            disabled={saving} 
+            className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
+          >
+            {saving ? 'Speichern...' : 'Speichern'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Variables Modal */}
+      <VariablesModal
+        isOpen={showVariablesModal}
+        onClose={() => setShowVariablesModal(false)}
+        onInsert={handleVariableInsert}
+      />
+    </>
   );
 }

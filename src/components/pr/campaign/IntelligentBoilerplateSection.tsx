@@ -16,27 +16,30 @@ import {
   LockOpenIcon,
   ChatBubbleBottomCenterTextIcon,
   NewspaperIcon,
-  DocumentDuplicateIcon
+  DocumentDuplicateIcon,
+  MagnifyingGlassIcon,
+  StarIcon
 } from '@heroicons/react/20/solid';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { boilerplatesService } from '@/lib/firebase/boilerplate-service';
-import { Boilerplate } from '@/types/crm-enhanced'; // GEÄNDERT: Import aus crm-enhanced
+import { Boilerplate } from '@/types/crm-enhanced';
 import clsx from 'clsx';
 import { RichTextEditor } from '@/components/RichTextEditor';
+import { Input } from '@/components/input';
+import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/dialog';
 
-// ERWEITERT: Types um strukturierte Elemente
+// Vereinfachte Types ohne position
 export interface BoilerplateSection {
   id: string;
-  type: 'boilerplate' | 'lead' | 'main' | 'quote'; // NEU: type field
-  boilerplateId?: string; // Optional für strukturierte Elemente
+  type: 'boilerplate' | 'lead' | 'main' | 'quote';
+  boilerplateId?: string;
   boilerplate?: Boilerplate;
-  content?: string; // NEU: Für strukturierte Inhalte
-  metadata?: { // NEU: Für Zitat-Metadaten
+  content?: string;
+  metadata?: {
     person?: string;
     role?: string;
     company?: string;
   };
-  position: 'header' | 'footer' | 'custom';
   order: number;
   isLocked: boolean;
   isCollapsed: boolean;
@@ -61,7 +64,7 @@ interface IntelligentBoilerplateSectionProps {
   }) => void) => void;
 }
 
-// NEU: Inline Editor Component
+// Inline Editor Component
 function InlineEditor({
   type,
   onSave,
@@ -178,7 +181,7 @@ function InlineEditor({
           type="button"
           onClick={() => onSave(content, type === 'quote' ? metadata : undefined)}
           disabled={!content.trim()}
-          className="bg-[#005fab] hover:bg-[#004a8c] text-white"
+          className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
         >
           Speichern
         </Button>
@@ -199,7 +202,6 @@ export default function IntelligentBoilerplateSection({
   const [availableBoilerplates, setAvailableBoilerplates] = useState<Boilerplate[]>([]);
   const [showSelector, setShowSelector] = useState(false);
   const [showInlineEditor, setShowInlineEditor] = useState<{ type: 'lead' | 'main' | 'quote'; editId?: string } | null>(null);
-  const [selectedPosition, setSelectedPosition] = useState<'header' | 'footer' | 'custom'>('footer');
   const [loading, setLoading] = useState(true);
   const [showElementDropdown, setShowElementDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -224,23 +226,47 @@ export default function IntelligentBoilerplateSection({
     setLoading(true);
     try {
       const data = await boilerplatesService.getForCampaignEditor(userId, clientId);
-      const allBoilerplates = [
-        ...Object.values(data.global).flat(),
-        ...Object.values(data.client).flat()
-      ];
-      setAvailableBoilerplates(allBoilerplates);
+      
+      // Filtere Boilerplates basierend auf clientId
+      let filteredBoilerplates: Boilerplate[] = [];
+      
+      // Füge alle globalen Boilerplates hinzu
+      filteredBoilerplates = [...Object.values(data.global).flat()];
+      
+      // Füge nur die client-spezifischen Boilerplates hinzu, die zum aktuellen clientId passen
+      if (clientId && data.client) {
+        const clientBoilerplates = Object.values(data.client).flat()
+          .filter(bp => bp.clientId === clientId);
+        filteredBoilerplates = [...filteredBoilerplates, ...clientBoilerplates];
+      }
+      
+      setAvailableBoilerplates(filteredBoilerplates);
       
       // Load full boilerplate data for existing sections
       const sectionsWithData = await Promise.all(
         sections.map(async (section) => {
           if (section.type === 'boilerplate' && !section.boilerplate && section.boilerplateId) {
-            const bp = await boilerplatesService.getById(section.boilerplateId);
-            return { ...section, boilerplate: bp || undefined };
+            try {
+              const bp = await boilerplatesService.getById(section.boilerplateId);
+              return { ...section, boilerplate: bp || undefined };
+            } catch (error) {
+              console.error(`Failed to load boilerplate ${section.boilerplateId}:`, error);
+              return section;
+            }
           }
           return section;
         })
       );
-      setSections(sectionsWithData);
+      
+      // Update sections only if there are changes
+      const hasChanges = sectionsWithData.some((newSection, index) => 
+        newSection.boilerplate && !sections[index].boilerplate
+      );
+      
+      if (hasChanges) {
+        setSections(sectionsWithData);
+        onContentChange(sectionsWithData);
+      }
     } catch (error) {
       console.error('Fehler beim Laden der Boilerplates:', error);
     } finally {
@@ -248,32 +274,23 @@ export default function IntelligentBoilerplateSection({
     }
   };
 
-  const handleAddBoilerplate = (boilerplate: Boilerplate, position: 'header' | 'footer' | 'custom') => {
+  const handleAddBoilerplate = (boilerplate: Boilerplate) => {
     const newSection: BoilerplateSection = {
       id: `section-${Date.now()}`,
       type: 'boilerplate',
       boilerplateId: boilerplate.id!,
       boilerplate: boilerplate,
-      position: position,
-      order: sections.filter(s => s.position === position).length,
+      order: sections.length,
       isLocked: false,
       isCollapsed: false
     };
     
-    const updatedSections = [...sections, newSection].sort((a, b) => {
-      const positionOrder = { header: 0, custom: 1, footer: 2 };
-      if (a.position !== b.position) {
-        return positionOrder[a.position] - positionOrder[b.position];
-      }
-      return a.order - b.order;
-    });
-    
+    const updatedSections = [...sections, newSection];
     setSections(updatedSections);
     onContentChange(updatedSections);
     setShowSelector(false);
   };
 
-  // NEU: Handler für strukturierte Elemente
   const handleAddStructuredElement = (type: 'lead' | 'main' | 'quote', content: string, metadata?: any) => {
     const editId = showInlineEditor?.editId;
     
@@ -299,21 +316,13 @@ export default function IntelligentBoilerplateSection({
         type: type,
         content: type === 'lead' ? `<p><strong>${content}</strong></p>` : content,
         metadata: metadata,
-        position: 'custom',
-        order: sections.filter(s => s.position === 'custom').length,
+        order: sections.length,
         isLocked: false,
         isCollapsed: false,
         customTitle: type === 'lead' ? 'Lead-Absatz' : type === 'main' ? 'Haupttext' : 'Zitat'
       };
       
-      const updatedSections = [...sections, newSection].sort((a, b) => {
-        const positionOrder = { header: 0, custom: 1, footer: 2 };
-        if (a.position !== b.position) {
-          return positionOrder[a.position] - positionOrder[b.position];
-        }
-        return a.order - b.order;
-      });
-      
+      const updatedSections = [...sections, newSection];
       setSections(updatedSections);
       onContentChange(updatedSections);
     }
@@ -322,12 +331,13 @@ export default function IntelligentBoilerplateSection({
   };
 
   const handleRemoveSection = (sectionId: string) => {
-    const updatedSections = sections.filter(s => s.id !== sectionId);
+    const updatedSections = sections
+      .filter(s => s.id !== sectionId)
+      .map((section, index) => ({ ...section, order: index }));
     setSections(updatedSections);
     onContentChange(updatedSections);
   };
 
-  // NEU: Handler für Edit strukturierter Elemente
   const handleEditStructuredElement = (sectionId: string) => {
     const section = sections.find((s: BoilerplateSection) => s.id === sectionId);
     if (section && ['lead', 'main', 'quote'].includes(section.type)) {
@@ -369,7 +379,7 @@ export default function IntelligentBoilerplateSection({
     onContentChange(updatedSections);
   };
 
-  // NEU: Funktion zum Hinzufügen strukturierter Elemente aus KI-Response
+  // Funktion zum Hinzufügen strukturierter Elemente aus KI-Response
   const addStructuredElementsFromAI = (structured: {
     leadParagraph: string;
     bodyParagraphs: string[];
@@ -381,7 +391,7 @@ export default function IntelligentBoilerplateSection({
     };
   }) => {
     const newSections: BoilerplateSection[] = [];
-    let order = sections.filter(s => s.position === 'custom').length;
+    let order = sections.length;
     
     // Lead
     if (structured.leadParagraph) {
@@ -389,7 +399,6 @@ export default function IntelligentBoilerplateSection({
         id: `ai-lead-${Date.now()}`,
         type: 'lead',
         content: `<p><strong>${structured.leadParagraph}</strong></p>`,
-        position: 'custom',
         order: order++,
         isLocked: false,
         isCollapsed: false,
@@ -407,7 +416,6 @@ export default function IntelligentBoilerplateSection({
         id: `ai-main-${Date.now() + 1}`,
         type: 'main',
         content: mainContent,
-        position: 'custom',
         order: order++,
         isLocked: false,
         isCollapsed: false,
@@ -426,7 +434,6 @@ export default function IntelligentBoilerplateSection({
           role: structured.quote.role,
           company: structured.quote.company
         },
-        position: 'custom',
         order: order++,
         isLocked: false,
         isCollapsed: false,
@@ -434,14 +441,7 @@ export default function IntelligentBoilerplateSection({
       });
     }
     
-    const updatedSections = [...sections, ...newSections].sort((a, b) => {
-      const positionOrder = { header: 0, custom: 1, footer: 2 };
-      if (a.position !== b.position) {
-        return positionOrder[a.position] - positionOrder[b.position];
-      }
-      return a.order - b.order;
-    });
-    
+    const updatedSections = [...sections, ...newSections];
     setSections(updatedSections);
     onContentChange(updatedSections);
   };
@@ -449,12 +449,10 @@ export default function IntelligentBoilerplateSection({
   // Expose function for parent components
   useEffect(() => {
     if (onStructuredContentFromAI) {
-      // Pass the function itself, not call it
       onStructuredContentFromAI(addStructuredElementsFromAI);
     }
-  }, [onStructuredContentFromAI, sections]); // Add dependencies
+  }, [onStructuredContentFromAI, sections]);
 
-  // NEU: Render-Funktion für strukturierte Inhalte
   const renderStructuredContent = (section: BoilerplateSection) => {
     if (!section.content) return null;
     
@@ -514,14 +512,6 @@ export default function IntelligentBoilerplateSection({
     );
   };
 
-  const getPositionLabel = (position: 'header' | 'footer' | 'custom') => {
-    switch (position) {
-      case 'header': return 'Kopfbereich';
-      case 'footer': return 'Fußbereich';
-      case 'custom': return 'Hauptinhalt';
-    }
-  };
-
   const getTypeIcon = (type: BoilerplateSection['type']) => {
     switch (type) {
       case 'lead': return '📰';
@@ -536,7 +526,16 @@ export default function IntelligentBoilerplateSection({
       case 'lead': return 'yellow';
       case 'main': return 'zinc';
       case 'quote': return 'blue';
-      case 'boilerplate': return 'zinc';
+      case 'boilerplate': return 'purple';
+    }
+  };
+
+  const getTypeLabel = (type: BoilerplateSection['type']) => {
+    switch (type) {
+      case 'lead': return 'Lead';
+      case 'main': return 'Haupttext';
+      case 'quote': return 'Zitat';
+      case 'boilerplate': return 'Baustein';
     }
   };
 
@@ -549,7 +548,7 @@ export default function IntelligentBoilerplateSection({
           Textbausteine & Elemente
         </h3>
         <div className="flex gap-2">
-          {/* NEU: Dropdown für strukturierte Elemente */}
+          {/* Dropdown für strukturierte Elemente */}
           <div className="relative" ref={dropdownRef}>
             <Button
               type="button"
@@ -558,7 +557,7 @@ export default function IntelligentBoilerplateSection({
                 e.stopPropagation();
                 setShowElementDropdown(!showElementDropdown);
               }}
-              className="text-sm"
+              className="text-sm whitespace-nowrap"
             >
               <PlusIcon className="h-4 w-4 mr-1" />
               Element erstellen
@@ -613,7 +612,7 @@ export default function IntelligentBoilerplateSection({
               e.stopPropagation();
               setShowSelector(true);
             }}
-            className="text-sm"
+            className="text-sm whitespace-nowrap"
           >
             <PlusIcon className="h-4 w-4 mr-1" />
             Baustein hinzufügen
@@ -621,7 +620,7 @@ export default function IntelligentBoilerplateSection({
         </div>
       </div>
 
-      {/* NEU: Inline Editor */}
+      {/* Inline Editor */}
       {showInlineEditor && (
         <InlineEditor
           type={showInlineEditor.type}
@@ -652,13 +651,14 @@ export default function IntelligentBoilerplateSection({
             <Button
               type="button"
               onClick={() => setShowInlineEditor({ type: 'lead' })}
-              className="bg-yellow-500 hover:bg-yellow-600 text-white"
+              className="bg-yellow-500 hover:bg-yellow-600 text-white whitespace-nowrap"
             >
               Lead erstellen
             </Button>
             <Button
               type="button"
               onClick={() => setShowSelector(true)}
+              className="whitespace-nowrap"
             >
               Baustein hinzufügen
             </Button>
@@ -729,16 +729,13 @@ export default function IntelligentBoilerplateSection({
                                     section.type === 'main' ? 'Haupttext' : 
                                     section.type === 'quote' ? 'Zitat' : 'Element')}
                                 </h4>
-                                <Badge color={getTypeBadgeColor(section.type)} className="text-xs">
-                                  {section.type === 'boilerplate' ? getPositionLabel(section.position) : 
-                                   section.type === 'lead' ? 'Lead' :
-                                   section.type === 'main' ? 'Haupttext' :
-                                   section.type === 'quote' ? 'Zitat' : ''}
+                                <Badge color={getTypeBadgeColor(section.type)} className="text-xs whitespace-nowrap">
+                                  {getTypeLabel(section.type)}
                                 </Badge>
                                 {section.type === 'boilerplate' && section.boilerplate?.isGlobal ? (
-                                  <Badge color="blue" className="text-xs">Global</Badge>
-                                ) : section.type === 'boilerplate' ? (
-                                  <Badge color="orange" className="text-xs">{clientName}</Badge>
+                                  <Badge color="blue" className="text-xs whitespace-nowrap">Global</Badge>
+                                ) : section.type === 'boilerplate' && clientName ? (
+                                  <Badge color="orange" className="text-xs whitespace-nowrap">{clientName}</Badge>
                                 ) : null}
                               </div>
                               {section.type === 'boilerplate' && section.boilerplate?.description && !section.isCollapsed && (
@@ -751,7 +748,7 @@ export default function IntelligentBoilerplateSection({
 
                           {/* Actions */}
                           <div className="flex items-center gap-1">
-                            {/* NEU: Edit Button für strukturierte Elemente */}
+                            {/* Edit Button für strukturierte Elemente */}
                             {['lead', 'main', 'quote'].includes(section.type) && (
                               <button
                                 type="button"
@@ -809,52 +806,10 @@ export default function IntelligentBoilerplateSection({
         </DragDropContext>
       )}
 
-      {/* Quick Add Buttons */}
-      {sections.length > 0 && !showInlineEditor && (
-        <div className="flex gap-2 justify-center pt-2">
-          <Button
-            type="button"
-            plain
-            onClick={(e: React.MouseEvent) => {
-              e.stopPropagation();
-              setSelectedPosition('header');
-              setShowSelector(true);
-            }}
-          >
-            <PlusIcon className="h-3 w-3 mr-1" />
-            Kopfbereich
-          </Button>
-          <Button
-            type="button"
-            plain
-            onClick={(e: React.MouseEvent) => {
-              e.stopPropagation();
-              setShowInlineEditor({ type: 'main' });
-            }}
-          >
-            <PlusIcon className="h-3 w-3 mr-1" />
-            Haupttext
-          </Button>
-          <Button
-            type="button"
-            plain
-            onClick={(e: React.MouseEvent) => {
-              e.stopPropagation();
-              setSelectedPosition('footer');
-              setShowSelector(true);
-            }}
-          >
-            <PlusIcon className="h-3 w-3 mr-1" />
-            Fußbereich
-          </Button>
-        </div>
-      )}
-
       {/* Boilerplate Selector Modal */}
       {showSelector && (
         <BoilerplateSelectorModal
           availableBoilerplates={availableBoilerplates}
-          selectedPosition={selectedPosition}
           onSelect={handleAddBoilerplate}
           onClose={() => setShowSelector(false)}
           existingSectionIds={sections.filter(s => s.type === 'boilerplate').map(s => s.boilerplateId!)}
@@ -864,22 +819,19 @@ export default function IntelligentBoilerplateSection({
   );
 }
 
-// Boilerplate Selector Modal Component (bleibt unverändert)
+// Vereinfachter Boilerplate Selector Modal
 function BoilerplateSelectorModal({
   availableBoilerplates,
-  selectedPosition,
   onSelect,
   onClose,
   existingSectionIds
 }: {
   availableBoilerplates: Boilerplate[];
-  selectedPosition: 'header' | 'footer' | 'custom';
-  onSelect: (boilerplate: Boilerplate, position: 'header' | 'footer' | 'custom') => void;
+  onSelect: (boilerplate: Boilerplate) => void;
   onClose: () => void;
   existingSectionIds: string[];
 }) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [position, setPosition] = useState(selectedPosition);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   const categories = [
@@ -904,67 +856,38 @@ function BoilerplateSelectorModal({
   });
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
-      <div 
-        className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[80vh] overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Modal Header */}
-        <div className="p-6 border-b">
-          <h3 className="text-lg font-semibold">Textbaustein hinzufügen</h3>
-          
-          {/* Search */}
-          <div className="mt-4">
-            <input
+    <Dialog open={true} onClose={onClose} size="3xl">
+      <DialogTitle className="px-6 py-4">Textbaustein hinzufügen</DialogTitle>
+      <DialogBody className="px-6 pb-6">
+        {/* Search */}
+        <div className="mb-4">
+          <div className="relative">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
               type="text"
-              placeholder="Suchen..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="Textbausteine suchen..."
+              className="pl-10"
             />
-          </div>
-
-          {/* Filters */}
-          <div className="mt-4 flex gap-4">
-            {/* Category Filter */}
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-3 py-2 border rounded-lg text-sm"
-            >
-              {categories.map(cat => (
-                <option key={cat.id} value={cat.id}>{cat.label}</option>
-              ))}
-            </select>
-
-            {/* Position Selector */}
-            <div className="flex gap-2">
-              {(['header', 'custom', 'footer'] as const).map(pos => (
-                <button
-                  key={pos}
-                  type="button"
-                  onClick={(e: React.MouseEvent) => {
-                    e.stopPropagation();
-                    setPosition(pos);
-                  }}
-                  className={clsx(
-                    "px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                    position === pos 
-                      ? "bg-indigo-100 text-indigo-700" 
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  )}
-                >
-                  {pos === 'header' && '🔝 Kopfbereich'}
-                  {pos === 'custom' && '📄 Hauptinhalt'}
-                  {pos === 'footer' && '🔚 Fußbereich'}
-                </button>
-              ))}
-            </div>
           </div>
         </div>
 
+        {/* Category Filter */}
+        <div className="mb-4">
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            {categories.map(cat => (
+              <option key={cat.id} value={cat.id}>{cat.label}</option>
+            ))}
+          </select>
+        </div>
+
         {/* Boilerplate List */}
-        <div className="overflow-y-auto max-h-[50vh] p-6">
+        <div className="max-h-96 overflow-y-auto">
           {filteredBoilerplates.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <DocumentTextIcon className="h-12 w-12 mx-auto mb-3 text-gray-300" />
@@ -976,14 +899,16 @@ function BoilerplateSelectorModal({
                 <div
                   key={boilerplate.id}
                   className="border rounded-lg p-4 hover:border-indigo-300 hover:bg-indigo-50 cursor-pointer transition-colors"
-                  onClick={(e: React.MouseEvent) => {
-                    e.stopPropagation();
-                    onSelect(boilerplate, position);
-                  }}
+                  onClick={() => onSelect(boilerplate)}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <h4 className="font-medium text-gray-900">{boilerplate.name}</h4>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-medium text-gray-900">{boilerplate.name}</h4>
+                        {boilerplate.isFavorite && (
+                          <StarIcon className="h-4 w-4 text-yellow-500" />
+                        )}
+                      </div>
                       {boilerplate.description && (
                         <p className="text-sm text-gray-600 mt-1">{boilerplate.description}</p>
                       )}
@@ -994,6 +919,11 @@ function BoilerplateSelectorModal({
                         ) : (
                           <Badge color="orange" className="text-xs">{boilerplate.clientName}</Badge>
                         )}
+                        {(boilerplate as any).language && (
+                          <Badge color="purple" className="text-xs">
+                            {(boilerplate as any).language.toUpperCase()}
+                          </Badge>
+                        )}
                       </div>
                     </div>
                     <EyeIcon className="h-5 w-5 text-gray-400" />
@@ -1003,14 +933,12 @@ function BoilerplateSelectorModal({
             </div>
           )}
         </div>
-
-        {/* Modal Footer */}
-        <div className="p-6 border-t flex justify-end">
-          <Button type="button" plain onClick={onClose}>
-            Abbrechen
-          </Button>
-        </div>
-      </div>
-    </div>
+      </DialogBody>
+      <DialogActions className="px-6 py-4">
+        <Button plain onClick={onClose}>
+          Abbrechen
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }

@@ -188,7 +188,7 @@ function FolderSelectorDialog({
                 </div>
                 <Button
                   onClick={handleConfirm}
-                  className="bg-[#005fab] hover:bg-[#004a8c] text-white"
+                  className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
                 >
                   Hier speichern
                 </Button>
@@ -256,6 +256,28 @@ export default function CampaignContentComposer({
   const [alertMessage, setAlertMessage] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const previewRef = useRef<HTMLDivElement>(null);
 
+  // Konvertiere Legacy-Sections mit position zu neuen ohne position
+  useEffect(() => {
+    const convertedSections = initialBoilerplateSections.map((section, index) => {
+      // Wenn section noch position hat (legacy), entferne es
+      if ('position' in section) {
+        const { position, ...sectionWithoutPosition } = section as any;
+        return {
+          ...sectionWithoutPosition,
+          order: section.order ?? index
+        };
+      }
+      return {
+        ...section,
+        order: section.order ?? index
+      };
+    });
+    
+    if (JSON.stringify(convertedSections) !== JSON.stringify(boilerplateSections)) {
+      setBoilerplateSections(convertedSections);
+    }
+  }, [initialBoilerplateSections]);
+
   // Update parent when sections change
   const handleBoilerplateSectionsChange = (sections: BoilerplateSection[]) => {
     setBoilerplateSections(sections);
@@ -267,32 +289,55 @@ export default function CampaignContentComposer({
   // Process content whenever sections or main content changes
   useEffect(() => {
     const composeFullContent = async () => {
-      const context = {
-        company: { 
-          name: clientName || '',
-          // Weitere Firmendaten können hier ergänzt werden
-        },
-        date: { 
-          today: new Date(),
-          year: new Date().getFullYear()
-        },
-        campaign: { 
-          title 
+      console.log('🔄 Composing content with sections:', boilerplateSections);
+      
+      // Erstelle den vollständigen HTML-Content aus allen Sections
+      let fullHtml = '';
+      
+      // Füge Titel hinzu wenn vorhanden
+      if (title) {
+        fullHtml += `<h1 class="text-2xl font-bold mb-4">${title}</h1>\n\n`;
+      }
+      
+      // Sortiere Sections nach order
+      const sortedSections = [...boilerplateSections].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      
+      // Füge alle Sections hinzu
+      for (const section of sortedSections) {
+        if (section.type === 'boilerplate' && section.boilerplate) {
+          // Boilerplate content
+          fullHtml += section.boilerplate.content + '\n\n';
+        } else if (section.content) {
+          // Strukturierte Inhalte (lead, main, quote)
+          if (section.type === 'quote' && section.metadata) {
+            fullHtml += `<blockquote class="border-l-4 border-blue-400 pl-4 italic">\n`;
+            fullHtml += `${section.content}\n`;
+            fullHtml += `<footer class="text-sm text-gray-600 mt-2">— ${section.metadata.person}`;
+            if (section.metadata.role) fullHtml += `, ${section.metadata.role}`;
+            if (section.metadata.company) fullHtml += ` bei ${section.metadata.company}`;
+            fullHtml += `</footer>\n`;
+            fullHtml += `</blockquote>\n\n`;
+          } else {
+            fullHtml += section.content + '\n\n';
+          }
         }
-      };
-
-      const composed = await processBoilerplates(
-        boilerplateSections,
-        '', // mainContent ist jetzt immer leer
-        context
-      );
-
-      setProcessedContent(composed);
-      onFullContentChange(composed);
+      }
+      
+      // Füge Datum am Ende hinzu
+      const currentDate = new Date().toLocaleDateString('de-DE', {
+        day: 'numeric',
+        month: 'long', 
+        year: 'numeric'
+      });
+      fullHtml += `<p class="text-sm text-gray-600 mt-8">${currentDate}</p>`;
+      
+      console.log('📄 Generated HTML:', fullHtml);
+      setProcessedContent(fullHtml);
+      onFullContentChange(fullHtml);
     };
 
     composeFullContent();
-  }, [boilerplateSections, title, clientName]); // mainContent entfernt
+  }, [boilerplateSections, title, clientName, onFullContentChange]);
 
   // Generate PDF
   const generatePdf = async (targetFolderId?: string) => {
@@ -306,7 +351,7 @@ export default function CampaignContentComposer({
 
       // PDF Options mit besseren Margins
       const opt = {
-        margin: [15, 15, 20, 15], // top, left, bottom, right - mehr Platz unten
+        margin: [15, 15, 20, 15], // top, left, bottom, right
         filename: `Pressemitteilung_${title.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
@@ -314,7 +359,7 @@ export default function CampaignContentComposer({
           useCORS: true,
           letterRendering: true,
           scrollY: 0,
-          windowHeight: previewRef.current.scrollHeight + 50 // Extra height to prevent cutoff
+          windowHeight: previewRef.current.scrollHeight + 50
         },
         jsPDF: { 
           unit: 'mm', 
@@ -348,7 +393,7 @@ export default function CampaignContentComposer({
 
       setPdfDownloadUrl(uploadedAsset.downloadUrl);
       
-      // Success message mit Catalyst Component
+      // Success message
       setAlertMessage({
         type: 'success',
         message: 'PDF wurde erfolgreich erstellt und im Mediacenter gespeichert!'
@@ -389,116 +434,116 @@ export default function CampaignContentComposer({
       )}
 
       <div className="space-y-6">
-      {/* Title Input */}
-      <Field>
-        <Label className="flex items-center">
-          Titel der Pressemitteilung
-          <InfoTooltip 
-            content="Pflichtfeld: Der Titel sollte prägnant und aussagekräftig sein. Er wird als Überschrift in der Pressemitteilung und im E-Mail-Betreff verwendet."
-            className="ml-1"
-          />
-        </Label>
-        <Input
-          type="text"
-          value={title}
-          onChange={(e) => onTitleChange(e.target.value)}
-          placeholder="z.B. Neue Partnerschaft revolutioniert die Branche"
-          required
-        />
-      </Field>
-
-      {/* Main Content Editor - JETZT VOR BOILERPLATE */}
-      {!hideMainContentField && (
+        {/* Title Input */}
         <Field>
           <Label className="flex items-center">
-            Hauptinhalt der Pressemitteilung
+            Titel der Pressemitteilung
             <InfoTooltip 
-              content="Pflichtfeld: Verfassen Sie hier den individuellen Inhalt Ihrer Pressemitteilung. Nutzen Sie die Formatierungsoptionen für professionelle Gestaltung."
+              content="Pflichtfeld: Der Titel sollte prägnant und aussagekräftig sein. Er wird als Überschrift in der Pressemitteilung und im E-Mail-Betreff verwendet."
               className="ml-1"
             />
           </Label>
-          <div className="mt-2 border rounded-lg">
-            <RichTextEditor
-              content={mainContent}
-              onChange={onMainContentChange}
-            />
-          </div>
-          <p className="mt-2 text-sm text-gray-500">
-            Schreibe hier den individuellen Inhalt deiner Pressemitteilung. Die Textbausteine werden automatisch an den entsprechenden Stellen eingefügt.
-          </p>
+          <Input
+            type="text"
+            value={title}
+            onChange={(e) => onTitleChange(e.target.value)}
+            placeholder="z.B. Neue Partnerschaft revolutioniert die Branche"
+            required
+          />
         </Field>
-      )}
 
-      {/* Boilerplate Sections - JETZT NACH HAUPTINHALT */}
-      <div className="bg-gray-50 rounded-lg p-4">
-        <IntelligentBoilerplateSection
-          userId={userId}
-          clientId={clientId}
-          clientName={clientName}
-          onContentChange={handleBoilerplateSectionsChange}
-          initialSections={boilerplateSections}
-        />
-      </div>
+        {/* Main Content Editor - nur wenn nicht versteckt */}
+        {!hideMainContentField && (
+          <Field>
+            <Label className="flex items-center">
+              Hauptinhalt der Pressemitteilung
+              <InfoTooltip 
+                content="Pflichtfeld: Verfassen Sie hier den individuellen Inhalt Ihrer Pressemitteilung. Nutzen Sie die Formatierungsoptionen für professionelle Gestaltung."
+                className="ml-1"
+              />
+            </Label>
+            <div className="mt-2 border rounded-lg">
+              <RichTextEditor
+                content={mainContent}
+                onChange={onMainContentChange}
+              />
+            </div>
+            <p className="mt-2 text-sm text-gray-500">
+              Schreibe hier den individuellen Inhalt deiner Pressemitteilung. Die Textbausteine werden automatisch eingefügt.
+            </p>
+          </Field>
+        )}
 
-      {/* Preview Toggle */}
-      <div className="border-t pt-4">
-        <div className="flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => setShowPreview(!showPreview)}
-            className="text-sm font-medium text-indigo-600 hover:text-indigo-500 flex items-center gap-2"
-          >
-            <span>{showPreview ? '▼' : '▶'}</span>
-            Vorschau der vollständigen Pressemitteilung
-          </button>
+        {/* Boilerplate Sections */}
+        <div className="bg-gray-50 rounded-lg p-4">
+          <IntelligentBoilerplateSection
+            userId={userId}
+            clientId={clientId}
+            clientName={clientName}
+            onContentChange={handleBoilerplateSectionsChange}
+            initialSections={boilerplateSections}
+          />
+        </div>
+
+        {/* Preview Toggle */}
+        <div className="border-t pt-4">
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setShowPreview(!showPreview)}
+              className="text-sm font-medium text-indigo-600 hover:text-indigo-500 flex items-center gap-2"
+            >
+              <span>{showPreview ? '▼' : '▶'}</span>
+              Vorschau der vollständigen Pressemitteilung
+            </button>
+            
+            {showPreview && (
+              <div className="flex items-center gap-3">
+                {pdfDownloadUrl && (
+                  <a
+                    href={pdfDownloadUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-[#005fab] hover:text-[#004a8c] underline"
+                  >
+                    PDF öffnen
+                  </a>
+                )}
+                <Button
+                  type="button"
+                  onClick={handlePdfExport}
+                  disabled={generatingPdf || !processedContent}
+                  className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
+                >
+                  <DocumentArrowDownIcon className="h-4 w-4 mr-1" />
+                  {generatingPdf ? 'PDF wird erstellt...' : 'Als PDF exportieren'}
+                </Button>
+              </div>
+            )}
+          </div>
           
           {showPreview && (
-            <div className="flex items-center gap-3">
-              {pdfDownloadUrl && (
-                <a
-                  href={pdfDownloadUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-[#005fab] hover:text-[#004a8c] underline"
-                >
-                  PDF öffnen
-                </a>
-              )}
-              <Button
-                type="button"
-                onClick={handlePdfExport}
-                disabled={generatingPdf || !processedContent}
-                className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
-              >
-                <DocumentArrowDownIcon className="h-4 w-4 mr-1" />
-                {generatingPdf ? 'PDF wird erstellt...' : 'Als PDF exportieren'}
-              </Button>
+            <div className="mt-4 p-6 bg-white border rounded-lg shadow-sm">
+              <h3 className="text-lg font-semibold mb-4">Vorschau</h3>
+              <div 
+                ref={previewRef}
+                className="prose prose-sm sm:prose-base lg:prose-lg max-w-none [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mt-6 [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mt-5 [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:mt-4 [&_h3]:mb-2"
+                style={{ paddingBottom: '20px' }}
+                dangerouslySetInnerHTML={{ __html: processedContent || '<p class="text-gray-500">Noch kein Inhalt vorhanden</p>' }}
+              />
             </div>
           )}
         </div>
-        
-        {showPreview && (
-          <div className="mt-4 p-6 bg-white border rounded-lg shadow-sm">
-            <h3 className="text-lg font-semibold mb-4">Vorschau</h3>
-            <div 
-              ref={previewRef}
-              className="prose prose-sm sm:prose-base lg:prose-lg max-w-none [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mt-6 [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mt-5 [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:mt-4 [&_h3]:mb-2"
-              style={{ paddingBottom: '20px' }} // Extra padding for PDF
-              dangerouslySetInnerHTML={{ __html: processedContent || '<p class="text-gray-500">Noch kein Inhalt vorhanden</p>' }}
-            />
-          </div>
-        )}
-      </div>
 
-      {/* Folder Selector Dialog */}
-      <FolderSelectorDialog
-        isOpen={showFolderSelector}
-        onClose={() => setShowFolderSelector(false)}
-        onFolderSelect={generatePdf}
-        userId={userId}
-        clientId={clientId}
-      />
-    </div>
+        {/* Folder Selector Dialog */}
+        <FolderSelectorDialog
+          isOpen={showFolderSelector}
+          onClose={() => setShowFolderSelector(false)}
+          onFolderSelect={generatePdf}
+          userId={userId}
+          clientId={clientId}
+        />
+      </div>
     </>
   );
 }
