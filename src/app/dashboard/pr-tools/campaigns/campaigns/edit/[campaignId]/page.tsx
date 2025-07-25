@@ -1,8 +1,8 @@
-// src/app/dashboard/pr-tools/campaigns/campaigns/new/page.tsx
+// src/app/dashboard/pr-tools/campaigns/campaigns/edit/[campaignId]/page.tsx
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from "@/context/AuthContext";
 import { teamMemberService } from "@/lib/firebase/organization-service";
@@ -37,11 +37,12 @@ import { listsService } from "@/lib/firebase/lists-service";
 import { prService } from "@/lib/firebase/pr-service";
 import { mediaService } from "@/lib/firebase/media-service";
 import { DistributionList } from "@/types/lists";
-import { CampaignAssetAttachment } from "@/types/pr";
+import { CampaignAssetAttachment, PRCampaign } from "@/types/pr";
 import { BoilerplateSection } from "@/components/pr/campaign/IntelligentBoilerplateSection";
 import { MediaAsset, MediaFolder } from "@/types/media";
 import { Input } from "@/components/input";
 import { InfoTooltip } from "@/components/InfoTooltip";
+import { serverTimestamp } from 'firebase/firestore';
 
 // Dynamic import für AI Modal
 import dynamic from 'next/dynamic';
@@ -86,7 +87,7 @@ function Alert({
   );
 }
 
-// Asset Selector Modal mit Fix für überlaufende Texte
+// Asset Selector Modal
 function AssetSelectorModal({
   isOpen,
   onClose,
@@ -154,7 +155,7 @@ function AssetSelectorModal({
             description: asset.description || '',
             thumbnailUrl: asset.downloadUrl
           },
-          attachedAt: new Date() as any,
+          attachedAt: serverTimestamp() as any,
           attachedBy: userId
         });
       }
@@ -170,7 +171,7 @@ function AssetSelectorModal({
             folderName: folder.name,
             description: folder.description || ''
           },
-          attachedAt: new Date() as any,
+          attachedAt: serverTimestamp() as any,
           attachedBy: userId
         });
       }
@@ -318,11 +319,17 @@ function AssetSelectorModal({
   );
 }
 
-export default function NewPRCampaignPage() {
+export default function EditPRCampaignPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const params = useParams();
+  const campaignId = params.campaignId as string;
   const formRef = useRef<HTMLFormElement>(null);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
+
+  // Campaign State
+  const [campaign, setCampaign] = useState<PRCampaign | null>(null);
+  const [loadingCampaign, setLoadingCampaign] = useState(true);
 
   // Form State
   const [availableLists, setAvailableLists] = useState<DistributionList[]>([]);
@@ -365,20 +372,69 @@ export default function NewPRCampaignPage() {
     loadOrganizationId();
   }, [user]);
 
+  // Load Campaign
+  useEffect(() => {
+    if (user && campaignId) {
+      loadCampaign();
+    }
+  }, [user, campaignId]);
+
+  // Load Lists
   useEffect(() => {
     if (user && organizationId) {
-      loadData();
+      loadLists();
     }
   }, [user, organizationId]);
 
-  const loadData = async () => {
+  const loadCampaign = async () => {
+    if (!user || !campaignId) return;
+    
+    setLoadingCampaign(true);
+    try {
+      const campaignData = await prService.getById(campaignId);
+      if (campaignData) {
+        setCampaign(campaignData);
+        
+        // Setze alle Formularfelder mit den geladenen Daten
+        setCampaignTitle(campaignData.title || '');
+        setPressReleaseContent(campaignData.contentHtml || '');
+        setSelectedCompanyId(campaignData.clientId || '');
+        setSelectedCompanyName(campaignData.clientName || '');
+        setSelectedListId(campaignData.distributionListId || '');
+        setSelectedListName(campaignData.distributionListName || '');
+        setRecipientCount(campaignData.recipientCount || 0);
+        setApprovalRequired(campaignData.approvalRequired || false);
+        setAttachedAssets(campaignData.attachedAssets || []);
+        
+        // Konvertiere boilerplateSections falls nötig
+        if (campaignData.boilerplateSections) {
+          const sections = campaignData.boilerplateSections.map((section: any, index: number) => ({
+            ...section,
+            order: section.order ?? index,
+            isLocked: section.isLocked || false,
+            isCollapsed: section.isCollapsed || false
+          }));
+          setBoilerplateSections(sections);
+        }
+      } else {
+        setValidationErrors(['Kampagne nicht gefunden']);
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden der Kampagne:', error);
+      setValidationErrors(['Fehler beim Laden der Kampagne']);
+    } finally {
+      setLoadingCampaign(false);
+    }
+  };
+
+  const loadLists = async () => {
     if (!user || !organizationId) return;
     setLoading(true);
     try {
       const listsData = await listsService.getAll(organizationId);
       setAvailableLists(listsData);
     } catch (error) {
-      console.error('Fehler beim Laden:', error);
+      console.error('Fehler beim Laden der Listen:', error);
     } finally {
       setLoading(false);
     }
@@ -411,120 +467,81 @@ export default function NewPRCampaignPage() {
     setSaving(true);
     
     try {
-      // Bereite die boilerplateSections für Firebase vor (ohne position)
+      // Bereite die boilerplateSections für Firebase vor
       const cleanedSections = boilerplateSections.map((section, index) => {
         const cleaned: any = {
           id: section.id,
           type: section.type,
-          order: section.order ?? index, // Fallback auf index wenn order fehlt
+          order: section.order ?? index,
           isLocked: section.isLocked || false,
           isCollapsed: section.isCollapsed || false
         };
         
         // Nur definierte Werte hinzufügen
-        if (section.boilerplateId !== undefined) cleaned.boilerplateId = section.boilerplateId;
-        if (section.content !== undefined) cleaned.content = section.content;
-        if (section.metadata !== undefined) cleaned.metadata = section.metadata;
-        if (section.customTitle !== undefined) cleaned.customTitle = section.customTitle;
+        if (section.boilerplateId !== undefined && section.boilerplateId !== null) {
+          cleaned.boilerplateId = section.boilerplateId;
+        }
+        if (section.content !== undefined && section.content !== null) {
+          cleaned.content = section.content;
+        }
+        if (section.metadata !== undefined && section.metadata !== null) {
+          cleaned.metadata = section.metadata;
+        }
+        if (section.customTitle !== undefined && section.customTitle !== null) {
+          cleaned.customTitle = section.customTitle;
+        }
         
         return cleaned;
       });
 
-      const campaignData: any = {
-        userId: user!.uid,
-        organizationId: organizationId!,
-        title: campaignTitle,
+      // Bereite attachedAssets vor
+      const cleanedAttachedAssets = attachedAssets.map(asset => ({
+        ...asset,
+        attachedAt: asset.attachedAt || serverTimestamp()
+      }));
+
+      const updateData: Partial<PRCampaign> = {
+        title: campaignTitle.trim(),
         contentHtml: pressReleaseContent || '',
         boilerplateSections: cleanedSections,
-        status: 'draft' as const,
         distributionListId: selectedListId,
-        distributionListName: selectedListName,
-        recipientCount: recipientCount,
-        clientId: selectedCompanyId,
-        clientName: selectedCompanyName,
-        attachedAssets: attachedAssets,
-        approvalRequired: approvalRequired,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        distributionListName: selectedListName || '',
+        recipientCount: recipientCount || 0,
+        clientId: selectedCompanyId || undefined,
+        clientName: selectedCompanyName || undefined,
+        attachedAssets: cleanedAttachedAssets,
+        approvalRequired: approvalRequired || false
       };
 
-      // Entferne alle undefined/null Werte rekursiv
-      const removeUndefinedDeep = (obj: any): any => {
-        if (obj === null || obj === undefined) return null;
-        if (obj instanceof Date) return obj;
-        if (Array.isArray(obj)) {
-          return obj.map(item => removeUndefinedDeep(item));
+      // Entferne undefined Werte
+      Object.keys(updateData).forEach(key => {
+        if (updateData[key as keyof typeof updateData] === undefined) {
+          delete updateData[key as keyof typeof updateData];
         }
-        if (typeof obj === 'object') {
-          const cleaned: any = {};
-          for (const key in obj) {
-            if (obj.hasOwnProperty(key) && obj[key] !== undefined) {
-              const cleanedValue = removeUndefinedDeep(obj[key]);
-              if (cleanedValue !== undefined) {
-                cleaned[key] = cleanedValue;
-              }
-            }
-          }
-          return cleaned;
-        }
-        return obj;
-      };
+      });
 
-      const cleanedCampaignData = removeUndefinedDeep(campaignData);
+      console.log('Aktualisiere Kampagne mit Daten:', updateData);
 
-      console.log('Speichere Kampagne mit bereinigten Daten:', cleanedCampaignData);
-      
-      // Debug: Finde undefined Werte
-      const findUndefined = (obj: any, path: string = ''): void => {
-        if (obj === undefined) {
-          console.error(`Found undefined at path: ${path}`);
-          return;
-        }
-        if (obj === null || obj instanceof Date) return;
-        if (Array.isArray(obj)) {
-          obj.forEach((item, index) => {
-            findUndefined(item, `${path}[${index}]`);
-          });
-        } else if (typeof obj === 'object') {
-          Object.keys(obj).forEach(key => {
-            findUndefined(obj[key], path ? `${path}.${key}` : key);
-          });
-        }
-      };
-      
-      console.log('🔍 Checking for undefined values...');
-      findUndefined(cleanedCampaignData);
-      
-      // Zusätzliche Sicherheit: Verwende structuredClone statt JSON parse/stringify
-      const finalCampaignData = structuredClone ? structuredClone(cleanedCampaignData) : JSON.parse(JSON.stringify(cleanedCampaignData));
+      await prService.update(campaignId, updateData);
+      console.log('✅ Kampagne aktualisiert');
 
-      const newCampaignId = await prService.create(finalCampaignData);
-      console.log('✅ Kampagne erstellt mit ID:', newCampaignId);
-
-      if (approvalRequired) {
+      // Wenn Freigabe erforderlich und noch nicht angefordert
+      if (approvalRequired && campaign?.status === 'draft') {
         try {
-          const shareId = await prService.requestApproval(newCampaignId);
+          const shareId = await prService.requestApproval(campaignId);
           if (shareId) {
             console.log('✅ Freigabe erstellt mit Share ID:', shareId);
-          } else {
-            console.warn('⚠️ Freigabe konnte nicht erstellt werden, Kampagne wurde trotzdem gespeichert');
           }
         } catch (approvalError) {
           console.error('Fehler beim Erstellen der Freigabe:', approvalError);
-          // Zeige Warnung, aber navigiere trotzdem
-          setValidationErrors(['Die Kampagne wurde gespeichert, aber die Freigabe konnte nicht erstellt werden.']);
-          setTimeout(() => {
-            router.push('/dashboard/pr-tools/campaigns');
-          }, 2000);
-          return;
         }
       }
 
-      // Erfolgreiche Navigation
+      // Navigation zurück zur Übersicht
       router.push('/dashboard/pr-tools/campaigns');
 
     } catch (error) {
-      console.error('Fehler beim Speichern der Kampagne:', error);
+      console.error('Fehler beim Aktualisieren der Kampagne:', error);
 
       let errorMessage = 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.';
       if (error instanceof Error) {
@@ -545,7 +562,7 @@ export default function NewPRCampaignPage() {
       setCampaignTitle(result.structured.headline);
     }
     
-    // Erstelle AI-Sections aus strukturierten Daten (ohne position)
+    // Erstelle AI-Sections aus strukturierten Daten
     if (result.structured) {
       console.log('Creating AI sections from structured data:', result.structured);
       const aiSections: BoilerplateSection[] = [];
@@ -606,10 +623,7 @@ export default function NewPRCampaignPage() {
       }
       
       // Füge die AI-Sections zu den bestehenden hinzu
-      console.log('Current boilerplateSections:', boilerplateSections);
-      console.log('Adding AI sections:', aiSections);
       const newSections = [...boilerplateSections, ...aiSections];
-      console.log('New sections total:', newSections);
       setBoilerplateSections(newSections);
     }
     
@@ -624,13 +638,24 @@ export default function NewPRCampaignPage() {
     ));
   };
 
-  if (loading) {
+  if (loadingCampaign || loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto"></div>
-          <Text className="mt-4">Lade Daten...</Text>
+          <Text className="mt-4">Lade Kampagne...</Text>
         </div>
+      </div>
+    );
+  }
+
+  if (!campaign) {
+    return (
+      <div className="text-center py-12">
+        <Text className="text-red-600">Kampagne nicht gefunden</Text>
+        <Link href="/dashboard/pr-tools/campaigns" className="mt-4 text-[#005fab] hover:text-[#004a8c]">
+          Zurück zur Übersicht
+        </Link>
       </div>
     );
   }
@@ -647,7 +672,7 @@ export default function NewPRCampaignPage() {
           Zurück zur Übersicht
         </Link>
         
-        <Heading>Neue PR-Kampagne</Heading>
+        <Heading>PR-Kampagne bearbeiten</Heading>
       </div>
 
       {/* Fehlermeldungen oben auf der Seite */}
@@ -826,6 +851,19 @@ export default function NewPRCampaignPage() {
                   <p className="text-sm text-gray-500 mt-1">
                     Wenn aktiviert, muss der Kunde die Pressemitteilung vor dem Versand freigeben.
                   </p>
+                  {campaign.approvalData && (
+                    <div className="mt-2">
+                      <Badge color={
+                        campaign.status === 'approved' ? 'green' :
+                        campaign.status === 'changes_requested' ? 'orange' :
+                        campaign.status === 'in_review' ? 'blue' : 'zinc'
+                      }>
+                        {campaign.status === 'approved' ? 'Freigegeben' :
+                         campaign.status === 'changes_requested' ? 'Änderungen angefordert' :
+                         campaign.status === 'in_review' ? 'In Prüfung' : 'Entwurf'}
+                      </Badge>
+                    </div>
+                  )}
                 </div>
               </label>
             </div>
@@ -841,12 +879,7 @@ export default function NewPRCampaignPage() {
             disabled={saving}
             className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
           >
-            {saving ? 'Speichert...' : approvalRequired ? (
-              <>
-                <PaperAirplaneIcon className="h-4 w-4" />
-                Freigabe anfordern
-              </>
-            ) : 'Als Entwurf speichern'}
+            {saving ? 'Speichert...' : 'Änderungen speichern'}
           </Button>
         </div>
       </form>
@@ -858,7 +891,11 @@ export default function NewPRCampaignPage() {
           onClose={() => setShowAssetSelector(false)}
           clientId={selectedCompanyId}
           clientName={selectedCompanyName}
-          onAssetsSelected={setAttachedAssets}
+          onAssetsSelected={(newAssets) => {
+            // Merge new assets with existing ones
+            const mergedAssets = [...attachedAssets, ...newAssets];
+            setAttachedAssets(mergedAssets);
+          }}
           userId={user.uid}
         />
       )}

@@ -173,7 +173,7 @@ export default function BoilerplatesPage() {
 
     // Sprachen-Filter
     if (selectedLanguages.length > 0) {
-      filtered = filtered.filter(bp => selectedLanguages.includes(bp.language || 'de'));
+      filtered = filtered.filter(bp => selectedLanguages.includes((bp as any).language || 'de'));
     }
 
     // Scope-Filter
@@ -545,7 +545,7 @@ export default function BoilerplatesPage() {
             {/* Header */}
             <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
               <div className="flex items-center">
-                <div className="flex items-center w-[30%]">
+                <div className="flex items-center w-[35%]">
                   <Checkbox
                     checked={paginatedBoilerplates.length > 0 && selectedListIds.size === paginatedBoilerplates.length}
                     indeterminate={selectedListIds.size > 0 && selectedListIds.size < paginatedBoilerplates.length}
@@ -561,15 +561,13 @@ export default function BoilerplatesPage() {
                 <div className="w-[10%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Sprache
                 </div>
-                <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Sichtbarkeit
                 </div>
                 <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Tags
                 </div>
-                <div className="flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right pr-14">
-                  Aktualisiert
-                </div>
+                <div className="w-[5%]"></div>
               </div>
             </div>
 
@@ -579,7 +577,7 @@ export default function BoilerplatesPage() {
                 <div key={bp.id} className="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                   <div className="flex items-center">
                     {/* Checkbox & Favorite */}
-                    <div className="flex items-center w-[30%]">
+                    <div className="flex items-center w-[35%]">
                       <Checkbox
                         checked={selectedListIds.has(bp.id!)}
                         onChange={(checked: boolean) => {
@@ -621,12 +619,12 @@ export default function BoilerplatesPage() {
                     {/* Sprache */}
                     <div className="w-[10%]">
                       <Badge color="zinc" className="text-xs whitespace-nowrap">
-                        {LANGUAGE_LABELS[bp.language || 'de'] || 'Deutsch'}
+                        {LANGUAGE_LABELS[(bp as any).language || 'de'] || 'Deutsch'}
                       </Badge>
                     </div>
 
                     {/* Sichtbarkeit */}
-                    <div className="w-[15%]">
+                    <div className="w-[20%]">
                       {bp.isGlobal ? (
                         <Badge color="blue" className="inline-flex items-center gap-1 text-xs whitespace-nowrap">
                           <GlobeAltIcon className="h-3 w-3" />
@@ -656,15 +654,8 @@ export default function BoilerplatesPage() {
                       )}
                     </div>
 
-                    {/* Aktualisiert */}
-                    <div className="flex-1 text-right pr-14">
-                      <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                        {formatDate(bp.updatedAt)}
-                      </span>
-                    </div>
-
                     {/* Actions */}
-                    <div className="ml-4">
+                    <div className="w-[5%] text-right">
                       <Dropdown>
                         <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700">
                           <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
@@ -755,7 +746,7 @@ export default function BoilerplatesPage() {
                     </Badge>
                     <Badge color="zinc" className="text-xs inline-flex items-center gap-1">
                       <LanguageIcon className="h-3 w-3" />
-                      {LANGUAGE_LABELS[bp.language || 'de']}
+                      {LANGUAGE_LABELS[(bp as any).language || 'de']}
                     </Badge>
                     {bp.isGlobal ? (
                       <Badge color="blue" className="text-xs inline-flex items-center gap-1">

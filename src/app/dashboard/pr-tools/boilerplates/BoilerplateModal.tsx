@@ -1,7 +1,7 @@
 // src/app/dashboard/pr-tools/boilerplates/BoilerplateModal.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { boilerplatesService } from "@/lib/firebase/boilerplate-service";
 import { companiesService } from "@/lib/firebase/crm-service";
 import { Boilerplate, BoilerplateCreateData } from "@/types/crm-enhanced";
@@ -18,7 +18,10 @@ import { RichTextEditor } from "@/components/RichTextEditor";
 import { FocusAreasInput } from "@/components/FocusAreasInput";
 import { InfoTooltip } from "@/components/InfoTooltip";
 import type { LanguageCode } from "@/types/international";
-import VariablesModal from "@/components/pr/email/VariablesModal";
+import { 
+  ClipboardDocumentIcon,
+  CheckIcon
+} from "@heroicons/react/20/solid";
 
 // Kategorie-Optionen
 const CATEGORY_OPTIONS = [
@@ -89,6 +92,82 @@ const BOILERPLATE_VARIABLES = [
   }
 ];
 
+// Custom Variables Modal Component
+function VariablesModal({
+  isOpen,
+  onClose,
+  onInsert
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onInsert: (variable: string) => void;
+}) {
+  const [copiedVar, setCopiedVar] = useState<string | null>(null);
+
+  const handleCopyVariable = async (variable: string) => {
+    try {
+      await navigator.clipboard.writeText(variable);
+      setCopiedVar(variable);
+      setTimeout(() => setCopiedVar(null), 2000);
+      
+      // Auch direkt einfügen
+      onInsert(variable);
+      onClose();
+    } catch (err) {
+      console.error('Fehler beim Kopieren:', err);
+      // Fallback: Direkt einfügen
+      onInsert(variable);
+      onClose();
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <Dialog open={isOpen} onClose={onClose} size="2xl">
+      <DialogTitle>Variablen einfügen</DialogTitle>
+      <DialogBody>
+        <div className="space-y-4">
+          <Text className="text-sm text-gray-600">
+            Klicken Sie auf eine Variable, um sie in den Text einzufügen.
+          </Text>
+          
+          <div className="grid gap-3">
+            {BOILERPLATE_VARIABLES.map((variable) => (
+              <button
+                key={variable.key}
+                onClick={() => handleCopyVariable(variable.key)}
+                className="flex items-start gap-3 p-3 text-left border rounded-lg hover:bg-gray-50 transition-colors group"
+              >
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <code className="font-mono text-sm text-blue-600">{variable.key}</code>
+                    {copiedVar === variable.key && (
+                      <Badge color="green" className="text-xs">
+                        <CheckIcon className="h-3 w-3 mr-1" />
+                        Kopiert
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm font-medium text-gray-900 mt-1">{variable.label}</p>
+                  <p className="text-xs text-gray-500">{variable.description}</p>
+                  <p className="text-xs text-gray-400 mt-1">Beispiel: {variable.example}</p>
+                </div>
+                <ClipboardDocumentIcon className="h-5 w-5 text-gray-400 group-hover:text-gray-600 shrink-0" />
+              </button>
+            ))}
+          </div>
+        </div>
+      </DialogBody>
+      <DialogActions>
+        <Button plain onClick={onClose}>
+          Schließen
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
 interface BoilerplateModalProps {
   boilerplate: Boilerplate | null;
   onClose: () => void;
@@ -123,9 +202,12 @@ export default function BoilerplateModal({
 
   useEffect(() => {
     loadCompanies();
-    
+  }, [organizationId]);
+
+  useEffect(() => {
     if (boilerplate) {
-      setFormData({
+      // Setze alle Felder aus dem Boilerplate
+      const newFormData = {
         name: boilerplate.name,
         content: boilerplate.content,
         category: boilerplate.category,
@@ -135,18 +217,50 @@ export default function BoilerplateModal({
         clientName: boilerplate.clientName,
         tags: boilerplate.tags || [],
         language: ((boilerplate as any).language || 'de') as LanguageCode
+      };
+      
+      setFormData(newFormData);
+      
+      // WICHTIG: Setze den Rich Text Content mit einem kleinen Delay
+      // damit der Editor Zeit hat sich zu initialisieren
+      setTimeout(() => {
+        setRichTextContent(boilerplate.content);
+      }, 100);
+    } else {
+      // Reset für neuen Boilerplate
+      setFormData({
+        name: '',
+        content: '',
+        category: 'custom',
+        description: '',
+        isGlobal: true,
+        clientId: undefined,
+        clientName: undefined,
+        tags: [],
+        language: 'de' as LanguageCode
       });
-      setRichTextContent(boilerplate.content);
+      setRichTextContent('');
     }
   }, [boilerplate]);
 
   const loadCompanies = async () => {
     try {
+      console.log('Loading companies for organizationId:', organizationId);
       const companiesData = await companiesService.getAll(organizationId);
+      console.log('Loaded companies:', companiesData);
       setCompanies(companiesData);
     } catch (error) {
-      console.warn("Companies konnten nicht geladen werden:", error);
-      setCompanies([]);
+      console.error("Fehler beim Laden der Companies:", error);
+      // Fallback: Versuche es mit userId
+      try {
+        console.log('Trying with userId as fallback:', userId);
+        const companiesData = await companiesService.getAll(userId);
+        console.log('Loaded companies with userId:', companiesData);
+        setCompanies(companiesData);
+      } catch (fallbackError) {
+        console.error("Auch mit userId konnten keine Companies geladen werden:", fallbackError);
+        setCompanies([]);
+      }
     }
   };
 
@@ -161,10 +275,9 @@ export default function BoilerplateModal({
   };
 
   const handleVariableInsert = (variable: string) => {
-    // Insert variable at cursor position in TipTap
-    if ((window as any).emailEditorInsertVariable) {
-      (window as any).emailEditorInsertVariable(variable);
-    }
+    // Füge die Variable am Ende des Texts hinzu
+    // Da RichTextEditor kein ref unterstützt, fügen wir es am Ende ein
+    setRichTextContent(prev => prev + ' ' + variable);
   };
 
   const handleSubmit = async () => {
@@ -287,6 +400,7 @@ export default function BoilerplateModal({
               <RichTextEditor
                 content={richTextContent}
                 onChange={setRichTextContent}
+                key={`editor-${boilerplate?.id || 'new'}-${richTextContent.length}`} // Force re-render when content changes
               />
               <Description className="mt-2">
                 Formatieren Sie Ihren Text mit der Toolbar. Nutzen Sie Variablen für dynamische Inhalte.
@@ -302,18 +416,20 @@ export default function BoilerplateModal({
                     Textbaustein ist für alle Kunden verfügbar
                   </Description>
                   <Switch
-                    checked={formData.isGlobal !== false}
-                    onChange={(checked) => setFormData({ 
-                      ...formData, 
-                      isGlobal: checked,
-                      clientId: checked ? undefined : formData.clientId,
-                      clientName: checked ? undefined : formData.clientName
-                    })}
-                    color="blue"
+                    checked={formData.isGlobal === true}
+                    onChange={(checked) => {
+                      console.log('Switch changed to:', checked);
+                      setFormData({ 
+                        ...formData, 
+                        isGlobal: checked,
+                        clientId: checked ? undefined : formData.clientId,
+                        clientName: checked ? undefined : formData.clientName
+                      });
+                    }}
                   />
                 </SwitchField>
 
-                {!formData.isGlobal && (
+                {formData.isGlobal === false && (
                   <Field>
                     <Label>Kunde</Label>
                     <Select
@@ -321,11 +437,15 @@ export default function BoilerplateModal({
                       onChange={(e) => handleClientChange(e.target.value)}
                     >
                       <option value="">Bitte wählen...</option>
-                      {companies.map(company => (
-                        <option key={company.id} value={company.id}>
-                          {company.name}
-                        </option>
-                      ))}
+                      {companies.length === 0 ? (
+                        <option value="" disabled>Keine Kunden gefunden</option>
+                      ) : (
+                        companies.map(company => (
+                          <option key={company.id} value={company.id}>
+                            {company.name || company.officialName || 'Unbenannt'}
+                          </option>
+                        ))
+                      )}
                     </Select>
                     <Description>
                       Dieser Textbaustein ist nur für den ausgewählten Kunden sichtbar

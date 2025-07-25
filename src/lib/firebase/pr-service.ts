@@ -31,41 +31,158 @@ const getBaseUrl = () => {
   return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 };
 
+// Helper function to remove undefined values from objects
+function removeUndefinedValues(obj: any): any {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+  
+  if (obj instanceof Date || obj instanceof Timestamp) {
+    return obj;
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(item => removeUndefinedValues(item))
+      .filter(item => item !== undefined);
+  }
+  
+  if (typeof obj === 'object') {
+    const cleaned: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (value !== undefined) {
+        const cleanedValue = removeUndefinedValues(value);
+        if (cleanedValue !== undefined) {
+          cleaned[key] = cleanedValue;
+        }
+      }
+    }
+    return cleaned;
+  }
+  
+  return obj;
+}
+
 export const prService = {
   
   // ERWEITERT mit organizationId Support
   async create(campaignData: Omit<PRCampaign, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
-    // Konvertiere boilerplateSections zu einem speicherbaren Format
-    const dataToSave = {
-      ...campaignData,
-      // Stelle sicher dass organizationId gesetzt ist (fallback auf userId für backwards compatibility)
-      organizationId: campaignData.organizationId || campaignData.userId,
-      // Stelle sicher, dass boilerplateSections serialisierbar ist
-      boilerplateSections: campaignData.boilerplateSections ? 
-        campaignData.boilerplateSections.map((section: any) => {
-          const cleanSection: any = {
-            id: section.id,
-            type: section.type,
-            position: section.position,
-            order: section.order,
-            isLocked: section.isLocked,
-            isCollapsed: section.isCollapsed
-          };
-          
-          // Nur definierte Werte hinzufügen
-          if (section.boilerplateId) cleanSection.boilerplateId = section.boilerplateId;
-          if (section.content) cleanSection.content = section.content;
-          if (section.metadata) cleanSection.metadata = section.metadata;
-          if (section.customTitle) cleanSection.customTitle = section.customTitle;
-          
-          return cleanSection;
-        }) : [],
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    };
-    
-    const docRef = await addDoc(collection(db, 'pr_campaigns'), dataToSave);
-    return docRef.id;
+    try {
+      // Deep clean der boilerplateSections
+      const cleanedBoilerplateSections = (campaignData.boilerplateSections || []).map((section: any) => {
+        const cleanSection: any = {
+          id: section.id || `section-${Date.now()}-${Math.random()}`,
+          type: section.type || 'boilerplate',
+          order: typeof section.order === 'number' ? section.order : 0,
+          isLocked: section.isLocked === true,
+          isCollapsed: section.isCollapsed === true
+        };
+        
+        // Nur definierte und nicht-leere Werte hinzufügen
+        if (section.boilerplateId && section.boilerplateId !== '') {
+          cleanSection.boilerplateId = section.boilerplateId;
+        }
+        if (section.content && section.content !== '') {
+          cleanSection.content = section.content;
+        }
+        if (section.metadata && Object.keys(section.metadata).length > 0) {
+          // Bereinige auch metadata
+          const cleanedMetadata = removeUndefinedValues(section.metadata);
+          if (Object.keys(cleanedMetadata).length > 0) {
+            cleanSection.metadata = cleanedMetadata;
+          }
+        }
+        if (section.customTitle && section.customTitle !== '') {
+          cleanSection.customTitle = section.customTitle;
+        }
+        
+        // Legacy position entfernen falls vorhanden
+        if ('position' in section) {
+          delete section.position;
+        }
+        
+        return cleanSection;
+      });
+
+      // Bereite attachedAssets vor
+      const cleanedAttachedAssets = (campaignData.attachedAssets || []).map((asset: any) => {
+        const cleanAsset = removeUndefinedValues({
+          ...asset,
+          attachedAt: asset.attachedAt || serverTimestamp()
+        });
+        return cleanAsset;
+      });
+
+      // Erstelle die zu speichernden Daten
+      const dataToSave: any = {
+        userId: campaignData.userId,
+        organizationId: campaignData.organizationId || campaignData.userId,
+        title: campaignData.title || '',
+        contentHtml: campaignData.contentHtml || '',
+        boilerplateSections: cleanedBoilerplateSections,
+        status: campaignData.status || 'draft',
+        distributionListId: campaignData.distributionListId || '',
+        distributionListName: campaignData.distributionListName || '',
+        recipientCount: campaignData.recipientCount || 0,
+        approvalRequired: campaignData.approvalRequired === true,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+
+      // Optionale Felder nur hinzufügen wenn sie einen Wert haben
+      if (campaignData.clientId && campaignData.clientId !== '') {
+        dataToSave.clientId = campaignData.clientId;
+      }
+      if (campaignData.clientName && campaignData.clientName !== '') {
+        dataToSave.clientName = campaignData.clientName;
+      }
+      if (cleanedAttachedAssets.length > 0) {
+        dataToSave.attachedAssets = cleanedAttachedAssets;
+      }
+      if (campaignData.mainContent && campaignData.mainContent !== '') {
+        dataToSave.mainContent = campaignData.mainContent;
+      }
+      if (campaignData.distributionListIds && campaignData.distributionListIds.length > 0) {
+        dataToSave.distributionListIds = campaignData.distributionListIds;
+      }
+      if (campaignData.distributionListNames && campaignData.distributionListNames.length > 0) {
+        dataToSave.distributionListNames = campaignData.distributionListNames;
+      }
+      if (campaignData.assetShareLinkId) {
+        dataToSave.assetShareLinkId = campaignData.assetShareLinkId;
+      }
+      if (campaignData.assetShareUrl) {
+        dataToSave.assetShareUrl = campaignData.assetShareUrl;
+      }
+      if (campaignData.assetSettings) {
+        dataToSave.assetSettings = removeUndefinedValues(campaignData.assetSettings);
+      }
+      if (campaignData.approvalData) {
+        dataToSave.approvalData = removeUndefinedValues(campaignData.approvalData);
+      }
+      if (campaignData.scheduledAt) {
+        dataToSave.scheduledAt = campaignData.scheduledAt;
+      }
+      if (campaignData.sentAt) {
+        dataToSave.sentAt = campaignData.sentAt;
+      }
+      if (campaignData.aiGenerated === true) {
+        dataToSave.aiGenerated = true;
+        if (campaignData.aiMetadata) {
+          dataToSave.aiMetadata = removeUndefinedValues(campaignData.aiMetadata);
+        }
+      }
+
+      // Finale Bereinigung: Entferne alle undefined Werte
+      const finalData = removeUndefinedValues(dataToSave);
+
+      console.log('Creating campaign with cleaned data:', finalData);
+      
+      const docRef = await addDoc(collection(db, 'pr_campaigns'), finalData);
+      return docRef.id;
+    } catch (error) {
+      console.error('Error in prService.create:', error);
+      throw error;
+    }
   },
 
   async getById(campaignId: string): Promise<PRCampaign | null> {
@@ -83,39 +200,64 @@ export const prService = {
     try {
       const fieldName = useOrganizationId ? 'organizationId' : 'userId';
       
-      // Mit orderBy für chronologische Sortierung
+      // Versuche zuerst ohne orderBy (braucht keinen Index)
       const q = query(
         collection(db, 'pr_campaigns'),
-        where(fieldName, '==', userOrOrgId),
-        orderBy('createdAt', 'desc')
+        where(fieldName, '==', userOrOrgId)
       );
       
       const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => ({
+      const campaigns = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       } as PRCampaign));
-    } catch (error: any) {
-      // Fallback ohne orderBy falls Index fehlt
-      if (error.code === 'failed-precondition') {
-        console.warn('Firestore Index fehlt, verwende Fallback ohne orderBy');
-        const fieldName = useOrganizationId ? 'organizationId' : 'userId';
-        const q = query(
-          collection(db, 'pr_campaigns'),
-          where(fieldName, '==', userOrOrgId)
-        );
-        const snapshot = await getDocs(q);
-        const campaigns = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as PRCampaign));
+      
+      // Client-seitige Sortierung nach createdAt (neueste zuerst)
+      return campaigns.sort((a, b) => {
+        // Konvertiere createdAt zu Millisekunden, egal ob Timestamp, Date oder undefined
+        let aTime: number;
+        let bTime: number;
         
-        // Client-seitige Sortierung
-        return campaigns.sort((a, b) => {
-          if (!a.createdAt || !b.createdAt) return 0;
-          return b.createdAt.toMillis() - a.createdAt.toMillis();
-        });
-      }
+        if (a.createdAt) {
+          if (typeof a.createdAt.toMillis === 'function') {
+            // Firestore Timestamp
+            aTime = a.createdAt.toMillis();
+          } else if (a.createdAt instanceof Date) {
+            // JavaScript Date
+            aTime = a.createdAt.getTime();
+          } else if (typeof a.createdAt === 'number') {
+            // Bereits Millisekunden
+            aTime = a.createdAt;
+          } else {
+            // Fallback
+            aTime = Date.now();
+          }
+        } else {
+          aTime = Date.now();
+        }
+        
+        if (b.createdAt) {
+          if (typeof b.createdAt.toMillis === 'function') {
+            // Firestore Timestamp
+            bTime = b.createdAt.toMillis();
+          } else if (b.createdAt instanceof Date) {
+            // JavaScript Date
+            bTime = b.createdAt.getTime();
+          } else if (typeof b.createdAt === 'number') {
+            // Bereits Millisekunden
+            bTime = b.createdAt;
+          } else {
+            // Fallback
+            bTime = Date.now();
+          }
+        } else {
+          bTime = Date.now();
+        }
+        
+        return bTime - aTime; // Descending order (neueste zuerst)
+      });
+    } catch (error) {
+      console.error('Fehler beim Laden der Kampagnen:', error);
       throw error;
     }
   },
@@ -143,13 +285,15 @@ export const prService = {
   async update(campaignId: string, data: Partial<Omit<PRCampaign, 'id'| 'userId'>>): Promise<void> {
     const docRef = doc(db, 'pr_campaigns', campaignId);
     
-    // Log für Debugging
-    console.log('Updating campaign:', campaignId, 'with data:', data);
-    
-    await updateDoc(docRef, {
+    // Bereinige die Update-Daten
+    const cleanedData = removeUndefinedValues({
       ...data,
       updatedAt: serverTimestamp(),
     });
+    
+    console.log('Updating campaign:', campaignId, 'with cleaned data:', cleanedData);
+    
+    await updateDoc(docRef, cleanedData);
   },
 
   async delete(campaignId: string): Promise<void> {
@@ -647,7 +791,9 @@ export const prService = {
       isActive: true
     };
 
-    await addDoc(collection(db, 'pr_approval_shares'), approvalShareData);
+    // Bereinige auch hier undefined Werte
+    const cleanedData = removeUndefinedValues(approvalShareData);
+    await addDoc(collection(db, 'pr_approval_shares'), cleanedData);
   },
 
 // Ersetze die getCampaignByShareId Methode in pr-service.ts mit dieser korrigierten Version:

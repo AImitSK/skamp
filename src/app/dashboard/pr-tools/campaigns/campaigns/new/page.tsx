@@ -42,6 +42,7 @@ import { BoilerplateSection } from "@/components/pr/campaign/IntelligentBoilerpl
 import { MediaAsset, MediaFolder } from "@/types/media";
 import { Input } from "@/components/input";
 import { InfoTooltip } from "@/components/InfoTooltip";
+import { serverTimestamp } from 'firebase/firestore';
 
 // Dynamic import für AI Modal
 import dynamic from 'next/dynamic';
@@ -154,7 +155,7 @@ function AssetSelectorModal({
             description: asset.description || '',
             thumbnailUrl: asset.downloadUrl
           },
-          attachedAt: new Date() as any,
+          attachedAt: serverTimestamp() as any,
           attachedBy: userId
         });
       }
@@ -170,7 +171,7 @@ function AssetSelectorModal({
             folderName: folder.name,
             description: folder.description || ''
           },
-          attachedAt: new Date() as any,
+          attachedAt: serverTimestamp() as any,
           attachedBy: userId
         });
       }
@@ -422,59 +423,54 @@ export default function NewPRCampaignPage() {
         };
         
         // Nur definierte Werte hinzufügen
-        if (section.boilerplateId !== undefined) cleaned.boilerplateId = section.boilerplateId;
-        if (section.content !== undefined) cleaned.content = section.content;
-        if (section.metadata !== undefined) cleaned.metadata = section.metadata;
-        if (section.customTitle !== undefined) cleaned.customTitle = section.customTitle;
+        if (section.boilerplateId !== undefined && section.boilerplateId !== null) {
+          cleaned.boilerplateId = section.boilerplateId;
+        }
+        if (section.content !== undefined && section.content !== null) {
+          cleaned.content = section.content;
+        }
+        if (section.metadata !== undefined && section.metadata !== null) {
+          cleaned.metadata = section.metadata;
+        }
+        if (section.customTitle !== undefined && section.customTitle !== null) {
+          cleaned.customTitle = section.customTitle;
+        }
         
         return cleaned;
       });
 
+      // Bereite attachedAssets vor - stelle sicher, dass keine undefined timestamps drin sind
+      const cleanedAttachedAssets = attachedAssets.map(asset => ({
+        ...asset,
+        attachedAt: asset.attachedAt || serverTimestamp()
+      }));
+
       const campaignData: any = {
         userId: user!.uid,
         organizationId: organizationId!,
-        title: campaignTitle,
+        title: campaignTitle.trim(),
         contentHtml: pressReleaseContent || '',
         boilerplateSections: cleanedSections,
         status: 'draft' as const,
         distributionListId: selectedListId,
-        distributionListName: selectedListName,
-        recipientCount: recipientCount,
-        clientId: selectedCompanyId,
-        clientName: selectedCompanyName,
-        attachedAssets: attachedAssets,
-        approvalRequired: approvalRequired,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        distributionListName: selectedListName || '',
+        recipientCount: recipientCount || 0,
+        clientId: selectedCompanyId || null,
+        clientName: selectedCompanyName || null,
+        attachedAssets: cleanedAttachedAssets,
+        approvalRequired: approvalRequired || false
       };
 
-      // Entferne alle undefined/null Werte rekursiv
-      const removeUndefinedDeep = (obj: any): any => {
-        if (obj === null || obj === undefined) return null;
-        if (obj instanceof Date) return obj;
-        if (Array.isArray(obj)) {
-          return obj.map(item => removeUndefinedDeep(item));
+      // Entferne alle null Werte (Firebase mag keine null-Werte)
+      Object.keys(campaignData).forEach(key => {
+        if (campaignData[key] === null) {
+          delete campaignData[key];
         }
-        if (typeof obj === 'object') {
-          const cleaned: any = {};
-          for (const key in obj) {
-            if (obj.hasOwnProperty(key) && obj[key] !== undefined) {
-              const cleanedValue = removeUndefinedDeep(obj[key]);
-              if (cleanedValue !== undefined) {
-                cleaned[key] = cleanedValue;
-              }
-            }
-          }
-          return cleaned;
-        }
-        return obj;
-      };
+      });
 
-      const cleanedCampaignData = removeUndefinedDeep(campaignData);
+      console.log('Speichere Kampagne mit bereinigten Daten:', campaignData);
 
-      console.log('Speichere Kampagne mit bereinigten Daten:', cleanedCampaignData);
-
-      const newCampaignId = await prService.create(cleanedCampaignData);
+      const newCampaignId = await prService.create(campaignData);
       console.log('✅ Kampagne erstellt mit ID:', newCampaignId);
 
       if (approvalRequired) {
