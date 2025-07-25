@@ -127,6 +127,9 @@ export default function BoilerplateModal({
       return;
     }
 
+    console.log('🟢 Submitting boilerplate with data:', formData);
+    console.log('🟢 Context:', { organizationId, userId });
+
     setSaving(true);
     
     try {
@@ -134,16 +137,18 @@ export default function BoilerplateModal({
       
       if (boilerplate?.id) {
         // Update
+        console.log('🟢 Updating boilerplate:', boilerplate.id);
         await boilerplatesService.update(boilerplate.id, formData, context);
       } else {
         // Create
+        console.log('🟢 Creating new boilerplate');
         await boilerplatesService.create(formData, context);
       }
       
       onSave();
     } catch (error) {
       console.error("Fehler beim Speichern:", error);
-      alert('Fehler beim Speichern des Textbausteins');
+      alert(`Fehler beim Speichern des Textbausteins: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
     } finally {
       setSaving(false);
     }
