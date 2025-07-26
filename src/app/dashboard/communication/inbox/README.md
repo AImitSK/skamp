@@ -1465,3 +1465,76 @@ NEXT_PUBLIC_APP_URL=https://app.skamp.de
 2. Alle neuen Features müssen dem Enhanced Service Pattern folgen
 3. Immer organizationId für Queries verwenden, nie nur userId
 4. Bei UI-Komponenten SimpleSwitch statt Catalyst Switch verwenden
+
+
+
+
+
+Soweit sind wir schon und was noch zu machen ist:
+
+
+📊 Status-Übersicht
+✅ Erledigt:
+
+Inbox Hauptseite (page.tsx)
+
+Ordner-Navigation
+Thread-basierte Ansicht
+Suchfunktion
+Mock-Daten Integration
+
+
+UI Komponenten
+
+InboxSidebar - Ordner mit Unread-Counts
+EmailList - Thread-Liste mit Vorschau
+EmailViewer - E-Mail-Anzeige mit Thread-Historie
+ComposeEmail - E-Mail verfassen mit RichTextEditor
+
+
+Typen (inbox-enhanced.ts)
+
+Multi-Tenancy ready mit BaseEntity
+Thread-Management
+Vollständige E-Mail-Struktur
+
+
+Mock-Daten für Entwicklung
+
+🔄 Anpassung nötig:
+ComposeEmail + MediaCenter Integration
+
+Statt eigenem Attachment-Upload → MediaCenter verwenden
+Button öffnet MediaCenter Modal
+Ausgewählte Medien als Links oder Anhänge einfügen
+
+📋 Nächste Schritte:
+
+Backend API Routes
+
+/api/inbox/messages - E-Mails abrufen
+/api/inbox/send - E-Mail versenden
+/api/inbox/reply - Auf E-Mail antworten
+/api/inbox/threads - Thread-Management
+
+
+SendGrid Inbound Parse
+
+Webhook für eingehende E-Mails
+Thread-Zuordnung über Message-IDs
+Campaign-Tracking über Subject-Tags
+
+
+Services
+
+EmailMessagesEnhancedService
+EmailThreadsEnhancedService
+Integration mit bestehendem SendGrid-Setup
+
+
+Features
+
+Kontakt-Verknüpfung (CRM Integration)
+E-Mail-Templates
+Automatische Signaturen
+Read/Unread Status synchronisieren
