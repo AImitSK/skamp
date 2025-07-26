@@ -9,7 +9,6 @@ import { Dialog, DialogActions, DialogBody, DialogTitle } from "@/components/dia
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
 import { Select } from "@/components/select";
-import { Switch, SwitchField } from "@/components/switch";
 import { Field, Label, Description, Fieldset } from "@/components/fieldset";
 import { Text } from "@/components/text";
 import { Badge } from "@/components/badge";
@@ -17,6 +16,7 @@ import { LanguageSelector } from "@/components/language-selector";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { FocusAreasInput } from "@/components/FocusAreasInput";
 import { InfoTooltip } from "@/components/InfoTooltip";
+import { SimpleSwitch } from "@/components/notifications/SimpleSwitch";
 import type { LanguageCode } from "@/types/international";
 import { 
   ClipboardDocumentIcon,
@@ -401,25 +401,28 @@ export default function BoilerplateModal({
             {/* Kunde und Sichtbarkeit */}
             <Fieldset>
               <div className="space-y-4">
-                <SwitchField>
-                  <Label>Global verfügbar</Label>
-                  <Description>
-                    Textbaustein ist für alle Kunden verfügbar
-                  </Description>
-                  <Switch
-                    checked={formData.isGlobal}
-                    onChange={(checked) => {
-                      console.log('Switch changed to:', checked);
-                      setFormData({ 
-                        ...formData, 
-                        isGlobal: checked,
-                        clientId: checked ? undefined : formData.clientId,
-                        clientName: checked ? undefined : formData.clientName
-                      });
-                    }}
-                    color="dark/zinc"
-                  />
-                </SwitchField>
+                <div className="flex items-start">
+                  <div className="flex-1">
+                    <Label>Global verfügbar</Label>
+                    <Description>
+                      Textbaustein ist für alle Kunden verfügbar
+                    </Description>
+                  </div>
+                  <div className="ml-4">
+                    <SimpleSwitch
+                      checked={formData.isGlobal ?? true}
+                      onChange={(checked) => {
+                        console.log('Switch changed to:', checked);
+                        setFormData({ 
+                          ...formData, 
+                          isGlobal: checked,
+                          clientId: checked ? undefined : formData.clientId,
+                          clientName: checked ? undefined : formData.clientName
+                        });
+                      }}
+                    />
+                  </div>
+                </div>
 
                 {!formData.isGlobal && (
                   <Field>
