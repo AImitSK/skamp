@@ -2,47 +2,29 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Dialog, DialogTitle } from '@/components/dialog';
+import { Dialog } from '@headlessui/react';
 import { Button } from '@/components/button';
 import { Input } from '@/components/input';
-import { Select } from '@/components/select';
+import { Field, Label, Description } from '@/components/fieldset';
 import { Text } from '@/components/text';
-import { Field, Label } from '@/components/fieldset';
 import { Badge } from '@/components/badge';
+import { useAuth } from '@/context/AuthContext';
+import { apiClient } from '@/lib/api/api-client';
+import { domainServiceEnhanced } from '@/lib/firebase/domain-service-enhanced';
 import { 
-  EnvelopeIcon,
+  EmailDomainEnhanced,
+  InboxTestResult 
+} from '@/types/email-domains-enhanced';
+import {
   CheckCircleIcon,
   XCircleIcon,
-  ClockIcon,
-  InformationCircleIcon,
+  EnvelopeIcon,
+  ArrowPathIcon,
   ExclamationTriangleIcon,
-  ArrowPathIcon
+  InformationCircleIcon,
+  PaperAirplaneIcon,
+  ClockIcon
 } from '@heroicons/react/20/solid';
-import { apiClient } from '@/lib/api/api-client';
-import { domainService } from '@/lib/firebase/domain-service';
-import { EmailDomain, EMAIL_PROVIDER_LABELS, DELIVERY_STATUS_COLORS } from '@/types/email-domains';
-
-// Alert Component
-function Alert({ 
-  type = 'info', 
-  children 
-}: { 
-  type?: 'info' | 'success' | 'warning' | 'error';
-  children: React.ReactNode;
-}) {
-  const styles = {
-    info: 'bg-blue-50 border-blue-200',
-    success: 'bg-green-50 border-green-200',
-    warning: 'bg-yellow-50 border-yellow-200',
-    error: 'bg-red-50 border-red-200'
-  };
-
-  return (
-    <div className={`rounded-lg border p-4 ${styles[type]}`}>
-      {children}
-    </div>
-  );
-}
 
 interface InboxTestModalProps {
   domainId: string;
@@ -50,14 +32,30 @@ interface InboxTestModalProps {
   onSuccess: () => void;
 }
 
+interface TestProvider {
+  name: string;
+  email?: string;
+  icon?: string;
+  recommended?: boolean;
+}
+
+const defaultTestProviders: TestProvider[] = [
+  { name: 'Gmail', icon: '📧', recommended: true },
+  { name: 'Outlook', icon: '📮', recommended: true },
+  { name: 'Yahoo', icon: '📪' },
+  { name: 'Custom', icon: '✉️' }
+];
+
 export function InboxTestModal({ domainId, onClose, onSuccess }: InboxTestModalProps) {
-  const [domain, setDomain] = useState<EmailDomain | null>(null);
-  const [testEmail, setTestEmail] = useState('');
-  const [emailProvider, setEmailProvider] = useState('gmail');
-  const [sending, setSending] = useState(false);
-  const [result, setResult] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
+  const [domain, setDomain] = useState<EmailDomainEnhanced | null>(null);
   const [loading, setLoading] = useState(true);
+  const [testing, setTesting] = useState(false);
+  const [testResults, setTestResults] = useState<InboxTestResult[]>([]);
+  const [customEmails, setCustomEmails] = useState('');
+  const [useCustomEmails, setUseCustomEmails] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [testComplete, setTestComplete] = useState(false);
 
   useEffect(() => {
     loadDomain();
@@ -65,302 +63,371 @@ export function InboxTestModal({ domainId, onClose, onSuccess }: InboxTestModalP
 
   const loadDomain = async () => {
     try {
-      const domainData = await domainService.getById(domainId);
+      setLoading(true);
+      const domainData = await domainServiceEnhanced.getById(
+        domainId,
+        user!.uid // TODO: Use proper organizationId
+      );
       setDomain(domainData);
-    } catch (error) {
-      console.error('Error loading domain:', error);
+    } catch (err) {
+      console.error('Error loading domain:', err);
       setError('Domain konnte nicht geladen werden');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSendTest = async () => {
+  const handleStartTest = async () => {
     if (!domain) return;
 
     try {
-      setSending(true);
+      setTesting(true);
       setError(null);
-      setResult(null);
+      setTestResults([]);
 
-      // E-Mail-Validierung
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(testEmail)) {
-        setError('Bitte geben Sie eine gültige E-Mail-Adresse ein');
-        setSending(false);
-        return;
+      // Prepare test addresses
+      let testAddresses: string[] = [];
+      if (useCustomEmails && customEmails) {
+        testAddresses = customEmails
+          .split(',')
+          .map(email => email.trim())
+          .filter(email => email.includes('@'));
+        
+        if (testAddresses.length === 0) {
+          setError('Bitte geben Sie gültige E-Mail-Adressen ein');
+          setTesting(false);
+          return;
+        }
       }
 
+      // Determine from email
+      const fromEmail = domain.subdomain 
+        ? `test@${domain.subdomain}.${domain.domain}`
+        : `test@${domain.domain}`;
+
+      // Call inbox test API
       const response = await apiClient.post<{
         success: boolean;
         testId: string;
-        messageId: string;
-        status: 'sending' | 'sent' | 'failed';
-        deliveryStatus?: string;
-        deliveryTime?: number;
-        spamScore?: number;
-        recommendations?: string[];
+        results: InboxTestResult[];
+        overallScore: number;
+        summary: {
+          total: number;
+          delivered: number;
+          failed: number;
+          message: string;
+        };
+        error?: string;
       }>('/api/email/domains/test-inbox', {
         domainId,
-        testEmail,
-        provider: emailProvider
+        fromEmail,
+        domain: domain.domain,
+        testAddresses: testAddresses.length > 0 ? testAddresses : undefined
       });
 
-      setResult(response);
-      
-      // Auto-refresh nach 5 Sekunden
-      if (response.testId) {
-        setTimeout(() => {
-          checkTestStatus(response.testId);
-        }, 5000);
+      if (!response.success) {
+        throw new Error(response.error || 'Inbox-Test fehlgeschlagen');
       }
+
+      setTestResults(response.results);
       
-    } catch (error: any) {
-      setError(error.message || 'Test fehlgeschlagen');
+      // Save test results to Firebase
+      const context = {
+        organizationId: user!.uid,
+        userId: user!.uid
+      };
+
+      for (const result of response.results) {
+        await domainServiceEnhanced.addInboxTestResult(
+          domainId,
+          result,
+          context
+        );
+      }
+
+      setTestComplete(true);
+
+    } catch (err: any) {
+      console.error('Inbox test error:', err);
+      setError(err.message || 'Test fehlgeschlagen');
     } finally {
-      setSending(false);
+      setTesting(false);
     }
   };
 
-  const checkTestStatus = async (testId: string) => {
-    try {
-      const status = await apiClient.get<{
-        deliveryStatus?: string;
-        deliveryTime?: number;
-        spamScore?: number;
-        recommendations?: string[];
-      }>(`/api/email/domains/test-status/${testId}`);
-      
-      setResult((prev: any) => {
-        if (!prev) return status;
-        return Object.assign({}, prev, status);
-      });
-    } catch (error) {
-      console.error('Status check failed:', error);
-    }
-  };
-
-  const getDeliveryStatusIcon = (status: string) => {
+  const getDeliveryIcon = (status: string) => {
     switch (status) {
       case 'delivered':
-        return CheckCircleIcon;
+        return <CheckCircleIcon className="w-5 h-5 text-green-500" />;
+      case 'failed':
+        return <XCircleIcon className="w-5 h-5 text-red-500" />;
       case 'spam':
-        return ExclamationTriangleIcon;
-      case 'blocked':
-        return XCircleIcon;
+        return <ExclamationTriangleIcon className="w-5 h-5 text-yellow-500" />;
       default:
-        return ClockIcon;
+        return <ClockIcon className="w-5 h-5 text-gray-400" />;
     }
   };
 
-  const getDeliveryStatusText = (status: string) => {
+  const getDeliveryBadge = (status: string) => {
     switch (status) {
       case 'delivered':
-        return 'E-Mail erfolgreich zugestellt!';
+        return <Badge color="green" className="whitespace-nowrap">Zugestellt</Badge>;
+      case 'failed':
+        return <Badge color="red" className="whitespace-nowrap">Fehlgeschlagen</Badge>;
       case 'spam':
-        return 'E-Mail im Spam-Ordner gelandet';
-      case 'blocked':
-        return 'E-Mail wurde blockiert';
-      case 'pending':
-        return 'Zustellung wird überprüft...';
+        return <Badge color="yellow" className="whitespace-nowrap">Spam</Badge>;
       default:
-        return 'Status unbekannt';
+        return <Badge color="zinc" className="whitespace-nowrap">Ausstehend</Badge>;
     }
   };
 
-  if (loading) {
+  const calculateScore = () => {
+    if (testResults.length === 0) return 0;
+    const delivered = testResults.filter(r => r.deliveryStatus === 'delivered').length;
+    return Math.round((delivered / testResults.length) * 100);
+  };
+
+  if (loading || !domain) {
     return (
-      <Dialog open onClose={onClose}>
-        <div>
-          <div className="flex items-center justify-center p-8">
-            <ArrowPathIcon className="w-8 h-8 text-gray-400 animate-spin" />
-          </div>
+      <Dialog open={true} onClose={onClose} className="relative z-50">
+        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <Dialog.Panel className="mx-auto max-w-lg rounded-xl bg-white p-6 shadow-xl">
+            <div className="flex items-center justify-center">
+              <ArrowPathIcon className="w-8 h-8 animate-spin text-gray-400" />
+            </div>
+          </Dialog.Panel>
         </div>
       </Dialog>
     );
   }
 
   return (
-    <Dialog open onClose={onClose}>
-      <div className="p-6">
-        <DialogTitle>Inbox-Zustellbarkeit testen</DialogTitle>
+    <Dialog open={true} onClose={onClose} className="relative z-50">
+      <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+      
+      <div className="fixed inset-0 flex items-center justify-center p-4">
+        <Dialog.Panel className="mx-auto max-w-2xl rounded-xl bg-white p-6 shadow-xl">
+          <Dialog.Title className="text-lg font-semibold text-gray-900 mb-4">
+            Inbox-Test für {domain.domain}
+          </Dialog.Title>
 
-        <div className="mt-4 space-y-4">
-          <Alert type="info">
-            <div className="flex gap-3">
-              <InformationCircleIcon className="w-5 h-5 text-blue-600 shrink-0" />
-              <div>
-                <Text className="font-semibold text-blue-800">So funktioniert der Test:</Text>
-                <Text className="text-sm mt-1 text-blue-700">
-                  Wir senden eine Test-E-Mail von Ihrer Domain an die angegebene 
-                  Adresse und prüfen, ob sie im Posteingang landet.
-                </Text>
+          {!testComplete ? (
+            <div className="space-y-4">
+              {/* Info */}
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex gap-3">
+                  <InformationCircleIcon className="w-5 h-5 text-blue-600 shrink-0" />
+                  <div>
+                    <Text className="text-sm font-medium text-blue-900">
+                      Was ist ein Inbox-Test?
+                    </Text>
+                    <Text className="text-sm text-blue-800 mt-1">
+                      Wir senden Test-E-Mails an verschiedene E-Mail-Provider, um zu prüfen, 
+                      ob Ihre E-Mails im Posteingang oder im Spam-Ordner landen.
+                    </Text>
+                  </div>
+                </div>
               </div>
-            </div>
-          </Alert>
 
-          {domain && (
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <Text className="text-sm text-gray-600">
-                Test-Domain: <span className="font-medium">{domain.domain}</span>
-              </Text>
-            </div>
-          )}
+              {/* Error Message */}
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex gap-2">
+                    <XCircleIcon className="w-5 h-5 text-red-600 shrink-0" />
+                    <Text className="text-sm text-red-800">{error}</Text>
+                  </div>
+                </div>
+              )}
 
-          <Field>
-            <Label>Test-E-Mail-Adresse</Label>
-            <Input
-              type="email"
-              value={testEmail}
-              onChange={(e) => setTestEmail(e.target.value)}
-              placeholder="ihre-email@gmail.com"
-              className="mt-2"
-            />
-            <Text className="mt-2 text-sm text-gray-600">
-              Verwenden Sie eine E-Mail-Adresse, auf die Sie Zugriff haben.
-            </Text>
-          </Field>
-
-          <Field>
-            <Label>E-Mail-Provider</Label>
-            <Select
-              value={emailProvider}
-              onChange={(e) => setEmailProvider(e.target.value)}
-              className="mt-2"
-            >
-              {Object.entries(EMAIL_PROVIDER_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </Select>
-            <Text className="mt-2 text-sm text-gray-600">
-              Verschiedene Provider haben unterschiedliche Spam-Filter.
-            </Text>
-          </Field>
-
-          {/* Test Result */}
-          {result && (
-            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-start gap-3">
-                {result.status === 'sending' && (
-                  <>
-                    <ClockIcon className="w-5 h-5 text-blue-600 animate-pulse" />
+              {/* Test Options */}
+              <div>
+                <h4 className="font-medium text-gray-900 mb-3">Test-Optionen</h4>
+                
+                <div className="space-y-3">
+                  <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                    <input
+                      type="radio"
+                      checked={!useCustomEmails}
+                      onChange={() => setUseCustomEmails(false)}
+                      className="text-blue-600"
+                    />
                     <div>
-                      <Text className="font-semibold">E-Mail wird gesendet...</Text>
-                      <Text className="text-sm text-gray-600 mt-1">
-                        Test-ID: {result.testId}
+                      <Text className="font-medium">Standard-Test</Text>
+                      <Text className="text-sm text-gray-600">
+                        Test mit vordefinierten E-Mail-Adressen (Gmail, Outlook, etc.)
                       </Text>
                     </div>
-                  </>
+                  </label>
+
+                  <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                    <input
+                      type="radio"
+                      checked={useCustomEmails}
+                      onChange={() => setUseCustomEmails(true)}
+                      className="text-blue-600"
+                    />
+                    <div className="flex-1">
+                      <Text className="font-medium">Eigene E-Mail-Adressen</Text>
+                      <Text className="text-sm text-gray-600">
+                        Testen Sie mit Ihren eigenen E-Mail-Adressen
+                      </Text>
+                    </div>
+                  </label>
+                </div>
+
+                {useCustomEmails && (
+                  <Field className="mt-3">
+                    <Label>E-Mail-Adressen (kommagetrennt)</Label>
+                    <Input
+                      type="text"
+                      value={customEmails}
+                      onChange={(e) => setCustomEmails(e.target.value)}
+                      placeholder="test1@gmail.com, test2@outlook.com"
+                      disabled={testing}
+                    />
+                    <Description>
+                      Geben Sie die E-Mail-Adressen ein, an die Test-E-Mails gesendet werden sollen
+                    </Description>
+                  </Field>
                 )}
-                
-                {result.deliveryStatus && (
-                  <>
+              </div>
+
+              {/* Previous Test Results */}
+              {domain.inboxTests && domain.inboxTests.length > 0 && (
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <Text className="text-sm text-gray-600">
+                    Letzter Test: {domain.inboxTestScore}% Zustellrate
+                  </Text>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex justify-between mt-6">
+                <Button plain onClick={onClose}>
+                  Abbrechen
+                </Button>
+                <Button onClick={handleStartTest} disabled={testing}>
+                  {testing ? (
+                    <>
+                      <ArrowPathIcon className="w-4 h-4 mr-2 animate-spin" />
+                      Test läuft...
+                    </>
+                  ) : (
+                    <>
+                      <PaperAirplaneIcon className="w-4 h-4 mr-2" />
+                      Test starten
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Test Complete */}
+              <div className="text-center mb-6">
+                <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                  <EnvelopeIcon className="w-10 h-10 text-green-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Inbox-Test abgeschlossen
+                </h3>
+                <Text className="mt-2 text-gray-600">
+                  Zustellrate: {calculateScore()}%
+                </Text>
+              </div>
+
+              {/* Test Results */}
+              <div className="space-y-3">
+                {testResults.map((result, index) => (
+                  <div key={index} className="p-3 border rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        {getDeliveryIcon(result.deliveryStatus)}
+                        <div>
+                          <Text className="font-medium">{result.testEmail}</Text>
+                          <Text className="text-sm text-gray-600">
+                            Provider: {result.provider || 'Unbekannt'}
+                          </Text>
+                        </div>
+                      </div>
+                      {getDeliveryBadge(result.deliveryStatus)}
+                    </div>
+                    
                     {(() => {
-                      const Icon = getDeliveryStatusIcon(result.deliveryStatus);
-                      const colorKey = result.deliveryStatus as keyof typeof DELIVERY_STATUS_COLORS;
-                      const color = DELIVERY_STATUS_COLORS[colorKey] || 'zinc';
-                      return (
-                        <>
-                          <Icon className={`w-5 h-5 text-${color}-600`} />
-                          <div className="flex-1">
-                            <Text className={`font-semibold text-${color}-800`}>
-                              {getDeliveryStatusText(result.deliveryStatus)}
-                            </Text>
-                            
-                            {result.deliveryTime && (
-                              <Text className="text-sm text-gray-600 mt-1">
-                                Zustellzeit: {result.deliveryTime}ms
-                              </Text>
-                            )}
-                            
-                            {result.spamScore !== undefined && (
-                              <div className="mt-2">
-                                <Text className="text-sm text-gray-600">
-                                  Spam-Score: {result.spamScore}/10
-                                </Text>
-                                <div className="mt-1 flex items-center gap-2">
-                                  <div className="flex-1 bg-gray-200 rounded-full h-2">
-                                    <div 
-                                      className={`h-2 rounded-full ${
-                                        result.spamScore <= 3 ? 'bg-green-500' :
-                                        result.spamScore <= 6 ? 'bg-yellow-500' :
-                                        'bg-red-500'
-                                      }`}
-                                      style={{ width: `${result.spamScore * 10}%` }}
-                                    />
-                                  </div>
-                                  <Badge 
-                                    color={
-                                      result.spamScore <= 3 ? 'green' :
-                                      result.spamScore <= 6 ? 'yellow' :
-                                      'red'
-                                    }
-                                    className="whitespace-nowrap"
-                                  >
-                                    {result.spamScore <= 3 ? 'Sehr gut' :
-                                     result.spamScore <= 6 ? 'OK' :
-                                     'Kritisch'}
-                                  </Badge>
-                                </div>
-                              </div>
-                            )}
-                            
-                            {result.recommendations && result.recommendations.length > 0 && (
-                              <div className="mt-3">
-                                <Text className="text-sm font-medium text-gray-700">
-                                  Empfehlungen:
-                                </Text>
-                                <ul className="text-sm text-gray-600 mt-1 list-disc list-inside">
-                                  {result.recommendations.map((rec: string, i: number) => (
-                                    <li key={i}>{rec}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
+                      const errorText = (result as any).error;
+                      if (errorText) {
+                        return (
+                          <div className="mt-2 p-2 bg-red-50 rounded">
+                            <Text className="text-sm text-red-700">{errorText}</Text>
                           </div>
-                        </>
-                      );
+                        );
+                      }
+                      return null;
                     })()}
-                  </>
-                )}
+
+                    {result.spamReasons && result.spamReasons.length > 0 && (
+                      <div className="mt-2 p-2 bg-yellow-50 rounded">
+                        <Text className="text-sm text-yellow-700">
+                          Spam-Gründe: {result.spamReasons.join(', ')}
+                        </Text>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Score Interpretation */}
+              <div className={`p-4 rounded-lg border ${
+                calculateScore() >= 90 ? 'bg-green-50 border-green-200' :
+                calculateScore() >= 70 ? 'bg-yellow-50 border-yellow-200' :
+                'bg-red-50 border-red-200'
+              }`}>
+                <div className="flex gap-3">
+                  <InformationCircleIcon className={`w-5 h-5 shrink-0 ${
+                    calculateScore() >= 90 ? 'text-green-600' :
+                    calculateScore() >= 70 ? 'text-yellow-600' :
+                    'text-red-600'
+                  }`} />
+                  <div>
+                    <Text className={`text-sm font-medium ${
+                      calculateScore() >= 90 ? 'text-green-900' :
+                      calculateScore() >= 70 ? 'text-yellow-900' :
+                      'text-red-900'
+                    }`}>
+                      {calculateScore() >= 90 ? 'Exzellente Zustellbarkeit!' :
+                       calculateScore() >= 70 ? 'Gute Zustellbarkeit' :
+                       'Verbesserung erforderlich'}
+                    </Text>
+                    <Text className={`text-sm mt-1 ${
+                      calculateScore() >= 90 ? 'text-green-800' :
+                      calculateScore() >= 70 ? 'text-yellow-800' :
+                      'text-red-800'
+                    }`}>
+                      {calculateScore() >= 90 ? 
+                        'Ihre E-Mails erreichen zuverlässig den Posteingang.' :
+                       calculateScore() >= 70 ? 
+                        'Die meisten E-Mails erreichen den Posteingang, aber es gibt Raum für Verbesserungen.' :
+                        'Viele E-Mails landen im Spam. Überprüfen Sie Ihre Sender-Reputation und E-Mail-Inhalte.'}
+                    </Text>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-center mt-6">
+                <Button 
+                  onClick={() => {
+                    onSuccess();
+                    onClose();
+                  }}
+                >
+                  Fertig
+                </Button>
               </div>
             </div>
           )}
-
-          {error && (
-            <Alert type="error">
-              <div className="flex gap-2">
-                <ExclamationTriangleIcon className="w-5 h-5 text-red-600 shrink-0" />
-                <Text className="text-red-800">{error}</Text>
-              </div>
-            </Alert>
-          )}
-        </div>
-
-        <div className="mt-6 flex justify-end gap-3 border-t pt-4">
-          <Button plain onClick={onClose}>
-            Schließen
-          </Button>
-          <Button 
-            onClick={handleSendTest}
-            disabled={!testEmail || sending}
-            className="whitespace-nowrap"
-          >
-            {sending ? (
-              <>
-                <ClockIcon className="w-4 h-4 mr-2 animate-spin" />
-                Sende Test...
-              </>
-            ) : (
-              <>
-                <EnvelopeIcon className="w-4 h-4 mr-2" />
-                Test senden
-              </>
-            )}
-          </Button>
-        </div>
+        </Dialog.Panel>
       </div>
     </Dialog>
   );

@@ -24,8 +24,12 @@ import { InboxTestModal } from '@/components/domains/InboxTestModal';
 import { DnsStatusCard } from '@/components/domains/DnsStatusCard';
 import { HelpSidebar } from '@/components/domains/HelpSidebar';
 import { apiClient } from '@/lib/api/api-client';
-import { domainService } from '@/lib/firebase/domain-service';
-import { EmailDomain, DomainStatus, DOMAIN_STATUS_COLORS } from '@/types/email-domains';
+import { domainServiceEnhanced } from '@/lib/firebase/domain-service-enhanced';
+import { 
+  EmailDomainEnhanced, 
+  DomainStatus, 
+  DOMAIN_STATUS_COLORS_ENHANCED 
+} from '@/types/email-domains-enhanced';
 import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
 import { de } from 'date-fns/locale/de';
 
@@ -53,15 +57,21 @@ function Alert({
 
 export default function DomainsPage() {
   const { user } = useAuth();
-  const [domains, setDomains] = useState<EmailDomain[]>([]);
+  const [domains, setDomains] = useState<EmailDomainEnhanced[]>([]);
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showInboxTest, setShowInboxTest] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState(true);
-  const [selectedDomain, setSelectedDomain] = useState<EmailDomain | null>(null);
+  const [selectedDomain, setSelectedDomain] = useState<EmailDomainEnhanced | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [checkingDns, setCheckingDns] = useState<string | null>(null);
+
+  // Context for all operations
+  const getContext = () => ({
+    organizationId: user!.uid, // TODO: Use proper organizationId when available
+    userId: user!.uid
+  });
 
   useEffect(() => {
     if (user) {
@@ -75,9 +85,8 @@ export default function DomainsPage() {
     try {
       setLoading(true);
       setError(null);
-      // Use Firebase client SDK directly - it has the user's auth
-      const organizationId = user.uid;
-      const data = await domainService.getAll(organizationId);
+      const context = getContext();
+      const data = await domainServiceEnhanced.getAll(context.organizationId);
       setDomains(data);
     } catch (error: any) {
       console.error('Error loading domains:', error);
@@ -92,34 +101,38 @@ export default function DomainsPage() {
       setVerifying(domainId);
       setError(null);
       
-      // Get domain data
       const domain = domains.find(d => d.id === domainId);
       if (!domain || !domain.sendgridDomainId) {
         setError('Domain oder SendGrid ID nicht gefunden');
         return;
       }
       
-      // Call API route with both IDs
       const response = await apiClient.post<{
         success: boolean;
-        status: string;
+        status: DomainStatus;
         dnsRecords: any[];
+        error?: string;
       }>('/api/email/domains/verify', { 
         domainId,
         sendgridDomainId: domain.sendgridDomainId
       });
       
       if (response.success) {
-        // Update domain in Firestore directly from client
-        await domainService.updateVerificationStatus(
+        const context = getContext();
+        
+        await domainServiceEnhanced.updateVerificationStatus(
           domainId,
-          response.status as any,
-          true
+          response.status,
+          context,
+          true // increment attempts
         );
         
-        await domainService.updateDnsRecords(domainId, response.dnsRecords);
+        await domainServiceEnhanced.updateDnsRecords(
+          domainId, 
+          response.dnsRecords,
+          context
+        );
         
-        // Reload domains to get updated status
         await loadDomains();
       }
     } catch (error: any) {
@@ -135,28 +148,30 @@ export default function DomainsPage() {
       setCheckingDns(domainId);
       setError(null);
       
-      // Get domain data
       const domain = domains.find(d => d.id === domainId);
       if (!domain || !domain.dnsRecords || domain.dnsRecords.length === 0) {
         setError('Domain oder DNS Records nicht gefunden');
         return;
       }
       
-      // Call API route with DNS records
       const response = await apiClient.post<{
         success: boolean;
         results: any[];
         allValid: boolean;
+        error?: string;
       }>('/api/email/domains/check-dns', { 
         domainId,
         dnsRecords: domain.dnsRecords 
       });
       
       if (response.success) {
-        // Update DNS check results in Firestore
-        await domainService.updateDnsCheckResults(domainId, response.results);
+        const context = getContext();
+        await domainServiceEnhanced.updateDnsCheckResults(
+          domainId, 
+          response.results,
+          context
+        );
         
-        // If all valid, trigger verification
         if (response.allValid && domain.status !== 'verified') {
           await handleVerify(domainId);
         } else {
@@ -178,22 +193,19 @@ export default function DomainsPage() {
 
     try {
       setError(null);
-      
-      // Get domain data
       const domain = domains.find(d => d.id === domainId);
       
-      // Call API to delete from SendGrid (if exists)
       if (domain?.sendgridDomainId) {
         try {
-          // Using POST endpoint for delete operation with body
           await apiClient.delete(`/api/email/domains/${domainId}`);
         } catch (apiError) {
           console.warn('SendGrid deletion failed, continuing with Firebase deletion');
         }
       }
       
-      // Delete from Firebase directly
-      await domainService.delete(domainId);
+      // Delete from Firebase using the softDelete method from BaseService
+      const context = getContext();
+      await domainServiceEnhanced.softDelete(domainId, context);
       await loadDomains();
       
     } catch (error: any) {
@@ -218,6 +230,16 @@ export default function DomainsPage() {
         {config.text}
       </Badge>
     );
+  };
+
+  const formatDate = (timestamp: any): string => {
+    if (!timestamp) return 'Unbekannt';
+    try {
+      const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+      return formatDistanceToNow(date, { addSuffix: true, locale: de });
+    } catch {
+      return 'Unbekannt';
+    }
   };
 
   if (loading) {
@@ -296,13 +318,13 @@ export default function DomainsPage() {
                     <div className="flex items-center gap-3">
                       <h3 className="text-lg font-semibold">{domain.domain}</h3>
                       {getStatusBadge(domain.status)}
+                      {domain.isDefault && (
+                        <Badge color="blue" className="whitespace-nowrap">Standard</Badge>
+                      )}
                     </div>
                     
                     <Text className="text-sm text-gray-500 mt-1">
-                      Hinzugefügt {formatDistanceToNow(domain.createdAt.toDate(), {
-                        addSuffix: true,
-                        locale: de
-                      })}
+                      Hinzugefügt {formatDate(domain.createdAt)}
                     </Text>
 
                     {/* DNS Status Details */}
@@ -314,20 +336,36 @@ export default function DomainsPage() {
                       />
                     )}
 
-                    {/* Inbox Test Results */}
-                    {domain.status === 'verified' && domain.inboxTests && domain.inboxTests.length > 0 && (
-                      <div className="mt-4 p-3 bg-green-50 rounded-lg">
-                        <Text className="text-sm text-green-800">
-                          ✓ Letzter Inbox-Test: {domain.inboxTests[0].deliveryStatus === 'delivered' ? 'Erfolgreich' : 'Fehlgeschlagen'}
-                        </Text>
+                    {/* Inbox Test Results Summary */}
+                    {domain.status === 'verified' && (
+                      <div className="mt-4 flex items-center gap-4">
+                        {domain.inboxTestScore !== undefined && (
+                          <div className="flex items-center gap-2">
+                            <div className="text-sm text-gray-600">Zustellrate:</div>
+                            <Badge 
+                              color={
+                                domain.inboxTestScore >= 90 ? 'green' : 
+                                domain.inboxTestScore >= 70 ? 'yellow' : 'red'
+                              }
+                              className="whitespace-nowrap"
+                            >
+                              {domain.inboxTestScore}%
+                            </Badge>
+                          </div>
+                        )}
+                        {domain.emailsSent && domain.emailsSent > 0 && (
+                          <Text className="text-sm text-gray-600">
+                            {domain.emailsSent} E-Mails versendet
+                          </Text>
+                        )}
                       </div>
                     )}
 
                     {/* Provider Info */}
-                    {domain.detectedProvider && (
+                    {domain.provider && domain.provider !== 'other' && (
                       <div className="mt-2">
                         <Text className="text-sm text-gray-600">
-                          Provider: <span className="font-medium capitalize">{domain.detectedProvider}</span>
+                          Provider: <span className="font-medium capitalize">{domain.provider}</span>
                         </Text>
                       </div>
                     )}
@@ -336,13 +374,26 @@ export default function DomainsPage() {
                   {/* Actions */}
                   <div className="flex items-center gap-2 ml-4">
                     {domain.status === 'verified' ? (
-                      <Button
-                        plain
-                        onClick={() => setShowInboxTest(domain.id!)}
-                      >
-                        <EnvelopeIcon className="w-4 h-4" />
-                        Inbox testen
-                      </Button>
+                      <>
+                        <Button
+                          plain
+                          onClick={() => setShowInboxTest(domain.id!)}
+                        >
+                          <EnvelopeIcon className="w-4 h-4" />
+                          Inbox testen
+                        </Button>
+                        {!domain.isDefault && (
+                          <Button
+                            plain
+                            onClick={async () => {
+                              await domainServiceEnhanced.setAsDefault(domain.id!, getContext());
+                              await loadDomains();
+                            }}
+                          >
+                            Als Standard
+                          </Button>
+                        )}
+                      </>
                     ) : (
                       <>
                         <Button
@@ -397,6 +448,17 @@ export default function DomainsPage() {
               Keine Sorge, wir führen Sie Schritt für Schritt durch den Prozess.
             </Text>
           </div>
+        )}
+
+        {/* Help Toggle Button (Mobile) */}
+        {!showHelp && (
+          <Button
+            plain
+            onClick={() => setShowHelp(true)}
+            className="fixed bottom-4 right-4 md:hidden bg-white shadow-lg rounded-full p-3"
+          >
+            <QuestionMarkCircleIcon className="w-6 h-6" />
+          </Button>
         )}
       </div>
 
