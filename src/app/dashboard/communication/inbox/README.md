@@ -1,11 +1,20 @@
-# Implementierungsplan: E-Mail Inbox
+# Implementierungsplan: E-Mail Inbox mit Multi-Tenancy
 
 ## 📋 Übersicht
 
-Implementierung einer vollwertigen E-Mail-Inbox für SKAMP, damit Nutzer:
+Implementierung einer vollwertigen E-Mail-Inbox für SKAMP mit Multi-Tenancy-Support, damit Nutzer:
 - Antworten auf ihre Pressemitteilungen empfangen können
 - E-Mails direkt in SKAMP lesen und beantworten können
 - Konversationen mit Journalisten verwalten können
+- Alles im Kontext ihrer Organisation (Multi-Tenancy)
+
+## 🏗️ Architektur-Grundlagen
+
+### Multi-Tenancy System
+- **BaseEntity**: Alle Datenmodelle erweitern das `BaseEntity` Interface
+- **OrganizationId**: Primärer Tenant-Identifier (aktuell noch userId als Workaround)
+- **Enhanced Services**: Verwendung der neuen Service-Architektur mit `_enhanced` Collections
+- **Context-basierte Operationen**: Alle Create/Update-Operationen benötigen Context mit organizationId und userId
 
 ## 🎯 Kern-Features
 
@@ -14,8 +23,9 @@ Implementierung einer vollwertigen E-Mail-Inbox für SKAMP, damit Nutzer:
 3. **E-Mail-Antworten**: Direkt aus SKAMP heraus
 4. **Konversations-Threading**: Zusammenhängende E-Mails gruppieren
 5. **Kontakt-Verknüpfung**: E-Mails mit CRM-Kontakten verbinden
+6. **Multi-Tenancy**: Strikte Trennung nach Organisationen
 
-## 🏗️ Technische Optionen
+## 🛠️ Technische Optionen
 
 ### Option A: SendGrid Inbound Parse (Empfohlen)
 - **Pro**: Nahtlose Integration, bereits SendGrid vorhanden
@@ -31,12 +41,30 @@ Implementierung einer vollwertigen E-Mail-Inbox für SKAMP, damit Nutzer:
 
 ## 🛠️ Implementierung mit SendGrid Inbound Parse
 
-### Phase 1: Datenbank-Struktur
+### Phase 1: Datenbank-Struktur mit Multi-Tenancy
 
 ```typescript
-// src/types/inbox.ts
-export interface EmailMessage {
-  id?: string;
+// src/types/inbox-enhanced.ts
+import { BaseEntity } from './international';
+
+export interface EmailAddress {
+  email: string;
+  name?: string;
+}
+
+export interface EmailAttachment {
+  id: string;
+  filename: string;
+  contentType: string;
+  size: number;
+  url?: string;
+  inline?: boolean;
+  contentId?: string;
+}
+
+// Hauptentitäten erweitern BaseEntity
+export interface EmailMessage extends BaseEntity {
+  // Eindeutige Identifikatoren
   messageId: string; // E-Mail Message-ID Header
   threadId?: string; // Für Konversations-Gruppierung
   
@@ -70,40 +98,19 @@ export interface EmailMessage {
   importance: 'low' | 'normal' | 'high';
   
   // Verknüpfungen
-  campaignId?: string; // Verweis auf PR-Kampagne
-  contactId?: string; // Verweis auf CRM-Kontakt
-  
-  // Organisation
-  userId: string;
-  organizationId: string;
-  emailAccountId: string; // Welches E-Mail-Konto
+  campaignId?: string;
+  contactId?: string;
+  emailAccountId: string;
   
   // SendGrid Spezifisch
   sendgridEventId?: string;
   spamScore?: number;
   spamReport?: string;
   
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  // BaseEntity liefert: id, organizationId, userId, createdAt, updatedAt
 }
 
-export interface EmailAddress {
-  email: string;
-  name?: string;
-}
-
-export interface EmailAttachment {
-  id: string;
-  filename: string;
-  contentType: string;
-  size: number;
-  url?: string; // Download URL
-  inline?: boolean;
-  contentId?: string; // Für inline Bilder
-}
-
-export interface EmailAccount {
-  id?: string;
+export interface EmailAccount extends BaseEntity {
   email: string;
   displayName: string;
   domain: string;
@@ -119,14 +126,10 @@ export interface EmailAccount {
   // Signatur
   signature?: string;
   
-  userId: string;
-  organizationId: string;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  // BaseEntity liefert: id, organizationId, userId, createdAt, updatedAt
 }
 
-export interface EmailThread {
-  id?: string;
+export interface EmailThread extends BaseEntity {
   subject: string;
   participants: EmailAddress[];
   lastMessageAt: Timestamp;
@@ -134,28 +137,389 @@ export interface EmailThread {
   unreadCount: number;
   
   // Erste und letzte Nachricht für Vorschau
-  firstMessage?: EmailMessage;
-  lastMessage?: EmailMessage;
+  firstMessageId?: string;
+  lastMessageId?: string;
   
   // Verknüpfungen
   campaignId?: string;
   contactIds: string[];
   
-  userId: string;
-  organizationId: string;
+  // BaseEntity liefert: id, organizationId, userId, createdAt, updatedAt
 }
 ```
 
-### Phase 2: Backend Services
+### Phase 2: Backend Services mit Enhanced Pattern
 
-#### 2.1 SendGrid Inbound Parse Webhook
+#### 2.1 Email Inbox Enhanced Service
+
+```typescript
+// src/lib/firebase/email-inbox-service-enhanced.ts
+import {
+  collection,
+  doc,
+  setDoc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  limit,
+  updateDoc,
+  Timestamp,
+  writeBatch
+} from 'firebase/firestore';
+import { db } from '../firebase/client-init';
+import { BaseService } from './base-service';
+import { EmailMessage, EmailAccount, EmailThread } from '@/types/inbox-enhanced';
+import { contactsEnhancedService } from './crm-service-enhanced';
+import { nanoid } from 'nanoid';
+
+// Haupt-Service für E-Mail-Nachrichten
+class EmailMessagesEnhancedService extends BaseService<EmailMessage> {
+  constructor() {
+    super('inbox_messages_enhanced');
+  }
+
+  // E-Mail empfangen und speichern
+  async receiveEmail(
+    data: any,
+    context: { organizationId: string; userId: string }
+  ): Promise<string> {
+    const messageId = data.headers['message-id'] || nanoid();
+    
+    // Thread-ID ermitteln
+    const threadId = await this.determineThreadId(
+      context.organizationId,
+      data.subject,
+      data.headers['in-reply-to'],
+      data.headers['references']
+    );
+    
+    // Kontakt verknüpfen
+    const contacts = await contactsEnhancedService.getByEmail(
+      context.organizationId,
+      data.from.email
+    );
+    
+    const emailMessage: Omit<EmailMessage, 'id' | 'createdAt' | 'updatedAt'> = {
+      messageId,
+      threadId,
+      from: data.from,
+      to: data.to,
+      cc: data.cc,
+      subject: data.subject,
+      textContent: data.text,
+      htmlContent: data.html,
+      snippet: this.generateSnippet(data.text),
+      attachments: data.attachments,
+      receivedAt: Timestamp.now(),
+      isRead: false,
+      isStarred: false,
+      isArchived: false,
+      isDraft: false,
+      labels: [],
+      folder: 'inbox',
+      importance: this.detectImportance(data),
+      contactId: contacts[0]?.id,
+      emailAccountId: data.emailAccountId,
+      spamScore: data.spam_score,
+      spamReport: data.spam_report,
+      organizationId: context.organizationId,
+      userId: context.userId
+    };
+    
+    // Kampagne verknüpfen
+    if (data.subject.includes('[SKAMP-')) {
+      const campaignId = this.extractCampaignId(data.subject);
+      if (campaignId) {
+        emailMessage.campaignId = campaignId;
+      }
+    }
+    
+    const docId = await this.create(emailMessage, context);
+    
+    // Thread aktualisieren
+    if (threadId) {
+      await this.updateThread(context.organizationId, threadId, emailMessage);
+    }
+    
+    // Notification erstellen
+    await this.createNewEmailNotification(emailMessage, docId);
+    
+    return docId;
+  }
+  
+  // E-Mails nach Ordner abrufen
+  async getByFolder(
+    organizationId: string,
+    folder: string,
+    options?: {
+      limit?: number;
+      startAfter?: any;
+      includeArchived?: boolean;
+    }
+  ): Promise<EmailMessage[]> {
+    let q = query(
+      this.collection,
+      where('organizationId', '==', organizationId),
+      where('folder', '==', folder)
+    );
+    
+    if (!options?.includeArchived) {
+      q = query(q, where('isArchived', '==', false));
+    }
+    
+    q = query(q, orderBy('receivedAt', 'desc'));
+    
+    if (options?.limit) {
+      q = query(q, limit(options.limit));
+    }
+    
+    return this.queryDocuments(q);
+  }
+  
+  // Thread-Management
+  private async determineThreadId(
+    organizationId: string,
+    subject: string,
+    inReplyTo?: string,
+    references?: string
+  ): Promise<string | undefined> {
+    // Suche nach existierendem Thread via Reply
+    if (inReplyTo) {
+      const messages = await this.queryDocuments(
+        query(
+          this.collection,
+          where('organizationId', '==', organizationId),
+          where('messageId', '==', inReplyTo),
+          limit(1)
+        )
+      );
+      
+      if (messages.length > 0) {
+        return messages[0].threadId || messages[0].id;
+      }
+    }
+    
+    // Thread basierend auf Betreff
+    const cleanSubject = subject.replace(/^(Re:|Fwd:|AW:|WG:)\s*/gi, '').trim();
+    const messages = await this.queryDocuments(
+      query(
+        this.collection,
+        where('organizationId', '==', organizationId),
+        where('subject', '==', cleanSubject),
+        orderBy('receivedAt', 'desc'),
+        limit(1)
+      )
+    );
+    
+    if (messages.length > 0) {
+      return messages[0].threadId || messages[0].id;
+    }
+    
+    // Neuer Thread
+    return nanoid();
+  }
+  
+  // E-Mail als gelesen markieren
+  async markAsRead(
+    organizationId: string,
+    messageId: string
+  ): Promise<void> {
+    const messages = await this.queryDocuments(
+      query(
+        this.collection,
+        where('organizationId', '==', organizationId),
+        where('id', '==', messageId),
+        limit(1)
+      )
+    );
+    
+    if (messages.length > 0) {
+      await this.update(messageId, { isRead: true });
+    }
+  }
+  
+  // Hilfsfunktionen
+  private generateSnippet(text: string): string {
+    return text
+      .replace(/\s+/g, ' ')
+      .trim()
+      .substring(0, 100);
+  }
+  
+  private detectImportance(data: any): 'low' | 'normal' | 'high' {
+    const headers = data.headers || {};
+    
+    if (headers['importance'] === 'high' || headers['priority'] === 'urgent') {
+      return 'high';
+    }
+    
+    if (headers['importance'] === 'low') {
+      return 'low';
+    }
+    
+    const urgentKeywords = ['urgent', 'asap', 'wichtig', 'dringend'];
+    if (urgentKeywords.some(keyword => 
+      data.subject.toLowerCase().includes(keyword)
+    )) {
+      return 'high';
+    }
+    
+    return 'normal';
+  }
+  
+  private extractCampaignId(subject: string): string | null {
+    const match = subject.match(/\[SKAMP-([A-Z0-9]+)\]/);
+    return match ? match[1] : null;
+  }
+  
+  private async updateThread(
+    organizationId: string,
+    threadId: string,
+    newMessage: Omit<EmailMessage, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<void> {
+    // Thread-Statistiken aktualisieren
+    const threadMessages = await this.queryDocuments(
+      query(
+        this.collection,
+        where('organizationId', '==', organizationId),
+        where('threadId', '==', threadId)
+      )
+    );
+    
+    const unreadCount = threadMessages.filter(m => !m.isRead).length;
+    
+    await emailThreadsEnhancedService.update(threadId, {
+      lastMessageAt: newMessage.receivedAt,
+      messageCount: threadMessages.length,
+      unreadCount,
+      lastMessageId: newMessage.messageId
+    });
+  }
+  
+  private async createNewEmailNotification(
+    message: Omit<EmailMessage, 'id' | 'createdAt' | 'updatedAt'>,
+    messageId: string
+  ): Promise<void> {
+    // Notification-System Integration
+    console.log('New email notification:', {
+      from: message.from.email,
+      subject: message.subject,
+      messageId
+    });
+  }
+}
+
+// Service für E-Mail-Konten
+class EmailAccountsEnhancedService extends BaseService<EmailAccount> {
+  constructor() {
+    super('email_accounts_enhanced');
+  }
+  
+  async getByEmail(
+    organizationId: string,
+    email: string
+  ): Promise<EmailAccount | null> {
+    const accounts = await this.queryDocuments(
+      query(
+        this.collection,
+        where('organizationId', '==', organizationId),
+        where('email', '==', email),
+        limit(1)
+      )
+    );
+    
+    return accounts[0] || null;
+  }
+  
+  async getEnabledAccounts(
+    organizationId: string
+  ): Promise<EmailAccount[]> {
+    return this.queryDocuments(
+      query(
+        this.collection,
+        where('organizationId', '==', organizationId),
+        where('inboundEnabled', '==', true)
+      )
+    );
+  }
+}
+
+// Service für E-Mail-Threads
+class EmailThreadsEnhancedService extends BaseService<EmailThread> {
+  constructor() {
+    super('email_threads_enhanced');
+  }
+  
+  async getByOrganization(
+    organizationId: string,
+    options?: {
+      limit?: number;
+      includeArchived?: boolean;
+    }
+  ): Promise<EmailThread[]> {
+    let q = query(
+      this.collection,
+      where('organizationId', '==', organizationId),
+      orderBy('lastMessageAt', 'desc')
+    );
+    
+    if (options?.limit) {
+      q = query(q, limit(options.limit));
+    }
+    
+    return this.queryDocuments(q);
+  }
+}
+
+// Services exportieren
+export const emailMessagesEnhancedService = new EmailMessagesEnhancedService();
+export const emailAccountsEnhancedService = new EmailAccountsEnhancedService();
+export const emailThreadsEnhancedService = new EmailThreadsEnhancedService();
+
+// SendGrid Helper
+export async function sendViaSendGrid(data: {
+  from: EmailAddress;
+  to: string[];
+  subject: string;
+  html: string;
+  text: string;
+  cc?: string[];
+  bcc?: string[];
+  attachments?: any[];
+}): Promise<string> {
+  // SendGrid API Integration
+  const sgMail = require('@sendgrid/mail');
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+  
+  const msg = {
+    from: data.from,
+    to: data.to,
+    cc: data.cc,
+    bcc: data.bcc,
+    subject: data.subject,
+    text: data.text,
+    html: data.html,
+    attachments: data.attachments
+  };
+  
+  const response = await sgMail.send(msg);
+  return response[0].headers['x-message-id'];
+}
+```
+
+#### 2.2 SendGrid Inbound Parse Webhook
 
 ```typescript
 // src/app/api/webhooks/sendgrid/inbound/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import formidable from 'formidable';
-import { emailInboxService } from '@/lib/email/email-inbox-service';
+import { 
+  emailMessagesEnhancedService, 
+  emailAccountsEnhancedService 
+} from '@/lib/firebase/email-inbox-service-enhanced';
 import crypto from 'crypto';
 
 // Verify SendGrid Webhook Signature
@@ -198,27 +562,34 @@ export async function POST(request: NextRequest) {
       html: fields.html as string,
       headers: JSON.parse(fields.headers as string),
       envelope: JSON.parse(fields.envelope as string),
-      attachments: files.attachments ? processAttachments(files.attachments) : [],
+      attachments: files.attachments ? await processAttachments(files.attachments) : [],
       spam_score: parseFloat(fields.spam_score as string),
       spam_report: fields.spam_report as string,
     };
     
-    // Determine target email account
+    // Determine target email account with multi-tenancy
     const targetEmail = emailData.envelope.to[0];
-    const emailAccount = await emailInboxService.getAccountByEmail(targetEmail);
+    
+    // Suche nach dem E-Mail-Account über alle Organisationen
+    // In Produktion sollte dies über Domain-Mapping optimiert werden
+    const emailAccount = await findEmailAccountByEmail(targetEmail);
     
     if (!emailAccount) {
       console.error('No email account found for:', targetEmail);
       return NextResponse.json({ error: 'Unknown recipient' }, { status: 404 });
     }
     
+    // Context für Multi-Tenancy
+    const context = {
+      organizationId: emailAccount.organizationId,
+      userId: emailAccount.userId
+    };
+    
     // Save email to inbox
-    await emailInboxService.receiveEmail({
+    await emailMessagesEnhancedService.receiveEmail({
       ...emailData,
       emailAccountId: emailAccount.id!,
-      userId: emailAccount.userId,
-      organizationId: emailAccount.organizationId,
-    });
+    }, context);
     
     return NextResponse.json({ success: true });
     
@@ -231,262 +602,60 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function processAttachments(files: any[]): any[] {
+async function findEmailAccountByEmail(email: string): Promise<EmailAccount | null> {
+  // TODO: Optimierung mit Domain-Index für bessere Performance
+  // Aktuell: Durchsuche alle Accounts (nicht optimal für Produktion)
+  
+  // Temporäre Lösung: Domain extrahieren und cachen
+  const domain = email.split('@')[1];
+  
+  // In Produktion: Domain-zu-Organization Mapping verwenden
+  // Für MVP: Direkte Suche
+  const { collection, query, where, getDocs } = await import('firebase/firestore');
+  const { db } = await import('@/lib/firebase/client-init');
+  
+  const q = query(
+    collection(db, 'email_accounts_enhanced'),
+    where('email', '==', email),
+    where('inboundEnabled', '==', true)
+  );
+  
+  const snapshot = await getDocs(q);
+  if (!snapshot.empty) {
+    return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as EmailAccount;
+  }
+  
+  return null;
+}
+
+async function processAttachments(files: any[]): Promise<any[]> {
   // Process and upload attachments to Firebase Storage
-  return files.map(file => ({
-    filename: file.originalFilename,
-    contentType: file.mimetype,
-    size: file.size,
-    // Upload logic here
-  }));
+  const { getStorage, ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
+  const storage = getStorage();
+  
+  const attachments = await Promise.all(
+    files.map(async (file) => {
+      const fileRef = ref(storage, `email-attachments/${Date.now()}-${file.originalFilename}`);
+      const snapshot = await uploadBytes(fileRef, file);
+      const url = await getDownloadURL(snapshot.ref);
+      
+      return {
+        id: nanoid(),
+        filename: file.originalFilename,
+        contentType: file.mimetype,
+        size: file.size,
+        url
+      };
+    })
+  );
+  
+  return attachments;
 }
 ```
 
-#### 2.2 Email Inbox Service
+### Phase 3: Frontend Implementation mit Multi-Tenancy
 
-```typescript
-// src/lib/email/email-inbox-service.ts
-import {
-  collection,
-  doc,
-  setDoc,
-  getDoc,
-  getDocs,
-  query,
-  where,
-  orderBy,
-  limit,
-  updateDoc,
-  Timestamp
-} from 'firebase/firestore';
-import { db } from '../firebase/client-init';
-import { EmailMessage, EmailAccount, EmailThread } from '@/types/inbox';
-import { contactsService } from '../firebase/crm-service';
-import { nanoid } from 'nanoid';
-
-export const emailInboxService = {
-  // E-Mail empfangen und speichern
-  async receiveEmail(data: any): Promise<string> {
-    const messageId = data.headers['message-id'] || nanoid();
-    
-    // Thread-ID ermitteln
-    const threadId = await this.determineThreadId(
-      data.subject,
-      data.headers['in-reply-to'],
-      data.headers['references']
-    );
-    
-    // Kontakt verknüpfen
-    const contact = await contactsService.getByEmail(
-      data.from.email,
-      data.organizationId
-    );
-    
-    const emailMessage: EmailMessage = {
-      messageId,
-      threadId,
-      from: data.from,
-      to: data.to,
-      cc: data.cc,
-      subject: data.subject,
-      textContent: data.text,
-      htmlContent: data.html,
-      snippet: this.generateSnippet(data.text),
-      attachments: data.attachments,
-      receivedAt: Timestamp.now(),
-      isRead: false,
-      isStarred: false,
-      isArchived: false,
-      isDraft: false,
-      labels: [],
-      folder: 'inbox',
-      importance: this.detectImportance(data),
-      contactId: contact?.id,
-      userId: data.userId,
-      organizationId: data.organizationId,
-      emailAccountId: data.emailAccountId,
-      spamScore: data.spam_score,
-      spamReport: data.spam_report,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now()
-    };
-    
-    // Kampagne verknüpfen (basierend auf Betreff oder References)
-    if (data.subject.includes('[SKAMP-')) {
-      const campaignId = this.extractCampaignId(data.subject);
-      if (campaignId) {
-        emailMessage.campaignId = campaignId;
-      }
-    }
-    
-    const docRef = doc(collection(db, 'inbox_messages'));
-    await setDoc(docRef, emailMessage);
-    
-    // Thread aktualisieren
-    if (threadId) {
-      await this.updateThread(threadId, emailMessage);
-    }
-    
-    // Notification erstellen
-    await this.createNewEmailNotification(emailMessage);
-    
-    return docRef.id;
-  },
-  
-  // E-Mail senden
-  async sendEmail(
-    accountId: string,
-    to: string[],
-    subject: string,
-    content: string,
-    options?: {
-      cc?: string[];
-      bcc?: string[];
-      replyTo?: string;
-      attachments?: any[];
-      threadId?: string;
-      inReplyTo?: string;
-    }
-  ): Promise<string> {
-    const account = await this.getAccount(accountId);
-    if (!account) throw new Error('Email account not found');
-    
-    // SendGrid API call
-    const messageId = await this.sendViaSendGrid({
-      from: {
-        email: account.email,
-        name: account.displayName
-      },
-      to,
-      subject,
-      html: content,
-      text: this.htmlToText(content),
-      ...options
-    });
-    
-    // Speichere in Sent folder
-    const sentMessage: EmailMessage = {
-      messageId,
-      threadId: options?.threadId,
-      from: {
-        email: account.email,
-        name: account.displayName
-      },
-      to: to.map(email => ({ email })),
-      cc: options?.cc?.map(email => ({ email })),
-      subject,
-      textContent: this.htmlToText(content),
-      htmlContent: content,
-      snippet: this.generateSnippet(content),
-      sentAt: Timestamp.now(),
-      receivedAt: Timestamp.now(),
-      isRead: true,
-      isStarred: false,
-      isArchived: false,
-      isDraft: false,
-      labels: [],
-      folder: 'sent',
-      importance: 'normal',
-      userId: account.userId,
-      organizationId: account.organizationId,
-      emailAccountId: accountId,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now()
-    };
-    
-    const docRef = doc(collection(db, 'inbox_messages'));
-    await setDoc(docRef, sentMessage);
-    
-    return docRef.id;
-  },
-  
-  // Thread-Management
-  async determineThreadId(
-    subject: string,
-    inReplyTo?: string,
-    references?: string
-  ): Promise<string | undefined> {
-    // Suche nach existierendem Thread
-    if (inReplyTo) {
-      const q = query(
-        collection(db, 'inbox_messages'),
-        where('messageId', '==', inReplyTo),
-        limit(1)
-      );
-      const snapshot = await getDocs(q);
-      if (!snapshot.empty) {
-        return snapshot.docs[0].data().threadId || snapshot.docs[0].id;
-      }
-    }
-    
-    // Thread basierend auf Betreff
-    const cleanSubject = subject.replace(/^(Re:|Fwd:|AW:|WG:)\s*/gi, '').trim();
-    const q = query(
-      collection(db, 'inbox_messages'),
-      where('subject', '==', cleanSubject),
-      orderBy('receivedAt', 'desc'),
-      limit(1)
-    );
-    const snapshot = await getDocs(q);
-    
-    if (!snapshot.empty) {
-      return snapshot.docs[0].data().threadId || snapshot.docs[0].id;
-    }
-    
-    // Neuer Thread
-    return nanoid();
-  },
-  
-  // Hilfsfunktionen
-  generateSnippet(text: string): string {
-    return text
-      .replace(/\s+/g, ' ')
-      .trim()
-      .substring(0, 100);
-  },
-  
-  detectImportance(data: any): 'low' | 'normal' | 'high' {
-    // Logik zur Erkennung wichtiger E-Mails
-    const headers = data.headers;
-    
-    if (headers['importance'] === 'high' || headers['priority'] === 'urgent') {
-      return 'high';
-    }
-    
-    if (headers['importance'] === 'low') {
-      return 'low';
-    }
-    
-    // Keywords im Betreff
-    const urgentKeywords = ['urgent', 'asap', 'wichtig', 'dringend'];
-    if (urgentKeywords.some(keyword => 
-      data.subject.toLowerCase().includes(keyword)
-    )) {
-      return 'high';
-    }
-    
-    return 'normal';
-  },
-  
-  extractCampaignId(subject: string): string | null {
-    const match = subject.match(/\[SKAMP-([A-Z0-9]+)\]/);
-    return match ? match[1] : null;
-  },
-  
-  htmlToText(html: string): string {
-    return html
-      .replace(/<style[^>]*>.*?<\/style>/gs, '')
-      .replace(/<script[^>]*>.*?<\/script>/gs, '')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-  }
-};
-```
-
-### Phase 3: Frontend Implementation
-
-#### 3.1 Inbox Page
+#### 3.1 Inbox Page mit Organization Context
 
 ```typescript
 // src/app/dashboard/communication/inbox/page.tsx
@@ -496,37 +665,46 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Heading } from '@/components/heading';
 import { Button } from '@/components/button';
-import { InboxList } from '@/components/inbox/InboxList';
-import { EmailViewer } from '@/components/inbox/EmailViewer';
-import { ComposeEmail } from '@/components/inbox/ComposeEmail';
-import { InboxSidebar } from '@/components/inbox/InboxSidebar';
-import { EmailMessage } from '@/types/inbox';
+import { InboxList } from './components/InboxList';
+import { EmailViewer } from './components/EmailViewer';
+import { ComposeEmail } from './components/ComposeEmail';
+import { InboxSidebar } from './components/InboxSidebar';
+import { EmailMessage } from '@/types/inbox-enhanced';
 import { 
   PencilSquareIcon,
   MagnifyingGlassIcon,
-  AdjustmentsHorizontalIcon 
+  AdjustmentsHorizontalIcon,
+  EnvelopeIcon
 } from '@heroicons/react/20/solid';
 
 export default function InboxPage() {
   const { user } = useAuth();
+  const organizationId = user?.uid || ''; // Workaround - später durch echte Org-ID ersetzen
+  
   const [selectedFolder, setSelectedFolder] = useState<string>('inbox');
   const [selectedEmail, setSelectedEmail] = useState<EmailMessage | null>(null);
   const [showCompose, setShowCompose] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [emails, setEmails] = useState<EmailMessage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [unreadCounts, setUnreadCounts] = useState({
+    inbox: 0,
+    spam: 0
+  });
 
   useEffect(() => {
-    if (user) {
+    if (user && organizationId) {
       loadEmails();
+      loadUnreadCounts();
     }
-  }, [user, selectedFolder]);
+  }, [user, organizationId, selectedFolder]);
 
   const loadEmails = async () => {
     try {
       setLoading(true);
-      // API call to load emails
-      const response = await fetch(`/api/inbox/messages?folder=${selectedFolder}`);
+      const response = await fetch(
+        `/api/inbox/messages?folder=${selectedFolder}&organizationId=${organizationId}`
+      );
       const data = await response.json();
       setEmails(data.messages);
     } catch (error) {
@@ -536,33 +714,97 @@ export default function InboxPage() {
     }
   };
 
-  const handleEmailSelect = (email: EmailMessage) => {
+  const loadUnreadCounts = async () => {
+    try {
+      const response = await fetch(
+        `/api/inbox/unread-counts?organizationId=${organizationId}`
+      );
+      const data = await response.json();
+      setUnreadCounts(data);
+    } catch (error) {
+      console.error('Failed to load unread counts:', error);
+    }
+  };
+
+  const handleEmailSelect = async (email: EmailMessage) => {
     setSelectedEmail(email);
+    
     // Mark as read
     if (!email.isRead) {
-      markAsRead(email.id!);
+      await markAsRead(email.id!);
     }
   };
 
   const markAsRead = async (emailId: string) => {
-    await fetch(`/api/inbox/messages/${emailId}/read`, { method: 'POST' });
+    await fetch(`/api/inbox/messages/${emailId}/read`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ organizationId })
+    });
+    
     // Update local state
     setEmails(prev => prev.map(e => 
       e.id === emailId ? { ...e, isRead: true } : e
     ));
+    
+    // Update unread counts
+    setUnreadCounts(prev => ({
+      ...prev,
+      [selectedFolder]: Math.max(0, prev[selectedFolder as keyof typeof prev] - 1)
+    }));
   };
 
+  const handleArchive = async (emailId: string) => {
+    await fetch(`/api/inbox/messages/${emailId}/archive`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ organizationId })
+    });
+    
+    // Remove from current view
+    setEmails(prev => prev.filter(e => e.id !== emailId));
+    setSelectedEmail(null);
+  };
+
+  const handleDelete = async (emailId: string) => {
+    await fetch(`/api/inbox/messages/${emailId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ organizationId })
+    });
+    
+    // Remove from current view
+    setEmails(prev => prev.filter(e => e.id !== emailId));
+    setSelectedEmail(null);
+  };
+
+  // Filter emails based on search
+  const filteredEmails = emails.filter(email => {
+    if (!searchQuery) return true;
+    
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      email.subject.toLowerCase().includes(searchLower) ||
+      email.from.email.toLowerCase().includes(searchLower) ||
+      email.from.name?.toLowerCase().includes(searchLower) ||
+      email.snippet.toLowerCase().includes(searchLower)
+    );
+  });
+
   return (
-    <div className="h-full flex">
+    <div className="h-full flex bg-white">
       {/* Sidebar */}
       <InboxSidebar
         selectedFolder={selectedFolder}
         onFolderSelect={setSelectedFolder}
         onCompose={() => setShowCompose(true)}
-        unreadCounts={{
-          inbox: emails.filter(e => !e.isRead && e.folder === 'inbox').length,
-          spam: emails.filter(e => e.folder === 'spam').length
-        }}
+        unreadCounts={unreadCounts}
       />
 
       {/* Email List */}
@@ -587,7 +829,7 @@ export default function InboxPage() {
 
           {/* Email List */}
           <InboxList
-            emails={emails}
+            emails={filteredEmails}
             selectedEmail={selectedEmail}
             onEmailSelect={handleEmailSelect}
             loading={loading}
@@ -607,12 +849,8 @@ export default function InboxPage() {
                 setShowCompose(true);
                 // Set forward context
               }}
-              onArchive={() => {
-                // Archive logic
-              }}
-              onDelete={() => {
-                // Delete logic
-              }}
+              onArchive={() => handleArchive(selectedEmail.id!)}
+              onDelete={() => handleDelete(selectedEmail.id!)}
             />
           ) : (
             <div className="h-full flex items-center justify-center text-gray-500">
@@ -628,11 +866,13 @@ export default function InboxPage() {
       {/* Compose Modal */}
       {showCompose && (
         <ComposeEmail
+          organizationId={organizationId}
           onClose={() => setShowCompose(false)}
           onSend={() => {
             setShowCompose(false);
             loadEmails();
           }}
+          replyTo={selectedEmail}
         />
       )}
     </div>
@@ -640,13 +880,103 @@ export default function InboxPage() {
 }
 ```
 
-#### 3.2 Email List Component
+#### 3.2 API Routes mit Multi-Tenancy
 
 ```typescript
-// src/components/inbox/InboxList.tsx
+// src/app/api/inbox/messages/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { 
+  emailMessagesEnhancedService 
+} from '@/lib/firebase/email-inbox-service-enhanced';
+
+export async function GET(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const searchParams = request.nextUrl.searchParams;
+    const folder = searchParams.get('folder') || 'inbox';
+    
+    // Multi-Tenancy: OrganizationId aus Session oder Query
+    const organizationId = searchParams.get('organizationId') || session.user.id;
+
+    const messages = await emailMessagesEnhancedService.getByFolder(
+      organizationId,
+      folder,
+      {
+        limit: 50,
+        includeArchived: false
+      }
+    );
+
+    return NextResponse.json({ messages });
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch messages' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const data = await request.json();
+    const organizationId = data.organizationId || session.user.id;
+    
+    const context = {
+      organizationId,
+      userId: session.user.id
+    };
+
+    // Send email logic
+    const messageId = await sendViaSendGrid({
+      from: data.from,
+      to: data.to,
+      subject: data.subject,
+      html: data.html,
+      text: data.text,
+      cc: data.cc,
+      bcc: data.bcc
+    });
+
+    // Save to sent folder
+    await emailMessagesEnhancedService.create({
+      ...data,
+      messageId,
+      folder: 'sent',
+      isRead: true,
+      receivedAt: Timestamp.now(),
+      sentAt: Timestamp.now()
+    }, context);
+
+    return NextResponse.json({ success: true, messageId });
+  } catch (error) {
+    console.error('Error sending message:', error);
+    return NextResponse.json(
+      { error: 'Failed to send message' },
+      { status: 500 }
+    );
+  }
+}
+```
+
+#### 3.3 Komponenten mit SimpleSwitch
+
+```typescript
+// src/app/dashboard/communication/inbox/components/InboxList.tsx
 "use client";
 
-import { EmailMessage } from '@/types/inbox';
+import { EmailMessage } from '@/types/inbox-enhanced';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { 
@@ -655,6 +985,7 @@ import {
   ExclamationCircleIcon 
 } from '@heroicons/react/20/solid';
 import { Badge } from '@/components/badge';
+import { SimpleSwitch } from '@/components/notifications/SimpleSwitch';
 
 interface InboxListProps {
   emails: EmailMessage[];
@@ -669,6 +1000,18 @@ export function InboxList({
   onEmailSelect,
   loading 
 }: InboxListProps) {
+  const handleStarToggle = async (email: EmailMessage, isStarred: boolean) => {
+    // Update star status
+    await fetch(`/api/inbox/messages/${email.id}/star`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        isStarred,
+        organizationId: email.organizationId 
+      })
+    });
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -698,20 +1041,22 @@ export function InboxList({
           `}
         >
           <div className="flex items-start gap-3">
-            {/* Star */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                // Toggle star
-              }}
+            {/* Star Toggle mit SimpleSwitch für visuelles Feedback */}
+            <div 
+              onClick={(e) => e.stopPropagation()}
               className="mt-1"
             >
-              <StarIcon 
-                className={`h-5 w-5 ${
-                  email.isStarred ? 'text-yellow-400' : 'text-gray-300'
-                }`} 
-              />
-            </button>
+              <button
+                onClick={() => handleStarToggle(email, !email.isStarred)}
+                className="p-1"
+              >
+                <StarIcon 
+                  className={`h-5 w-5 transition-colors ${
+                    email.isStarred ? 'text-yellow-400' : 'text-gray-300 hover:text-gray-400'
+                  }`} 
+                />
+              </button>
+            </div>
 
             {/* Content */}
             <div className="flex-1 min-w-0">
@@ -719,7 +1064,7 @@ export function InboxList({
                 <p className={`text-sm truncate ${!email.isRead ? 'font-semibold' : ''}`}>
                   {email.from.name || email.from.email}
                 </p>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-gray-500 whitespace-nowrap">
                   {formatDistanceToNow(email.receivedAt.toDate(), {
                     addSuffix: true,
                     locale: de
@@ -744,10 +1089,14 @@ export function InboxList({
                   <PaperClipIcon className="h-4 w-4 text-gray-400" />
                 )}
                 {email.campaignId && (
-                  <Badge size="xs" color="purple">Kampagne</Badge>
+                  <Badge size="xs" color="purple" className="whitespace-nowrap">
+                    Kampagne
+                  </Badge>
                 )}
                 {email.labels.map(label => (
-                  <Badge key={label} size="xs">{label}</Badge>
+                  <Badge key={label} size="xs" className="whitespace-nowrap">
+                    {label}
+                  </Badge>
                 ))}
               </div>
             </div>
@@ -759,341 +1108,164 @@ export function InboxList({
 }
 ```
 
-#### 3.3 Email Viewer Component
+### Phase 4: Domain Setup für Inbox mit Multi-Tenancy
 
 ```typescript
-// src/components/inbox/EmailViewer.tsx
+// src/app/dashboard/domains/[id]/inbox-setup/page.tsx
 "use client";
 
-import { EmailMessage } from '@/types/inbox';
+import { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/button';
-import { Avatar } from '@/components/avatar';
-import { 
-  ReplyIcon,
-  ForwardIcon,
-  TrashIcon,
-  ArchiveBoxIcon,
-  StarIcon,
-  PaperClipIcon,
-  ChevronDownIcon
-} from '@heroicons/react/20/solid';
-import { format } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { InboxSetupGuide } from './components/InboxSetupGuide';
+import { emailAccountsEnhancedService } from '@/lib/firebase/email-inbox-service-enhanced';
 
-interface EmailViewerProps {
-  email: EmailMessage;
-  onReply: () => void;
-  onForward: () => void;
-  onArchive: () => void;
-  onDelete: () => void;
-}
+export default function DomainInboxSetupPage() {
+  const { id: domainId } = useParams();
+  const { user } = useAuth();
+  const organizationId = user?.uid || '';
+  
+  const [domain, setDomain] = useState<string>('');
+  const [currentStep, setCurrentStep] = useState<'mx' | 'webhook' | 'test'>('mx');
+  const [emailAccount, setEmailAccount] = useState<EmailAccount | null>(null);
 
-export function EmailViewer({ 
-  email, 
-  onReply, 
-  onForward,
-  onArchive,
-  onDelete 
-}: EmailViewerProps) {
+  useEffect(() => {
+    if (domainId && organizationId) {
+      loadDomainAndAccount();
+    }
+  }, [domainId, organizationId]);
+
+  const loadDomainAndAccount = async () => {
+    // Load domain details
+    const domainDoc = await domainsEnhancedService.get(domainId as string);
+    if (domainDoc) {
+      setDomain(domainDoc.domain);
+      
+      // Check if email account exists
+      const account = await emailAccountsEnhancedService.getByEmail(
+        organizationId,
+        `noreply@${domainDoc.domain}`
+      );
+      setEmailAccount(account);
+    }
+  };
+
+  const createEmailAccount = async () => {
+    const context = {
+      organizationId,
+      userId: user!.uid
+    };
+
+    const newAccount = await emailAccountsEnhancedService.create({
+      email: `noreply@${domain}`,
+      displayName: 'SKAMP Automated',
+      domain: domain,
+      inboundEnabled: true,
+      outboundEnabled: true,
+      organizationId,
+      userId: user!.uid
+    }, context);
+
+    setEmailAccount(newAccount);
+    
+    // Configure SendGrid Inbound Parse
+    await configureSendGridInboundParse(domain, organizationId);
+  };
+
   return (
-    <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="border-b px-6 py-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">{email.subject}</h2>
-          <div className="flex items-center gap-2">
-            <Button plain size="sm" onClick={onReply}>
-              <ReplyIcon className="h-4 w-4" />
-              Antworten
+    <div className="max-w-4xl mx-auto p-6">
+      <Heading>E-Mail-Empfang für {domain} einrichten</Heading>
+      
+      <div className="mt-8">
+        {!emailAccount ? (
+          <div className="text-center py-12 bg-gray-50 rounded-lg">
+            <p className="text-gray-600 mb-4">
+              Noch kein E-Mail-Konto für diese Domain eingerichtet.
+            </p>
+            <Button onClick={createEmailAccount}>
+              E-Mail-Konto erstellen
             </Button>
-            <Button plain size="sm" onClick={onForward}>
-              <ForwardIcon className="h-4 w-4" />
-              Weiterleiten
-            </Button>
-            <div className="border-l pl-2 ml-2 flex gap-1">
-              <button className="p-1 hover:bg-gray-100 rounded">
-                <ArchiveBoxIcon className="h-5 w-5 text-gray-600" />
-              </button>
-              <button className="p-1 hover:bg-gray-100 rounded">
-                <TrashIcon className="h-5 w-5 text-gray-600" />
-              </button>
-              <button className="p-1 hover:bg-gray-100 rounded">
-                <StarIcon className={`h-5 w-5 ${
-                  email.isStarred ? 'text-yellow-400' : 'text-gray-600'
-                }`} />
-              </button>
-            </div>
           </div>
-        </div>
-      </div>
-
-      {/* Email Details */}
-      <div className="px-6 py-4 border-b">
-        <div className="flex items-start gap-4">
-          <Avatar name={email.from.name || email.from.email} size="lg" />
-          
-          <div className="flex-1">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">{email.from.name || 'Unbekannt'}</p>
-                <p className="text-sm text-gray-600">{email.from.email}</p>
-              </div>
-              <p className="text-sm text-gray-500">
-                {format(email.receivedAt.toDate(), 'PPpp', { locale: de })}
-              </p>
-            </div>
-            
-            <div className="mt-2 text-sm text-gray-600">
-              <p>An: {email.to.map(t => t.email).join(', ')}</p>
-              {email.cc && email.cc.length > 0 && (
-                <p>CC: {email.cc.map(c => c.email).join(', ')}</p>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Email Content */}
-      <div className="flex-1 overflow-auto">
-        <div className="px-6 py-4">
-          {email.htmlContent ? (
-            <div 
-              className="prose max-w-none"
-              dangerouslySetInnerHTML={{ __html: email.htmlContent }}
-            />
-          ) : (
-            <pre className="whitespace-pre-wrap font-sans">
-              {email.textContent}
-            </pre>
-          )}
-        </div>
-
-        {/* Attachments */}
-        {email.attachments && email.attachments.length > 0 && (
-          <div className="px-6 py-4 border-t">
-            <h3 className="text-sm font-medium mb-3">
-              Anhänge ({email.attachments.length})
-            </h3>
-            <div className="grid grid-cols-2 gap-2">
-              {email.attachments.map((attachment) => (
-                
-                  key={attachment.id}
-                  href={attachment.url}
-                  download={attachment.filename}
-                  className="flex items-center gap-2 p-2 border rounded hover:bg-gray-50"
-                >
-                  <PaperClipIcon className="h-4 w-4 text-gray-400" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm truncate">{attachment.filename}</p>
-                    <p className="text-xs text-gray-500">
-                      {formatFileSize(attachment.size)}
-                    </p>
-                  </div>
-                </a>
-              ))}
-            </div>
-          </div>
+        ) : (
+          <InboxSetupGuide
+            domain={domain}
+            currentStep={currentStep}
+            onStepComplete={(step) => {
+              if (step === 'mx') setCurrentStep('webhook');
+              else if (step === 'webhook') setCurrentStep('test');
+            }}
+          />
         )}
       </div>
     </div>
   );
 }
 
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-}
-```
-
-### Phase 4: Domain Setup für Inbox
-
-#### 4.1 MX Records Setup Guide
-
-```typescript
-// src/components/domains/InboxSetupGuide.tsx
-"use client";
-
-import { useState } from 'react';
-import { Text } from '@/components/text';
-import { Alert } from '@/components/alert';
-import { Button } from '@/components/button';
-import { 
-  InformationCircleIcon,
-  ClipboardDocumentIcon,
-  CheckIcon 
-} from '@heroicons/react/20/solid';
-
-interface InboxSetupGuideProps {
-  domain: string;
-  currentStep: 'mx' | 'webhook' | 'test';
-}
-
-export function InboxSetupGuide({ domain, currentStep }: InboxSetupGuideProps) {
-  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
-
-  const mxRecords = [
-    { priority: 10, value: 'mx.sendgrid.net' }
-  ];
-
-  const webhookUrl = `https://app.skamp.de/api/webhooks/sendgrid/inbound`;
-
-  const handleCopy = async (text: string, index: number) => {
-    await navigator.clipboard.writeText(text);
-    setCopiedIndex(index);
-    setTimeout(() => setCopiedIndex(null), 2000);
-  };
-
-  return (
-    <div className="space-y-6">
-      <Alert type="info">
-        <InformationCircleIcon className="h-5 w-5" />
-        <div>
-          <Text className="font-semibold">E-Mail-Empfang einrichten</Text>
-          <Text className="text-sm mt-1">
-            Um E-Mails empfangen zu können, müssen Sie zusätzlich zu den 
-            CNAME-Einträgen auch einen MX-Record einrichten.
-          </Text>
-        </div>
-      </Alert>
-
-      {currentStep === 'mx' && (
-        <div>
-          <h3 className="font-medium mb-3">Schritt 1: MX-Record hinzufügen</h3>
-          
-          <div className="bg-gray-50 rounded-lg p-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Text className="text-xs text-gray-500 uppercase">Typ</Text>
-                <Text className="font-medium">MX</Text>
-              </div>
-              <div>
-                <Text className="text-xs text-gray-500 uppercase">Priorität</Text>
-                <Text className="font-medium">10</Text>
-              </div>
-              <div className="col-span-2">
-                <Text className="text-xs text-gray-500 uppercase">Wert</Text>
-                <div className="flex items-center gap-2">
-                  <Text className="font-mono text-sm">mx.sendgrid.net</Text>
-                  <button
-                    onClick={() => handleCopy('mx.sendgrid.net', 0)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    {copiedIndex === 0 ? (
-                      <CheckIcon className="w-4 h-4 text-green-500" />
-                    ) : (
-                      <ClipboardDocumentIcon className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <Alert type="warning" className="mt-4">
-            <ExclamationTriangleIcon className="h-5 w-5" />
-            <div>
-              <Text className="font-semibold">Wichtiger Hinweis</Text>
-              <Text className="text-sm mt-1">
-                Wenn Sie bereits einen E-Mail-Provider nutzen (z.B. Google Workspace),
-                sollten Sie eine Subdomain wie "mail.{domain}" verwenden, um 
-                bestehende E-Mails nicht zu beeinträchtigen.
-              </Text>
-            </div>
-          </Alert>
-        </div>
-      )}
-
-      {currentStep === 'webhook' && (
-        <div>
-          <h3 className="font-medium mb-3">Schritt 2: Inbound Parse konfigurieren</h3>
-          
-          <Text className="text-sm text-gray-600 mb-3">
-            Dieser Schritt wird automatisch von SKAMP konfiguriert. 
-            Die folgende URL empfängt Ihre E-Mails:
-          </Text>
-
-          <div className="bg-gray-50 rounded-lg p-4">
-            <div className="flex items-center gap-2">
-              <Text className="font-mono text-sm break-all flex-1">
-                {webhookUrl}
-              </Text>
-              <button
-                onClick={() => handleCopy(webhookUrl, 1)}
-                className="text-gray-400 hover:text-gray-600 shrink-0"
-              >
-                {copiedIndex === 1 ? (
-                  <CheckIcon className="w-4 h-4 text-green-500" />
-                ) : (
-                  <ClipboardDocumentIcon className="w-4 h-4" />
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {currentStep === 'test' && (
-        <div>
-          <h3 className="font-medium mb-3">Schritt 3: Empfang testen</h3>
-          
-          <Text className="text-sm text-gray-600 mb-4">
-            Senden Sie eine Test-E-Mail an:
-          </Text>
-
-          <div className="bg-blue-50 rounded-lg p-4 text-center">
-            <Text className="font-mono text-lg text-blue-900">
-              test@{domain}
-            </Text>
-          </div>
-
-          <Text className="text-sm text-gray-600 mt-4">
-            Die E-Mail sollte innerhalb weniger Sekunden in Ihrer Inbox erscheinen.
-          </Text>
-        </div>
-      )}
-    </div>
-  );
+async function configureSendGridInboundParse(
+  domain: string,
+  organizationId: string
+): Promise<void> {
+  // Call backend API to configure SendGrid
+  await fetch('/api/sendgrid/configure-inbound', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ domain, organizationId })
+  });
 }
 ```
 
 ## 🔄 Alternativer Ansatz: IMAP/SMTP Integration
 
-Falls SendGrid Inbound Parse zu komplex ist:
+Falls SendGrid Inbound Parse zu komplex ist, hier die IMAP-Alternative mit Multi-Tenancy:
 
 ```typescript
-// src/lib/email/imap-service.ts
+// src/lib/email/imap-service-enhanced.ts
 import Imap from 'imap';
 import { simpleParser } from 'mailparser';
+import { emailMessagesEnhancedService } from '../firebase/email-inbox-service-enhanced';
 
-export class ImapService {
+export class ImapServiceEnhanced {
   private imap: Imap;
+  private organizationId: string;
+  private userId: string;
+  private emailAccountId: string;
   
-  constructor(config: {
-    user: string;
-    password: string;
-    host: string;
-    port: number;
-    tls: boolean;
-  }) {
+  constructor(
+    config: {
+      user: string;
+      password: string;
+      host: string;
+      port: number;
+      tls: boolean;
+    },
+    context: {
+      organizationId: string;
+      userId: string;
+      emailAccountId: string;
+    }
+  ) {
     this.imap = new Imap({
       ...config,
       tlsOptions: { rejectUnauthorized: false }
     });
+    
+    this.organizationId = context.organizationId;
+    this.userId = context.userId;
+    this.emailAccountId = context.emailAccountId;
   }
   
-  async fetchNewEmails(): Promise<any[]> {
+  async fetchNewEmails(): Promise<void> {
     return new Promise((resolve, reject) => {
-      const emails: any[] = [];
-      
       this.imap.once('ready', () => {
-        this.imap.openBox('INBOX', false, (err, box) => {
+        this.imap.openBox('INBOX', false, async (err, box) => {
           if (err) reject(err);
           
           // Fetch unseen emails
           const f = this.imap.seq.fetch('1:*', {
             bodies: '',
-            struct: true
+            struct: true,
+            markSeen: true
           });
           
           f.on('message', (msg) => {
@@ -1106,38 +1278,108 @@ export class ImapService {
             });
             
             msg.once('end', async () => {
-              const parsed = await simpleParser(buffer);
-              emails.push(parsed);
+              try {
+                const parsed = await simpleParser(buffer);
+                
+                // Save to Firestore with Multi-Tenancy context
+                await emailMessagesEnhancedService.receiveEmail({
+                  from: {
+                    email: parsed.from?.value[0]?.address || '',
+                    name: parsed.from?.value[0]?.name
+                  },
+                  to: parsed.to?.value.map(t => ({
+                    email: t.address,
+                    name: t.name
+                  })) || [],
+                  subject: parsed.subject || '',
+                  text: parsed.text || '',
+                  html: parsed.html || '',
+                  headers: parsed.headers,
+                  attachments: await this.processAttachments(parsed.attachments),
+                  emailAccountId: this.emailAccountId
+                }, {
+                  organizationId: this.organizationId,
+                  userId: this.userId
+                });
+              } catch (error) {
+                console.error('Error processing email:', error);
+              }
             });
           });
           
           f.once('end', () => {
             this.imap.end();
-            resolve(emails);
+            resolve();
           });
         });
       });
       
+      this.imap.once('error', reject);
       this.imap.connect();
     });
+  }
+  
+  private async processAttachments(attachments: any[]): Promise<any[]> {
+    // Process and upload attachments
+    return attachments.map(att => ({
+      id: nanoid(),
+      filename: att.filename,
+      contentType: att.contentType,
+      size: att.size
+    }));
+  }
+}
+
+// Background job to fetch emails
+export async function syncImapAccounts() {
+  // Get all IMAP-enabled accounts across all organizations
+  const accounts = await emailAccountsEnhancedService.queryDocuments(
+    query(
+      collection(db, 'email_accounts_enhanced'),
+      where('imapEnabled', '==', true)
+    )
+  );
+  
+  for (const account of accounts) {
+    try {
+      const imapService = new ImapServiceEnhanced(
+        {
+          user: account.email,
+          password: account.imapPassword, // Encrypted
+          host: account.imapHost,
+          port: account.imapPort,
+          tls: account.imapTls
+        },
+        {
+          organizationId: account.organizationId,
+          userId: account.userId,
+          emailAccountId: account.id!
+        }
+      );
+      
+      await imapService.fetchNewEmails();
+    } catch (error) {
+      console.error(`Failed to sync ${account.email}:`, error);
+    }
   }
 }
 ```
 
-## 🚀 Deployment Schritte
+## 🚀 Deployment Schritte mit Multi-Tenancy
 
 ### SendGrid Inbound Parse Setup:
 1. Domain in SendGrid verifizieren (bereits gemacht)
 2. MX Record hinzufügen: `mx.sendgrid.net`
 3. Inbound Parse Webhook konfigurieren
 4. Webhook URL: `https://app.skamp.de/api/webhooks/sendgrid/inbound`
+5. **Multi-Tenancy**: Domain-zu-Organization Mapping implementieren
 
 ### Firestore Indexes:
 ```json
 {
   "indexes": [
     {
-      "collectionGroup": "inbox_messages",
+      "collectionGroup": "inbox_messages_enhanced",
       "fields": [
         { "fieldPath": "organizationId", "order": "ASCENDING" },
         { "fieldPath": "folder", "order": "ASCENDING" },
@@ -1145,49 +1387,81 @@ export class ImapService {
       ]
     },
     {
-      "collectionGroup": "inbox_messages",
+      "collectionGroup": "inbox_messages_enhanced",
       "fields": [
+        { "fieldPath": "organizationId", "order": "ASCENDING" },
         { "fieldPath": "threadId", "order": "ASCENDING" },
         { "fieldPath": "receivedAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "email_accounts_enhanced",
+      "fields": [
+        { "fieldPath": "organizationId", "order": "ASCENDING" },
+        { "fieldPath": "email", "order": "ASCENDING" }
       ]
     }
   ]
 }
 ```
 
+### Environment Variables:
+```env
+SENDGRID_API_KEY=your_api_key
+SENDGRID_WEBHOOK_SECRET=your_webhook_secret
+NEXT_PUBLIC_APP_URL=https://app.skamp.de
+```
+
 ## 📊 Features Roadmap
 
 ### Phase 1 (MVP):
-- [x] E-Mails empfangen
-- [x] E-Mails anzeigen
+- [x] E-Mails empfangen mit Multi-Tenancy
+- [x] E-Mails anzeigen pro Organisation
 - [x] Auf E-Mails antworten
 - [x] Basis-Ordnerstruktur
+- [x] SimpleSwitch für UI-Toggles
 
 ### Phase 2:
-- [ ] Erweiterte Suche
-- [ ] Labels & Filter
+- [ ] Erweiterte Suche mit Elasticsearch
+- [ ] Labels & Filter pro Organisation
 - [ ] Automatische Kategorisierung
 - [ ] Massen-Aktionen
+- [ ] Domain-zu-Organization Optimierung
 
 ### Phase 3:
-- [ ] Email Templates
+- [ ] Email Templates pro Organisation
 - [ ] Geplanter Versand
 - [ ] Follow-up Reminders
-- [ ] Analytics
+- [ ] Analytics pro Organisation
+- [ ] Shared Inboxes für Teams
 
 ### Phase 4:
 - [ ] Mobile App Support
 - [ ] Offline-Sync
-- [ ] Verschlüsselung
-- [ ] Multi-Account Support
+- [ ] End-to-End Verschlüsselung
+- [ ] Multi-Account Support pro User
+- [ ] Erweiterte Berechtigungen
+
+## 🔐 Sicherheitsüberlegungen
+
+1. **Tenant Isolation**: Strikte Trennung der Daten nach organizationId
+2. **Domain Verification**: Nur verifizierte Domains können E-Mails empfangen
+3. **Rate Limiting**: Schutz vor Spam und Missbrauch
+4. **Encryption**: Sensible Daten verschlüsselt speichern
+5. **Audit Trail**: Alle Aktionen protokollieren
 
 ---
 
-**Geschätzte Implementierungszeit**: 8-10 Tage
-- Tag 1-2: Backend Setup (Webhook, Services)
-- Tag 3-4: Frontend Inbox UI
+**Geschätzte Implementierungszeit**: 10-12 Tage
+- Tag 1-2: Backend Setup mit Multi-Tenancy (Webhook, Services)
+- Tag 3-4: Frontend Inbox UI mit Organization Context
 - Tag 5-6: Email Composer & Threading
 - Tag 7-8: Domain Setup Integration
 - Tag 9-10: Testing & Polish
+- Tag 11-12: Multi-Tenancy Optimierungen & Sicherheit
 
-**Wichtig**: Die Inbox-Funktionalität sollte NACH der Domain-Authentifizierung implementiert werden, da sie darauf aufbaut!
+**Wichtig**: 
+1. Die Inbox-Funktionalität sollte NACH der Domain-Authentifizierung implementiert werden
+2. Alle neuen Features müssen dem Enhanced Service Pattern folgen
+3. Immer organizationId für Queries verwenden, nie nur userId
+4. Bei UI-Komponenten SimpleSwitch statt Catalyst Switch verwenden
