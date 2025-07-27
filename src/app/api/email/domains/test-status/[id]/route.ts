@@ -6,9 +6,9 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client-init';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 /**
@@ -21,7 +21,7 @@ export async function GET(
 ) {
   return withAuth(request, async (req, auth: AuthContext) => {
     try {
-      const testId = params.id;
+      const { id: testId } = await params;
       
       if (!testId) {
         return NextResponse.json(

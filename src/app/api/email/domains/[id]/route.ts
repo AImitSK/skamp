@@ -9,9 +9,9 @@ if (process.env.SENDGRID_API_KEY) {
 }
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 /**
@@ -25,7 +25,7 @@ export async function DELETE(
 ) {
   return withAuth(request, async (req, auth: AuthContext) => {
     try {
-      const domainId = params.id;
+      const { id: domainId } = await params;
       
       if (!domainId) {
         return NextResponse.json(

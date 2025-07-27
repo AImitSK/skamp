@@ -4,9 +4,9 @@ import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
 import { EmailDraft } from '@/types/email-composer';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string; // Campaign ID
-  };
+  }>;
 }
 
 // Firestore REST API Helper
@@ -153,7 +153,7 @@ function convertToFirestoreValue(value: any): any {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   return withAuth(request, async (req, auth: AuthContext) => {
     try {
-      const campaignId = params.id;
+      const { id: campaignId } = await params;
       
       console.log('📄 Loading draft for campaign:', campaignId);
 
@@ -247,7 +247,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   return withAuth(request, async (req, auth: AuthContext) => {
     try {
-      const campaignId = params.id;
+      const { id: campaignId } = await params;
       const draft: EmailDraft = await req.json();
       
       console.log('💾 Saving draft for campaign:', campaignId);
@@ -371,7 +371,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   return withAuth(request, async (req, auth: AuthContext) => {
     try {
-      const campaignId = params.id;
+      const { id: campaignId } = await params;
       
       // Draft ID aus Query-Parametern
       const { searchParams } = new URL(req.url);

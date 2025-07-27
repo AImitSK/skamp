@@ -4,10 +4,10 @@ import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
 import { emailAddressService } from '@/lib/email/email-address-service';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
     ruleId: string;
-  };
+  }>;
 }
 
 /**
@@ -20,9 +20,10 @@ export async function DELETE(
 ) {
   return withAuth(request, async (req: NextRequest, context: AuthContext) => {
     try {
+      const { id, ruleId } = await params;
       await emailAddressService.removeRoutingRule(
-        params.id,
-        params.ruleId,
+        id,
+        ruleId,
         context.userId
       );
       
@@ -66,8 +67,10 @@ export async function PUT(
 ) {
   return withAuth(request, async (req: NextRequest, context: AuthContext) => {
     try {
+      const { id, ruleId } = await params;
+      
       // Get current email address
-      const emailAddress = await emailAddressService.get(params.id);
+      const emailAddress = await emailAddressService.get(id);
       
       if (!emailAddress) {
         return NextResponse.json(
@@ -89,7 +92,7 @@ export async function PUT(
       
       // Find and update rule
       const updatedRules = (emailAddress.routingRules || []).map(rule => {
-        if (rule.id === params.ruleId) {
+        if (rule.id === ruleId) {
           return {
             ...rule,
             ...body,
@@ -100,7 +103,7 @@ export async function PUT(
       });
       
       // Check if rule was found
-      const ruleFound = updatedRules.some(rule => rule.id === params.ruleId);
+      const ruleFound = updatedRules.some(rule => rule.id === ruleId);
       if (!ruleFound) {
         return NextResponse.json(
           { error: 'Routing-Regel nicht gefunden' },
@@ -110,12 +113,12 @@ export async function PUT(
       
       // Update in database
       await emailAddressService.update(
-        params.id,
+        id,
         { routingRules: updatedRules } as any,
         context.userId
       );
       
-      const updatedRule = updatedRules.find(rule => rule.id === params.ruleId);
+      const updatedRule = updatedRules.find(rule => rule.id === ruleId);
       
       return NextResponse.json({ 
         rule: updatedRule,

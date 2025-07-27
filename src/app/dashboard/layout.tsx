@@ -243,6 +243,12 @@ export default function DashboardLayout({
       icon: EnvelopeIcon,
       description: "Eigene E-Mail-Domain einrichten"
     },
+        { 
+      name: "E-Mail", 
+      href: "/dashboard/settings/email", 
+      icon: EnvelopeIcon,
+      description: "E-Mail Konfiguration"
+    },
     { 
       name: "Import / Export", 
       href: "/dashboard/settings/import-export", 

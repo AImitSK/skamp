@@ -38,3 +38,31 @@ Das Design und die technische Umsetzung neuer Seiten und Komponenten sollen sich
 ### Wichtige Hinweise zu spezifischen Komponenten
 
 * **Button & Badge:** Die im Projekt verwendeten `Button`- und `Badge`-Komponenten (`src/components/button.tsx`, `src/components/badge.tsx`) sind angepasst. Bei der Verwendung ist darauf zu achten, dass Texte, die aus mehreren Wörtern bestehen, **nicht umbrechen**. Dies wird in der Regel durch CSS-Klassen wie `whitespace-nowrap` erreicht. Ich werde dies bei Code-Vorschlägen berücksichtigen.
+
+* **Switch-Komponente:** Die Standard `Switch`-Komponente aus `@/components/switch` funktioniert oft nicht korrekt. Stattdessen sollte **immer** die `SimpleSwitch`-Komponente aus `@/components/notifications/SimpleSwitch` verwendet werden. Diese erwartet die Props `checked`, `onChange` und optional `disabled`.
+
+* **Modal-Dialoge (Dialog):** Bei der Verwendung von Dialog-Komponenten muss **immer** Padding hinzugefügt werden:
+    * `DialogTitle`: Klasse `className="px-6 py-4"`
+    * `DialogBody`: Klasse `className="p-6"` oder `className="px-6 py-6"`
+    * `DialogActions`: Klasse `className="px-6 py-4"`
+    * Ohne diese Padding-Klassen klebt der Inhalt am Rand des Modals.
+
+* **Label-Komponente:** Die `Label`-Komponente aus `@/components/fieldset` kann **nur** innerhalb einer `Field`-Komponente verwendet werden. Für Labels außerhalb von Field-Kontexten (z.B. neben Switches) sollte stattdessen ein `<span className="text-sm font-medium text-gray-700">` verwendet werden.
+
+
+### Firebase & Firestore Konfiguration
+
+* **WICHTIG - Kein Firebase Admin SDK:** Aufgrund von Unternehmensrichtlinien in der Google Cloud Console verwenden wir **NIEMALS** das Firebase Admin SDK (`firebase-admin`). Alle Server-seitigen Operationen müssen mit dem regulären Firebase Client SDK durchgeführt werden. Dies betrifft:
+  - API Routes in Next.js
+  - Server-seitige Datenbankzugriffe
+  - Authentication-Verifizierung (nutzt Firebase REST API statt Admin SDK)
+
+* **Firestore Import für Server-Kontext:** Wenn Firestore in API Routes oder anderen Server-Kontexten verwendet wird, muss das reguläre Client SDK mit einer separaten App-Instanz initialisiert werden:
+  ```typescript
+  // Für Server-Kontext (API Routes)
+  import { initializeApp } from 'firebase/app';
+  import { getFirestore } from 'firebase/firestore';
+  import { firebaseConfig } from '@/lib/firebase/config';
+  
+  const app = initializeApp(firebaseConfig, 'server-instance');
+  const db = getFirestore(app);
