@@ -17,7 +17,9 @@ import { SettingsNav } from '@/components/SettingsNav';
 import { Text } from '@/components/text';
 import { EmailAddress, EmailSignature, EmailTemplate, EmailDomain, EmailAddressFormData } from '@/types/email-enhanced';
 import { emailAddressService } from '@/lib/email/email-address-service';
+import { emailSignatureService } from '@/lib/email/email-signature-service';
 import { RoutingRuleEditor } from '@/components/email/RoutingRuleEditor';
+import { SignatureList } from '@/components/email/SignatureList';
 import { 
   PlusIcon, 
   PencilIcon, 
@@ -34,7 +36,8 @@ import {
   FunnelIcon,
   DocumentTextIcon,
   PencilSquareIcon,
-  DocumentDuplicateIcon
+  DocumentDuplicateIcon,
+  InformationCircleIcon
 } from '@heroicons/react/20/solid';
 import clsx from 'clsx';
 import { domainService } from '@/lib/firebase/domain-service';
@@ -67,15 +70,18 @@ export default function EmailSettingsPage() {
   
   const [activeTab, setActiveTab] = useState<TabType>('addresses');
   const [emailAddresses, setEmailAddresses] = useState<EmailAddress[]>([]);
+  const [signatures, setSignatures] = useState<EmailSignature[]>([]);
   const [domains, setDomains] = useState<EmailDomain[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingDomains, setLoadingDomains] = useState(true);
+  const [loadingSignatures, setLoadingSignatures] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showRoutingModal, setShowRoutingModal] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState<EmailAddress | null>(null);
+  const [showDebugInfo, setShowDebugInfo] = useState(false);
   
   // Form state mit EmailAddressFormData type
   const [formData, setFormData] = useState<EmailAddressFormData>({
@@ -96,8 +102,13 @@ export default function EmailSettingsPage() {
   // Load email addresses from API
   useEffect(() => {
     if (organizationId) {
+      console.log('📊 EmailSettingsPage - useEffect triggered');
+      console.log('- organizationId:', organizationId);
+      console.log('- user?.uid:', user?.uid);
+      console.log('- user object:', user);
       loadEmailAddresses();
       loadDomains();
+      loadSignatures();
     }
   }, [organizationId]);
 
@@ -138,6 +149,38 @@ export default function EmailSettingsPage() {
       showToast('Fehler beim Laden der E-Mail-Adressen', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadSignatures = async () => {
+    try {
+      setLoadingSignatures(true);
+      console.log('🔍 Loading signatures - Debug Info:');
+      console.log('- organizationId being used:', organizationId);
+      console.log('- current user.uid:', user?.uid);
+      console.log('- user.email:', user?.email);
+      console.log('- Full user object:', user);
+      
+      // Prüfe ob organizationId und user.uid übereinstimmen
+      if (organizationId !== user?.uid) {
+        console.warn('⚠️ WARNUNG: organizationId stimmt nicht mit user.uid überein!');
+        console.warn('- organizationId:', organizationId);
+        console.warn('- user.uid:', user?.uid);
+      }
+      
+      const sigs = await emailSignatureService.getByOrganization(organizationId);
+      console.log('✅ Signatures loaded successfully:', sigs);
+      setSignatures(sigs);
+    } catch (error) {
+      console.error('❌ Fehler beim Laden der Signaturen:', error);
+      console.error('Error details:', {
+        message: (error as any)?.message,
+        code: (error as any)?.code,
+        stack: (error as any)?.stack
+      });
+      showToast('Fehler beim Laden der Signaturen', 'error');
+    } finally {
+      setLoadingSignatures(false);
     }
   };
 
@@ -281,6 +324,56 @@ export default function EmailSettingsPage() {
     }
   };
 
+  // Signature handlers
+  const handleSaveSignature = async (signature: Partial<EmailSignature>, id?: string) => {
+    try {
+      console.log('💾 Saving signature with data:', {
+        signature,
+        id,
+        organizationId,
+        userId: user?.uid
+      });
+      
+      if (id) {
+        await emailSignatureService.update(id, signature, user?.uid || '');
+        showToast('Signatur erfolgreich aktualisiert');
+      } else {
+        await emailSignatureService.create(signature, organizationId, user?.uid || '');
+        showToast('Signatur erfolgreich erstellt');
+      }
+      await loadSignatures();
+    } catch (error) {
+      console.error('❌ Fehler beim Speichern der Signatur:', error);
+      throw error;
+    }
+  };
+
+  const handleDeleteSignature = async (id: string) => {
+    try {
+      await emailSignatureService.delete(id);
+      showToast('Signatur erfolgreich gelöscht');
+      await loadSignatures();
+    } catch (error) {
+      console.error('Fehler beim Löschen der Signatur:', error);
+      if (error instanceof Error) {
+        showToast(error.message, 'error');
+      } else {
+        showToast('Fehler beim Löschen der Signatur', 'error');
+      }
+    }
+  };
+
+  const handleDuplicateSignature = async (id: string) => {
+    try {
+      await emailSignatureService.duplicate(id, user?.uid || '');
+      showToast('Signatur erfolgreich dupliziert');
+      await loadSignatures();
+    } catch (error) {
+      console.error('Fehler beim Duplizieren der Signatur:', error);
+      showToast('Fehler beim Duplizieren der Signatur', 'error');
+    }
+  };
+
   const getStatusIcon = (address: EmailAddress) => {
     if (!address.isActive) {
       return <ExclamationTriangleIcon className="h-5 w-5 text-gray-400" />;
@@ -296,6 +389,13 @@ export default function EmailSettingsPage() {
     { id: 'templates' as TabType, name: 'Vorlagen', icon: DocumentTextIcon },
     { id: 'signatures' as TabType, name: 'Signaturen', icon: PencilSquareIcon }
   ];
+
+  // Prepare email addresses for signature component
+  const emailAddressesForSignatures = emailAddresses.map(addr => ({
+    id: addr.id!,
+    email: addr.email,
+    displayName: addr.displayName
+  }));
 
   return (
     <div className="flex flex-col gap-10 lg:flex-row">
@@ -314,7 +414,40 @@ export default function EmailSettingsPage() {
               Verwalten Sie E-Mail-Adressen, Vorlagen und Signaturen für Ihre Organisation
             </Text>
           </div>
+          <div className="mt-4 md:mt-0">
+            <Button 
+              plain 
+              onClick={() => setShowDebugInfo(!showDebugInfo)}
+              className="text-sm"
+            >
+              <InformationCircleIcon className="h-4 w-4 mr-1" />
+              Debug Info {showDebugInfo ? 'ausblenden' : 'anzeigen'}
+            </Button>
+          </div>
         </div>
+
+        {/* Debug Info Panel */}
+        {showDebugInfo && (
+          <div className="bg-gray-100 rounded-lg p-4 text-xs font-mono">
+            <h3 className="font-bold text-sm mb-2">Debug Information:</h3>
+            <div className="space-y-1">
+              <div><strong>organizationId:</strong> {organizationId}</div>
+              <div><strong>user.uid:</strong> {user?.uid}</div>
+              <div><strong>user.email:</strong> {user?.email}</div>
+              <div><strong>Match:</strong> {organizationId === user?.uid ? '✅ IDs stimmen überein' : '❌ IDs stimmen NICHT überein!'}</div>
+              <div><strong>Active Tab:</strong> {activeTab}</div>
+              <div><strong>Email Addresses Count:</strong> {emailAddresses.length}</div>
+              <div><strong>Signatures Count:</strong> {signatures.length}</div>
+              <div><strong>Domains Count:</strong> {domains.length}</div>
+              <div className="mt-2 pt-2 border-t">
+                <strong>Full User Object:</strong>
+                <pre className="mt-1 text-xs overflow-auto bg-white p-2 rounded">
+                  {JSON.stringify(user, null, 2)}
+                </pre>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="border-b border-gray-200 mb-6">
@@ -588,17 +721,14 @@ export default function EmailSettingsPage() {
         )}
 
         {activeTab === 'signatures' && (
-          <div className="bg-white rounded-lg border p-8 text-center">
-            <PencilSquareIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">E-Mail-Signaturen</h3>
-            <p className="text-gray-500 mb-4">
-              Erstellen Sie professionelle Signaturen für Ihre E-Mails
-            </p>
-            <Button className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap">
-              <PlusIcon className="h-4 w-4 mr-2" />
-              Erste Signatur erstellen
-            </Button>
-          </div>
+          <SignatureList
+            signatures={signatures}
+            emailAddresses={emailAddressesForSignatures}
+            onSave={handleSaveSignature}
+            onDelete={handleDeleteSignature}
+            onDuplicate={handleDuplicateSignature}
+            loading={loadingSignatures}
+          />
         )}
       </div>
 
