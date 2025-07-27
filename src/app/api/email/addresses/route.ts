@@ -1,9 +1,22 @@
 // src/app/api/email/addresses/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
-import { emailAddressService } from '@/lib/email/email-address-service';
 import { EmailAddressFormData } from '@/types/email-enhanced';
 import { z } from 'zod';
+
+// Lazy import um Server-Initialisierung zu verzögern
+let emailAddressService: any;
+
+async function getEmailAddressService() {
+  if (!emailAddressService) {
+    const module = await import('@/lib/email/email-address-service');
+    emailAddressService = module.emailAddressService;
+  }
+  return emailAddressService;
+}
+
+// Teste die Imports
+console.log('Route loaded');
 
 // Validation Schema
 const createEmailAddressSchema = z.object({
@@ -24,25 +37,16 @@ const createEmailAddressSchema = z.object({
 /**
  * GET /api/email/addresses
  * Holt alle E-Mail-Adressen der Organisation
+ * HINWEIS: In diesem Projekt werden Daten direkt vom Client aus Firestore geladen
  */
 export async function GET(request: NextRequest) {
-  return withAuth(request, async (req: NextRequest, context: AuthContext) => {
-    try {
-      const emailAddresses = await emailAddressService.getByOrganization(
-        context.organizationId,
-        context.userId
-      );
-      
-      return NextResponse.json({ emailAddresses });
-      
-    } catch (error) {
-      console.error('Error fetching email addresses:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch email addresses' },
-        { status: 500 }
-      );
-    }
-  });
+  console.log('GET /api/email/addresses called');
+  
+  return NextResponse.json({
+    message: 'Use client-side Firebase for listing email addresses',
+    info: 'This endpoint is deprecated. Fetch email addresses directly from Firebase on the client.',
+    instructions: 'Import emailAddressService in your React component and use it directly.'
+  }, { status: 200 });
 }
 
 /**
@@ -57,7 +61,8 @@ export async function POST(request: NextRequest) {
       const validatedData = createEmailAddressSchema.parse(body);
       
       // Create email address
-      const emailAddress = await emailAddressService.create(
+      const service = await getEmailAddressService();
+      const emailAddress = await service.create(
         validatedData as EmailAddressFormData,
         context.organizationId,
         context.userId
