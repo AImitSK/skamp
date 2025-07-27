@@ -65,16 +65,16 @@ export function EmailList({
             )}
           >
             <div className="flex items-start gap-3">
-              {/* Star */}
-              <button
+                            {/* Star */}
+              <div
                 onClick={(e) => {
                   e.stopPropagation();
                   // onStar would handle individual email starring
                 }}
-                className="mt-1 text-gray-300 hover:text-yellow-400"
+                className="mt-1 text-gray-300 hover:text-yellow-400 cursor-pointer"
               >
                 <StarIcon className="h-5 w-5" />
-              </button>
+              </div>
 
               {/* Content */}
               <div className="flex-1 min-w-0">
