@@ -6,20 +6,17 @@ import { useAuth } from '@/context/AuthContext';
 import { Heading, Subheading } from '@/components/heading';
 import { Button } from '@/components/button';
 import { Badge } from '@/components/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/table';
 import { Dialog, DialogActions, DialogBody, DialogTitle } from '@/components/dialog';
+import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from '@/components/dropdown';
 import { Field, Label } from '@/components/fieldset';
 import { Input } from '@/components/input';
 import { Select } from '@/components/select';
-import { Textarea } from '@/components/textarea';
-import { Switch, SwitchField } from '@/components/switch';
 import { Checkbox, CheckboxField, CheckboxGroup } from '@/components/checkbox';
 import { SimpleSwitch } from '@/components/notifications/SimpleSwitch';
 import { SettingsNav } from '@/components/SettingsNav';
 import { Text } from '@/components/text';
 import { EmailAddress, EmailSignature, EmailTemplate, EmailDomain, EmailAddressFormData } from '@/types/email-enhanced';
-import { emailAddressApi, ApiError } from '@/lib/api/api-client';
-import { emailAddressService } from '@/lib/email/email-address-service'; // Direct Firestore access
+import { emailAddressService } from '@/lib/email/email-address-service';
 import { 
   PlusIcon, 
   PencilIcon, 
@@ -29,16 +26,16 @@ import {
   SparklesIcon,
   UserGroupIcon,
   ArrowPathIcon,
-  Cog6ToothIcon,
+  EllipsisVerticalIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,
   ClockIcon,
   FunnelIcon,
   DocumentTextIcon,
-  PencilSquareIcon
+  PencilSquareIcon,
+  DocumentDuplicateIcon
 } from '@heroicons/react/20/solid';
 import clsx from 'clsx';
-import { Timestamp } from 'firebase/firestore';
 import { domainService } from '@/lib/firebase/domain-service';
 
 // Mock team members - TODO: Replace with real API call
@@ -106,23 +103,9 @@ export default function EmailSettingsPage() {
   const loadDomains = async () => {
     try {
       setLoadingDomains(true);
-      console.log('Loading domains for organizationId:', organizationId);
-      
-      // Lade echte Domains aus Firestore
       const allDomains = await domainService.getAll(organizationId);
-      console.log('All domains loaded:', allDomains);
-      
-      // Debug: Zeige Status aller Domains
-      allDomains.forEach(d => {
-        console.log(`Domain: ${d.domain}, Status: ${d.status}, ID: ${d.id}`);
-      });
-      
-      // Filtere nur verifizierte Domains ODER pending Domains (temporär)
-      // TODO: Klären warum Domain als pending gespeichert ist obwohl sie verifiziert wurde
       const verifiedDomains = allDomains.filter(d => d.status === 'verified' || d.status === 'pending');
-      console.log('Verified/Pending domains:', verifiedDomains);
       
-      // Konvertiere zum EmailDomain Format
       const emailDomains: EmailDomain[] = verifiedDomains.map(d => ({
         id: d.id!,
         name: d.domain,
@@ -132,7 +115,6 @@ export default function EmailSettingsPage() {
         status: d.status
       } as EmailDomain));
       
-      console.log('Email domains formatted:', emailDomains);
       setDomains(emailDomains);
     } catch (error) {
       console.error('Fehler beim Laden der Domains:', error);
@@ -145,7 +127,6 @@ export default function EmailSettingsPage() {
   const loadEmailAddresses = async () => {
     try {
       setLoading(true);
-      // Direct Firestore access wie in anderen Teilen des Projekts
       const addresses = await emailAddressService.getByOrganization(
         organizationId,
         user?.uid || ''
@@ -206,32 +187,44 @@ export default function EmailSettingsPage() {
     setShowRoutingModal(true);
   };
 
+  const handleDuplicate = async (address: EmailAddress) => {
+    try {
+      const duplicateData: EmailAddressFormData = {
+        localPart: `${address.localPart}-kopie`,
+        domainId: address.domainId,
+        displayName: `${address.displayName} (Kopie)`,
+        aliasType: address.aliasType || 'specific',
+        isActive: false, // Kopie ist standardmäßig inaktiv
+        inboxEnabled: address.inboxEnabled,
+        assignedUserIds: address.assignedUserIds,
+        clientName: address.clientName || '',
+        aiEnabled: address.aiSettings?.enabled || false,
+        autoSuggest: address.aiSettings?.autoSuggest || false,
+        autoCategorize: address.aiSettings?.autoCategorize || false,
+        preferredTone: address.aiSettings?.preferredTone || 'formal'
+      };
+      
+      await emailAddressService.create(duplicateData, organizationId, user?.uid || '');
+      showToast('E-Mail-Adresse erfolgreich dupliziert');
+      await loadEmailAddresses();
+    } catch (error) {
+      showToast('Fehler beim Duplizieren der E-Mail-Adresse', 'error');
+    }
+  };
+
   const handleSaveEmailAddress = async () => {
     try {
       setSaving(true);
       
       if (showAddModal) {
-        // Create new email address direkt mit dem Service
-        const emailAddress = await emailAddressService.create(
-          formData,
-          organizationId,
-          user?.uid || ''
-        );
+        await emailAddressService.create(formData, organizationId, user?.uid || '');
         showToast('E-Mail-Adresse erfolgreich erstellt');
       } else if (showEditModal && selectedAddress?.id) {
-        // Update existing email address direkt mit dem Service
-        await emailAddressService.update(
-          selectedAddress.id,
-          formData,
-          user?.uid || ''
-        );
+        await emailAddressService.update(selectedAddress.id, formData, user?.uid || '');
         showToast('E-Mail-Adresse erfolgreich aktualisiert');
       }
       
-      // Reload list
       await loadEmailAddresses();
-      
-      // Close modal
       setShowAddModal(false);
       setShowEditModal(false);
       setSelectedAddress(null);
@@ -254,11 +247,7 @@ export default function EmailSettingsPage() {
       setSaving(true);
       await emailAddressService.delete(selectedAddress.id, user?.uid || '');
       showToast('E-Mail-Adresse erfolgreich gelöscht');
-      
-      // Reload list
       await loadEmailAddresses();
-      
-      // Close modal
       setShowDeleteModal(false);
       setSelectedAddress(null);
     } catch (error) {
@@ -405,50 +394,50 @@ export default function EmailSettingsPage() {
             </div>
 
             {/* Email Addresses Table */}
-            <div className="bg-white rounded-lg border">
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableHeader>Status</TableHeader>
-                    <TableHeader>E-Mail-Adresse</TableHeader>
-                    <TableHeader>Anzeigename</TableHeader>
-                    <TableHeader>Team</TableHeader>
-                    <TableHeader>Client</TableHeader>
-                    <TableHeader>Features</TableHeader>
-                    <TableHeader>Statistik</TableHeader>
-                    <TableHeader className="text-right">Aktionen</TableHeader>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#005fab] mx-auto"></div>
-                      </TableCell>
-                    </TableRow>
-                  ) : emailAddresses.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                        Keine E-Mail-Adressen vorhanden
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    emailAddresses.map((address) => (
-                      <TableRow key={address.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            {getStatusIcon(address)}
-                            {address.isDefault && (
-                              <Badge color="blue" className="whitespace-nowrap">
-                                Standard
-                              </Badge>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+              {/* Header */}
+              <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
+                <div className="flex items-center">
+                  <div className="w-[25%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    E-Mail-Adresse
+                  </div>
+                  <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Status
+                  </div>
+                  <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Team
+                  </div>
+                  <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Client
+                  </div>
+                  <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Features
+                  </div>
+                  <div className="flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right">
+                    Aktionen
+                  </div>
+                </div>
+              </div>
+
+              {/* Body */}
+              <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                {loading ? (
+                  <div className="px-6 py-8 text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#005fab] mx-auto"></div>
+                  </div>
+                ) : emailAddresses.length === 0 ? (
+                  <div className="px-6 py-8 text-center text-gray-500">
+                    Keine E-Mail-Adressen vorhanden
+                  </div>
+                ) : (
+                  emailAddresses.map((address) => (
+                    <div key={address.id} className="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                      <div className="flex items-center">
+                        {/* Email Address */}
+                        <div className="w-[25%] min-w-0">
                           <div>
-                            <p className="font-medium">{address.email}</p>
-                            <p className="text-xs text-gray-500">{address.displayName}</p>
+                            <p className="font-medium text-sm text-zinc-900 dark:text-white truncate">{address.email}</p>
+                            <p className="text-xs text-gray-500 truncate">{address.displayName}</p>
                             {address.aliasType && address.aliasType !== 'specific' && (
                               <p className="text-xs text-gray-500">
                                 {address.aliasType === 'catch-all' ? 'Catch-All' : `Pattern: ${address.aliasPattern}`}
@@ -458,8 +447,22 @@ export default function EmailSettingsPage() {
                               <p className="text-xs text-yellow-600">Domain wird verifiziert</p>
                             )}
                           </div>
-                        </TableCell>
-                        <TableCell>
+                        </div>
+
+                        {/* Status */}
+                        <div className="w-[15%]">
+                          <div className="flex items-center gap-2">
+                            {getStatusIcon(address)}
+                            {address.isDefault && (
+                              <Badge color="blue" className="whitespace-nowrap">
+                                Standard
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Team */}
+                        <div className="w-[20%]">
                           <div className="flex -space-x-2">
                             {address.assignedUserIds.slice(0, 3).map((userId: string) => {
                               const member = mockTeamMembers.find(m => m.id === userId);
@@ -478,18 +481,25 @@ export default function EmailSettingsPage() {
                                 +{address.assignedUserIds.length - 3}
                               </div>
                             )}
+                            {address.assignedUserIds.length === 0 && (
+                              <span className="text-gray-400 text-sm">Nicht zugewiesen</span>
+                            )}
                           </div>
-                        </TableCell>
-                        <TableCell>
+                        </div>
+
+                        {/* Client */}
+                        <div className="w-[15%]">
                           {address.clientName ? (
                             <Badge color="purple" className="whitespace-nowrap">
                               {address.clientName}
                             </Badge>
                           ) : (
-                            <span className="text-gray-400">-</span>
+                            <span className="text-gray-400 text-sm">-</span>
                           )}
-                        </TableCell>
-                        <TableCell>
+                        </div>
+
+                        {/* Features */}
+                        <div className="w-[15%]">
                           <div className="flex gap-1">
                             {address.inboxEnabled && (
                               <Badge color="zinc" className="whitespace-nowrap">
@@ -510,55 +520,49 @@ export default function EmailSettingsPage() {
                               </Badge>
                             )}
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            <p className="text-gray-600">
-                              ↓ {address.emailsReceived || 0} | ↑ {address.emailsSent || 0}
-                            </p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center justify-end gap-1">
-                            {!address.isDefault && (
-                              <Button
-                                plain
-                                onClick={() => handleSetAsDefault(address)}
-                                className="p-1"
-                                title="Als Standard setzen"
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex-1 flex justify-end">
+                          <Dropdown>
+                            <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700">
+                              <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                            </DropdownButton>
+                            <DropdownMenu anchor="bottom end">
+                              {!address.isDefault && (
+                                <DropdownItem onClick={() => handleSetAsDefault(address)}>
+                                  <ShieldCheckIcon className="h-4 w-4" />
+                                  Als Standard setzen
+                                </DropdownItem>
+                              )}
+                              <DropdownItem onClick={() => handleRouting(address)}>
+                                <FunnelIcon className="h-4 w-4" />
+                                Routing-Regeln
+                              </DropdownItem>
+                              <DropdownItem onClick={() => handleEdit(address)}>
+                                <PencilIcon className="h-4 w-4" />
+                                Bearbeiten
+                              </DropdownItem>
+                              <DropdownItem onClick={() => handleDuplicate(address)}>
+                                <DocumentDuplicateIcon className="h-4 w-4" />
+                                Duplizieren
+                              </DropdownItem>
+                              <DropdownDivider />
+                              <DropdownItem 
+                                onClick={() => handleDelete(address)} 
+                                disabled={address.isDefault}
                               >
-                                <ShieldCheckIcon className="h-4 w-4" />
-                              </Button>
-                            )}
-                            <Button
-                              plain
-                              onClick={() => handleRouting(address)}
-                              className="p-1"
-                            >
-                              <FunnelIcon className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              plain
-                              onClick={() => handleEdit(address)}
-                              className="p-1"
-                            >
-                              <PencilIcon className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              plain
-                              onClick={() => handleDelete(address)}
-                              className="p-1 text-red-600 hover:text-red-700"
-                              disabled={address.isDefault}
-                            >
-                              <TrashIcon className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+                                <TrashIcon className="h-4 w-4" />
+                                <span className="text-red-600">Löschen</span>
+                              </DropdownItem>
+                            </DropdownMenu>
+                          </Dropdown>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </>
         )}
@@ -570,7 +574,7 @@ export default function EmailSettingsPage() {
             <p className="text-gray-500 mb-4">
               Erstellen und verwalten Sie wiederverwendbare E-Mail-Vorlagen
             </p>
-            <Button className="bg-[#005fab] hover:bg-[#004a8c] text-white">
+            <Button className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap">
               <PlusIcon className="h-4 w-4 mr-2" />
               Erste Vorlage erstellen
             </Button>
@@ -584,7 +588,7 @@ export default function EmailSettingsPage() {
             <p className="text-gray-500 mb-4">
               Erstellen Sie professionelle Signaturen für Ihre E-Mails
             </p>
-            <Button className="bg-[#005fab] hover:bg-[#004a8c] text-white">
+            <Button className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap">
               <PlusIcon className="h-4 w-4 mr-2" />
               Erste Signatur erstellen
             </Button>
@@ -600,7 +604,7 @@ export default function EmailSettingsPage() {
         <DialogTitle className="px-6 py-4">
           {showAddModal ? 'Neue E-Mail-Adresse hinzufügen' : 'E-Mail-Adresse bearbeiten'}
         </DialogTitle>
-        <DialogBody className="mt-2 p-6">
+        <DialogBody className="p-6">
           <p className="text-sm text-gray-500">
             Konfigurieren Sie die E-Mail-Adresse und deren Einstellungen.
           </p>
@@ -673,7 +677,7 @@ export default function EmailSettingsPage() {
                       onChange={(e) => setFormData({ ...formData, aliasType: 'specific' })}
                       className="mr-2"
                     />
-                    <span>Spezifische Adresse</span>
+                    <span className="text-sm font-medium text-gray-700">Spezifische Adresse</span>
                   </label>
                   <label className="flex items-center">
                     <input
@@ -683,7 +687,7 @@ export default function EmailSettingsPage() {
                       onChange={(e) => setFormData({ ...formData, aliasType: 'catch-all' })}
                       className="mr-2"
                     />
-                    <span>Catch-All (alle E-Mails an diese Domain)</span>
+                    <span className="text-sm font-medium text-gray-700">Catch-All (alle E-Mails an diese Domain)</span>
                   </label>
                   <label className="flex items-center">
                     <input
@@ -693,7 +697,7 @@ export default function EmailSettingsPage() {
                       onChange={(e) => setFormData({ ...formData, aliasType: 'pattern' })}
                       className="mr-2"
                     />
-                    <span>Pattern (z.B. pr-* für pr-2024@, pr-sommer@)</span>
+                    <span className="text-sm font-medium text-gray-700">Pattern (z.B. pr-* für pr-2024@, pr-sommer@)</span>
                   </label>
                 </div>
               </div>
@@ -801,7 +805,7 @@ export default function EmailSettingsPage() {
             Abbrechen
           </Button>
           <Button 
-            className="bg-[#005fab] hover:bg-[#004a8c] text-white"
+            className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
             onClick={handleSaveEmailAddress}
             disabled={saving}
           >
@@ -813,7 +817,7 @@ export default function EmailSettingsPage() {
       {/* Delete Confirmation Modal */}
       <Dialog open={showDeleteModal} onClose={() => setShowDeleteModal(false)}>
         <DialogTitle className="px-6 py-4">E-Mail-Adresse löschen</DialogTitle>
-        <DialogBody className="mt-2 p-6">
+        <DialogBody className="p-6">
           <p className="text-sm text-gray-500">
             Sind Sie sicher, dass Sie die E-Mail-Adresse <strong>{selectedAddress?.email}</strong> löschen möchten?
             Diese Aktion kann nicht rückgängig gemacht werden.
@@ -824,7 +828,7 @@ export default function EmailSettingsPage() {
             Abbrechen
           </Button>
           <Button 
-            className="bg-red-600 hover:bg-red-700 text-white"
+            className="bg-red-600 hover:bg-red-700 text-white whitespace-nowrap"
             onClick={handleDeleteConfirm}
             disabled={saving}
           >
@@ -836,7 +840,7 @@ export default function EmailSettingsPage() {
       {/* Routing Rules Modal */}
       <Dialog open={showRoutingModal} onClose={() => setShowRoutingModal(false)} className="sm:max-w-3xl">
         <DialogTitle className="px-6 py-4">Routing-Regeln für {selectedAddress?.email}</DialogTitle>
-        <DialogBody className="mt-2 p-6">
+        <DialogBody className="p-6">
           <p className="text-sm text-gray-500 mb-4">
             Definieren Sie automatische Weiterleitungs- und Zuweisungsregeln basierend auf E-Mail-Eigenschaften.
           </p>
@@ -880,7 +884,7 @@ export default function EmailSettingsPage() {
             </div>
           )}
           <div className="mt-6">
-            <Button className="w-full bg-[#005fab] hover:bg-[#004a8c] text-white">
+            <Button className="w-full bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap">
               <PlusIcon className="h-4 w-4 mr-2" />
               Neue Regel hinzufügen
             </Button>
