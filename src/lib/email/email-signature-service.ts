@@ -153,7 +153,7 @@ export class EmailSignatureService {
       const q = query(
         collection(db, this.collectionName),
         where('organizationId', '==', organizationId),
-        orderBy('name')
+        orderBy('createdAt', 'desc')
       );
 
       const querySnapshot = await getDocs(q);
