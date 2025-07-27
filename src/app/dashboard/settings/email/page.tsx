@@ -17,6 +17,7 @@ import { SettingsNav } from '@/components/SettingsNav';
 import { Text } from '@/components/text';
 import { EmailAddress, EmailSignature, EmailTemplate, EmailDomain, EmailAddressFormData } from '@/types/email-enhanced';
 import { emailAddressService } from '@/lib/email/email-address-service';
+import { RoutingRuleEditor } from '@/components/email/RoutingRuleEditor';
 import { 
   PlusIcon, 
   PencilIcon, 
@@ -185,6 +186,11 @@ export default function EmailSettingsPage() {
   const handleRouting = (address: EmailAddress) => {
     setSelectedAddress(address);
     setShowRoutingModal(true);
+  };
+
+  const handleRoutingUpdate = () => {
+    // Reload email addresses after routing rules update
+    loadEmailAddresses();
   };
 
   const handleDuplicate = async (address: EmailAddress) => {
@@ -837,65 +843,16 @@ export default function EmailSettingsPage() {
         </DialogActions>
       </Dialog>
 
-      {/* Routing Rules Modal */}
-      <Dialog open={showRoutingModal} onClose={() => setShowRoutingModal(false)} className="sm:max-w-3xl">
-        <DialogTitle className="px-6 py-4">Routing-Regeln für {selectedAddress?.email}</DialogTitle>
-        <DialogBody className="p-6">
-          <p className="text-sm text-gray-500 mb-4">
-            Definieren Sie automatische Weiterleitungs- und Zuweisungsregeln basierend auf E-Mail-Eigenschaften.
-          </p>
-          {selectedAddress?.routingRules && selectedAddress.routingRules.length > 0 ? (
-            <div className="space-y-4">
-              {selectedAddress.routingRules.map((rule: any) => (
-                <div key={rule.id} className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium">{rule.name}</h4>
-                    <div className="flex gap-2">
-                      <Button plain className="text-sm">Bearbeiten</Button>
-                      <Button plain className="text-sm text-red-600">Löschen</Button>
-                    </div>
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    <p className="mb-1"><strong>Wenn:</strong></p>
-                    <ul className="list-disc list-inside ml-2">
-                      {rule.conditions.from && <li>Absender enthält: {rule.conditions.from}</li>}
-                      {rule.conditions.subject && <li>Betreff enthält: {rule.conditions.subject}</li>}
-                      {rule.conditions.keywords && <li>Schlüsselwörter: {rule.conditions.keywords.join(', ')}</li>}
-                    </ul>
-                    <p className="mt-2 mb-1"><strong>Dann:</strong></p>
-                    <ul className="list-disc list-inside ml-2">
-                      {rule.actions.assignTo && (
-                        <li>Zuweisen an: {rule.actions.assignTo.map((id: string) => 
-                          mockTeamMembers.find(m => m.id === id)?.name
-                        ).join(', ')}</li>
-                      )}
-                      {rule.actions.setPriority && <li>Priorität: {rule.actions.setPriority}</li>}
-                      {rule.actions.addTags && <li>Tags: {rule.actions.addTags.join(', ')}</li>}
-                    </ul>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              <FunnelIcon className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-              <p>Keine Routing-Regeln definiert</p>
-              <p className="text-sm mt-1">Erstellen Sie Regeln, um E-Mails automatisch zu verarbeiten</p>
-            </div>
-          )}
-          <div className="mt-6">
-            <Button className="w-full bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap">
-              <PlusIcon className="h-4 w-4 mr-2" />
-              Neue Regel hinzufügen
-            </Button>
-          </div>
-        </DialogBody>
-        <DialogActions className="px-6 py-4">
-          <Button plain onClick={() => setShowRoutingModal(false)}>
-            Schließen
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Routing Rules Modal - Using new RoutingRuleEditor */}
+      {showRoutingModal && selectedAddress && (
+        <RoutingRuleEditor
+          emailAddress={selectedAddress}
+          isOpen={showRoutingModal}
+          onClose={() => setShowRoutingModal(false)}
+          onUpdate={handleRoutingUpdate}
+          teamMembers={mockTeamMembers}
+        />
+      )}
     </div>
   );
 }
