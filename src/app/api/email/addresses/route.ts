@@ -1,22 +1,12 @@
 // src/app/api/email/addresses/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
+import { emailAddressService } from '@/lib/email/email-address-service';
 import { EmailAddressFormData } from '@/types/email-enhanced';
 import { z } from 'zod';
 
-// Lazy import um Server-Initialisierung zu verzögern
-let emailAddressService: any;
-
-async function getEmailAddressService() {
-  if (!emailAddressService) {
-    const module = await import('@/lib/email/email-address-service');
-    emailAddressService = module.emailAddressService;
-  }
-  return emailAddressService;
-}
-
 // Teste die Imports
-console.log('Route loaded');
+console.log('Route loaded, emailAddressService:', emailAddressService);
 
 // Validation Schema
 const createEmailAddressSchema = z.object({
@@ -58,15 +48,20 @@ export async function POST(request: NextRequest) {
     try {
       // Parse and validate request body
       const body = await req.json();
-      const validatedData = createEmailAddressSchema.parse(body);
+      console.log('POST body received:', body);
       
-      // Create email address
-      const service = await getEmailAddressService();
-      const emailAddress = await service.create(
+      const validatedData = createEmailAddressSchema.parse(body);
+      console.log('Validated data:', validatedData);
+      
+      // Create email address direkt mit dem Service
+      console.log('Creating email address with service...');
+      const emailAddress = await emailAddressService.create(
         validatedData as EmailAddressFormData,
         context.organizationId,
         context.userId
       );
+      
+      console.log('Email address created:', emailAddress);
       
       return NextResponse.json(
         { 
@@ -98,12 +93,18 @@ export async function POST(request: NextRequest) {
             { status: 409 }
           );
         }
-        if (error.message.includes('nicht verifiziert')) {
+        if (error.message.includes('nicht verifiziert') || error.message.includes('nicht gefunden')) {
           return NextResponse.json(
             { error: error.message },
             { status: 400 }
           );
         }
+        
+        // Return the actual error message for debugging
+        return NextResponse.json(
+          { error: error.message },
+          { status: 500 }
+        );
       }
       
       return NextResponse.json(

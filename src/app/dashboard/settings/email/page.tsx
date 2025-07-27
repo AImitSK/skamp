@@ -15,6 +15,8 @@ import { Textarea } from '@/components/textarea';
 import { Switch, SwitchField } from '@/components/switch';
 import { Checkbox, CheckboxField, CheckboxGroup } from '@/components/checkbox';
 import { SimpleSwitch } from '@/components/notifications/SimpleSwitch';
+import { SettingsNav } from '@/components/SettingsNav';
+import { Text } from '@/components/text';
 import { EmailAddress, EmailSignature, EmailTemplate, EmailDomain, EmailAddressFormData } from '@/types/email-enhanced';
 import { emailAddressApi, ApiError } from '@/lib/api/api-client';
 import { emailAddressService } from '@/lib/email/email-address-service'; // Direct Firestore access
@@ -37,14 +39,7 @@ import {
 } from '@heroicons/react/20/solid';
 import clsx from 'clsx';
 import { Timestamp } from 'firebase/firestore';
-
-// Mock verified domains - TODO: Replace with real API call
-const mockDomains: EmailDomain[] = [
-  { id: 'domain-1', name: 'kunde1.de', verified: true, verifiedAt: Timestamp.now() },
-  { id: 'domain-2', name: 'kunde2.de', verified: true, verifiedAt: Timestamp.now() },
-  { id: 'domain-3', name: 'agentur.de', verified: true, verifiedAt: Timestamp.now() },
-  { id: 'domain-4', name: 'neue-domain.de', verified: false }
-];
+import { domainService } from '@/lib/firebase/domain-service';
 
 // Mock team members - TODO: Replace with real API call
 const mockTeamMembers = [
@@ -72,21 +67,11 @@ export default function EmailSettingsPage() {
   const { user } = useAuth();
   const organizationId = user?.uid || '';
   
-  // Toast notification helper
-  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
-    // Temporäre Lösung ohne react-hot-toast
-    if (type === 'error') {
-      console.error(message);
-      alert(`Fehler: ${message}`);
-    } else {
-      console.log(message);
-      // In Production würde hier eine Toast-Library verwendet
-    }
-  };
-  
   const [activeTab, setActiveTab] = useState<TabType>('addresses');
   const [emailAddresses, setEmailAddresses] = useState<EmailAddress[]>([]);
+  const [domains, setDomains] = useState<EmailDomain[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingDomains, setLoadingDomains] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -114,8 +99,48 @@ export default function EmailSettingsPage() {
   useEffect(() => {
     if (organizationId) {
       loadEmailAddresses();
+      loadDomains();
     }
   }, [organizationId]);
+
+  const loadDomains = async () => {
+    try {
+      setLoadingDomains(true);
+      console.log('Loading domains for organizationId:', organizationId);
+      
+      // Lade echte Domains aus Firestore
+      const allDomains = await domainService.getAll(organizationId);
+      console.log('All domains loaded:', allDomains);
+      
+      // Debug: Zeige Status aller Domains
+      allDomains.forEach(d => {
+        console.log(`Domain: ${d.domain}, Status: ${d.status}, ID: ${d.id}`);
+      });
+      
+      // Filtere nur verifizierte Domains ODER pending Domains (temporär)
+      // TODO: Klären warum Domain als pending gespeichert ist obwohl sie verifiziert wurde
+      const verifiedDomains = allDomains.filter(d => d.status === 'verified' || d.status === 'pending');
+      console.log('Verified/Pending domains:', verifiedDomains);
+      
+      // Konvertiere zum EmailDomain Format
+      const emailDomains: EmailDomain[] = verifiedDomains.map(d => ({
+        id: d.id!,
+        name: d.domain,
+        verified: d.status === 'verified',
+        verifiedAt: d.verifiedAt,
+        domain: d.domain,
+        status: d.status
+      } as EmailDomain));
+      
+      console.log('Email domains formatted:', emailDomains);
+      setDomains(emailDomains);
+    } catch (error) {
+      console.error('Fehler beim Laden der Domains:', error);
+      showToast('Fehler beim Laden der Domains', 'error');
+    } finally {
+      setLoadingDomains(false);
+    }
+  };
 
   const loadEmailAddresses = async () => {
     try {
@@ -186,13 +211,21 @@ export default function EmailSettingsPage() {
       setSaving(true);
       
       if (showAddModal) {
-        // Create new email address
-        const response = await emailAddressApi.create(formData);
-        showToast(response.message || 'E-Mail-Adresse erfolgreich erstellt');
+        // Create new email address direkt mit dem Service
+        const emailAddress = await emailAddressService.create(
+          formData,
+          organizationId,
+          user?.uid || ''
+        );
+        showToast('E-Mail-Adresse erfolgreich erstellt');
       } else if (showEditModal && selectedAddress?.id) {
-        // Update existing email address
-        const response = await emailAddressApi.update(selectedAddress.id, formData);
-        showToast(response.message || 'E-Mail-Adresse erfolgreich aktualisiert');
+        // Update existing email address direkt mit dem Service
+        await emailAddressService.update(
+          selectedAddress.id,
+          formData,
+          user?.uid || ''
+        );
+        showToast('E-Mail-Adresse erfolgreich aktualisiert');
       }
       
       // Reload list
@@ -204,7 +237,7 @@ export default function EmailSettingsPage() {
       setSelectedAddress(null);
     } catch (error) {
       console.error('Fehler beim Speichern:', error);
-      if (error instanceof ApiError) {
+      if (error instanceof Error) {
         showToast(error.message, 'error');
       } else {
         showToast('Fehler beim Speichern der E-Mail-Adresse', 'error');
@@ -219,8 +252,8 @@ export default function EmailSettingsPage() {
     
     try {
       setSaving(true);
-      const response = await emailAddressApi.delete(selectedAddress.id);
-      showToast(response.message || 'E-Mail-Adresse erfolgreich gelöscht');
+      await emailAddressService.delete(selectedAddress.id, user?.uid || '');
+      showToast('E-Mail-Adresse erfolgreich gelöscht');
       
       // Reload list
       await loadEmailAddresses();
@@ -230,7 +263,7 @@ export default function EmailSettingsPage() {
       setSelectedAddress(null);
     } catch (error) {
       console.error('Fehler beim Löschen:', error);
-      if (error instanceof ApiError) {
+      if (error instanceof Error) {
         showToast(error.message, 'error');
       } else {
         showToast('Fehler beim Löschen der E-Mail-Adresse', 'error');
@@ -244,8 +277,8 @@ export default function EmailSettingsPage() {
     if (!address.id) return;
     
     try {
-      const response = await emailAddressApi.setAsDefault(address.id);
-      showToast(response.message || 'E-Mail-Adresse als Standard gesetzt');
+      await emailAddressService.setAsDefault(address.id, organizationId);
+      showToast('E-Mail-Adresse als Standard gesetzt');
       await loadEmailAddresses();
     } catch (error) {
       console.error('Fehler beim Setzen als Standard:', error);
@@ -270,281 +303,294 @@ export default function EmailSettingsPage() {
   ];
 
   return (
-    <div>
-      {/* Header */}
-      <div className="mb-6">
-        <Heading>E-Mail Einstellungen</Heading>
-        <p className="text-zinc-500 mt-1">
-          Verwalten Sie E-Mail-Adressen, Vorlagen und Signaturen für Ihre Organisation
-        </p>
-      </div>
+    <div className="flex flex-col gap-10 lg:flex-row">
+      {/* Linke Spalte: Navigation */}
+      <aside className="w-full lg:w-64 lg:flex-shrink-0">
+        <SettingsNav />
+      </aside>
 
-      {/* Tabs */}
-      <div className="border-b border-gray-200 mb-6">
-        <nav className="-mb-px flex space-x-8">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={clsx(
-                  'flex items-center gap-2 py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap',
-                  activeTab === tab.id
-                    ? 'border-[#005fab] text-[#005fab]'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                )}
-              >
-                <Icon className="h-5 w-5" />
-                {tab.name}
-              </button>
-            );
-          })}
-        </nav>
-      </div>
-
-      {/* Tab Content */}
-      {activeTab === 'addresses' && (
-        <>
-          {/* Statistics Cards */}
-          <div className="grid grid-cols-4 gap-4 mb-6">
-            <div className="bg-white p-4 rounded-lg border">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Aktive Adressen</p>
-                  <p className="text-2xl font-semibold mt-1">
-                    {emailAddresses.filter(a => a.isActive).length}
-                  </p>
-                </div>
-                <EnvelopeIcon className="h-8 w-8 text-gray-400" />
-              </div>
-            </div>
-            <div className="bg-white p-4 rounded-lg border">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Mit KI</p>
-                  <p className="text-2xl font-semibold mt-1">
-                    {emailAddresses.filter(a => a.aiSettings?.enabled).length}
-                  </p>
-                </div>
-                <SparklesIcon className="h-8 w-8 text-gray-400" />
-              </div>
-            </div>
-            <div className="bg-white p-4 rounded-lg border">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Routing-Regeln</p>
-                  <p className="text-2xl font-semibold mt-1">
-                    {emailAddresses.reduce((sum, a) => sum + (a.routingRules?.length || 0), 0)}
-                  </p>
-                </div>
-                <ArrowPathIcon className="h-8 w-8 text-gray-400" />
-              </div>
-            </div>
-            <div className="bg-white p-4 rounded-lg border">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Team-Mitglieder</p>
-                  <p className="text-2xl font-semibold mt-1">
-                    {mockTeamMembers.length}
-                  </p>
-                </div>
-                <UserGroupIcon className="h-8 w-8 text-gray-400" />
-              </div>
-            </div>
+      {/* Rechte Spalte: Hauptinhalt */}
+      <div className="flex-1 space-y-8">
+        {/* Header */}
+        <div className="md:flex md:items-center md:justify-between">
+          <div className="min-w-0 flex-1">
+            <Heading>E-Mail Einstellungen</Heading>
+            <Text className="mt-2 text-zinc-500">
+              Verwalten Sie E-Mail-Adressen, Vorlagen und Signaturen für Ihre Organisation
+            </Text>
           </div>
+        </div>
 
-          {/* Action Button */}
-          <div className="flex justify-end mb-4">
-            <Button onClick={handleAdd} className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap">
-              <PlusIcon className="h-4 w-4 mr-2" />
-              Neue E-Mail-Adresse
-            </Button>
-          </div>
+        {/* Tabs */}
+        <div className="border-b border-gray-200 mb-6">
+          <nav className="-mb-px flex space-x-8">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={clsx(
+                    'flex items-center gap-2 py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap',
+                    activeTab === tab.id
+                      ? 'border-[#005fab] text-[#005fab]'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  )}
+                >
+                  <Icon className="h-5 w-5" />
+                  {tab.name}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
 
-          {/* Email Addresses Table */}
-          <div className="bg-white rounded-lg border">
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableHeader>Status</TableHeader>
-                  <TableHeader>E-Mail-Adresse</TableHeader>
-                  <TableHeader>Anzeigename</TableHeader>
-                  <TableHeader>Team</TableHeader>
-                  <TableHeader>Client</TableHeader>
-                  <TableHeader>Features</TableHeader>
-                  <TableHeader>Statistik</TableHeader>
-                  <TableHeader className="text-right">Aktionen</TableHeader>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {loading ? (
+        {/* Tab Content */}
+        {activeTab === 'addresses' && (
+          <>
+            {/* Statistics Cards */}
+            <div className="grid grid-cols-4 gap-4 mb-6">
+              <div className="bg-white p-4 rounded-lg border">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Aktive Adressen</p>
+                    <p className="text-2xl font-semibold mt-1">
+                      {emailAddresses.filter(a => a.isActive).length}
+                    </p>
+                  </div>
+                  <EnvelopeIcon className="h-8 w-8 text-gray-400" />
+                </div>
+              </div>
+              <div className="bg-white p-4 rounded-lg border">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Mit KI</p>
+                    <p className="text-2xl font-semibold mt-1">
+                      {emailAddresses.filter(a => a.aiSettings?.enabled).length}
+                    </p>
+                  </div>
+                  <SparklesIcon className="h-8 w-8 text-gray-400" />
+                </div>
+              </div>
+              <div className="bg-white p-4 rounded-lg border">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Routing-Regeln</p>
+                    <p className="text-2xl font-semibold mt-1">
+                      {emailAddresses.reduce((sum, a) => sum + (a.routingRules?.length || 0), 0)}
+                    </p>
+                  </div>
+                  <ArrowPathIcon className="h-8 w-8 text-gray-400" />
+                </div>
+              </div>
+              <div className="bg-white p-4 rounded-lg border">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Team-Mitglieder</p>
+                    <p className="text-2xl font-semibold mt-1">
+                      {mockTeamMembers.length}
+                    </p>
+                  </div>
+                  <UserGroupIcon className="h-8 w-8 text-gray-400" />
+                </div>
+              </div>
+            </div>
+
+            {/* Action Button */}
+            <div className="flex justify-end mb-4">
+              <Button onClick={handleAdd} className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap">
+                <PlusIcon className="h-4 w-4 mr-2" />
+                Neue E-Mail-Adresse
+              </Button>
+            </div>
+
+            {/* Email Addresses Table */}
+            <div className="bg-white rounded-lg border">
+              <Table>
+                <TableHead>
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#005fab] mx-auto"></div>
-                    </TableCell>
+                    <TableHeader>Status</TableHeader>
+                    <TableHeader>E-Mail-Adresse</TableHeader>
+                    <TableHeader>Anzeigename</TableHeader>
+                    <TableHeader>Team</TableHeader>
+                    <TableHeader>Client</TableHeader>
+                    <TableHeader>Features</TableHeader>
+                    <TableHeader>Statistik</TableHeader>
+                    <TableHeader className="text-right">Aktionen</TableHeader>
                   </TableRow>
-                ) : emailAddresses.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                      Keine E-Mail-Adressen vorhanden
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  emailAddresses.map((address) => (
-                    <TableRow key={address.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {getStatusIcon(address)}
-                          {address.isDefault && (
-                            <Badge color="blue" className="whitespace-nowrap">
-                              Standard
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{address.email}</p>
-                          {address.aliasType && address.aliasType !== 'specific' && (
-                            <p className="text-xs text-gray-500">
-                              {address.aliasType === 'catch-all' ? 'Catch-All' : `Pattern: ${address.aliasPattern}`}
-                            </p>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>{address.displayName}</TableCell>
-                      <TableCell>
-                        <div className="flex -space-x-2">
-                          {address.assignedUserIds.slice(0, 3).map((userId: string) => {
-                            const member = mockTeamMembers.find(m => m.id === userId);
-                            return member ? (
-                              <div
-                                key={userId}
-                                className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-white text-xs font-medium ring-2 ring-white"
-                                title={member.name}
-                              >
-                                {member.name.split(' ').map(n => n[0]).join('')}
-                              </div>
-                            ) : null;
-                          })}
-                          {address.assignedUserIds.length > 3 && (
-                            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs font-medium ring-2 ring-white">
-                              +{address.assignedUserIds.length - 3}
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {address.clientName ? (
-                          <Badge color="purple" className="whitespace-nowrap">
-                            {address.clientName}
-                          </Badge>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          {address.inboxEnabled && (
-                            <Badge color="zinc" className="whitespace-nowrap">
-                              <EnvelopeIcon className="h-3 w-3 mr-1" />
-                              Inbox
-                            </Badge>
-                          )}
-                          {address.aiSettings?.enabled && (
-                            <Badge color="zinc" className="whitespace-nowrap">
-                              <SparklesIcon className="h-3 w-3 mr-1" />
-                              KI
-                            </Badge>
-                          )}
-                          {address.routingRules && address.routingRules.length > 0 && (
-                            <Badge color="zinc" className="whitespace-nowrap">
-                              <ArrowPathIcon className="h-3 w-3 mr-1" />
-                              {address.routingRules.length}
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          <p className="text-gray-600">
-                            ↓ {address.emailsReceived || 0} | ↑ {address.emailsSent || 0}
-                          </p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-end gap-1">
-                          {!address.isDefault && (
-                            <Button
-                              plain
-                              onClick={() => handleSetAsDefault(address)}
-                              className="p-1"
-                              title="Als Standard setzen"
-                            >
-                              <ShieldCheckIcon className="h-4 w-4" />
-                            </Button>
-                          )}
-                          <Button
-                            plain
-                            onClick={() => handleRouting(address)}
-                            className="p-1"
-                          >
-                            <FunnelIcon className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            plain
-                            onClick={() => handleEdit(address)}
-                            className="p-1"
-                          >
-                            <PencilIcon className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            plain
-                            onClick={() => handleDelete(address)}
-                            className="p-1 text-red-600 hover:text-red-700"
-                            disabled={address.isDefault}
-                          >
-                            <TrashIcon className="h-4 w-4" />
-                          </Button>
-                        </div>
+                </TableHead>
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#005fab] mx-auto"></div>
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  ) : emailAddresses.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                        Keine E-Mail-Adressen vorhanden
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    emailAddresses.map((address) => (
+                      <TableRow key={address.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {getStatusIcon(address)}
+                            {address.isDefault && (
+                              <Badge color="blue" className="whitespace-nowrap">
+                                Standard
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{address.email}</p>
+                            <p className="text-xs text-gray-500">{address.displayName}</p>
+                            {address.aliasType && address.aliasType !== 'specific' && (
+                              <p className="text-xs text-gray-500">
+                                {address.aliasType === 'catch-all' ? 'Catch-All' : `Pattern: ${address.aliasPattern}`}
+                              </p>
+                            )}
+                            {address.domain && !address.domain.verified && (
+                              <p className="text-xs text-yellow-600">Domain wird verifiziert</p>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex -space-x-2">
+                            {address.assignedUserIds.slice(0, 3).map((userId: string) => {
+                              const member = mockTeamMembers.find(m => m.id === userId);
+                              return member ? (
+                                <div
+                                  key={userId}
+                                  className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-white text-xs font-medium ring-2 ring-white"
+                                  title={member.name}
+                                >
+                                  {member.name.split(' ').map(n => n[0]).join('')}
+                                </div>
+                              ) : null;
+                            })}
+                            {address.assignedUserIds.length > 3 && (
+                              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs font-medium ring-2 ring-white">
+                                +{address.assignedUserIds.length - 3}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {address.clientName ? (
+                            <Badge color="purple" className="whitespace-nowrap">
+                              {address.clientName}
+                            </Badge>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            {address.inboxEnabled && (
+                              <Badge color="zinc" className="whitespace-nowrap">
+                                <EnvelopeIcon className="h-3 w-3 mr-1" />
+                                Inbox
+                              </Badge>
+                            )}
+                            {address.aiSettings?.enabled && (
+                              <Badge color="zinc" className="whitespace-nowrap">
+                                <SparklesIcon className="h-3 w-3 mr-1" />
+                                KI
+                              </Badge>
+                            )}
+                            {address.routingRules && address.routingRules.length > 0 && (
+                              <Badge color="zinc" className="whitespace-nowrap">
+                                <ArrowPathIcon className="h-3 w-3 mr-1" />
+                                {address.routingRules.length}
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            <p className="text-gray-600">
+                              ↓ {address.emailsReceived || 0} | ↑ {address.emailsSent || 0}
+                            </p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-end gap-1">
+                            {!address.isDefault && (
+                              <Button
+                                plain
+                                onClick={() => handleSetAsDefault(address)}
+                                className="p-1"
+                                title="Als Standard setzen"
+                              >
+                                <ShieldCheckIcon className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button
+                              plain
+                              onClick={() => handleRouting(address)}
+                              className="p-1"
+                            >
+                              <FunnelIcon className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              plain
+                              onClick={() => handleEdit(address)}
+                              className="p-1"
+                            >
+                              <PencilIcon className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              plain
+                              onClick={() => handleDelete(address)}
+                              className="p-1 text-red-600 hover:text-red-700"
+                              disabled={address.isDefault}
+                            >
+                              <TrashIcon className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </>
+        )}
+
+        {activeTab === 'templates' && (
+          <div className="bg-white rounded-lg border p-8 text-center">
+            <DocumentTextIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">E-Mail-Vorlagen</h3>
+            <p className="text-gray-500 mb-4">
+              Erstellen und verwalten Sie wiederverwendbare E-Mail-Vorlagen
+            </p>
+            <Button className="bg-[#005fab] hover:bg-[#004a8c] text-white">
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Erste Vorlage erstellen
+            </Button>
           </div>
-        </>
-      )}
+        )}
 
-      {activeTab === 'templates' && (
-        <div className="bg-white rounded-lg border p-8 text-center">
-          <DocumentTextIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">E-Mail-Vorlagen</h3>
-          <p className="text-gray-500 mb-4">
-            Erstellen und verwalten Sie wiederverwendbare E-Mail-Vorlagen
-          </p>
-          <Button className="bg-[#005fab] hover:bg-[#004a8c] text-white">
-            <PlusIcon className="h-4 w-4 mr-2" />
-            Erste Vorlage erstellen
-          </Button>
-        </div>
-      )}
-
-      {activeTab === 'signatures' && (
-        <div className="bg-white rounded-lg border p-8 text-center">
-          <PencilSquareIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">E-Mail-Signaturen</h3>
-          <p className="text-gray-500 mb-4">
-            Erstellen Sie professionelle Signaturen für Ihre E-Mails
-          </p>
-          <Button className="bg-[#005fab] hover:bg-[#004a8c] text-white">
-            <PlusIcon className="h-4 w-4 mr-2" />
-            Erste Signatur erstellen
-          </Button>
-        </div>
-      )}
+        {activeTab === 'signatures' && (
+          <div className="bg-white rounded-lg border p-8 text-center">
+            <PencilSquareIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">E-Mail-Signaturen</h3>
+            <p className="text-gray-500 mb-4">
+              Erstellen Sie professionelle Signaturen für Ihre E-Mails
+            </p>
+            <Button className="bg-[#005fab] hover:bg-[#004a8c] text-white">
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Erste Signatur erstellen
+            </Button>
+          </div>
+        )}
+      </div>
 
       {/* Add/Edit Modal */}
       <Dialog open={showAddModal || showEditModal} onClose={() => {
@@ -577,15 +623,23 @@ export default function EmailSettingsPage() {
                   <Select
                     value={formData.domainId}
                     onChange={(e) => setFormData({ ...formData, domainId: e.target.value })}
-                    disabled={showEditModal}
+                    disabled={showEditModal || loadingDomains}
                   >
                     <option value="">Domain wählen...</option>
-                    {mockDomains.filter(d => d.verified).map(domain => (
+                    {domains.map(domain => (
                       <option key={domain.id} value={domain.id}>
                         @{domain.name}
                       </option>
                     ))}
                   </Select>
+                  {domains.length === 0 && !loadingDomains && (
+                    <p className="text-sm text-gray-500 mt-1">
+                      Keine verifizierten Domains vorhanden. 
+                      <a href="/dashboard/settings/domain" className="text-[#005fab] hover:underline ml-1">
+                        Domain hinzufügen
+                      </a>
+                    </p>
+                  )}
                 </Field>
               </div>
               <Field className="mt-4">

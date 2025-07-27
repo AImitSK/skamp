@@ -1,5 +1,5 @@
 // src/lib/email/email-address-service.ts
-"use client";
+// KEIN "use client" - dieser Service wird sowohl client- als auch serverseitig verwendet
 
 import { 
   collection, 
@@ -18,7 +18,8 @@ import {
   DocumentData,
   QueryDocumentSnapshot
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase/client-init'; // Always use client init
+import { db } from '@/lib/firebase/client-init';
+import { domainService } from '@/lib/firebase/domain-service';
 import { 
   EmailAddress, 
   EmailDomain,
@@ -27,7 +28,6 @@ import {
 
 export class EmailAddressService {
   private readonly collectionName = 'email_addresses';
-  private readonly domainsCollection = 'email_domains';
 
   /**
    * Erstellt eine neue E-Mail-Adresse
@@ -38,21 +38,26 @@ export class EmailAddressService {
     userId: string
   ): Promise<EmailAddress> {
     try {
-      // Validiere Domain
-      const domain = await this.getDomain(data.domainId);
-      if (!domain || !domain.verified) {
+      // Validiere Domain mit dem echten Domain Service
+      const domain = await domainService.getById(data.domainId);
+      if (!domain) {
+        throw new Error('Domain nicht gefunden');
+      }
+      
+      // TODO: Temporär auch pending Domains erlauben, bis das Status-Problem gelöst ist
+      if (domain.status !== 'verified' && domain.status !== 'pending') {
         throw new Error('Domain ist nicht verifiziert');
       }
 
       // Prüfe auf Duplikate
-      const email = `${data.localPart}@${domain.name}`;
+      const email = `${data.localPart}@${domain.domain}`;
       const existing = await this.findByEmail(email, organizationId);
       if (existing) {
         throw new Error('E-Mail-Adresse existiert bereits');
       }
 
-      // Erstelle E-Mail-Adresse Objekt
-      const emailAddress: Omit<EmailAddress, 'id'> = {
+      // Erstelle E-Mail-Adresse Objekt - entferne undefined Werte
+      const emailAddress: any = {
         email,
         localPart: data.localPart,
         domainId: data.domainId,
@@ -60,21 +65,13 @@ export class EmailAddressService {
         isActive: data.isActive,
         isDefault: false,
         aliasType: data.aliasType,
-        aliasPattern: data.aliasType === 'pattern' ? data.localPart : undefined,
         inboxEnabled: data.inboxEnabled,
         assignedUserIds: data.assignedUserIds,
-        clientName: data.clientName || undefined,
         permissions: {
           read: [...data.assignedUserIds, userId],
           write: [...data.assignedUserIds, userId],
           manage: [userId]
         },
-        aiSettings: data.aiEnabled ? {
-          enabled: true,
-          autoSuggest: data.autoSuggest,
-          autoCategorize: data.autoCategorize,
-          preferredTone: data.preferredTone
-        } : undefined,
         emailsSent: 0,
         emailsReceived: 0,
         organizationId,
@@ -85,10 +82,28 @@ export class EmailAddressService {
         updatedBy: userId
       };
 
+      // Füge optionale Felder nur hinzu wenn sie definiert sind
+      if (data.aliasType === 'pattern' && data.localPart) {
+        emailAddress.aliasPattern = data.localPart;
+      }
+      
+      if (data.clientName) {
+        emailAddress.clientName = data.clientName;
+      }
+      
+      if (data.aiEnabled) {
+        emailAddress.aiSettings = {
+          enabled: true,
+          autoSuggest: data.autoSuggest || false,
+          autoCategorize: data.autoCategorize || false,
+          preferredTone: data.preferredTone || 'formal'
+        };
+      }
+
       // Speichere in Firestore
       const docRef = await addDoc(
         collection(db, this.collectionName), 
-        emailAddress as DocumentData
+        emailAddress
       );
 
       // Setze als Standard wenn erste E-Mail-Adresse
@@ -127,8 +142,8 @@ export class EmailAddressService {
         throw new Error('Keine Berechtigung zum Bearbeiten');
       }
 
-      // Update-Objekt erstellen
-      const updateData: Partial<EmailAddress> = {
+      // Update-Objekt erstellen - entferne undefined Werte
+      const updateData: any = {
         updatedAt: serverTimestamp() as Timestamp,
         updatedBy: userId
       };
@@ -147,19 +162,32 @@ export class EmailAddressService {
           write: Array.from(uniqueWriteUsers)
         };
       }
-      if (data.clientName !== undefined) updateData.clientName = data.clientName || undefined;
+      
+      // Behandle clientName speziell - nur setzen wenn es einen Wert hat
+      if (data.clientName !== undefined) {
+        if (data.clientName && data.clientName.trim() !== '') {
+          updateData.clientName = data.clientName;
+        } else {
+          // Explizit löschen wenn leer
+          updateData.clientName = null;
+        }
+      }
       
       // AI Settings
       if (data.aiEnabled !== undefined) {
-        updateData.aiSettings = data.aiEnabled ? {
-          enabled: true,
-          autoSuggest: data.autoSuggest || false,
-          autoCategorize: data.autoCategorize || false,
-          preferredTone: data.preferredTone || 'formal'
-        } : undefined;
+        if (data.aiEnabled) {
+          updateData.aiSettings = {
+            enabled: true,
+            autoSuggest: data.autoSuggest || false,
+            autoCategorize: data.autoCategorize || false,
+            preferredTone: data.preferredTone || 'formal'
+          };
+        } else {
+          updateData.aiSettings = null;
+        }
       }
 
-      await updateDoc(docRef, updateData as DocumentData);
+      await updateDoc(docRef, updateData);
     } catch (error) {
       console.error('Fehler beim Aktualisieren der E-Mail-Adresse:', error);
       throw error;
@@ -240,8 +268,8 @@ export class EmailAddressService {
         }
       });
 
-      // Populate Domains
-      await this.populateDomains(emailAddresses);
+      // Populate Domains mit echten Daten
+      await this.populateDomains(emailAddresses, organizationId);
 
       return emailAddresses;
     } catch (error) {
@@ -401,26 +429,36 @@ export class EmailAddressService {
     return { ...doc.data(), id: doc.id } as EmailAddress;
   }
 
-  private async getDomain(domainId: string): Promise<EmailDomain | null> {
-    // Temporär: Mock-Domain zurückgeben
-    // TODO: Implementiere echten Domain-Service
-    return {
-      id: domainId,
-      name: 'example.com',
-      verified: true
-    } as EmailDomain;
-  }
+  private async populateDomains(emailAddresses: EmailAddress[], organizationId: string): Promise<void> {
+    try {
+      // Hole alle Domains der Organisation einmal
+      const domains = await domainService.getAll(organizationId);
+      const domainMap = new Map(domains.map(d => [d.id, d]));
 
-  private async populateDomains(emailAddresses: EmailAddress[]): Promise<void> {
-    // TODO: Implementiere Domain-Population wenn Domain-Service verfügbar ist
-    // Für jetzt setzen wir Mock-Domains
-    emailAddresses.forEach(ea => {
-      ea.domain = {
-        id: ea.domainId,
-        name: 'example.com',
-        verified: true
-      } as EmailDomain;
-    });
+      // Mappe die Domains zu den E-Mail-Adressen
+      emailAddresses.forEach(ea => {
+        const domain = domainMap.get(ea.domainId);
+        if (domain) {
+          ea.domain = {
+            id: domain.id!,
+            name: domain.domain,
+            verified: domain.status === 'verified',
+            verifiedAt: domain.verifiedAt,
+            dnsRecords: domain.dnsRecords
+          } as EmailDomain;
+        }
+      });
+    } catch (error) {
+      console.error('Fehler beim Laden der Domains:', error);
+      // Fallback auf leere Domain-Objekte
+      emailAddresses.forEach(ea => {
+        ea.domain = {
+          id: ea.domainId,
+          name: 'Unbekannte Domain',
+          verified: false
+        } as EmailDomain;
+      });
+    }
   }
 
   private async isFirstEmailAddress(organizationId: string): Promise<boolean> {
