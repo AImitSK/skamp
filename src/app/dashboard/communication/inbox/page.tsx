@@ -11,12 +11,25 @@ import { EmailList } from '@/components/inbox/EmailList';
 import { EmailViewer } from '@/components/inbox/EmailViewer';
 import { ComposeEmail } from '@/components/inbox/ComposeEmail';
 import { EmailMessage, EmailThread } from '@/types/inbox-enhanced';
-import { generateMockData } from '@/lib/inbox/mockData';
+import { emailMessageService } from '@/lib/email/email-message-service';
+import { threadMatcherService } from '@/lib/email/thread-matcher-service';
+import { emailAddressService } from '@/lib/email/email-address-service';
+import { 
+  onSnapshot,
+  collection,
+  query,
+  where,
+  orderBy,
+  limit,
+  Unsubscribe
+} from 'firebase/firestore';
+import { db } from '@/lib/firebase/client-init';
 import { 
   PencilSquareIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
-  InboxIcon
+  InboxIcon,
+  ExclamationTriangleIcon
 } from '@heroicons/react/20/solid';
 
 export default function InboxPage() {
@@ -32,50 +45,174 @@ export default function InboxPage() {
   const [threads, setThreads] = useState<EmailThread[]>([]);
   const [emails, setEmails] = useState<EmailMessage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [composeMode, setComposeMode] = useState<'new' | 'reply' | 'forward'>('new');
   const [replyToEmail, setReplyToEmail] = useState<EmailMessage | null>(null);
+  const [hasEmailAddresses, setHasEmailAddresses] = useState(false);
   
-  // Mock unread counts
-  const [unreadCounts] = useState({
-    inbox: 3,
+  // Real-time unread counts
+  const [unreadCounts, setUnreadCounts] = useState({
+    inbox: 0,
     sent: 0,
-    drafts: 2,
-    spam: 1,
+    drafts: 0,
+    spam: 0,
     trash: 0
   });
 
-  // Load mock data on mount
-  useEffect(() => {
-    if (user && organizationId) {
-      loadMockData();
-    }
-  }, [user, organizationId, selectedFolder]);
+  // Firestore unsubscribe functions
+  const [unsubscribes, setUnsubscribes] = useState<Unsubscribe[]>([]);
 
-  const loadMockData = async () => {
+  // Check if user has email addresses configured
+  useEffect(() => {
+    const checkEmailAddresses = async () => {
+      if (!user || !organizationId) return;
+      
+      try {
+        const addresses = await emailAddressService.getByOrganization(organizationId, user.uid);
+        setHasEmailAddresses(addresses.length > 0);
+      } catch (error) {
+        console.error('Error checking email addresses:', error);
+      }
+    };
+
+    checkEmailAddresses();
+  }, [user, organizationId]);
+
+  // Load email data with real-time updates
+  useEffect(() => {
+    if (!user || !organizationId || !hasEmailAddresses) {
+      setLoading(false);
+      return;
+    }
+
+    // Clean up previous listeners
+    unsubscribes.forEach(unsubscribe => unsubscribe());
+    
+    const newUnsubscribes: Unsubscribe[] = [];
+    
+    // Set up real-time listeners
+    setupRealtimeListeners(newUnsubscribes);
+    
+    setUnsubscribes(newUnsubscribes);
+
+    // Cleanup on unmount
+    return () => {
+      newUnsubscribes.forEach(unsubscribe => unsubscribe());
+    };
+  }, [user, organizationId, selectedFolder, hasEmailAddresses]);
+
+  const setupRealtimeListeners = (unsubscribes: Unsubscribe[]) => {
     setLoading(true);
+    setError(null);
+
+    try {
+      // 1. Listen to threads
+      const threadsQuery = query(
+        collection(db, 'email_threads'),
+        where('organizationId', '==', organizationId),
+        orderBy('lastMessageAt', 'desc'),
+        limit(50)
+      );
+
+      const threadsUnsubscribe = onSnapshot(
+        threadsQuery,
+        (snapshot) => {
+          const threadsData: EmailThread[] = [];
+          snapshot.forEach((doc) => {
+            threadsData.push({ ...doc.data(), id: doc.id } as EmailThread);
+          });
+          setThreads(threadsData);
+          
+          // Update unread counts
+          updateUnreadCounts(threadsData);
+        },
+        (error) => {
+          console.error('Error loading threads:', error);
+          setError('Fehler beim Laden der E-Mail-Threads');
+        }
+      );
+      
+      unsubscribes.push(threadsUnsubscribe);
+
+      // 2. Listen to messages in selected folder
+      const messagesQuery = query(
+        collection(db, 'email_messages'),
+        where('organizationId', '==', organizationId),
+        where('folder', '==', selectedFolder),
+        orderBy('receivedAt', 'desc'),
+        limit(100)
+      );
+
+      const messagesUnsubscribe = onSnapshot(
+        messagesQuery,
+        (snapshot) => {
+          const messagesData: EmailMessage[] = [];
+          snapshot.forEach((doc) => {
+            messagesData.push({ ...doc.data(), id: doc.id } as EmailMessage);
+          });
+          setEmails(messagesData);
+          setLoading(false);
+        },
+        (error) => {
+          console.error('Error loading messages:', error);
+          setError('Fehler beim Laden der E-Mails');
+          setLoading(false);
+        }
+      );
+      
+      unsubscribes.push(messagesUnsubscribe);
+
+    } catch (error) {
+      console.error('Error setting up listeners:', error);
+      setError('Fehler beim Einrichten der Echtzeit-Updates');
+      setLoading(false);
+    }
+  };
+
+  const updateUnreadCounts = async (threadsData: EmailThread[]) => {
+    // Calculate unread counts from threads
+    const counts = {
+      inbox: 0,
+      sent: 0,
+      drafts: 0,
+      spam: 0,
+      trash: 0
+    };
+
+    // In a real implementation, we would query each folder
+    // For now, use thread unread counts for inbox
+    counts.inbox = threadsData.reduce((sum, thread) => sum + (thread.unreadCount || 0), 0);
     
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const mockData = generateMockData(organizationId, selectedFolder);
-    setThreads(mockData.threads);
-    setEmails(mockData.emails);
-    
-    setLoading(false);
+    setUnreadCounts(counts);
   };
 
   // Handle thread selection
-  const handleThreadSelect = (thread: EmailThread) => {
+  const handleThreadSelect = async (thread: EmailThread) => {
     setSelectedThread(thread);
     
-    // Find emails for this thread
-    const threadEmails = emails.filter(e => e.threadId === thread.id);
-    if (threadEmails.length > 0) {
-      // Select the latest email in the thread
-      const latestEmail = threadEmails.sort((a, b) => 
-        b.receivedAt.toDate().getTime() - a.receivedAt.toDate().getTime()
-      )[0];
-      setSelectedEmail(latestEmail);
+    try {
+      // Load all messages for this thread
+      const threadMessages = await emailMessageService.getThreadMessages(thread.id!);
+      
+      if (threadMessages.length > 0) {
+        // Select the latest email in the thread
+        const latestEmail = threadMessages[threadMessages.length - 1];
+        setSelectedEmail(latestEmail);
+        
+        // Mark thread as read
+        if (thread.unreadCount && thread.unreadCount > 0) {
+          await threadMatcherService.markThreadAsRead(thread.id!);
+          
+          // Mark all unread messages in thread as read
+          for (const message of threadMessages) {
+            if (!message.isRead && message.id) {
+              await emailMessageService.markAsRead(message.id);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading thread messages:', error);
     }
   };
 
@@ -93,23 +230,31 @@ export default function InboxPage() {
   };
 
   const handleArchive = async (emailId: string) => {
-    // In production: API call
-    setEmails(prev => prev.filter(e => e.id !== emailId));
-    setSelectedEmail(null);
-    setSelectedThread(null);
+    try {
+      await emailMessageService.archive(emailId);
+      setSelectedEmail(null);
+      setSelectedThread(null);
+    } catch (error) {
+      console.error('Error archiving email:', error);
+    }
   };
 
   const handleDelete = async (emailId: string) => {
-    // In production: API call
-    setEmails(prev => prev.filter(e => e.id !== emailId));
-    setSelectedEmail(null);
-    setSelectedThread(null);
+    try {
+      await emailMessageService.delete(emailId);
+      setSelectedEmail(null);
+      setSelectedThread(null);
+    } catch (error) {
+      console.error('Error deleting email:', error);
+    }
   };
 
   const handleStar = async (emailId: string, starred: boolean) => {
-    setEmails(prev => prev.map(e => 
-      e.id === emailId ? { ...e, isStarred: starred } : e
-    ));
+    try {
+      await emailMessageService.toggleStar(emailId);
+    } catch (error) {
+      console.error('Error starring email:', error);
+    }
   };
 
   // Filter threads based on search
@@ -129,8 +274,35 @@ export default function InboxPage() {
   // Get emails for selected thread
   const threadEmails = selectedThread 
     ? emails.filter(e => e.threadId === selectedThread.id)
-        .sort((a, b) => a.receivedAt.toDate().getTime() - b.receivedAt.toDate().getTime())
+        .sort((a, b) => {
+          const aTime = a.receivedAt?.toDate?.()?.getTime() || 0;
+          const bTime = b.receivedAt?.toDate?.()?.getTime() || 0;
+          return aTime - bTime;
+        })
     : [];
+
+  // Show empty state if no email addresses configured
+  if (!loading && !hasEmailAddresses) {
+    return (
+      <div className="h-[calc(100vh-4rem)] flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <InboxIcon className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+          <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+            Keine E-Mail-Adressen konfiguriert
+          </h2>
+          <p className="text-gray-500 mb-6">
+            Um E-Mails empfangen zu können, müssen Sie zuerst eine E-Mail-Adresse einrichten.
+          </p>
+          <Button 
+            href="/dashboard/settings/email"
+            className="bg-[#005fab] hover:bg-[#004a8c] text-white"
+          >
+            E-Mail-Adresse einrichten
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-[calc(100vh-4rem)] flex bg-white">
@@ -183,6 +355,16 @@ export default function InboxPage() {
             </h3>
           </div>
 
+          {/* Error State */}
+          {error && (
+            <div className="p-4 bg-red-50 border-b border-red-200">
+              <div className="flex items-center text-red-600">
+                <ExclamationTriangleIcon className="h-5 w-5 mr-2" />
+                <p className="text-sm">{error}</p>
+              </div>
+            </div>
+          )}
+
           {/* Email List */}
           <EmailList
             threads={filteredThreads}
@@ -210,8 +392,14 @@ export default function InboxPage() {
             <div className="flex-1 flex items-center justify-center text-gray-500">
               <div className="text-center">
                 <InboxIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                <p className="text-lg font-medium">Keine E-Mail ausgewählt</p>
-                <p className="text-sm mt-1">Wählen Sie eine Konversation aus der Liste</p>
+                <p className="text-lg font-medium">
+                  {loading ? 'E-Mails werden geladen...' : 'Keine E-Mail ausgewählt'}
+                </p>
+                <p className="text-sm mt-1">
+                  {!loading && threads.length === 0 
+                    ? 'Keine E-Mails in diesem Ordner' 
+                    : 'Wählen Sie eine Konversation aus der Liste'}
+                </p>
               </div>
             </div>
           )}
@@ -231,7 +419,7 @@ export default function InboxPage() {
           onSend={() => {
             setShowCompose(false);
             setReplyToEmail(null);
-            loadMockData(); // Reload to show sent email
+            // New email will appear automatically through real-time listener
           }}
         />
       )}

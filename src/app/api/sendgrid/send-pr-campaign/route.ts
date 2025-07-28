@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
 import { rateLimitServiceAPI } from '@/lib/security/rate-limit-service-api';
+import { emailAddressService } from '@/lib/email/email-address-service';
 import sgMail from '@sendgrid/mail';
 
 // SendGrid konfigurieren
@@ -67,6 +68,23 @@ export async function POST(request: NextRequest) {
       }
       
       console.log('🚀 Starting PR campaign send for', data.recipients.length, 'recipients');
+
+      // NEU: E-Mail-Adresse für Organisation holen
+      const emailAddress = await emailAddressService.getDefaultForOrganization(auth.organizationId);
+      
+      if (!emailAddress) {
+        return NextResponse.json(
+          { 
+            success: false,
+            error: 'Keine Standard E-Mail-Adresse konfiguriert. Bitte richten Sie eine E-Mail-Adresse in den Einstellungen ein.'
+          },
+          { status: 400 }
+        );
+      }
+
+      // NEU: Reply-To Adresse generieren
+      const replyToAddress = emailAddressService.generateReplyToAddress(emailAddress);
+      console.log('📧 Using email:', emailAddress.email, 'with reply-to:', replyToAddress);
 
       // SICHERHEIT: Prüfe Campaign Rate Limit
       const campaignRateLimit = await rateLimitServiceAPI.checkRateLimit(auth.userId, 'campaign', 1, token);
@@ -176,13 +194,9 @@ export async function POST(request: NextRequest) {
 
       console.log(`📧 Validated ${validRecipients.length} of ${data.recipients.length} recipients`);
 
-      // Absender-Konfiguration
-      const fromEmail = process.env.SENDGRID_FROM_EMAIL!;
-      const fromName = process.env.SENDGRID_FROM_NAME!;
-
-      if (!fromEmail || !fromName) {
-        throw new Error('SendGrid configuration missing');
-      }
+      // GEÄNDERT: Absender-Konfiguration nutzt jetzt die E-Mail-Adresse
+      const fromEmail = emailAddress.email; // z.B. presse@kunde.de
+      const fromName = emailAddress.displayName || data.senderInfo.company;
 
       const results = [];
       let successCount = 0;
@@ -217,6 +231,11 @@ export async function POST(request: NextRequest) {
                 email: fromEmail,
                 name: fromName
               },
+              // NEU: Reply-To Header
+              reply_to: {
+                email: replyToAddress,
+                name: fromName
+              },
               subject: personalizedSubject,
               html: htmlContent,
               text: textContent,
@@ -224,11 +243,18 @@ export async function POST(request: NextRequest) {
                 clickTracking: { enable: true },
                 openTracking: { enable: true }
               },
-              // Custom Headers für Tracking
+              // NEU: Erweiterte Custom Headers für besseres Tracking
               customArgs: {
                 campaign_id: data.campaignId || 'unknown',
                 user_id: auth.userId,
-                organization_id: auth.organizationId
+                organization_id: auth.organizationId,
+                email_address_id: emailAddress.id
+              },
+              headers: {
+                'X-CeleroPress-Campaign': data.campaignId || 'unknown',
+                'X-CeleroPress-EmailAddress': emailAddress.id || '',
+                'X-CeleroPress-Organization': auth.organizationId,
+                'X-Original-From': fromEmail
               }
             };
 
@@ -258,6 +284,13 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      // NEU: Update E-Mail-Statistiken
+      if (successCount > 0 && emailAddress.id) {
+        await emailAddressService.updateStats(emailAddress.id, 'sent').catch(err => 
+          console.error('Failed to update email stats:', err)
+        );
+      }
+
       // SICHERHEIT: Protokolliere Campaign-Versand
       await rateLimitServiceAPI.recordAction(auth.userId, 'campaign', 1, {
         campaignId: data.campaignId,
@@ -279,7 +312,12 @@ export async function POST(request: NextRequest) {
         userAgent
       }, token);
 
-      console.log('✅ Campaign send completed:', { successCount, failCount });
+      console.log('✅ Campaign send completed:', { 
+        successCount, 
+        failCount, 
+        fromEmail, 
+        replyTo: replyToAddress 
+      });
 
       return NextResponse.json({
         success: true,
@@ -288,6 +326,10 @@ export async function POST(request: NextRequest) {
           total: validRecipients.length,
           success: successCount,
           failed: failCount
+        },
+        emailConfig: {
+          from: fromEmail,
+          replyTo: replyToAddress
         },
         rateLimit: {
           campaignsRemaining: campaignRateLimit.remaining - 1,
@@ -310,7 +352,7 @@ export async function POST(request: NextRequest) {
         errorMessage: error.message,
         ip,
         userAgent
-      }, token);
+      }, token).catch(err => console.error('Failed to log error:', err));
       
       return NextResponse.json(
         { 
@@ -452,7 +494,7 @@ function buildPREmailHtml(
         </div>
         
         <div class="footer">
-            <p>Diese E-Mail wurde über das SKAMP PR-Tool versendet.</p>
+            <p>Diese E-Mail wurde über CeleroPress versendet.</p>
         </div>
     </div>
 </body>
@@ -481,7 +523,7 @@ ${replaceVariables(email.closing, recipient, sender)}
 ${replaceVariables(email.signature, recipient, sender)}
 
 ---
-Diese E-Mail wurde über das SKAMP PR-Tool versendet.
+Diese E-Mail wurde über CeleroPress versendet.
 Powered by ${sender.company}
 `;
 }

@@ -12,6 +12,7 @@ import {
   query, 
   where, 
   orderBy,
+  limit,
   serverTimestamp,
   Timestamp,
   writeBatch,
@@ -377,6 +378,37 @@ export class EmailAddressService {
   }
 
   /**
+   * Aktualisiert alle Routing-Regeln (für Drag & Drop)
+   */
+  async updateRoutingRules(
+    emailAddressId: string,
+    rules: NonNullable<EmailAddress['routingRules']>,
+    userId: string
+  ): Promise<void> {
+    try {
+      const emailAddress = await this.get(emailAddressId);
+      if (!emailAddress) {
+        throw new Error('E-Mail-Adresse nicht gefunden');
+      }
+
+      // Prüfe Berechtigung
+      if (!emailAddress.permissions.manage.includes(userId)) {
+        throw new Error('Keine Berechtigung zum Aktualisieren von Routing-Regeln');
+      }
+
+      // Aktualisiere alle Regeln auf einmal
+      await updateDoc(doc(db, this.collectionName, emailAddressId), {
+        routingRules: rules,
+        updatedAt: serverTimestamp(),
+        updatedBy: userId
+      });
+    } catch (error) {
+      console.error('Fehler beim Aktualisieren der Routing-Regeln:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Aktualisiert Statistiken
    */
   async updateStats(
@@ -407,6 +439,112 @@ export class EmailAddressService {
     } catch (error) {
       console.error('Fehler beim Aktualisieren der Statistiken:', error);
       // Fehler nicht werfen, da Statistiken nicht kritisch sind
+    }
+  }
+
+  /**
+   * Generiert eine eindeutige Reply-To Adresse für diese E-Mail-Adresse
+   * Format: {prefix}-{orgId}-{emailId}@inbox.sk-online-marketing.de
+   */
+  generateReplyToAddress(emailAddress: EmailAddress): string {
+    // Kurzer Prefix aus der lokalen E-Mail-Adresse
+    const prefix = emailAddress.localPart
+      .substring(0, 10)
+      .replace(/[^a-z0-9]/gi, ''); // Nur alphanumerisch
+    
+    // Kurze IDs verwenden (erste 8 Zeichen)
+    const shortOrgId = emailAddress.organizationId.substring(0, 8);
+    const shortEmailId = emailAddress.id!.substring(0, 8);
+    
+    // Verwende sk-online-marketing.de statt celeropress.de
+    return `${prefix}-${shortOrgId}-${shortEmailId}@inbox.sk-online-marketing.de`;
+  }
+
+  /**
+   * Findet eine E-Mail-Adresse basierend auf der Reply-To Adresse
+   * Parst: {prefix}-{orgId}-{emailId}@inbox.sk-online-marketing.de
+   */
+  async findByReplyToAddress(replyToEmail: string): Promise<EmailAddress | null> {
+    try {
+      // Extrahiere den lokalen Teil
+      const [localPart] = replyToEmail.split('@');
+      const parts = localPart.split('-');
+      
+      if (parts.length < 3) {
+        console.error('Invalid reply-to format:', replyToEmail);
+        return null;
+      }
+      
+      // Die letzten zwei Teile sind orgId und emailId
+      const shortEmailId = parts[parts.length - 1];
+      const shortOrgId = parts[parts.length - 2];
+      
+      // Suche nach E-Mail-Adressen mit diesem Prefix
+      const q = query(
+        collection(db, this.collectionName),
+        where('organizationId', '>=', shortOrgId),
+        where('organizationId', '<=', shortOrgId + '\uf8ff'),
+        limit(20)
+      );
+      
+      const snapshot = await getDocs(q);
+      
+      // Finde die passende E-Mail-Adresse
+      for (const doc of snapshot.docs) {
+        if (doc.id.startsWith(shortEmailId)) {
+          const emailAddress = { ...doc.data(), id: doc.id } as EmailAddress;
+          console.log('✅ Found email address for reply-to:', {
+            replyTo: replyToEmail,
+            found: emailAddress.email
+          });
+          return emailAddress;
+        }
+      }
+      
+      console.error('No email address found for reply-to:', replyToEmail);
+      return null;
+    } catch (error) {
+      console.error('Error finding email by reply-to:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Holt die Standard E-Mail-Adresse einer Organisation
+   */
+  async getDefaultForOrganization(organizationId: string): Promise<EmailAddress | null> {
+    try {
+      const q = query(
+        collection(db, this.collectionName),
+        where('organizationId', '==', organizationId),
+        where('isDefault', '==', true),
+        limit(1)
+      );
+
+      const snapshot = await getDocs(q);
+      if (snapshot.empty) {
+        // Fallback: Erste aktive E-Mail-Adresse
+        const fallbackQ = query(
+          collection(db, this.collectionName),
+          where('organizationId', '==', organizationId),
+          where('isActive', '==', true),
+          limit(1)
+        );
+        
+        const fallbackSnapshot = await getDocs(fallbackQ);
+        if (!fallbackSnapshot.empty) {
+          const doc = fallbackSnapshot.docs[0];
+          return { ...doc.data(), id: doc.id } as EmailAddress;
+        }
+        
+        return null;
+      }
+
+      const doc = snapshot.docs[0];
+      return { ...doc.data(), id: doc.id } as EmailAddress;
+    } catch (error) {
+      console.error('Error getting default email address:', error);
+      return null;
     }
   }
 
