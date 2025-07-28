@@ -2,21 +2,18 @@
 "use client";
 
 import { EmailThread } from '@/types/inbox-enhanced';
-import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
-import { de } from 'date-fns/locale/de';
 import { Badge } from '@/components/badge';
 import clsx from 'clsx';
 import { 
-  StarIcon,
-  PaperClipIcon,
-  ExclamationCircleIcon 
+  ChevronDoubleRightIcon,
+  UserGroupIcon
 } from '@heroicons/react/20/solid';
 
 interface EmailListProps {
   threads: EmailThread[];
   selectedThread: EmailThread | null;
   onThreadSelect: (thread: EmailThread) => void;
-  loading: boolean;
+  loading?: boolean;
   onStar?: (emailId: string, starred: boolean) => void;
 }
 
@@ -24,9 +21,57 @@ export function EmailList({
   threads, 
   selectedThread, 
   onThreadSelect,
-  loading,
-  onStar
+  loading = false
 }: EmailListProps) {
+  
+  // Helper function to safely convert Firestore timestamp to Date
+  const toDate = (timestamp: any): Date | null => {
+    if (!timestamp) return null;
+    
+    if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+      return timestamp.toDate();
+    }
+    
+    if (timestamp.seconds) {
+      return new Date(timestamp.seconds * 1000);
+    }
+    
+    if (timestamp instanceof Date) {
+      return timestamp;
+    }
+    
+    if (typeof timestamp === 'string') {
+      return new Date(timestamp);
+    }
+    
+    return null;
+  };
+
+  const formatTime = (timestamp: any): string => {
+    const date = toDate(timestamp);
+    if (!date) return '';
+    
+    try {
+      const now = new Date();
+      const diffMs = now.getTime() - date.getTime();
+      const diffSecs = Math.floor(diffMs / 1000);
+      const diffMins = Math.floor(diffSecs / 60);
+      const diffHours = Math.floor(diffMins / 60);
+      const diffDays = Math.floor(diffHours / 24);
+      
+      if (diffSecs < 60) return 'gerade eben';
+      if (diffMins < 60) return `vor ${diffMins} Minute${diffMins !== 1 ? 'n' : ''}`;
+      if (diffHours < 24) return `vor ${diffHours} Stunde${diffHours !== 1 ? 'n' : ''}`;
+      if (diffDays < 7) return `vor ${diffDays} Tag${diffDays !== 1 ? 'en' : ''}`;
+      
+      return date.toLocaleDateString('de-DE');
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return '';
+    }
+  };
+
+  // Loading state
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -35,101 +80,95 @@ export function EmailList({
     );
   }
 
+  // Empty state
   if (threads.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center text-gray-500">
-        <p>Keine E-Mails in diesem Ordner</p>
+        <div className="text-center">
+          <p className="text-sm">Keine E-Mails in diesem Ordner</p>
+        </div>
       </div>
     );
   }
 
+  // Thread list
   return (
     <div className="flex-1 overflow-y-auto">
       {threads.map((thread) => {
         const isSelected = selectedThread?.id === thread.id;
         const hasUnread = thread.unreadCount > 0;
-        
-        // Get primary participant (not us)
-        const primaryParticipant = thread.participants.find(p => 
-          !p.email.includes('@skamp.de')
-        ) || thread.participants[0];
+        const primaryParticipant = thread.participants[0] || { email: 'Unbekannt' };
         
         return (
-          <button
+          <div
             key={thread.id}
             onClick={() => onThreadSelect(thread)}
             className={clsx(
-              'w-full text-left p-4 border-b hover:bg-gray-100 transition-colors',
-              isSelected && 'bg-blue-50 border-l-4 border-l-[#005fab]',
-              hasUnread && 'bg-white'
+              "border-b border-gray-200 px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors",
+              isSelected && "bg-blue-50 hover:bg-blue-50",
+              hasUnread && "bg-white"
             )}
           >
             <div className="flex items-start gap-3">
-                            {/* Star */}
-              <div
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // onStar would handle individual email starring
-                }}
-                className="mt-1 text-gray-300 hover:text-yellow-400 cursor-pointer"
-              >
-                <StarIcon className="h-5 w-5" />
+              {/* Avatar */}
+              <div className={clsx(
+                "w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0",
+                isSelected ? "bg-[#005fab]" : "bg-gray-400"
+              )}>
+                {primaryParticipant.name 
+                  ? primaryParticipant.name.charAt(0).toUpperCase()
+                  : primaryParticipant.email.charAt(0).toUpperCase()
+                }
               </div>
 
               {/* Content */}
               <div className="flex-1 min-w-0">
-                {/* Header */}
+                {/* Header row */}
                 <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-2">
-                    <p className={clsx(
-                      'text-sm truncate',
-                      hasUnread ? 'font-semibold text-gray-900' : 'text-gray-700'
-                    )}>
-                      {primaryParticipant.name || primaryParticipant.email}
-                    </p>
-                    {thread.messageCount > 1 && (
-                      <Badge color="zinc" className="whitespace-nowrap text-xs">
-                        {thread.messageCount}
-                      </Badge>
-                    )}
-                  </div>
-                  <span className="text-xs text-gray-500 whitespace-nowrap">
-                    {formatDistanceToNow(thread.lastMessageAt.toDate(), {
-                      addSuffix: true,
-                      locale: de
-                    })}
+                  <h4 className={clsx(
+                    "text-sm truncate",
+                    hasUnread ? "font-semibold text-gray-900" : "font-normal text-gray-700"
+                  )}>
+                    {primaryParticipant.name || primaryParticipant.email}
+                  </h4>
+                  <span className="text-xs text-gray-500 flex-shrink-0">
+                    {formatTime(thread.lastMessageAt)}
                   </span>
                 </div>
 
                 {/* Subject */}
                 <p className={clsx(
-                  'text-sm truncate mb-1',
-                  hasUnread ? 'font-medium text-gray-900' : 'text-gray-700'
+                  "text-sm truncate mb-1",
+                  hasUnread ? "font-medium text-gray-900" : "text-gray-700"
                 )}>
                   {thread.subject}
                 </p>
 
-                {/* Preview - would come from last message */}
-                <p className="text-sm text-gray-600 truncate">
-                  {thread.lastMessageId ? 'Klicken Sie um die Unterhaltung anzuzeigen...' : ''}
-                </p>
-
-                {/* Tags */}
-                {thread.campaignId && (
-                  <div className="flex items-center gap-2 mt-2">
-                    <Badge color="purple" className="whitespace-nowrap text-xs">
-                      PR-Kampagne
+                {/* Badges row */}
+                <div className="flex items-center gap-2 mt-1">
+                  {hasUnread && (
+                    <Badge color="blue" className="text-xs">
+                      {thread.unreadCount} neu
                     </Badge>
-                    {hasUnread && (
-                      <Badge color="blue" className="whitespace-nowrap text-xs">
-                        Ungelesen
-                      </Badge>
-                    )}
-                  </div>
-                )}
+                  )}
+                  
+                  {thread.messageCount > 1 && (
+                    <span className="text-xs text-gray-400 flex items-center gap-1">
+                      <ChevronDoubleRightIcon className="h-3 w-3" />
+                      {thread.messageCount}
+                    </span>
+                  )}
+                  
+                  {thread.participants.length > 2 && (
+                    <span className="text-xs text-gray-400 flex items-center gap-1">
+                      <UserGroupIcon className="h-3 w-3" />
+                      {thread.participants.length}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
-          </button>
+          </div>
         );
       })}
     </div>
