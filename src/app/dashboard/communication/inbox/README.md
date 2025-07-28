@@ -807,7 +807,7 @@ export function EmailAIAssistant({ email, onReplyGenerated }) {
 ## 📊 Implementierungs-Zeitplan
 
 ### Phase 1: Backend Grundlagen (3 Tage)
-- [ ] EmailAddress Service mit Routing
+- [x] EmailAddress Service mit Routing
 - [ ] EmailSignature Service
 - [ ] EmailTemplate Service
 - [ ] Thread Matcher Service

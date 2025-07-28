@@ -19,6 +19,9 @@ Wir verfolgen einen strukturierten, schrittweisen Prozess, um Klarheit und Quali
 **Bevorzuge vollständige Dateien statt Code-Schnipsel.**
 Um Integrationsaufwand zu minimieren und Fehler zu vermeiden, ist es grundsätzlich die beste Vorgehensweise, vollständige Dateiinhalte ohne Platzhalter zu erzeugen. Ich (die KI) werde daher, wann immer praktikabel, den gesamten Code für eine Datei bereitstellen. Du (der Entwickler) kannst diesen dann direkt kopieren und einfügen, anstatt einzelne Blöcke manuell zusammensetzen zu müssen.
 
+**Artefakte und immer nur eine Datei**
+Um ein kontuliertes Arbeiten zu gewährleisten werde ich (die KI) immer nir eine Datei erzeugen und diese immer in einem Artefakt. Erst nach bestätigung vom Entwickler erzeuge ich die nächste Datei.
+
 ## 3. Technische & Stilistische Grundlagen
 
 ### UI-Komponenten-Bibliothek
@@ -57,12 +60,3 @@ Das Design und die technische Umsetzung neuer Seiten und Komponenten sollen sich
   - Server-seitige Datenbankzugriffe
   - Authentication-Verifizierung (nutzt Firebase REST API statt Admin SDK)
 
-* **Firestore Import für Server-Kontext:** Wenn Firestore in API Routes oder anderen Server-Kontexten verwendet wird, muss das reguläre Client SDK mit einer separaten App-Instanz initialisiert werden:
-  ```typescript
-  // Für Server-Kontext (API Routes)
-  import { initializeApp } from 'firebase/app';
-  import { getFirestore } from 'firebase/firestore';
-  import { firebaseConfig } from '@/lib/firebase/config';
-  
-  const app = initializeApp(firebaseConfig, 'server-instance');
-  const db = getFirestore(app);
