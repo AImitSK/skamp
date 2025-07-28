@@ -2,34 +2,39 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/dialog';
+import { Dialog, DialogActions, DialogBody, DialogTitle } from '@/components/dialog';
 import { Button } from '@/components/button';
+import { Field, Label } from '@/components/fieldset';
+import { Input } from '@/components/input';
+import { Select } from '@/components/select';
 import { Badge } from '@/components/badge';
 import { SimpleSwitch } from '@/components/notifications/SimpleSwitch';
 import { EmailAddress } from '@/types/email-enhanced';
 import { emailAddressService } from '@/lib/email/email-address-service';
-import { RoutingRuleBuilder } from './RoutingRuleBuilder';
-import { RoutingRuleTest } from './RoutingRuleTest';
 import { 
   PlusIcon, 
-  PencilIcon, 
-  TrashIcon,
+  TrashIcon, 
+  PencilIcon,
   FunnelIcon,
-  ArrowsUpDownIcon,
-  BeakerIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ChevronUpIcon,
-  ChevronDownIcon,
-  PlayIcon
+  UserGroupIcon,
+  TagIcon,
+  FlagIcon,
+  ArrowPathIcon,
+  XMarkIcon
 } from '@heroicons/react/20/solid';
-import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import clsx from 'clsx';
 
-interface RoutingRule {
+interface RoutingRuleEditorProps {
+  emailAddress: EmailAddress;
+  isOpen: boolean;
+  onClose: () => void;
+  onUpdate?: () => void;
+  teamMembers: Array<{ id: string; name: string; email: string }>;
+}
+
+interface LocalRoutingRule {
   id: string;
   name: string;
-  enabled?: boolean;
-  priority?: number;
   conditions: {
     subject?: string;
     from?: string;
@@ -41,14 +46,7 @@ interface RoutingRule {
     setPriority?: 'low' | 'normal' | 'high';
     autoReply?: string;
   };
-}
-
-interface RoutingRuleEditorProps {
-  emailAddress: EmailAddress;
-  isOpen: boolean;
-  onClose: () => void;
-  onUpdate: () => void;
-  teamMembers: Array<{ id: string; name: string; email: string }>;
+  enabled: boolean; // Lokaler State für UI
 }
 
 export function RoutingRuleEditor({ 
@@ -58,354 +56,554 @@ export function RoutingRuleEditor({
   onUpdate,
   teamMembers 
 }: RoutingRuleEditorProps) {
-  const [rules, setRules] = useState<RoutingRule[]>([]);
-  const [showBuilder, setShowBuilder] = useState(false);
-  const [showTest, setShowTest] = useState(false);
-  const [editingRule, setEditingRule] = useState<RoutingRule | null>(null);
+  // Konvertiere die gespeicherten Regeln zum lokalen Format mit enabled flag
+  const [rules, setRules] = useState<LocalRoutingRule[]>(() => 
+    (emailAddress.routingRules || []).map(rule => ({
+      ...rule,
+      enabled: true // Alle gespeicherten Regeln sind standardmäßig aktiv
+    }))
+  );
+  
+  const [editingRule, setEditingRule] = useState<LocalRoutingRule | null>(null);
+  const [showRuleModal, setShowRuleModal] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [expandedRules, setExpandedRules] = useState<Set<string>>(new Set());
+  const [draggedRule, setDraggedRule] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (emailAddress.routingRules) {
-      // Erweitere die Regeln mit priority falls nicht vorhanden
-      const rulesWithPriority = emailAddress.routingRules.map((rule, index) => ({
-        ...rule,
-        priority: (rule as any).priority ?? index,
-        enabled: (rule as any).enabled ?? true
-      }));
-      // Sortiere Regeln nach Priorität
-      const sortedRules = rulesWithPriority.sort((a, b) => 
-        (a.priority || 999) - (b.priority || 999)
-      );
-      setRules(sortedRules as RoutingRule[]);
-    }
-  }, [emailAddress]);
+  // Form state für Regel-Editor
+  const [formData, setFormData] = useState<LocalRoutingRule>({
+    id: '',
+    name: '',
+    conditions: {
+      subject: '',
+      from: '',
+      keywords: []
+    },
+    actions: {
+      assignTo: [],
+      addTags: [],
+      setPriority: 'normal',
+      autoReply: ''
+    },
+    enabled: true
+  });
+
+  const [keywordInput, setKeywordInput] = useState('');
+  const [tagInput, setTagInput] = useState('');
+
+  // Mock template options - TODO: Ersetzen mit echten Templates
+  const mockTemplates = [
+    { id: 'welcome', name: 'Willkommensnachricht' },
+    { id: 'received', name: 'Empfangsbestätigung' },
+    { id: 'out-of-office', name: 'Abwesenheitsnotiz' }
+  ];
 
   const handleAddRule = () => {
+    setFormData({
+      id: Date.now().toString(),
+      name: '',
+      conditions: {
+        subject: '',
+        from: '',
+        keywords: []
+      },
+      actions: {
+        assignTo: [],
+        addTags: [],
+        setPriority: 'normal',
+        autoReply: ''
+      },
+      enabled: true
+    });
     setEditingRule(null);
-    setShowBuilder(true);
+    setShowRuleModal(true);
   };
 
-  const handleEditRule = (rule: RoutingRule) => {
+  const handleEditRule = (rule: LocalRoutingRule) => {
+    setFormData(rule);
     setEditingRule(rule);
-    setShowBuilder(true);
+    setShowRuleModal(true);
   };
 
-  const handleDeleteRule = async (ruleId: string) => {
-    if (!confirm('Möchten Sie diese Regel wirklich löschen?')) return;
-    
+  const handleDeleteRule = (ruleId: string) => {
+    setRules(rules.filter(r => r.id !== ruleId));
+  };
+
+  const handleSaveRule = () => {
+    if (!formData.name) return;
+
+    if (editingRule) {
+      // Update existing rule
+      setRules(rules.map(r => r.id === editingRule.id ? formData : r));
+    } else {
+      // Add new rule
+      setRules([...rules, formData]);
+    }
+
+    setShowRuleModal(false);
+    setEditingRule(null);
+  };
+
+  const handleAddKeyword = () => {
+    if (keywordInput.trim() && !formData.conditions.keywords?.includes(keywordInput.trim())) {
+      setFormData({
+        ...formData,
+        conditions: {
+          ...formData.conditions,
+          keywords: [...(formData.conditions.keywords || []), keywordInput.trim()]
+        }
+      });
+      setKeywordInput('');
+    }
+  };
+
+  const handleRemoveKeyword = (keyword: string) => {
+    setFormData({
+      ...formData,
+      conditions: {
+        ...formData.conditions,
+        keywords: formData.conditions.keywords?.filter(k => k !== keyword) || []
+      }
+    });
+  };
+
+  const handleAddTag = () => {
+    if (tagInput.trim() && !formData.actions.addTags?.includes(tagInput.trim())) {
+      setFormData({
+        ...formData,
+        actions: {
+          ...formData.actions,
+          addTags: [...(formData.actions.addTags || []), tagInput.trim()]
+        }
+      });
+      setTagInput('');
+    }
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    setFormData({
+      ...formData,
+      actions: {
+        ...formData.actions,
+        addTags: formData.actions.addTags?.filter(t => t !== tag) || []
+      }
+    });
+  };
+
+  const handleSaveAllRules = async () => {
     try {
       setSaving(true);
-      await emailAddressService.removeRoutingRule(
+      
+      // Konvertiere zurück zum Speicherformat (ohne enabled flag)
+      const rulesToSave = rules
+        .filter(rule => rule.enabled) // Nur aktive Regeln speichern
+        .map(({ enabled, ...rule }) => rule); // Entferne enabled flag
+      
+      await emailAddressService.updateRoutingRules(
         emailAddress.id!,
-        ruleId,
+        rulesToSave,
         emailAddress.userId
       );
       
-      setRules(rules.filter(r => r.id !== ruleId));
-      onUpdate();
+      if (onUpdate) {
+        onUpdate();
+      }
+      
+      onClose();
     } catch (error) {
-      console.error('Fehler beim Löschen der Regel:', error);
-      alert('Fehler beim Löschen der Regel');
+      console.error('Fehler beim Speichern der Routing-Regeln:', error);
+      // TODO: Zeige Fehlermeldung
     } finally {
       setSaving(false);
     }
   };
 
-  const handleSaveRule = async (rule: RoutingRule) => {
-    try {
-      setSaving(true);
-      
-      if (editingRule) {
-        // Update existing rule
-        const updatedRules = rules.map(r => 
-          r.id === editingRule.id ? rule : r
-        );
-        setRules(updatedRules);
-        
-        // Update in backend - use a workaround
-        // First remove the old rule
-        await emailAddressService.removeRoutingRule(
-          emailAddress.id!,
-          editingRule.id,
-          emailAddress.userId
-        );
-        // Then add the updated rule
-        await emailAddressService.addRoutingRule(
-          emailAddress.id!,
-          rule,
-          emailAddress.userId
-        );
-      } else {
-        // Add new rule
-        const newRule = {
-          ...rule,
-          id: `rule_${Date.now()}`,
-          priority: rules.length,
-          enabled: true
-        };
-        
-        await emailAddressService.addRoutingRule(
-          emailAddress.id!,
-          newRule,
-          emailAddress.userId
-        );
-        
-        setRules([...rules, newRule]);
-      }
-      
-      setShowBuilder(false);
-      onUpdate();
-    } catch (error) {
-      console.error('Fehler beim Speichern der Regel:', error);
-      alert('Fehler beim Speichern der Regel');
-    } finally {
-      setSaving(false);
-    }
+  // Drag & Drop handlers
+  const handleDragStart = (index: number) => {
+    setDraggedRule(index);
   };
 
-  const handleToggleRule = async (ruleId: string, enabled: boolean) => {
-    try {
-      const updatedRules = rules.map(r => 
-        r.id === ruleId ? { ...r, enabled } : r
-      );
-      setRules(updatedRules);
-      
-      // Workaround: Remove and re-add all rules with updated state
-      const rule = rules.find(r => r.id === ruleId);
-      if (rule) {
-        await emailAddressService.removeRoutingRule(
-          emailAddress.id!,
-          ruleId,
-          emailAddress.userId
-        );
-        await emailAddressService.addRoutingRule(
-          emailAddress.id!,
-          { ...rule, enabled },
-          emailAddress.userId
-        );
-      }
-      
-      onUpdate();
-    } catch (error) {
-      console.error('Fehler beim Aktualisieren der Regel:', error);
-    }
-  };
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedRule === null || draggedRule === index) return;
 
-  const handleDragEnd = async (result: DropResult) => {
-    if (!result.destination) return;
+    const newRules = [...rules];
+    const draggedItem = newRules[draggedRule];
+    newRules.splice(draggedRule, 1);
+    newRules.splice(index, 0, draggedItem);
     
-    const items = Array.from(rules);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-    
-    // Update priorities
-    const updatedRules = items.map((rule, index) => ({
-      ...rule,
-      priority: index
-    }));
-    
-    setRules(updatedRules);
-    
-    try {
-      // Workaround: For now, just update the local state
-      // In production, you would need to implement a batch update
-      console.log('Neue Reihenfolge gespeichert:', updatedRules);
-      onUpdate();
-    } catch (error) {
-      console.error('Fehler beim Aktualisieren der Reihenfolge:', error);
-    }
+    setRules(newRules);
+    setDraggedRule(index);
   };
 
-  const toggleExpanded = (ruleId: string) => {
-    const newExpanded = new Set(expandedRules);
-    if (newExpanded.has(ruleId)) {
-      newExpanded.delete(ruleId);
-    } else {
-      newExpanded.add(ruleId);
-    }
-    setExpandedRules(newExpanded);
+  const handleDragEnd = () => {
+    setDraggedRule(null);
   };
 
-  const renderConditions = (conditions: RoutingRule['conditions']) => {
-    const parts = [];
-    if (conditions.from) parts.push(`Absender: ${conditions.from}`);
-    if (conditions.subject) parts.push(`Betreff: ${conditions.subject}`);
-    if (conditions.keywords?.length) parts.push(`Keywords: ${conditions.keywords.join(', ')}`);
-    return parts.join(' • ');
-  };
-
-  const renderActions = (actions: RoutingRule['actions']) => {
-    const parts = [];
-    if (actions.assignTo?.length) {
-      const names = actions.assignTo.map(id => 
-        teamMembers.find(m => m.id === id)?.name || id
-      ).join(', ');
-      parts.push(`Zuweisen an: ${names}`);
-    }
-    if (actions.setPriority) parts.push(`Priorität: ${actions.setPriority}`);
-    if (actions.addTags?.length) parts.push(`Tags: ${actions.addTags.join(', ')}`);
-    if (actions.autoReply) parts.push('Auto-Antwort');
-    return parts.join(' • ');
+  const toggleRuleEnabled = (ruleId: string) => {
+    setRules(rules.map(rule => 
+      rule.id === ruleId 
+        ? { ...rule, enabled: !rule.enabled }
+        : rule
+    ));
   };
 
   return (
     <>
-      <Dialog open={isOpen} onClose={onClose} className="sm:max-w-4xl">
+      <Dialog open={isOpen} onClose={onClose} size="xl">
         <DialogTitle className="px-6 py-4">
           Routing-Regeln für {emailAddress.email}
         </DialogTitle>
         <DialogBody className="p-6">
           <div className="mb-4">
-            <p className="text-sm text-gray-500">
-              Definieren Sie automatische Weiterleitungs- und Zuweisungsregeln basierend auf E-Mail-Eigenschaften.
-              Regeln werden in der angegebenen Reihenfolge ausgeführt.
+            <p className="text-sm text-gray-600">
+              Definieren Sie Regeln, um eingehende E-Mails automatisch zu verarbeiten.
+              Die Regeln werden in der angegebenen Reihenfolge ausgeführt.
             </p>
           </div>
 
-          {rules.length > 0 ? (
-            <DragDropContext onDragEnd={handleDragEnd}>
-              <Droppable droppableId="rules">
-                {(provided) => (
-                  <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3">
-                    {rules.map((rule, index) => (
-                      <Draggable key={rule.id} draggableId={rule.id} index={index}>
-                        {(provided, snapshot) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            className={`border rounded-lg transition-all ${
-                              snapshot.isDragging ? 'shadow-lg' : ''
-                            } ${rule.enabled === false ? 'opacity-60' : ''}`}
-                          >
-                            <div className="p-4">
-                              <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-3 flex-1">
-                                  <div
-                                    {...provided.dragHandleProps}
-                                    className="cursor-move text-gray-400 hover:text-gray-600"
-                                  >
-                                    <ArrowsUpDownIcon className="h-5 w-5" />
-                                  </div>
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2">
-                                      <h4 className="font-medium">{rule.name}</h4>
-                                      <Badge color="zinc" className="text-xs whitespace-nowrap">
-                                        Priorität {index + 1}
-                                      </Badge>
-                                      {rule.enabled === false && (
-                                        <Badge color="red" className="text-xs whitespace-nowrap">
-                                          Deaktiviert
-                                        </Badge>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <SimpleSwitch
-                                    checked={rule.enabled !== false}
-                                    onChange={(checked) => handleToggleRule(rule.id, checked)}
-                                  />
-                                  <Button
-                                    plain
-                                    onClick={() => toggleExpanded(rule.id)}
-                                    className="p-1"
-                                  >
-                                    {expandedRules.has(rule.id) ? (
-                                      <ChevronUpIcon className="h-4 w-4" />
-                                    ) : (
-                                      <ChevronDownIcon className="h-4 w-4" />
-                                    )}
-                                  </Button>
-                                  <Button plain onClick={() => handleEditRule(rule)} className="p-1">
-                                    <PencilIcon className="h-4 w-4" />
-                                  </Button>
-                                  <Button 
-                                    plain 
-                                    onClick={() => handleDeleteRule(rule.id)} 
-                                    className="p-1 text-red-600"
-                                  >
-                                    <TrashIcon className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </div>
-                              
-                              {expandedRules.has(rule.id) && (
-                                <div className="mt-3 text-sm text-gray-600 space-y-2">
-                                  <div>
-                                    <strong>Wenn:</strong> {renderConditions(rule.conditions)}
-                                  </div>
-                                  <div>
-                                    <strong>Dann:</strong> {renderActions(rule.actions)}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
+          {/* Rules List */}
+          <div className="space-y-2 mb-6">
+            {rules.length === 0 ? (
+              <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                <FunnelIcon className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+                <p className="text-gray-500">Keine Routing-Regeln definiert</p>
+                <p className="text-sm text-gray-400 mt-1">
+                  Fügen Sie Regeln hinzu, um E-Mails automatisch zu verarbeiten
+                </p>
+              </div>
+            ) : (
+              rules.map((rule, index) => (
+                <div
+                  key={rule.id}
+                  draggable
+                  onDragStart={() => handleDragStart(index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDragEnd={handleDragEnd}
+                  className={clsx(
+                    "bg-white border rounded-lg p-4 cursor-move transition-all",
+                    draggedRule === index && "opacity-50",
+                    !rule.enabled && "opacity-60 bg-gray-50"
+                  )}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h4 className={clsx(
+                          "font-medium",
+                          !rule.enabled && "text-gray-500"
+                        )}>
+                          {rule.name}
+                        </h4>
+                        <SimpleSwitch
+                          checked={rule.enabled}
+                          onChange={() => toggleRuleEnabled(rule.id)}
+                        />
+                      </div>
+                      
+                      {/* Conditions */}
+                      <div className="mb-2">
+                        <span className="text-xs font-medium text-gray-500 uppercase">Bedingungen:</span>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {rule.conditions.subject && (
+                            <Badge color="zinc" className="whitespace-nowrap">
+                              Betreff: {rule.conditions.subject}
+                            </Badge>
+                          )}
+                          {rule.conditions.from && (
+                            <Badge color="zinc" className="whitespace-nowrap">
+                              Von: {rule.conditions.from}
+                            </Badge>
+                          )}
+                          {rule.conditions.keywords?.map(keyword => (
+                            <Badge key={keyword} color="zinc" className="whitespace-nowrap">
+                              Keyword: {keyword}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      {/* Actions */}
+                      <div>
+                        <span className="text-xs font-medium text-gray-500 uppercase">Aktionen:</span>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {rule.actions.assignTo && rule.actions.assignTo.length > 0 && (
+                            <Badge color="blue" className="whitespace-nowrap">
+                              <UserGroupIcon className="h-3 w-3 mr-1" />
+                              {rule.actions.assignTo.length} Personen zuweisen
+                            </Badge>
+                          )}
+                          {rule.actions.addTags && rule.actions.addTags.length > 0 && (
+                            <Badge color="purple" className="whitespace-nowrap">
+                              <TagIcon className="h-3 w-3 mr-1" />
+                              {rule.actions.addTags.length} Tags
+                            </Badge>
+                          )}
+                          {rule.actions.setPriority && rule.actions.setPriority !== 'normal' && (
+                            <Badge 
+                              color={
+                                rule.actions.setPriority === 'high' ? 'orange' : 
+                                'zinc'
+                              } 
+                              className="whitespace-nowrap"
+                            >
+                              <FlagIcon className="h-3 w-3 mr-1" />
+                              {rule.actions.setPriority}
+                            </Badge>
+                          )}
+                          {rule.actions.autoReply && (
+                            <Badge color="green" className="whitespace-nowrap">
+                              <ArrowPathIcon className="h-3 w-3 mr-1" />
+                              Auto-Reply
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-2 ml-4">
+                      <Button
+                        plain
+                        onClick={() => handleEditRule(rule)}
+                        className="p-1"
+                      >
+                        <PencilIcon className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        plain
+                        onClick={() => handleDeleteRule(rule.id)}
+                        className="p-1 text-red-600"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                )}
-              </Droppable>
-            </DragDropContext>
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              <FunnelIcon className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-              <p>Keine Routing-Regeln definiert</p>
-              <p className="text-sm mt-1">Erstellen Sie Regeln, um E-Mails automatisch zu verarbeiten</p>
-            </div>
-          )}
-
-          <div className="mt-6 flex gap-3">
-            <Button 
-              className="flex-1 bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
-              onClick={handleAddRule}
-            >
-              <PlusIcon className="h-4 w-4 mr-2" />
-              Neue Regel hinzufügen
-            </Button>
-            <Button
-              plain
-              onClick={() => setShowTest(true)}
-              disabled={rules.length === 0}
-              className="whitespace-nowrap"
-            >
-              <BeakerIcon className="h-4 w-4 mr-2" />
-              Regeln testen
-            </Button>
+                </div>
+              ))
+            )}
           </div>
+
+          {/* Add Rule Button */}
+          <Button 
+            onClick={handleAddRule}
+            className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
+          >
+            <PlusIcon className="h-4 w-4 mr-2" />
+            Neue Regel hinzufügen
+          </Button>
         </DialogBody>
         <DialogActions className="px-6 py-4">
           <Button plain onClick={onClose}>
-            Schließen
+            Abbrechen
+          </Button>
+          <Button 
+            className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
+            onClick={handleSaveAllRules}
+            disabled={saving}
+          >
+            {saving ? 'Speichern...' : 'Regeln speichern'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Rule Builder Modal */}
-      {showBuilder && (
-        <RoutingRuleBuilder
-          rule={editingRule}
-          teamMembers={teamMembers}
-          onSave={handleSaveRule}
-          onClose={() => {
-            setShowBuilder(false);
-            setEditingRule(null);
-          }}
-          saving={saving}
-        />
-      )}
+      {/* Rule Editor Modal */}
+      <Dialog open={showRuleModal} onClose={() => setShowRuleModal(false)}>
+        <DialogTitle className="px-6 py-4">
+          {editingRule ? 'Regel bearbeiten' : 'Neue Routing-Regel'}
+        </DialogTitle>
+        <DialogBody className="p-6">
+          <div className="space-y-6">
+            {/* Rule Name */}
+            <Field>
+              <Label>Regelname</Label>
+              <Input
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="z.B. Presseanfragen an PR-Team"
+              />
+            </Field>
 
-      {/* Test Modal */}
-      {showTest && (
-        <RoutingRuleTest
-          rules={rules}
-          teamMembers={teamMembers}
-          onClose={() => setShowTest(false)}
-        />
-      )}
+            {/* Conditions */}
+            <div>
+              <h3 className="text-sm font-medium text-gray-900 mb-3">Bedingungen</h3>
+              <p className="text-xs text-gray-500 mb-4">
+                E-Mails, die mindestens eine dieser Bedingungen erfüllen, werden verarbeitet
+              </p>
+              
+              <div className="space-y-4">
+                <Field>
+                  <Label>Betreff enthält</Label>
+                  <Input
+                    value={formData.conditions.subject || ''}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      conditions: { ...formData.conditions, subject: e.target.value }
+                    })}
+                    placeholder="z.B. Presseanfrage"
+                  />
+                </Field>
+
+                <Field>
+                  <Label>Absender enthält</Label>
+                  <Input
+                    value={formData.conditions.from || ''}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      conditions: { ...formData.conditions, from: e.target.value }
+                    })}
+                    placeholder="z.B. @journalist.de"
+                  />
+                </Field>
+
+                <Field>
+                  <Label>Keywords</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={keywordInput}
+                      onChange={(e) => setKeywordInput(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddKeyword())}
+                      placeholder="Keyword hinzufügen"
+                    />
+                    <Button
+                      type="button"
+                      onClick={handleAddKeyword}
+                      className="bg-gray-100 hover:bg-gray-200 text-gray-700 whitespace-nowrap"
+                    >
+                      Hinzufügen
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {formData.conditions.keywords?.map(keyword => (
+                      <Badge key={keyword} color="zinc" className="whitespace-nowrap">
+                        {keyword}
+                        <button
+                          onClick={() => handleRemoveKeyword(keyword)}
+                          className="ml-2 text-gray-400 hover:text-gray-600"
+                        >
+                          <XMarkIcon className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                </Field>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div>
+              <h3 className="text-sm font-medium text-gray-900 mb-3">Aktionen</h3>
+              <p className="text-xs text-gray-500 mb-4">
+                Was soll mit E-Mails passieren, die die Bedingungen erfüllen?
+              </p>
+              
+              <div className="space-y-4">
+                <Field>
+                  <Label>Team-Mitglieder zuweisen</Label>
+                  <Select
+                    multiple
+                    value={formData.actions.assignTo || []}
+                    onChange={(e) => {
+                      const selected = Array.from(e.target.selectedOptions, option => option.value);
+                      setFormData({
+                        ...formData,
+                        actions: { ...formData.actions, assignTo: selected }
+                      });
+                    }}
+                  >
+                    {teamMembers.map(member => (
+                      <option key={member.id} value={member.id}>
+                        {member.name} ({member.email})
+                      </option>
+                    ))}
+                  </Select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Halten Sie Strg/Cmd gedrückt für Mehrfachauswahl
+                  </p>
+                </Field>
+
+                <Field>
+                  <Label>Tags hinzufügen</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
+                      placeholder="Tag hinzufügen"
+                    />
+                    <Button
+                      type="button"
+                      onClick={handleAddTag}
+                      className="bg-gray-100 hover:bg-gray-200 text-gray-700 whitespace-nowrap"
+                    >
+                      Hinzufügen
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {formData.actions.addTags?.map(tag => (
+                      <Badge key={tag} color="purple" className="whitespace-nowrap">
+                        {tag}
+                        <button
+                          onClick={() => handleRemoveTag(tag)}
+                          className="ml-2 text-purple-400 hover:text-purple-600"
+                        >
+                          <XMarkIcon className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                </Field>
+
+                <Field>
+                  <Label>Priorität setzen</Label>
+                  <Select
+                    value={formData.actions.setPriority || 'normal'}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      actions: { 
+                        ...formData.actions, 
+                        setPriority: e.target.value as 'low' | 'normal' | 'high'
+                      }
+                    })}
+                  >
+                    <option value="low">Niedrig</option>
+                    <option value="normal">Normal</option>
+                    <option value="high">Hoch</option>
+                  </Select>
+                </Field>
+
+                <Field>
+                  <Label>Auto-Reply Template</Label>
+                  <Select
+                    value={formData.actions.autoReply || ''}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      actions: { ...formData.actions, autoReply: e.target.value }
+                    })}
+                  >
+                    <option value="">Keine automatische Antwort</option>
+                    {mockTemplates.map(template => (
+                      <option key={template.id} value={template.id}>
+                        {template.name}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+              </div>
+            </div>
+          </div>
+        </DialogBody>
+        <DialogActions className="px-6 py-4">
+          <Button plain onClick={() => setShowRuleModal(false)}>
+            Abbrechen
+          </Button>
+          <Button 
+            className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
+            onClick={handleSaveRule}
+            disabled={!formData.name}
+          >
+            {editingRule ? 'Speichern' : 'Regel hinzufügen'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }
