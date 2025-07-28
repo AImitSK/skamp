@@ -17,7 +17,8 @@ import {
   writeBatch,
   DocumentData,
   QueryDocumentSnapshot,
-  Query
+  Query,
+  increment
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client-init';
 import { 
@@ -48,6 +49,7 @@ interface EmailListResult {
 
 export class EmailMessageService {
   private readonly collectionName = 'email_messages';
+  private readonly threadsCollectionName = 'email_threads';
 
   /**
    * Erstellt eine neue E-Mail-Nachricht
@@ -121,14 +123,115 @@ export class EmailMessageService {
    */
   async delete(id: string): Promise<void> {
     try {
+      console.log('🗑️ Starting delete for email:', id);
+      
+      // Hole die E-Mail für Thread-Informationen
+      const email = await this.get(id);
+      if (!email) {
+        throw new Error('E-Mail nicht gefunden');
+      }
+
+      console.log('📧 Email details:', {
+        id: email.id,
+        threadId: email.threadId,
+        folder: email.folder,
+        isRead: email.isRead
+      });
+
+      // Verschiebe in Trash
       await this.update(id, {
         folder: 'trash'
-        // deletedAt existiert nicht in EmailMessage Type
-        // Verwende updatedAt als Indikator für Löschzeitpunkt
       });
+
+      // Update Thread wenn die E-Mail zu einem Thread gehört
+      if (email.threadId) {
+        await this.updateThreadAfterDelete(email.threadId, email);
+      }
+
+      console.log('✅ Email successfully moved to trash');
     } catch (error) {
-      console.error('Fehler beim Löschen der E-Mail-Nachricht:', error);
+      console.error('❌ Fehler beim Löschen der E-Mail-Nachricht:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Aktualisiert Thread-Statistiken nach dem Löschen einer E-Mail
+   */
+  private async updateThreadAfterDelete(threadId: string, deletedEmail: EmailMessage): Promise<void> {
+    try {
+      console.log('🔄 Updating thread after delete:', threadId);
+      
+      const batch = writeBatch(db);
+      const threadRef = doc(db, this.threadsCollectionName, threadId);
+      
+      // Hole aktuelle Thread-Daten
+      const threadSnap = await getDoc(threadRef);
+      if (!threadSnap.exists()) {
+        console.warn('⚠️ Thread not found:', threadId);
+        return;
+      }
+
+      const threadData = threadSnap.data() as EmailThread;
+
+      // Zähle verbleibende E-Mails im Thread (ohne Trash)
+      const remainingEmailsQuery = query(
+        collection(db, this.collectionName),
+        where('threadId', '==', threadId),
+        where('folder', '!=', 'trash')
+      );
+      
+      const remainingSnapshot = await getDocs(remainingEmailsQuery);
+      const remainingCount = remainingSnapshot.size;
+
+      console.log(`📊 Remaining emails in thread: ${remainingCount}`);
+
+      if (remainingCount === 0) {
+        // Keine E-Mails mehr im Thread (außer Trash) - Thread löschen oder archivieren
+        console.log('🗑️ No emails left in thread, archiving thread');
+        batch.update(threadRef, {
+          messageCount: 0,
+          unreadCount: 0,
+          status: 'archived',
+          updatedAt: serverTimestamp()
+        });
+      } else {
+        // Aktualisiere Thread-Counts
+        const updates: any = {
+          messageCount: remainingCount,
+          updatedAt: serverTimestamp()
+        };
+
+        // Wenn die gelöschte E-Mail ungelesen war, reduziere unreadCount
+        if (!deletedEmail.isRead && threadData.unreadCount > 0) {
+          updates.unreadCount = Math.max(0, threadData.unreadCount - 1);
+        }
+
+        // Finde die neueste verbleibende E-Mail für lastMessageAt
+        const latestEmailQuery = query(
+          collection(db, this.collectionName),
+          where('threadId', '==', threadId),
+          where('folder', '!=', 'trash'),
+          orderBy('receivedAt', 'desc'),
+          limit(1)
+        );
+
+        const latestSnapshot = await getDocs(latestEmailQuery);
+        if (!latestSnapshot.empty) {
+          const latestEmail = latestSnapshot.docs[0].data() as EmailMessage;
+          updates.lastMessageAt = latestEmail.receivedAt;
+          updates.lastMessageId = latestSnapshot.docs[0].id;
+        }
+
+        console.log('📝 Updating thread with:', updates);
+        batch.update(threadRef, updates);
+      }
+
+      await batch.commit();
+      console.log('✅ Thread updated successfully');
+    } catch (error) {
+      console.error('❌ Error updating thread after delete:', error);
+      // Fehler nicht werfen, da das Löschen selbst erfolgreich war
     }
   }
 
@@ -137,8 +240,16 @@ export class EmailMessageService {
    */
   async permanentDelete(id: string): Promise<void> {
     try {
+      // Hole E-Mail für Thread-Update
+      const email = await this.get(id);
+      
       const docRef = doc(db, this.collectionName, id);
       await deleteDoc(docRef);
+
+      // Update Thread nach permanentem Löschen
+      if (email && email.threadId) {
+        await this.updateThreadAfterDelete(email.threadId, email);
+      }
     } catch (error) {
       console.error('Fehler beim endgültigen Löschen der E-Mail-Nachricht:', error);
       throw error;
@@ -246,13 +357,17 @@ export class EmailMessageService {
   }
 
   /**
-   * Holt alle E-Mails eines Threads
+   * Holt alle E-Mails eines Threads (ohne Trash)
    */
   async getThreadMessages(threadId: string): Promise<EmailMessage[]> {
     try {
+      console.log('📨 Getting thread messages for:', threadId);
+      
       const q = query(
         collection(db, this.collectionName),
         where('threadId', '==', threadId),
+        where('folder', '!=', 'trash'), // Ausschluss von gelöschten E-Mails
+        orderBy('folder'), // Notwendig für != Query
         orderBy('receivedAt', 'asc')
       );
 
@@ -263,10 +378,37 @@ export class EmailMessageService {
         messages.push({ ...doc.data(), id: doc.id } as EmailMessage);
       });
 
+      console.log(`✅ Found ${messages.length} messages in thread`);
       return messages;
     } catch (error) {
-      console.error('Fehler beim Abrufen der Thread-Nachrichten:', error);
-      throw error;
+      console.error('❌ Fehler beim Abrufen der Thread-Nachrichten:', error);
+      
+      // Fallback ohne folder Filter wenn Index fehlt
+      try {
+        console.log('⚠️ Trying fallback query without folder filter');
+        const fallbackQuery = query(
+          collection(db, this.collectionName),
+          where('threadId', '==', threadId),
+          orderBy('receivedAt', 'asc')
+        );
+        
+        const snapshot = await getDocs(fallbackQuery);
+        const messages: EmailMessage[] = [];
+        
+        snapshot.forEach((doc) => {
+          const data = doc.data() as EmailMessage;
+          // Manuell Trash-Emails filtern
+          if (data.folder !== 'trash') {
+            messages.push({ ...data, id: doc.id });
+          }
+        });
+        
+        console.log(`✅ Fallback: Found ${messages.length} messages (excluding trash)`);
+        return messages;
+      } catch (fallbackError) {
+        console.error('❌ Fallback query also failed:', fallbackError);
+        throw fallbackError;
+      }
     }
   }
 
@@ -274,7 +416,26 @@ export class EmailMessageService {
    * Markiert eine E-Mail als gelesen/ungelesen
    */
   async markAsRead(id: string, isRead: boolean = true): Promise<void> {
-    await this.update(id, { isRead });
+    try {
+      // Hole E-Mail für Thread-Update
+      const email = await this.get(id);
+      if (!email) return;
+
+      await this.update(id, { isRead });
+
+      // Update Thread unreadCount
+      if (email.threadId && email.isRead !== isRead) {
+        const threadRef = doc(db, this.threadsCollectionName, email.threadId);
+        const change = isRead ? -1 : 1;
+        await updateDoc(threadRef, {
+          unreadCount: increment(change),
+          updatedAt: serverTimestamp()
+        });
+      }
+    } catch (error) {
+      console.error('Fehler beim Markieren als gelesen:', error);
+      throw error;
+    }
   }
 
   /**
@@ -294,17 +455,53 @@ export class EmailMessageService {
     id: string, 
     folder: 'inbox' | 'sent' | 'draft' | 'trash' | 'spam'
   ): Promise<void> {
-    await this.update(id, { folder });
+    try {
+      const email = await this.get(id);
+      if (!email) return;
+
+      await this.update(id, { folder });
+
+      // Bei Verschiebung in/aus Trash: Thread aktualisieren
+      if ((email.folder === 'trash' || folder === 'trash') && email.threadId) {
+        await this.updateThreadAfterDelete(email.threadId, email);
+      }
+    } catch (error) {
+      console.error('Fehler beim Verschieben in Ordner:', error);
+      throw error;
+    }
   }
 
   /**
    * Archiviert eine E-Mail
    */
   async archive(id: string): Promise<void> {
-    await this.update(id, { 
-      isArchived: true,
-      folder: 'inbox' // Bleibt in Inbox aber ist archiviert
-    });
+    try {
+      console.log('📦 Archiving email:', id);
+      
+      const email = await this.get(id);
+      if (!email) {
+        throw new Error('E-Mail nicht gefunden');
+      }
+
+      await this.update(id, { 
+        isArchived: true,
+        folder: 'inbox' // Bleibt in Inbox aber ist archiviert
+      });
+
+      // Update Thread counts wenn nötig
+      if (email.threadId && !email.isRead) {
+        const threadRef = doc(db, this.threadsCollectionName, email.threadId);
+        await updateDoc(threadRef, {
+          unreadCount: increment(-1),
+          updatedAt: serverTimestamp()
+        });
+      }
+
+      console.log('✅ Email archived successfully');
+    } catch (error) {
+      console.error('❌ Fehler beim Archivieren:', error);
+      throw error;
+    }
   }
 
   /**

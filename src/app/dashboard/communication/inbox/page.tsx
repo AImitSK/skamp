@@ -23,7 +23,10 @@ import {
   limit,
   Unsubscribe,
   Timestamp,
-  serverTimestamp
+  serverTimestamp,
+  getDocs,
+  QueryDocumentSnapshot,
+  DocumentData
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client-init';
 import { 
@@ -55,6 +58,7 @@ export default function InboxPage() {
   const [hasEmailAddresses, setHasEmailAddresses] = useState(false);
   const [emailAddresses, setEmailAddresses] = useState<any[]>([]);
   const [showDebug, setShowDebug] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
   
   // Debug Info Type
   interface DebugInfo {
@@ -153,25 +157,57 @@ export default function InboxPage() {
     setError(null);
 
     try {
-      // 1. Listen to threads
-      console.log('📨 Setting up thread listener for org:', organizationId);
+      // 1. Listen to threads - Alle Ordner müssen gefiltert werden
+      console.log('📨 Setting up thread listener for org:', organizationId, 'folder:', selectedFolder);
       
-      // Vereinfachte Query ohne subject, um Index-Anforderung zu vermeiden
+      // Lade alle Threads und filtere client-seitig basierend auf E-Mails
       const threadsQuery = query(
         collection(db, 'email_threads'),
         where('organizationId', '==', organizationId),
         orderBy('lastMessageAt', 'desc'),
-        limit(50)
+        limit(100) // Mehr laden für client-seitige Filterung
       );
 
       const threadsUnsubscribe = onSnapshot(
         threadsQuery,
-        (snapshot) => {
+        async (snapshot) => {
           console.log('📨 Thread snapshot received, size:', snapshot.size);
-          const threadsData: EmailThread[] = [];
+          let threadsData: EmailThread[] = [];
+          
+          // Konvertiere Snapshot zu Array
           snapshot.forEach((doc) => {
             threadsData.push({ ...doc.data(), id: doc.id } as EmailThread);
           });
+          
+          // Filtere Threads basierend auf E-Mails im ausgewählten Ordner
+          console.log(`📁 Filtering threads for folder: ${selectedFolder}`);
+          const threadIdsInFolder = new Set<string>();
+          
+          // Finde alle Thread-IDs die E-Mails im ausgewählten Ordner haben
+          for (const thread of threadsData) {
+            const messagesQuery = query(
+              collection(db, 'email_messages'),
+              where('threadId', '==', thread.id),
+              where('folder', '==', selectedFolder),
+              limit(1)
+            );
+            
+            try {
+              const messagesSnapshot = await getDocs(messagesQuery);
+              if (!messagesSnapshot.empty) {
+                threadIdsInFolder.add(thread.id!);
+              }
+            } catch (err) {
+              console.error(`Error checking thread ${thread.id}:`, err);
+            }
+          }
+          
+          // Filtere Threads
+          threadsData = threadsData.filter(thread => 
+            threadIdsInFolder.has(thread.id!)
+          );
+          
+          console.log(`✅ Found ${threadsData.length} threads with emails in ${selectedFolder}`);
           setThreads(threadsData);
           
           // Update debug info
@@ -198,10 +234,14 @@ export default function InboxPage() {
 
       // 2. Listen to messages in selected folder
       console.log('📧 Setting up message listener for folder:', selectedFolder);
+      
+      // Fix für draft vs drafts
+      const folderName = selectedFolder === 'drafts' ? 'draft' : selectedFolder;
+      
       const messagesQuery = query(
         collection(db, 'email_messages'),
         where('organizationId', '==', organizationId),
-        where('folder', '==', selectedFolder),
+        where('folder', '==', folderName),
         orderBy('receivedAt', 'desc'),
         limit(100)
       );
@@ -260,7 +300,9 @@ export default function InboxPage() {
 
     // In a real implementation, we would query each folder
     // For now, use thread unread counts for inbox
-    counts.inbox = threadsData.reduce((sum, thread) => sum + (thread.unreadCount || 0), 0);
+    if (selectedFolder === 'inbox') {
+      counts.inbox = threadsData.reduce((sum, thread) => sum + (thread.unreadCount || 0), 0);
+    }
     
     setUnreadCounts(counts);
   };
@@ -276,10 +318,23 @@ export default function InboxPage() {
       console.log('🧪 Creating test email...');
       const defaultAddress = emailAddresses.find(addr => addr.isDefault) || emailAddresses[0];
       
+      // Bestimme den Ordner basierend auf selectedFolder
+      let folder: 'inbox' | 'sent' | 'draft' | 'trash' | 'spam' = 'inbox';
+      let isDraft = false;
+      
+      if (selectedFolder === 'sent') folder = 'sent';
+      else if (selectedFolder === 'drafts') {
+        folder = 'draft';
+        isDraft = true;
+      }
+      else if (selectedFolder === 'spam') folder = 'spam';
+      else if (selectedFolder === 'trash') folder = 'trash';
+      else folder = 'inbox';
+      
       // Create a test thread first
       const testThread = await threadMatcherService.findOrCreateThread({
         messageId: `test-${Date.now()}@celeropress.de`,
-        subject: `Test E-Mail ${new Date().toLocaleString('de-DE')}`,
+        subject: `Test E-Mail in ${selectedFolder} - ${new Date().toLocaleString('de-DE')}`,
         from: { email: 'test@example.com', name: 'Test Sender' },
         to: [{ email: defaultAddress.email, name: defaultAddress.displayName }],
         organizationId,
@@ -295,30 +350,35 @@ export default function InboxPage() {
       const testMessage = await emailMessageService.create({
         messageId: `test-${Date.now()}@celeropress.de`,
         threadId: testThread.thread.id,
-        from: { email: 'test@example.com', name: 'Test Sender' },
-        to: [{ email: defaultAddress.email, name: defaultAddress.displayName }],
-        subject: `Test E-Mail ${new Date().toLocaleString('de-DE')}`,
-        textContent: 'Dies ist eine Test-E-Mail zur Überprüfung der Inbox-Funktionalität.\n\nDiese E-Mail wurde automatisch generiert.',
-        htmlContent: '<p>Dies ist eine Test-E-Mail zur Überprüfung der Inbox-Funktionalität.</p><p>Diese E-Mail wurde automatisch generiert.</p>',
-        snippet: 'Dies ist eine Test-E-Mail zur Überprüfung der Inbox-Funktionalität...',
-        folder: 'inbox',
-        isRead: false,
+        from: folder === 'sent' 
+          ? { email: defaultAddress.email, name: defaultAddress.displayName }
+          : { email: 'test@example.com', name: 'Test Sender' },
+        to: folder === 'sent'
+          ? [{ email: 'recipient@example.com', name: 'Test Recipient' }]
+          : [{ email: defaultAddress.email, name: defaultAddress.displayName }],
+        subject: `Test E-Mail in ${selectedFolder} - ${new Date().toLocaleString('de-DE')}`,
+        textContent: `Dies ist eine Test-E-Mail im ${selectedFolder} Ordner zur Überprüfung der Inbox-Funktionalität.\n\nDiese E-Mail wurde automatisch generiert.`,
+        htmlContent: `<p>Dies ist eine Test-E-Mail im <strong>${selectedFolder}</strong> Ordner zur Überprüfung der Inbox-Funktionalität.</p><p>Diese E-Mail wurde automatisch generiert.</p>`,
+        snippet: `Dies ist eine Test-E-Mail im ${selectedFolder} Ordner...`,
+        folder: folder,
+        isRead: folder === 'sent' || isDraft, // Gesendete und Entwürfe sind "gelesen"
         isStarred: false,
         isArchived: false,
-        isDraft: false,
-        labels: ['test'],
+        isDraft: isDraft,
+        labels: ['test', selectedFolder],
         importance: 'normal',
         emailAccountId: defaultAddress.id,
         organizationId,
         userId: user?.uid || '',
         receivedAt: serverTimestamp() as Timestamp,
+        sentAt: folder === 'sent' ? serverTimestamp() as Timestamp : undefined,
         attachments: [],
         headers: {},
         references: []
       });
 
       console.log('✅ Test email created:', testMessage);
-      alert('Test-E-Mail wurde erstellt!');
+      alert(`Test-E-Mail wurde im ${selectedFolder} Ordner erstellt!`);
     } catch (error: any) {
       console.error('❌ Error creating test email:', error);
       alert(`Fehler beim Erstellen der Test-E-Mail: ${error.message}`);
@@ -327,19 +387,39 @@ export default function InboxPage() {
 
   // Handle thread selection
   const handleThreadSelect = async (thread: EmailThread) => {
+    console.log('📧 Thread selected:', thread.id, thread.subject);
     setSelectedThread(thread);
     
     try {
-      // Load all messages for this thread
-      const threadMessages = await emailMessageService.getThreadMessages(thread.id!);
+      // Load all messages for this thread im aktuellen Ordner
+      let threadMessages: EmailMessage[] = [];
+      
+      // Fix für draft vs drafts
+      const folderName = selectedFolder === 'drafts' ? 'draft' : selectedFolder;
+      
+      // Lade nur E-Mails des Threads im aktuellen Ordner
+      const folderQuery = query(
+        collection(db, 'email_messages'),
+        where('threadId', '==', thread.id!),
+        where('folder', '==', folderName),
+        orderBy('receivedAt', 'asc')
+      );
+      
+      const snapshot = await getDocs(folderQuery);
+      snapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
+        threadMessages.push({ ...doc.data(), id: doc.id } as EmailMessage);
+      });
+      
+      console.log(`📨 Loaded ${threadMessages.length} messages for thread in ${selectedFolder}`);
       
       if (threadMessages.length > 0) {
         // Select the latest email in the thread
         const latestEmail = threadMessages[threadMessages.length - 1];
         setSelectedEmail(latestEmail);
+        console.log('✅ Selected latest email:', latestEmail.id);
         
-        // Mark thread as read
-        if (thread.unreadCount && thread.unreadCount > 0) {
+        // Mark thread as read (nur in inbox)
+        if (selectedFolder === 'inbox' && thread.unreadCount && thread.unreadCount > 0) {
           await threadMatcherService.markThreadAsRead(thread.id!);
           
           // Mark all unread messages in thread as read
@@ -349,9 +429,13 @@ export default function InboxPage() {
             }
           }
         }
+      } else {
+        console.warn('⚠️ No messages found for thread:', thread.id);
+        setSelectedEmail(null);
       }
     } catch (error) {
-      console.error('Error loading thread messages:', error);
+      console.error('❌ Error loading thread messages:', error);
+      setError('Fehler beim Laden der Thread-Nachrichten');
     }
   };
 
@@ -369,22 +453,97 @@ export default function InboxPage() {
   };
 
   const handleArchive = async (emailId: string) => {
+    if (actionLoading) return;
+    
     try {
+      setActionLoading(true);
+      console.log('📦 Archiving email:', emailId);
+      
+      // Speichere aktuelle Auswahl
+      const currentThreadId = selectedThread?.id;
+      const currentEmailId = selectedEmail?.id;
+      
       await emailMessageService.archive(emailId);
-      setSelectedEmail(null);
-      setSelectedThread(null);
+      
+      // Wenn die archivierte E-Mail die ausgewählte war
+      if (currentEmailId === emailId) {
+        setSelectedEmail(null);
+        
+        // Prüfe ob es noch andere E-Mails im Thread gibt
+        const remainingEmails = emails.filter(e => 
+          e.threadId === currentThreadId && e.id !== emailId && !e.isArchived
+        );
+        
+        if (remainingEmails.length === 0) {
+          // Kein Thread mehr vorhanden, alles zurücksetzen
+          setSelectedThread(null);
+        } else {
+          // Wähle die nächste E-Mail im Thread
+          const nextEmail = remainingEmails[remainingEmails.length - 1];
+          setSelectedEmail(nextEmail);
+        }
+      }
+      
+      console.log('✅ Email archived successfully');
     } catch (error) {
-      console.error('Error archiving email:', error);
+      console.error('❌ Error archiving email:', error);
+      alert('Fehler beim Archivieren der E-Mail');
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const handleDelete = async (emailId: string) => {
+    if (actionLoading) return;
+    
     try {
+      setActionLoading(true);
+      console.log('🗑️ Deleting email:', emailId);
+      
+      // Speichere aktuelle Auswahl
+      const currentThreadId = selectedThread?.id;
+      const currentEmailId = selectedEmail?.id;
+      
+      // Lösche die E-Mail
       await emailMessageService.delete(emailId);
-      setSelectedEmail(null);
-      setSelectedThread(null);
+      
+      // Wenn die gelöschte E-Mail die ausgewählte war
+      if (currentEmailId === emailId) {
+        console.log('🔄 Deleted email was selected, updating state...');
+        setSelectedEmail(null);
+        
+        // Im Trash-Ordner: Thread bleibt sichtbar
+        if (selectedFolder === 'trash') {
+          // Thread bleibt ausgewählt, aber keine E-Mail
+          console.log('📂 In trash folder, keeping thread selected');
+          return;
+        }
+        
+        // In anderen Ordnern: Prüfe verbleibende E-Mails
+        const remainingEmails = emails.filter(e => 
+          e.threadId === currentThreadId && e.id !== emailId
+        );
+        
+        console.log(`📧 Remaining emails in thread: ${remainingEmails.length}`);
+        
+        if (remainingEmails.length === 0) {
+          // Kein Thread mehr vorhanden, alles zurücksetzen
+          console.log('🔄 No more emails in thread, resetting selection');
+          setSelectedThread(null);
+        } else {
+          // Wähle die nächste E-Mail im Thread
+          const nextEmail = remainingEmails[remainingEmails.length - 1];
+          console.log('✅ Selecting next email:', nextEmail.id);
+          setSelectedEmail(nextEmail);
+        }
+      }
+      
+      console.log('✅ Email deleted successfully');
     } catch (error) {
-      console.error('Error deleting email:', error);
+      console.error('❌ Error deleting email:', error);
+      alert('Fehler beim Löschen der E-Mail');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -410,7 +569,7 @@ export default function InboxPage() {
     );
   });
 
-  // Get emails for selected thread
+  // Get emails for selected thread - immer nur aus dem aktuellen Ordner
   const threadEmails = selectedThread 
     ? emails.filter(e => e.threadId === selectedThread.id)
         .sort((a, b) => {
