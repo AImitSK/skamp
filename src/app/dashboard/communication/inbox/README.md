@@ -51,156 +51,109 @@ Vollständige E-Mail-Inbox Integration für CeleroPress (ehemals SKAMP) mit Mult
 
 ## 🆕 Zu implementieren
 
-### 1. E-Mail-Adressen Verwaltung (Nächster Schritt)
+### 1. Inbox Backend Integration (NÄCHSTER SCHRITT)
 
-#### 1.1 Email Address Service
+#### 1.1 SendGrid Inbound Parse Webhook
 ```typescript
-// src/lib/email/email-address-service.ts
-- CRUD Operationen mit Multi-Tenancy Support
-- Routing-Rules Management 
-- Team-Zuweisungen
-- Domain-Validierung
-- Permissions-Verwaltung
+// src/app/api/webhooks/sendgrid/inbound/route.ts
+- Webhook-Endpoint für eingehende E-Mails
+- Parse E-Mail Headers und Content
+- Erstelle EmailMessage Dokumente
+- Trigger Email Processing Pipeline
 ```
 
-#### 1.2 Komponenten
-- **RoutingRuleEditor** Component
-- **TeamAssignment** Component
-- **EmailAddressForm** Validierung
+#### 1.2 Email Processing Pipeline
+```typescript
+// src/lib/email/email-processor.ts
+- Finde zugehörige EmailAddress
+- Wende Routing-Regeln an
+- Weise Team-Mitglieder zu
+- Erstelle/Update EmailThread
+- Sende Benachrichtigungen
+- KI-Analyse wenn aktiviert
+```
 
-#### 1.3 Features
-- E-Mail-Adressen erstellen/bearbeiten
-- Routing-Regeln definieren
-- Team-Mitglieder zuweisen
-- KI-Settings konfigurieren
-- Signatur zuordnen
-
-### 2. Inbox Backend Integration
-
-#### 2.1 Thread-Matching Service
+#### 1.3 Thread-Matching Service
 ```typescript
 // src/lib/email/thread-matcher-service.ts
-- Header-basiertes Matching
+- Header-basiertes Matching (Message-ID, In-Reply-To)
 - Subject-basiertes Matching
 - KI-semantisches Matching (Gemini)
 - Confidence Scoring
 ```
 
-#### 2.2 Email Processing Pipeline
-```typescript
-// src/lib/email/email-processor.ts
-- SendGrid Webhook Handler
-- Parse & Validate
-- Thread Assignment
-- Routing Rules Application
-- Notification System
-- KI-Analyse mit Gemini
-```
+### 2. Inbox UI Integration
 
-### 3. KI-Integration (Gemini)
+#### 2.1 Daten-Integration
+- EmailList mit echten Daten aus Firestore
+- ComposeEmail über EmailAddress senden
+- Thread-Historie laden
+- Echtzeit-Updates mit Firestore Listeners
 
-#### 3.1 Email AI Service
-```typescript
-// src/lib/ai/email-ai-service.ts
-- Antwort-Generierung
-- Intent-Analyse
-- Template-Vorschläge
-- Thread-Zusammenfassungen
-```
+#### 2.2 Fehlende UI-Komponenten
+- Thread-Gruppierung in EmailList
+- Anhänge-Verwaltung
+- E-Mail-Weiterleitung
+- Bulk-Aktionen
 
-#### 3.2 UI Integration
-- KI-Assistant Panel
-- Quick Reply Buttons
-- Template Suggestions
-- Structured Generation Modal
+### 3. Email Templates System
 
-### 4. PR-Kampagnen Anpassung
-
-#### 4.1 Absender-Auswahl
-- EmailAddress Dropdown
-- Signatur-Integration
-- Thread-Management
-
-#### 4.2 Tracking & Analytics
-- Open/Click Tracking
-- Response-Zeit Metriken
-- KI-Nutzungs-Statistiken
-
-### 5. Email Templates (Settings Tab)
-
-#### 5.1 Template Management UI
-```typescript
-// src/app/dashboard/settings/email/templates/*
-- TemplateList Component
-- TemplateEditor Component  
-- Template-Kategorien (response, follow-up, thank-you, decline)
-- Merge-Tags UI ({{contact.firstName}}, {{campaign.title}})
-```
-
-#### 5.2 Template Service
+#### 3.1 Template Service
 ```typescript
 // src/lib/email/email-template-service.ts
 - CRUD Operationen
 - Kategorie-Management
+- Merge-Tags System
 - Verwendungs-Tracking
-- KI-Vorschläge Integration
 ```
 
-#### 5.3 Features
-- Rich-Text Editor für Templates
+#### 3.2 Template UI
+- TemplateList Component
+- TemplateEditor mit RichTextEditor
 - Variable/Merge-Tag Picker
 - Vorschau-Funktion
-- Verwendungs-Statistiken
-- A/B Testing Vorbereitung
-
-### 6. Auto-Reply & Workflows
-
-#### 6.1 Workflow Engine
-- Regel-Editor
-- Bedingungen definieren
-- Aktionen konfigurieren
-- Zeit-basierte Trigger
 
 ## 📊 Implementierungs-Zeitplan (Aktualisiert)
 
-### ✅ Phase 0: Signaturen (FERTIG - 2 Tage)
-- [x] SignatureEditor Component
-- [x] SignatureList Component
-- [x] Email Signature Service
+### ✅ Phase 0: Grundlegende E-Mail Features (FERTIG - 5 Tage)
+- [x] E-Mail Signaturen System
+- [x] E-Mail-Adressen Verwaltung
+- [x] Domain-Verifizierung
+- [x] Routing-Rules System
 - [x] Security Rules
-- [x] Multi-Tenancy Support
 
-### Phase 1: E-Mail-Adressen (3 Tage)
-- [ ] EmailAddress Service implementieren
-- [ ] Routing-Rules Backend
-- [ ] Team-Assignment Logic
-- [ ] E-Mail-Adressen UI fertigstellen
+### Phase 1: Inbox Backend Integration (3 Tage) - NÄCHSTER SCHRITT
+- [ ] SendGrid Inbound Parse Webhook
+- [ ] Email Processing Pipeline
+- [ ] Thread Matcher Service
+- [ ] EmailMessage/Thread Firestore Integration
 - [ ] Tests
 
-### Phase 2: Email Templates (2 Tage)
+### Phase 2: Inbox UI Integration (2 Tage)
+- [ ] Mock-Daten durch echte Daten ersetzen
+- [ ] Firestore Listeners für Echtzeit-Updates
+- [ ] Thread-Gruppierung implementieren
+- [ ] Anhänge-Verwaltung
+- [ ] E-Mail senden über EmailAddress
+
+### Phase 3: Email Templates (2 Tage)
 - [ ] EmailTemplate Service
 - [ ] TemplateList Component
 - [ ] TemplateEditor Component
 - [ ] Merge-Tags System
 - [ ] Template-Kategorien
 
-### Phase 3: Inbox Backend (3 Tage)
-- [ ] Thread Matcher Service
-- [ ] Email Processor Pipeline
-- [ ] SendGrid Webhook Integration
-- [ ] Notification System
-- [ ] Tests
-
 ### Phase 4: KI-Integration (2 Tage)
-- [ ] Email AI Service
-- [ ] KI-Assistant UI
+- [ ] Email AI Service mit Gemini
+- [ ] KI-Assistant UI in EmailViewer
 - [ ] Template Suggestions
+- [ ] Intent-Analyse
 - [ ] Performance Optimierung
 
 ### Phase 5: PR-Kampagnen Integration (1 Tag)
-- [ ] Absender-Auswahl
-- [ ] Thread-Management
-- [ ] Tracking Integration
+- [ ] Absender-Auswahl in Kampagnen
+- [ ] Thread-Management für Kampagnen
+- [ ] Response Tracking
 
 ### Phase 6: Testing & Polish (2 Tage)
 - [ ] End-to-End Tests
@@ -208,7 +161,7 @@ Vollständige E-Mail-Inbox Integration für CeleroPress (ehemals SKAMP) mit Mult
 - [ ] Dokumentation
 - [ ] Bug Fixes
 
-**Gesamt: ~13 Arbeitstage** (3 Tage bereits erledigt)
+**Gesamt: ~13 Arbeitstage** (5 Tage bereits erledigt)
 
 ## 🚀 Deployment Checkliste
 
@@ -268,11 +221,14 @@ GEMINI_API_KEY=xxx
 - [x] Label Component Error - Dokumentiert in INSTRUCTIONS.md
 - [x] Security Rules für email_signatures
 - [x] Multi-Tenancy Fallback-Logik
+- [x] Domain-Verifizierung Status
 
 ### Offen
+- [ ] Inbox zeigt nur Mock-Daten (Backend-Integration fehlt)
+- [ ] E-Mails können nicht empfangen werden (Webhook fehlt)
+- [ ] ComposeEmail sendet nicht über EmailAddress
 - [ ] RichTextEditor Performance bei großen Signaturen
-- [ ] Domain-Verifizierung UI Feedback
-- [ ] Bulk-Operations für E-Mail-Adressen
+- [ ] Bulk-Operations für E-Mail-Verwaltung
 
 ## 📚 Dokumentation
 
@@ -297,14 +253,28 @@ GEMINI_API_KEY=xxx
 
 ## 🚦 Nächste Schritte
 
-1. **Email Address Service** implementieren
-2. **Routing Rules** Component erstellen
-3. **Test** E-Mail-Adresse anlegen
-4. **SendGrid Webhook** implementieren
-5. **Thread Matching** testen
+1. **SendGrid Inbound Parse Webhook** implementieren
+   - API Route erstellen
+   - E-Mail Parsing Logic
+   - Firestore Integration
+
+2. **Email Processing Pipeline** aufbauen
+   - Thread Matching implementieren
+   - Routing Rules anwenden
+   - Notifications triggern
+
+3. **Inbox UI mit Backend verbinden**
+   - Mock-Daten entfernen
+   - Firestore Queries implementieren
+   - Echtzeit-Updates einrichten
+
+4. **Testen** mit echten E-Mails
+   - SendGrid Webhook konfigurieren
+   - Test-E-Mails senden
+   - Debugging
 
 ---
 
-**Status**: In aktiver Entwicklung  
+**Status**: E-Mail-System funktionsfähig, Inbox-Integration ausstehend  
 **Letzte Aktualisierung**: Juli 2025  
-**Version**: 0.3.0 (Signaturen implementiert)
+**Version**: 0.5.0 (E-Mail-Adressen & Signaturen fertig)
