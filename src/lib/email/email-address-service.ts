@@ -17,9 +17,11 @@ import {
   Timestamp,
   writeBatch,
   DocumentData,
-  QueryDocumentSnapshot
+  QueryDocumentSnapshot,
+  getFirestore
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase/client-init';
+import { initializeApp, getApps } from 'firebase/app';
+import { getAuth, signInWithCustomToken } from 'firebase/auth';
 import { domainService } from '@/lib/firebase/domain-service';
 import { 
   EmailAddress, 
@@ -27,8 +29,275 @@ import {
   EmailAddressFormData 
 } from '@/types/email-enhanced';
 
+// Firebase-Konfiguration
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
+};
+
+// Initialisiere Firebase App wenn noch nicht geschehen
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const auth = getAuth(app);
+
+// Firestore Instanz
+const db = getFirestore(app);
+
+// Hilfsfunktion für Server-seitige Authentifizierung
+async function authenticateWithToken(token: string): Promise<void> {
+  if (typeof window === 'undefined' && token) {
+    try {
+      // Versuche mit dem Token zu authentifizieren
+      // Da wir kein Admin SDK verwenden können, müssen wir einen anderen Weg finden
+      // Option 1: Custom Token (benötigt Backend-Endpoint)
+      // Option 2: ID Token direkt verwenden (nicht ideal)
+      // Für jetzt: Skip auth auf Server-Seite und verlassen uns auf Security Rules
+      console.log('⚠️ Server-side auth skipped - relying on security rules');
+    } catch (error) {
+      console.error('Auth error:', error);
+    }
+  }
+}
+
 export class EmailAddressService {
   private readonly collectionName = 'email_addresses';
+
+  /**
+   * Server-seitige Methode mit direktem Firestore-Zugriff
+   * Nutzt Firestore REST API statt SDK für Server-Kompatibilität
+   */
+  async getDefaultForOrganizationServer(organizationId: string, authToken?: string): Promise<EmailAddress | null> {
+    if (typeof window !== 'undefined') {
+      // Client-seitig: Nutze normale Methode
+      return this.getDefaultForOrganization(organizationId);
+    }
+
+    try {
+      console.log('🔍 Server: getDefaultForOrganization via REST API');
+      
+      const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+      const baseUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents`;
+      
+      // Query für Standard E-Mail-Adresse
+      const queryUrl = `${baseUrl}:runQuery`;
+      const queryBody = {
+        structuredQuery: {
+          from: [{ collectionId: this.collectionName }],
+          where: {
+            compositeFilter: {
+              op: 'AND',
+              filters: [
+                {
+                  fieldFilter: {
+                    field: { fieldPath: 'organizationId' },
+                    op: 'EQUAL',
+                    value: { stringValue: organizationId }
+                  }
+                },
+                {
+                  fieldFilter: {
+                    field: { fieldPath: 'isDefault' },
+                    op: 'EQUAL',
+                    value: { booleanValue: true }
+                  }
+                }
+              ]
+            }
+          },
+          limit: 1
+        }
+      };
+
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+
+      const response = await fetch(queryUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(queryBody)
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        console.error('Firestore REST API error:', error);
+        
+        // Fallback auf normale SDK-Methode
+        return this.getDefaultForOrganization(organizationId);
+      }
+
+      const data = await response.json();
+      
+      if (data.length === 0 || !data[0].document) {
+        // Keine Standard-E-Mail gefunden, versuche Fallback
+        return this.getFirstActiveEmailServer(organizationId, authToken);
+      }
+
+      // Konvertiere Firestore-Dokument zu EmailAddress
+      const doc = data[0].document;
+      const emailAddress = this.convertFirestoreDocument(doc);
+      
+      console.log('✅ Found default email via REST:', emailAddress.email);
+      return emailAddress;
+
+    } catch (error) {
+      console.error('❌ Server getDefaultForOrganization error:', error);
+      // Fallback auf Client SDK
+      return this.getDefaultForOrganization(organizationId);
+    }
+  }
+
+  /**
+   * Server-seitige Methode für erste aktive E-Mail
+   */
+  private async getFirstActiveEmailServer(organizationId: string, authToken?: string): Promise<EmailAddress | null> {
+    try {
+      console.log('🔍 Server: Looking for first active email via REST API');
+      
+      const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+      const baseUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents`;
+      
+      const queryUrl = `${baseUrl}:runQuery`;
+      const queryBody = {
+        structuredQuery: {
+          from: [{ collectionId: this.collectionName }],
+          where: {
+            compositeFilter: {
+              op: 'AND',
+              filters: [
+                {
+                  fieldFilter: {
+                    field: { fieldPath: 'organizationId' },
+                    op: 'EQUAL',
+                    value: { stringValue: organizationId }
+                  }
+                },
+                {
+                  fieldFilter: {
+                    field: { fieldPath: 'isActive' },
+                    op: 'EQUAL',
+                    value: { booleanValue: true }
+                  }
+                }
+              ]
+            }
+          },
+          limit: 1
+        }
+      };
+
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+
+      const response = await fetch(queryUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(queryBody)
+      });
+
+      if (!response.ok) {
+        console.error('Firestore REST API error:', await response.text());
+        return null;
+      }
+
+      const data = await response.json();
+      
+      if (data.length === 0 || !data[0].document) {
+        console.log('❌ No active email addresses found');
+        return null;
+      }
+
+      const doc = data[0].document;
+      const emailAddress = this.convertFirestoreDocument(doc);
+      
+      console.log('✅ Found active email via REST:', emailAddress.email);
+      return emailAddress;
+
+    } catch (error) {
+      console.error('❌ Server getFirstActiveEmail error:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Konvertiert Firestore REST API Dokument zu EmailAddress
+   */
+  private convertFirestoreDocument(doc: any): EmailAddress {
+    const fields = doc.fields;
+    const id = doc.name.split('/').pop();
+    
+    return {
+      id,
+      email: fields.email?.stringValue || '',
+      localPart: fields.localPart?.stringValue || '',
+      domainId: fields.domainId?.stringValue || '',
+      displayName: fields.displayName?.stringValue || '',
+      isActive: fields.isActive?.booleanValue || false,
+      isDefault: fields.isDefault?.booleanValue || false,
+      aliasType: fields.aliasType?.stringValue as any || 'specific',
+      inboxEnabled: fields.inboxEnabled?.booleanValue || false,
+      assignedUserIds: fields.assignedUserIds?.arrayValue?.values?.map((v: any) => v.stringValue) || [],
+      permissions: {
+        read: fields.permissions?.mapValue?.fields?.read?.arrayValue?.values?.map((v: any) => v.stringValue) || [],
+        write: fields.permissions?.mapValue?.fields?.write?.arrayValue?.values?.map((v: any) => v.stringValue) || [],
+        manage: fields.permissions?.mapValue?.fields?.manage?.arrayValue?.values?.map((v: any) => v.stringValue) || []
+      },
+      emailsSent: parseInt(fields.emailsSent?.integerValue || '0'),
+      emailsReceived: parseInt(fields.emailsReceived?.integerValue || '0'),
+      organizationId: fields.organizationId?.stringValue || '',
+      userId: fields.userId?.stringValue || '',
+      createdAt: fields.createdAt?.timestampValue ? new Date(fields.createdAt.timestampValue) as any : null,
+      updatedAt: fields.updatedAt?.timestampValue ? new Date(fields.updatedAt.timestampValue) as any : null,
+      createdBy: fields.createdBy?.stringValue,
+      updatedBy: fields.updatedBy?.stringValue,
+      lastUsedAt: fields.lastUsedAt?.timestampValue ? new Date(fields.lastUsedAt.timestampValue) as any : undefined,
+      clientName: fields.clientName?.stringValue,
+      routingRules: fields.routingRules?.arrayValue?.values?.map((v: any) => this.convertRoutingRule(v.mapValue)) || undefined,
+      aiSettings: fields.aiSettings?.mapValue ? this.convertAISettings(fields.aiSettings.mapValue) : undefined
+    } as EmailAddress;
+  }
+
+  private convertRoutingRule(mapValue: any): any {
+    const fields = mapValue.fields;
+    return {
+      id: fields.id?.stringValue,
+      name: fields.name?.stringValue,
+      conditions: {
+        subject: fields.conditions?.mapValue?.fields?.subject?.stringValue,
+        from: fields.conditions?.mapValue?.fields?.from?.stringValue,
+        keywords: fields.conditions?.mapValue?.fields?.keywords?.arrayValue?.values?.map((v: any) => v.stringValue) || []
+      },
+      actions: {
+        assignTo: fields.actions?.mapValue?.fields?.assignTo?.arrayValue?.values?.map((v: any) => v.stringValue) || [],
+        addTags: fields.actions?.mapValue?.fields?.addTags?.arrayValue?.values?.map((v: any) => v.stringValue) || [],
+        setPriority: fields.actions?.mapValue?.fields?.setPriority?.stringValue,
+        autoReply: fields.actions?.mapValue?.fields?.autoReply?.stringValue
+      }
+    };
+  }
+
+  private convertAISettings(mapValue: any): any {
+    const fields = mapValue.fields;
+    return {
+      enabled: fields.enabled?.booleanValue || false,
+      autoSuggest: fields.autoSuggest?.booleanValue || false,
+      autoCategorize: fields.autoCategorize?.booleanValue || false,
+      preferredTone: fields.preferredTone?.stringValue || 'formal',
+      customPromptContext: fields.customPromptContext?.stringValue
+    };
+  }
 
   /**
    * Erstellt eine neue E-Mail-Adresse
@@ -514,6 +783,8 @@ export class EmailAddressService {
    */
   async getDefaultForOrganization(organizationId: string): Promise<EmailAddress | null> {
     try {
+      console.log('🔍 getDefaultForOrganization called with:', organizationId);
+      
       const q = query(
         collection(db, this.collectionName),
         where('organizationId', '==', organizationId),
@@ -522,7 +793,11 @@ export class EmailAddressService {
       );
 
       const snapshot = await getDocs(q);
+      console.log('📊 Default email query results:', snapshot.size);
+      
       if (snapshot.empty) {
+        console.log('⚠️ No default email found, trying fallback to first active...');
+        
         // Fallback: Erste aktive E-Mail-Adresse
         const fallbackQ = query(
           collection(db, this.collectionName),
@@ -532,18 +807,25 @@ export class EmailAddressService {
         );
         
         const fallbackSnapshot = await getDocs(fallbackQ);
+        console.log('📊 Active email query results:', fallbackSnapshot.size);
+        
         if (!fallbackSnapshot.empty) {
           const doc = fallbackSnapshot.docs[0];
-          return { ...doc.data(), id: doc.id } as EmailAddress;
+          const emailAddress = { ...doc.data(), id: doc.id } as EmailAddress;
+          console.log('✅ Found active email address:', emailAddress.email);
+          return emailAddress;
         }
         
+        console.log('❌ No active email addresses found');
         return null;
       }
 
       const doc = snapshot.docs[0];
-      return { ...doc.data(), id: doc.id } as EmailAddress;
+      const emailAddress = { ...doc.data(), id: doc.id } as EmailAddress;
+      console.log('✅ Found default email address:', emailAddress.email);
+      return emailAddress;
     } catch (error) {
-      console.error('Error getting default email address:', error);
+      console.error('❌ Error getting default email address:', error);
       return null;
     }
   }

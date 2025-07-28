@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
 import sgMail from '@sendgrid/mail';
 import { emailComposerService } from '@/lib/email/email-composer-service';
+import { emailAddressService } from '@/lib/email/email-address-service';
 import { rateLimitServiceAPI } from '@/lib/security/rate-limit-service-api';
 import { PRCampaign } from '@/types/pr';
 
@@ -105,7 +106,7 @@ interface TestEmailRequest {
     phone?: string;
     email?: string;
   };
-  campaignId?: string; // NEU: Campaign ID für echte Daten
+  campaignId?: string;
   testMode: boolean;
 }
 
@@ -133,6 +134,39 @@ export async function POST(request: NextRequest) {
       }
       
       console.log('🧪 Sending test email to:', data.recipient?.email || 'unknown');
+      console.log('📊 Auth context:', {
+        userId: auth.userId,
+        organizationId: auth.organizationId
+      });
+
+      // NEU: E-Mail-Adresse für Test-Versand holen
+      console.log('🔍 Getting email address for test...');
+      
+      // Verwende Server-Methode für API Routes
+      let emailAddress = await emailAddressService.getDefaultForOrganizationServer(auth.organizationId, token);
+      
+      if (!emailAddress) {
+        console.log('⚠️ No default email address found');
+        console.error('❌ No email addresses found for organization');
+        
+        return NextResponse.json(
+          { 
+            error: 'Keine E-Mail-Adresse konfiguriert. Bitte richten Sie mindestens eine E-Mail-Adresse in den Einstellungen ein.',
+            details: {
+              organizationId: auth.organizationId,
+              userId: auth.userId,
+              hint: 'Gehen Sie zu Einstellungen → E-Mail und fügen Sie eine E-Mail-Adresse hinzu.'
+            }
+          },
+          { status: 400 }
+        );
+      }
+
+      console.log('✅ Using email address:', emailAddress.email);
+
+      // NEU: Reply-To Adresse generieren
+      const replyToAddress = emailAddressService.generateReplyToAddress(emailAddress);
+      console.log('📧 Generated reply-to address:', replyToAddress);
 
       // SICHERHEIT: Rate Limiting prüfen
       const rateLimitCheck = await rateLimitServiceAPI.checkRateLimit(auth.userId, 'test', 1, token);
@@ -209,9 +243,9 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Absender-Konfiguration
-      const fromEmail = process.env.SENDGRID_FROM_EMAIL!;
-      const fromName = process.env.SENDGRID_FROM_NAME!;
+      // Absender-Konfiguration mit E-Mail-Adresse
+      const fromEmail = emailAddress.email;
+      const fromName = emailAddress.displayName || data.senderInfo.company;
 
       if (!fromEmail || !fromName) {
         throw new Error('SendGrid configuration missing');
@@ -264,7 +298,7 @@ export async function POST(request: NextRequest) {
           title: campaign?.title || 'Test-Kampagne', 
           clientName: campaign?.clientName || auth.organizationId 
         },
-        mediaShareUrl // NEU: Media Share URL übergeben
+        mediaShareUrl
       );
 
       // HTML und Text Content generieren
@@ -272,15 +306,17 @@ export async function POST(request: NextRequest) {
         data.campaignEmail, 
         variables,
         data.testMode,
-        mediaShareUrl, // NEU: Media Share URL übergeben
-        campaign // NEU: Campaign für Anhang-Info
+        mediaShareUrl,
+        campaign,
+        replyToAddress // NEU: Reply-To für Info im Footer
       );
       
       const textContent = buildTestEmailText(
         data.campaignEmail, 
         variables,
         data.testMode,
-        mediaShareUrl // NEU: Media Share URL übergeben
+        mediaShareUrl,
+        replyToAddress // NEU: Reply-To für Info im Footer
       );
       
       const personalizedSubject = emailComposerService.replaceVariables(
@@ -300,6 +336,11 @@ export async function POST(request: NextRequest) {
           email: fromEmail,
           name: fromName
         },
+        // NEU: Reply-To Header
+        reply_to: {
+          email: replyToAddress,
+          name: fromName
+        },
         subject: testSubject,
         html: htmlContent,
         text: textContent,
@@ -312,7 +353,8 @@ export async function POST(request: NextRequest) {
         headers: {
           'X-Campaign-Type': 'test',
           'X-Organization-Id': auth.organizationId,
-          'X-Campaign-Id': data.campaignId || ''
+          'X-Campaign-Id': data.campaignId || '',
+          'X-CeleroPress-EmailAddress': emailAddress.id || ''
         }
       };
 
@@ -321,7 +363,8 @@ export async function POST(request: NextRequest) {
       // SICHERHEIT: Erfolgreiche Aktion protokollieren
       await rateLimitServiceAPI.recordAction(auth.userId, 'test', 1, {
         campaignId: data.campaignId,
-        recipientEmail: data.recipient.email
+        recipientEmail: data.recipient.email,
+        emailAddressId: emailAddress.id
       }, token);
 
       await rateLimitServiceAPI.logEmailActivity({
@@ -346,6 +389,11 @@ export async function POST(request: NextRequest) {
           html: htmlContent,
           text: textContent,
           subject: testSubject
+        },
+        emailConfig: {
+          from: fromEmail,
+          replyTo: replyToAddress,
+          emailAddressId: emailAddress.id
         },
         rateLimit: {
           remaining: rateLimitCheck.remaining - 1,
@@ -391,7 +439,8 @@ function buildTestEmailHtml(
   variables: any,
   isTest: boolean,
   mediaShareUrl?: string,
-  campaign?: PRCampaign | null
+  campaign?: PRCampaign | null,
+  replyToAddress?: string
 ): string {
   const testBanner = isTest ? `
     <div style="background: #ff6b6b; color: white; padding: 10px; text-align: center; font-weight: bold;">
@@ -503,6 +552,13 @@ function buildTestEmailHtml(
             padding: 20px;
             background: #f1f3f4;
         }
+        .reply-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -524,14 +580,22 @@ function buildTestEmailHtml(
             ${attachmentInfo}
             ${mediaButtonHtml}
             
+            ${replyToAddress ? `
+            <div class="reply-info">
+                <p style="margin: 0;"><strong>ℹ️ Reply-To System aktiv:</strong></p>
+                <p style="margin: 5px 0 0 0;">Antworten auf diese E-Mail landen automatisch in Ihrer CeleroPress Inbox.</p>
+            </div>
+            ` : ''}
+            
             <div class="signature">
                 ${emailComposerService.replaceVariables(email.signature, variables)}
             </div>
         </div>
         
         <div class="footer">
-            <p>Diese TEST-E-Mail wurde über das SKAMP PR-Tool versendet.</p>
+            <p>Diese TEST-E-Mail wurde über das CeleroPress PR-Tool versendet.</p>
             ${campaign ? `<p style="font-size: 11px; color: #adb5bd;">Campaign: ${campaign.title}</p>` : ''}
+            ${replyToAddress ? `<p style="font-size: 11px; color: #adb5bd;">Reply-To: ${replyToAddress}</p>` : ''}
         </div>
     </div>
 </body>
@@ -542,10 +606,12 @@ function buildTestEmailText(
   email: TestEmailRequest['campaignEmail'], 
   variables: any,
   isTest: boolean,
-  mediaShareUrl?: string
+  mediaShareUrl?: string,
+  replyToAddress?: string
 ): string {
   const testHeader = isTest ? '🧪 TEST-EMAIL - Dies ist keine echte Kampagnen-Email\n\n' : '';
   const mediaText = mediaShareUrl ? `\n\n📎 Medien ansehen: ${mediaShareUrl}\n` : '';
+  const replyText = replyToAddress ? `\n\nℹ️ Reply-To System aktiv: Antworten landen in Ihrer CeleroPress Inbox\n` : '';
   
   // Extrahiere nur die Einleitung aus dem HTML (ohne Greeting und Signature)
   const introText = stripHtml(emailComposerService.replaceVariables(email.introduction, variables));
@@ -555,11 +621,12 @@ function buildTestEmailText(
 --- PRESSEMITTEILUNG ---
 ${stripHtml(emailComposerService.replaceVariables(email.pressReleaseHtml, variables))}
 --- ENDE PRESSEMITTEILUNG ---
-${mediaText}
+${mediaText}${replyText}
 ${emailComposerService.replaceVariables(email.signature, variables)}
 
 ---
-Diese TEST-E-Mail wurde über das SKAMP PR-Tool versendet.
+Diese TEST-E-Mail wurde über das CeleroPress PR-Tool versendet.
+${replyToAddress ? `Reply-To: ${replyToAddress}` : ''}
 `;
 }
 

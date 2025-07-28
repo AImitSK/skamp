@@ -36,8 +36,8 @@ interface SendPRCampaignRequest {
     phone?: string;
     email?: string;
   };
-  campaignId?: string; // NEU: Für Logging
-  campaignTitle?: string; // NEU: Für Logging
+  campaignId?: string;
+  campaignTitle?: string;
   mediaShareUrl?: string;
 }
 
@@ -68,23 +68,51 @@ export async function POST(request: NextRequest) {
       }
       
       console.log('🚀 Starting PR campaign send for', data.recipients.length, 'recipients');
+      console.log('📊 Auth context:', {
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        isMatching: auth.userId === auth.organizationId
+      });
 
-      // NEU: E-Mail-Adresse für Organisation holen
-      const emailAddress = await emailAddressService.getDefaultForOrganization(auth.organizationId);
+      // NEU: E-Mail-Adresse für Organisation holen mit verbessertem Fallback
+      console.log('🔍 Searching for email address...');
+      
+      // Verwende Server-Methode für API Routes
+      let emailAddress = await emailAddressService.getDefaultForOrganizationServer(auth.organizationId, token);
       
       if (!emailAddress) {
+        console.log('⚠️ No default email address found, trying fallback...');
+        
+        // Fallback: Hole alle E-Mail-Adressen über REST API
+        // Da getByOrganization auch Permissions braucht, müssen wir das umgehen
+        console.error('❌ No email addresses accessible via API');
+        
         return NextResponse.json(
           { 
             success: false,
-            error: 'Keine Standard E-Mail-Adresse konfiguriert. Bitte richten Sie eine E-Mail-Adresse in den Einstellungen ein.'
+            error: 'Keine E-Mail-Adresse konfiguriert oder keine Berechtigung. Bitte richten Sie mindestens eine E-Mail-Adresse in den Einstellungen ein.',
+            details: {
+              organizationId: auth.organizationId,
+              userId: auth.userId,
+              hint: 'Stellen Sie sicher, dass mindestens eine E-Mail-Adresse angelegt und als Standard markiert ist.'
+            }
           },
           { status: 400 }
         );
       }
+      
+      console.log('✅ Using email address:', emailAddress.email);
 
       // NEU: Reply-To Adresse generieren
       const replyToAddress = emailAddressService.generateReplyToAddress(emailAddress);
-      console.log('📧 Using email:', emailAddress.email, 'with reply-to:', replyToAddress);
+      console.log('📧 Generated reply-to address:', replyToAddress);
+      console.log('📧 Email configuration:', {
+        from: emailAddress.email,
+        displayName: emailAddress.displayName,
+        replyTo: replyToAddress,
+        isDefault: emailAddress.isDefault,
+        isActive: emailAddress.isActive
+      });
 
       // SICHERHEIT: Prüfe Campaign Rate Limit
       const campaignRateLimit = await rateLimitServiceAPI.checkRateLimit(auth.userId, 'campaign', 1, token);
@@ -194,8 +222,8 @@ export async function POST(request: NextRequest) {
 
       console.log(`📧 Validated ${validRecipients.length} of ${data.recipients.length} recipients`);
 
-      // GEÄNDERT: Absender-Konfiguration nutzt jetzt die E-Mail-Adresse
-      const fromEmail = emailAddress.email; // z.B. presse@kunde.de
+      // Absender-Konfiguration nutzt jetzt die E-Mail-Adresse
+      const fromEmail = emailAddress.email;
       const fromName = emailAddress.displayName || data.senderInfo.company;
 
       const results = [];
@@ -329,7 +357,10 @@ export async function POST(request: NextRequest) {
         },
         emailConfig: {
           from: fromEmail,
-          replyTo: replyToAddress
+          replyTo: replyToAddress,
+          displayName: fromName,
+          emailAddressId: emailAddress.id,
+          isDefault: emailAddress.isDefault
         },
         rateLimit: {
           campaignsRemaining: campaignRateLimit.remaining - 1,
@@ -357,7 +388,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { 
           success: false, 
-          error: error.message 
+          error: error.message,
+          details: {
+            organizationId: auth.organizationId,
+            userId: auth.userId
+          }
         }, 
         { status: 500 }
       );
