@@ -40,19 +40,27 @@ export function SignatureList({
   const [showPreview, setShowPreview] = useState<string | null>(null);
 
   const handleAdd = () => {
+    console.log('🔵 handleAdd clicked - opening editor for new signature');
     setEditingSignature(null);
     setShowEditor(true);
   };
 
   const handleEdit = (signature: EmailSignature) => {
+    console.log('🔵 handleEdit clicked - opening editor for:', signature.name);
     setEditingSignature(signature);
     setShowEditor(true);
   };
 
   const handleSave = async (data: Partial<EmailSignature>) => {
-    await onSave(data, editingSignature?.id);
-    setShowEditor(false);
-    setEditingSignature(null);
+    console.log('💾 handleSave called with data:', data);
+    try {
+      await onSave(data, editingSignature?.id);
+      setShowEditor(false);
+      setEditingSignature(null);
+    } catch (error) {
+      console.error('❌ Error in handleSave:', error);
+      // Don't close modal on error
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -76,6 +84,41 @@ export function SignatureList({
     });
   };
 
+  const getPreviewHtml = (signature: EmailSignature): string => {
+    const previewData = {
+      userName: signature.variables?.includeUserName ? 'Max Mustermann' : '',
+      userTitle: signature.variables?.includeUserTitle ? 'Geschäftsführer' : '',
+      companyName: signature.variables?.includeCompanyName ? 'Musterfirma GmbH' : '',
+      phone: signature.variables?.includePhone ? '+49 123 456789' : '',
+      website: signature.variables?.includeWebsite ? 'www.musterfirma.de' : '',
+      socialLinks: signature.variables?.includeSocialLinks ? 'LinkedIn | Twitter | Facebook' : ''
+    };
+
+    let previewContent = signature.content || '';
+    
+    const fields = [];
+    if (previewData.userName) fields.push(`<strong>${previewData.userName}</strong>`);
+    if (previewData.userTitle) fields.push(previewData.userTitle);
+    if (previewData.companyName) fields.push(previewData.companyName);
+    if (previewData.phone) fields.push(`Tel: ${previewData.phone}`);
+    if (previewData.website) fields.push(`<a href="https://${previewData.website}">${previewData.website}</a>`);
+    if (previewData.socialLinks) fields.push(previewData.socialLinks);
+    
+    if (fields.length > 0) {
+      previewContent = `
+        <div style="margin-top: 20px; border-top: 2px solid #e5e7eb; padding-top: 20px;">
+          ${fields.join('<br>')}
+          ${previewContent ? '<br><br>' + previewContent : ''}
+        </div>
+      `;
+    }
+    
+    return previewContent;
+  };
+
+  // Debug log für showEditor state
+  console.log('🔍 SignatureList render - showEditor:', showEditor);
+
   if (loading) {
     return (
       <div className="bg-white rounded-lg border p-8 text-center">
@@ -87,20 +130,37 @@ export function SignatureList({
 
   if (signatures.length === 0) {
     return (
-      <div className="bg-white rounded-lg border p-8 text-center">
-        <PencilSquareIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Keine Signaturen vorhanden</h3>
-        <p className="text-gray-500 mb-4">
-          Erstellen Sie professionelle Signaturen für Ihre E-Mails
-        </p>
-        <Button 
-          onClick={handleAdd}
-          className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
-        >
-          <PlusIcon className="h-4 w-4 mr-2" />
-          Erste Signatur erstellen
-        </Button>
-      </div>
+      <>
+        <div className="bg-white rounded-lg border p-8 text-center">
+          <PencilSquareIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Keine Signaturen vorhanden</h3>
+          <p className="text-gray-500 mb-4">
+            Erstellen Sie professionelle Signaturen für Ihre E-Mails
+          </p>
+          <Button 
+            onClick={handleAdd}
+            className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
+          >
+            <PlusIcon className="h-4 w-4 mr-2" />
+            Erste Signatur erstellen
+          </Button>
+        </div>
+
+        {/* Editor Modal - WICHTIG: Außerhalb des divs rendern */}
+        {showEditor && (
+          <SignatureEditor
+            signature={editingSignature}
+            isOpen={showEditor}
+            onClose={() => {
+              console.log('🔴 Closing signature editor');
+              setShowEditor(false);
+              setEditingSignature(null);
+            }}
+            onSave={handleSave}
+            emailAddresses={emailAddresses}
+          />
+        )}
+      </>
     );
   }
 
@@ -235,7 +295,7 @@ export function SignatureList({
                 <div className="fixed inset-0 z-50 overflow-y-auto">
                   <div className="flex min-h-full items-center justify-center p-4">
                     <div className="fixed inset-0 bg-black bg-opacity-25" onClick={() => setShowPreview(null)} />
-                    <div className="relative bg-white rounded-lg shadow-xl max-w-2xl w-full p-6">
+                    <div className="relative bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 z-50">
                       <h3 className="text-lg font-medium mb-4">Signatur-Vorschau: {signature.name}</h3>
                       <div className="bg-gray-50 rounded-lg p-6">
                         <div 
@@ -261,12 +321,13 @@ export function SignatureList({
         })}
       </div>
 
-      {/* Editor Modal */}
+      {/* Editor Modal - Am Ende der Komponente */}
       {showEditor && (
         <SignatureEditor
           signature={editingSignature}
           isOpen={showEditor}
           onClose={() => {
+            console.log('🔴 Closing signature editor');
             setShowEditor(false);
             setEditingSignature(null);
           }}
@@ -276,36 +337,4 @@ export function SignatureList({
       )}
     </>
   );
-  
-  function getPreviewHtml(signature: EmailSignature): string {
-    const previewData = {
-      userName: signature.variables?.includeUserName ? 'Max Mustermann' : '',
-      userTitle: signature.variables?.includeUserTitle ? 'Geschäftsführer' : '',
-      companyName: signature.variables?.includeCompanyName ? 'Musterfirma GmbH' : '',
-      phone: signature.variables?.includePhone ? '+49 123 456789' : '',
-      website: signature.variables?.includeWebsite ? 'www.musterfirma.de' : '',
-      socialLinks: signature.variables?.includeSocialLinks ? 'LinkedIn | Twitter | Facebook' : ''
-    };
-
-    let previewContent = signature.content;
-    
-    const fields = [];
-    if (previewData.userName) fields.push(`<strong>${previewData.userName}</strong>`);
-    if (previewData.userTitle) fields.push(previewData.userTitle);
-    if (previewData.companyName) fields.push(previewData.companyName);
-    if (previewData.phone) fields.push(`Tel: ${previewData.phone}`);
-    if (previewData.website) fields.push(`<a href="https://${previewData.website}">${previewData.website}</a>`);
-    if (previewData.socialLinks) fields.push(previewData.socialLinks);
-    
-    if (fields.length > 0) {
-      previewContent = `
-        <div style="margin-top: 20px; border-top: 2px solid #e5e7eb; padding-top: 20px;">
-          ${fields.join('<br>')}
-          ${previewContent ? '<br><br>' + previewContent : ''}
-        </div>
-      `;
-    }
-    
-    return previewContent;
-  }
 }

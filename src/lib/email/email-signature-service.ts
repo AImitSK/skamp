@@ -18,6 +18,17 @@ import {
 import { db } from '@/lib/firebase/client-init';
 import { EmailSignature } from '@/types/email-enhanced';
 
+/**
+ * Email Signature Service mit Multi-Tenancy Support
+ * 
+ * WICHTIG: Multi-Tenancy Übergangsphase
+ * 
+ * Aktuell: userId === organizationId (Single-User Organisationen)
+ * Zukunft: Echte Organisationen mit mehreren Usern
+ * 
+ * Die Fallback-Logik (organizationId -> userId) ermöglicht
+ * einen nahtlosen Übergang ohne Breaking Changes.
+ */
 export class EmailSignatureService {
   private readonly collectionName = 'email_signatures';
 
@@ -50,6 +61,7 @@ export class EmailSignatureService {
         signature
       );
 
+      console.log('✅ Signatur erfolgreich erstellt:', docRef.id);
       return docRef.id;
     } catch (error) {
       console.error('Fehler beim Erstellen der Signatur:', error);
@@ -77,7 +89,7 @@ export class EmailSignatureService {
 
       // Wenn als Standard gesetzt, entferne Standard von anderen
       if (data.isDefault && !currentData.isDefault) {
-        await this.clearDefaultSignatures(currentData.organizationId);
+        await this.clearDefaultSignatures(currentData.organizationId || currentData.userId);
       }
 
       const updateData = {
@@ -94,6 +106,7 @@ export class EmailSignatureService {
       });
 
       await updateDoc(docRef, updateData as DocumentData);
+      console.log('✅ Signatur erfolgreich aktualisiert:', id);
     } catch (error) {
       console.error('Fehler beim Aktualisieren der Signatur:', error);
       throw error;
@@ -120,6 +133,7 @@ export class EmailSignatureService {
       }
 
       await deleteDoc(docRef);
+      console.log('✅ Signatur erfolgreich gelöscht:', id);
     } catch (error) {
       console.error('Fehler beim Löschen der Signatur:', error);
       throw error;
@@ -147,22 +161,45 @@ export class EmailSignatureService {
 
   /**
    * Holt alle Signaturen einer Organisation
+   * Mit Fallback auf userId für Rückwärtskompatibilität
    */
   async getByOrganization(organizationId: string): Promise<EmailSignature[]> {
     try {
-      const q = query(
+      console.log('📥 getByOrganization aufgerufen mit organizationId:', organizationId);
+      
+      // Versuche zuerst mit organizationId (ohne orderBy wegen Security Rules)
+      let q = query(
         collection(db, this.collectionName),
-        where('organizationId', '==', organizationId),
-        orderBy('createdAt', 'desc')
+        where('organizationId', '==', organizationId)
       );
 
-      const querySnapshot = await getDocs(q);
-      const signatures: EmailSignature[] = [];
+      let snapshot = await getDocs(q);
+      console.log(`📊 Gefunden mit organizationId: ${snapshot.size} Signaturen`);
 
-      querySnapshot.forEach((doc) => {
+      // Wenn keine Ergebnisse, versuche mit userId (Legacy)
+      if (snapshot.empty) {
+        console.log('🔄 Keine Signaturen mit organizationId gefunden, versuche mit userId...');
+        q = query(
+          collection(db, this.collectionName),
+          where('userId', '==', organizationId) // organizationId könnte userId sein
+        );
+        snapshot = await getDocs(q);
+        console.log(`📊 Gefunden mit userId: ${snapshot.size} Signaturen`);
+      }
+
+      const signatures: EmailSignature[] = [];
+      snapshot.forEach((doc) => {
         signatures.push({ ...doc.data(), id: doc.id } as EmailSignature);
       });
 
+      // Sortiere im Client nach createdAt (absteigend)
+      signatures.sort((a, b) => {
+        const aTime = a.createdAt?.toMillis() || 0;
+        const bTime = b.createdAt?.toMillis() || 0;
+        return bTime - aTime; // Neueste zuerst
+      });
+
+      console.log('✅ Signaturen erfolgreich geladen:', signatures.length);
       return signatures;
     } catch (error) {
       console.error('Fehler beim Abrufen der Signaturen:', error);
@@ -192,13 +229,24 @@ export class EmailSignatureService {
    */
   async getDefaultSignature(organizationId: string): Promise<EmailSignature | null> {
     try {
-      const q = query(
+      // Versuche zuerst mit organizationId
+      let q = query(
         collection(db, this.collectionName),
         where('organizationId', '==', organizationId),
         where('isDefault', '==', true)
       );
 
-      const querySnapshot = await getDocs(q);
+      let querySnapshot = await getDocs(q);
+      
+      // Wenn keine Ergebnisse, versuche mit userId (Legacy)
+      if (querySnapshot.empty) {
+        q = query(
+          collection(db, this.collectionName),
+          where('userId', '==', organizationId),
+          where('isDefault', '==', true)
+        );
+        querySnapshot = await getDocs(q);
+      }
       
       if (querySnapshot.empty) {
         return null;
@@ -220,16 +268,26 @@ export class EmailSignatureService {
       const batch = writeBatch(db);
 
       // Entferne Standard von allen anderen
-      const q = query(
-        collection(db, this.collectionName),
-        where('organizationId', '==', organizationId),
-        where('isDefault', '==', true)
-      );
+      // Versuche mit beiden Feldern
+      const queries = [
+        query(
+          collection(db, this.collectionName),
+          where('organizationId', '==', organizationId),
+          where('isDefault', '==', true)
+        ),
+        query(
+          collection(db, this.collectionName),
+          where('userId', '==', organizationId),
+          where('isDefault', '==', true)
+        )
+      ];
       
-      const querySnapshot = await getDocs(q);
-      querySnapshot.forEach((doc) => {
-        batch.update(doc.ref, { isDefault: false });
-      });
+      for (const q of queries) {
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc) => {
+          batch.update(doc.ref, { isDefault: false });
+        });
+      }
 
       // Setze neue Standard-Signatur
       const docRef = doc(db, this.collectionName, id);
@@ -239,6 +297,7 @@ export class EmailSignatureService {
       });
 
       await batch.commit();
+      console.log('✅ Standard-Signatur erfolgreich gesetzt:', id);
     } catch (error) {
       console.error('Fehler beim Setzen der Standard-Signatur:', error);
       throw error;
@@ -273,6 +332,7 @@ export class EmailSignatureService {
         duplicate
       );
 
+      console.log('✅ Signatur erfolgreich dupliziert:', docRef.id);
       return docRef.id;
     } catch (error) {
       console.error('Fehler beim Duplizieren der Signatur:', error);
@@ -334,18 +394,62 @@ export class EmailSignatureService {
   private async clearDefaultSignatures(organizationId: string): Promise<void> {
     const batch = writeBatch(db);
     
-    const q = query(
+    // Versuche mit beiden Feldern
+    const queries = [
+      query(
+        collection(db, this.collectionName),
+        where('organizationId', '==', organizationId),
+        where('isDefault', '==', true)
+      ),
+      query(
+        collection(db, this.collectionName),
+        where('userId', '==', organizationId),
+        where('isDefault', '==', true)
+      )
+    ];
+    
+    for (const q of queries) {
+      const querySnapshot = await getDocs(q);
+      querySnapshot.forEach((doc) => {
+        batch.update(doc.ref, { isDefault: false });
+      });
+    }
+    
+    await batch.commit();
+  }
+
+  /**
+   * Migration von userId zu organizationId
+   */
+  async migrateFromUserToOrg(
+    userId: string,
+    organizationId: string
+  ): Promise<void> {
+    const legacyQuery = query(
       collection(db, this.collectionName),
-      where('organizationId', '==', organizationId),
-      where('isDefault', '==', true)
+      where('userId', '==', userId)
     );
     
-    const querySnapshot = await getDocs(q);
-    querySnapshot.forEach((doc) => {
-      batch.update(doc.ref, { isDefault: false });
+    const snapshot = await getDocs(legacyQuery);
+    if (snapshot.empty) {
+      console.log('Keine Signaturen für Migration gefunden');
+      return;
+    }
+    
+    const batch = writeBatch(db);
+    
+    snapshot.docs.forEach(doc => {
+      const data = doc.data();
+      batch.update(doc.ref, {
+        organizationId,
+        createdBy: data.userId || userId,
+        updatedBy: userId,
+        updatedAt: serverTimestamp()
+      });
     });
     
     await batch.commit();
+    console.log(`✅ ${snapshot.docs.length} Signaturen erfolgreich migriert`);
   }
 }
 

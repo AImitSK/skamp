@@ -60,3 +60,16 @@ Das Design und die technische Umsetzung neuer Seiten und Komponenten sollen sich
   - Server-seitige Datenbankzugriffe
   - Authentication-Verifizierung (nutzt Firebase REST API statt Admin SDK)
 
+
+
+/**
+ * WICHTIG: Multi-Tenancy Übergangsphase
+ * 
+ * Aktuell: userId === organizationId (Single-User Organisationen)
+ * Zukunft: Echte Organisationen mit mehreren Usern
+ * 
+ * Die Fallback-Logik (organizationId -> userId) ermöglicht
+ * einen nahtlosen Übergang ohne Breaking Changes.
+ * 
+ * @deprecated userId-only Queries - werden in v2.0 entfernt
+ */

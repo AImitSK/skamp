@@ -193,7 +193,7 @@ export function SignatureEditor({
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700">Name des Benutzers</span>
+                  <span className="text-sm font-medium text-gray-700">Name des Benutzers</span>
                   <SimpleSwitch
                     checked={formData.variables.includeUserName}
                     onChange={(checked) => setFormData({
@@ -204,7 +204,7 @@ export function SignatureEditor({
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700">Titel/Position</span>
+                  <span className="text-sm font-medium text-gray-700">Titel/Position</span>
                   <SimpleSwitch
                     checked={formData.variables.includeUserTitle}
                     onChange={(checked) => setFormData({
@@ -215,7 +215,7 @@ export function SignatureEditor({
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700">Firmenname</span>
+                  <span className="text-sm font-medium text-gray-700">Firmenname</span>
                   <SimpleSwitch
                     checked={formData.variables.includeCompanyName}
                     onChange={(checked) => setFormData({
@@ -226,7 +226,7 @@ export function SignatureEditor({
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700">Telefonnummer</span>
+                  <span className="text-sm font-medium text-gray-700">Telefonnummer</span>
                   <SimpleSwitch
                     checked={formData.variables.includePhone}
                     onChange={(checked) => setFormData({
@@ -237,7 +237,7 @@ export function SignatureEditor({
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700">Website</span>
+                  <span className="text-sm font-medium text-gray-700">Website</span>
                   <SimpleSwitch
                     checked={formData.variables.includeWebsite}
                     onChange={(checked) => setFormData({
@@ -248,7 +248,7 @@ export function SignatureEditor({
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700">Social Media Links</span>
+                  <span className="text-sm font-medium text-gray-700">Social Media Links</span>
                   <SimpleSwitch
                     checked={formData.variables.includeSocialLinks}
                     onChange={(checked) => setFormData({
@@ -287,7 +287,7 @@ export function SignatureEditor({
             {/* E-Mail-Adressen Zuordnung */}
             {emailAddresses.length > 0 && (
               <div className="space-y-3">
-                <Label>Diese Signatur verwenden für</Label>
+                <span className="text-sm font-medium text-gray-700">Diese Signatur verwenden für</span>
                 <div className="max-h-48 overflow-y-auto border rounded-lg p-3 space-y-2">
                   {emailAddresses.map((email) => (
                     <label
