@@ -376,13 +376,45 @@ export class FlexibleThreadMatcherService {
         wasDeferred: !!threadId
       };
 
-      // Entferne alle undefined-Werte
+      // Debug: Log die Daten vor der Bereinigung
+      console.log('🔍 Thread data before cleanup:', JSON.stringify(threadData, null, 2));
+
+      // Entferne alle undefined-Werte und prüfe auf nested undefined
       const cleanedData = Object.entries(threadData).reduce((acc, [key, value]) => {
-        if (value !== undefined) {
-          acc[key] = value;
+        // Skip undefined values
+        if (value === undefined) {
+          console.warn(`⚠️ Skipping undefined field: ${key}`);
+          return acc;
         }
+        
+        // Check for undefined in arrays
+        if (Array.isArray(value)) {
+          const cleanArray = value.filter(item => item !== undefined);
+          if (cleanArray.length > 0) {
+            acc[key] = cleanArray;
+          }
+          return acc;
+        }
+        
+        // Check for undefined in objects (like participants)
+        if (value && typeof value === 'object' && !(value instanceof Timestamp)) {
+          // Check if it's an array of objects
+          if (Array.isArray(value)) {
+            // Already handled above
+          } else {
+            const hasUndefined = Object.values(value).some(v => v === undefined);
+            if (hasUndefined) {
+              console.warn(`⚠️ Object ${key} contains undefined values:`, value);
+            }
+          }
+        }
+        
+        acc[key] = value;
         return acc;
       }, {} as any);
+
+      // Debug: Log die bereinigten Daten
+      console.log('✅ Cleaned thread data:', JSON.stringify(cleanedData, null, 2));
 
       // Wenn threadId vorgegeben, verwende diese als Document ID
       if (threadId) {
