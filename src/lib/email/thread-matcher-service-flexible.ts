@@ -390,9 +390,8 @@ export class FlexibleThreadMatcherService {
         // Check for undefined in arrays
         if (Array.isArray(value)) {
           const cleanArray = value.filter(item => item !== undefined);
-          if (cleanArray.length > 0) {
-            acc[key] = cleanArray;
-          }
+          // Behalte auch leere Arrays (wie contactIds)
+          acc[key] = cleanArray;
           return acc;
         }
         
