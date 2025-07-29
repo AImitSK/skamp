@@ -19,7 +19,10 @@ export async function POST(request: NextRequest) {
       textContent,
       emailAddressId,
       replyToMessageId,
-      attachments
+      attachments,
+      replyTo, // NEU: Reply-To Adresse direkt aus Request
+      threadId,
+      campaignId
     } = await request.json();
 
     // Validate required fields
@@ -33,21 +36,9 @@ export async function POST(request: NextRequest) {
     // Generate message ID
     const messageId = `${nanoid()}@${from.email.split('@')[1]}`;
 
-    // WICHTIG: Hole die E-Mail-Adresse aus der Datenbank für Reply-To
-    // Dies sollte idealerweise über emailAddressService erfolgen
-    // Für jetzt nehmen wir an, dass die Reply-To Adresse im from-Objekt mitgesendet wird
-    
     // Prepare SendGrid message
     const msg: any = {
       to: to.map((recipient: any) => ({
-        email: recipient.email,
-        name: recipient.name
-      })),
-      cc: cc?.map((recipient: any) => ({
-        email: recipient.email,
-        name: recipient.name
-      })),
-      bcc: bcc?.map((recipient: any) => ({
         email: recipient.email,
         name: recipient.name
       })),
@@ -60,7 +51,9 @@ export async function POST(request: NextRequest) {
       html: htmlContent,
       customArgs: {
         emailAddressId,
-        messageId
+        messageId,
+        threadId, // Für Thread-Zuordnung
+        campaignId // Für Kampagnen-Zuordnung
       },
       headers: {
         'Message-ID': `<${messageId}>`,
@@ -68,15 +61,39 @@ export async function POST(request: NextRequest) {
       }
     };
 
-    // WICHTIG: Setze Reply-To auf die spezielle Inbox-Adresse
-    // Format: test-{shortOrgId}-{shortEmailId}@inbox.sk-online-marketing.de
-    // Diese Information sollte aus der emailAddress kommen
-    // Für jetzt setzen wir es manuell basierend auf dem Pattern
-    if (from.replyToAddress) {
+    // Add CC if present
+    if (cc && cc.length > 0) {
+      msg.cc = cc.map((recipient: any) => ({
+        email: recipient.email,
+        name: recipient.name
+      }));
+    }
+
+    // Add BCC if present
+    if (bcc && bcc.length > 0) {
+      msg.bcc = bcc.map((recipient: any) => ({
+        email: recipient.email,
+        name: recipient.name
+      }));
+    }
+
+    // WICHTIG: Setze Reply-To für Inbox-System
+    if (replyTo) {
       msg.replyTo = {
-        email: from.replyToAddress,
+        email: replyTo,
         name: from.name || from.email
       };
+      console.log('📮 Setting Reply-To:', replyTo);
+    } else {
+      // Fallback: Generiere Reply-To wenn nicht vorhanden
+      const domain = from.email.split('@')[1];
+      const localPart = from.email.split('@')[0];
+      const generatedReplyTo = `${localPart}-${nanoid(8)}@inbox.${domain}`;
+      msg.replyTo = {
+        email: generatedReplyTo,
+        name: from.name || from.email
+      };
+      console.log('⚠️ Generated fallback Reply-To:', generatedReplyTo);
     }
 
     // Add In-Reply-To header if replying
@@ -89,7 +106,9 @@ export async function POST(request: NextRequest) {
     console.log('📧 Sending email via SendGrid:', {
       to: msg.to,
       from: msg.from,
-      subject: msg.subject
+      replyTo: msg.replyTo,
+      subject: msg.subject,
+      headers: msg.headers
     });
 
     try {
@@ -97,13 +116,15 @@ export async function POST(request: NextRequest) {
       
       console.log('✅ Email sent successfully:', {
         statusCode: response.statusCode,
-        messageId
+        messageId,
+        replyTo: msg.replyTo.email
       });
 
       return NextResponse.json({
         success: true,
         messageId,
-        sendGridMessageId: response.headers['x-message-id']
+        sendGridMessageId: response.headers['x-message-id'],
+        replyTo: msg.replyTo.email // Return für Debugging
       });
 
     } catch (sendError: any) {
