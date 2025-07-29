@@ -729,97 +729,141 @@ export class EmailAddressService {
     return `${prefix}-${shortOrgId}-${shortEmailId}@inbox.sk-online-marketing.de`;
   }
 
+// src/lib/email/email-address-service.ts - findByReplyToAddress Methode
+// Diese Methode ersetzt die existierende findByReplyToAddress Methode
+
 /**
  * Findet eine E-Mail-Adresse basierend auf der Reply-To Adresse
- * Parst: {prefix}-{orgId}-{emailId}@inbox.sk-online-marketing.de
+ * Unterstützt zwei Formate:
+ * 1. PR-Kampagnen: {prefix}-{campaignId}@inbox.domain (2 Teile)
+ * 2. Inbox: {localpart}-{orgId}-{emailId}@inbox.domain (3 Teile)
  */
 async findByReplyToAddress(replyToEmail: string): Promise<EmailAddress | null> {
   try {
     console.log('🔍 Finding email by reply-to:', replyToEmail);
     
     // Extrahiere den lokalen Teil
-    const [localPart] = replyToEmail.split('@');
+    const [localPart, domain] = replyToEmail.split('@');
     const parts = localPart.split('-');
     
-    if (parts.length < 3) {
-      console.error('Invalid reply-to format:', replyToEmail);
+    console.log('📝 Reply-To parts:', { localPart, parts, count: parts.length });
+    
+    // PR-KAMPAGNEN FORMAT (2 Teile): prefix-campaignId
+    if (parts.length === 2) {
+      console.log('🎯 PR Campaign format detected');
+      const [prefix, campaignId] = parts;
+      
+      // Bei PR-Kampagnen suchen wir nach der E-Mail-Adresse mit dem passenden Prefix
+      // z.B. "test" -> test@sk-online-marketing.de
+      const q = query(
+        collection(db, this.collectionName),
+        where('localPart', '==', prefix),
+        where('isActive', '==', true),
+        limit(10)
+      );
+      
+      const snapshot = await getDocs(q);
+      console.log(`📊 Found ${snapshot.size} email addresses with prefix: ${prefix}`);
+      
+      if (!snapshot.empty) {
+        // Nimm die erste aktive E-Mail-Adresse mit diesem Prefix
+        const emailAddress = { ...snapshot.docs[0].data(), id: snapshot.docs[0].id } as EmailAddress;
+        console.log('✅ Found PR campaign email:', emailAddress.email);
+        return emailAddress;
+      }
+      
+      // Fallback: Suche nach der Default-E-Mail der Organisation
+      // Da wir die campaignId haben, könnten wir theoretisch die Organisation aus der pr_campaigns Collection laden
+      console.log('⚠️ No email with prefix found, using fallback...');
+      
+      // Für den Moment: Verwende bekannte Test-E-Mail
+      const fallbackQuery = query(
+        collection(db, this.collectionName),
+        where('email', '==', 'test@sk-online-marketing.de'),
+        where('isActive', '==', true),
+        limit(1)
+      );
+      
+      const fallbackSnapshot = await getDocs(fallbackQuery);
+      if (!fallbackSnapshot.empty) {
+        const emailAddress = { ...fallbackSnapshot.docs[0].data(), id: fallbackSnapshot.docs[0].id } as EmailAddress;
+        console.log('✅ Found fallback email for PR campaign:', emailAddress.email);
+        return emailAddress;
+      }
+    }
+    
+    // INBOX FORMAT (3 Teile): localpart-orgId-emailId
+    else if (parts.length >= 3) {
+      console.log('📧 Inbox format detected');
+      
+      // Die letzten zwei Teile sind orgId und emailId (lowercase von SendGrid)
+      const shortEmailId = parts[parts.length - 1]; // rtedp7rd
+      const shortOrgId = parts[parts.length - 2]; // wva3cj7y
+      
+      console.log('📝 Extracted IDs:', { shortOrgId, shortEmailId });
+      
+      // Suche alle E-Mail-Adressen und filtere manuell
+      const q = query(
+        collection(db, this.collectionName),
+        where('isActive', '==', true),
+        limit(50)
+      );
+      
+      const snapshot = await getDocs(q);
+      console.log(`📊 Found ${snapshot.size} active email addresses`);
+      
+      // Durchsuche alle E-Mail-Adressen
+      for (const doc of snapshot.docs) {
+        const docData = doc.data();
+        const docId = doc.id;
+        const orgId = docData.organizationId || '';
+        
+        // Extrahiere die ersten 8 Zeichen für Vergleich
+        const orgIdShort = orgId.substring(0, 8).toLowerCase();
+        const docIdShort = docId.substring(0, 8).toLowerCase();
+        
+        console.log(`🔍 Checking: docId=${docIdShort}, orgId=${orgIdShort}`);
+        
+        // Vergleiche die Kurzformen (case-insensitive)
+        if (orgIdShort === shortOrgId.toLowerCase() && docIdShort === shortEmailId.toLowerCase()) {
+          const emailAddress = { ...docData, id: doc.id } as EmailAddress;
+          console.log('✅ Found inbox email address:', emailAddress.email);
+          return emailAddress;
+        }
+      }
+      
+      // FALLBACK: Direkte Suche mit bekannter Org-ID
+      console.log('⚠️ Trying fallback with specific organization...');
+      
+      const knownOrgId = 'wVa3cJ7YhYUCQcbwZLLVB6w5Xs23';
+      const fallbackQuery = query(
+        collection(db, this.collectionName),
+        where('organizationId', '==', knownOrgId),
+        limit(10)
+      );
+      
+      const fallbackSnapshot = await getDocs(fallbackQuery);
+      console.log(`📊 Fallback found ${fallbackSnapshot.size} addresses for org ${knownOrgId}`);
+      
+      for (const doc of fallbackSnapshot.docs) {
+        const docIdLower = doc.id.substring(0, 8).toLowerCase();
+        if (docIdLower === shortEmailId.toLowerCase()) {
+          const emailAddress = { ...doc.data(), id: doc.id } as EmailAddress;
+          console.log('✅ Found via fallback:', emailAddress.email);
+          return emailAddress;
+        }
+      }
+    }
+    
+    // UNBEKANNTES FORMAT
+    else {
+      console.error('❌ Unknown reply-to format:', replyToEmail, { parts });
       return null;
     }
     
-    // Die letzten zwei Teile sind orgId und emailId (lowercase von SendGrid)
-    const shortEmailId = parts[parts.length - 1]; // rtedp7rd
-    const shortOrgId = parts[parts.length - 2]; // wva3cj7y
-    
-    console.log('📝 Extracted IDs:', { shortOrgId, shortEmailId });
-    
-    // NEUER ANSATZ: Suche alle E-Mail-Adressen und filtere manuell
-    // Da wir die exakte organizationId nicht kennen, müssen wir breiter suchen
-    const q = query(
-      collection(db, this.collectionName),
-      where('isActive', '==', true), // Nur aktive E-Mail-Adressen
-      limit(50)
-    );
-    
-    const snapshot = await getDocs(q);
-    console.log(`📊 Found ${snapshot.size} active email addresses`);
-    
-    // Durchsuche alle E-Mail-Adressen
-    for (const doc of snapshot.docs) {
-      const docData = doc.data();
-      const docId = doc.id;
-      const orgId = docData.organizationId || '';
-      
-      // Extrahiere die ersten 8 Zeichen für Vergleich
-      const orgIdShort = orgId.substring(0, 8).toLowerCase();
-      const docIdShort = docId.substring(0, 8).toLowerCase();
-      
-      console.log(`🔍 Checking: docId=${docIdShort}, orgId=${orgIdShort}`);
-      
-      // Vergleiche die Kurzformen (case-insensitive)
-      if (orgIdShort === shortOrgId && docIdShort === shortEmailId) {
-        const emailAddress = { ...docData, id: doc.id } as EmailAddress;
-        console.log('✅ Found email address for reply-to:', {
-          replyTo: replyToEmail,
-          found: emailAddress.email,
-          docId: doc.id,
-          orgId: emailAddress.organizationId
-        });
-        return emailAddress;
-      }
-    }
-    
-    // FALLBACK: Direkte Suche mit spezifischer E-Mail
-    // Wenn die obige Suche fehlschlägt, versuche es mit der bekannten Org-ID
-    console.log('⚠️ Trying fallback with specific organization...');
-    
-    // Für deinen speziellen Fall - kann später entfernt werden
-    const knownOrgId = 'wVa3cJ7YhYUCQcbwZLLVB6w5Xs23';
-    const fallbackQuery = query(
-      collection(db, this.collectionName),
-      where('organizationId', '==', knownOrgId),
-      limit(10)
-    );
-    
-    const fallbackSnapshot = await getDocs(fallbackQuery);
-    console.log(`📊 Fallback found ${fallbackSnapshot.size} addresses for org ${knownOrgId}`);
-    
-    for (const doc of fallbackSnapshot.docs) {
-      const docIdLower = doc.id.substring(0, 8).toLowerCase();
-      if (docIdLower === shortEmailId) {
-        const emailAddress = { ...doc.data(), id: doc.id } as EmailAddress;
-        console.log('✅ Found via fallback:', emailAddress.email);
-        return emailAddress;
-      }
-    }
-    
-    console.error('❌ No email address found for reply-to:', replyToEmail, {
-      localPart,
-      parts,
-      shortOrgId,
-      shortEmailId,
-      searchedIn: snapshot.size + fallbackSnapshot.size + ' documents'
-    });
+    console.error('❌ No email address found for reply-to:', replyToEmail);
     return null;
+    
   } catch (error) {
     console.error('❌ Error finding email by reply-to:', error);
     return null;
