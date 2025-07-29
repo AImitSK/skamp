@@ -364,7 +364,7 @@ export class FlexibleEmailProcessor {
       .trim()
       .substring(0, 150);
 
-    return {
+    const message: Partial<EmailMessage> = {
       messageId: emailData.messageId,
       from: emailData.from,
       to: emailData.to,
@@ -380,11 +380,23 @@ export class FlexibleEmailProcessor {
       organizationId: emailAddress.organizationId,
       userId: emailAddress.userId,
       headers: emailData.headers,
-      inReplyTo: emailData.inReplyTo || undefined,
-      references: emailData.references || [],
-      spamScore: emailData.spamScore,
-      spamReport: emailData.spamReport
+      references: emailData.references || []
     };
+
+    // Nur hinzufügen wenn nicht null/undefined
+    if (emailData.inReplyTo) {
+      message.inReplyTo = emailData.inReplyTo;
+    }
+    
+    if (emailData.spamScore !== undefined) {
+      message.spamScore = emailData.spamScore;
+    }
+    
+    if (emailData.spamReport) {
+      message.spamReport = emailData.spamReport;
+    }
+
+    return message;
   }
 
   /**
