@@ -1,7 +1,7 @@
 // src/app/dashboard/communication/inbox/page.tsx
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Heading } from '@/components/heading';
 import { Button } from '@/components/button';
@@ -12,7 +12,7 @@ import { EmailViewer } from '@/components/inbox/EmailViewer';
 import { ComposeEmail } from '@/components/inbox/ComposeEmail';
 import { EmailMessage, EmailThread } from '@/types/inbox-enhanced';
 import { emailMessageService } from '@/lib/email/email-message-service';
-import { threadMatcherService } from '@/lib/email/thread-matcher-service';
+import { threadMatcherService } from '@/lib/email/thread-matcher-service-flexible';
 import { emailAddressService } from '@/lib/email/email-address-service';
 import { 
   onSnapshot,
@@ -36,7 +36,8 @@ import {
   InboxIcon,
   ExclamationTriangleIcon,
   BugAntIcon,
-  PlusIcon
+  PlusIcon,
+  ArrowPathIcon
 } from '@heroicons/react/20/solid';
 
 export default function InboxPage() {
@@ -59,6 +60,10 @@ export default function InboxPage() {
   const [emailAddresses, setEmailAddresses] = useState<any[]>([]);
   const [showDebug, setShowDebug] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [resolvingThreads, setResolvingThreads] = useState(false);
+  
+  // Ref to track if we've already resolved threads
+  const threadsResolvedRef = useRef(false);
   
   // Debug Info Type
   interface DebugInfo {
@@ -75,6 +80,7 @@ export default function InboxPage() {
     messages?: EmailMessage[];
     messageError?: string;
     setupError?: string;
+    deferredThreadsResolved?: number;
   }
   
   const [debugInfo, setDebugInfo] = useState<DebugInfo>({});
@@ -90,6 +96,41 @@ export default function InboxPage() {
 
   // Firestore unsubscribe functions
   const [unsubscribes, setUnsubscribes] = useState<Unsubscribe[]>([]);
+
+  // Resolve deferred threads when component mounts
+  useEffect(() => {
+    const resolveDeferredThreads = async () => {
+      if (!user || !organizationId || threadsResolvedRef.current || !hasEmailAddresses) {
+        return;
+      }
+      
+      setResolvingThreads(true);
+      console.log('🔄 Resolving deferred threads...');
+      
+      try {
+        const resolvedCount = await threadMatcherService.resolveDeferredThreads(organizationId);
+        console.log(`✅ Resolved ${resolvedCount} deferred threads`);
+        
+        setDebugInfo(prev => ({
+          ...prev,
+          deferredThreadsResolved: resolvedCount
+        }));
+        
+        threadsResolvedRef.current = true;
+      } catch (error) {
+        console.error('Error resolving deferred threads:', error);
+      } finally {
+        setResolvingThreads(false);
+      }
+    };
+    
+    // Verzögere die Thread-Resolution um sicherzustellen, dass E-Mails geladen sind
+    const timer = setTimeout(() => {
+      resolveDeferredThreads();
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, [user, organizationId, hasEmailAddresses]);
 
   // Check if user has email addresses configured
   useEffect(() => {
@@ -150,7 +191,7 @@ export default function InboxPage() {
     return () => {
       newUnsubscribes.forEach(unsubscribe => unsubscribe());
     };
-  }, [user, organizationId, selectedFolder, hasEmailAddresses]);
+  }, [user, organizationId, selectedFolder, hasEmailAddresses, resolvingThreads]);
 
   const setupRealtimeListeners = (unsubscribes: Unsubscribe[]) => {
     setLoading(true);
@@ -307,6 +348,25 @@ export default function InboxPage() {
     setUnreadCounts(counts);
   };
 
+  // Manually resolve deferred threads
+  const handleResolveThreads = async () => {
+    setResolvingThreads(true);
+    try {
+      const resolvedCount = await threadMatcherService.resolveDeferredThreads(organizationId);
+      alert(`${resolvedCount} Threads wurden erstellt!`);
+      
+      setDebugInfo(prev => ({
+        ...prev,
+        deferredThreadsResolved: resolvedCount
+      }));
+    } catch (error) {
+      console.error('Error resolving threads:', error);
+      alert('Fehler beim Erstellen der Threads');
+    } finally {
+      setResolvingThreads(false);
+    }
+  };
+
   // Create test email for development
   const createTestEmail = async () => {
     if (!emailAddresses.length) {
@@ -342,14 +402,14 @@ export default function InboxPage() {
         references: []
       });
 
-      if (!testThread.success || !testThread.thread?.id) {
+      if (!testThread.success || !testThread.threadId) {
         throw new Error('Failed to create test thread');
       }
 
       // Create test email message
       const testMessage = await emailMessageService.create({
         messageId: `test-${Date.now()}@celeropress.de`,
-        threadId: testThread.thread.id,
+        threadId: testThread.threadId,
         from: folder === 'sent' 
           ? { email: defaultAddress.email, name: defaultAddress.displayName }
           : { email: 'test@example.com', name: 'Test Sender' },
@@ -652,6 +712,12 @@ export default function InboxPage() {
               )}
             </h3>
             <div className="flex items-center gap-2">
+              {resolvingThreads && (
+                <div className="flex items-center text-xs text-gray-500">
+                  <ArrowPathIcon className="h-4 w-4 animate-spin mr-1" />
+                  Threads werden erstellt...
+                </div>
+              )}
               {process.env.NODE_ENV === 'development' && (
                 <>
                   <Button
@@ -661,6 +727,15 @@ export default function InboxPage() {
                     title="Test-E-Mail erstellen"
                   >
                     <PlusIcon className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    plain
+                    onClick={handleResolveThreads}
+                    className="text-xs p-1"
+                    title="Threads manuell erstellen"
+                    disabled={resolvingThreads}
+                  >
+                    <ArrowPathIcon className={`h-4 w-4 ${resolvingThreads ? 'animate-spin' : ''}`} />
                   </Button>
                   <Button
                     plain
@@ -700,7 +775,7 @@ export default function InboxPage() {
             threads={filteredThreads}
             selectedThread={selectedThread}
             onThreadSelect={handleThreadSelect}
-            loading={loading}
+            loading={loading || resolvingThreads}
             onStar={handleStar}
           />
         </div>

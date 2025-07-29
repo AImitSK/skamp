@@ -2,13 +2,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import crypto from 'crypto';
-import { emailMessageService } from '@/lib/email/email-message-service';
-import { emailProcessor } from '@/lib/email/email-processor';
+import { flexibleEmailProcessor, IncomingEmailData } from '@/lib/email/email-processor-flexible';
 import { EmailAddressInfo, EmailAttachment } from '@/types/email-enhanced';
 
 // SendGrid Inbound Parse Data Structure
 interface ParsedEmail {
-  headers: string;
+  headers?: string;
   to: string;
   from: string;
   subject: string;
@@ -36,25 +35,6 @@ interface ParsedAttachmentInfo {
     name: string;
     type: string;
     'content-id'?: string;
-  };
-}
-
-interface IncomingEmailData {
-  messageId: string;
-  from: EmailAddressInfo;
-  to: EmailAddressInfo[];
-  subject: string;
-  textContent: string;
-  htmlContent?: string;
-  attachments?: EmailAttachment[];
-  inReplyTo?: string | null;
-  references?: string[];
-  headers: Record<string, string>;
-  spamScore?: number;
-  spamReport?: string;
-  envelope?: {
-    to: string[];
-    from: string;
   };
 }
 
@@ -133,15 +113,20 @@ export async function POST(request: NextRequest) {
       emailData.attachments = attachments;
     }
 
-    // Process the email through our pipeline
-    const result = await emailProcessor.processIncomingEmail(emailData);
+    // Process the email through our flexible pipeline
+    const result = await flexibleEmailProcessor.processIncomingEmail(emailData);
     
     if (result.success) {
-      console.log('✅ Email processed successfully:', result.messageId);
+      console.log('✅ Email processed successfully:', {
+        messageId: result.messageId,
+        threadId: result.threadId,
+        strategy: 'deferred'
+      });
       return NextResponse.json({ 
         success: true, 
         messageId: result.messageId,
-        threadId: result.threadId 
+        threadId: result.threadId,
+        note: 'Thread will be created when accessed in UI'
       });
     } else {
       console.error('❌ Email processing failed:', result.error);
@@ -409,7 +394,8 @@ export async function GET(request: NextRequest) {
     configuration: {
       signatureVerification: !!process.env.SENDGRID_INBOUND_SECRET,
       attachmentHandling: true,
-      spamFiltering: true
+      spamFiltering: true,
+      threadMatching: 'deferred'
     }
   });
 }
