@@ -68,6 +68,16 @@ export function ComposeEmail({
       setTo(replyToEmail.from.email);
       setSubject(`Re: ${replyToEmail.subject.replace(/^Re:\s*/i, '')}`);
       
+      // WICHTIG: Setze die richtige E-Mail-Adresse für Antworten
+      // Finde die E-Mail-Adresse, an die die ursprüngliche E-Mail ging
+      const recipientAddress = emailAddresses.find(addr => 
+        replyToEmail.to.some(to => to.email === addr.email || to.email === addr.replyToAddress)
+      );
+      
+      if (recipientAddress && recipientAddress.id) {
+        setSelectedEmailAddressId(recipientAddress.id);
+      }
+      
       // Quote original message
       const quote = `
 <br><br>
@@ -91,7 +101,7 @@ An: ${replyToEmail.to.map(t => `${t.name || t.email} <${t.email}>`).join(', ')}<
 ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
       setContent(forward);
     }
-  }, [mode, replyToEmail]);
+  }, [mode, replyToEmail, emailAddresses]);
 
   const handleSend = async () => {
     if (!to || !subject || !content || !selectedEmailAddressId) {
@@ -129,7 +139,8 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
         bcc: bccAddresses,
         from: {
           email: fromAddress.email,
-          name: fromAddress.displayName
+          name: fromAddress.displayName,
+          replyToAddress: fromAddress.replyToAddress // WICHTIG: Reply-To Adresse mitschicken
         },
         subject,
         htmlContent: content,

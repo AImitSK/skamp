@@ -33,6 +33,10 @@ export async function POST(request: NextRequest) {
     // Generate message ID
     const messageId = `${nanoid()}@${from.email.split('@')[1]}`;
 
+    // WICHTIG: Hole die E-Mail-Adresse aus der Datenbank für Reply-To
+    // Dies sollte idealerweise über emailAddressService erfolgen
+    // Für jetzt nehmen wir an, dass die Reply-To Adresse im from-Objekt mitgesendet wird
+    
     // Prepare SendGrid message
     const msg: any = {
       to: to.map((recipient: any) => ({
@@ -63,6 +67,17 @@ export async function POST(request: NextRequest) {
         'X-Entity-Ref-ID': messageId
       }
     };
+
+    // WICHTIG: Setze Reply-To auf die spezielle Inbox-Adresse
+    // Format: test-{shortOrgId}-{shortEmailId}@inbox.sk-online-marketing.de
+    // Diese Information sollte aus der emailAddress kommen
+    // Für jetzt setzen wir es manuell basierend auf dem Pattern
+    if (from.replyToAddress) {
+      msg.replyTo = {
+        email: from.replyToAddress,
+        name: from.name || from.email
+      };
+    }
 
     // Add In-Reply-To header if replying
     if (replyToMessageId) {
