@@ -8,7 +8,12 @@ import { Input } from '@/components/input';
 import { Field, Label } from '@/components/fieldset';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { EmailMessage } from '@/types/inbox-enhanced';
+import { emailAddressService } from '@/lib/email/email-address-service';
+import { emailMessageService } from '@/lib/email/email-message-service';
+import { threadMatcherService } from '@/lib/email/thread-matcher-service-flexible';
 import { XMarkIcon, PaperAirplaneIcon, PaperClipIcon } from '@heroicons/react/20/solid';
+import { Select } from '@/components/select';
+import { serverTimestamp, Timestamp } from 'firebase/firestore';
 
 interface ComposeEmailProps {
   organizationId: string;
@@ -31,6 +36,31 @@ export function ComposeEmail({
   const [subject, setSubject] = useState('');
   const [content, setContent] = useState('');
   const [sending, setSending] = useState(false);
+  const [emailAddresses, setEmailAddresses] = useState<any[]>([]);
+  const [selectedEmailAddressId, setSelectedEmailAddressId] = useState<string>('');
+  const [loadingAddresses, setLoadingAddresses] = useState(true);
+
+  // Load email addresses
+  useEffect(() => {
+    const loadEmailAddresses = async () => {
+      try {
+        const addresses = await emailAddressService.getByOrganization(organizationId, organizationId);
+        setEmailAddresses(addresses);
+        
+        // Select default address
+        const defaultAddress = addresses.find(addr => addr.isDefault) || addresses[0];
+        if (defaultAddress && defaultAddress.id) {
+          setSelectedEmailAddressId(defaultAddress.id);
+        }
+      } catch (error) {
+        console.error('Failed to load email addresses:', error);
+      } finally {
+        setLoadingAddresses(false);
+      }
+    };
+
+    loadEmailAddresses();
+  }, [organizationId]);
 
   // Initialize fields based on mode
   useEffect(() => {
@@ -64,27 +94,127 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
   }, [mode, replyToEmail]);
 
   const handleSend = async () => {
-    if (!to || !subject || !content) {
-      alert('Bitte füllen Sie alle Pflichtfelder aus');
+    if (!to || !subject || !content || !selectedEmailAddressId) {
+      alert('Bitte füllen Sie alle Pflichtfelder aus und wählen Sie eine Absender-Adresse');
       return;
     }
 
     setSending(true);
     
     try {
-      await onSend({
-        to: to.split(',').map(email => email.trim()),
-        cc: cc ? cc.split(',').map(email => email.trim()) : [],
-        bcc: bcc ? bcc.split(',').map(email => email.trim()) : [],
+      // Get selected email address
+      const fromAddress = emailAddresses.find(addr => addr.id === selectedEmailAddressId);
+      if (!fromAddress) {
+        throw new Error('Keine Absender-Adresse ausgewählt');
+      }
+
+      // Parse recipients
+      const toAddresses = to.split(',').map(email => ({
+        email: email.trim(),
+        name: undefined
+      }));
+      const ccAddresses = cc ? cc.split(',').map(email => ({
+        email: email.trim(),
+        name: undefined
+      })) : [];
+      const bccAddresses = bcc ? bcc.split(',').map(email => ({
+        email: email.trim(),
+        name: undefined
+      })) : [];
+
+      // Prepare email data
+      const emailData = {
+        to: toAddresses,
+        cc: ccAddresses,
+        bcc: bccAddresses,
+        from: {
+          email: fromAddress.email,
+          name: fromAddress.displayName
+        },
         subject,
         htmlContent: content,
         textContent: content.replace(/<[^>]*>/g, ''), // Simple HTML strip
-        replyToMessageId: mode === 'reply' ? replyToEmail?.messageId : undefined,
-        threadId: replyToEmail?.threadId
+      };
+
+      // Send email via API
+      const response = await fetch('/api/email/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...emailData,
+          emailAddressId: selectedEmailAddressId,
+          replyToMessageId: mode === 'reply' ? replyToEmail?.messageId : undefined,
+        }),
       });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to send email');
+      }
+
+      const result = await response.json();
+
+      // Create or find thread
+      let threadId = replyToEmail?.threadId;
+      
+      if (!threadId) {
+        // Create new thread for new emails
+        const threadResult = await threadMatcherService.findOrCreateThread({
+          messageId: result.messageId,
+          subject,
+          from: emailData.from,
+          to: toAddresses,
+          organizationId,
+          inReplyTo: mode === 'reply' ? replyToEmail?.messageId : null,
+          references: mode === 'reply' && replyToEmail ? [replyToEmail.messageId] : []
+        });
+        
+        threadId = threadResult.threadId || threadResult.thread?.id;
+      }
+
+      // Save sent email to database
+      await emailMessageService.create({
+        messageId: result.messageId,
+        threadId: threadId || `thread_${Date.now()}`,
+        from: emailData.from,
+        to: toAddresses,
+        cc: ccAddresses,
+        bcc: bccAddresses,
+        subject,
+        textContent: emailData.textContent,
+        htmlContent: emailData.htmlContent,
+        snippet: emailData.textContent.substring(0, 150),
+        folder: 'sent',
+        isRead: true,
+        isStarred: false,
+        isArchived: false,
+        isDraft: false,
+        labels: [],
+        importance: 'normal',
+        emailAccountId: selectedEmailAddressId,
+        organizationId,
+        userId: organizationId,
+        receivedAt: serverTimestamp() as Timestamp,
+        sentAt: serverTimestamp() as Timestamp,
+        attachments: [],
+        headers: {},
+        references: mode === 'reply' && replyToEmail ? [replyToEmail.messageId] : [],
+        inReplyTo: mode === 'reply' ? replyToEmail?.messageId : undefined
+      });
+
+      // Call parent onSend callback
+      onSend({
+        success: true,
+        messageId: result.messageId
+      });
+
+      // Close dialog
+      onClose();
     } catch (error) {
       console.error('Failed to send email:', error);
-      alert('Fehler beim Senden der E-Mail');
+      alert(`Fehler beim Senden der E-Mail: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
     } finally {
       setSending(false);
     }
@@ -111,6 +241,28 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
         {/* Form */}
         <div className="flex-1 overflow-y-auto px-6 py-4">
           <div className="space-y-4">
+            {/* From selector */}
+            <Field>
+              <Label>Von</Label>
+              <Select
+                value={selectedEmailAddressId}
+                onChange={(e) => setSelectedEmailAddressId(e.target.value)}
+                disabled={loadingAddresses || emailAddresses.length === 0}
+              >
+                {loadingAddresses ? (
+                  <option>Lade E-Mail-Adressen...</option>
+                ) : emailAddresses.length === 0 ? (
+                  <option>Keine E-Mail-Adressen verfügbar</option>
+                ) : (
+                  emailAddresses.map(addr => (
+                    <option key={addr.id} value={addr.id}>
+                      {addr.displayName} &lt;{addr.email}&gt;
+                    </option>
+                  ))
+                )}
+              </Select>
+            </Field>
+
             <Field>
               <Label>An</Label>
               <Input
@@ -179,7 +331,7 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
             </Button>
             <Button 
               onClick={handleSend}
-              disabled={sending}
+              disabled={sending || emailAddresses.length === 0}
               className="bg-[#005fab] hover:bg-[#004a8c] text-white"
             >
               <PaperAirplaneIcon className="h-4 w-4 mr-2" />
