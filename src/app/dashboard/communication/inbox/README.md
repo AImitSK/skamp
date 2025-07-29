@@ -1,280 +1,417 @@
-# Finaler Implementierungsplan: E-Mail Inbox für CeleroPress
+# 📋 CeleroPress E-Mail System - Implementierungsplan 2025 (Aktualisiert)
 
-## 📋 Übersicht
+## 🎯 Vision: Von der funktionierenden Inbox zum kollaborativen PR-Management-System
 
-Vollständige E-Mail-Inbox Integration für CeleroPress (ehemals SKAMP) mit Multi-Tenancy-Support für PR-Agenturen und deren Kunden. Integration mit vorhandener Gemini KI.
+### Kernkonzept (aus paste.txt)
+- **Kunden-basierte Organisation** statt klassischer E-Mail-Ordner
+- **Kampagnen-Unterordner** für bessere Strukturierung
+- **Team-Kollaboration** mit Zuweisungen und Delegation
+- **Status-Tracking** für jeden Thread
+- **Interne Notizen** für Team-Kommunikation
 
-## ✅ Bereits implementiert
+## 📊 Aktueller Status (Stand: Juli 2025)
 
-### Frontend Komponenten
-- **Inbox Hauptseite** (`/dashboard/communication/inbox/page.tsx`)
-  - Thread-basierte E-Mail-Ansicht
-  - Ordner-Navigation (Posteingang, Gesendet, Entwürfe, etc.)
-  - Suchfunktion
-- **InboxSidebar** - Ordnerstruktur mit Unread-Counts
-- **EmailList** - Thread-Liste mit Vorschau
-- **EmailViewer** - E-Mail-Anzeige mit Thread-Historie
-- **ComposeEmail** - E-Mail verfassen mit RichTextEditor
-- **Mock-Daten** für Entwicklung
+### ✅ Bereits funktionsfähig
+- **E-Mail-Empfang funktioniert** - Webhook läuft, E-Mails kommen an
+- **E-Mail-Versand aus Inbox** - Grundsätzlich funktionsfähig (kleine Bugs)
+- **Reply-To System** - Antworten auf PR-Kampagnen landen korrekt in der Inbox
+- **Domain-Registrierung** - Vollständig implementiert
+- **E-Mail-Adressen anlegen** - Multi-Adressen pro Domain möglich
+- **Signaturen-System** - Vollständig funktionsfähig
+- **Routing-Regeln UI** - Regeln können angelegt werden (Ausführung fehlt)
+- **Thread-Matching** - Basis-Funktionalität vorhanden
 
-### Typen & Interfaces
-- **EmailMessage** mit Multi-Tenancy (BaseEntity)
-- **EmailThread** für Konversations-Gruppierung
-- **EmailAccount** Struktur definiert
-- **EmailAddress** mit erweiterten Features
-- **EmailSignature** mit Variablen
-- **EmailTemplate** für häufige Antworten
-- **EmailDomain** für Verifizierung
+### ⚠️ Kleine Bugs / Verbesserungen nötig
+- **E-Mail-Versand** - Kleinere Fehler zu beheben
+- **Routing-Regeln** - UI überarbeiten, Ausführung implementieren
+- **Überflüssige Ordner** - Spam/Entwürfe noch sichtbar
 
-### Bestehende Infrastruktur
-- **SendGrid Integration** für E-Mail-Versand
-- **Domain-Verifizierung** bereits implementiert
-- **Auth Middleware** mit organizationId
-- **CRM Service** mit Kontakt-Suche
-- **Organization Service** mit Team-Management
-- **API Client** mit Authentication
-- **Google Gemini KI** mit strukturierter Textgenerierung
+### ❌ Noch nicht implementiert
+- **Kunden/Kampagnen-basierte Ordnerstruktur**
+- **Team-Features** (nur Mock-Daten)
+- **Status-System für E-Mails**
+- **Interne Notizen & Kommentare**
+- **MediaCenter Integration**
+- **E-Mail Templates**
+- **KI-Integration (Gemini)**
+- **Bulk-Aktionen**
 
-### ✅ NEU: E-Mail Signaturen (Implementiert)
-- **SignatureEditor** Component mit RichTextEditor
-- **SignatureList** Component mit Grid-Ansicht
-- **Email Signature Service** mit Multi-Tenancy Support
-- **Firestore Security Rules** für email_signatures
-- **CRUD Operationen** funktionsfähig
-- **Standard-Signatur** Funktionalität
-- **E-Mail-Adressen Zuordnung** vorbereitet
+## 🏗️ Angepasster Implementierungsplan
 
-### Settings UI Status
-- [x] **E-Mail-Adressen Tab** - UI vorhanden, Service fehlt
-- [ ] **Email Templates Tab** - Nur Placeholder vorhanden
-- [x] **Signaturen Tab** - Vollständig implementiert
+### Phase 0: Quick Fixes & Stabilisierung (1-2 Tage) 🚀 SOFORT STARTEN
 
-## 🆕 Zu implementieren
+#### 0.1 Bug-Fixes
+**Datei:** `src/components/inbox/ComposeEmail.tsx`
+- [ ] E-Mail-Versand Fehler debuggen und beheben
+- [ ] Error-Handling verbessern
+- [ ] Erfolgs-Feedback nach Versand
 
-### 1. Inbox Backend Integration (NÄCHSTER SCHRITT)
+#### 0.2 UI-Bereinigung
+**Datei:** `src/components/inbox/InboxSidebar.tsx`
+- [ ] Ordner "Spam" und "Entwürfe" entfernen
+- [ ] Nur relevante Ordner anzeigen (Posteingang, Gesendet, Papierkorb)
 
-#### 1.1 SendGrid Inbound Parse Webhook
+#### 0.3 Routing-Regeln aktivieren
+**Datei:** `src/lib/email/email-processor-flexible.ts`
+- [ ] `applyRoutingRules()` Methode vervollständigen
+- [ ] Team-Zuweisung tatsächlich durchführen
+- [ ] Tags und Prioritäten setzen
+- [ ] Test mit echten eingehenden E-Mails
+
+### Phase 1: Kunden/Kampagnen-Organisation (4 Tage) 🎯 HÖCHSTE PRIORITÄT
+
+#### 1.1 Datenmodell-Erweiterung
+**Updates in:** `src/types/email-enhanced.ts`
 ```typescript
-// src/app/api/webhooks/sendgrid/inbound/route.ts
-- Webhook-Endpoint für eingehende E-Mails
-- Parse E-Mail Headers und Content
-- Erstelle EmailMessage Dokumente
-- Trigger Email Processing Pipeline
+interface EmailThread {
+  // Neu hinzufügen:
+  customerId?: string;
+  customerName?: string;
+  campaignId?: string;
+  campaignName?: string;
+  folderType: 'customer' | 'campaign' | 'general';
+}
+
+interface EmailMessage {
+  // Erweitern um:
+  customerId?: string;
+  campaignId?: string;
+}
 ```
 
-#### 1.2 Email Processing Pipeline
+#### 1.2 Automatische Kunden/Kampagnen-Zuordnung
+**Neue Datei:** `src/lib/email/customer-campaign-matcher.ts`
 ```typescript
-// src/lib/email/email-processor.ts
-- Finde zugehörige EmailAddress
-- Wende Routing-Regeln an
-- Weise Team-Mitglieder zu
-- Erstelle/Update EmailThread
-- Sende Benachrichtigungen
-- KI-Analyse wenn aktiviert
+class CustomerCampaignMatcher {
+  // Zuordnung basierend auf:
+  // 1. E-Mail-Adresse → Kunde (aus CRM)
+  // 2. Reply-To → Kampagne (aus PR-Kampagnen)
+  // 3. Subject-Keywords → Kampagne
+  // 4. Domain → Kunde
+}
 ```
 
-#### 1.3 Thread-Matching Service
+#### 1.3 Neue Sidebar mit Kunden-Struktur
+**Neue Datei:** `src/components/inbox/CustomerCampaignSidebar.tsx`
+- Ersetze aktuelle Ordner-Struktur durch:
+  ```
+  📁 Kunde ABC GmbH (3 neu)
+     └── 📄 Produktlaunch 2025 (2 neu)
+     └── 📄 Pressemitteilung Juli
+  📁 Kunde XYZ AG (1 neu)
+     └── 📄 Messe-Kampagne
+  📁 Allgemeine Anfragen (5 neu)
+  ```
+
+#### 1.4 Thread-Liste Anpassung
+**Update:** `src/app/dashboard/communication/inbox/page.tsx`
+- [ ] Filter-Logik für Kunden/Kampagnen
+- [ ] Breadcrumb-Navigation
+- [ ] Kunde/Kampagne in Thread-Preview anzeigen
+
+### Phase 2: Team-Features aktivieren (3 Tage)
+
+#### 2.1 Echte Team-Daten laden
+**Update:** `src/app/dashboard/settings/email/page.tsx`
+- [ ] Mock-Team-Members durch Organization-Service ersetzen
+- [ ] Team-Mitglieder aus Firebase laden
+- [ ] Permissions prüfen
+
+#### 2.2 E-Mail-Zuweisung funktionsfähig machen
+**Update:** `src/components/inbox/EmailList.tsx`
+- [ ] Zugewiesene Person anzeigen (Avatar + Name)
+- [ ] Quick-Assign Dropdown
+- [ ] Zuweisung in Firestore speichern
+
+#### 2.3 Status-System implementieren
+**Neues Feature in:** `src/components/inbox/EmailViewer.tsx`
 ```typescript
-// src/lib/email/thread-matcher-service.ts
-- Header-basiertes Matching (Message-ID, In-Reply-To)
-- Subject-basiertes Matching
-- KI-semantisches Matching (Gemini)
-- Confidence Scoring
+type ThreadStatus = 'new' | 'in-progress' | 'waiting-for-reply' | 'completed';
+- Status-Badge prominent anzeigen
+- Status-Änderungs-Buttons
+- Automatischer Status "waiting-for-reply" nach Antwort
 ```
 
-### 2. Inbox UI Integration
+#### 2.4 Interne Notizen
+**Neue Komponente:** `src/components/inbox/InternalNotes.tsx`
+- [ ] Notiz-Feld unter jeder E-Mail
+- [ ] @Mentions für Team-Mitglieder
+- [ ] Timestamp & Autor anzeigen
+- [ ] Nur für Team sichtbar
 
-#### 2.1 Daten-Integration
-- EmailList mit echten Daten aus Firestore
-- ComposeEmail über EmailAddress senden
-- Thread-Historie laden
-- Echtzeit-Updates mit Firestore Listeners
-
-#### 2.2 Fehlende UI-Komponenten
-- Thread-Gruppierung in EmailList
-- Anhänge-Verwaltung
-- E-Mail-Weiterleitung
-- Bulk-Aktionen
-
-### 3. Email Templates System
+### Phase 3: E-Mail Templates (2 Tage)
 
 #### 3.1 Template Service
+**Neue Datei:** `src/lib/email/email-template-service.ts`
+- [ ] CRUD-Operationen für Templates
+- [ ] Kategorien: Antwort, Follow-Up, Absage
+- [ ] Variable-System: {{contact.name}}, {{campaign.title}}
+
+#### 3.2 Template UI im Settings-Bereich
+**Update:** `src/app/dashboard/settings/email/page.tsx`
+- [ ] Templates Tab funktionsfähig machen
+- [ ] Template-Editor mit RichTextEditor
+- [ ] Variable-Picker
+
+#### 3.3 Template-Integration in ComposeEmail
+**Update:** `src/components/inbox/ComposeEmail.tsx`
+- [ ] Template-Auswahl Dropdown
+- [ ] Variablen automatisch ersetzen
+- [ ] Vorschau-Modus
+
+### Phase 4: MediaCenter & Anhänge (2 Tage)
+
+#### 4.1 Anhang-Upload aus Webhook
+**Update:** `src/app/api/webhooks/sendgrid/inbound/route.ts`
+- [ ] Attachments aus FormData extrahieren
+- [ ] Upload zu Firebase Storage
+- [ ] Speichern der URLs in EmailMessage
+
+#### 4.2 Anhang-Anzeige
+**Update:** `src/components/inbox/EmailViewer.tsx`
+- [ ] Anhänge-Liste anzeigen
+- [ ] Download-Buttons
+- [ ] Vorschau für Bilder/PDFs
+
+#### 4.3 MediaCenter Integration
+**Update:** `src/components/inbox/ComposeEmail.tsx`
+- [ ] MediaCenter-Modal einbinden
+- [ ] Assets als Anhänge hinzufügen
+- [ ] Drag & Drop Support
+
+### Phase 5: Erweiterte Features (2 Tage)
+
+#### 5.1 Bulk-Operationen
+**Update:** `src/components/inbox/EmailList.tsx`
+- [ ] Multi-Select Checkboxes
+- [ ] Bulk-Actions Toolbar
+- [ ] Bulk Archive/Delete/Assign
+
+#### 5.2 E-Mail-Weiterleitung
+**Update:** `src/components/inbox/EmailViewer.tsx`
+- [ ] Forward-Button funktionsfähig
+- [ ] Empfänger-Auswahl
+- [ ] Original-Nachricht zitieren
+
+#### 5.3 Delegation & Abwesenheit
+**Neue Komponente:** `src/components/inbox/DelegationSettings.tsx`
+- [ ] Temporäre Weiterleitungen
+- [ ] Vertretungs-Regeln
+- [ ] Auto-Reply bei Abwesenheit
+
+### Phase 6: KI-Integration (Optional, 3 Tage)
+
+#### 6.1 Gemini Integration
+**Neue Datei:** `src/lib/email/email-ai-service.ts`
+- [ ] Intent-Analyse (Anfrage, Beschwerde, etc.)
+- [ ] Antwort-Vorschläge generieren
+- [ ] Sentiment-Analyse
+
+#### 6.2 KI-Assistant UI
+**Neue Komponente:** `src/components/inbox/AIAssistant.tsx`
+- [ ] Vorschläge in EmailViewer anzeigen
+- [ ] "Mit KI antworten" Button
+- [ ] Ton-Anpassung (formal/locker)
+
+## 📅 Realistischer Zeitplan
+
+| Phase | Aufwand | Priorität | Status |
+|-------|---------|-----------|--------|
+| Phase 0: Quick Fixes | 1-2 Tage | 🔴 KRITISCH | ⏳ Sofort starten |
+| Phase 1: Kunden-Organisation | 4 Tage | 🔴 HOCH | ⏳ Diese Woche |
+| Phase 2: Team-Features | 3 Tage | 🟡 MITTEL | ⏳ Nächste Woche |
+| Phase 3: Templates | 2 Tage | 🟡 MITTEL | ⏳ KW 32 |
+| Phase 4: MediaCenter | 2 Tage | 🟢 NIEDRIG | ⏳ KW 33 |
+| Phase 5: Erweiterte Features | 2 Tage | 🟢 NIEDRIG | ⏳ KW 33 |
+| Phase 6: KI-Integration | 3 Tage | 🔵 OPTIONAL | ⏳ September |
+
+**Gesamt: 14-17 Arbeitstage** (ohne KI-Integration)
+
+## 🚀 Sofort-Maßnahmen (Heute noch!)
+
+### 1. Routing-Regeln testen (30 Min)
 ```typescript
-// src/lib/email/email-template-service.ts
-- CRUD Operationen
-- Kategorie-Management
-- Merge-Tags System
-- Verwendungs-Tracking
+// In email-processor-flexible.ts, Zeile ~500
+private async applyRoutingRules() {
+  // TODO: Implementierung vervollständigen
+  console.log('🔧 Routing-Regeln werden angewendet');
+  // Team-Zuweisung
+  // Tags hinzufügen
+  // Priorität setzen
+}
 ```
 
-#### 3.2 Template UI
-- TemplateList Component
-- TemplateEditor mit RichTextEditor
-- Variable/Merge-Tag Picker
-- Vorschau-Funktion
-
-## 📊 Implementierungs-Zeitplan (Aktualisiert)
-
-### ✅ Phase 0: Grundlegende E-Mail Features (FERTIG - 5 Tage)
-- [x] E-Mail Signaturen System
-- [x] E-Mail-Adressen Verwaltung
-- [x] Domain-Verifizierung
-- [x] Routing-Rules System
-- [x] Security Rules
-
-### Phase 1: Inbox Backend Integration (3 Tage) - NÄCHSTER SCHRITT
-- [ ] SendGrid Inbound Parse Webhook
-- [ ] Email Processing Pipeline
-- [ ] Thread Matcher Service
-- [ ] EmailMessage/Thread Firestore Integration
-- [ ] Tests
-
-### Phase 2: Inbox UI Integration (2 Tage)
-- [ ] Mock-Daten durch echte Daten ersetzen
-- [ ] Firestore Listeners für Echtzeit-Updates
-- [ ] Thread-Gruppierung implementieren
-- [ ] Anhänge-Verwaltung
-- [ ] E-Mail senden über EmailAddress
-
-### Phase 3: Email Templates (2 Tage)
-- [ ] EmailTemplate Service
-- [ ] TemplateList Component
-- [ ] TemplateEditor Component
-- [ ] Merge-Tags System
-- [ ] Template-Kategorien
-
-### Phase 4: KI-Integration (2 Tage)
-- [ ] Email AI Service mit Gemini
-- [ ] KI-Assistant UI in EmailViewer
-- [ ] Template Suggestions
-- [ ] Intent-Analyse
-- [ ] Performance Optimierung
-
-### Phase 5: PR-Kampagnen Integration (1 Tag)
-- [ ] Absender-Auswahl in Kampagnen
-- [ ] Thread-Management für Kampagnen
-- [ ] Response Tracking
-
-### Phase 6: Testing & Polish (2 Tage)
-- [ ] End-to-End Tests
-- [ ] Performance Tests
-- [ ] Dokumentation
-- [ ] Bug Fixes
-
-**Gesamt: ~13 Arbeitstage** (5 Tage bereits erledigt)
-
-## 🚀 Deployment Checkliste
-
-### SendGrid Konfiguration
-- [ ] Inbound Parse Webhook: `https://app.celeropress.de/api/webhooks/sendgrid/inbound`
-- [ ] Domain Whitelisting aktiviert
-- [ ] Event Webhooks für Analytics
-- [ ] API Keys sicher hinterlegt
-
-### Firebase Konfiguration
-- [x] Security Rules deployed
-- [x] Composite Indexes erstellt
-- [ ] Backup-Strategie definiert
-- [ ] Monitoring eingerichtet
-
-### Environment Variables
-```env
-# SendGrid
-SENDGRID_API_KEY=xxx (✓ vorhanden)
-SENDGRID_INBOUND_SECRET=xxx
-SENDGRID_WEBHOOK_SECRET=xxx
-
-# Gemini KI (✓ vorhanden)
-GEMINI_API_KEY=xxx
+### 2. Überflüssige Ordner entfernen (15 Min)
+```typescript
+// In InboxSidebar.tsx
+const folders = [
+  { id: 'inbox', name: 'Posteingang', icon: InboxIcon },
+  { id: 'sent', name: 'Gesendet', icon: PaperAirplaneIcon },
+  // { id: 'drafts', name: 'Entwürfe', icon: DocumentDuplicateIcon }, // ENTFERNEN
+  // { id: 'spam', name: 'Spam', icon: ExclamationTriangleIcon }, // ENTFERNEN
+  { id: 'trash', name: 'Papierkorb', icon: TrashIcon }
+];
 ```
 
-## 🎯 Erfolgs-Metriken
+### 3. Test-Szenario durchspielen (45 Min)
+1. PR-Kampagne versenden
+2. Auf Test-E-Mail antworten
+3. Prüfen ob Antwort korrekt zugeordnet wird
+4. Routing-Regel testen
 
-### Technische Metriken
-- **Delivery Rate**: > 95%
-- **Thread-Zuordnung**: > 90% Genauigkeit
-- **Response Time**: < 2 Stunden Durchschnitt
-- **System Uptime**: > 99.9%
+## 🎯 Definition of Done - Phase 0
 
-### Business Metriken
-- **User Adoption**: 80% aktive Nutzung
-- **Automation Rate**: 30% automatisierte E-Mails
-- **KI-Nutzung**: 50% der Antworten mit KI-Support
-- **Zeitersparnis**: 40% weniger Zeit pro E-Mail
+- [ ] E-Mails können ohne Fehler versendet werden
+- [ ] Nur relevante Ordner sind sichtbar
+- [ ] Routing-Regeln werden bei eingehenden E-Mails ausgeführt
+- [ ] Team kann E-Mails zugewiesen bekommen
+- [ ] Basis-Funktionalität ist stabil
 
-## 🔒 Sicherheit & Compliance
+## 🔑 Kritische Erfolgsfaktoren
 
-### Implementiert
-- [x] Multi-Tenancy Security Rules
-- [x] Authentication Middleware
-- [x] Permissions System Design
+1. **Stabilität vor Features** - Erst Bugs fixen, dann erweitern
+2. **Schrittweise Migration** - Klassische Ansicht als Fallback behalten
+3. **Team-Feedback** - Nach jeder Phase mit Nutzern testen
+4. **Performance** - Bei vielen Kunden/Kampagnen muss es flüssig bleiben
 
-### Ausstehend
-- [ ] Audit Logging
-- [ ] DSGVO Compliance Tools
-- [ ] Retention Policies
-- [ ] Encryption at Rest
+## 📁 Dateistruktur-Übersicht
 
-## 🐛 Bekannte Probleme
+### 🎯 Frontend - Inbox UI
+```
+src/app/dashboard/communication/inbox/
+├── page.tsx                    # Haupt-Inbox-Seite mit Thread-Liste
+├── layout.tsx                  # Layout ohne Sidebar
+├── INSTRUCTIONS.md             # Entwicklungs-Guidelines
+└── README.md                   # Projekt-Übersicht & Status
 
-### Gelöst
-- [x] Label Component Error - Dokumentiert in INSTRUCTIONS.md
-- [x] Security Rules für email_signatures
-- [x] Multi-Tenancy Fallback-Logik
-- [x] Domain-Verifizierung Status
+src/components/inbox/
+├── InboxSidebar.tsx           # Ordner-Navigation (zu ersetzen)
+├── EmailList.tsx              # Thread-Liste Komponente
+├── EmailViewer.tsx            # E-Mail-Anzeige & Aktionen
+└── ComposeEmail.tsx           # E-Mail verfassen/antworten
+```
 
-### Offen
-- [ ] Inbox zeigt nur Mock-Daten (Backend-Integration fehlt)
-- [ ] E-Mails können nicht empfangen werden (Webhook fehlt)
-- [ ] ComposeEmail sendet nicht über EmailAddress
-- [ ] RichTextEditor Performance bei großen Signaturen
-- [ ] Bulk-Operations für E-Mail-Verwaltung
+### ⚙️ Backend - API Routes
+```
+src/app/api/
+├── webhooks/sendgrid/inbound/route.ts    # Empfängt eingehende E-Mails
+├── email/
+│   ├── send/route.ts                      # E-Mail-Versand API
+│   └── test/route.ts                      # Test-E-Mail-Versand
+└── sendgrid/
+    ├── send-pr-campaign/route.ts          # PR-Kampagnen-Versand
+    └── webhook/route.ts                   # SendGrid Event-Webhook
+```
 
-## 📚 Dokumentation
+### 📚 Services & Business Logic
+```
+src/lib/email/
+├── email-message-service.ts              # E-Mail CRUD-Operationen
+├── email-processor-flexible.ts           # E-Mail-Verarbeitung & Routing
+├── thread-matcher-service-flexible.ts    # Thread-Zuordnung
+├── email-address-service.ts              # E-Mail-Adressen Verwaltung
+├── email-signature-service.ts            # Signaturen-Verwaltung
+├── email-composer-service.ts             # E-Mail-Erstellung
+├── email-service.ts                      # Allgemeine E-Mail-Funktionen
+└── inbox-test-service.ts                 # Domain-Test-E-Mails
+```
 
-### Vorhanden
-- [x] INSTRUCTIONS.md - Entwicklungs-Guidelines
-- [x] README.md - Projekt-Übersicht
-- [x] Type Definitions
-- [x] Service Dokumentation
+### 🔧 Neue Services (zu erstellen)
+```
+src/lib/email/
+├── customer-campaign-matcher.ts          # Phase 1.2
+├── email-template-service.ts             # Phase 3.1
+├── email-ai-service.ts                   # Phase 6.1
+├── attachment-service.ts                 # Phase 4.1
+└── email-notification-service.ts         # Benachrichtigungen
+```
 
-### Benötigt
-- [ ] API Dokumentation
-- [ ] User Guide
-- [ ] Admin Guide
-- [ ] Troubleshooting Guide
+### 📝 TypeScript Types
+```
+src/types/
+├── email-enhanced.ts                     # Haupt-E-Mail-Typen
+├── inbox-enhanced.ts                     # Inbox-spezifische Typen
+├── email-domains.ts                      # Domain-Typen
+└── email-domains-enhanced.ts             # Erweiterte Domain-Typen
+```
 
-## 🤝 Team & Verantwortlichkeiten
+### ⚛️ Neue Komponenten (zu erstellen)
+```
+src/components/inbox/
+├── CustomerCampaignSidebar.tsx           # Phase 1.3
+├── InternalNotes.tsx                     # Phase 2.4
+├── AIAssistant.tsx                       # Phase 6.2
+├── AttachmentViewer.tsx                  # Phase 4.3
+├── DelegationSettings.tsx                # Phase 5.3
+└── SLATracker.tsx                        # Optional
 
-- **Frontend**: E-Mail UI, Settings, Integration
-- **Backend**: Services, Security, API
-- **DevOps**: Deployment, Monitoring
-- **QA**: Testing, Dokumentation
+src/components/email/
+├── RoutingRuleEditor.tsx                 # ✅ Vorhanden (überarbeiten)
+├── RoutingRuleBuilder.tsx                # ✅ Vorhanden
+├── RoutingRuleTest.tsx                   # ✅ Vorhanden
+├── SignatureEditor.tsx                   # ✅ Vorhanden
+├── SignatureList.tsx                     # ✅ Vorhanden
+├── TemplateList.tsx                      # Phase 3.2 (neu)
+├── TemplateEditor.tsx                    # Phase 3.2 (neu)
+├── TemplatePreview.tsx                   # Phase 3.2 (neu)
+└── VariablePicker.tsx                    # Phase 3.2 (neu)
+```
 
-## 🚦 Nächste Schritte
+### ⚙️ Settings & Konfiguration
+```
+src/app/dashboard/settings/email/
+└── page.tsx                              # E-Mail-Einstellungen (3 Tabs)
 
-1. **SendGrid Inbound Parse Webhook** implementieren
-   - API Route erstellen
-   - E-Mail Parsing Logic
-   - Firestore Integration
+src/app/dashboard/settings/domain/
+└── page.tsx                              # Domain-Verwaltung
+```
 
-2. **Email Processing Pipeline** aufbauen
-   - Thread Matching implementieren
-   - Routing Rules anwenden
-   - Notifications triggern
+### 🔒 Security & Middleware
+```
+src/lib/api/
+├── auth-middleware.ts                    # API Authentication
+└── api-client.ts                         # Authenticated Fetch Wrapper
 
-3. **Inbox UI mit Backend verbinden**
-   - Mock-Daten entfernen
-   - Firestore Queries implementieren
-   - Echtzeit-Updates einrichten
+src/lib/security/
+└── rate-limit-service-api.ts             # Rate Limiting
+```
 
-4. **Testen** mit echten E-Mails
-   - SendGrid Webhook konfigurieren
-   - Test-E-Mails senden
-   - Debugging
+### 🔥 Firebase Integration
+```
+src/lib/firebase/
+├── client-init.ts                        # Client-Side Firebase
+├── server-init.ts                        # Server-Side Firebase
+├── config.ts                             # Firebase Konfiguration
+├── domain-service.ts                     # Domain-Verwaltung
+└── notifications-service.ts              # Benachrichtigungen
+```
+
+### 📊 Firestore Collections
+```
+Firestore Database:
+├── email_messages/                       # Einzelne E-Mails
+├── email_threads/                        # E-Mail-Threads
+├── email_addresses/                      # Konfigurierte E-Mail-Adressen
+├── email_signatures/                     # E-Mail-Signaturen
+├── email_templates/                      # E-Mail-Vorlagen (Phase 3)
+├── email_drafts/                         # Entwürfe
+├── domains/                              # Verifizierte Domains
+├── organizations/                        # Organisationen/Kunden
+└── pr_campaigns/                         # PR-Kampagnen
+```
+
+### 🛠️ Utility & Helper
+```
+src/lib/
+├── utils/                                # Allgemeine Utilities
+├── hooks/                                # React Hooks
+└── context/
+    └── AuthContext.tsx                   # Authentication Context
+```
 
 ---
 
-**Status**: E-Mail-System funktionsfähig, Inbox-Integration ausstehend  
-**Letzte Aktualisierung**: Juli 2025  
-**Version**: 0.5.0 (E-Mail-Adressen & Signaturen fertig)
+**Status**: Phase 0 - Quick Fixes  
+**Version**: 2.1.0  
+**Letzte Aktualisierung**: 29. Juli 2025  
+**Nächster Meilenstein**: Kunden-basierte Organisation (KW 31)
