@@ -118,36 +118,37 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
         throw new Error('Keine Absender-Adresse ausgewählt');
       }
 
-      // Parse recipients
+      // Parse recipients - stelle sicher dass name nie undefined ist
       const toAddresses = to.split(',').map(email => ({
         email: email.trim(),
-        name: undefined
+        name: ''
       }));
       const ccAddresses = cc ? cc.split(',').map(email => ({
         email: email.trim(),
-        name: undefined
+        name: ''
       })) : [];
       const bccAddresses = bcc ? bcc.split(',').map(email => ({
         email: email.trim(),
-        name: undefined
+        name: ''
       })) : [];
 
-      // Prepare email data
+      // Prepare email data - nur EmailAddressInfo konforme Felder
+      const fromData = {
+        email: fromAddress.email,
+        name: fromAddress.displayName || ''
+      };
+
       const emailData = {
         to: toAddresses,
         cc: ccAddresses,
         bcc: bccAddresses,
-        from: {
-          email: fromAddress.email,
-          name: fromAddress.displayName,
-          replyToAddress: fromAddress.replyToAddress // WICHTIG: Reply-To Adresse mitschicken
-        },
+        from: fromData,
         subject,
         htmlContent: content,
         textContent: content.replace(/<[^>]*>/g, ''), // Simple HTML strip
       };
 
-      // Send email via API
+      // Send email via API - replyToAddress separat übergeben
       const response = await fetch('/api/email/send', {
         method: 'POST',
         headers: {
@@ -157,6 +158,7 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
           ...emailData,
           emailAddressId: selectedEmailAddressId,
           replyToMessageId: mode === 'reply' ? replyToEmail?.messageId : undefined,
+          replyToAddress: fromAddress.replyToAddress // Separat für API
         }),
       });
 
@@ -166,6 +168,7 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
       }
 
       const result = await response.json();
+      console.log('📧 Email sent successfully:', result);
 
       // Create or find thread
       let threadId = replyToEmail?.threadId;
@@ -175,7 +178,7 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
         const threadResult = await threadMatcherService.findOrCreateThread({
           messageId: result.messageId,
           subject,
-          from: emailData.from,
+          from: fromData,
           to: toAddresses,
           organizationId,
           inReplyTo: mode === 'reply' ? replyToEmail?.messageId : null,
@@ -183,47 +186,54 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
         });
         
         threadId = threadResult.threadId || threadResult.thread?.id;
+        console.log('📨 Thread created/found:', threadId);
       }
 
       // Save sent email to database
       const emailMessageData: any = {
         messageId: result.messageId,
         threadId: threadId || `thread_${Date.now()}`,
-        from: emailData.from,
+        from: fromData,
         to: toAddresses,
         subject,
         textContent: emailData.textContent,
         htmlContent: emailData.htmlContent,
         snippet: emailData.textContent.substring(0, 150),
-        folder: 'sent',
+        folder: 'sent' as const,
         isRead: true,
         isStarred: false,
         isArchived: false,
         isDraft: false,
         labels: [],
-        importance: 'normal',
+        importance: 'normal' as const,
         emailAccountId: selectedEmailAddressId,
         organizationId,
         userId: organizationId,
         receivedAt: serverTimestamp() as Timestamp,
         sentAt: serverTimestamp() as Timestamp,
-        attachments: [],
-        headers: {},
-        references: mode === 'reply' && replyToEmail ? [replyToEmail.messageId] : []
+        attachments: []
       };
 
-      // Nur hinzufügen wenn nicht undefined
+      // Nur hinzufügen wenn nicht undefined oder leer
       if (ccAddresses.length > 0) {
         emailMessageData.cc = ccAddresses;
       }
       if (bccAddresses.length > 0) {
         emailMessageData.bcc = bccAddresses;
       }
-      if (mode === 'reply' && replyToEmail?.messageId) {
+      
+      // Optionale Felder für Reply/Forward
+      if (mode === 'reply' && replyToEmail) {
         emailMessageData.inReplyTo = replyToEmail.messageId;
+        emailMessageData.references = [replyToEmail.messageId];
       }
+      
+      // Headers als leeres Objekt
+      emailMessageData.headers = {};
 
+      console.log('💾 Saving email to database:', emailMessageData);
       await emailMessageService.create(emailMessageData);
+      console.log('✅ Email saved successfully');
 
       // Call parent onSend callback
       onSend({
