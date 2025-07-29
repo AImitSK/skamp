@@ -159,6 +159,11 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
       // WICHTIG: Generiere Reply-To für ALLE E-Mails (für Inbound Parse)
       let replyToAddress: string | undefined;
       
+      // Hole die kurze ID der E-Mail-Adresse für die Reply-To
+      const shortEmailAddressId = selectedEmailAddressId.substring(0, 8).toLowerCase();
+      const domain = fromAddress.email.split('@')[1];
+      const localPart = fromAddress.email.split('@')[0];
+      
       if (mode === 'reply' && replyToEmail?.replyTo?.email) {
         // Prüfe ob die ursprüngliche E-Mail eine PR-Kampagnen Reply-To hatte
         const originalReplyTo = replyToEmail.replyTo.email;
@@ -166,26 +171,19 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
         const match = originalReplyTo.match(replyToPattern);
         
         if (match) {
-          // Es ist eine PR-Kampagne! Generiere neue Reply-To
-          const [, prefix, userId, campaignId, domain] = match;
-          // Generiere eine neue eindeutige ID für diese Antwort
-          const replyId = Math.random().toString(36).substring(2, 10);
-          replyToAddress = `${prefix}-${userId}-${campaignId}-reply-${replyId}@inbox.${domain}`;
+          // Es ist eine PR-Kampagne! Verwende das gleiche Format
+          const [, prefix, userId, campaignId, ] = match;
+          // Verwende die echte E-Mail-Adress-ID statt einer zufälligen
+          replyToAddress = `${localPart}-${organizationId.toLowerCase()}-${shortEmailAddressId}@inbox.${domain}`;
           console.log('🎯 Generated PR campaign reply-to:', replyToAddress);
         } else {
-          // Normale Antwort - generiere Standard Reply-To
-          const domain = fromAddress.email.split('@')[1];
-          const localPart = fromAddress.email.split('@')[0];
-          const replyId = Math.random().toString(36).substring(2, 10);
-          replyToAddress = `${localPart}-${organizationId}-reply-${replyId}@inbox.${domain}`;
+          // Normale Antwort - verwende E-Mail-Adress-ID
+          replyToAddress = `${localPart}-${organizationId.toLowerCase()}-${shortEmailAddressId}@inbox.${domain}`;
           console.log('📧 Generated standard reply-to:', replyToAddress);
         }
       } else if (mode === 'new' || mode === 'forward') {
-        // NEUE E-Mail oder Weiterleitung - generiere immer eine Reply-To für Inbound Parse
-        const domain = fromAddress.email.split('@')[1];
-        const localPart = fromAddress.email.split('@')[0];
-        const messageId = Math.random().toString(36).substring(2, 10);
-        replyToAddress = `${localPart}-${organizationId}-${messageId}@inbox.${domain}`;
+        // NEUE E-Mail oder Weiterleitung - verwende E-Mail-Adress-ID
+        replyToAddress = `${localPart}-${organizationId.toLowerCase()}-${shortEmailAddressId}@inbox.${domain}`;
         console.log('📮 Generated new email reply-to:', replyToAddress);
       }
 
