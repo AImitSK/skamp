@@ -1,21 +1,4 @@
-interface IncomingEmailData {
-  messageId: string;
-  from: EmailAddressInfo;
-  to: EmailAddressInfo[];
-  subject: string;
-  textContent: string;
-  htmlContent?: string;
-  attachments?: EmailAttachment[];
-  inReplyTo?: string | null;
-  references?: string[];
-  headers: Record<string, string>;
-  spamScore?: number;
-  spamReport?: string;
-  envelope?: {
-    to: string[];
-    from: string;
-  };
-}// src/app/api/webhooks/sendgrid/inbound/route.ts
+// src/app/api/webhooks/sendgrid/inbound/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import crypto from 'crypto';
@@ -56,6 +39,25 @@ interface ParsedAttachmentInfo {
   };
 }
 
+interface IncomingEmailData {
+  messageId: string;
+  from: EmailAddressInfo;
+  to: EmailAddressInfo[];
+  subject: string;
+  textContent: string;
+  htmlContent?: string;
+  attachments?: EmailAttachment[];
+  inReplyTo?: string | null;
+  references?: string[];
+  headers: Record<string, string>;
+  spamScore?: number;
+  spamReport?: string;
+  envelope?: {
+    to: string[];
+    from: string;
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
     console.log('📨 SendGrid Inbound Parse Webhook received');
@@ -85,6 +87,9 @@ export async function POST(request: NextRequest) {
       subject: parsedEmail.subject
     });
 
+    // Debug log headers
+    console.log('📋 Headers present:', !!parsedEmail.headers);
+    
     // Extract email addresses
     const fromAddress = parseEmailAddress(parsedEmail.from);
     const toAddresses = parseToAddresses(parsedEmail);
@@ -94,10 +99,10 @@ export async function POST(request: NextRequest) {
     
     // Create email message data
     const emailData: IncomingEmailData = {
-      // Headers
-      messageId: extractMessageId(parsedEmail.headers),
-      inReplyTo: extractHeader(parsedEmail.headers, 'In-Reply-To'),
-      references: extractHeader(parsedEmail.headers, 'References')?.split(/\s+/) || [],
+      // Headers - mit Fallback wenn headers undefined
+      messageId: parsedEmail.headers ? extractMessageId(parsedEmail.headers) : generateMessageId(),
+      inReplyTo: parsedEmail.headers ? extractHeader(parsedEmail.headers, 'In-Reply-To') : null,
+      references: parsedEmail.headers ? (extractHeader(parsedEmail.headers, 'References')?.split(/\s+/) || []) : [],
       
       // Addresses
       from: fromAddress,
@@ -112,8 +117,8 @@ export async function POST(request: NextRequest) {
       spamScore: parsedEmail.spam_score ? parseFloat(parsedEmail.spam_score) : undefined,
       spamReport: parsedEmail.spam_report,
       
-      // Raw headers for debugging
-      headers: parseHeaders(parsedEmail.headers),
+      // Raw headers for debugging - mit Fallback
+      headers: parsedEmail.headers ? parseHeaders(parsedEmail.headers) : {},
       
       // Envelope data for accurate routing - nur wenn vorhanden
       envelope: envelope || undefined,
@@ -169,6 +174,9 @@ function parseFormData(formData: FormData): ParsedEmail | null {
       }
     }
     
+    // Debug log all fields
+    console.log('📝 Form fields:', Object.keys(email));
+    
     // Validate required fields
     if (!email.from || !email.to) {
       console.error('Missing required fields: from or to');
@@ -185,11 +193,17 @@ function parseFormData(formData: FormData): ParsedEmail | null {
 /**
  * Parse email address from string
  */
-function parseEmailAddress(addressString: string): EmailAddressInfo {
+function parseEmailAddress(addressString: string | undefined): EmailAddressInfo {
+  // Null/undefined check
+  if (!addressString) {
+    console.warn('⚠️ Empty address string provided');
+    return { email: 'unknown@unknown.com' };
+  }
+  
   // Match patterns like "Name <email@domain.com>" or just "email@domain.com"
   const match = addressString.match(/^(?:"?([^"]*)"?\s)?<?([^>]+)>?$/);
   
-  if (match) {
+  if (match && match[2]) {
     return {
       name: match[1]?.trim() || undefined,
       email: match[2].trim().toLowerCase()
@@ -213,7 +227,7 @@ function parseToAddresses(parsedEmail: ParsedEmail): EmailAddressInfo[] {
   if (parsedEmail.to) {
     const toAddresses = parsedEmail.to.split(',').map(addr => parseEmailAddress(addr.trim()));
     toAddresses.forEach(addr => {
-      if (!seen.has(addr.email)) {
+      if (addr.email && !seen.has(addr.email)) {
         addresses.push(addr);
         seen.add(addr.email);
       }
@@ -239,6 +253,13 @@ function parseToAddresses(parsedEmail: ParsedEmail): EmailAddressInfo[] {
 }
 
 /**
+ * Generate a unique message ID
+ */
+function generateMessageId(): string {
+  return `sendgrid-${Date.now()}-${Math.random().toString(36).substr(2, 9)}@inbound.celeropress.de`;
+}
+
+/**
  * Extract Message-ID from headers
  */
 function extractMessageId(headers: string): string {
@@ -248,13 +269,15 @@ function extractMessageId(headers: string): string {
   }
   
   // Generate a unique ID if none found
-  return `sendgrid-${Date.now()}-${Math.random().toString(36).substr(2, 9)}@inbound.celeropress.de`;
+  return generateMessageId();
 }
 
 /**
  * Extract specific header value
  */
-function extractHeader(headers: string, headerName: string): string | null {
+function extractHeader(headers: string | undefined, headerName: string): string | null {
+  if (!headers) return null;
+  
   const regex = new RegExp(`^${headerName}:\\s*(.*)$`, 'mi');
   const match = headers.match(regex);
   return match ? match[1].trim() : null;
@@ -263,7 +286,9 @@ function extractHeader(headers: string, headerName: string): string | null {
 /**
  * Parse all headers into key-value pairs
  */
-function parseHeaders(headersString: string): Record<string, string> {
+function parseHeaders(headersString: string | undefined): Record<string, string> {
+  if (!headersString) return {};
+  
   const headers: Record<string, string> = {};
   const lines = headersString.split('\n');
   
