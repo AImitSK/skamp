@@ -22,7 +22,7 @@
 - **Thread-Matching** - Basis-Funktionalität vorhanden
 
 ### ⚠️ Kleine Bugs / Verbesserungen nötig
-- **E-Mail-Versand** - Kleinere Fehler zu beheben
+- **E-Mail-Versand** - Kleinere Fehler zu beheben (erledigt)
 - **Routing-Regeln** - UI überarbeiten, Ausführung implementieren
 - **Überflüssige Ordner** - Spam/Entwürfe noch sichtbar
 
@@ -42,9 +42,9 @@
 
 #### 0.1 Bug-Fixes
 **Datei:** `src/components/inbox/ComposeEmail.tsx`
-- [ ] E-Mail-Versand Fehler debuggen und beheben
-- [ ] Error-Handling verbessern
-- [ ] Erfolgs-Feedback nach Versand
+- [✅] E-Mail-Versand Fehler debuggen und beheben
+- [✅] Error-Handling verbessern
+- [✅] Erfolgs-Feedback nach Versand
 
 #### 0.2 UI-Bereinigung
 **Datei:** `src/components/inbox/InboxSidebar.tsx`
@@ -199,7 +199,7 @@ type ThreadStatus = 'new' | 'in-progress' | 'waiting-for-reply' | 'completed';
 - [ ] Vertretungs-Regeln
 - [ ] Auto-Reply bei Abwesenheit
 
-### Phase 6: KI-Integration (Optional, 3 Tage)
+### Phase 6: KI-Integration (3 Tage)
 
 #### 6.1 Gemini Integration
 **Neue Datei:** `src/lib/email/email-ai-service.ts`
@@ -261,7 +261,7 @@ const folders = [
 
 ## 🎯 Definition of Done - Phase 0
 
-- [ ] E-Mails können ohne Fehler versendet werden
+- [✅] E-Mails können ohne Fehler versendet werden
 - [ ] Nur relevante Ordner sind sichtbar
 - [ ] Routing-Regeln werden bei eingehenden E-Mails ausgeführt
 - [ ] Team kann E-Mails zugewiesen bekommen
