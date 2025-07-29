@@ -175,13 +175,11 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
       }
 
       // Save sent email to database
-      await emailMessageService.create({
+      const emailMessageData: any = {
         messageId: result.messageId,
         threadId: threadId || `thread_${Date.now()}`,
         from: emailData.from,
         to: toAddresses,
-        cc: ccAddresses,
-        bcc: bccAddresses,
         subject,
         textContent: emailData.textContent,
         htmlContent: emailData.htmlContent,
@@ -200,9 +198,21 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
         sentAt: serverTimestamp() as Timestamp,
         attachments: [],
         headers: {},
-        references: mode === 'reply' && replyToEmail ? [replyToEmail.messageId] : [],
-        inReplyTo: mode === 'reply' ? replyToEmail?.messageId : undefined
-      });
+        references: mode === 'reply' && replyToEmail ? [replyToEmail.messageId] : []
+      };
+
+      // Nur hinzufügen wenn nicht undefined
+      if (ccAddresses.length > 0) {
+        emailMessageData.cc = ccAddresses;
+      }
+      if (bccAddresses.length > 0) {
+        emailMessageData.bcc = bccAddresses;
+      }
+      if (mode === 'reply' && replyToEmail?.messageId) {
+        emailMessageData.inReplyTo = replyToEmail.messageId;
+      }
+
+      await emailMessageService.create(emailMessageData);
 
       // Call parent onSend callback
       onSend({
