@@ -18,9 +18,11 @@ import {
   DocumentData,
   QueryDocumentSnapshot,
   Query,
-  increment
+  increment,
+  Firestore
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase/client-init';
+import { db as clientDb } from '@/lib/firebase/client-init';
+import { serverDb, isServerSide } from '@/lib/firebase/server-init';
 import { 
   EmailMessage,
   EmailThread,
@@ -50,6 +52,11 @@ interface EmailListResult {
 export class EmailMessageService {
   private readonly collectionName = 'email_messages';
   private readonly threadsCollectionName = 'email_threads';
+  
+  // Dynamisch die richtige DB-Instanz verwenden
+  private get db(): Firestore {
+    return isServerSide() ? serverDb : clientDb;
+  }
 
   /**
    * Erstellt eine neue E-Mail-Nachricht
@@ -71,7 +78,7 @@ export class EmailMessageService {
       };
 
       const docRef = await addDoc(
-        collection(db, this.collectionName),
+        collection(this.db, this.collectionName),
         data
       );
 
@@ -87,7 +94,7 @@ export class EmailMessageService {
    */
   async get(id: string): Promise<EmailMessage | null> {
     try {
-      const docRef = doc(db, this.collectionName, id);
+      const docRef = doc(this.db, this.collectionName, id);
       const docSnap = await getDoc(docRef);
       
       if (!docSnap.exists()) {
@@ -106,7 +113,7 @@ export class EmailMessageService {
    */
   async update(id: string, updates: Partial<EmailMessage>): Promise<void> {
     try {
-      const docRef = doc(db, this.collectionName, id);
+      const docRef = doc(this.db, this.collectionName, id);
       
       await updateDoc(docRef, {
         ...updates,
@@ -162,8 +169,8 @@ export class EmailMessageService {
     try {
       console.log('🔄 Updating thread after delete:', threadId);
       
-      const batch = writeBatch(db);
-      const threadRef = doc(db, this.threadsCollectionName, threadId);
+      const batch = writeBatch(this.db);
+      const threadRef = doc(this.db, this.threadsCollectionName, threadId);
       
       // Hole aktuelle Thread-Daten
       const threadSnap = await getDoc(threadRef);
@@ -176,7 +183,7 @@ export class EmailMessageService {
 
       // Zähle verbleibende E-Mails im Thread (ohne Trash)
       const remainingEmailsQuery = query(
-        collection(db, this.collectionName),
+        collection(this.db, this.collectionName),
         where('threadId', '==', threadId),
         where('folder', '!=', 'trash')
       );
@@ -209,7 +216,7 @@ export class EmailMessageService {
 
         // Finde die neueste verbleibende E-Mail für lastMessageAt
         const latestEmailQuery = query(
-          collection(db, this.collectionName),
+          collection(this.db, this.collectionName),
           where('threadId', '==', threadId),
           where('folder', '!=', 'trash'),
           orderBy('receivedAt', 'desc'),
@@ -243,7 +250,7 @@ export class EmailMessageService {
       // Hole E-Mail für Thread-Update
       const email = await this.get(id);
       
-      const docRef = doc(db, this.collectionName, id);
+      const docRef = doc(this.db, this.collectionName, id);
       await deleteDoc(docRef);
 
       // Update Thread nach permanentem Löschen
@@ -264,7 +271,7 @@ export class EmailMessageService {
     options: EmailQueryOptions = {}
   ): Promise<EmailListResult> {
     try {
-      let q: Query = collection(db, this.collectionName);
+      let q: Query = collection(this.db, this.collectionName);
       const constraints: any[] = [
         where('organizationId', '==', organizationId)
       ];
@@ -364,7 +371,7 @@ export class EmailMessageService {
       console.log('📨 Getting thread messages for:', threadId);
       
       const q = query(
-        collection(db, this.collectionName),
+        collection(this.db, this.collectionName),
         where('threadId', '==', threadId),
         where('folder', '!=', 'trash'), // Ausschluss von gelöschten E-Mails
         orderBy('folder'), // Notwendig für != Query
@@ -387,7 +394,7 @@ export class EmailMessageService {
       try {
         console.log('⚠️ Trying fallback query without folder filter');
         const fallbackQuery = query(
-          collection(db, this.collectionName),
+          collection(this.db, this.collectionName),
           where('threadId', '==', threadId),
           orderBy('receivedAt', 'asc')
         );
@@ -425,7 +432,7 @@ export class EmailMessageService {
 
       // Update Thread unreadCount
       if (email.threadId && email.isRead !== isRead) {
-        const threadRef = doc(db, this.threadsCollectionName, email.threadId);
+        const threadRef = doc(this.db, this.threadsCollectionName, email.threadId);
         const change = isRead ? -1 : 1;
         await updateDoc(threadRef, {
           unreadCount: increment(change),
@@ -490,7 +497,7 @@ export class EmailMessageService {
 
       // Update Thread counts wenn nötig
       if (email.threadId && !email.isRead) {
-        const threadRef = doc(db, this.threadsCollectionName, email.threadId);
+        const threadRef = doc(this.db, this.threadsCollectionName, email.threadId);
         await updateDoc(threadRef, {
           unreadCount: increment(-1),
           updatedAt: serverTimestamp()
@@ -536,10 +543,10 @@ export class EmailMessageService {
     updates: Partial<EmailMessage>
   ): Promise<void> {
     try {
-      const batch = writeBatch(db);
+      const batch = writeBatch(this.db);
       
       ids.forEach(id => {
-        const docRef = doc(db, this.collectionName, id);
+        const docRef = doc(this.db, this.collectionName, id);
         batch.update(docRef, {
           ...updates,
           updatedAt: serverTimestamp()
@@ -575,7 +582,7 @@ export class EmailMessageService {
           constraints.push(where('emailAccountId', '==', emailAccountId));
         }
 
-        const q = query(collection(db, this.collectionName), ...constraints);
+        const q = query(collection(this.db, this.collectionName), ...constraints);
         const snapshot = await getDocs(q);
         stats[folder] = snapshot.size;
       }
@@ -607,7 +614,7 @@ export class EmailMessageService {
 
       for (const chunk of chunks) {
         const q = query(
-          collection(db, this.collectionName),
+          collection(this.db, this.collectionName),
           where('organizationId', '==', organizationId),
           where('messageId', 'in', chunk)
         );
