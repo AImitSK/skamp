@@ -645,13 +645,19 @@ export class FlexibleThreadMatcherService {
   private extractParticipants(criteria: ThreadMatchingCriteria): EmailAddressInfo[] {
     const participantMap = new Map<string, EmailAddressInfo>();
     
-    // From
-    participantMap.set(criteria.from.email, criteria.from);
+    // From - stelle sicher, dass name nie undefined ist
+    participantMap.set(criteria.from.email, {
+      email: criteria.from.email,
+      name: criteria.from.name || ''
+    });
     
-    // To
+    // To - stelle sicher, dass name nie undefined ist
     criteria.to.forEach(addr => {
       if (!participantMap.has(addr.email)) {
-        participantMap.set(addr.email, addr);
+        participantMap.set(addr.email, {
+          email: addr.email,
+          name: addr.name || ''
+        });
       }
     });
     
