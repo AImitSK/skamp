@@ -13,6 +13,7 @@ interface ParsedEmail {
   subject: string;
   text?: string;
   html?: string;
+  email?: string; // NEU: Das komplette E-Mail im RFC822 Format
   attachments?: number;
   'attachment-info'?: string;
   envelope?: string;
@@ -162,6 +163,31 @@ function parseFormData(formData: FormData): ParsedEmail | null {
     // Debug log all fields
     console.log('📝 Form fields:', Object.keys(email));
     
+    // WICHTIG: SendGrid sendet den E-Mail-Inhalt manchmal im 'email' Feld
+    // als komplette RFC822 E-Mail. Wir müssen das parsen.
+    if (email.email && !email.text && !email.html) {
+      console.log('📧 Parsing email content from RFC822 format...');
+      const parsedContent = parseRFC822Email(email.email);
+      if (parsedContent) {
+        email.text = parsedContent.text;
+        email.html = parsedContent.html;
+        // Headers könnten auch hier sein
+        if (!email.headers && parsedContent.headers) {
+          email.headers = parsedContent.headers;
+        }
+      }
+    }
+    
+    // Debug log content
+    console.log('📄 Email content:', {
+      hasText: !!email.text,
+      textLength: email.text?.length || 0,
+      hasHtml: !!email.html,
+      htmlLength: email.html?.length || 0,
+      textPreview: email.text?.substring(0, 100) || 'NO TEXT CONTENT',
+      htmlPreview: email.html?.substring(0, 100) || 'NO HTML CONTENT'
+    });
+    
     // Validate required fields
     if (!email.from || !email.to) {
       console.error('Missing required fields: from or to');
@@ -171,6 +197,89 @@ function parseFormData(formData: FormData): ParsedEmail | null {
     return email as ParsedEmail;
   } catch (error) {
     console.error('Error parsing form data:', error);
+    return null;
+  }
+}
+
+/**
+ * Parse RFC822 formatted email to extract text and HTML content
+ */
+function parseRFC822Email(emailData: string): { text?: string; html?: string; headers?: string } | null {
+  try {
+    // Einfacher Parser für RFC822 E-Mails
+    // Teile Header und Body
+    const parts = emailData.split(/\r?\n\r?\n/);
+    if (parts.length < 2) {
+      console.log('⚠️ No body found in email data');
+      return null;
+    }
+    
+    const headers = parts[0];
+    const body = parts.slice(1).join('\n\n');
+    
+    // Prüfe ob es eine multipart E-Mail ist
+    const contentTypeMatch = headers.match(/Content-Type:\s*([^;\s]+)/i);
+    const contentType = contentTypeMatch ? contentTypeMatch[1].toLowerCase() : 'text/plain';
+    
+    console.log('📋 Content-Type:', contentType);
+    
+    if (contentType.includes('multipart')) {
+      // Multipart E-Mail - extrahiere Boundary
+      const boundaryMatch = headers.match(/boundary=["']?([^"'\s]+)["']?/i);
+      if (!boundaryMatch) {
+        console.log('⚠️ No boundary found in multipart email');
+        return { text: body, headers };
+      }
+      
+      const boundary = boundaryMatch[1];
+      const parts = body.split(new RegExp(`--${boundary}(?:--)?`));
+      
+      let textContent = '';
+      let htmlContent = '';
+      
+      // Durchsuche alle Parts
+      for (const part of parts) {
+        if (!part.trim()) continue;
+        
+        const partContentTypeMatch = part.match(/Content-Type:\s*([^;\s]+)/i);
+        if (!partContentTypeMatch) continue;
+        
+        const partType = partContentTypeMatch[1].toLowerCase();
+        const partBody = part.split(/\r?\n\r?\n/).slice(1).join('\n\n').trim();
+        
+        if (partType === 'text/plain' && !textContent) {
+          textContent = partBody;
+        } else if (partType === 'text/html' && !htmlContent) {
+          htmlContent = partBody;
+        }
+      }
+      
+      console.log('✅ Extracted from multipart:', {
+        textLength: textContent.length,
+        htmlLength: htmlContent.length
+      });
+      
+      return {
+        text: textContent || undefined,
+        html: htmlContent || undefined,
+        headers
+      };
+    } else if (contentType === 'text/html') {
+      // Nur HTML
+      return {
+        html: body,
+        text: body.replace(/<[^>]*>/g, ''), // Simple HTML strip
+        headers
+      };
+    } else {
+      // Plain text oder unbekannt
+      return {
+        text: body,
+        headers
+      };
+    }
+  } catch (error) {
+    console.error('Error parsing RFC822 email:', error);
     return null;
   }
 }
