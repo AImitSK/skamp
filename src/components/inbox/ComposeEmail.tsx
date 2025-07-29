@@ -70,12 +70,30 @@ export function ComposeEmail({
       
       // WICHTIG: Setze die richtige E-Mail-Adresse für Antworten
       // Finde die E-Mail-Adresse, an die die ursprüngliche E-Mail ging
-      const recipientAddress = emailAddresses.find(addr => 
-        replyToEmail.to.some(to => to.email === addr.email || to.email === addr.replyToAddress)
-      );
+      const recipientAddress = emailAddresses.find(addr => {
+        // Prüfe ob die E-Mail an eine unserer Adressen ging
+        const wasDirectRecipient = replyToEmail.to.some(to => to.email === addr.email);
+        
+        // WICHTIG: Prüfe ob es eine Reply-To-Adresse gibt (z.B. pr-reply-xxx@domain.de)
+        // Diese wird bei PR-Kampagnen verwendet
+        if (replyToEmail.replyTo?.email) {
+          // Wenn die Reply-To zu unserer Domain gehört, finde die passende E-Mail-Adresse
+          const replyToDomain = replyToEmail.replyTo.email.split('@')[1];
+          const addressDomain = addr.email.split('@')[1];
+          
+          // Verwende die E-Mail-Adresse mit der gleichen Domain wie die Reply-To
+          if (replyToDomain === addressDomain) {
+            console.log('📧 Using email address matching reply-to domain:', addr.email);
+            return true;
+          }
+        }
+        
+        return wasDirectRecipient;
+      });
       
       if (recipientAddress && recipientAddress.id) {
         setSelectedEmailAddressId(recipientAddress.id);
+        console.log('✅ Selected email address for reply:', recipientAddress.email);
       }
       
       // Quote original message
@@ -138,6 +156,39 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
         name: fromAddress.displayName || ''
       };
 
+      // WICHTIG: Generiere Reply-To für ALLE E-Mails (für Inbound Parse)
+      let replyToAddress: string | undefined;
+      
+      if (mode === 'reply' && replyToEmail?.replyTo?.email) {
+        // Prüfe ob die ursprüngliche E-Mail eine PR-Kampagnen Reply-To hatte
+        const originalReplyTo = replyToEmail.replyTo.email;
+        const replyToPattern = /^(.+)-([a-zA-Z0-9]+)-([a-zA-Z0-9]+)@inbox\.(.+)$/;
+        const match = originalReplyTo.match(replyToPattern);
+        
+        if (match) {
+          // Es ist eine PR-Kampagne! Generiere neue Reply-To
+          const [, prefix, userId, campaignId, domain] = match;
+          // Generiere eine neue eindeutige ID für diese Antwort
+          const replyId = Math.random().toString(36).substring(2, 10);
+          replyToAddress = `${prefix}-${userId}-${campaignId}-reply-${replyId}@inbox.${domain}`;
+          console.log('🎯 Generated PR campaign reply-to:', replyToAddress);
+        } else {
+          // Normale Antwort - generiere Standard Reply-To
+          const domain = fromAddress.email.split('@')[1];
+          const localPart = fromAddress.email.split('@')[0];
+          const replyId = Math.random().toString(36).substring(2, 10);
+          replyToAddress = `${localPart}-${organizationId}-reply-${replyId}@inbox.${domain}`;
+          console.log('📧 Generated standard reply-to:', replyToAddress);
+        }
+      } else if (mode === 'new' || mode === 'forward') {
+        // NEUE E-Mail oder Weiterleitung - generiere immer eine Reply-To für Inbound Parse
+        const domain = fromAddress.email.split('@')[1];
+        const localPart = fromAddress.email.split('@')[0];
+        const messageId = Math.random().toString(36).substring(2, 10);
+        replyToAddress = `${localPart}-${organizationId}-${messageId}@inbox.${domain}`;
+        console.log('📮 Generated new email reply-to:', replyToAddress);
+      }
+
       const emailData = {
         to: toAddresses,
         cc: ccAddresses,
@@ -158,7 +209,11 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
           ...emailData,
           emailAddressId: selectedEmailAddressId,
           replyToMessageId: mode === 'reply' ? replyToEmail?.messageId : undefined,
-          replyToAddress: fromAddress.replyToAddress // Separat für API
+          // WICHTIG: Reply-To Adresse für PR-Kampagnen
+          replyTo: replyToAddress,
+          // Thread-ID und Campaign-ID für korrekte Zuordnung
+          threadId: replyToEmail?.threadId,
+          campaignId: replyToEmail?.campaignId
         }),
       });
 
