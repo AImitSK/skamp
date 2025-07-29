@@ -159,10 +159,32 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
       // WICHTIG: Generiere Reply-To für ALLE E-Mails (für Inbound Parse)
       let replyToAddress: string | undefined;
       
+      // Debug-Logging
+      console.log('🔍 Debug Reply-To Generation:', {
+        selectedEmailAddressId,
+        fromAddress,
+        organizationId,
+        mode
+      });
+      
       // Hole die kurze ID der E-Mail-Adresse für die Reply-To
+      if (!selectedEmailAddressId || !fromAddress) {
+        console.error('❌ Missing required data for Reply-To generation');
+        alert('Fehler: Keine E-Mail-Adresse ausgewählt');
+        return;
+      }
+      
       const shortEmailAddressId = selectedEmailAddressId.substring(0, 8).toLowerCase();
       const domain = fromAddress.email.split('@')[1];
       const localPart = fromAddress.email.split('@')[0];
+      
+      console.log('📝 Reply-To components:', {
+        shortEmailAddressId,
+        domain,
+        localPart,
+        fullOrganizationId: organizationId,
+        shortOrganizationId: organizationId.toLowerCase()
+      });
       
       if (mode === 'reply' && replyToEmail?.replyTo?.email) {
         // Prüfe ob die ursprüngliche E-Mail eine PR-Kampagnen Reply-To hatte
