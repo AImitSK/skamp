@@ -729,54 +729,107 @@ export class EmailAddressService {
     return `${prefix}-${shortOrgId}-${shortEmailId}@inbox.sk-online-marketing.de`;
   }
 
-  /**
-   * Findet eine E-Mail-Adresse basierend auf der Reply-To Adresse
-   * Parst: {prefix}-{orgId}-{emailId}@inbox.sk-online-marketing.de
-   */
-  async findByReplyToAddress(replyToEmail: string): Promise<EmailAddress | null> {
-    try {
-      // Extrahiere den lokalen Teil
-      const [localPart] = replyToEmail.split('@');
-      const parts = localPart.split('-');
-      
-      if (parts.length < 3) {
-        console.error('Invalid reply-to format:', replyToEmail);
-        return null;
-      }
-      
-      // Die letzten zwei Teile sind orgId und emailId
-      const shortEmailId = parts[parts.length - 1];
-      const shortOrgId = parts[parts.length - 2];
-      
-      // Suche nach E-Mail-Adressen mit diesem Prefix
-      const q = query(
-        collection(db, this.collectionName),
-        where('organizationId', '>=', shortOrgId),
-        where('organizationId', '<=', shortOrgId + '\uf8ff'),
-        limit(20)
-      );
-      
-      const snapshot = await getDocs(q);
-      
-      // Finde die passende E-Mail-Adresse
-      for (const doc of snapshot.docs) {
-        if (doc.id.startsWith(shortEmailId)) {
-          const emailAddress = { ...doc.data(), id: doc.id } as EmailAddress;
-          console.log('✅ Found email address for reply-to:', {
-            replyTo: replyToEmail,
-            found: emailAddress.email
-          });
-          return emailAddress;
-        }
-      }
-      
-      console.error('No email address found for reply-to:', replyToEmail);
-      return null;
-    } catch (error) {
-      console.error('Error finding email by reply-to:', error);
+/**
+ * Findet eine E-Mail-Adresse basierend auf der Reply-To Adresse
+ * Parst: {prefix}-{orgId}-{emailId}@inbox.sk-online-marketing.de
+ */
+async findByReplyToAddress(replyToEmail: string): Promise<EmailAddress | null> {
+  try {
+    console.log('🔍 Finding email by reply-to:', replyToEmail);
+    
+    // Extrahiere den lokalen Teil
+    const [localPart] = replyToEmail.split('@');
+    const parts = localPart.split('-');
+    
+    if (parts.length < 3) {
+      console.error('Invalid reply-to format:', replyToEmail);
       return null;
     }
+    
+    // Die letzten zwei Teile sind orgId und emailId
+    const shortEmailId = parts[parts.length - 1].toLowerCase(); // lowercase!
+    const shortOrgId = parts[parts.length - 2].toLowerCase(); // lowercase!
+    
+    console.log('📝 Extracted IDs:', { shortOrgId, shortEmailId });
+    
+    // Da wir keine case-insensitive Suche in Firestore haben,
+    // müssen wir alle E-Mail-Adressen der Organisation laden
+    const q = query(
+      collection(db, this.collectionName),
+      where('organizationId', '>=', shortOrgId),
+      where('organizationId', '<=', shortOrgId + '\uf8ff'),
+      limit(50) // Erhöht für mehr Sicherheit
+    );
+    
+    const snapshot = await getDocs(q);
+    console.log(`📊 Found ${snapshot.size} potential matches`);
+    
+    // Finde die passende E-Mail-Adresse (case-insensitive)
+    for (const doc of snapshot.docs) {
+      const docData = doc.data();
+      const docIdLower = doc.id.toLowerCase();
+      const orgIdLower = docData.organizationId?.toLowerCase() || '';
+      
+      console.log(`🔍 Checking doc: ${doc.id} (${docIdLower})`);
+      
+      // Case-insensitive Vergleich
+      if (docIdLower.startsWith(shortEmailId) && orgIdLower.startsWith(shortOrgId)) {
+        const emailAddress = { ...docData, id: doc.id } as EmailAddress;
+        console.log('✅ Found email address for reply-to:', {
+          replyTo: replyToEmail,
+          found: emailAddress.email,
+          docId: doc.id,
+          orgId: emailAddress.organizationId
+        });
+        return emailAddress;
+      }
+    }
+    
+    // Fallback: Exakte Suche nach der E-Mail-Adresse ID
+    // Versuche direkt mit der ID zu laden (für alte Daten)
+    try {
+      // Konstruiere mögliche Doc IDs
+      const possibleIds = [
+        shortEmailId, // lowercase
+        shortEmailId.toUpperCase(), // UPPERCASE
+        // Originale Großschreibung rekonstruieren (hacky aber funktioniert oft)
+        shortEmailId.charAt(0).toUpperCase() + shortEmailId.slice(1),
+      ];
+      
+      for (const possibleId of possibleIds) {
+        // Suche mit verschiedenen ID-Kombinationen
+        const directQuery = query(
+          collection(db, this.collectionName),
+          where('organizationId', '==', parts[parts.length - 2]), // Original case
+          limit(10)
+        );
+        
+        const directSnapshot = await getDocs(directQuery);
+        
+        for (const doc of directSnapshot.docs) {
+          if (doc.id.toLowerCase().startsWith(shortEmailId)) {
+            const emailAddress = { ...doc.data(), id: doc.id } as EmailAddress;
+            console.log('✅ Found via fallback search:', emailAddress.email);
+            return emailAddress;
+          }
+        }
+      }
+    } catch (fallbackError) {
+      console.error('Fallback search failed:', fallbackError);
+    }
+    
+    console.error('❌ No email address found for reply-to:', replyToEmail, {
+      localPart,
+      parts,
+      shortOrgId,
+      shortEmailId
+    });
+    return null;
+  } catch (error) {
+    console.error('❌ Error finding email by reply-to:', error);
+    return null;
   }
+}
 
   /**
    * Holt die Standard E-Mail-Adresse einer Organisation
