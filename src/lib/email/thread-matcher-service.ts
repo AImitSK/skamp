@@ -1,4 +1,6 @@
 // src/lib/email/thread-matcher-service.ts
+// Am Anfang der thread-matcher-service.ts, ersetze die imports:
+
 import { 
   collection, 
   doc,
@@ -12,14 +14,31 @@ import {
   limit,
   serverTimestamp,
   Timestamp,
-  increment
+  increment,
+  getFirestore
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase/client-init';
+import { initializeApp, getApps } from 'firebase/app';
 import { 
   EmailThread,
   EmailAddressInfo,
   EmailMessage
 } from '@/types/email-enhanced';
+
+// Firebase-Konfiguration
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
+};
+
+// Initialisiere Firebase App wenn noch nicht geschehen
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+
+// Firestore Instanz
+const db = getFirestore(app);
 
 interface ThreadMatchingCriteria {
   messageId: string;
