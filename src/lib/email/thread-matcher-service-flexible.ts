@@ -289,6 +289,10 @@ export class FlexibleThreadMatcherService {
 
   /**
    * Subject-basiertes Thread-Matching
+   * HINWEIS: Benötigt einen zusammengesetzten Index in Firestore:
+   * - normalizedSubject (ASC)
+   * - organizationId (ASC)
+   * - lastMessageAt (DESC)
    */
   private async matchBySubject(criteria: ThreadMatchingCriteria): Promise<ThreadMatchResult> {
     try {
@@ -303,7 +307,7 @@ export class FlexibleThreadMatcherService {
       const threadsQuery = query(
         collection(db, this.collectionName),
         where('organizationId', '==', criteria.organizationId),
-        where('normalizedSubject', '==', normalizedSubject), // Neues Feld
+        where('normalizedSubject', '==', normalizedSubject),
         orderBy('lastMessageAt', 'desc'),
         limit(5)
       );
@@ -336,6 +340,7 @@ export class FlexibleThreadMatcherService {
 
   /**
    * Erstellt einen neuen Thread
+   * FIX: Stelle sicher, dass alle Felder definierte Werte haben
    */
   private async createThread(
     criteria: ThreadMatchingCriteria,
@@ -346,10 +351,11 @@ export class FlexibleThreadMatcherService {
       const participants = this.extractParticipants(criteria);
       const normalizedSubject = this.normalizeSubject(criteria.subject);
       
-      const threadData: ExtendedEmailThread = {
-        subject: criteria.subject,
-        normalizedSubject, // Für besseres Subject-Matching
-        participants,
+      // Erstelle Thread-Daten mit sicheren Default-Werten
+      const threadData: Partial<ExtendedEmailThread> = {
+        subject: criteria.subject || 'Kein Betreff',
+        normalizedSubject: normalizedSubject || 'kein-betreff',
+        participants: participants,
         lastMessageAt: serverTimestamp() as Timestamp,
         messageCount: 1,
         unreadCount: 1,
@@ -370,17 +376,25 @@ export class FlexibleThreadMatcherService {
         wasDeferred: !!threadId
       };
 
+      // Entferne alle undefined-Werte
+      const cleanedData = Object.entries(threadData).reduce((acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = value;
+        }
+        return acc;
+      }, {} as any);
+
       // Wenn threadId vorgegeben, verwende diese als Document ID
       if (threadId) {
         const docRef = doc(db, this.collectionName, threadId);
-        await setDoc(docRef, threadData, { merge: true });
-        return { ...threadData, id: threadId } as EmailThread;
+        await setDoc(docRef, cleanedData, { merge: true });
+        return { ...cleanedData, id: threadId } as EmailThread;
       } else {
         const docRef = await addDoc(
           collection(db, this.collectionName),
-          threadData
+          cleanedData
         );
-        return { ...threadData, id: docRef.id } as EmailThread;
+        return { ...cleanedData, id: docRef.id } as EmailThread;
       }
     } catch (error) {
       console.error('Error creating thread:', error);
