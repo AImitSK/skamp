@@ -14,6 +14,8 @@ import { SettingsNav } from '@/components/SettingsNav';
 import { Text } from '@/components/text';
 import { teamMemberService } from '@/lib/firebase/organization-service';
 import { TeamMember, UserRole } from '@/types/international';
+import { Timestamp, collection, query, where, onSnapshot, orderBy, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase/client-init';
 import { 
   UserPlusIcon,
   UserGroupIcon,
@@ -28,7 +30,11 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/react/20/solid';
 import clsx from 'clsx';
-import { Timestamp } from 'firebase/firestore';
+
+// Extended TeamMember type for UI
+type TeamMemberUI = TeamMember & {
+  _fromNotification?: boolean;
+};
 
 // Toast notification helper
 const showToast = (message: string, type: 'success' | 'error' = 'success') => {
@@ -45,7 +51,7 @@ export default function TeamSettingsPage() {
   const organizationId = user?.uid || '';
   
   // State
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [teamMembers, setTeamMembers] = useState<TeamMemberUI[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -62,6 +68,53 @@ export default function TeamSettingsPage() {
     loadTeamMembers();
   }, [organizationId]);
   
+  // Listen for invitation notifications
+  useEffect(() => {
+    if (!organizationId) return;
+    
+    console.log('📬 Setting up invitation notifications listener');
+    
+    const notificationsQuery = query(
+      collection(db, 'notifications'),
+      where('userId', '==', organizationId),
+      where('category', '==', 'team_invitation'),
+      orderBy('createdAt', 'desc')
+    );
+    
+    const unsubscribe = onSnapshot(notificationsQuery, (snapshot) => {
+      console.log('📬 Invitation notifications received:', snapshot.size);
+      
+      snapshot.forEach((doc) => {
+        const notification = doc.data();
+        if (notification.data?.memberData && !notification.isProcessed) {
+          // Konvertiere Notification zu TeamMember für Anzeige
+          const invitedMember: TeamMemberUI = {
+            id: doc.id,
+            ...notification.data.memberData,
+            status: 'invited',
+            _fromNotification: true
+          };
+          
+          // Füge zur Liste hinzu, wenn noch nicht vorhanden
+          setTeamMembers(prev => {
+            const exists = prev.some(m => 
+              m.email === invitedMember.email && 
+              m.organizationId === invitedMember.organizationId
+            );
+            if (!exists) {
+              return [...prev, invitedMember];
+            }
+            return prev;
+          });
+        }
+      });
+    }, (error) => {
+      console.error('Error listening to invitation notifications:', error);
+    });
+    
+    return () => unsubscribe();
+  }, [organizationId]);
+  
   const loadTeamMembers = async () => {
     if (!organizationId) return;
     
@@ -70,9 +123,38 @@ export default function TeamSettingsPage() {
       console.log('👥 Loading team members for organization:', organizationId);
       const members = await teamMemberService.getByOrganization(organizationId);
       
+      // Check for owner in notifications if no members found
       if (members.length === 0) {
-        // Create default member for current user
-        const defaultMember: TeamMember = {
+        console.log('⚠️ No team members found, checking notifications for owner init');
+        
+        // Prüfe ob Owner-Init in Notifications existiert
+        const ownerNotificationQuery = query(
+          collection(db, 'notifications'),
+          where('userId', '==', organizationId),
+          where('category', '==', 'team_owner_init'),
+          orderBy('createdAt', 'desc')
+        );
+        
+        try {
+          const snapshot = await getDocs(ownerNotificationQuery);
+          if (!snapshot.empty) {
+            const ownerNotification = snapshot.docs[0].data();
+            if (ownerNotification.data?.ownerData) {
+              const ownerMember: TeamMemberUI = {
+                id: 'owner_' + organizationId,
+                ...ownerNotification.data.ownerData,
+                _fromNotification: true
+              };
+              setTeamMembers([ownerMember]);
+              return;
+            }
+          }
+        } catch (e) {
+          console.error('Could not check owner notifications:', e);
+        }
+        
+        // Fallback: Create default member for current user
+        const defaultMember: TeamMemberUI = {
           id: '1',
           userId: user?.uid || '',
           organizationId,
@@ -94,7 +176,7 @@ export default function TeamSettingsPage() {
       setError('Fehler beim Laden der Team-Mitglieder');
       
       // Fallback
-      const fallbackMember: TeamMember = {
+      const fallbackMember: TeamMemberUI = {
         id: '1',
         userId: user?.uid || '',
         organizationId,
@@ -119,7 +201,7 @@ export default function TeamSettingsPage() {
     setTimeout(() => setRefreshing(false), 500);
   };
   
-const handleInvite = async () => {
+  const handleInvite = async () => {
     if (!inviteEmail || !user) return;
     
     try {
@@ -146,13 +228,21 @@ const handleInvite = async () => {
         throw new Error(data.error || 'Fehler beim Einladen des Team-Mitglieds');
       }
       
-      showToast('Einladung wurde versendet!');
+      // Spezielle Meldung wenn Notification erstellt wurde
+      if (data.requiresProcessing) {
+        showToast('Einladung wurde erstellt. Die Seite wird aktualisiert...');
+        // Reload nach kurzer Verzögerung
+        setTimeout(() => {
+          loadTeamMembers();
+        }, 1000);
+      } else {
+        showToast('Einladung wurde erfolgreich versendet!');
+      }
+      
       setShowInviteModal(false);
       setInviteEmail('');
       setInviteRole('member');
       
-      // Reload members
-      await loadTeamMembers();
     } catch (error: any) {
       console.error('Error inviting team member:', error);
       setError(error.message || 'Fehler beim Einladen des Team-Mitglieds');
@@ -160,10 +250,16 @@ const handleInvite = async () => {
       setInviteLoading(false);
     }
   };
-    
-  const handleRoleChange = async (member: TeamMember, newRole: UserRole) => {
+  
+  const handleRoleChange = async (member: TeamMemberUI, newRole: UserRole) => {
     if (member.role === 'owner') {
       showToast('Die Rolle des Owners kann nicht geändert werden', 'error');
+      return;
+    }
+    
+    // Skip für Notifications-basierte Einträge
+    if (member._fromNotification) {
+      showToast('Diese Einladung muss erst verarbeitet werden', 'error');
       return;
     }
     
@@ -176,13 +272,19 @@ const handleInvite = async () => {
     }
   };
   
-  const handleRemoveMember = async (member: TeamMember) => {
+  const handleRemoveMember = async (member: TeamMemberUI) => {
     if (member.role === 'owner') {
       showToast('Der Owner kann nicht entfernt werden', 'error');
       return;
     }
     
     if (!confirm(`Möchten Sie ${member.displayName} wirklich aus dem Team entfernen?`)) {
+      return;
+    }
+    
+    // Für Notifications-basierte Einträge
+    if (member._fromNotification) {
+      showToast('Diese Einladung muss erst verarbeitet werden', 'error');
       return;
     }
     
@@ -398,18 +500,24 @@ const handleInvite = async () => {
                         </div>
                       </div>
                       <div className="w-[15%]">
-                        <Select
-                          value={member.role}
-                          onChange={(e) => handleRoleChange(member, e.target.value as UserRole)}
-                          disabled={member.role === 'owner'}
-                          className="text-sm"
-                        >
-                          {Object.entries(roleConfig).map(([value, config]) => (
-                            <option key={value} value={value}>
-                              {config.label}
-                            </option>
-                          ))}
-                        </Select>
+                        {member._fromNotification ? (
+                          <Badge color="yellow" className="whitespace-nowrap">
+                            {role.label} (Ausstehend)
+                          </Badge>
+                        ) : (
+                          <Select
+                            value={member.role}
+                            onChange={(e) => handleRoleChange(member, e.target.value as UserRole)}
+                            disabled={member.role === 'owner'}
+                            className="text-sm"
+                          >
+                            {Object.entries(roleConfig).map(([value, config]) => (
+                              <option key={value} value={value}>
+                                {config.label}
+                              </option>
+                            ))}
+                          </Select>
+                        )}
                       </div>
                       <div className="w-[15%]">
                         <Badge color={status.color as any} className="whitespace-nowrap">
@@ -430,7 +538,12 @@ const handleInvite = async () => {
                         {formatLastActive(member.lastActiveAt)}
                       </div>
                       <div className="flex-1 flex justify-end gap-2">
-                        {member.status === 'invited' && (
+                        {member._fromNotification && (
+                          <span className="text-xs text-yellow-600 mr-2">
+                            Einladung wird verarbeitet...
+                          </span>
+                        )}
+                        {member.status === 'invited' && !member._fromNotification && (
                           <Button
                             plain
                             onClick={() => handleResendInvite(member)}
@@ -439,7 +552,7 @@ const handleInvite = async () => {
                             <ArrowPathIcon className="h-4 w-4" />
                           </Button>
                         )}
-                        {member.role !== 'owner' && (
+                        {member.role !== 'owner' && !member._fromNotification && (
                           <Button
                             plain
                             onClick={() => handleRemoveMember(member)}
