@@ -786,11 +786,6 @@ export default function InboxPage() {
         <InboxSidebar
           selectedFolder={selectedFolder}
           onFolderSelect={setSelectedFolder}
-          onCompose={() => {
-            setComposeMode('new');
-            setReplyToEmail(null);
-            setShowCompose(true);
-          }}
           unreadCounts={unreadCounts}
         />
 

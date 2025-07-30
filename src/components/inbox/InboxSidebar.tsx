@@ -1,27 +1,23 @@
 // src/components/inbox/InboxSidebar.tsx
 "use client";
 
-import { Button } from '@/components/button';
 import { Badge } from '@/components/badge';
 import clsx from 'clsx';
 import {
   InboxIcon,
   PaperAirplaneIcon,
-  TrashIcon,
-  PencilSquareIcon
+  TrashIcon
 } from '@heroicons/react/20/solid';
 
 interface InboxSidebarProps {
   selectedFolder: string;
   onFolderSelect: (folder: string) => void;
-  onCompose: () => void;
   unreadCounts: Record<string, number>;
 }
 
 export function InboxSidebar({
   selectedFolder,
   onFolderSelect,
-  onCompose,
   unreadCounts
 }: InboxSidebarProps) {
   const folders = [
@@ -47,19 +43,8 @@ export function InboxSidebar({
 
   return (
     <div className="w-64 border-r bg-gray-50 flex flex-col">
-      {/* Compose Button */}
-      <div className="p-4">
-        <Button 
-          onClick={onCompose}
-          className="w-full bg-[#005fab] hover:bg-[#004a8c] text-white flex items-center justify-center gap-2"
-        >
-          <PencilSquareIcon className="h-5 w-5" />
-          <span className="whitespace-nowrap">Neue E-Mail</span>
-        </Button>
-      </div>
-
       {/* Folder List */}
-      <nav className="flex-1 px-2">
+      <nav className="flex-1 px-2 pt-4">
         <ul className="space-y-1">
           {folders.map((folder) => {
             const Icon = folder.icon;
