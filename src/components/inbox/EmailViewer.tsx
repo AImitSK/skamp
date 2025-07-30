@@ -3,6 +3,7 @@
 
 import { EmailMessage, EmailThread } from '@/types/inbox-enhanced';
 import { Button } from '@/components/button';
+import { Badge } from '@/components/badge';
 import format from 'date-fns/format';
 import { de } from 'date-fns/locale/de';
 import {
@@ -12,7 +13,11 @@ import {
   TrashIcon,
   StarIcon,
   EllipsisVerticalIcon,
-  PaperClipIcon
+  PaperClipIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  ExclamationCircleIcon,
+  ArrowPathIcon
 } from '@heroicons/react/20/solid';
 import clsx from 'clsx';
 
@@ -25,6 +30,7 @@ interface EmailViewerProps {
   onArchive: (emailId: string) => void;
   onDelete: (emailId: string) => void;
   onStar: (emailId: string, starred: boolean) => void;
+  onStatusChange?: (threadId: string, status: 'active' | 'waiting' | 'resolved' | 'archived') => void;
 }
 
 export function EmailViewer({
@@ -35,7 +41,8 @@ export function EmailViewer({
   onForward,
   onArchive,
   onDelete,
-  onStar
+  onStar,
+  onStatusChange
 }: EmailViewerProps) {
   if (!selectedEmail || emails.length === 0) {
     return null;
@@ -43,14 +50,72 @@ export function EmailViewer({
 
   const latestEmail = emails[emails.length - 1];
 
+  // Status-Konfiguration
+  const statusConfig = {
+    active: {
+      label: 'Aktiv',
+      icon: ExclamationCircleIcon,
+      color: 'blue',
+      bgClass: 'bg-blue-50',
+      textClass: 'text-blue-700',
+      borderClass: 'border-blue-200'
+    },
+    waiting: {
+      label: 'Wartet auf Antwort',
+      icon: ClockIcon,
+      color: 'yellow',
+      bgClass: 'bg-yellow-50',
+      textClass: 'text-yellow-700',
+      borderClass: 'border-yellow-200'
+    },
+    resolved: {
+      label: 'Abgeschlossen',
+      icon: CheckCircleIcon,
+      color: 'green',
+      bgClass: 'bg-green-50',
+      textClass: 'text-green-700',
+      borderClass: 'border-green-200'
+    },
+    archived: {
+      label: 'Archiviert',
+      icon: ArchiveBoxIcon,
+      color: 'gray',
+      bgClass: 'bg-gray-50',
+      textClass: 'text-gray-700',
+      borderClass: 'border-gray-200'
+    }
+  };
+
+  const currentStatus = thread.status || 'active';
+  const statusInfo = statusConfig[currentStatus];
+  const StatusIcon = statusInfo.icon;
+
   return (
     <div className="flex-1 flex flex-col bg-white">
       {/* Header */}
       <div className="border-b px-6 py-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-gray-900">
-            {thread.subject}
-          </h2>
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              <h2 className="text-xl font-semibold text-gray-900">
+                {thread.subject}
+              </h2>
+              {/* Status Badge */}
+              <Badge 
+                color={statusInfo.color as any}
+                className={clsx(
+                  'flex items-center gap-1.5',
+                  statusInfo.bgClass,
+                  statusInfo.textClass,
+                  statusInfo.borderClass,
+                  'border'
+                )}
+              >
+                <StatusIcon className="h-3.5 w-3.5" />
+                {statusInfo.label}
+              </Badge>
+            </div>
+          </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => onStar(latestEmail.id!, !latestEmail.isStarred)}
@@ -96,6 +161,39 @@ export function EmailViewer({
             Weiterleiten
           </Button>
         </div>
+
+        {/* Status Change Buttons */}
+        {onStatusChange && (
+          <div className="flex items-center gap-2 mt-3 pt-3 border-t">
+            <span className="text-sm text-gray-600 mr-2">Status ändern:</span>
+            <div className="flex gap-1">
+              {Object.entries(statusConfig).map(([status, config]) => {
+                const Icon = config.icon;
+                const isActive = currentStatus === status;
+                
+                return (
+                  <Button
+                    key={status}
+                    onClick={() => onStatusChange(thread.id!, status as any)}
+                    className={clsx(
+                      'px-3 py-1.5 text-xs flex items-center gap-1.5',
+                      isActive ? [
+                        config.bgClass,
+                        config.textClass,
+                        config.borderClass,
+                        'border'
+                      ] : 'text-gray-600 hover:bg-gray-100'
+                    )}
+                    plain={!isActive}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {config.label}
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Email Thread */}
@@ -135,7 +233,10 @@ export function EmailViewer({
 
                 {/* Timestamp */}
                 <div className="text-sm text-gray-500">
-                  {format(email.receivedAt.toDate(), 'dd. MMM yyyy, HH:mm')}
+                  {email.receivedAt?.toDate?.() 
+                    ? format(email.receivedAt.toDate(), 'dd. MMM yyyy, HH:mm')
+                    : ''
+                  }
                 </div>
               </div>
             </div>

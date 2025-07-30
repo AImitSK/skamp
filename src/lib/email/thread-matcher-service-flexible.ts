@@ -539,6 +539,92 @@ export class FlexibleThreadMatcherService {
   }
 
   /**
+   * NEU: Weist einen Thread einem Team-Mitglied zu
+   */
+  async assignThread(
+    threadId: string,
+    userId: string | null,
+    assignedBy: string
+  ): Promise<void> {
+    if (this.isServerSide) {
+      return;
+    }
+
+    try {
+      const updateData: any = {
+        updatedAt: serverTimestamp()
+      };
+
+      if (userId) {
+        // Zuweisung hinzufügen
+        updateData.assignedTo = userId;
+        updateData.assignedAt = serverTimestamp();
+        updateData.assignedBy = assignedBy;
+      } else {
+        // Zuweisung entfernen
+        updateData.assignedTo = null;
+        updateData.assignedAt = null;
+        updateData.assignedBy = null;
+      }
+
+      await updateDoc(doc(db, this.collectionName, threadId), updateData);
+      
+      console.log(`✅ Thread ${threadId} ${userId ? `assigned to ${userId}` : 'unassigned'}`);
+    } catch (error) {
+      console.error('Error assigning thread:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * NEU: Ändert den Status eines Threads
+   */
+  async updateThreadStatus(
+    threadId: string,
+    status: EmailThread['status']
+  ): Promise<void> {
+    if (this.isServerSide) {
+      return;
+    }
+
+    try {
+      await updateDoc(doc(db, this.collectionName, threadId), {
+        status,
+        updatedAt: serverTimestamp()
+      });
+      
+      console.log(`✅ Thread ${threadId} status updated to ${status}`);
+    } catch (error) {
+      console.error('Error updating thread status:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * NEU: Ändert die Priorität eines Threads
+   */
+  async updateThreadPriority(
+    threadId: string,
+    priority: EmailThread['priority']
+  ): Promise<void> {
+    if (this.isServerSide) {
+      return;
+    }
+
+    try {
+      await updateDoc(doc(db, this.collectionName, threadId), {
+        priority,
+        updatedAt: serverTimestamp()
+      });
+      
+      console.log(`✅ Thread ${threadId} priority updated to ${priority}`);
+    } catch (error) {
+      console.error('Error updating thread priority:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Resolves deferred threads
    * Wird von der Inbox UI aufgerufen um fehlende Threads zu erstellen
    */

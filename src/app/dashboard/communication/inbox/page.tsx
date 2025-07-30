@@ -792,6 +792,87 @@ export default function InboxPage() {
     }
   };
 
+  // NEU: Handle Thread-Zuweisung
+  const handleThreadAssign = async (threadId: string, userId: string | null) => {
+    if (!user) return;
+    
+    try {
+      console.log('👤 Assigning thread:', threadId, 'to user:', userId);
+      
+      // Update in Firestore
+      await threadMatcherService.assignThread(
+        threadId,
+        userId,
+        user.uid // assignedBy
+      );
+      
+      // Update local state für sofortiges UI-Feedback
+      setThreads(prevThreads => 
+        prevThreads.map(thread => 
+          thread.id === threadId 
+            ? { 
+                ...thread, 
+                assignedTo: userId || undefined,
+                assignedAt: userId ? new Date() : undefined,
+                assignedBy: userId ? user.uid : undefined
+              } as EmailThread
+            : thread
+        )
+      );
+      
+      console.log('✅ Thread assignment updated successfully');
+    } catch (error) {
+      console.error('❌ Error assigning thread:', error);
+      alert('Fehler beim Zuweisen des Threads');
+    }
+  };
+
+  // NEU: Handle Thread-Status Update
+  const handleThreadStatusChange = async (threadId: string, status: EmailThread['status']) => {
+    try {
+      console.log('📊 Updating thread status:', threadId, 'to:', status);
+      
+      await threadMatcherService.updateThreadStatus(threadId, status);
+      
+      // Update local state
+      setThreads(prevThreads => 
+        prevThreads.map(thread => 
+          thread.id === threadId 
+            ? { ...thread, status } as EmailThread
+            : thread
+        )
+      );
+      
+      console.log('✅ Thread status updated successfully');
+    } catch (error) {
+      console.error('❌ Error updating thread status:', error);
+      alert('Fehler beim Aktualisieren des Thread-Status');
+    }
+  };
+
+  // NEU: Handle Thread-Priority Update
+  const handleThreadPriorityChange = async (threadId: string, priority: EmailThread['priority']) => {
+    try {
+      console.log('🔥 Updating thread priority:', threadId, 'to:', priority);
+      
+      await threadMatcherService.updateThreadPriority(threadId, priority);
+      
+      // Update local state
+      setThreads(prevThreads => 
+        prevThreads.map(thread => 
+          thread.id === threadId 
+            ? { ...thread, priority } as EmailThread
+            : thread
+        )
+      );
+      
+      console.log('✅ Thread priority updated successfully');
+    } catch (error) {
+      console.error('❌ Error updating thread priority:', error);
+      alert('Fehler beim Aktualisieren der Thread-Priorität');
+    }
+  };
+
   // Handle email actions
   const handleReply = (email: EmailMessage) => {
     setReplyToEmail(email);
@@ -1177,6 +1258,8 @@ export default function InboxPage() {
             onThreadSelect={handleThreadSelect}
             loading={loading || resolvingThreads}
             onStar={handleStar}
+            onAssign={handleThreadAssign}
+            organizationId={organizationId}
           />
         </div>
 
@@ -1192,6 +1275,7 @@ export default function InboxPage() {
               onArchive={handleArchive}
               onDelete={handleDelete}
               onStar={handleStar}
+              onStatusChange={handleThreadStatusChange}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center text-gray-500">

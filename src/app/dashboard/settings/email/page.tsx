@@ -37,18 +37,16 @@ import {
   DocumentTextIcon,
   PencilSquareIcon,
   DocumentDuplicateIcon,
-  InformationCircleIcon
+  InformationCircleIcon,
+  UserPlusIcon,
+  XMarkIcon
 } from '@heroicons/react/20/solid';
 import clsx from 'clsx';
 import { domainService } from '@/lib/firebase/domain-service';
 
-// Mock team members - TODO: Replace with real API call
-const mockTeamMembers = [
-  { id: 'user-1', name: 'Anna Meyer', email: 'anna@agentur.de' },
-  { id: 'user-2', name: 'Ben Klein', email: 'ben@agentur.de' },
-  { id: 'user-3', name: 'Clara Schmidt', email: 'clara@agentur.de' },
-  { id: 'user-4', name: 'David Weber', email: 'david@agentur.de' }
-];
+// NEU: Import für echte Team-Daten
+import { teamMemberService, organizationService } from '@/lib/firebase/organization-service';
+import { TeamMember } from '@/types/international';
 
 // Toast notification helper
 const showToast = (message: string, type: 'success' | 'error' = 'success') => {
@@ -83,6 +81,14 @@ export default function EmailSettingsPage() {
   const [selectedAddress, setSelectedAddress] = useState<EmailAddress | null>(null);
   const [showDebugInfo, setShowDebugInfo] = useState(false);
   
+  // NEU: State für echte Team-Mitglieder
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [loadingTeam, setLoadingTeam] = useState(true);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState<'admin' | 'member'>('member');
+  const [inviting, setInviting] = useState(false);
+  
   // Form state mit EmailAddressFormData type
   const [formData, setFormData] = useState<EmailAddressFormData>({
     localPart: '',
@@ -99,7 +105,7 @@ export default function EmailSettingsPage() {
     preferredTone: 'formal' as 'formal' | 'modern' | 'technical' | 'startup'
   });
 
-  // Load email addresses from API
+  // Load all data
   useEffect(() => {
     if (organizationId) {
       console.log('📊 EmailSettingsPage - useEffect triggered');
@@ -109,8 +115,86 @@ export default function EmailSettingsPage() {
       loadEmailAddresses();
       loadDomains();
       loadSignatures();
+      loadTeamMembers(); // NEU: Lade echte Team-Mitglieder
     }
   }, [organizationId]);
+
+  // NEU: Lade Team-Mitglieder aus Firestore
+  const loadTeamMembers = async () => {
+    try {
+      setLoadingTeam(true);
+      console.log('👥 Loading team members for organization:', organizationId);
+      
+      const members = await teamMemberService.getByOrganization(organizationId);
+      console.log('✅ Team members loaded:', members);
+      
+      // Filtere nur aktive Mitglieder
+      const activeMembers = members.filter(m => m.status === 'active');
+      setTeamMembers(activeMembers);
+    } catch (error) {
+      console.error('Error loading team members:', error);
+      showToast('Fehler beim Laden der Team-Mitglieder', 'error');
+      
+      // Fallback: Erstelle das erste Team-Mitglied (Owner) wenn keines existiert
+      if (user) {
+        try {
+          console.log('🔧 Creating initial team member for owner');
+          const ownerMember: TeamMember = {
+            id: 'temp-owner',
+            userId: user.uid,
+            organizationId,
+            email: user.email || '',
+            displayName: user.displayName || user.email || 'Admin',
+            role: 'owner',
+            status: 'active',
+            invitedAt: new Date() as any,
+            invitedBy: user.uid,
+            joinedAt: new Date() as any,
+          };
+          setTeamMembers([ownerMember]);
+        } catch (err) {
+          console.error('Error creating fallback team member:', err);
+        }
+      }
+    } finally {
+      setLoadingTeam(false);
+    }
+  };
+
+  // NEU: Team-Mitglied einladen
+  const handleInviteTeamMember = async () => {
+    if (!inviteEmail) {
+      showToast('Bitte geben Sie eine E-Mail-Adresse ein', 'error');
+      return;
+    }
+
+    try {
+      setInviting(true);
+      
+      await teamMemberService.invite({
+        email: inviteEmail,
+        organizationId,
+        role: inviteRole,
+        invitedBy: user?.uid || ''
+      });
+      
+      showToast(`Einladung an ${inviteEmail} gesendet`);
+      setShowInviteModal(false);
+      setInviteEmail('');
+      setInviteRole('member');
+      
+      // Reload team members
+      await loadTeamMembers();
+    } catch (error) {
+      console.error('Error inviting team member:', error);
+      showToast(
+        error instanceof Error ? error.message : 'Fehler beim Einladen des Team-Mitglieds',
+        'error'
+      );
+    } finally {
+      setInviting(false);
+    }
+  };
 
   const loadDomains = async () => {
     try {
@@ -397,6 +481,13 @@ export default function EmailSettingsPage() {
     displayName: addr.displayName
   }));
 
+  // NEU: Konvertiere TeamMember zu Format für RoutingRuleEditor
+  const teamMembersForRouting = teamMembers.map(member => ({
+    id: member.userId, // Verwende userId statt id
+    name: member.displayName,
+    email: member.email
+  }));
+
   return (
     <div className="flex flex-col gap-10 lg:flex-row">
       {/* Linke Spalte: Navigation */}
@@ -439,10 +530,18 @@ export default function EmailSettingsPage() {
               <div><strong>Email Addresses Count:</strong> {emailAddresses.length}</div>
               <div><strong>Signatures Count:</strong> {signatures.length}</div>
               <div><strong>Domains Count:</strong> {domains.length}</div>
+              <div><strong>Team Members Count:</strong> {teamMembers.length}</div>
               <div className="mt-2 pt-2 border-t">
-                <strong>Full User Object:</strong>
+                <strong>Team Members:</strong>
                 <pre className="mt-1 text-xs overflow-auto bg-white p-2 rounded">
-                  {JSON.stringify(user, null, 2)}
+                  {JSON.stringify(teamMembers.map(m => ({
+                    id: m.id,
+                    userId: m.userId,
+                    email: m.email,
+                    name: m.displayName,
+                    role: m.role,
+                    status: m.status
+                  })), null, 2)}
                 </pre>
               </div>
             </div>
@@ -516,7 +615,7 @@ export default function EmailSettingsPage() {
                   <div>
                     <p className="text-sm text-gray-600">Team-Mitglieder</p>
                     <p className="text-2xl font-semibold mt-1">
-                      {mockTeamMembers.length}
+                      {loadingTeam ? '...' : teamMembers.length}
                     </p>
                   </div>
                   <UserGroupIcon className="h-8 w-8 text-gray-400" />
@@ -524,8 +623,16 @@ export default function EmailSettingsPage() {
               </div>
             </div>
 
-            {/* Action Button */}
-            <div className="flex justify-end mb-4">
+            {/* Action Buttons */}
+            <div className="flex justify-end mb-4 gap-3">
+              <Button 
+                onClick={() => setShowInviteModal(true)} 
+                plain
+                className="whitespace-nowrap"
+              >
+                <UserPlusIcon className="h-4 w-4 mr-2" />
+                Team-Mitglied einladen
+              </Button>
               <Button onClick={handleAdd} className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap">
                 <PlusIcon className="h-4 w-4 mr-2" />
                 Neue E-Mail-Adresse
@@ -604,14 +711,14 @@ export default function EmailSettingsPage() {
                         <div className="w-[20%]">
                           <div className="flex -space-x-2">
                             {address.assignedUserIds.slice(0, 3).map((userId: string) => {
-                              const member = mockTeamMembers.find(m => m.id === userId);
+                              const member = teamMembers.find(m => m.userId === userId);
                               return member ? (
                                 <div
                                   key={userId}
                                   className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-white text-xs font-medium ring-2 ring-white"
-                                  title={member.name}
+                                  title={member.displayName}
                                 >
-                                  {member.name.split(' ').map(n => n[0]).join('')}
+                                  {member.displayName.split(' ').map(n => n[0]).join('')}
                                 </div>
                               ) : null;
                             })}
@@ -842,29 +949,51 @@ export default function EmailSettingsPage() {
             {/* Team Assignment */}
             <div>
               <Subheading>Team-Zuweisungen</Subheading>
-              <CheckboxGroup className="mt-4 space-y-2">
-                {mockTeamMembers.map(member => (
-                  <CheckboxField key={member.id}>
-                    <Checkbox
-                      checked={formData.assignedUserIds.includes(member.id)}
-                      onChange={(checked) => {
-                        if (checked) {
-                          setFormData({
-                            ...formData,
-                            assignedUserIds: [...formData.assignedUserIds, member.id]
-                          });
-                        } else {
-                          setFormData({
-                            ...formData,
-                            assignedUserIds: formData.assignedUserIds.filter(id => id !== member.id)
-                          });
-                        }
-                      }}
-                    />
-                    <Label>{member.name} ({member.email})</Label>
-                  </CheckboxField>
-                ))}
-              </CheckboxGroup>
+              {loadingTeam ? (
+                <div className="mt-4 text-center">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#005fab] mx-auto"></div>
+                </div>
+              ) : teamMembers.length === 0 ? (
+                <div className="mt-4 text-sm text-gray-500">
+                  Keine Team-Mitglieder vorhanden. 
+                  <button
+                    type="button"
+                    onClick={() => setShowInviteModal(true)}
+                    className="text-[#005fab] hover:underline ml-1"
+                  >
+                    Jetzt einladen
+                  </button>
+                </div>
+              ) : (
+                <CheckboxGroup className="mt-4 space-y-2">
+                  {teamMembers.map(member => (
+                    <CheckboxField key={member.userId}>
+                      <Checkbox
+                        checked={formData.assignedUserIds.includes(member.userId)}
+                        onChange={(checked) => {
+                          if (checked) {
+                            setFormData({
+                              ...formData,
+                              assignedUserIds: [...formData.assignedUserIds, member.userId]
+                            });
+                          } else {
+                            setFormData({
+                              ...formData,
+                              assignedUserIds: formData.assignedUserIds.filter(id => id !== member.userId)
+                            });
+                          }
+                        }}
+                      />
+                      <Label>
+                        {member.displayName} ({member.email})
+                        {member.role === 'owner' && (
+                          <Badge color="blue" className="ml-2">Owner</Badge>
+                        )}
+                      </Label>
+                    </CheckboxField>
+                  ))}
+                </CheckboxGroup>
+              )}
             </div>
 
             {/* Features */}
@@ -950,6 +1079,56 @@ export default function EmailSettingsPage() {
         </DialogActions>
       </Dialog>
 
+      {/* NEU: Team Member Invite Modal */}
+      <Dialog open={showInviteModal} onClose={() => setShowInviteModal(false)}>
+        <DialogTitle className="px-6 py-4">Team-Mitglied einladen</DialogTitle>
+        <DialogBody className="p-6">
+          <p className="text-sm text-gray-500 mb-4">
+            Laden Sie ein neues Team-Mitglied per E-Mail ein. Sie erhalten eine Einladung zum Beitritt.
+          </p>
+          <div className="space-y-4">
+            <Field>
+              <Label>E-Mail-Adresse</Label>
+              <Input
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="kollege@beispiel.de"
+              />
+            </Field>
+            <Field>
+              <Label>Rolle</Label>
+              <Select
+                value={inviteRole}
+                onChange={(e) => setInviteRole(e.target.value as 'admin' | 'member')}
+              >
+                <option value="member">Mitglied</option>
+                <option value="admin">Administrator</option>
+              </Select>
+              <p className="text-xs text-gray-500 mt-1">
+                Administratoren können alle Einstellungen verwalten
+              </p>
+            </Field>
+          </div>
+        </DialogBody>
+        <DialogActions className="px-6 py-4">
+          <Button plain onClick={() => {
+            setShowInviteModal(false);
+            setInviteEmail('');
+            setInviteRole('member');
+          }}>
+            Abbrechen
+          </Button>
+          <Button 
+            className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
+            onClick={handleInviteTeamMember}
+            disabled={inviting || !inviteEmail}
+          >
+            {inviting ? 'Einladung wird gesendet...' : 'Einladung senden'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Delete Confirmation Modal */}
       <Dialog open={showDeleteModal} onClose={() => setShowDeleteModal(false)}>
         <DialogTitle className="px-6 py-4">E-Mail-Adresse löschen</DialogTitle>
@@ -980,7 +1159,7 @@ export default function EmailSettingsPage() {
           isOpen={showRoutingModal}
           onClose={() => setShowRoutingModal(false)}
           onUpdate={handleRoutingUpdate}
-          teamMembers={mockTeamMembers}
+          teamMembers={teamMembersForRouting}
         />
       )}
     </div>
