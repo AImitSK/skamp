@@ -34,6 +34,9 @@ export function generateMockData(organizationId: string, folder: string) {
       organizationId,
       userId: organizationId,
       contactIds: [],
+      campaignId: 'campaign-123',
+      campaignName: 'KI-Lösung Launch 2024',
+      folderType: 'campaign', // NEU: Required property
       createdAt: Timestamp.fromDate(new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)),
       updatedAt: Timestamp.now()
     });
@@ -62,6 +65,8 @@ export function generateMockData(organizationId: string, folder: string) {
         organizationId,
         userId: organizationId,
         campaignId: 'campaign-123',
+        campaignName: 'KI-Lösung Launch 2024',
+        folderType: 'campaign',
         emailAccountId: 'account-1',
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now()
@@ -87,6 +92,8 @@ export function generateMockData(organizationId: string, folder: string) {
         organizationId,
         userId: organizationId,
         campaignId: 'campaign-123',
+        campaignName: 'KI-Lösung Launch 2024',
+        folderType: 'campaign',
         emailAccountId: 'account-1',
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now()
@@ -105,6 +112,9 @@ export function generateMockData(organizationId: string, folder: string) {
       organizationId,
       userId: organizationId,
       contactIds: [],
+      customerId: 'customer-lokalzeitung',
+      customerName: 'Lokalzeitung GmbH',
+      folderType: 'customer', // NEU: Required property
       createdAt: Timestamp.fromDate(new Date(now.getTime() - 5 * 60 * 60 * 1000)),
       updatedAt: Timestamp.now()
     });
@@ -129,6 +139,9 @@ export function generateMockData(organizationId: string, folder: string) {
       importance: 'normal',
       organizationId,
       userId: organizationId,
+      customerId: 'customer-lokalzeitung',
+      customerName: 'Lokalzeitung GmbH',
+      folderType: 'customer',
       emailAccountId: 'account-1',
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now()
@@ -148,6 +161,7 @@ export function generateMockData(organizationId: string, folder: string) {
       organizationId,
       userId: organizationId,
       contactIds: [],
+      folderType: 'general', // NEU: Required property
       createdAt: Timestamp.fromDate(new Date(now.getTime() - 24 * 60 * 60 * 1000)),
       updatedAt: Timestamp.now()
     });
@@ -166,6 +180,9 @@ export function generateMockData(organizationId: string, folder: string) {
       organizationId,
       userId: organizationId,
       contactIds: [],
+      customerId: 'customer-lokalzeitung',
+      customerName: 'Lokalzeitung GmbH',
+      folderType: 'customer', // NEU: Required property
       createdAt: Timestamp.fromDate(new Date(now.getTime() - 30 * 60 * 1000)),
       updatedAt: Timestamp.now()
     });
@@ -190,6 +207,9 @@ export function generateMockData(organizationId: string, folder: string) {
       importance: 'normal',
       organizationId,
       userId: organizationId,
+      customerId: 'customer-lokalzeitung',
+      customerName: 'Lokalzeitung GmbH',
+      folderType: 'customer',
       emailAccountId: 'account-1',
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now()
