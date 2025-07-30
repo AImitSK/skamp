@@ -27,6 +27,9 @@ export interface EmailAttachment {
   contentId?: string;
 }
 
+// NEU Phase 1: Folder Type für Kunden/Kampagnen-Organisation
+export type FolderType = 'customer' | 'campaign' | 'general';
+
 // Hauptentitäten erweitern BaseEntity
 export interface EmailMessage extends BaseEntity {
   // Eindeutige Identifikatoren
@@ -64,8 +67,14 @@ export interface EmailMessage extends BaseEntity {
   
   // Verknüpfungen
   campaignId?: string;
+  campaignName?: string; // NEU Phase 1: Kampagnen-Name für Anzeige
   contactId?: string;
   emailAccountId: string;
+  
+  // NEU Phase 1: Kunden/Kampagnen-Organisation
+  customerId?: string;
+  customerName?: string;
+  folderType?: FolderType;
   
   // SendGrid Spezifisch
   sendgridEventId?: string;
@@ -107,7 +116,17 @@ export interface EmailThread extends BaseEntity {
   
   // Verknüpfungen
   campaignId?: string;
+  campaignName?: string; // NEU Phase 1: Kampagnen-Name für Anzeige
   contactIds: string[];
+  
+  // NEU Phase 1: Kunden/Kampagnen-Organisation
+  customerId?: string;
+  customerName?: string;
+  folderType: FolderType;
+  
+  // NEU Phase 1: Thread-Status für bessere Organisation
+  status?: 'active' | 'waiting' | 'resolved' | 'archived';
+  priority?: 'low' | 'normal' | 'high' | 'urgent';
   
   // BaseEntity liefert: id, organizationId, userId, createdAt, updatedAt
 }

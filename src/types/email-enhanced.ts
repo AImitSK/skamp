@@ -38,10 +38,15 @@ export interface EmailAddress extends BaseEntity {
   autoReply?: string;
   forwardTo?: string[]; // Weiterleitung an andere Adressen
   
+// In src/types/email-enhanced.ts
+// Ersetzen Sie die routingRules Definition in der EmailAddress interface (ca. Zeile 41-59) mit:
+
   // Auto-Routing Regeln
   routingRules?: Array<{
     id: string;
     name: string;
+    enabled?: boolean; // NEU: Regel aktiv/inaktiv
+    priority?: number; // NEU: Ausführungsreihenfolge (niedrigere Zahlen = höhere Priorität)
     conditions: {
       subject?: string; // Contains
       from?: string; // Email oder Domain
