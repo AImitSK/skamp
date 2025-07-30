@@ -1,9 +1,9 @@
 // src/app/api/team/invite/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { teamMemberService } from '@/lib/firebase/organization-service';
 import { getAuthContext } from '@/lib/api/auth-middleware';
-import { Timestamp } from 'firebase/firestore';
-import { UserRole } from '@/types/international';
+import { Timestamp, collection, query, where, getDocs, addDoc } from 'firebase/firestore';
+import { serverDb } from '@/lib/firebase/server-init';
+import { UserRole, TeamMember } from '@/types/international';
 
 export async function POST(request: NextRequest) {
   try {
@@ -49,12 +49,30 @@ export async function POST(request: NextRequest) {
     }
 
     // 4. Prüfe ob User berechtigt ist (muss Owner oder Admin sein)
-    const userMember = await teamMemberService.getByUserAndOrg(userId, organizationId);
+    // Verwende serverDb statt teamMemberService
+    const memberQuery = query(
+      collection(serverDb, 'team_members'),
+      where('userId', '==', userId),
+      where('organizationId', '==', organizationId)
+    );
+    
+    const memberSnapshot = await getDocs(memberQuery);
+    const userMember = memberSnapshot.empty ? null : {
+      ...memberSnapshot.docs[0].data(),
+      id: memberSnapshot.docs[0].id
+    } as TeamMember;
     
     // Spezialfall: Wenn es noch keine Team-Mitglieder gibt und der User die gleiche ID wie die Org hat,
     // dann ist es der Owner der seine erste Einladung macht
     if (!userMember) {
-      const memberCount = await teamMemberService.countActiveMembers(organizationId);
+      // Zähle aktive Mitglieder
+      const countQuery = query(
+        collection(serverDb, 'team_members'),
+        where('organizationId', '==', organizationId),
+        where('status', '==', 'active')
+      );
+      const countSnapshot = await getDocs(countQuery);
+      const memberCount = countSnapshot.size;
       
       // Wenn keine Mitglieder existieren und userId === organizationId, dann ist es der Owner
       if (memberCount === 0 && userId === organizationId) {
@@ -74,7 +92,7 @@ export async function POST(request: NextRequest) {
           lastActiveAt: Timestamp.now()
         };
         
-        await teamMemberService.createDirectly(ownerData);
+        await addDoc(collection(serverDb, 'team_members'), ownerData);
         
         // Fahre mit der Einladung fort
       } else {
@@ -91,8 +109,14 @@ export async function POST(request: NextRequest) {
     }
 
     // 5. Prüfe ob E-Mail bereits existiert
-    const existingMember = await teamMemberService.getByEmailAndOrg(email, organizationId);
-    if (existingMember) {
+    const existingQuery = query(
+      collection(serverDb, 'team_members'),
+      where('email', '==', email),
+      where('organizationId', '==', organizationId)
+    );
+    const existingSnapshot = await getDocs(existingQuery);
+    
+    if (!existingSnapshot.empty) {
       return NextResponse.json(
         { error: 'Diese E-Mail-Adresse wurde bereits eingeladen oder ist bereits Mitglied' },
         { status: 409 }
@@ -112,8 +136,9 @@ export async function POST(request: NextRequest) {
       lastActiveAt: Timestamp.now()
     };
 
-    // Verwende createDirectly für die Erstellung
-    const memberId = await teamMemberService.createDirectly(newMember);
+    // Erstelle das neue Team-Mitglied
+    const docRef = await addDoc(collection(serverDb, 'team_members'), newMember);
+    const memberId = docRef.id;
 
     console.log('✅ Team member invited:', memberId);
 
