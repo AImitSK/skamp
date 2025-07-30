@@ -6,21 +6,20 @@ import { useAuth } from '@/context/AuthContext';
 import { Heading } from '@/components/heading';
 import { Button } from '@/components/button';
 import { Badge } from '@/components/badge';
-import { Dialog } from '@/components/dialog';
+import { Dialog, DialogActions, DialogBody, DialogTitle } from '@/components/dialog';
 import { Input } from '@/components/input';
 import { Field, Label } from '@/components/fieldset';
 import { Select } from '@/components/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/table';
-import { teamMemberService, organizationService } from '@/lib/firebase/organization-service';
+import { SettingsNav } from '@/components/SettingsNav';
+import { Text } from '@/components/text';
+import { teamMemberService } from '@/lib/firebase/organization-service';
 import { TeamMember, UserRole } from '@/types/international';
 import { 
   UserPlusIcon,
   UserGroupIcon,
   TrashIcon,
-  PencilIcon,
   ArrowPathIcon,
   EnvelopeIcon,
-  ClockIcon,
   CheckCircleIcon,
   XCircleIcon,
   ShieldCheckIcon,
@@ -30,6 +29,16 @@ import {
 } from '@heroicons/react/20/solid';
 import clsx from 'clsx';
 import { Timestamp } from 'firebase/firestore';
+
+// Toast notification helper
+const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+  if (type === 'error') {
+    console.error(message);
+    alert(`Fehler: ${message}`);
+  } else {
+    console.log(message);
+  }
+};
 
 export default function TeamSettingsPage() {
   const { user } = useAuth();
@@ -41,7 +50,6 @@ export default function TeamSettingsPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
-  const [showEditModal, setShowEditModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   // Invite form state
@@ -118,14 +126,22 @@ export default function TeamSettingsPage() {
       setInviteLoading(true);
       setError(null);
       
-      await teamMemberService.invite({
+      // Direkt Team-Mitglied erstellen ohne Organization-Check
+      const newMember: Partial<TeamMember> = {
         email: inviteEmail,
         organizationId,
         role: inviteRole,
-        invitedBy: user.uid
-      });
+        displayName: inviteEmail.split('@')[0], // Temporärer Name
+        status: 'invited',
+        invitedAt: Timestamp.now(),
+        invitedBy: user.uid,
+        userId: '' // Wird beim Accept gesetzt
+      };
       
-      alert('Einladung wurde versendet!');
+      // Erstelle das Mitglied direkt in der team_members Collection
+      await teamMemberService.createDirectly(newMember);
+      
+      showToast('Einladung wurde versendet!');
       setShowInviteModal(false);
       setInviteEmail('');
       setInviteRole('member');
@@ -142,7 +158,7 @@ export default function TeamSettingsPage() {
   
   const handleRoleChange = async (member: TeamMember, newRole: UserRole) => {
     if (member.role === 'owner') {
-      alert('Die Rolle des Owners kann nicht geändert werden');
+      showToast('Die Rolle des Owners kann nicht geändert werden', 'error');
       return;
     }
     
@@ -151,13 +167,13 @@ export default function TeamSettingsPage() {
       await loadTeamMembers();
     } catch (error) {
       console.error('Error updating member role:', error);
-      alert('Fehler beim Ändern der Rolle');
+      showToast('Fehler beim Ändern der Rolle', 'error');
     }
   };
   
   const handleRemoveMember = async (member: TeamMember) => {
     if (member.role === 'owner') {
-      alert('Der Owner kann nicht entfernt werden');
+      showToast('Der Owner kann nicht entfernt werden', 'error');
       return;
     }
     
@@ -170,12 +186,12 @@ export default function TeamSettingsPage() {
       await loadTeamMembers();
     } catch (error) {
       console.error('Error removing member:', error);
-      alert('Fehler beim Entfernen des Mitglieds');
+      showToast('Fehler beim Entfernen des Mitglieds', 'error');
     }
   };
   
   const handleResendInvite = async (member: TeamMember) => {
-    alert('Einladung erneut senden - Feature noch nicht implementiert');
+    showToast('Einladung erneut senden - Feature noch nicht implementiert');
   };
   
   // Role configuration
@@ -274,258 +290,264 @@ export default function TeamSettingsPage() {
   };
   
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="sm:flex sm:items-center sm:justify-between">
-        <div>
-          <Heading level={1}>Team-Verwaltung</Heading>
-          <p className="mt-1 text-sm text-gray-600">
-            Verwalten Sie Ihr Team und laden Sie neue Mitglieder ein
-          </p>
-        </div>
-        <div className="mt-4 sm:ml-16 sm:mt-0 flex gap-3">
-          <Button 
-            plain
-            onClick={handleRefresh}
-            disabled={refreshing}
-          >
-            <ArrowPathIcon className={clsx(
-              "h-4 w-4",
-              refreshing && "animate-spin"
-            )} />
-          </Button>
-          <Button 
-            onClick={() => setShowInviteModal(true)}
-            className="bg-[#005fab] hover:bg-[#004a8c] text-white"
-          >
-            <UserPlusIcon className="h-4 w-4 mr-2" />
-            <span className="whitespace-nowrap">Mitglied einladen</span>
-          </Button>
-        </div>
-      </div>
-      
-      {/* Error Message */}
-      {error && (
-        <div className="rounded-lg bg-red-50 p-4">
-          <div className="flex">
-            <ExclamationTriangleIcon className="h-5 w-5 text-red-400" />
-            <div className="ml-3">
-              <p className="text-sm text-red-800">{error}</p>
-            </div>
+    <div className="flex flex-col gap-10 lg:flex-row">
+      {/* Linke Spalte: Navigation */}
+      <aside className="w-full lg:w-64 lg:flex-shrink-0">
+        <SettingsNav />
+      </aside>
+
+      {/* Rechte Spalte: Hauptinhalt */}
+      <div className="flex-1 space-y-8">
+        {/* Header */}
+        <div className="md:flex md:items-center md:justify-between">
+          <div className="min-w-0 flex-1">
+            <Heading>Team-Verwaltung</Heading>
+            <Text className="mt-2 text-zinc-500">
+              Verwalten Sie Ihr Team und laden Sie neue Mitglieder ein
+            </Text>
           </div>
-        </div>
-      )}
-      
-      {/* Team Members Table */}
-      <div className="mt-8 flow-root">
-        <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-          <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-            <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableHeader>Mitglied</TableHeader>
-                    <TableHeader>Rolle</TableHeader>
-                    <TableHeader>Status</TableHeader>
-                    <TableHeader>Beigetreten</TableHeader>
-                    <TableHeader>Zuletzt aktiv</TableHeader>
-                    <TableHeader className="relative">
-                      <span className="sr-only">Aktionen</span>
-                    </TableHeader>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8">
-                        <div className="flex justify-center">
-                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#005fab]"></div>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ) : teamMembers.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                        Keine Team-Mitglieder gefunden
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    teamMembers.map((member) => {
-                      const role = roleConfig[member.role];
-                      const status = statusConfig[member.status];
-                      const StatusIcon = status.icon;
-                      
-                      return (
-                        <TableRow key={member.id}>
-                          <TableCell className="font-medium">
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">
-                                {member.displayName}
-                              </div>
-                              <div className="text-sm text-gray-500">
-                                {member.email}
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Select
-                              value={member.role}
-                              onChange={(e) => handleRoleChange(member, e.target.value as UserRole)}
-                              disabled={member.role === 'owner'}
-                              className="text-sm"
-                            >
-                              {Object.entries(roleConfig).map(([value, config]) => (
-                                <option key={value} value={value}>
-                                  {config.label}
-                                </option>
-                              ))}
-                            </Select>
-                          </TableCell>
-                          <TableCell>
-                            <Badge color={status.color as any} className="whitespace-nowrap">
-                              <StatusIcon className="h-3 w-3 mr-1" />
-                              {status.label}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-sm text-gray-500">
-                            {member.status === 'invited' ? (
-                              <span className="text-yellow-600">
-                                Eingeladen am {formatDate(member.invitedAt)}
-                              </span>
-                            ) : (
-                              formatDate(member.joinedAt)
-                            )}
-                          </TableCell>
-                          <TableCell className="text-sm text-gray-500">
-                            {formatLastActive(member.lastActiveAt)}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              {member.status === 'invited' && (
-                                <Button
-                                  plain
-                                  onClick={() => handleResendInvite(member)}
-                                  className="text-xs"
-                                >
-                                  <ArrowPathIcon className="h-4 w-4" />
-                                </Button>
-                              )}
-                              {member.role !== 'owner' && (
-                                <Button
-                                  plain
-                                  onClick={() => handleRemoveMember(member)}
-                                  className="text-xs text-red-600 hover:text-red-700"
-                                >
-                                  <TrashIcon className="h-4 w-4" />
-                                </Button>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Stats */}
-      <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-3">
-        <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
-          <dt className="truncate text-sm font-medium text-gray-500">
-            Aktive Mitglieder
-          </dt>
-          <dd className="mt-1 text-3xl font-semibold tracking-tight text-gray-900">
-            {teamMembers.filter(m => m.status === 'active').length}
-          </dd>
-        </div>
-        <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
-          <dt className="truncate text-sm font-medium text-gray-500">
-            Ausstehende Einladungen
-          </dt>
-          <dd className="mt-1 text-3xl font-semibold tracking-tight text-gray-900">
-            {teamMembers.filter(m => m.status === 'invited').length}
-          </dd>
-        </div>
-        <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
-          <dt className="truncate text-sm font-medium text-gray-500">
-            Rollen-Verteilung
-          </dt>
-          <dd className="mt-1 flex items-center gap-2">
-            {Object.entries(roleConfig).map(([role, config]) => {
-              const count = teamMembers.filter(m => m.role === role).length;
-              if (count === 0) return null;
-              
-              return (
-                <Badge key={role} color={config.color as any} className="whitespace-nowrap">
-                  {count} {config.label}
-                </Badge>
-              );
-            })}
-          </dd>
-        </div>
-      </div>
-      
-      {/* Invite Modal */}
-      <Dialog
-        open={showInviteModal}
-        onClose={() => setShowInviteModal(false)}
-        className="sm:max-w-md"
-      >
-        <div className="px-6 py-4">
-          <h3 className="text-lg font-medium text-gray-900">
-            Neues Team-Mitglied einladen
-          </h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Senden Sie eine Einladung per E-Mail
-          </p>
-        </div>
-        
-        <div className="px-6 py-4 space-y-4">
-          <Field>
-            <Label>E-Mail-Adresse</Label>
-            <Input
-              type="email"
-              value={inviteEmail}
-              onChange={(e) => setInviteEmail(e.target.value)}
-              placeholder="kollege@firma.de"
-              required
-            />
-          </Field>
-          
-          <Field>
-            <Label>Rolle</Label>
-            <Select
-              value={inviteRole}
-              onChange={(e) => setInviteRole(e.target.value as UserRole)}
+          <div className="mt-4 md:mt-0 flex gap-3">
+            <Button 
+              plain
+              onClick={handleRefresh}
+              disabled={refreshing}
             >
-              {Object.entries(roleConfig)
-                .filter(([role]) => role !== 'owner')
-                .map(([value, config]) => (
-                  <option key={value} value={value}>
-                    {config.label} - {config.description}
-                  </option>
-                ))}
-            </Select>
-          </Field>
+              <ArrowPathIcon className={clsx(
+                "h-4 w-4",
+                refreshing && "animate-spin"
+              )} />
+            </Button>
+            <Button 
+              onClick={() => setShowInviteModal(true)}
+              className="bg-[#005fab] hover:bg-[#004a8c] text-white"
+            >
+              <UserPlusIcon className="h-4 w-4 mr-2" />
+              <span className="whitespace-nowrap">Mitglied einladen</span>
+            </Button>
+          </div>
         </div>
         
-        <div className="flex justify-end gap-3 px-6 py-4 bg-gray-50">
-          <Button plain onClick={() => setShowInviteModal(false)}>
-            Abbrechen
-          </Button>
-          <Button
-            onClick={handleInvite}
-            disabled={!inviteEmail || inviteLoading}
-            className="bg-[#005fab] hover:bg-[#004a8c] text-white"
-          >
-            {inviteLoading ? 'Wird gesendet...' : 'Einladung senden'}
-          </Button>
+        {/* Error Message */}
+        {error && (
+          <div className="rounded-lg bg-red-50 p-4">
+            <div className="flex">
+              <ExclamationTriangleIcon className="h-5 w-5 text-red-400" />
+              <div className="ml-3">
+                <p className="text-sm text-red-800">{error}</p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Team Members Table */}
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          {/* Table Header */}
+          <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
+            <div className="flex items-center">
+              <div className="w-[25%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                Mitglied
+              </div>
+              <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                Rolle
+              </div>
+              <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                Status
+              </div>
+              <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                Beigetreten
+              </div>
+              <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                Zuletzt aktiv
+              </div>
+              <div className="flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right">
+                Aktionen
+              </div>
+            </div>
+          </div>
+
+          {/* Table Body */}
+          <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
+            {loading ? (
+              <div className="px-6 py-8 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#005fab] mx-auto"></div>
+              </div>
+            ) : teamMembers.length === 0 ? (
+              <div className="px-6 py-8 text-center text-gray-500">
+                Keine Team-Mitglieder gefunden
+              </div>
+            ) : (
+              teamMembers.map((member) => {
+                const role = roleConfig[member.role];
+                const status = statusConfig[member.status];
+                const StatusIcon = status.icon;
+                
+                return (
+                  <div key={member.id} className="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                    <div className="flex items-center">
+                      <div className="w-[25%] min-w-0">
+                        <div className="text-sm font-medium text-gray-900">
+                          {member.displayName}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {member.email}
+                        </div>
+                      </div>
+                      <div className="w-[15%]">
+                        <Select
+                          value={member.role}
+                          onChange={(e) => handleRoleChange(member, e.target.value as UserRole)}
+                          disabled={member.role === 'owner'}
+                          className="text-sm"
+                        >
+                          {Object.entries(roleConfig).map(([value, config]) => (
+                            <option key={value} value={value}>
+                              {config.label}
+                            </option>
+                          ))}
+                        </Select>
+                      </div>
+                      <div className="w-[15%]">
+                        <Badge color={status.color as any} className="whitespace-nowrap">
+                          <StatusIcon className="h-3 w-3 mr-1" />
+                          {status.label}
+                        </Badge>
+                      </div>
+                      <div className="w-[15%] text-sm text-gray-500">
+                        {member.status === 'invited' ? (
+                          <span className="text-yellow-600">
+                            Eingeladen am {formatDate(member.invitedAt)}
+                          </span>
+                        ) : (
+                          formatDate(member.joinedAt)
+                        )}
+                      </div>
+                      <div className="w-[15%] text-sm text-gray-500">
+                        {formatLastActive(member.lastActiveAt)}
+                      </div>
+                      <div className="flex-1 flex justify-end gap-2">
+                        {member.status === 'invited' && (
+                          <Button
+                            plain
+                            onClick={() => handleResendInvite(member)}
+                            className="text-xs"
+                          >
+                            <ArrowPathIcon className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {member.role !== 'owner' && (
+                          <Button
+                            plain
+                            onClick={() => handleRemoveMember(member)}
+                            className="text-xs text-red-600 hover:text-red-700"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
-      </Dialog>
+        
+        {/* Stats */}
+        <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-3">
+          <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+            <dt className="truncate text-sm font-medium text-gray-500">
+              Aktive Mitglieder
+            </dt>
+            <dd className="mt-1 text-3xl font-semibold tracking-tight text-gray-900">
+              {teamMembers.filter(m => m.status === 'active').length}
+            </dd>
+          </div>
+          <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+            <dt className="truncate text-sm font-medium text-gray-500">
+              Ausstehende Einladungen
+            </dt>
+            <dd className="mt-1 text-3xl font-semibold tracking-tight text-gray-900">
+              {teamMembers.filter(m => m.status === 'invited').length}
+            </dd>
+          </div>
+          <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+            <dt className="truncate text-sm font-medium text-gray-500">
+              Rollen-Verteilung
+            </dt>
+            <dd className="mt-1 flex items-center gap-2">
+              {Object.entries(roleConfig).map(([role, config]) => {
+                const count = teamMembers.filter(m => m.role === role).length;
+                if (count === 0) return null;
+                
+                return (
+                  <Badge key={role} color={config.color as any} className="whitespace-nowrap">
+                    {count} {config.label}
+                  </Badge>
+                );
+              })}
+            </dd>
+          </div>
+        </div>
+        
+        {/* Invite Modal */}
+        <Dialog
+          open={showInviteModal}
+          onClose={() => setShowInviteModal(false)}
+          className="sm:max-w-md"
+        >
+          <DialogTitle className="px-6 py-4">
+            Neues Team-Mitglied einladen
+          </DialogTitle>
+          
+          <DialogBody className="p-6">
+            <p className="text-sm text-gray-500 mb-4">
+              Senden Sie eine Einladung per E-Mail
+            </p>
+            
+            <div className="space-y-4">
+              <Field>
+                <Label>E-Mail-Adresse</Label>
+                <Input
+                  type="email"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  placeholder="kollege@firma.de"
+                  required
+                />
+              </Field>
+              
+              <Field>
+                <Label>Rolle</Label>
+                <Select
+                  value={inviteRole}
+                  onChange={(e) => setInviteRole(e.target.value as UserRole)}
+                >
+                  {Object.entries(roleConfig)
+                    .filter(([role]) => role !== 'owner')
+                    .map(([value, config]) => (
+                      <option key={value} value={value}>
+                        {config.label} - {config.description}
+                      </option>
+                    ))}
+                </Select>
+              </Field>
+            </div>
+          </DialogBody>
+          
+          <DialogActions className="px-6 py-4">
+            <Button plain onClick={() => setShowInviteModal(false)}>
+              Abbrechen
+            </Button>
+            <Button
+              onClick={handleInvite}
+              disabled={!inviteEmail || inviteLoading}
+              className="bg-[#005fab] hover:bg-[#004a8c] text-white"
+            >
+              {inviteLoading ? 'Wird gesendet...' : 'Einladung senden'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </div>
     </div>
   );
 }
