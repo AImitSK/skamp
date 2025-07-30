@@ -682,7 +682,7 @@ export default function InboxPage() {
   return (
     <div className="w-full h-[calc(100vh-3.5rem)] bg-white flex flex-col">
       {/* Toolbar / Funktionsbar */}
-      <div className="border-b bg-gray-50 px-4 py-5">
+      <div className="border-b bg-gray-50 px-4 py-5 mt-4">
         <div className="flex items-center justify-between gap-4">
           {/* Left side - Search, New Email & Refresh */}
           <div className="flex items-center gap-3 flex-1">
