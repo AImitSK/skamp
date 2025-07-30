@@ -7,6 +7,7 @@ import { Heading } from '@/components/heading';
 import { Button } from '@/components/button';
 import { Badge } from '@/components/badge';
 import { InboxSidebar } from '@/components/inbox/InboxSidebar';
+import { CustomerCampaignSidebar } from '@/components/inbox/CustomerCampaignSidebar';
 import { EmailList } from '@/components/inbox/EmailList';
 import { EmailViewer } from '@/components/inbox/EmailViewer';
 import { ComposeEmail } from '@/components/inbox/ComposeEmail';
@@ -14,6 +15,7 @@ import { EmailMessage, EmailThread } from '@/types/inbox-enhanced';
 import { emailMessageService } from '@/lib/email/email-message-service';
 import { threadMatcherService } from '@/lib/email/thread-matcher-service-flexible';
 import { emailAddressService } from '@/lib/email/email-address-service';
+import { getCustomerCampaignMatcher } from '@/lib/email/customer-campaign-matcher';
 import { 
   onSnapshot,
   collection,
@@ -39,7 +41,8 @@ import {
   PlusIcon,
   ArrowPathIcon,
   Squares2X2Icon,
-  Cog6ToothIcon
+  Cog6ToothIcon,
+  ArrowsRightLeftIcon
 } from '@heroicons/react/20/solid';
 
 export default function InboxPage() {
@@ -65,6 +68,13 @@ export default function InboxPage() {
   const [resolvingThreads, setResolvingThreads] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   
+  // NEU: State für Kunden/Kampagnen-Organisation
+  const [viewMode, setViewMode] = useState<'classic' | 'customer'>('customer');
+  const [selectedFolderType, setSelectedFolderType] = useState<'customer' | 'campaign' | 'general'>('general');
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | undefined>();
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | undefined>();
+  const [customerCampaignMatcher, setCustomerCampaignMatcher] = useState<any>(null);
+  
   // Ref to track if we've already resolved threads
   const threadsResolvedRef = useRef(false);
   
@@ -76,6 +86,10 @@ export default function InboxPage() {
     listenersSetup?: boolean;
     organizationId?: string;
     selectedFolder?: string;
+    selectedFolderType?: string;
+    selectedCustomerId?: string;
+    selectedCampaignId?: string;
+    viewMode?: string;
     threadCount?: number;
     threads?: EmailThread[];
     threadError?: string;
@@ -89,16 +103,25 @@ export default function InboxPage() {
   const [debugInfo, setDebugInfo] = useState<DebugInfo>({});
   
   // Real-time unread counts
-  const [unreadCounts, setUnreadCounts] = useState({
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({
     inbox: 0,
     sent: 0,
     drafts: 0,
     spam: 0,
-    trash: 0
+    trash: 0,
+    general: 0
   });
 
   // Firestore unsubscribe functions
   const [unsubscribes, setUnsubscribes] = useState<Unsubscribe[]>([]);
+
+  // Initialize CustomerCampaignMatcher
+  useEffect(() => {
+    if (organizationId) {
+      const matcher = getCustomerCampaignMatcher(organizationId);
+      setCustomerCampaignMatcher(matcher);
+    }
+  }, [organizationId]);
 
   // Resolve deferred threads when component mounts
   useEffect(() => {
@@ -177,7 +200,11 @@ export default function InboxPage() {
       ...prev,
       listenersSetup: true,
       organizationId,
-      selectedFolder
+      selectedFolder,
+      selectedFolderType,
+      selectedCustomerId,
+      selectedCampaignId,
+      viewMode
     }));
 
     // Clean up previous listeners
@@ -194,132 +221,21 @@ export default function InboxPage() {
     return () => {
       newUnsubscribes.forEach(unsubscribe => unsubscribe());
     };
-  }, [user, organizationId, selectedFolder, hasEmailAddresses, resolvingThreads]);
+  }, [user, organizationId, selectedFolder, selectedFolderType, selectedCustomerId, selectedCampaignId, hasEmailAddresses, resolvingThreads, viewMode]);
 
   const setupRealtimeListeners = (unsubscribes: Unsubscribe[]) => {
     setLoading(true);
     setError(null);
 
     try {
-      // 1. Listen to threads - Alle Ordner müssen gefiltert werden
-      console.log('📨 Setting up thread listener for org:', organizationId, 'folder:', selectedFolder);
-      
-      // Lade alle Threads und filtere client-seitig basierend auf E-Mails
-      const threadsQuery = query(
-        collection(db, 'email_threads'),
-        where('organizationId', '==', organizationId),
-        orderBy('lastMessageAt', 'desc'),
-        limit(100) // Mehr laden für client-seitige Filterung
-      );
+      // Classic Mode - nutze alte Logik
+      if (viewMode === 'classic') {
+        setupClassicListeners(unsubscribes);
+        return;
+      }
 
-      const threadsUnsubscribe = onSnapshot(
-        threadsQuery,
-        async (snapshot) => {
-          console.log('📨 Thread snapshot received, size:', snapshot.size);
-          let threadsData: EmailThread[] = [];
-          
-          // Konvertiere Snapshot zu Array
-          snapshot.forEach((doc) => {
-            threadsData.push({ ...doc.data(), id: doc.id } as EmailThread);
-          });
-          
-          // Filtere Threads basierend auf E-Mails im ausgewählten Ordner
-          console.log(`📁 Filtering threads for folder: ${selectedFolder}`);
-          const threadIdsInFolder = new Set<string>();
-          
-          // Finde alle Thread-IDs die E-Mails im ausgewählten Ordner haben
-          for (const thread of threadsData) {
-            const messagesQuery = query(
-              collection(db, 'email_messages'),
-              where('threadId', '==', thread.id),
-              where('folder', '==', selectedFolder),
-              limit(1)
-            );
-            
-            try {
-              const messagesSnapshot = await getDocs(messagesQuery);
-              if (!messagesSnapshot.empty) {
-                threadIdsInFolder.add(thread.id!);
-              }
-            } catch (err) {
-              console.error(`Error checking thread ${thread.id}:`, err);
-            }
-          }
-          
-          // Filtere Threads
-          threadsData = threadsData.filter(thread => 
-            threadIdsInFolder.has(thread.id!)
-          );
-          
-          console.log(`✅ Found ${threadsData.length} threads with emails in ${selectedFolder}`);
-          setThreads(threadsData);
-          
-          // Update debug info
-          setDebugInfo((prev: DebugInfo) => ({
-            ...prev,
-            threadCount: threadsData.length,
-            threads: threadsData
-          }));
-          
-          // Update unread counts
-          updateUnreadCounts(threadsData);
-        },
-        (error) => {
-          console.error('Error loading threads:', error);
-          setError('Fehler beim Laden der E-Mail-Threads');
-          setDebugInfo((prev: DebugInfo) => ({
-            ...prev,
-            threadError: error.message
-          }));
-        }
-      );
-      
-      unsubscribes.push(threadsUnsubscribe);
-
-      // 2. Listen to messages in selected folder
-      console.log('📧 Setting up message listener for folder:', selectedFolder);
-      
-      // Fix für draft vs drafts
-      const folderName = selectedFolder === 'drafts' ? 'draft' : selectedFolder;
-      
-      const messagesQuery = query(
-        collection(db, 'email_messages'),
-        where('organizationId', '==', organizationId),
-        where('folder', '==', folderName),
-        orderBy('receivedAt', 'desc'),
-        limit(100)
-      );
-
-      const messagesUnsubscribe = onSnapshot(
-        messagesQuery,
-        (snapshot) => {
-          console.log('📧 Message snapshot received, size:', snapshot.size);
-          const messagesData: EmailMessage[] = [];
-          snapshot.forEach((doc) => {
-            messagesData.push({ ...doc.data(), id: doc.id } as EmailMessage);
-          });
-          setEmails(messagesData);
-          setLoading(false);
-          
-          // Update debug info
-          setDebugInfo((prev: DebugInfo) => ({
-            ...prev,
-            messageCount: messagesData.length,
-            messages: messagesData
-          }));
-        },
-        (error) => {
-          console.error('Error loading messages:', error);
-          setError('Fehler beim Laden der E-Mails');
-          setLoading(false);
-          setDebugInfo((prev: DebugInfo) => ({
-            ...prev,
-            messageError: error.message
-          }));
-        }
-      );
-      
-      unsubscribes.push(messagesUnsubscribe);
+      // Customer/Campaign Mode - neue Logik
+      setupCustomerCampaignListeners(unsubscribes);
 
     } catch (error: any) {
       console.error('Error setting up listeners:', error);
@@ -332,6 +248,295 @@ export default function InboxPage() {
     }
   };
 
+  const setupClassicListeners = (unsubscribes: Unsubscribe[]) => {
+    // 1. Listen to threads - Alle Ordner müssen gefiltert werden
+    console.log('📨 Setting up CLASSIC thread listener for org:', organizationId, 'folder:', selectedFolder);
+    
+    // Lade alle Threads und filtere client-seitig basierend auf E-Mails
+    const threadsQuery = query(
+      collection(db, 'email_threads'),
+      where('organizationId', '==', organizationId),
+      orderBy('lastMessageAt', 'desc'),
+      limit(100)
+    );
+
+    const threadsUnsubscribe = onSnapshot(
+      threadsQuery,
+      async (snapshot) => {
+        console.log('📨 Thread snapshot received, size:', snapshot.size);
+        let threadsData: EmailThread[] = [];
+        
+        // Konvertiere Snapshot zu Array
+        snapshot.forEach((doc) => {
+          threadsData.push({ ...doc.data(), id: doc.id } as EmailThread);
+        });
+        
+        // Filtere Threads basierend auf E-Mails im ausgewählten Ordner
+        console.log(`📁 Filtering threads for folder: ${selectedFolder}`);
+        const threadIdsInFolder = new Set<string>();
+        
+        // Finde alle Thread-IDs die E-Mails im ausgewählten Ordner haben
+        for (const thread of threadsData) {
+          const messagesQuery = query(
+            collection(db, 'email_messages'),
+            where('threadId', '==', thread.id),
+            where('folder', '==', selectedFolder),
+            limit(1)
+          );
+          
+          try {
+            const messagesSnapshot = await getDocs(messagesQuery);
+            if (!messagesSnapshot.empty) {
+              threadIdsInFolder.add(thread.id!);
+            }
+          } catch (err) {
+            console.error(`Error checking thread ${thread.id}:`, err);
+          }
+        }
+        
+        // Filtere Threads
+        threadsData = threadsData.filter(thread => 
+          threadIdsInFolder.has(thread.id!)
+        );
+        
+        console.log(`✅ Found ${threadsData.length} threads with emails in ${selectedFolder}`);
+        setThreads(threadsData);
+        
+        // Update debug info
+        setDebugInfo((prev: DebugInfo) => ({
+          ...prev,
+          threadCount: threadsData.length,
+          threads: threadsData
+        }));
+        
+        // Update unread counts
+        updateUnreadCounts(threadsData);
+      },
+      (error) => {
+        console.error('Error loading threads:', error);
+        setError('Fehler beim Laden der E-Mail-Threads');
+        setDebugInfo((prev: DebugInfo) => ({
+          ...prev,
+          threadError: error.message
+        }));
+      }
+    );
+    
+    unsubscribes.push(threadsUnsubscribe);
+
+    // 2. Listen to messages in selected folder
+    console.log('📧 Setting up CLASSIC message listener for folder:', selectedFolder);
+    
+    // Fix für draft vs drafts
+    const folderName = selectedFolder === 'drafts' ? 'draft' : selectedFolder;
+    
+    const messagesQuery = query(
+      collection(db, 'email_messages'),
+      where('organizationId', '==', organizationId),
+      where('folder', '==', folderName),
+      orderBy('receivedAt', 'desc'),
+      limit(100)
+    );
+
+    const messagesUnsubscribe = onSnapshot(
+      messagesQuery,
+      (snapshot) => {
+        console.log('📧 Message snapshot received, size:', snapshot.size);
+        const messagesData: EmailMessage[] = [];
+        snapshot.forEach((doc) => {
+          messagesData.push({ ...doc.data(), id: doc.id } as EmailMessage);
+        });
+        setEmails(messagesData);
+        setLoading(false);
+        
+        // Update debug info
+        setDebugInfo((prev: DebugInfo) => ({
+          ...prev,
+          messageCount: messagesData.length,
+          messages: messagesData
+        }));
+      },
+      (error) => {
+        console.error('Error loading messages:', error);
+        setError('Fehler beim Laden der E-Mails');
+        setLoading(false);
+        setDebugInfo((prev: DebugInfo) => ({
+          ...prev,
+          messageError: error.message
+        }));
+      }
+    );
+    
+    unsubscribes.push(messagesUnsubscribe);
+  };
+
+  const setupCustomerCampaignListeners = (unsubscribes: Unsubscribe[]) => {
+    console.log('🎯 Setting up CUSTOMER/CAMPAIGN listeners:', {
+      folderType: selectedFolderType,
+      customerId: selectedCustomerId,
+      campaignId: selectedCampaignId
+    });
+
+    // 1. Basis-Query für Threads
+    let threadsQuery = query(
+      collection(db, 'email_threads'),
+      where('organizationId', '==', organizationId),
+      orderBy('lastMessageAt', 'desc'),
+      limit(100)
+    );
+
+    // NEU: Füge spezifische Filter für Kunden/Kampagnen hinzu
+    if (selectedFolderType === 'customer' && selectedCustomerId) {
+      threadsQuery = query(
+        collection(db, 'email_threads'),
+        where('organizationId', '==', organizationId),
+        where('customerId', '==', selectedCustomerId),
+        orderBy('lastMessageAt', 'desc'),
+        limit(100)
+      );
+    } else if (selectedFolderType === 'campaign' && selectedCampaignId) {
+      threadsQuery = query(
+        collection(db, 'email_threads'),
+        where('organizationId', '==', organizationId),
+        where('campaignId', '==', selectedCampaignId),
+        orderBy('lastMessageAt', 'desc'),
+        limit(100)
+      );
+    }
+
+    const threadsUnsubscribe = onSnapshot(
+      threadsQuery,
+      async (snapshot) => {
+        console.log('📨 Customer/Campaign thread snapshot received, size:', snapshot.size);
+        let threadsData: EmailThread[] = [];
+        
+        snapshot.forEach((doc) => {
+          threadsData.push({ ...doc.data(), id: doc.id } as EmailThread);
+        });
+
+        // Für "general" folder: Filtere nur Threads ohne Kunden/Kampagnen-Zuordnung
+        if (selectedFolderType === 'general') {
+          threadsData = threadsData.filter(thread => 
+            !thread.customerId && !thread.campaignId
+          );
+        }
+        
+        console.log(`✅ Found ${threadsData.length} threads for ${selectedFolderType}`);
+        setThreads(threadsData);
+        
+        // Update unread counts
+        await updateCustomerCampaignUnreadCounts(threadsData);
+        
+        setDebugInfo((prev: DebugInfo) => ({
+          ...prev,
+          threadCount: threadsData.length,
+          threads: threadsData
+        }));
+      },
+      (error) => {
+        console.error('Error loading threads:', error);
+        setError('Fehler beim Laden der E-Mail-Threads');
+        setDebugInfo((prev: DebugInfo) => ({
+          ...prev,
+          threadError: error.message
+        }));
+      }
+    );
+    
+    unsubscribes.push(threadsUnsubscribe);
+
+    // 2. Listen to messages
+    let messagesQuery = query(
+      collection(db, 'email_messages'),
+      where('organizationId', '==', organizationId),
+      where('folder', '==', 'inbox'), // Nur Inbox-Nachrichten für Kunden/Kampagnen
+      orderBy('receivedAt', 'desc'),
+      limit(100)
+    );
+
+    // Füge spezifische Filter hinzu
+    if (selectedFolderType === 'customer' && selectedCustomerId) {
+      messagesQuery = query(
+        collection(db, 'email_messages'),
+        where('organizationId', '==', organizationId),
+        where('customerId', '==', selectedCustomerId),
+        orderBy('receivedAt', 'desc'),
+        limit(100)
+      );
+    } else if (selectedFolderType === 'campaign' && selectedCampaignId) {
+      messagesQuery = query(
+        collection(db, 'email_messages'),
+        where('organizationId', '==', organizationId),
+        where('campaignId', '==', selectedCampaignId),
+        orderBy('receivedAt', 'desc'),
+        limit(100)
+      );
+    }
+
+    const messagesUnsubscribe = onSnapshot(
+      messagesQuery,
+      async (snapshot) => {
+        console.log('📧 Customer/Campaign message snapshot received, size:', snapshot.size);
+        let messagesData: EmailMessage[] = [];
+        
+        snapshot.forEach((doc) => {
+          messagesData.push({ ...doc.data(), id: doc.id } as EmailMessage);
+        });
+
+        // Für "general": Filtere nur Nachrichten ohne Zuordnung
+        if (selectedFolderType === 'general') {
+          messagesData = messagesData.filter(msg => 
+            !msg.customerId && !msg.campaignId
+          );
+        }
+
+        // NEU: Verwende CustomerCampaignMatcher für neue E-Mails ohne Zuordnung
+        if (customerCampaignMatcher && selectedFolderType === 'general') {
+          for (const message of messagesData) {
+            if (!message.customerId && !message.campaignId && message.id) {
+              try {
+                const match = await customerCampaignMatcher.matchEmail(message);
+                if (match.customerId || match.campaignId) {
+                  // Update die Nachricht mit der Zuordnung
+                  const updateData: Partial<EmailMessage> = {
+                    customerId: match.customerId,
+                    customerName: match.customerName,
+                    campaignId: match.campaignId,
+                    campaignName: match.campaignName,
+                    folderType: match.folderType
+                  };
+                  await emailMessageService.update(message.id, updateData);
+                }
+              } catch (error) {
+                console.error('Error matching email:', error);
+              }
+            }
+          }
+        }
+        
+        setEmails(messagesData);
+        setLoading(false);
+        
+        setDebugInfo((prev: DebugInfo) => ({
+          ...prev,
+          messageCount: messagesData.length,
+          messages: messagesData
+        }));
+      },
+      (error) => {
+        console.error('Error loading messages:', error);
+        setError('Fehler beim Laden der E-Mails');
+        setLoading(false);
+        setDebugInfo((prev: DebugInfo) => ({
+          ...prev,
+          messageError: error.message
+        }));
+      }
+    );
+    
+    unsubscribes.push(messagesUnsubscribe);
+  };
+
   const updateUnreadCounts = async (threadsData: EmailThread[]) => {
     // Calculate unread counts from threads
     const counts = {
@@ -339,7 +544,8 @@ export default function InboxPage() {
       sent: 0,
       drafts: 0,
       spam: 0,
-      trash: 0
+      trash: 0,
+      general: 0
     };
 
     // In a real implementation, we would query each folder
@@ -349,6 +555,29 @@ export default function InboxPage() {
     }
     
     setUnreadCounts(counts);
+  };
+
+  const updateCustomerCampaignUnreadCounts = async (threadsData: EmailThread[]) => {
+    const counts: Record<string, number> = {
+      general: 0
+    };
+
+    // Zähle ungelesene Nachrichten pro Kunde/Kampagne
+    for (const thread of threadsData) {
+      if (thread.unreadCount > 0) {
+        if (thread.customerId) {
+          counts[`customer_${thread.customerId}`] = (counts[`customer_${thread.customerId}`] || 0) + thread.unreadCount;
+        }
+        if (thread.campaignId) {
+          counts[`campaign_${thread.campaignId}`] = (counts[`campaign_${thread.campaignId}`] || 0) + thread.unreadCount;
+        }
+        if (!thread.customerId && !thread.campaignId) {
+          counts.general += thread.unreadCount;
+        }
+      }
+    }
+
+    setUnreadCounts(prev => ({ ...prev, ...counts }));
   };
 
   // Manually resolve deferred threads
@@ -374,6 +603,11 @@ export default function InboxPage() {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
+      // Clear matcher cache
+      if (customerCampaignMatcher) {
+        customerCampaignMatcher.clearCache();
+      }
+      
       // Trigger listeners to refresh
       unsubscribes.forEach(unsubscribe => unsubscribe());
       const newUnsubscribes: Unsubscribe[] = [];
@@ -395,23 +629,28 @@ export default function InboxPage() {
       console.log('🧪 Creating test email...');
       const defaultAddress = emailAddresses.find(addr => addr.isDefault) || emailAddresses[0];
       
-      // Bestimme den Ordner basierend auf selectedFolder
+      // Bestimme den Ordner basierend auf selectedFolder/selectedFolderType
       let folder: 'inbox' | 'sent' | 'draft' | 'trash' | 'spam' = 'inbox';
       let isDraft = false;
       
-      if (selectedFolder === 'sent') folder = 'sent';
-      else if (selectedFolder === 'drafts') {
-        folder = 'draft';
-        isDraft = true;
+      if (viewMode === 'classic') {
+        if (selectedFolder === 'sent') folder = 'sent';
+        else if (selectedFolder === 'drafts') {
+          folder = 'draft';
+          isDraft = true;
+        }
+        else if (selectedFolder === 'spam') folder = 'spam';
+        else if (selectedFolder === 'trash') folder = 'trash';
+        else folder = 'inbox';
+      } else {
+        // In Customer/Campaign Mode immer inbox
+        folder = 'inbox';
       }
-      else if (selectedFolder === 'spam') folder = 'spam';
-      else if (selectedFolder === 'trash') folder = 'trash';
-      else folder = 'inbox';
       
       // Create a test thread first
       const testThread = await threadMatcherService.findOrCreateThread({
         messageId: `test-${Date.now()}@celeropress.de`,
-        subject: `Test E-Mail in ${selectedFolder} - ${new Date().toLocaleString('de-DE')}`,
+        subject: `Test E-Mail - ${new Date().toLocaleString('de-DE')}`,
         from: { email: 'test@example.com', name: 'Test Sender' },
         to: [{ email: defaultAddress.email, name: defaultAddress.displayName }],
         organizationId,
@@ -423,8 +662,26 @@ export default function InboxPage() {
         throw new Error('Failed to create test thread');
       }
 
+      // Füge Kunden/Kampagnen-Zuordnung hinzu für Customer Mode
+      let customerId = undefined;
+      let customerName = undefined;
+      let campaignId = undefined;
+      let campaignName = undefined;
+      
+      if (viewMode === 'customer') {
+        if (selectedFolderType === 'customer' && selectedCustomerId) {
+          customerId = selectedCustomerId;
+          customerName = 'Test Kunde GmbH';
+        } else if (selectedFolderType === 'campaign' && selectedCampaignId) {
+          campaignId = selectedCampaignId;
+          campaignName = 'Test Kampagne 2024';
+          customerId = 'test-customer-id';
+          customerName = 'Test Kunde GmbH';
+        }
+      }
+
       // Create test email message
-      const testMessage = await emailMessageService.create({
+      const testMessageData: Partial<EmailMessage> = {
         messageId: `test-${Date.now()}@celeropress.de`,
         threadId: testThread.threadId,
         from: folder === 'sent' 
@@ -433,16 +690,16 @@ export default function InboxPage() {
         to: folder === 'sent'
           ? [{ email: 'recipient@example.com', name: 'Test Recipient' }]
           : [{ email: defaultAddress.email, name: defaultAddress.displayName }],
-        subject: `Test E-Mail in ${selectedFolder} - ${new Date().toLocaleString('de-DE')}`,
-        textContent: `Dies ist eine Test-E-Mail im ${selectedFolder} Ordner zur Überprüfung der Inbox-Funktionalität.\n\nDiese E-Mail wurde automatisch generiert.`,
-        htmlContent: `<p>Dies ist eine Test-E-Mail im <strong>${selectedFolder}</strong> Ordner zur Überprüfung der Inbox-Funktionalität.</p><p>Diese E-Mail wurde automatisch generiert.</p>`,
-        snippet: `Dies ist eine Test-E-Mail im ${selectedFolder} Ordner...`,
+        subject: `Test E-Mail - ${new Date().toLocaleString('de-DE')}`,
+        textContent: `Dies ist eine Test-E-Mail zur Überprüfung der Inbox-Funktionalität.\n\nDiese E-Mail wurde automatisch generiert.`,
+        htmlContent: `<p>Dies ist eine Test-E-Mail zur Überprüfung der Inbox-Funktionalität.</p><p>Diese E-Mail wurde automatisch generiert.</p>`,
+        snippet: `Dies ist eine Test-E-Mail...`,
         folder: folder,
-        isRead: folder === 'sent' || isDraft, // Gesendete und Entwürfe sind "gelesen"
+        isRead: folder === 'sent' || isDraft,
         isStarred: false,
         isArchived: false,
         isDraft: isDraft,
-        labels: ['test', selectedFolder],
+        labels: ['test'],
         importance: 'normal',
         emailAccountId: defaultAddress.id,
         organizationId,
@@ -450,12 +707,18 @@ export default function InboxPage() {
         receivedAt: serverTimestamp() as Timestamp,
         sentAt: folder === 'sent' ? serverTimestamp() as Timestamp : undefined,
         attachments: [],
-        headers: {},
-        references: []
-      });
+        // NEU: Kunden/Kampagnen-Zuordnung
+        customerId,
+        customerName,
+        campaignId,
+        campaignName,
+        folderType: customerId || campaignId ? (campaignId ? 'campaign' : 'customer') : 'general'
+      };
+      
+      const testMessage = await emailMessageService.create(testMessageData);
 
       console.log('✅ Test email created:', testMessage);
-      alert(`Test-E-Mail wurde im ${selectedFolder} Ordner erstellt!`);
+      alert(`Test-E-Mail wurde erstellt!`);
     } catch (error: any) {
       console.error('❌ Error creating test email:', error);
       alert(`Fehler beim Erstellen der Test-E-Mail: ${error.message}`);
@@ -468,26 +731,39 @@ export default function InboxPage() {
     setSelectedThread(thread);
     
     try {
-      // Load all messages for this thread im aktuellen Ordner
+      // Load all messages for this thread
       let threadMessages: EmailMessage[] = [];
       
-      // Fix für draft vs drafts
-      const folderName = selectedFolder === 'drafts' ? 'draft' : selectedFolder;
+      if (viewMode === 'classic') {
+        // Classic Mode: Filter by folder
+        const folderName = selectedFolder === 'drafts' ? 'draft' : selectedFolder;
+        
+        const folderQuery = query(
+          collection(db, 'email_messages'),
+          where('threadId', '==', thread.id!),
+          where('folder', '==', folderName),
+          orderBy('receivedAt', 'asc')
+        );
+        
+        const snapshot = await getDocs(folderQuery);
+        snapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
+          threadMessages.push({ ...doc.data(), id: doc.id } as EmailMessage);
+        });
+      } else {
+        // Customer/Campaign Mode: Load all messages in thread
+        const messagesQuery = query(
+          collection(db, 'email_messages'),
+          where('threadId', '==', thread.id!),
+          orderBy('receivedAt', 'asc')
+        );
+        
+        const snapshot = await getDocs(messagesQuery);
+        snapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
+          threadMessages.push({ ...doc.data(), id: doc.id } as EmailMessage);
+        });
+      }
       
-      // Lade nur E-Mails des Threads im aktuellen Ordner
-      const folderQuery = query(
-        collection(db, 'email_messages'),
-        where('threadId', '==', thread.id!),
-        where('folder', '==', folderName),
-        orderBy('receivedAt', 'asc')
-      );
-      
-      const snapshot = await getDocs(folderQuery);
-      snapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
-        threadMessages.push({ ...doc.data(), id: doc.id } as EmailMessage);
-      });
-      
-      console.log(`📨 Loaded ${threadMessages.length} messages for thread in ${selectedFolder}`);
+      console.log(`📨 Loaded ${threadMessages.length} messages for thread`);
       
       if (threadMessages.length > 0) {
         // Select the latest email in the thread
@@ -495,8 +771,8 @@ export default function InboxPage() {
         setSelectedEmail(latestEmail);
         console.log('✅ Selected latest email:', latestEmail.id);
         
-        // Mark thread as read (nur in inbox)
-        if (selectedFolder === 'inbox' && thread.unreadCount && thread.unreadCount > 0) {
+        // Mark thread as read
+        if (thread.unreadCount && thread.unreadCount > 0) {
           await threadMatcherService.markThreadAsRead(thread.id!);
           
           // Mark all unread messages in thread as read
@@ -632,6 +908,24 @@ export default function InboxPage() {
     }
   };
 
+  // Handle folder selection from sidebar
+  const handleFolderSelect = (type: 'customer' | 'campaign' | 'general', id?: string) => {
+    console.log('📁 Folder selected:', { type, id });
+    setSelectedFolderType(type);
+    setSelectedCustomerId(type === 'customer' ? id : undefined);
+    setSelectedCampaignId(type === 'campaign' ? id : undefined);
+    setSelectedThread(null);
+    setSelectedEmail(null);
+  };
+
+  // Handle classic folder selection
+  const handleClassicFolderSelect = (folder: string) => {
+    console.log('📁 Classic folder selected:', folder);
+    setSelectedFolder(folder);
+    setSelectedThread(null);
+    setSelectedEmail(null);
+  };
+
   // Filter threads based on search
   const filteredThreads = threads.filter(thread => {
     if (!searchQuery) return true;
@@ -642,11 +936,13 @@ export default function InboxPage() {
       thread.participants.some(p => 
         p.email.toLowerCase().includes(searchLower) ||
         p.name?.toLowerCase().includes(searchLower)
-      )
+      ) ||
+      (thread.customerName?.toLowerCase().includes(searchLower)) ||
+      (thread.campaignName?.toLowerCase().includes(searchLower))
     );
   });
 
-  // Get emails for selected thread - immer nur aus dem aktuellen Ordner
+  // Get emails for selected thread
   const threadEmails = selectedThread 
     ? emails.filter(e => e.threadId === selectedThread.id)
         .sort((a, b) => {
@@ -655,6 +951,31 @@ export default function InboxPage() {
           return aTime - bTime;
         })
     : [];
+
+  // Get folder display name
+  const getFolderDisplayName = () => {
+    if (viewMode === 'classic') {
+      switch(selectedFolder) {
+        case 'inbox': return 'Posteingang';
+        case 'sent': return 'Gesendet';
+        case 'drafts': return 'Entwürfe';
+        case 'spam': return 'Spam';
+        case 'trash': return 'Papierkorb';
+        default: return selectedFolder;
+      }
+    } else {
+      if (selectedFolderType === 'general') return 'Allgemeine Anfragen';
+      if (selectedFolderType === 'customer' && selectedCustomerId) {
+        const customer = filteredThreads.find(t => t.customerId === selectedCustomerId);
+        return customer?.customerName || 'Kunde';
+      }
+      if (selectedFolderType === 'campaign' && selectedCampaignId) {
+        const campaign = filteredThreads.find(t => t.campaignId === selectedCampaignId);
+        return campaign?.campaignName || 'Kampagne';
+      }
+      return 'E-Mails';
+    }
+  };
 
   // Show empty state if no email addresses configured
   if (!loading && !hasEmailAddresses) {
@@ -728,7 +1049,16 @@ export default function InboxPage() {
 
           {/* Right side - Actions */}
           <div className="flex items-center gap-2">
-            {/* Später: Bulk-Actions, View Options, etc. */}
+            {/* View Mode Toggle */}
+            <Button
+              plain
+              onClick={() => setViewMode(viewMode === 'classic' ? 'customer' : 'classic')}
+              className="p-2"
+              title={viewMode === 'classic' ? 'Zur Kunden-Ansicht wechseln' : 'Zur klassischen Ansicht wechseln'}
+            >
+              <ArrowsRightLeftIcon className="h-5 w-5 text-gray-400" />
+            </Button>
+            
             <Button
               plain
               className="p-2"
@@ -782,23 +1112,30 @@ export default function InboxPage() {
 
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Sidebar */}
-        <InboxSidebar
-          selectedFolder={selectedFolder}
-          onFolderSelect={setSelectedFolder}
-          unreadCounts={unreadCounts}
-        />
+        {/* Sidebar - Classic or Customer/Campaign */}
+        {viewMode === 'classic' ? (
+          <InboxSidebar
+            selectedFolder={selectedFolder}
+            onFolderSelect={handleClassicFolderSelect}
+            unreadCounts={unreadCounts}
+          />
+        ) : (
+          <CustomerCampaignSidebar
+            selectedCustomerId={selectedCustomerId}
+            selectedCampaignId={selectedCampaignId}
+            selectedFolderType={selectedFolderType}
+            onFolderSelect={handleFolderSelect}
+            unreadCounts={unreadCounts}
+            organizationId={organizationId}
+          />
+        )}
 
         {/* Thread List */}
         <div className="w-96 border-r bg-gray-50 flex flex-col">
           {/* Folder Header */}
           <div className="px-4 py-2 border-b bg-gray-100 flex items-center justify-between">
             <h3 className="font-medium text-sm text-gray-700">
-              {selectedFolder === 'inbox' && 'Posteingang'}
-              {selectedFolder === 'sent' && 'Gesendet'}
-              {selectedFolder === 'drafts' && 'Entwürfe'}
-              {selectedFolder === 'spam' && 'Spam'}
-              {selectedFolder === 'trash' && 'Papierkorb'}
+              {getFolderDisplayName()}
               {filteredThreads.length > 0 && (
                 <span className="text-gray-500 font-normal ml-2">
                   ({filteredThreads.length})
