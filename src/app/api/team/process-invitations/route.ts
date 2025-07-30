@@ -15,7 +15,6 @@ import {
 import { serverDb } from '@/lib/firebase/server-init';
 import { TeamMember } from '@/types/international';
 import { getTeamInvitationEmailTemplate } from '@/lib/email/team-invitation-templates';
-import { apiClient } from '@/lib/api/api-client';
 
 interface ProcessResult {
   processed: number;
@@ -28,12 +27,70 @@ interface ProcessResult {
   }>;
 }
 
-export async function POST(request: NextRequest) {
+// GET endpoint für Status-Check
+export async function GET(request: NextRequest) {
   try {
-    // 1. Auth prüfen (optional für manuelle Ausführung, required für Cron)
+    console.log('🔍 Checking pending invitations...');
+    
+    // Auth ist optional für GET
     const authContext = await getAuthContext(request);
     
-    console.log('🔄 Processing team invitations...');
+    // Wenn kein Auth Context, gebe 0 zurück
+    if (!authContext) {
+      return NextResponse.json({
+        pending: 0,
+        message: 'Nicht authentifiziert'
+      });
+    }
+    
+    try {
+      // Zähle unverarbeitete Einladungen
+      const pendingQuery = query(
+        collection(serverDb, 'notifications'),
+        where('userId', '==', authContext.userId),
+        where('category', '==', 'team_invitation'),
+        where('isProcessed', '!=', true)
+      );
+      
+      const pendingSnapshot = await getDocs(pendingQuery);
+      
+      return NextResponse.json({
+        pending: pendingSnapshot.size,
+        message: `${pendingSnapshot.size} Einladungen warten auf Verarbeitung`
+      });
+    } catch (firestoreError: any) {
+      console.error('Firestore query error:', firestoreError);
+      
+      // Bei Firestore-Fehlern, gebe 0 zurück statt 500
+      return NextResponse.json({
+        pending: 0,
+        message: 'Konnte Einladungen nicht prüfen',
+        error: firestoreError.message
+      });
+    }
+    
+  } catch (error: any) {
+    console.error('GET /api/team/process-invitations error:', error);
+    
+    // Gebe 200 mit error info zurück statt 500
+    return NextResponse.json({
+      pending: 0,
+      message: 'Fehler beim Prüfen der Einladungen',
+      error: error.message
+    });
+  }
+}
+
+// POST endpoint für Verarbeitung
+export async function POST(request: NextRequest) {
+  try {
+    // Auth ist optional für POST (für Cron Jobs)
+    const authContext = await getAuthContext(request);
+    
+    console.log('🔄 Processing team invitations...', {
+      hasAuth: !!authContext,
+      userId: authContext?.userId
+    });
     
     const result: ProcessResult = {
       processed: 0,
@@ -42,17 +99,41 @@ export async function POST(request: NextRequest) {
       details: []
     };
 
-    // 2. Hole alle unverarbeiteten Team-Einladungen
-    const invitationsQuery = query(
-      collection(serverDb, 'notifications'),
-      where('category', '==', 'team_invitation'),
-      where('isProcessed', '!=', true)
-    );
+    // Wenn authentifiziert, nur Invitations für diesen User
+    // Wenn nicht authentifiziert (Cron), verarbeite alle
+    let invitationsQuery;
+    
+    if (authContext) {
+      invitationsQuery = query(
+        collection(serverDb, 'notifications'),
+        where('userId', '==', authContext.userId),
+        where('category', '==', 'team_invitation'),
+        where('isProcessed', '!=', true)
+      );
+    } else {
+      // Für Cron Jobs - verarbeite alle unverarbeiteten
+      invitationsQuery = query(
+        collection(serverDb, 'notifications'),
+        where('category', '==', 'team_invitation'),
+        where('isProcessed', '!=', true)
+      );
+    }
 
-    const invitationsSnapshot = await getDocs(invitationsQuery);
+    let invitationsSnapshot;
+    try {
+      invitationsSnapshot = await getDocs(invitationsQuery);
+    } catch (queryError: any) {
+      console.error('Failed to query notifications:', queryError);
+      return NextResponse.json({
+        success: false,
+        error: 'Konnte Benachrichtigungen nicht abrufen',
+        details: queryError.message
+      });
+    }
+    
     console.log(`📬 Found ${invitationsSnapshot.size} unprocessed invitations`);
 
-    // 3. Verarbeite jede Einladung
+    // Verarbeite jede Einladung
     for (const inviteDoc of invitationsSnapshot.docs) {
       const notification = inviteDoc.data();
       const memberData = notification.data?.memberData;
@@ -64,51 +145,55 @@ export async function POST(request: NextRequest) {
       }
 
       try {
-        // 4. Erstelle Team-Mitglied in team_members
+        // Erstelle Team-Mitglied in team_members
         const memberId = `invite_${Date.now()}_${memberData.email.replace('@', '_at_')}`;
         const teamMember: Partial<TeamMember> = {
           ...memberData,
           id: memberId,
-          createdAt: serverTimestamp() as Timestamp,
-          updatedAt: serverTimestamp() as Timestamp
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now()
         };
 
         await setDoc(doc(serverDb, 'team_members', memberId), teamMember);
         console.log(`✅ Created team member: ${memberId}`);
 
-        // 5. Generiere Einladungslink
+        // Generiere Einladungslink
         const invitationToken = generateInvitationToken();
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.celeropress.com';
         const invitationUrl = `${baseUrl}/auth/accept-invitation?token=${invitationToken}&id=${memberId}`;
 
-        // Speichere Token in team_members für Verifizierung
+        // Speichere Token
         await updateDoc(doc(serverDb, 'team_members', memberId), {
           invitationToken,
-          invitationTokenExpiry: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 Tage
+          invitationTokenExpiry: Timestamp.fromDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000))
         });
 
-        // 6. Hole Inviter-Informationen
+        // Hole Inviter-Informationen
         let inviterName = 'Das Team';
         let organizationName = 'CeleroPress';
         
-        // Versuche Owner-Info aus notifications zu holen
+        // Versuche Owner-Info zu holen
         if (notification.userId) {
-          const ownerQuery = query(
-            collection(serverDb, 'notifications'),
-            where('userId', '==', notification.userId),
-            where('category', '==', 'team_owner_init')
-          );
-          const ownerSnapshot = await getDocs(ownerQuery);
-          if (!ownerSnapshot.empty) {
-            const ownerData = ownerSnapshot.docs[0].data()?.data?.ownerData;
-            if (ownerData) {
-              inviterName = ownerData.displayName || ownerData.email;
-              organizationName = ownerData.displayName || 'CeleroPress';
+          try {
+            const ownerQuery = query(
+              collection(serverDb, 'notifications'),
+              where('userId', '==', notification.userId),
+              where('category', '==', 'team_owner_init')
+            );
+            const ownerSnapshot = await getDocs(ownerQuery);
+            if (!ownerSnapshot.empty) {
+              const ownerData = ownerSnapshot.docs[0].data()?.data?.ownerData;
+              if (ownerData) {
+                inviterName = ownerData.displayName || ownerData.email;
+                organizationName = ownerData.displayName || 'CeleroPress';
+              }
             }
+          } catch (e) {
+            console.log('Could not get owner info:', e);
           }
         }
 
-        // 7. Sende Einladungs-E-Mail
+        // Sende Einladungs-E-Mail
         const emailData = getTeamInvitationEmailTemplate({
           recipientName: memberData.displayName || memberData.email.split('@')[0],
           recipientEmail: memberData.email,
@@ -128,10 +213,10 @@ export async function POST(request: NextRequest) {
         });
 
         if (emailResult.success) {
-          // 8. Markiere Notification als verarbeitet
+          // Markiere als verarbeitet
           await updateDoc(doc(serverDb, 'notifications', inviteDoc.id), {
             isProcessed: true,
-            processedAt: serverTimestamp(),
+            processedAt: Timestamp.now(),
             emailSent: true,
             invitationUrl
           });
@@ -158,52 +243,63 @@ export async function POST(request: NextRequest) {
         });
 
         // Markiere als fehlgeschlagen
-        await updateDoc(doc(serverDb, 'notifications', inviteDoc.id), {
-          isProcessed: true,
-          processedAt: serverTimestamp(),
-          processingError: error.message
-        });
+        try {
+          await updateDoc(doc(serverDb, 'notifications', inviteDoc.id), {
+            isProcessed: true,
+            processedAt: Timestamp.now(),
+            processingError: error.message
+          });
+        } catch (updateError) {
+          console.error('Could not update notification:', updateError);
+        }
       }
     }
 
-    // 9. Verarbeite auch Owner-Initialisierungen
-    const ownerInitQuery = query(
-      collection(serverDb, 'notifications'),
-      where('category', '==', 'team_owner_init'),
-      where('isProcessed', '!=', true)
-    );
-
-    const ownerInitSnapshot = await getDocs(ownerInitQuery);
-    
-    for (const ownerDoc of ownerInitSnapshot.docs) {
-      const notification = ownerDoc.data();
-      const ownerData = notification.data?.ownerData;
-      
-      if (!ownerData) continue;
+    // Verarbeite auch Owner-Initialisierungen
+    if (authContext) {
+      const ownerInitQuery = query(
+        collection(serverDb, 'notifications'),
+        where('userId', '==', authContext.userId),
+        where('category', '==', 'team_owner_init'),
+        where('isProcessed', '!=', true)
+      );
 
       try {
-        // Erstelle Owner in team_members
-        const ownerId = `${ownerData.userId}_${ownerData.organizationId}`;
-        await setDoc(doc(serverDb, 'team_members', ownerId), {
-          ...ownerData,
-          id: ownerId,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        });
+        const ownerInitSnapshot = await getDocs(ownerInitQuery);
+        
+        for (const ownerDoc of ownerInitSnapshot.docs) {
+          const notification = ownerDoc.data();
+          const ownerData = notification.data?.ownerData;
+          
+          if (!ownerData) continue;
 
-        // Markiere als verarbeitet
-        await updateDoc(doc(serverDb, 'notifications', ownerDoc.id), {
-          isProcessed: true,
-          processedAt: serverTimestamp()
-        });
+          try {
+            // Erstelle Owner in team_members
+            const ownerId = `${ownerData.userId}_${ownerData.organizationId}`;
+            await setDoc(doc(serverDb, 'team_members', ownerId), {
+              ...ownerData,
+              id: ownerId,
+              createdAt: Timestamp.now(),
+              updatedAt: Timestamp.now()
+            });
 
-        console.log(`✅ Owner initialized: ${ownerId}`);
-        result.processed++;
+            // Markiere als verarbeitet
+            await updateDoc(doc(serverDb, 'notifications', ownerDoc.id), {
+              isProcessed: true,
+              processedAt: Timestamp.now()
+            });
 
-      } catch (error: any) {
-        console.error('❌ Error initializing owner:', error);
-        result.failed++;
-        result.errors.push(`Owner init: ${error.message}`);
+            console.log(`✅ Owner initialized: ${ownerId}`);
+            result.processed++;
+
+          } catch (error: any) {
+            console.error('❌ Error initializing owner:', error);
+            result.failed++;
+            result.errors.push(`Owner init: ${error.message}`);
+          }
+        }
+      } catch (e) {
+        console.log('Could not process owner inits:', e);
       }
     }
 
@@ -215,41 +311,14 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('Error processing invitations:', error);
+    console.error('POST /api/team/process-invitations error:', error);
     
     return NextResponse.json(
       { 
         success: false,
-        error: error.message || 'Interner Serverfehler' 
+        error: error.message || 'Interner Serverfehler',
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
       },
-      { status: 500 }
-    );
-  }
-}
-
-// GET endpoint für manuellen Trigger oder Status-Check
-export async function GET(request: NextRequest) {
-  try {
-    // Prüfe ob Auth vorhanden (optional)
-    const authContext = await getAuthContext(request);
-    
-    // Zähle unverarbeitete Einladungen
-    const pendingQuery = query(
-      collection(serverDb, 'notifications'),
-      where('category', '==', 'team_invitation'),
-      where('isProcessed', '!=', true)
-    );
-    
-    const pendingSnapshot = await getDocs(pendingQuery);
-    
-    return NextResponse.json({
-      pending: pendingSnapshot.size,
-      message: `${pendingSnapshot.size} Einladungen warten auf Verarbeitung`
-    });
-    
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error.message || 'Interner Serverfehler' },
       { status: 500 }
     );
   }
@@ -273,12 +342,12 @@ async function sendInvitationEmail(data: {
   text: string;
 }): Promise<{ success: boolean; error?: string }> {
   try {
-    // Nutze die bestehende SendGrid API Route
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/sendgrid/send`, {
+    // Nutze die SendGrid API Route direkt
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.celeropress.com';
+    const response = await fetch(`${baseUrl}/api/sendgrid/send`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        // Keine Auth nötig für interne API Calls
       },
       body: JSON.stringify({
         to: data.to,
