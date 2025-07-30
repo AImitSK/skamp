@@ -682,12 +682,12 @@ export default function InboxPage() {
   return (
     <div className="w-full h-[calc(100vh-3.5rem)] bg-white flex flex-col">
       {/* Toolbar / Funktionsbar */}
-      <div className="border-b bg-white px-4 py-3 mt-12">
+      <div className="border-b bg-white px-4 py-3 mt-6">
         <div className="flex items-center justify-between gap-4">
           {/* Left side - Search, New Email & Refresh */}
           <div className="flex items-center gap-3 flex-1">
             {/* Search */}
-            <div className="relative w-96">
+            <div className="relative w-[768px]">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="text"
