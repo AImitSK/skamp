@@ -50,14 +50,40 @@ export async function POST(request: NextRequest) {
 
     // 4. Prüfe ob User berechtigt ist (muss Owner oder Admin sein)
     const userMember = await teamMemberService.getByUserAndOrg(userId, organizationId);
+    
+    // Spezialfall: Wenn es noch keine Team-Mitglieder gibt und der User die gleiche ID wie die Org hat,
+    // dann ist es der Owner der seine erste Einladung macht
     if (!userMember) {
-      return NextResponse.json(
-        { error: 'Sie sind kein Mitglied dieser Organisation' },
-        { status: 403 }
-      );
-    }
-
-    if (userMember.role !== 'owner' && userMember.role !== 'admin') {
+      const memberCount = await teamMemberService.countActiveMembers(organizationId);
+      
+      // Wenn keine Mitglieder existieren und userId === organizationId, dann ist es der Owner
+      if (memberCount === 0 && userId === organizationId) {
+        console.log('🚀 First team member - creating owner entry');
+        
+        // Erstelle den Owner als erstes Team-Mitglied
+        const ownerData = {
+          userId,
+          organizationId,
+          email: authContext.email || '',
+          displayName: authContext.email?.split('@')[0] || 'Owner',
+          role: 'owner' as const,
+          status: 'active' as const,
+          invitedAt: Timestamp.now(),
+          invitedBy: userId,
+          joinedAt: Timestamp.now(),
+          lastActiveAt: Timestamp.now()
+        };
+        
+        await teamMemberService.createDirectly(ownerData);
+        
+        // Fahre mit der Einladung fort
+      } else {
+        return NextResponse.json(
+          { error: 'Sie sind kein Mitglied dieser Organisation' },
+          { status: 403 }
+        );
+      }
+    } else if (userMember.role !== 'owner' && userMember.role !== 'admin') {
       return NextResponse.json(
         { error: 'Nur Owner und Admins können Team-Mitglieder einladen' },
         { status: 403 }
