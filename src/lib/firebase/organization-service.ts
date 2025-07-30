@@ -286,6 +286,25 @@ export const teamMemberService = {
     }
   },
 
+    /**
+   * Erstellt ein Team-Mitglied direkt ohne Organization-Check
+   * Workaround für fehlende organizations Collection
+   */
+  async createDirectly(memberData: Partial<TeamMember>): Promise<string> {
+    try {
+      const docRef = await addDoc(collection(db, 'team_members'), {
+        ...memberData,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      
+      return docRef.id;
+    } catch (error) {
+      console.error('Error creating team member directly:', error);
+      throw error;
+    }
+  },
+
   /**
    * Lädt Team-Mitglied by User & Org
    */
