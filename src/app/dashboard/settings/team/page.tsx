@@ -63,9 +63,11 @@ export default function TeamSettingsPage() {
   const [inviteRole, setInviteRole] = useState<UserRole>('member');
   const [inviteLoading, setInviteLoading] = useState(false);
   
-  // Load team members
+  // Load team members - nur beim ersten Mount
   useEffect(() => {
-    loadTeamMembers();
+    if (teamMembers.length === 0) {
+      loadTeamMembers();
+    }
   }, [organizationId]);
   
   // Listen for invitation notifications
@@ -121,6 +123,10 @@ export default function TeamSettingsPage() {
     try {
       setLoading(true);
       console.log('👥 Loading team members for organization:', organizationId);
+      
+      // Behalte Notifications-basierte Einträge
+      const notificationMembers = teamMembers.filter(m => m._fromNotification);
+      
       const members = await teamMemberService.getByOrganization(organizationId);
       
       // Check for owner in notifications if no members found
@@ -145,7 +151,8 @@ export default function TeamSettingsPage() {
                 ...ownerNotification.data.ownerData,
                 _fromNotification: true
               };
-              setTeamMembers([ownerMember]);
+              // Kombiniere mit bestehenden Notification-Members
+              setTeamMembers([ownerMember, ...notificationMembers.filter(m => m.id !== ownerMember.id)]);
               return;
             }
           }
@@ -153,8 +160,49 @@ export default function TeamSettingsPage() {
           console.error('Could not check owner notifications:', e);
         }
         
-        // Fallback: Create default member for current user
-        const defaultMember: TeamMemberUI = {
+        // Fallback nur wenn wirklich keine Daten vorhanden sind
+        if (notificationMembers.length === 0) {
+          const defaultMember: TeamMemberUI = {
+            id: '1',
+            userId: user?.uid || '',
+            organizationId,
+            email: user?.email || '',
+            displayName: user?.displayName || user?.email || 'Admin',
+            role: 'owner',
+            status: 'active',
+            invitedAt: Timestamp.now(),
+            invitedBy: user?.uid || '',
+            joinedAt: Timestamp.now(),
+            lastActiveAt: Timestamp.now()
+          };
+          setTeamMembers([defaultMember]);
+        } else {
+          // Behalte die Notification-Members
+          setTeamMembers(notificationMembers);
+        }
+      } else {
+        // Kombiniere echte Members mit Notification-Members
+        const combinedMembers = [...members];
+        
+        // Füge Notification-Members hinzu, die noch nicht in den echten Members sind
+        notificationMembers.forEach(nm => {
+          if (!members.some(m => m.email === nm.email)) {
+            combinedMembers.push(nm);
+          }
+        });
+        
+        setTeamMembers(combinedMembers);
+      }
+    } catch (error) {
+      console.error('Error loading team members:', error);
+      setError('Fehler beim Laden der Team-Mitglieder');
+      
+      // Behalte Notifications-basierte Einträge auch bei Fehler
+      const notificationMembers = teamMembers.filter(m => m._fromNotification);
+      
+      if (notificationMembers.length === 0) {
+        // Fallback nur wenn keine Notifications vorhanden
+        const fallbackMember: TeamMemberUI = {
           id: '1',
           userId: user?.uid || '',
           organizationId,
@@ -167,29 +215,10 @@ export default function TeamSettingsPage() {
           joinedAt: Timestamp.now(),
           lastActiveAt: Timestamp.now()
         };
-        setTeamMembers([defaultMember]);
+        setTeamMembers([fallbackMember]);
       } else {
-        setTeamMembers(members);
+        setTeamMembers(notificationMembers);
       }
-    } catch (error) {
-      console.error('Error loading team members:', error);
-      setError('Fehler beim Laden der Team-Mitglieder');
-      
-      // Fallback
-      const fallbackMember: TeamMemberUI = {
-        id: '1',
-        userId: user?.uid || '',
-        organizationId,
-        email: user?.email || '',
-        displayName: user?.displayName || user?.email || 'Admin',
-        role: 'owner',
-        status: 'active',
-        invitedAt: Timestamp.now(),
-        invitedBy: user?.uid || '',
-        joinedAt: Timestamp.now(),
-        lastActiveAt: Timestamp.now()
-      };
-      setTeamMembers([fallbackMember]);
     } finally {
       setLoading(false);
     }
@@ -230,13 +259,12 @@ export default function TeamSettingsPage() {
       
       // Spezielle Meldung wenn Notification erstellt wurde
       if (data.requiresProcessing) {
-        showToast('Einladung wurde erstellt. Die Seite wird aktualisiert...');
-        // Reload nach kurzer Verzögerung
-        setTimeout(() => {
-          loadTeamMembers();
-        }, 1000);
+        showToast('Einladung wurde erstellt.');
+        // Nicht automatisch neu laden - die Notifications werden durch den Listener aktualisiert
       } else {
         showToast('Einladung wurde erfolgreich versendet!');
+        // Reload nur wenn direkt in team_members geschrieben wurde
+        await loadTeamMembers();
       }
       
       setShowInviteModal(false);
