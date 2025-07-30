@@ -119,27 +119,32 @@ export default function TeamSettingsPage() {
     setTimeout(() => setRefreshing(false), 500);
   };
   
-  const handleInvite = async () => {
+const handleInvite = async () => {
     if (!inviteEmail || !user) return;
     
     try {
       setInviteLoading(true);
       setError(null);
       
-      // Direkt Team-Mitglied erstellen ohne Organization-Check
-      const newMember: Partial<TeamMember> = {
-        email: inviteEmail,
-        organizationId,
-        role: inviteRole,
-        displayName: inviteEmail.split('@')[0], // Temporärer Name
-        status: 'invited',
-        invitedAt: Timestamp.now(),
-        invitedBy: user.uid,
-        userId: '' // Wird beim Accept gesetzt
-      };
+      // Verwende die API-Route für Team-Einladungen
+      const response = await fetch('/api/team/invite', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await user.getIdToken()}`
+        },
+        body: JSON.stringify({
+          email: inviteEmail,
+          role: inviteRole,
+          organizationId
+        })
+      });
       
-      // Erstelle das Mitglied direkt in der team_members Collection
-      await teamMemberService.createDirectly(newMember);
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Fehler beim Einladen des Team-Mitglieds');
+      }
       
       showToast('Einladung wurde versendet!');
       setShowInviteModal(false);
@@ -155,7 +160,7 @@ export default function TeamSettingsPage() {
       setInviteLoading(false);
     }
   };
-  
+    
   const handleRoleChange = async (member: TeamMember, newRole: UserRole) => {
     if (member.role === 'owner') {
       showToast('Die Rolle des Owners kann nicht geändert werden', 'error');
