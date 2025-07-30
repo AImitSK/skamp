@@ -36,16 +36,13 @@ import {
   FunnelIcon,
   DocumentTextIcon,
   PencilSquareIcon,
-  DocumentDuplicateIcon,
-  InformationCircleIcon,
-  UserPlusIcon,
-  XMarkIcon
+  DocumentDuplicateIcon
 } from '@heroicons/react/20/solid';
 import clsx from 'clsx';
 import { domainService } from '@/lib/firebase/domain-service';
 
 // NEU: Import für echte Team-Daten
-import { teamMemberService, organizationService } from '@/lib/firebase/organization-service';
+import { teamMemberService } from '@/lib/firebase/organization-service';
 import { TeamMember } from '@/types/international';
 
 // Toast notification helper
@@ -79,15 +76,10 @@ export default function EmailSettingsPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showRoutingModal, setShowRoutingModal] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState<EmailAddress | null>(null);
-  const [showDebugInfo, setShowDebugInfo] = useState(false);
   
   // NEU: State für echte Team-Mitglieder
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loadingTeam, setLoadingTeam] = useState(true);
-  const [showInviteModal, setShowInviteModal] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState<'admin' | 'member'>('member');
-  const [inviting, setInviting] = useState(false);
   
   // Form state mit EmailAddressFormData type
   const [formData, setFormData] = useState<EmailAddressFormData>({
@@ -108,10 +100,6 @@ export default function EmailSettingsPage() {
   // Load all data
   useEffect(() => {
     if (organizationId) {
-      console.log('📊 EmailSettingsPage - useEffect triggered');
-      console.log('- organizationId:', organizationId);
-      console.log('- user?.uid:', user?.uid);
-      console.log('- user object:', user);
       loadEmailAddresses();
       loadDomains();
       loadSignatures();
@@ -123,10 +111,8 @@ export default function EmailSettingsPage() {
   const loadTeamMembers = async () => {
     try {
       setLoadingTeam(true);
-      console.log('👥 Loading team members for organization:', organizationId);
       
       const members = await teamMemberService.getByOrganization(organizationId);
-      console.log('✅ Team members loaded:', members);
       
       // Filtere nur aktive Mitglieder
       const activeMembers = members.filter(m => m.status === 'active');
@@ -138,7 +124,6 @@ export default function EmailSettingsPage() {
       // Fallback: Erstelle das erste Team-Mitglied (Owner) wenn keines existiert
       if (user) {
         try {
-          console.log('🔧 Creating initial team member for owner');
           const ownerMember: TeamMember = {
             id: 'temp-owner',
             userId: user.uid,
@@ -158,41 +143,6 @@ export default function EmailSettingsPage() {
       }
     } finally {
       setLoadingTeam(false);
-    }
-  };
-
-  // NEU: Team-Mitglied einladen
-  const handleInviteTeamMember = async () => {
-    if (!inviteEmail) {
-      showToast('Bitte geben Sie eine E-Mail-Adresse ein', 'error');
-      return;
-    }
-
-    try {
-      setInviting(true);
-      
-      await teamMemberService.invite({
-        email: inviteEmail,
-        organizationId,
-        role: inviteRole,
-        invitedBy: user?.uid || ''
-      });
-      
-      showToast(`Einladung an ${inviteEmail} gesendet`);
-      setShowInviteModal(false);
-      setInviteEmail('');
-      setInviteRole('member');
-      
-      // Reload team members
-      await loadTeamMembers();
-    } catch (error) {
-      console.error('Error inviting team member:', error);
-      showToast(
-        error instanceof Error ? error.message : 'Fehler beim Einladen des Team-Mitglieds',
-        'error'
-      );
-    } finally {
-      setInviting(false);
     }
   };
 
@@ -239,29 +189,11 @@ export default function EmailSettingsPage() {
   const loadSignatures = async () => {
     try {
       setLoadingSignatures(true);
-      console.log('🔍 Loading signatures - Debug Info:');
-      console.log('- organizationId being used:', organizationId);
-      console.log('- current user.uid:', user?.uid);
-      console.log('- user.email:', user?.email);
-      console.log('- Full user object:', user);
-      
-      // Prüfe ob organizationId und user.uid übereinstimmen
-      if (organizationId !== user?.uid) {
-        console.warn('⚠️ WARNUNG: organizationId stimmt nicht mit user.uid überein!');
-        console.warn('- organizationId:', organizationId);
-        console.warn('- user.uid:', user?.uid);
-      }
       
       const sigs = await emailSignatureService.getByOrganization(organizationId);
-      console.log('✅ Signatures loaded successfully:', sigs);
       setSignatures(sigs);
     } catch (error) {
       console.error('❌ Fehler beim Laden der Signaturen:', error);
-      console.error('Error details:', {
-        message: (error as any)?.message,
-        code: (error as any)?.code,
-        stack: (error as any)?.stack
-      });
       showToast('Fehler beim Laden der Signaturen', 'error');
     } finally {
       setLoadingSignatures(false);
@@ -411,13 +343,6 @@ export default function EmailSettingsPage() {
   // Signature handlers
   const handleSaveSignature = async (signature: Partial<EmailSignature>, id?: string) => {
     try {
-      console.log('💾 Saving signature with data:', {
-        signature,
-        id,
-        organizationId,
-        userId: user?.uid
-      });
-      
       if (id) {
         await emailSignatureService.update(id, signature, user?.uid || '');
         showToast('Signatur erfolgreich aktualisiert');
@@ -505,48 +430,7 @@ export default function EmailSettingsPage() {
               Verwalten Sie E-Mail-Adressen, Vorlagen und Signaturen für Ihre Organisation
             </Text>
           </div>
-          <div className="mt-4 md:mt-0">
-            <Button 
-              plain 
-              onClick={() => setShowDebugInfo(!showDebugInfo)}
-              className="text-sm"
-            >
-              <InformationCircleIcon className="h-4 w-4 mr-1" />
-              Debug Info {showDebugInfo ? 'ausblenden' : 'anzeigen'}
-            </Button>
-          </div>
         </div>
-
-        {/* Debug Info Panel */}
-        {showDebugInfo && (
-          <div className="bg-gray-100 rounded-lg p-4 text-xs font-mono">
-            <h3 className="font-bold text-sm mb-2">Debug Information:</h3>
-            <div className="space-y-1">
-              <div><strong>organizationId:</strong> {organizationId}</div>
-              <div><strong>user.uid:</strong> {user?.uid}</div>
-              <div><strong>user.email:</strong> {user?.email}</div>
-              <div><strong>Match:</strong> {organizationId === user?.uid ? '✅ IDs stimmen überein' : '❌ IDs stimmen NICHT überein!'}</div>
-              <div><strong>Active Tab:</strong> {activeTab}</div>
-              <div><strong>Email Addresses Count:</strong> {emailAddresses.length}</div>
-              <div><strong>Signatures Count:</strong> {signatures.length}</div>
-              <div><strong>Domains Count:</strong> {domains.length}</div>
-              <div><strong>Team Members Count:</strong> {teamMembers.length}</div>
-              <div className="mt-2 pt-2 border-t">
-                <strong>Team Members:</strong>
-                <pre className="mt-1 text-xs overflow-auto bg-white p-2 rounded">
-                  {JSON.stringify(teamMembers.map(m => ({
-                    id: m.id,
-                    userId: m.userId,
-                    email: m.email,
-                    name: m.displayName,
-                    role: m.role,
-                    status: m.status
-                  })), null, 2)}
-                </pre>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Tabs */}
         <div className="border-b border-gray-200 mb-6">
@@ -623,16 +507,8 @@ export default function EmailSettingsPage() {
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex justify-end mb-4 gap-3">
-              <Button 
-                onClick={() => setShowInviteModal(true)} 
-                plain
-                className="whitespace-nowrap"
-              >
-                <UserPlusIcon className="h-4 w-4 mr-2" />
-                Team-Mitglied einladen
-              </Button>
+            {/* Action Button */}
+            <div className="flex justify-end mb-4">
               <Button onClick={handleAdd} className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap">
                 <PlusIcon className="h-4 w-4 mr-2" />
                 Neue E-Mail-Adresse
@@ -956,13 +832,12 @@ export default function EmailSettingsPage() {
               ) : teamMembers.length === 0 ? (
                 <div className="mt-4 text-sm text-gray-500">
                   Keine Team-Mitglieder vorhanden. 
-                  <button
-                    type="button"
-                    onClick={() => setShowInviteModal(true)}
+                  <a
+                    href="/dashboard/settings/team"
                     className="text-[#005fab] hover:underline ml-1"
                   >
-                    Jetzt einladen
-                  </button>
+                    Team verwalten
+                  </a>
                 </div>
               ) : (
                 <CheckboxGroup className="mt-4 space-y-2">
@@ -1075,56 +950,6 @@ export default function EmailSettingsPage() {
             disabled={saving}
           >
             {saving ? 'Speichern...' : (showAddModal ? 'Hinzufügen' : 'Speichern')}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* NEU: Team Member Invite Modal */}
-      <Dialog open={showInviteModal} onClose={() => setShowInviteModal(false)}>
-        <DialogTitle className="px-6 py-4">Team-Mitglied einladen</DialogTitle>
-        <DialogBody className="p-6">
-          <p className="text-sm text-gray-500 mb-4">
-            Laden Sie ein neues Team-Mitglied per E-Mail ein. Sie erhalten eine Einladung zum Beitritt.
-          </p>
-          <div className="space-y-4">
-            <Field>
-              <Label>E-Mail-Adresse</Label>
-              <Input
-                type="email"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-                placeholder="kollege@beispiel.de"
-              />
-            </Field>
-            <Field>
-              <Label>Rolle</Label>
-              <Select
-                value={inviteRole}
-                onChange={(e) => setInviteRole(e.target.value as 'admin' | 'member')}
-              >
-                <option value="member">Mitglied</option>
-                <option value="admin">Administrator</option>
-              </Select>
-              <p className="text-xs text-gray-500 mt-1">
-                Administratoren können alle Einstellungen verwalten
-              </p>
-            </Field>
-          </div>
-        </DialogBody>
-        <DialogActions className="px-6 py-4">
-          <Button plain onClick={() => {
-            setShowInviteModal(false);
-            setInviteEmail('');
-            setInviteRole('member');
-          }}>
-            Abbrechen
-          </Button>
-          <Button 
-            className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
-            onClick={handleInviteTeamMember}
-            disabled={inviting || !inviteEmail}
-          >
-            {inviting ? 'Einladung wird gesendet...' : 'Einladung senden'}
           </Button>
         </DialogActions>
       </Dialog>

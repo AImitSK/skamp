@@ -4,6 +4,7 @@
 import { EmailMessage, EmailThread } from '@/types/inbox-enhanced';
 import { Button } from '@/components/button';
 import { Badge } from '@/components/badge';
+import { InternalNotes } from '@/components/inbox/InternalNotes';
 import format from 'date-fns/format';
 import { de } from 'date-fns/locale/de';
 import {
@@ -31,6 +32,13 @@ interface EmailViewerProps {
   onDelete: (emailId: string) => void;
   onStar: (emailId: string, starred: boolean) => void;
   onStatusChange?: (threadId: string, status: 'active' | 'waiting' | 'resolved' | 'archived') => void;
+  organizationId: string;
+  teamMembers?: Array<{
+    id: string;
+    userId: string;
+    displayName: string;
+    email: string;
+  }>;
 }
 
 export function EmailViewer({

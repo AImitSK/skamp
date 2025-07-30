@@ -16,6 +16,7 @@ import { emailMessageService } from '@/lib/email/email-message-service';
 import { threadMatcherService } from '@/lib/email/thread-matcher-service-flexible';
 import { emailAddressService } from '@/lib/email/email-address-service';
 import { getCustomerCampaignMatcher } from '@/lib/email/customer-campaign-matcher';
+import { teamMemberService } from '@/lib/firebase/organization-service';
 import { 
   onSnapshot,
   collection,
@@ -75,6 +76,10 @@ export default function InboxPage() {
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | undefined>();
   const [customerCampaignMatcher, setCustomerCampaignMatcher] = useState<any>(null);
   
+  // NEU: State für Team-Features
+  const [teamMembers, setTeamMembers] = useState<any[]>([]);
+  const [loadingTeam, setLoadingTeam] = useState(true);
+  
   // Ref to track if we've already resolved threads
   const threadsResolvedRef = useRef(false);
   
@@ -98,6 +103,8 @@ export default function InboxPage() {
     messageError?: string;
     setupError?: string;
     deferredThreadsResolved?: number;
+    teamMembers?: any[];
+    teamError?: string;
   }
   
   const [debugInfo, setDebugInfo] = useState<DebugInfo>({});
@@ -122,6 +129,83 @@ export default function InboxPage() {
       setCustomerCampaignMatcher(matcher);
     }
   }, [organizationId]);
+
+  // Load team members with fallback
+  useEffect(() => {
+    const loadTeamMembers = async () => {
+      if (!organizationId) return;
+      
+      setLoadingTeam(true);
+      try {
+        console.log('👥 Loading team members for organization:', organizationId);
+        const members = await teamMemberService.getByOrganization(organizationId);
+        
+        if (members.length === 0) {
+          // Fallback: Create mock team members for development
+          console.log('⚠️ No team members found, using fallback data');
+          const mockMembers = [
+            {
+              id: '1',
+              userId: user?.uid || '',
+              displayName: user?.displayName || user?.email || 'Aktueller Benutzer',
+              email: user?.email || 'user@example.com',
+              role: 'owner',
+              status: 'active'
+            },
+            {
+              id: '2',
+              userId: 'mock-team-member-1',
+              displayName: 'Max Mustermann',
+              email: 'max@example.com',
+              role: 'admin',
+              status: 'active'
+            },
+            {
+              id: '3',
+              userId: 'mock-team-member-2',
+              displayName: 'Anna Schmidt',
+              email: 'anna@example.com',
+              role: 'member',
+              status: 'active'
+            }
+          ];
+          setTeamMembers(mockMembers);
+          setDebugInfo(prev => ({
+            ...prev,
+            teamMembers: mockMembers,
+            teamError: 'Using mock data - no organization found'
+          }));
+        } else {
+          setTeamMembers(members);
+          setDebugInfo(prev => ({
+            ...prev,
+            teamMembers: members
+          }));
+        }
+      } catch (error) {
+        console.error('Error loading team members:', error);
+        // Fallback bei Fehler
+        const fallbackMember = {
+          id: '1',
+          userId: user?.uid || '',
+          displayName: user?.displayName || user?.email || 'Aktueller Benutzer',
+          email: user?.email || 'user@example.com',
+          role: 'owner',
+          status: 'active'
+        };
+        setTeamMembers([fallbackMember]);
+        setDebugInfo(prev => ({
+          ...prev,
+          teamMembers: [fallbackMember],
+          teamError: error instanceof Error ? error.message : 'Unknown error'
+        }));
+      } finally {
+        setLoadingTeam(false);
+      }
+    };
+
+    loadTeamMembers();
+  }, [organizationId, user]);
 
   // Resolve deferred threads when component mounts
   useEffect(() => {
@@ -792,87 +876,6 @@ export default function InboxPage() {
     }
   };
 
-  // NEU: Handle Thread-Zuweisung
-  const handleThreadAssign = async (threadId: string, userId: string | null) => {
-    if (!user) return;
-    
-    try {
-      console.log('👤 Assigning thread:', threadId, 'to user:', userId);
-      
-      // Update in Firestore
-      await threadMatcherService.assignThread(
-        threadId,
-        userId,
-        user.uid // assignedBy
-      );
-      
-      // Update local state für sofortiges UI-Feedback
-      setThreads(prevThreads => 
-        prevThreads.map(thread => 
-          thread.id === threadId 
-            ? { 
-                ...thread, 
-                assignedTo: userId || undefined,
-                assignedAt: userId ? new Date() : undefined,
-                assignedBy: userId ? user.uid : undefined
-              } as EmailThread
-            : thread
-        )
-      );
-      
-      console.log('✅ Thread assignment updated successfully');
-    } catch (error) {
-      console.error('❌ Error assigning thread:', error);
-      alert('Fehler beim Zuweisen des Threads');
-    }
-  };
-
-  // NEU: Handle Thread-Status Update
-  const handleThreadStatusChange = async (threadId: string, status: EmailThread['status']) => {
-    try {
-      console.log('📊 Updating thread status:', threadId, 'to:', status);
-      
-      await threadMatcherService.updateThreadStatus(threadId, status);
-      
-      // Update local state
-      setThreads(prevThreads => 
-        prevThreads.map(thread => 
-          thread.id === threadId 
-            ? { ...thread, status } as EmailThread
-            : thread
-        )
-      );
-      
-      console.log('✅ Thread status updated successfully');
-    } catch (error) {
-      console.error('❌ Error updating thread status:', error);
-      alert('Fehler beim Aktualisieren des Thread-Status');
-    }
-  };
-
-  // NEU: Handle Thread-Priority Update
-  const handleThreadPriorityChange = async (threadId: string, priority: EmailThread['priority']) => {
-    try {
-      console.log('🔥 Updating thread priority:', threadId, 'to:', priority);
-      
-      await threadMatcherService.updateThreadPriority(threadId, priority);
-      
-      // Update local state
-      setThreads(prevThreads => 
-        prevThreads.map(thread => 
-          thread.id === threadId 
-            ? { ...thread, priority } as EmailThread
-            : thread
-        )
-      );
-      
-      console.log('✅ Thread priority updated successfully');
-    } catch (error) {
-      console.error('❌ Error updating thread priority:', error);
-      alert('Fehler beim Aktualisieren der Thread-Priorität');
-    }
-  };
-
   // Handle email actions
   const handleReply = (email: EmailMessage) => {
     setReplyToEmail(email);
@@ -986,6 +989,50 @@ export default function InboxPage() {
       await emailMessageService.toggleStar(emailId);
     } catch (error) {
       console.error('Error starring email:', error);
+    }
+  };
+
+  // NEU: Handle thread assignment
+  const handleThreadAssign = async (threadId: string, userId: string | null) => {
+    if (!userId) return;
+    
+    try {
+      // assignThread erwartet: threadId (string), userId (string | null), assignedBy (string)
+      await threadMatcherService.assignThread(threadId, userId, user?.uid || '');
+      console.log('✅ Thread assigned successfully');
+    } catch (error) {
+      console.error('Error assigning thread:', error);
+      alert('Fehler beim Zuweisen des Threads');
+    }
+  };
+
+  // NEU: Handle thread status change
+  const handleThreadStatusChange = async (threadId: string, status: 'active' | 'waiting' | 'resolved' | 'archived' | undefined) => {
+    if (!status) return;
+    
+    try {
+      await threadMatcherService.updateThreadStatus(threadId, status);
+      console.log('✅ Thread status updated successfully');
+      
+      // Bei Archivierung: Thread aus der Liste entfernen
+      if (status === 'archived') {
+        setSelectedThread(null);
+        setSelectedEmail(null);
+      }
+    } catch (error) {
+      console.error('Error updating thread status:', error);
+      alert('Fehler beim Ändern des Thread-Status');
+    }
+  };
+
+  // NEU: Handle thread priority change
+  const handleThreadPriorityChange = async (threadId: string, priority: 'low' | 'normal' | 'high' | 'urgent') => {
+    try {
+      await threadMatcherService.updateThreadPriority(threadId, priority);
+      console.log('✅ Thread priority updated successfully');
+    } catch (error) {
+      console.error('Error updating thread priority:', error);
+      alert('Fehler beim Ändern der Thread-Priorität');
     }
   };
 
@@ -1276,6 +1323,8 @@ export default function InboxPage() {
               onDelete={handleDelete}
               onStar={handleStar}
               onStatusChange={handleThreadStatusChange}
+              organizationId={organizationId}
+              teamMembers={teamMembers}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center text-gray-500">
