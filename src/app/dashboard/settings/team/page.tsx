@@ -14,7 +14,7 @@ import { SettingsNav } from '@/components/SettingsNav';
 import { Text } from '@/components/text';
 import { teamMemberService } from '@/lib/firebase/organization-service';
 import { TeamMember, UserRole } from '@/types/international';
-import { Timestamp, collection, query, where, onSnapshot, orderBy, getDocs } from 'firebase/firestore';
+import { Timestamp, collection, query, where, onSnapshot, orderBy, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client-init';
 import { 
   UserPlusIcon,
@@ -27,7 +27,8 @@ import {
   ShieldCheckIcon,
   UserIcon,
   BuildingOfficeIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  PaperAirplaneIcon
 } from '@heroicons/react/20/solid';
 import clsx from 'clsx';
 
@@ -57,6 +58,8 @@ export default function TeamSettingsPage() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [processingInvitations, setProcessingInvitations] = useState(false);
+  const [pendingInvitations, setPendingInvitations] = useState(0);
   
   // Invite form state
   const [inviteEmail, setInviteEmail] = useState('');
@@ -116,6 +119,13 @@ export default function TeamSettingsPage() {
     
     return () => unsubscribe();
   }, [organizationId]);
+  
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadTeamMembers();
+    await checkPendingInvitations();
+    setTimeout(() => setRefreshing(false), 500);
+  };
   
   const loadTeamMembers = async () => {
     if (!organizationId) return;
@@ -224,10 +234,57 @@ export default function TeamSettingsPage() {
     }
   };
   
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await loadTeamMembers();
-    setTimeout(() => setRefreshing(false), 500);
+  // Check pending invitations on mount
+  useEffect(() => {
+    checkPendingInvitations();
+  }, []);
+  
+  const checkPendingInvitations = async () => {
+    try {
+      const response = await fetch('/api/team/process-invitations');
+      if (response.ok) {
+        const data = await response.json();
+        setPendingInvitations(data.pending || 0);
+      }
+    } catch (error) {
+      console.error('Error checking pending invitations:', error);
+    }
+  };
+  
+  const handleProcessInvitations = async () => {
+    setProcessingInvitations(true);
+    setError(null);
+    
+    try {
+      const response = await fetch('/api/team/process-invitations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Fehler beim Verarbeiten der Einladungen');
+      }
+      
+      if (data.result && data.result.processed > 0) {
+        showToast(`${data.result.processed} Einladungen wurden versendet!`);
+      } else {
+        showToast('Keine ausstehenden Einladungen gefunden');
+      }
+      
+      // Reload nach Verarbeitung
+      await loadTeamMembers();
+      setPendingInvitations(0);
+      
+    } catch (error: any) {
+      console.error('Error processing invitations:', error);
+      setError(error.message || 'Fehler beim Verarbeiten der Einladungen');
+    } finally {
+      setProcessingInvitations(false);
+    }
   };
   
   const handleInvite = async () => {
@@ -310,9 +367,24 @@ export default function TeamSettingsPage() {
       return;
     }
     
-    // Für Notifications-basierte Einträge
+    // Für Notifications-basierte Einträge - lösche die Notification
     if (member._fromNotification) {
-      showToast('Diese Einladung muss erst verarbeitet werden', 'error');
+      try {
+        // Lösche die Notification aus Firestore
+        const notificationRef = doc(db, 'notifications', member.id!);
+        await updateDoc(notificationRef, {
+          isProcessed: true,
+          deletedAt: Timestamp.now(),
+          deletedBy: user?.uid
+        });
+        
+        // Entferne aus der lokalen Liste
+        setTeamMembers(prev => prev.filter(m => m.id !== member.id));
+        showToast('Einladung wurde gelöscht');
+      } catch (error) {
+        console.error('Error deleting invitation:', error);
+        showToast('Fehler beim Löschen der Einladung', 'error');
+      }
       return;
     }
     
@@ -326,6 +398,42 @@ export default function TeamSettingsPage() {
   };
   
   const handleResendInvite = async (member: TeamMember) => {
+    // Für Notifications-basierte Einträge - verarbeite einzeln
+    if ((member as TeamMemberUI)._fromNotification) {
+      setProcessingInvitations(true);
+      try {
+        // Markiere die Notification als unverarbeitet
+        const notificationRef = doc(db, 'notifications', member.id!);
+        await updateDoc(notificationRef, {
+          isProcessed: false
+        });
+        
+        // Verarbeite nur diese eine Einladung
+        const response = await fetch('/api/team/process-invitations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            specificId: member.id // Optional: nur diese eine verarbeiten
+          })
+        });
+        
+        if (response.ok) {
+          showToast('Einladung wird erneut versendet...');
+          await loadTeamMembers();
+        } else {
+          throw new Error('Fehler beim erneuten Versenden');
+        }
+      } catch (error) {
+        console.error('Error resending invitation:', error);
+        showToast('Fehler beim erneuten Versenden der Einladung', 'error');
+      } finally {
+        setProcessingInvitations(false);
+      }
+      return;
+    }
+    
     showToast('Einladung erneut senden - Feature noch nicht implementiert');
   };
   
@@ -452,6 +560,18 @@ export default function TeamSettingsPage() {
                 refreshing && "animate-spin"
               )} />
             </Button>
+            {pendingInvitations > 0 && (
+              <Button 
+                onClick={handleProcessInvitations}
+                disabled={processingInvitations}
+                className="bg-yellow-500 hover:bg-yellow-600 text-white"
+              >
+                <PaperAirplaneIcon className="h-4 w-4 mr-2" />
+                <span className="whitespace-nowrap">
+                  {processingInvitations ? 'Wird versendet...' : `${pendingInvitations} Einladungen versenden`}
+                </span>
+              </Button>
+            )}
             <Button 
               onClick={() => setShowInviteModal(true)}
               className="bg-[#005fab] hover:bg-[#004a8c] text-white"
@@ -567,24 +687,37 @@ export default function TeamSettingsPage() {
                       </div>
                       <div className="flex-1 flex justify-end gap-2">
                         {member._fromNotification && (
-                          <span className="text-xs text-yellow-600 mr-2">
-                            Einladung wird verarbeitet...
-                          </span>
+                          <>
+                            <span className="text-xs text-yellow-600 mr-2">
+                              Einladung ausstehend
+                            </span>
+                            <Button
+                              plain
+                              onClick={() => handleResendInvite(member)}
+                              className="text-xs"
+                              disabled={processingInvitations}
+                              title="Einladung erneut senden"
+                            >
+                              <PaperAirplaneIcon className="h-4 w-4" />
+                            </Button>
+                          </>
                         )}
                         {member.status === 'invited' && !member._fromNotification && (
                           <Button
                             plain
                             onClick={() => handleResendInvite(member)}
                             className="text-xs"
+                            title="Einladung erneut senden"
                           >
                             <ArrowPathIcon className="h-4 w-4" />
                           </Button>
                         )}
-                        {member.role !== 'owner' && !member._fromNotification && (
+                        {member.role !== 'owner' && (
                           <Button
                             plain
                             onClick={() => handleRemoveMember(member)}
                             className="text-xs text-red-600 hover:text-red-700"
+                            title={member._fromNotification ? "Einladung löschen" : "Mitglied entfernen"}
                           >
                             <TrashIcon className="h-4 w-4" />
                           </Button>
