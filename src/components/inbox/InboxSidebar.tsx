@@ -7,8 +7,6 @@ import clsx from 'clsx';
 import {
   InboxIcon,
   PaperAirplaneIcon,
-  DocumentDuplicateIcon,
-  ExclamationTriangleIcon,
   TrashIcon,
   PencilSquareIcon
 } from '@heroicons/react/20/solid';
@@ -38,18 +36,6 @@ export function InboxSidebar({
       name: 'Gesendet',
       icon: PaperAirplaneIcon,
       count: unreadCounts.sent
-    },
-    {
-      id: 'drafts',
-      name: 'Entwürfe',
-      icon: DocumentDuplicateIcon,
-      count: unreadCounts.drafts
-    },
-    {
-      id: 'spam',
-      name: 'Spam',
-      icon: ExclamationTriangleIcon,
-      count: unreadCounts.spam
     },
     {
       id: 'trash',

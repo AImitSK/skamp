@@ -37,7 +37,9 @@ import {
   ExclamationTriangleIcon,
   BugAntIcon,
   PlusIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  Squares2X2Icon,
+  Cog6ToothIcon
 } from '@heroicons/react/20/solid';
 
 export default function InboxPage() {
@@ -61,6 +63,7 @@ export default function InboxPage() {
   const [showDebug, setShowDebug] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [resolvingThreads, setResolvingThreads] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   
   // Ref to track if we've already resolved threads
   const threadsResolvedRef = useRef(false);
@@ -367,6 +370,20 @@ export default function InboxPage() {
     }
   };
 
+  // Refresh inbox
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      // Trigger listeners to refresh
+      unsubscribes.forEach(unsubscribe => unsubscribe());
+      const newUnsubscribes: Unsubscribe[] = [];
+      setupRealtimeListeners(newUnsubscribes);
+      setUnsubscribes(newUnsubscribes);
+    } finally {
+      setTimeout(() => setRefreshing(false), 1000);
+    }
+  };
+
   // Create test email for development
   const createTestEmail = async () => {
     if (!emailAddresses.length) {
@@ -663,8 +680,108 @@ export default function InboxPage() {
   }
 
   return (
-    <div className="w-full h-[calc(100vh-3.5rem)] bg-white">
-      <div className="flex h-full">
+    <div className="w-full h-[calc(100vh-3.5rem)] bg-white flex flex-col">
+      {/* Toolbar / Funktionsbar */}
+      <div className="border-b bg-white px-4 py-2">
+        <div className="flex items-center justify-between gap-4">
+          {/* Left side - New Email & Refresh */}
+          <div className="flex items-center gap-2">
+            <Button 
+              onClick={() => {
+                setComposeMode('new');
+                setReplyToEmail(null);
+                setShowCompose(true);
+              }}
+              className="bg-[#005fab] hover:bg-[#004a8c] text-white"
+            >
+              <PencilSquareIcon className="h-4 w-4 mr-2" />
+              <span className="whitespace-nowrap">Neue E-Mail</span>
+            </Button>
+            
+            <Button
+              plain
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="p-2"
+              title="Aktualisieren"
+            >
+              <ArrowPathIcon className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
+
+          {/* Center - Search */}
+          <div className="flex-1 max-w-2xl">
+            <div className="relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="E-Mails durchsuchen..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-10 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:border-transparent"
+              />
+              <button className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded">
+                <FunnelIcon className="h-5 w-5 text-gray-400" />
+              </button>
+            </div>
+          </div>
+
+          {/* Right side - Actions */}
+          <div className="flex items-center gap-2">
+            {/* Später: Bulk-Actions, View Options, etc. */}
+            <Button
+              plain
+              className="p-2"
+              title="Ansichtsoptionen"
+            >
+              <Squares2X2Icon className="h-5 w-5 text-gray-400" />
+            </Button>
+            
+            <Button
+              plain
+              className="p-2"
+              title="Einstellungen"
+            >
+              <Cog6ToothIcon className="h-5 w-5 text-gray-400" />
+            </Button>
+
+            {/* Debug controls for development */}
+            {process.env.NODE_ENV === 'development' && (
+              <>
+                <div className="border-l mx-2 h-6" />
+                <Button
+                  plain
+                  onClick={createTestEmail}
+                  className="text-xs p-1"
+                  title="Test-E-Mail erstellen"
+                >
+                  <PlusIcon className="h-4 w-4" />
+                </Button>
+                <Button
+                  plain
+                  onClick={handleResolveThreads}
+                  className="text-xs p-1"
+                  title="Threads manuell erstellen"
+                  disabled={resolvingThreads}
+                >
+                  <ArrowPathIcon className={`h-4 w-4 ${resolvingThreads ? 'animate-spin' : ''}`} />
+                </Button>
+                <Button
+                  plain
+                  onClick={() => setShowDebug(!showDebug)}
+                  className="text-xs p-1"
+                  title="Debug-Info anzeigen"
+                >
+                  <BugAntIcon className="h-4 w-4" />
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex overflow-hidden">
         {/* Sidebar */}
         <InboxSidebar
           selectedFolder={selectedFolder}
@@ -677,175 +794,124 @@ export default function InboxPage() {
           unreadCounts={unreadCounts}
         />
 
-        {/* Main Content */}
-        <div className="flex-1 flex">
-          {/* Thread List */}
-          <div className="w-96 border-r bg-gray-50 flex flex-col">
-            {/* Search Bar */}
-            <div className="p-4 border-b bg-white">
-              <div className="relative">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="E-Mails durchsuchen..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-10 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:border-transparent"
-                />
-                <button className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded">
-                  <FunnelIcon className="h-5 w-5 text-gray-400" />
-                </button>
-              </div>
-            </div>
-
-            {/* Folder Header with Debug Toggle */}
-            <div className="px-4 py-2 border-b bg-gray-100 flex items-center justify-between">
-              <h3 className="font-medium text-sm text-gray-700">
-                {selectedFolder === 'inbox' && 'Posteingang'}
-                {selectedFolder === 'sent' && 'Gesendet'}
-                {selectedFolder === 'drafts' && 'Entwürfe'}
-                {selectedFolder === 'spam' && 'Spam'}
-                {selectedFolder === 'trash' && 'Papierkorb'}
-                {filteredThreads.length > 0 && (
-                  <span className="text-gray-500 font-normal ml-2">
-                    ({filteredThreads.length})
-                  </span>
-                )}
-              </h3>
-              <div className="flex items-center gap-2">
-                {resolvingThreads && (
-                  <div className="flex items-center text-xs text-gray-500">
-                    <ArrowPathIcon className="h-4 w-4 animate-spin mr-1" />
-                    Threads werden erstellt...
-                  </div>
-                )}
-                {process.env.NODE_ENV === 'development' && (
-                  <>
-                    <Button
-                      plain
-                      onClick={createTestEmail}
-                      className="text-xs p-1"
-                      title="Test-E-Mail erstellen"
-                    >
-                      <PlusIcon className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      plain
-                      onClick={handleResolveThreads}
-                      className="text-xs p-1"
-                      title="Threads manuell erstellen"
-                      disabled={resolvingThreads}
-                    >
-                      <ArrowPathIcon className={`h-4 w-4 ${resolvingThreads ? 'animate-spin' : ''}`} />
-                    </Button>
-                    <Button
-                      plain
-                      onClick={() => setShowDebug(!showDebug)}
-                      className="text-xs p-1"
-                      title="Debug-Info anzeigen"
-                    >
-                      <BugAntIcon className="h-4 w-4" />
-                    </Button>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Debug Info */}
-            {showDebug && (
-              <div className="p-4 bg-yellow-50 border-b border-yellow-200 text-xs">
-                <h4 className="font-bold mb-2">Debug Info:</h4>
-                <pre className="whitespace-pre-wrap overflow-x-auto">
-                  {JSON.stringify(debugInfo, null, 2)}
-                </pre>
-              </div>
-            )}
-
-            {/* Error State */}
-            {error && (
-              <div className="p-4 bg-red-50 border-b border-red-200">
-                <div className="flex items-center text-red-600">
-                  <ExclamationTriangleIcon className="h-5 w-5 mr-2" />
-                  <p className="text-sm">{error}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Email List */}
-            <EmailList
-              threads={filteredThreads}
-              selectedThread={selectedThread}
-              onThreadSelect={handleThreadSelect}
-              loading={loading || resolvingThreads}
-              onStar={handleStar}
-            />
-          </div>
-
-          {/* Email Viewer */}
-          <div className="flex-1 flex flex-col">
-            {selectedThread && threadEmails.length > 0 ? (
-              <EmailViewer
-                thread={selectedThread}
-                emails={threadEmails}
-                selectedEmail={selectedEmail}
-                onReply={handleReply}
-                onForward={handleForward}
-                onArchive={handleArchive}
-                onDelete={handleDelete}
-                onStar={handleStar}
-              />
-            ) : (
-              <div className="flex-1 flex items-center justify-center text-gray-500">
-                <div className="text-center">
-                  <InboxIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                  <p className="text-lg font-medium">
-                    {loading ? 'E-Mails werden geladen...' : 'Keine E-Mail ausgewählt'}
-                  </p>
-                  <p className="text-sm mt-1">
-                    {!loading && threads.length === 0 
-                      ? 'Keine E-Mails in diesem Ordner' 
-                      : 'Wählen Sie eine Konversation aus der Liste'}
-                  </p>
-                  {!loading && threads.length === 0 && hasEmailAddresses && (
-                    <div className="mt-6">
-                      <p className="text-xs text-gray-400 mb-3">
-                        Warten Sie auf eingehende E-Mails oder senden Sie eine Test-E-Mail
-                      </p>
-                      {process.env.NODE_ENV === 'development' && (
-                        <Button 
-                          onClick={createTestEmail}
-                          className="bg-gray-100 hover:bg-gray-200 text-gray-700"
-                        >
-                          <PlusIcon className="h-4 w-4 mr-2" />
-                          Test-E-Mail erstellen
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </div>
+        {/* Thread List */}
+        <div className="w-96 border-r bg-gray-50 flex flex-col">
+          {/* Folder Header */}
+          <div className="px-4 py-2 border-b bg-gray-100 flex items-center justify-between">
+            <h3 className="font-medium text-sm text-gray-700">
+              {selectedFolder === 'inbox' && 'Posteingang'}
+              {selectedFolder === 'sent' && 'Gesendet'}
+              {selectedFolder === 'drafts' && 'Entwürfe'}
+              {selectedFolder === 'spam' && 'Spam'}
+              {selectedFolder === 'trash' && 'Papierkorb'}
+              {filteredThreads.length > 0 && (
+                <span className="text-gray-500 font-normal ml-2">
+                  ({filteredThreads.length})
+                </span>
+              )}
+            </h3>
+            {resolvingThreads && (
+              <div className="flex items-center text-xs text-gray-500">
+                <ArrowPathIcon className="h-4 w-4 animate-spin mr-1" />
+                Threads werden erstellt...
               </div>
             )}
           </div>
+
+          {/* Debug Info */}
+          {showDebug && (
+            <div className="p-4 bg-yellow-50 border-b border-yellow-200 text-xs">
+              <h4 className="font-bold mb-2">Debug Info:</h4>
+              <pre className="whitespace-pre-wrap overflow-x-auto">
+                {JSON.stringify(debugInfo, null, 2)}
+              </pre>
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && (
+            <div className="p-4 bg-red-50 border-b border-red-200">
+              <div className="flex items-center text-red-600">
+                <ExclamationTriangleIcon className="h-5 w-5 mr-2" />
+                <p className="text-sm">{error}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Email List */}
+          <EmailList
+            threads={filteredThreads}
+            selectedThread={selectedThread}
+            onThreadSelect={handleThreadSelect}
+            loading={loading || resolvingThreads}
+            onStar={handleStar}
+          />
         </div>
 
-        {/* Compose Modal */}
-        {showCompose && (
-          <ComposeEmail
-            organizationId={organizationId}
-            mode={composeMode}
-            replyToEmail={replyToEmail}
-            onClose={() => {
-              setShowCompose(false);
-              setReplyToEmail(null);
-            }}
-            onSend={() => {
-              setShowCompose(false);
-              setReplyToEmail(null);
-              // New email will appear automatically through real-time listener
-            }}
-          />
-        )}
+        {/* Email Viewer */}
+        <div className="flex-1 flex flex-col">
+          {selectedThread && threadEmails.length > 0 ? (
+            <EmailViewer
+              thread={selectedThread}
+              emails={threadEmails}
+              selectedEmail={selectedEmail}
+              onReply={handleReply}
+              onForward={handleForward}
+              onArchive={handleArchive}
+              onDelete={handleDelete}
+              onStar={handleStar}
+            />
+          ) : (
+            <div className="flex-1 flex items-center justify-center text-gray-500">
+              <div className="text-center">
+                <InboxIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <p className="text-lg font-medium">
+                  {loading ? 'E-Mails werden geladen...' : 'Keine E-Mail ausgewählt'}
+                </p>
+                <p className="text-sm mt-1">
+                  {!loading && threads.length === 0 
+                    ? 'Keine E-Mails in diesem Ordner' 
+                    : 'Wählen Sie eine Konversation aus der Liste'}
+                </p>
+                {!loading && threads.length === 0 && hasEmailAddresses && (
+                  <div className="mt-6">
+                    <p className="text-xs text-gray-400 mb-3">
+                      Warten Sie auf eingehende E-Mails oder senden Sie eine Test-E-Mail
+                    </p>
+                    {process.env.NODE_ENV === 'development' && (
+                      <Button 
+                        onClick={createTestEmail}
+                        className="bg-gray-100 hover:bg-gray-200 text-gray-700"
+                      >
+                        <PlusIcon className="h-4 w-4 mr-2" />
+                        Test-E-Mail erstellen
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Compose Modal */}
+      {showCompose && (
+        <ComposeEmail
+          organizationId={organizationId}
+          mode={composeMode}
+          replyToEmail={replyToEmail}
+          onClose={() => {
+            setShowCompose(false);
+            setReplyToEmail(null);
+          }}
+          onSend={() => {
+            setShowCompose(false);
+            setReplyToEmail(null);
+            // New email will appear automatically through real-time listener
+          }}
+        />
+      )}
     </div>
   );
 }
