@@ -682,36 +682,12 @@ export default function InboxPage() {
   return (
     <div className="w-full h-[calc(100vh-3.5rem)] bg-white flex flex-col">
       {/* Toolbar / Funktionsbar */}
-      <div className="border-b bg-white px-4 py-2">
+      <div className="border-b bg-white px-4 py-3 mt-12">
         <div className="flex items-center justify-between gap-4">
-          {/* Left side - New Email & Refresh */}
-          <div className="flex items-center gap-2">
-            <Button 
-              onClick={() => {
-                setComposeMode('new');
-                setReplyToEmail(null);
-                setShowCompose(true);
-              }}
-              className="bg-[#005fab] hover:bg-[#004a8c] text-white"
-            >
-              <PencilSquareIcon className="h-4 w-4 mr-2" />
-              <span className="whitespace-nowrap">Neue E-Mail</span>
-            </Button>
-            
-            <Button
-              plain
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="p-2"
-              title="Aktualisieren"
-            >
-              <ArrowPathIcon className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
-            </Button>
-          </div>
-
-          {/* Center - Search */}
-          <div className="flex-1 max-w-2xl">
-            <div className="relative">
+          {/* Left side - Search, New Email & Refresh */}
+          <div className="flex items-center gap-3 flex-1">
+            {/* Search */}
+            <div className="relative w-96">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="text"
@@ -724,6 +700,30 @@ export default function InboxPage() {
                 <FunnelIcon className="h-5 w-5 text-gray-400" />
               </button>
             </div>
+
+            {/* New Email Button */}
+            <Button 
+              onClick={() => {
+                setComposeMode('new');
+                setReplyToEmail(null);
+                setShowCompose(true);
+              }}
+              className="bg-[#005fab] hover:bg-[#004a8c] text-white"
+            >
+              <PencilSquareIcon className="h-4 w-4 mr-2" />
+              <span className="whitespace-nowrap">Neue E-Mail</span>
+            </Button>
+            
+            {/* Refresh Button */}
+            <Button
+              plain
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="p-2"
+              title="Aktualisieren"
+            >
+              <ArrowPathIcon className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
+            </Button>
           </div>
 
           {/* Right side - Actions */}
