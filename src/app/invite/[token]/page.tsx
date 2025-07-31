@@ -168,14 +168,6 @@ export default function AcceptInvitationPage() {
         displayName: displayName
       });
       
-      // 2b. Erstelle users Dokument (wie bei normaler Registrierung)
-      await setDoc(doc(db, "users", userCredential.user.uid), {
-        userId: userCredential.user.uid,
-        email: userCredential.user.email,
-        createdAt: serverTimestamp(),
-        displayName: displayName
-      });
-      
       // 3. Einladung akzeptieren - DIREKT mit updateDoc
       const memberRef = doc(db, 'team_members', invitationId);
       await updateDoc(memberRef, {
