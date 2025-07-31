@@ -75,17 +75,26 @@ export default function TeamSettingsPage() {
     if (!user) return;
     
     try {
-      await orgService.ensureOwnerExists(
-        user.uid,
-        user.uid, // organizationId = userId für jetzt
-        {
+      // Prüfe ob Owner bereits existiert
+      const existingOwner = await teamMemberService.getByUserAndOrg(user.uid, user.uid);
+      
+      if (!existingOwner) {
+        console.log('🔧 Creating owner entry for first-time user');
+        
+        // Erstelle Owner über Service
+        await teamMemberService.createOwner({
+          userId: user.uid,
+          organizationId: user.uid,
           email: user.email || '',
           displayName: user.displayName || user.email || '',
           photoUrl: user.photoURL || undefined
-        }
-      );
+        });
+        
+        console.log('✅ Owner entry created successfully');
+      }
     } catch (error) {
       console.error('Error ensuring owner exists:', error);
+      // Don't block the UI
     }
   };
   
@@ -145,18 +154,24 @@ export default function TeamSettingsPage() {
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
       const invitationUrl = `${baseUrl}/invite/${invitationToken}?id=${memberId}`;
       
-      // Sende E-Mail über API (mit Auth Token)
+      // Sende E-Mail über API (wie in Inbox)
       try {
-        const response = await fetch('/api/sendgrid/send', {
+        const response = await fetch('/api/email/send', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${await user.getIdToken()}`
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            to: inviteEmail,
+            to: [{
+              email: inviteEmail,
+              name: inviteEmail.split('@')[0]
+            }],
+            from: {
+              email: user.email || 'noreply@celeropress.com',
+              name: user.displayName || 'CeleroPress Team'
+            },
             subject: `Einladung zum Team von ${user.displayName || 'CeleroPress'}`,
-            html: `
+            htmlContent: `
               <h2>Sie wurden eingeladen!</h2>
               <p>${user.displayName || user.email} hat Sie zum Team eingeladen.</p>
               <p>Rolle: ${roleConfig[inviteRole].label}</p>
@@ -166,7 +181,8 @@ export default function TeamSettingsPage() {
               </a>
               <p><small>Dieser Link ist 7 Tage gültig.</small></p>
             `,
-            text: `Sie wurden zum Team eingeladen. Klicken Sie hier: ${invitationUrl}`
+            textContent: `Sie wurden zum Team eingeladen. Klicken Sie hier: ${invitationUrl}`,
+            replyTo: 'noreply@celeropress.com'
           })
         });
         
@@ -252,16 +268,22 @@ export default function TeamSettingsPage() {
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
       const invitationUrl = `${baseUrl}/invite/${invitationToken}?id=${member.id}`;
       
-      const response = await fetch('/api/sendgrid/send', {
+      const response = await fetch('/api/email/send', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${await user.getIdToken()}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          to: member.email,
+          to: [{
+            email: member.email,
+            name: member.displayName
+          }],
+          from: {
+            email: user.email || 'noreply@celeropress.com',
+            name: user.displayName || 'CeleroPress Team'
+          },
           subject: `Erinnerung: Einladung zum Team`,
-          html: `
+          htmlContent: `
             <h2>Erinnerung: Sie wurden eingeladen!</h2>
             <p>Dies ist eine Erinnerung an Ihre Team-Einladung.</p>
             <p>Rolle: ${roleConfig[member.role].label}</p>
@@ -269,7 +291,8 @@ export default function TeamSettingsPage() {
               Einladung annehmen
             </a>
           `,
-          text: `Erinnerung: Sie wurden zum Team eingeladen. Klicken Sie hier: ${invitationUrl}`
+          textContent: `Erinnerung: Sie wurden zum Team eingeladen. Klicken Sie hier: ${invitationUrl}`,
+          replyTo: 'noreply@celeropress.com'
         })
       });
       
