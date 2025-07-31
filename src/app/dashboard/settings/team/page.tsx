@@ -81,14 +81,20 @@ export default function TeamSettingsPage() {
       if (!existingOwner) {
         console.log('🔧 Creating owner entry for first-time user');
         
-        // Erstelle Owner über Service
-        await teamMemberService.createOwner({
+        // Erstelle Owner-Daten ohne undefined
+        const ownerData: any = {
           userId: user.uid,
           organizationId: user.uid,
           email: user.email || '',
-          displayName: user.displayName || user.email || '',
-          photoUrl: user.photoURL || undefined
-        });
+          displayName: user.displayName || user.email || ''
+        };
+        
+        // Füge photoUrl nur hinzu, wenn vorhanden
+        if (user.photoURL) {
+          ownerData.photoUrl = user.photoURL;
+        }
+        
+        await teamMemberService.createOwner(ownerData);
         
         console.log('✅ Owner entry created successfully');
       }

@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/button';
 import { Heading } from '@/components/heading';
@@ -14,7 +14,9 @@ import {
   ArrowRightIcon,
   ClockIcon
 } from '@heroicons/react/20/solid';
-import clsx from 'clsx';
+import { teamMemberService } from '@/lib/firebase/team-service-enhanced';
+import { getDoc, doc } from 'firebase/firestore';
+import { db } from '@/lib/firebase/client-init';
 
 interface InvitationData {
   email: string;
@@ -23,31 +25,20 @@ interface InvitationData {
   invitedBy: string;
 }
 
-// Server Component für Next.js 15
-export default async function AcceptInvitationPage({ 
-  params 
-}: { 
-  params: Promise<{ token: string }> 
-}) {
-  // Await params für Next.js 15
-  const resolvedParams = await params;
-  
-  return <AcceptInvitationClient token={resolvedParams.token} />;
-}
-
-// Client Component
-function AcceptInvitationClient({ token }: { token: string }) {
+export default function AcceptInvitationPage() {
+  const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
+  
+  const token = params.token as string;
+  const invitationId = searchParams.get('id');
   
   const [loading, setLoading] = useState(true);
   const [accepting, setAccepting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [invitation, setInvitation] = useState<InvitationData | null>(null);
   const [valid, setValid] = useState(false);
-  
-  const invitationId = searchParams.get('id');
   
   // Role configuration
   const roleLabels: Record<string, string> = {
@@ -74,19 +65,45 @@ function AcceptInvitationClient({ token }: { token: string }) {
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`/api/team/accept-invitation?token=${token}&id=${invitationId}`);
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Einladung konnte nicht validiert werden');
+      // Prüfe nochmal ob invitationId existiert
+      if (!invitationId) {
+        throw new Error('Keine Einladungs-ID gefunden');
       }
       
-      if (data.valid) {
-        setInvitation(data.invitation);
-        setValid(true);
-      } else {
-        throw new Error(data.error || 'Ungültige Einladung');
+      // Lade Einladung direkt aus Firestore
+      const memberRef = doc(db, 'team_members', invitationId);
+      const memberDoc = await getDoc(memberRef);
+      
+      if (!memberDoc.exists()) {
+        throw new Error('Einladung nicht gefunden');
       }
+      
+      const memberData = memberDoc.data();
+      
+      // Prüfe Status
+      if (memberData.status !== 'invited') {
+        throw new Error('Diese Einladung wurde bereits verwendet');
+      }
+      
+      // Prüfe Token
+      if (memberData.invitationToken !== token) {
+        throw new Error('Ungültiger Einladungstoken');
+      }
+      
+      // Prüfe Ablauf
+      if (memberData.invitationTokenExpiry && memberData.invitationTokenExpiry.toDate() < new Date()) {
+        throw new Error('Diese Einladung ist abgelaufen');
+      }
+      
+      // Setze Einladungsdaten
+      setInvitation({
+        email: memberData.email,
+        role: memberData.role,
+        organizationId: memberData.organizationId,
+        invitedBy: memberData.invitedBy
+      });
+      setValid(true);
+      
     } catch (error: any) {
       console.error('Error validating invitation:', error);
       setError(error.message || 'Fehler beim Validieren der Einladung');
@@ -104,7 +121,7 @@ function AcceptInvitationClient({ token }: { token: string }) {
       return;
     }
     
-    if (!invitation) return;
+    if (!invitation || !invitationId) return;
     
     // Check if user email matches invitation email
     if (user.email !== invitation.email) {
@@ -116,23 +133,16 @@ function AcceptInvitationClient({ token }: { token: string }) {
       setAccepting(true);
       setError(null);
       
-      const response = await fetch('/api/team/accept-invitation', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${await user.getIdToken()}`
-        },
-        body: JSON.stringify({
-          token,
-          invitationId
-        })
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Fehler beim Annehmen der Einladung');
-      }
+      // Akzeptiere Einladung über Service
+      await teamMemberService.acceptInvite(
+        invitationId,
+        token,
+        {
+          userId: user.uid,
+          displayName: user.displayName || user.email || '',
+          photoUrl: user.photoURL || undefined
+        }
+      );
       
       // Erfolg - weiterleiten zum Dashboard
       router.push('/dashboard?welcome=true');

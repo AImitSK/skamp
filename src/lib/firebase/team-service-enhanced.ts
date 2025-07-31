@@ -86,32 +86,31 @@ class TeamMemberEnhancedService extends BaseService<TeamMemberExtended> {
     const ownerId = `${userData.userId}_${userData.organizationId}`;
     const ownerRef = doc(db, 'team_members', ownerId);
     
-    const ownerData: TeamMemberExtended = {
+    // Erstelle Owner-Daten ohne undefined-Werte
+    const ownerData: any = {
       id: ownerId,
       userId: userData.userId,
       organizationId: userData.organizationId,
       email: userData.email,
       displayName: userData.displayName,
-      photoUrl: userData.photoUrl,
       role: 'owner',
       status: 'active',
-      invitedAt: serverTimestamp() as Timestamp,
+      invitedAt: serverTimestamp(),
       invitedBy: userData.userId,
-      joinedAt: serverTimestamp() as Timestamp,
-      lastActiveAt: serverTimestamp() as Timestamp,
+      joinedAt: serverTimestamp(),
+      lastActiveAt: serverTimestamp(),
       createdBy: userData.userId,
-      createdAt: serverTimestamp() as Timestamp,
-      updatedAt: serverTimestamp() as Timestamp
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
     };
 
+    // Füge photoUrl nur hinzu, wenn vorhanden
+    if (userData.photoUrl) {
+      ownerData.photoUrl = userData.photoUrl;
+    }
+
     // Nutze setDoc statt addDoc für deterministische ID
-    await setDoc(ownerRef, {
-      ...ownerData,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-      createdBy: userData.userId,
-      updatedBy: userData.userId
-    });
+    await setDoc(ownerRef, ownerData);
 
     return ownerId;
   }
@@ -202,10 +201,9 @@ class TeamMemberEnhancedService extends BaseService<TeamMemberExtended> {
 
     // Update Mitglied
     const memberRef = doc(db, 'team_members', memberId);
-    await updateDoc(memberRef, {
+    const updateData: any = {
       userId: userData.userId,
       displayName: userData.displayName,
-      photoUrl: userData.photoUrl,
       status: 'active',
       joinedAt: serverTimestamp(),
       lastActiveAt: serverTimestamp(),
@@ -213,7 +211,14 @@ class TeamMemberEnhancedService extends BaseService<TeamMemberExtended> {
       // Lösche Token-Felder
       invitationToken: null,
       invitationTokenExpiry: null
-    });
+    };
+
+    // Füge photoUrl nur hinzu, wenn vorhanden
+    if (userData.photoUrl) {
+      updateData.photoUrl = userData.photoUrl;
+    }
+
+    await updateDoc(memberRef, updateData);
   }
 
   /**
