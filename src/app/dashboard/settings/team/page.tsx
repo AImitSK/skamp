@@ -290,101 +290,147 @@ export default function TeamSettingsPage() {
         // Client-seitige Verarbeitung der Notifications
         setTimeout(async () => {
           try {
-            // Suche die unverarbeitete Notification
+            // Query mit Index für unverarbeitete Notifications
             const notificationsQuery = query(
               collection(db, 'notifications'),
               where('userId', '==', organizationId),
               where('category', '==', 'team_invitation'),
               where('isProcessed', '!=', true),
               orderBy('createdAt', 'desc'),
-              limit(5)
+              limit(10)
             );
             
             const snapshot = await getDocs(notificationsQuery);
-            console.log('📬 Found unprocessed notifications:', snapshot.size);
+            console.log('📬 Found unprocessed team invitation notifications:', snapshot.size);
             
-            let processed = 0;
+            // Debug: Zeige alle unverarbeiteten Notifications
+            snapshot.docs.forEach((doc, index) => {
+              const data = doc.data();
+              console.log(`Unprocessed notification ${index}:`, {
+                id: doc.id,
+                email: data.data?.memberData?.email,
+                isProcessed: data.isProcessed,
+                createdAt: data.createdAt?.toDate()
+              });
+            });
             
-            for (const notificationDoc of snapshot.docs) {
-              const notification = notificationDoc.data();
-              const memberData = notification.data?.memberData;
-              const invitationToken = notification.data?.invitationToken;
-              const invitationTokenExpiry = notification.data?.invitationTokenExpiry;
+            // Finde die Notification für die aktuelle E-Mail
+            const targetNotification = snapshot.docs.find(doc => {
+              const data = doc.data();
+              return data.data?.memberData?.email === inviteEmail;
+            });
+            
+            if (!targetNotification) {
+              console.log('⚠️ No unprocessed notification found for', inviteEmail);
+              // Retry nach kurzer Zeit
+              setTimeout(async () => {
+                console.log('🔄 Retrying to find notification...');
+                const retrySnapshot = await getDocs(notificationsQuery);
+                const retryNotification = retrySnapshot.docs.find(doc => {
+                  const data = doc.data();
+                  return data.data?.memberData?.email === inviteEmail;
+                });
+                
+                if (retryNotification) {
+                  console.log('✅ Found notification on retry, reloading page...');
+                  window.location.reload();
+                } else {
+                  showToast('Einladung wurde erstellt, bitte Seite neu laden');
+                }
+              }, 3000);
+              return;
+            }
+            
+            // Verarbeite die gefundene Notification
+            const notification = targetNotification.data();
+            const memberData = notification.data?.memberData;
+            const invitationToken = notification.data?.invitationToken;
+            const invitationTokenExpiry = notification.data?.invitationTokenExpiry;
+              
+              console.log('📨 Processing notification:', {
+                notificationId: targetNotification.id,
+                email: memberData?.email,
+                hasToken: !!invitationToken
+              });
               
               if (!memberData || !invitationToken) {
-                console.log('⚠️ Skipping notification without complete data');
-                continue;
+                console.error('⚠️ Notification missing required data');
+                showToast('Fehler: Einladungsdaten unvollständig', 'error');
+                return;
               }
               
-              // Finde die passende Einladung nach E-Mail
-              if (memberData.email === inviteEmail) {
-                console.log('📨 Processing invitation for:', memberData.email);
+              try {
+                // 1. Erstelle team_member Eintrag
+                const memberId = `invite_${Date.now()}_${memberData.email.replace('@', '_at_')}`;
                 
-                try {
-                  // 1. Erstelle team_member Eintrag
-                  const memberId = `invite_${Date.now()}_${memberData.email.replace('@', '_at_')}`;
-                  await setDoc(doc(db, 'team_members', memberId), {
-                    ...memberData,
-                    id: memberId,
+                console.log('📝 Creating team member with ID:', memberId);
+                
+                const teamMemberData = {
+                  ...memberData,
+                  id: memberId,
+                  invitationToken,
+                  invitationTokenExpiry,
+                  createdAt: Timestamp.now(),
+                  updatedAt: Timestamp.now()
+                };
+                
+                console.log('Team member data:', teamMemberData);
+                
+                await setDoc(doc(db, 'team_members', memberId), teamMemberData);
+                
+                console.log('✅ Created team member:', memberId);
+                
+                // 2. Markiere Notification als verarbeitet SOFORT
+                await updateDoc(doc(db, 'notifications', targetNotification.id), {
+                  isProcessed: true,
+                  processedAt: Timestamp.now(),
+                  processedMemberId: memberId
+                });
+                
+                console.log('✅ Marked notification as processed');
+                
+                // 3. Rufe process-invitations für E-Mail-Versand auf
+                const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+                const invitationUrl = `${baseUrl}/invite/${invitationToken}?id=${memberId}`;
+                
+                const processResponse = await fetch('/api/team/process-invitations', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    specificMemberId: memberId,
+                    memberData: teamMemberData,
+                    invitationUrl,
                     invitationToken,
-                    invitationTokenExpiry,
-                    createdAt: Timestamp.now(),
-                    updatedAt: Timestamp.now()
-                  });
-                  
-                  console.log('✅ Created team member:', memberId);
-                  
-                  // 2. Rufe process-invitations für diese spezifische Einladung auf
-                  const processResponse = await fetch('/api/team/process-invitations', {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                      specificMemberId: memberId,
-                      memberEmail: memberData.email,
-                      invitationToken,
-                      organizationId
-                    })
-                  });
-                  
-                  if (processResponse.ok) {
-                    // 3. Markiere Notification als verarbeitet
-                    await updateDoc(doc(db, 'notifications', notificationDoc.id), {
-                      isProcessed: true,
-                      processedAt: Timestamp.now(),
-                      processedMemberId: memberId
-                    });
-                    
-                    processed++;
-                    console.log('✅ Invitation processed and email sent');
-                  } else {
-                    console.error('Failed to send email:', await processResponse.text());
-                  }
-                  
-                } catch (error) {
-                  console.error('Error processing notification:', error);
+                    organizationId
+                  })
+                });
+                
+                if (processResponse.ok) {
+                  const result = await processResponse.json();
+                  console.log('📧 Email send result:', result);
+                  showToast('Einladung wurde erfolgreich versendet!');
+                } else {
+                  const errorText = await processResponse.text();
+                  console.error('Failed to send email:', errorText);
+                  showToast('Einladung erstellt, E-Mail konnte nicht versendet werden', 'error');
                 }
                 
-                break; // Nur die aktuelle Einladung verarbeiten
+                // Reload sofort nach Erstellung
+                await loadTeamMembers();
+                
+              } catch (processingError: any) {
+                console.error('Error processing notification:', processingError);
+                showToast(`Fehler: ${processingError.message}`, 'error');
               }
-            }
             
-            if (processed > 0) {
-              showToast('Einladung wurde erfolgreich versendet!');
-              // Reload nach erfolgreicher Verarbeitung
-              setTimeout(() => {
-                loadTeamMembers();
-              }, 1000);
-            } else {
-              showToast('Einladung wurde erstellt, E-Mail wird vorbereitet...');
-            }
-            
-          } catch (error) {
+          } catch (error: any) {
             console.error('Error in client-side processing:', error);
-            showToast('Einladung erstellt, aber E-Mail konnte nicht versendet werden', 'error');
+            console.error('Error details:', error.message, error.stack);
+            showToast('Fehler beim Verarbeiten der Einladung', 'error');
           }
-        }, 2000); // 2 Sekunden warten
+        }, 3000); // 3 Sekunden warten damit Notification sicher geschrieben ist
         
         showToast('Einladung wird vorbereitet...');
       } else {
