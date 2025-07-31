@@ -327,7 +327,13 @@ class TeamMemberEnhancedService extends BaseService<TeamMemberExtended> {
 
       const data = memberDoc.data();
       
-      if (data.status !== 'invited') {
+      // Prüfe Status - akzeptiere sowohl 'invited' als auch 'active' (falls bereits teilweise akzeptiert)
+      if (data.status !== 'invited' && data.status !== 'active') {
+        return { valid: false, error: 'Einladung hat ungültigen Status' };
+      }
+
+      // Bei aktivem Status, prüfe ob userId bereits gesetzt ist
+      if (data.status === 'active' && data.userId) {
         return { valid: false, error: 'Einladung bereits verwendet' };
       }
 
@@ -341,6 +347,7 @@ class TeamMemberEnhancedService extends BaseService<TeamMemberExtended> {
 
       return { valid: true };
     } catch (error) {
+      console.error('Error validating token:', error);
       return { valid: false, error: 'Fehler bei Token-Validierung' };
     }
   }
