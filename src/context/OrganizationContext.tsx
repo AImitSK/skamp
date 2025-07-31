@@ -88,19 +88,12 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
           console.log('Keine Mitgliedschaften nach mehreren Versuchen gefunden.');
         }
         
-        // User ist wirklich in keinem Team - erstelle sein eigenes
-        console.log('User hat keine Team-Mitgliedschaften, erstelle Owner-Eintrag');
-        await teamMemberService.createOwner({
-          userId: user.uid,
-          organizationId: user.uid,
-          email: user.email || '',
-          displayName: user.displayName || user.email || '',
-          photoUrl: user.photoURL || undefined
-        });
+        // User ist wirklich in keinem Team
+        console.log('User hat keine Team-Mitgliedschaften');
         
-        // Lade erneut
-        const newMemberships = await teamMemberService.getUserMemberships(user.uid);
-        processMemberships(newMemberships);
+        // Setze leeren Zustand statt eine Organisation zu erstellen
+        setOrganizations([]);
+        setCurrentOrganization(null);
       } else {
         processMemberships(memberships);
       }
