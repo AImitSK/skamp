@@ -24,7 +24,7 @@ export default function HomePage() {
     setError(null);
     setLoading(true);
     try {
-      await login(email, password);
+      await login(email.toLowerCase(), password); // Normalisiere E-Mail zu Kleinbuchstaben
       router.push('/dashboard'); // Weiterleitung nach erfolgreichem Login
     } catch (err: any) {
       console.error("Login Fehler:", err);
@@ -40,7 +40,7 @@ export default function HomePage() {
     setLoading(true);
     try {
       // 1. Erstelle den User in Firebase Authentication
-      const userCredential = await register(email, password);
+      const userCredential = await register(email.toLowerCase(), password); // Normalisiere E-Mail
       const newUser = userCredential.user;
 
       // 2. Erstelle ein zugehöriges Dokument in der "users"-Collection in Firestore

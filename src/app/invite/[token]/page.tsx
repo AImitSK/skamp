@@ -19,7 +19,7 @@ import {
   EnvelopeIcon,
   UserIcon
 } from '@heroicons/react/20/solid';
-import { getDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { getDoc, doc, updateDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client-init';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase/client-init';
@@ -159,12 +159,20 @@ export default function AcceptInvitationPage() {
       // 1. Account erstellen
       const userCredential = await createUserWithEmailAndPassword(
         auth,
-        invitation.email,
+        invitation.email.toLowerCase(), // Normalisiere E-Mail zu Kleinbuchstaben
         password
       );
       
       // 2. Display Name setzen
       await updateProfile(userCredential.user, {
+        displayName: displayName
+      });
+      
+      // 2b. Erstelle users Dokument (wie bei normaler Registrierung)
+      await setDoc(doc(db, "users", userCredential.user.uid), {
+        userId: userCredential.user.uid,
+        email: userCredential.user.email,
+        createdAt: serverTimestamp(),
         displayName: displayName
       });
       
@@ -214,7 +222,7 @@ export default function AcceptInvitationPage() {
       // 1. Mit bestehendem Account anmelden
       const userCredential = await signInWithEmailAndPassword(
         auth,
-        invitation.email,
+        invitation.email.toLowerCase(), // Normalisiere E-Mail zu Kleinbuchstaben
         password
       );
       
