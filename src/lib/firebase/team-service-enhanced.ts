@@ -296,6 +296,15 @@ class TeamMemberEnhancedService extends BaseService<TeamMemberExtended> {
       
       snapshot.forEach((doc) => {
         const data = doc.data();
+        
+        // WICHTIG: Ignoriere falsche Self-Owner Einträge
+        // Nur behalten wenn es eine echte Team-Mitgliedschaft ist
+        // oder wenn es der ursprüngliche Owner ist (invitedBy === userId)
+        if (data.userId === data.organizationId && data.invitedBy !== data.userId) {
+          console.log('Ignoriere falschen Self-Owner Eintrag:', doc.id);
+          return; // Skip dieser Eintrag
+        }
+        
         memberships.push({
           id: doc.id,
           userId: data.userId,
@@ -314,6 +323,7 @@ class TeamMemberEnhancedService extends BaseService<TeamMemberExtended> {
         });
       });
       
+      console.log(`Gefundene gültige Mitgliedschaften für ${userId}:`, memberships.length);
       return memberships;
     } catch (error) {
       console.error('Error getting user memberships:', error);
