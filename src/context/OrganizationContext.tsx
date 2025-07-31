@@ -56,7 +56,9 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       
       // Lade alle Team-Mitgliedschaften des Users
+      console.log('Lade Mitgliedschaften für User:', user.uid);
       const memberships = await teamMemberService.getUserMemberships(user.uid);
+      console.log('Initiale Mitgliedschaften gefunden:', memberships.length);
       
       if (memberships.length === 0) {
         // Prüfe ob der User gerade von einer Einladung kommt
@@ -66,14 +68,24 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
         if (isFromInvite) {
           // Warte kurz, damit Firestore die Daten synchronisieren kann
           console.log('User kommt von Einladung, warte auf Synchronisation...');
-          await new Promise(resolve => setTimeout(resolve, 2000));
           
-          // Versuche erneut zu laden
-          const retryMemberships = await teamMemberService.getUserMemberships(user.uid);
-          if (retryMemberships.length > 0) {
-            processMemberships(retryMemberships);
-            return;
+          // Mehrere Versuche mit steigender Wartezeit
+          const retryDelays = [1000, 2000, 3000];
+          for (const delay of retryDelays) {
+            console.log(`Warte ${delay}ms und versuche erneut...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            
+            const retryMemberships = await teamMemberService.getUserMemberships(user.uid);
+            console.log(`Gefundene Mitgliedschaften nach ${delay}ms:`, retryMemberships.length);
+            
+            if (retryMemberships.length > 0) {
+              console.log('Mitgliedschaften gefunden! Verwende diese.');
+              processMemberships(retryMemberships);
+              return;
+            }
           }
+          
+          console.log('Keine Mitgliedschaften nach mehreren Versuchen gefunden.');
         }
         
         // User ist wirklich in keinem Team - erstelle sein eigenes
