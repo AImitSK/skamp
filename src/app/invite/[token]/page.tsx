@@ -19,9 +19,6 @@ import {
   EnvelopeIcon,
   UserIcon
 } from '@heroicons/react/20/solid';
-import { teamMemberService } from '@/lib/firebase/team-service-enhanced';
-import { getDoc, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase/client-init';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase/client-init';
 
@@ -79,52 +76,26 @@ export default function AcceptInvitationPage() {
       setLoading(true);
       setError(null);
       
-      // Prüfe nochmal ob invitationId existiert
-      if (!invitationId) {
-        throw new Error('Keine Einladungs-ID gefunden');
+      // Validiere über API Route
+      const response = await fetch(`/api/team/accept-invitation?token=${token}&id=${invitationId}`);
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Einladung konnte nicht validiert werden');
       }
       
-      // Lade Einladung direkt aus Firestore
-      const memberRef = doc(db, 'team_members', invitationId);
-      const memberDoc = await getDoc(memberRef);
-      
-      if (!memberDoc.exists()) {
-        throw new Error('Einladung nicht gefunden');
+      if (data.valid) {
+        setInvitation(data.invitation);
+        setDisplayName(data.invitation.displayName || data.invitation.email.split('@')[0]);
+        setValid(true);
+        
+        // Zeige Account-Form nur wenn kein User eingeloggt ist oder der richtige User
+        if (!user || user.email === data.invitation.email) {
+          setShowAccountForm(true);
+        }
+      } else {
+        throw new Error(data.error || 'Ungültige Einladung');
       }
-      
-      const memberData = memberDoc.data();
-      
-      // Prüfe Status
-      if (memberData.status !== 'invited') {
-        throw new Error('Diese Einladung wurde bereits verwendet');
-      }
-      
-      // Prüfe Token
-      if (memberData.invitationToken !== token) {
-        throw new Error('Ungültiger Einladungstoken');
-      }
-      
-      // Prüfe Ablauf
-      if (memberData.invitationTokenExpiry && memberData.invitationTokenExpiry.toDate() < new Date()) {
-        throw new Error('Diese Einladung ist abgelaufen');
-      }
-      
-      // Setze Einladungsdaten
-      setInvitation({
-        email: memberData.email,
-        role: memberData.role,
-        organizationId: memberData.organizationId,
-        invitedBy: memberData.invitedBy,
-        displayName: memberData.displayName || memberData.email.split('@')[0]
-      });
-      setDisplayName(memberData.displayName || memberData.email.split('@')[0]);
-      setValid(true);
-      
-      // Zeige Account-Form nur wenn kein User eingeloggt ist oder der richtige User
-      if (!user || user.email === memberData.email) {
-        setShowAccountForm(true);
-      }
-      
     } catch (error: any) {
       console.error('Error validating invitation:', error);
       setError(error.message || 'Fehler beim Validieren der Einladung');
@@ -169,16 +140,23 @@ export default function AcceptInvitationPage() {
         displayName: displayName
       });
       
-      // 3. Einladung akzeptieren
-      await teamMemberService.acceptInvite(
-        invitationId,
-        token,
-        {
-          userId: userCredential.user.uid,
-          displayName: displayName,
-          photoUrl: userCredential.user.photoURL || undefined
-        }
-      );
+      // 3. Einladung über API akzeptieren
+      const acceptResponse = await fetch('/api/team/accept-invitation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await userCredential.user.getIdToken()}`
+        },
+        body: JSON.stringify({
+          invitationId,
+          invitationToken: token
+        })
+      });
+      
+      if (!acceptResponse.ok) {
+        const errorData = await acceptResponse.json();
+        throw new Error(errorData.error || 'Fehler beim Akzeptieren der Einladung');
+      }
       
       // Erfolg - weiterleiten zum Dashboard
       router.push('/dashboard?welcome=true');
@@ -214,16 +192,23 @@ export default function AcceptInvitationPage() {
         password
       );
       
-      // 2. Einladung akzeptieren
-      await teamMemberService.acceptInvite(
-        invitationId,
-        token,
-        {
-          userId: userCredential.user.uid,
-          displayName: userCredential.user.displayName || displayName,
-          photoUrl: userCredential.user.photoURL || undefined
-        }
-      );
+      // 2. Einladung über API akzeptieren
+      const acceptResponse = await fetch('/api/team/accept-invitation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await userCredential.user.getIdToken()}`
+        },
+        body: JSON.stringify({
+          invitationId,
+          invitationToken: token
+        })
+      });
+      
+      if (!acceptResponse.ok) {
+        const errorData = await acceptResponse.json();
+        throw new Error(errorData.error || 'Fehler beim Akzeptieren der Einladung');
+      }
       
       // Erfolg - weiterleiten zum Dashboard
       router.push('/dashboard?welcome=true');
@@ -374,67 +359,69 @@ export default function AcceptInvitationPage() {
               </>
             ) : showAccountForm ? (
               <>
-                <div className="space-y-4">
-                  <Field>
-                    <Label>
-                      <UserIcon className="inline h-4 w-4 mr-1" />
-                      Ihr Name
-                    </Label>
-                    <Input
-                      type="text"
-                      value={displayName}
-                      onChange={(e) => setDisplayName(e.target.value)}
-                      placeholder="Max Mustermann"
-                      required
-                    />
-                  </Field>
+                <form onSubmit={(e) => { e.preventDefault(); handleCreateAccountAndAccept(); }}>
+                  <div className="space-y-4">
+                    <Field>
+                      <Label>
+                        <UserIcon className="inline h-4 w-4 mr-1" />
+                        Ihr Name
+                      </Label>
+                      <Input
+                        type="text"
+                        value={displayName}
+                        onChange={(e) => setDisplayName(e.target.value)}
+                        placeholder="Max Mustermann"
+                        required
+                      />
+                    </Field>
+                    
+                    <Field>
+                      <Label>
+                        <KeyIcon className="inline h-4 w-4 mr-1" />
+                        Passwort
+                      </Label>
+                      <Input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Mindestens 6 Zeichen"
+                        required
+                      />
+                    </Field>
+                    
+                    <Field>
+                      <Label>
+                        <KeyIcon className="inline h-4 w-4 mr-1" />
+                        Passwort bestätigen
+                      </Label>
+                      <Input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Passwort wiederholen"
+                        required
+                      />
+                    </Field>
+                  </div>
                   
-                  <Field>
-                    <Label>
-                      <KeyIcon className="inline h-4 w-4 mr-1" />
-                      Passwort
-                    </Label>
-                    <Input
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Mindestens 6 Zeichen"
-                      required
-                    />
-                  </Field>
-                  
-                  <Field>
-                    <Label>
-                      <KeyIcon className="inline h-4 w-4 mr-1" />
-                      Passwort bestätigen
-                    </Label>
-                    <Input
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Passwort wiederholen"
-                      required
-                    />
-                  </Field>
-                </div>
-                
-                <Button
-                  onClick={handleCreateAccountAndAccept}
-                  disabled={accepting || !displayName || !password || !confirmPassword}
-                  className="w-full bg-[#005fab] hover:bg-[#004a8c] text-white"
-                >
-                  {accepting ? (
-                    <>
-                      <ClockIcon className="mr-2 h-4 w-4 animate-spin" />
-                      Account wird erstellt...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircleIcon className="mr-2 h-4 w-4" />
-                      Account erstellen & Einladung annehmen
-                    </>
-                  )}
-                </Button>
+                  <Button
+                    type="submit"
+                    disabled={accepting || !displayName || !password || !confirmPassword}
+                    className="w-full bg-[#005fab] hover:bg-[#004a8c] text-white mt-4"
+                  >
+                    {accepting ? (
+                      <>
+                        <ClockIcon className="mr-2 h-4 w-4 animate-spin" />
+                        Account wird erstellt...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircleIcon className="mr-2 h-4 w-4" />
+                        Account erstellen & Einladung annehmen
+                      </>
+                    )}
+                  </Button>
+                </form>
                 
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
@@ -462,37 +449,39 @@ export default function AcceptInvitationPage() {
                   Melden Sie sich mit Ihrem bestehenden Passwort an:
                 </Text>
                 
-                <Field>
-                  <Label>
-                    <KeyIcon className="inline h-4 w-4 mr-1" />
-                    Passwort
-                  </Label>
-                  <Input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Ihr Passwort"
-                    required
-                  />
-                </Field>
-                
-                <Button
-                  onClick={handleLoginAndAccept}
-                  disabled={accepting || !password}
-                  className="w-full bg-[#005fab] hover:bg-[#004a8c] text-white"
-                >
-                  {accepting ? (
-                    <>
-                      <ClockIcon className="mr-2 h-4 w-4 animate-spin" />
-                      Wird angemeldet...
-                    </>
-                  ) : (
-                    <>
-                      <ArrowRightIcon className="mr-2 h-4 w-4" />
-                      Anmelden & Einladung annehmen
-                    </>
-                  )}
-                </Button>
+                <form onSubmit={(e) => { e.preventDefault(); handleLoginAndAccept(); }}>
+                  <Field>
+                    <Label>
+                      <KeyIcon className="inline h-4 w-4 mr-1" />
+                      Passwort
+                    </Label>
+                    <Input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Ihr Passwort"
+                      required
+                    />
+                  </Field>
+                  
+                  <Button
+                    type="submit"
+                    disabled={accepting || !password}
+                    className="w-full bg-[#005fab] hover:bg-[#004a8c] text-white mt-4"
+                  >
+                    {accepting ? (
+                      <>
+                        <ClockIcon className="mr-2 h-4 w-4 animate-spin" />
+                        Wird angemeldet...
+                      </>
+                    ) : (
+                      <>
+                        <ArrowRightIcon className="mr-2 h-4 w-4" />
+                        Anmelden & Einladung annehmen
+                      </>
+                    )}
+                  </Button>
+                </form>
                 
                 <Button
                   onClick={() => setShowAccountForm(true)}
