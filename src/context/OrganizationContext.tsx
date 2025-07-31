@@ -59,7 +59,24 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       const memberships = await teamMemberService.getUserMemberships(user.uid);
       
       if (memberships.length === 0) {
-        // User ist in keinem Team - erstelle sein eigenes
+        // Prüfe ob der User gerade von einer Einladung kommt
+        const urlParams = new URLSearchParams(window.location.search);
+        const isFromInvite = urlParams.get('welcome') === 'true';
+        
+        if (isFromInvite) {
+          // Warte kurz, damit Firestore die Daten synchronisieren kann
+          console.log('User kommt von Einladung, warte auf Synchronisation...');
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          // Versuche erneut zu laden
+          const retryMemberships = await teamMemberService.getUserMemberships(user.uid);
+          if (retryMemberships.length > 0) {
+            processMemberships(retryMemberships);
+            return;
+          }
+        }
+        
+        // User ist wirklich in keinem Team - erstelle sein eigenes
         console.log('User hat keine Team-Mitgliedschaften, erstelle Owner-Eintrag');
         await teamMemberService.createOwner({
           userId: user.uid,
