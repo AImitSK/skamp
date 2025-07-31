@@ -7,22 +7,30 @@ import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/button';
 import { Heading } from '@/components/heading';
 import { Text } from '@/components/text';
+import { Input } from '@/components/input';
+import { Field, Label } from '@/components/fieldset';
 import { 
   CheckCircleIcon, 
   ExclamationTriangleIcon,
   UserGroupIcon,
   ArrowRightIcon,
-  ClockIcon
+  ClockIcon,
+  KeyIcon,
+  EnvelopeIcon,
+  UserIcon
 } from '@heroicons/react/20/solid';
 import { teamMemberService } from '@/lib/firebase/team-service-enhanced';
 import { getDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client-init';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { auth } from '@/lib/firebase/client-init';
 
 interface InvitationData {
   email: string;
   role: string;
   organizationId: string;
   invitedBy: string;
+  displayName: string;
 }
 
 export default function AcceptInvitationPage() {
@@ -39,6 +47,12 @@ export default function AcceptInvitationPage() {
   const [error, setError] = useState<string | null>(null);
   const [invitation, setInvitation] = useState<InvitationData | null>(null);
   const [valid, setValid] = useState(false);
+  
+  // Form State für Account-Erstellung
+  const [displayName, setDisplayName] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showAccountForm, setShowAccountForm] = useState(false);
   
   // Role configuration
   const roleLabels: Record<string, string> = {
@@ -59,6 +73,14 @@ export default function AcceptInvitationPage() {
     
     validateInvitation();
   }, [token, invitationId]);
+  
+  // Wenn User bereits eingeloggt ist, automatisch ausloggen
+  useEffect(() => {
+    if (user && invitation && user.email !== invitation.email) {
+      // User ist mit falschem Account eingeloggt
+      handleSignOut();
+    }
+  }, [user, invitation]);
   
   const validateInvitation = async () => {
     try {
@@ -100,9 +122,12 @@ export default function AcceptInvitationPage() {
         email: memberData.email,
         role: memberData.role,
         organizationId: memberData.organizationId,
-        invitedBy: memberData.invitedBy
+        invitedBy: memberData.invitedBy,
+        displayName: memberData.displayName || memberData.email.split('@')[0]
       });
+      setDisplayName(memberData.displayName || memberData.email.split('@')[0]);
       setValid(true);
+      setShowAccountForm(true);
       
     } catch (error: any) {
       console.error('Error validating invitation:', error);
@@ -113,19 +138,22 @@ export default function AcceptInvitationPage() {
     }
   };
   
-  const handleAcceptInvitation = async () => {
-    if (!user) {
-      // Redirect to login with return URL
-      const returnUrl = `/invite/${token}?id=${invitationId}`;
-      router.push(`/auth/signin?returnUrl=${encodeURIComponent(returnUrl)}`);
+  const handleCreateAccountAndAccept = async () => {
+    if (!invitation || !invitationId) return;
+    
+    // Validiere Formular
+    if (!displayName.trim()) {
+      setError('Bitte geben Sie Ihren Namen ein');
       return;
     }
     
-    if (!invitation || !invitationId) return;
+    if (password.length < 6) {
+      setError('Das Passwort muss mindestens 6 Zeichen lang sein');
+      return;
+    }
     
-    // Check if user email matches invitation email
-    if (user.email !== invitation.email) {
-      setError(`Diese Einladung wurde an ${invitation.email} gesendet. Sie sind als ${user.email} angemeldet.`);
+    if (password !== confirmPassword) {
+      setError('Die Passwörter stimmen nicht überein');
       return;
     }
     
@@ -133,14 +161,26 @@ export default function AcceptInvitationPage() {
       setAccepting(true);
       setError(null);
       
-      // Akzeptiere Einladung über Service
+      // 1. Account erstellen
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        invitation.email,
+        password
+      );
+      
+      // 2. Display Name setzen
+      await updateProfile(userCredential.user, {
+        displayName: displayName
+      });
+      
+      // 3. Einladung akzeptieren
       await teamMemberService.acceptInvite(
         invitationId,
         token,
         {
-          userId: user.uid,
-          displayName: user.displayName || user.email || '',
-          photoUrl: user.photoURL || undefined
+          userId: userCredential.user.uid,
+          displayName: displayName,
+          photoUrl: userCredential.user.photoURL || undefined
         }
       );
       
@@ -148,8 +188,58 @@ export default function AcceptInvitationPage() {
       router.push('/dashboard?welcome=true');
       
     } catch (error: any) {
-      console.error('Error accepting invitation:', error);
-      setError(error.message || 'Fehler beim Annehmen der Einladung');
+      console.error('Error creating account:', error);
+      
+      // Spezifische Fehlermeldungen
+      if (error.code === 'auth/email-already-in-use') {
+        setError('Ein Account mit dieser E-Mail existiert bereits. Bitte melden Sie sich an.');
+        setShowAccountForm(false);
+      } else if (error.code === 'auth/weak-password') {
+        setError('Das Passwort ist zu schwach');
+      } else {
+        setError(error.message || 'Fehler beim Erstellen des Accounts');
+      }
+    } finally {
+      setAccepting(false);
+    }
+  };
+  
+  const handleLoginAndAccept = async () => {
+    if (!invitation || !invitationId || !password) return;
+    
+    try {
+      setAccepting(true);
+      setError(null);
+      
+      // 1. Mit bestehendem Account anmelden
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        invitation.email,
+        password
+      );
+      
+      // 2. Einladung akzeptieren
+      await teamMemberService.acceptInvite(
+        invitationId,
+        token,
+        {
+          userId: userCredential.user.uid,
+          displayName: userCredential.user.displayName || displayName,
+          photoUrl: userCredential.user.photoURL || undefined
+        }
+      );
+      
+      // Erfolg - weiterleiten zum Dashboard
+      router.push('/dashboard?welcome=true');
+      
+    } catch (error: any) {
+      console.error('Error logging in:', error);
+      
+      if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+        setError('Falsches Passwort');
+      } else {
+        setError(error.message || 'Fehler beim Anmelden');
+      }
     } finally {
       setAccepting(false);
     }
@@ -221,10 +311,11 @@ export default function AcceptInvitationPage() {
           </Heading>
           
           <div className="mt-6 space-y-4">
+            {/* Einladungsdetails */}
             <div className="bg-gray-50 rounded-lg p-4">
               <dl className="space-y-2">
                 <div className="flex justify-between">
-                  <dt className="text-sm font-medium text-gray-500">Eingeladen für:</dt>
+                  <dt className="text-sm font-medium text-gray-500">E-Mail:</dt>
                   <dd className="text-sm text-gray-900">{invitation?.email}</dd>
                 </div>
                 <div className="flex justify-between">
@@ -251,70 +342,136 @@ export default function AcceptInvitationPage() {
               </div>
             )}
             
-            {!user ? (
+            {/* Account-Erstellungsformular */}
+            {showAccountForm ? (
               <>
-                <Text className="text-center text-sm text-gray-600">
-                  Sie müssen sich anmelden, um diese Einladung anzunehmen.
-                </Text>
+                <div className="space-y-4">
+                  <Field>
+                    <Label>
+                      <UserIcon className="inline h-4 w-4 mr-1" />
+                      Ihr Name
+                    </Label>
+                    <Input
+                      type="text"
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      placeholder="Max Mustermann"
+                      required
+                    />
+                  </Field>
+                  
+                  <Field>
+                    <Label>
+                      <KeyIcon className="inline h-4 w-4 mr-1" />
+                      Passwort
+                    </Label>
+                    <Input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Mindestens 6 Zeichen"
+                      required
+                    />
+                  </Field>
+                  
+                  <Field>
+                    <Label>
+                      <KeyIcon className="inline h-4 w-4 mr-1" />
+                      Passwort bestätigen
+                    </Label>
+                    <Input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Passwort wiederholen"
+                      required
+                    />
+                  </Field>
+                </div>
+                
                 <Button
-                  onClick={() => handleAcceptInvitation()}
-                  className="w-full bg-[#005fab] hover:bg-[#004a8c] text-white"
-                >
-                  Anmelden & Einladung annehmen
-                  <ArrowRightIcon className="ml-2 h-4 w-4" />
-                </Button>
-              </>
-            ) : user.email === invitation?.email ? (
-              <>
-                <Text className="text-center text-sm text-gray-600">
-                  Angemeldet als <span className="font-medium">{user.email}</span>
-                </Text>
-                <Button
-                  onClick={handleAcceptInvitation}
-                  disabled={accepting}
+                  onClick={handleCreateAccountAndAccept}
+                  disabled={accepting || !displayName || !password || !confirmPassword}
                   className="w-full bg-[#005fab] hover:bg-[#004a8c] text-white"
                 >
                   {accepting ? (
                     <>
                       <ClockIcon className="mr-2 h-4 w-4 animate-spin" />
-                      Wird angenommen...
+                      Account wird erstellt...
                     </>
                   ) : (
                     <>
                       <CheckCircleIcon className="mr-2 h-4 w-4" />
-                      Einladung annehmen
+                      Account erstellen & Einladung annehmen
                     </>
                   )}
+                </Button>
+                
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-300" />
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="bg-white px-2 text-gray-500">
+                      Haben Sie bereits einen Account?
+                    </span>
+                  </div>
+                </div>
+                
+                <Button
+                  onClick={() => setShowAccountForm(false)}
+                  plain
+                  className="w-full"
+                >
+                  Mit bestehendem Account anmelden
                 </Button>
               </>
             ) : (
               <>
-                <div className="rounded-md bg-yellow-50 p-4">
-                  <div className="flex">
-                    <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400" />
-                    <div className="ml-3">
-                      <p className="text-sm text-yellow-800">
-                        Sie sind als <span className="font-medium">{user.email}</span> angemeldet, 
-                        aber diese Einladung ist für <span className="font-medium">{invitation?.email}</span>.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Button
-                    onClick={handleSignOut}
-                    plain
-                    className="w-full"
-                  >
-                    Mit anderem Konto anmelden
-                  </Button>
-                  <Button
-                    onClick={() => router.push('/dashboard')}
-                    className="w-full bg-gray-600 hover:bg-gray-700 text-white"
-                  >
-                    Zum Dashboard
-                  </Button>
-                </div>
+                {/* Login mit bestehendem Account */}
+                <Text className="text-center text-sm text-gray-600">
+                  Melden Sie sich mit Ihrem bestehenden Passwort an:
+                </Text>
+                
+                <Field>
+                  <Label>
+                    <KeyIcon className="inline h-4 w-4 mr-1" />
+                    Passwort
+                  </Label>
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Ihr Passwort"
+                    required
+                  />
+                </Field>
+                
+                <Button
+                  onClick={handleLoginAndAccept}
+                  disabled={accepting || !password}
+                  className="w-full bg-[#005fab] hover:bg-[#004a8c] text-white"
+                >
+                  {accepting ? (
+                    <>
+                      <ClockIcon className="mr-2 h-4 w-4 animate-spin" />
+                      Wird angemeldet...
+                    </>
+                  ) : (
+                    <>
+                      <ArrowRightIcon className="mr-2 h-4 w-4" />
+                      Anmelden & Einladung annehmen
+                    </>
+                  )}
+                </Button>
+                
+                <Button
+                  onClick={() => setShowAccountForm(true)}
+                  plain
+                  className="w-full"
+                >
+                  Neuen Account erstellen
+                </Button>
               </>
             )}
           </div>
