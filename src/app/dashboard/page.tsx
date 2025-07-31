@@ -135,6 +135,13 @@ export default function DashboardHomePage() {
               </Select>
             </div>
           )}
+          {/* Zeige aktuelle Rolle wenn nur eine Organisation */}
+          {organizations.length === 1 && currentOrganization && (
+            <Badge color="blue" className="flex items-center gap-1">
+              <UserGroupIcon className="h-3 w-3" />
+              {roleLabels[currentOrganization.role]}
+            </Badge>
+          )}
         </div>
       </div>
 

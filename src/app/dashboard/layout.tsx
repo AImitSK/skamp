@@ -255,6 +255,12 @@ export default function DashboardLayout({
       icon: ArrowDownTrayIcon,
       description: "Daten importieren oder exportieren"
     },
+    { 
+      name: "Team", 
+      href: "/dashboard/settings/team", 
+      icon: UserGroupIcon,
+      description: "Team-Mitglieder verwalten"
+    },
   ];
 
   const userMenuItems = [
