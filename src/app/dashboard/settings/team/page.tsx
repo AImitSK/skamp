@@ -7,6 +7,7 @@ import { Heading } from '@/components/heading';
 import { Button } from '@/components/button';
 import { Badge } from '@/components/badge';
 import { Dialog, DialogActions, DialogBody, DialogTitle } from '@/components/dialog';
+import { Dropdown, DropdownButton, DropdownItem, DropdownMenu } from '@/components/dropdown';
 import { Input } from '@/components/input';
 import { Field, Label } from '@/components/fieldset';
 import { Select } from '@/components/select';
@@ -28,7 +29,9 @@ import {
   UserIcon,
   BuildingOfficeIcon,
   ExclamationTriangleIcon,
-  PaperAirplaneIcon
+  EllipsisVerticalIcon,
+  PaperAirplaneIcon,
+  ClockIcon
 } from '@heroicons/react/20/solid';
 import clsx from 'clsx';
 
@@ -44,6 +47,7 @@ const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     alert(`Fehler: ${message}`);
   } else {
     console.log(message);
+    alert(message); // Temporär - später durch echte Toast-Komponente ersetzen
   }
 };
 
@@ -56,7 +60,6 @@ export default function TeamSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [processingInvitations, setProcessingInvitations] = useState(false);
   const [pendingInvitations, setPendingInvitations] = useState(0);
@@ -113,6 +116,10 @@ export default function TeamSettingsPage() {
           });
         }
       });
+      
+      // Update pending count
+      const unprocessed = snapshot.docs.filter(doc => !doc.data().isProcessed);
+      setPendingInvitations(unprocessed.length);
     }, (error) => {
       console.error('Error listening to invitation notifications:', error);
     });
@@ -123,7 +130,6 @@ export default function TeamSettingsPage() {
   const handleRefresh = async () => {
     setRefreshing(true);
     await loadTeamMembers();
-    await checkPendingInvitations();
     setTimeout(() => setRefreshing(false), 500);
   };
   
@@ -159,6 +165,7 @@ export default function TeamSettingsPage() {
               const ownerMember: TeamMemberUI = {
                 id: 'owner_' + organizationId,
                 ...ownerNotification.data.ownerData,
+                status: 'active', // WICHTIG: Owner ist immer aktiv!
                 _fromNotification: true
               };
               // Kombiniere mit bestehenden Notification-Members
@@ -179,7 +186,7 @@ export default function TeamSettingsPage() {
             email: user?.email || '',
             displayName: user?.displayName || user?.email || 'Admin',
             role: 'owner',
-            status: 'active',
+            status: 'active', // WICHTIG: Owner ist immer aktiv!
             invitedAt: Timestamp.now(),
             invitedBy: user?.uid || '',
             joinedAt: Timestamp.now(),
@@ -201,7 +208,13 @@ export default function TeamSettingsPage() {
           }
         });
         
-        setTeamMembers(combinedMembers);
+        // Stelle sicher, dass Owner immer als aktiv angezeigt wird
+        const processedMembers = combinedMembers.map(member => ({
+          ...member,
+          status: member.role === 'owner' ? 'active' : member.status
+        }));
+        
+        setTeamMembers(processedMembers);
       }
     } catch (error) {
       console.error('Error loading team members:', error);
@@ -219,7 +232,7 @@ export default function TeamSettingsPage() {
           email: user?.email || '',
           displayName: user?.displayName || user?.email || 'Admin',
           role: 'owner',
-          status: 'active',
+          status: 'active', // WICHTIG: Owner ist immer aktiv!
           invitedAt: Timestamp.now(),
           invitedBy: user?.uid || '',
           joinedAt: Timestamp.now(),
@@ -231,59 +244,6 @@ export default function TeamSettingsPage() {
       }
     } finally {
       setLoading(false);
-    }
-  };
-  
-  // Check pending invitations on mount
-  useEffect(() => {
-    checkPendingInvitations();
-  }, []);
-  
-  const checkPendingInvitations = async () => {
-    try {
-      const response = await fetch('/api/team/process-invitations');
-      if (response.ok) {
-        const data = await response.json();
-        setPendingInvitations(data.pending || 0);
-      }
-    } catch (error) {
-      console.error('Error checking pending invitations:', error);
-    }
-  };
-  
-  const handleProcessInvitations = async () => {
-    setProcessingInvitations(true);
-    setError(null);
-    
-    try {
-      const response = await fetch('/api/team/process-invitations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Fehler beim Verarbeiten der Einladungen');
-      }
-      
-      if (data.result && data.result.processed > 0) {
-        showToast(`${data.result.processed} Einladungen wurden versendet!`);
-      } else {
-        showToast('Keine ausstehenden Einladungen gefunden');
-      }
-      
-      // Reload nach Verarbeitung
-      await loadTeamMembers();
-      setPendingInvitations(0);
-      
-    } catch (error: any) {
-      console.error('Error processing invitations:', error);
-      setError(error.message || 'Fehler beim Verarbeiten der Einladungen');
-    } finally {
-      setProcessingInvitations(false);
     }
   };
   
@@ -314,14 +274,36 @@ export default function TeamSettingsPage() {
         throw new Error(data.error || 'Fehler beim Einladen des Team-Mitglieds');
       }
       
-      // Spezielle Meldung wenn Notification erstellt wurde
+      // AUTOMATISCH E-MAILS VERSENDEN
       if (data.requiresProcessing) {
-        showToast('Einladung wurde erstellt.');
-        // Nicht automatisch neu laden - die Notifications werden durch den Listener aktualisiert
+        console.log('📧 Automatisches Versenden der Einladung...');
+        
+        // Kurze Verzögerung damit die Notification geschrieben wird
+        setTimeout(async () => {
+          try {
+            const processResponse = await fetch('/api/team/process-invitations', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${await user.getIdToken()}`
+              }
+            });
+            
+            if (processResponse.ok) {
+              const processData = await processResponse.json();
+              if (processData.result?.processed > 0) {
+                showToast('Einladung wurde erfolgreich versendet!');
+              }
+            }
+          } catch (processError) {
+            console.error('Error processing invitation:', processError);
+            showToast('Einladung erstellt, aber E-Mail konnte nicht versendet werden', 'error');
+          }
+        }, 1000);
+        
+        showToast('Einladung wird versendet...');
       } else {
         showToast('Einladung wurde erfolgreich versendet!');
-        // Reload nur wenn direkt in team_members geschrieben wurde
-        await loadTeamMembers();
       }
       
       setShowInviteModal(false);
@@ -344,13 +326,14 @@ export default function TeamSettingsPage() {
     
     // Skip für Notifications-basierte Einträge
     if (member._fromNotification) {
-      showToast('Diese Einladung muss erst verarbeitet werden', 'error');
+      showToast('Diese Einladung muss erst angenommen werden', 'error');
       return;
     }
     
     try {
       await teamMemberService.update(member.id!, { role: newRole }, user?.uid || '');
       await loadTeamMembers();
+      showToast(`Rolle wurde auf ${roleConfig[newRole].label} geändert`);
     } catch (error) {
       console.error('Error updating member role:', error);
       showToast('Fehler beim Ändern der Rolle', 'error');
@@ -391,6 +374,7 @@ export default function TeamSettingsPage() {
     try {
       await teamMemberService.remove(member.id!, user?.uid || '');
       await loadTeamMembers();
+      showToast('Mitglied wurde entfernt');
     } catch (error) {
       console.error('Error removing member:', error);
       showToast('Fehler beim Entfernen des Mitglieds', 'error');
@@ -402,26 +386,16 @@ export default function TeamSettingsPage() {
     if ((member as TeamMemberUI)._fromNotification) {
       setProcessingInvitations(true);
       try {
-        // Markiere die Notification als unverarbeitet
-        const notificationRef = doc(db, 'notifications', member.id!);
-        await updateDoc(notificationRef, {
-          isProcessed: false
-        });
-        
-        // Verarbeite nur diese eine Einladung
         const response = await fetch('/api/team/process-invitations', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            specificId: member.id // Optional: nur diese eine verarbeiten
-          })
+            'Authorization': `Bearer ${await user?.getIdToken()}`
+          }
         });
         
         if (response.ok) {
-          showToast('Einladung wird erneut versendet...');
-          await loadTeamMembers();
+          showToast('Einladung wurde erneut versendet');
         } else {
           throw new Error('Fehler beim erneuten Versenden');
         }
@@ -434,7 +408,7 @@ export default function TeamSettingsPage() {
       return;
     }
     
-    showToast('Einladung erneut senden - Feature noch nicht implementiert');
+    showToast('Diese Funktion ist noch nicht implementiert');
   };
   
   // Role configuration
@@ -532,6 +506,11 @@ export default function TeamSettingsPage() {
     }
   };
   
+  // Filtere inaktive Mitglieder aus der Anzeige
+  const activeMembers = teamMembers.filter(m => m.status !== 'inactive');
+  const pendingMembers = activeMembers.filter(m => m.status === 'invited');
+  const activeMembersOnly = activeMembers.filter(m => m.status === 'active');
+  
   return (
     <div className="flex flex-col gap-10 lg:flex-row">
       {/* Linke Spalte: Navigation */}
@@ -560,18 +539,6 @@ export default function TeamSettingsPage() {
                 refreshing && "animate-spin"
               )} />
             </Button>
-            {pendingInvitations > 0 && (
-              <Button 
-                onClick={handleProcessInvitations}
-                disabled={processingInvitations}
-                className="bg-yellow-500 hover:bg-yellow-600 text-white"
-              >
-                <PaperAirplaneIcon className="h-4 w-4 mr-2" />
-                <span className="whitespace-nowrap">
-                  {processingInvitations ? 'Wird versendet...' : `${pendingInvitations} Einladungen versenden`}
-                </span>
-              </Button>
-            )}
             <Button 
               onClick={() => setShowInviteModal(true)}
               className="bg-[#005fab] hover:bg-[#004a8c] text-white"
@@ -599,19 +566,13 @@ export default function TeamSettingsPage() {
           {/* Table Header */}
           <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
             <div className="flex items-center">
-              <div className="w-[25%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+              <div className="w-[35%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                 Mitglied
               </div>
-              <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+              <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                 Rolle
               </div>
-              <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                Status
-              </div>
-              <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                Beigetreten
-              </div>
-              <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+              <div className="w-[25%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                 Zuletzt aktiv
               </div>
               <div className="flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right">
@@ -626,12 +587,12 @@ export default function TeamSettingsPage() {
               <div className="px-6 py-8 text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#005fab] mx-auto"></div>
               </div>
-            ) : teamMembers.length === 0 ? (
+            ) : activeMembers.length === 0 ? (
               <div className="px-6 py-8 text-center text-gray-500">
                 Keine Team-Mitglieder gefunden
               </div>
             ) : (
-              teamMembers.map((member) => {
+              activeMembers.map((member) => {
                 const role = roleConfig[member.role];
                 const status = statusConfig[member.status];
                 const StatusIcon = status.icon;
@@ -639,88 +600,79 @@ export default function TeamSettingsPage() {
                 return (
                   <div key={member.id} className="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                     <div className="flex items-center">
-                      <div className="w-[25%] min-w-0">
+                      <div className="w-[35%] min-w-0">
                         <div className="text-sm font-medium text-gray-900">
                           {member.displayName}
                         </div>
                         <div className="text-sm text-gray-500">
                           {member.email}
                         </div>
+                        <div className="mt-1">
+                          <Badge color={status.color as any} className="whitespace-nowrap">
+                            <StatusIcon className="h-3 w-3 mr-1" />
+                            {status.label}
+                          </Badge>
+                        </div>
                       </div>
-                      <div className="w-[15%]">
-                        {member._fromNotification ? (
+                      <div className="w-[20%]">
+                        {member._fromNotification && member.status === 'invited' ? (
                           <Badge color="yellow" className="whitespace-nowrap">
                             {role.label} (Ausstehend)
+                          </Badge>
+                        ) : member.role === 'owner' ? (
+                          <Badge color={role.color as any} className="whitespace-nowrap">
+                            {role.label}
                           </Badge>
                         ) : (
                           <Select
                             value={member.role}
                             onChange={(e) => handleRoleChange(member, e.target.value as UserRole)}
-                            disabled={member.role === 'owner'}
                             className="text-sm"
                           >
-                            {Object.entries(roleConfig).map(([value, config]) => (
-                              <option key={value} value={value}>
-                                {config.label}
-                              </option>
-                            ))}
+                            {Object.entries(roleConfig)
+                              .filter(([roleKey]) => roleKey !== 'owner')
+                              .map(([value, config]) => (
+                                <option key={value} value={value}>
+                                  {config.label}
+                                </option>
+                              ))}
                           </Select>
                         )}
                       </div>
-                      <div className="w-[15%]">
-                        <Badge color={status.color as any} className="whitespace-nowrap">
-                          <StatusIcon className="h-3 w-3 mr-1" />
-                          {status.label}
-                        </Badge>
-                      </div>
-                      <div className="w-[15%] text-sm text-gray-500">
+                      <div className="w-[25%] text-sm text-gray-500">
                         {member.status === 'invited' ? (
-                          <span className="text-yellow-600">
-                            Eingeladen am {formatDate(member.invitedAt)}
-                          </span>
+                          <div className="flex items-center text-yellow-600">
+                            <ClockIcon className="h-4 w-4 mr-1" />
+                            <span>Eingeladen am {formatDate(member.invitedAt)}</span>
+                          </div>
                         ) : (
-                          formatDate(member.joinedAt)
+                          formatLastActive(member.lastActiveAt)
                         )}
                       </div>
-                      <div className="w-[15%] text-sm text-gray-500">
-                        {formatLastActive(member.lastActiveAt)}
-                      </div>
-                      <div className="flex-1 flex justify-end gap-2">
-                        {member._fromNotification && (
-                          <>
-                            <span className="text-xs text-yellow-600 mr-2">
-                              Einladung ausstehend
-                            </span>
-                            <Button
-                              plain
-                              onClick={() => handleResendInvite(member)}
-                              className="text-xs"
-                              disabled={processingInvitations}
-                              title="Einladung erneut senden"
-                            >
-                              <PaperAirplaneIcon className="h-4 w-4" />
-                            </Button>
-                          </>
-                        )}
-                        {member.status === 'invited' && !member._fromNotification && (
-                          <Button
-                            plain
-                            onClick={() => handleResendInvite(member)}
-                            className="text-xs"
-                            title="Einladung erneut senden"
-                          >
-                            <ArrowPathIcon className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {member.role !== 'owner' && (
-                          <Button
-                            plain
-                            onClick={() => handleRemoveMember(member)}
-                            className="text-xs text-red-600 hover:text-red-700"
-                            title={member._fromNotification ? "Einladung löschen" : "Mitglied entfernen"}
-                          >
-                            <TrashIcon className="h-4 w-4" />
-                          </Button>
+                      <div className="flex-1 flex justify-end">
+                        {member.role === 'owner' ? (
+                          <span className="text-xs text-gray-400">-</span>
+                        ) : (
+                          <Dropdown>
+                            <DropdownButton plain>
+                              <EllipsisVerticalIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                            </DropdownButton>
+                            <DropdownMenu anchor="bottom end">
+                              {member.status === 'invited' && (
+                                <DropdownItem onClick={() => handleResendInvite(member)}>
+                                  <PaperAirplaneIcon className="h-4 w-4 mr-2" />
+                                  Einladung erneut senden
+                                </DropdownItem>
+                              )}
+                              <DropdownItem 
+                                onClick={() => handleRemoveMember(member)}
+                                className="text-red-600"
+                              >
+                                <TrashIcon className="h-4 w-4 mr-2" />
+                                {member.status === 'invited' ? 'Einladung löschen' : 'Mitglied entfernen'}
+                              </DropdownItem>
+                            </DropdownMenu>
+                          </Dropdown>
                         )}
                       </div>
                     </div>
@@ -738,7 +690,7 @@ export default function TeamSettingsPage() {
               Aktive Mitglieder
             </dt>
             <dd className="mt-1 text-3xl font-semibold tracking-tight text-gray-900">
-              {teamMembers.filter(m => m.status === 'active').length}
+              {activeMembersOnly.length}
             </dd>
           </div>
           <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
@@ -746,16 +698,16 @@ export default function TeamSettingsPage() {
               Ausstehende Einladungen
             </dt>
             <dd className="mt-1 text-3xl font-semibold tracking-tight text-gray-900">
-              {teamMembers.filter(m => m.status === 'invited').length}
+              {pendingMembers.length}
             </dd>
           </div>
           <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
             <dt className="truncate text-sm font-medium text-gray-500">
               Rollen-Verteilung
             </dt>
-            <dd className="mt-1 flex items-center gap-2">
+            <dd className="mt-1 flex items-center gap-2 flex-wrap">
               {Object.entries(roleConfig).map(([role, config]) => {
-                const count = teamMembers.filter(m => m.role === role).length;
+                const count = activeMembers.filter(m => m.role === role).length;
                 if (count === 0) return null;
                 
                 return (
