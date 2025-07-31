@@ -13,10 +13,10 @@ import { Field, Label } from '@/components/fieldset';
 import { Select } from '@/components/select';
 import { SettingsNav } from '@/components/SettingsNav';
 import { Text } from '@/components/text';
-import { teamMemberService } from '@/lib/firebase/organization-service';
+import { teamMemberService } from '@/lib/firebase/team-service-enhanced';
+import { orgService } from '@/lib/firebase/organization-service';
 import { TeamMember, UserRole } from '@/types/international';
-import { Timestamp, collection, query, where, onSnapshot, orderBy, getDocs, doc, updateDoc, setDoc, limit } from 'firebase/firestore';
-import { db } from '@/lib/firebase/client-init';
+import { Timestamp } from 'firebase/firestore';
 import { 
   UserPlusIcon,
   UserGroupIcon,
@@ -35,11 +35,6 @@ import {
 } from '@heroicons/react/20/solid';
 import clsx from 'clsx';
 
-// Extended TeamMember type for UI
-type TeamMemberUI = TeamMember & {
-  _fromNotification?: boolean;
-};
-
 // Toast notification helper
 const showToast = (message: string, type: 'success' | 'error' = 'success') => {
   if (type === 'error') {
@@ -56,80 +51,43 @@ export default function TeamSettingsPage() {
   const organizationId = user?.uid || '';
   
   // State
-  const [teamMembers, setTeamMembers] = useState<TeamMemberUI[]>([]);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [processingInvitations, setProcessingInvitations] = useState(false);
-  const [pendingInvitations, setPendingInvitations] = useState(0);
   
   // Invite form state
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<UserRole>('member');
   const [inviteLoading, setInviteLoading] = useState(false);
   
-  // Load team members - nur beim ersten Mount
+  // Load team members on mount
   useEffect(() => {
-    if (teamMembers.length === 0) {
+    if (user) {
       loadTeamMembers();
+      // Ensure owner exists
+      ensureOwnerExists();
     }
-  }, [organizationId]);
+  }, [user]);
   
-  // Listen for invitation notifications
-  useEffect(() => {
-    if (!organizationId) return;
+  const ensureOwnerExists = async () => {
+    if (!user) return;
     
-    console.log('📬 Setting up invitation notifications listener');
-    
-    const notificationsQuery = query(
-      collection(db, 'notifications'),
-      where('userId', '==', organizationId),
-      where('category', '==', 'team_invitation'),
-      orderBy('createdAt', 'desc')
-    );
-    
-    const unsubscribe = onSnapshot(notificationsQuery, (snapshot) => {
-      console.log('📬 Invitation notifications received:', snapshot.size);
-      
-      snapshot.forEach((doc) => {
-        const notification = doc.data();
-        if (notification.data?.memberData && !notification.isProcessed) {
-          // Konvertiere Notification zu TeamMember für Anzeige
-          const invitedMember: TeamMemberUI = {
-            id: doc.id,
-            ...notification.data.memberData,
-            status: 'invited',
-            _fromNotification: true
-          };
-          
-          // Füge zur Liste hinzu, wenn noch nicht vorhanden
-          setTeamMembers(prev => {
-            const exists = prev.some(m => 
-              m.email === invitedMember.email && 
-              m.organizationId === invitedMember.organizationId
-            );
-            if (!exists) {
-              console.log('📥 Adding notification-based member:', invitedMember.email);
-              return [...prev, invitedMember];
-            }
-            return prev;
-          });
+    try {
+      await orgService.ensureOwnerExists(
+        user.uid,
+        user.uid, // organizationId = userId für jetzt
+        {
+          email: user.email || '',
+          displayName: user.displayName || user.email || '',
+          photoUrl: user.photoURL || undefined
         }
-      });
-      
-      // Update pending count - nur unverarbeitete zählen
-      const unprocessed = snapshot.docs.filter(doc => {
-        const data = doc.data();
-        return !data.isProcessed && data.data?.memberData;
-      });
-      setPendingInvitations(unprocessed.length);
-    }, (error) => {
-      console.error('Error listening to invitation notifications:', error);
-    });
-    
-    return () => unsubscribe();
-  }, [organizationId]);
+      );
+    } catch (error) {
+      console.error('Error ensuring owner exists:', error);
+    }
+  };
   
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -144,113 +102,18 @@ export default function TeamSettingsPage() {
       setLoading(true);
       console.log('👥 Loading team members for organization:', organizationId);
       
-      // WICHTIG: Behalte Notifications-basierte Einträge während des Ladens
-      const notificationMembers = teamMembers.filter(m => m._fromNotification);
-      console.log('📌 Preserving notification members:', notificationMembers.length);
-      
       const members = await teamMemberService.getByOrganization(organizationId);
       
-      // Check for owner in notifications if no members found
-      if (members.length === 0) {
-        console.log('⚠️ No team members found, checking notifications for owner init');
-        
-        // Prüfe ob Owner-Init in Notifications existiert
-        const ownerNotificationQuery = query(
-          collection(db, 'notifications'),
-          where('userId', '==', organizationId),
-          where('category', '==', 'team_owner_init'),
-          orderBy('createdAt', 'desc')
-        );
-        
-        try {
-          const snapshot = await getDocs(ownerNotificationQuery);
-          if (!snapshot.empty) {
-            const ownerNotification = snapshot.docs[0].data();
-            if (ownerNotification.data?.ownerData) {
-              const ownerMember: TeamMemberUI = {
-                id: 'owner_' + organizationId,
-                ...ownerNotification.data.ownerData,
-                status: 'active', // WICHTIG: Owner ist immer aktiv!
-                _fromNotification: true
-              };
-              // Kombiniere mit bestehenden Notification-Members
-              setTeamMembers([ownerMember, ...notificationMembers.filter(m => m.id !== ownerMember.id)]);
-              return;
-            }
-          }
-        } catch (e) {
-          console.error('Could not check owner notifications:', e);
-        }
-        
-        // Fallback nur wenn wirklich keine Daten vorhanden sind
-        if (notificationMembers.length === 0) {
-          const defaultMember: TeamMemberUI = {
-            id: '1',
-            userId: user?.uid || '',
-            organizationId,
-            email: user?.email || '',
-            displayName: user?.displayName || user?.email || 'Admin',
-            role: 'owner',
-            status: 'active', // WICHTIG: Owner ist immer aktiv!
-            invitedAt: Timestamp.now(),
-            invitedBy: user?.uid || '',
-            joinedAt: Timestamp.now(),
-            lastActiveAt: Timestamp.now()
-          };
-          setTeamMembers([defaultMember]);
-        } else {
-          // Behalte die Notification-Members
-          setTeamMembers(notificationMembers);
-        }
-      } else {
-        // Kombiniere echte Members mit Notification-Members
-        const combinedMembers = [...members];
-        
-        // Füge Notification-Members hinzu, die noch nicht in den echten Members sind
-        notificationMembers.forEach(nm => {
-          const alreadyExists = members.some(m => 
-            m.email === nm.email && m.organizationId === nm.organizationId
-          );
-          if (!alreadyExists) {
-            console.log('📌 Keeping notification member:', nm.email);
-            combinedMembers.push(nm);
-          }
-        });
-        
-        // Stelle sicher, dass Owner immer als aktiv angezeigt wird
-        const processedMembers = combinedMembers.map(member => ({
-          ...member,
-          status: member.role === 'owner' ? 'active' : member.status
-        }));
-        
-        setTeamMembers(processedMembers);
-      }
+      // Stelle sicher, dass Owner immer als aktiv angezeigt wird
+      const processedMembers = members.map(member => ({
+        ...member,
+        status: member.role === 'owner' ? 'active' : member.status
+      }));
+      
+      setTeamMembers(processedMembers);
     } catch (error) {
       console.error('Error loading team members:', error);
       setError('Fehler beim Laden der Team-Mitglieder');
-      
-      // Behalte Notifications-basierte Einträge auch bei Fehler
-      const notificationMembers = teamMembers.filter(m => m._fromNotification);
-      
-      if (notificationMembers.length === 0) {
-        // Fallback nur wenn keine Notifications vorhanden
-        const fallbackMember: TeamMemberUI = {
-          id: '1',
-          userId: user?.uid || '',
-          organizationId,
-          email: user?.email || '',
-          displayName: user?.displayName || user?.email || 'Admin',
-          role: 'owner',
-          status: 'active', // WICHTIG: Owner ist immer aktiv!
-          invitedAt: Timestamp.now(),
-          invitedBy: user?.uid || '',
-          joinedAt: Timestamp.now(),
-          lastActiveAt: Timestamp.now()
-        };
-        setTeamMembers([fallbackMember]);
-      } else {
-        setTeamMembers(notificationMembers);
-      }
     } finally {
       setLoading(false);
     }
@@ -263,185 +126,66 @@ export default function TeamSettingsPage() {
       setInviteLoading(true);
       setError(null);
       
-      // Verwende die API-Route für Team-Einladungen
-      const response = await fetch('/api/team/invite', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${await user.getIdToken()}`
-        },
-        body: JSON.stringify({
+      // Context für Service
+      const context = { organizationId, userId: user.uid };
+      
+      // Erstelle Einladung direkt über Service
+      const { memberId, invitationToken } = await teamMemberService.invite(
+        {
           email: inviteEmail,
           role: inviteRole,
-          organizationId
-        })
-      });
+          displayName: inviteEmail.split('@')[0] // Vorläufiger Name
+        },
+        context
+      );
       
-      const data = await response.json();
+      console.log('✅ Member invited:', memberId);
       
-      if (!response.ok) {
-        throw new Error(data.error || 'Fehler beim Einladen des Team-Mitglieds');
+      // Generiere Einladungs-URL
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+      const invitationUrl = `${baseUrl}/invite/${invitationToken}?id=${memberId}`;
+      
+      // Sende E-Mail über API (mit Auth Token)
+      try {
+        const response = await fetch('/api/sendgrid/send', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${await user.getIdToken()}`
+          },
+          body: JSON.stringify({
+            to: inviteEmail,
+            subject: `Einladung zum Team von ${user.displayName || 'CeleroPress'}`,
+            html: `
+              <h2>Sie wurden eingeladen!</h2>
+              <p>${user.displayName || user.email} hat Sie zum Team eingeladen.</p>
+              <p>Rolle: ${roleConfig[inviteRole].label}</p>
+              <p>Klicken Sie auf den folgenden Link, um die Einladung anzunehmen:</p>
+              <a href="${invitationUrl}" style="display: inline-block; padding: 12px 24px; background: #005fab; color: white; text-decoration: none; border-radius: 4px;">
+                Einladung annehmen
+              </a>
+              <p><small>Dieser Link ist 7 Tage gültig.</small></p>
+            `,
+            text: `Sie wurden zum Team eingeladen. Klicken Sie hier: ${invitationUrl}`
+          })
+        });
+        
+        if (response.ok) {
+          showToast('Einladung wurde erfolgreich versendet!');
+        } else {
+          console.error('E-Mail konnte nicht versendet werden');
+          showToast('Einladung erstellt, aber E-Mail konnte nicht versendet werden', 'error');
+        }
+      } catch (emailError) {
+        console.error('Error sending email:', emailError);
+        showToast('Einladung erstellt, aber E-Mail konnte nicht versendet werden', 'error');
       }
       
-      // AUTOMATISCH E-MAILS VERSENDEN
-      if (data.requiresProcessing) {
-        console.log('📧 Automatisches Versenden der Einladung...');
-        
-        // Client-seitige Verarbeitung der Notifications
-        setTimeout(async () => {
-          try {
-            // Query mit Index für unverarbeitete Notifications
-            const notificationsQuery = query(
-              collection(db, 'notifications'),
-              where('userId', '==', organizationId),
-              where('category', '==', 'team_invitation'),
-              where('isProcessed', '!=', true),
-              orderBy('createdAt', 'desc'),
-              limit(10)
-            );
-            
-            const snapshot = await getDocs(notificationsQuery);
-            console.log('📬 Found unprocessed team invitation notifications:', snapshot.size);
-            
-            // Debug: Zeige alle unverarbeiteten Notifications
-            snapshot.docs.forEach((doc, index) => {
-              const data = doc.data();
-              console.log(`Unprocessed notification ${index}:`, {
-                id: doc.id,
-                email: data.data?.memberData?.email,
-                isProcessed: data.isProcessed,
-                createdAt: data.createdAt?.toDate()
-              });
-            });
-            
-            // Finde die Notification für die aktuelle E-Mail
-            const targetNotification = snapshot.docs.find(doc => {
-              const data = doc.data();
-              return data.data?.memberData?.email === inviteEmail;
-            });
-            
-            if (!targetNotification) {
-              console.log('⚠️ No unprocessed notification found for', inviteEmail);
-              // Retry nach kurzer Zeit
-              setTimeout(async () => {
-                console.log('🔄 Retrying to find notification...');
-                const retrySnapshot = await getDocs(notificationsQuery);
-                const retryNotification = retrySnapshot.docs.find(doc => {
-                  const data = doc.data();
-                  return data.data?.memberData?.email === inviteEmail;
-                });
-                
-                if (retryNotification) {
-                  console.log('✅ Found notification on retry, reloading page...');
-                  window.location.reload();
-                } else {
-                  showToast('Einladung wurde erstellt, bitte Seite neu laden');
-                }
-              }, 3000);
-              return;
-            }
-            
-            // Verarbeite die gefundene Notification
-            const notification = targetNotification.data();
-            const memberData = notification.data?.memberData;
-            const invitationToken = notification.data?.invitationToken;
-            const invitationTokenExpiry = notification.data?.invitationTokenExpiry;
-              
-              console.log('📨 Processing notification:', {
-                notificationId: targetNotification.id,
-                email: memberData?.email,
-                hasToken: !!invitationToken
-              });
-              
-              if (!memberData || !invitationToken) {
-                console.error('⚠️ Notification missing required data');
-                showToast('Fehler: Einladungsdaten unvollständig', 'error');
-                return;
-              }
-              
-              try {
-                // 1. Erstelle team_member Eintrag
-                const memberId = `invite_${Date.now()}_${memberData.email.replace('@', '_at_')}`;
-                
-                console.log('📝 Creating team member with ID:', memberId);
-                
-                const teamMemberData = {
-                  ...memberData,
-                  id: memberId,
-                  invitationToken,
-                  invitationTokenExpiry,
-                  createdAt: Timestamp.now(),
-                  updatedAt: Timestamp.now()
-                };
-                
-                console.log('Team member data:', teamMemberData);
-                
-                await setDoc(doc(db, 'team_members', memberId), teamMemberData);
-                
-                console.log('✅ Created team member:', memberId);
-                
-                // 2. Markiere Notification als verarbeitet SOFORT
-                await updateDoc(doc(db, 'notifications', targetNotification.id), {
-                  isProcessed: true,
-                  processedAt: Timestamp.now(),
-                  processedMemberId: memberId
-                });
-                
-                console.log('✅ Marked notification as processed');
-                
-                // 3. Rufe process-invitations für E-Mail-Versand auf
-                const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
-                const invitationUrl = `${baseUrl}/invite/${invitationToken}?id=${memberId}`;
-                
-                const processResponse = await fetch('/api/team/process-invitations', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({
-                    specificMemberId: memberId,
-                    memberData: teamMemberData,
-                    invitationUrl,
-                    invitationToken,
-                    organizationId
-                  })
-                });
-                
-                if (processResponse.ok) {
-                  const result = await processResponse.json();
-                  console.log('📧 Email send result:', result);
-                  showToast('Einladung wurde erfolgreich versendet!');
-                } else {
-                  const errorText = await processResponse.text();
-                  console.error('Failed to send email:', errorText);
-                  showToast('Einladung erstellt, E-Mail konnte nicht versendet werden', 'error');
-                }
-                
-                // Reload sofort nach Erstellung
-                await loadTeamMembers();
-                
-              } catch (processingError: any) {
-                console.error('Error processing notification:', processingError);
-                showToast(`Fehler: ${processingError.message}`, 'error');
-              }
-            
-          } catch (error: any) {
-            console.error('Error in client-side processing:', error);
-            console.error('Error details:', error.message, error.stack);
-            showToast('Fehler beim Verarbeiten der Einladung', 'error');
-          }
-        }, 3000); // 3 Sekunden warten damit Notification sicher geschrieben ist
-        
-        showToast('Einladung wird vorbereitet...');
-      } else {
-        showToast('Einladung wurde erfolgreich versendet!');
-        // Bei direktem Versand neu laden
-        await loadTeamMembers();
-      }
-      
+      // Modal schließen und Liste neu laden
       setShowInviteModal(false);
       setInviteEmail('');
       setInviteRole('member');
+      await loadTeamMembers();
       
     } catch (error: any) {
       console.error('Error inviting team member:', error);
@@ -451,20 +195,15 @@ export default function TeamSettingsPage() {
     }
   };
   
-  const handleRoleChange = async (member: TeamMemberUI, newRole: UserRole) => {
+  const handleRoleChange = async (member: TeamMember, newRole: UserRole) => {
     if (member.role === 'owner') {
       showToast('Die Rolle des Owners kann nicht geändert werden', 'error');
       return;
     }
     
-    // Skip für Notifications-basierte Einträge
-    if (member._fromNotification) {
-      showToast('Diese Einladung muss erst angenommen werden', 'error');
-      return;
-    }
-    
     try {
-      await teamMemberService.update(member.id!, { role: newRole }, user?.uid || '');
+      const context = { organizationId, userId: user?.uid || '' };
+      await teamMemberService.update(member.id!, { role: newRole }, context);
       await loadTeamMembers();
       showToast(`Rolle wurde auf ${roleConfig[newRole].label} geändert`);
     } catch (error) {
@@ -473,7 +212,7 @@ export default function TeamSettingsPage() {
     }
   };
   
-  const handleRemoveMember = async (member: TeamMemberUI) => {
+  const handleRemoveMember = async (member: TeamMember) => {
     if (member.role === 'owner') {
       showToast('Der Owner kann nicht entfernt werden', 'error');
       return;
@@ -483,29 +222,9 @@ export default function TeamSettingsPage() {
       return;
     }
     
-    // Für Notifications-basierte Einträge - lösche die Notification
-    if (member._fromNotification) {
-      try {
-        // Lösche die Notification aus Firestore
-        const notificationRef = doc(db, 'notifications', member.id!);
-        await updateDoc(notificationRef, {
-          isProcessed: true,
-          deletedAt: Timestamp.now(),
-          deletedBy: user?.uid
-        });
-        
-        // Entferne aus der lokalen Liste
-        setTeamMembers(prev => prev.filter(m => m.id !== member.id));
-        showToast('Einladung wurde gelöscht');
-      } catch (error) {
-        console.error('Error deleting invitation:', error);
-        showToast('Fehler beim Löschen der Einladung', 'error');
-      }
-      return;
-    }
-    
     try {
-      await teamMemberService.remove(member.id!, user?.uid || '');
+      const context = { organizationId, userId: user?.uid || '' };
+      await teamMemberService.remove(member.id!, context);
       await loadTeamMembers();
       showToast('Mitglied wurde entfernt');
     } catch (error) {
@@ -515,33 +234,54 @@ export default function TeamSettingsPage() {
   };
   
   const handleResendInvite = async (member: TeamMember) => {
-    // Für Notifications-basierte Einträge - verarbeite einzeln
-    if ((member as TeamMemberUI)._fromNotification) {
-      setProcessingInvitations(true);
-      try {
-        const response = await fetch('/api/team/process-invitations', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${await user?.getIdToken()}`
-          }
-        });
-        
-        if (response.ok) {
-          showToast('Einladung wurde erneut versendet');
-        } else {
-          throw new Error('Fehler beim erneuten Versenden');
-        }
-      } catch (error) {
-        console.error('Error resending invitation:', error);
-        showToast('Fehler beim erneuten Versenden der Einladung', 'error');
-      } finally {
-        setProcessingInvitations(false);
-      }
-      return;
-    }
+    if (!user) return;
     
-    showToast('Diese Funktion ist noch nicht implementiert');
+    try {
+      // Generiere neuen Token
+      const context = { organizationId, userId: user.uid };
+      const { invitationToken } = await teamMemberService.invite(
+        {
+          email: member.email,
+          role: member.role,
+          displayName: member.displayName
+        },
+        context
+      );
+      
+      // Sende E-Mail erneut
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+      const invitationUrl = `${baseUrl}/invite/${invitationToken}?id=${member.id}`;
+      
+      const response = await fetch('/api/sendgrid/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await user.getIdToken()}`
+        },
+        body: JSON.stringify({
+          to: member.email,
+          subject: `Erinnerung: Einladung zum Team`,
+          html: `
+            <h2>Erinnerung: Sie wurden eingeladen!</h2>
+            <p>Dies ist eine Erinnerung an Ihre Team-Einladung.</p>
+            <p>Rolle: ${roleConfig[member.role].label}</p>
+            <a href="${invitationUrl}" style="display: inline-block; padding: 12px 24px; background: #005fab; color: white; text-decoration: none; border-radius: 4px;">
+              Einladung annehmen
+            </a>
+          `,
+          text: `Erinnerung: Sie wurden zum Team eingeladen. Klicken Sie hier: ${invitationUrl}`
+        })
+      });
+      
+      if (response.ok) {
+        showToast('Einladung wurde erneut versendet');
+      } else {
+        throw new Error('E-Mail-Versand fehlgeschlagen');
+      }
+    } catch (error) {
+      console.error('Error resending invitation:', error);
+      showToast('Fehler beim erneuten Versenden der Einladung', 'error');
+    }
   };
   
   // Role configuration
@@ -748,11 +488,7 @@ export default function TeamSettingsPage() {
                         </div>
                       </div>
                       <div className="w-[20%]">
-                        {member._fromNotification && member.status === 'invited' ? (
-                          <Badge color="yellow" className="whitespace-nowrap">
-                            {role.label} (Ausstehend)
-                          </Badge>
-                        ) : member.role === 'owner' ? (
+                        {member.role === 'owner' ? (
                           <Badge color={role.color as any} className="whitespace-nowrap">
                             {role.label}
                           </Badge>
