@@ -28,9 +28,15 @@
 **Problem**: Einladungs-E-Mails werden nicht versendet.
 
 **Ursache**:
-- Der Workflow erstellt nur Notifications in Firestore
-- Es fehlt die Verknüpfung zwischen Notification-Erstellung und tatsächlichem E-Mail-Versand
-- Die API-Route `/api/team/invite` erstellt nur Einträge, sendet aber keine E-Mails
+- Der Workflow ist bereits implementiert, aber nutzt einen umständlichen Notification-Workaround
+- `/api/team/invite` erstellt Notifications statt direkt E-Mails zu senden
+- `/api/team/process-invitations` muss manuell aufgerufen werden für E-Mail-Versand
+- `/api/team/accept-invitation` existiert bereits für Token-Validierung
+
+**Vorhandene Implementierung**:
+1. **invite/route.ts**: Erstellt Notification → team_members Eintrag (Workaround wegen Firestore Rules)
+2. **process-invitations/route.ts**: Liest Notifications → Sendet E-Mails via SendGrid
+3. **accept-invitation/route.ts**: Validiert Token → Aktiviert Mitglied → Benachrichtigt Inviter
 
 ### 1.4 UI/UX Probleme
 - Status-Badge sollte unter dem Namen stehen
@@ -51,7 +57,67 @@
 - Doppelte Datenhaltung in `notifications` und `team_members`
 - Fehlende klare Trennung zwischen Einladungs-Workflow und Mitglieder-Verwaltung
 
-### 2.2 Service-Layer Probleme
+### 2.2 Firestore Security Rules Analyse
+
+**Aktuelle Rules für team_members:**
+```javascript
+// TEAM MEMBERS - KRITISCH FÜR DEN FIX
+match /team_members/{membershipId} {
+  // READ: Erlaubt unauthentifizierte Reads (für API)
+  allow read: if 
+    (request.auth != null && (
+      request.auth.uid == resource.data.userId ||
+      request.auth.uid == resource.data.organizationId ||
+      exists(/databases/$(database)/documents/team_members/$(request.auth.uid + '_' + resource.data.organizationId))
+    )) ||
+    request.auth == null; // ⚠️ PROBLEM: Öffentlicher Read
+
+  // CREATE: Erweitert für API-Routes (Workaround)
+  allow create: if 
+    (request.auth != null && (
+      request.auth.uid == request.resource.data.organizationId ||
+      (exists(/databases/$(database)/documents/team_members/$(request.auth.uid + '_' + request.resource.data.organizationId)) &&
+       get(/databases/$(database)/documents/team_members/$(request.auth.uid + '_' + request.resource.data.organizationId)).data.role in ['owner', 'admin'])
+    )) ||
+    // ⚠️ PROBLEM: Unauthentifizierte Creates für Einladungen
+    (request.auth == null && 
+     request.resource.data.keys().hasAll(['email', 'organizationId', 'role', 'status']) &&
+     request.resource.data.status == 'invited');
+
+  // UPDATE: Auch unauthentifiziert für Token-Updates
+  allow update: if 
+    (request.auth != null && (
+      request.auth.uid == resource.data.organizationId ||
+      (exists(/databases/$(database)/documents/team_members/$(request.auth.uid + '_' + resource.data.organizationId)) &&
+       get(/databases/$(database)/documents/team_members/$(request.auth.uid + '_' + resource.data.organizationId)).data.role in ['owner', 'admin'])
+    )) ||
+    // ⚠️ PROBLEM: Unauthentifizierte Updates
+    (request.auth == null &&
+     request.resource.data.diff(resource.data).affectedKeys().hasOnly(['invitationToken', 'invitationTokenExpiry', 'updatedAt']));
+
+  // LIST: Erlaubt auch unauthentifiziert
+  allow list: if request.auth != null || request.auth == null;
+}
+```
+
+**Probleme mit den Rules:**
+1. Öffentlicher Read-Zugriff (Sicherheitsrisiko)
+2. Unauthentifizierte Creates/Updates (deshalb der Notification-Workaround)
+3. Keine Prüfung ob Organization existiert
+
+**Relevante Rules für Notifications (Workaround):**
+```javascript
+match /notifications/{notificationId} {
+  // WICHTIG: Erlaube Create ohne Auth für Team-System Workaround
+  allow create: if true; // ⚠️ PROBLEM: Komplett offen!
+  
+  allow read: if request.auth != null && 
+    (request.auth.uid == resource.data.userId ||
+     request.auth.uid == resource.data.organizationId);
+}
+```
+
+### 2.3 Service-Layer Probleme
 
 1. **organization-service.ts**:
    - `createDirectly()` umgeht Organization-Checks (Workaround)
@@ -70,106 +136,164 @@
 
 ### 3.1 Owner-Initialisierung
 
+Der aktuelle Workaround über Notifications sollte vereinfacht werden:
+
 ```typescript
-// Neuer Service: team-initialization-service.ts
+// Problem: Owner wird über Notification erstellt
+// Lösung: Direkte Erstellung beim ersten Login
 export async function ensureOwnerExists(userId: string, organizationId: string) {
-  // 1. Prüfe ob Owner bereits existiert
-  const existingOwner = await teamMemberService.getOwner(organizationId);
+  const ownerId = `${userId}_${organizationId}`;
+  const ownerRef = doc(db, 'team_members', ownerId);
   
-  if (!existingOwner) {
-    // 2. Erstelle Owner-Eintrag
-    await teamMemberService.createOwner({
+  const existing = await getDoc(ownerRef);
+  if (!existing.exists()) {
+    await setDoc(ownerRef, {
       userId,
       organizationId,
       email: user.email,
-      displayName: user.displayName,
-      status: 'active' // NICHT 'invited'!
+      displayName: user.displayName || user.email,
+      role: 'owner',
+      status: 'active', // WICHTIG: Nicht 'invited'!
+      joinedAt: serverTimestamp(),
+      lastActiveAt: serverTimestamp()
     });
   }
 }
 ```
 
-### 3.2 Einladungs-Workflow
+### 3.2 Einladungs-Workflow vereinfachen
+
+Der aktuelle 2-Schritt-Prozess (Notification → process-invitations) sollte zu einem 1-Schritt-Prozess werden:
 
 ```typescript
-// Klarer 3-Stufen-Prozess:
-1. Team-Einladung erstellen (team_members mit status: 'invited')
-2. E-Mail versenden (SendGrid Integration)
-3. Einladung annehmen (status -> 'active')
+// Alt: invite → notification → process-invitations → email
+// Neu: invite → team_members + email direkt
 
-// Keine Notifications für Team-Management!
-// Notifications nur für Events (z.B. "Du wurdest eingeladen")
+// In /api/team/invite:
+1. Erstelle team_member Eintrag direkt
+2. Generiere Token
+3. Sende E-Mail sofort
+4. Kein Notification-Workaround mehr nötig
 ```
 
-### 3.3 Soft Delete Verbesserung
+### 3.3 Firestore Rules Fixes
 
-```typescript
-// Option 1: Hard Delete für Team-Mitglieder
-async removeCompletely(memberId: string) {
-  // Prüfe ob nicht Owner
-  // Lösche komplett aus team_members
-  await deleteDoc(doc(db, 'team_members', memberId));
+**Option 1: Sichere Rules mit Service Account (Empfohlen)**
+```javascript
+// team_members - NUR authentifizierte Zugriffe
+match /team_members/{membershipId} {
+  // Helper Functions
+  function isOrgMember() {
+    return exists(/databases/$(database)/documents/team_members/$(request.auth.uid + '_' + resource.data.organizationId));
+  }
+  
+  function isOrgAdmin() {
+    return isOrgMember() && 
+           get(/databases/$(database)/documents/team_members/$(request.auth.uid + '_' + resource.data.organizationId)).data.role in ['owner', 'admin'];
+  }
+  
+  // READ: Nur Org-Mitglieder
+  allow read: if request.auth != null && (
+    request.auth.uid == resource.data.userId ||
+    request.auth.uid == resource.data.organizationId ||
+    isOrgMember()
+  );
+  
+  // CREATE: Nur Owner/Admin
+  allow create: if request.auth != null && (
+    request.auth.uid == request.resource.data.organizationId ||
+    isOrgAdmin()
+  );
+  
+  // UPDATE: Nur Owner/Admin (außer eigene lastActiveAt)
+  allow update: if request.auth != null && (
+    // Owner/Admin kann alles
+    (request.auth.uid == resource.data.organizationId || isOrgAdmin()) ||
+    // User kann nur eigene lastActiveAt updaten
+    (request.auth.uid == resource.data.userId &&
+     request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastActiveAt', 'updatedAt']))
+  );
+  
+  // DELETE: Nur Owner/Admin, nicht sich selbst
+  allow delete: if request.auth != null && 
+    request.auth.uid != resource.data.userId &&
+    (request.auth.uid == resource.data.organizationId || isOrgAdmin());
 }
 
-// Option 2: Soft Delete mit Re-Invite Möglichkeit
-async canReinvite(email: string, organizationId: string) {
-  const existing = await this.getByEmailAndOrg(email, organizationId);
-  return !existing || existing.status === 'inactive';
+// notifications - Entfernen des Team-Workarounds
+match /notifications/{notificationId} {
+  // Nur noch für echte User-Notifications
+  allow create: if request.auth != null &&
+    request.auth.uid == request.resource.data.userId;
+  
+  allow read, update, delete: if request.auth != null && 
+    request.auth.uid == resource.data.userId;
 }
 ```
 
-## 4. Implementierungsplan
+**Option 2: Rules mit eingeschränktem Public Access (Übergang)**
+```javascript
+// Erlaubt API-Routes mit speziellem Header/Token
+match /team_members/{membershipId} {
+  // Prüfe API-Token aus Request Headers
+  function isValidAPIRequest() {
+    return request.auth == null && 
+           request.resource.data.apiToken == resource.data.expectedToken;
+  }
+  
+  allow create: if (request.auth != null && isOrgAdmin()) ||
+                   (isValidAPIRequest() && request.resource.data.status == 'invited');
+}
+```
 
-### Phase 1: Basis-Fixes (1-2 Tage)
+## 4. Implementierungsplan (REVIDIERT)
+
+### Phase 1: Quick Fixes ohne Breaking Changes (1 Tag)
 
 1. **Owner-Status Fix**:
-   - Neue Funktion `ensureOwnerExists()` beim App-Start
-   - Entfernen der Fallback-Logik aus `loadTeamMembers()`
-   - Owner immer mit `status: 'active'` initialisieren
+   - Modifiziere `loadTeamMembers()` um Owner korrekt mit `status: 'active'` anzuzeigen
+   - Behalte Notification-System vorerst bei (keine Breaking Changes)
+   - Filtere Owner aus "Ausstehende Einladungen" heraus
 
-2. **Delete-Funktionalität**:
-   - Implementiere Hard Delete für Team-Mitglieder
-   - Oder: Erweitere `invite()` um inaktive Mitglieder zu reaktivieren
-
-3. **UI-Verbesserungen**:
-   - Status-Badge unter Namen verschieben
+2. **UI-Verbesserungen**:
+   - Status-Badge unter Namen verschieben (3. Zeile)
    - Dropdown-Menü für Aktionen implementieren
    - "Beigetreten"-Spalte entfernen
+   - "Inaktive" Mitglieder ausblenden oder kennzeichnen
 
-### Phase 2: E-Mail-Integration (2-3 Tage)
+3. **Process-Button Integration**:
+   - Automatischer Aufruf von `process-invitations` nach Einladung
+   - Oder: Einladungen direkt versenden ohne Umweg
 
-1. **SendGrid Integration**:
-   ```typescript
-   // In /api/team/invite
-   // Nach team_members Eintrag:
-   await sendInvitationEmail({
-     to: email,
-     inviterName: currentUser.displayName,
-     organizationName: organization.name,
-     inviteLink: generateInviteLink(inviteToken)
-   });
-   ```
+### Phase 2: E-Mail-Workflow optimieren (1-2 Tage)
 
-2. **Einladungs-Token System**:
-   - Generiere sicheren Token
-   - Speichere in `invitationToken` Feld
-   - Erstelle `/invite/[token]` Route für Annahme
+1. **Direkter E-Mail-Versand**:
+   - Modifiziere `/api/team/invite` um E-Mails direkt zu senden
+   - Nutze vorhandene `process-invitations` Logik
+   - Behalte Notification als Fallback
 
-### Phase 3: Architektur-Refactoring (3-5 Tage)
+2. **Re-Invite Funktionalität**:
+   - Erweitere `invite` um inaktive Mitglieder zu reaktivieren
+   - Oder implementiere Hard Delete
 
-1. **Service-Layer Bereinigung**:
-   - Entferne Notifications-basierte Team-Verwaltung
-   - Klare Trennung zwischen Services
-   - Zentrale Team-Management API
+3. **Accept-Flow verbessern**:
+   - Erstelle `/app/invite/[token]` UI-Seite
+   - Nutze vorhandene `/api/team/accept-invitation`
 
-2. **Firestore Rules Update**:
-   - Entferne öffentliche Create-Rechte für team_members
-   - Nur authentifizierte Admins/Owner dürfen einladen
+### Phase 3: Architektur-Bereinigung (2-3 Tage)
 
-3. **State Management**:
-   - Implementiere optimistic updates
-   - Besseres Error Handling
-   - Loading States pro Aktion
+1. **Firestore Rules Update**:
+   - Erlaube authentifizierten Admins direkte team_members Erstellung
+   - Entferne Notification-Workaround Abhängigkeit
+
+2. **Service Consolidation**:
+   - Extrahiere Team-Logik aus `organization-service.ts`
+   - Erstelle dedizierten `team-service.ts`
+   - Entferne Notification-basierte Team-Verwaltung
+
+3. **Vollständige Migration**:
+   - Migriere bestehende Notification-Daten zu team_members
+   - Bereinige alte Notifications
 
 ## 5. Neue Dateistruktur
 
@@ -230,22 +354,74 @@ export async function requireTeamAdmin(
 }
 ```
 
-## 7. Migration Strategy
+## 7. Kritische Firestore Rules Änderungen
 
-1. **Daten-Bereinigung**:
-   - Script um alle Owner auf `status: 'active'` zu setzen
-   - Entferne doppelte Einträge aus notifications
-   - Bereinige inaktive Mitglieder
+### 7.1 Problem-Analyse
+Die aktuellen Rules erlauben unauthentifizierte Zugriffe, was ein Sicherheitsrisiko darstellt und den Notification-Workaround erzwingt.
 
-2. **Schrittweise Migration**:
-   - Phase 1: UI-Fixes (keine Breaking Changes)
-   - Phase 2: Backend-Fixes mit Fallbacks
-   - Phase 3: Komplettes Refactoring
+### 7.2 Migration Strategy für Rules
 
-3. **Testing**:
-   - Unit Tests für alle Services
-   - Integration Tests für Einladungs-Workflow
-   - E2E Tests für kritische Pfade
+**Schritt 1: Daten-Migration (vor Rules-Änderung)**
+```javascript
+// Migration Script: Alle Notifications zu team_members
+async function migrateNotificationsToTeamMembers() {
+  // 1. Owner-Initialisierungen
+  const ownerInits = await db.collection('notifications')
+    .where('category', '==', 'team_owner_init')
+    .get();
+    
+  for (const doc of ownerInits.docs) {
+    const data = doc.data();
+    if (data.data?.ownerData) {
+      const ownerId = `${data.data.ownerData.userId}_${data.data.ownerData.organizationId}`;
+      await db.collection('team_members').doc(ownerId).set({
+        ...data.data.ownerData,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+    }
+  }
+  
+  // 2. Team-Einladungen
+  // Bereits in team_members durch process-invitations
+}
+```
+
+**Schritt 2: Übergangs-Rules (1-2 Wochen)**
+```javascript
+// Erlaube beide Methoden während Migration
+match /team_members/{membershipId} {
+  allow create: if 
+    // Neue Methode: Authentifiziert
+    (request.auth != null && isAuthorizedToInvite()) ||
+    // Alte Methode: Notification-Workaround (mit Warnung)
+    (request.auth == null && 
+     request.resource.data.status == 'invited' &&
+     request.resource.data.migrationFlag != true); // Flag zum Tracking
+}
+```
+
+**Schritt 3: Finale Rules (nach Migration)**
+```javascript
+// Nur noch authentifizierte Zugriffe
+match /team_members/{membershipId} {
+  // Keine unauthentifizierten Zugriffe mehr!
+  allow read: if request.auth != null && canReadMember();
+  allow create: if request.auth != null && canCreateMember();
+  allow update: if request.auth != null && canUpdateMember();
+  allow delete: if request.auth != null && canDeleteMember();
+}
+```
+
+### 7.3 Alternative: Admin SDK Service Account
+
+Für API Routes ohne User-Auth:
+```typescript
+// Nutze Service Account mit Custom Token
+const serviceToken = await createCustomToken('team-service');
+await signInWithCustomToken(auth, serviceToken);
+// Jetzt können API Routes authentifiziert schreiben
+```
 
 ## 8. Zusammenfassung
 
@@ -265,49 +441,30 @@ Mit diesem Plan können wir schrittweise von der aktuellen problematischen Imple
 | Datei | Zweck | Änderungen nötig |
 |-------|-------|------------------|
 | **Frontend** | | |
-| `src/app/dashboard/settings/team/page.tsx` | Team-Verwaltungs-UI | ⚠️ Major - Notifications entfernen, UI-Redesign |
+| `src/app/dashboard/settings/team/page.tsx` | Team-Verwaltungs-UI | ⚠️ Major - UI-Redesign, Process-Button Integration |
 | `src/components/SettingsNav.tsx` | Settings Navigation | ✅ Keine |
 | **Neue Frontend-Dateien** | | |
-| `src/app/dashboard/settings/team/TeamTable.tsx` | Neue Tabellen-Komponente | 🆕 Neu erstellen |
-| `src/app/dashboard/settings/team/InviteModal.tsx` | Einladungs-Dialog | 🆕 Neu erstellen |
-| `src/app/invite/[token]/page.tsx` | Einladung annehmen | 🆕 Neu erstellen |
+| `src/app/invite/[token]/page.tsx` | Einladung annehmen UI | 🆕 Neu erstellen |
 | | | |
 | **Backend Services** | | |
-| `src/lib/firebase/organization-service.ts` | Organization & Team Service | ⚠️ Major - Team-Service extrahieren |
+| `src/lib/firebase/organization-service.ts` | Organization & Team Service | ⚠️ Minor - ensureOwnerExists hinzufügen |
 | `src/lib/firebase/service-base.ts` | Basis-Service-Klasse | ✅ Keine |
-| `src/lib/firebase/notifications-service.ts` | Benachrichtigungen | ⚠️ Minor - Team-Notifications entfernen |
-| **Neue Backend-Services** | | |
-| `src/lib/team/team-service.ts` | Zentrale Team-Verwaltung | 🆕 Neu erstellen |
-| `src/lib/team/invitation-service.ts` | Einladungs-Workflow | 🆕 Neu erstellen |
-| `src/lib/team/team-email-service.ts` | SendGrid Integration | 🆕 Neu erstellen |
+| `src/lib/email/team-invitation-templates.ts` | E-Mail Templates | ✅ Bereits vorhanden (nicht gezeigt) |
 | | | |
-| **API Routes** | | |
-| `src/app/api/team/invite/route.ts` | Team-Einladung API | ⚠️ Major - SendGrid Integration |
-| `src/app/api/team/process-invitations/route.ts` | Batch-Verarbeitung | 🗑️ Entfernen |
-| **Neue API Routes** | | |
-| `src/app/api/team/members/route.ts` | Team CRUD API | 🆕 Neu erstellen |
-| `src/app/api/team/accept/route.ts` | Einladung annehmen | 🆕 Neu erstellen |
-| `src/app/api/team/resend/route.ts` | Einladung erneut senden | 🆕 Neu erstellen |
+| **API Routes (VORHANDEN)** | | |
+| `src/app/api/team/invite/route.ts` | Team-Einladung API | ⚠️ Major - Direkter E-Mail-Versand |
+| `src/app/api/team/process-invitations/route.ts` | Batch E-Mail-Versand | ⚠️ Minor - Als Helper nutzen |
+| `src/app/api/team/accept-invitation/route.ts` | Einladung annehmen | ✅ Funktioniert bereits |
 | | | |
 | **E-Mail Integration** | | |
-| `src/app/api/email/send/route.ts` | SendGrid E-Mail-Versand | ✅ Referenz für Implementation |
-| `src/lib/email/email-service.ts` | E-Mail Service | ✅ Referenz für Templates |
-| **Neue E-Mail Templates** | | |
-| `src/templates/team-invitation.tsx` | Einladungs-E-Mail Template | 🆕 Neu erstellen |
+| `src/app/api/sendgrid/send/route.ts` | SendGrid API | ✅ Referenz - wird genutzt |
 | | | |
 | **Typen & Interfaces** | | |
-| `src/types/international.ts` | Basis-Typen, TeamMember | ✅ Keine |
-| `src/types/email-enhanced.ts` | E-Mail Typen | ✅ Keine |
-| **Neue Typen** | | |
-| `src/types/team.ts` | Team-spezifische Typen | 🆕 Neu erstellen |
+| `src/types/international.ts` | TeamMember Typen | ✅ Keine |
 | | | |
 | **Konfiguration** | | |
-| `firestore.rules` | Firestore Security Rules | ⚠️ Major - Team Rules verschärfen |
-| `.env.local` | Umgebungsvariablen | ⚠️ Minor - APP_URL hinzufügen |
-| | | |
-| **Utilities & Helpers** | | |
-| `src/lib/api/auth-middleware.ts` | Auth Middleware | ⚠️ Minor - Team-Admin Check |
-| `src/lib/api/api-client.ts` | API Client | ⚠️ Minor - Team-Endpoints |
+| `firestore.rules` | Security Rules | ⚠️ Major - team_members Rules anpassen |
+| `.env.local` | Umgebungsvariablen | ✅ NEXT_PUBLIC_BASE_URL vorhanden |
 
 ### 🔄 Abhängigkeiten zwischen Dateien
 
@@ -337,17 +494,30 @@ graph TD
 
 ### 📋 Kritische Dateien für jede Phase
 
-**Phase 1 - Quick Fixes:**
-- `src/app/dashboard/settings/team/page.tsx`
-- `src/lib/firebase/organization-service.ts`
-- `firestore.rules` (team_members rules)
+**Phase 1 - Quick Fixes (vorhandene Struktur nutzen):**
+- `src/app/dashboard/settings/team/page.tsx` - UI anpassen
+- `src/app/api/team/invite/route.ts` - process-invitations automatisch aufrufen
+- `src/app/api/team/process-invitations/route.ts` - behalten als E-Mail-Sender
 
-**Phase 2 - E-Mail Integration:**
-- `src/app/api/team/invite/route.ts`
-- `src/lib/team/team-email-service.ts` (neu)
-- `src/templates/team-invitation.tsx` (neu)
+**Phase 2 - E-Mail optimieren:**
+- `src/app/api/team/invite/route.ts` - Direkter E-Mail-Versand
+- `src/app/invite/[token]/page.tsx` - UI für Einladungsannahme (neu)
+- `src/lib/firebase/organization-service.ts` - Hard Delete implementieren
 
-**Phase 3 - Refactoring:**
-- `src/lib/team/team-service.ts` (neu)
-- `src/lib/team/invitation-service.ts` (neu)
-- `src/app/invite/[token]/page.tsx` (neu)
+**Phase 3 - Refactoring (optional):**
+- `firestore.rules` - Direkte team_members Erstellung erlauben
+- Notification-Workaround entfernen
+- Service-Layer konsolidieren
+
+### 🎯 Zusammenfassung der Analyse-Updates
+
+Nach Analyse der vorhandenen API-Routen:
+
+1. **E-Mail-System funktioniert bereits** - es muss nur automatisch getriggert werden
+2. **Token-System ist implementiert** - `/api/team/accept-invitation` validiert bereits
+3. **Der Notification-Workaround** ist wegen Firestore Rules nötig
+
+**Empfehlung**: Statt großem Refactoring sollten wir:
+1. Den vorhandenen Code optimieren (Phase 1)
+2. Fehlende UI-Seiten ergänzen (Phase 2)
+3. Nur bei Bedarf das System grundlegend überarbeiten (Phase 3)
