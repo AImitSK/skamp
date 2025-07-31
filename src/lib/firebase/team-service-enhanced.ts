@@ -11,7 +11,8 @@ import {
   Timestamp,
   doc,
   setDoc,
-  updateDoc
+  updateDoc,
+  addDoc
 } from 'firebase/firestore';
 import { db } from './client-init';
 
@@ -148,21 +149,30 @@ class TeamMemberEnhancedService extends BaseService<TeamMemberExtended> {
     const tokenExpiry = new Date();
     tokenExpiry.setDate(tokenExpiry.getDate() + 7); // 7 Tage gültig
 
-    // Erstelle Mitglied
-    const memberId = await this.create({
+    // Erstelle saubere Mitgliedsdaten ohne undefined
+    const memberData: any = {
       userId: '', // Wird beim Accept gesetzt
       organizationId: context.organizationId,
       email: data.email,
       displayName: data.displayName || data.email,
       role: data.role,
       status: 'invited',
-      invitedAt: serverTimestamp() as Timestamp,
+      invitedAt: serverTimestamp(),
       invitedBy: context.userId,
-      restrictedToCompanyIds: data.restrictedToCompanyIds,
-      expiresAt: data.expiresAt ? Timestamp.fromDate(data.expiresAt) : undefined,
-      joinedAt: undefined,
-      lastActiveAt: serverTimestamp() as Timestamp
-    }, context);
+      lastActiveAt: serverTimestamp()
+    };
+
+    // Füge optionale Felder nur hinzu, wenn sie definiert sind
+    if (data.restrictedToCompanyIds && data.restrictedToCompanyIds.length > 0) {
+      memberData.restrictedToCompanyIds = data.restrictedToCompanyIds;
+    }
+
+    if (data.expiresAt) {
+      memberData.expiresAt = Timestamp.fromDate(data.expiresAt);
+    }
+
+    // Erstelle das Mitglied
+    const memberId = await this.create(memberData, context);
 
     // Speichere Token separat (da nicht im TeamMember Type)
     await this.saveInvitationToken(memberId, invitationToken, tokenExpiry);
