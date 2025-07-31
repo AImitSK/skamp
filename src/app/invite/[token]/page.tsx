@@ -19,6 +19,8 @@ import {
   EnvelopeIcon,
   UserIcon
 } from '@heroicons/react/20/solid';
+import { getDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase/client-init';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase/client-init';
 
@@ -76,26 +78,52 @@ export default function AcceptInvitationPage() {
       setLoading(true);
       setError(null);
       
-      // Validiere über API Route
-      const response = await fetch(`/api/team/accept-invitation?token=${token}&id=${invitationId}`);
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Einladung konnte nicht validiert werden');
+      // Prüfe nochmal ob invitationId existiert
+      if (!invitationId) {
+        throw new Error('Keine Einladungs-ID gefunden');
       }
       
-      if (data.valid) {
-        setInvitation(data.invitation);
-        setDisplayName(data.invitation.displayName || data.invitation.email.split('@')[0]);
-        setValid(true);
-        
-        // Zeige Account-Form nur wenn kein User eingeloggt ist oder der richtige User
-        if (!user || user.email === data.invitation.email) {
-          setShowAccountForm(true);
-        }
-      } else {
-        throw new Error(data.error || 'Ungültige Einladung');
+      // Lade Einladung direkt aus Firestore
+      const memberRef = doc(db, 'team_members', invitationId);
+      const memberDoc = await getDoc(memberRef);
+      
+      if (!memberDoc.exists()) {
+        throw new Error('Einladung nicht gefunden');
       }
+      
+      const memberData = memberDoc.data();
+      
+      // Prüfe Status
+      if (memberData.status !== 'invited') {
+        throw new Error('Diese Einladung wurde bereits verwendet');
+      }
+      
+      // Prüfe Token
+      if (memberData.invitationToken !== token) {
+        throw new Error('Ungültiger Einladungstoken');
+      }
+      
+      // Prüfe Ablauf
+      if (memberData.invitationTokenExpiry && memberData.invitationTokenExpiry.toDate() < new Date()) {
+        throw new Error('Diese Einladung ist abgelaufen');
+      }
+      
+      // Setze Einladungsdaten
+      setInvitation({
+        email: memberData.email,
+        role: memberData.role,
+        organizationId: memberData.organizationId,
+        invitedBy: memberData.invitedBy,
+        displayName: memberData.displayName || memberData.email.split('@')[0]
+      });
+      setDisplayName(memberData.displayName || memberData.email.split('@')[0]);
+      setValid(true);
+      
+      // Zeige Account-Form nur wenn kein User eingeloggt ist oder der richtige User
+      if (!user || user.email === memberData.email) {
+        setShowAccountForm(true);
+      }
+      
     } catch (error: any) {
       console.error('Error validating invitation:', error);
       setError(error.message || 'Fehler beim Validieren der Einladung');
@@ -140,23 +168,19 @@ export default function AcceptInvitationPage() {
         displayName: displayName
       });
       
-      // 3. Einladung über API akzeptieren
-      const acceptResponse = await fetch('/api/team/accept-invitation', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${await userCredential.user.getIdToken()}`
-        },
-        body: JSON.stringify({
-          invitationId,
-          invitationToken: token
-        })
+      // 3. Einladung akzeptieren - DIREKT mit updateDoc
+      const memberRef = doc(db, 'team_members', invitationId);
+      await updateDoc(memberRef, {
+        userId: userCredential.user.uid,
+        displayName: displayName,
+        photoUrl: userCredential.user.photoURL || null,
+        status: 'active',
+        joinedAt: serverTimestamp(),
+        lastActiveAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        invitationToken: null,
+        invitationTokenExpiry: null
       });
-      
-      if (!acceptResponse.ok) {
-        const errorData = await acceptResponse.json();
-        throw new Error(errorData.error || 'Fehler beim Akzeptieren der Einladung');
-      }
       
       // Erfolg - weiterleiten zum Dashboard
       router.push('/dashboard?welcome=true');
@@ -170,6 +194,8 @@ export default function AcceptInvitationPage() {
         setShowAccountForm(false);
       } else if (error.code === 'auth/weak-password') {
         setError('Das Passwort ist zu schwach');
+      } else if (error.code === 'permission-denied') {
+        setError('Keine Berechtigung. Bitte kontaktieren Sie den Administrator.');
       } else {
         setError(error.message || 'Fehler beim Erstellen des Accounts');
       }
@@ -192,23 +218,19 @@ export default function AcceptInvitationPage() {
         password
       );
       
-      // 2. Einladung über API akzeptieren
-      const acceptResponse = await fetch('/api/team/accept-invitation', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${await userCredential.user.getIdToken()}`
-        },
-        body: JSON.stringify({
-          invitationId,
-          invitationToken: token
-        })
+      // 2. Einladung akzeptieren - DIREKT mit updateDoc
+      const memberRef = doc(db, 'team_members', invitationId);
+      await updateDoc(memberRef, {
+        userId: userCredential.user.uid,
+        displayName: userCredential.user.displayName || displayName,
+        photoUrl: userCredential.user.photoURL || null,
+        status: 'active',
+        joinedAt: serverTimestamp(),
+        lastActiveAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        invitationToken: null,
+        invitationTokenExpiry: null
       });
-      
-      if (!acceptResponse.ok) {
-        const errorData = await acceptResponse.json();
-        throw new Error(errorData.error || 'Fehler beim Akzeptieren der Einladung');
-      }
       
       // Erfolg - weiterleiten zum Dashboard
       router.push('/dashboard?welcome=true');
@@ -218,6 +240,8 @@ export default function AcceptInvitationPage() {
       
       if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
         setError('Falsches Passwort oder Account existiert nicht');
+      } else if (error.code === 'permission-denied') {
+        setError('Keine Berechtigung. Bitte kontaktieren Sie den Administrator.');
       } else {
         setError(error.message || 'Fehler beim Anmelden');
       }
@@ -385,6 +409,7 @@ export default function AcceptInvitationPage() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="Mindestens 6 Zeichen"
+                        autoComplete="new-password"
                         required
                       />
                     </Field>
@@ -399,6 +424,7 @@ export default function AcceptInvitationPage() {
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         placeholder="Passwort wiederholen"
+                        autoComplete="new-password"
                         required
                       />
                     </Field>
@@ -460,6 +486,7 @@ export default function AcceptInvitationPage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Ihr Passwort"
+                      autoComplete="current-password"
                       required
                     />
                   </Field>
@@ -486,7 +513,7 @@ export default function AcceptInvitationPage() {
                 <Button
                   onClick={() => setShowAccountForm(true)}
                   plain
-                  className="w-full"
+                  className="w-full mt-2"
                 >
                   Neuen Account erstellen
                 </Button>
