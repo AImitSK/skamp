@@ -88,10 +88,10 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
           console.log('Keine Mitgliedschaften nach mehreren Versuchen gefunden.');
         }
         
-        // User ist wirklich in keinem Team
-        console.log('User hat keine Team-Mitgliedschaften');
+        // User ist in keinem Team
+        console.log('User hat keine Team-Mitgliedschaften - kein Problem für eingeladene User');
         
-        // Setze leeren Zustand statt eine Organisation zu erstellen
+        // Setze leeren Zustand - keine Organisation erstellen!
         setOrganizations([]);
         setCurrentOrganization(null);
       } else {

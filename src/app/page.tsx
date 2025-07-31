@@ -53,6 +53,16 @@ export default function HomePage() {
         // z.B. plan: 'free', role: 'user'
       });
 
+      // 3. Erstelle Owner-Organisation für normale Registrierung
+      const { teamMemberService } = await import('@/lib/firebase/team-service-enhanced');
+      await teamMemberService.createOwner({
+        userId: newUser.uid,
+        organizationId: newUser.uid,
+        email: newUser.email || '',
+        displayName: newUser.displayName || newUser.email || '',
+        photoUrl: newUser.photoURL || undefined
+      });
+
       router.push('/dashboard'); // Weiterleitung nach erfolgreicher Registrierung
 
     } catch (err: any) {
