@@ -15,7 +15,7 @@ import { SettingsNav } from '@/components/SettingsNav';
 import { Text } from '@/components/text';
 import { teamMemberService } from '@/lib/firebase/organization-service';
 import { TeamMember, UserRole } from '@/types/international';
-import { Timestamp, collection, query, where, onSnapshot, orderBy, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { Timestamp, collection, query, where, onSnapshot, orderBy, getDocs, doc, updateDoc, setDoc, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client-init';
 import { 
   UserPlusIcon,
@@ -287,38 +287,104 @@ export default function TeamSettingsPage() {
       if (data.requiresProcessing) {
         console.log('📧 Automatisches Versenden der Einladung...');
         
-        // Längere Verzögerung damit die Notification sicher geschrieben wurde
+        // Client-seitige Verarbeitung der Notifications
         setTimeout(async () => {
           try {
-            const processResponse = await fetch('/api/team/process-invitations', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${await user.getIdToken()}`
-              }
-            });
+            // Suche die unverarbeitete Notification
+            const notificationsQuery = query(
+              collection(db, 'notifications'),
+              where('userId', '==', organizationId),
+              where('category', '==', 'team_invitation'),
+              where('isProcessed', '!=', true),
+              orderBy('createdAt', 'desc'),
+              limit(5)
+            );
             
-            if (processResponse.ok) {
-              const processData = await processResponse.json();
-              console.log('📬 Process result:', processData);
+            const snapshot = await getDocs(notificationsQuery);
+            console.log('📬 Found unprocessed notifications:', snapshot.size);
+            
+            let processed = 0;
+            
+            for (const notificationDoc of snapshot.docs) {
+              const notification = notificationDoc.data();
+              const memberData = notification.data?.memberData;
+              const invitationToken = notification.data?.invitationToken;
+              const invitationTokenExpiry = notification.data?.invitationTokenExpiry;
               
-              if (processData.result?.processed > 0) {
-                showToast('Einladung wurde erfolgreich versendet!');
-                // Reload nach erfolgreicher Verarbeitung
-                setTimeout(() => {
-                  loadTeamMembers();
-                }, 1000);
-              } else {
-                showToast('Einladung erstellt, warte auf Verarbeitung...');
+              if (!memberData || !invitationToken) {
+                console.log('⚠️ Skipping notification without complete data');
+                continue;
               }
-            } else {
-              console.error('Process response not ok:', await processResponse.text());
+              
+              // Finde die passende Einladung nach E-Mail
+              if (memberData.email === inviteEmail) {
+                console.log('📨 Processing invitation for:', memberData.email);
+                
+                try {
+                  // 1. Erstelle team_member Eintrag
+                  const memberId = `invite_${Date.now()}_${memberData.email.replace('@', '_at_')}`;
+                  await setDoc(doc(db, 'team_members', memberId), {
+                    ...memberData,
+                    id: memberId,
+                    invitationToken,
+                    invitationTokenExpiry,
+                    createdAt: Timestamp.now(),
+                    updatedAt: Timestamp.now()
+                  });
+                  
+                  console.log('✅ Created team member:', memberId);
+                  
+                  // 2. Rufe process-invitations für diese spezifische Einladung auf
+                  const processResponse = await fetch('/api/team/process-invitations', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                      specificMemberId: memberId,
+                      memberEmail: memberData.email,
+                      invitationToken,
+                      organizationId
+                    })
+                  });
+                  
+                  if (processResponse.ok) {
+                    // 3. Markiere Notification als verarbeitet
+                    await updateDoc(doc(db, 'notifications', notificationDoc.id), {
+                      isProcessed: true,
+                      processedAt: Timestamp.now(),
+                      processedMemberId: memberId
+                    });
+                    
+                    processed++;
+                    console.log('✅ Invitation processed and email sent');
+                  } else {
+                    console.error('Failed to send email:', await processResponse.text());
+                  }
+                  
+                } catch (error) {
+                  console.error('Error processing notification:', error);
+                }
+                
+                break; // Nur die aktuelle Einladung verarbeiten
+              }
             }
-          } catch (processError) {
-            console.error('Error processing invitation:', processError);
+            
+            if (processed > 0) {
+              showToast('Einladung wurde erfolgreich versendet!');
+              // Reload nach erfolgreicher Verarbeitung
+              setTimeout(() => {
+                loadTeamMembers();
+              }, 1000);
+            } else {
+              showToast('Einladung wurde erstellt, E-Mail wird vorbereitet...');
+            }
+            
+          } catch (error) {
+            console.error('Error in client-side processing:', error);
             showToast('Einladung erstellt, aber E-Mail konnte nicht versendet werden', 'error');
           }
-        }, 3000); // 3 Sekunden warten
+        }, 2000); // 2 Sekunden warten
         
         showToast('Einladung wird vorbereitet...');
       } else {
