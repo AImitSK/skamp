@@ -1,4 +1,4 @@
-// src/app/dashboard/page.tsx
+// src/app/page.tsx
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
@@ -10,27 +10,32 @@ import { DescriptionList, DescriptionTerm, DescriptionDetails } from "@/componen
 import { Divider } from "@/components/divider";
 import { ApprovalWidget } from '@/components/calendar/ApprovalWidget';
 import { Select } from "@/components/select";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
-export default function DashboardHomePage() {
-  const { user } = useAuth();
-  const { currentOrganization, organizations, loading: orgLoading, switchOrganization, userRole } = useOrganization();
-  const [refreshKey, setRefreshKey] = useState(0);
+// Komponente die useSearchParams verwendet
+function WelcomeHandler({ onWelcome }: { onWelcome: () => void }) {
   const searchParams = useSearchParams();
-  
-  // Welcome message für neue Team-Mitglieder
-  const [showWelcome, setShowWelcome] = useState(false);
   
   useEffect(() => {
     if (searchParams.get('welcome') === 'true') {
-      setShowWelcome(true);
+      onWelcome();
       // URL aufräumen
       const url = new URL(window.location.href);
       url.searchParams.delete('welcome');
       window.history.replaceState({}, '', url.toString());
     }
-  }, [searchParams]);
+  }, [searchParams, onWelcome]);
+  
+  return null;
+}
+
+// Hauptcontent der Seite
+function DashboardContent() {
+  const { user } = useAuth();
+  const { currentOrganization, organizations, loading: orgLoading, switchOrganization, userRole } = useOrganization();
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [showWelcome, setShowWelcome] = useState(false);
 
   // Formatiere das Erstellungsdatum
   const accountCreated = user?.metadata?.creationTime
@@ -74,6 +79,11 @@ export default function DashboardHomePage() {
 
   return (
     <div>
+      {/* Suspense für useSearchParams */}
+      <Suspense fallback={null}>
+        <WelcomeHandler onWelcome={() => setShowWelcome(true)} />
+      </Suspense>
+
       {/* Welcome Banner für neue Mitglieder */}
       {showWelcome && (
         <div className="mb-8 rounded-lg bg-green-50 border border-green-200 p-6">
@@ -196,4 +206,9 @@ export default function DashboardHomePage() {
       </div>
     </div>
   );
+}
+
+// Export mit Suspense Wrapper
+export default function DashboardHomePage() {
+  return <DashboardContent />;
 }
