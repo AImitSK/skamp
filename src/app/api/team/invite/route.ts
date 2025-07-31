@@ -1,9 +1,61 @@
 // src/app/api/team/invite/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthContext } from '@/lib/api/auth-middleware';
-import { Timestamp, collection, query, where, getDocs, addDoc, doc, setDoc } from 'firebase/firestore';
+import { Timestamp, collection, query, where, getDocs, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { serverDb } from '@/lib/firebase/server-init';
 import { UserRole, TeamMember } from '@/types/international';
+import { getTeamInvitationEmailTemplate } from '@/lib/email/team-invitation-templates';
+
+// Helper: Einladungstoken generieren
+function generateInvitationToken(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let token = '';
+  for (let i = 0; i < 32; i++) {
+    token += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return token;
+}
+
+// Helper: E-Mail über SendGrid senden
+async function sendInvitationEmail(data: {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+}): Promise<{ success: boolean; error?: string }> {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${baseUrl}/api/sendgrid/send`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        to: data.to,
+        subject: data.subject,
+        html: data.html,
+        text: data.text,
+        from: {
+          email: process.env.SENDGRID_FROM_EMAIL || 'noreply@celeropress.com',
+          name: 'CeleroPress Team'
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(error);
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('SendGrid error:', error);
+    return { 
+      success: false, 
+      error: error.message || 'E-Mail-Versand fehlgeschlagen' 
+    };
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,7 +68,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { userId } = authContext;
+    const { userId, email: inviterEmail } = authContext;
 
     // 2. Request Body parsen
     const body = await request.json();
@@ -56,126 +108,188 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 5. Prüfe ob E-Mail bereits existiert
+    // 5. Prüfe ob E-Mail bereits existiert (inkl. inaktive)
     const existingQuery = query(
       collection(serverDb, 'team_members'),
       where('email', '==', email),
       where('organizationId', '==', organizationId)
     );
     
+    let existingMember: any = null;
     try {
       const existingSnapshot = await getDocs(existingQuery);
       if (!existingSnapshot.empty) {
-        return NextResponse.json(
-          { error: 'Diese E-Mail-Adresse wurde bereits eingeladen oder ist bereits Mitglied' },
-          { status: 409 }
-        );
+        existingMember = {
+          id: existingSnapshot.docs[0].id,
+          ...existingSnapshot.docs[0].data()
+        };
+        
+        // Wenn inaktiv, reaktiviere statt neu zu erstellen
+        if (existingMember.status === 'inactive') {
+          console.log('🔄 Reactivating inactive member:', email);
+          // Fahre fort mit Reaktivierung
+        } else {
+          return NextResponse.json(
+            { error: 'Diese E-Mail-Adresse wurde bereits eingeladen oder ist bereits Mitglied' },
+            { status: 409 }
+          );
+        }
       }
     } catch (e) {
-      // Ignoriere Read-Fehler, fahre fort
       console.log('Could not check existing members:', e);
     }
 
-    // 6. Prüfe ob Owner bereits existiert
-    let ownerExists = false;
+    // 6. Stelle sicher, dass Owner existiert
+    const ownerId = `${userId}_${organizationId}`;
+    const ownerRef = doc(serverDb, 'team_members', ownerId);
+    
     try {
-      const ownerQuery = query(
+      const ownerDoc = await getDocs(query(
         collection(serverDb, 'team_members'),
         where('organizationId', '==', organizationId),
         where('role', '==', 'owner')
-      );
-      const ownerSnapshot = await getDocs(ownerQuery);
-      ownerExists = !ownerSnapshot.empty;
+      ));
+      
+      if (ownerDoc.empty) {
+        console.log('🚀 Creating owner entry first');
+        
+        // Owner direkt erstellen
+        await setDoc(ownerRef, {
+          id: ownerId,
+          userId,
+          organizationId,
+          email: inviterEmail || '',
+          displayName: inviterEmail?.split('@')[0] || 'Owner',
+          role: 'owner' as UserRole,
+          status: 'active' as const,
+          invitedAt: serverTimestamp(),
+          invitedBy: userId,
+          joinedAt: serverTimestamp(),
+          lastActiveAt: serverTimestamp(),
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+        
+        console.log('✅ Owner created successfully');
+      }
     } catch (e) {
-      console.log('Could not check owner:', e);
+      console.log('Could not check/create owner:', e);
     }
 
-    // 7. Wenn kein Owner existiert, erstelle ihn zuerst
-    if (!ownerExists) {
-      console.log('🚀 Creating owner entry first');
+    // 7. Erstelle oder aktualisiere Team-Mitglied
+    const invitationToken = generateInvitationToken();
+    const tokenExpiry = Timestamp.fromDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)); // 7 Tage
+    
+    let memberId: string;
+    
+    if (existingMember && existingMember.status === 'inactive') {
+      // Reaktiviere inaktives Mitglied
+      memberId = existingMember.id;
+      const memberRef = doc(serverDb, 'team_members', memberId);
       
-      // WORKAROUND: Nutze notifications collection für Owner-Erstellung
-      const ownerNotification = {
-        userId: organizationId, // Für notification rules
-        type: 'system',
-        category: 'team_owner_init',
-        title: 'Owner Initialization',
-        body: 'System: Initialize team owner',
-        data: {
-          action: 'create_owner',
-          ownerData: {
-            userId,
-            organizationId,
-            email: authContext.email || '',
-            displayName: authContext.email?.split('@')[0] || 'Owner',
-            role: 'owner',
-            status: 'active',
-            invitedAt: Timestamp.now(),
-            invitedBy: userId,
-            joinedAt: Timestamp.now(),
-            lastActiveAt: Timestamp.now()
-          }
-        },
-        isRead: false,
-        createdAt: Timestamp.now()
+      await setDoc(memberRef, {
+        ...existingMember,
+        role, // Aktualisiere Rolle
+        status: 'invited',
+        invitedAt: serverTimestamp(),
+        invitedBy: userId,
+        invitationToken,
+        invitationTokenExpiry: tokenExpiry,
+        updatedAt: serverTimestamp()
+      });
+      
+      console.log('✅ Reactivated team member:', memberId);
+    } else {
+      // Erstelle neues Mitglied
+      memberId = `invite_${Date.now()}_${email.replace('@', '_at_')}`;
+      const memberData: Partial<TeamMember> = {
+        id: memberId,
+        userId: '', // Wird beim Accept gesetzt
+        organizationId,
+        email,
+        displayName: email.split('@')[0],
+        role,
+        status: 'invited',
+        invitedAt: serverTimestamp() as Timestamp,
+        invitedBy: userId,
+        lastActiveAt: serverTimestamp() as Timestamp
       };
 
-      await addDoc(collection(serverDb, 'notifications'), ownerNotification);
+      // Speichere mit zusätzlichen Feldern, die nicht in TeamMember Type sind
+      await setDoc(doc(serverDb, 'team_members', memberId), {
+        ...memberData,
+        invitationToken,
+        invitationTokenExpiry: tokenExpiry,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      console.log('✅ Created new team member:', memberId);
     }
 
-    // 8. Team-Einladung als Notification erstellen (Workaround)
-    const invitationNotification = {
-      userId: organizationId, // Für notification rules
-      type: 'system',
-      category: 'team_invitation',
-      title: 'Neue Team-Einladung',
-      body: `Einladung für ${email} als ${role}`,
-      data: {
-        action: 'create_team_member',
-        memberData: {
-          email,
-          organizationId,
-          role,
-          displayName: email.split('@')[0],
-          status: 'invited',
-          invitedAt: Timestamp.now(),
-          invitedBy: userId,
-          userId: '', // Wird beim Accept gesetzt
-          lastActiveAt: Timestamp.now()
-        }
-      },
-      isRead: false,
-      createdAt: Timestamp.now()
-    };
-
-    const notificationRef = await addDoc(collection(serverDb, 'notifications'), invitationNotification);
-    const notificationId = notificationRef.id;
-
-    console.log('✅ Team invitation created as notification:', notificationId);
-
-    // 9. Versuche direkt in team_members zu schreiben (optional)
+    // 8. Hole Inviter-Name für E-Mail
+    let inviterName = 'Das Team';
+    let organizationName = 'CeleroPress';
+    
     try {
-      const memberData = invitationNotification.data.memberData;
-      const memberId = `${Date.now()}_${email.replace('@', '_at_')}`;
-      await setDoc(doc(serverDb, 'team_members', memberId), memberData);
+      // Versuche Owner-Daten zu holen
+      const ownerDoc = await getDocs(query(
+        collection(serverDb, 'team_members'),
+        where('organizationId', '==', organizationId),
+        where('userId', '==', userId)
+      ));
       
-      console.log('✅ Also created in team_members:', memberId);
+      if (!ownerDoc.empty) {
+        const ownerData = ownerDoc.docs[0].data();
+        inviterName = ownerData.displayName || ownerData.email || inviterName;
+      }
+    } catch (e) {
+      console.log('Could not get inviter info:', e);
+    }
+
+    // 9. Sende Einladungs-E-Mail DIREKT
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const invitationUrl = `${baseUrl}/invite/${invitationToken}?id=${memberId}`;
+    
+    const emailData = getTeamInvitationEmailTemplate({
+      recipientName: email.split('@')[0],
+      recipientEmail: email,
+      inviterName,
+      organizationName,
+      role,
+      invitationUrl,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    });
+
+    const emailResult = await sendInvitationEmail({
+      to: email,
+      subject: emailData.subject,
+      html: emailData.html,
+      text: emailData.text
+    });
+
+    if (!emailResult.success) {
+      // E-Mail fehlgeschlagen - trotzdem erfolgreich, da Mitglied erstellt wurde
+      console.error('❌ Failed to send invitation email:', emailResult.error);
       
       return NextResponse.json({
         success: true,
         memberId,
-        message: 'Einladung wurde erfolgreich erstellt'
+        message: 'Einladung wurde erstellt, aber E-Mail konnte nicht versendet werden',
+        emailError: emailResult.error,
+        requiresManualSend: true
       });
-    } catch (directWriteError) {
-      console.log('Could not write directly to team_members, using notification workaround');
     }
 
-    // 10. Fallback: Nur Notification wurde erstellt
+    console.log('✅ Invitation email sent successfully to:', email);
+
+    // 10. Erfolg
     return NextResponse.json({
       success: true,
-      memberId: notificationId,
-      message: 'Einladung wurde erstellt. Bitte laden Sie die Seite neu.',
-      requiresProcessing: true
+      memberId,
+      message: existingMember ? 
+        'Mitglied wurde reaktiviert und Einladung wurde versendet' : 
+        'Einladung wurde erfolgreich versendet',
+      invitationUrl // Für Debug/Testing
     });
 
   } catch (error: any) {

@@ -14,7 +14,8 @@ import {
   writeBatch,
   limit,
   Timestamp,
-  FirestoreError
+  FirestoreError,
+  setDoc
 } from 'firebase/firestore';
 import { db } from './client-init';
 import { 
@@ -84,6 +85,60 @@ export const organizationService = {
     } catch (error) {
       console.error('Error creating organization:', error);
       throw new Error('Fehler beim Erstellen der Organisation');
+    }
+  },
+
+  /**
+   * Stellt sicher, dass ein Owner-Eintrag existiert
+   * Wird beim ersten Login aufgerufen um den Owner korrekt zu initialisieren
+   */
+  async ensureOwnerExists(
+    userId: string, 
+    organizationId: string,
+    userData: {
+      email: string;
+      displayName?: string;
+      photoUrl?: string;
+    }
+  ): Promise<void> {
+    try {
+      const ownerId = `${userId}_${organizationId}`;
+      const ownerRef = doc(db, 'team_members', ownerId);
+      
+      const existing = await getDoc(ownerRef);
+      if (!existing.exists()) {
+        console.log('🔧 Creating owner entry for first-time user');
+        
+        // Owner direkt erstellen (kein Notification-Workaround)
+        await setDoc(ownerRef, {
+          id: ownerId,
+          userId,
+          organizationId,
+          email: userData.email,
+          displayName: userData.displayName || userData.email,
+          photoUrl: userData.photoUrl,
+          role: 'owner' as UserRole,
+          status: 'active' as const,
+          invitedAt: serverTimestamp(),
+          invitedBy: userId,
+          joinedAt: serverTimestamp(),
+          lastActiveAt: serverTimestamp(),
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+        
+        console.log('✅ Owner entry created successfully');
+      } else {
+        // Update lastActiveAt
+        await updateDoc(ownerRef, {
+          lastActiveAt: serverTimestamp(),
+          photoUrl: userData.photoUrl, // Update photo if changed
+          displayName: userData.displayName || userData.email // Update name if changed
+        });
+      }
+    } catch (error) {
+      console.error('Error ensuring owner exists:', error);
+      // Don't throw - this shouldn't block login
     }
   },
 
@@ -286,7 +341,7 @@ export const teamMemberService = {
     }
   },
 
-    /**
+  /**
    * Erstellt ein Team-Mitglied direkt ohne Organization-Check
    * Workaround für fehlende organizations Collection
    */
@@ -384,6 +439,11 @@ export const teamMemberService = {
       // Prüfe ob Email bereits eingeladen
       const existing = await this.getByEmailAndOrg(data.email, data.organizationId);
       if (existing) {
+        // Prüfe ob inaktiv - dann reaktivieren
+        if (existing.status === 'inactive') {
+          await this.reactivate(existing.id!, data.invitedBy);
+          return existing.id!;
+        }
         throw new Error('Diese E-Mail wurde bereits eingeladen');
       }
 
@@ -413,6 +473,25 @@ export const teamMemberService = {
       return docRef.id;
     } catch (error) {
       console.error('Error inviting member:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Reaktiviert ein inaktives Mitglied
+   */
+  async reactivate(memberId: string, reactivatedBy: string): Promise<void> {
+    try {
+      const docRef = doc(db, 'team_members', memberId);
+      
+      await updateDoc(docRef, {
+        status: 'invited',
+        invitedAt: serverTimestamp(),
+        invitedBy: reactivatedBy,
+        updatedAt: serverTimestamp()
+      });
+    } catch (error) {
+      console.error('Error reactivating member:', error);
       throw error;
     }
   },
@@ -505,6 +584,26 @@ export const teamMemberService = {
       });
     } catch (error) {
       console.error('Error removing member:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Mitglied hart löschen (für Clean-up)
+   */
+  async hardDelete(memberId: string): Promise<void> {
+    try {
+      const docRef = doc(db, 'team_members', memberId);
+      
+      // Owner kann nicht gelöscht werden
+      const member = await getDoc(docRef);
+      if (member.exists() && member.data().role === 'owner') {
+        throw new Error('Owner kann nicht gelöscht werden');
+      }
+
+      await deleteDoc(docRef);
+    } catch (error) {
+      console.error('Error hard deleting member:', error);
       throw error;
     }
   },
