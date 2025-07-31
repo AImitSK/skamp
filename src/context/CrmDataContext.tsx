@@ -3,6 +3,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useAuth } from './AuthContext';
+import { useOrganization } from './OrganizationContext';
 import { CompanyEnhanced, ContactEnhanced, Tag } from '@/types/crm-enhanced';
 import { companiesEnhancedService, contactsEnhancedService, tagsEnhancedService } from '@/lib/firebase/crm-service-enhanced';
 
@@ -19,6 +20,7 @@ const CrmDataContext = createContext<CrmDataContextType | undefined>(undefined);
 
 export function CrmDataProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+  const { currentOrganization, loading: orgLoading } = useOrganization();
   const [companies, setCompanies] = useState<CompanyEnhanced[]>([]);
   const [contacts, setContacts] = useState<ContactEnhanced[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
@@ -26,18 +28,25 @@ export function CrmDataProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<Error | null>(null);
 
   const fetchData = useCallback(async () => {
-    if (!user) {
-        setLoading(false);
-        return;
-    };
+    // Warte bis Organisation geladen ist
+    if (!user || !currentOrganization || orgLoading) {
+      setLoading(false);
+      return;
+    }
+    
     setLoading(true);
     setError(null);
+    
     try {
+      // Verwende die aktuelle Organisation statt user.uid
+      const orgId = currentOrganization.id;
+      
       const [companiesData, contactsData, tagsData] = await Promise.all([
-        companiesEnhancedService.getAll(user.uid),
-        contactsEnhancedService.getAll(user.uid),
-        tagsEnhancedService.getAllAsLegacyTags(user.uid),
+        companiesEnhancedService.getAll(orgId),
+        contactsEnhancedService.getAll(orgId),
+        tagsEnhancedService.getAllAsLegacyTags(orgId),
       ]);
+      
       setCompanies(companiesData);
       setContacts(contactsData);
       setTags(tagsData);
@@ -47,7 +56,7 @@ export function CrmDataProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, currentOrganization, orgLoading]);
 
   useEffect(() => {
     fetchData();

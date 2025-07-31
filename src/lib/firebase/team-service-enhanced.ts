@@ -209,26 +209,37 @@ class TeamMemberEnhancedService extends BaseService<TeamMemberExtended> {
       throw new Error(tokenData.error || 'Ungültiger Token');
     }
 
-    // Update Mitglied
+    // Update Mitglied - WICHTIG: Verwende Admin SDK oder Service Account
+    // Da der neue User noch keine Rechte hat
     const memberRef = doc(db, 'team_members', memberId);
-    const updateData: any = {
-      userId: userData.userId,
-      displayName: userData.displayName,
-      status: 'active',
-      joinedAt: serverTimestamp(),
-      lastActiveAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-      // Lösche Token-Felder
-      invitationToken: null,
-      invitationTokenExpiry: null
-    };
+    
+    try {
+      const updateData: any = {
+        userId: userData.userId,
+        displayName: userData.displayName,
+        status: 'active',
+        joinedAt: serverTimestamp(),
+        lastActiveAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        // Lösche Token-Felder
+        invitationToken: null,
+        invitationTokenExpiry: null
+      };
 
-    // Füge photoUrl nur hinzu, wenn vorhanden
-    if (userData.photoUrl) {
-      updateData.photoUrl = userData.photoUrl;
+      // Füge photoUrl nur hinzu, wenn vorhanden
+      if (userData.photoUrl) {
+        updateData.photoUrl = userData.photoUrl;
+      }
+
+      await updateDoc(memberRef, updateData);
+    } catch (error: any) {
+      console.error('Error updating member:', error);
+      // Wenn Permissions fehlen, versuche es über API Route
+      if (error.code === 'permission-denied') {
+        throw new Error('Berechtigung fehlt. Bitte kontaktieren Sie den Administrator.');
+      }
+      throw error;
     }
-
-    await updateDoc(memberRef, updateData);
   }
 
   /**
@@ -271,10 +282,43 @@ class TeamMemberEnhancedService extends BaseService<TeamMemberExtended> {
   }
 
   /**
-   * Zählt aktive Mitglieder
+   * Lädt alle Mitgliedschaften eines Users
    */
-  async countActiveMembers(organizationId: string): Promise<number> {
-    return this.count(organizationId, { status: 'active' });
+  async getUserMemberships(userId: string): Promise<TeamMember[]> {
+    try {
+      const q = query(
+        collection(db, 'team_members'),
+        where('userId', '==', userId)
+      );
+      
+      const snapshot = await getDocs(q);
+      const memberships: TeamMember[] = [];
+      
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        memberships.push({
+          id: doc.id,
+          userId: data.userId,
+          organizationId: data.organizationId,
+          email: data.email,
+          displayName: data.displayName,
+          photoUrl: data.photoUrl,
+          role: data.role,
+          status: data.status,
+          invitedAt: data.invitedAt,
+          invitedBy: data.invitedBy,
+          joinedAt: data.joinedAt,
+          lastActiveAt: data.lastActiveAt,
+          restrictedToCompanyIds: data.restrictedToCompanyIds,
+          expiresAt: data.expiresAt
+        });
+      });
+      
+      return memberships;
+    } catch (error) {
+      console.error('Error getting user memberships:', error);
+      return [];
+    }
   }
 
   // ========================================
