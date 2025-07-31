@@ -169,6 +169,13 @@ export default function AcceptInvitationPage() {
       });
       
       // 3. Einladung akzeptieren - DIREKT mit updateDoc
+      console.log('🔥 DEBUG: Akzeptiere Einladung:', {
+        memberId: invitationId,
+        userId: userCredential.user.uid,
+        organizationId: invitation.organizationId,
+        email: invitation.email
+      });
+      
       const memberRef = doc(db, 'team_members', invitationId);
       await updateDoc(memberRef, {
         userId: userCredential.user.uid,
@@ -181,6 +188,8 @@ export default function AcceptInvitationPage() {
         invitationToken: null,
         invitationTokenExpiry: null
       });
+      
+      console.log('✅ Einladung erfolgreich akzeptiert, weiterleitung zu Dashboard...');
       
       // Erfolg - weiterleiten zum Dashboard
       router.push('/dashboard?welcome=true');
