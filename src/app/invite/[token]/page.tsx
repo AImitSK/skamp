@@ -189,7 +189,10 @@ export default function AcceptInvitationPage() {
         invitationTokenExpiry: null
       });
       
-      console.log('✅ Einladung erfolgreich akzeptiert, weiterleitung zu Dashboard...');
+      console.log('✅ Einladung erfolgreich akzeptiert, warte kurz und leite dann weiter...');
+      
+      // WICHTIG: Kurz warten damit Firestore synchronisiert
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
       // Erfolg - weiterleiten zum Dashboard
       router.push('/dashboard?welcome=true');
