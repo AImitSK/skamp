@@ -110,6 +110,7 @@ export default function TeamSettingsPage() {
               m.organizationId === invitedMember.organizationId
             );
             if (!exists) {
+              console.log('📥 Adding notification-based member:', invitedMember.email);
               return [...prev, invitedMember];
             }
             return prev;
@@ -117,8 +118,11 @@ export default function TeamSettingsPage() {
         }
       });
       
-      // Update pending count
-      const unprocessed = snapshot.docs.filter(doc => !doc.data().isProcessed);
+      // Update pending count - nur unverarbeitete zählen
+      const unprocessed = snapshot.docs.filter(doc => {
+        const data = doc.data();
+        return !data.isProcessed && data.data?.memberData;
+      });
       setPendingInvitations(unprocessed.length);
     }, (error) => {
       console.error('Error listening to invitation notifications:', error);
@@ -140,8 +144,9 @@ export default function TeamSettingsPage() {
       setLoading(true);
       console.log('👥 Loading team members for organization:', organizationId);
       
-      // Behalte Notifications-basierte Einträge
+      // WICHTIG: Behalte Notifications-basierte Einträge während des Ladens
       const notificationMembers = teamMembers.filter(m => m._fromNotification);
+      console.log('📌 Preserving notification members:', notificationMembers.length);
       
       const members = await teamMemberService.getByOrganization(organizationId);
       
@@ -203,7 +208,11 @@ export default function TeamSettingsPage() {
         
         // Füge Notification-Members hinzu, die noch nicht in den echten Members sind
         notificationMembers.forEach(nm => {
-          if (!members.some(m => m.email === nm.email)) {
+          const alreadyExists = members.some(m => 
+            m.email === nm.email && m.organizationId === nm.organizationId
+          );
+          if (!alreadyExists) {
+            console.log('📌 Keeping notification member:', nm.email);
             combinedMembers.push(nm);
           }
         });
@@ -278,7 +287,7 @@ export default function TeamSettingsPage() {
       if (data.requiresProcessing) {
         console.log('📧 Automatisches Versenden der Einladung...');
         
-        // Kurze Verzögerung damit die Notification geschrieben wird
+        // Längere Verzögerung damit die Notification sicher geschrieben wurde
         setTimeout(async () => {
           try {
             const processResponse = await fetch('/api/team/process-invitations', {
@@ -291,19 +300,31 @@ export default function TeamSettingsPage() {
             
             if (processResponse.ok) {
               const processData = await processResponse.json();
+              console.log('📬 Process result:', processData);
+              
               if (processData.result?.processed > 0) {
                 showToast('Einladung wurde erfolgreich versendet!');
+                // Reload nach erfolgreicher Verarbeitung
+                setTimeout(() => {
+                  loadTeamMembers();
+                }, 1000);
+              } else {
+                showToast('Einladung erstellt, warte auf Verarbeitung...');
               }
+            } else {
+              console.error('Process response not ok:', await processResponse.text());
             }
           } catch (processError) {
             console.error('Error processing invitation:', processError);
             showToast('Einladung erstellt, aber E-Mail konnte nicht versendet werden', 'error');
           }
-        }, 1000);
+        }, 3000); // 3 Sekunden warten
         
-        showToast('Einladung wird versendet...');
+        showToast('Einladung wird vorbereitet...');
       } else {
         showToast('Einladung wurde erfolgreich versendet!');
+        // Bei direktem Versand neu laden
+        await loadTeamMembers();
       }
       
       setShowInviteModal(false);
