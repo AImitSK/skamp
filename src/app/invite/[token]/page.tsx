@@ -22,7 +22,7 @@ import {
 import { teamMemberService } from '@/lib/firebase/team-service-enhanced';
 import { getDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client-init';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase/client-init';
 
 interface InvitationData {
@@ -74,14 +74,6 @@ export default function AcceptInvitationPage() {
     validateInvitation();
   }, [token, invitationId]);
   
-  // Wenn User bereits eingeloggt ist, automatisch ausloggen
-  useEffect(() => {
-    if (user && invitation && user.email !== invitation.email) {
-      // User ist mit falschem Account eingeloggt
-      handleSignOut();
-    }
-  }, [user, invitation]);
-  
   const validateInvitation = async () => {
     try {
       setLoading(true);
@@ -127,7 +119,11 @@ export default function AcceptInvitationPage() {
       });
       setDisplayName(memberData.displayName || memberData.email.split('@')[0]);
       setValid(true);
-      setShowAccountForm(true);
+      
+      // Zeige Account-Form nur wenn kein User eingeloggt ist oder der richtige User
+      if (!user || user.email === memberData.email) {
+        setShowAccountForm(true);
+      }
       
     } catch (error: any) {
       console.error('Error validating invitation:', error);
@@ -236,7 +232,7 @@ export default function AcceptInvitationPage() {
       console.error('Error logging in:', error);
       
       if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
-        setError('Falsches Passwort');
+        setError('Falsches Passwort oder Account existiert nicht');
       } else {
         setError(error.message || 'Fehler beim Anmelden');
       }
@@ -246,9 +242,12 @@ export default function AcceptInvitationPage() {
   };
   
   const handleSignOut = async () => {
-    if (user) {
-      await fetch('/api/auth/signout', { method: 'POST' });
+    try {
+      await signOut(auth);
+      // Seite neu laden um Einladung erneut zu prüfen
       window.location.reload();
+    } catch (error) {
+      console.error('Error signing out:', error);
     }
   };
   
@@ -342,8 +341,38 @@ export default function AcceptInvitationPage() {
               </div>
             )}
             
-            {/* Account-Erstellungsformular */}
-            {showAccountForm ? (
+            {/* Account-Erstellungsformular oder Ausloggen-Option bei falschem User */}
+            {user && user.email !== invitation?.email ? (
+              <>
+                <div className="rounded-md bg-yellow-50 p-4">
+                  <div className="flex">
+                    <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400" />
+                    <div className="ml-3">
+                      <p className="text-sm text-yellow-800">
+                        Sie sind als <span className="font-medium">{user.email}</span> angemeldet, 
+                        aber diese Einladung ist für <span className="font-medium">{invitation?.email}</span>.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col gap-2">
+                  <Button
+                    onClick={handleSignOut}
+                    className="w-full bg-[#005fab] hover:bg-[#004a8c] text-white"
+                  >
+                    Abmelden und mit {invitation?.email} fortfahren
+                  </Button>
+                  <Button
+                    onClick={() => router.push('/dashboard')}
+                    plain
+                    className="w-full"
+                  >
+                    Zum Dashboard (ohne Einladung anzunehmen)
+                  </Button>
+                </div>
+              </>
+            ) : showAccountForm ? (
               <>
                 <div className="space-y-4">
                   <Field>
