@@ -66,8 +66,7 @@ export default function TeamSettingsPage() {
   useEffect(() => {
     if (user) {
       loadTeamMembers();
-      // Ensure owner exists
-      ensureOwnerExists();
+      // Entfernt: ensureOwnerExists() - erstellt falsche Owner-Einträge für eingeladene User
     }
   }, [user]);
   
