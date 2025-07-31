@@ -12,6 +12,7 @@ import { ApprovalWidget } from '@/components/calendar/ApprovalWidget';
 import { Select } from "@/components/select";
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { UserGroupIcon } from '@heroicons/react/20/solid';
 
 // Komponente für den Welcome-Check mit useSearchParams
 function WelcomeCheck({ onWelcome }: { onWelcome: () => void }) {
