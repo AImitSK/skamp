@@ -23,11 +23,20 @@ interface InvitationData {
   invitedBy: string;
 }
 
-export default function AcceptInvitationPage({ 
+// Server Component für Next.js 15
+export default async function AcceptInvitationPage({ 
   params 
 }: { 
-  params: { token: string } 
+  params: Promise<{ token: string }> 
 }) {
+  // Await params für Next.js 15
+  const resolvedParams = await params;
+  
+  return <AcceptInvitationClient token={resolvedParams.token} />;
+}
+
+// Client Component
+function AcceptInvitationClient({ token }: { token: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
@@ -38,10 +47,9 @@ export default function AcceptInvitationPage({
   const [invitation, setInvitation] = useState<InvitationData | null>(null);
   const [valid, setValid] = useState(false);
   
-  const token = params.token;
   const invitationId = searchParams.get('id');
   
-  // Rolle Labels
+  // Role configuration
   const roleLabels: Record<string, string> = {
     owner: 'Owner',
     admin: 'Administrator',

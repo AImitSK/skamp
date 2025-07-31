@@ -399,97 +399,214 @@ export class FlexibleEmailProcessor {
     return message;
   }
 
+// Ersetzen Sie die existierende applyRoutingRules() Methode in email-processor-flexible.ts
+// ab Zeile 495 mit dieser verbesserten Version:
+
   /**
    * Wendet Routing-Regeln an
-   * Diese werden als Labels gespeichert, da wir server-seitig keine User-Zuweisungen machen können
+   * Verbesserte Version mit vollständiger Unterstützung aller Regel-Features
    */
   private async applyRoutingRules(message: EmailMessage, emailAddress: EmailAddress): Promise<void> {
     if (!emailAddress.routingRules || emailAddress.routingRules.length === 0) {
+      console.log('📭 No routing rules defined for email address:', emailAddress.email);
       return;
     }
 
-    console.log('📋 Applying routing rules');
+    console.log('📋 Applying routing rules for message:', message.subject);
 
-    for (const rule of emailAddress.routingRules) {
+    // Sortiere Regeln nach Priorität (niedrigere Zahlen = höhere Priorität)
+    const sortedRules = [...emailAddress.routingRules].sort((a, b) => 
+      (a.priority || 999) - (b.priority || 999)
+    );
+
+    // Durchlaufe alle Regeln
+    for (const rule of sortedRules) {
+      // Überspringe deaktivierte Regeln
+      if (rule.enabled === false) {
+        console.log(`⏭️ Skipping disabled rule: ${rule.name}`);
+        continue;
+      }
+
+      console.log(`🔍 Checking rule: ${rule.name}`);
+      
       if (this.matchesRuleConditions(message, rule.conditions)) {
         console.log(`✅ Rule matched: ${rule.name}`);
         
         // Actions anwenden
-        const updates: Partial<EmailMessage> = {};
+        const updates: Partial<EmailMessage> = {
+          labels: [...(message.labels || [])]
+        };
 
-        // Team-Zuweisung als Labels speichern
+        // 1. Team-Zuweisung
         if (rule.actions.assignTo && rule.actions.assignTo.length > 0) {
+          console.log(`👥 Assigning to team members:`, rule.actions.assignTo);
+          
+          // Speichere Team-Zuweisungen als spezielle Labels
           const assignmentLabels = rule.actions.assignTo.map(userId => `assigned:${userId}`);
-          updates.labels = [...(message.labels || []), ...assignmentLabels];
-        }
-
-        // Tags hinzufügen
-        if (rule.actions.addTags && rule.actions.addTags.length > 0) {
-          updates.labels = [...(updates.labels || message.labels || []), ...rule.actions.addTags];
-        }
-
-        // Priorität setzen
-        if (rule.actions.setPriority) {
-          updates.importance = rule.actions.setPriority;
-        }
-
-        // Updates anwenden
-        if (Object.keys(updates).length > 0 && message.id) {
-          await emailMessageService.update(message.id, updates);
+          updates.labels = [...updates.labels!, ...assignmentLabels];
           
-          // Update local message object
-          Object.assign(message, updates);
-        }
-
-        // Auto-Reply markieren (wird client-seitig verarbeitet)
-        if (rule.actions.autoReply) {
-          console.log('📨 Auto-reply marked for template:', rule.actions.autoReply);
-          if (!updates.labels) updates.labels = message.labels || [];
-          updates.labels.push(`auto-reply:${rule.actions.autoReply}`);
+          // Füge auch ein generelles "assigned" Label hinzu
+          if (!updates.labels!.includes('assigned')) {
+            updates.labels!.push('assigned');
+          }
           
-          if (message.id) {
-            await emailMessageService.update(message.id, { labels: updates.labels });
+          // Speichere die Zuweisungen auch in einem speziellen Feld (falls vorhanden)
+          if ('assignedTo' in message) {
+            (updates as any).assignedTo = rule.actions.assignTo;
           }
         }
+
+        // 2. Tags hinzufügen
+        if (rule.actions.addTags && rule.actions.addTags.length > 0) {
+          console.log(`🏷️ Adding tags:`, rule.actions.addTags);
+          
+          // Füge Tags hinzu, aber verhindere Duplikate
+          rule.actions.addTags.forEach(tag => {
+            if (!updates.labels!.includes(tag)) {
+              updates.labels!.push(tag);
+            }
+          });
+        }
+
+        // 3. Priorität setzen
+        if (rule.actions.setPriority) {
+          console.log(`🚨 Setting priority:`, rule.actions.setPriority);
+          updates.importance = rule.actions.setPriority;
+          
+          // Füge auch ein Prioritäts-Label hinzu für bessere Sichtbarkeit
+          const priorityLabel = `priority:${rule.actions.setPriority}`;
+          if (!updates.labels!.includes(priorityLabel)) {
+            updates.labels!.push(priorityLabel);
+          }
+        }
+
+        // 4. Auto-Reply markieren
+        if (rule.actions.autoReply) {
+          console.log('📨 Marking for auto-reply with template:', rule.actions.autoReply);
+          
+          // Markiere für Auto-Reply mit Template-ID
+          const autoReplyLabel = `auto-reply:${rule.actions.autoReply}`;
+          if (!updates.labels!.includes(autoReplyLabel)) {
+            updates.labels!.push(autoReplyLabel);
+          }
+          
+          // Füge generelles auto-reply Label hinzu
+          if (!updates.labels!.includes('auto-reply-pending')) {
+            updates.labels!.push('auto-reply-pending');
+          }
+        }
+
+        // 5. Regel-Name als Label hinzufügen (für Debugging/Tracking)
+        const ruleLabel = `rule:${rule.name.toLowerCase().replace(/\s+/g, '-')}`;
+        if (!updates.labels!.includes(ruleLabel)) {
+          updates.labels!.push(ruleLabel);
+        }
+
+        // Updates nur anwenden wenn sich etwas geändert hat
+        const hasChanges = updates.labels!.length > (message.labels || []).length ||
+                          updates.importance !== message.importance;
+
+        if (hasChanges && message.id) {
+          console.log('💾 Applying rule updates:', updates);
+          
+          try {
+            await emailMessageService.update(message.id, updates);
+            
+            // Update local message object
+            Object.assign(message, updates);
+            
+            console.log('✅ Rule actions applied successfully');
+          } catch (error) {
+            console.error('❌ Error applying rule actions:', error);
+          }
+        }
+
+        // Stoppe nach der ersten passenden Regel
+        console.log('🛑 Stopping after first matching rule (as per email standards)');
+        break;
+      } else {
+        console.log(`❌ Rule did not match: ${rule.name}`);
       }
     }
+
+    // Log final state
+    console.log('📊 Final message labels:', message.labels);
+    console.log('📊 Final message importance:', message.importance);
   }
 
   /**
    * Prüft ob eine Nachricht den Regel-Bedingungen entspricht
+   * Verbesserte Version mit detaillierterem Logging
    */
   private matchesRuleConditions(
     message: EmailMessage, 
     conditions: any
   ): boolean {
+    // Wenn keine Bedingungen definiert sind, matcht die Regel nicht
+    if (!conditions || Object.keys(conditions).length === 0) {
+      console.log('  ⚠️ No conditions defined for rule');
+      return false;
+    }
+
+    let conditionsChecked = 0;
+    let conditionsMet = 0;
+
     // Subject Check
-    if (conditions.subject) {
-      if (!message.subject.toLowerCase().includes(conditions.subject.toLowerCase())) {
-        return false;
+    if (conditions.subject !== undefined && conditions.subject !== '') {
+      conditionsChecked++;
+      const subjectLower = message.subject.toLowerCase();
+      const conditionLower = conditions.subject.toLowerCase();
+      
+      if (subjectLower.includes(conditionLower)) {
+        conditionsMet++;
+        console.log(`  ✅ Subject condition met: "${conditions.subject}" found in "${message.subject}"`);
+      } else {
+        console.log(`  ❌ Subject condition NOT met: "${conditions.subject}" not found in "${message.subject}"`);
       }
     }
 
-    // From Check
-    if (conditions.from) {
+    // From Check (Email oder Name)
+    if (conditions.from !== undefined && conditions.from !== '') {
+      conditionsChecked++;
       const fromCheck = conditions.from.toLowerCase();
-      if (!message.from.email.includes(fromCheck) && 
-          !(message.from.name?.toLowerCase().includes(fromCheck))) {
-        return false;
+      const emailMatches = message.from.email.toLowerCase().includes(fromCheck);
+      const nameMatches = message.from.name ? 
+        message.from.name.toLowerCase().includes(fromCheck) : false;
+      
+      if (emailMatches || nameMatches) {
+        conditionsMet++;
+        console.log(`  ✅ From condition met: "${conditions.from}" found in ${emailMatches ? 'email' : 'name'}`);
+      } else {
+        console.log(`  ❌ From condition NOT met: "${conditions.from}" not found in from field`);
       }
     }
 
-    // Keywords Check
+    // Keywords Check (im Betreff UND Text)
     if (conditions.keywords && conditions.keywords.length > 0) {
+      conditionsChecked++;
       const content = `${message.subject} ${message.textContent}`.toLowerCase();
-      const hasKeyword = conditions.keywords.some((keyword: string) => 
-        content.includes(keyword.toLowerCase())
-      );
-      if (!hasKeyword) {
-        return false;
+      const matchedKeywords: string[] = [];
+      
+      conditions.keywords.forEach((keyword: string) => {
+        if (content.includes(keyword.toLowerCase())) {
+          matchedKeywords.push(keyword);
+        }
+      });
+      
+      if (matchedKeywords.length > 0) {
+        conditionsMet++;
+        console.log(`  ✅ Keywords condition met: Found ${matchedKeywords.join(', ')}`);
+      } else {
+        console.log(`  ❌ Keywords condition NOT met: None of [${conditions.keywords.join(', ')}] found`);
       }
     }
 
-    return true;
+    // Alle definierten Bedingungen müssen erfüllt sein
+    const allConditionsMet = conditionsChecked > 0 && conditionsMet === conditionsChecked;
+    
+    console.log(`  📊 Rule condition summary: ${conditionsMet}/${conditionsChecked} conditions met`);
+    
+    return allConditionsMet;
   }
 }
 
