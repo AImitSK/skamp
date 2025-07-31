@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import { Heading } from '@/components/heading';
 import { Button } from '@/components/button';
 import { Badge } from '@/components/badge';
@@ -48,7 +49,8 @@ const showToast = (message: string, type: 'success' | 'error' = 'success') => {
 
 export default function TeamSettingsPage() {
   const { user } = useAuth();
-  const organizationId = user?.uid || '';
+  const { currentOrganization } = useOrganization();
+  const organizationId = currentOrganization?.id || '';
   
   // State
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
@@ -83,7 +85,7 @@ export default function TeamSettingsPage() {
         // Erstelle Owner-Daten ohne undefined
         const ownerData: any = {
           userId: user.uid,
-          organizationId: user.uid,
+          organizationId: organizationId,
           email: user.email || '',
           displayName: user.displayName || user.email || ''
         };

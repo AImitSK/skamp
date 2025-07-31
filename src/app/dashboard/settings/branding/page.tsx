@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useOrganization } from "@/context/OrganizationContext";
 import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
 import { Button } from "@/components/button";
@@ -62,6 +63,7 @@ function Alert({
 
 export default function BrandingPage() {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [loading, setLoading] = useState(true);
@@ -69,7 +71,7 @@ export default function BrandingPage() {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
-  const [organizationId, setOrganizationId] = useState<string>('');
+  const organizationId = currentOrganization?.id || '';
 
   const [formData, setFormData] = useState<Partial<BrandingSettings>>({
     companyName: '',
@@ -84,39 +86,6 @@ export default function BrandingPage() {
     website: '',
     showCopyright: true
   });
-
-  // Lade OrganizationId
-  useEffect(() => {
-    const loadOrganization = async () => {
-      if (!user) return;
-
-      console.log('🟢 Loading organization for user:', user.uid);
-
-      try {
-        const orgs = await teamMemberService.getUserOrganizations(user.uid);
-        console.log('🟢 Organizations found:', orgs);
-
-        if (orgs.length > 0) {
-          const orgId = orgs[0].organization.id;
-          setOrganizationId(orgId);
-          console.log('🟢 Setting organizationId:', orgId);
-        } else {
-          // Fallback auf userId
-          const fallbackId = user.uid;
-          setOrganizationId(fallbackId);
-          console.log('🟢 Using userId as fallback:', fallbackId);
-        }
-      } catch (error) {
-        console.error('Error loading organization:', error);
-        // Fallback auf userId
-        const fallbackId = user.uid;
-        setOrganizationId(fallbackId);
-        console.log('🟢 Error fallback - using userId:', fallbackId);
-      }
-    };
-
-    loadOrganization();
-  }, [user]);
 
   // Lade Branding Settings wenn organizationId verfügbar ist
   useEffect(() => {

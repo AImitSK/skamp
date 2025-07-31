@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import { Heading } from '@/components/heading';
 import { Button } from '@/components/button';
 import { Badge } from '@/components/badge';
@@ -48,7 +49,8 @@ import {
 
 export default function InboxPage() {
   const { user } = useAuth();
-  const organizationId = user?.uid || '';
+  const { currentOrganization } = useOrganization();
+  const organizationId = currentOrganization?.id || '';
   
   // State
   const [selectedFolder, setSelectedFolder] = useState<string>('inbox');
