@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from "@/context/AuthContext";
+import { useOrganization } from "@/context/OrganizationContext";
 import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
 import { Button } from "@/components/button";
@@ -164,6 +165,7 @@ const getPrimaryPhone = (phones?: Array<{ number: string; isPrimary?: boolean }>
 
 export default function ContactsPage() {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const searchParams = useSearchParams();
   const router = useRouter();
   
@@ -225,16 +227,16 @@ export default function ContactsPage() {
     if (user) {
       loadData();
     }
-  }, [user]); 
+  }, [user, currentOrganization]); 
 
   const loadData = async () => {
-    if (!user) return;
+    if (!user || !currentOrganization) return;
     setLoading(true);
     try {
 const [companiesData, contactsData, tagsData] = await Promise.all([
-        companiesEnhancedService.getAll(user.uid),
-        contactsEnhancedService.getAll(user.uid),
-        tagsEnhancedService.getAllAsLegacyTags(user.uid)
+        companiesEnhancedService.getAll(currentOrganization.id),
+        contactsEnhancedService.getAll(currentOrganization.id),
+        tagsEnhancedService.getAllAsLegacyTags(currentOrganization.id)
       ]);
       
       setCompanies(companiesData);
