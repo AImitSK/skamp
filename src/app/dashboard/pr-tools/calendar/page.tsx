@@ -246,6 +246,11 @@ function QuickTaskModal({
                   </option>
                 ))}
               </Select>
+              {clients.length === 0 && (
+                <p className="text-sm text-gray-500 mt-1">
+                  Keine Kunden verfügbar. Bitte erst Kunden im CRM anlegen.
+                </p>
+              )}
             </Field>
           </FieldGroup>
         </DialogBody>
@@ -319,7 +324,10 @@ export default function CalendarDashboard() {
 
         setEvents(realEvents);
         setCampaigns(campaignsData);
-        setClients(clientsData.filter(c => c.type === 'customer'));
+        const customerClients = clientsData.filter(c => c.type === 'customer');
+        console.log('📞 Loaded clients for organization:', customerClients.length);
+        console.log('📞 Client details:', customerClients);
+        setClients(customerClients);
       } catch (error) {
         showAlert('error', 'Fehler beim Laden der Kalenderdaten');
       } finally {
