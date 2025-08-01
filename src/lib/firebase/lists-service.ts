@@ -45,7 +45,7 @@ export const listsService = {
         } as DistributionList));
       }
       
-      // Fallback: Legacy-Daten mit userId
+      // Fallback 1: Legacy-Daten mit legacyUserId (falls übergeben)
       if (legacyUserId) {
         console.log(`🔄 No lists found with organizationId (${organizationId}), trying legacy userId (${legacyUserId})...`);
         q = query(
@@ -62,6 +62,23 @@ export const listsService = {
             ...doc.data()
           } as DistributionList));
         }
+      }
+      
+      // Fallback 2: Versuche mit organizationId als userId (falls organizationId == userId)
+      console.log(`🔄 Trying organizationId (${organizationId}) as legacy userId...`);
+      q = query(
+        collection(db, 'distribution_lists'),
+        where('userId', '==', organizationId),
+        orderBy('name')
+      );
+      snapshot = await getDocs(q);
+      
+      if (!snapshot.empty) {
+        console.log(`✅ Found ${snapshot.size} lists with organizationId-as-userId`);
+        return snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as DistributionList));
       }
       
       console.log(`❌ No lists found with either organizationId (${organizationId}) or userId (${legacyUserId})`);
