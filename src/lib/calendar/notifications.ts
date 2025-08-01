@@ -190,7 +190,7 @@ export const getEventsForDateRange = async (
     const calendarEventsRef = collection(db, 'calendar_events');
     const q = query(
       calendarEventsRef,
-      where('userId', '==', userId),
+      where('organizationId', '==', userId), // FIXME: userId sollte organizationId sein
       where('startTime', '>=', Timestamp.fromDate(startDate)),
       where('startTime', '<=', Timestamp.fromDate(endDate)),
       orderBy('startTime', 'asc')

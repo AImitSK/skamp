@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import { Heading } from '@/components/heading';
 import { Text } from '@/components/text';
 import { Button } from '@/components/button';
@@ -267,6 +268,7 @@ function QuickTaskModal({
 
 export default function CalendarDashboard() {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [clients, setClients] = useState<Company[]>([]);
@@ -298,7 +300,7 @@ export default function CalendarDashboard() {
   // Lade alle Events, Kampagnen und Kunden
   useEffect(() => {
     const loadAllData = async () => {
-      if (!user?.uid) {
+      if (!user?.uid || !currentOrganization?.id) {
         setLoading(false);
         return;
       }
@@ -310,9 +312,9 @@ export default function CalendarDashboard() {
         endOfMonth.setMonth(endOfMonth.getMonth() + 2);
 
         const [realEvents, campaignsData, clientsData] = await Promise.all([
-          getEventsForDateRange(user.uid, startOfMonth, endOfMonth),
-          prService.getAll(user.uid),
-          companiesService.getAll(user.uid)
+          getEventsForDateRange(currentOrganization.id, startOfMonth, endOfMonth),
+          prService.getAll(currentOrganization.id),
+          companiesService.getAll(currentOrganization.id)
         ]);
 
         setEvents(realEvents);
@@ -325,7 +327,7 @@ export default function CalendarDashboard() {
       }
     };
     loadAllData();
-  }, [user?.uid, refreshKey, showAlert]);
+  }, [user?.uid, currentOrganization?.id, refreshKey, showAlert]);
 
   // Gefilterte Events berechnen für FullCalendar
   const filteredEventsForCalendar = useMemo(() => {
