@@ -27,6 +27,8 @@ export const listsService = {
 
   async getAll(organizationId: string, legacyUserId?: string): Promise<DistributionList[]> {
     try {
+      console.log('🔍 listsService.getAll called with:', { organizationId, legacyUserId });
+      
       // Zuerst versuchen mit organizationId (neues Schema)
       let q = query(
         collection(db, 'distribution_lists'),
@@ -45,7 +47,7 @@ export const listsService = {
       
       // Fallback: Legacy-Daten mit userId
       if (legacyUserId) {
-        console.log('🔄 No lists found with organizationId, trying legacy userId...');
+        console.log(`🔄 No lists found with organizationId (${organizationId}), trying legacy userId (${legacyUserId})...`);
         q = query(
           collection(db, 'distribution_lists'),
           where('userId', '==', legacyUserId),
@@ -62,7 +64,7 @@ export const listsService = {
         }
       }
       
-      console.log('❌ No lists found with either organizationId or userId');
+      console.log(`❌ No lists found with either organizationId (${organizationId}) or userId (${legacyUserId})`);
       return [];
       
     } catch (error) {

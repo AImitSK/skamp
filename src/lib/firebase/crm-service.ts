@@ -20,6 +20,8 @@ import { Company, Contact, Tag } from '@/types/crm';
 export const companiesService = {
   async getAll(organizationId: string, legacyUserId?: string): Promise<Company[]> {
     try {
+      console.log('🔍 companiesService.getAll called with:', { organizationId, legacyUserId });
+      
       // Zuerst versuchen mit organizationId (neues Schema)
       let q = query(
         collection(db, 'companies'),
@@ -38,7 +40,7 @@ export const companiesService = {
       
       // Fallback: Legacy-Daten mit userId (falls legacyUserId übergeben)
       if (legacyUserId) {
-        console.log('🔄 No companies found with organizationId, trying legacy userId...');
+        console.log(`🔄 No companies found with organizationId (${organizationId}), trying legacy userId (${legacyUserId})...`);
         q = query(
           collection(db, 'companies'),
           where('userId', '==', legacyUserId),
@@ -55,7 +57,7 @@ export const companiesService = {
         }
       }
       
-      console.log('❌ No companies found with either organizationId or userId');
+      console.log(`❌ No companies found with either organizationId (${organizationId}) or userId (${legacyUserId})`);
       return [];
       
     } catch (error) {
