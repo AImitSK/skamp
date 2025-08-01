@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import { Heading, Subheading } from '@/components/heading';
 import { Button } from '@/components/button';
 import { Badge } from '@/components/badge';
@@ -39,7 +40,7 @@ import {
   DocumentDuplicateIcon
 } from '@heroicons/react/20/solid';
 import clsx from 'clsx';
-import { domainService } from '@/lib/firebase/domain-service';
+import { domainServiceEnhanced } from '@/lib/firebase/domain-service-enhanced';
 
 // NEU: Import für echte Team-Daten
 import { teamMemberService } from '@/lib/firebase/organization-service';
@@ -61,7 +62,8 @@ type TabType = 'addresses' | 'templates' | 'signatures';
 
 export default function EmailSettingsPage() {
   const { user } = useAuth();
-  const organizationId = user?.uid || '';
+  const { currentOrganization } = useOrganization();
+  const organizationId = currentOrganization?.id || '';
   
   const [activeTab, setActiveTab] = useState<TabType>('addresses');
   const [emailAddresses, setEmailAddresses] = useState<EmailAddress[]>([]);
@@ -149,7 +151,7 @@ export default function EmailSettingsPage() {
   const loadDomains = async () => {
     try {
       setLoadingDomains(true);
-      const allDomains = await domainService.getAll(organizationId);
+      const allDomains = await domainServiceEnhanced.getAll(organizationId);
       const verifiedDomains = allDomains.filter(d => d.status === 'verified' || d.status === 'pending');
       
       const emailDomains: EmailDomain[] = verifiedDomains.map(d => ({
