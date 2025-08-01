@@ -308,8 +308,18 @@ export class EmailAddressService {
     userId: string
   ): Promise<EmailAddress> {
     try {
-      // Validiere Domain mit dem echten Domain Service
-      const domain = await domainService.getById(data.domainId);
+      // Validiere Domain mit organisationsspezifischem Lookup
+      let domain;
+      try {
+        // Dynamischer Import des Enhanced Service zur Laufzeit
+        const { domainServiceEnhanced } = await import('@/lib/firebase/domain-service-enhanced');
+        domain = await domainServiceEnhanced.getById(data.domainId, organizationId);
+      } catch (error) {
+        // Fallback zu domainService für Build-Kompatibilität
+        console.warn('Fallback to domainService due to:', error);
+        domain = await domainService.getById(data.domainId);
+      }
+      
       if (!domain) {
         throw new Error('Domain nicht gefunden');
       }
@@ -944,7 +954,16 @@ async findByReplyToAddress(replyToEmail: string): Promise<EmailAddress | null> {
   private async populateDomains(emailAddresses: EmailAddress[], organizationId: string): Promise<void> {
     try {
       // Hole alle Domains der Organisation einmal
-      const domains = await domainService.getAll(organizationId);
+      let domains;
+      try {
+        // Dynamischer Import des Enhanced Service zur Laufzeit
+        const { domainServiceEnhanced } = await import('@/lib/firebase/domain-service-enhanced');
+        domains = await domainServiceEnhanced.getAll(organizationId);
+      } catch (error) {
+        // Fallback zu domainService für Build-Kompatibilität
+        console.warn('Fallback to domainService for populateDomains due to:', error);
+        domains = await domainService.getAll(organizationId);
+      }
       const domainMap = new Map(domains.map(d => [d.id, d]));
 
       // Mappe die Domains zu den E-Mail-Adressen
