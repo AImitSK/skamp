@@ -72,20 +72,30 @@ export default function DomainsPage() {
     userId: user!.uid
   });
 
+  // Debug: Log organization loading state
   useEffect(() => {
-    if (user) {
+    console.log('🔍 Organization state:', {
+      currentOrganization: currentOrganization?.id,
+      user: user?.uid
+    });
+  }, [currentOrganization, user]);
+
+  useEffect(() => {
+    if (user && currentOrganization?.id) {
       loadDomains();
     }
-  }, [user]);
+  }, [user, currentOrganization?.id]);
 
   const loadDomains = async () => {
-    if (!user) return;
+    if (!user || !currentOrganization?.id) return;
 
     try {
       setLoading(true);
       setError(null);
       const context = getContext();
+      console.log('🔍 Loading domains for organizationId:', context.organizationId);
       const data = await domainServiceEnhanced.getAll(context.organizationId);
+      console.log('✅ Loaded domains:', data.length);
       setDomains(data);
     } catch (error: any) {
       console.error('Error loading domains:', error);
