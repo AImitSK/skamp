@@ -4,6 +4,7 @@
 import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
 import Link from 'next/link';
 import { useAuth } from "@/context/AuthContext";
+import { useOrganization } from "@/context/OrganizationContext";
 import { publicationService } from "@/lib/firebase/library-service";
 import type { Publication } from "@/types/library";
 import { Heading } from "@/components/heading";
@@ -124,6 +125,7 @@ function Alert({
 
 export default function PublicationsPage() {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const [publications, setPublications] = useState<Publication[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -159,16 +161,16 @@ export default function PublicationsPage() {
   }, []);
 
   useEffect(() => {
-    if (user) {
+    if (user && currentOrganization?.id) {
       loadData();
     }
-  }, [user]);
+  }, [user, currentOrganization?.id]);
 
   const loadData = async () => {
-    if (!user) return;
+    if (!user || !currentOrganization?.id) return;
     setLoading(true);
     try {
-      const pubsData = await publicationService.getAll(user.uid);
+      const pubsData = await publicationService.getAll(currentOrganization.id);
       setPublications(pubsData);
     } catch (error) {
       showAlert('error', 'Fehler beim Laden', 'Die Daten konnten nicht geladen werden.');
@@ -253,7 +255,7 @@ export default function PublicationsPage() {
       onConfirm: async () => {
         try {
           await publicationService.softDelete(id, {
-            organizationId: user?.uid || '',
+            organizationId: currentOrganization?.id || '',
             userId: user?.uid || ''
           });
           showAlert('success', `${title} wurde gelöscht`);
@@ -278,7 +280,7 @@ export default function PublicationsPage() {
         try {
           await Promise.all(Array.from(selectedPubIds).map(id => 
             publicationService.softDelete(id, {
-              organizationId: user?.uid || '',
+              organizationId: currentOrganization?.id || '',
               userId: user?.uid || ''
             })
           ));
@@ -304,7 +306,7 @@ export default function PublicationsPage() {
       delete duplicated.id;
       
       await publicationService.create(duplicated, {
-        organizationId: user?.uid || '',
+        organizationId: currentOrganization?.id || '',
         userId: user?.uid || ''
       });
       

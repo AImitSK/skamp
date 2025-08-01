@@ -16,6 +16,7 @@ import { companiesEnhancedService } from "@/lib/firebase/crm-service-enhanced";
 import { Publication, PublicationType, PUBLICATION_TYPE_LABELS } from '@/types/library';
 import type { CompanyEnhanced } from "@/types/crm-enhanced";
 import { useAuth } from '@/context/AuthContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import {
   InformationCircleIcon,
   ArrowUpTrayIcon,
@@ -105,6 +106,7 @@ type Step = 'upload' | 'mapping' | 'import';
 
 export default function PublicationImportModal({ onClose, onImportSuccess }: PublicationImportModalProps) {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const [currentStep, setCurrentStep] = useState<Step>('upload');
   
   // Step 1: Upload
@@ -148,9 +150,9 @@ export default function PublicationImportModal({ onClose, onImportSuccess }: Pub
     
     try {
       setLoadingPublishers(true);
-      console.log('Loading companies for user:', user.uid); // Debug
+      console.log('Loading companies for organizationId:', currentOrganization?.id); // Debug
       
-      const allCompanies = await companiesEnhancedService.getAll(user.uid);
+      const allCompanies = await companiesEnhancedService.getAll(currentOrganization?.id || '');
       console.log('All companies loaded:', allCompanies); // Debug
       
       const publisherCompanies = allCompanies.filter(company => 
@@ -328,7 +330,7 @@ export default function PublicationImportModal({ onClose, onImportSuccess }: Pub
           publisherId: selectedPublisherId,
           publisherName: selectedPublisher?.name,
           status: 'active',
-          organizationId: user.uid
+          organizationId: currentOrganization?.id || ''
         };
         
         // Mappe Felder
@@ -439,7 +441,7 @@ export default function PublicationImportModal({ onClose, onImportSuccess }: Pub
       // Import durchführen
       const results = await publicationService.import(
         publications,
-        { organizationId: user.uid, userId: user.uid },
+        { organizationId: currentOrganization?.id || '', userId: user?.uid || '' },
         {
           duplicateCheck: true,
           updateExisting: importOptions.updateExisting,

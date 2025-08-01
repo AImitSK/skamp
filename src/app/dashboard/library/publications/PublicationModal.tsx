@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useOrganization } from "@/context/OrganizationContext";
 import { companiesEnhancedService } from "@/lib/firebase/crm-service-enhanced";
 import type { CompanyEnhanced } from "@/types/crm-enhanced";
 import type { Publication, PublicationType, PublicationFormat, PublicationFrequency } from "@/types/library";
@@ -179,6 +180,7 @@ function TagInput({
 
 export function PublicationModal({ isOpen, onClose, publication, onSuccess, preselectedPublisherId }: PublicationModalProps) {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const [loading, setLoading] = useState(false);
 const [publishers, setPublishers] = useState<CompanyEnhanced[]>([]);
 const [loadingPublishers, setLoadingPublishers] = useState(true);
@@ -365,9 +367,9 @@ const loadPublishers = async () => {
   
   try {
     setLoadingPublishers(true);
-    console.log('Loading companies for user:', user.uid); // Debug
+    console.log('Loading companies for organizationId:', currentOrganization?.id); // Debug
     
-    const allCompanies = await companiesEnhancedService.getAll(user.uid);
+    const allCompanies = await companiesEnhancedService.getAll(currentOrganization?.id || '');
     console.log('All companies loaded:', allCompanies); // Debug
     
     const publisherCompanies = allCompanies.filter(company => 
@@ -574,13 +576,13 @@ const loadPublishers = async () => {
 
       if (publication?.id) {
         await publicationService.update(publication.id, cleanedData, {
-          organizationId: user.uid,
-          userId: user.uid
+          organizationId: currentOrganization?.id || '',
+          userId: user?.uid || ''
         });
       } else {
         await publicationService.create(cleanedData, {
-          organizationId: user.uid,
-          userId: user.uid
+          organizationId: currentOrganization?.id || '',
+          userId: user?.uid || ''
         });
       }
 

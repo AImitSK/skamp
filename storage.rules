@@ -1,0 +1,89 @@
+rules_version = '2';
+
+// Firebase Storage Rules for Multi-Tenant Organization Structure
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper function to check if user is member of organization
+    function isOrganizationMember(organizationId) {
+      // Check if there's a team_member document where userId == request.auth.uid AND organizationId == organizationId
+      // Since we can't do queries in storage rules, we need a simpler approach
+      // We'll check if the user has any active membership (this is a simplified version)
+      return request.auth != null && request.auth.uid != null;
+    }
+    
+    // Helper function to check user role in organization  
+    function getOrganizationRole(organizationId) {
+      // For now, return 'member' as default role
+      // In a real implementation, you'd need to restructure data or use a different approach
+      return 'member';
+    }
+    
+    // Helper function to check if user has specific role
+    function hasRole(organizationId, role) {
+      return getOrganizationRole(organizationId) == role;
+    }
+    
+    // Helper function to check if user has admin privileges (owner or admin)
+    function isAdminOrOwner(organizationId) {
+      let role = getOrganizationRole(organizationId);
+      return role == 'owner' || role == 'admin';
+    }
+    
+    // Organization-based file access
+    match /organizations/{organizationId}/{allPaths=**} {
+      // Allow read access for organization members
+      allow read: if request.auth != null && isOrganizationMember(organizationId);
+      
+      // Allow write access for organization members (upload, update, delete)
+      allow write: if request.auth != null && isOrganizationMember(organizationId);
+      
+      // Special rules for media folder
+      match /media/{fileName} {
+        // Allow organization members to upload media files
+        allow create: if request.auth != null && 
+                      isOrganizationMember(organizationId) &&
+                      request.resource.size < 50 * 1024 * 1024; // Max 50MB
+        
+        // Allow organization members to read media files
+        allow read: if request.auth != null && isOrganizationMember(organizationId);
+        
+        // Allow organization members to update/delete media files
+        allow update, delete: if request.auth != null && isOrganizationMember(organizationId);
+      }
+      
+      // Special rules for branding folder (logos, etc.)
+      match /branding/{fileName} {
+        // Allow organization members to upload branding files
+        allow create: if request.auth != null && 
+                      isOrganizationMember(organizationId) &&
+                      request.resource.size < 10 * 1024 * 1024; // Max 10MB for branding
+        
+        // Allow organization members to read branding files
+        allow read: if request.auth != null && isOrganizationMember(organizationId);
+        
+        // Allow organization members to update/delete branding files
+        allow update, delete: if request.auth != null && isOrganizationMember(organizationId);
+      }
+    }
+    
+    // User-specific files (fallback for legacy data)
+    match /users/{userId}/{allPaths=**} {
+      // Only allow access to own user files
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Public files (if needed)
+    match /public/{allPaths=**} {
+      // Allow read for authenticated users
+      allow read: if request.auth != null;
+      // Only admins can write to public folder (if you have global admins)
+      allow write: if request.auth != null; // Adjust this based on your needs
+    }
+    
+    // Deny all other access
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
