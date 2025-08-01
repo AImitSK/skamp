@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import { Field, Label, Description } from '@/components/fieldset';
 import { Input } from '@/components/input';
 import { Button } from '@/components/button';
@@ -51,6 +52,7 @@ export function ListSelector({
   showQuickAdd = true
 }: ListSelectorProps) {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const [internalLists, setInternalLists] = useState<DistributionList[]>([]);
   const [loadingLists, setLoadingLists] = useState(!externalLists);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
@@ -64,27 +66,12 @@ export function ListSelector({
   // Verwende externe Listen wenn verfügbar, sonst interne
   const lists = externalLists || internalLists;
   
-  // Lade OrganizationId
+  // Setze OrganizationId aus Context
   useEffect(() => {
-    const loadOrganizationId = async () => {
-      if (!user || externalLists) return;
-      
-      try {
-        const orgs = await teamMemberService.getUserOrganizations(user.uid);
-        if (orgs.length > 0) {
-          setOrganizationId(orgs[0].organization.id!);
-        } else {
-          // Fallback auf userId für Backwards Compatibility
-          setOrganizationId(user.uid);
-        }
-      } catch (error) {
-        console.error('Error loading organization:', error);
-        setOrganizationId(user.uid);
-      }
-    };
-    
-    loadOrganizationId();
-  }, [user, externalLists]);
+    if (currentOrganization?.id && !externalLists) {
+      setOrganizationId(currentOrganization.id);
+    }
+  }, [currentOrganization?.id, externalLists]);
   
   // Lade Listen nur wenn keine externen Listen übergeben wurden
   useEffect(() => {
@@ -93,7 +80,8 @@ export function ListSelector({
       
       setLoadingLists(true);
       try {
-        // listsService mit Fallback auf user.uid für Legacy-Daten
+        // listsService mit organizationId und user.uid Fallback
+        console.log('🔍 ListSelector calling listsService with:', { organizationId, userId: user?.uid });
         const listsData = await listsService.getAll(organizationId, user?.uid);
         setInternalLists(listsData);
       } catch (error) {
