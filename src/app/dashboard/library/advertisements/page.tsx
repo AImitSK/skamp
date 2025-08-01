@@ -4,6 +4,7 @@
 import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
 import Link from 'next/link';
 import { useAuth } from "@/context/AuthContext";
+import { useOrganization } from "@/context/OrganizationContext";
 import { advertisementService, publicationService } from "@/lib/firebase/library-service";
 import type { Advertisement, Publication } from "@/types/library";
 import { Heading } from "@/components/heading";
@@ -116,6 +117,7 @@ function Alert({
 
 export default function AdvertisementsPage() {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const [advertisements, setAdvertisements] = useState<Advertisement[]>([]);
   const [publications, setPublications] = useState<Publication[]>([]);
   const [loading, setLoading] = useState(true);
@@ -151,18 +153,18 @@ export default function AdvertisementsPage() {
   }, []);
 
   useEffect(() => {
-    if (user) {
+    if (user && currentOrganization?.id) {
       loadData();
     }
-  }, [user]);
+  }, [user, currentOrganization?.id]);
 
   const loadData = async () => {
-    if (!user) return;
+    if (!user || !currentOrganization?.id) return;
     setLoading(true);
     try {
       const [adsData, pubsData] = await Promise.all([
-        advertisementService.getAll(user.uid),
-        publicationService.getAll(user.uid)
+        advertisementService.getAll(currentOrganization.id),
+        publicationService.getAll(currentOrganization.id)
       ]);
       setAdvertisements(adsData);
       setPublications(pubsData);
@@ -229,7 +231,7 @@ export default function AdvertisementsPage() {
         try {
           // Verwende softDelete statt delete
           await advertisementService.softDelete(id, {
-            organizationId: user?.uid || '',
+            organizationId: currentOrganization?.id || '',
             userId: user?.uid || ''
           });
           showAlert('success', `${name} wurde gelöscht`);
@@ -254,7 +256,7 @@ export default function AdvertisementsPage() {
         try {
           await Promise.all(Array.from(selectedAdIds).map(id => 
             advertisementService.softDelete(id, {
-              organizationId: user?.uid || '',
+              organizationId: currentOrganization?.id || '',
               userId: user?.uid || ''
             })
           ));
@@ -280,7 +282,7 @@ export default function AdvertisementsPage() {
       delete duplicated.id;
       
       await advertisementService.create(duplicated, {
-        organizationId: user?.uid || '',
+        organizationId: currentOrganization?.id || '',
         userId: user?.uid || ''
       });
       

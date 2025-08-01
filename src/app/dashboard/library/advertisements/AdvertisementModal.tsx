@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useOrganization } from "@/context/OrganizationContext";
 import { advertisementService } from "@/lib/firebase/library-service";
 import type { Advertisement, AdvertisementType, Publication, PriceModel } from "@/types/library";
 import type { BaseEntity } from "@/types/international";
@@ -81,6 +82,7 @@ export function AdvertisementModal({
   onSuccess 
 }: AdvertisementModalProps) {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'basic' | 'specifications' | 'pricing' | 'availability'>('basic');
   
@@ -433,14 +435,14 @@ const handleSubmit = async (e: React.FormEvent) => {
       if (advertisement?.id) {
         // Update
         await advertisementService.update(advertisement.id, cleanedData, {
-          organizationId: user.uid,
-          userId: user.uid
+          organizationId: currentOrganization?.id || '',
+          userId: user?.uid || ''
         });
       } else {
         // Create
         await advertisementService.create(cleanedData, {
-          organizationId: user.uid,
-          userId: user.uid
+          organizationId: currentOrganization?.id || '',
+          userId: user?.uid || ''
         });
       }
 
