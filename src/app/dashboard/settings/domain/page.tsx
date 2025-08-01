@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import { Heading } from '@/components/heading';
 import { Text } from '@/components/text';
 import { Button } from '@/components/button';
@@ -55,6 +56,7 @@ function Alert({
 
 export default function DomainsPage() {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const [domains, setDomains] = useState<EmailDomainEnhanced[]>([]);
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState<string | null>(null);
@@ -66,7 +68,7 @@ export default function DomainsPage() {
 
   // Context for all operations
   const getContext = () => ({
-    organizationId: user!.uid, // TODO: Use proper organizationId when available
+    organizationId: currentOrganization?.id || '', // Use currentOrganization instead of user.uid
     userId: user!.uid
   });
 
