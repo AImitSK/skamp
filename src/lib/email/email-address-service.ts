@@ -526,8 +526,12 @@ export class EmailAddressService {
 
   /**
    * Holt alle E-Mail-Adressen einer Organisation
+   * 
+   * @param organizationId - ID der Organisation
+   * @param userId - ID des anfragenden Users
+   * @param userRole - Rolle des Users in der Organisation (optional, für erweiterte Berechtigungen)
    */
-  async getByOrganization(organizationId: string, userId: string): Promise<EmailAddress[]> {
+  async getByOrganization(organizationId: string, userId: string, userRole?: string): Promise<EmailAddress[]> {
     try {
       console.log('getByOrganization called with:', { organizationId, userId });
       
@@ -542,8 +546,17 @@ export class EmailAddressService {
 
       querySnapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
         const data = doc.data() as EmailAddress;
-        // Nur E-Mail-Adressen zurückgeben, für die der User Leserechte hat
-        if (data.permissions?.read?.includes(userId) || data.userId === userId) {
+        
+        // Erweiterte Berechtigungsprüfung für Multi-Tenancy
+        const hasAccess = 
+          // Explizite Leserechte
+          data.permissions?.read?.includes(userId) ||
+          // Ersteller der E-Mail-Adresse
+          data.userId === userId ||
+          // Owner/Admin der Organisation sehen alle E-Mails
+          (userRole && (userRole === 'owner' || userRole === 'admin'));
+          
+        if (hasAccess) {
           emailAddresses.push({ ...data, id: doc.id });
         }
       });

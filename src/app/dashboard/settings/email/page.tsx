@@ -177,7 +177,8 @@ export default function EmailSettingsPage() {
       setLoading(true);
       const addresses = await emailAddressService.getByOrganization(
         organizationId,
-        user?.uid || ''
+        user?.uid || '',
+        currentOrganization?.role // Rolle für erweiterte Berechtigungen
       );
       setEmailAddresses(addresses);
     } catch (error) {
