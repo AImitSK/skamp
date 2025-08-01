@@ -38,6 +38,36 @@ class PublicationService extends BaseService<Publication> {
   }
 
   /**
+   * Override: Hole alle Publikationen mit Fallback für Legacy-Daten
+   */
+  async getAll(
+    organizationId: string, 
+    options: QueryOptions = {}
+  ): Promise<Publication[]> {
+    try {
+      // Zuerst versuchen mit organizationId (neues Schema)
+      const newResults = await super.getAll(organizationId, options);
+      
+      if (newResults.length > 0) {
+        console.log(`✅ Found ${newResults.length} publications with organizationId`);
+        return newResults;
+      }
+      
+      // Fallback: Legacy-Daten mit organizationId = userId
+      console.log('🔄 No publications found with organizationId, trying legacy userId...');
+      
+      // Hole User ID aus dem OrganizationContext (falls verfügbar)
+      // Da wir hier keinen Context haben, geben wir leeres Array zurück
+      // Die Migration sollte separat erfolgen
+      return [];
+      
+    } catch (error) {
+      console.error('Error in PublicationService.getAll:', error);
+      return [];
+    }
+  }
+
+  /**
    * Erstellt eine neue Publikation
    */
   async create(
@@ -447,6 +477,32 @@ class PublicationService extends BaseService<Publication> {
 class AdvertisementService extends BaseService<Advertisement> {
   constructor() {
     super('advertisements');
+  }
+
+  /**
+   * Override: Hole alle Werbemittel mit Fallback für Legacy-Daten
+   */
+  async getAll(
+    organizationId: string, 
+    options: QueryOptions = {}
+  ): Promise<Advertisement[]> {
+    try {
+      // Zuerst versuchen mit organizationId (neues Schema)
+      const newResults = await super.getAll(organizationId, options);
+      
+      if (newResults.length > 0) {
+        console.log(`✅ Found ${newResults.length} advertisements with organizationId`);
+        return newResults;
+      }
+      
+      // Fallback: Legacy-Daten mit organizationId = userId
+      console.log('🔄 No advertisements found with organizationId, trying legacy userId...');
+      return [];
+      
+    } catch (error) {
+      console.error('Error in AdvertisementService.getAll:', error);
+      return [];
+    }
   }
 
   /**

@@ -162,10 +162,13 @@ export default function AdvertisementsPage() {
     if (!user || !currentOrganization?.id) return;
     setLoading(true);
     try {
+      console.log('🔍 Loading data for organizationId:', currentOrganization.id);
       const [adsData, pubsData] = await Promise.all([
         advertisementService.getAll(currentOrganization.id),
         publicationService.getAll(currentOrganization.id)
       ]);
+      console.log('📊 Loaded advertisements:', adsData.length);
+      console.log('📰 Loaded publications:', pubsData.length);
       setAdvertisements(adsData);
       setPublications(pubsData);
     } catch (error) {

@@ -616,6 +616,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                 Publikationen *
               </label>
               <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-2">
+                {console.log('🔍 Advertisement Modal - Publications available:', publications.length)}
                 {publications.map(pub => (
                   <label key={pub.id} className="flex items-center space-x-2">
                     <Checkbox

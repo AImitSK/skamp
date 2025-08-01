@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useOrganization } from "@/context/OrganizationContext";
 import { 
   publicationService, 
   advertisementService
@@ -98,23 +99,24 @@ function StatCard({
 
 export default function LibraryDashboard() {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const [stats, setStats] = useState<LibraryStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [recentPublications, setRecentPublications] = useState<Publication[]>([]);
 
   useEffect(() => {
-    if (user) {
+    if (user && currentOrganization?.id) {
       loadStats();
       loadRecentPublications();
     }
-  }, [user]);
+  }, [user, currentOrganization?.id]);
 
   const loadStats = async () => {
-    if (!user) return;
+    if (!user || !currentOrganization?.id) return;
 
     try {
       // Publikationen Stats
-      const publications = await publicationService.getAll(user.uid);
+      const publications = await publicationService.getAll(currentOrganization.id);
       const publicationStats = {
         total: publications.length,
         byType: publications.reduce((acc: Record<string, number>, pub: Publication) => {
@@ -128,7 +130,7 @@ export default function LibraryDashboard() {
       };
 
       // Werbemittel Stats
-      const advertisements = await advertisementService.getAll(user.uid);
+      const advertisements = await advertisementService.getAll(currentOrganization.id);
       const adStats = {
         total: advertisements.length,
         withPricing: advertisements.filter((ad: Advertisement) => ad.pricing).length,
@@ -172,10 +174,10 @@ export default function LibraryDashboard() {
   };
 
   const loadRecentPublications = async () => {
-    if (!user) return;
+    if (!user || !currentOrganization?.id) return;
 
     try {
-      const recent = await publicationService.getAll(user.uid, {
+      const recent = await publicationService.getAll(currentOrganization.id, {
         limit: 5
       });
       // Sortiere manuell nach createdAt
