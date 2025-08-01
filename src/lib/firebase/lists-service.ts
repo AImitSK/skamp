@@ -25,17 +25,50 @@ import { Publication } from '@/types/library';
 export const listsService = {
   // --- CRUD Operationen ---
 
-  async getAll(userId: string): Promise<DistributionList[]> {
-    const q = query(
-      collection(db, 'distribution_lists'),
-      where('userId', '==', userId),
-      orderBy('name')
-    );
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as DistributionList));
+  async getAll(organizationId: string, legacyUserId?: string): Promise<DistributionList[]> {
+    try {
+      // Zuerst versuchen mit organizationId (neues Schema)
+      let q = query(
+        collection(db, 'distribution_lists'),
+        where('organizationId', '==', organizationId),
+        orderBy('name')
+      );
+      let snapshot = await getDocs(q);
+      
+      if (!snapshot.empty) {
+        console.log(`✅ Found ${snapshot.size} lists with organizationId`);
+        return snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as DistributionList));
+      }
+      
+      // Fallback: Legacy-Daten mit userId
+      if (legacyUserId) {
+        console.log('🔄 No lists found with organizationId, trying legacy userId...');
+        q = query(
+          collection(db, 'distribution_lists'),
+          where('userId', '==', legacyUserId),
+          orderBy('name')
+        );
+        snapshot = await getDocs(q);
+        
+        if (!snapshot.empty) {
+          console.log(`✅ Found ${snapshot.size} legacy lists with userId`);
+          return snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          } as DistributionList));
+        }
+      }
+      
+      console.log('❌ No lists found with either organizationId or userId');
+      return [];
+      
+    } catch (error) {
+      console.error('Error in listsService.getAll:', error);
+      return [];
+    }
   },
 
   async getById(id: string): Promise<DistributionList | null> {

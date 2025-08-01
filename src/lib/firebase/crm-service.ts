@@ -18,17 +18,50 @@ import { Company, Contact, Tag } from '@/types/crm';
 
 // --- Service für Firmen ---
 export const companiesService = {
-  async getAll(userId: string): Promise<Company[]> {
-    const q = query(
-      collection(db, 'companies'),
-      where('userId', '==', userId),
-      orderBy('name')
-    );
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as Company));
+  async getAll(organizationId: string, legacyUserId?: string): Promise<Company[]> {
+    try {
+      // Zuerst versuchen mit organizationId (neues Schema)
+      let q = query(
+        collection(db, 'companies'),
+        where('organizationId', '==', organizationId),
+        orderBy('name')
+      );
+      let snapshot = await getDocs(q);
+      
+      if (!snapshot.empty) {
+        console.log(`✅ Found ${snapshot.size} companies with organizationId`);
+        return snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as Company));
+      }
+      
+      // Fallback: Legacy-Daten mit userId (falls legacyUserId übergeben)
+      if (legacyUserId) {
+        console.log('🔄 No companies found with organizationId, trying legacy userId...');
+        q = query(
+          collection(db, 'companies'),
+          where('userId', '==', legacyUserId),
+          orderBy('name')
+        );
+        snapshot = await getDocs(q);
+        
+        if (!snapshot.empty) {
+          console.log(`✅ Found ${snapshot.size} legacy companies with userId`);
+          return snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          } as Company));
+        }
+      }
+      
+      console.log('❌ No companies found with either organizationId or userId');
+      return [];
+      
+    } catch (error) {
+      console.error('Error in companiesService.getAll:', error);
+      return [];
+    }
   },
 
   async getById(id: string): Promise<Company | null> {

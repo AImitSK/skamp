@@ -319,12 +319,14 @@ export default function CalendarDashboard() {
         const [realEvents, campaignsData, clientsData] = await Promise.all([
           getEventsForDateRange(currentOrganization.id, startOfMonth, endOfMonth),
           prService.getAll(currentOrganization.id),
-          companiesService.getAll(currentOrganization.id)
+          companiesService.getAll(currentOrganization.id, user.uid) // Fallback mit user.uid
         ]);
 
         setEvents(realEvents);
         setCampaigns(campaignsData);
         const customerClients = clientsData.filter(c => c.type === 'customer');
+        console.log('📞 Loading companies with organizationId:', currentOrganization.id);
+        console.log('📞 Current user.uid:', user.uid);
         console.log('📞 Loaded clients for organization:', customerClients.length);
         console.log('📞 Client details:', customerClients);
         setClients(customerClients);

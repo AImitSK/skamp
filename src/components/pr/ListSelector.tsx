@@ -93,8 +93,8 @@ export function ListSelector({
       
       setLoadingLists(true);
       try {
-        // listsService verwendet intern userId, aber wir können das später anpassen
-        const listsData = await listsService.getAll(organizationId);
+        // listsService mit Fallback auf user.uid für Legacy-Daten
+        const listsData = await listsService.getAll(organizationId, user?.uid);
         setInternalLists(listsData);
       } catch (error) {
         console.error('Error loading lists:', error);
@@ -150,10 +150,42 @@ export function ListSelector({
   }, [showDropdown]);
 
   // Quick Add Handler (Placeholder)
-  const handleQuickAdd = useCallback(() => {
-    // TODO: Implement Quick Add Modal
-    alert('Neue Liste erstellen - Feature kommt bald!');
-  }, []);
+  const handleQuickAdd = useCallback(async () => {
+    if (!organizationId || !user) return;
+    
+    const listName = prompt('Name für die neue Liste:');
+    if (!listName?.trim()) return;
+    
+    try {
+      const newListData = {
+        name: listName.trim(),
+        description: `Erstellt am ${new Date().toLocaleDateString()}`,
+        type: 'static' as const,
+        category: 'custom' as const,
+        color: 'blue' as const,
+        organizationId, // Verwende organizationId für neue Listen
+        userId: user.uid, // Backward compatibility
+        contactIds: []
+      };
+      
+      const newListId = await listsService.create(newListData);
+      console.log('✅ New list created:', newListId);
+      
+      // Aktualisiere Liste wenn intern geladen
+      if (!externalLists) {
+        const updatedLists = await listsService.getAll(organizationId, user.uid);
+        setInternalLists(updatedLists);
+      }
+      
+      // Wähle die neue Liste aus
+      onChangeRef.current(newListId, listName.trim(), 0);
+      setShowDropdown(false);
+      
+    } catch (error) {
+      console.error('Error creating list:', error);
+      alert('Fehler beim Erstellen der Liste. Bitte versuchen Sie es erneut.');
+    }
+  }, [organizationId, user, externalLists]);
 
   // Toggle dropdown handler
   const handleToggleDropdown = useCallback(() => {
