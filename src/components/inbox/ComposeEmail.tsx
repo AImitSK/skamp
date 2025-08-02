@@ -255,11 +255,11 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
       const result = await response.json();
       console.log('📧 Email sent successfully:', result);
 
-      // Create or find thread
+      // Create or find thread (only for replies, not for new emails)
       let threadId = replyToEmail?.threadId;
       
-      if (!threadId) {
-        // Create new thread for new emails
+      if (!threadId && mode !== 'new') {
+        // Only create threads for replies/forwards, NOT for new emails
         const threadResult = await threadMatcherService.findOrCreateThread({
           messageId: result.messageId,
           subject,
@@ -271,7 +271,11 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
         });
         
         threadId = threadResult.threadId || threadResult.thread?.id;
-        console.log('📨 Thread created/found:', threadId);
+        console.log('📨 Thread created/found for reply:', threadId);
+      } else if (mode === 'new') {
+        // For new emails, generate a unique threadId but don't create a thread in Firestore
+        threadId = `sent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        console.log('📤 Generated threadId for sent email (no thread created):', threadId);
       }
 
       // Save sent email to database
@@ -316,9 +320,9 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
       // Headers als leeres Objekt
       emailMessageData.headers = {};
 
-      console.log('💾 Saving email to database:', emailMessageData);
+      console.log('💾 Saving sent email to database (sent folder only):', emailMessageData);
       await emailMessageService.create(emailMessageData);
-      console.log('✅ Email saved successfully');
+      console.log('✅ Sent email saved successfully in sent folder');
 
       // Call parent onSend callback
       onSend({
