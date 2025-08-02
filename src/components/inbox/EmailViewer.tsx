@@ -400,7 +400,7 @@ export function EmailViewer({
               context={{
                 threadHistory: emails.map(e => e.textContent || e.htmlContent || '').filter(Boolean),
                 customerInfo: thread.participants[0]?.name || thread.participants[0]?.email,
-                campaignContext: thread.tags?.join(', ')
+                campaignContext: thread.subject
               }}
               onPriorityChange={onPriorityChange}
               onCategoryChange={onCategoryChange}
