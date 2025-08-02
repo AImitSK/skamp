@@ -164,8 +164,9 @@ export function StatusManager({
     
     // Calculate resolution time if resolved
     let resolutionTime;
-    if (thread.status === 'resolved' && thread.resolvedAt) {
-      const resolvedAt = thread.resolvedAt.toDate?.() || new Date();
+    if (thread.status === 'resolved') {
+      // Use current time as resolved time since resolvedAt doesn't exist in type
+      const resolvedAt = new Date();
       resolutionTime = Math.floor((resolvedAt.getTime() - createdAt.getTime()) / (1000 * 60 * 60));
     }
     

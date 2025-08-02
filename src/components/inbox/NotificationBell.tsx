@@ -156,7 +156,7 @@ export function NotificationBell({ onNotificationClick }: NotificationBellProps)
       if (diffMins < 60) return `vor ${diffMins}m`;
       if (diffHours < 24) return `vor ${diffHours}h`;
       
-      return format(date, 'dd.MM. HH:mm', { locale: de });
+      return format(date, 'dd.MM. HH:mm');
     } catch (error) {
       return '';
     }
