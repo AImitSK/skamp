@@ -626,8 +626,8 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
           comment,
           previousStatus: approval.status,
           newStatus: 'changes_requested',
-          publicAccess: true,
-          ...(inlineComments && { changes: { inlineComments } })
+          ...(inlineComments && { changes: { inlineComments, publicAccess: true } }),
+          ...(!inlineComments && { changes: { publicAccess: true } })
         },
         ...(inlineComments && { inlineComments })
       };
