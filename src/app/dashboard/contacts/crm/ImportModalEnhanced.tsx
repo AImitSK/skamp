@@ -13,6 +13,7 @@ import { companiesEnhancedService, contactsEnhancedService } from '@/lib/firebas
 import { CompanyEnhanced, ContactEnhanced, COMPANY_STATUS_OPTIONS, LIFECYCLE_STAGE_OPTIONS, CONTACT_STATUS_OPTIONS } from '@/types/crm-enhanced';
 import { CompanyType, companyTypeLabels } from '@/types/crm';
 import { useAuth } from '@/context/AuthContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import {
   InformationCircleIcon,
   ArrowUpTrayIcon,
@@ -142,6 +143,7 @@ interface ImportModalEnhancedProps {
 
 export default function ImportModalEnhanced({ onClose, onImportSuccess }: ImportModalEnhancedProps) {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const [activeTab, setActiveTab] = useState<ImportTab>('companies');
   const [file, setFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
@@ -645,7 +647,7 @@ Peter,Müller,Herr,Prof.,Chefredakteur,Redaktion,Tech Magazin,active,p.mueller@t
   };
 
   const handleImport = async () => {
-    if (!file || !user) return;
+    if (!file || !user || !currentOrganization) return;
     
     setIsImporting(true);
     setError('');
@@ -723,7 +725,7 @@ Peter,Müller,Herr,Prof.,Chefredakteur,Redaktion,Tech Magazin,active,p.mueller@t
 
             const result = await companiesEnhancedService.import(
               companies,
-              { organizationId: user.uid, userId: user.uid },
+              { organizationId: currentOrganization!.id, userId: user.uid },
               {
                 duplicateCheck: true,
                 updateExisting: duplicateHandling === 'update'
@@ -807,7 +809,7 @@ Peter,Müller,Herr,Prof.,Chefredakteur,Redaktion,Tech Magazin,active,p.mueller@t
 
             const result = await contactsEnhancedService.import(
               contacts,
-              { organizationId: user.uid, userId: user.uid },
+              { organizationId: currentOrganization!.id, userId: user.uid },
               {
                 duplicateCheck: true,
                 updateExisting: duplicateHandling === 'update'
