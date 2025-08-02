@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from "@/context/AuthContext";
-import { teamMemberService } from "@/lib/firebase/organization-service";
+import { useOrganization } from "@/context/OrganizationContext";
 import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
 import { Button } from "@/components/button";
@@ -321,9 +321,9 @@ function AssetSelectorModal({
 
 export default function NewPRCampaignPage() {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
-  const [organizationId, setOrganizationId] = useState<string | null>(null);
 
   // Form State
   const [availableLists, setAvailableLists] = useState<DistributionList[]>([]);
@@ -345,38 +345,18 @@ export default function NewPRCampaignPage() {
   const [showAiModal, setShowAiModal] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
-  // Load OrganizationId
-  useEffect(() => {
-    const loadOrganizationId = async () => {
-      if (!user) return;
-      
-      try {
-        const orgs = await teamMemberService.getUserOrganizations(user.uid);
-        if (orgs.length > 0) {
-          setOrganizationId(orgs[0].organization.id!);
-        } else {
-          setOrganizationId(user.uid);
-        }
-      } catch (error) {
-        console.error('Organization loading failed, using userId as fallback:', error);
-        setOrganizationId(user.uid);
-      }
-    };
-    
-    loadOrganizationId();
-  }, [user]);
 
   useEffect(() => {
-    if (user && organizationId) {
+    if (user && currentOrganization) {
       loadData();
     }
-  }, [user, organizationId]);
+  }, [user, currentOrganization]);
 
   const loadData = async () => {
-    if (!user || !organizationId) return;
+    if (!user || !currentOrganization) return;
     setLoading(true);
     try {
-      const listsData = await listsService.getAll(organizationId);
+      const listsData = await listsService.getAll(currentOrganization.id, user.uid);
       setAvailableLists(listsData);
     } catch (error) {
       console.error('Fehler beim Laden:', error);
@@ -447,7 +427,7 @@ export default function NewPRCampaignPage() {
 
       const campaignData: any = {
         userId: user!.uid,
-        organizationId: organizationId!,
+        organizationId: currentOrganization!.id,
         title: campaignTitle.trim(),
         contentHtml: pressReleaseContent || '',
         boilerplateSections: cleanedSections,
