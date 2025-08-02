@@ -958,7 +958,7 @@ export default function ContactModalEnhanced({
                   ) : (
                     <div className="rounded-lg bg-amber-50 p-4">
                       <Text className="text-sm text-amber-800">
-                        Bitte wählen Sie zuerst eine Firma im Tab "Allgemein" aus.
+                        Bitte wählen Sie zuerst eine Firma im Tab &ldquo;Allgemein&rdquo; aus.
                       </Text>
                     </div>
                   )}

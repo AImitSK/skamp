@@ -249,7 +249,7 @@ export function RoutingRuleTest({ rules, teamMembers, onClose }: RoutingRuleTest
                               <XCircleIcon className="h-4 w-4 text-red-600" />
                             )}
                             <span className={condition.matched ? 'text-green-700' : 'text-gray-600'}>
-                              {condition.type}: "{condition.value}"
+                              {condition.type}: &ldquo;{condition.value}&rdquo;
                             </span>
                           </div>
                         ))}
@@ -273,7 +273,7 @@ export function RoutingRuleTest({ rules, teamMembers, onClose }: RoutingRuleTest
                       {testResults.some(r => r.matched) ? (
                         <>
                           <CheckCircleIcon className="h-4 w-4 inline mr-1 text-green-600" />
-                          Die E-Mail würde von der Regel "{testResults.find(r => r.matched)?.rule.name}" verarbeitet.
+                          Die E-Mail würde von der Regel &ldquo;{testResults.find(r => r.matched)?.rule.name}&rdquo; verarbeitet.
                         </>
                       ) : (
                         <>

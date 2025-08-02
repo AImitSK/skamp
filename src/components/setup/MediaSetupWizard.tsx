@@ -278,7 +278,7 @@ export default function MediaSetupWizard({ onClose, onComplete, userId }: MediaS
                 />
                 <div>
                   <div className="font-medium">Beispiel-Verlag erstellen</div>
-                  <div className="text-sm text-gray-600">"Beispiel Verlag GmbH" mit Medien-Informationen</div>
+                  <div className="text-sm text-gray-600">&ldquo;Beispiel Verlag GmbH&rdquo; mit Medien-Informationen</div>
                 </div>
               </label>
               
@@ -289,7 +289,7 @@ export default function MediaSetupWizard({ onClose, onComplete, userId }: MediaS
                 />
                 <div>
                   <div className="font-medium">Beispiel-Journalist erstellen</div>
-                  <div className="text-sm text-gray-600">"Max Mustermann" als Tech-Redakteur</div>
+                  <div className="text-sm text-gray-600">&ldquo;Max Mustermann&rdquo; als Tech-Redakteur</div>
                 </div>
               </label>
             </div>

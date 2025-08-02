@@ -187,14 +187,14 @@ function FeedbackHistoryModal({
                           )}
                         </Text>
                         {entry.details.comment && (
-                          <Text className="text-sm italic text-gray-700 mt-2">"{entry.details.comment}"</Text>
+                          <Text className="text-sm italic text-gray-700 mt-2">&ldquo;{entry.details.comment}&rdquo;</Text>
                         )}
                         {entry.inlineComments && entry.inlineComments.length > 0 && (
                           <div className="mt-2 space-y-1">
                             <Text className="text-xs font-medium text-gray-500">Inline-Kommentare:</Text>
                             {entry.inlineComments.map((comment, idx) => (
                               <div key={comment.id} className="text-sm bg-gray-50 p-2 rounded">
-                                <Text className="text-gray-600 italic">"{comment.quote}"</Text>
+                                <Text className="text-gray-600 italic">&ldquo;{comment.quote}&rdquo;</Text>
                                 <Text className="text-gray-800 mt-1">→ {comment.text}</Text>
                               </div>
                             ))}

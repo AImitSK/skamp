@@ -463,7 +463,7 @@ export default function IntelligentBoilerplateSection({
         )}>
           <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
             <blockquote className="italic text-gray-800">
-              "{section.content}"
+              &ldquo;{section.content}&rdquo;
             </blockquote>
             <p className="text-sm text-gray-600 mt-2">
               — {section.metadata.person}

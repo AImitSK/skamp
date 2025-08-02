@@ -120,7 +120,7 @@ export default function SenderSelector({ campaign, sender, onChange, error }: Se
             <div className="p-4 bg-yellow-50 rounded-lg">
               <p className="text-sm text-yellow-800">
                 Keine Kontakte für {campaign.clientName} gefunden. 
-                Bitte wählen Sie "Manuell eingeben" oder fügen Sie zuerst einen Kontakt zur Firma hinzu.
+                Bitte wählen Sie &ldquo;Manuell eingeben&rdquo; oder fügen Sie zuerst einen Kontakt zur Firma hinzu.
               </p>
             </div>
           ) : (

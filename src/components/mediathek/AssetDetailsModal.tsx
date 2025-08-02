@@ -247,7 +247,7 @@ export default function AssetDetailsModal({
                 <div className="mt-2 mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <div className="flex items-center gap-2 text-sm">
                     <Text className="text-blue-800">
-                      Vererbt vom Ordner "{folderPath}": 
+                      Vererbt vom Ordner &ldquo;{folderPath}&rdquo;: 
                     </Text>
                     <Badge color="blue">
                       {inheritedCompany.name}

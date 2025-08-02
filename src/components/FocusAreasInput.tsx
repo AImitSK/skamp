@@ -149,7 +149,7 @@ export function FocusAreasInput({
                 onClick={() => addArea(inputValue)}
                 className="w-full px-3 py-2 text-sm text-left hover:bg-indigo-50 focus:bg-indigo-50 focus:outline-none transition-colors border-t"
               >
-                <span className="text-zinc-600">"{inputValue.trim()}" hinzufügen</span>
+                <span className="text-zinc-600">&ldquo;{inputValue.trim()}&rdquo; hinzufügen</span>
               </button>
           )}
         </div>,

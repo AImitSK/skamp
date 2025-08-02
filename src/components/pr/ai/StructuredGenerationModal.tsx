@@ -1137,7 +1137,7 @@ function ReviewStep({
                 <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Zitat</h4>
                 <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-400">
                   <blockquote className="italic text-gray-800">
-                    "{result.structured.quote.text}"
+                    &ldquo;{result.structured.quote.text}&rdquo;
                   </blockquote>
                   <p className="text-sm text-gray-600 mt-2">
                     — {result.structured.quote.person}, {result.structured.quote.role}

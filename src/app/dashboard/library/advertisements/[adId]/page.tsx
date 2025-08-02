@@ -1292,7 +1292,7 @@ export default function AdvertisementDetailPage() {
               <DialogTitle>Werbemittel löschen</DialogTitle>
               <DialogBody className="mt-2">
                 <Text>
-                  Möchten Sie das Werbemittel "{advertisement.name}" wirklich löschen? 
+                  Möchten Sie das Werbemittel &ldquo;{advertisement.name}&rdquo; wirklich löschen? 
                   Diese Aktion kann nicht rückgängig gemacht werden.
                 </Text>
               </DialogBody>

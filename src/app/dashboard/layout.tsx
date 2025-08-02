@@ -581,7 +581,7 @@ export default function DashboardLayout({
                       </DropdownMenu>
                     </Dropdown>
                   ) : (
-                    <SidebarItem>
+                    <SidebarItem key={item.name}>
                       <item.icon className="size-5" />
                       <SidebarLabel>{item.name}</SidebarLabel>
                     </SidebarItem>

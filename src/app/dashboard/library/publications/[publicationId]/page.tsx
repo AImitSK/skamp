@@ -1228,7 +1228,7 @@ export default function PublicationDetailPage() {
               <DialogTitle>Publikation löschen</DialogTitle>
               <DialogBody className="mt-2">
                 <Text>
-                  Möchten Sie die Publikation "{publication.title}" wirklich löschen? 
+                  Möchten Sie die Publikation &ldquo;{publication.title}&rdquo; wirklich löschen? 
                   Diese Aktion kann nicht rückgängig gemacht werden.
                 </Text>
               </DialogBody>
