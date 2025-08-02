@@ -164,20 +164,20 @@ export function TeamFolderSidebar({
                   key={member.id}
                   onClick={() => onFolderSelect('team', member.userId)}
                   className={clsx(
-                    'w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors',
+                    'w-full flex items-center px-3 py-2 rounded-lg text-sm transition-colors',
                     selectedFolderId === member.userId && selectedFolderType === 'team'
                       ? 'bg-[#005fab] text-white'
                       : 'text-gray-700 hover:bg-gray-200'
                   )}
                 >
-                  <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
                     <UserIcon className="h-4 w-4 flex-shrink-0" />
-                    <div className="min-w-0">
-                      <div className="font-medium truncate">
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium truncate text-left">
                         {member.displayName}
                       </div>
                       <div className={clsx(
-                        'text-xs truncate',
+                        'text-xs truncate text-left',
                         selectedFolderId === member.userId && selectedFolderType === 'team'
                           ? 'text-white/70'
                           : 'text-gray-500'
@@ -191,7 +191,7 @@ export function TeamFolderSidebar({
                     <Badge 
                       color={selectedFolderId === member.userId && selectedFolderType === 'team' ? 'zinc' : 'blue'} 
                       className={clsx(
-                        'whitespace-nowrap flex-shrink-0',
+                        'whitespace-nowrap flex-shrink-0 ml-auto',
                         selectedFolderId === member.userId && selectedFolderType === 'team' 
                           ? 'bg-white/20 text-white' 
                           : ''

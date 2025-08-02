@@ -635,7 +635,14 @@ export default function InboxPage() {
       
       console.log(`📨 Loaded ${threadMessages.length} messages for thread`);
       
+      // Update the global emails state with thread messages
       if (threadMessages.length > 0) {
+        setEmails(prevEmails => {
+          // Remove existing messages for this thread and add new ones
+          const otherMessages = prevEmails.filter(email => email.threadId !== thread.id);
+          return [...otherMessages, ...threadMessages];
+        });
+        
         // Select the latest email in the thread
         const latestEmail = threadMessages[threadMessages.length - 1];
         setSelectedEmail(latestEmail);
