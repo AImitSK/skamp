@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from "@/context/AuthContext";
+import { useOrganization } from "@/context/OrganizationContext";
 import { listsService } from "@/lib/firebase/lists-service";
 import { tagsService } from "@/lib/firebase/crm-service";
 import { publicationService } from "@/lib/firebase/library-service";
@@ -180,6 +181,7 @@ function getContactPhone(contact: Contact | ContactEnhanced): string | undefined
 
 export default function ListDetailPage() {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const params = useParams();
   const router = useRouter();
   const listId = params.listId as string;
@@ -741,6 +743,7 @@ export default function ListDetailPage() {
           onClose={() => setShowEditModal(false)}
           onSave={handleSave}
           userId={user.uid}
+          organizationId={currentOrganization?.id || user.uid}
         />
       )}
     </>
