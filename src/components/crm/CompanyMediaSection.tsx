@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useOrganization } from "@/context/OrganizationContext";
 import { mediaService } from "@/lib/firebase/media-service";
 import { MediaAsset, MediaFolder } from "@/types/media";
 import { Button } from "@/components/button";
@@ -26,23 +27,24 @@ interface CompanyMediaSectionProps {
 
 export default function CompanyMediaSection({ companyId, companyName }: CompanyMediaSectionProps) {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const [folders, setFolders] = useState<MediaFolder[]>([]);
   const [recentAssets, setRecentAssets] = useState<MediaAsset[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user && companyId) {
+    if (user && companyId && currentOrganization) {
       loadCompanyMedia();
     }
-  }, [user, companyId]);
+  }, [user, companyId, currentOrganization]);
 
   const loadCompanyMedia = async () => {
-    if (!user) return;
+    if (!user || !currentOrganization) return;
     
     setLoading(true);
     try {
-      const { folders, assets, totalCount } = await mediaService.getMediaByClientId(user.uid, companyId);
+      const { folders, assets, totalCount } = await mediaService.getMediaByClientId(currentOrganization.id, companyId);
       setFolders(folders);
       setRecentAssets(assets.slice(0, 6)); // Nur die letzten 6 für Vorschau
       setTotalCount(totalCount);
