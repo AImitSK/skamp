@@ -210,90 +210,73 @@ export function EmailViewer({
 
   return (
     <div className="flex-1 flex flex-col bg-white h-full overflow-hidden">
-      {/* Header */}
-      <div className="border-b px-6 py-4 flex-shrink-0">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <h2 className="text-xl font-semibold text-gray-900">
-                {thread.subject}
-              </h2>
-              {/* Status Badge */}
-              <Badge 
-                color={statusInfo.color as any}
-                className={clsx(
-                  'flex items-center gap-1.5',
-                  statusInfo.bgClass,
-                  statusInfo.textClass,
-                  statusInfo.borderClass,
-                  'border'
-                )}
-              >
-                <StatusIcon className="h-3.5 w-3.5" />
-                {statusInfo.label}
-              </Badge>
-            </div>
+      {/* Compact Header - Single Line */}
+      <div className="border-b px-4 py-2 flex-shrink-0">
+        <div className="flex items-center gap-3">
+          {/* Subject & Status */}
+          <div className="flex-1 flex items-center gap-2 min-w-0">
+            <h2 className="text-lg font-semibold text-gray-900 truncate">
+              {thread.subject}
+            </h2>
+            <StatusManager
+              thread={thread}
+              onStatusChange={onStatusChange}
+              compact={true}
+              showSLA={false}
+              showTimers={false}
+            />
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => onStar(latestEmail.id!, !latestEmail.isStarred)}
-              className={clsx(
-                'p-2 rounded-lg hover:bg-gray-100',
-                latestEmail.isStarred ? 'text-yellow-400' : 'text-gray-400'
-              )}
-            >
-              <StarIcon className="h-5 w-5" />
-            </button>
-            <button
-              onClick={() => onArchive(latestEmail.id!)}
-              className="p-2 rounded-lg hover:bg-gray-100 text-gray-400"
-            >
-              <ArchiveBoxIcon className="h-5 w-5" />
-            </button>
-            <button
-              onClick={() => onDelete(latestEmail.id!)}
-              className="p-2 rounded-lg hover:bg-gray-100 text-gray-400"
-            >
-              <TrashIcon className="h-5 w-5" />
-            </button>
-            <button className="p-2 rounded-lg hover:bg-gray-100 text-gray-400">
-              <EllipsisVerticalIcon className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
 
-        {/* Action buttons */}
-        <div className="flex items-center gap-3 mt-4">
-          <Button 
-            onClick={() => onReply(latestEmail)}
-            className="bg-[#005fab] hover:bg-[#004a8c] text-white"
-          >
-            <ArrowUturnLeftIcon className="h-4 w-4 mr-2" />
-            Antworten
-          </Button>
-          <Button 
-            onClick={() => onForward(latestEmail)}
-            plain
-          >
-            <ArrowUturnRightIcon className="h-4 w-4 mr-2" />
-            Weiterleiten
-          </Button>
-        </div>
-
-        {/* Team & Status Management */}
-        <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t">
+          {/* Team Assignment Dropdown */}
           <TeamAssignmentUI
             thread={thread}
             organizationId={organizationId}
             onAssignmentChange={onAssignmentChange}
-            compact={false}
+            compact={true}
           />
-          <StatusManager
-            thread={thread}
-            onStatusChange={onStatusChange}
-            showSLA={true}
-            showTimers={true}
-          />
+
+          {/* Action Icons */}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => onReply(latestEmail)}
+              className="p-1.5 rounded hover:bg-gray-100 text-gray-600 hover:text-[#005fab]"
+              title="Antworten"
+            >
+              <ArrowUturnLeftIcon className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => onForward(latestEmail)}
+              className="p-1.5 rounded hover:bg-gray-100 text-gray-600"
+              title="Weiterleiten"
+            >
+              <ArrowUturnRightIcon className="h-4 w-4" />
+            </button>
+            <div className="w-px h-4 bg-gray-300 mx-1" />
+            <button
+              onClick={() => onStar(latestEmail.id!, !latestEmail.isStarred)}
+              className={clsx(
+                'p-1.5 rounded hover:bg-gray-100',
+                latestEmail.isStarred ? 'text-yellow-400' : 'text-gray-400'
+              )}
+              title="Markieren"
+            >
+              <StarIcon className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => onArchive(latestEmail.id!)}
+              className="p-1.5 rounded hover:bg-gray-100 text-gray-400"
+              title="Archivieren"
+            >
+              <ArchiveBoxIcon className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => onDelete(latestEmail.id!)}
+              className="p-1.5 rounded hover:bg-gray-100 text-gray-400"
+              title="Löschen"
+            >
+              <TrashIcon className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -391,48 +374,48 @@ export function EmailViewer({
         ))}
         </div>
 
-        {/* AI Features */}
+        {/* AI Features - Collapsed by default */}
         {showAI && selectedEmail && (
-          <div className="border-t border-gray-200 p-6 space-y-4">
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-            {/* AI Insights */}
-            <AIInsightsPanel
-              email={selectedEmail}
-              thread={thread}
-              context={{
-                threadHistory: emails.map(e => e.textContent || e.htmlContent || '').filter(Boolean),
-                customerInfo: thread.participants[0]?.name || thread.participants[0]?.email,
-                campaignContext: thread.subject
-              }}
-              onPriorityChange={onPriorityChange}
-              onCategoryChange={onCategoryChange}
-              collapsed={false}
-            />
+          <div className="border-t border-gray-200 p-4 space-y-3">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+              {/* AI Insights */}
+              <AIInsightsPanel
+                email={selectedEmail}
+                thread={thread}
+                context={{
+                  threadHistory: emails.map(e => e.textContent || e.htmlContent || '').filter(Boolean),
+                  customerInfo: thread.participants[0]?.name || thread.participants[0]?.email,
+                  campaignContext: thread.subject
+                }}
+                onPriorityChange={onPriorityChange}
+                onCategoryChange={onCategoryChange}
+                collapsed={true}
+              />
 
-            {/* AI Response Suggestions */}
-            <AIResponseSuggestions
-              email={selectedEmail}
-              thread={thread}
-              onUseSuggestion={(responseText) => {
-                // Create a synthetic email object for reply
-                const replyEmail = {
-                  ...selectedEmail,
-                  textContent: responseText,
-                  htmlContent: responseText
-                };
-                onReply(replyEmail);
-              }}
-              context={{
-                customerName: thread.participants[0]?.name,
-                customerHistory: `Vorherige E-Mails in diesem Thread: ${emails.length}`,
-                companyInfo: organizationId,
-                threadHistory: emails.map(e => e.textContent || e.htmlContent || '').filter(Boolean)
-              }}
-              collapsed={false}
-            />
+              {/* AI Response Suggestions */}
+              <AIResponseSuggestions
+                email={selectedEmail}
+                thread={thread}
+                onUseSuggestion={(responseText) => {
+                  // Create a synthetic email object for reply
+                  const replyEmail = {
+                    ...selectedEmail,
+                    textContent: responseText,
+                    htmlContent: responseText
+                  };
+                  onReply(replyEmail);
+                }}
+                context={{
+                  customerName: thread.participants[0]?.name,
+                  customerHistory: `Vorherige E-Mails in diesem Thread: ${emails.length}`,
+                  companyInfo: organizationId,
+                  threadHistory: emails.map(e => e.textContent || e.htmlContent || '').filter(Boolean)
+                }}
+                collapsed={true}
+              />
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
         {/* Internal Notes */}
         <InternalNotes

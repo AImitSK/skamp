@@ -48,7 +48,9 @@ import {
   ArrowPathIcon,
   Squares2X2Icon,
   Cog6ToothIcon,
-  ArrowsRightLeftIcon
+  ArrowsRightLeftIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon
 } from '@heroicons/react/20/solid';
 
 export default function InboxPage() {
@@ -74,6 +76,7 @@ export default function InboxPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [resolvingThreads, setResolvingThreads] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
   // NEU: State für Kunden/Kampagnen-Organisation
   const [viewMode, setViewMode] = useState<'classic' | 'customer'>('customer');
@@ -1262,6 +1265,20 @@ export default function InboxPage() {
 
           {/* Right side - Actions */}
           <div className="flex items-center gap-2">
+            {/* Sidebar Toggle */}
+            <Button
+              plain
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className="p-2"
+              title={sidebarCollapsed ? 'Sidebar anzeigen' : 'Sidebar ausblenden'}
+            >
+              {sidebarCollapsed ? (
+                <ChevronRightIcon className="h-5 w-5 text-gray-400" />
+              ) : (
+                <ChevronLeftIcon className="h-5 w-5 text-gray-400" />
+              )}
+            </Button>
+
             {/* Notifications */}
             <NotificationBell
               onNotificationClick={(notification) => {
@@ -1339,21 +1356,25 @@ export default function InboxPage() {
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar - Classic or Customer/Campaign */}
-        {viewMode === 'classic' ? (
-          <InboxSidebar
-            selectedFolder={selectedFolder}
-            onFolderSelect={handleClassicFolderSelect}
-            unreadCounts={unreadCounts}
-          />
-        ) : (
-          <CustomerCampaignSidebar
-            selectedCustomerId={selectedCustomerId}
-            selectedCampaignId={selectedCampaignId}
-            selectedFolderType={selectedFolderType}
-            onFolderSelect={handleFolderSelect}
-            unreadCounts={unreadCounts}
-            organizationId={organizationId}
-          />
+        {!sidebarCollapsed && (
+          <>
+            {viewMode === 'classic' ? (
+              <InboxSidebar
+                selectedFolder={selectedFolder}
+                onFolderSelect={handleClassicFolderSelect}
+                unreadCounts={unreadCounts}
+              />
+            ) : (
+              <CustomerCampaignSidebar
+                selectedCustomerId={selectedCustomerId}
+                selectedCampaignId={selectedCampaignId}
+                selectedFolderType={selectedFolderType}
+                onFolderSelect={handleFolderSelect}
+                unreadCounts={unreadCounts}
+                organizationId={organizationId}
+              />
+            )}
+          </>
         )}
 
         {/* Thread List */}
