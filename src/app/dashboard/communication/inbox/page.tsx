@@ -12,12 +12,14 @@ import { CustomerCampaignSidebar } from '@/components/inbox/CustomerCampaignSide
 import { EmailList } from '@/components/inbox/EmailList';
 import { EmailViewer } from '@/components/inbox/EmailViewer';
 import { ComposeEmail } from '@/components/inbox/ComposeEmail';
+import { NotificationBell } from '@/components/inbox/NotificationBell';
 import { EmailMessage, EmailThread } from '@/types/inbox-enhanced';
 import { emailMessageService } from '@/lib/email/email-message-service';
 import { threadMatcherService } from '@/lib/email/thread-matcher-service-flexible';
 import { emailAddressService } from '@/lib/email/email-address-service';
 import { getCustomerCampaignMatcher } from '@/lib/email/customer-campaign-matcher';
 import { teamMemberService } from '@/lib/firebase/organization-service';
+import { notificationService } from '@/lib/email/notification-service-enhanced';
 import { 
   onSnapshot,
   collection,
@@ -1017,11 +1019,27 @@ export default function InboxPage() {
 
   // NEU: Handle thread assignment
   const handleThreadAssign = async (threadId: string, userId: string | null) => {
-    if (!userId) return;
-    
     try {
-      // assignThread erwartet: threadId (string), userId (string | null), assignedBy (string)
-      await threadMatcherService.assignThread(threadId, userId, user?.uid || '');
+      const assignedBy = user?.uid || '';
+      const assignedByName = user?.displayName || user?.email || 'Unbekannt';
+      
+      // Update thread assignment
+      await threadMatcherService.assignThread(threadId, userId, assignedBy);
+      
+      // Send notification if assigning to someone
+      if (userId && userId !== user?.uid) {
+        const thread = threads.find(t => t.id === threadId);
+        if (thread) {
+          await notificationService.sendAssignmentNotification(
+            thread,
+            userId,
+            assignedBy,
+            assignedByName,
+            organizationId
+          );
+        }
+      }
+      
       console.log('✅ Thread assigned successfully');
     } catch (error) {
       console.error('Error assigning thread:', error);
@@ -1034,7 +1052,24 @@ export default function InboxPage() {
     if (!status) return;
     
     try {
+      const changedBy = user?.uid || '';
+      const changedByName = user?.displayName || user?.email || 'Unbekannt';
+      const thread = threads.find(t => t.id === threadId);
+      
+      // Update thread status
       await threadMatcherService.updateThreadStatus(threadId, status);
+      
+      // Send notification if thread is assigned to someone else
+      if (thread) {
+        await notificationService.sendStatusChangeNotification(
+          thread,
+          status,
+          changedBy,
+          changedByName,
+          organizationId
+        );
+      }
+      
       console.log('✅ Thread status updated successfully');
       
       // Bei Archivierung: Thread aus der Liste entfernen
@@ -1200,6 +1235,19 @@ export default function InboxPage() {
 
           {/* Right side - Actions */}
           <div className="flex items-center gap-2">
+            {/* Notifications */}
+            <NotificationBell
+              onNotificationClick={(notification) => {
+                // Navigate to thread when notification is clicked
+                if (notification.threadId) {
+                  const thread = threads.find(t => t.id === notification.threadId);
+                  if (thread) {
+                    handleThreadSelect(thread);
+                  }
+                }
+              }}
+            />
+            
             {/* View Mode Toggle */}
             <Button
               plain
@@ -1346,6 +1394,7 @@ export default function InboxPage() {
               onDelete={handleDelete}
               onStar={handleStar}
               onStatusChange={handleThreadStatusChange}
+              onAssignmentChange={handleThreadAssign}
               organizationId={organizationId}
               teamMembers={teamMembers}
             />

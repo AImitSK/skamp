@@ -5,6 +5,8 @@ import { EmailMessage, EmailThread } from '@/types/inbox-enhanced';
 import { Button } from '@/components/button';
 import { Badge } from '@/components/badge';
 import { InternalNotes } from '@/components/inbox/InternalNotes';
+import { TeamAssignmentUI } from '@/components/inbox/TeamAssignmentUI';
+import { StatusManager } from '@/components/inbox/StatusManager';
 import format from 'date-fns/format';
 import { de } from 'date-fns/locale/de';
 import {
@@ -34,6 +36,7 @@ interface EmailViewerProps {
   onDelete: (emailId: string) => void;
   onStar: (emailId: string, starred: boolean) => void;
   onStatusChange?: (threadId: string, status: 'active' | 'waiting' | 'resolved' | 'archived') => void;
+  onAssignmentChange?: (threadId: string, assignedTo: string | null) => void;
   organizationId: string;
   teamMembers?: Array<{
     id: string;
@@ -146,7 +149,10 @@ export function EmailViewer({
   onArchive,
   onDelete,
   onStar,
-  onStatusChange
+  onStatusChange,
+  onAssignmentChange,
+  organizationId,
+  teamMembers
 }: EmailViewerProps) {
   if (!selectedEmail || emails.length === 0) {
     return null;
@@ -266,38 +272,21 @@ export function EmailViewer({
           </Button>
         </div>
 
-        {/* Status Change Buttons */}
-        {onStatusChange && (
-          <div className="flex items-center gap-2 mt-3 pt-3 border-t">
-            <span className="text-sm text-gray-600 mr-2">Status ändern:</span>
-            <div className="flex gap-1">
-              {Object.entries(statusConfig).map(([status, config]) => {
-                const Icon = config.icon;
-                const isActive = currentStatus === status;
-                
-                return (
-                  <Button
-                    key={status}
-                    onClick={() => onStatusChange(thread.id!, status as any)}
-                    className={clsx(
-                      'px-3 py-1.5 text-xs flex items-center gap-1.5',
-                      isActive ? [
-                        config.bgClass,
-                        config.textClass,
-                        config.borderClass,
-                        'border'
-                      ] : 'text-gray-600 hover:bg-gray-100'
-                    )}
-                    plain={!isActive}
-                  >
-                    <Icon className="h-3.5 w-3.5" />
-                    {config.label}
-                  </Button>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        {/* Team & Status Management */}
+        <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t">
+          <TeamAssignmentUI
+            thread={thread}
+            organizationId={organizationId}
+            onAssignmentChange={onAssignmentChange}
+            compact={false}
+          />
+          <StatusManager
+            thread={thread}
+            onStatusChange={onStatusChange}
+            showSLA={true}
+            showTimers={true}
+          />
+        </div>
       </div>
 
       {/* Email Thread */}
@@ -391,6 +380,14 @@ export function EmailViewer({
           </div>
         ))}
       </div>
+
+      {/* Internal Notes */}
+      <InternalNotes
+        threadId={thread.id!}
+        emailId={selectedEmail?.id}
+        organizationId={organizationId}
+        teamMembers={teamMembers}
+      />
     </div>
   );
 }

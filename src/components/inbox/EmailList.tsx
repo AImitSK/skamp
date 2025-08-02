@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { EmailThread } from '@/types/inbox-enhanced';
 import { Badge } from '@/components/badge';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/dropdown';
+import { StatusManager } from '@/components/inbox/StatusManager';
 import clsx from 'clsx';
 import { 
   ChevronDoubleRightIcon,
@@ -277,37 +278,13 @@ export function EmailList({
                     </span>
                   )}
                   
-                  {/* NEU: Status Badge */}
-                  {thread.status && thread.status !== 'active' && (
-                    <Badge 
-                      color={
-                        thread.status === 'resolved' ? 'green' :
-                        thread.status === 'waiting' ? 'yellow' :
-                        'zinc'
-                      } 
-                      className="text-xs"
-                    >
-                      {thread.status === 'waiting' ? 'Wartet' :
-                       thread.status === 'resolved' ? 'Erledigt' :
-                       thread.status}
-                    </Badge>
-                  )}
-                  
-                  {/* NEU: Priority Badge */}
-                  {thread.priority && thread.priority !== 'normal' && (
-                    <Badge 
-                      color={
-                        thread.priority === 'urgent' ? 'red' :
-                        thread.priority === 'high' ? 'orange' :
-                        'zinc'
-                      } 
-                      className="text-xs"
-                    >
-                      {thread.priority === 'urgent' ? 'Dringend' :
-                       thread.priority === 'high' ? 'Hoch' :
-                       'Niedrig'}
-                    </Badge>
-                  )}
+                  {/* Enhanced Status & Priority Display */}
+                  <StatusManager
+                    thread={thread}
+                    compact={true}
+                    showSLA={false}
+                    showTimers={false}
+                  />
                 </div>
               </div>
               

@@ -551,6 +551,12 @@ export class FlexibleThreadMatcherService {
     }
 
     try {
+      // Get current assignment for logging
+      const threadDoc = await getDoc(doc(db, this.collectionName, threadId));
+      const currentData = threadDoc.data();
+      const currentAssignedTo = currentData?.assignedTo || null;
+      const organizationId = currentData?.organizationId;
+
       const updateData: any = {
         updatedAt: serverTimestamp()
       };
@@ -568,6 +574,17 @@ export class FlexibleThreadMatcherService {
       }
 
       await updateDoc(doc(db, this.collectionName, threadId), updateData);
+      
+      // Log assignment change
+      if (organizationId) {
+        await this.logAssignmentChange(
+          threadId,
+          currentAssignedTo,
+          userId,
+          assignedBy,
+          organizationId
+        );
+      }
       
       console.log(`✅ Thread ${threadId} ${userId ? `assigned to ${userId}` : 'unassigned'}`);
     } catch (error) {
@@ -792,6 +809,91 @@ export class FlexibleThreadMatcherService {
     }
     
     return false;
+  }
+
+  /**
+   * Get count of assigned threads for a team member
+   */
+  async getAssignedThreadsCount(organizationId: string, userId: string): Promise<number> {
+    const q = query(
+      collection(db, 'email_threads'),
+      where('organizationId', '==', organizationId),
+      where('assignedTo', '==', userId),
+      where('status', 'in', ['active', 'waiting'])
+    );
+    
+    const snapshot = await getDocs(q);
+    return snapshot.size;
+  }
+
+  /**
+   * Get workload statistics for organization
+   */
+  async getWorkloadStats(organizationId: string): Promise<Record<string, number>> {
+    const q = query(
+      collection(db, 'email_threads'),
+      where('organizationId', '==', organizationId),
+      where('status', 'in', ['active', 'waiting'])
+    );
+    
+    const snapshot = await getDocs(q);
+    const stats: Record<string, number> = {};
+    
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      if (data.assignedTo) {
+        stats[data.assignedTo] = (stats[data.assignedTo] || 0) + 1;
+      }
+    });
+    
+    return stats;
+  }
+
+  /**
+   * Get thread assignment history
+   */
+  async getAssignmentHistory(threadId: string): Promise<any[]> {
+    const q = query(
+      collection(db, 'thread_assignment_history'),
+      where('threadId', '==', threadId),
+      orderBy('createdAt', 'desc'),
+      limit(10)
+    );
+    
+    const snapshot = await getDocs(q);
+    const history: any[] = [];
+    
+    snapshot.forEach(doc => {
+      history.push({ id: doc.id, ...doc.data() });
+    });
+    
+    return history;
+  }
+
+  /**
+   * Log assignment change for history
+   */
+  private async logAssignmentChange(
+    threadId: string, 
+    fromUserId: string | null, 
+    toUserId: string | null, 
+    assignedBy: string,
+    organizationId: string
+  ): Promise<void> {
+    try {
+      await addDoc(collection(db, 'thread_assignment_history'), {
+        threadId,
+        fromUserId,
+        toUserId,
+        assignedBy,
+        organizationId,
+        action: toUserId ? (fromUserId ? 'reassigned' : 'assigned') : 'unassigned',
+        createdAt: serverTimestamp()
+      });
+    } catch (error) {
+      console.error('Error logging assignment change:', error);
+      // Don't throw - this is just for logging
+    }
   }
 }
 

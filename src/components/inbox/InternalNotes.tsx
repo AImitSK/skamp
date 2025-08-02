@@ -16,6 +16,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client-init';
 import { useAuth } from '@/context/AuthContext';
+import { notificationService } from '@/lib/email/notification-service-enhanced';
 import { 
   ChatBubbleLeftIcon,
   PaperAirplaneIcon,
@@ -166,6 +167,21 @@ export function InternalNotes({
       };
 
       await addDoc(collection(db, 'email_notes'), noteData);
+      
+      // Send notifications for mentions
+      if (mentions.length > 0) {
+        const userName = user.displayName || user.email || 'Unbekannt';
+        await notificationService.sendMentionNotification(
+          threadId,
+          emailId,
+          mentions,
+          user.uid,
+          userName,
+          organizationId,
+          newNote
+        );
+      }
+      
       setNewNote('');
     } catch (error) {
       console.error('Error adding note:', error);
