@@ -7,7 +7,7 @@ import {
   Timestamp,
   serverTimestamp 
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase/client-init';
+import { serverDb } from '@/lib/firebase/server-init';
 import { emailMessageService } from '@/lib/email/email-message-service';
 import { serverThreadMatcherService } from '@/lib/email/thread-matcher-service-flexible';
 import { emailAddressService } from '@/lib/email/email-address-service';
@@ -348,7 +348,7 @@ export class FlexibleEmailProcessor {
       // Prüfe, ob der Thread bereits existiert und Team-Zuweisungen hat
       try {
         const threadsQuery = query(
-          collection(db, 'email_threads'),
+          collection(serverDb, 'email_threads'),
           where('id', '==', threadId),
           where('organizationId', '==', emailAddress.organizationId)
         );
