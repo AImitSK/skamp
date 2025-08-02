@@ -106,23 +106,15 @@ export function TeamAssignmentUI({
     try {
       setAssigning(true);
       
-      // Update in database
-      await threadMatcherService.assignThread(
-        thread.id!, 
-        userId, 
-        'current-user-id' // TODO: Get from auth context
-      );
+      // Delegate to parent component which handles optimistic updates
+      await onAssignmentChange?.(thread.id!, userId);
       
-      // Update workload stats
+      // Update workload stats after successful assignment
       await loadWorkloadStats(teamMembers);
-      
-      // Notify parent component
-      onAssignmentChange?.(thread.id!, userId);
       
       console.log('✅ Thread assignment updated successfully');
     } catch (error) {
       console.error('Error assigning thread:', error);
-      alert('Fehler beim Zuweisen des Threads');
     } finally {
       setAssigning(false);
     }

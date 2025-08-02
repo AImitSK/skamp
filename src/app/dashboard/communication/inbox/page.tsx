@@ -7,7 +7,6 @@ import { useOrganization } from '@/context/OrganizationContext';
 import { Heading } from '@/components/heading';
 import { Button } from '@/components/button';
 import { Badge } from '@/components/badge';
-import { InboxSidebar } from '@/components/inbox/InboxSidebar';
 import { CustomerCampaignSidebar } from '@/components/inbox/CustomerCampaignSidebar';
 import { EmailList } from '@/components/inbox/EmailList';
 import { EmailViewer } from '@/components/inbox/EmailViewer';
@@ -48,7 +47,6 @@ import {
   ArrowPathIcon,
   Squares2X2Icon,
   Cog6ToothIcon,
-  ArrowsRightLeftIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   FolderIcon,
@@ -61,7 +59,6 @@ export default function InboxPage() {
   const organizationId = currentOrganization?.id || '';
   
   // State
-  const [selectedFolder, setSelectedFolder] = useState<string>('inbox');
   const [selectedThread, setSelectedThread] = useState<EmailThread | null>(null);
   const [selectedEmail, setSelectedEmail] = useState<EmailMessage | null>(null);
   const [showCompose, setShowCompose] = useState(false);
@@ -81,8 +78,7 @@ export default function InboxPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [organizationSidebarCollapsed, setOrganizationSidebarCollapsed] = useState(false);
   
-  // NEU: State für Kunden/Kampagnen-Organisation
-  const [viewMode, setViewMode] = useState<'classic' | 'customer'>('customer');
+  // State für Kunden/Kampagnen-Organisation
   const [selectedFolderType, setSelectedFolderType] = useState<'customer' | 'campaign' | 'general'>('general');
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | undefined>();
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | undefined>();
@@ -296,11 +292,9 @@ export default function InboxPage() {
       ...prev,
       listenersSetup: true,
       organizationId,
-      selectedFolder,
       selectedFolderType,
       selectedCustomerId,
-      selectedCampaignId,
-      viewMode
+      selectedCampaignId
     }));
 
     // Clean up previous listeners
@@ -317,20 +311,14 @@ export default function InboxPage() {
     return () => {
       newUnsubscribes.forEach(unsubscribe => unsubscribe());
     };
-  }, [user, organizationId, selectedFolder, selectedFolderType, selectedCustomerId, selectedCampaignId, hasEmailAddresses, resolvingThreads, viewMode]);
+  }, [user, organizationId, selectedFolderType, selectedCustomerId, selectedCampaignId, hasEmailAddresses, resolvingThreads]);
 
   const setupRealtimeListeners = (unsubscribes: Unsubscribe[]) => {
     setLoading(true);
     setError(null);
 
     try {
-      // Classic Mode - nutze alte Logik
-      if (viewMode === 'classic') {
-        setupClassicListeners(unsubscribes);
-        return;
-      }
-
-      // Customer/Campaign Mode - neue Logik
+      // Customer/Campaign Mode
       setupCustomerCampaignListeners(unsubscribes);
 
     } catch (error: any) {
@@ -344,127 +332,6 @@ export default function InboxPage() {
     }
   };
 
-  const setupClassicListeners = (unsubscribes: Unsubscribe[]) => {
-    // 1. Listen to threads - Alle Ordner müssen gefiltert werden
-    console.log('📨 Setting up CLASSIC thread listener for org:', organizationId, 'folder:', selectedFolder);
-    
-    // Lade alle Threads und filtere client-seitig basierend auf E-Mails
-    const threadsQuery = query(
-      collection(db, 'email_threads'),
-      where('organizationId', '==', organizationId),
-      orderBy('lastMessageAt', 'desc'),
-      limit(100)
-    );
-
-    const threadsUnsubscribe = onSnapshot(
-      threadsQuery,
-      async (snapshot) => {
-        console.log('📨 Thread snapshot received, size:', snapshot.size);
-        let threadsData: EmailThread[] = [];
-        
-        // Konvertiere Snapshot zu Array
-        snapshot.forEach((doc) => {
-          threadsData.push({ ...doc.data(), id: doc.id } as EmailThread);
-        });
-        
-        // Filtere Threads basierend auf E-Mails im ausgewählten Ordner
-        console.log(`📁 Filtering threads for folder: ${selectedFolder}`);
-        const threadIdsInFolder = new Set<string>();
-        
-        // Finde alle Thread-IDs die E-Mails im ausgewählten Ordner haben
-        for (const thread of threadsData) {
-          const messagesQuery = query(
-            collection(db, 'email_messages'),
-            where('threadId', '==', thread.id),
-            where('folder', '==', selectedFolder),
-            limit(1)
-          );
-          
-          try {
-            const messagesSnapshot = await getDocs(messagesQuery);
-            if (!messagesSnapshot.empty) {
-              threadIdsInFolder.add(thread.id!);
-            }
-          } catch (err) {
-            console.error(`Error checking thread ${thread.id}:`, err);
-          }
-        }
-        
-        // Filtere Threads
-        threadsData = threadsData.filter(thread => 
-          threadIdsInFolder.has(thread.id!)
-        );
-        
-        console.log(`✅ Found ${threadsData.length} threads with emails in ${selectedFolder}`);
-        setThreads(threadsData);
-        
-        // Update debug info
-        setDebugInfo((prev: DebugInfo) => ({
-          ...prev,
-          threadCount: threadsData.length,
-          threads: threadsData
-        }));
-        
-        // Update unread counts
-        updateUnreadCounts(threadsData);
-      },
-      (error) => {
-        console.error('Error loading threads:', error);
-        setError('Fehler beim Laden der E-Mail-Threads');
-        setDebugInfo((prev: DebugInfo) => ({
-          ...prev,
-          threadError: error.message
-        }));
-      }
-    );
-    
-    unsubscribes.push(threadsUnsubscribe);
-
-    // 2. Listen to messages in selected folder
-    console.log('📧 Setting up CLASSIC message listener for folder:', selectedFolder);
-    
-    // Fix für draft vs drafts
-    const folderName = selectedFolder === 'drafts' ? 'draft' : selectedFolder;
-    
-    const messagesQuery = query(
-      collection(db, 'email_messages'),
-      where('organizationId', '==', organizationId),
-      where('folder', '==', folderName),
-      orderBy('receivedAt', 'desc'),
-      limit(100)
-    );
-
-    const messagesUnsubscribe = onSnapshot(
-      messagesQuery,
-      (snapshot) => {
-        console.log('📧 Message snapshot received, size:', snapshot.size);
-        const messagesData: EmailMessage[] = [];
-        snapshot.forEach((doc) => {
-          messagesData.push({ ...doc.data(), id: doc.id } as EmailMessage);
-        });
-        setEmails(messagesData);
-        setLoading(false);
-        
-        // Update debug info
-        setDebugInfo((prev: DebugInfo) => ({
-          ...prev,
-          messageCount: messagesData.length,
-          messages: messagesData
-        }));
-      },
-      (error) => {
-        console.error('Error loading messages:', error);
-        setError('Fehler beim Laden der E-Mails');
-        setLoading(false);
-        setDebugInfo((prev: DebugInfo) => ({
-          ...prev,
-          messageError: error.message
-        }));
-      }
-    );
-    
-    unsubscribes.push(messagesUnsubscribe);
-  };
 
   const setupCustomerCampaignListeners = (unsubscribes: Unsubscribe[]) => {
     console.log('🎯 Setting up CUSTOMER/CAMPAIGN listeners:', {
@@ -733,23 +600,9 @@ export default function InboxPage() {
       console.log('🧪 Creating test email...');
       const defaultAddress = emailAddresses.find(addr => addr.isDefault) || emailAddresses[0];
       
-      // Bestimme den Ordner basierend auf selectedFolder/selectedFolderType
+      // In Customer/Campaign Mode immer inbox
       let folder: 'inbox' | 'sent' | 'draft' | 'trash' | 'spam' = 'inbox';
       let isDraft = false;
-      
-      if (viewMode === 'classic') {
-        if (selectedFolder === 'sent') folder = 'sent';
-        else if (selectedFolder === 'drafts') {
-          folder = 'draft';
-          isDraft = true;
-        }
-        else if (selectedFolder === 'spam') folder = 'spam';
-        else if (selectedFolder === 'trash') folder = 'trash';
-        else folder = 'inbox';
-      } else {
-        // In Customer/Campaign Mode immer inbox
-        folder = 'inbox';
-      }
       
       // Create a test thread first
       const testThread = await threadMatcherService.findOrCreateThread({
@@ -766,22 +619,20 @@ export default function InboxPage() {
         throw new Error('Failed to create test thread');
       }
 
-      // Füge Kunden/Kampagnen-Zuordnung hinzu für Customer Mode
+      // Füge Kunden/Kampagnen-Zuordnung hinzu
       let customerId = undefined;
       let customerName = undefined;
       let campaignId = undefined;
       let campaignName = undefined;
       
-      if (viewMode === 'customer') {
-        if (selectedFolderType === 'customer' && selectedCustomerId) {
-          customerId = selectedCustomerId;
-          customerName = 'Test Kunde GmbH';
-        } else if (selectedFolderType === 'campaign' && selectedCampaignId) {
-          campaignId = selectedCampaignId;
-          campaignName = 'Test Kampagne 2024';
-          customerId = 'test-customer-id';
-          customerName = 'Test Kunde GmbH';
-        }
+      if (selectedFolderType === 'customer' && selectedCustomerId) {
+        customerId = selectedCustomerId;
+        customerName = 'Test Kunde GmbH';
+      } else if (selectedFolderType === 'campaign' && selectedCampaignId) {
+        campaignId = selectedCampaignId;
+        campaignName = 'Test Kampagne 2024';
+        customerId = 'test-customer-id';
+        customerName = 'Test Kunde GmbH';
       }
 
       // Create test email message
@@ -1026,10 +877,24 @@ export default function InboxPage() {
   // NEU: Handle thread assignment
   const handleThreadAssign = async (threadId: string, userId: string | null) => {
     try {
+      // Optimistic update - sofort lokale Thread-Liste aktualisieren
+      setThreads(prevThreads => 
+        prevThreads.map(thread => 
+          thread.id === threadId 
+            ? { ...thread, assignedTo: userId } as any
+            : thread
+        )
+      );
+
+      // Update selected thread if it's the one being assigned
+      if (selectedThread?.id === threadId) {
+        setSelectedThread(prev => prev ? { ...prev, assignedTo: userId } as any : prev);
+      }
+
       const assignedBy = user?.uid || '';
       const assignedByName = user?.displayName || user?.email || 'Unbekannt';
       
-      // Update thread assignment
+      // Update thread assignment in database
       await threadMatcherService.assignThread(threadId, userId, assignedBy);
       
       // Send notification if assigning to someone
@@ -1037,7 +902,7 @@ export default function InboxPage() {
         const thread = threads.find(t => t.id === threadId);
         if (thread) {
           await notificationService.sendAssignmentNotification(
-            thread,
+            { ...thread, assignedTo: userId } as any,
             userId,
             assignedBy,
             assignedByName,
@@ -1049,6 +914,20 @@ export default function InboxPage() {
       console.log('✅ Thread assigned successfully');
     } catch (error) {
       console.error('Error assigning thread:', error);
+      
+      // Rollback optimistic update bei Fehler
+      setThreads(prevThreads => 
+        prevThreads.map(thread => 
+          thread.id === threadId 
+            ? { ...thread, assignedTo: (thread as any).assignedTo } // Zurück zum ursprünglichen Wert
+            : thread
+        )
+      );
+      
+      if (selectedThread?.id === threadId) {
+        setSelectedThread(prev => prev ? { ...prev, assignedTo: (prev as any).assignedTo } : prev);
+      }
+      
       alert('Fehler beim Zuweisen des Threads');
     }
   };
@@ -1137,13 +1016,6 @@ export default function InboxPage() {
     setSelectedEmail(null);
   };
 
-  // Handle classic folder selection
-  const handleClassicFolderSelect = (folder: string) => {
-    console.log('📁 Classic folder selected:', folder);
-    setSelectedFolder(folder);
-    setSelectedThread(null);
-    setSelectedEmail(null);
-  };
 
   // Filter threads based on search
   const filteredThreads = threads.filter(thread => {
@@ -1173,27 +1045,16 @@ export default function InboxPage() {
 
   // Get folder display name
   const getFolderDisplayName = () => {
-    if (viewMode === 'classic') {
-      switch(selectedFolder) {
-        case 'inbox': return 'Posteingang';
-        case 'sent': return 'Gesendet';
-        case 'drafts': return 'Entwürfe';
-        case 'spam': return 'Spam';
-        case 'trash': return 'Papierkorb';
-        default: return selectedFolder;
-      }
-    } else {
-      if (selectedFolderType === 'general') return 'Allgemeine Anfragen';
-      if (selectedFolderType === 'customer' && selectedCustomerId) {
-        const customer = filteredThreads.find(t => t.customerId === selectedCustomerId);
-        return customer?.customerName || 'Kunde';
-      }
-      if (selectedFolderType === 'campaign' && selectedCampaignId) {
-        const campaign = filteredThreads.find(t => t.campaignId === selectedCampaignId);
-        return campaign?.campaignName || 'Kampagne';
-      }
-      return 'E-Mails';
+    if (selectedFolderType === 'general') return 'Allgemeine Anfragen';
+    if (selectedFolderType === 'customer' && selectedCustomerId) {
+      const customer = filteredThreads.find(t => t.customerId === selectedCustomerId);
+      return customer?.customerName || 'Kunde';
     }
+    if (selectedFolderType === 'campaign' && selectedCampaignId) {
+      const campaign = filteredThreads.find(t => t.campaignId === selectedCampaignId);
+      return campaign?.campaignName || 'Kampagne';
+    }
+    return 'E-Mails';
   };
 
   // Show empty state if no email addresses configured
@@ -1314,15 +1175,6 @@ export default function InboxPage() {
               }}
             />
             
-            {/* View Mode Toggle */}
-            <Button
-              plain
-              onClick={() => setViewMode(viewMode === 'classic' ? 'customer' : 'classic')}
-              className="p-2"
-              title={viewMode === 'classic' ? 'Zur Kunden-Ansicht wechseln' : 'Zur klassischen Ansicht wechseln'}
-            >
-              <ArrowsRightLeftIcon className="h-5 w-5 text-gray-400" />
-            </Button>
             
             <Button
               plain
@@ -1377,26 +1229,16 @@ export default function InboxPage() {
 
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Organization Sidebar - Classic or Customer/Campaign */}
+        {/* Organization Sidebar - Customer/Campaign */}
         {!organizationSidebarCollapsed && (
-          <>
-            {viewMode === 'classic' ? (
-              <InboxSidebar
-                selectedFolder={selectedFolder}
-                onFolderSelect={handleClassicFolderSelect}
-                unreadCounts={unreadCounts}
-              />
-            ) : (
-              <CustomerCampaignSidebar
-                selectedCustomerId={selectedCustomerId}
-                selectedCampaignId={selectedCampaignId}
-                selectedFolderType={selectedFolderType}
-                onFolderSelect={handleFolderSelect}
-                unreadCounts={unreadCounts}
-                organizationId={organizationId}
-              />
-            )}
-          </>
+          <CustomerCampaignSidebar
+            selectedCustomerId={selectedCustomerId}
+            selectedCampaignId={selectedCampaignId}
+            selectedFolderType={selectedFolderType}
+            onFolderSelect={handleFolderSelect}
+            unreadCounts={unreadCounts}
+            organizationId={organizationId}
+          />
         )}
 
         {/* Thread List */}

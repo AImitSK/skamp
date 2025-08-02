@@ -315,13 +315,6 @@ export function CustomerCampaignSidebar({
         </div>
       </nav>
 
-      {/* Quick Actions */}
-      <div className="p-4 border-t bg-white">
-        <button className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-[#005fab] hover:bg-[#005fab]/10 border border-[#005fab] rounded-lg transition-colors">
-          <PlusIcon className="h-4 w-4" />
-          <span>Neuen Kunden anlegen</span>
-        </button>
-      </div>
     </div>
   );
 }
