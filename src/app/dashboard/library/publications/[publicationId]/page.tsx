@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { useOrganization } from "@/context/OrganizationContext";
 import { publicationService, advertisementService } from "@/lib/firebase/library-service";
 import { companiesService } from "@/lib/firebase/crm-service";
 import type { Publication, Advertisement } from "@/types/library";
@@ -159,6 +160,7 @@ function InfoRow({ label, value, icon: Icon }: { label: string; value: string | 
 
 export default function PublicationDetailPage() {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const params = useParams();
   const router = useRouter();
   const publicationId = params.publicationId as string;
@@ -173,19 +175,19 @@ export default function PublicationDetailPage() {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    if (user && publicationId) {
+    if (user && currentOrganization && publicationId) {
       loadData();
     }
-  }, [user, publicationId]);
+  }, [user, currentOrganization, publicationId]);
 
   const loadData = async () => {
-    if (!user) return;
+    if (!user || !currentOrganization) return;
 
     try {
       setLoading(true);
       
       // Lade Publikation
-      const pubData = await publicationService.getById(publicationId, user.uid);
+      const pubData = await publicationService.getById(publicationId, currentOrganization.id);
       if (!pubData) {
         router.push('/dashboard/library/publications');
         return;
@@ -203,7 +205,7 @@ export default function PublicationDetailPage() {
       }
 
       // Lade zugehörige Werbemittel
-      const adsData = await advertisementService.getByPublicationId(publicationId, user.uid);
+      const adsData = await advertisementService.getByPublicationId(publicationId, currentOrganization.id);
       setAdvertisements(adsData);
 
     } catch (error) {
@@ -215,7 +217,7 @@ export default function PublicationDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (!user || !publication) return;
+    if (!user || !currentOrganization || !publication) return;
 
     setDeleting(true);
     try {
@@ -226,7 +228,7 @@ export default function PublicationDetailPage() {
           deletedBy: user.uid
         },
         {
-          organizationId: user.uid,
+          organizationId: currentOrganization.id,
           userId: user.uid
         }
       );
@@ -240,11 +242,11 @@ export default function PublicationDetailPage() {
   };
 
   const handleVerify = async () => {
-    if (!user || !publication) return;
+    if (!user || !currentOrganization || !publication) return;
 
     try {
       await publicationService.verify(publicationId, {
-        organizationId: user.uid,
+        organizationId: currentOrganization.id,
         userId: user.uid
       });
       await loadData();

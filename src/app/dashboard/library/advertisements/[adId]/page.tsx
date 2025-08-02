@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from "@headlessui/react";
 import { useAuth } from "@/context/AuthContext";
+import { useOrganization } from "@/context/OrganizationContext";
 import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
 import { Button } from "@/components/button";
@@ -267,6 +268,7 @@ export default function AdvertisementDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const adId = params.adId as string;
 
   const [advertisement, setAdvertisement] = useState<Advertisement | null>(null);
@@ -281,20 +283,20 @@ export default function AdvertisementDetailPage() {
   const [selectedTabIndex, setSelectedTabIndex] = useState(0);
 
   useEffect(() => {
-    if (user && adId) {
+    if (user && currentOrganization && adId) {
       loadData();
     }
-  }, [user, adId]);
+  }, [user, currentOrganization, adId]);
 
   const loadData = async () => {
-    if (!user) return;
+    if (!user || !currentOrganization) return;
     
     setLoading(true);
     setError(null);
     
     try {
       // Load advertisement
-      const adData = await advertisementService.getById(adId, user.uid);
+      const adData = await advertisementService.getById(adId, currentOrganization.id);
       if (!adData) {
         setError('Werbemittel nicht gefunden');
         return;
@@ -304,7 +306,7 @@ export default function AdvertisementDetailPage() {
       // Load related publications
       if (adData.publicationIds.length > 0) {
         const pubPromises = adData.publicationIds.map(id => 
-          publicationService.getById(id, user.uid)
+          publicationService.getById(id, currentOrganization.id)
         );
         const pubResults = await Promise.all(pubPromises);
         const validPubs = pubResults.filter(p => p !== null) as Publication[];
@@ -325,10 +327,10 @@ export default function AdvertisementDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (!user || !advertisement) return;
+    if (!user || !currentOrganization || !advertisement) return;
 
     try {
-      await advertisementService.softDelete(adId, { organizationId: user.uid, userId: user.uid });
+      await advertisementService.softDelete(adId, { organizationId: currentOrganization.id, userId: user.uid });
       router.push('/dashboard/library/advertisements');
     } catch (err) {
       console.error('Error deleting advertisement:', err);
@@ -337,12 +339,12 @@ export default function AdvertisementDetailPage() {
   };
 
   const handleDuplicate = async () => {
-    if (!user || !advertisement) return;
+    if (!user || !currentOrganization || !advertisement) return;
 
     try {
       const newId = await advertisementService.duplicate(
         adId,
-        { organizationId: user.uid, userId: user.uid },
+        { organizationId: currentOrganization.id, userId: user.uid },
         { newName: `${advertisement.name} (Kopie)` }
       );
       router.push(`/dashboard/library/advertisements/${newId}`);
