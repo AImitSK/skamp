@@ -486,14 +486,14 @@ export default function NewPRCampaignPage() {
           // Zeige Warnung, aber navigiere trotzdem
           setValidationErrors(['Die Kampagne wurde gespeichert, aber die Freigabe konnte nicht erstellt werden.']);
           setTimeout(() => {
-            router.push('/dashboard/pr-tools/campaigns');
+            router.push('/dashboard/pr-tools/campaigns?refresh=true');
           }, 2000);
           return;
         }
       }
 
-      // Erfolgreiche Navigation
-      router.push('/dashboard/pr-tools/campaigns');
+      // Erfolgreiche Navigation mit Refresh-Parameter
+      router.push('/dashboard/pr-tools/campaigns?refresh=true');
 
     } catch (error) {
       console.error('Fehler beim Speichern der Kampagne:', error);

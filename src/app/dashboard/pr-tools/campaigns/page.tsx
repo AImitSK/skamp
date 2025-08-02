@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
 import { Heading } from "@/components/heading";
@@ -214,6 +215,7 @@ function StatusBadge({ status }: { status: PRCampaignStatus }) {
 export default function PRCampaignsPage() {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
+  const searchParams = useSearchParams();
   const [campaigns, setCampaigns] = useState<PRCampaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -249,6 +251,30 @@ export default function PRCampaignsPage() {
       loadCampaigns();
     }
   }, [user, currentOrganization]);
+
+  // Auto-reload on window focus (when returning from campaign creation)
+  useEffect(() => {
+    const handleFocus = () => {
+      if (user && currentOrganization && !loading) {
+        console.log('Window focused - reloading campaigns');
+        loadCampaigns();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [user, currentOrganization, loading]);
+
+  // Check for refresh parameter (from campaign creation)
+  useEffect(() => {
+    const shouldRefresh = searchParams.get('refresh');
+    if (shouldRefresh === 'true' && user && currentOrganization) {
+      console.log('Refresh parameter detected - reloading campaigns');
+      loadCampaigns();
+      // Clean URL without triggering navigation
+      window.history.replaceState({}, '', '/dashboard/pr-tools/campaigns');
+    }
+  }, [searchParams, user, currentOrganization]);
 
   const loadCampaigns = async () => {
     if (!user || !currentOrganization) return;
