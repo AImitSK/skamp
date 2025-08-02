@@ -155,11 +155,13 @@ export const checkUpcomingEvents = async (userId: string): Promise<Notification[
 
 // Hilfsfunktion: Hole Events für einen bestimmten Zeitraum
 export const getEventsForDateRange = async (
-  userId: string, 
+  organizationId: string, 
   startDate: Date, 
-  endDate: Date
+  endDate: Date,
+  userId?: string
 ): Promise<CalendarEvent[]> => {
   console.log('🔍 getEventsForDateRange Debug:', {
+    organizationId,
     userId,
     startDate: startDate.toISOString(),
     endDate: endDate.toISOString()
@@ -175,7 +177,7 @@ export const getEventsForDateRange = async (
   let tasks: Task[] = [];
   try {
     console.log('🔄 Versuche Tasks zu laden...');
-    tasks = await taskService.getByDateRange(userId, startDate, endDate);
+    tasks = await taskService.getByDateRange(organizationId, startDate, endDate, userId);
     console.log('📊 Gefundene Tasks:', tasks.length);
     console.log('📝 Tasks Detail:', tasks);
   } catch (error) {

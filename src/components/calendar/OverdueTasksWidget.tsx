@@ -15,24 +15,25 @@ import { taskService } from '@/lib/firebase/task-service';
 import { Task } from '@/types/tasks';
 
 interface OverdueTasksWidgetProps {
-  userId: string;
+  organizationId: string;
+  userId?: string;
   onTaskClick?: (task: Task) => void;
   onRefresh?: () => void;
 }
 
-export function OverdueTasksWidget({ userId, onTaskClick, onRefresh }: OverdueTasksWidgetProps) {
+export function OverdueTasksWidget({ organizationId, userId, onTaskClick, onRefresh }: OverdueTasksWidgetProps) {
   const [overdueTasks, setOverdueTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     loadOverdueTasks();
-  }, [userId]);
+  }, [organizationId, userId]);
 
   const loadOverdueTasks = async () => {
     setLoading(true);
     try {
-      const tasks = await taskService.getAll(userId);
+      const tasks = await taskService.getAll(organizationId, userId);
       const now = new Date();
       now.setHours(0, 0, 0, 0);
       

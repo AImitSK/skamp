@@ -51,11 +51,11 @@ export const taskService = {
   /**
    * Holt alle Aufgaben eines Benutzers
    */
-  async getAll(userId: string): Promise<Task[]> {
+  async getAll(organizationId: string, userId?: string): Promise<Task[]> {
     try {
       const q = query(
         collection(db, 'tasks'),
-        where('userId', '==', userId),
+        where('organizationId', '==', organizationId),
         orderBy('dueDate', 'asc')
       );
       
@@ -70,7 +70,7 @@ export const taskService = {
         console.warn('Firestore Index fehlt für tasks, verwende Fallback ohne orderBy');
         const q = query(
           collection(db, 'tasks'),
-          where('userId', '==', userId)
+          where('organizationId', '==', organizationId)
         );
         const snapshot = await getDocs(q);
         const tasks = snapshot.docs.map(doc => ({
@@ -91,14 +91,14 @@ export const taskService = {
   /**
    * Holt alle Aufgaben für einen bestimmten Zeitraum
    */
-  async getByDateRange(userId: string, startDate: Date, endDate: Date): Promise<Task[]> {
+  async getByDateRange(organizationId: string, startDate: Date, endDate: Date, userId?: string): Promise<Task[]> {
     console.log('🔍 taskService.getByDateRange aufgerufen mit:', {
       userId,
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString()
     });
     
-    const tasks = await this.getAll(userId);
+    const tasks = await this.getAll(organizationId, userId);
     console.log('📋 Alle Tasks des Users:', tasks.length);
     
     const filteredTasks = tasks.filter(task => {
@@ -119,10 +119,10 @@ export const taskService = {
   /**
    * Holt alle Aufgaben für einen bestimmten Kunden
    */
-  async getByClientId(userId: string, clientId: string): Promise<Task[]> {
+  async getByClientId(organizationId: string, clientId: string, userId?: string): Promise<Task[]> {
     const q = query(
       collection(db, 'tasks'),
-      where('userId', '==', userId),
+      where('organizationId', '==', organizationId),
       where('linkedClientId', '==', clientId)
     );
     const snapshot = await getDocs(q);
@@ -135,10 +135,10 @@ export const taskService = {
   /**
    * Holt alle Aufgaben für eine bestimmte Kampagne
    */
-  async getByCampaignId(userId: string, campaignId: string): Promise<Task[]> {
+  async getByCampaignId(organizationId: string, campaignId: string, userId?: string): Promise<Task[]> {
     const q = query(
       collection(db, 'tasks'),
-      where('userId', '==', userId),
+      where('organizationId', '==', organizationId),
       where('linkedCampaignId', '==', campaignId)
     );
     const snapshot = await getDocs(q);
@@ -214,7 +214,7 @@ export const taskService = {
   /**
    * Holt Statistiken zu Aufgaben
    */
-  async getStats(userId: string): Promise<{
+  async getStats(organizationId: string, userId?: string): Promise<{
     total: number;
     pending: number;
     completed: number;
@@ -222,7 +222,7 @@ export const taskService = {
     dueToday: number;
     dueThisWeek: number;
   }> {
-    const tasks = await this.getAll(userId);
+    const tasks = await this.getAll(organizationId, userId);
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const weekEnd = new Date(today);
@@ -264,7 +264,7 @@ export const taskService = {
    * Prüft überfällige Tasks und sendet Benachrichtigungen
    * Diese Methode wird vom Cron-Job aufgerufen
    */
-  async checkAndNotifyOverdueTasks(userId: string): Promise<void> {
+  async checkAndNotifyOverdueTasks(organizationId: string, userId?: string): Promise<void> {
     try {
       console.log('🔍 Checking for overdue tasks for user:', userId);
       
@@ -276,7 +276,7 @@ export const taskService = {
       }
       
       // Hole alle nicht-erledigten Tasks
-      const tasks = await this.getAll(userId);
+      const tasks = await this.getAll(organizationId, userId);
       const now = new Date();
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       
@@ -299,7 +299,7 @@ export const taskService = {
         const existingNotifications = await getDocs(
           query(
             collection(db, 'notifications'),
-            where('userId', '==', userId),
+            where('organizationId', '==', organizationId),
             where('type', '==', 'TASK_OVERDUE'),
             where('linkId', '==', task.id),
             where('createdAt', '>=', Timestamp.fromDate(todayStart))

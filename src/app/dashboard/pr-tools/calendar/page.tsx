@@ -317,7 +317,7 @@ export default function CalendarDashboard() {
         endOfMonth.setMonth(endOfMonth.getMonth() + 2);
 
         const [realEvents, campaignsData, clientsData] = await Promise.all([
-          getEventsForDateRange(currentOrganization.id, startOfMonth, endOfMonth),
+          getEventsForDateRange(currentOrganization.id, startOfMonth, endOfMonth, user.uid),
           prService.getAll(currentOrganization.id),
           companiesService.getAll(currentOrganization.id, user.uid) // Fallback mit user.uid
         ]);
@@ -435,6 +435,7 @@ export default function CalendarDashboard() {
     try {
       const newTask: Omit<Task, 'id' | 'createdAt' | 'updatedAt'> = {
         userId: user.uid,
+        organizationId: currentOrganization.id,
         title: taskData.title,
         description: taskData.description || '',
         status: 'pending',
@@ -502,9 +503,10 @@ export default function CalendarDashboard() {
 
       {/* Overdue Tasks Widget */}
       <div className="mt-6 mb-6">
-        {user?.uid && (
+        {user?.uid && currentOrganization && (
           <OverdueTasksWidget
             key={`overdue-${refreshKey}`}
+            organizationId={currentOrganization.id}
             userId={user.uid}
             onTaskClick={(task) => {
               const taskEvent: CalendarEvent = {
