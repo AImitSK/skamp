@@ -98,11 +98,9 @@ export default function InboxPage() {
     emailAddressError?: any;
     listenersSetup?: boolean;
     organizationId?: string;
-    selectedFolder?: string;
     selectedFolderType?: string;
     selectedCustomerId?: string;
     selectedCampaignId?: string;
-    viewMode?: string;
     threadCount?: number;
     threads?: EmailThread[];
     threadError?: string;
@@ -686,34 +684,17 @@ export default function InboxPage() {
       // Load all messages for this thread
       let threadMessages: EmailMessage[] = [];
       
-      if (viewMode === 'classic') {
-        // Classic Mode: Filter by folder
-        const folderName = selectedFolder === 'drafts' ? 'draft' : selectedFolder;
-        
-        const folderQuery = query(
-          collection(db, 'email_messages'),
-          where('threadId', '==', thread.id!),
-          where('folder', '==', folderName),
-          orderBy('receivedAt', 'asc')
-        );
-        
-        const snapshot = await getDocs(folderQuery);
-        snapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
-          threadMessages.push({ ...doc.data(), id: doc.id } as EmailMessage);
-        });
-      } else {
-        // Customer/Campaign Mode: Load all messages in thread
-        const messagesQuery = query(
-          collection(db, 'email_messages'),
-          where('threadId', '==', thread.id!),
-          orderBy('receivedAt', 'asc')
-        );
-        
-        const snapshot = await getDocs(messagesQuery);
-        snapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
-          threadMessages.push({ ...doc.data(), id: doc.id } as EmailMessage);
-        });
-      }
+      // Load all messages in thread
+      const messagesQuery = query(
+        collection(db, 'email_messages'),
+        where('threadId', '==', thread.id!),
+        orderBy('receivedAt', 'asc')
+      );
+      
+      const snapshot = await getDocs(messagesQuery);
+      snapshot.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
+        threadMessages.push({ ...doc.data(), id: doc.id } as EmailMessage);
+      });
       
       console.log(`📨 Loaded ${threadMessages.length} messages for thread`);
       
@@ -817,12 +798,8 @@ export default function InboxPage() {
         console.log('🔄 Deleted email was selected, updating state...');
         setSelectedEmail(null);
         
-        // Im Trash-Ordner: Thread bleibt sichtbar
-        if (selectedFolder === 'trash') {
-          // Thread bleibt ausgewählt, aber keine E-Mail
-          console.log('📂 In trash folder, keeping thread selected');
-          return;
-        }
+        // In Customer/Campaign mode, check remaining emails
+        console.log('📂 Email deleted, checking remaining emails');
         
         // In anderen Ordnern: Prüfe verbleibende E-Mails
         const remainingEmails = emails.filter(e => 
