@@ -53,12 +53,50 @@ class PublicationService extends BaseService<Publication> {
         return newResults;
       }
       
-      // Fallback: Legacy-Daten mit organizationId = userId
+      // Fallback: Legacy-Daten mit organizationId als userId
       console.log('🔄 No publications found with organizationId, trying legacy userId...');
       
-      // Hole User ID aus dem OrganizationContext (falls verfügbar)
-      // Da wir hier keinen Context haben, geben wir leeres Array zurück
-      // Die Migration sollte separat erfolgen
+      const constraints: QueryConstraint[] = [];
+      
+      // Sortierung
+      if (options.orderBy) {
+        constraints.push(
+          orderBy(options.orderBy.field, options.orderBy.direction || 'asc')
+        );
+      } else {
+        constraints.push(orderBy('createdAt', 'desc'));
+      }
+
+      // Limit
+      if (options.limit) {
+        constraints.push(limit(options.limit));
+      }
+
+      // Legacy Query mit userId = organizationId
+      const legacyQuery = query(
+        this.collectionRef,
+        where('userId', '==', organizationId),
+        ...constraints
+      );
+      
+      const legacySnapshot = await getDocs(legacyQuery);
+      
+      if (!legacySnapshot.empty) {
+        console.log(`✅ Found ${legacySnapshot.size} legacy publications with userId = ${organizationId}`);
+        const legacyDocs = legacySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as Publication));
+        
+        // Soft-delete Filter
+        if (!options.includeDeleted) {
+          return legacyDocs.filter(doc => !doc.deletedAt);
+        }
+        
+        return legacyDocs;
+      }
+      
+      console.log(`❌ No publications found with either organizationId or userId = ${organizationId}`);
       return [];
       
     } catch (error) {

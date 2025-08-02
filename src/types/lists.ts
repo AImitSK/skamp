@@ -33,6 +33,7 @@ export interface DistributionList {
   // Metadaten
   contactCount: number;
   userId: string; // Owner der Liste
+  organizationId?: string; // Organisation der Liste (für Multi-Tenancy)
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
   lastUpdated?: Timestamp; // Wann wurden die Kontakte zuletzt aktualisiert

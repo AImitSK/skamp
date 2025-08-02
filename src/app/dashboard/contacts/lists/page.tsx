@@ -4,6 +4,7 @@
 import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
 import Link from 'next/link';
 import { useAuth } from "@/context/AuthContext";
+import { useOrganization } from "@/context/OrganizationContext";
 import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
 import { Button } from "@/components/button";
@@ -135,6 +136,7 @@ function Alert({
 
 export default function ListsPage() {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const [lists, setLists] = useState<DistributionList[]>([]);
   const [metrics, setMetrics] = useState<Map<string, ListMetrics>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -167,16 +169,16 @@ export default function ListsPage() {
   }, []);
 
   useEffect(() => {
-    if (user) {
+    if (user && currentOrganization?.id) {
       loadData();
     }
-  }, [user]);
+  }, [user, currentOrganization?.id]);
 
   const loadData = async () => {
-    if (!user) return;
+    if (!user || !currentOrganization?.id) return;
     setLoading(true);
     try {
-      const listsData = await listsService.getAll(user.uid);
+      const listsData = await listsService.getAll(currentOrganization.id);
       setLists(listsData);
 
       const metricsMap = new Map<string, ListMetrics>();
@@ -282,7 +284,7 @@ export default function ListsPage() {
       onConfirm: async () => {
         try {
           showAlert('info', 'Aktualisierung gestartet', 'Alle dynamischen Listen werden neu berechnet...');
-          await listsService.refreshAllDynamicLists(user.uid);
+          await listsService.refreshAllDynamicLists(currentOrganization?.id || user.uid);
           showAlert('success', 'Aktualisierung abgeschlossen', 'Alle dynamischen Listen wurden erfolgreich aktualisiert.');
           await loadData();
         } catch (error) {
@@ -1001,6 +1003,7 @@ export default function ListsPage() {
           }}
           onSave={editingList ? handleEditList : handleCreateList}
           userId={user.uid}
+          organizationId={currentOrganization?.id || user.uid}
         />
       )}
 

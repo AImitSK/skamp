@@ -72,9 +72,10 @@ interface ListModalProps {
   onClose: () => void;
   onSave: (listData: Omit<DistributionList, 'id' | 'contactCount' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   userId: string;
+  organizationId: string;
 }
 
-export default function ListModal({ list, onClose, onSave, userId }: ListModalProps) {
+export default function ListModal({ list, onClose, onSave, userId, organizationId }: ListModalProps) {
   const { companies, contacts, tags } = useCrmData();
 
   const [formData, setFormData] = useState<Partial<DistributionList>>({
@@ -171,10 +172,10 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
   }, [formData.filters, formData.contactIds, formData.type]);
 
   const updatePreview = async () => {
-    if (!formData.filters || !userId) return;
+    if (!formData.filters || !organizationId) return;
     setLoadingPreview(true);
     try {
-      const contacts = await listsService.getContactsByFilters(formData.filters, userId);
+      const contacts = await listsService.getContactsByFilters(formData.filters, organizationId);
       setPreviewContacts(contacts.slice(0, 10));
       setPreviewCount(contacts.length);
     } catch (error) {
@@ -243,6 +244,7 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
         type: formData.type!, 
         category: formData.category || 'custom',
         userId: userId,
+        organizationId: organizationId,
         filters: formData.type === 'dynamic' ? formData.filters : {},
         contactIds: formData.type === 'static' ? formData.contactIds : [],
       };
@@ -488,7 +490,7 @@ export default function ListModal({ list, onClose, onSave, userId }: ListModalPr
                         
                         <PublicationFilterSection
                           filters={formData.filters?.publications}
-                          organizationId={userId}
+                          organizationId={organizationId}
                           onChange={(publicationFilters) => 
                             handleFilterChange('publications', publicationFilters)
                           }

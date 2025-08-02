@@ -111,6 +111,7 @@ export const listsService = {
       category: listData.category || 'custom',
       color: listData.color || 'blue',
       userId: listData.userId,
+      organizationId: listData.organizationId || listData.userId, // Nutze organizationId wenn vorhanden, sonst Fallback auf userId
       contactCount,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
@@ -173,7 +174,8 @@ export const listsService = {
     if (list.type === 'static' && list.contactIds) {
       return await this.getContactsByIds(list.contactIds);
     } else if (list.type === 'dynamic' && list.filters) {
-      return await this.getContactsByFilters(list.filters, list.userId);
+      const organizationId = list.organizationId || list.userId;
+      return await this.getContactsByFilters(list.filters, organizationId);
     }
     return [];
   },
@@ -186,17 +188,19 @@ export const listsService = {
   async calculateContactCount(list: Partial<DistributionList>): Promise<number> {
     if (list.type === 'static' && list.contactIds) {
       return list.contactIds.length;
-    } else if (list.type === 'dynamic' && list.filters && list.userId) {
-      const contacts = await this.getContactsByFilters(list.filters, list.userId);
-      return contacts.length;
+    } else if (list.type === 'dynamic' && list.filters) {
+      const organizationId = list.organizationId || list.userId;
+      if (organizationId) {
+        const contacts = await this.getContactsByFilters(list.filters, organizationId);
+        return contacts.length;
+      }
     }
     return 0;
   },
 
   // --- Filter-basierte Kontaktsuche ---
 
-  async getContactsByFilters(filters: ListFilters, userId: string): Promise<ContactEnhanced[]> {
-    const organizationId = userId;
+  async getContactsByFilters(filters: ListFilters, organizationId: string): Promise<ContactEnhanced[]> {
     
     // Basis: Alle Kontakte der Organisation
     let allContacts = await contactsEnhancedService.getAll(organizationId);

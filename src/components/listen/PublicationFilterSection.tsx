@@ -65,20 +65,42 @@ export default function PublicationFilterSection({
     const publishers = new Map<string, string>();
     const industries = new Set<string>();
 
+    // Schutz gegen undefined publications
+    if (!publications || !Array.isArray(publications)) {
+      return {
+        types: [],
+        formats: [],
+        frequencies: [],
+        focusAreas: [],
+        languages: [],
+        countries: [],
+        publishers: [],
+        industries: []
+      };
+    }
+
     publications.forEach(pub => {
-      types.add(pub.type);
-      formats.add(pub.format);
-      frequencies.add(pub.metrics.frequency);
+      if (pub.type) types.add(pub.type);
+      if (pub.format) formats.add(pub.format);
+      if (pub.metrics?.frequency) frequencies.add(pub.metrics.frequency);
       
-      pub.focusAreas.forEach(area => focusAreas.add(area));
-      pub.languages.forEach(lang => languages.add(lang));
-      pub.geographicTargets.forEach(country => countries.add(country));
+      if (pub.focusAreas && Array.isArray(pub.focusAreas)) {
+        pub.focusAreas.forEach(area => focusAreas.add(area));
+      }
+      if (pub.languages && Array.isArray(pub.languages)) {
+        pub.languages.forEach(lang => languages.add(lang));
+      }
+      if (pub.geographicTargets && Array.isArray(pub.geographicTargets)) {
+        pub.geographicTargets.forEach(country => countries.add(country));
+      }
       
       if (pub.publisherId && pub.publisherName) {
         publishers.set(pub.publisherId, pub.publisherName);
       }
       
-      pub.targetIndustries?.forEach(industry => industries.add(industry));
+      if (pub.targetIndustries && Array.isArray(pub.targetIndustries)) {
+        pub.targetIndustries.forEach(industry => industries.add(industry));
+      }
     });
 
     return {
