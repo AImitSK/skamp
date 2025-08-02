@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Routing Rules Test</title>
+</head>
+<body>
+    <h1>Routing Rules Test Console</h1>
+    <p>Open browser console and run: <code>testRoutingRules()</code></p>
+    <div id="results"></div>
+
+    <script>
+        // Vereinfachter Test für Browser
+        function testRoutingRules() {
+            console.log('🧪 Starting Routing Rules Test...');
+            
+            // Test Email Address mit Routing Rules
+            const emailAddress = {
+                id: 'test-address-123',
+                email: 'test@example.com',
+                routingRules: [
+                    {
+                        id: 'rule-support',
+                        name: 'Support Requests',
+                        conditions: {
+                            subject: 'Support',
+                            keywords: ['hilfe', 'problem', 'fehler']
+                        },
+                        actions: {
+                            assignTo: ['user-support-123'],
+                            addTags: ['support', 'urgent'],
+                            setPriority: 'high'
+                        },
+                        enabled: true,
+                        priority: 1
+                    },
+                    {
+                        id: 'rule-press',
+                        name: 'Press Inquiries',
+                        conditions: {
+                            keywords: ['presse', 'interview', 'journalist']
+                        },
+                        actions: {
+                            assignTo: ['user-pr-789'],
+                            addTags: ['press', 'media'],
+                            setPriority: 'high',
+                            autoReply: 'press-response-template'
+                        },
+                        enabled: true,
+                        priority: 1
+                    }
+                ]
+            };
+
+            // Test Messages
+            const testMessages = [
+                {
+                    id: 'msg-support-test',
+                    subject: 'Support - Problem mit Login',
+                    textContent: 'Ich habe ein Problem mit meinem Login. Können Sie mir helfen?',
+                    from: { email: 'kunde@example.com', name: 'Max Mustermann' },
+                    labels: [],
+                    importance: 'normal'
+                },
+                {
+                    id: 'msg-press-test',
+                    subject: 'Interview Anfrage für Artikel',
+                    textContent: 'Ich bin Journalist und würde gerne ein Interview führen.',
+                    from: { email: 'journalist@zeitung.de', name: 'Anna Journalist' },
+                    labels: [],
+                    importance: 'normal'
+                }
+            ];
+
+            // Simuliere Routing Rules Logic
+            testMessages.forEach(message => {
+                console.log(`\n🔍 Testing message: "${message.subject}"`);
+                
+                const sortedRules = [...emailAddress.routingRules].sort((a, b) => 
+                    (a.priority || 999) - (b.priority || 999)
+                );
+
+                for (const rule of sortedRules) {
+                    if (!rule.enabled) continue;
+                    
+                    console.log(`🔍 Checking rule: ${rule.name}`);
+                    
+                    if (matchesRuleConditions(message, rule.conditions)) {
+                        console.log(`✅ Rule matched: ${rule.name}`);
+                        
+                        // Apply actions
+                        const updates = { labels: [...message.labels] };
+                        
+                        if (rule.actions.assignTo?.length > 0) {
+                            console.log(`👥 Assigning to: ${rule.actions.assignTo.join(', ')}`);
+                            updates.labels.push(...rule.actions.assignTo.map(u => `assigned:${u}`), 'assigned');
+                        }
+                        
+                        if (rule.actions.addTags?.length > 0) {
+                            console.log(`🏷️ Adding tags: ${rule.actions.addTags.join(', ')}`);
+                            rule.actions.addTags.forEach(tag => {
+                                if (!updates.labels.includes(tag)) {
+                                    updates.labels.push(tag);
+                                }
+                            });
+                        }
+                        
+                        if (rule.actions.setPriority) {
+                            console.log(`🚨 Setting priority: ${rule.actions.setPriority}`);
+                            updates.importance = rule.actions.setPriority;
+                            updates.labels.push(`priority:${rule.actions.setPriority}`);
+                        }
+                        
+                        if (rule.actions.autoReply) {
+                            console.log(`📨 Auto-reply template: ${rule.actions.autoReply}`);
+                            updates.labels.push(`auto-reply:${rule.actions.autoReply}`, 'auto-reply-pending');
+                        }
+                        
+                        const ruleLabel = `rule:${rule.name.toLowerCase().replace(/\s+/g, '-')}`;
+                        updates.labels.push(ruleLabel);
+                        
+                        Object.assign(message, updates);
+                        console.log('✅ Rule actions applied');
+                        break;
+                    } else {
+                        console.log(`❌ Rule did not match: ${rule.name}`);
+                    }
+                }
+                
+                console.log(`🏷️ Final labels: ${message.labels.join(', ')}`);
+                console.log(`🚨 Final priority: ${message.importance}`);
+            });
+            
+            console.log('\n🎉 Routing Rules Test completed!');
+        }
+
+        function matchesRuleConditions(message, conditions) {
+            if (!conditions || Object.keys(conditions).length === 0) {
+                return false;
+            }
+
+            let conditionsChecked = 0;
+            let conditionsMet = 0;
+
+            // Subject Check
+            if (conditions.subject !== undefined && conditions.subject !== '') {
+                conditionsChecked++;
+                if (message.subject.toLowerCase().includes(conditions.subject.toLowerCase())) {
+                    conditionsMet++;
+                    console.log(`  ✅ Subject condition met: "${conditions.subject}"`);
+                } else {
+                    console.log(`  ❌ Subject condition NOT met: "${conditions.subject}"`);
+                }
+            }
+
+            // From Check
+            if (conditions.from !== undefined && conditions.from !== '') {
+                conditionsChecked++;
+                const fromCheck = conditions.from.toLowerCase();
+                const emailMatches = message.from.email.toLowerCase().includes(fromCheck);
+                const nameMatches = message.from.name ? 
+                    message.from.name.toLowerCase().includes(fromCheck) : false;
+                
+                if (emailMatches || nameMatches) {
+                    conditionsMet++;
+                    console.log(`  ✅ From condition met: "${conditions.from}"`);
+                } else {
+                    console.log(`  ❌ From condition NOT met: "${conditions.from}"`);
+                }
+            }
+
+            // Keywords Check
+            if (conditions.keywords && conditions.keywords.length > 0) {
+                conditionsChecked++;
+                const content = `${message.subject} ${message.textContent}`.toLowerCase();
+                const matchedKeywords = [];
+                
+                conditions.keywords.forEach(keyword => {
+                    if (content.includes(keyword.toLowerCase())) {
+                        matchedKeywords.push(keyword);
+                    }
+                });
+                
+                if (matchedKeywords.length > 0) {
+                    conditionsMet++;
+                    console.log(`  ✅ Keywords condition met: ${matchedKeywords.join(', ')}`);
+                } else {
+                    console.log(`  ❌ Keywords condition NOT met: none of [${conditions.keywords.join(', ')}] found`);
+                }
+            }
+
+            const allConditionsMet = conditionsChecked > 0 && conditionsMet === conditionsChecked;
+            console.log(`  📊 Conditions: ${conditionsMet}/${conditionsChecked} met`);
+            
+            return allConditionsMet;
+        }
+
+        // Make function globally available
+        window.testRoutingRules = testRoutingRules;
+    </script>
+</body>
+</html>
