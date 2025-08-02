@@ -634,18 +634,14 @@ export default function InboxPage() {
       const testMessageData: Partial<EmailMessage> = {
         messageId: `test-${Date.now()}@celeropress.de`,
         threadId: testThread.threadId,
-        from: folder === 'sent' 
-          ? { email: defaultAddress.email, name: defaultAddress.displayName }
-          : { email: 'test@example.com', name: 'Test Sender' },
-        to: folder === 'sent'
-          ? [{ email: 'recipient@example.com', name: 'Test Recipient' }]
-          : [{ email: defaultAddress.email, name: defaultAddress.displayName }],
+        from: { email: 'test@example.com', name: 'Test Sender' },
+        to: [{ email: defaultAddress.email, name: defaultAddress.displayName }],
         subject: `Test E-Mail - ${new Date().toLocaleString('de-DE')}`,
         textContent: `Dies ist eine Test-E-Mail zur Überprüfung der Inbox-Funktionalität.\n\nDiese E-Mail wurde automatisch generiert.`,
         htmlContent: `<p>Dies ist eine Test-E-Mail zur Überprüfung der Inbox-Funktionalität.</p><p>Diese E-Mail wurde automatisch generiert.</p>`,
         snippet: `Dies ist eine Test-E-Mail...`,
         folder: folder,
-        isRead: folder === 'sent' || isDraft,
+        isRead: isDraft,
         isStarred: false,
         isArchived: false,
         isDraft: isDraft,
@@ -655,7 +651,7 @@ export default function InboxPage() {
         organizationId,
         userId: user?.uid || '',
         receivedAt: serverTimestamp() as Timestamp,
-        sentAt: folder === 'sent' ? serverTimestamp() as Timestamp : undefined,
+        sentAt: undefined,
         attachments: [],
         // NEU: Kunden/Kampagnen-Zuordnung
         customerId,
