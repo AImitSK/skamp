@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from "@/context/AuthContext";
+import { useOrganization } from "@/context/OrganizationContext";
 import { contactsEnhancedService, companiesEnhancedService, tagsEnhancedService } from "@/lib/firebase/crm-service-enhanced";
 import { listsService } from "@/lib/firebase/lists-service";
 import { ContactEnhanced, CompanyEnhanced, CONTACT_STATUS_OPTIONS, COMMUNICATION_CHANNELS } from "@/types/crm-enhanced";
@@ -195,6 +196,7 @@ function InfoCard({
 
 export default function ContactDetailPage() {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const params = useParams();
   const router = useRouter();
   const contactId = params.contactId as string;
@@ -900,7 +902,7 @@ export default function ContactDetailPage() {
           contact={contact}
           companies={companies}
           userId={user!.uid}
-          organizationId={user!.uid}
+          organizationId={currentOrganization?.id || user!.uid}
           onClose={() => setShowEditModal(false)}
           onSave={() => {
             setShowEditModal(false);
