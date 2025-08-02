@@ -77,6 +77,7 @@ export default function InboxPage() {
   const [resolvingThreads, setResolvingThreads] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [organizationSidebarCollapsed, setOrganizationSidebarCollapsed] = useState(false);
   
   // NEU: State für Kunden/Kampagnen-Organisation
   const [viewMode, setViewMode] = useState<'classic' | 'customer'>('customer');
@@ -1265,12 +1266,26 @@ export default function InboxPage() {
 
           {/* Right side - Actions */}
           <div className="flex items-center gap-2">
-            {/* Sidebar Toggle */}
+            {/* Organization Sidebar Toggle */}
+            <Button
+              plain
+              onClick={() => setOrganizationSidebarCollapsed(!organizationSidebarCollapsed)}
+              className="p-2"
+              title={organizationSidebarCollapsed ? 'Ordner-Sidebar anzeigen' : 'Ordner-Sidebar ausblenden'}
+            >
+              {organizationSidebarCollapsed ? (
+                <ChevronRightIcon className="h-5 w-5 text-gray-400" />
+              ) : (
+                <ChevronLeftIcon className="h-5 w-5 text-gray-400" />
+              )}
+            </Button>
+            
+            {/* Thread List Sidebar Toggle */}
             <Button
               plain
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
               className="p-2"
-              title={sidebarCollapsed ? 'Sidebar anzeigen' : 'Sidebar ausblenden'}
+              title={sidebarCollapsed ? 'Thread-Liste anzeigen' : 'Thread-Liste ausblenden'}
             >
               {sidebarCollapsed ? (
                 <ChevronRightIcon className="h-5 w-5 text-gray-400" />
@@ -1355,8 +1370,8 @@ export default function InboxPage() {
 
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Sidebar - Classic or Customer/Campaign */}
-        {!sidebarCollapsed && (
+        {/* Organization Sidebar - Classic or Customer/Campaign */}
+        {!organizationSidebarCollapsed && (
           <>
             {viewMode === 'classic' ? (
               <InboxSidebar
@@ -1378,7 +1393,8 @@ export default function InboxPage() {
         )}
 
         {/* Thread List */}
-        <div className="w-96 border-r bg-gray-50 flex flex-col">
+        {!sidebarCollapsed && (
+          <div className="w-96 border-r bg-gray-50 flex flex-col">
           {/* Folder Header */}
           <div className="px-4 py-2 border-b bg-gray-100 flex items-center justify-between">
             <h3 className="font-medium text-sm text-gray-700">
@@ -1427,7 +1443,8 @@ export default function InboxPage() {
             onAssign={handleThreadAssign}
             organizationId={organizationId}
           />
-        </div>
+          </div>
+        )}
 
         {/* Email Viewer */}
         <div className="flex-1 flex flex-col min-h-0">

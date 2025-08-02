@@ -222,7 +222,7 @@ export function EmailViewer({
               thread={thread}
               onStatusChange={onStatusChange}
               compact={true}
-              showSLA={false}
+              showSLA={true}
               showTimers={false}
             />
           </div>
@@ -374,46 +374,44 @@ export function EmailViewer({
         ))}
         </div>
 
-        {/* AI Features - Collapsed by default */}
+        {/* AI Features - Full Width Layout */}
         {showAI && selectedEmail && (
-          <div className="border-t border-gray-200 p-4 space-y-3">
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
-              {/* AI Insights */}
-              <AIInsightsPanel
-                email={selectedEmail}
-                thread={thread}
-                context={{
-                  threadHistory: emails.map(e => e.textContent || e.htmlContent || '').filter(Boolean),
-                  customerInfo: thread.participants[0]?.name || thread.participants[0]?.email,
-                  campaignContext: thread.subject
-                }}
-                onPriorityChange={onPriorityChange}
-                onCategoryChange={onCategoryChange}
-                collapsed={true}
-              />
+          <div className="border-t border-gray-200 p-4 space-y-4">
+            {/* AI Insights */}
+            <AIInsightsPanel
+              email={selectedEmail}
+              thread={thread}
+              context={{
+                threadHistory: emails.map(e => e.textContent || e.htmlContent || '').filter(Boolean),
+                customerInfo: thread.participants[0]?.name || thread.participants[0]?.email,
+                campaignContext: thread.subject
+              }}
+              onPriorityChange={onPriorityChange}
+              onCategoryChange={onCategoryChange}
+              collapsed={true}
+            />
 
-              {/* AI Response Suggestions */}
-              <AIResponseSuggestions
-                email={selectedEmail}
-                thread={thread}
-                onUseSuggestion={(responseText) => {
-                  // Create a synthetic email object for reply
-                  const replyEmail = {
-                    ...selectedEmail,
-                    textContent: responseText,
-                    htmlContent: responseText
-                  };
-                  onReply(replyEmail);
-                }}
-                context={{
-                  customerName: thread.participants[0]?.name,
-                  customerHistory: `Vorherige E-Mails in diesem Thread: ${emails.length}`,
-                  companyInfo: organizationId,
-                  threadHistory: emails.map(e => e.textContent || e.htmlContent || '').filter(Boolean)
-                }}
-                collapsed={true}
-              />
-            </div>
+            {/* AI Response Suggestions */}
+            <AIResponseSuggestions
+              email={selectedEmail}
+              thread={thread}
+              onUseSuggestion={(responseText) => {
+                // Create a synthetic email object for reply
+                const replyEmail = {
+                  ...selectedEmail,
+                  textContent: responseText,
+                  htmlContent: responseText
+                };
+                onReply(replyEmail);
+              }}
+              context={{
+                customerName: thread.participants[0]?.name,
+                customerHistory: `Vorherige E-Mails in diesem Thread: ${emails.length}`,
+                companyInfo: organizationId,
+                threadHistory: emails.map(e => e.textContent || e.htmlContent || '').filter(Boolean)
+              }}
+              collapsed={true}
+            />
           </div>
         )}
 
