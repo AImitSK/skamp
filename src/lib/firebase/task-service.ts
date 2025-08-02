@@ -93,7 +93,7 @@ export const taskService = {
    */
   async getByDateRange(organizationId: string, startDate: Date, endDate: Date, userId?: string): Promise<Task[]> {
     console.log('🔍 taskService.getByDateRange aufgerufen mit:', {
-      userId,
+      organizationId,
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString()
     });

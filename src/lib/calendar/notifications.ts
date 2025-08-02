@@ -31,7 +31,7 @@ async function getUpcomingEvents(userId: string, hoursAhead: number = 24): Promi
   const endTime = new Date(now.getTime() + hoursAhead * 60 * 60 * 1000);
   
   // Hole alle Kampagnen
-  const campaigns = await prService.getAll(userId);
+  const campaigns = await prService.getAll(organizationId);
   const events: CalendarEvent[] = [];
   
   // Konvertiere Kampagnen zu Events
@@ -167,7 +167,7 @@ export const getEventsForDateRange = async (
     endDate: endDate.toISOString()
   });
   
-  const campaigns = await prService.getAll(userId);
+  const campaigns = await prService.getAll(organizationId);
   console.log('📊 Gefundene Kampagnen:', campaigns.length);
   
   const events: CalendarEvent[] = [];
@@ -192,7 +192,7 @@ export const getEventsForDateRange = async (
     const calendarEventsRef = collection(db, 'calendar_events');
     const q = query(
       calendarEventsRef,
-      where('organizationId', '==', userId), // FIXME: userId sollte organizationId sein
+      where('organizationId', '==', organizationId),
       where('startTime', '>=', Timestamp.fromDate(startDate)),
       where('startTime', '<=', Timestamp.fromDate(endDate)),
       orderBy('startTime', 'asc')
@@ -236,7 +236,7 @@ export const getEventsForDateRange = async (
     const scheduledEmailsRef = collection(db, 'scheduled_emails');
     const q = query(
       scheduledEmailsRef,
-      where('userId', '==', userId),
+      where('organizationId', '==', organizationId),
       where('status', '==', 'pending'),
       where('scheduledAt', '>=', Timestamp.fromDate(startDate)),
       where('scheduledAt', '<=', Timestamp.fromDate(endDate))
