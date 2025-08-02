@@ -23,6 +23,7 @@ import { prService } from '@/lib/firebase/pr-service';
 import { taskService } from '@/lib/firebase/task-service';
 import { Timestamp } from 'firebase/firestore';
 import { Company } from '@/types/crm';
+import { CompanyEnhanced } from '@/types/crm-enhanced';
 import { MultiSelectDropdown } from '@/components/MultiSelectDropdown';
 
 // FullCalendar Imports
@@ -277,7 +278,7 @@ export default function CalendarDashboard() {
   const { companies } = useCrmData();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [campaigns, setCampaigns] = useState<any[]>([]);
-  const [clients, setClients] = useState<Company[]>([]);
+  const [clients, setClients] = useState<CompanyEnhanced[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
