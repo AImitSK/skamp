@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import { Field, Label, Description } from '@/components/fieldset';
 import { Button } from '@/components/button';
 import { companiesEnhancedService } from '@/lib/firebase/crm-service-enhanced';
@@ -45,29 +46,30 @@ export function CustomerSelector({
   className
 }: CustomerSelectorProps) {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const [companies, setCompanies] = useState<CompanyOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [internalError, setInternalError] = useState<string | null>(null);
 
-  // Load companies - SIMPLIFIED VERSION using userId directly
+  // Load companies - Multi-Tenancy version using organizationId
   useEffect(() => {
     let mounted = true;
 
     const loadCompanies = async () => {
-      if (!user?.uid) {
-        console.log('CustomerSelector: No user available');
+      if (!user?.uid || !currentOrganization) {
+        console.log('CustomerSelector: No user or organization available');
         if (mounted) {
           setLoading(false);
         }
         return;
       }
 
-      console.log('CustomerSelector: Loading companies for user:', user.uid);
+      console.log('CustomerSelector: Loading companies for organization:', currentOrganization.id);
       
       try {
-        // Verwende companiesEnhancedService genau wie in der CRM-Seite
-        const companiesData = await companiesEnhancedService.getAll(user.uid);
+        // Verwende companiesEnhancedService mit organizationId für Multi-Tenancy
+        const companiesData = await companiesEnhancedService.getAll(currentOrganization.id);
         console.log('CustomerSelector: Loaded companies:', companiesData.length);
         
         // Debug: Log die ersten Companies
@@ -114,7 +116,7 @@ export function CustomerSelector({
     return () => {
       mounted = false;
     };
-  }, [user]);
+  }, [user, currentOrganization]);
 
   // Get selected company
   const selectedCompany = useMemo(() => 

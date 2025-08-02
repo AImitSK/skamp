@@ -9,6 +9,7 @@ import { ManualRecipient } from '@/types/email-composer';
 import { DistributionList } from '@/types/lists';
 import { listsService } from '@/lib/firebase/lists-service';
 import { useAuth } from '@/context/AuthContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import { 
   UserGroupIcon, 
   UserPlusIcon, 
@@ -36,6 +37,7 @@ export default function RecipientManager({
   recipientCount
 }: RecipientManagerProps) {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const [lists, setLists] = useState<DistributionList[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -44,11 +46,11 @@ export default function RecipientManager({
   // Lade Verteilerlisten
   useEffect(() => {
     const loadLists = async () => {
-      if (!user) return;
+      if (!user || !currentOrganization) return;
       
       setLoading(true);
       try {
-        const userLists = await listsService.getAll(user.uid);
+        const userLists = await listsService.getAll(currentOrganization.id, user.uid);
         setLists(userLists);
       } catch (error) {
         console.error('Fehler beim Laden der Listen:', error);
@@ -58,7 +60,7 @@ export default function RecipientManager({
     };
 
     loadLists();
-  }, [user]);
+  }, [user, currentOrganization]);
 
   // Gefilterte Listen
   const filteredLists = lists.filter(list =>

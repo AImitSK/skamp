@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
 import Link from 'next/link';
 import { useAuth } from "@/context/AuthContext";
-import { teamMemberService } from "@/lib/firebase/organization-service";
+import { useOrganization } from "@/context/OrganizationContext";
 import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
 import { Button } from "@/components/button";
@@ -213,7 +213,7 @@ function StatusBadge({ status }: { status: PRCampaignStatus }) {
 
 export default function PRCampaignsPage() {
   const { user } = useAuth();
-  const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const { currentOrganization } = useOrganization();
   const [campaigns, setCampaigns] = useState<PRCampaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -243,40 +243,19 @@ export default function PRCampaignsPage() {
     setTimeout(() => setAlert(null), 5000);
   }, []);
 
-  // Load OrganizationId
-  useEffect(() => {
-    const loadOrganizationId = async () => {
-      if (!user) return;
-      
-      try {
-        const orgs = await teamMemberService.getUserOrganizations(user.uid);
-        if (orgs.length > 0) {
-          setOrganizationId(orgs[0].organization.id!);
-        } else {
-          // Fallback auf userId für Backwards Compatibility
-          setOrganizationId(user.uid);
-        }
-      } catch (error) {
-        console.error('Error loading organization:', error);
-        setOrganizationId(user.uid);
-      }
-    };
-    
-    loadOrganizationId();
-  }, [user]);
 
   useEffect(() => {
-    if (user && organizationId) {
+    if (user && currentOrganization) {
       loadCampaigns();
     }
-  }, [user, organizationId]);
+  }, [user, currentOrganization]);
 
   const loadCampaigns = async () => {
-    if (!user || !organizationId) return;
+    if (!user || !currentOrganization) return;
     setLoading(true);
     try {
-      // Verwende organizationId wenn verfügbar, sonst userId
-      const campaignsData = await prService.getAllByOrganization(organizationId);
+      // Verwende currentOrganization.id für Multi-Tenancy
+      const campaignsData = await prService.getAllByOrganization(currentOrganization.id);
       setCampaigns(campaignsData);
     } catch (error) {
       showAlert('error', 'Fehler beim Laden', 'Die Kampagnen konnten nicht geladen werden.');

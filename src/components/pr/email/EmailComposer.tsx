@@ -13,6 +13,7 @@ import {
   SenderInfo
 } from '@/types/email-composer';
 import { useAuth } from '@/context/AuthContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import { emailCampaignService } from '@/lib/firebase/email-campaign-service';
 import { emailService } from '@/lib/email/email-service';
 import { emailComposerService } from '@/lib/email/email-composer-service';
@@ -281,6 +282,7 @@ interface EmailComposerProps {
 
 export default function EmailComposer({ campaign, onClose, onSent }: EmailComposerProps) {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const [state, dispatch] = useReducer(
     composerReducer, 
     { campaignId: campaign.id!, campaignTitle: campaign.title },
@@ -365,7 +367,7 @@ export default function EmailComposer({ campaign, onClose, onSent }: EmailCompos
         campaign.id!,
         state.draft,
         user.uid,
-        user.uid // organizationId = userId für jetzt
+        currentOrganization?.id || user.uid // organizationId aus Context
       );
       
       if (result.success) {
