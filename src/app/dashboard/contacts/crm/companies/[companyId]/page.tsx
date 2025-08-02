@@ -271,8 +271,10 @@ export default function CompanyDetailPage() {
         // Load publications for media companies
         if (['publisher', 'media_house', 'agency'].includes(companyData.type)) {
           const [pubs, ads] = await Promise.all([
-            publicationService.getByPublisherId(companyId, user.uid),
-            advertisementService.getAll(user.uid)
+            publicationService.getAll(organizationId).then(allPubs => 
+              allPubs.filter(pub => pub.publisherId === companyId)
+            ),
+            advertisementService.getAll(organizationId)
           ]);
           setPublications(pubs);
           

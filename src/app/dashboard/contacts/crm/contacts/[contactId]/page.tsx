@@ -8,9 +8,11 @@ import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
 import { contactsEnhancedService, companiesEnhancedService, tagsEnhancedService } from "@/lib/firebase/crm-service-enhanced";
 import { listsService } from "@/lib/firebase/lists-service";
+import { publicationService } from "@/lib/firebase/library-service";
 import { ContactEnhanced, CompanyEnhanced, CONTACT_STATUS_OPTIONS, COMMUNICATION_CHANNELS } from "@/types/crm-enhanced";
 import { Tag, socialPlatformLabels } from "@/types/crm";
 import { DistributionList } from "@/types/lists";
+import { Publication } from "@/types/library";
 import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
 import { Button } from "@/components/button";
@@ -207,6 +209,7 @@ export default function ContactDetailPage() {
   const [tags, setTags] = useState<Tag[]>([]);
   const [lists, setLists] = useState<DistributionList[]>([]);
   const [companies, setCompanies] = useState<CompanyEnhanced[]>([]);
+  const [publications, setPublications] = useState<Publication[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -261,6 +264,22 @@ export default function ContactDetailPage() {
         });
         
         setLists(contactLists);
+        
+        // Load publications for journalists
+        if (contactData.mediaProfile?.publicationIds && contactData.mediaProfile.publicationIds.length > 0) {
+          try {
+            const allPublications = await publicationService.getAll(organizationId);
+            const contactPublications = allPublications.filter(pub => 
+              contactData.mediaProfile?.publicationIds.includes(pub.id!)
+            );
+            setPublications(contactPublications);
+          } catch (error) {
+            console.error('Error loading publications:', error);
+            setPublications([]);
+          }
+        } else {
+          setPublications([]);
+        }
       } else {
         setError("Kontakt nicht gefunden.");
       }
@@ -861,6 +880,72 @@ export default function ContactDetailPage() {
             )}
 
 */}
+
+            {/* Publications for Journalists */}
+            {contact.mediaProfile?.isJournalist && publications.length > 0 && (
+              <div className="rounded-lg border bg-white overflow-hidden">
+                <div className="px-4 py-3 border-b bg-gray-50">
+                  <h3 className="font-semibold text-lg flex items-center gap-2">
+                    <NewspaperIcon className="h-5 w-5 text-gray-500" />
+                    Publikationen
+                    <Badge color="blue" className="ml-auto">{publications.length}</Badge>
+                  </h3>
+                </div>
+                <div className="p-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {publications.map(publication => (
+                      <div key={publication.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h4 className="font-semibold text-lg">{publication.title}</h4>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge color="blue" className="text-xs whitespace-nowrap">
+                                {publication.type}
+                              </Badge>
+                              {publication.verified && (
+                                <Badge color="green" className="text-xs whitespace-nowrap">
+                                  Verifiziert
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          <Link
+                            href={`/dashboard/library/publications/${publication.id}`}
+                            className="text-sm text-[#005fab] hover:text-[#004a8c] ml-4"
+                          >
+                            Details →
+                          </Link>
+                        </div>
+                        
+                        {publication.subtitle && (
+                          <Text className="text-sm text-gray-600 mb-2">{publication.subtitle}</Text>
+                        )}
+                        
+                        <div className="flex items-center gap-4 text-xs text-gray-500">
+                          <span>Format: {publication.format}</span>
+                          {publication.metrics?.frequency && (
+                            <span>Frequenz: {publication.metrics.frequency}</span>
+                          )}
+                        </div>
+                        
+                        {publication.focusAreas && publication.focusAreas.length > 0 && (
+                          <div className="mt-2">
+                            <div className="flex flex-wrap gap-1">
+                              {publication.focusAreas.slice(0, 3).map((area, index) => (
+                                <Badge key={index} color="zinc" className="text-xs">{area}</Badge>
+                              ))}
+                              {publication.focusAreas.length > 3 && (
+                                <Badge color="zinc" className="text-xs">+{publication.focusAreas.length - 3}</Badge>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Distribution lists */}
             {lists.length > 0 && (
