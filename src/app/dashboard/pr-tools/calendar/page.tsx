@@ -97,7 +97,7 @@ function QuickTaskModal({
   onSave: (task: any) => void;
   defaultDate?: Date;
   campaigns: any[];
-  clients: Company[];
+  clients: CompanyEnhanced[];
 }) {
   const [formData, setFormData] = useState({
     title: '',
