@@ -47,7 +47,7 @@ export interface BoilerplateSection {
 }
 
 interface IntelligentBoilerplateSectionProps {
-  userId: string;
+  organizationId: string;
   clientId?: string;
   clientName?: string;
   onContentChange: (sections: BoilerplateSection[]) => void;
@@ -191,7 +191,7 @@ function InlineEditor({
 }
 
 export default function IntelligentBoilerplateSection({
-  userId,
+  organizationId,
   clientId,
   clientName,
   onContentChange,
@@ -225,7 +225,7 @@ export default function IntelligentBoilerplateSection({
   const loadBoilerplates = async () => {
     setLoading(true);
     try {
-      const data = await boilerplatesService.getForCampaignEditor(userId, clientId);
+      const data = await boilerplatesService.getForCampaignEditor(organizationId, clientId || undefined);
       
       // Filtere Boilerplates basierend auf clientId
       let filteredBoilerplates: Boilerplate[] = [];
@@ -250,7 +250,6 @@ export default function IntelligentBoilerplateSection({
               const bp = await boilerplatesService.getById(section.boilerplateId);
               return { ...section, boilerplate: bp || undefined };
             } catch (error) {
-              console.error(`Failed to load boilerplate ${section.boilerplateId}:`, error);
               return section;
             }
           }
@@ -268,7 +267,6 @@ export default function IntelligentBoilerplateSection({
         onContentChange(sectionsWithData);
       }
     } catch (error) {
-      console.error('Fehler beim Laden der Boilerplates:', error);
     } finally {
       setLoading(false);
     }

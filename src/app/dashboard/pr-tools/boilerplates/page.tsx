@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useOrganization } from "@/context/OrganizationContext";
 import { boilerplatesService } from "@/lib/firebase/boilerplate-service";
 import { companiesService } from "@/lib/firebase/crm-service";
 import { Boilerplate } from "@/types/crm-enhanced";
@@ -90,6 +91,7 @@ const LANGUAGE_LABELS: Record<string, string> = {
 
 export default function BoilerplatesPage() {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const [boilerplates, setBoilerplates] = useState<Boilerplate[]>([]);
   const [companies, setCompanies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -115,17 +117,17 @@ export default function BoilerplatesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(25);
 
-  // Verwende userId als organizationId (temporär)
-  const organizationId = user?.uid || '';
+  // Verwende currentOrganization.id für Multi-Tenancy
+  const organizationId = currentOrganization?.id || '';
 
   useEffect(() => {
-    if (user && organizationId) {
+    if (user && currentOrganization && organizationId) {
       loadData();
     }
-  }, [user, organizationId]);
+  }, [user, currentOrganization, organizationId]);
 
   const loadData = async () => {
-    if (!user || !organizationId) return;
+    if (!user || !currentOrganization || !organizationId) return;
     
     setLoading(true);
     try {

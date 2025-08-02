@@ -70,7 +70,7 @@ function AlertMessage({
 }
 
 interface CampaignContentComposerProps {
-  userId: string;
+  organizationId: string;
   clientId?: string;
   clientName?: string;
   title: string;
@@ -88,13 +88,13 @@ function FolderSelectorDialog({
   isOpen,
   onClose,
   onFolderSelect,
-  userId,
+  organizationId,
   clientId
 }: {
   isOpen: boolean;
   onClose: () => void;
   onFolderSelect: (folderId?: string) => void;
-  userId: string;
+  organizationId: string;
   clientId?: string;
 }) {
   const [folders, setFolders] = useState<MediaFolder[]>([]);
@@ -111,7 +111,7 @@ function FolderSelectorDialog({
   const loadFolders = async () => {
     setLoading(true);
     try {
-      const foldersData = await mediaService.getFolders(userId, currentFolderId);
+      const foldersData = await mediaService.getFolders(organizationId, currentFolderId);
       
       // Filter für Client-Ordner wenn clientId vorhanden
       const filteredFolders = clientId 
@@ -235,7 +235,7 @@ function FolderSelectorDialog({
 }
 
 export default function CampaignContentComposer({
-  userId,
+  organizationId,
   clientId,
   clientName,
   title,
@@ -289,7 +289,6 @@ export default function CampaignContentComposer({
   // Process content whenever sections or main content changes
   useEffect(() => {
     const composeFullContent = async () => {
-      console.log('🔄 Composing content with sections:', boilerplateSections);
       
       // Erstelle den vollständigen HTML-Content aus allen Sections
       let fullHtml = '';
@@ -331,7 +330,6 @@ export default function CampaignContentComposer({
       });
       fullHtml += `<p class="text-sm text-gray-600 mt-8">${currentDate}</p>`;
       
-      console.log('📄 Generated HTML:', fullHtml);
       setProcessedContent(fullHtml);
       onFullContentChange(fullHtml);
     };
@@ -381,7 +379,7 @@ export default function CampaignContentComposer({
       // Upload to Media Center
       const uploadedAsset = await mediaService.uploadMedia(
         pdfFile,
-        userId,
+        organizationId,
         targetFolderId,
         undefined // No progress callback needed
       );
@@ -477,7 +475,7 @@ export default function CampaignContentComposer({
         {/* Boilerplate Sections */}
         <div className="bg-gray-50 rounded-lg p-4">
           <IntelligentBoilerplateSection
-            userId={userId}
+            organizationId={organizationId}
             clientId={clientId}
             clientName={clientName}
             onContentChange={handleBoilerplateSectionsChange}
@@ -540,7 +538,7 @@ export default function CampaignContentComposer({
           isOpen={showFolderSelector}
           onClose={() => setShowFolderSelector(false)}
           onFolderSelect={generatePdf}
-          userId={userId}
+          organizationId={organizationId}
           clientId={clientId}
         />
       </div>
