@@ -88,13 +88,40 @@ export abstract class BaseService<T extends BaseEntity> {
   /**
    * Erstellt eine neue Entität
    */
+  /**
+   * Bereinigt ein Objekt von undefined Werten (rekursiv)
+   */
+  private cleanData(obj: any): any {
+    if (obj === null || obj === undefined) {
+      return null;
+    }
+    
+    if (Array.isArray(obj)) {
+      return obj.map(item => this.cleanData(item)).filter(item => item !== undefined);
+    }
+    
+    if (typeof obj === 'object') {
+      const cleaned: any = {};
+      for (const [key, value] of Object.entries(obj)) {
+        if (value !== undefined) {
+          cleaned[key] = this.cleanData(value);
+        }
+      }
+      return cleaned;
+    }
+    
+    return obj;
+  }
+
   async create(
     data: Omit<T, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>,
     context: { organizationId: string; userId: string }
   ): Promise<string> {
     try {
+      const cleanedData = this.cleanData(data);
+      
       const docData = {
-        ...data,
+        ...cleanedData,
         organizationId: context.organizationId,
         createdBy: context.userId,
         createdAt: serverTimestamp(),
@@ -377,8 +404,11 @@ export abstract class BaseService<T extends BaseEntity> {
         ...updateData 
       } = data as any;
 
+      // Bereinige undefined Werte
+      const cleanedData = this.cleanData(updateData);
+
       await updateDoc(docRef, {
-        ...updateData,
+        ...cleanedData,
         updatedBy: context.userId,
         updatedAt: serverTimestamp()
       });

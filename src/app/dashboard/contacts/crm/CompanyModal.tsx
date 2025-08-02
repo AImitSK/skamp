@@ -164,9 +164,10 @@ interface CompanyModalProps {
   onClose: () => void;
   onSave: () => void;
   userId: string;
+  organizationId: string;
 }
 
-export default function CompanyModal({ company, onClose, onSave, userId }: CompanyModalProps) {
+export default function CompanyModal({ company, onClose, onSave, userId, organizationId }: CompanyModalProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabId>('general');
   const [formData, setFormData] = useState<Partial<CompanyEnhanced>>({
@@ -418,7 +419,7 @@ export default function CompanyModal({ company, onClose, onSave, userId }: Compa
         formData.officialName = formData.name!;
       }
 
-      const context = { organizationId: userId, userId: userId };
+      const context = { organizationId: organizationId, userId: userId };
       
       if (company?.id) {
         // Update existing company

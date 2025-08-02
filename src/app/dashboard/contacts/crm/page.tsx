@@ -1389,6 +1389,7 @@ const getContactCount = (companyId: string) => {
             setSelectedCompany(null);
           }} 
           userId={user?.uid || ''}
+          organizationId={currentOrganization?.id || user?.uid || ''}
         />
       )}
       
