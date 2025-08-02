@@ -257,6 +257,11 @@ export const taskService = {
    */
   async checkAndNotifyOverdueTasks(organizationId: string, userId?: string): Promise<void> {
     try {
+      if (!userId) {
+        console.log('⚠️ No userId provided for overdue task check');
+        return;
+      }
+      
       console.log('🔍 Checking for overdue tasks for user:', userId);
       
       // Hole die Benachrichtigungseinstellungen
