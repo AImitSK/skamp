@@ -1224,10 +1224,41 @@ export default function InboxPage() {
       {/* Toolbar / Funktionsbar */}
       <div className="border-b bg-gray-50 px-4 py-5 mt-4">
         <div className="flex items-center justify-between gap-4">
-          {/* Left side - Search, New Email & Refresh */}
+          {/* Left side - Toggle Buttons, Search, New Email & Refresh */}
           <div className="flex items-center gap-3 flex-1">
+            {/* Toggle Buttons */}
+            <div className="flex items-center gap-1">
+              {/* Organization Sidebar Toggle */}
+              <Button
+                onClick={() => setOrganizationSidebarCollapsed(!organizationSidebarCollapsed)}
+                className="flex items-center gap-1 px-2 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-600 border-0"
+                title={organizationSidebarCollapsed ? 'Ordner-Sidebar anzeigen' : 'Ordner-Sidebar ausblenden'}
+              >
+                <FolderIcon className="h-4 w-4" />
+                {organizationSidebarCollapsed ? (
+                  <ChevronRightIcon className="h-3 w-3" />
+                ) : (
+                  <ChevronLeftIcon className="h-3 w-3" />
+                )}
+              </Button>
+              
+              {/* Thread List Sidebar Toggle */}
+              <Button
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className="flex items-center gap-1 px-2 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-600 border-0"
+                title={sidebarCollapsed ? 'Thread-Liste anzeigen' : 'Thread-Liste ausblenden'}
+              >
+                <ListBulletIcon className="h-4 w-4" />
+                {sidebarCollapsed ? (
+                  <ChevronRightIcon className="h-3 w-3" />
+                ) : (
+                  <ChevronLeftIcon className="h-3 w-3" />
+                )}
+              </Button>
+            </div>
+
             {/* Search */}
-            <div className="relative w-[768px]">
+            <div className="relative flex-1 max-w-lg">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="text"
@@ -1268,34 +1299,6 @@ export default function InboxPage() {
 
           {/* Right side - Actions */}
           <div className="flex items-center gap-2">
-            {/* Organization Sidebar Toggle */}
-            <Button
-              onClick={() => setOrganizationSidebarCollapsed(!organizationSidebarCollapsed)}
-              className="flex items-center gap-1 px-3 py-2 text-sm border border-gray-300 hover:bg-gray-50"
-              title={organizationSidebarCollapsed ? 'Ordner-Sidebar anzeigen' : 'Ordner-Sidebar ausblenden'}
-            >
-              <FolderIcon className="h-4 w-4" />
-              {organizationSidebarCollapsed ? (
-                <ChevronRightIcon className="h-4 w-4" />
-              ) : (
-                <ChevronLeftIcon className="h-4 w-4" />
-              )}
-            </Button>
-            
-            {/* Thread List Sidebar Toggle */}
-            <Button
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="flex items-center gap-1 px-3 py-2 text-sm border border-gray-300 hover:bg-gray-50"
-              title={sidebarCollapsed ? 'Thread-Liste anzeigen' : 'Thread-Liste ausblenden'}
-            >
-              <ListBulletIcon className="h-4 w-4" />
-              {sidebarCollapsed ? (
-                <ChevronRightIcon className="h-4 w-4" />
-              ) : (
-                <ChevronLeftIcon className="h-4 w-4" />
-              )}
-            </Button>
-
             {/* Notifications */}
             <NotificationBell
               onNotificationClick={(notification) => {

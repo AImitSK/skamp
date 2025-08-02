@@ -211,8 +211,9 @@ export function TeamAssignmentUI({
                   key={member.userId}
                   onClick={() => handleAssign(member.userId)}
                 >
-                  <div className="flex items-center justify-between w-full py-1">
-                    <div className="flex items-center gap-3">
+                  <div className="flex items-center w-full py-2 relative">
+                    {/* Alles links ausgerichtet */}
+                    <div className="flex items-center gap-3 flex-1">
                       <div 
                         className={clsx(
                           "w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-medium",
@@ -226,21 +227,15 @@ export function TeamAssignmentUI({
                           {member.displayName}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {workload} aktive Threads
+                          {workload} aktive Threads • {workloadInfo.label}
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 ml-2">
-                      <Badge 
-                        color={workloadInfo.color as any}
-                        className="text-xs whitespace-nowrap"
-                      >
-                        {workloadInfo.label}
-                      </Badge>
-                      {assignedMember?.userId === member.userId && (
-                        <CheckIcon className="h-4 w-4 text-green-600 flex-shrink-0" />
-                      )}
-                    </div>
+                    
+                    {/* Haken ganz rechts */}
+                    {assignedMember?.userId === member.userId && (
+                      <CheckIcon className="h-4 w-4 text-green-600 flex-shrink-0 absolute right-2" />
+                    )}
                   </div>
                 </DropdownItem>
               );
