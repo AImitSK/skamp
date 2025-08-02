@@ -4,6 +4,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
+import { useCrmData } from '@/context/CrmDataContext';
 import { Heading } from '@/components/heading';
 import { Text } from '@/components/text';
 import { Button } from '@/components/button';
@@ -21,7 +22,6 @@ import { OverdueTasksWidget } from '@/components/calendar/OverdueTasksWidget';
 import { prService } from '@/lib/firebase/pr-service';
 import { taskService } from '@/lib/firebase/task-service';
 import { Timestamp } from 'firebase/firestore';
-import { companiesService } from '@/lib/firebase/crm-service';
 import { Company } from '@/types/crm';
 import { MultiSelectDropdown } from '@/components/MultiSelectDropdown';
 
@@ -274,6 +274,7 @@ function QuickTaskModal({
 export default function CalendarDashboard() {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
+  const { companies } = useCrmData();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [clients, setClients] = useState<Company[]>([]);
@@ -316,19 +317,16 @@ export default function CalendarDashboard() {
         const endOfMonth = new Date();
         endOfMonth.setMonth(endOfMonth.getMonth() + 2);
 
-        const [realEvents, campaignsData, clientsData] = await Promise.all([
+        const [realEvents, campaignsData] = await Promise.all([
           getEventsForDateRange(currentOrganization.id, startOfMonth, endOfMonth, user.uid),
           prService.getAll(currentOrganization.id, true), // true = useOrganizationId
-          companiesService.getAll(currentOrganization.id, user.uid) // Fallback mit user.uid
         ]);
 
         setEvents(realEvents);
         setCampaigns(campaignsData);
-        const customerClients = clientsData.filter(c => c.type === 'customer');
-        console.log('📞 Loading companies with organizationId:', currentOrganization.id);
-        console.log('📞 Current user.uid:', user.uid);
-        console.log('📞 Loaded clients for organization:', customerClients.length);
-        console.log('📞 Client details:', customerClients);
+        
+        // Verwende Daten aus CrmDataContext statt separater API-Calls
+        const customerClients = companies.filter(c => c.type === 'customer');
         setClients(customerClients);
       } catch (error) {
         showAlert('error', 'Fehler beim Laden der Kalenderdaten');
@@ -337,7 +335,7 @@ export default function CalendarDashboard() {
       }
     };
     loadAllData();
-  }, [user?.uid, currentOrganization?.id, refreshKey, showAlert]);
+  }, [user?.uid, currentOrganization?.id, refreshKey, showAlert, companies]);
 
   // Gefilterte Events berechnen für FullCalendar
   const filteredEventsForCalendar = useMemo(() => {

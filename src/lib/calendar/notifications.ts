@@ -160,15 +160,8 @@ export const getEventsForDateRange = async (
   endDate: Date,
   userId?: string
 ): Promise<CalendarEvent[]> => {
-  console.log('🔍 getEventsForDateRange Debug:', {
-    organizationId,
-    userId,
-    startDate: startDate.toISOString(),
-    endDate: endDate.toISOString()
-  });
   
   const campaigns = await prService.getAll(organizationId);
-  console.log('📊 Gefundene Kampagnen:', campaigns.length);
   
   const events: CalendarEvent[] = [];
   const now = new Date();
@@ -176,17 +169,13 @@ export const getEventsForDateRange = async (
   // Lade Tasks
   let tasks: Task[] = [];
   try {
-    console.log('🔄 Versuche Tasks zu laden...');
     tasks = await taskService.getByDateRange(organizationId, startDate, endDate, userId);
-    console.log('📊 Gefundene Tasks:', tasks.length);
-    console.log('📝 Tasks Detail:', tasks);
   } catch (error) {
     console.error('⚠️ Fehler beim Laden der Tasks:', error);
   }
   
   // NEU: Lade Kalender-Events aus der calendar_events Collection
   try {
-    console.log('📅 Lade Kalender-Events...');
     
     // Query für calendar_events im Zeitraum
     const calendarEventsRef = collection(db, 'calendar_events');
@@ -199,11 +188,9 @@ export const getEventsForDateRange = async (
     );
     
     const querySnapshot = await getDocs(q);
-    console.log('📅 Gefundene Kalender-Events:', querySnapshot.size);
     
     querySnapshot.forEach((doc) => {
       const data = doc.data();
-      console.log('📅 Kalender-Event:', data);
       
       // Konvertiere zu CalendarEvent
       if (data.type === 'email_campaign' && data.metadata) {
@@ -231,7 +218,6 @@ export const getEventsForDateRange = async (
   
   // NEU: Lade auch scheduled_emails für zusätzliche Informationen
   try {
-    console.log('📧 Lade geplante E-Mails...');
     
     const scheduledEmailsRef = collection(db, 'scheduled_emails');
     const q = query(
@@ -243,7 +229,6 @@ export const getEventsForDateRange = async (
     );
     
     const querySnapshot = await getDocs(q);
-    console.log('📧 Gefundene geplante E-Mails:', querySnapshot.size);
     
     querySnapshot.forEach((doc) => {
       const data = doc.data();
@@ -277,22 +262,10 @@ export const getEventsForDateRange = async (
   }
   
   campaigns.forEach((campaign: PRCampaign) => {
-    console.log('🔎 Prüfe Kampagne:', {
-      id: campaign.id,
-      title: campaign.title,
-      status: campaign.status,
-      scheduledAt: campaign.scheduledAt?.toDate?.(),
-      sentAt: campaign.sentAt?.toDate?.()
-    });
     
     // Versendete Kampagnen
     if (campaign.sentAt) {
       const sentDate = campaign.sentAt.toDate();
-      console.log('📤 Versendete Kampagne gefunden:', {
-        title: campaign.title,
-        sentDate: sentDate.toISOString(),
-        inRange: sentDate >= startDate && sentDate <= endDate
-      });
       
       if (sentDate >= startDate && sentDate <= endDate) {
         events.push({
@@ -314,11 +287,6 @@ export const getEventsForDateRange = async (
     // Nur alte geplante Kampagnen (vor der neuen Implementierung)
     if (campaign.scheduledAt && campaign.status === 'scheduled') {
       const scheduledDate = campaign.scheduledAt.toDate();
-      console.log('📅 Geplante Kampagne gefunden:', {
-        title: campaign.title,
-        scheduledDate: scheduledDate.toISOString(),
-        inRange: scheduledDate >= startDate && scheduledDate <= endDate
-      });
       
       // Prüfe ob schon ein Event aus scheduled_emails existiert
       const isDuplicate = events.some(e => 
@@ -344,10 +312,6 @@ export const getEventsForDateRange = async (
     
     // Freigaben (immer im aktuellen Monat anzeigen wenn in Review)
     if (campaign.status === 'in_review') {
-      console.log('⏳ In Review Kampagne gefunden:', {
-        title: campaign.title,
-        updatedAt: campaign.updatedAt?.toDate?.()
-      });
       
       const reviewDate = campaign.updatedAt?.toDate() || now;
       
@@ -453,7 +417,6 @@ export const getEventsForDateRange = async (
         }
       });
       
-      console.log(`✅ Task als Event hinzugefügt: ${task.title}`);
     }
   });
   
@@ -462,7 +425,6 @@ export const getEventsForDateRange = async (
     index === self.findIndex((e) => e.id === event.id)
   );
   
-  console.log('✅ Finale Events:', uniqueEvents.length, uniqueEvents);
   return uniqueEvents.sort((a, b) => a.date.getTime() - b.date.getTime());
 };
 

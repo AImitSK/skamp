@@ -56,18 +56,9 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       
       // Lade alle Team-Mitgliedschaften des Users
-      console.log('🔥 DEBUG OrganizationContext - Lade Mitgliedschaften für User:', user.uid);
       const memberships = await teamMemberService.getUserMemberships(user.uid);
-      console.log('🔥 DEBUG - Initiale Mitgliedschaften gefunden:', memberships.length);
       
       if (memberships.length > 0) {
-        console.log('🔥 DEBUG - Mitgliedschaften Details:', memberships.map(m => ({
-          id: m.id,
-          userId: m.userId,
-          organizationId: m.organizationId,
-          role: m.role,
-          status: m.status
-        })));
       }
       
       if (memberships.length === 0) {

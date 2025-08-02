@@ -92,27 +92,18 @@ export const taskService = {
    * Holt alle Aufgaben für einen bestimmten Zeitraum
    */
   async getByDateRange(organizationId: string, startDate: Date, endDate: Date, userId?: string): Promise<Task[]> {
-    console.log('🔍 taskService.getByDateRange aufgerufen mit:', {
-      organizationId,
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString()
-    });
     
     const tasks = await this.getAll(organizationId, userId);
-    console.log('📋 Alle Tasks des Users:', tasks.length);
     
     const filteredTasks = tasks.filter(task => {
       if (!task.dueDate) {
-        console.log(`Task ${task.id} hat kein dueDate`);
         return false;
       }
       const taskDate = task.dueDate.toDate();
       const inRange = taskDate >= startDate && taskDate <= endDate;
-      console.log(`Task ${task.id} (${task.title}): ${taskDate.toISOString()} - Im Zeitraum: ${inRange}`);
       return inRange;
     });
     
-    console.log(`📊 Gefilterte Tasks: ${filteredTasks.length} von ${tasks.length}`);
     return filteredTasks;
   },
 

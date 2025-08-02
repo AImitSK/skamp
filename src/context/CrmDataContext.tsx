@@ -41,8 +41,6 @@ export function CrmDataProvider({ children }: { children: ReactNode }) {
       // Verwende die aktuelle Organisation statt user.uid
       const orgId = currentOrganization.id;
       
-      console.log('🔥 DEBUG CrmDataContext - Lade Daten für orgId:', orgId);
-      console.log('🔥 DEBUG CrmDataContext - currentOrganization:', currentOrganization);
       
       const [companiesData, contactsData, tagsData] = await Promise.all([
         companiesEnhancedService.getAll(orgId),
@@ -50,11 +48,6 @@ export function CrmDataProvider({ children }: { children: ReactNode }) {
         tagsEnhancedService.getAllAsLegacyTags(orgId),
       ]);
       
-      console.log('🔥 DEBUG CrmDataContext - Geladene Daten:', {
-        companies: companiesData.length,
-        contacts: contactsData.length,
-        tags: tagsData.length
-      });
       
       setCompanies(companiesData);
       setContacts(contactsData);
