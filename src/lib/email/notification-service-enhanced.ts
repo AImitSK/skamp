@@ -489,8 +489,7 @@ class NotificationServiceEnhanced {
         icon: '/favicon.ico',
         badge: '/favicon.ico',
         tag: `inbox-${type}`,
-        requireInteraction: type === 'urgent' || type === 'escalation',
-        timestamp: Date.now()
+        requireInteraction: type === 'urgent' || type === 'escalation'
       });
 
       notification.onclick = () => {
