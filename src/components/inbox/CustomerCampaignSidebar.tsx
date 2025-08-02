@@ -303,16 +303,6 @@ export function CustomerCampaignSidebar({
           )}
         </div>
 
-        {/* Legacy Folders Toggle */}
-        <div className="px-2 pt-4 pb-2 border-t mt-4">
-          <button
-            onClick={() => onFolderSelect('general')}
-            className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <FolderIcon className="h-4 w-4" />
-            <span>Klassische Ordner-Ansicht</span>
-          </button>
-        </div>
       </nav>
 
     </div>
