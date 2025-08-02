@@ -24,7 +24,7 @@ import { taskService } from '@/lib/firebase/task-service';
 import { Timestamp } from 'firebase/firestore';
 import { Company } from '@/types/crm';
 import { CompanyEnhanced } from '@/types/crm-enhanced';
-import { Task } from '@/types/tasks';
+import { Task as TaskType } from '@/types/tasks';
 import { MultiSelectDropdown } from '@/components/MultiSelectDropdown';
 
 // FullCalendar Imports
@@ -433,7 +433,7 @@ export default function CalendarDashboard() {
       return;
     }
     try {
-      const newTask: Omit<Task, 'id' | 'createdAt' | 'updatedAt'> = {
+      const newTask: Omit<TaskType, 'id' | 'createdAt' | 'updatedAt'> = {
         userId: user.uid,
         organizationId: currentOrganization.id,
         title: taskData.title,
