@@ -424,7 +424,7 @@ export default function ContactModalEnhanced({
         status: formData.status || 'active'
       };
 
-      const context = { organizationId: userId, userId: userId };
+      const context = { organizationId: organizationId, userId: userId };
 
       if (contact?.id) {
         // Update existing contact

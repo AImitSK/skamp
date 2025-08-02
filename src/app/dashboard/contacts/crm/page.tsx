@@ -1413,7 +1413,7 @@ const getContactCount = (companyId: string) => {
             }
           }} 
           userId={user?.uid || ''}
-          organizationId={user?.uid || ''}
+          organizationId={currentOrganization?.id || user?.uid || ''}
         />
       )}
       
