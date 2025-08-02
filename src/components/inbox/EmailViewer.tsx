@@ -209,9 +209,9 @@ export function EmailViewer({
   const StatusIcon = statusInfo.icon;
 
   return (
-    <div className="flex-1 flex flex-col bg-white">
+    <div className="flex-1 flex flex-col bg-white h-full overflow-hidden">
       {/* Header */}
-      <div className="border-b px-6 py-4">
+      <div className="border-b px-6 py-4 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
@@ -298,7 +298,7 @@ export function EmailViewer({
       </div>
 
       {/* Email Thread */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto min-h-0">
         {emails.map((email, index) => (
           <div 
             key={email.id}
@@ -391,7 +391,7 @@ export function EmailViewer({
 
       {/* AI Features */}
       {showAI && selectedEmail && (
-        <div className="border-t border-gray-200 p-6 space-y-4">
+        <div className="border-t border-gray-200 p-6 space-y-4 flex-shrink-0">
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             {/* AI Insights */}
             <AIInsightsPanel
