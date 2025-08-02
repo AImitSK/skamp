@@ -214,9 +214,9 @@ export interface EmailThread extends BaseEntity {
   customerDomain?: string; // NEU: Für Domain-Matching
   folderType: FolderType;
   
-  // NEU TEAM-FOLDER-SYSTEM: Multi-Location Support
-  folderAssignments: EmailThreadFolder[]; // Thread kann in mehreren Ordnern sein
-  primaryFolderId: string; // Haupt-Ordner (meist "Allgemeine Anfragen")
+  // NEU TEAM-FOLDER-SYSTEM: Multi-Location Support  
+  folderAssignments?: EmailThreadFolder[]; // Thread kann in mehreren Ordnern sein
+  primaryFolderId?: string; // Haupt-Ordner (meist "Allgemeine Anfragen")
   
   // NEU Phase 2B: Thread-Status für bessere Organisation
   status?: 'active' | 'waiting' | 'resolved' | 'archived';
@@ -235,9 +235,9 @@ export interface EmailThread extends BaseEntity {
   autoAssignReason?: string; // "Domain-Match: kunde.de"
   
   // NEU TEAM-FOLDER-SYSTEM: Workflow
-  isInPersonalFolder: boolean; // Liegt in persönlichem Team-Ordner
-  sharedWithTeam: boolean; // Mit Team geteilt (immer true für "Allgemeine Anfragen")
-  needsAttention: boolean; // Aufmerksamkeit erforderlich
+  isInPersonalFolder?: boolean; // Liegt in persönlichem Team-Ordner
+  sharedWithTeam?: boolean; // Mit Team geteilt (immer true für "Allgemeine Anfragen")
+  needsAttention?: boolean; // Aufmerksamkeit erforderlich
   
   // NEU Phase 4: AI & Automation
   aiAnalysis?: AIAnalysis;
@@ -431,8 +431,7 @@ export interface TeamFolder extends BaseEntity {
 }
 
 // Verknüpfung zwischen E-Mail-Thread und Ordnern (Multi-Location Support)
-export interface EmailThreadFolder {
-  id: string;
+export interface EmailThreadFolder extends BaseEntity {
   threadId: string; // Verweis auf EmailThread
   folderId: string; // Verweis auf TeamFolder
   folderPath: string[]; // Cached path für Performance ["Allgemein", "Stefan", "Kundenprojekte"]
@@ -443,8 +442,7 @@ export interface EmailThreadFolder {
   isOriginalLocation: boolean; // True für "Allgemeine Anfragen"
   isPrimaryLocation: boolean; // Haupt-Standort des Threads
   
-  // Organisation
-  organizationId: string;
+  // BaseEntity liefert: id, organizationId, userId, createdAt, updatedAt, createdBy, updatedBy
 }
 
 // Hierarchische Ordner-Struktur für UI
@@ -463,7 +461,7 @@ export interface AssignmentResult {
   reason: string; // "Domain-Match: kunde.de"
   confidence: number; // 0.0 - 1.0
   priority: number; // 1 = höchste
-  ruleType: 'domain' | 'keyword' | 'sender' | 'subject' | 'ai' | 'manual';
+  ruleType: 'domain' | 'keyword' | 'sender' | 'subject' | 'content' | 'ai' | 'manual';
 }
 
 // Smart Folder Suggestion für UI

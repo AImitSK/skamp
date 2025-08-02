@@ -4,8 +4,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
-import { Badge } from '@/components/badge';
-import { Button } from '@/components/button';
+// Removed Badge and Button imports - using native HTML elements with Tailwind
 import clsx from 'clsx';
 import {
   InboxIcon,
@@ -259,13 +258,12 @@ export function TeamFolderSidebar({
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-gray-900">📧 Postfächer</h2>
-          <Button
-            size="sm"
+          <button
             onClick={() => handleCreateFolder()}
             className="p-1 hover:bg-gray-100 rounded"
           >
             <PlusIcon className="h-4 w-4" />
-          </Button>
+          </button>
         </div>
         
         {/* Suche */}
@@ -427,13 +425,9 @@ function FolderTreeItem({
 
           {/* Unread Badge */}
           {unreadCount > 0 && (
-            <Badge 
-              size="sm" 
-              color="blue"
-              className="ml-2"
-            >
+            <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
               {unreadCount > 99 ? '99+' : unreadCount}
-            </Badge>
+            </span>
           )}
         </div>
 

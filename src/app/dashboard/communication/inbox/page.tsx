@@ -7,7 +7,7 @@ import { useOrganization } from '@/context/OrganizationContext';
 import { Heading } from '@/components/heading';
 import { Button } from '@/components/button';
 import { Badge } from '@/components/badge';
-import { TeamFolderSidebar } from '@/components/inbox/TeamFolderSidebar';
+import { TeamFolderSidebar } from '@/components/inbox/TeamFolderSidebar_Simple';
 import { EmailList } from '@/components/inbox/EmailList';
 import { EmailViewer } from '@/components/inbox/EmailViewer';
 import { ComposeEmail } from '@/components/inbox/ComposeEmail';
