@@ -519,11 +519,8 @@ export default function InboxPage() {
       general: 0
     };
 
-    // In a real implementation, we would query each folder
-    // For now, use thread unread counts for inbox
-    if (selectedFolder === 'inbox') {
-      counts.inbox = threadsData.reduce((sum, thread) => sum + (thread.unreadCount || 0), 0);
-    }
+    // In Customer/Campaign mode, we don't use classic folder counts anymore
+    // This function is kept for backward compatibility but can be removed
     
     setUnreadCounts(counts);
   };
