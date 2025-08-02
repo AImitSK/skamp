@@ -1230,29 +1230,31 @@ export default function InboxPage() {
             <div className="flex items-center gap-1">
               {/* Organization Sidebar Toggle */}
               <Button
+                plain
                 onClick={() => setOrganizationSidebarCollapsed(!organizationSidebarCollapsed)}
-                className="flex items-center gap-1 px-2 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-600 border-0"
+                className="p-2"
                 title={organizationSidebarCollapsed ? 'Ordner-Sidebar anzeigen' : 'Ordner-Sidebar ausblenden'}
               >
-                <FolderIcon className="h-4 w-4" />
+                <FolderIcon className="h-5 w-5 text-gray-400" />
                 {organizationSidebarCollapsed ? (
-                  <ChevronRightIcon className="h-3 w-3" />
+                  <ChevronRightIcon className="h-3 w-3 text-gray-400" />
                 ) : (
-                  <ChevronLeftIcon className="h-3 w-3" />
+                  <ChevronLeftIcon className="h-3 w-3 text-gray-400" />
                 )}
               </Button>
               
               {/* Thread List Sidebar Toggle */}
               <Button
+                plain
                 onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="flex items-center gap-1 px-2 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-600 border-0"
+                className="p-2"
                 title={sidebarCollapsed ? 'Thread-Liste anzeigen' : 'Thread-Liste ausblenden'}
               >
-                <ListBulletIcon className="h-4 w-4" />
+                <ListBulletIcon className="h-5 w-5 text-gray-400" />
                 {sidebarCollapsed ? (
-                  <ChevronRightIcon className="h-3 w-3" />
+                  <ChevronRightIcon className="h-3 w-3 text-gray-400" />
                 ) : (
-                  <ChevronLeftIcon className="h-3 w-3" />
+                  <ChevronLeftIcon className="h-3 w-3 text-gray-400" />
                 )}
               </Button>
             </div>

@@ -1,7 +1,7 @@
 // src/components/inbox/TeamAssignmentUI.tsx
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { EmailThread } from '@/types/inbox-enhanced';
 import { TeamMember } from '@/types/international';
 import { Button } from '@/components/button';
@@ -41,11 +41,26 @@ export function TeamAssignmentUI({
   const [assignmentHistory, setAssignmentHistory] = useState<any[]>([]);
   const [showWorkload, setShowWorkload] = useState(false);
   const [workloadStats, setWorkloadStats] = useState<Record<string, number>>({});
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Load team members
   useEffect(() => {
     loadTeamMembers();
   }, [organizationId]);
+
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowWorkload(false);
+      }
+    }
+
+    if (showWorkload) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showWorkload]);
 
   const loadTeamMembers = async () => {
     if (!organizationId) return;
@@ -168,22 +183,30 @@ export function TeamAssignmentUI({
   // Compact view for EmailList
   if (compact) {
     return (
-      <div className="flex items-center gap-1">
-        {assignedMember && (
-          <div 
-            className={clsx(
-              "w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium",
-              getAvatarColor(assignedMember.displayName)
-            )}
-            title={`Zugewiesen an ${assignedMember.displayName}`}
-          >
-            {getInitials(assignedMember.displayName)}
+      <div className="flex items-center gap-2">
+        {/* Current Assignment Display */}
+        {assignedMember ? (
+          <div className="flex items-center gap-2">
+            <div 
+              className={clsx(
+                "w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium",
+                getAvatarColor(assignedMember.displayName)
+              )}
+            >
+              {getInitials(assignedMember.displayName)}
+            </div>
+            <span className="text-sm text-gray-700 font-medium">
+              {assignedMember.displayName.split(' ')[0]}
+            </span>
           </div>
+        ) : (
+          <span className="text-sm text-gray-500">Nicht zugewiesen</span>
         )}
         
-        <Dropdown>
-          <DropdownButton 
-            plain 
+        {/* Custom Dropdown */}
+        <div className="relative" ref={dropdownRef}>
+          <button
+            onClick={() => setShowWorkload(!showWorkload)}
             className={clsx(
               "p-1.5 hover:bg-gray-200 rounded transition-colors",
               assigning && "opacity-50 cursor-wait"
@@ -191,57 +214,83 @@ export function TeamAssignmentUI({
             disabled={assigning}
           >
             <UserIcon className="h-4 w-4 text-gray-400" />
-          </DropdownButton>
-          <DropdownMenu anchor="bottom end">
-            {assignedMember && (
-              <>
-                <DropdownItem onClick={() => handleAssign(null)}>
-                  <XMarkIcon className="h-4 w-4 mr-2" />
-                  Zuweisung entfernen
-                </DropdownItem>
-                <div className="border-t my-1" />
-              </>
-            )}
-            {teamMembers.map(member => {
-              const workload = workloadStats[member.userId] || 0;
-              const workloadInfo = getWorkloadLevel(workload);
+          </button>
+          
+          {showWorkload && (
+            <div className="absolute right-0 top-full mt-1 w-64 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+              {/* Remove Assignment */}
+              {assignedMember && (
+                <>
+                  <button
+                    onClick={() => {
+                      handleAssign(null);
+                      setShowWorkload(false);
+                    }}
+                    className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                  >
+                    <XMarkIcon className="h-4 w-4" />
+                    Zuweisung entfernen
+                  </button>
+                  <div className="border-t border-gray-100" />
+                </>
+              )}
               
-              return (
-                <DropdownItem 
-                  key={member.userId}
-                  onClick={() => handleAssign(member.userId)}
-                >
-                  <div className="flex items-center w-full py-2 relative">
-                    {/* Alles links ausgerichtet */}
-                    <div className="flex items-center gap-3 flex-1">
-                      <div 
-                        className={clsx(
-                          "w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-medium",
-                          getAvatarColor(member.displayName)
+              {/* Team Members */}
+              <div className="max-h-64 overflow-y-auto">
+                {teamMembers.map(member => {
+                  const workload = workloadStats[member.userId] || 0;
+                  const workloadInfo = getWorkloadLevel(workload);
+                  const isAssigned = assignedMember?.userId === member.userId;
+                  
+                  return (
+                    <button
+                      key={member.userId}
+                      onClick={() => {
+                        handleAssign(member.userId);
+                        setShowWorkload(false);
+                      }}
+                      className={clsx(
+                        "w-full px-3 py-3 text-left hover:bg-gray-50 transition-colors relative",
+                        isAssigned && "bg-blue-50"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div 
+                          className={clsx(
+                            "w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0",
+                            getAvatarColor(member.displayName)
+                          )}
+                        >
+                          {getInitials(member.displayName)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-900 truncate">
+                            {member.displayName}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {workload} aktive Threads
+                          </div>
+                          <div className={clsx(
+                            "text-xs font-medium mt-0.5",
+                            workloadInfo.color === 'green' && "text-green-600",
+                            workloadInfo.color === 'yellow' && "text-yellow-600", 
+                            workloadInfo.color === 'orange' && "text-orange-600",
+                            workloadInfo.color === 'red' && "text-red-600"
+                          )}>
+                            {workloadInfo.label}
+                          </div>
+                        </div>
+                        {isAssigned && (
+                          <CheckIcon className="h-4 w-4 text-green-600 flex-shrink-0" />
                         )}
-                      >
-                        {getInitials(member.displayName)}
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="text-sm font-medium text-gray-900 truncate">
-                          {member.displayName}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {workload} aktive Threads • {workloadInfo.label}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Haken ganz rechts */}
-                    {assignedMember?.userId === member.userId && (
-                      <CheckIcon className="h-4 w-4 text-green-600 flex-shrink-0 absolute right-2" />
-                    )}
-                  </div>
-                </DropdownItem>
-              );
-            })}
-          </DropdownMenu>
-        </Dropdown>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     );
   }

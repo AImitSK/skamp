@@ -219,7 +219,7 @@ export function InternalNotes({
       {/* Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-6 py-3 flex items-center justify-between hover:bg-gray-100 transition-colors"
+        className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-100 transition-colors"
       >
         <div className="flex items-center gap-2">
           <ChatBubbleLeftIcon className="h-5 w-5 text-gray-400" />

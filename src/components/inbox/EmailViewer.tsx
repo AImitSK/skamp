@@ -420,14 +420,12 @@ export function EmailViewer({
         )}
 
         {/* Internal Notes */}
-        <div className="mt-4 pt-4 pb-6">
-          <InternalNotes
-            threadId={thread.id!}
-            emailId={selectedEmail?.id}
-            organizationId={organizationId}
-            teamMembers={teamMembers}
-          />
-        </div>
+        <InternalNotes
+          threadId={thread.id!}
+          emailId={selectedEmail?.id}
+          organizationId={organizationId}
+          teamMembers={teamMembers}
+        />
       </div>
     </div>
   );
