@@ -633,13 +633,28 @@ export const mediaService = {
 
   // === MEDIA OPERATIONS ===
 
+  // Upload media specifically for a client
+  async uploadClientMedia(
+    file: File,
+    organizationId: string,
+    clientId: string,
+    folderId?: string,
+    onProgress?: (progress: number) => void,
+    context?: { userId: string }
+  ): Promise<MediaAsset> {
+    return this.uploadMedia(file, organizationId, folderId, onProgress, 3, {
+      userId: context?.userId || organizationId,
+      clientId
+    });
+  },
+
   async uploadMedia(
     file: File,
     organizationId: string, // CHANGED
     folderId?: string,
     onProgress?: (progress: number) => void,
     retryCount = 3,
-    context?: { userId: string } // NEW: optional context for createdBy
+    context?: { userId: string; clientId?: string } // NEW: optional context for createdBy and clientId
   ): Promise<MediaAsset> {
     try {
       console.log('📤 Starting upload for:', file.name, 'Size:', file.size);
@@ -701,6 +716,7 @@ export const mediaService = {
               const assetData: any = {
                 organizationId, // CHANGED
                 createdBy: context?.userId || organizationId, // NEW
+                ...(context?.clientId && { clientId: context.clientId }), // NEW: Add clientId if provided
                 fileName: file.name,
                 fileType: file.type,
                 storagePath,
@@ -1122,23 +1138,91 @@ export const mediaService = {
     }
   },
 
-  async getMediaByClientId(organizationId: string, clientId: string, cleanupInvalid = false): Promise<{folders: MediaFolder[], assets: MediaAsset[], totalCount: number}> {
+  async getMediaByClientId(organizationId: string, clientId: string, cleanupInvalid = false, legacyUserId?: string): Promise<{folders: MediaFolder[], assets: MediaAsset[], totalCount: number}> {
     try {
       console.log('🔍 DEBUG: Loading media for client:', clientId, '(Organization:', organizationId, ')');
       
-      // 1. Lade Ordner und Assets parallel
-      const [foldersSnapshot, assetsSnapshot] = await Promise.all([
+      // 1. Lade Ordner und Assets parallel - mit Fallback auf userId
+      // WICHTIG: Wir suchen zuerst nach Assets MIT clientId
+      let [foldersSnapshot, assetsSnapshot] = await Promise.all([
         getDocs(query(
           collection(db, 'media_folders'),
-          where('organizationId', '==', organizationId), // CHANGED
+          where('organizationId', '==', organizationId),
           where('clientId', '==', clientId)
         )),
         getDocs(query(
           collection(db, 'media_assets'),
-          where('organizationId', '==', organizationId), // CHANGED
+          where('organizationId', '==', organizationId),
           where('clientId', '==', clientId)
         ))
       ]);
+
+      // Fallback auf userId wenn keine Ergebnisse mit organizationId
+      if (foldersSnapshot.empty && assetsSnapshot.empty) {
+        console.log('🔄 No results with organizationId, trying userId fallback...');
+        console.log('🔍 Searching with userId:', organizationId, 'clientId:', clientId);
+        [foldersSnapshot, assetsSnapshot] = await Promise.all([
+          getDocs(query(
+            collection(db, 'media_folders'),
+            where('userId', '==', organizationId),
+            where('clientId', '==', clientId)
+          )),
+          getDocs(query(
+            collection(db, 'media_assets'),
+            where('userId', '==', organizationId),
+            where('clientId', '==', clientId)
+          ))
+        ]);
+        
+        // Wenn immer noch keine Ergebnisse und legacyUserId verfügbar, versuche mit legacyUserId
+        if (foldersSnapshot.empty && assetsSnapshot.empty && legacyUserId && legacyUserId !== organizationId) {
+          console.log('🔄 Still no results, trying with legacyUserId:', legacyUserId);
+          [foldersSnapshot, assetsSnapshot] = await Promise.all([
+            getDocs(query(
+              collection(db, 'media_folders'),
+              where('userId', '==', legacyUserId),
+              where('clientId', '==', clientId)
+            )),
+            getDocs(query(
+              collection(db, 'media_assets'),
+              where('userId', '==', legacyUserId),
+              where('clientId', '==', clientId)
+            ))
+          ]);
+        }
+        
+        // Wenn immer noch keine Ergebnisse, versuche ohne clientId Filter (für global gespeicherte Medien)
+        if (foldersSnapshot.empty && assetsSnapshot.empty) {
+          console.log('🔄 Still no results, trying without clientId filter for global media...');
+          
+          // TEMPORÄRE LÖSUNG: Zeige ALLE Assets der Organisation
+          // Dies ist notwendig, da existierende Assets keine clientId haben
+          console.log('📌 TEMPORARY: Showing ALL organization assets (no clientId filter)');
+          
+          let [globalFoldersSnapshot, globalAssetsSnapshot] = await Promise.all([
+            getDocs(query(
+              collection(db, 'media_folders'),
+              where('organizationId', '==', organizationId)
+            )),
+            getDocs(query(
+              collection(db, 'media_assets'),
+              where('organizationId', '==', organizationId)
+            ))
+          ]);
+          
+          // Assets gefunden - verwende sie
+          if (!globalFoldersSnapshot.empty || !globalAssetsSnapshot.empty) {
+            console.log('✅ Found organization media');
+            foldersSnapshot = globalFoldersSnapshot;
+            assetsSnapshot = globalAssetsSnapshot;
+          }
+          
+          console.log('📊 Organization media found:', {
+            folders: foldersSnapshot.docs.length,
+            assets: assetsSnapshot.docs.length
+          });
+        }
+      }
 
       console.log('📊 Raw data loaded:', {
         folders: foldersSnapshot.docs.length,

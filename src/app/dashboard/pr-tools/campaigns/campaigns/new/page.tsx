@@ -94,14 +94,16 @@ function AssetSelectorModal({
   clientId,
   clientName,
   onAssetsSelected,
-  userId
+  organizationId,
+  legacyUserId
 }: {
   isOpen: boolean;
   onClose: () => void;
   clientId: string;
   clientName?: string;
   onAssetsSelected: (assets: CampaignAssetAttachment[]) => void;
-  userId: string;
+  organizationId: string;
+  legacyUserId?: string;
 }) {
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [folders, setFolders] = useState<MediaFolder[]>([]);
@@ -119,8 +121,10 @@ function AssetSelectorModal({
     setLoading(true);
     try {
       const { assets: clientAssets, folders: clientFolders } = await mediaService.getMediaByClientId(
-        userId,
-        clientId
+        organizationId,
+        clientId,
+        false,
+        legacyUserId
       );
       setAssets(clientAssets);
       setFolders(clientFolders);
@@ -156,7 +160,7 @@ function AssetSelectorModal({
             thumbnailUrl: asset.downloadUrl
           },
           attachedAt: serverTimestamp() as any,
-          attachedBy: userId
+          attachedBy: organizationId
         });
       }
     });
@@ -172,7 +176,7 @@ function AssetSelectorModal({
             description: folder.description || ''
           },
           attachedAt: serverTimestamp() as any,
-          attachedBy: userId
+          attachedBy: organizationId
         });
       }
     });
@@ -688,7 +692,7 @@ export default function NewPRCampaignPage() {
               {/* Content Composer */}
               <CampaignContentComposer
                 key={`composer-${boilerplateSections.length}`}
-                userId={user!.uid}
+                organizationId={currentOrganization!.id}
                 clientId={selectedCompanyId}
                 clientName={selectedCompanyName}
                 title={campaignTitle}
@@ -811,7 +815,8 @@ export default function NewPRCampaignPage() {
           clientId={selectedCompanyId}
           clientName={selectedCompanyName}
           onAssetsSelected={setAttachedAssets}
-          userId={user.uid}
+          organizationId={currentOrganization!.id}
+          legacyUserId={user.uid}
         />
       )}
 

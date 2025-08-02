@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from "@/context/AuthContext";
+import { useOrganization } from "@/context/OrganizationContext";
 import { teamMemberService } from "@/lib/firebase/organization-service";
 import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
@@ -94,14 +95,16 @@ function AssetSelectorModal({
   clientId,
   clientName,
   onAssetsSelected,
-  userId
+  organizationId,
+  legacyUserId
 }: {
   isOpen: boolean;
   onClose: () => void;
   clientId: string;
   clientName?: string;
   onAssetsSelected: (assets: CampaignAssetAttachment[]) => void;
-  userId: string;
+  organizationId: string;
+  legacyUserId?: string;
 }) {
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [folders, setFolders] = useState<MediaFolder[]>([]);
@@ -119,8 +122,10 @@ function AssetSelectorModal({
     setLoading(true);
     try {
       const { assets: clientAssets, folders: clientFolders } = await mediaService.getMediaByClientId(
-        userId,
-        clientId
+        organizationId,
+        clientId,
+        false,
+        legacyUserId
       );
       setAssets(clientAssets);
       setFolders(clientFolders);
@@ -156,7 +161,7 @@ function AssetSelectorModal({
             thumbnailUrl: asset.downloadUrl
           },
           attachedAt: serverTimestamp() as any,
-          attachedBy: userId
+          attachedBy: organizationId
         });
       }
     });
@@ -172,7 +177,7 @@ function AssetSelectorModal({
             description: folder.description || ''
           },
           attachedAt: serverTimestamp() as any,
-          attachedBy: userId
+          attachedBy: organizationId
         });
       }
     });
@@ -321,6 +326,7 @@ function AssetSelectorModal({
 
 export default function EditPRCampaignPage() {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const router = useRouter();
   const params = useParams();
   const campaignId = params.campaignId as string;
@@ -761,7 +767,7 @@ export default function EditPRCampaignPage() {
               {/* Content Composer */}
               <CampaignContentComposer
                 key={`composer-${boilerplateSections.length}`}
-                userId={user!.uid}
+                organizationId={currentOrganization!.id}
                 clientId={selectedCompanyId}
                 clientName={selectedCompanyName}
                 title={campaignTitle}
@@ -896,7 +902,8 @@ export default function EditPRCampaignPage() {
             const mergedAssets = [...attachedAssets, ...newAssets];
             setAttachedAssets(mergedAssets);
           }}
-          userId={user.uid}
+          organizationId={currentOrganization!.id}
+          legacyUserId={user.uid}
         />
       )}
 

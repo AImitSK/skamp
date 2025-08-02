@@ -262,3 +262,22 @@ const migrateLegacyData = async () => {
 
 **Status:** Multi-Tenancy Grundfunktionen ✅ FUNKTIONIEREN  
 **Nächste Phase:** Legacy Code Migration und Cleanup
+
+---
+
+## 🔥 AKTUELL IN BEARBEITUNG
+
+### MediaCenter in PR Campaign Modal ✅
+- **Problem**: Media Tool findet keine Daten bei der Filterung nach Firma
+- **Betroffene Module**: 
+  - src/app/dashboard/pr-tools/campaigns/campaigns/new/page.tsx
+  - src/app/dashboard/pr-tools/campaigns/campaigns/edit/[campaignId]/page.tsx
+- **Ursache**: 
+  - Existierende Media Assets wurden ohne `clientId` gespeichert
+  - Die `uploadMedia` Funktion unterstützte keine `clientId`
+  - `getMediaByClientId` filterte zu strikt nach `clientId`
+- **Lösung**:
+  1. `uploadMedia` erweitert um optionale `clientId` im Context
+  2. Neue Funktion `uploadClientMedia` für Client-spezifische Uploads
+  3. `getMediaByClientId` zeigt temporär ALLE Organisation-Assets wenn keine mit spezifischer `clientId` gefunden werden
+- **Status**: ✅ Behoben - Assets werden jetzt angezeigt
