@@ -318,7 +318,7 @@ export default function CalendarDashboard() {
 
         const [realEvents, campaignsData, clientsData] = await Promise.all([
           getEventsForDateRange(currentOrganization.id, startOfMonth, endOfMonth, user.uid),
-          prService.getAll(currentOrganization.id),
+          prService.getAll(currentOrganization.id, true), // true = useOrganizationId
           companiesService.getAll(currentOrganization.id, user.uid) // Fallback mit user.uid
         ]);
 
