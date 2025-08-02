@@ -226,22 +226,24 @@ export default function CompanyDetailPage() {
 
   // Data Loading
   const loadData = useCallback(async () => {
-    if (!user || !companyId) return;
+    if (!user || !companyId || !currentOrganization?.id) return;
     setLoading(true);
     setError(null);
     
+    const organizationId = currentOrganization.id;
+    
     try {
       // Load company
-      const companyData = await companiesEnhancedService.getById(companyId, user.uid);
+      const companyData = await companiesEnhancedService.getById(companyId, organizationId);
       if (companyData) {
         setCompany(companyData);
         
         // Load related data in parallel
         const [allContacts, allLists, tagsData] = await Promise.all([
-          contactsEnhancedService.getAll(user.uid),
-          listsService.getAll(user.uid),
+          contactsEnhancedService.getAll(organizationId),
+          listsService.getAll(organizationId),
           companyData.tagIds && companyData.tagIds.length > 0 
-            ? tagsEnhancedService.getAllAsLegacyTags(user.uid).then(allTags => 
+            ? tagsEnhancedService.getAllAsLegacyTags(organizationId).then(allTags => 
                 allTags.filter(tag => companyData.tagIds?.includes(tag.id!))
               )
             : Promise.resolve([])
@@ -286,7 +288,7 @@ export default function CompanyDetailPage() {
         // Load parent company if exists
         if (companyData.parentCompanyId) {
           try {
-            const parent = await companiesEnhancedService.getById(companyData.parentCompanyId, user.uid);
+            const parent = await companiesEnhancedService.getById(companyData.parentCompanyId, organizationId);
             setParentCompany(parent);
           } catch (err) {
             console.error('Error loading parent company:', err);
@@ -297,7 +299,7 @@ export default function CompanyDetailPage() {
         if (companyData.subsidiaryIds && companyData.subsidiaryIds.length > 0) {
           try {
             const subsPromises = companyData.subsidiaryIds.map(id => 
-              companiesEnhancedService.getById(id, user.uid)
+              companiesEnhancedService.getById(id, organizationId)
             );
             const subs = await Promise.all(subsPromises);
             setSubsidiaries(subs.filter(Boolean) as CompanyEnhanced[]);
@@ -314,7 +316,7 @@ export default function CompanyDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [user, companyId]);
+  }, [user, companyId, currentOrganization?.id]);
   
   useEffect(() => {
     loadData();

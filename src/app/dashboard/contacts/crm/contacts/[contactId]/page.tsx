@@ -220,22 +220,24 @@ export default function ContactDetailPage() {
 
   // Data Loading
   const loadData = useCallback(async () => {
-    if (!user || !contactId) return;
+    if (!user || !contactId || !currentOrganization?.id) return;
     setLoading(true);
     setError(null);
     
+    const organizationId = currentOrganization.id;
+    
     try {
       // Load contact
-      const contactData = await contactsEnhancedService.getById(contactId, user.uid);
+      const contactData = await contactsEnhancedService.getById(contactId, organizationId);
       if (contactData) {
         setContact(contactData);
         
         // Load related data in parallel
         const [companiesData, allLists, tagsData] = await Promise.all([
-          companiesEnhancedService.getAll(user.uid),
-          listsService.getAll(user.uid),
+          companiesEnhancedService.getAll(organizationId),
+          listsService.getAll(organizationId),
           contactData.tagIds && contactData.tagIds.length > 0 
-            ? tagsEnhancedService.getAllAsLegacyTags(user.uid).then(allTags => 
+            ? tagsEnhancedService.getAllAsLegacyTags(organizationId).then(allTags => 
                 allTags.filter(tag => contactData.tagIds?.includes(tag.id!))
               )
             : Promise.resolve([])
@@ -268,7 +270,7 @@ export default function ContactDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [user, contactId]);
+  }, [user, contactId, currentOrganization?.id]);
   
   useEffect(() => {
     loadData();
