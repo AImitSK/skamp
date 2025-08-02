@@ -14,6 +14,7 @@ import { threadMatcherService } from '@/lib/email/thread-matcher-service-flexibl
 import { XMarkIcon, PaperAirplaneIcon, PaperClipIcon } from '@heroicons/react/20/solid';
 import { Select } from '@/components/select';
 import { serverTimestamp, Timestamp } from 'firebase/firestore';
+import { useAuth } from '@/context/AuthContext';
 
 interface ComposeEmailProps {
   organizationId: string;
@@ -30,6 +31,7 @@ export function ComposeEmail({
   onClose,
   onSend
 }: ComposeEmailProps) {
+  const { user } = useAuth();
   const [to, setTo] = useState('');
   const [cc, setCc] = useState('');
   const [bcc, setBcc] = useState('');
@@ -44,7 +46,13 @@ export function ComposeEmail({
   useEffect(() => {
     const loadEmailAddresses = async () => {
       try {
-        const addresses = await emailAddressService.getByOrganization(organizationId, organizationId);
+        if (!user?.uid) {
+          console.error('No user available for loading email addresses');
+          return;
+        }
+        
+        const addresses = await emailAddressService.getByOrganization(organizationId, user.uid);
+        console.log('📧 Loaded email addresses:', addresses);
         setEmailAddresses(addresses);
         
         // Select default address
@@ -59,8 +67,10 @@ export function ComposeEmail({
       }
     };
 
-    loadEmailAddresses();
-  }, [organizationId]);
+    if (user?.uid) {
+      loadEmailAddresses();
+    }
+  }, [organizationId, user?.uid]);
 
   // Initialize fields based on mode
   useEffect(() => {
@@ -330,18 +340,12 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
     <Dialog open={true} onClose={onClose} className="sm:max-w-4xl">
       <div className="flex flex-col h-[80vh]">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b">
+        <div className="px-6 py-4 border-b">
           <h2 className="text-lg font-semibold">
             {mode === 'new' && 'Neue E-Mail'}
             {mode === 'reply' && 'Antworten'}
             {mode === 'forward' && 'Weiterleiten'}
           </h2>
-          <button
-            onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded-lg"
-          >
-            <XMarkIcon className="h-5 w-5" />
-          </button>
         </div>
 
         {/* Form */}
