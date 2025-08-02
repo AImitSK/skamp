@@ -323,7 +323,6 @@ class TeamMemberEnhancedService extends BaseService<TeamMemberExtended> {
         });
       });
       
-      console.log(`Gefundene gültige Mitgliedschaften für ${userId}:`, memberships.length);
       return memberships;
     } catch (error) {
       console.error('Error getting user memberships:', error);
