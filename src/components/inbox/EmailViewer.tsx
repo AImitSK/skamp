@@ -7,6 +7,8 @@ import { Badge } from '@/components/badge';
 import { InternalNotes } from '@/components/inbox/InternalNotes';
 import { TeamAssignmentUI } from '@/components/inbox/TeamAssignmentUI';
 import { StatusManager } from '@/components/inbox/StatusManager';
+import { AIInsightsPanel } from '@/components/inbox/AIInsightsPanel';
+import { AIResponseSuggestions } from '@/components/inbox/AIResponseSuggestions';
 import format from 'date-fns/format';
 import { de } from 'date-fns/locale/de';
 import {
@@ -37,6 +39,8 @@ interface EmailViewerProps {
   onStar: (emailId: string, starred: boolean) => void;
   onStatusChange?: (threadId: string, status: 'active' | 'waiting' | 'resolved' | 'archived') => void;
   onAssignmentChange?: (threadId: string, assignedTo: string | null) => void;
+  onPriorityChange?: (priority: 'low' | 'normal' | 'high' | 'urgent') => void;
+  onCategoryChange?: (category: string, assignee?: string) => void;
   organizationId: string;
   teamMembers?: Array<{
     id: string;
@@ -44,6 +48,7 @@ interface EmailViewerProps {
     displayName: string;
     email: string;
   }>;
+  showAI?: boolean;
 }
 
 interface EmailContentRendererProps {
@@ -151,8 +156,11 @@ export function EmailViewer({
   onStar,
   onStatusChange,
   onAssignmentChange,
+  onPriorityChange,
+  onCategoryChange,
   organizationId,
-  teamMembers
+  teamMembers,
+  showAI = true
 }: EmailViewerProps) {
   if (!selectedEmail || emails.length === 0) {
     return null;
@@ -380,6 +388,49 @@ export function EmailViewer({
           </div>
         ))}
       </div>
+
+      {/* AI Features */}
+      {showAI && selectedEmail && (
+        <div className="border-t border-gray-200 p-6 space-y-4">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            {/* AI Insights */}
+            <AIInsightsPanel
+              email={selectedEmail}
+              thread={thread}
+              context={{
+                threadHistory: emails.map(e => e.textContent || e.htmlContent || '').filter(Boolean),
+                customerInfo: thread.participants[0]?.name || thread.participants[0]?.email,
+                campaignContext: thread.tags?.join(', ')
+              }}
+              onPriorityChange={onPriorityChange}
+              onCategoryChange={onCategoryChange}
+              collapsed={false}
+            />
+
+            {/* AI Response Suggestions */}
+            <AIResponseSuggestions
+              email={selectedEmail}
+              thread={thread}
+              onUseSuggestion={(responseText) => {
+                // Create a synthetic email object for reply
+                const replyEmail = {
+                  ...selectedEmail,
+                  textContent: responseText,
+                  htmlContent: responseText
+                };
+                onReply(replyEmail);
+              }}
+              context={{
+                customerName: thread.participants[0]?.name,
+                customerHistory: `Vorherige E-Mails in diesem Thread: ${emails.length}`,
+                companyInfo: organizationId,
+                threadHistory: emails.map(e => e.textContent || e.htmlContent || '').filter(Boolean)
+              }}
+              collapsed={false}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Internal Notes */}
       <InternalNotes

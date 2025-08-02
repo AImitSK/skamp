@@ -67,3 +67,116 @@ export interface StandardGenerateResponse {
   timestamp: string;
   postProcessed?: boolean;
 }
+
+// ===============================================
+// EMAIL ANALYSIS TYPES - Phase 4: KI Integration
+// ===============================================
+
+export interface EmailAnalysisRequest {
+  emailContent: string;
+  htmlContent?: string;
+  subject: string;
+  fromEmail: string;
+  analysisType: 'sentiment' | 'intent' | 'priority' | 'category' | 'full';
+  context?: {
+    threadHistory?: string[];
+    customerInfo?: string;
+    campaignContext?: string;
+  };
+}
+
+export interface EmailSentimentAnalysis {
+  sentiment: 'positive' | 'neutral' | 'negative' | 'urgent';
+  confidence: number; // 0-1
+  emotionalTone: string[];
+  keyPhrases: string[];
+  urgencyLevel: 'low' | 'medium' | 'high' | 'urgent';
+}
+
+export interface EmailIntentAnalysis {
+  intent: 'question' | 'complaint' | 'request' | 'information' | 'compliment' | 'other';
+  confidence: number;
+  actionRequired: boolean;
+  suggestedActions: string[];
+  responseTemplate?: string;
+}
+
+export interface EmailPriorityAnalysis {
+  priority: 'low' | 'normal' | 'high' | 'urgent';
+  confidence: number;
+  reasoning: string;
+  slaRecommendation: number; // hours
+  escalationNeeded: boolean;
+}
+
+export interface EmailCategoryAnalysis {
+  category: 'sales' | 'support' | 'billing' | 'partnership' | 'hr' | 'marketing' | 'legal' | 'other';
+  confidence: number;
+  subcategory?: string;
+  suggestedDepartment?: string;
+  suggestedAssignee?: string;
+}
+
+export interface EmailFullAnalysis {
+  sentiment: EmailSentimentAnalysis;
+  intent: EmailIntentAnalysis;
+  priority: EmailPriorityAnalysis;
+  category: EmailCategoryAnalysis;
+  summary: string;
+  keyInsights: string[];
+  suggestedResponse?: {
+    tone: 'formal' | 'friendly' | 'professional' | 'empathetic';
+    template: string;
+    keyPoints: string[];
+  };
+  customerInsights?: {
+    satisfactionLevel: 'low' | 'medium' | 'high';
+    relationshipStatus: 'new' | 'established' | 'at_risk' | 'loyal';
+    nextBestAction: string;
+  };
+}
+
+export interface EmailAnalysisResponse {
+  success: boolean;
+  analysis: EmailSentimentAnalysis | EmailIntentAnalysis | EmailPriorityAnalysis | EmailCategoryAnalysis | EmailFullAnalysis;
+  analysisType: string;
+  processingTime: number;
+  aiProvider: string;
+  timestamp: string;
+  confidence: number;
+}
+
+export interface EmailResponseSuggestion {
+  responseText: string;
+  tone: 'formal' | 'friendly' | 'professional' | 'empathetic';
+  confidence: number;
+  keyPoints: string[];
+  suggestedActions: string[];
+  personalizations?: Record<string, string>;
+}
+
+export interface EmailResponseRequest {
+  originalEmail: {
+    subject: string;
+    content: string;
+    fromEmail: string;
+    toEmail: string;
+  };
+  responseType: 'answer' | 'acknowledge' | 'escalate' | 'follow_up';
+  context?: {
+    customerName?: string;
+    customerHistory?: string;
+    companyInfo?: string;
+    threadHistory?: string[];
+  };
+  tone?: 'formal' | 'friendly' | 'professional' | 'empathetic';
+  language?: 'de' | 'en';
+}
+
+export interface EmailResponseSuggestionResponse {
+  success: boolean;
+  suggestions: EmailResponseSuggestion[];
+  aiProvider: string;
+  timestamp: string;
+  processingTime: number;
+}

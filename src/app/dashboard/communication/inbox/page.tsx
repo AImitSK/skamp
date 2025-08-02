@@ -1084,13 +1084,40 @@ export default function InboxPage() {
   };
 
   // NEU: Handle thread priority change
-  const handleThreadPriorityChange = async (threadId: string, priority: 'low' | 'normal' | 'high' | 'urgent') => {
+  const handleThreadPriorityChange = async (priority: 'low' | 'normal' | 'high' | 'urgent') => {
+    if (!selectedThread) return;
+    
     try {
-      await threadMatcherService.updateThreadPriority(threadId, priority);
+      await threadMatcherService.updateThreadPriority(selectedThread.id!, priority);
       console.log('✅ Thread priority updated successfully');
     } catch (error) {
       console.error('Error updating thread priority:', error);
       alert('Fehler beim Ändern der Thread-Priorität');
+    }
+  };
+
+  // NEU: Handle thread category change (AI-based assignment)
+  const handleThreadCategoryChange = async (category: string, assignee?: string) => {
+    if (!selectedThread) return;
+    
+    try {
+      // If AI suggests an assignee, try to find matching team member
+      if (assignee) {
+        const matchingMember = teamMembers.find(member => 
+          member.displayName.toLowerCase().includes(assignee.toLowerCase()) ||
+          member.email.toLowerCase().includes(assignee.toLowerCase())
+        );
+        
+        if (matchingMember) {
+          await handleThreadAssign(selectedThread.id!, matchingMember.userId);
+        }
+      }
+      
+      // Store category in thread metadata (could be extended)
+      console.log(`✅ Thread categorized as: ${category}`, assignee ? `→ ${assignee}` : '');
+      
+    } catch (error) {
+      console.error('Error updating thread category:', error);
     }
   };
 
@@ -1395,8 +1422,11 @@ export default function InboxPage() {
               onStar={handleStar}
               onStatusChange={handleThreadStatusChange}
               onAssignmentChange={handleThreadAssign}
+              onPriorityChange={handleThreadPriorityChange}
+              onCategoryChange={handleThreadCategoryChange}
               organizationId={organizationId}
               teamMembers={teamMembers}
+              showAI={true}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center text-gray-500">
