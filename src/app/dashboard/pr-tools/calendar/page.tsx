@@ -448,7 +448,7 @@ export default function CalendarDashboard() {
       if (taskData.linkedCampaignId) (newTask as any).linkedCampaignId = taskData.linkedCampaignId;
       if (taskData.linkedClientId) (newTask as any).linkedClientId = taskData.linkedClientId;
 
-      await taskService.create(newTask as Task);
+      await taskService.create(newTask);
       showAlert('info', 'Aufgabe wurde erfolgreich erstellt!');
       handleDataRefresh();
     } catch (error: any) {
