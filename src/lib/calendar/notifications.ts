@@ -31,7 +31,7 @@ async function getUpcomingEvents(userId: string, hoursAhead: number = 24): Promi
   const endTime = new Date(now.getTime() + hoursAhead * 60 * 60 * 1000);
   
   // Hole alle Kampagnen
-  const campaigns = await prService.getAll(organizationId);
+  const campaigns = await prService.getAll(userId);
   const events: CalendarEvent[] = [];
   
   // Konvertiere Kampagnen zu Events
