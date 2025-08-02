@@ -44,6 +44,33 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
     super('approvals');
   }
 
+  // Helper method to remove undefined values recursively
+  private removeUndefinedValues(obj: any): any {
+    if (obj === null || obj === undefined) {
+      return obj;
+    }
+    
+    if (Array.isArray(obj)) {
+      return obj.map(item => this.removeUndefinedValues(item))
+        .filter(item => item !== undefined);
+    }
+    
+    if (typeof obj === 'object') {
+      const cleaned: any = {};
+      for (const [key, value] of Object.entries(obj)) {
+        if (value !== undefined) {
+          const cleanedValue = this.removeUndefinedValues(value);
+          if (cleanedValue !== undefined) {
+            cleaned[key] = cleanedValue;
+          }
+        }
+      }
+      return cleaned;
+    }
+    
+    return obj;
+  }
+
   /**
    * Erstellt eine neue Freigabe-Anfrage
    */
@@ -176,8 +203,9 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         throw new Error('Freigabe nicht gefunden');
       }
 
-      if (approval.status !== 'draft') {
-        throw new Error('Freigabe wurde bereits gesendet');
+      // Erlaube Resubmit für changes_requested und rejected Status
+      if (!['draft', 'changes_requested', 'rejected'].includes(approval.status)) {
+        throw new Error('Freigabe kann in diesem Status nicht (erneut) gesendet werden');
       }
 
       // Update Status und Historie
@@ -414,9 +442,9 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
           previousStatus: approval.status,
           newStatus,
           comment,
-          changes: inlineComments ? { inlineComments } : undefined
+          ...(inlineComments && { changes: { inlineComments } })
         },
-        inlineComments
+        ...(inlineComments && { inlineComments })
       };
 
       updates.history = arrayUnion(historyEntry);
@@ -485,15 +513,10 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         }
       };
 
-      // Entferne undefined Felder
-      if (!inlineComments) {
-        delete (historyEntry as any).inlineComments;
-      }
-      if (!comment) {
-        delete historyEntry.details.comment;
-      }
+      // Entferne undefined Felder rekursiv
+      const cleanHistoryEntry = this.removeUndefinedValues(historyEntry);
 
-      updates.history = arrayUnion(historyEntry);
+      updates.history = arrayUnion(cleanHistoryEntry);
       
       console.log('📝 Updating document with:', updates);
 
@@ -553,9 +576,9 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
           comment,
           previousStatus: approval.status,
           newStatus: 'changes_requested',
-          changes: inlineComments ? { inlineComments } : undefined
+          ...(inlineComments && { changes: { inlineComments } })
         },
-        inlineComments
+        ...(inlineComments && { inlineComments })
       };
 
       updates.history = arrayUnion(historyEntry);
@@ -603,9 +626,10 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
           comment,
           previousStatus: approval.status,
           newStatus: 'changes_requested',
-          changes: inlineComments ? { inlineComments, publicAccess: true } : { publicAccess: true }
+          publicAccess: true,
+          ...(inlineComments && { changes: { inlineComments } })
         },
-        inlineComments
+        ...(inlineComments && { inlineComments })
       };
 
       updates.history = arrayUnion(historyEntry);
