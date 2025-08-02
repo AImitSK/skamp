@@ -327,6 +327,7 @@ export class FlexibleEmailProcessor {
 
   /**
    * Erstellt eine E-Mail-Nachricht
+   * Prüft, ob der Thread bereits existiert und überträgt Team-Zuweisungen
    */
   private async createEmailMessage(
     emailData: IncomingEmailData,
@@ -343,6 +344,32 @@ export class FlexibleEmailProcessor {
         isArchived: false,
         isDraft: false
       };
+
+      // Prüfe, ob der Thread bereits existiert und Team-Zuweisungen hat
+      try {
+        const threadsQuery = query(
+          collection(db, 'email_threads'),
+          where('id', '==', threadId),
+          where('organizationId', '==', emailAddress.organizationId)
+        );
+        
+        const threadsSnapshot = await getDocs(threadsQuery);
+        
+        if (!threadsSnapshot.empty) {
+          const existingThread = threadsSnapshot.docs[0].data();
+          const assignedTo = existingThread.assignedToUserId || existingThread.assignedTo;
+          
+          if (assignedTo) {
+            console.log('✅ Thread already assigned to:', assignedTo, '- transferring to new message');
+            // Übertrage die Team-Zuweisung auf die neue Message
+            (messageData as any).assignedToUserId = assignedTo;
+            (messageData as any).assignedTo = assignedTo; // Fallback für altes Format
+          }
+        }
+      } catch (threadCheckError) {
+        console.log('⚠️ Could not check existing thread assignments:', threadCheckError);
+        // Fahre trotzdem fort - das ist kein kritischer Fehler
+      }
 
       return await emailMessageService.create(messageData);
     } catch (error) {
