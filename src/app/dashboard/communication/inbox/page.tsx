@@ -342,16 +342,9 @@ export default function InboxPage() {
       limit(100)
     );
 
-    // NEU: Füge spezifische Filter für Team-Ordner hinzu
-    if (selectedFolderType === 'team' && selectedTeamMemberId) {
-      threadsQuery = query(
-        collection(db, 'email_threads'),
-        where('organizationId', '==', organizationId),
-        where('assignedToUserId', '==', selectedTeamMemberId),
-        orderBy('lastMessageAt', 'desc'),
-        limit(100)
-      );
-    }
+    // HINWEIS: Für Team-Ordner verwenden wir die Basis-Query und filtern client-seitig,
+    // da assignedToUserId noch nicht in allen bestehenden Threads vorhanden ist
+    // TODO: Später können wir server-seitige Filterung hinzufügen, wenn alle Threads migriert sind
 
     const threadsUnsubscribe = onSnapshot(
       threadsQuery,
@@ -410,16 +403,8 @@ export default function InboxPage() {
       limit(100)
     );
 
-    // Füge spezifische Filter für Team-Ordner hinzu
-    if (selectedFolderType === 'team' && selectedTeamMemberId) {
-      messagesQuery = query(
-        collection(db, 'email_messages'),
-        where('organizationId', '==', organizationId),
-        where('assignedToUserId', '==', selectedTeamMemberId),
-        orderBy('receivedAt', 'desc'),
-        limit(100)
-      );
-    }
+    // HINWEIS: Für Team-Ordner verwenden wir die Basis-Query und filtern client-seitig,
+    // da assignedToUserId noch nicht in allen bestehenden Messages vorhanden ist
 
     const messagesUnsubscribe = onSnapshot(
       messagesQuery,
@@ -431,11 +416,19 @@ export default function InboxPage() {
           messagesData.push({ ...doc.data(), id: doc.id } as EmailMessage);
         });
 
-        // Für "general": Filtere nur Nachrichten ohne Zuordnung
+        // Client-seitige Filterung für Team-Ordner
         if (selectedFolderType === 'general') {
-          messagesData = messagesData.filter(msg => 
-            !msg.customerId && !msg.campaignId
-          );
+          // Allgemeine Anfragen: Nachrichten ohne Team-Zuweisung
+          messagesData = messagesData.filter(msg => {
+            const assignedTo = (msg as any).assignedToUserId || (msg as any).assignedTo;
+            return !assignedTo;
+          });
+        } else if (selectedFolderType === 'team' && selectedTeamMemberId) {
+          // Team-Ordner: Nur Nachrichten für dieses Team-Mitglied
+          messagesData = messagesData.filter(msg => {
+            const assignedTo = (msg as any).assignedToUserId || (msg as any).assignedTo;
+            return assignedTo === selectedTeamMemberId;
+          });
         }
 
         // Keine automatische Zuordnung mehr nötig im Team-System
@@ -622,6 +615,7 @@ export default function InboxPage() {
   const handleThreadSelect = async (thread: EmailThread) => {
     console.log('📧 Thread selected:', thread.id, thread.subject);
     setSelectedThread(thread);
+    setSelectedEmail(null); // Reset selected email when switching threads
     
     try {
       // Load all messages for this thread
@@ -936,9 +930,15 @@ export default function InboxPage() {
   // Filter threads based on folder selection and search
   const filteredThreads = threads.filter(thread => {
     // Erstens: Filter nach Ordner-Auswahl
-    if (selectedFolderType === 'team' && selectedTeamMemberId) {
-      // Zeige nur Threads, die diesem Team-Mitglied zugewiesen sind
-      const assignedTo = (thread as any).assignedTo || (thread as any).assignedToUserId;
+    const assignedTo = (thread as any).assignedTo || (thread as any).assignedToUserId;
+    
+    if (selectedFolderType === 'general') {
+      // General: Zeige nur Threads ohne Zuweisung
+      if (assignedTo) {
+        return false;
+      }
+    } else if (selectedFolderType === 'team' && selectedTeamMemberId) {
+      // Team: Zeige nur Threads, die diesem Team-Mitglied zugewiesen sind
       if (assignedTo !== selectedTeamMemberId) {
         return false;
       }
