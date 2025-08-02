@@ -30,7 +30,9 @@ import {
   serverTimestamp,
   getDocs,
   QueryDocumentSnapshot,
-  DocumentData
+  DocumentData,
+  deleteDoc,
+  doc
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client-init';
 import { 
@@ -501,9 +503,17 @@ export default function InboxPage() {
         });
 
         // Für "general" folder: Filtere nur Threads ohne Kunden/Kampagnen-Zuordnung
+        // UND schließe gesendete E-Mail Threads aus (sent_ prefix)
         if (selectedFolderType === 'general') {
           threadsData = threadsData.filter(thread => 
-            !thread.customerId && !thread.campaignId
+            !thread.customerId && 
+            !thread.campaignId &&
+            !(thread.id && thread.id.startsWith('sent_'))
+          );
+        } else {
+          // Auch in anderen Ordnern gesendete Threads ausschließen
+          threadsData = threadsData.filter(thread => 
+            !(thread.id && thread.id.startsWith('sent_'))
           );
         }
         
@@ -966,8 +976,19 @@ export default function InboxPage() {
         console.log(`📧 Remaining emails in thread: ${remainingEmails.length}`);
         
         if (remainingEmails.length === 0) {
-          // Kein Thread mehr vorhanden, alles zurücksetzen
-          console.log('🔄 No more emails in thread, resetting selection');
+          // Kein Thread mehr vorhanden, Thread auch aus Firestore löschen
+          console.log('🔄 No more emails in thread, deleting thread and resetting selection');
+          
+          if (currentThreadId) {
+            try {
+              // Lösche den Thread direkt aus Firestore
+              await deleteDoc(doc(db, 'email_threads', currentThreadId));
+              console.log('🗑️ Thread deleted from Firestore:', currentThreadId);
+            } catch (error) {
+              console.error('❌ Error deleting thread:', error);
+            }
+          }
+          
           setSelectedThread(null);
         } else {
           // Wähle die nächste E-Mail im Thread

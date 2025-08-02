@@ -647,10 +647,10 @@ export class FlexibleThreadMatcherService {
       const threadIds = new Set<string>();
       const messagesByThread = new Map<string, EmailMessage[]>();
       
-      // Gruppiere Messages nach Thread-ID
+      // Gruppiere Messages nach Thread-ID (aber ignoriere sent_ Threads)
       snapshot.forEach(doc => {
         const message = { ...doc.data(), id: doc.id } as EmailMessage;
-        if (message.threadId) {
+        if (message.threadId && !message.threadId.startsWith('sent_')) {
           threadIds.add(message.threadId);
           const messages = messagesByThread.get(message.threadId) || [];
           messages.push(message);
