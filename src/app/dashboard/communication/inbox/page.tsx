@@ -7,7 +7,7 @@ import { useOrganization } from '@/context/OrganizationContext';
 import { Heading } from '@/components/heading';
 import { Button } from '@/components/button';
 import { Badge } from '@/components/badge';
-import { TeamFolderSidebar } from '@/components/inbox/TeamFolderSidebar_Simple';
+import { TeamFolderSidebar } from '@/components/inbox/TeamFolderSidebar';
 import { EmailList } from '@/components/inbox/EmailList';
 import { EmailViewer } from '@/components/inbox/EmailViewer';
 import { ComposeEmail } from '@/components/inbox/ComposeEmail';
@@ -78,11 +78,10 @@ export default function InboxPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [organizationSidebarCollapsed, setOrganizationSidebarCollapsed] = useState(false);
   
-  // State für Kunden/Kampagnen-Organisation
-  const [selectedFolderType, setSelectedFolderType] = useState<'customer' | 'campaign' | 'general'>('general');
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string | undefined>();
-  const [selectedCampaignId, setSelectedCampaignId] = useState<string | undefined>();
-  const [customerCampaignMatcher, setCustomerCampaignMatcher] = useState<any>(null);
+  // State für Team-Ordner-Organisation
+  const [selectedFolderType, setSelectedFolderType] = useState<'general' | 'team'>('general');
+  const [selectedTeamMemberId, setSelectedTeamMemberId] = useState<string | undefined>();
+  // Entfernt: customerCampaignMatcher (nicht mehr benötigt für Team-System)
   
   // NEU: State für Team-Features
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
@@ -99,8 +98,7 @@ export default function InboxPage() {
     listenersSetup?: boolean;
     organizationId?: string;
     selectedFolderType?: string;
-    selectedCustomerId?: string;
-    selectedCampaignId?: string;
+    selectedTeamMemberId?: string;
     threadCount?: number;
     threads?: EmailThread[];
     threadError?: string;
@@ -132,7 +130,7 @@ export default function InboxPage() {
   useEffect(() => {
     if (organizationId) {
       const matcher = getCustomerCampaignMatcher(organizationId);
-      setCustomerCampaignMatcher(matcher);
+      // Entfernt: setCustomerCampaignMatcher(matcher);
     }
   }, [organizationId]);
 
@@ -291,8 +289,7 @@ export default function InboxPage() {
       listenersSetup: true,
       organizationId,
       selectedFolderType,
-      selectedCustomerId,
-      selectedCampaignId
+      selectedTeamMemberId
     }));
 
     // Clean up previous listeners
@@ -309,15 +306,15 @@ export default function InboxPage() {
     return () => {
       newUnsubscribes.forEach(unsubscribe => unsubscribe());
     };
-  }, [user, organizationId, selectedFolderType, selectedCustomerId, selectedCampaignId, hasEmailAddresses, resolvingThreads]);
+  }, [user, organizationId, selectedFolderType, selectedTeamMemberId, hasEmailAddresses, resolvingThreads]);
 
   const setupRealtimeListeners = (unsubscribes: Unsubscribe[]) => {
     setLoading(true);
     setError(null);
 
     try {
-      // Customer/Campaign Mode
-      setupCustomerCampaignListeners(unsubscribes);
+      // Team-Ordner Mode
+      setupTeamFolderListeners(unsubscribes);
 
     } catch (error: any) {
       console.error('Error setting up listeners:', error);
@@ -331,11 +328,10 @@ export default function InboxPage() {
   };
 
 
-  const setupCustomerCampaignListeners = (unsubscribes: Unsubscribe[]) => {
-    console.log('🎯 Setting up CUSTOMER/CAMPAIGN listeners:', {
+  const setupTeamFolderListeners = (unsubscribes: Unsubscribe[]) => {
+    console.log('🎯 Setting up TEAM FOLDER listeners:', {
       folderType: selectedFolderType,
-      customerId: selectedCustomerId,
-      campaignId: selectedCampaignId
+      teamMemberId: selectedTeamMemberId
     });
 
     // 1. Basis-Query für Threads
@@ -346,20 +342,12 @@ export default function InboxPage() {
       limit(100)
     );
 
-    // NEU: Füge spezifische Filter für Kunden/Kampagnen hinzu
-    if (selectedFolderType === 'customer' && selectedCustomerId) {
+    // NEU: Füge spezifische Filter für Team-Ordner hinzu
+    if (selectedFolderType === 'team' && selectedTeamMemberId) {
       threadsQuery = query(
         collection(db, 'email_threads'),
         where('organizationId', '==', organizationId),
-        where('customerId', '==', selectedCustomerId),
-        orderBy('lastMessageAt', 'desc'),
-        limit(100)
-      );
-    } else if (selectedFolderType === 'campaign' && selectedCampaignId) {
-      threadsQuery = query(
-        collection(db, 'email_threads'),
-        where('organizationId', '==', organizationId),
-        where('campaignId', '==', selectedCampaignId),
+        where('assignedToUserId', '==', selectedTeamMemberId),
         orderBy('lastMessageAt', 'desc'),
         limit(100)
       );
@@ -375,14 +363,13 @@ export default function InboxPage() {
           threadsData.push({ ...doc.data(), id: doc.id } as EmailThread);
         });
 
-        // Für "general" folder: Filtere nur Threads ohne Kunden/Kampagnen-Zuordnung
+        // Für "general" folder: Filtere alle Threads ohne Team-Zuweisung
         // UND schließe gesendete E-Mail Threads aus (sent_ prefix)
         if (selectedFolderType === 'general') {
-          threadsData = threadsData.filter(thread => 
-            !thread.customerId && 
-            !thread.campaignId &&
-            !(thread.id && thread.id.startsWith('sent_'))
-          );
+          threadsData = threadsData.filter(thread => {
+            const assignedTo = (thread as any).assignedToUserId || (thread as any).assignedTo;
+            return !assignedTo && !(thread.id && thread.id.startsWith('sent_'));
+          });
         } else {
           // Auch in anderen Ordnern gesendete Threads ausschließen
           threadsData = threadsData.filter(thread => 
@@ -394,7 +381,7 @@ export default function InboxPage() {
         setThreads(threadsData);
         
         // Update unread counts
-        await updateCustomerCampaignUnreadCounts(threadsData);
+        await updateTeamUnreadCounts(threadsData);
         
         setDebugInfo((prev: DebugInfo) => ({
           ...prev,
@@ -423,20 +410,12 @@ export default function InboxPage() {
       limit(100)
     );
 
-    // Füge spezifische Filter hinzu
-    if (selectedFolderType === 'customer' && selectedCustomerId) {
+    // Füge spezifische Filter für Team-Ordner hinzu
+    if (selectedFolderType === 'team' && selectedTeamMemberId) {
       messagesQuery = query(
         collection(db, 'email_messages'),
         where('organizationId', '==', organizationId),
-        where('customerId', '==', selectedCustomerId),
-        orderBy('receivedAt', 'desc'),
-        limit(100)
-      );
-    } else if (selectedFolderType === 'campaign' && selectedCampaignId) {
-      messagesQuery = query(
-        collection(db, 'email_messages'),
-        where('organizationId', '==', organizationId),
-        where('campaignId', '==', selectedCampaignId),
+        where('assignedToUserId', '==', selectedTeamMemberId),
         orderBy('receivedAt', 'desc'),
         limit(100)
       );
@@ -459,29 +438,8 @@ export default function InboxPage() {
           );
         }
 
-        // NEU: Verwende CustomerCampaignMatcher für neue E-Mails ohne Zuordnung
-        if (customerCampaignMatcher && selectedFolderType === 'general') {
-          for (const message of messagesData) {
-            if (!message.customerId && !message.campaignId && message.id) {
-              try {
-                const match = await customerCampaignMatcher.matchEmail(message);
-                if (match.customerId || match.campaignId) {
-                  // Update die Nachricht mit der Zuordnung
-                  const updateData: Partial<EmailMessage> = {
-                    customerId: match.customerId,
-                    customerName: match.customerName,
-                    campaignId: match.campaignId,
-                    campaignName: match.campaignName,
-                    folderType: match.folderType
-                  };
-                  await emailMessageService.update(message.id, updateData);
-                }
-              } catch (error) {
-                console.error('Error matching email:', error);
-              }
-            }
-          }
-        }
+        // Keine automatische Zuordnung mehr nötig im Team-System
+        // E-Mails werden manuell über die UI zugewiesen
         
         setEmails(messagesData);
         setLoading(false);
@@ -523,21 +481,23 @@ export default function InboxPage() {
     setUnreadCounts(counts);
   };
 
-  const updateCustomerCampaignUnreadCounts = async (threadsData: EmailThread[]) => {
+  const updateTeamUnreadCounts = async (threadsData: EmailThread[]) => {
     const counts: Record<string, number> = {
       general: 0
     };
 
-    // Zähle ungelesene Nachrichten pro Kunde/Kampagne
+    // Zähle ungelesene Nachrichten für Team-Ordner
     for (const thread of threadsData) {
       if (thread.unreadCount > 0) {
-        if (thread.customerId) {
-          counts[`customer_${thread.customerId}`] = (counts[`customer_${thread.customerId}`] || 0) + thread.unreadCount;
+        // Allgemeine Anfragen: alle E-Mails ohne spezifische Zuweisung
+        if (!thread.assignedToUserId) {
+          counts.general += thread.unreadCount;
         }
-        if (thread.campaignId) {
-          counts[`campaign_${thread.campaignId}`] = (counts[`campaign_${thread.campaignId}`] || 0) + thread.unreadCount;
-        }
-        if (!thread.customerId && !thread.campaignId) {
+        
+        // Team-Mitglied Ordner: zugewiesene E-Mails
+        if (thread.assignedToUserId) {
+          counts[`team_${thread.assignedToUserId}`] = (counts[`team_${thread.assignedToUserId}`] || 0) + thread.unreadCount;
+          // E-Mail auch in Allgemeinen Anfragen zählen (sichtbar für alle)
           counts.general += thread.unreadCount;
         }
       }
@@ -569,10 +529,7 @@ export default function InboxPage() {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      // Clear matcher cache
-      if (customerCampaignMatcher) {
-        customerCampaignMatcher.clearCache();
-      }
+      // Keine Cache-Bereinigung mehr nötig im Team-System
       
       // Trigger listeners to refresh
       unsubscribes.forEach(unsubscribe => unsubscribe());
@@ -615,19 +572,12 @@ export default function InboxPage() {
       }
 
       // Füge Kunden/Kampagnen-Zuordnung hinzu
-      let customerId = undefined;
-      let customerName = undefined;
-      let campaignId = undefined;
-      let campaignName = undefined;
+      // Im Team-System wird keine automatische Kunden/Kampagnen-Zuordnung mehr vorgenommen
+      // E-Mails werden in allgemeine Anfragen erstellt und können dann zugewiesen werden
+      let assignedToUserId = undefined;
       
-      if (selectedFolderType === 'customer' && selectedCustomerId) {
-        customerId = selectedCustomerId;
-        customerName = 'Test Kunde GmbH';
-      } else if (selectedFolderType === 'campaign' && selectedCampaignId) {
-        campaignId = selectedCampaignId;
-        campaignName = 'Test Kampagne 2024';
-        customerId = 'test-customer-id';
-        customerName = 'Test Kunde GmbH';
+      if (selectedFolderType === 'team' && selectedTeamMemberId) {
+        assignedToUserId = selectedTeamMemberId;
       }
 
       // Create test email message
@@ -653,12 +603,9 @@ export default function InboxPage() {
         receivedAt: serverTimestamp() as Timestamp,
         sentAt: undefined,
         attachments: [],
-        // NEU: Kunden/Kampagnen-Zuordnung
-        customerId,
-        customerName,
-        campaignId,
-        campaignName,
-        folderType: customerId || campaignId ? (campaignId ? 'campaign' : 'customer') : 'general'
+        // NEU: Team-Zuordnung (wird als benutzerdefiniertes Feld hinzugefügt)
+        ...(assignedToUserId && { assignedToUserId }),
+        folderType: 'general' // Alle E-Mails starten in allgemeinen Anfragen
       };
       
       const testMessage = await emailMessageService.create(testMessageData);
@@ -977,18 +924,27 @@ export default function InboxPage() {
   };
 
   // Handle folder selection from sidebar
-  const handleFolderSelect = (type: 'customer' | 'campaign' | 'general', id?: string) => {
+  const handleFolderSelect = (type: 'general' | 'team', id?: string) => {
     console.log('📁 Folder selected:', { type, id });
     setSelectedFolderType(type);
-    setSelectedCustomerId(type === 'customer' ? id : undefined);
-    setSelectedCampaignId(type === 'campaign' ? id : undefined);
+    setSelectedTeamMemberId(type === 'team' ? id : undefined);
     setSelectedThread(null);
     setSelectedEmail(null);
   };
 
 
-  // Filter threads based on search
+  // Filter threads based on folder selection and search
   const filteredThreads = threads.filter(thread => {
+    // Erstens: Filter nach Ordner-Auswahl
+    if (selectedFolderType === 'team' && selectedTeamMemberId) {
+      // Zeige nur Threads, die diesem Team-Mitglied zugewiesen sind
+      const assignedTo = (thread as any).assignedTo || (thread as any).assignedToUserId;
+      if (assignedTo !== selectedTeamMemberId) {
+        return false;
+      }
+    }
+    
+    // Zweitens: Filter nach Suchbegriff
     if (!searchQuery) return true;
     
     const searchLower = searchQuery.toLowerCase();
@@ -997,9 +953,7 @@ export default function InboxPage() {
       thread.participants.some(p => 
         p.email.toLowerCase().includes(searchLower) ||
         p.name?.toLowerCase().includes(searchLower)
-      ) ||
-      (thread.customerName?.toLowerCase().includes(searchLower)) ||
-      (thread.campaignName?.toLowerCase().includes(searchLower))
+      )
     );
   });
 
@@ -1016,13 +970,9 @@ export default function InboxPage() {
   // Get folder display name
   const getFolderDisplayName = () => {
     if (selectedFolderType === 'general') return 'Allgemeine Anfragen';
-    if (selectedFolderType === 'customer' && selectedCustomerId) {
-      const customer = filteredThreads.find(t => t.customerId === selectedCustomerId);
-      return customer?.customerName || 'Kunde';
-    }
-    if (selectedFolderType === 'campaign' && selectedCampaignId) {
-      const campaign = filteredThreads.find(t => t.campaignId === selectedCampaignId);
-      return campaign?.campaignName || 'Kampagne';
+    if (selectedFolderType === 'team' && selectedTeamMemberId) {
+      const member = teamMembers.find(m => m.userId === selectedTeamMemberId);
+      return member?.displayName || 'Team-Mitglied';
     }
     return 'E-Mails';
   };
@@ -1202,20 +1152,11 @@ export default function InboxPage() {
         {/* Team Folder Sidebar */}
         {!organizationSidebarCollapsed && (
           <TeamFolderSidebar
-            selectedFolderId={selectedCustomerId || selectedCampaignId}
-            onFolderSelect={(folderId, folderType) => {
-              // Adapter für neue Struktur
-              if (folderType === 'general') {
-                handleFolderSelect('general');
-              } else {
-                handleFolderSelect('customer', folderId);
-              }
-            }}
+            selectedFolderId={selectedTeamMemberId}
+            selectedFolderType={selectedFolderType}
+            onFolderSelect={handleFolderSelect}
             unreadCounts={unreadCounts}
-            onEmailMove={(emailId, targetFolderId) => {
-              // TODO: Implement email move functionality
-              console.log('Move email', emailId, 'to folder', targetFolderId);
-            }}
+            organizationId={organizationId}
           />
         )}
 
