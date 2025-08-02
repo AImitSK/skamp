@@ -297,9 +297,11 @@ export function EmailViewer({
         </div>
       </div>
 
-      {/* Email Thread */}
+      {/* Scrollable Content Area */}
       <div className="flex-1 overflow-y-auto min-h-0">
-        {emails.map((email, index) => (
+        {/* Email Thread */}
+        <div>
+          {emails.map((email, index) => (
           <div 
             key={email.id}
             className={clsx(
@@ -387,11 +389,11 @@ export function EmailViewer({
             )}
           </div>
         ))}
-      </div>
+        </div>
 
-      {/* AI Features */}
-      {showAI && selectedEmail && (
-        <div className="border-t border-gray-200 p-6 space-y-4 flex-shrink-0">
+        {/* AI Features */}
+        {showAI && selectedEmail && (
+          <div className="border-t border-gray-200 p-6 space-y-4">
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             {/* AI Insights */}
             <AIInsightsPanel
@@ -432,13 +434,14 @@ export function EmailViewer({
         </div>
       )}
 
-      {/* Internal Notes */}
-      <InternalNotes
-        threadId={thread.id!}
-        emailId={selectedEmail?.id}
-        organizationId={organizationId}
-        teamMembers={teamMembers}
-      />
+        {/* Internal Notes */}
+        <InternalNotes
+          threadId={thread.id!}
+          emailId={selectedEmail?.id}
+          organizationId={organizationId}
+          teamMembers={teamMembers}
+        />
+      </div>
     </div>
   );
 }
