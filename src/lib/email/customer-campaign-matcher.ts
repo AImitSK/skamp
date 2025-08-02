@@ -111,7 +111,7 @@ export class CustomerCampaignMatcher {
           // Lade Kundeninfo
           let customerName = 'Unbekannter Kunde';
           if (campaign.customerId) {
-            const customerDoc = await getDoc(doc(db, 'organizations', campaign.customerId));
+            const customerDoc = await getDoc(doc(db, 'companies_enhanced', campaign.customerId));
             if (customerDoc.exists()) {
               customerName = customerDoc.data().name || customerName;
             }
@@ -144,7 +144,7 @@ export class CustomerCampaignMatcher {
     try {
       // Suche Kontakt mit dieser E-Mail
       const contactsQuery = query(
-        collection(db, 'contacts'),
+        collection(db, 'contacts_enhanced'),
         where('organizationId', '==', this.organizationId),
         where('email', '==', fromEmail),
         limit(1)
@@ -180,10 +180,12 @@ export class CustomerCampaignMatcher {
     }
 
     try {
-      // Suche Unternehmen mit dieser Domain
+      // Suche Unternehmen mit dieser Domain (über Website URL)
       const orgsQuery = query(
-        collection(db, 'organizations'),
-        where('domains', 'array-contains', domain),
+        collection(db, 'companies_enhanced'),
+        where('organizationId', '==', this.organizationId),
+        where('website', '>=', domain),
+        where('website', '<=', domain + '\uf8ff'),
         limit(1)
       );
 
@@ -203,7 +205,7 @@ export class CustomerCampaignMatcher {
 
       // Alternative: Suche in Kontakten nach Domain
       const contactsQuery = query(
-        collection(db, 'contacts'),
+        collection(db, 'contacts_enhanced'),
         where('organizationId', '==', this.organizationId),
         where('email', '>=', '@' + domain),
         where('email', '<=', '@' + domain + '\uf8ff'),
@@ -274,7 +276,7 @@ export class CustomerCampaignMatcher {
           // Lade Kundeninfo
           let customerName = 'Unbekannter Kunde';
           if (campaign.customerId) {
-            const customerDoc = await getDoc(doc(db, 'organizations', campaign.customerId));
+            const customerDoc = await getDoc(doc(db, 'companies_enhanced', campaign.customerId));
             if (customerDoc.exists()) {
               customerName = customerDoc.data().name || customerName;
             }
@@ -294,7 +296,7 @@ export class CustomerCampaignMatcher {
 
       // Prüfe auf Kunden-Keywords
       const orgsQuery = query(
-        collection(db, 'organizations'),
+        collection(db, 'companies_enhanced'),
         where('organizationId', '==', this.organizationId),
         limit(50)
       );
