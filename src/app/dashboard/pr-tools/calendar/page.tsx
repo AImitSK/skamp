@@ -428,7 +428,7 @@ export default function CalendarDashboard() {
 
   // Handler für das Erstellen einer neuen Aufgabe
   const handleCreateTask = async (taskData: any) => {
-    if (!user?.uid) {
+    if (!user?.uid || !currentOrganization?.id) {
       showAlert('error', 'Sie müssen eingeloggt sein, um eine Aufgabe zu erstellen.');
       return;
     }
