@@ -4,6 +4,7 @@
 import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
 import Link from 'next/link';
 import { useAuth } from "@/context/AuthContext";
+import { useOrganization } from "@/context/OrganizationContext";
 import { Heading } from "@/components/heading";
 import { Text } from "@/components/text";
 import { Button } from "@/components/button";
@@ -36,7 +37,6 @@ import {
   ChevronRightIcon
 } from "@heroicons/react/20/solid";
 import { approvalService } from "@/lib/firebase/approval-service";
-import { teamMemberService } from "@/lib/firebase/organization-service";
 import { companiesEnhancedService } from "@/lib/firebase/crm-service-enhanced";
 import { 
   ApprovalEnhanced, 
@@ -246,6 +246,7 @@ function FeedbackHistoryModal({
 
 export default function ApprovalsPage() {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const [approvals, setApprovals] = useState<ApprovalListView[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -257,7 +258,6 @@ export default function ApprovalsPage() {
   const [selectedApproval, setSelectedApproval] = useState<ApprovalEnhanced | null>(null);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [clients, setClients] = useState<Array<{ id: string; name: string }>>([]);
-  const [organizationId, setOrganizationId] = useState<string>('');
   
   // Refresh States
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -269,35 +269,14 @@ export default function ApprovalsPage() {
     setTimeout(() => setAlert(null), 5000);
   }, []);
 
-  // Load Organization
-  useEffect(() => {
-    const loadOrganization = async () => {
-      if (!user) return;
-      
-      console.log('🟢 Loading organization for user:', user.uid);
-      
-      const orgs = await teamMemberService.getUserOrganizations(user.uid);
-      console.log('🟢 Organizations found:', orgs);
-      
-      if (orgs.length > 0) {
-        setOrganizationId(orgs[0].organization.id);
-        console.log('🟢 Using organizationId:', orgs[0].organization.id);
-      } else {
-        setOrganizationId(user.uid); // Fallback
-        console.log('🟢 Using userId as fallback:', user.uid);
-      }
-    };
-    
-    loadOrganization();
-  }, [user]);
 
   const loadApprovals = async () => {
-    if (!organizationId) {
-      console.log('🟡 No organizationId yet, skipping load');
+    if (!currentOrganization) {
+      console.log('🟡 No currentOrganization yet, skipping load');
       return;
     }
     
-    console.log('🟢 Loading approvals for organizationId:', organizationId);
+    console.log('🟢 Loading approvals for organizationId:', currentOrganization.id);
     
     setLoading(true);
     setIsRefreshing(true);
@@ -314,7 +293,7 @@ export default function ApprovalsPage() {
       console.log('🟢 Calling searchEnhanced with filters:', filters);
       
       // Lade Freigaben mit Filtern
-      const allApprovals = await approvalService.searchEnhanced(organizationId, filters);
+      const allApprovals = await approvalService.searchEnhanced(currentOrganization.id, filters);
       
       console.log('🟢 Approvals loaded:', allApprovals.length, 'approvals');
       console.log('🟢 Approval statuses:', JSON.stringify(allApprovals.map(a => ({ 
@@ -339,7 +318,7 @@ export default function ApprovalsPage() {
       setLastRefresh(new Date());
       
       // Lade Kunden für Filter
-      const companies = await companiesEnhancedService.getAll(organizationId);
+      const companies = await companiesEnhancedService.getAll(currentOrganization.id);
       const uniqueClients = Array.from(new Map(
         allApprovals
           .filter(a => a.clientId)
@@ -368,21 +347,21 @@ export default function ApprovalsPage() {
   };
 
   useEffect(() => {
-    if (organizationId) {
+    if (currentOrganization) {
       loadApprovals();
     }
-  }, [organizationId, selectedStatus, selectedClients, selectedPriorities, showOverdueOnly, searchTerm]);
+  }, [currentOrganization, selectedStatus, selectedClients, selectedPriorities, showOverdueOnly, searchTerm]);
 
   // Auto-Refresh alle 30 Sekunden
   useEffect(() => {
     const interval = setInterval(() => {
-      if (!loading && !isRefreshing && organizationId) {
+      if (!loading && !isRefreshing && currentOrganization) {
         loadApprovals();
       }
     }, 30000);
     
     return () => clearInterval(interval);
-  }, [organizationId, loading, isRefreshing]);
+  }, [currentOrganization, loading, isRefreshing]);
 
   const handleCopyLink = async (shareId: string) => {
     const url = `${window.location.origin}/freigabe/${shareId}`;
@@ -396,7 +375,7 @@ export default function ApprovalsPage() {
 
   const handleViewFeedback = async (approval: ApprovalListView) => {
     // Lade vollständige Approval mit Historie
-    const fullApproval = await approvalService.getById(approval.id!, organizationId);
+    const fullApproval = await approvalService.getById(approval.id!, currentOrganization!.id);
     if (fullApproval) {
       setSelectedApproval(fullApproval);
       setShowFeedbackModal(true);
@@ -405,7 +384,7 @@ export default function ApprovalsPage() {
 
   const handleResubmit = async (approval: ApprovalListView) => {
     try {
-      await approvalService.sendForApproval(approval.id!, { organizationId, userId: user!.uid });
+      await approvalService.sendForApproval(approval.id!, { organizationId: currentOrganization!.id, userId: user!.uid });
       showAlert('success', 'Erneut zur Freigabe gesendet', 'Die Kampagne wurde erneut an den Kunden gesendet.');
       await loadApprovals();
     } catch (error) {
@@ -415,7 +394,7 @@ export default function ApprovalsPage() {
 
   const handleSendReminder = async (approval: ApprovalListView) => {
     try {
-      await approvalService.sendReminder(approval.id!, { organizationId, userId: user!.uid });
+      await approvalService.sendReminder(approval.id!, { organizationId: currentOrganization!.id, userId: user!.uid });
       showAlert('success', 'Erinnerung gesendet', 'Eine Erinnerung wurde an den Kunden gesendet.');
     } catch (error) {
       showAlert('error', 'Fehler beim Senden', 'Die Erinnerung konnte nicht gesendet werden.');
