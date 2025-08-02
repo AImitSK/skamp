@@ -7,7 +7,7 @@ import { useOrganization } from '@/context/OrganizationContext';
 import { Heading } from '@/components/heading';
 import { Button } from '@/components/button';
 import { Badge } from '@/components/badge';
-import { CustomerCampaignSidebar } from '@/components/inbox/CustomerCampaignSidebar';
+import { TeamFolderSidebar } from '@/components/inbox/TeamFolderSidebar';
 import { EmailList } from '@/components/inbox/EmailList';
 import { EmailViewer } from '@/components/inbox/EmailViewer';
 import { ComposeEmail } from '@/components/inbox/ComposeEmail';
@@ -1199,15 +1199,23 @@ export default function InboxPage() {
 
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Organization Sidebar - Customer/Campaign */}
+        {/* Team Folder Sidebar */}
         {!organizationSidebarCollapsed && (
-          <CustomerCampaignSidebar
-            selectedCustomerId={selectedCustomerId}
-            selectedCampaignId={selectedCampaignId}
-            selectedFolderType={selectedFolderType}
-            onFolderSelect={handleFolderSelect}
+          <TeamFolderSidebar
+            selectedFolderId={selectedCustomerId || selectedCampaignId}
+            onFolderSelect={(folderId, folderType) => {
+              // Adapter für neue Struktur
+              if (folderType === 'general') {
+                handleFolderSelect('general');
+              } else {
+                handleFolderSelect('customer', folderId);
+              }
+            }}
             unreadCounts={unreadCounts}
-            organizationId={organizationId}
+            onEmailMove={(emailId, targetFolderId) => {
+              // TODO: Implement email move functionality
+              console.log('Move email', emailId, 'to folder', targetFolderId);
+            }}
           />
         )}
 

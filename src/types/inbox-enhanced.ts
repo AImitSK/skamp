@@ -214,6 +214,10 @@ export interface EmailThread extends BaseEntity {
   customerDomain?: string; // NEU: Für Domain-Matching
   folderType: FolderType;
   
+  // NEU TEAM-FOLDER-SYSTEM: Multi-Location Support
+  folderAssignments: EmailThreadFolder[]; // Thread kann in mehreren Ordnern sein
+  primaryFolderId: string; // Haupt-Ordner (meist "Allgemeine Anfragen")
+  
   // NEU Phase 2B: Thread-Status für bessere Organisation
   status?: 'active' | 'waiting' | 'resolved' | 'archived';
   priority?: 'low' | 'normal' | 'high' | 'urgent';
@@ -223,6 +227,17 @@ export interface EmailThread extends BaseEntity {
   assignedTeamMembers?: TeamMember[];
   assignedAt?: Timestamp;
   assignedBy?: string;
+  
+  // NEU TEAM-FOLDER-SYSTEM: Erweiterte Team-Features
+  assignedToUserId?: string; // Primär zugewiesenes Team-Mitglied
+  assignedToUserName?: string; // Display-Name für UI
+  autoAssignedTo?: string; // Automatisch zugewiesen durch Regeln
+  autoAssignReason?: string; // "Domain-Match: kunde.de"
+  
+  // NEU TEAM-FOLDER-SYSTEM: Workflow
+  isInPersonalFolder: boolean; // Liegt in persönlichem Team-Ordner
+  sharedWithTeam: boolean; // Mit Team geteilt (immer true für "Allgemeine Anfragen")
+  needsAttention: boolean; // Aufmerksamkeit erforderlich
   
   // NEU Phase 4: AI & Automation
   aiAnalysis?: AIAnalysis;
@@ -369,4 +384,118 @@ export interface EmailAutomationRule {
   createdAt: Timestamp;
   lastExecuted?: Timestamp;
   executionCount?: number;
+}
+
+// ============================================================================
+// TEAM-FOLDER-SYSTEM - NEUE ENTITÄTEN
+// ============================================================================
+
+// Auto-Assignment Regel für intelligente Ordner-Zuweisung
+export interface AutoAssignRule {
+  id: string;
+  type: 'domain' | 'keyword' | 'sender' | 'subject' | 'content';
+  pattern: string; // Email-Domain, Keyword, etc.
+  isActive: boolean;
+  priority: number; // 1 = höchste Priorität
+  confidence?: number; // Erforderliche Mindest-Confidence
+}
+
+// Team-Ordner Hauptentität
+export interface TeamFolder extends BaseEntity {
+  // Grundlegende Info
+  name: string;
+  description?: string;
+  icon?: string; // Emoji oder Icon-Name
+  color?: string; // Hex-Color für UI
+  
+  // Besitzer & Hierarchie
+  ownerId: string; // Team-Member ID (oder "system" für System-Ordner)
+  ownerName: string; // Display-Name für UI
+  parentFolderId?: string; // Für Unterordner-Struktur
+  level: number; // 0 = Root, 1 = Sub, etc. (max 3)
+  path: string[]; // ["Stefan", "Kundenprojekte"] für Breadcrumbs
+  
+  // Berechtigungen
+  isShared: boolean; // Mit anderen Team-Mitgliedern teilen?
+  sharedWithUserIds?: string[]; // Spezifische User-IDs mit Zugriff
+  isSystem: boolean; // System-Ordner (nicht löschbar/editierbar)
+  
+  // Auto-Assignment Regeln
+  autoAssignRules?: AutoAssignRule[];
+  
+  // Statistiken (für UI)
+  emailCount: number; // Gesamt-E-Mails in diesem Ordner
+  unreadCount: number; // Ungelesene E-Mails
+  
+  // BaseEntity liefert: id, organizationId, userId, createdAt, updatedAt
+}
+
+// Verknüpfung zwischen E-Mail-Thread und Ordnern (Multi-Location Support)
+export interface EmailThreadFolder {
+  id: string;
+  threadId: string; // Verweis auf EmailThread
+  folderId: string; // Verweis auf TeamFolder
+  folderPath: string[]; // Cached path für Performance ["Allgemein", "Stefan", "Kundenprojekte"]
+  
+  // Meta-Info
+  assignedBy?: string; // User-ID wer verschoben hat
+  assignedAt: Timestamp; // Wann verschoben
+  isOriginalLocation: boolean; // True für "Allgemeine Anfragen"
+  isPrimaryLocation: boolean; // Haupt-Standort des Threads
+  
+  // Organisation
+  organizationId: string;
+}
+
+// Hierarchische Ordner-Struktur für UI
+export interface FolderTreeNode {
+  folder: TeamFolder;
+  children: FolderTreeNode[];
+  depth: number;
+  isExpanded?: boolean;
+  hasUnread?: boolean;
+}
+
+// Ergebnis der Auto-Assignment Engine
+export interface AssignmentResult {
+  folderId: string;
+  folderPath: string[];
+  reason: string; // "Domain-Match: kunde.de"
+  confidence: number; // 0.0 - 1.0
+  priority: number; // 1 = höchste
+  ruleType: 'domain' | 'keyword' | 'sender' | 'subject' | 'ai' | 'manual';
+}
+
+// Smart Folder Suggestion für UI
+export interface FolderSuggestion {
+  folderId: string;
+  folderName: string;
+  folderPath: string[];
+  reason: string;
+  confidence: number;
+  canApply: boolean; // User hat Berechtigung?
+}
+
+// Ordner-Performance Statistiken
+export interface FolderStats {
+  folderId: string;
+  folderName: string;
+  totalEmails: number;
+  newEmails: number;
+  inProgressEmails: number;
+  resolvedEmails: number;
+  avgResponseTime: number; // Stunden
+  assignedToUser?: string;
+  lastActivity: Timestamp;
+}
+
+// Team-Member Ordner-Übersicht
+export interface TeamMemberFolderSummary {
+  userId: string;
+  userName: string;
+  totalFolders: number;
+  totalEmails: number;
+  unreadEmails: number;
+  avgResponseTime: number;
+  folders: FolderStats[];
 }
