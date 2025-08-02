@@ -21,6 +21,8 @@ import {
   ArrowPathIcon
 } from '@heroicons/react/20/solid';
 import clsx from 'clsx';
+import DOMPurify from 'dompurify';
+import { useEffect, useRef } from 'react';
 
 interface EmailViewerProps {
   thread: EmailThread;
@@ -39,6 +41,100 @@ interface EmailViewerProps {
     displayName: string;
     email: string;
   }>;
+}
+
+interface EmailContentRendererProps {
+  htmlContent?: string;
+  textContent: string;
+  allowExternalImages?: boolean;
+}
+
+/**
+ * Enhanced Email Content Renderer with HTML sanitization
+ */
+function EmailContentRenderer({ htmlContent, textContent, allowExternalImages = false }: EmailContentRendererProps) {
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // Configure DOMPurify
+  const sanitizeHtml = (html: string): string => {
+    // Configure allowed tags and attributes for email content
+    const config = {
+      ALLOWED_TAGS: [
+        'p', 'br', 'div', 'span', 'strong', 'b', 'em', 'i', 'u', 'a', 'img',
+        'ul', 'ol', 'li', 'blockquote', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+        'table', 'thead', 'tbody', 'tr', 'td', 'th', 'pre', 'code'
+      ],
+      ALLOWED_ATTR: [
+        'href', 'title', 'alt', 'src', 'width', 'height', 'style', 'class',
+        'target', 'rel', 'colspan', 'rowspan'
+      ],
+      ALLOW_DATA_ATTR: false,
+      FORBID_SCRIPTS: true,
+      FORBID_TAGS: ['script', 'object', 'embed', 'form', 'input', 'button'],
+      KEEP_CONTENT: true,
+      // Handle external images
+      SANITIZE_DOM: true
+    };
+
+    // Add hook to handle external images
+    DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+      if (node.tagName === 'IMG' && !allowExternalImages) {
+        const src = node.getAttribute('src');
+        if (src && (src.startsWith('http://') || src.startsWith('https://'))) {
+          // Replace external images with placeholder or proxy through our server
+          node.setAttribute('src', `/api/image-proxy?url=${encodeURIComponent(src)}`);
+          node.setAttribute('loading', 'lazy');
+        }
+      }
+      
+      // Make all links open in new tab for security
+      if (node.tagName === 'A') {
+        node.setAttribute('target', '_blank');
+        node.setAttribute('rel', 'noopener noreferrer');
+      }
+    });
+
+    return DOMPurify.sanitize(html, config);
+  };
+
+  // Handle link clicks to prevent navigation issues
+  useEffect(() => {
+    const handleLinkClick = (e: Event) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'A') {
+        const href = target.getAttribute('href');
+        if (href && href.startsWith('mailto:')) {
+          e.preventDefault();
+          // Handle mailto links if needed
+          console.log('Mailto link clicked:', href);
+        }
+      }
+    };
+
+    const contentElement = contentRef.current;
+    if (contentElement) {
+      contentElement.addEventListener('click', handleLinkClick);
+      return () => contentElement.removeEventListener('click', handleLinkClick);
+    }
+  }, [htmlContent]);
+
+  if (htmlContent) {
+    const sanitizedHtml = sanitizeHtml(htmlContent);
+    return (
+      <div 
+        ref={contentRef}
+        className="prose prose-sm max-w-none email-content"
+        dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
+      />
+    );
+  }
+
+  // Fallback to plain text with basic formatting
+  return (
+    <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
+      {textContent}
+    </div>
+  );
 }
 
 export function EmailViewer({
@@ -251,14 +347,11 @@ export function EmailViewer({
 
             {/* Email Body */}
             <div className="px-6 pb-6">
-              {email.htmlContent ? (
-                <div 
-                  className="prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: email.htmlContent }}
-                />
-              ) : (
-                <p className="text-gray-700 whitespace-pre-wrap">{email.textContent}</p>
-              )}
+              <EmailContentRenderer
+                htmlContent={email.htmlContent}
+                textContent={email.textContent || ''}
+                allowExternalImages={false}
+              />
 
               {/* Attachments */}
               {email.attachments && email.attachments.length > 0 && (

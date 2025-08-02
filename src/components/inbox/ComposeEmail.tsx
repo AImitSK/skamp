@@ -11,10 +11,12 @@ import { EmailMessage } from '@/types/inbox-enhanced';
 import { emailAddressService } from '@/lib/email/email-address-service';
 import { emailMessageService } from '@/lib/email/email-message-service';
 import { threadMatcherService } from '@/lib/email/thread-matcher-service-flexible';
+import { emailSignatureService } from '@/lib/email/email-signature-service';
 import { XMarkIcon, PaperAirplaneIcon, PaperClipIcon } from '@heroicons/react/20/solid';
 import { Select } from '@/components/select';
 import { serverTimestamp, Timestamp } from 'firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
+import { EmailSignature } from '@/types/email-enhanced';
 
 interface ComposeEmailProps {
   organizationId: string;
@@ -41,17 +43,22 @@ export function ComposeEmail({
   const [emailAddresses, setEmailAddresses] = useState<any[]>([]);
   const [selectedEmailAddressId, setSelectedEmailAddressId] = useState<string>('');
   const [loadingAddresses, setLoadingAddresses] = useState(true);
+  const [signatures, setSignatures] = useState<EmailSignature[]>([]);
+  const [selectedSignatureId, setSelectedSignatureId] = useState<string>('');
+  const [signaturePosition, setSignaturePosition] = useState<'above' | 'below'>('below');
+  const [loadingSignatures, setLoadingSignatures] = useState(true);
 
-  // Load email addresses
+  // Load email addresses and signatures
   useEffect(() => {
-    const loadEmailAddresses = async () => {
+    const loadEmailData = async () => {
       try {
         if (!user?.uid) {
-          console.error('No user available for loading email addresses');
+          console.error('No user available for loading email data');
           return;
         }
         
-        const addresses = await emailAddressService.getByOrganization(organizationId, user.uid);
+        // Load email addresses
+        const addresses = await emailAddressService.getByOrganization(organizationId, user?.uid || '');
         console.log('📧 Loaded email addresses:', addresses);
         setEmailAddresses(addresses);
         
@@ -60,17 +67,82 @@ export function ComposeEmail({
         if (defaultAddress && defaultAddress.id) {
           setSelectedEmailAddressId(defaultAddress.id);
         }
+        
+        // Load signatures
+        const sigs = await emailSignatureService.getByOrganization(organizationId);
+        console.log('✍️ Loaded signatures:', sigs);
+        setSignatures(sigs);
+        
+        // Auto-select signature based on email address or default
+        if (defaultAddress && defaultAddress.id) {
+          const addressSignatures = sigs.filter(sig => 
+            sig.emailAddressIds?.includes(defaultAddress.id!)
+          );
+          
+          if (addressSignatures.length > 0) {
+            setSelectedSignatureId(addressSignatures[0].id!);
+          } else {
+            const defaultSignature = sigs.find(sig => sig.isDefault);
+            if (defaultSignature) {
+              setSelectedSignatureId(defaultSignature.id!);
+            }
+          }
+        }
       } catch (error) {
-        console.error('Failed to load email addresses:', error);
+        console.error('Failed to load email data:', error);
       } finally {
         setLoadingAddresses(false);
+        setLoadingSignatures(false);
       }
     };
 
     if (user?.uid) {
-      loadEmailAddresses();
+      loadEmailData();
     }
   }, [organizationId, user?.uid]);
+
+  // Auto-update signature when email address changes
+  useEffect(() => {
+    if (selectedEmailAddressId && signatures.length > 0) {
+      // Find signatures for this email address
+      const addressSignatures = signatures.filter(sig => 
+        sig.emailAddressIds?.includes(selectedEmailAddressId)
+      );
+      
+      if (addressSignatures.length > 0) {
+        setSelectedSignatureId(addressSignatures[0].id!);
+      } else {
+        // Use default signature if no address-specific signature
+        const defaultSignature = signatures.find(sig => sig.isDefault);
+        if (defaultSignature) {
+          setSelectedSignatureId(defaultSignature.id!);
+        }
+      }
+    }
+  }, [selectedEmailAddressId, signatures]);
+
+  // Helper function to merge signature with content
+  const mergeSignatureWithContent = (baseContent: string, signatureId: string): string => {
+    if (!signatureId || signatures.length === 0) {
+      return baseContent;
+    }
+    
+    const signature = signatures.find(sig => sig.id === signatureId);
+    if (!signature) {
+      return baseContent;
+    }
+    
+    const signatureHtml = `
+<div class="signature" style="margin-top: 20px; padding-top: 10px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px;">
+  ${signature.content || ''}
+</div>`;
+    
+    if (signaturePosition === 'above') {
+      return signatureHtml + '<br>' + baseContent;
+    } else {
+      return baseContent + signatureHtml;
+    }
+  };
 
   // Initialize fields based on mode
   useEffect(() => {
@@ -106,7 +178,7 @@ export function ComposeEmail({
         console.log('✅ Selected email address for reply:', recipientAddress.email);
       }
       
-      // Quote original message
+      // Quote original message (without signature for now)
       const quote = `
 <br><br>
 <div style="border-left: 2px solid #ccc; padding-left: 10px; margin-left: 10px; color: #666;">
@@ -117,7 +189,7 @@ export function ComposeEmail({
     } else if (mode === 'forward' && replyToEmail) {
       setSubject(`Fwd: ${replyToEmail.subject.replace(/^Fwd:\s*/i, '')}`);
       
-      // Forward original message
+      // Forward original message (without signature for now)
       const forward = `
 <br><br>
 ---------- Weitergeleitete Nachricht ----------<br>
@@ -128,8 +200,11 @@ An: ${replyToEmail.to.map(t => `${t.name || t.email} <${t.email}>`).join(', ')}<
 <br>
 ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
       setContent(forward);
+    } else if (mode === 'new') {
+      // For new emails, start with empty content (signature will be added on send)
+      setContent('');
     }
-  }, [mode, replyToEmail, emailAddresses]);
+  }, [mode, replyToEmail, emailAddresses, signaturePosition]);
 
   const handleSend = async () => {
     if (!to || !subject || !content || !selectedEmailAddressId) {
@@ -219,14 +294,17 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
         console.log('📮 Generated new email reply-to:', replyToAddress);
       }
 
+      // Merge signature with content before sending
+      const finalContent = mergeSignatureWithContent(content, selectedSignatureId);
+      
       const emailData = {
         to: toAddresses,
         cc: ccAddresses,
         bcc: bccAddresses,
         from: fromData,
         subject,
-        htmlContent: content,
-        textContent: content.replace(/<[^>]*>/g, ''), // Simple HTML strip
+        htmlContent: finalContent,
+        textContent: finalContent.replace(/<[^>]*>/g, ''), // Simple HTML strip
       };
 
       // Send email via API - replyToAddress separat übergeben
@@ -287,6 +365,7 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
         subject,
         textContent: emailData.textContent,
         htmlContent: emailData.htmlContent,
+        signatureId: selectedSignatureId || undefined,
         snippet: emailData.textContent.substring(0, 150),
         folder: 'sent' as const,
         isRead: true,
@@ -356,26 +435,61 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
         <div className="flex-1 overflow-y-auto px-6 py-4">
           <div className="space-y-4">
             {/* From selector */}
-            <Field>
-              <Label>Von</Label>
-              <Select
-                value={selectedEmailAddressId}
-                onChange={(e) => setSelectedEmailAddressId(e.target.value)}
-                disabled={loadingAddresses || emailAddresses.length === 0}
-              >
-                {loadingAddresses ? (
-                  <option>Lade E-Mail-Adressen...</option>
-                ) : emailAddresses.length === 0 ? (
-                  <option>Keine E-Mail-Adressen verfügbar</option>
-                ) : (
-                  emailAddresses.map(addr => (
-                    <option key={addr.id} value={addr.id}>
-                      {addr.displayName} &lt;{addr.email}&gt;
-                    </option>
-                  ))
-                )}
-              </Select>
-            </Field>
+            <div className="grid grid-cols-2 gap-4">
+              <Field>
+                <Label>Von</Label>
+                <Select
+                  value={selectedEmailAddressId}
+                  onChange={(e) => setSelectedEmailAddressId(e.target.value)}
+                  disabled={loadingAddresses || emailAddresses.length === 0}
+                >
+                  {loadingAddresses ? (
+                    <option>Lade E-Mail-Adressen...</option>
+                  ) : emailAddresses.length === 0 ? (
+                    <option>Keine E-Mail-Adressen verfügbar</option>
+                  ) : (
+                    emailAddresses.map(addr => (
+                      <option key={addr.id} value={addr.id}>
+                        {addr.displayName} &lt;{addr.email}&gt;
+                      </option>
+                    ))
+                  )}
+                </Select>
+              </Field>
+
+              <Field>
+                <Label>Signatur</Label>
+                <Select
+                  value={selectedSignatureId}
+                  onChange={(e) => setSelectedSignatureId(e.target.value)}
+                  disabled={loadingSignatures || signatures.length === 0}
+                >
+                  <option value="">Keine Signatur</option>
+                  {loadingSignatures ? (
+                    <option>Lade Signaturen...</option>
+                  ) : (
+                    signatures.map(sig => (
+                      <option key={sig.id} value={sig.id}>
+                        {sig.name} {sig.isDefault ? '(Standard)' : ''}
+                      </option>
+                    ))
+                  )}
+                </Select>
+              </Field>
+            </div>
+            
+            {selectedSignatureId && (
+              <Field>
+                <Label>Signatur-Position</Label>
+                <Select
+                  value={signaturePosition}
+                  onChange={(e) => setSignaturePosition(e.target.value as 'above' | 'below')}
+                >
+                  <option value="below">Unter der Nachricht</option>
+                  <option value="above">Über der Nachricht</option>
+                </Select>
+              </Field>
+            )}
 
             <Field>
               <Label>An</Label>
@@ -427,6 +541,31 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
                 content={content}
                 onChange={setContent}
               />
+              {selectedSignatureId && (
+                <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-700">Signatur-Vorschau:</span>
+                    <span className="text-xs text-gray-500">
+                      Position: {signaturePosition === 'above' ? 'Oben' : 'Unten'}
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-600 border-t pt-2">
+                    {(() => {
+                      const signature = signatures.find(sig => sig.id === selectedSignatureId);
+                      if (signature) {
+                        return (
+                          <div 
+                            dangerouslySetInnerHTML={{ 
+                              __html: signature.content || '' 
+                            }}
+                          />
+                        );
+                      }
+                      return null;
+                    })()}
+                  </div>
+                </div>
+              )}
             </Field>
           </div>
         </div>

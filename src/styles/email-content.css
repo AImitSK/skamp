@@ -1,0 +1,216 @@
+/* Email Content Styling for HTML emails */
+.email-content {
+  /* Base typography */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.6;
+  color: #374151;
+}
+
+/* Headings */
+.email-content h1,
+.email-content h2,
+.email-content h3,
+.email-content h4,
+.email-content h5,
+.email-content h6 {
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.email-content h1 { font-size: 1.875rem; }
+.email-content h2 { font-size: 1.5rem; }
+.email-content h3 { font-size: 1.25rem; }
+.email-content h4 { font-size: 1.125rem; }
+.email-content h5 { font-size: 1rem; }
+.email-content h6 { font-size: 0.875rem; }
+
+/* Paragraphs */
+.email-content p {
+  margin-bottom: 1em;
+}
+
+.email-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* Links */
+.email-content a {
+  color: #2563eb;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+
+.email-content a:hover {
+  color: #1d4ed8;
+}
+
+/* Lists */
+.email-content ul,
+.email-content ol {
+  margin: 1em 0;
+  padding-left: 1.5em;
+}
+
+.email-content li {
+  margin-bottom: 0.25em;
+}
+
+/* Blockquotes */
+.email-content blockquote {
+  border-left: 4px solid #e5e7eb;
+  margin: 1.5em 0;
+  padding: 0.5em 0 0.5em 1em;
+  background-color: #f9fafb;
+  font-style: italic;
+  color: #6b7280;
+}
+
+/* Tables */
+.email-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+  border: 1px solid #e5e7eb;
+}
+
+.email-content th,
+.email-content td {
+  border: 1px solid #e5e7eb;
+  padding: 0.5em 0.75em;
+  text-align: left;
+}
+
+.email-content th {
+  background-color: #f9fafb;
+  font-weight: 600;
+}
+
+/* Images */
+.email-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.375rem;
+  margin: 0.5em 0;
+}
+
+/* Code */
+.email-content code {
+  background-color: #f3f4f6;
+  padding: 0.125em 0.25em;
+  border-radius: 0.25rem;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  font-size: 0.875em;
+}
+
+.email-content pre {
+  background-color: #1f2937;
+  color: #f9fafb;
+  padding: 1em;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+.email-content pre code {
+  background-color: transparent;
+  padding: 0;
+  color: inherit;
+}
+
+/* Quoted text styling (for replies) */
+.email-content .quoted-text {
+  border-left: 3px solid #d1d5db;
+  padding-left: 1rem;
+  margin: 1rem 0;
+  color: #6b7280;
+  background-color: #f9fafb;
+  padding: 0.75rem 1rem;
+  border-radius: 0.375rem;
+}
+
+/* Signature styling */
+.email-content .signature {
+  border-top: 1px solid #e5e7eb;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+/* Fix for Outlook/Gmail specific styles */
+.email-content div[style*="margin: 0"] {
+  margin: 0 !important;
+}
+
+.email-content table[style*="border-collapse: collapse"] {
+  border-collapse: collapse !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .email-content {
+    font-size: 0.875rem;
+  }
+  
+  .email-content table {
+    font-size: 0.75rem;
+  }
+  
+  .email-content th,
+  .email-content td {
+    padding: 0.25em 0.5em;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .email-content {
+    color: #f3f4f6;
+  }
+  
+  .email-content blockquote {
+    background-color: #374151;
+    border-left-color: #6b7280;
+    color: #d1d5db;
+  }
+  
+  .email-content th {
+    background-color: #374151;
+  }
+  
+  .email-content table,
+  .email-content th,
+  .email-content td {
+    border-color: #6b7280;
+  }
+  
+  .email-content code {
+    background-color: #374151;
+    color: #f3f4f6;
+  }
+  
+  .email-content .quoted-text {
+    background-color: #374151;
+    border-left-color: #6b7280;
+    color: #d1d5db;
+  }
+  
+  .email-content .signature {
+    border-top-color: #6b7280;
+    color: #d1d5db;
+  }
+}
+
+/* Loading placeholder for images */
+.email-content img[src*="image-proxy"] {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

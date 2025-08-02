@@ -4,6 +4,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Email Content Styling */
+@import '../styles/email-content.css';
+
 /* Fix für Avatar-Dropdown-Menü Abstände */
 .avatar-dropdown-menu a {
   display: flex !important;
