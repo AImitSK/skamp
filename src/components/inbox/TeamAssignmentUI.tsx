@@ -211,32 +211,34 @@ export function TeamAssignmentUI({
                   key={member.userId}
                   onClick={() => handleAssign(member.userId)}
                 >
-                  <div className="flex items-center justify-between w-full">
-                    <div className="flex items-center">
+                  <div className="flex items-center justify-between w-full py-1">
+                    <div className="flex items-center gap-3">
                       <div 
                         className={clsx(
-                          "w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium mr-2",
+                          "w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-medium",
                           getAvatarColor(member.displayName)
                         )}
                       >
                         {getInitials(member.displayName)}
                       </div>
-                      <div>
-                        <span className="block text-sm">{member.displayName}</span>
-                        <span className="block text-xs text-gray-500">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium text-gray-900 truncate">
+                          {member.displayName}
+                        </div>
+                        <div className="text-xs text-gray-500">
                           {workload} aktive Threads
-                        </span>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 ml-2">
                       <Badge 
                         color={workloadInfo.color as any}
-                        className="text-xs"
+                        className="text-xs whitespace-nowrap"
                       >
                         {workloadInfo.label}
                       </Badge>
                       {assignedMember?.userId === member.userId && (
-                        <CheckIcon className="h-4 w-4 text-green-600" />
+                        <CheckIcon className="h-4 w-4 text-green-600 flex-shrink-0" />
                       )}
                     </div>
                   </div>

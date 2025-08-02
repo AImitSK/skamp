@@ -50,7 +50,9 @@ import {
   Cog6ToothIcon,
   ArrowsRightLeftIcon,
   ChevronLeftIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  FolderIcon,
+  ListBulletIcon
 } from '@heroicons/react/20/solid';
 
 export default function InboxPage() {
@@ -1268,29 +1270,29 @@ export default function InboxPage() {
           <div className="flex items-center gap-2">
             {/* Organization Sidebar Toggle */}
             <Button
-              plain
               onClick={() => setOrganizationSidebarCollapsed(!organizationSidebarCollapsed)}
-              className="p-2"
+              className="flex items-center gap-1 px-3 py-2 text-sm border border-gray-300 hover:bg-gray-50"
               title={organizationSidebarCollapsed ? 'Ordner-Sidebar anzeigen' : 'Ordner-Sidebar ausblenden'}
             >
+              <FolderIcon className="h-4 w-4" />
               {organizationSidebarCollapsed ? (
-                <ChevronRightIcon className="h-5 w-5 text-gray-400" />
+                <ChevronRightIcon className="h-4 w-4" />
               ) : (
-                <ChevronLeftIcon className="h-5 w-5 text-gray-400" />
+                <ChevronLeftIcon className="h-4 w-4" />
               )}
             </Button>
             
             {/* Thread List Sidebar Toggle */}
             <Button
-              plain
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="p-2"
+              className="flex items-center gap-1 px-3 py-2 text-sm border border-gray-300 hover:bg-gray-50"
               title={sidebarCollapsed ? 'Thread-Liste anzeigen' : 'Thread-Liste ausblenden'}
             >
+              <ListBulletIcon className="h-4 w-4" />
               {sidebarCollapsed ? (
-                <ChevronRightIcon className="h-5 w-5 text-gray-400" />
+                <ChevronRightIcon className="h-4 w-4" />
               ) : (
-                <ChevronLeftIcon className="h-5 w-5 text-gray-400" />
+                <ChevronLeftIcon className="h-4 w-4" />
               )}
             </Button>
 

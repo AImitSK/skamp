@@ -282,6 +282,25 @@ export function EmailViewer({
 
       {/* Scrollable Content Area */}
       <div className="flex-1 overflow-y-auto min-h-0">
+        {/* AI Features - Before Messages for better workflow */}
+        {showAI && selectedEmail && (
+          <div className="border-b border-gray-200 p-4 space-y-4 bg-blue-50/30">
+            {/* AI Insights */}
+            <AIInsightsPanel
+              email={selectedEmail}
+              thread={thread}
+              context={{
+                threadHistory: emails.map(e => e.textContent || e.htmlContent || '').filter(Boolean),
+                customerInfo: thread.participants[0]?.name || thread.participants[0]?.email,
+                campaignContext: thread.subject
+              }}
+              onPriorityChange={onPriorityChange}
+              onCategoryChange={onCategoryChange}
+              collapsed={true}
+            />
+          </div>
+        )}
+
         {/* Email Thread */}
         <div>
           {emails.map((email, index) => (
@@ -374,24 +393,9 @@ export function EmailViewer({
         ))}
         </div>
 
-        {/* AI Features - Full Width Layout */}
+        {/* AI Response Suggestions - After Messages */}
         {showAI && selectedEmail && (
-          <div className="border-t border-gray-200 p-4 space-y-4">
-            {/* AI Insights */}
-            <AIInsightsPanel
-              email={selectedEmail}
-              thread={thread}
-              context={{
-                threadHistory: emails.map(e => e.textContent || e.htmlContent || '').filter(Boolean),
-                customerInfo: thread.participants[0]?.name || thread.participants[0]?.email,
-                campaignContext: thread.subject
-              }}
-              onPriorityChange={onPriorityChange}
-              onCategoryChange={onCategoryChange}
-              collapsed={true}
-            />
-
-            {/* AI Response Suggestions */}
+          <div className="border-t border-gray-200 p-4 bg-green-50/30">
             <AIResponseSuggestions
               email={selectedEmail}
               thread={thread}

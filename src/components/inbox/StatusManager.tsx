@@ -249,9 +249,12 @@ export function StatusManager({
           </Badge>
         )}
         
-        {slaInfo?.isOverdue && (
-          <Badge color="red" className="text-xs animate-pulse">
-            Überfällig
+        {slaInfo && (
+          <Badge 
+            color={slaInfo.isOverdue ? "red" : "green"} 
+            className={clsx("text-xs", slaInfo.isOverdue && "animate-pulse")}
+          >
+            {slaInfo.isOverdue ? "Überfällig" : `${slaInfo.responseTime}h/${slaInfo.targetResponseTime}h`}
           </Badge>
         )}
       </div>
