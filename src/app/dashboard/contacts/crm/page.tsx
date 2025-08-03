@@ -917,16 +917,19 @@ const getContactCount = (companyId: string) => {
                           </DropdownButton>
                           <DropdownMenu anchor="bottom end">
                             <DropdownItem onClick={() => router.push(`/dashboard/contacts/crm/companies/${company.id}`)}>
+                              <EyeIcon className="h-4 w-4" />
                               Anzeigen
                             </DropdownItem>
                             <DropdownItem onClick={() => {
                               setSelectedCompany(company);
                               setShowCompanyModal(true);
                             }}>
+                              <PencilIcon className="h-4 w-4" />
                               Bearbeiten
                             </DropdownItem>
                             <DropdownDivider />
                             <DropdownItem onClick={() => handleDelete(company.id!, company.name, 'company')}>
+                              <TrashIcon className="h-4 w-4" />
                               <span className="text-red-600">Löschen</span>
                             </DropdownItem>
                           </DropdownMenu>
@@ -1063,19 +1066,19 @@ const getContactCount = (companyId: string) => {
                           </DropdownButton>
                           <DropdownMenu anchor="bottom end">
                             <DropdownItem onClick={() => router.push(`/dashboard/contacts/crm/contacts/${contact.id}`)}>
-                              <EyeIcon />
+                              <EyeIcon className="h-4 w-4" />
                               Anzeigen
                             </DropdownItem>
                             <DropdownItem onClick={() => {
                               setSelectedContact(contact);
                               setShowContactModal(true);
                             }}>
-                              <PencilIcon />
+                              <PencilIcon className="h-4 w-4" />
                               Bearbeiten
                             </DropdownItem>
                             <DropdownDivider />
                             <DropdownItem onClick={() => handleDelete(contact.id!, contact.displayName, 'contact')}>
-                              <TrashIcon />
+                              <TrashIcon className="h-4 w-4" />
                               <span className="text-red-600">Löschen</span>
                             </DropdownItem>
                           </DropdownMenu>

@@ -17,9 +17,11 @@ const styles = {
 
   // Farbvarianten, jetzt mit direkten Tailwind-Klassen
   colors: {
-    // Standard-Button (wird verwendet, wenn keine Farbe angegeben ist)
+    // Primary-Button für Hauptaktionen (Standard)
+    primary: 'border-transparent bg-primary text-white hover:bg-primary-hover focus:ring-primary',
+    // Zinc-Button für sekundäre Aktionen
     zinc: 'border-transparent bg-zinc-800 text-white hover:bg-zinc-700 dark:bg-zinc-600 dark:hover:bg-zinc-500',
-    // Indigo-Button für primäre Aktionen
+    // Indigo-Button für spezielle Aktionen
     indigo: 'border-transparent bg-indigo-600 text-white hover:bg-indigo-500',
     // "Plain" Variante für Abbrechen-Buttons
     plain: 'border-transparent bg-transparent text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800',
@@ -28,7 +30,7 @@ const styles = {
 
 // Typ-Definitionen für die Button-Props, jetzt vereinfacht
 type ButtonProps = {
-  color?: 'zinc' | 'indigo';
+  color?: 'primary' | 'zinc' | 'indigo';
   plain?: boolean;
   className?: string;
   children: React.ReactNode;
@@ -46,7 +48,7 @@ export const Button = forwardRef(function Button(
     className,
     styles.base,
     styles.sizing,
-    plain ? styles.colors.plain : styles.colors[color ?? 'zinc']
+    plain ? styles.colors.plain : styles.colors[color ?? 'primary']
   )
 
   return 'href' in props ? (

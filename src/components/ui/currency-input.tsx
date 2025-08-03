@@ -189,7 +189,7 @@ export const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
     )
 
     return (
-      <div className={clsx('flex items-center gap-2', className)}>
+      <div className={clsx('flex items-center', showCurrencySelect ? 'gap-2' : '', className)}>
         {showCurrencySelect && currencyPosition === 'left' && <CurrencySelect />}
         {!showCurrencySelect && currencyPosition === 'left' && <CurrencySymbol />}
         
