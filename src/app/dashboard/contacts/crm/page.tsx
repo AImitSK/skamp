@@ -706,6 +706,7 @@ const getContactCount = (companyId: string) => {
               }
             }}
           >
+            <PlusIcon className="h-4 w-4 mr-2" />
             {activeTab === 'companies' ? 'Firma hinzufügen' : 'Person hinzufügen'}
           </Button>
 

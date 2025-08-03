@@ -982,6 +982,7 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                         }
                       })}
                       currency={'EUR'}
+                      currencyPosition="right"
                       placeholder="0,00"
                     />
                   </Field>

@@ -103,7 +103,7 @@ export default function CompanyMediaSection({ companyId, companyName }: CompanyM
               Zur Mediathek
             </Button>
           </Link>
-          <Button color="indigo" className="text-sm" onClick={handleUploadForClient}>
+          <Button className="text-sm" onClick={handleUploadForClient}>
             <PlusIcon className="h-4 w-4 mr-1" />
             Für {companyName}
           </Button>
@@ -119,7 +119,7 @@ export default function CompanyMediaSection({ companyId, companyName }: CompanyM
             Laden Sie Dateien hoch oder erstellen Sie Ordner für {companyName}.
           </p>
           <div className="mt-6 flex justify-center gap-3">
-            <Button color="indigo" onClick={handleUploadForClient}>
+            <Button onClick={handleUploadForClient}>
               <PlusIcon className="h-4 w-4 mr-2" />
               Ersten Upload starten
             </Button>
@@ -136,12 +136,12 @@ export default function CompanyMediaSection({ companyId, companyName }: CompanyM
                   <Link 
                     key={folder.id} 
                     href={`/dashboard/pr-tools/media-library?folder=${folder.id}`}
-                    className="group p-4 border rounded-lg hover:shadow-md transition-all duration-200 hover:border-indigo-300"
+                    className="group p-4 border rounded-lg hover:shadow-md transition-all duration-200 hover:border-primary/30"
                   >
                     <div className="flex items-center space-x-3">
                       <FolderIcon 
                         className="h-8 w-8 flex-shrink-0 group-hover:scale-105 transition-transform"
-                        style={{ color: folder.color || '#6366f1' }}
+                        style={{ color: folder.color || '#005fab' }}
                       />
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-gray-900 truncate" title={folder.name}>
