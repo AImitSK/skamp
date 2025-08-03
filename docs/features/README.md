@@ -6,10 +6,10 @@ Diese Dokumentationen folgen dem standardisierten Template aus `FEATURE_DOCUMENT
 
 ### ✅ Abgeschlossen
 - **[CRM Enhanced](./docu_dashboard_contacts_crm_enhanced.md)** - Erweiterte Kontakt- und Firmenverwaltung (✅ Fertig)
-- **[PR-Kampagnen](./docu_dashboard_pr-tools_campaigns.md)** - Kampagnen-Erstellung mit KI-Unterstützung  
 - **[Verteilerlisten](./docu_dashboard_contacts_lists.md)** - Listen-Management für zielgerichtete Kommunikation (🎯 **ABGESCHLOSSEN** - Production-Ready)
 
 ### 🚧 In Arbeit
+- **[PR-Kampagnen](./docu_dashboard_pr-tools_campaigns.md)** - Kampagnen-Erstellung mit KI-Unterstützung (❌ Template noch nicht angewendet)
 - [ ] **E-Mail Inbox** - E-Mail-Kommunikation und Thread-Verwaltung
 - [ ] **Mediathek** - Asset-Management und Datei-Verwaltung
 - [ ] **Freigabe-Workflow** - Approval-Prozesse für Kampagnen
@@ -50,9 +50,9 @@ Jede Feature-Dokumentation enthält:
 ## 🔄 Migration von Legacy-Features
 
 **Status der Migration:**
-- ✅ **CRM Enhanced**: Vollständig migriert mit allen Details (Import/Export, Tag-System)
-- ✅ **Kampagnen**: Vollständig migriert mit KI-Integration
-- ✅ **Verteilerlisten**: Vollständig dokumentiert mit Export-Funktionen (Production-Ready)
+- ✅ **CRM Enhanced**: Vollständig nach Template dokumentiert (Import/Export, Tag-System)
+- ✅ **Verteilerlisten**: Vollständig nach Template dokumentiert (Production-Ready mit Tests)
+- 🚧 **PR-Kampagnen**: Template noch NICHT angewendet - steht aus
 - 🚧 **Weitere Features**: Sukzessive Migration geplant
 
 **Referenz-Dokumentationen:**
@@ -74,5 +74,5 @@ Alle ursprünglichen Feature-Beschreibungen sind in `/docs/legacy-features/` ver
 ---
 
 **Letzte Aktualisierung:** 2025-08-03  
-**Dokumentierte Features:** 3/15+ geplant (CRM Enhanced, Kampagnen, Verteilerlisten)  
+**Dokumentierte Features:** 2/15+ geplant (CRM Enhanced ✅, Verteilerlisten ✅)  
 **Template-Version:** 2.0
