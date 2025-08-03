@@ -196,6 +196,59 @@ User Action → Component → API Call → State Update → UI Update
 - **Responsive:** [Mobile Ansicht vorhanden?]
 - **Accessibility:** [Barrierefreiheit beachtet?]
 
+### 🎨 CeleroPress Design System Standards
+
+#### Branding & Naming
+- **WICHTIG:** Der alte Projektname "SKAMP" wird ÜBERALL durch "CeleroPress" ersetzt
+- **Schreibweise:** Immer "CeleroPress" (CamelCase, ein Wort)
+- **Domain:** https://www.celeropress.com/
+- **In Texten:** Verwende "CeleroPress" konsistent in:
+  - UI-Texten und Labels
+  - Kommentaren im Code
+  - Dokumentation
+  - E-Mail-Templates
+  - Fehlermeldungen
+  - Meta-Descriptions
+
+#### Farben
+- **Primary-Farbe:** Alle Hauptaktions-Buttons verwenden `bg-primary hover:bg-primary-hover` (definiert in tailwind.config.ts)
+  - Primary: `#005fab` 
+  - Primary-Hover: `#004a8c`
+- **Sekundäre Aktionen:** `plain` Button-Variante für Abbrechen/Zurück
+- **Focus-States:** Immer `focus:ring-primary` verwenden, niemals Indigo oder andere Farben
+
+#### Icons
+- **Konsistenz:** IMMER Outline-Varianten verwenden (`@heroicons/react/24/outline`)
+- **Größen:** Standard `h-4 w-4` für Buttons und kleine UI-Elemente, `h-5 w-5` für größere Bereiche
+- **Farben:** Icons folgen der Text-Farbe ihres Containers
+
+#### Spacing & Layout
+- **Label-Abstände:** Konsistent `mt-4` (16px) für Input-Felder nach Labels
+- **Button-Padding:** Standard `px-6 py-2` für normale Buttons, `px-4 py-1.5` für kompakte Buttons
+- **Dropdown-Styling:** Focus-Ring mit `focus:ring-2 focus:ring-primary focus:ring-offset-2`
+
+#### Komponenten-Patterns
+- **CurrencyInput:** Euro-Symbol rechts positionieren mit `currencyPosition="right"`
+- **Dropdown-Menüs in Tabellen:** Icons mit `h-4 w-4` und konsistenter Reihenfolge (View, Edit, Delete)
+- **Hinzufügen-Buttons:** Immer mit PlusIcon `<PlusIcon className="h-4 w-4 mr-2" />`
+
+#### Code-Standards
+```typescript
+// Button-Beispiel
+<Button 
+  className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+>
+  <PlusIcon className="h-4 w-4 mr-2" />
+  Hinzufügen
+</Button>
+
+// Icon-Import (RICHTIG)
+import { UserIcon, TrashIcon } from "@heroicons/react/24/outline";
+
+// Icon-Import (FALSCH - nicht verwenden!)
+import { UserIcon, TrashIcon } from "@heroicons/react/20/solid";
+```
+
 ## 📊 Performance (Wenn erkennbar)
 - **Potenzielle Probleme:** [z.B. große Listen ohne Pagination]
 - **Vorhandene Optimierungen:** [z.B. useMemo, React.memo gefunden]

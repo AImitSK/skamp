@@ -60,7 +60,7 @@ export const TiptapToolbar = ({ editor }: ToolbarProps) => {
     { name: 'Blau', value: '#2563EB' },
     { name: 'Indigo', value: '#4F46E5' },
     { name: 'Lila', value: '#9333EA' },
-    { name: 'SKAMP Blau', value: '#005fab' },
+    { name: 'CeleroPress Blau', value: '#005fab' },
   ];
 
   const handleLinkSubmit = () => {

@@ -209,7 +209,7 @@ export default function MediaSetupWizard({ onClose, onComplete, userId }: MediaS
         return (
           <div className="text-center py-8">
             <NewspaperIcon className="mx-auto h-16 w-16 text-blue-600 mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Presse-Setup für SKAMP</h3>
+            <h3 className="text-lg font-semibold mb-2">Presse-Setup für CeleroPress</h3>
             <p className="text-gray-600 mb-6">
               Dieser Assistent hilft dir dabei, dein CRM für professionelle Pressearbeit einzurichten.
             </p>

@@ -1,4 +1,4 @@
-# SKAMP Deployment Guide
+# CeleroPress Deployment Guide
 
 ## 📋 Inhaltsverzeichnis
 
@@ -17,7 +17,7 @@
 
 ## 🌐 Übersicht
 
-SKAMP ist eine Next.js 14 Anwendung, die für verschiedene Hosting-Umgebungen optimiert ist. Diese Anleitung führt Sie durch den kompletten Deployment-Prozess von der Entwicklung bis zur Produktion.
+CeleroPress ist eine Next.js 14 Anwendung, die für verschiedene Hosting-Umgebungen optimiert ist. Diese Anleitung führt Sie durch den kompletten Deployment-Prozess von der Entwicklung bis zur Produktion.
 
 ### Architektur-Übersicht
 
@@ -84,14 +84,14 @@ FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE K
 # SendGrid
 SENDGRID_API_KEY=SG.your-sendgrid-api-key
 SENDGRID_FROM_EMAIL=noreply@yourdomain.com
-SENDGRID_FROM_NAME=SKAMP
+SENDGRID_FROM_NAME=CeleroPress
 
 # Google Gemini AI
 GEMINI_API_KEY=your-gemini-api-key
 
 # App Configuration
 NEXT_PUBLIC_APP_URL=https://app.yourdomain.com
-NEXT_PUBLIC_APP_NAME=SKAMP
+NEXT_PUBLIC_APP_NAME=CeleroPress
 NEXT_PUBLIC_ENVIRONMENT=production
 
 # Optional: Monitoring
@@ -131,7 +131,7 @@ vercel
 # - Set up and deploy? Yes
 # - Which scope? (Ihr Account)
 # - Link to existing project? No
-# - Project name? skamp
+# - Project name? celeropress
 # - Directory? ./
 # - Override settings? No
 ```
@@ -144,7 +144,7 @@ vercel env add NEXT_PUBLIC_FIREBASE_API_KEY production
 vercel env add SENDGRID_API_KEY production
 
 # Oder über Dashboard
-# https://vercel.com/[your-account]/skamp/settings/environment-variables
+# https://vercel.com/[your-account]/celeropress/settings/environment-variables
 ```
 
 #### 4. Domain konfigurieren
@@ -272,8 +272,8 @@ sudo apt-get install nginx
 
 ```bash
 # Repository klonen
-git clone https://github.com/youraccount/skamp.git
-cd skamp
+git clone https://github.com/youraccount/celeropress.git
+cd celeropress
 
 # Dependencies installieren
 npm install
@@ -289,7 +289,7 @@ Erstellen Sie `ecosystem.config.js`:
 ```javascript
 module.exports = {
   apps: [{
-    name: 'skamp',
+    name: 'celeropress',
     script: 'npm',
     args: 'start',
     env: {

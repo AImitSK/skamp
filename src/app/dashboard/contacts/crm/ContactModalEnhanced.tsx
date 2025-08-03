@@ -34,7 +34,7 @@ import {
   ShieldCheckIcon,
   HeartIcon,
   InformationCircleIcon
-} from "@heroicons/react/20/solid";
+} from "@heroicons/react/24/outline";
 import clsx from "clsx";
 
 // Tab-Konfiguration ist jetzt in @/lib/constants/crm-constants.ts definiert

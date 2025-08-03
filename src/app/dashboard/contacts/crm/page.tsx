@@ -45,7 +45,7 @@ import {
   UsersIcon,
   MapPinIcon,
   CalendarIcon
-} from "@heroicons/react/20/solid";
+} from "@heroicons/react/24/outline";
 import { companiesEnhancedService, contactsEnhancedService, tagsEnhancedService } from "@/lib/firebase/crm-service-enhanced";
 import { Tag, companyTypeLabels, CompanyType } from "@/types/crm";
 import { CompanyEnhanced, ContactEnhanced } from "@/types/crm-enhanced";

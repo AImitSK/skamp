@@ -185,7 +185,7 @@ GEMINI_API_KEY=
 # APP CONFIGURATION
 # ===========================
 NEXT_PUBLIC_APP_URL=http://localhost:3000
-NEXT_PUBLIC_APP_NAME=SKAMP
+NEXT_PUBLIC_APP_NAME=CeleroPress
 NEXT_PUBLIC_ENVIRONMENT=development
 ```
 

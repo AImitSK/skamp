@@ -38,7 +38,7 @@ import {
   BuildingOffice2Icon,
   NewspaperIcon,
   BookOpenIcon
-} from "@heroicons/react/20/solid";
+} from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

@@ -1,6 +1,6 @@
 # Changelog
 
-Alle nennenswerten Änderungen an SKAMP werden in dieser Datei dokumentiert.
+Alle nennenswerten Änderungen an CeleroPress werden in dieser Datei dokumentiert.
 
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/),
 und dieses Projekt folgt [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -17,7 +17,7 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [1.0.0] - 2025-01-15
 
 ### 🎉 Initial Release
-Erste produktionsreife Version von SKAMP - Die Online Suite für Pressemeldungen
+Erste produktionsreife Version von CeleroPress - Die Online Suite für Pressemeldungen
 
 ### ✨ Neue Features
 
@@ -133,7 +133,7 @@ Erste produktionsreife Version von SKAMP - Die Online Suite für Pressemeldungen
 
 ## Versionierungs-Schema
 
-SKAMP folgt Semantic Versioning:
+CeleroPress folgt Semantic Versioning:
 
 - **MAJOR.MINOR.PATCH**
   - **MAJOR**: Inkompatible API-Änderungen
@@ -172,12 +172,12 @@ SKAMP folgt Semantic Versioning:
 
 ## Links
 
-- [GitHub Releases](https://github.com/skamp/skamp/releases)
+- [GitHub Releases](https://github.com/celeropress/celeropress/releases)
 - [Upgrade Guide](./docs/UPGRADE.md)
 - [Breaking Changes](./docs/BREAKING_CHANGES.md)
 
-[Unreleased]: https://github.com/skamp/skamp/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/skamp/skamp/compare/v0.9.0...v1.0.0
-[0.9.0]: https://github.com/skamp/skamp/compare/v0.8.0...v0.9.0
-[0.8.0]: https://github.com/skamp/skamp/compare/v0.5.0...v0.8.0
-[0.5.0]: https://github.com/skamp/skamp/releases/tag/v0.5.0
+[Unreleased]: https://github.com/celeropress/celeropress/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/celeropress/celeropress/compare/v0.9.0...v1.0.0
+[0.9.0]: https://github.com/celeropress/celeropress/compare/v0.8.0...v0.9.0
+[0.8.0]: https://github.com/celeropress/celeropress/compare/v0.5.0...v0.8.0
+[0.5.0]: https://github.com/celeropress/celeropress/releases/tag/v0.5.0

@@ -45,7 +45,7 @@ import {
   BriefcaseIcon,
   IdentificationIcon,
   CheckBadgeIcon
-} from "@heroicons/react/20/solid";
+} from "@heroicons/react/24/outline";
 import clsx from 'clsx';
 
 // Helper functions
