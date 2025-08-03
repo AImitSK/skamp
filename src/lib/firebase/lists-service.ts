@@ -201,11 +201,9 @@ export const listsService = {
   // --- Filter-basierte Kontaktsuche ---
 
   async getContactsByFilters(filters: ListFilters, organizationId: string): Promise<ContactEnhanced[]> {
-    console.log('🔍 getContactsByFilters called with:', { filters, organizationId });
     
     // Basis: Alle Kontakte der Organisation
     let allContacts = await contactsEnhancedService.getAll(organizationId);
-    console.log('📊 Base contacts loaded:', allContacts.length);
     
     // Lade Publikationen wenn Publikations-Filter gesetzt sind
     let publications: Publication[] = [];
@@ -296,8 +294,7 @@ export const listsService = {
     }
 
     // Filter anwenden
-    console.log('🔧 Applying filters to', allContacts.length, 'contacts');
-    const filteredContacts = allContacts.filter(contact => {
+    return allContacts.filter(contact => {
       // E-Mail-Filter - GEÄNDERT: Prüfe emails Array
       if (filters.hasEmail && (!contact.emails || contact.emails.length === 0)) return false;
       
@@ -405,15 +402,10 @@ export const listsService = {
 
       return true;
     });
-    
-    console.log('✅ Filter result:', filteredContacts.length, 'contacts match filters');
-    return filteredContacts;
   },
 
   async getContactsByIds(contactIds: string[]): Promise<ContactEnhanced[]> {
     if (contactIds.length === 0) return [];
-    
-    console.log('📋 Loading contacts by IDs:', contactIds.length);
     
     // Batch-Abfragen für große Listen (Firestore limit ist 10 pro "in" query)
     const batches = [];
@@ -435,7 +427,6 @@ export const listsService = {
       });
     }
     
-    console.log('✅ Loaded', allContacts.length, 'contacts from IDs');
     return allContacts;
   },
 

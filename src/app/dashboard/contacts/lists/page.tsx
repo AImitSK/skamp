@@ -52,7 +52,7 @@ function ViewToggle({ value, onChange, className }: { value: ViewMode; onChange:
       <button
         onClick={() => onChange('list')}
         className={clsx(
-          'flex items-center justify-center p-2 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-l-lg',
+          'flex items-center justify-center h-10 px-3 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-l-lg',
           value === 'list'
             ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white'
             : 'bg-white text-zinc-600 hover:text-zinc-900 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100'
@@ -65,7 +65,7 @@ function ViewToggle({ value, onChange, className }: { value: ViewMode; onChange:
       <button
         onClick={() => onChange('grid')}
         className={clsx(
-          'flex items-center justify-center p-2 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-r-lg border-l border-zinc-300 dark:border-zinc-600',
+          'flex items-center justify-center h-10 px-3 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-r-lg border-l border-zinc-300 dark:border-zinc-600',
           value === 'grid'
             ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white'
             : 'bg-white text-zinc-600 hover:text-zinc-900 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100'
