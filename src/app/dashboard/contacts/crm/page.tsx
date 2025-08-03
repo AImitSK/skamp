@@ -913,7 +913,7 @@ const getContactCount = (companyId: string) => {
                       {/* Actions */}
                       <div className="ml-4">
                         <Dropdown>
-                          <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700">
+                          <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
                             <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
                           </DropdownButton>
                           <DropdownMenu anchor="bottom end">
@@ -1062,7 +1062,7 @@ const getContactCount = (companyId: string) => {
                       {/* Actions */}
                       <div className="w-[80px] flex justify-end">
                         <Dropdown>
-                          <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700">
+                          <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
                             <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
                           </DropdownButton>
                           <DropdownMenu anchor="bottom end">
