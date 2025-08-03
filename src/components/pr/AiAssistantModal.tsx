@@ -12,9 +12,9 @@ import {
   CheckCircleIcon,
   ArrowUpIcon
 } from '@heroicons/react/24/outline';
-import { Button } from '@/components/button';
-import { Field, Label } from '@/components/fieldset';
-import { Textarea } from '@/components/textarea';
+import { Button } from '@/components/ui/button';
+import { Field, Label } from '@/components/ui/fieldset';
+import { Textarea } from '@/components/ui/textarea';
 import { firebaseAIService } from '@/lib/ai/firebase-ai-service';
 import { useAuth } from '@/context/AuthContext';
 

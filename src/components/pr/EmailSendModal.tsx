@@ -1,7 +1,7 @@
 // src/components/pr/EmailSendModal.tsx
 "use client";
 
-import { Dialog } from '@/components/dialog';
+import { Dialog } from '@/components/ui/dialog';
 import EmailComposer from '@/components/pr/email/EmailComposer';
 import { PRCampaign } from '@/types/pr';
 

@@ -6,8 +6,8 @@ import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
 import { mediaService } from "@/lib/firebase/media-service";
 import { MediaAsset, MediaFolder } from "@/types/media";
-import { Button } from "@/components/button";
-import { Badge } from "@/components/badge";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { 
   PhotoIcon, 
   FolderIcon, 

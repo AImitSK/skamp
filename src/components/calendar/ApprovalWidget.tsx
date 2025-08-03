@@ -1,9 +1,9 @@
 // src/components/calendar/ApprovalWidget.tsx
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/button';
-import { Badge } from '@/components/badge';
-import { Text } from '@/components/text';
-import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@/components/table';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Text } from '@/components/ui/text';
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '@/components/ui/table';
 import { 
   ClockIcon,
   ExclamationTriangleIcon,

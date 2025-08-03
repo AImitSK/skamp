@@ -7,6 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:ci": "jest --ci --coverage --maxWorkers=2",
     "migrate:test": "node scripts/test-migration.js",
     "migrate:folders": "npx ts-node scripts/migrate-team-folders.ts folders",
     "migrate:emails": "npx ts-node scripts/migrate-team-folders.ts emails",
@@ -54,7 +58,12 @@
     "zod": "^4.0.10"
   },
   "devDependencies": {
+    "@tanstack/react-query": "^5.84.1",
+    "@testing-library/jest-dom": "^6.6.4",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/date-fns": "^2.5.3",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/papaparse": "^5.3.16",
     "@types/react": "^18",
@@ -64,6 +73,8 @@
     "eslint": "^8",
     "eslint-config-next": "14.2.5",
     "eslint-plugin-mdx": "^3.6.0",
+    "jest": "^30.0.5",
+    "jest-environment-jsdom": "^30.0.5",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
     "typescript": "^5"

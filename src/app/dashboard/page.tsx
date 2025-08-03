@@ -3,13 +3,13 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
-import { Heading, Subheading } from "@/components/heading";
-import { Text } from "@/components/text";
-import { Badge } from "@/components/badge";
-import { DescriptionList, DescriptionTerm, DescriptionDetails } from "@/components/description-list";
-import { Divider } from "@/components/divider";
+import { Heading, Subheading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
+import { Badge } from "@/components/ui/badge";
+import { DescriptionList, DescriptionTerm, DescriptionDetails } from "@/components/ui/description-list";
+import { Divider } from "@/components/ui/divider";
 import { ApprovalWidget } from '@/components/calendar/ApprovalWidget';
-import { Select } from "@/components/select";
+import { Select } from "@/components/ui/select";
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { UserGroupIcon } from '@heroicons/react/20/solid';

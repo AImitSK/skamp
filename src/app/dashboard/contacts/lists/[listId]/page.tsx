@@ -13,11 +13,11 @@ import { DistributionList } from "@/types/lists";
 import { Contact, ContactEnhanced, companyTypeLabels, Tag } from "@/types/crm-enhanced";
 import { Publication, PUBLICATION_TYPE_LABELS, PUBLICATION_FREQUENCY_LABELS } from "@/types/library";
 import { COUNTRY_NAMES, LANGUAGE_NAMES } from "@/types/international";
-import { Heading } from "@/components/heading";
-import { Text } from "@/components/text";
-import { Button } from "@/components/button";
-import { Badge } from "@/components/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/table";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import ListModal from "../ListModal";
 import { 
   ArrowLeftIcon,

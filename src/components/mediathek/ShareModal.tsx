@@ -2,13 +2,13 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
-import { Field, Label, FieldGroup } from "@/components/fieldset";
-import { Input } from "@/components/input";
-import { Textarea } from "@/components/textarea";
-import { Button } from "@/components/button";
-import { Checkbox } from "@/components/checkbox";
-import { Text } from "@/components/text";
+import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
+import { Field, Label, FieldGroup } from "@/components/ui/fieldset";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Text } from "@/components/ui/text";
 import { MediaFolder, MediaAsset } from "@/types/media";
 import { mediaService } from "@/lib/firebase/media-service";
 import { 

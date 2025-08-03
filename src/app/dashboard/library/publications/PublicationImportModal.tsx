@@ -2,13 +2,13 @@
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
-import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/dialog';
-import { Button } from '@/components/button';
-import { Badge } from '@/components/badge';
-import { Text } from '@/components/text';
-import { Select } from '@/components/select';
-import { Checkbox } from '@/components/checkbox';
-import { Field, Label, FieldGroup, Description } from '@/components/fieldset';
+import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Text } from '@/components/ui/text';
+import { Select } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Field, Label, FieldGroup, Description } from '@/components/ui/fieldset';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import { publicationService } from '@/lib/firebase/library-service';

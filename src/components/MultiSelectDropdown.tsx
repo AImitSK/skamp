@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Combobox } from '@headlessui/react';
 import { CheckIcon, ChevronUpDownIcon, XMarkIcon } from '@heroicons/react/20/solid';
 import clsx from 'clsx';
-import { Badge } from './badge';
+import { Badge } from './ui/badge';
 
 interface Option {
   value: string;

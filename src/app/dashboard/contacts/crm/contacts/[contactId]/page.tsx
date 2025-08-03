@@ -13,10 +13,10 @@ import { ContactEnhanced, CompanyEnhanced, CONTACT_STATUS_OPTIONS, COMMUNICATION
 import { Tag, socialPlatformLabels } from "@/types/crm";
 import { DistributionList } from "@/types/lists";
 import { Publication } from "@/types/library";
-import { Heading } from "@/components/heading";
-import { Text } from "@/components/text";
-import { Button } from "@/components/button";
-import { Badge } from "@/components/badge";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import ContactModalEnhanced from "@/app/dashboard/contacts/crm/ContactModalEnhanced";
 import {
   ArrowLeftIcon,

@@ -2,8 +2,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import { Badge } from '@/components/badge';
-import { Button } from '@/components/button';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { 
   DocumentTextIcon,
   ChevronDownIcon,
@@ -25,8 +25,8 @@ import { boilerplatesService } from '@/lib/firebase/boilerplate-service';
 import { Boilerplate } from '@/types/crm-enhanced';
 import clsx from 'clsx';
 import { RichTextEditor } from '@/components/RichTextEditor';
-import { Input } from '@/components/input';
-import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/dialog';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 
 // Vereinfachte Types ohne position
 export interface BoilerplateSection {

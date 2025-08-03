@@ -6,8 +6,8 @@ import { PRCampaign } from '@/types/pr';
 import { Contact } from '@/types/crm';
 import { SenderInfo } from '@/types/email-composer';
 import { contactsService } from '@/lib/firebase/crm-service';
-import { Select } from '@/components/select';
-import { Input } from '@/components/input';
+import { Select } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { 
   UserIcon,
   BuildingOfficeIcon,

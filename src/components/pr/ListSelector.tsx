@@ -4,10 +4,10 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
-import { Field, Label, Description } from '@/components/fieldset';
-import { Input } from '@/components/input';
-import { Button } from '@/components/button';
-import { Badge } from '@/components/badge';
+import { Field, Label, Description } from '@/components/ui/fieldset';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { listsService } from '@/lib/firebase/lists-service';
 import { teamMemberService } from '@/lib/firebase/organization-service';
 import { DistributionList } from '@/types/lists';

@@ -2,13 +2,13 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Field, Label } from '@/components/fieldset';
-import { Input } from '@/components/input';
-import { Select } from '@/components/select';
-import { Checkbox } from '@/components/checkbox';
+import { Field, Label } from '@/components/ui/fieldset';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { MultiSelectDropdown } from '@/components/MultiSelectDropdown';
-import { Badge } from '@/components/badge';
-import { Button } from '@/components/button';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { publicationService } from '@/lib/firebase/library-service';
 import { Publication, PUBLICATION_TYPE_LABELS, PUBLICATION_FREQUENCY_LABELS } from '@/types/library';
 import { COUNTRY_NAMES, LANGUAGE_NAMES } from '@/types/international';

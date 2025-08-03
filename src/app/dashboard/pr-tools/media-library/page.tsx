@@ -8,21 +8,21 @@ import { useCrmData } from "@/context/CrmDataContext";
 import { mediaService } from "@/lib/firebase/media-service";
 import { MediaAsset, MediaFolder, FolderBreadcrumb } from "@/types/media";
 import { teamMemberService } from "@/lib/firebase/organization-service";
-import { Heading } from "@/components/heading";
-import { Text } from "@/components/text";
-import { Button } from "@/components/button";
-import { Badge } from "@/components/badge";
-import { Input } from "@/components/input";
-import { Checkbox } from "@/components/checkbox";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/table";
-import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import { 
   Dropdown,
   DropdownButton,
   DropdownMenu,
   DropdownItem,
   DropdownDivider
-} from "@/components/dropdown";
+} from "@/components/ui/dropdown";
 import { 
   PlusIcon, 
   PhotoIcon, 

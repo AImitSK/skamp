@@ -8,10 +8,10 @@ import {
   LinkIcon,
   ChevronDownIcon,
 } from '@heroicons/react/20/solid';
-import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/dialog';
-import { Button } from '@/components/button';
-import { Input } from '@/components/input';
-import { Field, Label } from '@/components/fieldset';
+import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Field, Label } from '@/components/ui/fieldset';
 
 type ToolbarProps = {
   editor: Editor | null;

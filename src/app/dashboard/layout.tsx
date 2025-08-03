@@ -26,8 +26,8 @@ import {
   DropdownMenu,
   DropdownItem,
   DropdownDivider,
-} from "@/components/dropdown";
-import { Avatar } from "@/components/avatar";
+} from "@/components/ui/dropdown";
+import { Avatar } from "@/components/ui/avatar";
 import { useNotifications } from "@/hooks/use-notifications";
 import {
   HomeIcon,

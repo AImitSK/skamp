@@ -2,12 +2,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
-import { Field, Label, FieldGroup, Description } from "@/components/fieldset";
-import { Select } from "@/components/select";
-import { Button } from "@/components/button";
-import { Badge } from "@/components/badge";
-import { Text } from "@/components/text";
+import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
+import { Field, Label, FieldGroup, Description } from "@/components/ui/fieldset";
+import { Select } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Text } from "@/components/ui/text";
 import { useCrmData } from "@/context/CrmDataContext";
 import { mediaService } from "@/lib/firebase/media-service";
 import { 

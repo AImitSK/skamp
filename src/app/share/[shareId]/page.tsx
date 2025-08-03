@@ -22,10 +22,10 @@ import {
   MapPinIcon,
   NewspaperIcon
 } from "@heroicons/react/24/outline";
-import { Button } from "@/components/button";
-import { Input } from "@/components/input";
-import { Heading } from "@/components/heading";
-import { Text } from "@/components/text";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
 import Link from "next/link";
 
 export default function SharePage() {

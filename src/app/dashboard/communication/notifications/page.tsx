@@ -1,9 +1,9 @@
 // src/app/dashboard/communication/notifications/page.tsx
 "use client";
 
-import { Heading } from "@/components/heading";
+import { Heading } from "@/components/ui/heading";
 import { NotificationList } from "@/components/notifications/NotificationList";
-import { Button } from "@/components/button";
+import { Button } from "@/components/ui/button";
 import { BellIcon, Cog6ToothIcon } from "@heroicons/react/20/solid";
 import { useRouter } from "next/navigation";
 

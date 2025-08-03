@@ -2,10 +2,10 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
-import { Button } from "@/components/button";
-import { Badge } from "@/components/badge";
-import { Checkbox } from "@/components/checkbox";
+import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { companiesService, contactsService, tagsService } from "@/lib/firebase/crm-service";
 import { listsService } from "@/lib/firebase/lists-service";
 import { STANDARD_PRESS_TAGS, STANDARD_BEATS } from "@/types/crm";

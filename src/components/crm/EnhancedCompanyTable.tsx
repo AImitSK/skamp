@@ -3,10 +3,10 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { Badge } from "@/components/badge";
-import { Button } from "@/components/button";
-import { Checkbox } from "@/components/checkbox";
-import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from "@/components/dropdown";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from "@/components/ui/dropdown";
 import { companyTypeLabels } from "@/types/crm";
 import { CompanyEnhanced, COMPANY_STATUS_OPTIONS, LIFECYCLE_STAGE_OPTIONS, CompanyEnhancedListView } from "@/types/crm-enhanced";
 import { getCurrencyInfo } from "@/lib/validators/iso-validators";

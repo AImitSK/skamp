@@ -3,8 +3,8 @@
 
 import { useState, useEffect } from 'react';
 import { EmailThread } from '@/types/inbox-enhanced';
-import { Badge } from '@/components/badge';
-import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/dropdown';
+import { Badge } from '@/components/ui/badge';
+import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
 import { StatusManager } from '@/components/inbox/StatusManager';
 import clsx from 'clsx';
 import { 

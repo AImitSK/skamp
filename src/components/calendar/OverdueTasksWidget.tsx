@@ -1,8 +1,8 @@
 // src/components/calendar/OverdueTasksWidget.tsx
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/button';
-import { Badge } from '@/components/badge';
-import { Text } from '@/components/text';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Text } from '@/components/ui/text';
 import { 
   ExclamationTriangleIcon,
   CheckCircleIcon,

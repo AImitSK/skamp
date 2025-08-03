@@ -17,7 +17,13 @@
       "Bash(npm run lint)",
       "Bash(npm install:*)",
       "Bash(npm run dev:*)",
-      "Bash(npm run migrate:test:*)"
+      "Bash(npm run migrate:test:*)",
+      "Bash(mkdir:*)",
+      "Bash(node:*)",
+      "Bash(mv:*)",
+      "Bash(find:*)",
+      "Bash(sed:*)",
+      "Bash(grep:*)"
     ],
     "deny": []
   }

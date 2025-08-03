@@ -2,28 +2,28 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
-import { Field, Label, FieldGroup } from "@/components/fieldset";
-import { Input } from "@/components/input";
-import { Textarea } from "@/components/textarea";
-import { Select } from "@/components/select";
-import { Button } from "@/components/button";
-import { Badge } from "@/components/badge";
-import { Text } from "@/components/text";
-import { Checkbox } from "@/components/checkbox";
+import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
+import { Field, Label, FieldGroup } from "@/components/ui/fieldset";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Text } from "@/components/ui/text";
+import { Checkbox } from "@/components/ui/checkbox";
 import { companiesEnhancedService, tagsEnhancedService } from "@/lib/firebase/crm-service-enhanced";
 import { publicationService, advertisementService } from "@/lib/firebase/library-service";
 import { Company, CompanyType, Tag, TagColor, SocialPlatform, socialPlatformLabels } from "@/types/crm";
 import { CompanyEnhanced, COMPANY_STATUS_OPTIONS, LIFECYCLE_STAGE_OPTIONS } from "@/types/crm-enhanced";
 import { CountryCode, LanguageCode, CurrencyCode } from "@/types/international";
 import { Publication, Advertisement } from "@/types/library";
-import { TagInput } from "@/components/tag-input";
+import { TagInput } from "@/components/ui/tag-input";
 import { FocusAreasInput } from "@/components/FocusAreasInput";
 import { InfoTooltip } from "@/components/InfoTooltip";
-import { CountrySelector } from "@/components/country-selector";
-import { LanguageSelector } from "@/components/language-selector";
-import { CurrencyInput } from "@/components/currency-input";
-import { PhoneInput } from "@/components/phone-input";
+import { CountrySelector } from "@/components/ui/country-selector";
+import { LanguageSelector } from "@/components/ui/language-selector";
+import { CurrencyInput } from "@/components/ui/currency-input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { 
   PlusIcon, 
   TrashIcon, 

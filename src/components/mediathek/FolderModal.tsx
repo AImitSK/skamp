@@ -2,14 +2,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
-import { Field, Label, FieldGroup, Description } from "@/components/fieldset";
-import { Input } from "@/components/input";
-import { Textarea } from "@/components/textarea";
-import { Button } from "@/components/button";
-import { Select } from "@/components/select";
-import { Badge } from "@/components/badge";
-import { Text } from "@/components/text";
+import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
+import { Field, Label, FieldGroup, Description } from "@/components/ui/fieldset";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Text } from "@/components/ui/text";
 import { MediaFolder } from "@/types/media";
 import { useCrmData } from "@/context/CrmDataContext";
 import { InformationCircleIcon } from "@heroicons/react/20/solid";

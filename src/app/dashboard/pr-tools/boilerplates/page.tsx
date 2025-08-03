@@ -7,14 +7,14 @@ import { useOrganization } from "@/context/OrganizationContext";
 import { boilerplatesService } from "@/lib/firebase/boilerplate-service";
 import { companiesService } from "@/lib/firebase/crm-service";
 import { Boilerplate } from "@/types/crm-enhanced";
-import { Heading } from "@/components/heading";
-import { Text } from "@/components/text";
-import { Button } from "@/components/button";
-import { Badge } from "@/components/badge";
-import { Checkbox } from "@/components/checkbox";
-import { SearchInput } from "@/components/search-input";
-import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
-import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from "@/components/dropdown";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { SearchInput } from "@/components/ui/search-input";
+import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
+import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from "@/components/ui/dropdown";
 import { Popover, Transition } from '@headlessui/react';
 import { 
   PlusIcon,

@@ -2,9 +2,9 @@
 "use client";
 
 import { useState } from 'react';
-import { Button } from '@/components/button';
-import { Badge } from '@/components/badge';
-import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from '@/components/dropdown';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from '@/components/ui/dropdown';
 import { EmailSignature } from '@/types/email-enhanced';
 import { SignatureEditor } from './SignatureEditor';
 import { 

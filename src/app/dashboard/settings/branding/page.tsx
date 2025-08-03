@@ -4,12 +4,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
-import { Heading } from "@/components/heading";
-import { Text } from "@/components/text";
-import { Button } from "@/components/button";
-import { Input } from "@/components/input";
-import { Checkbox } from "@/components/checkbox";
-import { Field, Label, FieldGroup } from "@/components/fieldset";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Field, Label, FieldGroup } from "@/components/ui/fieldset";
 import { brandingService } from "@/lib/firebase/branding-service";
 import { mediaService } from "@/lib/firebase/media-service";
 import { BrandingSettings } from "@/types/branding";

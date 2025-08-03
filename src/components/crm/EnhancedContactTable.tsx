@@ -3,10 +3,10 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { Badge } from "@/components/badge";
-import { Button } from "@/components/button";
-import { Checkbox } from "@/components/checkbox";
-import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from "@/components/dropdown";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from "@/components/ui/dropdown";
 import { Contact } from "@/types/crm";
 import { ContactEnhanced, CONTACT_STATUS_OPTIONS, ContactEnhancedListView } from "@/types/crm-enhanced";
 import {

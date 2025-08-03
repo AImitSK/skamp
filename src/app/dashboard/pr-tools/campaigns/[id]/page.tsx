@@ -7,11 +7,11 @@ import Link from 'next/link';
 import { useAuth } from "@/context/AuthContext";
 import { prService } from "@/lib/firebase/pr-service";
 import { PRCampaign, PRCampaignStatus } from "@/types/pr";
-import { Heading } from "@/components/heading";
-import { Text } from "@/components/text";
-import { Button } from "@/components/button";
-import { Badge } from "@/components/badge";
-import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import EmailSendModal from "@/components/pr/EmailSendModal";
 import {
   ArrowLeftIcon,

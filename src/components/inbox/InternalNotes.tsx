@@ -2,8 +2,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/button';
-import { Badge } from '@/components/badge';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { 
   collection, 
   query, 

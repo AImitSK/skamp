@@ -2,11 +2,11 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/dialog';
-import { Field, Label, Description } from '@/components/fieldset';
-import { Input } from '@/components/input';
-import { Button } from '@/components/button';
-import { Badge } from '@/components/badge';
+import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
+import { Field, Label, Description } from '@/components/ui/fieldset';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { SimpleSwitch } from '@/components/notifications/SimpleSwitch';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { EmailSignature } from '@/types/email-enhanced';

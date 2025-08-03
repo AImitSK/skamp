@@ -6,14 +6,14 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
-import { Heading } from "@/components/heading";
-import { Text } from "@/components/text";
-import { Button } from "@/components/button";
-import { Badge } from "@/components/badge";
-import { SearchInput } from "@/components/search-input";
-import { Checkbox } from "@/components/checkbox";
-import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
-import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from "@/components/dropdown";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { SearchInput } from "@/components/ui/search-input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
+import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from "@/components/ui/dropdown";
 import { Popover, Transition } from '@headlessui/react';
 import { 
   PlusIcon, 

@@ -2,24 +2,24 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
-import { Field, Label, FieldGroup } from "@/components/fieldset";
-import { Input } from "@/components/input";
-import { Textarea } from "@/components/textarea";
-import { Select } from "@/components/select";
-import { Button } from "@/components/button";
-import { Badge } from "@/components/badge";
-import { Text } from "@/components/text";
-import { Checkbox } from "@/components/checkbox";
+import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
+import { Field, Label, FieldGroup } from "@/components/ui/fieldset";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Text } from "@/components/ui/text";
+import { Checkbox } from "@/components/ui/checkbox";
 import { contactsService, tagsService, companiesService } from "@/lib/firebase/crm-service";
 import { Contact, Company, Tag, TagColor, SocialPlatform, socialPlatformLabels, STANDARD_BEATS } from "@/types/crm";
 import { ContactEnhanced, CONTACT_STATUS_OPTIONS, COMMUNICATION_CHANNELS, MEDIA_TYPES, SUBMISSION_FORMATS } from "@/types/crm-enhanced";
 import { CountryCode, LanguageCode } from "@/types/international";
-import { TagInput } from "@/components/tag-input";
+import { TagInput } from "@/components/ui/tag-input";
 import { InfoTooltip } from "@/components/InfoTooltip";
-import { CountrySelector } from "@/components/country-selector";
-import { LanguageSelector, LanguageSelectorMulti } from "@/components/language-selector";
-import { PhoneInput } from "@/components/phone-input";
+import { CountrySelector } from "@/components/ui/country-selector";
+import { LanguageSelector, LanguageSelectorMulti } from "@/components/ui/language-selector";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { 
   PlusIcon, 
   TrashIcon, 

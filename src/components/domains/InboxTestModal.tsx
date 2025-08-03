@@ -3,11 +3,11 @@
 
 import { useState, useEffect } from 'react';
 import { Dialog } from '@headlessui/react';
-import { Button } from '@/components/button';
-import { Input } from '@/components/input';
-import { Field, Label, Description } from '@/components/fieldset';
-import { Text } from '@/components/text';
-import { Badge } from '@/components/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Field, Label, Description } from '@/components/ui/fieldset';
+import { Text } from '@/components/ui/text';
+import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/context/AuthContext';
 import { apiClient } from '@/lib/api/api-client';
 import { domainServiceEnhanced } from '@/lib/firebase/domain-service-enhanced';

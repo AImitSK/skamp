@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { SimpleSwitch } from './SimpleSwitch';
-import { Input } from '@/components/input';
-import { Button } from '@/components/button';
-import { Divider } from '@/components/divider';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Divider } from '@/components/ui/divider';
 import { useNotificationSettings } from '@/hooks/use-notifications';
 import { 
   BellIcon,

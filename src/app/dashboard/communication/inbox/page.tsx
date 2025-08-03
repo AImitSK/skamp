@@ -4,9 +4,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
-import { Heading } from '@/components/heading';
-import { Button } from '@/components/button';
-import { Badge } from '@/components/badge';
+import { Heading } from '@/components/ui/heading';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { TeamFolderSidebar } from '@/components/inbox/TeamFolderSidebar';
 import { EmailList } from '@/components/inbox/EmailList';
 import { EmailViewer } from '@/components/inbox/EmailViewer';

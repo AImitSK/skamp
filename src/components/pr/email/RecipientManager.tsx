@@ -2,9 +2,9 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/dialog';
-import { Button } from '@/components/button';
-import { Input } from '@/components/input';
+import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { ManualRecipient } from '@/types/email-composer';
 import { DistributionList } from '@/types/lists';
 import { listsService } from '@/lib/firebase/lists-service';

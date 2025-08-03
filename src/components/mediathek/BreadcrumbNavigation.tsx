@@ -3,7 +3,7 @@
 
 import { FolderBreadcrumb } from "@/types/media";
 import { HomeIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
-import { Button } from "@/components/button";
+import { Button } from "@/components/ui/button";
 
 interface BreadcrumbNavigationProps {
   breadcrumbs: FolderBreadcrumb[];

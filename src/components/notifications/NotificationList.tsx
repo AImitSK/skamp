@@ -1,7 +1,7 @@
 // src/components/notifications/NotificationList.tsx
 
 import { useState } from 'react';
-import { Button } from '@/components/button';
+import { Button } from '@/components/ui/button';
 import { NotificationItem } from './NotificationItem';
 import { useNotifications } from '@/hooks/use-notifications';
 import { 

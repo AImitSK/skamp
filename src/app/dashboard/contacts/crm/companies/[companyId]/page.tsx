@@ -13,11 +13,11 @@ import { CompanyEnhanced, ContactEnhanced, COMPANY_STATUS_OPTIONS, LIFECYCLE_STA
 import { Tag, companyTypeLabels, socialPlatformLabels } from "@/types/crm";
 import { Publication, Advertisement } from "@/types/library";
 import { DistributionList } from "@/types/lists";
-import { Heading } from "@/components/heading";
-import { Text } from "@/components/text";
-import { Button } from "@/components/button";
-import { Badge } from "@/components/badge";
-import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import CompanyModal from '@/app/dashboard/contacts/crm/CompanyModal';
 import CompanyMediaSection from "@/components/crm/CompanyMediaSection";
 import {

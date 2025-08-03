@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Badge } from '@/components/badge';
+import { Badge } from '@/components/ui/badge';
 import clsx from 'clsx';
 import {
   InboxIcon,

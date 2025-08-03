@@ -18,8 +18,8 @@ import {
   ArrowUpIcon,
   ArrowDownIcon
 } from "@heroicons/react/24/outline";
-import { Button } from "@/components/button";
-import { Badge } from "@/components/badge";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 
 interface LibraryStats {

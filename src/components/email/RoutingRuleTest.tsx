@@ -2,12 +2,12 @@
 "use client";
 
 import { useState } from 'react';
-import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/dialog';
-import { Field, Label } from '@/components/fieldset';
-import { Input } from '@/components/input';
-import { Textarea } from '@/components/textarea';
-import { Button } from '@/components/button';
-import { Badge } from '@/components/badge';
+import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
+import { Field, Label } from '@/components/ui/fieldset';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { 
   BeakerIcon,
   CheckCircleIcon,

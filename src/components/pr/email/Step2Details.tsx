@@ -4,7 +4,7 @@
 import { useEffect, useRef } from 'react';
 import { PRCampaign } from '@/types/pr';
 import { EmailDraft, ManualRecipient, SenderInfo, StepValidation } from '@/types/email-composer';
-import { Input } from '@/components/input';
+import { Input } from '@/components/ui/input';
 import { InfoTooltip } from '@/components/InfoTooltip';
 import { EnvelopeIcon, UserIcon, DocumentTextIcon } from '@heroicons/react/20/solid';
 import RecipientManager from '@/components/pr/email/RecipientManager';

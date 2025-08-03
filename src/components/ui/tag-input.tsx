@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { XMarkIcon } from "@heroicons/react/20/solid";
-import { Badge } from "@/components/badge";
+import { Badge } from "@/components/ui/badge";
 import { Tag, TagColor } from "@/types/crm";
 import clsx from "clsx";
 

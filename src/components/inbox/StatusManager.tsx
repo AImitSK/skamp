@@ -3,9 +3,9 @@
 
 import { useState, useEffect } from 'react';
 import { EmailThread } from '@/types/inbox-enhanced';
-import { Button } from '@/components/button';
-import { Badge } from '@/components/badge';
-import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/dropdown';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
 import { threadMatcherService } from '@/lib/email/thread-matcher-service-flexible';
 import clsx from 'clsx';
 import { 

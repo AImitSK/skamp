@@ -2,9 +2,9 @@
 "use client";
 
 import { useState } from 'react';
-import { Heading } from "@/components/heading";
-import { Button } from "@/components/button";
-import { Text } from "@/components/text";
+import { Heading } from "@/components/ui/heading";
+import { Button } from "@/components/ui/button";
+import { Text } from "@/components/ui/text";
 import { SettingsNav } from '@/components/SettingsNav'; // ✨ Hinzugefügt
 import { PencilIcon, RocketLaunchIcon, CircleStackIcon, ArrowDownTrayIcon, ArrowUpTrayIcon } from "@heroicons/react/20/solid";
 import { seedDummyDataEnhanced } from 'src/scripts/seed-dummy-data';

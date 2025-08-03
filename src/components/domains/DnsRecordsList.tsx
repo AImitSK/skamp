@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from 'react';
-import { Text } from '@/components/text';
+import { Text } from '@/components/ui/text';
 import { 
   ClipboardDocumentIcon, 
   CheckIcon,

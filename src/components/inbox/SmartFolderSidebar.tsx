@@ -14,8 +14,8 @@ import {
   ChartBarIcon,
   ExclamationCircleIcon
 } from '@heroicons/react/20/solid';
-import { Button } from '@/components/button';
-import { Badge } from '@/components/badge';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import clsx from 'clsx';
 
 interface SmartFolderSidebarProps {

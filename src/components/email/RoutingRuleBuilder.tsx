@@ -2,13 +2,13 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/dialog';
-import { Field, Label } from '@/components/fieldset';
-import { Input } from '@/components/input';
-import { Select } from '@/components/select';
-import { Button } from '@/components/button';
-import { Badge } from '@/components/badge';
-import { Checkbox, CheckboxField, CheckboxGroup } from '@/components/checkbox';
+import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
+import { Field, Label } from '@/components/ui/fieldset';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox, CheckboxField, CheckboxGroup } from '@/components/ui/checkbox';
 import { SimpleSwitch } from '@/components/notifications/SimpleSwitch';
 import { 
   PlusIcon, 

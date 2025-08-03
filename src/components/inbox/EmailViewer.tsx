@@ -2,8 +2,8 @@
 "use client";
 
 import { EmailMessage, EmailThread } from '@/types/inbox-enhanced';
-import { Button } from '@/components/button';
-import { Badge } from '@/components/badge';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { InternalNotes } from '@/components/inbox/InternalNotes';
 import { TeamAssignmentUI } from '@/components/inbox/TeamAssignmentUI';
 import { StatusManager } from '@/components/inbox/StatusManager';

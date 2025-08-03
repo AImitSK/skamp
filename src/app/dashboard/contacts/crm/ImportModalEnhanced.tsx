@@ -2,12 +2,12 @@
 "use client";
 
 import { useState, useRef } from 'react';
-import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/dialog';
-import { Button } from '@/components/button';
-import { Text } from '@/components/text';
-import { Badge } from '@/components/badge';
-import { Field, Label, FieldGroup } from '@/components/fieldset';
-import { Checkbox } from '@/components/checkbox';
+import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Text } from '@/components/ui/text';
+import { Badge } from '@/components/ui/badge';
+import { Field, Label, FieldGroup } from '@/components/ui/fieldset';
+import { Checkbox } from '@/components/ui/checkbox';
 import Papa from 'papaparse';
 import { companiesEnhancedService, contactsEnhancedService } from '@/lib/firebase/crm-service-enhanced';
 import { CompanyEnhanced, ContactEnhanced, COMPANY_STATUS_OPTIONS, LIFECYCLE_STAGE_OPTIONS, CONTACT_STATUS_OPTIONS } from '@/types/crm-enhanced';

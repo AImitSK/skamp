@@ -4,9 +4,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { EmailThread } from '@/types/inbox-enhanced';
 import { TeamMember } from '@/types/international';
-import { Button } from '@/components/button';
-import { Badge } from '@/components/badge';
-import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/dropdown';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
 import { teamMemberService } from '@/lib/firebase/organization-service';
 import { threadMatcherService } from '@/lib/email/thread-matcher-service-flexible';
 import clsx from 'clsx';

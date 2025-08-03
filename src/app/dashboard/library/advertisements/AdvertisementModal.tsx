@@ -7,13 +7,13 @@ import { useOrganization } from "@/context/OrganizationContext";
 import { advertisementService } from "@/lib/firebase/library-service";
 import type { Advertisement, AdvertisementType, Publication, PriceModel } from "@/types/library";
 import type { BaseEntity } from "@/types/international";
-import { Dialog } from "@/components/dialog";
-import { Button } from "@/components/button";
-import { Input } from "@/components/input";
-import { Textarea } from "@/components/textarea";
-import { Select } from "@/components/select";
-import { Badge } from "@/components/badge";
-import { Checkbox } from "@/components/checkbox";
+import { Dialog } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   XMarkIcon,
   PlusIcon,

@@ -1,8 +1,8 @@
 // src/app/dashboard/settings/notifications/page.tsx
 "use client";
 
-import { Heading } from "@/components/heading";
-import { Text } from "@/components/text";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
 import { NotificationSettings } from "@/components/notifications/NotificationSettings";
 import { SettingsNav } from '@/components/SettingsNav'; // ✨ Import der neuen Komponente
 

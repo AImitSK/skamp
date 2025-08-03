@@ -1,7 +1,7 @@
 // src/components/MediaUploadLink.tsx - Wiederverwendbarer Upload-Link
 "use client";
 
-import { Button } from "@/components/button";
+import { Button } from "@/components/ui/button";
 import { PhotoIcon, FolderPlusIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 

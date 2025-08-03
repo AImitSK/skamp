@@ -3,12 +3,12 @@
 
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { Heading } from "@/components/heading";
-import { Text } from "@/components/text";
-import { Button } from "@/components/button";
-import { Select } from "@/components/select";
-import { Input } from "@/components/input";
-import { Field, Label } from "@/components/fieldset";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
+import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Field, Label } from "@/components/ui/fieldset";
 import { notificationsService } from "@/lib/firebase/notifications-service";
 import { NotificationType, NOTIFICATION_TEMPLATES } from "@/types/notifications";
 import { 

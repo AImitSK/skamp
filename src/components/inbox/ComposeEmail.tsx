@@ -2,10 +2,10 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Dialog } from '@/components/dialog';
-import { Button } from '@/components/button';
-import { Input } from '@/components/input';
-import { Field, Label } from '@/components/fieldset';
+import { Dialog } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Field, Label } from '@/components/ui/fieldset';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { EmailMessage } from '@/types/inbox-enhanced';
 import { emailAddressService } from '@/lib/email/email-address-service';
@@ -13,7 +13,7 @@ import { emailMessageService } from '@/lib/email/email-message-service';
 import { threadMatcherService } from '@/lib/email/thread-matcher-service-flexible';
 import { emailSignatureService } from '@/lib/email/email-signature-service';
 import { XMarkIcon, PaperAirplaneIcon, PaperClipIcon } from '@heroicons/react/20/solid';
-import { Select } from '@/components/select';
+import { Select } from '@/components/ui/select';
 import { serverTimestamp, Timestamp } from 'firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
 import { EmailSignature } from '@/types/email-enhanced';

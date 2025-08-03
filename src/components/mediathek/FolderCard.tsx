@@ -2,8 +2,8 @@
 "use client";
 
 import { MediaFolder } from "@/types/media";
-import { Button } from "@/components/button";
-import { Badge } from "@/components/badge";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { 
   FolderIcon, 
   EllipsisVerticalIcon,
@@ -16,7 +16,7 @@ import {
   DropdownButton,
   DropdownMenu,
   DropdownItem,
-} from "@/components/dropdown";
+} from "@/components/ui/dropdown";
 import { useCrmData } from "@/context/CrmDataContext";
 
 interface FolderCardProps {

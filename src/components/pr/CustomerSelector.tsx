@@ -4,8 +4,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
-import { Field, Label, Description } from '@/components/fieldset';
-import { Button } from '@/components/button';
+import { Field, Label, Description } from '@/components/ui/fieldset';
+import { Button } from '@/components/ui/button';
 import { companiesEnhancedService } from '@/lib/firebase/crm-service-enhanced';
 import { 
   BuildingOfficeIcon, 

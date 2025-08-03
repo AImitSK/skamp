@@ -2,7 +2,7 @@
 "use client";
 
 import { Fragment, useState } from 'react';
-import { Dialog, DialogTitle, DialogBody } from '@/components/dialog';
+import { Dialog, DialogTitle, DialogBody } from '@/components/ui/dialog';
 import { EMAIL_VARIABLES, VariableDefinition } from '@/types/email-composer';
 import { 
   ClipboardDocumentIcon, 

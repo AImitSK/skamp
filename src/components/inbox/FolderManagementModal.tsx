@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
-import { Button } from '@/components/button';
+import { Button } from '@/components/ui/button';
 import clsx from 'clsx';
 import {
   XMarkIcon,

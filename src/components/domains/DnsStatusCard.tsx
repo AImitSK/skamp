@@ -1,9 +1,9 @@
 // src/components/domains/DnsStatusCard.tsx
 "use client";
 
-import { Text } from '@/components/text';
-import { Button } from '@/components/button';
-import { Badge } from '@/components/badge';
+import { Text } from '@/components/ui/text';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { DnsCheckResult } from '@/types/email-domains-enhanced';
 import {
   CheckCircleIcon,

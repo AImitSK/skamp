@@ -32,11 +32,11 @@ import {
   GlobeAltIcon,
   MapPinIcon
 } from "@heroicons/react/24/outline";
-import { Button } from "@/components/button";
-import { Textarea } from "@/components/textarea";
-import { Heading } from "@/components/heading";
-import { Text } from "@/components/text";
-import { Badge } from "@/components/badge";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
+import { Badge } from "@/components/ui/badge";
 import clsx from "clsx";
 
 // Status-Konfiguration für Badges

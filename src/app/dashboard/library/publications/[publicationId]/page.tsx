@@ -10,12 +10,12 @@ import { publicationService, advertisementService } from "@/lib/firebase/library
 import { companiesService } from "@/lib/firebase/crm-service";
 import type { Publication, Advertisement } from "@/types/library";
 import type { Company } from "@/types/crm";
-import { Heading } from "@/components/heading";
-import { Text } from "@/components/text";
-import { Button } from "@/components/button";
-import { Badge } from "@/components/badge";
-import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
-import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from "@/components/dropdown";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
+import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from "@/components/ui/dropdown";
 import { Timestamp } from 'firebase/firestore';
 import { PublicationModal } from "../PublicationModal";
 import {

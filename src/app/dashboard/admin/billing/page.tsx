@@ -1,8 +1,8 @@
 // src\app\dashboard\admin\billing\page.tsx
 "use client";
 
-import { Heading } from "@/components/heading";
-import { Button } from "@/components/button";
+import { Heading } from "@/components/ui/heading";
+import { Button } from "@/components/ui/button";
 import { PencilIcon, RocketLaunchIcon } from "@heroicons/react/20/solid";
 
 export default function PlaceholderPage() {

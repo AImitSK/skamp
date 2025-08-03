@@ -4,9 +4,9 @@
 import { useState, useCallback, useMemo } from 'react';
 import { PRCampaign } from '@/types/pr';
 import { EmailDraft, StepValidation } from '@/types/email-composer';
-import { Input } from '@/components/input';
-import { Button } from '@/components/button';
-import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/dialog';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { InfoTooltip } from '@/components/InfoTooltip';
 import { emailService } from '@/lib/email/email-service';
 import { emailComposerService } from '@/lib/email/email-composer-service';

@@ -2,11 +2,11 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/dialog";
-import { Button } from "@/components/button";
-import { Input } from "@/components/input";
-import { Checkbox } from "@/components/checkbox";
-import { Text } from "@/components/text";
+import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Text } from "@/components/ui/text";
 import { useCrmData } from "@/context/CrmDataContext";
 import { ContactEnhanced } from "@/types/crm-enhanced";
 import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";

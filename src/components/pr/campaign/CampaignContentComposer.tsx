@@ -6,10 +6,10 @@ import dynamic from 'next/dynamic';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import IntelligentBoilerplateSection, { BoilerplateSection } from './IntelligentBoilerplateSection';
 import { processBoilerplates } from '@/lib/boilerplate-processor';
-import { Field, Label } from '@/components/fieldset';
-import { Input } from '@/components/input';
-import { Button } from '@/components/button';
-import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/dialog';
+import { Field, Label } from '@/components/ui/fieldset';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { 
   DocumentArrowDownIcon, 
   FolderIcon, 
@@ -18,7 +18,7 @@ import {
 } from '@heroicons/react/20/solid';
 import { mediaService } from '@/lib/firebase/media-service';
 import { MediaFolder } from '@/types/media';
-import { Text } from '@/components/text';
+import { Text } from '@/components/ui/text';
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/solid';
 import { InfoTooltip } from '@/components/InfoTooltip';
 

@@ -4,11 +4,11 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Button } from '@/components/button';
-import { Heading } from '@/components/heading';
-import { Text } from '@/components/text';
-import { Input } from '@/components/input';
-import { Field, Label } from '@/components/fieldset';
+import { Button } from '@/components/ui/button';
+import { Heading } from '@/components/ui/heading';
+import { Text } from '@/components/ui/text';
+import { Input } from '@/components/ui/input';
+import { Field, Label } from '@/components/ui/fieldset';
 import { 
   CheckCircleIcon, 
   ExclamationTriangleIcon,

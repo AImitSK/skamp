@@ -19,12 +19,12 @@ import {
   LightBulbIcon,
   ClipboardDocumentIcon
 } from '@heroicons/react/24/outline';
-import { Button } from '@/components/button';
-import { Field, Label } from '@/components/fieldset';
-import { Input } from '@/components/input';
-import { Textarea } from '@/components/textarea';
-import { Select } from '@/components/select';
-import { Badge } from '@/components/badge';
+import { Button } from '@/components/ui/button';
+import { Field, Label } from '@/components/ui/fieldset';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/context/AuthContext';
 import clsx from 'clsx';
 import {

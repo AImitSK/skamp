@@ -2,13 +2,13 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import { Heading, Subheading } from "@/components/heading";
-import { Text } from "@/components/text";
-import { Field, Label, FieldGroup } from "@/components/fieldset";
-import { Input } from "@/components/input";
-import { Button } from "@/components/button";
-import { Divider } from "@/components/divider";
-import { Avatar } from "@/components/avatar";
+import { Heading, Subheading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
+import { Field, Label, FieldGroup } from "@/components/ui/fieldset";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Divider } from "@/components/ui/divider";
+import { Avatar } from "@/components/ui/avatar";
 
 export default function ProfilePage() {
   const { user } = useAuth();

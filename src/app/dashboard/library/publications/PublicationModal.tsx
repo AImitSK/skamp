@@ -9,14 +9,14 @@ import type { CompanyEnhanced } from "@/types/crm-enhanced";
 import type { Publication, PublicationType, PublicationFormat, PublicationFrequency } from "@/types/library";
 import { publicationService } from "@/lib/firebase/library-service";
 import type { BaseEntity, CountryCode, LanguageCode } from "@/types/international";
-import { Dialog } from "@/components/dialog";
-import { Button } from "@/components/button";
-import { Input } from "@/components/input";
-import { Textarea } from "@/components/textarea";
-import { Select } from "@/components/select";
-import { Badge } from "@/components/badge";
-import { LanguageSelectorMulti } from "@/components/language-selector";
-import { CountrySelectorMulti } from "@/components/country-selector";
+import { Dialog } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { LanguageSelectorMulti } from "@/components/ui/language-selector";
+import { CountrySelectorMulti } from "@/components/ui/country-selector";
 
 import { 
   CheckIcon,

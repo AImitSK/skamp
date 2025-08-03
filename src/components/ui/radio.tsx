@@ -2,7 +2,7 @@
 "use client";
 
 import { Radio as HeadlessRadio, RadioGroup as HeadlessRadioGroup, RadioGroupProps, RadioProps } from '@headlessui/react';
-import { Label, Description } from '@/components/fieldset';
+import { Label, Description } from '@/components/ui/fieldset';
 import clsx from 'clsx';
 import React from 'react';
 

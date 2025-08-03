@@ -1,7 +1,7 @@
 // src/components/inbox/InboxSidebar.tsx
 "use client";
 
-import { Badge } from '@/components/badge';
+import { Badge } from '@/components/ui/badge';
 import clsx from 'clsx';
 import {
   InboxIcon,
