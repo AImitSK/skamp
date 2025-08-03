@@ -173,13 +173,15 @@ export default function ListModal({ list, onClose, onSave, userId, organizationI
 
   const updatePreview = async () => {
     if (!formData.filters || !organizationId) return;
+    console.log('🔍 ListModal updatePreview called with filters:', formData.filters);
     setLoadingPreview(true);
     try {
       const contacts = await listsService.getContactsByFilters(formData.filters, organizationId);
+      console.log('✅ ListModal preview result:', contacts.length, 'contacts');
       setPreviewContacts(contacts.slice(0, 10));
       setPreviewCount(contacts.length);
     } catch (error) {
-      // Error handled silently - user will see loading state timeout
+      console.error('❌ ListModal preview error:', error);
     } finally {
       setLoadingPreview(false);
     }
