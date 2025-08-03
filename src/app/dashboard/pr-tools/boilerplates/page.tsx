@@ -458,7 +458,7 @@ export default function BoilerplatesPage() {
 
           {/* Add Button */}
           <Button 
-            className="bg-zinc-900 hover:bg-zinc-800 text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-zinc-900 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 h-10 px-6"
+            className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary h-10 px-6"
             onClick={() => setShowModal(true)}
           >
             Baustein erstellen
@@ -533,7 +533,7 @@ export default function BoilerplatesPage() {
               <div className="mt-6">
                 <Button 
                   onClick={() => setShowModal(true)}
-                  className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
+                  className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap"
                 >
                   <PlusIcon className="h-4 w-4" />
                   Ersten Baustein erstellen

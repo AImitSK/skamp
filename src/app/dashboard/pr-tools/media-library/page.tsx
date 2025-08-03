@@ -1163,7 +1163,7 @@ export default function MediathekPage() {
           <Button 
             onClick={handleCreateFolder}
             disabled={draggedFolder !== null}
-            className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005fab]"
+            className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
           >
             <FolderPlusIcon className="h-4 w-4" />
             Ordner anlegen
@@ -1171,7 +1171,7 @@ export default function MediathekPage() {
           <Button 
             onClick={handleUploadModalOpen}
             disabled={draggedFolder !== null || !organizationId}
-            className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005fab]"
+            className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
           >
             <PlusIcon className="h-4 w-4" />
             Dateien hochladen
@@ -1274,7 +1274,7 @@ export default function MediathekPage() {
                 <FolderPlusIcon className="h-4 w-4" />
                 Ordner erstellen
               </Button>
-              <Button onClick={handleUploadModalOpen} className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap">
+              <Button onClick={handleUploadModalOpen} className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap">
                 <PlusIcon className="h-4 w-4" />
                 Dateien hochladen
               </Button>

@@ -998,7 +998,7 @@ export default function InboxPage() {
           </p>
           <Button 
             href="/dashboard/settings/email"
-            className="bg-[#005fab] hover:bg-[#004a8c] text-white"
+            className="bg-primary hover:bg-primary-hover text-white"
           >
             E-Mail-Adresse einrichten
           </Button>
@@ -1069,7 +1069,7 @@ export default function InboxPage() {
                 setReplyToEmail(null);
                 setShowCompose(true);
               }}
-              className="bg-[#005fab] hover:bg-[#004a8c] text-white"
+              className="bg-primary hover:bg-primary-hover text-white"
             >
               <PencilSquareIcon className="h-4 w-4 mr-2" />
               <span className="whitespace-nowrap">Neue E-Mail</span>

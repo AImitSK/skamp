@@ -444,7 +444,7 @@ export default function TeamSettingsPage() {
             </Button>
             <Button 
               onClick={() => setShowInviteModal(true)}
-              className="bg-[#005fab] hover:bg-[#004a8c] text-white"
+              className="bg-primary hover:bg-primary-hover text-white"
             >
               <UserPlusIcon className="h-4 w-4 mr-2" />
               <span className="whitespace-nowrap">Mitglied einladen</span>
@@ -671,7 +671,7 @@ export default function TeamSettingsPage() {
             <Button
               onClick={handleInvite}
               disabled={!inviteEmail || inviteLoading}
-              className="bg-[#005fab] hover:bg-[#004a8c] text-white"
+              className="bg-primary hover:bg-primary-hover text-white"
             >
               {inviteLoading ? 'Wird gesendet...' : 'Einladung senden'}
             </Button>

@@ -1182,7 +1182,7 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
           <Button 
             type="submit" 
             disabled={loading}
-            className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
+            className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap"
           >
             {loading ? 'Speichern...' : 'Speichern'}
           </Button>

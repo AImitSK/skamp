@@ -478,7 +478,7 @@ export default function BrandingPage() {
                   <Button
                     type="submit"
                     disabled={saving || !organizationId}
-                    className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
+                    className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap"
                   >
                     {saving ? 'Wird gespeichert...' : 'Speichern'}
                   </Button>

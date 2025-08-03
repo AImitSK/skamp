@@ -512,7 +512,7 @@ export default function EmailSettingsPage() {
 
             {/* Action Button */}
             <div className="flex justify-end mb-4">
-              <Button onClick={handleAdd} className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap">
+              <Button onClick={handleAdd} className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap">
                 <PlusIcon className="h-4 w-4 mr-2" />
                 Neue E-Mail-Adresse
               </Button>
@@ -699,7 +699,7 @@ export default function EmailSettingsPage() {
             <p className="text-gray-500 mb-4">
               Erstellen und verwalten Sie wiederverwendbare E-Mail-Vorlagen
             </p>
-            <Button className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap">
+            <Button className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap">
               <PlusIcon className="h-4 w-4 mr-2" />
               Erste Vorlage erstellen
             </Button>
@@ -948,7 +948,7 @@ export default function EmailSettingsPage() {
             Abbrechen
           </Button>
           <Button 
-            className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
+            className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap"
             onClick={handleSaveEmailAddress}
             disabled={saving}
           >

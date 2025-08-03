@@ -343,7 +343,7 @@ export default function UploadModal({
           <Button 
             onClick={handleUpload} 
             disabled={selectedFiles.length === 0 || uploading}
-            className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
+            className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap"
           >
             {uploading ? 'Uploading...' : `${selectedFiles.length} Datei(en) hochladen`}
           </Button>

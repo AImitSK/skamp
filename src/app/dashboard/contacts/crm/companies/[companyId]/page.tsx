@@ -449,7 +449,7 @@ export default function CompanyDetailPage() {
             </div>
             <Button 
               onClick={() => setShowEditModal(true)}
-              className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap inline-flex items-center gap-x-2"
+              className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap inline-flex items-center gap-x-2"
             >
               <PencilIcon className="h-4 w-4" />
               Firma bearbeiten

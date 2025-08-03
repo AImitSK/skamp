@@ -536,7 +536,7 @@ export default function AdvertisementsPage() {
 
           {/* Add Button */}
           <Button 
-            className="bg-zinc-900 hover:bg-zinc-800 text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-zinc-900 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 h-10 px-6"
+            className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary h-10 px-6"
             onClick={() => {
               setSelectedAd(null);
               setShowAdModal(true);
