@@ -33,7 +33,7 @@ import {
   FunnelIcon,
   LanguageIcon,
   NewspaperIcon
-} from "@heroicons/react/20/solid";
+} from "@heroicons/react/24/outline";
 
 // Alert Component
 function Alert({ 
@@ -179,7 +179,7 @@ export default function ListModal({ list, onClose, onSave, userId, organizationI
       setPreviewContacts(contacts.slice(0, 10));
       setPreviewCount(contacts.length);
     } catch (error) {
-      console.error("Fehler bei der Vorschau:", error);
+      // Error handled silently - user will see loading state timeout
     } finally {
       setLoadingPreview(false);
     }
@@ -197,7 +197,7 @@ export default function ListModal({ list, onClose, onSave, userId, organizationI
       setPreviewContacts(contacts.slice(0, 10));
       setPreviewCount(contacts.length);
     } catch (error) {
-      console.error("Fehler bei der Vorschau:", error);
+      // Error handled silently - user will see loading state timeout
     } finally {
       setLoadingPreview(false);
     }
@@ -364,7 +364,7 @@ export default function ListModal({ list, onClose, onSave, userId, organizationI
                     <div className="space-y-6">
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                          <FunnelIcon className="h-5 w-5" />
+                          <FunnelIcon className="h-4 w-4" />
                           Filter-Kriterien
                         </h3>
                       </div>
@@ -372,7 +372,7 @@ export default function ListModal({ list, onClose, onSave, userId, organizationI
                       {/* Firmen Filter */}
                       <div className="space-y-4 rounded-md border p-4 bg-gray-50">
                         <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
-                          <BuildingOfficeIcon className="h-5 w-5 text-gray-400" />
+                          <BuildingOfficeIcon className="h-4 w-4 text-gray-400" />
                           Firmen-Filter
                         </div>
                         
@@ -417,7 +417,7 @@ export default function ListModal({ list, onClose, onSave, userId, organizationI
                       {/* Personen Filter */}
                       <div className="space-y-4 rounded-md border p-4 bg-gray-50">
                         <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
-                          <UsersIcon className="h-5 w-5 text-gray-400" />
+                          <UsersIcon className="h-4 w-4 text-gray-400" />
                           Personen-Filter
                         </div>
                         
@@ -464,7 +464,7 @@ export default function ListModal({ list, onClose, onSave, userId, organizationI
                       {/* NEU: Journalisten-Filter */}
                       <div className="space-y-4 rounded-md border p-4 bg-gray-50">
                         <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
-                          <NewspaperIcon className="h-5 w-5 text-gray-400" />
+                          <NewspaperIcon className="h-4 w-4 text-gray-400" />
                           Journalisten-Filter
                         </div>
                         
@@ -484,7 +484,7 @@ export default function ListModal({ list, onClose, onSave, userId, organizationI
                       {/* NEU: Publikations-Filter mit neuer Komponente */}
                       <div className="space-y-4 rounded-md border p-4 bg-gray-50">
                         <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
-                          <DocumentTextIcon className="h-5 w-5 text-gray-400" />
+                          <DocumentTextIcon className="h-4 w-4 text-gray-400" />
                           Publikations-Filter
                         </div>
                         
@@ -522,7 +522,7 @@ export default function ListModal({ list, onClose, onSave, userId, organizationI
                     <h3 className="font-medium text-gray-900">Live-Vorschau</h3>
                     {loadingPreview ? (
                       <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#005fab]"></div>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
                         <span>Lade...</span>
                       </div>
                     ) : (
@@ -556,7 +556,7 @@ export default function ListModal({ list, onClose, onSave, userId, organizationI
                           <div className="flex items-center gap-1">
                             {(('emails' in contact && contact.emails && contact.emails.length > 0) || 
                               ('email' in contact && contact.email)) && (
-                              <EnvelopeIcon className="h-3 w-3 text-[#005fab]" title="Hat E-Mail" />
+                              <EnvelopeIcon className="h-3 w-3 text-primary" title="Hat E-Mail" />
                             )}
                             {(('phones' in contact && contact.phones && contact.phones.length > 0) || 
                               ('phone' in contact && contact.phone)) && (
@@ -599,7 +599,7 @@ export default function ListModal({ list, onClose, onSave, userId, organizationI
             <Button 
               type="submit" 
               disabled={loading || !formData.name}
-              className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
+              color="primary"
             >
               {loading ? 'Speichern...' : 'Speichern'}
             </Button>

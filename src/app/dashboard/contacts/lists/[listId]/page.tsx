@@ -43,7 +43,7 @@ import {
   ChartBarIcon,
   LanguageIcon,
   SparklesIcon
-} from "@heroicons/react/20/solid";
+} from "@heroicons/react/24/outline";
 
 // Alert Component
 function Alert({ 
@@ -115,7 +115,7 @@ function InfoCard({
     <div className="rounded-lg border bg-white overflow-hidden">
       <div className="px-4 py-3 border-b bg-gray-50">
         <h3 className="font-semibold text-lg flex items-center gap-2">
-          <Icon className="h-5 w-5 text-gray-500" />
+          <Icon className="h-4 w-4 text-gray-500" />
           {title}
         </h3>
       </div>
@@ -475,7 +475,7 @@ export default function ListDetailPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <Text className="mt-4">Lade Listendetails...</Text>
         </div>
       </div>
@@ -548,7 +548,7 @@ export default function ListDetailPage() {
               )}
               <Button 
                 onClick={() => setShowEditModal(true)}
-                className="bg-[#005fab] hover:bg-[#004a8c] text-white inline-flex items-center gap-x-2 whitespace-nowrap"
+                color="primary"
               >
                 <PencilIcon className="h-4 w-4" />
                 Liste bearbeiten
@@ -563,7 +563,7 @@ export default function ListDetailPage() {
             <div className="rounded-lg border bg-white overflow-hidden">
               <div className="px-6 py-4 border-b bg-gray-50">
                 <h3 className="font-semibold text-lg flex items-center gap-2">
-                  <UsersIcon className="h-5 w-5 text-gray-500" />
+                  <UsersIcon className="h-4 w-4 text-gray-500" />
                   Enthaltene Kontakte
                   <Badge color="blue" className="ml-2 whitespace-nowrap">{list.contactCount || 0}</Badge>
                 </h3>
@@ -585,7 +585,7 @@ export default function ListDetailPage() {
                           <TableCell className="font-medium pl-6">
                             <Link 
                               href={`/dashboard/contacts/crm/contacts/${contact.id}`} 
-                              className="text-[#005fab] hover:text-[#004a8c] hover:underline"
+                              className="text-primary hover:text-primary-hover hover:underline"
                             >
                               {formatContactName(contact)}
                             </Link>
@@ -601,7 +601,7 @@ export default function ListDetailPage() {
                             {contact.companyId && contact.companyName ? (
                               <Link 
                                 href={`/dashboard/contacts/crm/companies/${contact.companyId}`} 
-                                className="text-[#005fab] hover:text-[#004a8c] hover:underline"
+                                className="text-primary hover:text-primary-hover hover:underline"
                               >
                                 {contact.companyName}
                               </Link>
@@ -636,7 +636,7 @@ export default function ListDetailPage() {
             <InfoCard title="Listen-Details" icon={ListBulletIcon}>
               <div className="space-y-3 text-sm">
                 <div className="flex items-center gap-3">
-                  <ListBulletIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                  <ListBulletIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
                   <div className="flex items-center gap-2">
                     <span className="text-gray-600">Typ:</span>
                     <Badge color={list.type === 'dynamic' ? 'green' : 'zinc'} className="whitespace-nowrap">
@@ -646,7 +646,7 @@ export default function ListDetailPage() {
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  <HashtagIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                  <HashtagIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
                   <div className="flex items-center gap-2">
                     <span className="text-gray-600">Kategorie:</span>
                     <Badge color="purple" className="whitespace-nowrap">{getCategoryLabel(list.category)}</Badge>
@@ -654,7 +654,7 @@ export default function ListDetailPage() {
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  <CalendarIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                  <CalendarIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
                   <div>
                     <span className="text-gray-600">Erstellt:</span>
                     <span className="ml-2">{formatDate(list.createdAt)}</span>
@@ -662,7 +662,7 @@ export default function ListDetailPage() {
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  <ClockIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                  <ClockIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
                   <div>
                     <span className="text-gray-600">Aktualisiert:</span>
                     <span className="ml-2">{formatDate(list.lastUpdated || list.updatedAt)}</span>
@@ -687,7 +687,7 @@ export default function ListDetailPage() {
                         const Icon = getFilterIcon(key);
                         return (
                           <li key={key} className="flex items-start gap-3">
-                            <Icon className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                            <Icon className="h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5" />
                             <div className="flex-1">
                               <div className="font-medium text-sm text-gray-700">
                                 {getFilterLabel(key)}
@@ -715,7 +715,7 @@ export default function ListDetailPage() {
                         const Icon = getPublicationFilterIcon(key);
                         return (
                           <li key={key} className="flex items-start gap-3">
-                            <Icon className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                            <Icon className="h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5" />
                             <div className="flex-1">
                               <div className="font-medium text-sm text-gray-700">
                                 {getPublicationFilterLabel(key)}

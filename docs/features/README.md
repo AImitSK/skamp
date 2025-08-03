@@ -7,6 +7,7 @@ Diese Dokumentationen folgen dem standardisierten Template aus `FEATURE_DOCUMENT
 ### ✅ Abgeschlossen
 - **[CRM - Contact Management](./docu_dashboard_contacts_crm.md)** - Zentrale Verwaltung von Kontakten und Firmen
 - **[PR-Kampagnen](./docu_dashboard_pr-tools_campaigns.md)** - Kampagnen-Erstellung mit KI-Unterstützung
+- **[Verteilerlisten](./docu_dashboard_contacts_lists.md)** - Listen-Management für zielgerichtete Kommunikation (✅ Vollständig mit Tests)
 
 ### 🚧 In Arbeit
 - [ ] **E-Mail Inbox** - E-Mail-Kommunikation und Thread-Verwaltung
@@ -18,7 +19,6 @@ Diese Dokumentationen folgen dem standardisierten Template aus `FEATURE_DOCUMENT
 - [ ] **AI-Assistent** - KI-gestützte Textgenerierung
 - [ ] **Boilerplates** - Template-Management
 - [ ] **Kalender** - Terminplanung und Task-Management
-- [ ] **Verteilerlisten** - Listen-Management für E-Mail-Versand
 - [ ] **Analytics** - Kampagnen-Auswertung und Reporting
 
 ## 🎯 Dokumentations-Standards
@@ -52,6 +52,7 @@ Jede Feature-Dokumentation enthält:
 **Status der Migration:**
 - ✅ **CRM**: Vollständig migriert mit allen Details
 - ✅ **Kampagnen**: Vollständig migriert mit KI-Integration
+- ✅ **Verteilerlisten**: Vollständig dokumentiert mit Export-Funktionen
 - 🚧 **Weitere Features**: Sukzessive Migration geplant
 
 **Referenz-Dokumentationen:**
@@ -73,5 +74,5 @@ Alle ursprünglichen Feature-Beschreibungen sind in `/docs/legacy-features/` ver
 ---
 
 **Letzte Aktualisierung:** 2025-08-03  
-**Dokumentierte Features:** 2/15+ geplant  
+**Dokumentierte Features:** 3/15+ geplant  
 **Template-Version:** 2.0

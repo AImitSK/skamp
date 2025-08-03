@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Text } from "@/components/ui/text";
 import { useCrmData } from "@/context/CrmDataContext";
 import { ContactEnhanced } from "@/types/crm-enhanced";
-import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
+import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 
 interface ContactSelectorModalProps {
   initialSelectedIds: string[];
@@ -94,7 +94,7 @@ export default function ContactSelectorModal({
       <DialogBody className="p-0 max-h-[50vh] overflow-y-auto">
         {loading ? (
           <div className="p-6 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#005fab] mx-auto"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
             <Text className="mt-2">Lade Kontakte...</Text>
           </div>
         ) : (
@@ -108,7 +108,7 @@ export default function ContactSelectorModal({
                 <Checkbox 
                   checked={selectedIds.has(contact.id!)} 
                   onChange={() => {}}
-                  className="text-[#005fab] focus:ring-[#005fab]"
+                  className="text-primary focus:ring-primary"
                 />
                 <div className="flex-1">
                   <p className="font-medium">{getContactName(contact)}</p>
@@ -142,7 +142,7 @@ export default function ContactSelectorModal({
           </Button>
           <Button 
             onClick={handleSave}
-            className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
+            color="primary"
           >
             Auswahl übernehmen
           </Button>

@@ -36,7 +36,7 @@ import {
   CalendarIcon,
   SparklesIcon,
   DocumentDuplicateIcon
-} from "@heroicons/react/20/solid";
+} from "@heroicons/react/24/outline";
 import { listsService } from "@/lib/firebase/lists-service";
 import { DistributionList, ListMetrics } from "@/types/lists";
 import ListModal from "./ListModal";
@@ -59,7 +59,7 @@ function ViewToggle({ value, onChange, className }: { value: ViewMode; onChange:
         )}
         aria-label="List view"
       >
-        <ListBulletIcon className="h-5 w-5" />
+        <ListBulletIcon className="h-4 w-4" />
       </button>
       
       <button
@@ -72,7 +72,7 @@ function ViewToggle({ value, onChange, className }: { value: ViewMode; onChange:
         )}
         aria-label="Grid view"
       >
-        <Squares2X2Icon className="h-5 w-5" />
+        <Squares2X2Icon className="h-4 w-4" />
       </button>
     </div>
   );
@@ -407,7 +407,7 @@ export default function ListsPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <Text className="mt-4">Lade Listen...</Text>
         </div>
       </div>
@@ -452,7 +452,7 @@ export default function ListsPage() {
               )}
               aria-label="Filter"
             >
-              <FunnelIcon className="h-5 w-5" />
+              <FunnelIcon className="h-4 w-4" />
               {activeFiltersCount > 0 && (
                 <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-white">
                   {activeFiltersCount}
@@ -561,16 +561,17 @@ export default function ListsPage() {
 
           {/* Add Button */}
           <Button 
-            className="bg-zinc-900 hover:bg-zinc-800 text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-zinc-900 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 h-10 px-6"
+            className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary h-10 px-6"
             onClick={() => setShowCreateModal(true)}
           >
+            <PlusIcon className="h-4 w-4 mr-2" />
             Liste erstellen
           </Button>
 
           {/* Actions Button */}
           <Popover className="relative">
             <Popover.Button className="inline-flex items-center justify-center p-2 text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:text-zinc-300 dark:hover:bg-zinc-800">
-              <EllipsisVerticalIcon className="h-5 w-5" />
+              <EllipsisVerticalIcon className="h-4 w-4" />
             </Popover.Button>
             
             <Transition
@@ -588,7 +589,7 @@ export default function ListsPage() {
                     onClick={handleRefreshAllLists}
                     className="flex w-full items-center gap-3 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-700"
                   >
-                    <ArrowPathIcon className="h-5 w-5" />
+                    <ArrowPathIcon className="h-4 w-4" />
                     Alle aktualisieren
                   </button>
                   {selectedListIds.size > 0 && (
@@ -598,7 +599,7 @@ export default function ListsPage() {
                         onClick={handleBulkDelete}
                         className="flex w-full items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                       >
-                        <TrashIcon className="h-5 w-5" />
+                        <TrashIcon className="h-4 w-4" />
                         Auswahl löschen ({selectedListIds.size})
                       </button>
                     </>
@@ -647,7 +648,7 @@ export default function ListsPage() {
               <div className="mt-6">
                 <Button 
                   onClick={() => setShowCreateModal(true)}
-                  className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
+                  color="primary"
                 >
                   <PlusIcon />
                   Erste Liste erstellen
@@ -780,7 +781,7 @@ export default function ListsPage() {
                       {/* Actions */}
                       <div className="ml-4">
                         <Dropdown>
-                          <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700">
+                          <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
                             <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
                           </DropdownButton>
                           <DropdownMenu anchor="bottom end">
@@ -898,8 +899,8 @@ export default function ListsPage() {
                       Anzeigen
                     </Link>
                     <Dropdown>
-                      <DropdownButton plain className="p-1 hover:bg-zinc-100 rounded dark:hover:bg-zinc-700">
-                        <EllipsisVerticalIcon className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+                      <DropdownButton plain className="p-1 hover:bg-zinc-100 rounded dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                        <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
                       </DropdownButton>
                       <DropdownMenu anchor="bottom end">
                         <DropdownItem onClick={() => {
@@ -969,7 +970,7 @@ export default function ListsPage() {
                     key={i}
                     plain
                     onClick={() => setCurrentPage(i)}
-                    className={currentPage === i ? 'font-semibold text-[#005fab]' : ''}
+                    className={currentPage === i ? 'font-semibold text-primary' : ''}
                   >
                     {i}
                   </Button>
