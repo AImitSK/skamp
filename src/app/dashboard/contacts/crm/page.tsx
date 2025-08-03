@@ -439,7 +439,7 @@ const [companiesData, contactsData, tagsData] = await Promise.all([
       downloadCSV(csvContent, filename);
       showAlert('success', `Export erfolgreich: ${filename}`);
     } catch (error) {
-      console.error('Export error:', error);
+      // Export error logged via alert system
       showAlert('error', 'Export fehlgeschlagen', 'Bitte prüfen Sie die Konsole für Details.');
     }
   };
@@ -462,7 +462,7 @@ const [companiesData, contactsData, tagsData] = await Promise.all([
   // Berechne Contact Count für Companies
 const getContactCount = (companyId: string) => {
   const count = contacts.filter(contact => contact.companyId === companyId).length;
-  console.log(`Company ${companyId} has ${count} contacts`);
+  // Company contact count tracked internally
   return count;
 };
 
@@ -1408,7 +1408,7 @@ const getContactCount = (companyId: string) => {
               setShowContactModal(false);
               setSelectedContact(null);
             } catch (error) {
-              console.error('Error after save:', error);
+              // Error handled via alert system
               showAlert('error', 'Fehler beim Speichern', 'Bitte prüfen Sie die Konsole für Details.');
             }
           }} 

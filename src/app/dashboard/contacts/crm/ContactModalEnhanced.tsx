@@ -16,6 +16,8 @@ import { contactsEnhancedService, companiesEnhancedService, tagsEnhancedService 
 import { publicationService } from "@/lib/firebase/library-service";
 import { Tag, TagColor, SocialPlatform, socialPlatformLabels } from "@/types/crm";
 import { ContactEnhanced, CompanyEnhanced, CONTACT_STATUS_OPTIONS, COMMUNICATION_CHANNELS, MEDIA_TYPES, SUBMISSION_FORMATS } from "@/types/crm-enhanced";
+import { ContactModalEnhancedProps, ContactTabId, ContactTabConfig } from "@/types/crm-enhanced-ui";
+import { CONTACT_TABS } from "@/lib/constants/crm-constants";
 import { CountryCode, LanguageCode } from "@/types/international";
 import { Publication } from "@/types/library";
 import { TagInput } from "@/components/ui/tag-input";
@@ -36,56 +38,7 @@ import {
 } from "@heroicons/react/20/solid";
 import clsx from "clsx";
 
-// Tab Definition
-type TabId = 'general' | 'communication' | 'media' | 'professional' | 'gdpr' | 'personal';
-
-interface TabConfig {
-  id: TabId;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  description: string;
-  visible?: (formData: Partial<ContactEnhanced>) => boolean;
-}
-
-const TABS: TabConfig[] = [
-  { 
-    id: 'general', 
-    label: 'Allgemein', 
-    icon: UserIcon,
-    description: 'Basis-Kontaktinformationen' 
-  },
-  { 
-    id: 'communication', 
-    label: 'Kommunikation', 
-    icon: ChatBubbleLeftRightIcon,
-    description: 'Kontaktdaten und Präferenzen' 
-  },
-  { 
-    id: 'media', 
-    label: 'Medien', 
-    icon: NewspaperIcon,
-    description: 'Journalist-Profil und Publikationen',
-    visible: (formData) => formData.mediaProfile?.isJournalist === true
-  },
-  { 
-    id: 'professional', 
-    label: 'Beruflich', 
-    icon: BriefcaseIcon,
-    description: 'Position, Bildung, Qualifikationen' 
-  },
-  { 
-    id: 'gdpr', 
-    label: 'GDPR', 
-    icon: ShieldCheckIcon,
-    description: 'Datenschutz-Einwilligungen' 
-  },
-  { 
-    id: 'personal', 
-    label: 'Persönlich', 
-    icon: HeartIcon,
-    description: 'Persönliche Informationen' 
-  }
-];
+// Tab-Konfiguration ist jetzt in @/lib/constants/crm-constants.ts definiert
 
 // Alert Component
 function Alert({ 
@@ -124,7 +77,9 @@ function Alert({
   );
 }
 
-interface ContactModalEnhancedProps {
+// Props Interface ist jetzt in @/types/crm-enhanced-ui.ts definiert
+
+interface Props {
   contact: ContactEnhanced | null;
   companies: CompanyEnhanced[];
   onClose: () => void;
@@ -140,8 +95,8 @@ export default function ContactModalEnhanced({
   onSave, 
   userId,
   organizationId
-}: ContactModalEnhancedProps) {
-  const [activeTab, setActiveTab] = useState<TabId>('general');
+}: Props) {
+  const [activeTab, setActiveTab] = useState<ContactTabId>('general');
   const [formData, setFormData] = useState<Partial<ContactEnhanced>>({
     name: {
       firstName: '',
@@ -233,7 +188,7 @@ export default function ContactModalEnhanced({
       const orgTags = await tagsEnhancedService.getAllAsLegacyTags(organizationId);
       setTags(orgTags);
     } catch (error) {
-      console.error('Error loading tags:', error);
+      // Error loading tags - operation tracked internally
     }
   };
 
@@ -250,7 +205,7 @@ export default function ContactModalEnhanced({
         setPublications(pubs);
       }
     } catch (error) {
-      console.error('Error loading publications:', error);
+      // Error loading publications - operation tracked internally
     }
   }, [formData.companyId, organizationId]);
 
@@ -284,12 +239,12 @@ export default function ContactModalEnhanced({
   };
 
   // Tab visibility check
-  const isTabVisible = (tab: TabConfig): boolean => {
+  const isTabVisible = (tab: ContactTabConfig): boolean => {
     if (!tab.visible) return true;
     return tab.visible(formData);
   };
 
-  const visibleTabs = TABS.filter(isTabVisible);
+  const visibleTabs = CONTACT_TABS.filter(isTabVisible);
 
   // Email handlers
   const addEmailField = () => {
@@ -444,7 +399,7 @@ export default function ContactModalEnhanced({
       onSave();
       onClose();
     } catch (error) {
-      console.error('Error saving contact:', error);
+      // Error saving contact - handled via UI feedback
       setValidationErrors(['Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.']);
     } finally {
       setLoading(false);

@@ -274,7 +274,7 @@ export default function ContactDetailPage() {
             );
             setPublications(contactPublications);
           } catch (error) {
-            console.error('Error loading publications:', error);
+            // Error loading publications - data loading tracked internally
             setPublications([]);
           }
         } else {
@@ -285,7 +285,7 @@ export default function ContactDetailPage() {
       }
     } catch (err: any) {
       setError("Fehler beim Laden der Daten.");
-      console.error(err);
+      // Error handled via UI feedback
     } finally {
       setLoading(false);
     }

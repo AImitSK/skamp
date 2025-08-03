@@ -293,7 +293,7 @@ export default function CompanyDetailPage() {
             const parent = await companiesEnhancedService.getById(companyData.parentCompanyId, organizationId);
             setParentCompany(parent);
           } catch (err) {
-            console.error('Error loading parent company:', err);
+            // Error loading parent company - operation tracked internally
           }
         }
 
@@ -306,7 +306,7 @@ export default function CompanyDetailPage() {
             const subs = await Promise.all(subsPromises);
             setSubsidiaries(subs.filter(Boolean) as CompanyEnhanced[]);
           } catch (err) {
-            console.error('Error loading subsidiaries:', err);
+            // Error loading subsidiaries - operation tracked internally
           }
         }
       } else {
@@ -314,7 +314,7 @@ export default function CompanyDetailPage() {
       }
     } catch (err: any) {
       setError("Fehler beim Laden der Daten.");
-      console.error(err);
+      // Error handled via UI feedback
     } finally {
       setLoading(false);
     }

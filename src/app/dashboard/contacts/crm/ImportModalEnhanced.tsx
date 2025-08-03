@@ -12,6 +12,8 @@ import Papa from 'papaparse';
 import { companiesEnhancedService, contactsEnhancedService } from '@/lib/firebase/crm-service-enhanced';
 import { CompanyEnhanced, ContactEnhanced, COMPANY_STATUS_OPTIONS, LIFECYCLE_STAGE_OPTIONS, CONTACT_STATUS_OPTIONS } from '@/types/crm-enhanced';
 import { CompanyType, companyTypeLabels } from '@/types/crm';
+import { ImportResult, ImportProgress, ImportTab, ImportModalEnhancedProps } from '@/types/crm-enhanced-ui';
+import { CSV_MAX_FILE_SIZE, CSV_CHUNK_SIZE, STATUS_MESSAGES, ERROR_MESSAGES } from '@/lib/constants/crm-constants';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import {
@@ -29,24 +31,7 @@ import {
 import { CountryCode, CurrencyCode, LanguageCode } from '@/types/international';
 import clsx from 'clsx';
 
-// Tab type
-type ImportTab = 'companies' | 'contacts';
-
-// Import result type
-interface ImportResult {
-  created: number;
-  updated: number;
-  skipped: number;
-  errors: { row: number; error: string }[];
-  warnings: { row: number; warning: string }[];
-}
-
-// Import progress type
-interface ImportProgress {
-  current: number;
-  total: number;
-  status: 'parsing' | 'validating' | 'importing' | 'done';
-}
+// Typen sind jetzt in @/types/crm-enhanced-ui.ts definiert
 
 // Alert Component
 function Alert({ 
@@ -136,12 +121,14 @@ function ProgressBar({ progress }: { progress: ImportProgress }) {
   );
 }
 
-interface ImportModalEnhancedProps {
+// Props Interface ist jetzt in @/types/crm-enhanced-ui.ts definiert
+
+interface Props {
   onClose: () => void;
   onImportSuccess: () => void;
 }
 
-export default function ImportModalEnhanced({ onClose, onImportSuccess }: ImportModalEnhancedProps) {
+export default function ImportModalEnhanced({ onClose, onImportSuccess }: Props) {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const [activeTab, setActiveTab] = useState<ImportTab>('companies');
@@ -835,7 +822,7 @@ Peter,Müller,Herr,Prof.,Chefredakteur,Redaktion,Tech Magazin,active,p.mueller@t
             }
           }
         } catch (err) {
-          console.error("Import error:", err);
+          // Import error handled via UI error message
           setError("Ein Fehler ist aufgetreten. Bitte überprüfen Sie das Dateiformat.");
         } finally {
           setIsImporting(false);

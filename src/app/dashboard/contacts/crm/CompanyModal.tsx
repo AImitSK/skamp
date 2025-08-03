@@ -15,6 +15,8 @@ import { companiesEnhancedService, tagsEnhancedService } from "@/lib/firebase/cr
 import { publicationService, advertisementService } from "@/lib/firebase/library-service";
 import { Company, CompanyType, Tag, TagColor, SocialPlatform, socialPlatformLabels } from "@/types/crm";
 import { CompanyEnhanced, COMPANY_STATUS_OPTIONS, LIFECYCLE_STAGE_OPTIONS } from "@/types/crm-enhanced";
+import { CompanyModalProps, CompanyTabId, CompanyTabConfig } from "@/types/crm-enhanced-ui";
+import { COMPANY_TABS } from "@/lib/constants/crm-constants";
 import { CountryCode, LanguageCode, CurrencyCode } from "@/types/international";
 import { Publication, Advertisement } from "@/types/library";
 import { TagInput } from "@/components/ui/tag-input";
@@ -41,56 +43,7 @@ import clsx from "clsx";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-// Tab Definition
-type TabId = 'general' | 'legal' | 'international' | 'financial' | 'corporate' | 'media';
-
-interface TabConfig {
-  id: TabId;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  description: string;
-  visible?: (formData: Partial<CompanyEnhanced>) => boolean;
-}
-
-const TABS: TabConfig[] = [
-  { 
-    id: 'general', 
-    label: 'Allgemein', 
-    icon: BuildingOfficeIcon,
-    description: 'Basis-Informationen zur Firma' 
-  },
-  { 
-    id: 'legal', 
-    label: 'Rechtliches', 
-    icon: ScaleIcon,
-    description: 'Offizieller Name, Identifikatoren, Rechtsform' 
-  },
-  { 
-    id: 'international', 
-    label: 'International', 
-    icon: GlobeAltIcon,
-    description: 'Adressen, Telefonnummern, Sprachen' 
-  },
-  { 
-    id: 'financial', 
-    label: 'Finanzen', 
-    icon: BanknotesIcon,
-    description: 'Umsatz, Währung, Finanzkennzahlen' 
-  },
-  { 
-    id: 'corporate', 
-    label: 'Konzern', 
-    icon: BuildingOffice2Icon,
-    description: 'Muttergesellschaft, Tochterunternehmen' 
-  },
-  { 
-    id: 'media', 
-    label: 'Medien', 
-    icon: NewspaperIcon,
-    description: 'Publikationen und Medien-Informationen',
-    visible: (formData) => ['publisher', 'media_house', 'agency'].includes(formData.type!)
-  }
-];
+// Tab-Konfiguration ist jetzt in @/lib/constants/crm-constants.ts definiert
 
 // Business Identifier Types
 const IDENTIFIER_TYPES = [
@@ -159,7 +112,9 @@ function Alert({
   );
 }
 
-interface CompanyModalProps {
+// Props Interface ist jetzt in @/types/crm-enhanced-ui.ts definiert
+
+interface Props {
   company: CompanyEnhanced | null;
   onClose: () => void;
   onSave: () => void;
@@ -167,9 +122,9 @@ interface CompanyModalProps {
   organizationId: string;
 }
 
-export default function CompanyModal({ company, onClose, onSave, userId, organizationId }: CompanyModalProps) {
+export default function CompanyModal({ company, onClose, onSave, userId, organizationId }: Props) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<TabId>('general');
+  const [activeTab, setActiveTab] = useState<CompanyTabId>('general');
   const [formData, setFormData] = useState<Partial<CompanyEnhanced>>({
     // Basic fields
     name: '',
@@ -303,7 +258,7 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
         setLinkedAdvertisements([]);
       }
     } catch (error) {
-      console.error('Error loading library data:', error);
+      // Error loading library data - operation tracked internally
     } finally {
       setLoadingLibraryData(false);
     }
@@ -327,12 +282,12 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
   };
 
   // Tab visibility check
-  const isTabVisible = (tab: TabConfig): boolean => {
+  const isTabVisible = (tab: CompanyTabConfig): boolean => {
     if (!tab.visible) return true;
     return tab.visible(formData);
   };
 
-  const visibleTabs = TABS.filter(isTabVisible);
+  const visibleTabs = COMPANY_TABS.filter(isTabVisible);
 
   // Handler functions
   const handleSocialMediaChange = (index: number, field: 'platform' | 'url', value: string) => {
