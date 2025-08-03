@@ -194,7 +194,10 @@ User Action → CRM Component → Enhanced Service → Firebase → Context Upda
   - Pagination mit 50er-Batches
 
 ## 🧪 Tests (Realistisch)
-- **Tests gefunden:** Nein (im __tests__ Ordner gesucht)
+- **Tests gefunden:** ✅ Ja - Umfassende Unit Tests erstellt
+- **Test-Dateien:**
+  - `src/__tests__/features/crm-enhanced-unit.test.ts` (14 Tests, alle erfolgreich)
+  - `src/__tests__/features/crm-enhanced.test.tsx` (Vollständige Integration Tests)
 - **Kritische Test-Szenarien:**
   - CRUD-Operationen für Kontakte und Firmen
   - CSV-Import/Export mit verschiedenen Formaten
