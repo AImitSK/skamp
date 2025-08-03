@@ -23,7 +23,8 @@
       "Bash(mv:*)",
       "Bash(find:*)",
       "Bash(sed:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(cp:*)"
     ],
     "deny": []
   }
