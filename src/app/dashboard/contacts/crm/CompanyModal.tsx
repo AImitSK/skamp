@@ -22,7 +22,7 @@ import { Publication, Advertisement } from "@/types/library";
 import { TagInput } from "@/components/ui/tag-input";
 import { FocusAreasInput } from "@/components/FocusAreasInput";
 import { InfoTooltip } from "@/components/InfoTooltip";
-import { CountrySelector } from "@/components/ui/country-selector";
+// CountrySelector durch reguläres Select ersetzt
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { PhoneInput } from "@/components/ui/phone-input";
@@ -745,14 +745,45 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
                     </Field>
                     <Field>
                       <Label>Land</Label>
-                      <CountrySelector
-                        value={formData.mainAddress?.countryCode}
-                        onChange={(country) => setFormData({ 
+                      <Select 
+                        value={formData.mainAddress?.countryCode || ''} 
+                        onChange={(e) => setFormData({ 
                           ...formData, 
-                          mainAddress: { ...formData.mainAddress!, countryCode: country as CountryCode }
+                          mainAddress: { ...formData.mainAddress!, countryCode: e.target.value as CountryCode }
                         })}
-                        showCommonOnly={true}
-                      />
+                      >
+                        <option value="">Land auswählen...</option>
+                        <option value="DE">🇩🇪 Deutschland</option>
+                        <option value="AT">🇦🇹 Österreich</option>
+                        <option value="CH">🇨🇭 Schweiz</option>
+                        <option value="US">🇺🇸 USA</option>
+                        <option value="GB">🇬🇧 Großbritannien</option>
+                        <option value="FR">🇫🇷 Frankreich</option>
+                        <option value="IT">🇮🇹 Italien</option>
+                        <option value="ES">🇪🇸 Spanien</option>
+                        <option value="NL">🇳🇱 Niederlande</option>
+                        <option value="BE">🇧🇪 Belgien</option>
+                        <option value="LU">🇱🇺 Luxemburg</option>
+                        <option value="DK">🇩🇰 Dänemark</option>
+                        <option value="SE">🇸🇪 Schweden</option>
+                        <option value="NO">🇳🇴 Norwegen</option>
+                        <option value="FI">🇫🇮 Finnland</option>
+                        <option value="PL">🇵🇱 Polen</option>
+                        <option value="CZ">🇨🇿 Tschechien</option>
+                        <option value="HU">🇭🇺 Ungarn</option>
+                        <option value="PT">🇵🇹 Portugal</option>
+                        <option value="GR">🇬🇷 Griechenland</option>
+                        <option value="IE">🇮🇪 Irland</option>
+                        <option value="CA">🇨🇦 Kanada</option>
+                        <option value="AU">🇦🇺 Australien</option>
+                        <option value="JP">🇯🇵 Japan</option>
+                        <option value="CN">🇨🇳 China</option>
+                        <option value="IN">🇮🇳 Indien</option>
+                        <option value="BR">🇧🇷 Brasilien</option>
+                        <option value="MX">🇲🇽 Mexiko</option>
+                        <option value="RU">🇷🇺 Russland</option>
+                        <option value="TR">🇹🇷 Türkei</option>
+                      </Select>
                     </Field>
                   </div>
                 </div>

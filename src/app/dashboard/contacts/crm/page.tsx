@@ -36,8 +36,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   FunnelIcon,
-  ListBulletIcon,
-  Squares2X2Icon,
+  // ListBulletIcon, Squares2X2Icon - Grid-View entfernt
   PhoneIcon,
   EnvelopeIcon,
   GlobeAltIcon,
@@ -59,40 +58,7 @@ import { CountryCode } from '@/types/international';
 import { COMPANY_STATUS_OPTIONS, LIFECYCLE_STAGE_OPTIONS } from '@/types/crm-enhanced';
 
 type TabType = 'companies' | 'contacts';
-type ViewMode = 'grid' | 'list';
-
-// ViewToggle Component
-function ViewToggle({ value, onChange, className }: { value: ViewMode; onChange: (value: ViewMode) => void; className?: string }) {
-  return (
-    <div className={clsx('inline-flex rounded-lg border border-zinc-300 dark:border-zinc-600', className)}>
-      <button
-        onClick={() => onChange('list')}
-        className={clsx(
-          'flex items-center justify-center p-2 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-l-lg',
-          value === 'list'
-            ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white'
-            : 'bg-white text-zinc-600 hover:text-zinc-900 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100'
-        )}
-        aria-label="List view"
-      >
-        <ListBulletIcon className="h-5 w-5" />
-      </button>
-      
-      <button
-        onClick={() => onChange('grid')}
-        className={clsx(
-          'flex items-center justify-center p-2 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-r-lg border-l border-zinc-300 dark:border-zinc-600',
-          value === 'grid'
-            ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white'
-            : 'bg-white text-zinc-600 hover:text-zinc-900 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100'
-        )}
-        aria-label="Grid view"
-      >
-        <Squares2X2Icon className="h-5 w-5" />
-      </button>
-    </div>
-  );
-}
+// Grid-Ansicht entfernt - nur Listenansicht verfügbar
 
 // Alert Component
 function Alert({ 
@@ -199,7 +165,7 @@ export default function ContactsPage() {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(25);
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  // ViewMode entfernt - nur Listenansicht
 
   // Filter States
   const [selectedTypes, setSelectedTypes] = useState<CompanyType[]>([]);
@@ -725,8 +691,7 @@ const getContactCount = (companyId: string) => {
             }}
           </Popover>
 
-          {/* View Toggle */}
-          <ViewToggle value={viewMode} onChange={setViewMode} />
+          {/* View Toggle entfernt - nur Listenansicht */}
 
           {/* Add Button */}
           <Button 
@@ -821,10 +786,9 @@ const getContactCount = (companyId: string) => {
         )}
       </div>
 
-      {/* Tabellen-Rendering */}
+      {/* Listen-Rendering */}
       <div>
-        {viewMode === 'list' ? (
-          activeTab === 'companies' ? (
+        {activeTab === 'companies' ? (
             <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm overflow-hidden">
               {/* Header */}
               <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
@@ -1123,202 +1087,7 @@ const getContactCount = (companyId: string) => {
               </div>
             </div>
           )
-        ) : (
-          // Grid View
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {activeTab === 'companies' ? (
-              paginatedCompanies.map((company) => (
-                <div
-                  key={company.id}
-                  className="relative rounded-lg border border-zinc-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md dark:border-zinc-700 dark:bg-zinc-800"
-                >
-                  {/* Checkbox */}
-                  <div className="absolute top-4 right-4">
-                    <Checkbox
-                      checked={selectedCompanyIds.has(company.id!)}
-                      onChange={(checked: boolean) => {
-                        const newIds = new Set(selectedCompanyIds);
-                        if (checked) {
-                          newIds.add(company.id!);
-                        } else {
-                          newIds.delete(company.id!);
-                        }
-                        setSelectedCompanyIds(newIds);
-                      }}
-                    />
-                  </div>
-
-                  {/* Company Info */}
-                  <div className="pr-8">
-                    <h3 className="text-lg font-semibold text-zinc-900 dark:text-white">
-                      <Link href={`/dashboard/contacts/crm/companies/${company.id}`} className="hover:text-primary">
-                        {company.name}
-                      </Link>
-                    </h3>
-                    <div className="mt-2 space-y-2">
-                      <Badge color="zinc">{companyTypeLabels[company.type]}</Badge>
-                      {company.industryClassification?.primary && (
-                        <p className="text-sm text-zinc-600 dark:text-zinc-400">{company.industryClassification.primary}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Tags */}
-                  {company.tagIds && company.tagIds.length > 0 && (
-                    <div className="mt-4 flex flex-wrap gap-1">
-                      {company.tagIds.slice(0, 3).map(tagId => {
-                        const tag = tags.find(t => t.id === tagId);
-                        return tag ? <Badge key={tag.id} color={tag.color as any} className="text-xs">{tag.name}</Badge> : null;
-                      })}
-                      {company.tagIds.length > 3 && (
-                        <span className="text-xs text-zinc-400">+{company.tagIds.length - 3}</span>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Actions */}
-                  <div className="mt-4 flex items-center justify-between border-t border-zinc-100 pt-4 dark:border-zinc-700">
-                    <div className="flex gap-3">
-                      {company.website && (
-                        <a
-                          href={company.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm text-primary hover:text-primary-hover"
-                        >
-                          Website
-                        </a>
-                      )}
-                      {getPrimaryPhone(company.phones) && (
-                        <a href={`tel:${getPrimaryPhone(company.phones)}`} className="text-sm text-primary hover:text-primary-hover">
-                          Anrufen
-                        </a>
-                      )}
-                    </div>
-                    <Dropdown>
-                      <DropdownButton plain className="p-1 hover:bg-zinc-100 rounded dark:hover:bg-zinc-700">
-                        <EllipsisVerticalIcon className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
-                      </DropdownButton>
-                      <DropdownMenu anchor="bottom end">
-                        <DropdownItem href={`/dashboard/contacts/crm/companies/${company.id}`}>
-                          <EyeIcon />
-                          Anzeigen
-                        </DropdownItem>
-                        <DropdownItem onClick={() => {
-                          setSelectedCompany(company);
-                          setShowCompanyModal(true);
-                        }}>
-                          <PencilIcon />
-                          Bearbeiten
-                        </DropdownItem>
-                        <DropdownDivider />
-                        <DropdownItem onClick={() => handleDelete(company.id!, company.name, 'company')}>
-                          <TrashIcon />
-                          <span className="text-red-600">Löschen</span>
-                        </DropdownItem>
-                      </DropdownMenu>
-                    </Dropdown>
-                  </div>
-                </div>
-              ))
-            ) : (
-              paginatedContacts.map((contact) => (
-                <div
-                  key={contact.id}
-                  className="relative rounded-lg border border-zinc-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md dark:border-zinc-700 dark:bg-zinc-800"
-                >
-                  {/* Checkbox */}
-                  <div className="absolute top-4 right-4">
-                    <Checkbox
-                      checked={selectedContactIds.has(contact.id!)}
-                      onChange={(checked: boolean) => {
-                        const newIds = new Set(selectedContactIds);
-                        if (checked) {
-                          newIds.add(contact.id!);
-                        } else {
-                          newIds.delete(contact.id!);
-                        }
-                        setSelectedContactIds(newIds);
-                      }}
-                    />
-                  </div>
-
-                  {/* Contact Info */}
-                  <div className="pr-8">
-                    <h3 className="text-lg font-semibold text-zinc-900 dark:text-white">
-                      <Link href={`/dashboard/contacts/crm/contacts/${contact.id}`} className="hover:text-primary">
-                        {contact.displayName}
-                      </Link>
-                    </h3>
-                    <div className="mt-2 space-y-1">
-                      {contact.position && (
-                        <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{contact.position}</p>
-                      )}
-                      {contact.companyName && (
-                        <p className="text-sm text-zinc-600 dark:text-zinc-400">{contact.companyName}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Tags */}
-                  {contact.tagIds && contact.tagIds.length > 0 && (
-                    <div className="mt-4 flex flex-wrap gap-1">
-                      {contact.tagIds.slice(0, 3).map(tagId => {
-                        const tag = tags.find(t => t.id === tagId);
-                        return tag ? <Badge key={tag.id} color={tag.color as any} className="text-xs">{tag.name}</Badge> : null;
-                      })}
-                      {contact.tagIds.length > 3 && (
-                        <span className="text-xs text-zinc-400">+{contact.tagIds.length - 3}</span>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Actions */}
-                  <div className="mt-4 flex items-center justify-between border-t border-zinc-100 pt-4 dark:border-zinc-700">
-                    <div className="flex gap-3">
-                      {getPrimaryEmail(contact.emails) && (
-                        <a
-                          href={`mailto:${getPrimaryEmail(contact.emails)}`}
-                          className="text-sm text-primary hover:text-primary-hover"
-                        >
-                          E-Mail
-                        </a>
-                      )}
-                      {getPrimaryPhone(contact.phones) && (
-                        <a href={`tel:${getPrimaryPhone(contact.phones)}`} className="text-sm text-primary hover:text-primary-hover">
-                          Anrufen
-                        </a>
-                      )}
-                    </div>
-                    <Dropdown>
-                      <DropdownButton plain className="p-1 hover:bg-zinc-100 rounded dark:hover:bg-zinc-700">
-                        <EllipsisVerticalIcon className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
-                      </DropdownButton>
-                      <DropdownMenu anchor="bottom end">
-                        <DropdownItem href={`/dashboard/contacts/crm/contacts/${contact.id}`}>
-                          <EyeIcon />
-                          Anzeigen
-                        </DropdownItem>
-                        <DropdownItem onClick={() => {
-                          setSelectedContact(contact);
-                          setShowContactModal(true);
-                        }}>
-                          <PencilIcon />
-                          Bearbeiten
-                        </DropdownItem>
-                        <DropdownDivider />
-                        <DropdownItem onClick={() => handleDelete(contact.id!, contact.displayName, 'contact')}>
-                          <TrashIcon />
-                          <span className="text-red-600">Löschen</span>
-                        </DropdownItem>
-                      </DropdownMenu>
-                    </Dropdown>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        )}
+        }
       </div>
 
      {/* Pagination */}

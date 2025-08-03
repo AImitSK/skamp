@@ -21,8 +21,7 @@ import { CONTACT_TABS } from "@/lib/constants/crm-constants";
 import { CountryCode, LanguageCode } from "@/types/international";
 import { Publication } from "@/types/library";
 import { TagInput } from "@/components/ui/tag-input";
-import { CountrySelector } from "@/components/ui/country-selector";
-import { LanguageSelector } from "@/components/ui/language-selector";
+// CountrySelector, LanguageSelector durch reguläre Select ersetzt
 import { PhoneInput } from "@/components/ui/phone-input";
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { 
@@ -599,7 +598,7 @@ export default function ContactModalEnhanced({
                 {/* Tags */}
                 <Field>
                   <Label>Tags</Label>
-                  <div className="relative z-10">
+                  <div className="relative z-[60]">
                     <TagInput 
                       selectedTagIds={formData.tagIds || []} 
                       availableTags={tags} 
@@ -828,16 +827,30 @@ export default function ContactModalEnhanced({
                     </Field>
                     <Field>
                       <Label>Bevorzugte Sprache</Label>
-                      <LanguageSelector
-                        value={formData.communicationPreferences?.preferredLanguage}
-                        onChange={(lang) => setFormData({ 
+                      <Select 
+                        value={formData.communicationPreferences?.preferredLanguage || ''} 
+                        onChange={(e) => setFormData({ 
                           ...formData, 
                           communicationPreferences: { 
                             ...formData.communicationPreferences,
-                            preferredLanguage: lang as LanguageCode
+                            preferredLanguage: e.target.value as LanguageCode
                           }
                         })}
-                      />
+                      >
+                        <option value="">Sprache auswählen...</option>
+                        <option value="de">🇩🇪 Deutsch</option>
+                        <option value="en">🇺🇸 English</option>
+                        <option value="fr">🇫🇷 Français</option>
+                        <option value="es">🇪🇸 Español</option>
+                        <option value="it">🇮🇹 Italiano</option>
+                        <option value="pt">🇵🇹 Português</option>
+                        <option value="nl">🇳🇱 Nederlands</option>
+                        <option value="pl">🇵🇱 Polski</option>
+                        <option value="ru">🇷🇺 Русский</option>
+                        <option value="ja">🇯🇵 日本語</option>
+                        <option value="ko">🇰🇷 한국어</option>
+                        <option value="zh">🇨🇳 中文</option>
+                      </Select>
                     </Field>
                   </div>
                 </div>
@@ -1173,17 +1186,48 @@ export default function ContactModalEnhanced({
                   </Field>
                   <Field>
                     <Label>Nationalität</Label>
-                    <CountrySelector
-                      value={formData.personalInfo?.nationality}
-                      onChange={(country) => setFormData({ 
+                    <Select 
+                      value={formData.personalInfo?.nationality || ''} 
+                      onChange={(e) => setFormData({ 
                         ...formData, 
                         personalInfo: { 
                           ...formData.personalInfo,
-                          nationality: country as CountryCode
+                          nationality: e.target.value as CountryCode
                         }
                       })}
-                      showCommonOnly={false}
-                    />
+                    >
+                      <option value="">Nationalität auswählen...</option>
+                      <option value="DE">🇩🇪 Deutschland</option>
+                      <option value="AT">🇦🇹 Österreich</option>
+                      <option value="CH">🇨🇭 Schweiz</option>
+                      <option value="US">🇺🇸 USA</option>
+                      <option value="GB">🇬🇧 Großbritannien</option>
+                      <option value="FR">🇫🇷 Frankreich</option>
+                      <option value="IT">🇮🇹 Italien</option>
+                      <option value="ES">🇪🇸 Spanien</option>
+                      <option value="NL">🇳🇱 Niederlande</option>
+                      <option value="BE">🇧🇪 Belgien</option>
+                      <option value="LU">🇱🇺 Luxemburg</option>
+                      <option value="DK">🇩🇰 Dänemark</option>
+                      <option value="SE">🇸🇪 Schweden</option>
+                      <option value="NO">🇳🇴 Norwegen</option>
+                      <option value="FI">🇫🇮 Finnland</option>
+                      <option value="PL">🇵🇱 Polen</option>
+                      <option value="CZ">🇨🇿 Tschechien</option>
+                      <option value="HU">🇭🇺 Ungarn</option>
+                      <option value="PT">🇵🇹 Portugal</option>
+                      <option value="GR">🇬🇷 Griechenland</option>
+                      <option value="IE">🇮🇪 Irland</option>
+                      <option value="CA">🇨🇦 Kanada</option>
+                      <option value="AU">🇦🇺 Australien</option>
+                      <option value="JP">🇯🇵 Japan</option>
+                      <option value="CN">🇨🇳 China</option>
+                      <option value="IN">🇮🇳 Indien</option>
+                      <option value="BR">🇧🇷 Brasilien</option>
+                      <option value="MX">🇲🇽 Mexiko</option>
+                      <option value="RU">🇷🇺 Russland</option>
+                      <option value="TR">🇹🇷 Türkei</option>
+                    </Select>
                   </Field>
                 </div>
 

@@ -112,11 +112,11 @@ export function DropdownItem({
   let classes = clsx(
     className,
     // Base styles - größere Padding für mehr Raum
-    'group relative flex gap-x-4 rounded-lg p-3 focus:outline-hidden',
-    // Hover state
+    'group relative flex gap-x-4 rounded-lg p-3 focus:outline-hidden w-full',
+    // Hover state - volle Breite
     'hover:bg-zinc-50 dark:hover:bg-zinc-800/50',
-    // Focus state
-    'data-focus:bg-zinc-100 dark:data-focus:bg-zinc-800',
+    // Focus state - CI-Blau anstatt grau
+    'data-focus:bg-[#005fab]/10 dark:data-focus:bg-[#005fab]/20 data-focus:ring-2 data-focus:ring-[#005fab]/20',
     // Disabled state
     'data-disabled:opacity-50',
     // Forced colors mode
