@@ -45,15 +45,30 @@ Zentrale Dokumentation für einheitliche UI/UX-Standards in der gesamten CeleroP
 ### Zurück-Buttons
 **Standard-Muster für alle Detail-Seiten:**
 ```tsx
-<Button plain onClick={() => router.back()}>
+<button
+  onClick={() => router.push('/dashboard/library/publications')}
+  className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 border-0 rounded-md px-3 py-2 text-sm font-medium"
+>
   <ArrowLeftIcon className="h-4 w-4 mr-2" />
   Zurück zur Übersicht
-</Button>
+</button>
+```
+
+### Verifizieren-Buttons
+**Standard-Muster für Verifizierungs-Funktionen:**
+```tsx
+<button
+  onClick={() => setShowVerifyDialog(true)}
+  className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 border-0 rounded-md px-3 py-2 text-sm font-medium"
+>
+  <CheckBadgeIcon className="h-4 w-4 mr-2" />
+  {verified ? 'Verifizierung zurücknehmen' : 'Verifizieren'}
+</button>
 ```
 
 **NICHT verwenden:**
-- ❌ `bg-zinc-50 hover:bg-zinc-100 px-3 py-2 rounded-lg border`
-- ❌ Links statt Buttons für Navigation
+- ❌ `Button plain` Komponente für Navigation
+- ❌ Links statt Buttons für Aktionen
 
 ### Button-Padding
 - **Standard-Buttons:** `px-6 py-2`
@@ -71,32 +86,42 @@ Zentrale Dokumentation für einheitliche UI/UX-Standards in der gesamten CeleroP
 
 ## 📦 Content Boxes & Cards
 
-### Grundregel: KEINE Schatten
+### Grundregel: KEINE Schatten & KEINE Linien
 - **NIEMALS:** `shadow`, `shadow-md`, `hover:shadow-md` verwenden
-- **Stattdessen:** Nur Borders für Abgrenzung
+- **NIEMALS:** `border-b` Linien zwischen Header und Content
+- **Stattdessen:** Nur äußere Borders für Abgrenzung
 
-### Standard Content-Boxen
+### Standard Content-Boxen (InfoCard Pattern)
 ```tsx
-<div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6">
-  {/* Content */}
+<div className="rounded-lg border bg-white overflow-hidden">
+  <div className="px-4 py-3 bg-gray-50">
+    <h3 className="text-lg font-medium text-gray-900">
+      Titel
+    </h3>
+  </div>
+  <div className="p-6">
+    {/* Content */}
+  </div>
 </div>
 ```
 
 ### Status-Cards (Reichweite, Metriken, etc.)
-**Kompakt und dezent:**
+**Hellgelbes Design mit grauer Schrift:**
 ```tsx
-<div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-4">
+<div className="bg-gray-50 rounded-lg p-4" style={{backgroundColor: '#f1f0e2'}}>
   <div className="flex items-center gap-3">
-    <Icon className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+    <div className="flex-shrink-0">
+      <Icon className="h-5 w-5 text-gray-500" />
+    </div>
     <div className="flex-1 min-w-0">
-      <div className="text-lg font-semibold text-zinc-900 dark:text-white">
+      <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
         {value}
       </div>
-      <div className="text-sm text-zinc-500 dark:text-zinc-400 truncate">
+      <div className="text-sm text-gray-500 truncate">
         {label}
       </div>
       {subValue && (
-        <div className="text-xs text-zinc-400 dark:text-zinc-500 truncate">
+        <div className="text-xs text-gray-400 truncate">
           {subValue}
         </div>
       )}
@@ -167,16 +192,58 @@ Zentrale Dokumentation für einheitliche UI/UX-Standards in der gesamten CeleroP
 - **Status-Updates:** Live-Regions für dynamische Inhalte
 - **Strukturierte Überschriften:** H1 → H2 → H3 Hierarchie
 
+## 🎨 UI-Komponenten Standards
+
+### Verifizierungs-Dialoge
+```tsx
+<Dialog open={showVerifyDialog} onClose={() => setShowVerifyDialog(false)}>
+  <div className="p-6">
+    <div className="sm:flex sm:items-start">
+      <div className={`mx-auto flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${
+        verified ? 'bg-yellow-100' : 'bg-green-100'
+      } sm:mx-0 sm:h-10 sm:w-10`}>
+        <CheckBadgeIcon className={`h-6 w-6 ${
+          verified ? 'text-yellow-600' : 'text-green-600'
+        }`} />
+      </div>
+      <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+        <DialogTitle>
+          {verified ? 'Verifizierung zurücknehmen' : 'Publikation verifizieren'}
+        </DialogTitle>
+        <DialogBody className="mt-2">
+          <Text>Bestätigungstext hier</Text>
+        </DialogBody>
+      </div>
+    </div>
+  </div>
+</Dialog>
+```
+
+### Layout ohne störende Linien
+```tsx
+// Layout ohne border-b Linien
+<div className="pb-5 mb-5">  {/* Kein border-b */}
+  <h1>Bibliothek</h1>
+</div>
+
+<div>  {/* Kein border-b */}
+  <nav className="-mb-px flex space-x-8">
+    {/* Tabs mit border-b-2 nur für aktive Unterstreichung */}
+  </nav>
+</div>
+```
+
 ## 🧪 Qualitätssicherung
 
 ### Checkliste vor Commit
 - [ ] Keine `shadow`-Klassen verwendet
+- [ ] Keine `border-b` Linien zwischen Header/Content
 - [ ] Alle Icons sind `@heroicons/react/24/outline`
 - [ ] Icon-Größen entsprechen Standard (h-4, h-5, h-6)
-- [ ] Zurück-Buttons ohne Hintergrundfarbe
-- [ ] Status-Cards kompakt gestaltet
+- [ ] Zurück/Verifizieren-Buttons mit `bg-gray-50`
+- [ ] Status-Cards mit `#f1f0e2` Hintergrund
 - [ ] CeleroPress statt SKAMP verwendet
-- [ ] Dark-Mode getestet
+- [ ] InfoCard Pattern für Content-Boxen
 
 ### Automatische Prüfungen
 ```bash
@@ -190,18 +257,28 @@ grep -r "@heroicons/react/20/solid" src/
 ## 📚 Referenz-Implementierungen
 
 ### Gute Beispiele
-- **Publications Detail-Page:** Korrekte Status-Cards
-- **CRM Detail-Pages:** Standard Zurück-Buttons
-- **Library Features:** Konsistente Icon-Verwendung
+- **Publications Detail-Page:** Hellgelbe Status-Cards mit `#f1f0e2`
+- **CRM Detail-Pages:** InfoCard Pattern mit grauen Headern
+- **Library Layout:** Keine störenden border-b Linien
+- **Verifizieren-Buttons:** Graue Buttons mit Toggle-Funktionalität
 
 ### Zu vermeidende Patterns
-- Große, aufgeblähte Status-Cards
-- Schatten-Effekte auf Content-Boxen
-- Inconsistente Icon-Größen
-- Zurück-Buttons mit Hintergrundfarbe
+- ❌ Schatten-Effekte auf Content-Boxen
+- ❌ `border-b` Linien zwischen Header und Content
+- ❌ `Button plain` für Navigation
+- ❌ Verifiziert-Badges (redundant zu Button)
+- ❌ Inconsistente Icon-Größen
 
 ---
 
 **Letzte Aktualisierung:** 2025-08-04  
-**Version:** 1.0  
+**Version:** 2.0  
 **Gültig für:** Alle CeleroPress Features
+
+## 🎯 Neue Standards (v2.0)
+- Hellgelbe Status-Cards (`#f1f0e2`)
+- InfoCard Pattern für Content-Boxen
+- Keine `border-b` Linien in Layouts
+- Native HTML-Buttons für Navigation
+- Verifizierungs-Dialoge mit farbkodierten Icons
+- Toggle-Funktionalität für Verifizierung
