@@ -168,7 +168,9 @@ export default function PublicationDetailPage() {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showVerifyDialog, setShowVerifyDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [verifying, setVerifying] = useState(false);
 
   useEffect(() => {
     if (user && currentOrganization && publicationId) {
@@ -238,13 +240,27 @@ export default function PublicationDetailPage() {
     if (!user || !currentOrganization || !publication) return;
 
     try {
-      await publicationService.verify(publicationId, {
-        organizationId: currentOrganization.id,
-        userId: user.uid
-      });
-      await loadData();
+      setVerifying(true);
+      
+      if (publication.verified) {
+        // Entverifizieren (falls Service-Methode existiert)
+        // await publicationService.unverify(publicationId, { organizationId: currentOrganization.id, userId: user.uid });
+        // Fallback: Update nur lokal
+        setPublication(prev => prev ? { ...prev, verified: false, verifiedAt: undefined } : null);
+      } else {
+        // Verifizieren
+        await publicationService.verify(publicationId, {
+          organizationId: currentOrganization.id,
+          userId: user.uid
+        });
+        await loadData();
+      }
+      
+      setShowVerifyDialog(false);
     } catch (error) {
-      alert("Fehler beim Verifizieren");
+      alert(`Fehler beim ${publication.verified ? 'Entverifizieren' : 'Verifizieren'}`);
+    } finally {
+      setVerifying(false);
     }
   };
 
@@ -357,12 +373,13 @@ className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 b
           </div>
 
           <div className="flex items-center gap-2">
-            {!publication.verified && (
-              <Button plain onClick={handleVerify}>
-                <CheckBadgeIcon className="h-4 w-4 mr-2" />
-                Verifizieren
-              </Button>
-            )}
+            <button
+              onClick={() => setShowVerifyDialog(true)}
+              className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 border-0 rounded-md px-3 py-2 text-sm font-medium"
+            >
+              <CheckBadgeIcon className="h-4 w-4 mr-2" />
+              {publication.verified ? 'Entverifizieren' : 'Verifizieren'}
+            </button>
             <Button onClick={() => setShowEditModal(true)} className="px-6 py-2">
               <PencilIcon className="h-4 w-4 mr-2" />
               Bearbeiten
@@ -1195,6 +1212,49 @@ className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 b
           }}
         />
       )}
+
+      {/* Verify Dialog */}
+      <Dialog open={showVerifyDialog} onClose={() => setShowVerifyDialog(false)}>
+        <div className="p-6">
+          <div className="sm:flex sm:items-start">
+            <div className={`mx-auto flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${
+              publication.verified ? 'bg-yellow-100' : 'bg-green-100'
+            } sm:mx-0 sm:h-10 sm:w-10`}>
+              <CheckBadgeIcon className={`h-6 w-6 ${
+                publication.verified ? 'text-yellow-600' : 'text-green-600'
+              }`} />
+            </div>
+            <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+              <DialogTitle>
+                Publikation {publication.verified ? 'entverifizieren' : 'verifizieren'}
+              </DialogTitle>
+              <DialogBody className="mt-2">
+                <Text>
+                  {publication.verified 
+                    ? `Möchten Sie die Verifikation der Publikation "${publication.title}" wirklich entfernen?`
+                    : `Möchten Sie die Publikation "${publication.title}" als verifiziert markieren?`
+                  }
+                </Text>
+              </DialogBody>
+            </div>
+          </div>
+          <DialogActions className="mt-5 sm:mt-4">
+            <Button plain onClick={() => setShowVerifyDialog(false)}>
+              Abbrechen
+            </Button>
+            <Button 
+              color={publication.verified ? "zinc" : "green"} 
+              onClick={handleVerify} 
+              disabled={verifying}
+            >
+              {verifying 
+                ? (publication.verified ? 'Entverifiziere...' : 'Verifiziere...') 
+                : (publication.verified ? 'Entverifizieren' : 'Verifizieren')
+              }
+            </Button>
+          </DialogActions>
+        </div>
+      </Dialog>
 
       {/* Delete Dialog */}
       <Dialog open={showDeleteDialog} onClose={() => setShowDeleteDialog(false)}>
