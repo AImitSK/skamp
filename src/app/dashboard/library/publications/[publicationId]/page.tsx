@@ -312,13 +312,11 @@ className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 b
           </button>
         </div>
 
-        <div>
-          <div className="flex items-center gap-3">
-            <Heading level={1}>{publication.title}</Heading>
-            {publication.verified && (
-              <CheckBadgeIcon className="h-6 w-6 text-green-500" />
-            )}
-          </div>
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="flex items-center gap-3">
+              <Heading level={1}>{publication.title}</Heading>
+            </div>
           {publication.subtitle && (
             <Text className="mt-1 text-lg text-zinc-600 dark:text-zinc-400">
               {publication.subtitle}
@@ -351,7 +349,51 @@ className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 b
               ) : (
                 <Badge color="red">Eingestellt</Badge>
               )}
+              {publication.verified && (
+                <Badge color="green">Verifiziert</Badge>
+              )}
             </div>
+          </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {!publication.verified && (
+              <Button plain onClick={handleVerify}>
+                <CheckBadgeIcon className="h-4 w-4 mr-2" />
+                Verifizieren
+              </Button>
+            )}
+            <Button onClick={() => setShowEditModal(true)} className="px-6 py-2">
+              <PencilIcon className="h-4 w-4 mr-2" />
+              Bearbeiten
+            </Button>
+            <Dropdown>
+              <DropdownButton plain>
+                <EllipsisVerticalIcon className="h-5 w-5" />
+              </DropdownButton>
+              <DropdownMenu anchor="bottom end">
+                <DropdownItem onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/dashboard/library/publications/${publicationId}`);
+                  alert("Link kopiert!");
+                }}>
+                  <LinkIcon />
+                  Link kopieren
+                </DropdownItem>
+                <DropdownItem>
+                  <DocumentDuplicateIcon />
+                  Duplizieren
+                </DropdownItem>
+                <DropdownItem>
+                  <ShareIcon />
+                  Teilen
+                </DropdownItem>
+                <DropdownDivider />
+                <DropdownItem onClick={() => setShowDeleteDialog(true)}>
+                  <TrashIcon />
+                  <span className="text-red-600">Löschen</span>
+                </DropdownItem>
+              </DropdownMenu>
+            </Dropdown>
           </div>
         </div>
       </div>
@@ -607,39 +649,6 @@ className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 b
                 </div>
               )}
 
-              {/* Quick Actions */}
-              <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6">
-                <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">
-                  Schnellaktionen
-                </h3>
-                <div className="space-y-2">
-                  {publication.websiteUrl && (
-                    <a
-                      href={publication.websiteUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center text-sm text-primary hover:text-primary-hover"
-                    >
-                      <GlobeAltIcon className="h-4 w-4 mr-2" />
-                      Website besuchen
-                    </a>
-                  )}
-                  <button
-                    onClick={() => setActiveTab('advertisements')}
-                    className="flex items-center text-sm text-primary hover:text-primary-hover"
-                  >
-                    <NewspaperIcon className="h-4 w-4 mr-2" />
-                    Werbemittel anzeigen ({advertisements.length})
-                  </button>
-                  <Link
-                    href={`/dashboard/library/media-kits/new?publicationId=${publicationId}`}
-                    className="flex items-center text-sm text-primary hover:text-primary-hover"
-                  >
-                    <DocumentTextIcon className="h-4 w-4 mr-2" />
-                    Media Kit erstellen
-                  </Link>
-                </div>
-              </div>
             </div>
           </div>
         )}
