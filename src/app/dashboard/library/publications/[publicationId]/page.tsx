@@ -106,17 +106,17 @@ function StatCard({
   className?: string;
 }) {
   return (
-    <div className={`bg-primary rounded-lg p-4 ${className}`}>
+    <div className={`bg-blue-500/15 border border-blue-500/20 rounded-lg p-4 ${className}`}>
       <div className="flex items-center gap-3">
         <div className="flex-shrink-0">
-          <Icon className="h-5 w-5 text-white" />
+          <Icon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-lg font-semibold text-yellow-400 flex items-baseline gap-2">
+          <div className="text-lg font-semibold text-blue-700 dark:text-blue-400 flex items-baseline gap-2">
             {value}
             {trend && (
               <div className={`flex items-center text-sm font-medium ${
-                trend.value > 0 ? 'text-green-300' : 'text-red-300'
+                trend.value > 0 ? 'text-green-600' : 'text-red-600'
               }`}>
                 <ArrowTrendingUpIcon className={`h-3 w-3 ${
                   trend.value < 0 ? 'rotate-180' : ''
@@ -125,11 +125,11 @@ function StatCard({
               </div>
             )}
           </div>
-          <div className="text-sm text-white truncate">
+          <div className="text-sm text-blue-700 dark:text-blue-400 truncate">
             {label}
           </div>
           {subValue && (
-            <div className="text-xs text-white/80 truncate">
+            <div className="text-xs text-blue-600 dark:text-blue-500 truncate">
               {subValue}
             </div>
           )}
