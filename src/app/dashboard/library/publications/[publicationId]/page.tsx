@@ -312,90 +312,48 @@ className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 b
           </button>
         </div>
 
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="flex items-center gap-3">
-              <Heading level={1}>{publication.title}</Heading>
-              {publication.verified && (
-                <CheckBadgeIcon className="h-6 w-6 text-green-500" />
-              )}
-            </div>
-            {publication.subtitle && (
-              <Text className="mt-1 text-lg text-zinc-600 dark:text-zinc-400">
-                {publication.subtitle}
-              </Text>
+        <div>
+          <div className="flex items-center gap-3">
+            <Heading level={1}>{publication.title}</Heading>
+            {publication.verified && (
+              <CheckBadgeIcon className="h-6 w-6 text-green-500" />
             )}
-            <div className="mt-2 flex items-center gap-4 text-sm text-zinc-500 dark:text-zinc-400">
-              {publisher && (
-                <Link
-                  href={`/dashboard/contacts/crm/companies/${publisher.id}`}
-                  className="flex items-center hover:text-primary"
-                >
-                  <BuildingOfficeIcon className="h-4 w-4 mr-1" />
-                  {publisher.name}
-                </Link>
-              )}
-              <span className="flex items-center">
-                <CalendarIcon className="h-4 w-4 mr-1" />
-                Erstellt am {formatDate(publication.createdAt)}
-              </span>
-            </div>
           </div>
-
-          <div className="flex items-center gap-2">
-            {!publication.verified && (
-              <Button plain onClick={handleVerify}>
-                <CheckBadgeIcon className="h-4 w-4 mr-2" />
-                Verifizieren
-              </Button>
+          {publication.subtitle && (
+            <Text className="mt-1 text-lg text-zinc-600 dark:text-zinc-400">
+              {publication.subtitle}
+            </Text>
+          )}
+          
+          {/* Kompakte Zeile: Erstellt + Publisher + Badges */}
+          <div className="mt-3 flex items-center flex-wrap gap-3">
+            <span className="flex items-center text-sm text-zinc-500 dark:text-zinc-400">
+              <CalendarIcon className="h-4 w-4 mr-1" />
+              Erstellt am {formatDate(publication.createdAt)}
+            </span>
+            {publisher && (
+              <Link
+                href={`/dashboard/contacts/crm/companies/${publisher.id}`}
+                className="flex items-center text-sm text-zinc-500 dark:text-zinc-400 hover:text-primary"
+              >
+                <BuildingOfficeIcon className="h-4 w-4 mr-1" />
+                {publisher.name}
+              </Link>
             )}
-            <Button onClick={() => setShowEditModal(true)} className="px-6 py-2">
-              <PencilIcon className="h-4 w-4 mr-2" />
-              Bearbeiten
-            </Button>
-            <Dropdown>
-              <DropdownButton plain>
-                <EllipsisVerticalIcon className="h-5 w-5" />
-              </DropdownButton>
-              <DropdownMenu anchor="bottom end">
-                <DropdownItem onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/dashboard/library/publications/${publicationId}`);
-                  alert("Link kopiert!");
-                }}>
-                  <LinkIcon />
-                  Link kopieren
-                </DropdownItem>
-                <DropdownItem>
-                  <DocumentDuplicateIcon />
-                  Duplizieren
-                </DropdownItem>
-                <DropdownItem>
-                  <ShareIcon />
-                  Teilen
-                </DropdownItem>
-                <DropdownDivider />
-                <DropdownItem onClick={() => setShowDeleteDialog(true)}>
-                  <TrashIcon />
-                  <span className="text-red-600">Löschen</span>
-                </DropdownItem>
-              </DropdownMenu>
-            </Dropdown>
+            <div className="flex flex-wrap gap-2">
+              <Badge color="zinc">{publicationTypeLabels[publication.type] || publication.type}</Badge>
+              <Badge color="blue">{formatLabels[publication.format] || publication.format}</Badge>
+              <Badge color="green">{scopeLabels[publication.geographicScope]}</Badge>
+              {publication.status === 'active' ? (
+                <Badge color="green">Aktiv</Badge>
+              ) : publication.status === 'inactive' ? (
+                <Badge color="yellow">Inaktiv</Badge>
+              ) : (
+                <Badge color="red">Eingestellt</Badge>
+              )}
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* Status Badges */}
-      <div className="mb-6 flex flex-wrap gap-2">
-        <Badge color="zinc">{publicationTypeLabels[publication.type] || publication.type}</Badge>
-        <Badge color="blue">{formatLabels[publication.format] || publication.format}</Badge>
-        <Badge color="green">{scopeLabels[publication.geographicScope]}</Badge>
-        {publication.status === 'active' ? (
-          <Badge color="green">Aktiv</Badge>
-        ) : publication.status === 'inactive' ? (
-          <Badge color="yellow">Inaktiv</Badge>
-        ) : (
-          <Badge color="red">Eingestellt</Badge>
-        )}
       </div>
 
       {/* Stat Cards */}
