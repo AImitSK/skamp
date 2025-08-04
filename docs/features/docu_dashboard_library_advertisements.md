@@ -210,18 +210,65 @@ Spezielle Flows:
 
 ## 🧪 Tests
 
-### Tests gefunden
-**Nein** - Keine Tests im `__tests__` Ordner gefunden
+### Tests implementiert
+**Ja** - Vollständige Test-Suite implementiert:
 
-### Kritische Test-Szenarien
-- **CRUD-Operationen:** Erstellen, Bearbeiten, Löschen von Werbemitteln
-- **Preiskalkulator:** Verschiedene Preismodelle und Rabatt-Kombinationen
-- **Filter-Funktionalität:** Multi-Kriterien-Filterung
-- **CSV-Export:** Vollständigkeit und Excel-Kompatibilität
-- **Verfügbarkeitsprüfung:** Blackout-Dates und Inventory-Limits
+#### Service Tests (`library-advertisements-service.test.ts`)
+- ✅ **CRUD-Operationen:** Create, Update, Delete mit Validierung
+- ✅ **Preiskalkulator:** Alle Rabatt-Kombinationen und Preismodelle
+- ✅ **Verfügbarkeitsprüfung:** Blackout-Dates, Start/End-Termine
+- ✅ **Suchfunktionalität:** Text-Suche, Filter nach Typ/Preis
+- ✅ **Duplikation:** Werbemittel-Kopierung mit Anpassungen
+- ✅ **Fehlerbehandlung:** Validierung und Exception-Cases
+
+#### UI Tests (`library-advertisements-ui.test.tsx`)
+- ✅ **Modal-Rendering:** Erstellen vs. Bearbeiten Modi
+- ✅ **Form-Validierung:** Pflichtfelder und Fehlermeldungen
+- ✅ **Tab-Navigation:** Alle 4 Tabs (Grunddaten, Specs, Preise, Verfügbarkeit)
+- ✅ **Publikationsauswahl:** Multi-Select mit Anzeige von Status
+- ✅ **Speicher-Workflow:** Loading States und Error Handling
+- ✅ **User Interactions:** Buttons, Inputs, Dropdowns
+
+#### Kritische Test-Szenarien abgedeckt
+- **✅ Preiskalkulator:** 
+  - Basispreis ohne Rabatte
+  - Mengenrabatte (5%, 10% Schwellen)
+  - Agenturprovision (15%)
+  - Frühbucherrabatt (30+ Tage)
+  - Kombinierte Rabatte
+  - Aufpreise (feste Beträge)
+  - Mengen-Multiplikation
+- **✅ Verfügbarkeitsprüfung:**
+  - Start/End-Datum Validierung  
+  - Blackout-Dates (Weihnachten etc.)
+  - Fehlerbehandlung für ungültige Termine
+- **✅ Filter-Funktionalität:**
+  - Text-Suche in Namen/Beschreibungen
+  - Filter nach Typ (banner, display_banner, etc.)
+  - Preisbereich-Filter (min/max)
+  - Publikations-Filter
+- **✅ CRUD-Operationen:**
+  - Validierung (Name erforderlich, Publikationen erforderlich)
+  - Erfolgreiche Erstellung/Aktualisierung
+  - Fehlerbehandlung bei API-Problemen
 
 ### Test-Priorität
-**Hoch** - Business-kritische Funktionalität mit komplexer Preislogik
+**Hoch** - Business-kritische Funktionalität mit komplexer Preislogik - **Komplett abgedeckt**
+
+### Automatisierte Test-Ausführung
+```bash
+# Alle Advertisement Tests ausführen
+npm test -- --testPathPattern=advertisements
+
+# Nur Service Tests
+npm test -- library-advertisements-service.test.ts
+
+# Nur UI Tests
+npm test -- library-advertisements-ui.test.ts
+
+# Mit Coverage Report
+npm test -- --coverage --testPathPattern=advertisements
+```
 
 ### User-Test-Anleitung
 1. **Werbemittel erstellen:**
@@ -254,4 +301,4 @@ Spezielle Flows:
 
 ---
 **Bearbeitet am:** 2025-08-04
-**Status:** ✅ Dokumentation fertig / 🔄 Design-Pattern-Anwendung in Arbeit
+**Status:** ✅ Komplett fertiggestellt - Design Pattern v2.0 + Tests implementiert
