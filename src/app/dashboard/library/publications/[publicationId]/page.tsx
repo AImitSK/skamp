@@ -112,7 +112,7 @@ function StatCard({
           <Icon className="h-5 w-5 text-primary dark:text-primary" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-lg font-semibold text-white flex items-baseline gap-2">
+          <div className="text-lg font-semibold flex items-baseline gap-2" style={{color: 'rgb(222, 220, 0)'}}>
             {value}
             {trend && (
               <div className={`flex items-center text-sm font-medium ${
