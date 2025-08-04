@@ -19,7 +19,7 @@ import {
   PlusIcon,
   TrashIcon,
   InformationCircleIcon
-} from "@heroicons/react/20/solid";
+} from "@heroicons/react/24/outline";
 
 interface AdvertisementModalProps {
   isOpen: boolean;

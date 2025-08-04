@@ -36,7 +36,7 @@ import {
   EllipsisVerticalIcon,
   ArrowDownTrayIcon,
   ExclamationTriangleIcon
-} from "@heroicons/react/20/solid";
+} from "@heroicons/react/24/outline";
 import { advertisementService, publicationService } from "@/lib/firebase/library-service";
 import { companiesService } from "@/lib/firebase/crm-service";
 import { 
@@ -174,7 +174,7 @@ function PriceCalculator({
                 min="1"
                 value={quantity}
                 onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                className="mt-1 block w-full rounded-md border-zinc-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm dark:border-zinc-600 dark:bg-zinc-700"
+                className="mt-1 block w-full rounded-md border-zinc-300 focus:border-primary focus:ring-primary sm:text-sm dark:border-zinc-600 dark:bg-zinc-700"
               />
             </div>
 
@@ -188,7 +188,7 @@ function PriceCalculator({
                 min="1"
                 value={bookingsPerYear}
                 onChange={(e) => setBookingsPerYear(parseInt(e.target.value) || 1)}
-                className="mt-1 block w-full rounded-md border-zinc-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm dark:border-zinc-600 dark:bg-zinc-700"
+                className="mt-1 block w-full rounded-md border-zinc-300 focus:border-primary focus:ring-primary sm:text-sm dark:border-zinc-600 dark:bg-zinc-700"
               />
             </div>
 
@@ -202,7 +202,7 @@ function PriceCalculator({
                 min="0"
                 value={daysInAdvance}
                 onChange={(e) => setDaysInAdvance(parseInt(e.target.value) || 0)}
-                className="mt-1 block w-full rounded-md border-zinc-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm dark:border-zinc-600 dark:bg-zinc-700"
+                className="mt-1 block w-full rounded-md border-zinc-300 focus:border-primary focus:ring-primary sm:text-sm dark:border-zinc-600 dark:bg-zinc-700"
               />
             </div>
 
@@ -387,13 +387,13 @@ export default function AdvertisementDetailPage() {
     <div>
       {/* Back Button */}
       <div className="mb-6">
-        <Link
-          href="/dashboard/library/advertisements"
-          className="inline-flex items-center text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+        <button
+          onClick={() => router.push('/dashboard/library/advertisements')}
+          className="inline-flex items-center px-3 py-2 text-sm text-zinc-700 bg-gray-50 rounded-md hover:bg-gray-100 dark:text-zinc-300 dark:bg-zinc-700 dark:hover:bg-zinc-600"
         >
           <ArrowLeftIcon className="mr-1 h-4 w-4" />
           Zurück zur Übersicht
-        </Link>
+        </button>
       </div>
 
       {/* Header */}
@@ -485,14 +485,14 @@ export default function AdvertisementDetailPage() {
               <div className="lg:col-span-2 space-y-6">
                 {/* Beschreibung */}
                 {advertisement.description && (
-                  <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                  <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                     <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-3">Beschreibung</h3>
                     <Text className="whitespace-pre-wrap">{advertisement.description}</Text>
                   </div>
                 )}
 
                 {/* Zugeordnete Publikationen */}
-                <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                   <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">
                     Publikationen ({publications.length})
                   </h3>
@@ -501,7 +501,7 @@ export default function AdvertisementDetailPage() {
                       <Link
                         key={pub.id}
                         href={`/dashboard/library/publications/${pub.id}`}
-                        className="block rounded-lg border border-zinc-200 p-4 hover:border-primary hover:shadow-sm transition-all dark:border-zinc-700 dark:hover:border-primary"
+                        className="block rounded-lg border border-zinc-200 p-4 hover:border-primary transition-all dark:border-zinc-700 dark:hover:border-primary"
                       >
                         <div className="flex items-start justify-between">
                           <div>
@@ -531,7 +531,7 @@ export default function AdvertisementDetailPage() {
 
                 {/* Marketing Bullet Points */}
                 {advertisement.marketingBulletPoints && advertisement.marketingBulletPoints.length > 0 && (
-                  <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                  <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                     <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">Verkaufsargumente</h3>
                     <ul className="space-y-2">
                       {advertisement.marketingBulletPoints.map((point, index) => (
@@ -548,7 +548,7 @@ export default function AdvertisementDetailPage() {
               {/* Sidebar */}
               <div className="space-y-6">
                 {/* Quick Stats */}
-                <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                   <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">Auf einen Blick</h3>
                   <dl className="space-y-3">
                     <div>
@@ -609,7 +609,7 @@ export default function AdvertisementDetailPage() {
 
                 {/* Tags */}
                 {advertisement.tags && advertisement.tags.length > 0 && (
-                  <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                  <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                     <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-3">Tags</h3>
                     <div className="flex flex-wrap gap-2">
                       {advertisement.tags.map((tag) => (
@@ -620,7 +620,7 @@ export default function AdvertisementDetailPage() {
                 )}
 
                 {/* Metadata */}
-                <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                   <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">Metadaten</h3>
                   <dl className="space-y-2 text-sm">
                     <div className="flex justify-between">
@@ -655,7 +655,7 @@ export default function AdvertisementDetailPage() {
           <TabPanel>
             <div className="grid gap-6 lg:grid-cols-2">
               {/* General Specs */}
-              <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+              <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                 <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">Allgemeine Spezifikationen</h3>
                 <dl className="space-y-3">
                   {advertisement.specifications.format && (
@@ -675,7 +675,7 @@ export default function AdvertisementDetailPage() {
 
               {/* Type-specific Specs */}
               {advertisement.specifications.printSpecs && (
-                <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                   <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">Print-Spezifikationen</h3>
                   <dl className="space-y-3">
                     {advertisement.specifications.printSpecs.dimensions && (
@@ -713,7 +713,7 @@ export default function AdvertisementDetailPage() {
               )}
 
               {advertisement.specifications.digitalSpecs && (
-                <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                   <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">Digital-Spezifikationen</h3>
                   <dl className="space-y-3">
                     {advertisement.specifications.digitalSpecs.dimensions && (
@@ -754,7 +754,7 @@ export default function AdvertisementDetailPage() {
               )}
 
               {advertisement.specifications.videoSpecs && (
-                <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                   <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">Video-Spezifikationen</h3>
                   <dl className="space-y-3">
                     {advertisement.specifications.videoSpecs.length && (
@@ -787,7 +787,7 @@ export default function AdvertisementDetailPage() {
 
               {/* Custom Specs */}
               {advertisement.specifications.customSpecs && Object.keys(advertisement.specifications.customSpecs).length > 0 && (
-                <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                   <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">Weitere Spezifikationen</h3>
                   <dl className="space-y-3">
                     {Object.entries(advertisement.specifications.customSpecs).map(([key, value]) => (
@@ -806,7 +806,7 @@ export default function AdvertisementDetailPage() {
           <TabPanel>
             <div className="grid gap-6 lg:grid-cols-2">
               {/* Base Pricing */}
-              <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+              <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                 <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">Basispreis</h3>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
@@ -833,7 +833,7 @@ export default function AdvertisementDetailPage() {
 
               {/* Discounts */}
               {advertisement.pricing.discounts && (
-                <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                   <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">Rabatte</h3>
                   <div className="space-y-4">
                     {advertisement.pricing.discounts.volume && advertisement.pricing.discounts.volume.length > 0 && (
@@ -895,7 +895,7 @@ export default function AdvertisementDetailPage() {
 
               {/* Surcharges */}
               {advertisement.pricing.surcharges && advertisement.pricing.surcharges.length > 0 && (
-                <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                   <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">Aufpreise</h3>
                   <div className="space-y-2">
                     {advertisement.pricing.surcharges.map((surcharge, index) => (
@@ -920,7 +920,7 @@ export default function AdvertisementDetailPage() {
 
               {/* Regional Pricing */}
               {advertisement.regionalPricing && advertisement.regionalPricing.length > 0 && (
-                <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                   <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">Regionale Preise</h3>
                   <div className="space-y-3">
                     {advertisement.regionalPricing.map((regional, index) => (
@@ -952,7 +952,7 @@ export default function AdvertisementDetailPage() {
           <TabPanel>
             <div className="grid gap-6 lg:grid-cols-2">
               {/* General Availability */}
-              <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+              <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                 <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">Verfügbarkeitszeitraum</h3>
                 <div className="space-y-3">
                   {advertisement.availability.startDate && (
@@ -995,7 +995,7 @@ export default function AdvertisementDetailPage() {
 
               {/* Blackout Dates */}
               {advertisement.availability.blackoutDates && advertisement.availability.blackoutDates.length > 0 && (
-                <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                   <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">Sperrzeiten</h3>
                   <div className="space-y-3">
                     {advertisement.availability.blackoutDates.map((blackout, index) => (
@@ -1019,7 +1019,7 @@ export default function AdvertisementDetailPage() {
 
               {/* Inventory */}
               {advertisement.availability.inventory && (
-                <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                   <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">Inventar</h3>
                   <div className="space-y-4">
                     <div className="relative pt-1">
@@ -1044,7 +1044,7 @@ export default function AdvertisementDetailPage() {
 
               {/* Seasonal Availability */}
               {advertisement.availability.seasonalAvailability && advertisement.availability.seasonalAvailability.length > 0 && (
-                <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                   <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">Saisonale Verfügbarkeit</h3>
                   <div className="space-y-3">
                     {advertisement.availability.seasonalAvailability.map((seasonal, index) => (
@@ -1094,13 +1094,13 @@ export default function AdvertisementDetailPage() {
                 <>
                   {/* Overview Stats */}
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                    <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                       <dt className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Buchungen gesamt</dt>
                       <dd className="mt-2 text-3xl font-semibold text-zinc-900 dark:text-white">
                         {advertisement.performance.totalBookings || 0}
                       </dd>
                     </div>
-                    <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                    <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                       <dt className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Umsatz gesamt</dt>
                       <dd className="mt-2 text-3xl font-semibold text-zinc-900 dark:text-white">
                         {advertisement.performance.totalRevenue 
@@ -1109,13 +1109,13 @@ export default function AdvertisementDetailPage() {
                         }
                       </dd>
                     </div>
-                    <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                    <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                       <dt className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Ø CTR</dt>
                       <dd className="mt-2 text-3xl font-semibold text-zinc-900 dark:text-white">
                         {advertisement.performance.avgCtr ? `${advertisement.performance.avgCtr.toFixed(2)}%` : '—'}
                       </dd>
                     </div>
-                    <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                    <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                       <dt className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Letzte Buchung</dt>
                       <dd className="mt-2 text-sm font-semibold text-zinc-900 dark:text-white">
                         {advertisement.performance.lastBookingDate 
@@ -1129,7 +1129,7 @@ export default function AdvertisementDetailPage() {
                   {/* Additional Metrics */}
                   <div className="grid gap-6 lg:grid-cols-2">
                     {advertisement.performance.clientSatisfaction !== undefined && (
-                      <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                      <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                         <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">Kundenzufriedenheit</h3>
                         <div className="flex items-center">
                           <div className="text-4xl font-semibold text-zinc-900 dark:text-white">
@@ -1141,7 +1141,7 @@ export default function AdvertisementDetailPage() {
                     )}
 
                     {advertisement.performance.rebookingRate !== undefined && (
-                      <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                      <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                         <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">Wiederbuchungsrate</h3>
                         <div className="text-4xl font-semibold text-zinc-900 dark:text-white">
                           {advertisement.performance.rebookingRate}%
@@ -1151,7 +1151,7 @@ export default function AdvertisementDetailPage() {
                   </div>
                 </>
               ) : (
-                <div className="rounded-lg border border-zinc-200 bg-white p-12 text-center shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                <div className="rounded-lg border border-zinc-200 bg-white p-12 text-center dark:border-zinc-700 dark:bg-zinc-800">
                   <ChartBarIcon className="mx-auto h-12 w-12 text-zinc-400" />
                   <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
                     Noch keine Performance-Daten verfügbar
@@ -1166,7 +1166,7 @@ export default function AdvertisementDetailPage() {
             <div className="grid gap-6">
               {/* Spec Sheet */}
               {advertisement.materials.specSheet && (
-                <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                   <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">Spezifikationsblatt</h3>
                   <div className="flex items-center justify-between">
                     <div>
@@ -1191,7 +1191,7 @@ export default function AdvertisementDetailPage() {
 
               {/* Templates */}
               {advertisement.materials.templates && advertisement.materials.templates.length > 0 && (
-                <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                   <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">Vorlagen</h3>
                   <div className="space-y-3">
                     {advertisement.materials.templates.map((template, index) => (
@@ -1216,7 +1216,7 @@ export default function AdvertisementDetailPage() {
 
               {/* Examples */}
               {advertisement.materials.examples && advertisement.materials.examples.length > 0 && (
-                <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
                   <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">Beispiele</h3>
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {advertisement.materials.examples.map((example, index) => (
@@ -1243,7 +1243,7 @@ export default function AdvertisementDetailPage() {
               {!advertisement.materials.specSheet && 
                (!advertisement.materials.templates || advertisement.materials.templates.length === 0) &&
                (!advertisement.materials.examples || advertisement.materials.examples.length === 0) && (
-                <div className="rounded-lg border border-zinc-200 bg-white p-12 text-center shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                <div className="rounded-lg border border-zinc-200 bg-white p-12 text-center dark:border-zinc-700 dark:bg-zinc-800">
                   <DocumentIcon className="mx-auto h-12 w-12 text-zinc-400" />
                   <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
                     Keine Materialien verfügbar
