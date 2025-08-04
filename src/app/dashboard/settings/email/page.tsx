@@ -472,7 +472,7 @@ export default function EmailSettingsPage() {
                       {emailAddresses.filter(a => a.isActive).length}
                     </p>
                   </div>
-                  <EnvelopeIcon className="h-8 w-8 text-gray-400" />
+                  <EnvelopeIcon className="h-6 w-6 text-gray-400" />
                 </div>
               </div>
               <div className="bg-white p-4 rounded-lg border">
@@ -483,7 +483,7 @@ export default function EmailSettingsPage() {
                       {emailAddresses.filter(a => a.aiSettings?.enabled).length}
                     </p>
                   </div>
-                  <SparklesIcon className="h-8 w-8 text-gray-400" />
+                  <SparklesIcon className="h-6 w-6 text-gray-400" />
                 </div>
               </div>
               <div className="bg-white p-4 rounded-lg border">
@@ -494,7 +494,7 @@ export default function EmailSettingsPage() {
                       {emailAddresses.reduce((sum, a) => sum + (a.routingRules?.length || 0), 0)}
                     </p>
                   </div>
-                  <ArrowPathIcon className="h-8 w-8 text-gray-400" />
+                  <ArrowPathIcon className="h-6 w-6 text-gray-400" />
                 </div>
               </div>
               <div className="bg-white p-4 rounded-lg border">
@@ -505,7 +505,7 @@ export default function EmailSettingsPage() {
                       {loadingTeam ? '...' : teamMembers.length}
                     </p>
                   </div>
-                  <UserGroupIcon className="h-8 w-8 text-gray-400" />
+                  <UserGroupIcon className="h-6 w-6 text-gray-400" />
                 </div>
               </div>
             </div>

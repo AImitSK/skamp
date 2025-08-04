@@ -326,8 +326,8 @@ export default function ContactDetailPage() {
           <Button 
             onClick={() => router.push('/dashboard/contacts/crm/')} 
             plain
-            className="bg-zinc-50 hover:bg-zinc-100 px-3 py-2 rounded-lg border"
           >
+            <ArrowLeftIcon className="h-4 w-4 mr-2" />
             Zurück zur Übersicht
           </Button>
         </div>
@@ -344,8 +344,8 @@ export default function ContactDetailPage() {
           <Button 
             onClick={() => router.push('/dashboard/contacts/crm/')} 
             plain
-            className="bg-zinc-50 hover:bg-zinc-100 px-3 py-2 rounded-lg border"
           >
+            <ArrowLeftIcon className="h-4 w-4 mr-2" />
             Zurück zur Übersicht
           </Button>
         </div>
@@ -371,9 +371,9 @@ export default function ContactDetailPage() {
           <Button 
             plain 
             onClick={() => router.push('/dashboard/contacts/crm/')}
-            className="mb-4 flex items-center gap-2 whitespace-nowrap bg-zinc-50 hover:bg-zinc-100 px-3 py-2 rounded-lg border"
+            className="mb-4"
           >
-            <ArrowLeftIcon className="h-4 w-4" />
+            <ArrowLeftIcon className="h-4 w-4 mr-2" />
             Zurück zur Übersicht
           </Button>
           

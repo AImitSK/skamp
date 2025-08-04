@@ -15,7 +15,7 @@ export default function NotificationsPage() {
       <div className="md:flex md:items-center md:justify-between px-4 py-6 sm:px-6 lg:px-8">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-3">
-            <BellIcon className="h-8 w-8 text-gray-400" />
+            <BellIcon className="h-6 w-6 text-gray-400" />
             <Heading>Benachrichtigungen</Heading>
           </div>
         </div>

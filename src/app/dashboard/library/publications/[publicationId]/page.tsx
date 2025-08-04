@@ -106,37 +106,33 @@ function StatCard({
   className?: string;
 }) {
   return (
-    <div className={`bg-white dark:bg-zinc-800 overflow-hidden shadow rounded-lg ${className}`}>
-      <div className="px-4 py-5 sm:p-6">
-        <div className="flex items-center">
-          <div className="flex-shrink-0">
-            <Icon className="h-8 w-8 text-zinc-400" />
-          </div>
-          <div className="ml-4 flex-1">
-            <dt className="text-sm font-medium text-zinc-500 dark:text-zinc-400 truncate">
-              {label}
-            </dt>
-            <dd className="flex items-baseline">
-              <div className="text-2xl font-semibold text-zinc-900 dark:text-white">
-                {value}
+    <div className={`border border-zinc-200 dark:border-zinc-700 rounded-lg p-4 ${className}`}>
+      <div className="flex items-center gap-3">
+        <div className="flex-shrink-0">
+          <Icon className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-lg font-semibold text-zinc-900 dark:text-white flex items-baseline gap-2">
+            {value}
+            {trend && (
+              <div className={`flex items-center text-sm font-medium ${
+                trend.value > 0 ? 'text-green-600' : 'text-red-600'
+              }`}>
+                <ArrowTrendingUpIcon className={`h-3 w-3 ${
+                  trend.value < 0 ? 'rotate-180' : ''
+                }`} />
+                <span className="ml-1">{Math.abs(trend.value)}%</span>
               </div>
-              {trend && (
-                <div className={`ml-2 flex items-baseline text-sm font-semibold ${
-                  trend.value > 0 ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  <ArrowTrendingUpIcon className={`h-4 w-4 flex-shrink-0 ${
-                    trend.value < 0 ? 'rotate-180' : ''
-                  }`} />
-                  <span className="ml-1">{Math.abs(trend.value)}%</span>
-                </div>
-              )}
-            </dd>
-            {subValue && (
-              <dd className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                {subValue}
-              </dd>
             )}
           </div>
+          <div className="text-sm text-zinc-500 dark:text-zinc-400 truncate">
+            {label}
+          </div>
+          {subValue && (
+            <div className="text-xs text-zinc-400 dark:text-zinc-500 truncate">
+              {subValue}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -307,13 +303,13 @@ export default function PublicationDetailPage() {
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center mb-4">
-          <Link
-            href="/dashboard/library/publications"
-            className="inline-flex items-center text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+          <Button
+            plain
+            onClick={() => router.push('/dashboard/library/publications')}
           >
             <ArrowLeftIcon className="h-4 w-4 mr-2" />
             Zurück zur Übersicht
-          </Link>
+          </Button>
         </div>
 
         <div className="flex items-start justify-between">
@@ -496,7 +492,7 @@ export default function PublicationDetailPage() {
             {/* Main Info */}
             <div className="lg:col-span-2 space-y-6">
               {/* Basic Information */}
-              <div className="bg-white dark:bg-zinc-800 shadow rounded-lg p-6">
+              <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6">
                 <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">
                   Grundinformationen
                 </h3>
@@ -521,7 +517,7 @@ export default function PublicationDetailPage() {
 
               {/* Focus Areas */}
               {publication.focusAreas && publication.focusAreas.length > 0 && (
-                <div className="bg-white dark:bg-zinc-800 shadow rounded-lg p-6">
+                <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6">
                   <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">
                     Themenschwerpunkte
                   </h3>
@@ -537,7 +533,7 @@ export default function PublicationDetailPage() {
 
               {/* Target Industries */}
               {publication.targetIndustries && publication.targetIndustries.length > 0 && (
-                <div className="bg-white dark:bg-zinc-800 shadow rounded-lg p-6">
+                <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6">
                   <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">
                     Zielbranchen
                   </h3>
@@ -553,7 +549,7 @@ export default function PublicationDetailPage() {
 
               {/* Notes */}
               {(publication.publicNotes || publication.internalNotes) && (
-                <div className="bg-white dark:bg-zinc-800 shadow rounded-lg p-6">
+                <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6">
                   <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">
                     Notizen
                   </h3>
@@ -582,7 +578,7 @@ export default function PublicationDetailPage() {
             {/* Sidebar */}
             <div className="space-y-6">
               {/* Languages & Countries */}
-              <div className="bg-white dark:bg-zinc-800 shadow rounded-lg p-6">
+              <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6">
                 <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">
                   Sprachen & Länder
                 </h3>
@@ -634,7 +630,7 @@ export default function PublicationDetailPage() {
               )}
 
               {/* Quick Actions */}
-              <div className="bg-white dark:bg-zinc-800 shadow rounded-lg p-6">
+              <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6">
                 <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">
                   Schnellaktionen
                 </h3>
@@ -674,7 +670,7 @@ export default function PublicationDetailPage() {
         {activeTab === 'metrics' && (
           <div className="space-y-6">
             {/* Frequency */}
-            <div className="bg-white dark:bg-zinc-800 shadow rounded-lg p-6">
+            <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6">
               <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">
                 Erscheinungsfrequenz
               </h3>
@@ -688,7 +684,7 @@ export default function PublicationDetailPage() {
 
             {/* Print Metrics */}
             {publication.metrics?.print && (
-              <div className="bg-white dark:bg-zinc-800 shadow rounded-lg p-6">
+              <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6">
                 <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">
                   Print-Metriken
                 </h3>
@@ -728,7 +724,7 @@ export default function PublicationDetailPage() {
 
             {/* Online Metrics */}
             {publication.metrics?.online && (
-              <div className="bg-white dark:bg-zinc-800 shadow rounded-lg p-6">
+              <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6">
                 <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">
                   Online-Metriken
                 </h3>
@@ -799,7 +795,7 @@ export default function PublicationDetailPage() {
 
             {/* Audience Demographics */}
             {publication.metrics?.targetAudience && (
-              <div className="bg-white dark:bg-zinc-800 shadow rounded-lg p-6">
+              <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6">
                 <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">
                   Zielgruppe
                 </h3>
@@ -826,7 +822,7 @@ export default function PublicationDetailPage() {
           <div className="space-y-6">
             {/* Editorial Contacts */}
             {publication.editorialContacts && publication.editorialContacts.length > 0 && (
-              <div className="bg-white dark:bg-zinc-800 shadow rounded-lg p-6">
+              <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6">
                 <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">
                   Redaktionelle Kontakte
                 </h3>
@@ -870,7 +866,7 @@ export default function PublicationDetailPage() {
 
             {/* Submission Guidelines */}
             {publication.submissionGuidelines && (
-              <div className="bg-white dark:bg-zinc-800 shadow rounded-lg p-6">
+              <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6">
                 <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">
                   Einreichungsrichtlinien
                 </h3>
@@ -953,7 +949,7 @@ export default function PublicationDetailPage() {
 
             {/* Sections */}
             {publication.sections && publication.sections.length > 0 && (
-              <div className="bg-white dark:bg-zinc-800 shadow rounded-lg p-6">
+              <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6">
                 <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">
                   Ressorts & Rubriken
                 </h3>
@@ -989,7 +985,7 @@ export default function PublicationDetailPage() {
         {activeTab === 'advertisements' && (
           <div>
             {advertisements.length === 0 ? (
-              <div className="bg-white dark:bg-zinc-800 shadow rounded-lg p-12 text-center">
+              <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-12 text-center">
                 <NewspaperIcon className="h-12 w-12 text-zinc-400 mx-auto mb-4" />
                 <Text className="text-lg font-medium text-zinc-900 dark:text-white mb-2">
                   Keine Werbemittel vorhanden
@@ -1005,7 +1001,7 @@ export default function PublicationDetailPage() {
                 </Link>
               </div>
             ) : (
-              <div className="bg-white dark:bg-zinc-900 shadow rounded-lg overflow-hidden">
+              <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg overflow-hidden">
                 <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-800">
                   <thead className="bg-zinc-50 dark:bg-zinc-800/50">
                     <tr>
@@ -1082,7 +1078,7 @@ export default function PublicationDetailPage() {
           <div className="space-y-6">
             {/* Identifiers */}
             {publication.identifiers && publication.identifiers.length > 0 && (
-              <div className="bg-white dark:bg-zinc-800 shadow rounded-lg p-6">
+              <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6">
                 <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">
                   Identifikatoren
                 </h3>
@@ -1103,7 +1099,7 @@ export default function PublicationDetailPage() {
             )}
 
             {/* URLs */}
-            <div className="bg-white dark:bg-zinc-800 shadow rounded-lg p-6">
+            <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6">
               <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">
                 Online-Präsenz
               </h3>
@@ -1166,7 +1162,7 @@ export default function PublicationDetailPage() {
 
             {/* Editions */}
             {publication.editions && publication.editions.length > 0 && (
-              <div className="bg-white dark:bg-zinc-800 shadow rounded-lg p-6">
+              <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6">
                 <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">
                   Ausgaben & Editionen
                 </h3>

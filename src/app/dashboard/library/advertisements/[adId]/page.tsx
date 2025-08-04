@@ -405,7 +405,7 @@ export default function AdvertisementDetailPage() {
           <div className="flex items-start space-x-4">
             <div className="flex-shrink-0">
               <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800">
-                <AdTypeIcon className="h-8 w-8 text-zinc-600 dark:text-zinc-400" />
+                <AdTypeIcon className="h-6 w-6 text-zinc-600 dark:text-zinc-400" />
               </div>
             </div>
             <div>
