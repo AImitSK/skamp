@@ -106,13 +106,13 @@ function StatCard({
   className?: string;
 }) {
   return (
-    <div className={`bg-blue-500/15 border border-blue-500/20 rounded-lg p-4 ${className}`}>
+    <div className={`bg-primary/15 border border-primary/20 rounded-lg p-4 ${className}`}>
       <div className="flex items-center gap-3">
         <div className="flex-shrink-0">
-          <Icon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+          <Icon className="h-5 w-5 text-primary dark:text-primary" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-lg font-semibold text-blue-700 dark:text-blue-400 flex items-baseline gap-2">
+          <div className="text-lg font-semibold text-white flex items-baseline gap-2">
             {value}
             {trend && (
               <div className={`flex items-center text-sm font-medium ${
@@ -125,11 +125,11 @@ function StatCard({
               </div>
             )}
           </div>
-          <div className="text-sm text-blue-700 dark:text-blue-400 truncate">
+          <div className="text-sm text-primary dark:text-primary truncate">
             {label}
           </div>
           {subValue && (
-            <div className="text-xs text-blue-600 dark:text-blue-500 truncate">
+            <div className="text-xs text-primary/80 dark:text-primary/80 truncate">
               {subValue}
             </div>
           )}
