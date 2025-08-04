@@ -428,7 +428,7 @@ export default function PublicationDetailPage() {
 
       {/* Tabs */}
       <div className="mb-6">
-        <div className="border-b border-gray-50">
+        <div>
           <nav aria-label="Tabs" className="-mb-px flex space-x-8">
             <button
               onClick={() => setActiveTab('overview')}
@@ -436,7 +436,7 @@ export default function PublicationDetailPage() {
                 activeTab === 'overview'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300 dark:text-zinc-400 dark:hover:text-zinc-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+              } whitespace-nowrap py-4 px-1 font-medium text-sm`}
             >
               Übersicht
             </button>
@@ -446,7 +446,7 @@ export default function PublicationDetailPage() {
                 activeTab === 'metrics'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300 dark:text-zinc-400 dark:hover:text-zinc-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+              } whitespace-nowrap py-4 px-1 font-medium text-sm`}
             >
               Metriken & Zahlen
             </button>
@@ -456,7 +456,7 @@ export default function PublicationDetailPage() {
                 activeTab === 'editorial'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300 dark:text-zinc-400 dark:hover:text-zinc-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+              } whitespace-nowrap py-4 px-1 font-medium text-sm`}
             >
               Redaktion & Einreichung
             </button>
@@ -466,7 +466,7 @@ export default function PublicationDetailPage() {
                 activeTab === 'advertisements'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300 dark:text-zinc-400 dark:hover:text-zinc-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+              } whitespace-nowrap py-4 px-1 font-medium text-sm`}
             >
               Werbemittel ({advertisements.length})
             </button>
@@ -476,7 +476,7 @@ export default function PublicationDetailPage() {
                 activeTab === 'identifiers'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300 dark:text-zinc-400 dark:hover:text-zinc-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+              } whitespace-nowrap py-4 px-1 font-medium text-sm`}
             >
               Identifikatoren & Links
             </button>
