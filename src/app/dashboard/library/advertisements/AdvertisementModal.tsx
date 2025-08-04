@@ -185,7 +185,6 @@ export function AdvertisementModal({
   };
 
   useEffect(() => {
-    console.log('🔍 Advertisement Modal - Publications available:', publications.length);
     
     if (advertisement) {
       // Lade bestehende Werbemittel-Daten
@@ -451,7 +450,6 @@ const handleSubmit = async (e: React.FormEvent) => {
       onSuccess();
       onClose();
     } catch (error) {
-      console.error("Error saving advertisement:", error);
       alert("Fehler beim Speichern des Werbemittels");
     } finally {
       setLoading(false);

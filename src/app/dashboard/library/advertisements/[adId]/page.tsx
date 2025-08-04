@@ -319,7 +319,6 @@ export default function AdvertisementDetailPage() {
         }
       }
     } catch (err) {
-      console.error('Error loading data:', err);
       setError('Fehler beim Laden der Daten');
     } finally {
       setLoading(false);
@@ -333,7 +332,6 @@ export default function AdvertisementDetailPage() {
       await advertisementService.softDelete(adId, { organizationId: currentOrganization.id, userId: user.uid });
       router.push('/dashboard/library/advertisements');
     } catch (err) {
-      console.error('Error deleting advertisement:', err);
       setError('Fehler beim Löschen');
     }
   };
@@ -349,7 +347,6 @@ export default function AdvertisementDetailPage() {
       );
       router.push(`/dashboard/library/advertisements/${newId}`);
     } catch (err) {
-      console.error('Error duplicating advertisement:', err);
       setError('Fehler beim Duplizieren');
     }
   };

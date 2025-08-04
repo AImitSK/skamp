@@ -31,7 +31,7 @@ import {
   ChevronRightIcon,
   InformationCircleIcon,
   ExclamationTriangleIcon
-} from "@heroicons/react/20/solid";
+} from "@heroicons/react/24/outline";
 import Papa from 'papaparse';
 import clsx from 'clsx';
 
@@ -162,13 +162,10 @@ export default function AdvertisementsPage() {
     if (!user || !currentOrganization?.id) return;
     setLoading(true);
     try {
-      console.log('🔍 Loading data for organizationId:', currentOrganization.id);
       const [adsData, pubsData] = await Promise.all([
         advertisementService.getAll(currentOrganization.id),
         publicationService.getAll(currentOrganization.id)
       ]);
-      console.log('📊 Loaded advertisements:', adsData.length);
-      console.log('📰 Loaded publications:', pubsData.length);
       setAdvertisements(adsData);
       setPublications(pubsData);
     } catch (error) {
@@ -608,7 +605,7 @@ export default function AdvertisementsPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
         {/* Header */}
         <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
           <div className="flex items-center">
