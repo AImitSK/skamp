@@ -303,13 +303,13 @@ export default function PublicationDetailPage() {
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center mb-4">
-          <Button
+          <button
             onClick={() => router.push('/dashboard/library/publications')}
-            className="bg-gray-50 hover:bg-gray-100 text-gray-900 border border-gray-50"
+            className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 border border-gray-200 rounded-md px-3 py-2 text-sm font-medium"
           >
             <ArrowLeftIcon className="h-4 w-4 mr-2" />
             Zurück zur Übersicht
-          </Button>
+          </button>
         </div>
 
         <div className="flex items-start justify-between">
