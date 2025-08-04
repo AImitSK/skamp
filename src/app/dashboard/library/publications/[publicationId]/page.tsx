@@ -106,7 +106,7 @@ function StatCard({
   className?: string;
 }) {
   return (
-    <div className={`bg-gray-50 rounded-lg p-4 ${className}`}>
+    <div className={`bg-gray-50 rounded-lg p-4 ${className}`} style={{backgroundColor: 'rgb(249, 250, 251)'}}>
       <div className="flex items-center gap-3">
         <div className="flex-shrink-0">
           <Icon className="h-5 w-5 text-gray-500" />
@@ -305,7 +305,7 @@ export default function PublicationDetailPage() {
         <div className="flex items-center mb-4">
           <button
             onClick={() => router.push('/dashboard/library/publications')}
-            className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 border border-gray-200 rounded-md px-3 py-2 text-sm font-medium"
+className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 border-0 rounded-md px-3 py-2 text-sm font-medium"
           >
             <ArrowLeftIcon className="h-4 w-4 mr-2" />
             Zurück zur Übersicht
