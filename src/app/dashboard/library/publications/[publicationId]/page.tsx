@@ -106,17 +106,17 @@ function StatCard({
   className?: string;
 }) {
   return (
-    <div className={`border border-zinc-200 dark:border-zinc-700 rounded-lg p-4 ${className}`}>
+    <div className={`bg-primary rounded-lg p-4 ${className}`}>
       <div className="flex items-center gap-3">
         <div className="flex-shrink-0">
-          <Icon className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+          <Icon className="h-5 w-5 text-white" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-lg font-semibold text-zinc-900 dark:text-white flex items-baseline gap-2">
+          <div className="text-lg font-semibold text-yellow-400 flex items-baseline gap-2">
             {value}
             {trend && (
               <div className={`flex items-center text-sm font-medium ${
-                trend.value > 0 ? 'text-green-600' : 'text-red-600'
+                trend.value > 0 ? 'text-green-300' : 'text-red-300'
               }`}>
                 <ArrowTrendingUpIcon className={`h-3 w-3 ${
                   trend.value < 0 ? 'rotate-180' : ''
@@ -125,11 +125,11 @@ function StatCard({
               </div>
             )}
           </div>
-          <div className="text-sm text-zinc-500 dark:text-zinc-400 truncate">
+          <div className="text-sm text-white truncate">
             {label}
           </div>
           {subValue && (
-            <div className="text-xs text-zinc-400 dark:text-zinc-500 truncate">
+            <div className="text-xs text-white/80 truncate">
               {subValue}
             </div>
           )}
@@ -304,8 +304,8 @@ export default function PublicationDetailPage() {
       <div className="mb-6">
         <div className="flex items-center mb-4">
           <Button
-            plain
             onClick={() => router.push('/dashboard/library/publications')}
+            className="bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200"
           >
             <ArrowLeftIcon className="h-4 w-4 mr-2" />
             Zurück zur Übersicht
@@ -492,11 +492,14 @@ export default function PublicationDetailPage() {
             {/* Main Info */}
             <div className="lg:col-span-2 space-y-6">
               {/* Basic Information */}
-              <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6">
-                <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">
-                  Grundinformationen
-                </h3>
-                <dl className="divide-y divide-zinc-200 dark:divide-zinc-700">
+              <div className="rounded-lg border bg-white overflow-hidden">
+                <div className="px-4 py-3 border-b bg-gray-50">
+                  <h3 className="text-lg font-medium text-gray-900">
+                    Grundinformationen
+                  </h3>
+                </div>
+                <div className="p-6">
+                  <dl className="divide-y divide-zinc-200 dark:divide-zinc-700">
                   <InfoRow label="Typ" value={publicationTypeLabels[publication.type] || publication.type} />
                   <InfoRow label="Format" value={formatLabels[publication.format] || publication.format} />
                   <InfoRow label="Geografischer Fokus" value={scopeLabels[publication.geographicScope]} />
@@ -512,47 +515,59 @@ export default function PublicationDetailPage() {
                   {publication.launchDate && (
                     <InfoRow label="Gegründet" value={formatDate(publication.launchDate)} />
                   )}
-                </dl>
+                  </dl>
+                </div>
               </div>
 
               {/* Focus Areas */}
               {publication.focusAreas && publication.focusAreas.length > 0 && (
-                <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6">
-                  <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">
-                    Themenschwerpunkte
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {publication.focusAreas.map((area, index) => (
-                      <Badge key={index} color="blue">
-                        {area}
-                      </Badge>
-                    ))}
+                <div className="rounded-lg border bg-white overflow-hidden">
+                  <div className="px-4 py-3 border-b bg-gray-50">
+                    <h3 className="text-lg font-medium text-gray-900">
+                      Themenschwerpunkte
+                    </h3>
+                  </div>
+                  <div className="p-6">
+                    <div className="flex flex-wrap gap-2">
+                      {publication.focusAreas.map((area, index) => (
+                        <Badge key={index} color="blue">
+                          {area}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
 
               {/* Target Industries */}
               {publication.targetIndustries && publication.targetIndustries.length > 0 && (
-                <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6">
-                  <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">
-                    Zielbranchen
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {publication.targetIndustries.map((industry, index) => (
-                      <Badge key={index} color="zinc">
-                        {industry}
-                      </Badge>
-                    ))}
+                <div className="rounded-lg border bg-white overflow-hidden">
+                  <div className="px-4 py-3 border-b bg-gray-50">
+                    <h3 className="text-lg font-medium text-gray-900">
+                      Zielbranchen
+                    </h3>
+                  </div>
+                  <div className="p-6">
+                    <div className="flex flex-wrap gap-2">
+                      {publication.targetIndustries.map((industry, index) => (
+                        <Badge key={index} color="zinc">
+                          {industry}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
 
               {/* Notes */}
               {(publication.publicNotes || publication.internalNotes) && (
-                <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6">
-                  <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">
-                    Notizen
-                  </h3>
+                <div className="rounded-lg border bg-white overflow-hidden">
+                  <div className="px-4 py-3 border-b bg-gray-50">
+                    <h3 className="text-lg font-medium text-gray-900">
+                      Notizen
+                    </h3>
+                  </div>
+                  <div className="p-6">
                   {publication.publicNotes && (
                     <div className="mb-4">
                       <h4 className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
@@ -571,6 +586,7 @@ export default function PublicationDetailPage() {
                       </Text>
                     </div>
                   )}
+                  </div>
                 </div>
               )}
             </div>
@@ -578,10 +594,13 @@ export default function PublicationDetailPage() {
             {/* Sidebar */}
             <div className="space-y-6">
               {/* Languages & Countries */}
-              <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-6">
-                <h3 className="text-lg font-medium text-zinc-900 dark:text-white mb-4">
-                  Sprachen & Länder
-                </h3>
+              <div className="rounded-lg border bg-white overflow-hidden">
+                <div className="px-4 py-3 border-b bg-gray-50">
+                  <h3 className="text-lg font-medium text-gray-900">
+                    Sprachen & Länder
+                  </h3>
+                </div>
+                <div className="p-6">
                 
                 <div className="mb-4">
                   <h4 className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
@@ -607,6 +626,7 @@ export default function PublicationDetailPage() {
                       </Badge>
                     ))}
                   </div>
+                </div>
                 </div>
               </div>
 
