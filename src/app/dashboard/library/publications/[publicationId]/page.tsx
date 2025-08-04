@@ -258,7 +258,7 @@ export default function PublicationDetailPage() {
       
       setShowVerifyDialog(false);
     } catch (error) {
-      alert(`Fehler beim ${publication.verified ? 'Entverifizieren' : 'Verifizieren'}`);
+      alert(`Fehler beim ${publication.verified ? 'Zurücknehmen der Verifizierung' : 'Verifizieren'}`);
     } finally {
       setVerifying(false);
     }
@@ -365,9 +365,6 @@ className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 b
               ) : (
                 <Badge color="red">Eingestellt</Badge>
               )}
-              {publication.verified && (
-                <Badge color="green">Verifiziert</Badge>
-              )}
             </div>
           </div>
           </div>
@@ -378,7 +375,7 @@ className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 b
               className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 border-0 rounded-md px-3 py-2 text-sm font-medium"
             >
               <CheckBadgeIcon className="h-4 w-4 mr-2" />
-              {publication.verified ? 'Entverifizieren' : 'Verifizieren'}
+              {publication.verified ? 'Verifizierung zurücknehmen' : 'Verifizieren'}
             </button>
             <Button onClick={() => setShowEditModal(true)} className="px-6 py-2">
               <PencilIcon className="h-4 w-4 mr-2" />
@@ -1226,7 +1223,7 @@ className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 b
             </div>
             <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
               <DialogTitle>
-                Publikation {publication.verified ? 'entverifizieren' : 'verifizieren'}
+                {publication.verified ? 'Verifizierung zurücknehmen' : 'Publikation verifizieren'}
               </DialogTitle>
               <DialogBody className="mt-2">
                 <Text>
@@ -1248,8 +1245,8 @@ className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 b
               disabled={verifying}
             >
               {verifying 
-                ? (publication.verified ? 'Entverifiziere...' : 'Verifiziere...') 
-                : (publication.verified ? 'Entverifizieren' : 'Verifizieren')
+                ? (publication.verified ? 'Nehme zurück...' : 'Verifiziere...') 
+                : (publication.verified ? 'Zurücknehmen' : 'Verifizieren')
               }
             </Button>
           </DialogActions>
