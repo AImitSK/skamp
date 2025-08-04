@@ -213,9 +213,6 @@ export default function LibraryDashboard() {
     <div className="space-y-6">
       {/* Statistik-Karten */}
       <div>
-        <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
-          Übersicht
-        </h3>
         <dl className="grid grid-cols-1 gap-5 sm:grid-cols-3 lg:grid-cols-3">
           <StatCard
             title="Publikationen"
