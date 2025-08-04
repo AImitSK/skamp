@@ -57,32 +57,32 @@ function StatCard({
   href?: string;
 }) {
   const content = (
-    <div className="relative overflow-hidden rounded-lg bg-white px-4 py-5 border border-gray-200 sm:px-6 sm:py-6">
-      <dt>
-        <div className="absolute rounded-md bg-[#005fab] p-3">
-          <Icon className="h-6 w-6 text-white" aria-hidden="true" />
+    <div className="rounded-lg p-4" style={{backgroundColor: '#f1f0e2'}}>
+      <div className="flex items-center gap-3">
+        <div className="flex-shrink-0">
+          <Icon className="h-5 w-5 text-gray-500" />
         </div>
-        <p className="ml-16 truncate text-sm font-medium text-gray-500">
-          {title}
-        </p>
-      </dt>
-      <dd className="ml-16 flex items-baseline">
-        <p className="text-2xl font-semibold text-gray-900">{value}</p>
-        {change !== undefined && (
-          <p className={`ml-2 flex items-baseline text-sm font-semibold ${
-            change >= 0 ? 'text-green-600' : 'text-red-600'
-          }`}>
-            {change >= 0 ? (
-              <ArrowUpIcon className="h-4 w-4 flex-shrink-0 self-center" />
-            ) : (
-              <ArrowDownIcon className="h-4 w-4 flex-shrink-0 self-center" />
+        <div className="flex-1 min-w-0">
+          <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
+            {value}
+            {change !== undefined && (
+              <span className={`text-sm font-semibold ${
+                change >= 0 ? 'text-green-600' : 'text-red-600'
+              }`}>
+                {change >= 0 ? (
+                  <ArrowUpIcon className="inline h-3 w-3" />
+                ) : (
+                  <ArrowDownIcon className="inline h-3 w-3" />
+                )}
+                {Math.abs(change)}%
+              </span>
             )}
-            <span className="ml-1">
-              {Math.abs(change)}% {changeLabel}
-            </span>
-          </p>
-        )}
-      </dd>
+          </div>
+          <div className="text-sm text-gray-500 truncate">
+            {title}
+          </div>
+        </div>
+      </div>
     </div>
   );
 
@@ -216,7 +216,7 @@ export default function LibraryDashboard() {
         <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
           Übersicht
         </h3>
-        <dl className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <dl className="grid grid-cols-1 gap-5 sm:grid-cols-3 lg:grid-cols-3">
           <StatCard
             title="Publikationen"
             value={stats?.publications.total || 0}
