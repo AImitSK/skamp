@@ -106,34 +106,34 @@ function StatCard({
   className?: string;
 }) {
   return (
-    <div className={`rounded-lg border bg-white overflow-hidden ${className}`}>
-      <div className="px-4 py-3 border-b bg-gray-50">
-        <div className="flex items-center gap-3">
+    <div className={`bg-gray-50 rounded-lg p-4 ${className}`}>
+      <div className="flex items-center gap-3">
+        <div className="flex-shrink-0">
           <Icon className="h-5 w-5 text-gray-500" />
-          <h3 className="text-sm font-medium text-gray-900">{label}</h3>
         </div>
-      </div>
-      <div className="p-4">
-        <div className="flex items-baseline gap-2">
-          <div className="text-2xl font-semibold text-gray-900">
+        <div className="flex-1 min-w-0">
+          <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
             {value}
+            {trend && (
+              <div className={`flex items-center text-sm font-medium ${
+                trend.value > 0 ? 'text-green-600' : 'text-red-600'
+              }`}>
+                <ArrowTrendingUpIcon className={`h-3 w-3 ${
+                  trend.value < 0 ? 'rotate-180' : ''
+                }`} />
+                <span className="ml-1">{Math.abs(trend.value)}%</span>
+              </div>
+            )}
           </div>
-          {trend && (
-            <div className={`flex items-center text-sm font-medium ${
-              trend.value > 0 ? 'text-green-600' : 'text-red-600'
-            }`}>
-              <ArrowTrendingUpIcon className={`h-3 w-3 ${
-                trend.value < 0 ? 'rotate-180' : ''
-              }`} />
-              <span className="ml-1">{Math.abs(trend.value)}%</span>
+          <div className="text-sm text-gray-500 truncate">
+            {label}
+          </div>
+          {subValue && (
+            <div className="text-xs text-gray-400 truncate">
+              {subValue}
             </div>
           )}
         </div>
-        {subValue && (
-          <div className="text-sm text-gray-500 mt-1">
-            {subValue}
-          </div>
-        )}
       </div>
     </div>
   );
