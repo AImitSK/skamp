@@ -239,87 +239,90 @@ export default function LibraryDashboard() {
         </dl>
       </div>
 
-      {/* Geografische Abdeckung */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
-          Internationale Abdeckung
-        </h3>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div className="text-center">
-            <div className="flex items-center justify-center h-12 w-12 rounded-md bg-[#005fab] text-white mx-auto">
-              <GlobeAltIcon className="h-6 w-6" />
-            </div>
-            <p className="mt-2 text-2xl font-semibold text-gray-900">
-              {stats?.coverage.countries.length || 0}
-            </p>
-            <p className="text-sm text-gray-500">Länder</p>
-          </div>
-          <div className="text-center">
-            <div className="flex items-center justify-center h-12 w-12 rounded-md bg-[#005fab] text-white mx-auto">
-              <ChartBarIcon className="h-6 w-6" />
-            </div>
-            <p className="mt-2 text-2xl font-semibold text-gray-900">
-              {stats?.coverage.languages.length || 0}
-            </p>
-            <p className="text-sm text-gray-500">Sprachen</p>
-          </div>
-          <div className="text-center">
-            <div className="flex items-center justify-center h-12 w-12 rounded-md bg-[#005fab] text-white mx-auto">
-              <BookOpenIcon className="h-6 w-6" />
-            </div>
-            <p className="mt-2 text-2xl font-semibold text-gray-900">
-              {stats?.publications.verified || 0}
-            </p>
-            <p className="text-sm text-gray-500">Verifizierte Publikationen</p>
-          </div>
-        </div>
-        
-        {/* Länder-Badges */}
-        {stats && stats.coverage.countries.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <p className="text-sm font-medium text-gray-700 mb-2">Abgedeckte Länder:</p>
-            <div className="flex flex-wrap gap-2">
-              {stats.coverage.countries.slice(0, 10).map(country => (
-                <Badge key={country} color="blue">
-                  {country}
-                </Badge>
-              ))}
-              {stats.coverage.countries.length > 10 && (
-                <Badge color="zinc">
-                  +{stats.coverage.countries.length - 10} weitere
-                </Badge>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Publikationstypen */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
-          Publikationen nach Typ
-        </h3>
-        <div className="space-y-3">
-          {Object.entries(stats?.publications.byType || {}).map(([type, count]) => (
-            <div key={type} className="flex items-center justify-between">
-              <div className="flex items-center">
-                <span className="text-sm font-medium text-gray-900 capitalize">
-                  {type}
-                </span>
+      {/* Internationale Abdeckung & Publikationstypen nebeneinander */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Geografische Abdeckung */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6">
+          <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
+            Internationale Abdeckung
+          </h3>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="text-center">
+              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-[#005fab] text-white mx-auto">
+                <GlobeAltIcon className="h-6 w-6" />
               </div>
-              <div className="flex items-center">
-                <span className="mr-2 text-sm text-gray-500">{count}</span>
-                <div className="w-32 bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-[#005fab] h-2 rounded-full" 
-                    style={{ 
-                      width: `${(count / (stats?.publications.total || 1)) * 100}%` 
-                    }}
-                  />
+              <p className="mt-2 text-2xl font-semibold text-gray-900">
+                {stats?.coverage.countries.length || 0}
+              </p>
+              <p className="text-sm text-gray-500">Länder</p>
+            </div>
+            <div className="text-center">
+              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-[#005fab] text-white mx-auto">
+                <ChartBarIcon className="h-6 w-6" />
+              </div>
+              <p className="mt-2 text-2xl font-semibold text-gray-900">
+                {stats?.coverage.languages.length || 0}
+              </p>
+              <p className="text-sm text-gray-500">Sprachen</p>
+            </div>
+            <div className="text-center">
+              <div className="flex items-center justify-center h-12 w-12 rounded-md bg-[#005fab] text-white mx-auto">
+                <BookOpenIcon className="h-6 w-6" />
+              </div>
+              <p className="mt-2 text-2xl font-semibold text-gray-900">
+                {stats?.publications.verified || 0}
+              </p>
+              <p className="text-sm text-gray-500">Verifizierte Publikationen</p>
+            </div>
+          </div>
+          
+          {/* Länder-Badges */}
+          {stats && stats.coverage.countries.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <p className="text-sm font-medium text-gray-700 mb-2">Abgedeckte Länder:</p>
+              <div className="flex flex-wrap gap-2">
+                {stats.coverage.countries.slice(0, 10).map(country => (
+                  <Badge key={country} color="blue">
+                    {country}
+                  </Badge>
+                ))}
+                {stats.coverage.countries.length > 10 && (
+                  <Badge color="zinc">
+                    +{stats.coverage.countries.length - 10} weitere
+                  </Badge>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Publikationstypen */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6">
+          <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
+            Publikationen nach Typ
+          </h3>
+          <div className="space-y-3">
+            {Object.entries(stats?.publications.byType || {}).map(([type, count]) => (
+              <div key={type} className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <span className="text-sm font-medium text-gray-900 capitalize">
+                    {type}
+                  </span>
+                </div>
+                <div className="flex items-center">
+                  <span className="mr-2 text-sm text-gray-500">{count}</span>
+                  <div className="w-32 bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-[#005fab] h-2 rounded-full" 
+                      style={{ 
+                        width: `${(count / (stats?.publications.total || 1)) * 100}%` 
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
