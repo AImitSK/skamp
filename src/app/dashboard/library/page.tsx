@@ -57,7 +57,7 @@ function StatCard({
   href?: string;
 }) {
   const content = (
-    <div className="relative overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:px-6 sm:py-6">
+    <div className="relative overflow-hidden rounded-lg bg-white px-4 py-5 border border-gray-200 sm:px-6 sm:py-6">
       <dt>
         <div className="absolute rounded-md bg-[#005fab] p-3">
           <Icon className="h-6 w-6 text-white" aria-hidden="true" />
@@ -167,7 +167,7 @@ export default function LibraryDashboard() {
         }
       });
     } catch (error) {
-      console.error("Error loading stats:", error);
+      // Fehler beim Laden der Statistiken - wird im UI über loading state behandelt
     } finally {
       setLoading(false);
     }
@@ -188,7 +188,7 @@ export default function LibraryDashboard() {
       });
       setRecentPublications(sorted.slice(0, 5));
     } catch (error) {
-      console.error("Error loading recent publications:", error);
+      // Fehler beim Laden der Publikationen - wird im UI über empty state behandelt
     }
   };
 
@@ -240,7 +240,7 @@ export default function LibraryDashboard() {
       </div>
 
       {/* Geografische Abdeckung */}
-      <div className="bg-white shadow rounded-lg p-6">
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
         <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
           Internationale Abdeckung
         </h3>
@@ -295,7 +295,7 @@ export default function LibraryDashboard() {
       </div>
 
       {/* Publikationstypen */}
-      <div className="bg-white shadow rounded-lg p-6">
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
         <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
           Publikationen nach Typ
         </h3>
@@ -325,7 +325,7 @@ export default function LibraryDashboard() {
 
       {/* Zuletzt hinzugefügte Publikationen */}
       {recentPublications.length > 0 && (
-        <div className="bg-white shadow rounded-lg p-6">
+        <div className="bg-white border border-gray-200 rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-medium leading-6 text-gray-900">
               Zuletzt hinzugefügte Publikationen
