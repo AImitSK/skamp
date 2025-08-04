@@ -305,7 +305,7 @@ export default function PublicationDetailPage() {
         <div className="flex items-center mb-4">
           <Button
             onClick={() => router.push('/dashboard/library/publications')}
-            className="bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200"
+            className="bg-gray-50 hover:bg-gray-100 text-gray-900 border border-gray-50"
           >
             <ArrowLeftIcon className="h-4 w-4 mr-2" />
             Zurück zur Übersicht
@@ -428,7 +428,7 @@ export default function PublicationDetailPage() {
 
       {/* Tabs */}
       <div className="mb-6">
-        <div className="border-b border-zinc-200 dark:border-zinc-700">
+        <div className="border-b border-gray-50">
           <nav aria-label="Tabs" className="-mb-px flex space-x-8">
             <button
               onClick={() => setActiveTab('overview')}
@@ -493,7 +493,7 @@ export default function PublicationDetailPage() {
             <div className="lg:col-span-2 space-y-6">
               {/* Basic Information */}
               <div className="rounded-lg border bg-white overflow-hidden">
-                <div className="px-4 py-3 border-b bg-gray-50">
+                <div className="px-4 py-3 border-b border-gray-50 bg-gray-50">
                   <h3 className="text-lg font-medium text-gray-900">
                     Grundinformationen
                   </h3>
@@ -522,7 +522,7 @@ export default function PublicationDetailPage() {
               {/* Focus Areas */}
               {publication.focusAreas && publication.focusAreas.length > 0 && (
                 <div className="rounded-lg border bg-white overflow-hidden">
-                  <div className="px-4 py-3 border-b bg-gray-50">
+                  <div className="px-4 py-3 border-b border-gray-50 bg-gray-50">
                     <h3 className="text-lg font-medium text-gray-900">
                       Themenschwerpunkte
                     </h3>
@@ -542,7 +542,7 @@ export default function PublicationDetailPage() {
               {/* Target Industries */}
               {publication.targetIndustries && publication.targetIndustries.length > 0 && (
                 <div className="rounded-lg border bg-white overflow-hidden">
-                  <div className="px-4 py-3 border-b bg-gray-50">
+                  <div className="px-4 py-3 border-b border-gray-50 bg-gray-50">
                     <h3 className="text-lg font-medium text-gray-900">
                       Zielbranchen
                     </h3>
@@ -562,7 +562,7 @@ export default function PublicationDetailPage() {
               {/* Notes */}
               {(publication.publicNotes || publication.internalNotes) && (
                 <div className="rounded-lg border bg-white overflow-hidden">
-                  <div className="px-4 py-3 border-b bg-gray-50">
+                  <div className="px-4 py-3 border-b border-gray-50 bg-gray-50">
                     <h3 className="text-lg font-medium text-gray-900">
                       Notizen
                     </h3>
@@ -595,7 +595,7 @@ export default function PublicationDetailPage() {
             <div className="space-y-6">
               {/* Languages & Countries */}
               <div className="rounded-lg border bg-white overflow-hidden">
-                <div className="px-4 py-3 border-b bg-gray-50">
+                <div className="px-4 py-3 border-b border-gray-50 bg-gray-50">
                   <h3 className="text-lg font-medium text-gray-900">
                     Sprachen & Länder
                   </h3>
