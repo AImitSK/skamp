@@ -106,7 +106,7 @@ function StatCard({
   className?: string;
 }) {
   return (
-    <div className={`bg-gray-50 rounded-lg p-4 ${className}`} style={{backgroundColor: 'rgb(249, 250, 251)'}}>
+    <div className={`bg-gray-50 rounded-lg p-4 ${className}`} style={{backgroundColor: '#f1f0e2'}}>
       <div className="flex items-center gap-3">
         <div className="flex-shrink-0">
           <Icon className="h-5 w-5 text-gray-500" />

@@ -64,7 +64,7 @@ export default function LibraryLayout({
   return (
     <div className="h-full flex flex-col">
       {/* Header mit Titel und Beschreibung */}
-      <div className="border-b border-gray-200 pb-5 mb-5">
+      <div className="pb-5 mb-5">
         <div className="sm:flex sm:items-baseline sm:justify-between">
           <div className="sm:w-0 sm:flex-1">
             <h1 className="text-2xl font-semibold leading-6 text-gray-900">
@@ -78,7 +78,7 @@ export default function LibraryLayout({
       </div>
 
       {/* Tab Navigation */}
-      <div className="border-b border-gray-200">
+      <div>
         <nav className="-mb-px flex space-x-8" aria-label="Tabs">
           {tabs.map((tab) => {
             const isActive = 
