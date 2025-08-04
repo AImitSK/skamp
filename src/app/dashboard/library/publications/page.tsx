@@ -33,39 +33,17 @@ import {
   ChevronRightIcon,
   InformationCircleIcon,
   ExclamationTriangleIcon
-} from "@heroicons/react/20/solid";
+} from "@heroicons/react/24/outline";
 import Papa from 'papaparse';
 import clsx from 'clsx';
+import { 
+  PUBLICATION_TYPE_LABELS, 
+  FREQUENCY_LABELS, 
+  PUBLICATIONS_PAGE_SIZE, 
+  ALERT_TIMEOUT_MS 
+} from '@/lib/constants/library-publications-constants';
+import type { AlertProps, ConfirmDialogState } from '@/types/library-publications-ui';
 
-// Labels für Publikationstypen
-const publicationTypeLabels: Record<string, string> = {
-  newspaper: "Zeitung",
-  magazine: "Magazin",
-  website: "Website",
-  blog: "Blog",
-  newsletter: "Newsletter",
-  podcast: "Podcast",
-  tv: "TV",
-  radio: "Radio",
-  trade_journal: "Fachzeitschrift",
-  press_agency: "Nachrichtenagentur",
-  social_media: "Social Media"
-};
-
-// Labels für Frequenz
-const frequencyLabels: Record<string, string> = {
-  continuous: "Durchgehend",
-  multiple_daily: "Mehrmals täglich",
-  daily: "Täglich",
-  weekly: "Wöchentlich",
-  biweekly: "14-tägig",
-  monthly: "Monatlich",
-  bimonthly: "Zweimonatlich",
-  quarterly: "Quartalsweise",
-  biannual: "Halbjährlich",
-  annual: "Jährlich",
-  irregular: "Unregelmäßig"
-};
 
 // Alert Component
 function Alert({ 
@@ -73,12 +51,7 @@ function Alert({
   title, 
   message, 
   action 
-}: { 
-  type?: 'info' | 'success' | 'warning' | 'error';
-  title: string;
-  message?: string;
-  action?: { label: string; onClick: () => void };
-}) {
+}: AlertProps) {
   const styles = {
     info: 'bg-blue-50 text-blue-700',
     success: 'bg-green-50 text-green-700',
@@ -136,17 +109,11 @@ export default function PublicationsPage() {
   const [showImportModal, setShowImportModal] = useState(false);
   
   const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string } | null>(null);
-  const [confirmDialog, setConfirmDialog] = useState<{
-    isOpen: boolean;
-    title: string;
-    message: string;
-    onConfirm: () => void;
-    type?: 'danger' | 'warning';
-  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(25);
+  const [itemsPerPage] = useState(PUBLICATIONS_PAGE_SIZE);
 
   // Filter States
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
@@ -157,7 +124,7 @@ export default function PublicationsPage() {
   // Alert Management
   const showAlert = useCallback((type: 'info' | 'success' | 'warning' | 'error', title: string, message?: string) => {
     setAlert({ type, title, message });
-    setTimeout(() => setAlert(null), 5000);
+    setTimeout(() => setAlert(null), ALERT_TIMEOUT_MS);
   }, []);
 
   useEffect(() => {
@@ -328,7 +295,7 @@ export default function PublicationsPage() {
       const exportData = filteredPublications.map(pub => ({
         "Titel": pub.title,
         "Verlag": pub.publisherName || '',
-        "Typ": publicationTypeLabels[pub.type] || pub.type,
+        "Typ": PUBLICATION_TYPE_LABELS[pub.type] || pub.type,
         "Format": pub.format || '',
         "Website": pub.websiteUrl || '',
         "Sprachen": pub.languages?.join(', ') || '',
@@ -336,7 +303,7 @@ export default function PublicationsPage() {
         "Auflage": pub.metrics?.print?.circulation || '',
         "Online Besucher": pub.metrics?.online?.monthlyUniqueVisitors || '',
         "Themenschwerpunkte": pub.focusAreas?.join(', ') || '',
-        "Frequenz": pub.metrics?.frequency ? frequencyLabels[pub.metrics.frequency] : '',
+        "Frequenz": pub.metrics?.frequency ? FREQUENCY_LABELS[pub.metrics.frequency] : '',
         "Zielgruppe": pub.metrics?.targetAudience || '',
         "Verifiziert": pub.verified ? 'Ja' : 'Nein',
         "Status": pub.status
@@ -467,7 +434,7 @@ export default function PublicationsPage() {
                             Typ
                           </label>
                           <div className="space-y-2 max-h-40 overflow-y-auto">
-                            {Object.entries(publicationTypeLabels).map(([value, label]) => (
+                            {Object.entries(PUBLICATION_TYPE_LABELS).map(([value, label]) => (
                               <label key={value} className="flex items-center gap-2 cursor-pointer">
                                 <input
                                   type="checkbox"
@@ -568,12 +535,13 @@ export default function PublicationsPage() {
 
           {/* Add Button */}
           <Button 
-            className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary h-10 px-6"
+            className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary px-6 py-2"
             onClick={() => {
               setSelectedPublication(null);
               setShowPublicationModal(true);
             }}
           >
+            <PlusIcon className="h-4 w-4 mr-2" />
             Publikation hinzufügen
           </Button>
 
@@ -724,7 +692,7 @@ export default function PublicationsPage() {
                   
                   <div className="hidden lg:block w-[15%]">
                     <Badge color="zinc" className="text-xs">
-                      {publicationTypeLabels[pub.type] || pub.type}
+                      {PUBLICATION_TYPE_LABELS[pub.type] || pub.type}
                     </Badge>
                   </div>
                   
@@ -733,7 +701,7 @@ export default function PublicationsPage() {
                   </div>
                   
                   <div className="hidden xl:block w-[10%] text-sm text-zinc-600 dark:text-zinc-400">
-                    {pub.metrics?.frequency ? frequencyLabels[pub.metrics.frequency] : "—"}
+                    {pub.metrics?.frequency ? FREQUENCY_LABELS[pub.metrics.frequency] : "—"}
                   </div>
                   
                   <div className="hidden xl:block flex-1">
@@ -794,7 +762,7 @@ export default function PublicationsPage() {
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
             >
-              <ChevronLeftIcon />
+              <ChevronLeftIcon className="h-4 w-4 mr-2" />
               Zurück
             </Button>
           </div>
@@ -832,7 +800,7 @@ export default function PublicationsPage() {
               disabled={currentPage === totalPages}
             >
               Weiter
-              <ChevronRightIcon />
+              <ChevronRightIcon className="h-4 w-4 ml-2" />
             </Button>
           </div>
         </nav>

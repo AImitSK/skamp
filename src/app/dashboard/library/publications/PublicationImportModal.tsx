@@ -26,7 +26,7 @@ import {
   ExclamationTriangleIcon,
   ArrowRightIcon,
   ArrowLeftIcon
-} from '@heroicons/react/20/solid';
+} from '@heroicons/react/24/outline';
 
 // Alert Component
 function Alert({ 
@@ -150,25 +150,20 @@ export default function PublicationImportModal({ onClose, onImportSuccess }: Pub
     
     try {
       setLoadingPublishers(true);
-      console.log('Loading companies for organizationId:', currentOrganization?.id); // Debug
       
       const allCompanies = await companiesEnhancedService.getAll(currentOrganization?.id || '');
-      console.log('All companies loaded:', allCompanies); // Debug
       
       const publisherCompanies = allCompanies.filter(company => 
         ['publisher', 'media_house', 'partner'].includes(company.type)
       );
-      console.log('Filtered publisher companies:', publisherCompanies); // Debug
       
       // Temporär: Falls keine Publisher gefunden, zeige alle Firmen
       if (publisherCompanies.length === 0 && allCompanies.length > 0) {
-        console.warn('No publishers found, showing all companies as fallback');
         setPublishers(allCompanies);
       } else {
         setPublishers(publisherCompanies);
       }
     } catch (error) {
-      console.error("Error loading publishers:", error);
     } finally {
       setLoadingPublishers(false);
     }
@@ -458,7 +453,6 @@ export default function PublicationImportModal({ onClose, onImportSuccess }: Pub
         }, 2000);
       }
     } catch (err) {
-      console.error('Import error:', err);
       setError('Fehler beim Import. Bitte überprüfen Sie das Dateiformat.');
     } finally {
       setIsImporting(false);
@@ -533,7 +527,7 @@ export default function PublicationImportModal({ onClose, onImportSuccess }: Pub
                   onClick={downloadTemplate}
                   className="text-sm"
                 >
-                  <DocumentArrowDownIcon className="h-4 w-4 mr-1" />
+                  <DocumentArrowDownIcon className="h-4 w-4 mr-2" />
                   Vorlage herunterladen
                 </Button>
               </div>
@@ -631,7 +625,7 @@ export default function PublicationImportModal({ onClose, onImportSuccess }: Pub
                   onClick={applyAutoMapping}
                   className="text-sm"
                 >
-                  <CheckCircleIcon className="h-4 w-4 mr-1" />
+                  <CheckCircleIcon className="h-4 w-4 mr-2" />
                   Automatisch zuordnen
                 </Button>
               </div>
@@ -843,7 +837,7 @@ export default function PublicationImportModal({ onClose, onImportSuccess }: Pub
               className="bg-zinc-900 hover:bg-zinc-800 text-white whitespace-nowrap dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100"
             >
               Weiter
-              <ArrowRightIcon className="ml-2 h-4 w-4" />
+              <ArrowRightIcon className="h-4 w-4 ml-2" />
             </Button>
           </>
         )}
@@ -851,7 +845,7 @@ export default function PublicationImportModal({ onClose, onImportSuccess }: Pub
         {currentStep === 'mapping' && (
           <>
             <Button plain onClick={() => setCurrentStep('upload')}>
-              <ArrowLeftIcon className="mr-2 h-4 w-4" />
+              <ArrowLeftIcon className="h-4 w-4 mr-2" />
               Zurück
             </Button>
             <Button 
@@ -860,7 +854,7 @@ export default function PublicationImportModal({ onClose, onImportSuccess }: Pub
               className="bg-zinc-900 hover:bg-zinc-800 text-white whitespace-nowrap dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100"
             >
               Weiter
-              <ArrowRightIcon className="ml-2 h-4 w-4" />
+              <ArrowRightIcon className="h-4 w-4 ml-2" />
             </Button>
           </>
         )}
@@ -868,7 +862,7 @@ export default function PublicationImportModal({ onClose, onImportSuccess }: Pub
         {currentStep === 'import' && !importResults && (
           <>
             <Button plain onClick={() => setCurrentStep('mapping')} disabled={isImporting}>
-              <ArrowLeftIcon className="mr-2 h-4 w-4" />
+              <ArrowLeftIcon className="h-4 w-4 mr-2" />
               Zurück
             </Button>
             <Button 

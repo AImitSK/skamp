@@ -39,7 +39,7 @@ import {
   DocumentDuplicateIcon,
   ShareIcon,
   PlusIcon
-} from "@heroicons/react/20/solid";
+} from "@heroicons/react/24/outline";
 
 // Type Labels
 const publicationTypeLabels: Record<string, string> = {
@@ -200,7 +200,6 @@ export default function PublicationDetailPage() {
           const publisherData = await companiesService.getById(pubData.publisherId);
           setPublisher(publisherData);
         } catch (error) {
-          console.error("Error loading publisher:", error);
         }
       }
 
@@ -209,7 +208,6 @@ export default function PublicationDetailPage() {
       setAdvertisements(adsData);
 
     } catch (error) {
-      console.error("Error loading publication:", error);
       router.push('/dashboard/library/publications');
     } finally {
       setLoading(false);
@@ -234,7 +232,6 @@ export default function PublicationDetailPage() {
       );
       router.push('/dashboard/library/publications');
     } catch (error) {
-      console.error("Error deleting publication:", error);
       alert("Fehler beim Löschen der Publikation");
     } finally {
       setDeleting(false);
@@ -251,7 +248,6 @@ export default function PublicationDetailPage() {
       });
       await loadData();
     } catch (error) {
-      console.error("Error verifying publication:", error);
       alert("Fehler beim Verifizieren");
     }
   };
@@ -315,7 +311,7 @@ export default function PublicationDetailPage() {
             href="/dashboard/library/publications"
             className="inline-flex items-center text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
           >
-            <ArrowLeftIcon className="h-4 w-4 mr-1" />
+            <ArrowLeftIcon className="h-4 w-4 mr-2" />
             Zurück zur Übersicht
           </Link>
         </div>
@@ -353,12 +349,12 @@ export default function PublicationDetailPage() {
           <div className="flex items-center gap-2">
             {!publication.verified && (
               <Button plain onClick={handleVerify}>
-                <CheckBadgeIcon className="h-4 w-4" />
+                <CheckBadgeIcon className="h-4 w-4 mr-2" />
                 Verifizieren
               </Button>
             )}
-            <Button onClick={() => setShowEditModal(true)}>
-              <PencilIcon className="h-4 w-4" />
+            <Button onClick={() => setShowEditModal(true)} className="px-6 py-2">
+              <PencilIcon className="h-4 w-4 mr-2" />
               Bearbeiten
             </Button>
             <Dropdown>
@@ -1002,8 +998,8 @@ export default function PublicationDetailPage() {
                   Für diese Publikation wurden noch keine Werbemittel angelegt.
                 </Text>
                 <Link href={`/dashboard/library/advertisements/new?publicationId=${publicationId}`}>
-                  <Button>
-                    <PlusIcon className="h-4 w-4" />
+                  <Button className="px-6 py-2">
+                    <PlusIcon className="h-4 w-4 mr-2" />
                     Werbemittel erstellen
                   </Button>
                 </Link>

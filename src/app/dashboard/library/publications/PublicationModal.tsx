@@ -27,7 +27,7 @@ import {
   LanguageIcon,
   BuildingOfficeIcon,
   InformationCircleIcon
-} from "@heroicons/react/20/solid";
+} from "@heroicons/react/24/outline";
 
 interface PublicationModalProps {
   isOpen: boolean;
@@ -367,25 +367,20 @@ const loadPublishers = async () => {
   
   try {
     setLoadingPublishers(true);
-    console.log('Loading companies for organizationId:', currentOrganization?.id); // Debug
     
     const allCompanies = await companiesEnhancedService.getAll(currentOrganization?.id || '');
-    console.log('All companies loaded:', allCompanies); // Debug
     
     const publisherCompanies = allCompanies.filter(company => 
       ['publisher', 'media_house', 'partner'].includes(company.type)
     );
-    console.log('Filtered publisher companies:', publisherCompanies); // Debug
     
     // Temporär: Falls keine Publisher gefunden, zeige alle Firmen
     if (publisherCompanies.length === 0 && allCompanies.length > 0) {
-      console.warn('No publishers found, showing all companies as fallback');
       setPublishers(allCompanies);
     } else {
       setPublishers(publisherCompanies);
     }
   } catch (error) {
-    console.error("Error loading publishers:", error);
   } finally {
     setLoadingPublishers(false);
   }
@@ -589,7 +584,6 @@ const loadPublishers = async () => {
       onSuccess();
       onClose();
     } catch (error) {
-      console.error("Error saving publication:", error);
       alert("Fehler beim Speichern der Publikation");
     } finally {
       setLoading(false);
@@ -1200,7 +1194,7 @@ const loadPublishers = async () => {
                     </div>
                   ))}
                   <Button type="button" plain onClick={addIdentifier}>
-                    <PlusIcon className="h-4 w-4 mr-1" />
+                    <PlusIcon className="h-4 w-4 mr-2" />
                     Identifikator hinzufügen
                   </Button>
                 </div>
@@ -1243,7 +1237,7 @@ const loadPublishers = async () => {
                     </div>
                   ))}
                   <Button type="button" plain onClick={addSocialMedia}>
-                    <PlusIcon className="h-4 w-4 mr-1" />
+                    <PlusIcon className="h-4 w-4 mr-2" />
                     Social Media hinzufügen
                   </Button>
                 </div>
@@ -1256,7 +1250,7 @@ const loadPublishers = async () => {
             <Button plain onClick={onClose}>
               Abbrechen
             </Button>
-            <Button type="submit" disabled={loading || !formData.publisherId}>
+            <Button type="submit" disabled={loading || !formData.publisherId} className="px-6 py-2">
               {loading ? 'Speichern...' : publication ? 'Aktualisieren' : 'Erstellen'}
             </Button>
           </div>

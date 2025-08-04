@@ -7,6 +7,7 @@ Diese Dokumentationen folgen dem standardisierten Template aus `FEATURE_DOCUMENT
 ### ✅ Abgeschlossen
 - **[CRM Enhanced](./docu_dashboard_contacts_crm_enhanced.md)** - Erweiterte Kontakt- und Firmenverwaltung (✅ Fertig)
 - **[Verteilerlisten](./docu_dashboard_contacts_lists.md)** - Listen-Management für zielgerichtete Kommunikation (🎯 **ABGESCHLOSSEN** - Production-Ready)
+- **[Library Publications](./docu_dashboard_library_publications.md)** - Publikationsverwaltung mit Metriken und Import/Export (✅ Fertig)
 
 ### 🚧 In Arbeit
 - **[PR-Kampagnen](./docu_dashboard_pr-tools_campaigns.md)** - Kampagnen-Erstellung mit KI-Unterstützung (❌ Template noch nicht angewendet)
@@ -73,6 +74,6 @@ Alle ursprünglichen Feature-Beschreibungen sind in `/docs/legacy-features/` ver
 
 ---
 
-**Letzte Aktualisierung:** 2025-08-03  
-**Dokumentierte Features:** 2/15+ geplant (CRM Enhanced ✅, Verteilerlisten ✅)  
+**Letzte Aktualisierung:** 2025-08-04  
+**Dokumentierte Features:** 3/15+ geplant (CRM Enhanced ✅, Verteilerlisten ✅, Library Publications ✅)  
 **Template-Version:** 2.0
