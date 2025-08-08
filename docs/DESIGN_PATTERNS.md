@@ -84,6 +84,27 @@ Zentrale Dokumentation für einheitliche UI/UX-Standards in der gesamten CeleroP
 </Button>
 ```
 
+### Outline Button Pattern
+**Standard für sekundäre Aktionen (z.B. "Änderungen anfordern", "Abbrechen"):**
+```tsx
+<Button className="!bg-white !border !border-gray-300 !text-gray-700 hover:!bg-gray-100">
+  <PencilSquareIcon className="h-5 w-5 mr-2" />
+  Änderungen anfordern
+</Button>
+```
+
+**Eigenschaften:**
+- **Hintergrund:** Weiß (`!bg-white`)
+- **Border:** Graue Outline (`!border !border-gray-300`)
+- **Text:** Dunkler Text (`!text-gray-700`)
+- **Hover:** Graues Hover wie Back-Button (`hover:!bg-gray-100`)
+- **!important:** Nötig um Button-Component-Styles zu überschreiben
+
+**Verwendung:**
+- Sekundäre Aktionen in Formularen
+- "Abbrechen" Buttons
+- "Änderungen anfordern" in Freigabe-Workflows
+
 ## 📦 Content Boxes & Cards
 
 ### Grundregel: KEINE Schatten & KEINE Linien
