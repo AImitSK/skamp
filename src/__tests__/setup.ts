@@ -52,6 +52,82 @@ global.Image = class {
   }
 } as any;
 
+// Mock ResizeObserver for Headless UI components
+global.ResizeObserver = jest.fn().mockImplementation(() => ({
+  observe: jest.fn(),
+  unobserve: jest.fn(),
+  disconnect: jest.fn(),
+}));
+
+// Mock Firebase completely for tests
+jest.mock('firebase/app', () => ({
+  initializeApp: jest.fn(() => ({ name: '[DEFAULT]' })),
+  getApps: jest.fn(() => []),
+  getApp: jest.fn(() => ({ name: '[DEFAULT]' }))
+}));
+
+jest.mock('firebase/auth', () => ({
+  getAuth: jest.fn(() => ({})),
+  onAuthStateChanged: jest.fn(),
+  signInWithEmailAndPassword: jest.fn(),
+  signOut: jest.fn()
+}));
+
+jest.mock('firebase/firestore', () => ({
+  getFirestore: jest.fn(() => ({})),
+  collection: jest.fn(),
+  doc: jest.fn(),
+  getDocs: jest.fn(),
+  getDoc: jest.fn(),
+  query: jest.fn(),
+  where: jest.fn(),
+  orderBy: jest.fn(),
+  addDoc: jest.fn(),
+  updateDoc: jest.fn(),
+  deleteDoc: jest.fn(),
+  serverTimestamp: jest.fn(() => ({ seconds: 1234567890, nanoseconds: 0 }))
+}));
+
+jest.mock('firebase/storage', () => ({
+  getStorage: jest.fn(() => ({})),
+  ref: jest.fn(),
+  uploadBytes: jest.fn(),
+  uploadBytesResumable: jest.fn(),
+  getDownloadURL: jest.fn(),
+  deleteObject: jest.fn()
+}));
+
+jest.mock('firebase/functions', () => ({
+  getFunctions: jest.fn(() => ({})),
+  httpsCallable: jest.fn(() => jest.fn()),
+  connectFunctionsEmulator: jest.fn()
+}));
+
+// Mock nanoid to prevent ES module issues
+jest.mock('nanoid', () => ({
+  nanoid: jest.fn(() => 'mock-nanoid-12345'),
+}));
+
+// Mock Next.js navigation hooks
+jest.mock('next/navigation', () => ({
+  useRouter: jest.fn(() => ({
+    push: jest.fn(),
+    refresh: jest.fn(),
+    back: jest.fn(),
+    forward: jest.fn(),
+    replace: jest.fn(),
+    prefetch: jest.fn(),
+  })),
+  useParams: jest.fn(() => ({
+    campaignId: 'test-campaign-123',
+  })),
+  useSearchParams: jest.fn(() => ({
+    get: jest.fn(() => null),
+    has: jest.fn(() => false),
+  })),
+  usePathname: jest.fn(() => '/dashboard/pr-tools/campaigns'),
+}));
+
 // Suppress console.log during tests (optional)
 // global.console = {
 //   ...console,
