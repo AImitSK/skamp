@@ -10,6 +10,16 @@ global.fetch = jest.fn(() =>
   })
 ) as jest.Mock;
 
+// Mock Response for Firebase
+global.Response = class {
+  ok = true;
+  status = 200;
+  statusText = 'OK';
+  constructor(public body?: any, options?: any) {}
+  json() { return Promise.resolve(this.body); }
+  text() { return Promise.resolve(String(this.body)); }
+} as any;
+
 // Mock crypto for sharing IDs
 Object.defineProperty(global, 'crypto', {
   value: {
@@ -17,9 +27,16 @@ Object.defineProperty(global, 'crypto', {
   },
 });
 
-// Mock window.location
-delete (window as any).location;
-window.location = { origin: 'http://localhost:3000' } as any;
+// Mock window.location (simplified)
+try {
+  delete (window as any).location;
+  (window as any).location = { 
+    origin: 'http://localhost:3000',
+    href: 'http://localhost:3000'
+  };
+} catch (e) {
+  // Location bereits definiert, ignorieren
+}
 
 // Mock Image for asset validation
 global.Image = class {
