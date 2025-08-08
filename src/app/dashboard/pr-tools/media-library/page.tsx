@@ -30,7 +30,7 @@ import {
   ListBulletIcon,
   EyeIcon,
   TrashIcon,
-  DocumentIcon,
+  // DocumentIcon ersetzt durch DocumentTextIcon,
   VideoCameraIcon,
   DocumentTextIcon,
   FolderPlusIcon,
@@ -755,7 +755,7 @@ export default function MediathekPage() {
     } else if (fileType.includes('pdf') || fileType.includes('document')) {
       return DocumentTextIcon;
     } else {
-      return DocumentIcon;
+      return DocumentTextIcon;
     }
   };
 

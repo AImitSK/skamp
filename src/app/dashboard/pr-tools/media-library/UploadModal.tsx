@@ -12,7 +12,7 @@ import { useCrmData } from "@/context/CrmDataContext";
 import { mediaService } from "@/lib/firebase/media-service";
 import { 
   CloudArrowUpIcon, 
-  DocumentIcon, 
+  DocumentTextIcon, 
   XMarkIcon, 
   FolderIcon, 
   BuildingOfficeIcon,
@@ -283,7 +283,7 @@ export default function UploadModal({
                     return (
                       <div key={fileKey} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <div className="flex items-center gap-3 flex-1">
-                          <DocumentIcon className="h-8 w-8 text-gray-400" />
+                          <DocumentTextIcon className="h-8 w-8 text-gray-400" />
                           <div className="flex-1 min-w-0">
                             <Text className="text-sm font-medium text-gray-900 truncate">
                               {file.name}

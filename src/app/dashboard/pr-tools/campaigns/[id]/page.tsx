@@ -37,7 +37,7 @@ import {
   ChatBubbleLeftRightIcon,
   LinkIcon,
   FolderIcon,
-  DocumentIcon
+  DocumentTextIcon as DocumentIcon
 } from "@heroicons/react/20/solid";
 
 // Alert Component
