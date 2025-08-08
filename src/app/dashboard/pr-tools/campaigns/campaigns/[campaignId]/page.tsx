@@ -32,6 +32,7 @@ import {
   LinkIcon,
   ChartBarIcon,
   DocumentTextIcon,
+  ShieldCheckIcon,
 } from "@heroicons/react/20/solid";
 import { prService } from "@/lib/firebase/pr-service";
 import { listsService } from "@/lib/firebase/lists-service";
@@ -309,7 +310,7 @@ export default function CampaignDetailPage() {
               )}
               {canRequestApproval && (
                 <DropdownItem onClick={() => setShowApprovalModal(true)}>
-                  <CheckBadgeIcon className="h-4 w-4" />
+                  <ShieldCheckIcon className="h-4 w-4" />
                   Freigabe anfordern
                 </DropdownItem>
               )}
@@ -501,7 +502,7 @@ export default function CampaignDetailPage() {
               {campaign.approvalRequired && (
                 <div className="pt-4 border-t">
                   <div className="flex items-center gap-2 mb-2">
-                    <CheckBadgeIcon className="h-5 w-5 text-blue-500" />
+                    <ShieldCheckIcon className="h-5 w-5 text-blue-500" />
                     <Text className="font-medium">Freigabe erforderlich</Text>
                   </div>
                   

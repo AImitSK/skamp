@@ -3,7 +3,7 @@ import {
   PencilSquareIcon,
   ClockIcon,
   ExclamationCircleIcon,
-  CheckBadgeIcon,
+  ShieldCheckIcon,
   PaperAirplaneIcon,
   CheckCircleIcon,
   ArchiveBoxIcon,
@@ -37,7 +37,7 @@ export const statusConfig: Record<PRCampaignStatus, {
   approved: {
     label: 'Freigegeben',
     color: 'teal',
-    icon: CheckBadgeIcon,
+    icon: ShieldCheckIcon,
     description: 'Die Kampagne wurde vom Kunden freigegeben'
   },
   scheduled: {

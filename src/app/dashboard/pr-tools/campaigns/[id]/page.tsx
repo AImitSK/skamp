@@ -30,7 +30,7 @@ import {
   InformationCircleIcon,
   PencilSquareIcon,
   ArchiveBoxIcon,
-  CheckBadgeIcon,
+  ShieldCheckIcon,
   ExclamationCircleIcon,
   ChartBarIcon,
   EyeIcon,
@@ -116,7 +116,7 @@ const statusConfig: Record<PRCampaignStatus, { label: string; color: "zinc" | "y
   approved: {
     label: 'Freigegeben',
     color: 'teal',
-    icon: CheckBadgeIcon,
+    icon: ShieldCheckIcon,
   },
   scheduled: {
     label: 'Geplant',
