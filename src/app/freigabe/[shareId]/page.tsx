@@ -603,8 +603,7 @@ export default function ApprovalPage() {
                   <div className="flex flex-col sm:flex-row gap-3">
                     <Button
                       onClick={handleApprove}
-                      color="indigo"
-                      className="flex-1 bg-green-600 hover:bg-green-500"
+                      className="flex-1 bg-[#005fab] hover:bg-[#004a8c] text-white"
                       disabled={submitting}
                     >
                       <CheckIcon className="h-5 w-5 mr-2" />
@@ -612,8 +611,7 @@ export default function ApprovalPage() {
                     </Button>
                     <Button
                       onClick={() => setShowFeedbackForm(true)}
-                      plain
-                      className="flex-1"
+                      className="flex-1 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
                       disabled={submitting}
                     >
                       <PencilSquareIcon className="h-5 w-5 mr-2" />
