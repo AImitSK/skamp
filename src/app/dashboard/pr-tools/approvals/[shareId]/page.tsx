@@ -344,9 +344,9 @@ export default function ApprovalPage() {
           setCampaign(campaignData);
           
           // Lade Branding-Einstellungen
-          if (campaignData.userId) {
+          if (campaignData.organizationId) {
             try {
-              const branding = await brandingService.getBrandingSettings(campaignData.userId);
+              const branding = await brandingService.getBrandingSettings(campaignData.organizationId);
               setBrandingSettings(branding);
             } catch (brandingError) {
               console.error('Fehler beim Laden der Branding-Einstellungen:', brandingError);
@@ -371,9 +371,9 @@ export default function ApprovalPage() {
         }
 
         // Lade Branding-Einstellungen
-        if (campaignData.userId) {
+        if (campaignData.organizationId) {
           try {
-            const branding = await brandingService.getBrandingSettings(campaignData.userId);
+            const branding = await brandingService.getBrandingSettings(campaignData.organizationId);
             setBrandingSettings(branding);
           } catch (brandingError) {
             console.error('Fehler beim Laden der Branding-Einstellungen:', brandingError);
@@ -877,7 +877,7 @@ export default function ApprovalPage() {
               {/* Copyright-Zeile */}
               {brandingSettings.showCopyright && (
                 <div className="text-center text-xs text-gray-500">
-                  <p>Copyright © {new Date().getFullYear()} CeleroPress. Alle Rechte vorbehalten.</p>
+                  <p>Copyright © {new Date().getFullYear()} {brandingSettings.companyName || 'CeleroPress'}. Alle Rechte vorbehalten.</p>
                 </div>
               )}
             </div>

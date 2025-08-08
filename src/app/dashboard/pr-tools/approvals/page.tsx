@@ -218,18 +218,17 @@ function FeedbackHistoryModal({
               <Text className="font-medium mb-3">Angehängte Medien ({approval.attachedAssets.length})</Text>
               <div className="space-y-2">
                 {approval.attachedAssets.map((asset, idx) => (
-                  <div key={idx} className="flex items-center gap-3 p-2 bg-gray-50 rounded">
-                    {asset.type === 'folder' ? (
-                      <>
+                  <div key={idx} className="flex items-center gap-3 p-2 bg-gray-50 rounded overflow-hidden">
+                    <div className="flex-shrink-0">
+                      {asset.type === 'folder' ? (
                         <FolderIcon className="h-5 w-5 text-gray-400" />
-                        <span className="text-sm">{asset.name}</span>
-                      </>
-                    ) : (
-                      <>
+                      ) : (
                         <DocumentIcon className="h-5 w-5 text-gray-400" />
-                        <span className="text-sm">{asset.name}</span>
-                      </>
-                    )}
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm text-gray-900 truncate block">{asset.name}</span>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -503,7 +502,7 @@ export default function ApprovalsPage() {
             <Button
               onClick={() => loadApprovals()}
               disabled={isRefreshing}
-              plain
+              className="bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200"
             >
               <ArrowPathIcon className={isRefreshing ? 'animate-spin' : ''} />
               Aktualisieren
@@ -514,50 +513,66 @@ export default function ApprovalsPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <Text className="text-sm text-gray-500">Ausstehend</Text>
-              <Text className="text-2xl font-semibold text-gray-900">{stats.pending}</Text>
+        <div className="rounded-lg p-4" style={{backgroundColor: '#f1f0e2'}}>
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0">
+              <ClockIcon className="h-5 w-5 text-gray-500" />
             </div>
-            <div className="p-3 bg-yellow-100 rounded-full">
-              <ClockIcon className="h-6 w-6 text-yellow-600" />
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <Text className="text-sm text-gray-500">Änderungen erbeten</Text>
-              <Text className="text-2xl font-semibold text-gray-900">{stats.changesRequested}</Text>
-            </div>
-            <div className="p-3 bg-orange-100 rounded-full">
-              <ChatBubbleLeftRightIcon className="h-6 w-6 text-orange-600" />
+            <div className="flex-1 min-w-0">
+              <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
+                {stats.pending}
+              </div>
+              <div className="text-sm text-gray-500 truncate">
+                Ausstehend
+              </div>
             </div>
           </div>
         </div>
         
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <Text className="text-sm text-gray-500">Freigegeben</Text>
-              <Text className="text-2xl font-semibold text-gray-900">{stats.approved}</Text>
+        <div className="rounded-lg p-4" style={{backgroundColor: '#f1f0e2'}}>
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0">
+              <ChatBubbleLeftRightIcon className="h-5 w-5 text-gray-500" />
             </div>
-            <div className="p-3 bg-green-100 rounded-full">
-              <CheckBadgeIcon className="h-6 w-6 text-green-600" />
+            <div className="flex-1 min-w-0">
+              <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
+                {stats.changesRequested}
+              </div>
+              <div className="text-sm text-gray-500 truncate">
+                Änderungen erbeten
+              </div>
             </div>
           </div>
         </div>
         
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <Text className="text-sm text-gray-500">Überfällig</Text>
-              <Text className="text-2xl font-semibold text-gray-900">{stats.overdue}</Text>
+        <div className="rounded-lg p-4" style={{backgroundColor: '#f1f0e2'}}>
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0">
+              <CheckBadgeIcon className="h-5 w-5 text-gray-500" />
             </div>
-            <div className="p-3 bg-red-100 rounded-full">
-              <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
+            <div className="flex-1 min-w-0">
+              <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
+                {stats.approved}
+              </div>
+              <div className="text-sm text-gray-500 truncate">
+                Freigegeben
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="rounded-lg p-4" style={{backgroundColor: '#f1f0e2'}}>
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0">
+              <ExclamationTriangleIcon className="h-5 w-5 text-gray-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
+                {stats.overdue}
+              </div>
+              <div className="text-sm text-gray-500 truncate">
+                Überfällig
+              </div>
             </div>
           </div>
         </div>
@@ -602,7 +617,7 @@ export default function ApprovalsPage() {
               leaveFrom="opacity-100 translate-y-0"
               leaveTo="opacity-0 translate-y-1"
             >
-              <Popover.Panel className="absolute left-0 z-10 mt-2 w-80 origin-top-left rounded-lg bg-white p-4 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-zinc-800 dark:ring-white/10">
+              <Popover.Panel className="absolute right-0 z-10 mt-2 w-80 origin-top-right rounded-lg bg-white p-4 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-zinc-800 dark:ring-white/10">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-medium text-zinc-900 dark:text-white">Filter</h3>
