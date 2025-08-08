@@ -384,7 +384,7 @@ export default function CampaignDetailPage() {
 
           {/* Attached Assets */}
           {(assets.length > 0 || folders.length > 0) && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-hidden">
               <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <PhotoIcon className="h-5 w-5 text-gray-400" />
                 Angehängte Medien
@@ -393,9 +393,9 @@ export default function CampaignDetailPage() {
               <div className="space-y-3">
                 {folders.map((folder) => (
                   <div key={folder.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <PhotoIcon className="h-5 w-5 text-gray-400" />
-                    <div>
-                      <Text className="font-medium">{folder.name}</Text>
+                    <PhotoIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <Text className="font-medium truncate" title={folder.name}>{folder.name}</Text>
                       <Badge color="blue" className="text-xs">Ordner</Badge>
                     </div>
                   </div>
@@ -407,14 +407,19 @@ export default function CampaignDetailPage() {
                       <img 
                         src={asset.downloadUrl} 
                         alt={asset.fileName}
-                        className="h-10 w-10 object-cover rounded"
+                        className="h-10 w-10 object-cover rounded flex-shrink-0"
                       />
                     ) : (
-                      <DocumentTextIcon className="h-10 w-10 text-gray-400" />
+                      <DocumentTextIcon className="h-10 w-10 text-gray-400 flex-shrink-0" />
                     )}
-                    <div>
-                      <Text className="font-medium text-sm">{asset.fileName}</Text>
-                      <Text className="text-xs text-gray-500">
+                    <div className="flex-1 min-w-0">
+                      <Text className="font-medium text-sm truncate" title={asset.fileName}>{asset.fileName}</Text>
+                      {asset.description && (
+                        <Text className="text-xs text-gray-500 truncate" title={asset.description}>
+                          {asset.description}
+                        </Text>
+                      )}
+                      <Text className="text-xs text-gray-400">
                         {asset.fileType?.split('/')[1]?.toUpperCase() || 'Datei'}
                       </Text>
                     </div>
@@ -506,27 +511,30 @@ export default function CampaignDetailPage() {
                   </div>
                   
                   {campaign.approvalData?.shareId && (
-                    <div className="mt-2">
+                    <div className="mt-2 space-y-2">
                       <Text className="text-sm text-gray-700">Freigabe-Link:</Text>
-                      <a 
-                        href={prService.getApprovalUrl(campaign.approvalData.shareId)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-blue-600 hover:text-blue-700 break-all"
-                      >
+                      <div className="p-2 bg-gray-50 rounded border text-xs break-all text-gray-600">
                         {prService.getApprovalUrl(campaign.approvalData.shareId)}
-                      </a>
-                      <Button
-                        plain
-                        onClick={() => {
-                          navigator.clipboard.writeText(prService.getApprovalUrl(campaign.approvalData!.shareId));
-                          showAlert('success', 'Link kopiert');
-                        }}
-                        className="mt-2 text-sm"
-                      >
-                        <DocumentDuplicateIcon />
-                        Link kopieren
-                      </Button>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <button
+                          onClick={() => window.open(prService.getApprovalUrl(campaign.approvalData!.shareId), '_blank')}
+                          className="inline-flex items-center border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-md px-3 py-2 text-sm font-medium"
+                        >
+                          <EyeIcon className="h-4 w-4 mr-2" />
+                          Freigabe-Seite
+                        </button>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(prService.getApprovalUrl(campaign.approvalData!.shareId));
+                            showAlert('success', 'Link kopiert');
+                          }}
+                          className="inline-flex items-center border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-md px-3 py-2 text-sm font-medium"
+                        >
+                          <DocumentDuplicateIcon className="h-4 w-4 mr-2" />
+                          Link kopieren
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>

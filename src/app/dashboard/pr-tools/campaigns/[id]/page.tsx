@@ -537,7 +537,12 @@ export default function CampaignDetailPage() {
                             <p className="font-medium text-sm truncate" title={asset.metadata.fileName}>
                               {asset.metadata.fileName}
                             </p>
-                            <p className="text-xs text-gray-500">
+                            {asset.metadata.description && (
+                              <p className="text-xs text-gray-500 truncate" title={asset.metadata.description}>
+                                {asset.metadata.description}
+                              </p>
+                            )}
+                            <p className="text-xs text-gray-400">
                               {asset.metadata.fileType?.split('/')[1]?.toUpperCase() || 'Datei'}
                             </p>
                           </div>

@@ -787,8 +787,8 @@ export default function EditPRCampaignPage() {
                         ) : (
                           <DocumentTextIcon className="h-5 w-5 text-gray-400" />
                         )}
-                        <div>
-                          <p className="font-medium text-sm">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate" title={attachment.metadata.fileName || attachment.metadata.folderName}>
                             {attachment.metadata.fileName || attachment.metadata.folderName}
                           </p>
                           {attachment.type === 'folder' && (
