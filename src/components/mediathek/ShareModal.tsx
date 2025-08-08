@@ -164,14 +164,14 @@ export default function ShareModal({
               
               {/* Share URL */}
               <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                <div className="flex items-center justify-between gap-2">
-                  <code className="text-sm text-gray-700 flex-1 truncate">
+                <div className="flex items-start justify-between gap-2">
+                  <code className="text-sm text-gray-700 flex-1 min-w-0 break-all leading-relaxed">
                     {getShareUrl()}
                   </code>
                   <Button
                     plain
                     onClick={handleCopyLink}
-                    className={`whitespace-nowrap ${copied ? 'text-green-600' : 'text-gray-600'}`}
+                    className={`whitespace-nowrap flex-shrink-0 ${copied ? 'text-green-600' : 'text-gray-600'}`}
                   >
                     {copied ? (
                       <>

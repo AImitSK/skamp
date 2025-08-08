@@ -343,17 +343,17 @@ export default function SharePage() {
                       {/* Actions */}
                       <div className="space-y-2">
                         <Link href={asset.downloadUrl} target="_blank" className="block">
-                          <Button plain className="w-full text-xs py-2">
+                          <button className="w-full flex items-center justify-center px-3 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005fab] transition-colors">
                             <EyeIcon className="h-3 w-3 mr-2" />
                             Ansehen
-                          </Button>
+                          </button>
                         </Link>
                         {shareLink?.settings.downloadAllowed && (
                           <Link href={asset.downloadUrl} download className="block">
-                            <Button color="indigo" className="w-full text-xs py-2">
+                            <button className="w-full flex items-center justify-center px-3 py-2 text-xs font-medium text-white bg-[#005fab] border border-[#005fab] rounded-md hover:bg-[#004a8c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005fab] transition-colors">
                               <ArrowDownTrayIcon className="h-3 w-3 mr-2" />
                               Download
-                            </Button>
+                            </button>
                           </Link>
                         )}
                       </div>
