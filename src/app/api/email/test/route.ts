@@ -146,8 +146,32 @@ export async function POST(request: NextRequest) {
       let emailAddress = await emailAddressService.getDefaultForOrganizationServer(auth.organizationId, token);
       
       if (!emailAddress) {
-        console.log('⚠️ No default email address found');
-        console.error('❌ No email addresses found for organization');
+        console.log('⚠️ No default email address found, trying to get any active email...');
+        
+        // Zusätzlicher Fallback: Versuche irgendeine aktive E-Mail-Adresse zu finden
+        try {
+          const allEmails = await emailAddressService.getByOrganizationServer(auth.organizationId, auth.userId, token);
+          const activeEmail = allEmails.find(e => e.isActive);
+          
+          if (activeEmail) {
+            console.log('✅ Found active email as fallback:', activeEmail.email);
+            emailAddress = activeEmail;
+            
+            // Optional: Setze diese E-Mail als Standard für zukünftige Verwendung
+            try {
+              await emailAddressService.setAsDefault(activeEmail.id!, auth.organizationId);
+              console.log('✅ Set fallback email as default');
+            } catch (err) {
+              console.warn('Could not set as default:', err);
+            }
+          }
+        } catch (fallbackError) {
+          console.error('Fallback search failed:', fallbackError);
+        }
+      }
+      
+      if (!emailAddress) {
+        console.error('❌ No email addresses found for organization after all attempts');
         
         return NextResponse.json(
           { 

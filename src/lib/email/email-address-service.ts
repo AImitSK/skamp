@@ -232,6 +232,92 @@ export class EmailAddressService {
   }
 
   /**
+   * Server-seitige Methode um alle E-Mail-Adressen einer Organisation zu holen
+   */
+  async getByOrganizationServer(
+    organizationId: string, 
+    userId: string,
+    authToken?: string
+  ): Promise<EmailAddress[]> {
+    if (typeof window !== 'undefined') {
+      // Client-seitig: Nutze normale Methode
+      return this.getByOrganization(organizationId, userId);
+    }
+
+    try {
+      console.log('🔍 Server: getByOrganizationServer via REST API');
+      
+      const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+      const baseUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents`;
+      
+      const queryUrl = `${baseUrl}:runQuery`;
+      const queryBody = {
+        structuredQuery: {
+          from: [{ collectionId: this.collectionName }],
+          where: {
+            fieldFilter: {
+              field: { fieldPath: 'organizationId' },
+              op: 'EQUAL',
+              value: { stringValue: organizationId }
+            }
+          },
+          orderBy: [
+            {
+              field: { fieldPath: 'isDefault' },
+              direction: 'DESCENDING'
+            },
+            {
+              field: { fieldPath: 'createdAt' },
+              direction: 'DESCENDING'  
+            }
+          ]
+        }
+      };
+
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+
+      const response = await fetch(queryUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(queryBody)
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        console.error('Firestore REST API error:', error);
+        // Fallback auf normale SDK-Methode
+        return this.getByOrganization(organizationId, userId);
+      }
+
+      const data = await response.json();
+      const emailAddresses: EmailAddress[] = [];
+      
+      if (data && data.length > 0) {
+        for (const result of data) {
+          if (result.document) {
+            const emailAddress = this.convertFirestoreDocument(result.document);
+            emailAddresses.push(emailAddress);
+          }
+        }
+      }
+      
+      console.log(`✅ Found ${emailAddresses.length} email addresses via REST`);
+      return emailAddresses;
+
+    } catch (error) {
+      console.error('❌ Server getByOrganizationServer error:', error);
+      // Fallback auf Client SDK
+      return this.getByOrganization(organizationId, userId);
+    }
+  }
+
+  /**
    * Konvertiert Firestore REST API Dokument zu EmailAddress
    */
   private convertFirestoreDocument(doc: any): EmailAddress {
@@ -380,17 +466,20 @@ export class EmailAddressService {
         };
       }
 
+      // Prüfe ob es bereits E-Mail-Adressen gibt (vor dem Speichern)
+      const existingEmails = await this.getByOrganization(organizationId, userId);
+      const shouldBeDefault = existingEmails.length === 0;
+      
+      // Wenn erste E-Mail-Adresse, setze als Standard
+      if (shouldBeDefault) {
+        emailAddress.isDefault = true;
+      }
+
       // Speichere in Firestore
       const docRef = await addDoc(
         collection(db, this.collectionName), 
         emailAddress
       );
-
-      // Setze als Standard wenn erste E-Mail-Adresse
-      const isFirst = await this.isFirstEmailAddress(organizationId);
-      if (isFirst) {
-        await this.setAsDefault(docRef.id, organizationId);
-      }
 
       return { ...emailAddress, id: docRef.id } as EmailAddress;
     } catch (error) {
@@ -1005,15 +1094,6 @@ async findByReplyToAddress(replyToEmail: string): Promise<EmailAddress | null> {
     }
   }
 
-  private async isFirstEmailAddress(organizationId: string): Promise<boolean> {
-    const q = query(
-      collection(db, this.collectionName),
-      where('organizationId', '==', organizationId)
-    );
-
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.size === 1;
-  }
 }
 
 // Singleton Export
