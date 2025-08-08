@@ -25,7 +25,7 @@ import {
   ExclamationCircleIcon,
   CalendarIcon,
   PaperClipIcon,
-  DocumentIcon,
+  DocumentTextIcon,
   InformationCircleIcon
 } from '@heroicons/react/20/solid';
 
@@ -395,7 +395,7 @@ export default function Step3Preview({
   // Helper-Funktion für Dateigrößen-Formatierung (entfernt, da keine Größe in attachedAssets)
   const getFileTypeIcon = (fileType?: string) => {
     // Später können hier verschiedene Icons basierend auf Dateityp zurückgegeben werden
-    return DocumentIcon;
+    return DocumentTextIcon;
   };
 
   // Extrahiere Anhang-Informationen aus der Kampagne
@@ -403,7 +403,7 @@ export default function Step3Preview({
     const attachmentList: Array<{
       name: string;
       type: string;
-      icon: typeof DocumentIcon;
+      icon: typeof DocumentTextIcon;
       description?: string;
     }> = [];
     
@@ -414,14 +414,14 @@ export default function Step3Preview({
           attachmentList.push({
             name: attachment.metadata.fileName,
             type: attachment.metadata.fileType || 'Dokument',
-            icon: DocumentIcon,
+            icon: DocumentTextIcon,
             description: attachment.metadata.description
           });
         } else if (attachment.type === 'folder' && attachment.metadata.folderName) {
           attachmentList.push({
             name: attachment.metadata.folderName,
             type: 'Ordner',
-            icon: DocumentIcon,
+            icon: DocumentTextIcon,
             description: attachment.metadata.description
           });
         }

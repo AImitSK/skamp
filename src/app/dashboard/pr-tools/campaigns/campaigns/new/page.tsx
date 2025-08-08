@@ -468,7 +468,7 @@ export default function NewPRCampaignPage() {
                             className="h-8 w-8 object-cover rounded"
                           />
                         ) : (
-                          <DocumentIcon className="h-5 w-5 text-gray-400" />
+                          <DocumentTextIcon className="h-5 w-5 text-gray-400" />
                         )}
                         <div>
                           <p className="font-medium text-sm">

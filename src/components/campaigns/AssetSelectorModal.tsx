@@ -10,7 +10,7 @@ import { Text } from "@/components/ui/text";
 import { 
   MagnifyingGlassIcon,
   FolderIcon,
-  DocumentIcon,
+  DocumentTextIcon,
   PhotoIcon,
   ArrowUpTrayIcon
 } from "@heroicons/react/20/solid";
@@ -216,7 +216,7 @@ export function AssetSelectorModal({
                           className="h-10 w-10 object-cover rounded mr-3 shrink-0"
                         />
                       ) : (
-                        <DocumentIcon className="h-10 w-10 text-gray-400 mr-3 shrink-0" />
+                        <DocumentTextIcon className="h-10 w-10 text-gray-400 mr-3 shrink-0" />
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">{asset.fileName}</p>
