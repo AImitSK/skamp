@@ -334,7 +334,8 @@ export class EmailService {
       const manualRecipientCount = request.manualRecipients?.length || 0;
       const totalRecipientCount = listRecipientCount + manualRecipientCount;
 
-      console.log('📊 Scheduling for:', {
+      emailLogger.debug('Scheduling details', {
+        campaignId: request.campaign.id,
         listRecipients: listRecipientCount,
         manualRecipients: manualRecipientCount,
         total: totalRecipientCount

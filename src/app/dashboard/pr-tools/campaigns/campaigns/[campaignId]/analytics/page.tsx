@@ -35,6 +35,8 @@ import { companiesEnhancedService } from "@/lib/firebase/crm-service-enhanced";
 import { PRCampaign } from "@/types/pr";
 import { EmailCampaignSend } from "@/types/email";
 import { CompanyEnhanced } from "@/types/crm-enhanced";
+import { formatDate } from "@/utils/dateHelpers";
+import { LOADING_SPINNER_SIZE, LOADING_SPINNER_BORDER, ICON_SIZES } from "@/constants/ui";
 
 // Vereinfachter Aktivitätstyp
 interface EmailActivity {
@@ -49,29 +51,7 @@ interface EmailActivity {
   };
 }
 
-// Hilfsfunktion zur Formatierung des Datums
-function formatDate(timestamp: any) {
-  if (!timestamp || !timestamp.toDate) return '—';
-  return timestamp.toDate().toLocaleDateString('de-DE', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-}
 
-// Hilfsfunktion zur Formatierung der relativen Zeit
-function formatRelativeTime(date: Date): string {
-  const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-  if (diffInSeconds < 60) return 'vor wenigen Sekunden';
-  if (diffInSeconds < 3600) return `vor ${Math.floor(diffInSeconds / 60)} Minuten`;
-  if (diffInSeconds < 86400) return `vor ${Math.floor(diffInSeconds / 3600)} Stunden`;
-  if (diffInSeconds < 2592000) return `vor ${Math.floor(diffInSeconds / 86400)} Tagen`;
-  return date.toLocaleDateString('de-DE');
-}
 
 // Metrik-Karten Komponente
 function MetricCard({
@@ -188,7 +168,7 @@ function ActivityItem({ activity }: { activity: EmailActivity }) {
             </div>
           </div>
           <Text className="text-sm text-gray-500 whitespace-nowrap">
-            {formatRelativeTime(timestamp)}
+            {formatDate(activity.timestamp)}
           </Text>
         </div>
         {activity.metadata?.clickedUrl && (
@@ -310,7 +290,7 @@ export default function CampaignAnalyticsPage() {
           setOrganizationId(user.uid);
         }
       } catch (error) {
-        console.warn('Organization loading failed, using userId as fallback:', error);
+        // Organization loading failed, using userId as fallback
         setOrganizationId(user.uid);
       }
     };
@@ -340,7 +320,7 @@ export default function CampaignAnalyticsPage() {
           const companyData = await companiesEnhancedService.getById(organizationId, campaignData.clientId);
           setCompany(companyData);
         } catch (err) {
-          console.error('Error loading company:', err);
+          // Error loading company
         }
       }
 
@@ -431,7 +411,6 @@ export default function CampaignAnalyticsPage() {
 
       setActivities(mockActivities);
     } catch (error) {
-      console.error('Error loading analytics:', error);
       setError('Fehler beim Laden der Analytics');
     } finally {
       setLoading(false);
@@ -499,7 +478,7 @@ export default function CampaignAnalyticsPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto"></div>
+          <div className={`animate-spin rounded-full ${LOADING_SPINNER_SIZE} ${LOADING_SPINNER_BORDER} mx-auto`}></div>
           <Text className="mt-4">Lade Analytics...</Text>
         </div>
       </div>
@@ -625,7 +604,7 @@ export default function CampaignAnalyticsPage() {
               <select
                 value={filter}
                 onChange={(e) => setFilter(e.target.value as any)}
-                className="text-sm border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                className="text-sm border-gray-300 rounded-md shadow-sm focus:ring-[#005fab] focus:border-[#005fab]"
               >
                 <option value="all">Alle Aktivitäten</option>
                 <option value="opened">Nur Öffnungen</option>

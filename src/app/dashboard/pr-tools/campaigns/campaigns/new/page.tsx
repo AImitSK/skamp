@@ -10,6 +10,8 @@ import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AssetSelectorModal } from "@/components/campaigns/AssetSelectorModal";
+import { LOADING_SPINNER_SIZE, LOADING_SPINNER_BORDER } from "@/constants/ui";
 import { Field, Label, FieldGroup } from "@/components/ui/fieldset";
 import { Select } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -25,22 +27,16 @@ import {
   DocumentTextIcon,
   PhotoIcon,
   XMarkIcon,
-  FolderIcon,
-  DocumentIcon,
+  XCircleIcon,
   SparklesIcon,
   InformationCircleIcon,
-  ArrowUpTrayIcon,
-  MagnifyingGlassIcon,
   PaperAirplaneIcon
 } from "@heroicons/react/20/solid";
 import { listsService } from "@/lib/firebase/lists-service";
 import { prService } from "@/lib/firebase/pr-service";
-import { mediaService } from "@/lib/firebase/media-service";
 import { DistributionList } from "@/types/lists";
 import { CampaignAssetAttachment } from "@/types/pr";
 import { BoilerplateSection } from "@/components/pr/campaign/IntelligentBoilerplateSection";
-import { MediaAsset, MediaFolder } from "@/types/media";
-import { Input } from "@/components/ui/input";
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { serverTimestamp } from 'firebase/firestore';
 
@@ -50,278 +46,27 @@ const StructuredGenerationModal = dynamic(() => import('@/components/pr/ai/Struc
   ssr: false
 });
 
-// Alert Component
-function Alert({
-  type = 'info',
-  title,
-  message
-}: {
-  type?: 'info' | 'error';
-  title?: string;
-  message: string;
-}) {
-  const styles = {
-    info: 'bg-blue-50 text-blue-700',
-    error: 'bg-red-50 text-red-700'
-  };
-
-  const icons = {
-    info: InformationCircleIcon,
-    error: InformationCircleIcon
-  };
-
-  const Icon = icons[type];
+// Einfache Alert-Komponente für diese Seite
+function SimpleAlert({ type = 'info', message }: { type?: 'info' | 'error'; message: string }) {
+  const Icon = type === 'error' ? XCircleIcon : InformationCircleIcon;
+  const bgColor = type === 'error' ? 'bg-red-50' : 'bg-blue-50';
+  const textColor = type === 'error' ? 'text-red-700' : 'text-blue-700';
+  const iconColor = type === 'error' ? 'text-red-400' : 'text-blue-400';
 
   return (
-    <div className={`rounded-md p-4 ${styles[type].split(' ')[0]}`}>
+    <div className={`rounded-md p-4 ${bgColor}`}>
       <div className="flex">
         <div className="shrink-0">
-          <Icon aria-hidden="true" className={`size-5 ${type === 'error' ? 'text-red-400' : 'text-blue-400'}`} />
+          <Icon aria-hidden="true" className={`h-5 w-5 ${iconColor}`} />
         </div>
         <div className="ml-3">
-          {title && <Text className={`font-medium ${styles[type].split(' ')[1]}`}>{title}</Text>}
-          <Text className={`text-sm ${styles[type].split(' ')[1]}`}>{message}</Text>
+          <Text className={`text-sm ${textColor}`}>{message}</Text>
         </div>
       </div>
     </div>
   );
 }
 
-// Asset Selector Modal mit Fix für überlaufende Texte
-function AssetSelectorModal({
-  isOpen,
-  onClose,
-  clientId,
-  clientName,
-  onAssetsSelected,
-  organizationId,
-  legacyUserId
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  clientId: string;
-  clientName?: string;
-  onAssetsSelected: (assets: CampaignAssetAttachment[]) => void;
-  organizationId: string;
-  legacyUserId?: string;
-}) {
-  const [assets, setAssets] = useState<MediaAsset[]>([]);
-  const [folders, setFolders] = useState<MediaFolder[]>([]);
-  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-
-  useEffect(() => {
-    if (isOpen && clientId) {
-      loadClientMedia();
-    }
-  }, [isOpen, clientId]);
-
-  const loadClientMedia = async () => {
-    setLoading(true);
-    try {
-      const { assets: clientAssets, folders: clientFolders } = await mediaService.getMediaByClientId(
-        organizationId,
-        clientId,
-        false,
-        legacyUserId
-      );
-      setAssets(clientAssets);
-      setFolders(clientFolders);
-    } catch (error) {
-      console.error('Fehler beim Laden der Medien:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filteredAssets = useMemo(() => {
-    if (!searchTerm) return assets;
-    const search = searchTerm.toLowerCase();
-    return assets.filter(a =>
-      a.fileName.toLowerCase().includes(search) ||
-      a.description?.toLowerCase().includes(search)
-    );
-  }, [assets, searchTerm]);
-
-  const handleConfirm = () => {
-    const attachments: CampaignAssetAttachment[] = [];
-    
-    assets.forEach(asset => {
-      if (selectedItems.has(asset.id!)) {
-        attachments.push({
-          id: `asset-${asset.id}`,
-          type: 'asset',
-          assetId: asset.id,
-          metadata: {
-            fileName: asset.fileName,
-            fileType: asset.fileType,
-            description: asset.description || '',
-            thumbnailUrl: asset.downloadUrl
-          },
-          attachedAt: serverTimestamp() as any,
-          attachedBy: organizationId
-        });
-      }
-    });
-
-    folders.forEach(folder => {
-      if (selectedItems.has(folder.id!)) {
-        attachments.push({
-          id: `folder-${folder.id}`,
-          type: 'folder',
-          folderId: folder.id,
-          metadata: {
-            folderName: folder.name,
-            description: folder.description || ''
-          },
-          attachedAt: serverTimestamp() as any,
-          attachedBy: organizationId
-        });
-      }
-    });
-
-    onAssetsSelected(attachments);
-    onClose();
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <Dialog open={isOpen} onClose={onClose} size="3xl">
-      <DialogTitle className="px-6 py-4">Medien auswählen</DialogTitle>
-      <DialogBody className="px-6">
-        {/* Search */}
-        <div className="mb-4">
-          <div className="relative">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Medien suchen..."
-              className="pl-9"
-            />
-          </div>
-        </div>
-
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto"></div>
-            <Text className="mt-4">Lade Medien...</Text>
-          </div>
-        ) : (
-          <div className="space-y-6 max-h-96 overflow-y-auto">
-            {/* Folders */}
-            {folders.length > 0 && (
-              <div>
-                <h4 className="font-medium text-gray-900 mb-3">Ordner</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {folders.map(folder => (
-                    <label
-                      key={folder.id}
-                      className="flex items-center p-3 rounded-lg border hover:bg-gray-50 cursor-pointer"
-                    >
-                      <Checkbox
-                        checked={selectedItems.has(folder.id!)}
-                        onChange={(checked) => {
-                          const newSelection = new Set(selectedItems);
-                          if (checked) {
-                            newSelection.add(folder.id!);
-                          } else {
-                            newSelection.delete(folder.id!);
-                          }
-                          setSelectedItems(newSelection);
-                        }}
-                        className="mr-3 shrink-0"
-                      />
-                      <FolderIcon className="h-5 w-5 text-gray-400 mr-3 shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{folder.name}</p>
-                        {folder.description && (
-                          <p className="text-sm text-gray-500 truncate">{folder.description}</p>
-                        )}
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Assets */}
-            {filteredAssets.length > 0 && (
-              <div>
-                <h4 className="font-medium text-gray-900 mb-3">Dateien</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {filteredAssets.map(asset => (
-                    <label
-                      key={asset.id}
-                      className="flex items-center p-3 rounded-lg border hover:bg-gray-50 cursor-pointer"
-                    >
-                      <Checkbox
-                        checked={selectedItems.has(asset.id!)}
-                        onChange={(checked) => {
-                          const newSelection = new Set(selectedItems);
-                          if (checked) {
-                            newSelection.add(asset.id!);
-                          } else {
-                            newSelection.delete(asset.id!);
-                          }
-                          setSelectedItems(newSelection);
-                        }}
-                        className="mr-3 shrink-0"
-                      />
-                      {asset.fileType?.startsWith('image/') ? (
-                        <img
-                          src={asset.downloadUrl}
-                          alt={asset.fileName}
-                          className="h-10 w-10 object-cover rounded mr-3 shrink-0"
-                        />
-                      ) : (
-                        <DocumentIcon className="h-10 w-10 text-gray-400 mr-3 shrink-0" />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{asset.fileName}</p>
-                        <p className="text-xs text-gray-500">
-                          {asset.fileType?.split('/')[1]?.toUpperCase() || 'Datei'}
-                        </p>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {assets.length === 0 && folders.length === 0 && (
-              <div className="text-center py-12">
-                <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <Text>Keine Medien für diesen Kunden gefunden</Text>
-                <Link
-                  href={`/dashboard/pr-tools/media-library?uploadFor=${clientId}`}
-                  target="_blank"
-                  className="inline-flex items-center mt-4 text-[#005fab] hover:text-[#004a8c]"
-                >
-                  <ArrowUpTrayIcon className="h-4 w-4 mr-1" />
-                  Medien hochladen
-                </Link>
-              </div>
-            )}
-          </div>
-        )}
-      </DialogBody>
-      <DialogActions className="px-6 py-4">
-        <Button plain onClick={onClose}>Abbrechen</Button>
-        <Button
-          onClick={handleConfirm}
-          disabled={selectedItems.size === 0}
-          className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
-        >
-          {selectedItems.size} Medien übernehmen
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-}
 
 export default function NewPRCampaignPage() {
   const { user } = useAuth();
@@ -363,7 +108,7 @@ export default function NewPRCampaignPage() {
       const listsData = await listsService.getAll(currentOrganization.id, user.uid);
       setAvailableLists(listsData);
     } catch (error) {
-      console.error('Fehler beim Laden:', error);
+      // Fehler beim Laden
     } finally {
       setLoading(false);
     }
@@ -452,21 +197,15 @@ export default function NewPRCampaignPage() {
         }
       });
 
-      console.log('Speichere Kampagne mit bereinigten Daten:', campaignData);
-
       const newCampaignId = await prService.create(campaignData);
-      console.log('✅ Kampagne erstellt mit ID:', newCampaignId);
 
       if (approvalRequired) {
         try {
           const shareId = await prService.requestApproval(newCampaignId);
-          if (shareId) {
-            console.log('✅ Freigabe erstellt mit Share ID:', shareId);
-          } else {
-            console.warn('⚠️ Freigabe konnte nicht erstellt werden, Kampagne wurde trotzdem gespeichert');
+          if (!shareId) {
+            // Freigabe konnte nicht erstellt werden, Kampagne wurde trotzdem gespeichert
           }
         } catch (approvalError) {
-          console.error('Fehler beim Erstellen der Freigabe:', approvalError);
           // Zeige Warnung, aber navigiere trotzdem
           setValidationErrors(['Die Kampagne wurde gespeichert, aber die Freigabe konnte nicht erstellt werden.']);
           setTimeout(() => {
@@ -480,7 +219,6 @@ export default function NewPRCampaignPage() {
       router.push('/dashboard/pr-tools/campaigns?refresh=true');
 
     } catch (error) {
-      console.error('Fehler beim Speichern der Kampagne:', error);
 
       let errorMessage = 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.';
       if (error instanceof Error) {
@@ -494,22 +232,17 @@ export default function NewPRCampaignPage() {
   };
 
   const handleAiGenerate = (result: any) => {
-    console.log('handleAiGenerate called with:', result);
-    
     if (result.structured?.headline) {
-      console.log('Setting campaign title to:', result.structured.headline);
       setCampaignTitle(result.structured.headline);
     }
     
     // Erstelle AI-Sections aus strukturierten Daten (ohne position)
     if (result.structured) {
-      console.log('Creating AI sections from structured data:', result.structured);
       const aiSections: BoilerplateSection[] = [];
       let order = boilerplateSections.length;
       
       // Lead-Absatz
       if (result.structured.leadParagraph && result.structured.leadParagraph !== 'Lead-Absatz fehlt') {
-        console.log('Adding lead section:', result.structured.leadParagraph);
         aiSections.push({
           id: `ai-lead-${Date.now()}`,
           type: 'lead',
@@ -523,7 +256,6 @@ export default function NewPRCampaignPage() {
       
       // Hauptabsätze
       if (result.structured.bodyParagraphs && result.structured.bodyParagraphs.length > 0) {
-        console.log('Adding body paragraphs:', result.structured.bodyParagraphs.length);
         const mainContent = result.structured.bodyParagraphs
           .filter((paragraph: string) => paragraph && paragraph !== 'Haupttext der Pressemitteilung')
           .map((paragraph: string) => `<p>${paragraph}</p>`)
@@ -544,7 +276,6 @@ export default function NewPRCampaignPage() {
       
       // Zitat
       if (result.structured.quote && result.structured.quote.text) {
-        console.log('Adding quote section:', result.structured.quote);
         aiSections.push({
           id: `ai-quote-${Date.now()}`,
           type: 'quote',
@@ -562,14 +293,10 @@ export default function NewPRCampaignPage() {
       }
       
       // Füge die AI-Sections zu den bestehenden hinzu
-      console.log('Current boilerplateSections:', boilerplateSections);
-      console.log('Adding AI sections:', aiSections);
       const newSections = [...boilerplateSections, ...aiSections];
-      console.log('New sections total:', newSections);
       setBoilerplateSections(newSections);
     }
     
-    console.log('Closing AI modal');
     setShowAiModal(false);
   };
 
@@ -584,7 +311,7 @@ export default function NewPRCampaignPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto"></div>
+          <div className={`animate-spin rounded-full ${LOADING_SPINNER_SIZE} ${LOADING_SPINNER_BORDER} mx-auto`}></div>
           <Text className="mt-4">Lade Daten...</Text>
         </div>
       </div>
@@ -595,13 +322,14 @@ export default function NewPRCampaignPage() {
     <div>
       {/* Header */}
       <div className="mb-8">
-        <Link
+        <Button
+          plain
           href="/dashboard/pr-tools/campaigns"
-          className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
+          className="mb-4"
         >
-          <ArrowLeftIcon className="h-4 w-4 mr-1" />
+          <ArrowLeftIcon className="h-4 w-4" />
           Zurück zur Übersicht
-        </Link>
+        </Button>
         
         <Heading>Neue PR-Kampagne</Heading>
       </div>
@@ -609,7 +337,7 @@ export default function NewPRCampaignPage() {
       {/* Fehlermeldungen oben auf der Seite */}
       {validationErrors.length > 0 && (
         <div className="mb-6 animate-shake">
-          <Alert type="error" message={validationErrors[0]} />
+          <SimpleAlert type="error" message={validationErrors[0]} />
         </div>
       )}
 

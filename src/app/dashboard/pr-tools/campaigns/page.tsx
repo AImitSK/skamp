@@ -1,7 +1,7 @@
 // src/app/dashboard/pr-tools/campaigns/page.tsx
 "use client";
 
-import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
+import { useState, useEffect, useMemo, Fragment } from "react";
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from "@/context/AuthContext";
@@ -9,15 +9,20 @@ import { useOrganization } from "@/context/OrganizationContext";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { SearchInput } from "@/components/ui/search-input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from "@/components/ui/dropdown";
 import { Popover, Transition } from '@headlessui/react';
+import { Alert } from "@/components/common/Alert";
+import { StatusBadge } from "@/components/campaigns/StatusBadge";
+import { ViewToggle, ViewMode } from "@/components/campaigns/ViewToggle";
+import { useAlert } from "@/hooks/useAlert";
+import { formatDateShort } from "@/utils/dateHelpers";
+import { statusConfig } from "@/utils/campaignStatus";
+import { DEFAULT_ITEMS_PER_PAGE, LOADING_SPINNER_SIZE, LOADING_SPINNER_BORDER, MAX_VISIBLE_PAGES, ICON_SIZES } from "@/constants/ui";
 import { 
   PlusIcon, 
-  MagnifyingGlassIcon, 
   EyeIcon, 
   PencilIcon, 
   TrashIcon,
@@ -29,22 +34,12 @@ import {
   PhotoIcon,
   SparklesIcon,
   EllipsisVerticalIcon,
-  CheckCircleIcon,
-  XCircleIcon,
   ExclamationTriangleIcon,
-  InformationCircleIcon,
   ArrowDownTrayIcon,
-  ExclamationCircleIcon,
-  CheckBadgeIcon,
-  PencilSquareIcon,
-  ClockIcon,
-  ArchiveBoxIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   BuildingOfficeIcon,
-  FunnelIcon,
-  ListBulletIcon,
-  Squares2X2Icon
+  FunnelIcon
 } from "@heroicons/react/20/solid";
 import { prService } from "@/lib/firebase/pr-service";
 import { PRCampaign, PRCampaignStatus } from "@/types/pr";
@@ -52,165 +47,10 @@ import EmailSendModal from "@/components/pr/EmailSendModal";
 import Papa from 'papaparse';
 import clsx from 'clsx';
 
-type ViewMode = 'grid' | 'list';
 
-// ViewToggle Component
-function ViewToggle({ value, onChange, className }: { value: ViewMode; onChange: (value: ViewMode) => void; className?: string }) {
-  return (
-    <div className={clsx('inline-flex rounded-lg border border-zinc-300 dark:border-zinc-600', className)}>
-      <button
-        onClick={() => onChange('list')}
-        className={clsx(
-          'flex items-center justify-center p-2 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-l-lg',
-          value === 'list'
-            ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white'
-            : 'bg-white text-zinc-600 hover:text-zinc-900 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100'
-        )}
-        aria-label="List view"
-      >
-        <ListBulletIcon className="h-5 w-5" />
-      </button>
-      
-      <button
-        onClick={() => onChange('grid')}
-        className={clsx(
-          'flex items-center justify-center p-2 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-r-lg border-l border-zinc-300 dark:border-zinc-600',
-          value === 'grid'
-            ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-700 dark:text-white'
-            : 'bg-white text-zinc-600 hover:text-zinc-900 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100'
-        )}
-        aria-label="Grid view"
-      >
-        <Squares2X2Icon className="h-5 w-5" />
-      </button>
-    </div>
-  );
-}
 
-// Alert Component
-function Alert({ 
-  type = 'info', 
-  title, 
-  message, 
-  action 
-}: { 
-  type?: 'info' | 'success' | 'warning' | 'error';
-  title: string;
-  message?: string;
-  action?: { label: string; onClick: () => void };
-}) {
-  const styles = {
-    info: 'bg-blue-50 text-blue-700',
-    success: 'bg-green-50 text-green-700',
-    warning: 'bg-yellow-50 text-yellow-700',
-    error: 'bg-red-50 text-red-700'
-  };
 
-  const icons = {
-    info: InformationCircleIcon,
-    success: CheckCircleIcon,
-    warning: ExclamationTriangleIcon,
-    error: XCircleIcon
-  };
 
-  const Icon = icons[type];
-
-  return (
-    <div className={`rounded-md p-4 ${styles[type].split(' ')[0]}`}>
-      <div className="flex">
-        <div className="shrink-0">
-          <Icon aria-hidden="true" className={`size-5 ${type === 'info' || type === 'success' ? 'text-blue-400' : type === 'warning' ? 'text-yellow-400' : 'text-red-400'}`} />
-        </div>
-        <div className="ml-3 flex-1 md:flex md:justify-between">
-          <div>
-            <Text className={`font-medium ${styles[type].split(' ')[1]}`}>{title}</Text>
-            {message && <Text className={`mt-2 ${styles[type].split(' ')[1]}`}>{message}</Text>}
-          </div>
-          {action && (
-            <p className="mt-3 text-sm md:mt-0 md:ml-6">
-              <button
-                onClick={action.onClick}
-                className={`font-medium whitespace-nowrap ${styles[type].split(' ')[1]} hover:opacity-80`}
-              >
-                {action.label}
-                <span aria-hidden="true"> →</span>
-              </button>
-            </p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Status configuration
-const statusConfig: Record<PRCampaignStatus, { label: string; color: "zinc" | "yellow" | "orange" | "teal" | "blue" | "indigo" | "green"; icon: React.ElementType }> = {
-  draft: {
-    label: 'Entwurf',
-    color: 'zinc',
-    icon: PencilSquareIcon,
-  },
-  in_review: {
-    label: 'In Prüfung',
-    color: 'yellow',
-    icon: ClockIcon,
-  },
-  changes_requested: {
-    label: 'Änderung erbeten',
-    color: 'orange',
-    icon: ExclamationCircleIcon,
-  },
-  approved: {
-    label: 'Freigegeben',
-    color: 'teal',
-    icon: CheckBadgeIcon,
-  },
-  scheduled: {
-    label: 'Geplant',
-    color: 'blue',
-    icon: ClockIcon,
-  },
-  sending: {
-    label: 'Wird gesendet',
-    color: 'indigo',
-    icon: PaperAirplaneIcon,
-  },
-  sent: {
-    label: 'Gesendet',
-    color: 'green',
-    icon: CheckCircleIcon,
-  },
-  archived: {
-    label: 'Archiviert',
-    color: 'zinc',
-    icon: ArchiveBoxIcon,
-  },
-};
-
-// Helper functions
-function formatDate(timestamp: any) {
-  if (!timestamp || !timestamp.toDate) return '—';
-  return timestamp.toDate().toLocaleDateString('de-DE', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-}
-
-// Status Badge Component
-function StatusBadge({ status }: { status: PRCampaignStatus }) {
-  const config = statusConfig[status];
-  const Icon = config.icon;
-  
-  return (
-    <Badge color={config.color} className="inline-flex items-center gap-1 whitespace-nowrap">
-      <Icon className="h-3 w-3" />
-      {config.label}
-    </Badge>
-  );
-}
 
 export default function PRCampaignsPage() {
   const { user } = useAuth();
@@ -237,13 +77,10 @@ export default function PRCampaignsPage() {
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(25);
+  const [itemsPerPage] = useState(DEFAULT_ITEMS_PER_PAGE);
 
   // Alert Management
-  const showAlert = useCallback((type: 'info' | 'success' | 'warning' | 'error', title: string, message?: string) => {
-    setAlert({ type, title, message });
-    setTimeout(() => setAlert(null), 5000);
-  }, []);
+  const { alert, showAlert } = useAlert();
 
 
   useEffect(() => {
@@ -256,7 +93,6 @@ export default function PRCampaignsPage() {
   useEffect(() => {
     const handleFocus = () => {
       if (user && currentOrganization && !loading) {
-        console.log('Window focused - reloading campaigns');
         loadCampaigns();
       }
     };
@@ -269,7 +105,6 @@ export default function PRCampaignsPage() {
   useEffect(() => {
     const shouldRefresh = searchParams.get('refresh');
     if (shouldRefresh === 'true' && user && currentOrganization) {
-      console.log('Refresh parameter detected - reloading campaigns');
       loadCampaigns();
       // Clean URL without triggering navigation
       window.history.replaceState({}, '', '/dashboard/pr-tools/campaigns');
@@ -382,8 +217,8 @@ export default function PRCampaignsPage() {
         "Status": statusConfig[campaign.status].label,
         "Empfänger": campaign.recipientCount || 0,
         "Medien": campaign.attachedAssets?.length || 0,
-        "Erstellt": formatDate(campaign.createdAt),
-        "Versendet": campaign.sentAt ? formatDate(campaign.sentAt) : 'Noch nicht versendet',
+        "Erstellt": formatDateShort(campaign.createdAt),
+        "Versendet": campaign.sentAt ? formatDateShort(campaign.sentAt) : 'Noch nicht versendet',
         "Verteiler": campaign.distributionListName
       }));
 
@@ -406,7 +241,7 @@ export default function PRCampaignsPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto"></div>
+          <div className={`animate-spin rounded-full ${LOADING_SPINNER_SIZE} ${LOADING_SPINNER_BORDER} mx-auto`}></div>
           <Text className="mt-4">Lade Kampagnen...</Text>
         </div>
       </div>
@@ -453,16 +288,16 @@ export default function PRCampaignsPage() {
           <Popover className="relative">
             <Popover.Button
               className={clsx(
-                'inline-flex items-center justify-center rounded-lg border p-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 h-10 w-10',
+                'inline-flex items-center justify-center rounded-lg border p-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2 h-10 w-10',
                 activeFiltersCount > 0
-                  ? 'border-primary bg-primary/5 text-primary hover:bg-primary/10'
+                  ? 'border-[#005fab] bg-[#005fab]/5 text-[#005fab] hover:bg-[#005fab]/10'
                   : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
               )}
               aria-label="Filter"
             >
               <FunnelIcon className="h-5 w-5" />
               {activeFiltersCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-white">
+                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#005fab] text-xs font-medium text-white">
                   {activeFiltersCount}
                 </span>
               )}
@@ -512,7 +347,7 @@ export default function PRCampaignsPage() {
                               name="status"
                               checked={isChecked}
                               onChange={() => setSelectedStatus(status as PRCampaignStatus)}
-                              className="h-4 w-4 border-zinc-300 text-primary focus:ring-primary"
+                              className="h-4 w-4 border-zinc-300 text-[#005fab] focus:ring-[#005fab]"
                             />
                             <span className="text-sm text-zinc-700 dark:text-zinc-300">
                               {config.label}
@@ -533,14 +368,14 @@ export default function PRCampaignsPage() {
           {/* Add Button */}
           <Button 
             href="/dashboard/pr-tools/campaigns/campaigns/new"
-            className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary h-10 px-6"
+            className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005fab] h-10 px-6"
           >
             Neue Kampagne
           </Button>
 
           {/* Actions Button */}
           <Popover className="relative">
-            <Popover.Button className="inline-flex items-center justify-center p-2 text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:text-zinc-300 dark:hover:bg-zinc-800">
+            <Popover.Button className="inline-flex items-center justify-center p-2 text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2 dark:text-zinc-300 dark:hover:bg-zinc-800">
               <EllipsisVerticalIcon className="h-5 w-5" />
             </Popover.Button>
             
@@ -644,7 +479,7 @@ export default function PRCampaignsPage() {
             {campaigns.length === 0 && (
               <Button 
                 href="/dashboard/pr-tools/campaigns/campaigns/new"
-                className="bg-primary hover:bg-primary-hover text-white"
+                className="bg-[#005fab] hover:bg-[#004a8c] text-white"
               >
                 <PlusIcon />
                 Erste Kampagne erstellen
@@ -707,14 +542,14 @@ export default function PRCampaignsPage() {
                       <div className="ml-4 min-w-0 flex-1">
                         <Link 
                           href={`/dashboard/pr-tools/campaigns/campaigns/${campaign.id}`} 
-                          className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-primary truncate block"
+                          className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-[#005fab] truncate block"
                         >
                           {campaign.title}
                         </Link>
                         {campaign.scheduledAt && (
                           <div className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1 mt-1">
-                            <CalendarIcon className="h-3 w-3" />
-                            Geplant für: {formatDate(campaign.scheduledAt)}
+                            <CalendarIcon className={ICON_SIZES.xs} />
+                            Geplant für: {formatDateShort(campaign.scheduledAt)}
                           </div>
                         )}
                       </div>
@@ -727,7 +562,7 @@ export default function PRCampaignsPage() {
                           href={`/dashboard/contacts/crm/companies/${campaign.clientId}`}
                           className="inline-flex items-center gap-1 text-sm text-[#005fab] hover:text-[#004a8c]"
                         >
-                          <BuildingOfficeIcon className="h-3.5 w-3.5" />
+                          <BuildingOfficeIcon className={ICON_SIZES.sm} />
                           <span className="truncate">{campaign.clientName}</span>
                         </Link>
                       ) : (
@@ -761,14 +596,14 @@ export default function PRCampaignsPage() {
                     {/* Erstellt */}
                     <div className="w-[15%]">
                       <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                        {formatDate(campaign.createdAt)}
+                        {formatDateShort(campaign.createdAt)}
                       </span>
                     </div>
 
                     {/* Versendet */}
                     <div className="flex-1 text-right pr-14">
                       <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                        {campaign.sentAt ? formatDate(campaign.sentAt) : '—'}
+                        {campaign.sentAt ? formatDateShort(campaign.sentAt) : '—'}
                       </span>
                     </div>
 
@@ -838,7 +673,7 @@ export default function PRCampaignsPage() {
                 {/* Campaign Info */}
                 <div className="pr-8">
                   <h3 className="text-lg font-semibold text-zinc-900 dark:text-white">
-                    <Link href={`/dashboard/pr-tools/campaigns/campaigns/${campaign.id}`} className="hover:text-primary">
+                    <Link href={`/dashboard/pr-tools/campaigns/campaigns/${campaign.id}`} className="hover:text-[#005fab]">
                       {campaign.title}
                     </Link>
                   </h3>
@@ -872,7 +707,7 @@ export default function PRCampaignsPage() {
                 <div className="mt-4 flex items-center justify-between border-t border-zinc-100 pt-4 dark:border-zinc-700">
                   <Link
                     href={`/dashboard/pr-tools/campaigns/campaigns/${campaign.id}`}
-                    className="text-sm text-primary hover:text-primary-hover"
+                    className="text-sm text-[#005fab] hover:text-[#004a8c]"
                   >
                     Anzeigen
                   </Link>
@@ -930,7 +765,7 @@ export default function PRCampaignsPage() {
           <div className="hidden md:-mt-px md:flex">
             {(() => {
               const pages = [];
-              const maxVisible = 7;
+              const maxVisible = MAX_VISIBLE_PAGES;
               let start = Math.max(1, currentPage - 3);
               let end = Math.min(totalPages, start + maxVisible - 1);
               
@@ -944,7 +779,7 @@ export default function PRCampaignsPage() {
                     key={i}
                     plain
                     onClick={() => setCurrentPage(i)}
-                    className={currentPage === i ? 'font-semibold text-[#005fab]' : ''}
+                    className={currentPage === i ? 'font-semibold text-[#005fab]' : 'text-zinc-700 hover:text-[#005fab]'}
                   >
                     {i}
                   </Button>

@@ -18,6 +18,9 @@ import {
   EmailVariables,
   SaveDraftResponse 
 } from '@/types/email-composer';
+import { emailLogger } from '@/utils/emailLogger';
+import { EmailErrorHandler, EMAIL_ERROR_CODES } from '@/utils/emailErrorHandler';
+import { EMAIL_TIMING } from '@/constants/email';
 import { PRCampaignEmail } from '@/types/email';
 import { PRCampaign } from '@/types/pr';
 
@@ -44,7 +47,7 @@ export const emailComposerService = {
     organizationId?: string // Optional für Backwards Compatibility
   ): Promise<SaveDraftResponse> {
     try {
-      console.log('💾 Saving email draft for campaign:', campaignId);
+      emailLogger.debug('Saving email draft for campaign', { campaignId });
 
       // Prüfe ob bereits ein Draft existiert
       const existingDraft = await this.loadDraft(campaignId);
@@ -66,7 +69,7 @@ export const emailComposerService = {
       // Speichere in Firestore
       await setDoc(doc(db, 'email_drafts', draftId), draftDocument);
 
-      console.log('✅ Draft saved successfully:', draftId);
+      emailLogger.draftSaved(campaignId);
 
       return {
         success: true,
@@ -75,7 +78,8 @@ export const emailComposerService = {
       };
 
     } catch (error) {
-      console.error('❌ Error saving draft:', error);
+      const emailError = EmailErrorHandler.handle(error, { campaignId }, EMAIL_ERROR_CODES.DRAFT_SAVE_ERROR);
+      throw emailError;
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Speichern fehlgeschlagen'
@@ -88,7 +92,7 @@ export const emailComposerService = {
    */
   async loadDraft(campaignId: string): Promise<EmailDraftDocument | null> {
     try {
-      console.log('📄 Loading draft for campaign:', campaignId);
+      emailLogger.debug('Loading draft for campaign', { campaignId });
 
       // Suche den neuesten Draft für diese Kampagne
       const draftsRef = collection(db, 'email_drafts');
@@ -102,14 +106,14 @@ export const emailComposerService = {
       const querySnapshot = await getDocs(q);
       
       if (querySnapshot.empty) {
-        console.log('📭 No draft found for campaign');
+        emailLogger.debug('No draft found for campaign', { campaignId });
         return null;
       }
 
       const doc = querySnapshot.docs[0];
       const data = doc.data() as EmailDraftDocument;
       
-      console.log('✅ Draft loaded:', doc.id);
+      emailLogger.debug('Draft loaded successfully', { campaignId, draftId: doc.id });
       
       return {
         ...data,
@@ -117,7 +121,8 @@ export const emailComposerService = {
       };
 
     } catch (error) {
-      console.error('❌ Error loading draft:', error);
+      const emailError = EmailErrorHandler.handle(error, { campaignId }, EMAIL_ERROR_CODES.DRAFT_LOAD_ERROR);
+      throw emailError;
       return null;
     }
   },
@@ -129,7 +134,7 @@ export const emailComposerService = {
     draft: EmailDraft, 
     campaign: PRCampaign
   ): PRCampaignEmail {
-    console.log('🔀 Merging email fields');
+    emailLogger.debug('Merging email fields');
 
     // Extrahiere Sender-Info
     let senderSignature = '';
@@ -385,7 +390,7 @@ export const emailComposerService = {
       }));
 
     } catch (error) {
-      console.error('❌ Error loading draft history:', error);
+      emailLogger.error('Error loading draft history', { campaignId, error: error.message });
       return [];
     }
   },
@@ -403,7 +408,7 @@ export const emailComposerService = {
 
       return true;
     } catch (error) {
-      console.error('❌ Error deleting draft:', error);
+      emailLogger.error('Error deleting draft', { draftId, error: error.message });
       return false;
     }
   }

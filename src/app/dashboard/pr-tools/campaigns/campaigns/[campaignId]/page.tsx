@@ -9,8 +9,12 @@ import { teamMemberService } from "@/lib/firebase/organization-service";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
+import { Alert } from "@/components/common/Alert";
+import { StatusBadge } from "@/components/campaigns/StatusBadge";
+import { useAlert } from "@/hooks/useAlert";
+import { formatDate } from "@/utils/dateHelpers";
+import { LOADING_SPINNER_SIZE, LOADING_SPINNER_BORDER } from "@/constants/ui";
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from "@/components/ui/dropdown";
 import { 
   ArrowLeftIcon,
@@ -20,10 +24,6 @@ import {
   DocumentDuplicateIcon,
   EyeIcon,
   ArrowDownTrayIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ExclamationTriangleIcon,
-  ClockIcon,
   EllipsisVerticalIcon,
   BuildingOfficeIcon,
   UsersIcon,
@@ -32,10 +32,6 @@ import {
   LinkIcon,
   ChartBarIcon,
   DocumentTextIcon,
-  CheckBadgeIcon,
-  ExclamationCircleIcon,
-  PencilSquareIcon,
-  ArchiveBoxIcon
 } from "@heroicons/react/20/solid";
 import { prService } from "@/lib/firebase/pr-service";
 import { listsService } from "@/lib/firebase/lists-service";
@@ -47,146 +43,9 @@ import { CompanyEnhanced } from "@/types/crm-enhanced";
 import { MediaAsset, MediaFolder } from "@/types/media";
 import EmailSendModal from "@/components/pr/EmailSendModal";
 
-// Status configuration
-const statusConfig: Record<PRCampaignStatus, { 
-  label: string; 
-  color: "zinc" | "yellow" | "orange" | "teal" | "blue" | "indigo" | "green"; 
-  icon: React.ElementType;
-  description: string;
-}> = {
-  draft: {
-    label: 'Entwurf',
-    color: 'zinc',
-    icon: PencilSquareIcon,
-    description: 'Die Kampagne ist noch in Bearbeitung'
-  },
-  in_review: {
-    label: 'In Prüfung',
-    color: 'yellow',
-    icon: ClockIcon,
-    description: 'Die Kampagne wird vom Kunden geprüft'
-  },
-  changes_requested: {
-    label: 'Änderung erbeten',
-    color: 'orange',
-    icon: ExclamationCircleIcon,
-    description: 'Der Kunde hat Änderungen angefordert'
-  },
-  approved: {
-    label: 'Freigegeben',
-    color: 'teal',
-    icon: CheckBadgeIcon,
-    description: 'Die Kampagne wurde vom Kunden freigegeben'
-  },
-  scheduled: {
-    label: 'Geplant',
-    color: 'blue',
-    icon: ClockIcon,
-    description: 'Die Kampagne ist für den Versand geplant'
-  },
-  sending: {
-    label: 'Wird gesendet',
-    color: 'indigo',
-    icon: PaperAirplaneIcon,
-    description: 'Die Kampagne wird gerade versendet'
-  },
-  sent: {
-    label: 'Gesendet',
-    color: 'green',
-    icon: CheckCircleIcon,
-    description: 'Die Kampagne wurde erfolgreich versendet'
-  },
-  archived: {
-    label: 'Archiviert',
-    color: 'zinc',
-    icon: ArchiveBoxIcon,
-    description: 'Die Kampagne wurde archiviert'
-  },
-};
 
-// Alert Component
-function Alert({ 
-  type = 'info', 
-  title, 
-  message, 
-  action 
-}: { 
-  type?: 'info' | 'success' | 'warning' | 'error';
-  title: string;
-  message?: string;
-  action?: { label: string; onClick: () => void };
-}) {
-  const styles = {
-    info: 'bg-blue-50 text-blue-700',
-    success: 'bg-green-50 text-green-700',
-    warning: 'bg-yellow-50 text-yellow-700',
-    error: 'bg-red-50 text-red-700'
-  };
 
-  const icons = {
-    info: ExclamationTriangleIcon,
-    success: CheckCircleIcon,
-    warning: ExclamationTriangleIcon,
-    error: XCircleIcon
-  };
 
-  const Icon = icons[type];
-
-  return (
-    <div className={`rounded-md p-4 ${styles[type].split(' ')[0]}`}>
-      <div className="flex">
-        <div className="shrink-0">
-          <Icon aria-hidden="true" className={`size-5 ${type === 'info' || type === 'success' ? 'text-blue-400' : type === 'warning' ? 'text-yellow-400' : 'text-red-400'}`} />
-        </div>
-        <div className="ml-3 flex-1 md:flex md:justify-between">
-          <div>
-            <Text className={`font-medium ${styles[type].split(' ')[1]}`}>{title}</Text>
-            {message && <Text className={`mt-2 ${styles[type].split(' ')[1]}`}>{message}</Text>}
-          </div>
-          {action && (
-            <p className="mt-3 text-sm md:mt-0 md:ml-6">
-              <button
-                onClick={action.onClick}
-                className={`font-medium whitespace-nowrap ${styles[type].split(' ')[1]} hover:opacity-80`}
-              >
-                {action.label}
-                <span aria-hidden="true"> →</span>
-              </button>
-            </p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Status Badge Component
-function StatusBadge({ status }: { status: PRCampaignStatus }) {
-  const config = statusConfig[status];
-  const Icon = config.icon;
-  
-  return (
-    <div className="flex items-center gap-3">
-      <Badge color={config.color} className="inline-flex items-center gap-1">
-        <Icon className="h-3 w-3" />
-        {config.label}
-      </Badge>
-      <Text className="text-sm text-gray-500">{config.description}</Text>
-    </div>
-  );
-}
-
-// Helper function to format date
-function formatDate(timestamp: any) {
-  if (!timestamp || !timestamp.toDate) return '—';
-  return timestamp.toDate().toLocaleDateString('de-DE', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-}
 
 export default function CampaignDetailPage() {
   const params = useParams();
@@ -202,7 +61,6 @@ export default function CampaignDetailPage() {
   const [folders, setFolders] = useState<MediaFolder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string } | null>(null);
   
   // Modals
   const [showSendModal, setShowSendModal] = useState(false);
@@ -211,10 +69,7 @@ export default function CampaignDetailPage() {
   const [deleting, setDeleting] = useState(false);
 
   // Alert Management
-  const showAlert = useCallback((type: 'info' | 'success' | 'warning' | 'error', title: string, message?: string) => {
-    setAlert({ type, title, message });
-    setTimeout(() => setAlert(null), 5000);
-  }, []);
+  const { alert, showAlert } = useAlert();
 
   // Load OrganizationId
   useEffect(() => {
@@ -230,7 +85,7 @@ export default function CampaignDetailPage() {
           setOrganizationId(user.uid);
         }
       } catch (error) {
-        console.warn('Organization loading failed, using userId as fallback:', error);
+        // Organization loading failed, using userId as fallback
         setOrganizationId(user.uid);
       }
     };
@@ -265,7 +120,7 @@ export default function CampaignDetailPage() {
         promises.push(
           companiesEnhancedService.getById(organizationId, campaignData.clientId)
             .then(companyData => setCompany(companyData))
-            .catch(err => console.error('Error loading company:', err))
+            .catch(err => {})
         );
       }
 
@@ -274,7 +129,7 @@ export default function CampaignDetailPage() {
         promises.push(
           listsService.getById(campaignData.distributionListId)
             .then(listData => setDistributionList(listData))
-            .catch(err => console.error('Error loading list:', err))
+            .catch(err => {})
         );
       }
 
@@ -292,7 +147,7 @@ export default function CampaignDetailPage() {
           promises.push(
             Promise.all(assetIds.map(id => mediaService.getMediaAssetById(id)))
               .then(assetsData => setAssets(assetsData.filter((asset): asset is MediaAsset => asset !== null)))
-              .catch(err => console.error('Error loading assets:', err))
+              .catch(err => {})
           );
         }
 
@@ -300,14 +155,13 @@ export default function CampaignDetailPage() {
           promises.push(
             Promise.all(folderIds.map(id => mediaService.getFolder(id)))
               .then(foldersData => setFolders(foldersData.filter((folder): folder is MediaFolder => folder !== null)))
-              .catch(err => console.error('Error loading folders:', err))
+              .catch(err => {})
           );
         }
       }
 
       await Promise.all(promises);
     } catch (error) {
-      console.error('Error loading campaign data:', error);
       setError('Fehler beim Laden der Kampagne');
     } finally {
       setLoading(false);
@@ -387,7 +241,7 @@ export default function CampaignDetailPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto"></div>
+          <div className={`animate-spin rounded-full ${LOADING_SPINNER_SIZE} ${LOADING_SPINNER_BORDER} mx-auto`}></div>
           <Text className="mt-4">Lade Kampagne...</Text>
         </div>
       </div>
@@ -436,7 +290,7 @@ export default function CampaignDetailPage() {
           <div>
             <Heading level={1}>{campaign.title}</Heading>
             <div className="mt-2">
-              <StatusBadge status={campaign.status} />
+              <StatusBadge status={campaign.status} showDescription={true} />
             </div>
           </div>
           

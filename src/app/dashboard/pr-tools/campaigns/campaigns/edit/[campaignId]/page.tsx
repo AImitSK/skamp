@@ -30,6 +30,7 @@ import {
   DocumentIcon,
   SparklesIcon,
   InformationCircleIcon,
+  XCircleIcon,
   ArrowUpTrayIcon,
   MagnifyingGlassIcon,
   PaperAirplaneIcon
@@ -44,6 +45,8 @@ import { MediaAsset, MediaFolder } from "@/types/media";
 import { Input } from "@/components/ui/input";
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { serverTimestamp } from 'firebase/firestore';
+import { AssetSelectorModal } from "@/components/campaigns/AssetSelectorModal";
+import { LOADING_SPINNER_SIZE, LOADING_SPINNER_BORDER } from "@/constants/ui";
 
 // Dynamic import für AI Modal
 import dynamic from 'next/dynamic';
@@ -51,37 +54,21 @@ const StructuredGenerationModal = dynamic(() => import('@/components/pr/ai/Struc
   ssr: false
 });
 
-// Alert Component
-function Alert({
-  type = 'info',
-  title,
-  message
-}: {
-  type?: 'info' | 'error';
-  title?: string;
-  message: string;
-}) {
-  const styles = {
-    info: 'bg-blue-50 text-blue-700',
-    error: 'bg-red-50 text-red-700'
-  };
-
-  const icons = {
-    info: InformationCircleIcon,
-    error: InformationCircleIcon
-  };
-
-  const Icon = icons[type];
+// Einfache Alert-Komponente für diese Seite
+function SimpleAlert({ type = 'info', message }: { type?: 'info' | 'error'; message: string }) {
+  const Icon = type === 'error' ? XCircleIcon : InformationCircleIcon;
+  const bgColor = type === 'error' ? 'bg-red-50' : 'bg-blue-50';
+  const textColor = type === 'error' ? 'text-red-700' : 'text-blue-700';
+  const iconColor = type === 'error' ? 'text-red-400' : 'text-blue-400';
 
   return (
-    <div className={`rounded-md p-4 ${styles[type].split(' ')[0]}`}>
+    <div className={`rounded-md p-4 ${bgColor}`}>
       <div className="flex">
         <div className="shrink-0">
-          <Icon aria-hidden="true" className={`size-5 ${type === 'error' ? 'text-red-400' : 'text-blue-400'}`} />
+          <Icon aria-hidden="true" className={`h-5 w-5 ${iconColor}`} />
         </div>
         <div className="ml-3">
-          {title && <Text className={`font-medium ${styles[type].split(' ')[1]}`}>{title}</Text>}
-          <Text className={`text-sm ${styles[type].split(' ')[1]}`}>{message}</Text>
+          <Text className={`text-sm ${textColor}`}>{message}</Text>
         </div>
       </div>
     </div>
@@ -130,7 +117,7 @@ function AssetSelectorModal({
       setAssets(clientAssets);
       setFolders(clientFolders);
     } catch (error) {
-      console.error('Fehler beim Laden der Medien:', error);
+      // Fehler beim Laden der Medien
     } finally {
       setLoading(false);
     }
@@ -208,7 +195,7 @@ function AssetSelectorModal({
 
         {loading ? (
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto"></div>
+            <div className={`animate-spin rounded-full ${LOADING_SPINNER_SIZE} ${LOADING_SPINNER_BORDER} mx-auto`}></div>
             <Text className="mt-4">Lade Medien...</Text>
           </div>
         ) : (
@@ -370,7 +357,7 @@ export default function EditPRCampaignPage() {
           setOrganizationId(user.uid);
         }
       } catch (error) {
-        console.error('Organization loading failed, using userId as fallback:', error);
+        // Organization loading failed, using userId as fallback
         setOrganizationId(user.uid);
       }
     };
@@ -426,7 +413,6 @@ export default function EditPRCampaignPage() {
         setValidationErrors(['Kampagne nicht gefunden']);
       }
     } catch (error) {
-      console.error('Fehler beim Laden der Kampagne:', error);
       setValidationErrors(['Fehler beim Laden der Kampagne']);
     } finally {
       setLoadingCampaign(false);
@@ -440,7 +426,7 @@ export default function EditPRCampaignPage() {
       const listsData = await listsService.getAll(organizationId);
       setAvailableLists(listsData);
     } catch (error) {
-      console.error('Fehler beim Laden der Listen:', error);
+      // Fehler beim Laden der Listen
     } finally {
       setLoading(false);
     }
@@ -526,20 +512,14 @@ export default function EditPRCampaignPage() {
         }
       });
 
-      console.log('Aktualisiere Kampagne mit Daten:', updateData);
-
       await prService.update(campaignId, updateData);
-      console.log('✅ Kampagne aktualisiert');
 
       // Wenn Freigabe erforderlich und noch nicht angefordert
       if (approvalRequired && campaign?.status === 'draft') {
         try {
           const shareId = await prService.requestApproval(campaignId);
-          if (shareId) {
-            console.log('✅ Freigabe erstellt mit Share ID:', shareId);
-          }
         } catch (approvalError) {
-          console.error('Fehler beim Erstellen der Freigabe:', approvalError);
+          // Fehler beim Erstellen der Freigabe
         }
       }
 
@@ -547,8 +527,6 @@ export default function EditPRCampaignPage() {
       router.push('/dashboard/pr-tools/campaigns');
 
     } catch (error) {
-      console.error('Fehler beim Aktualisieren der Kampagne:', error);
-
       let errorMessage = 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.';
       if (error instanceof Error) {
         errorMessage = `Fehler: ${error.message}`;
@@ -561,22 +539,17 @@ export default function EditPRCampaignPage() {
   };
 
   const handleAiGenerate = (result: any) => {
-    console.log('handleAiGenerate called with:', result);
-    
     if (result.structured?.headline) {
-      console.log('Setting campaign title to:', result.structured.headline);
       setCampaignTitle(result.structured.headline);
     }
     
     // Erstelle AI-Sections aus strukturierten Daten
     if (result.structured) {
-      console.log('Creating AI sections from structured data:', result.structured);
       const aiSections: BoilerplateSection[] = [];
       let order = boilerplateSections.length;
       
       // Lead-Absatz
       if (result.structured.leadParagraph && result.structured.leadParagraph !== 'Lead-Absatz fehlt') {
-        console.log('Adding lead section:', result.structured.leadParagraph);
         aiSections.push({
           id: `ai-lead-${Date.now()}`,
           type: 'lead',
@@ -590,7 +563,6 @@ export default function EditPRCampaignPage() {
       
       // Hauptabsätze
       if (result.structured.bodyParagraphs && result.structured.bodyParagraphs.length > 0) {
-        console.log('Adding body paragraphs:', result.structured.bodyParagraphs.length);
         const mainContent = result.structured.bodyParagraphs
           .filter((paragraph: string) => paragraph && paragraph !== 'Haupttext der Pressemitteilung')
           .map((paragraph: string) => `<p>${paragraph}</p>`)
@@ -611,7 +583,6 @@ export default function EditPRCampaignPage() {
       
       // Zitat
       if (result.structured.quote && result.structured.quote.text) {
-        console.log('Adding quote section:', result.structured.quote);
         aiSections.push({
           id: `ai-quote-${Date.now()}`,
           type: 'quote',
@@ -633,7 +604,6 @@ export default function EditPRCampaignPage() {
       setBoilerplateSections(newSections);
     }
     
-    console.log('Closing AI modal');
     setShowAiModal(false);
   };
 
@@ -648,7 +618,7 @@ export default function EditPRCampaignPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto"></div>
+          <div className={`animate-spin rounded-full ${LOADING_SPINNER_SIZE} ${LOADING_SPINNER_BORDER} mx-auto`}></div>
           <Text className="mt-4">Lade Kampagne...</Text>
         </div>
       </div>
@@ -670,13 +640,14 @@ export default function EditPRCampaignPage() {
     <div>
       {/* Header */}
       <div className="mb-8">
-        <Link
+        <Button
+          plain
           href="/dashboard/pr-tools/campaigns"
-          className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
+          className="mb-4"
         >
-          <ArrowLeftIcon className="h-4 w-4 mr-1" />
+          <ArrowLeftIcon className="h-4 w-4" />
           Zurück zur Übersicht
-        </Link>
+        </Button>
         
         <Heading>PR-Kampagne bearbeiten</Heading>
       </div>
@@ -684,7 +655,7 @@ export default function EditPRCampaignPage() {
       {/* Fehlermeldungen oben auf der Seite */}
       {validationErrors.length > 0 && (
         <div className="mb-6 animate-shake">
-          <Alert type="error" message={validationErrors[0]} />
+          <SimpleAlert type="error" message={validationErrors[0]} />
         </div>
       )}
 
