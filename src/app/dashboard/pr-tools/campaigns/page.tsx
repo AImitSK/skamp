@@ -63,7 +63,6 @@ export default function PRCampaignsPage() {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
   const [selectedCampaignIds, setSelectedCampaignIds] = useState<Set<string>>(new Set());
   const [showSendModal, setShowSendModal] = useState<PRCampaign | null>(null);
-  const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string } | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     title: string;

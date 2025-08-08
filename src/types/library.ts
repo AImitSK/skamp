@@ -40,6 +40,9 @@ export type PublicationFrequency =
   | 'annual'
   | 'irregular';
 
+// Re-export types from international für Library-Komponenten
+export type { LanguageCode, CountryCode } from './international';
+
 export interface Publication extends BaseEntity {
   // Grunddaten
   title: string; // Haupttitel

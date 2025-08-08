@@ -14,6 +14,7 @@ import { emailCampaignService } from '@/lib/firebase/email-campaign-service';
 import { apiClient } from '@/lib/api/api-client';
 import { db } from '@/lib/firebase/client-init';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { emailLogger } from '@/utils/emailLogger';
 import { 
   EyeIcon,
   PaperAirplaneIcon,
@@ -167,7 +168,10 @@ export default function Step3Preview({
     setTestSent(false);
 
     try {
-      console.log('Sending test email to:', testEmail);
+      emailLogger.info('Test email requested', {
+        campaignId: campaign.id,
+        recipientEmail: testEmail
+      });
       
       // API Call für Test-Email
       const result = await emailService.sendTestEmail({
@@ -180,12 +184,20 @@ export default function Step3Preview({
       if (result.success) {
         setTestSent(true);
         setTimeout(() => setTestSent(false), 5000);
-        console.log('✅ Test email sent:', result.messageId);
+        emailLogger.info('Test email sent successfully', {
+          campaignId: campaign.id,
+          messageId: result.messageId,
+          recipientEmail: testEmail
+        });
       } else {
         setTestEmailError(result.error || 'Test-Versand fehlgeschlagen');
       }
     } catch (error: any) {
-      console.error('Test email failed:', error);
+      emailLogger.error('Test email failed', {
+        campaignId: campaign.id,
+        error: error.message,
+        recipientEmail: testEmail
+      });
       setTestEmailError(error.message || 'Test-Versand fehlgeschlagen');
     } finally {
       setSendingTest(false);
@@ -203,9 +215,17 @@ export default function Step3Preview({
         updatedAt: serverTimestamp(),
         ...additionalData
       });
-      console.log(`✅ Campaign status updated to: ${status}`);
+      emailLogger.info('Campaign status updated', {
+        campaignId: campaign.id,
+        status,
+        additionalData
+      });
     } catch (error) {
-      console.error('Failed to update campaign status:', error);
+      emailLogger.error('Failed to update campaign status', {
+        campaignId: campaign.id,
+        status,
+        error
+      });
       throw error;
     }
   };
@@ -239,7 +259,11 @@ export default function Step3Preview({
       if (sendMode === 'scheduled') {
         // Geplanter Versand
         const scheduledDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
-        console.log('Scheduling email for:', scheduledDateTime);
+        emailLogger.info('Email scheduling requested', {
+          campaignId: campaign.id,
+          scheduledDateTime: scheduledDateTime.toISOString(),
+          recipientCount: draft.recipients.totalCount
+        });
         
         // WICHTIG: Erstelle eine modifizierte Campaign mit den Listen aus dem Draft
         const campaignWithLists = {
@@ -249,7 +273,8 @@ export default function Step3Preview({
           recipientCount: draft.recipients.totalCount
         };
         
-        console.log('📅 Campaign with lists:', {
+        emailLogger.debug('Campaign data prepared for scheduling', {
+          campaignId: campaign.id,
           listIds: campaignWithLists.distributionListIds,
           listNames: campaignWithLists.distributionListNames,
           totalCount: campaignWithLists.recipientCount
@@ -271,7 +296,11 @@ export default function Step3Preview({
         });
         
         if (result.success) {
-          console.log('✅ Email scheduled:', result.jobId);
+          emailLogger.info('Email scheduled successfully', {
+            campaignId: campaign.id,
+            jobId: result.jobId,
+            scheduledDateTime: scheduledDateTime.toISOString()
+          });
           
           // WICHTIG: Update Campaign Status auf "scheduled"
           await updateCampaignStatus('scheduled', {
@@ -292,8 +321,11 @@ export default function Step3Preview({
         }
       } else {
         // Sofortiger Versand über emailCampaignService
-        console.log('Sending email now to', totalRecipients, 'recipients');
-        console.log('Including', draft.recipients.manual.length, 'manual recipients');
+        emailLogger.info('Immediate email send initiated', {
+          campaignId: campaign.id,
+          totalRecipients,
+          manualRecipients: draft.recipients.manual.length
+        });
         
         // WICHTIG: Update Campaign Status auf "sending" VOR dem Versand
         await updateCampaignStatus('sending');
@@ -312,7 +344,11 @@ export default function Step3Preview({
             draft.recipients.manual
           );
           
-          console.log('✅ Email sent:', result);
+          emailLogger.info('Email sent successfully', {
+            campaignId: campaign.id,
+            successCount: result.success,
+            totalRecipients
+          });
           
           // WICHTIG: Update Campaign Status auf "sent" NACH erfolgreichem Versand
           await updateCampaignStatus('sent', {
@@ -335,7 +371,11 @@ export default function Step3Preview({
         }
       }
     } catch (error: any) {
-      console.error('Send failed:', error);
+      emailLogger.error('Email send failed', {
+        campaignId: campaign.id,
+        error: error.message,
+        sendMode
+      });
       setAlert({ 
         type: 'error', 
         message: `Versand fehlgeschlagen: ${error.message || 'Unbekannter Fehler'}` 
