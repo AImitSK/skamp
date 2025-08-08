@@ -66,14 +66,25 @@ describe('Media Library Management', () => {
       loading: false,
     } as any);
 
+    // Setup service mocks with correct function names
+    mockMediaService.getMediaAssets = jest.fn();
+    mockMediaService.getFolders = jest.fn();
+    mockMediaService.uploadMedia = jest.fn();
+    mockMediaService.createFolder = jest.fn();
+    mockMediaService.moveAssetToFolder = jest.fn();
+    mockMediaService.deleteMediaAsset = jest.fn();
+    mockMediaService.deleteFolder = jest.fn();
+    mockMediaService.createShareLink = jest.fn();
+    mockMediaService.getShareLinkByShareId = jest.fn();
+    
     // Reset all service mocks
     jest.clearAllMocks();
   });
 
   describe('Asset Management', () => {
     beforeEach(() => {
-      mockMediaService.getAssetsByOrganization.mockResolvedValue([mockAsset]);
-      mockMediaService.getFoldersByOrganization.mockResolvedValue([mockFolder]);
+      mockMediaService.getMediaAssets.mockResolvedValue([mockAsset]);
+      mockMediaService.getFolders.mockResolvedValue([mockFolder]);
     });
 
     it('should render media library with assets and folders', async () => {
@@ -328,8 +339,8 @@ describe('Media Library Management', () => {
 
   describe('Drag and Drop', () => {
     beforeEach(() => {
-      mockMediaService.getAssetsByOrganization.mockResolvedValue([mockAsset]);
-      mockMediaService.getFoldersByOrganization.mockResolvedValue([mockFolder]);
+      mockMediaService.getMediaAssets.mockResolvedValue([mockAsset]);
+      mockMediaService.getFolders.mockResolvedValue([mockFolder]);
       mockMediaService.moveAsset.mockResolvedValue(undefined);
     });
 
