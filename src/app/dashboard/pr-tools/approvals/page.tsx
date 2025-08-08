@@ -507,9 +507,7 @@ export default function ApprovalsPage() {
               <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
                 {stats.pending}
               </div>
-              <div className="text-sm text-yellow-600 truncate">
-                Ausstehend
-              </div>
+              <Badge color="yellow">Ausstehend</Badge>
             </div>
           </div>
         </div>
@@ -523,9 +521,7 @@ export default function ApprovalsPage() {
               <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
                 {stats.changesRequested}
               </div>
-              <div className="text-sm text-orange-600 truncate">
-                Änderungen erbeten
-              </div>
+              <Badge color="orange">Änderungen erbeten</Badge>
             </div>
           </div>
         </div>
@@ -539,9 +535,7 @@ export default function ApprovalsPage() {
               <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
                 {stats.approved}
               </div>
-              <div className="text-sm text-green-600 truncate">
-                Freigegeben
-              </div>
+              <Badge color="green">Freigegeben</Badge>
             </div>
           </div>
         </div>
@@ -555,9 +549,7 @@ export default function ApprovalsPage() {
               <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
                 {stats.overdue}
               </div>
-              <div className="text-sm text-red-600 truncate">
-                Überfällig
-              </div>
+              <Badge color="red">Überfällig</Badge>
             </div>
           </div>
         </div>
