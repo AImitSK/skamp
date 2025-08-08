@@ -640,14 +640,13 @@ export default function EditPRCampaignPage() {
     <div>
       {/* Header */}
       <div className="mb-8">
-        <Button
-          plain
-          href="/dashboard/pr-tools/campaigns"
-          className="mb-4"
+        <button
+          onClick={() => router.push('/dashboard/pr-tools/campaigns')}
+          className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 border-0 rounded-md px-3 py-2 text-sm font-medium mb-4"
         >
-          <ArrowLeftIcon className="h-4 w-4" />
+          <ArrowLeftIcon className="h-4 w-4 mr-2" />
           Zurück zur Übersicht
-        </Button>
+        </button>
         
         <Heading>PR-Kampagne bearbeiten</Heading>
       </div>

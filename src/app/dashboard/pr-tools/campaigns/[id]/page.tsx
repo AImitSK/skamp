@@ -352,9 +352,13 @@ export default function CampaignDetailPage() {
       <div className="p-8">
         <Alert type="error" title="Fehler" message={error || 'Kampagne nicht gefunden'} />
         <div className="mt-4">
-          <Button onClick={() => router.push('/dashboard/pr-tools/campaigns')} plain>
+          <button
+            onClick={() => router.push('/dashboard/pr-tools/campaigns')}
+            className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 border-0 rounded-md px-3 py-2 text-sm font-medium"
+          >
+            <ArrowLeftIcon className="h-4 w-4 mr-2" />
             Zurück zur Übersicht
-          </Button>
+          </button>
         </div>
       </div>
     );
@@ -462,24 +466,27 @@ export default function CampaignDetailPage() {
               </div>
               
               {campaign.approvalData.shareId && (
-                <div className="flex gap-2">
-                  <Button
-                    href={`/freigabe/${campaign.approvalData.shareId}`}
-                    target="_blank"
-                    plain
-                    className="text-sm whitespace-nowrap"
-                  >
-                    <EyeIcon />
-                    Freigabe-Seite
-                  </Button>
-                  <Button
-                    plain
-                    onClick={handleCopyApprovalLink}
-                    className="text-sm whitespace-nowrap"
-                  >
-                    <LinkIcon />
-                    Link kopieren
-                  </Button>
+                <div className="mt-3 space-y-2">
+                  <div className="text-sm text-gray-500">Freigabe-Link:</div>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Button
+                      href={`/freigabe/${campaign.approvalData.shareId}`}
+                      target="_blank"
+                      plain
+                      className="text-sm"
+                    >
+                      <EyeIcon />
+                      Freigabe-Seite
+                    </Button>
+                    <Button
+                      plain
+                      onClick={handleCopyApprovalLink}
+                      className="text-sm"
+                    >
+                      <LinkIcon />
+                      Link kopieren
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
@@ -507,10 +514,10 @@ export default function CampaignDetailPage() {
                       {asset.type === 'folder' ? (
                         <>
                           <FolderIcon className="h-6 w-6 text-gray-400" />
-                          <div className="flex-1">
-                            <p className="font-medium text-sm">{asset.metadata.folderName}</p>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{asset.metadata.folderName}</p>
                             {asset.metadata.description && (
-                              <p className="text-xs text-gray-500">{asset.metadata.description}</p>
+                              <p className="text-xs text-gray-500 truncate">{asset.metadata.description}</p>
                             )}
                           </div>
                           <Badge color="blue" className="text-xs">Ordner</Badge>
@@ -526,8 +533,10 @@ export default function CampaignDetailPage() {
                           ) : (
                             <DocumentIcon className="h-6 w-6 text-gray-400" />
                           )}
-                          <div className="flex-1">
-                            <p className="font-medium text-sm truncate">{asset.metadata.fileName}</p>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate" title={asset.metadata.fileName}>
+                              {asset.metadata.fileName}
+                            </p>
                             <p className="text-xs text-gray-500">
                               {asset.metadata.fileType?.split('/')[1]?.toUpperCase() || 'Datei'}
                             </p>
