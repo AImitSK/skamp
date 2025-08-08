@@ -162,7 +162,7 @@ function MediaGallery({
                 return (
                   <div 
                     key={asset.id}
-                    className="group relative bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+                    className="group relative bg-white rounded-lg border border-gray-200 overflow-hidden"
                   >
                     {/* Preview */}
                     <div className="aspect-square bg-gray-50 flex items-center justify-center">
@@ -573,7 +573,7 @@ export default function ApprovalPage() {
               ) : (
                 <>
                   <div className="text-xs text-gray-400 mb-1">Freigabe-System</div>
-                  <div className="text-sm font-medium text-[#005fab]">SKAMP</div>
+                  <div className="text-sm font-medium text-[#005fab]">CeleroPress</div>
                 </>
               )}
             </div>
@@ -877,13 +877,13 @@ export default function ApprovalPage() {
               {/* Copyright-Zeile */}
               {brandingSettings.showCopyright && (
                 <div className="text-center text-xs text-gray-500">
-                  <p>Copyright © {new Date().getFullYear()} SKAMP. Alle Rechte vorbehalten.</p>
+                  <p>Copyright © {new Date().getFullYear()} CeleroPress. Alle Rechte vorbehalten.</p>
                 </div>
               )}
             </div>
           ) : (
             <div className="text-center text-sm text-gray-500">
-              <p>Bereitgestellt über SKAMP PR-Suite</p>
+              <p>Bereitgestellt über CeleroPress</p>
             </div>
           )}
         </div>

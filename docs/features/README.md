@@ -8,12 +8,12 @@ Diese Dokumentationen folgen dem standardisierten Template aus `FEATURE_DOCUMENT
 - **[CRM Enhanced](./docu_dashboard_contacts_crm_enhanced.md)** - Erweiterte Kontakt- und Firmenverwaltung (✅ Fertig)
 - **[Verteilerlisten](./docu_dashboard_contacts_lists.md)** - Listen-Management für zielgerichtete Kommunikation (🎯 **ABGESCHLOSSEN** - Production-Ready)
 - **[Library Publications](./docu_dashboard_library_publications.md)** - Publikationsverwaltung mit Metriken und Import/Export (✅ Fertig)
+- **[Freigaben-Center](./docu_dashboard_pr-tools_freigaben.md)** - Approval-Workflow für Kampagnen mit Multi-Freigabe-Support (✅ Fertig)
 
 ### 🚧 In Arbeit
 - **[PR-Kampagnen](./docu_dashboard_pr-tools_campaigns.md)** - Kampagnen-Erstellung mit KI-Unterstützung (❌ Template noch nicht angewendet)
 - [ ] **E-Mail Inbox** - E-Mail-Kommunikation und Thread-Verwaltung
 - [ ] **Mediathek** - Asset-Management und Datei-Verwaltung
-- [ ] **Freigabe-Workflow** - Approval-Prozesse für Kampagnen
 - [ ] **Team-Verwaltung** - Multi-Tenancy und Benutzer-Management
 
 ### 📝 Geplant (basierend auf Legacy-Features)
@@ -53,6 +53,7 @@ Jede Feature-Dokumentation enthält:
 **Status der Migration:**
 - ✅ **CRM Enhanced**: Vollständig nach Template dokumentiert (Import/Export, Tag-System)
 - ✅ **Verteilerlisten**: Vollständig nach Template dokumentiert (Production-Ready mit Tests)
+- ✅ **Freigaben-Center**: Vollständig nach Template dokumentiert (Code-Cleaning, Design-Patterns, Tests)
 - 🚧 **PR-Kampagnen**: Template noch NICHT angewendet - steht aus
 - 🚧 **Weitere Features**: Sukzessive Migration geplant
 
@@ -74,6 +75,6 @@ Alle ursprünglichen Feature-Beschreibungen sind in `/docs/legacy-features/` ver
 
 ---
 
-**Letzte Aktualisierung:** 2025-08-04  
-**Dokumentierte Features:** 3/15+ geplant (CRM Enhanced ✅, Verteilerlisten ✅, Library Publications ✅)  
+**Letzte Aktualisierung:** 2025-08-08  
+**Dokumentierte Features:** 4/15+ geplant (CRM Enhanced ✅, Verteilerlisten ✅, Library Publications ✅, Freigaben-Center ✅)  
 **Template-Version:** 2.0

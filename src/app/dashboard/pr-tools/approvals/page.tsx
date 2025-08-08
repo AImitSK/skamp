@@ -35,7 +35,7 @@ import {
   BuildingOfficeIcon,
   ChevronLeftIcon,
   ChevronRightIcon
-} from "@heroicons/react/20/solid";
+} from "@heroicons/react/24/outline";
 import { approvalService } from "@/lib/firebase/approval-service";
 import { companiesEnhancedService } from "@/lib/firebase/crm-service-enhanced";
 import { 
@@ -272,11 +272,9 @@ export default function ApprovalsPage() {
 
   const loadApprovals = async () => {
     if (!currentOrganization) {
-      console.log('🟡 No currentOrganization yet, skipping load');
       return;
     }
     
-    console.log('🟢 Loading approvals for organizationId:', currentOrganization.id);
     
     setLoading(true);
     setIsRefreshing(true);
@@ -290,29 +288,14 @@ export default function ApprovalsPage() {
         isOverdue: showOverdueOnly ? true : undefined
       };
       
-      console.log('🟢 Calling searchEnhanced with filters:', filters);
       
       // Lade Freigaben mit Filtern
       const allApprovals = await approvalService.searchEnhanced(currentOrganization.id, filters);
       
-      console.log('🟢 Approvals loaded:', allApprovals.length, 'approvals');
-      console.log('🟢 Approval statuses:', JSON.stringify(allApprovals.map(a => ({ 
-        id: a.id, 
-        title: a.title, 
-        status: a.status,
-        shareId: a.shareId 
-      })), null, 2));
       
       // Filtere Draft-Status heraus
       const filteredApprovals = allApprovals.filter(a => a.status !== 'draft');
       
-      console.log('🟢 Filtered approvals (excluding drafts):', filteredApprovals.length, 'approvals');
-      console.log('🟢 Filtered approval statuses:', JSON.stringify(filteredApprovals.map(a => ({ 
-        id: a.id, 
-        title: a.title, 
-        status: a.status,
-        shareId: a.shareId 
-      })), null, 2));
       
       setApprovals(filteredApprovals);
       setLastRefresh(new Date());
@@ -338,7 +321,6 @@ export default function ApprovalsPage() {
         showAlert('success', 'Daten aktualisiert');
       }
     } catch (error) {
-      console.error('❌ Error loading approvals:', error);
       showAlert('error', 'Fehler beim Laden', 'Die Freigaben konnten nicht geladen werden.');
     } finally {
       setLoading(false);
