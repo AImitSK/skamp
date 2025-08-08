@@ -260,7 +260,6 @@ export default function ApprovalsPage() {
   
   // Refresh States
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
   // Alert Management
   const showAlert = useCallback((type: 'info' | 'success' | 'warning' | 'error', title: string, message?: string) => {
@@ -297,7 +296,6 @@ export default function ApprovalsPage() {
       
       
       setApprovals(filteredApprovals);
-      setLastRefresh(new Date());
       
       // Lade Kunden für Filter
       const companies = await companiesEnhancedService.getAll(currentOrganization.id);
@@ -333,16 +331,6 @@ export default function ApprovalsPage() {
     }
   }, [currentOrganization, selectedStatus, selectedClients, selectedPriorities, showOverdueOnly, searchTerm]);
 
-  // Auto-Refresh alle 30 Sekunden
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (!loading && !isRefreshing && currentOrganization) {
-        loadApprovals();
-      }
-    }, 30000);
-    
-    return () => clearInterval(interval);
-  }, [currentOrganization, loading, isRefreshing]);
 
   const handleCopyLink = async (shareId: string) => {
     const url = `${window.location.origin}/freigabe/${shareId}`;
@@ -496,9 +484,6 @@ export default function ApprovalsPage() {
             </Text>
           </div>
           <div className="flex items-center gap-3">
-            <Text className="text-xs text-gray-500">
-              Zuletzt aktualisiert: {lastRefresh.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
-            </Text>
             <Button
               onClick={() => loadApprovals()}
               disabled={isRefreshing}
@@ -522,7 +507,7 @@ export default function ApprovalsPage() {
               <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
                 {stats.pending}
               </div>
-              <div className="text-sm text-gray-500 truncate">
+              <div className="text-sm text-yellow-600 truncate">
                 Ausstehend
               </div>
             </div>
@@ -538,7 +523,7 @@ export default function ApprovalsPage() {
               <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
                 {stats.changesRequested}
               </div>
-              <div className="text-sm text-gray-500 truncate">
+              <div className="text-sm text-orange-600 truncate">
                 Änderungen erbeten
               </div>
             </div>
@@ -554,7 +539,7 @@ export default function ApprovalsPage() {
               <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
                 {stats.approved}
               </div>
-              <div className="text-sm text-gray-500 truncate">
+              <div className="text-sm text-green-600 truncate">
                 Freigegeben
               </div>
             </div>
@@ -570,7 +555,7 @@ export default function ApprovalsPage() {
               <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
                 {stats.overdue}
               </div>
-              <div className="text-sm text-gray-500 truncate">
+              <div className="text-sm text-red-600 truncate">
                 Überfällig
               </div>
             </div>

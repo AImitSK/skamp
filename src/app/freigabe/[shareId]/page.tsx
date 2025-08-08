@@ -287,9 +287,9 @@ export default function ApprovalPage() {
       setCampaign(campaignData);
 
       // Lade Branding-Einstellungen
-      if (campaignData.userId) {
+      if (campaignData.organizationId) {
         try {
-          const branding = await brandingService.getBrandingSettings(campaignData.userId);
+          const branding = await brandingService.getBrandingSettings(campaignData.organizationId);
           setBrandingSettings(branding);
         } catch (brandingError) {
           console.error('Fehler beim Laden der Branding-Einstellungen:', brandingError);
@@ -463,7 +463,7 @@ export default function ApprovalPage() {
               ) : (
                 <>
                   <div className="text-xs text-gray-400 mb-1">Freigabe-System</div>
-                  <div className="text-sm font-medium text-[#005fab]">SKAMP</div>
+                  <div className="text-sm font-medium text-[#005fab]">CeleroPress</div>
                 </>
               )}
             </div>
@@ -706,13 +706,13 @@ export default function ApprovalPage() {
               {/* Copyright-Zeile */}
               {brandingSettings.showCopyright && (
                 <div className="text-center text-xs text-gray-500">
-                  <p>Copyright © {new Date().getFullYear()} SKAMP. Alle Rechte vorbehalten.</p>
+                  <p>Copyright © {new Date().getFullYear()} {brandingSettings.companyName || 'CeleroPress'}. Alle Rechte vorbehalten.</p>
                 </div>
               )}
             </div>
           ) : (
             <div className="text-center text-sm text-gray-500">
-              <p>Bereitgestellt über SKAMP PR-Suite</p>
+              <p>Bereitgestellt über CeleroPress</p>
             </div>
           )}
         </div>
