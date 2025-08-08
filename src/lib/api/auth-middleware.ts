@@ -9,6 +9,80 @@ export interface AuthContext {
 }
 
 /**
+ * Get user's organization from Firestore
+ */
+async function getUserOrganizationId(userId: string, token: string): Promise<string | null> {
+  try {
+    const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    const baseUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents`;
+    
+    // Query team_members für den User
+    const queryUrl = `${baseUrl}:runQuery`;
+    const queryBody = {
+      structuredQuery: {
+        from: [{ collectionId: 'team_members' }],
+        where: {
+          compositeFilter: {
+            op: 'AND',
+            filters: [
+              {
+                fieldFilter: {
+                  field: { fieldPath: 'userId' },
+                  op: 'EQUAL',
+                  value: { stringValue: userId }
+                }
+              },
+              {
+                fieldFilter: {
+                  field: { fieldPath: 'status' },
+                  op: 'EQUAL',
+                  value: { stringValue: 'active' }
+                }
+              }
+            ]
+          }
+        },
+        limit: 1
+      }
+    };
+
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json'
+    };
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const firestoreResponse = await fetch(queryUrl, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(queryBody)
+    });
+
+    if (!firestoreResponse.ok) {
+      console.error('Firestore query failed:', firestoreResponse.status);
+      return null;
+    }
+
+    const firestoreData = await firestoreResponse.json();
+    
+    if (firestoreData && firestoreData.length > 0 && firestoreData[0].document) {
+      const doc = firestoreData[0].document;
+      const organizationId = doc.fields?.organizationId?.stringValue;
+      console.log('✅ Found organization ID:', organizationId);
+      return organizationId || null;
+    }
+    
+    console.log('⚠️ No team member found for user:', userId);
+    return null;
+  } catch (error) {
+    console.error('Error getting organization ID:', error);
+    return null;
+  }
+}
+
+/**
  * Verify Firebase ID Token ohne Admin SDK
  */
 async function verifyFirebaseToken(token: string): Promise<AuthContext | null> {
@@ -33,12 +107,15 @@ async function verifyFirebaseToken(token: string): Promise<AuthContext | null> {
     
     if (!user) return null;
     
+    // Get real organization ID
+    const organizationId = await getUserOrganizationId(user.localId, token) || user.localId;
+    
     // Return auth context
     return {
       userId: user.localId,
-      organizationId: user.localId, // Für jetzt gleich userId
+      organizationId: organizationId,
       email: user.email,
-      role: 'admin' // Alle User sind erstmal Admin ihrer eigenen Org
+      role: 'admin' // TODO: Get real role from team_members
     };
   } catch (error) {
     console.error('Auth verification error:', error);
