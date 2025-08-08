@@ -782,7 +782,7 @@ export default function ApprovalPage() {
                     </Button>
                     <Button
                       onClick={() => setShowFeedbackForm(true)}
-                      className="flex-1 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                      className="flex-1 !bg-white !border !border-gray-300 !text-gray-700 hover:!bg-gray-100"
                       disabled={submitting}
                     >
                       <PencilSquareIcon className="h-5 w-5 mr-2" />
