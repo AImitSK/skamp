@@ -14,7 +14,7 @@ import {
   PlusIcon, 
   ShareIcon,
   ArrowTopRightOnSquareIcon,
-  DocumentIcon,
+  // DocumentIcon ersetzt durch DocumentTextIcon,
   VideoCameraIcon,
   DocumentTextIcon
 } from "@heroicons/react/24/outline";
@@ -59,7 +59,7 @@ export default function CompanyMediaSection({ companyId, companyName }: CompanyM
     if (fileType.startsWith('image/')) return PhotoIcon;
     if (fileType.startsWith('video/')) return VideoCameraIcon;
     if (fileType.includes('pdf') || fileType.includes('document')) return DocumentTextIcon;
-    return DocumentIcon;
+    return DocumentTextIcon;
   };
 
   // NEU: Direkt zur Mediathek mit Kunden-Context

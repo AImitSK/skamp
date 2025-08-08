@@ -15,7 +15,7 @@ import { useCrmData } from "@/context/CrmDataContext";
 import { mediaService } from "@/lib/firebase/media-service";
 import { 
   PhotoIcon, 
-  DocumentIcon, 
+  // DocumentIcon ersetzt durch DocumentTextIcon, 
   VideoCameraIcon, 
   DocumentTextIcon,
   InformationCircleIcon,
@@ -112,7 +112,7 @@ export default function AssetDetailsModal({
     } else if (fileType.includes('pdf') || fileType.includes('document')) {
       return DocumentTextIcon;
     } else {
-      return DocumentIcon;
+      return DocumentTextIcon;
     }
   };
 

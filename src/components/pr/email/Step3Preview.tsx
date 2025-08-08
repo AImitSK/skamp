@@ -434,7 +434,7 @@ export default function Step3Preview({
       attachmentList.push({
         name: `${campaign.title}.pdf`,
         type: 'Pressemitteilung',
-        icon: DocumentIcon,
+        icon: DocumentTextIcon,
         description: 'Generierte Pressemitteilung'
       });
     }
