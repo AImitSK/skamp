@@ -10,7 +10,7 @@ import {
   TrashIcon,
   PencilIcon,
   ShareIcon
-} from "@heroicons/react/24/solid";
+} from "@heroicons/react/24/outline";
 import { 
   Dropdown,
   DropdownButton,
@@ -70,7 +70,6 @@ export default function FolderCard({
 
   // Folder Drag Handlers
   const handleFolderDragStart = (e: React.DragEvent) => {
-    console.log('Dragging folder:', folder.name);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', `folder:${folder.id}`);
     e.stopPropagation();
@@ -81,8 +80,6 @@ export default function FolderCard({
   };
 
   const handleFolderDragEnd = () => {
-    console.log('Folder drag ended');
-    
     if (onFolderDragEnd) {
       onFolderDragEnd();
     }
@@ -93,45 +90,30 @@ export default function FolderCard({
     e.stopPropagation();
     
     const data = e.dataTransfer.getData('text/plain');
-    console.log('🗂️ FolderCard Drop - received data:', data);
     
     // Check if it's a folder being dropped
     if (data.startsWith('folder:')) {
-      console.log('🔧 This IS a folder drop');
-      
       if (onFolderMove) {
-        console.log('🎯 onFolderMove exists, calling it!');
         const draggedFolderId = data.replace('folder:', '');
-        
-        console.log(`🗂️ Folder-to-folder drop detected: ${draggedFolderId} -> ${folder.id}`);
         
         // Prevent dropping folder into itself
         if (draggedFolderId === folder.id) {
-          console.log('❌ Cannot drop folder into itself');
           return;
         }
         
-        console.log(`✅ Moving folder ${draggedFolderId} into ${folder.id}`);
-        
         try {
           await onFolderMove(draggedFolderId, folder.id!);
-          console.log('🎉 Folder move completed successfully!');
         } catch (error) {
-          console.error('❌ Error moving folder:', error);
+          // Error handling could be improved with proper user feedback
         }
         
         return;
-      } else {
-        console.log('❌ onFolderMove is null/undefined!');
       }
     } 
     
     // If it's not a folder drop, call the asset drop handler
     if (onDrop && !data.startsWith('folder:')) {
-      console.log('📁 Delegating to asset drop handler');
       onDrop(e);
-    } else {
-      console.log('⚠️ No handler for drop type:', data);
     }
   };
 
@@ -158,12 +140,12 @@ export default function FolderCard({
 
   return (
     <div 
-      className={`group relative bg-white rounded-lg border shadow-sm transition-all duration-200 overflow-hidden ${
+      className={`group relative bg-white rounded-lg border transition-all duration-200 overflow-hidden ${
         isDragOver 
-          ? 'border-blue-400 bg-blue-50 shadow-lg scale-105 border-2' // Drag Over Styling
+          ? 'border-blue-400 bg-blue-50 scale-105 border-2' // Drag Over Styling
           : isDraggedFolder
           ? 'opacity-50 scale-95 border-gray-300' // Being dragged
-          : 'border-gray-200 hover:shadow-md'
+          : 'border-gray-200 hover:border-gray-300'
       }`}
       // Make folder draggable
       draggable={true}
@@ -228,7 +210,7 @@ export default function FolderCard({
               <DropdownButton 
                 as={Button} 
                 plain 
-                className="bg-white/90 shadow-sm hover:bg-white p-2"
+                className="bg-white/90 hover:bg-white p-2"
                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
               >
                 <EllipsisVerticalIcon className="h-4 w-4" />

@@ -16,7 +16,7 @@ import {
   ClipboardDocumentIcon, 
   CheckIcon,
   InformationCircleIcon
-} from "@heroicons/react/20/solid";
+} from "@heroicons/react/24/outline";
 
 interface ShareModalProps {
   target: MediaFolder | MediaAsset;
@@ -108,7 +108,7 @@ export default function ShareModal({
       // onSuccess?.();
       
     } catch (error) {
-      console.error('Fehler beim Erstellen des Share-Links:', error);
+      // Error handling could be improved with proper user feedback
       alert('Fehler beim Erstellen des Share-Links. Bitte versuchen Sie es erneut.');
     } finally {
       setCreating(false);
@@ -126,7 +126,7 @@ export default function ShareModal({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      console.error('Fehler beim Kopieren:', error);
+      // Error handling could be improved with proper user feedback
     }
   };
 

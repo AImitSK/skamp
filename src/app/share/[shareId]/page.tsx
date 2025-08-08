@@ -80,11 +80,9 @@ export default function SharePage() {
           const branding = await brandingService.getBrandingSettings(link.userId);
           setBrandingSettings(branding);
         } catch (brandingError) {
-          console.error('Fehler beim Laden der Branding-Einstellungen:', brandingError);
           // Kein kritischer Fehler - fahre ohne Branding fort
         }
       } else if (link.type === 'campaign') {
-        console.log('📎 Campaign share detected - branding disabled');
         setBrandingSettings(null); // Explizit kein Branding für Kampagnen
       }
 
@@ -100,7 +98,6 @@ export default function SharePage() {
       }
 
     } catch (error) {
-      console.error('Fehler beim Laden des Share-Inhalts:', error);
       setError('Fehler beim Laden des Inhalts.');
     } finally {
       setLoading(false);
@@ -110,19 +107,15 @@ export default function SharePage() {
   // NEU: Lade Campaign-Medien
   const loadCampaignContent = async (shareLink: ShareLink) => {
     try {
-      console.log('Loading campaign content for shareLink:', shareLink);
-      
       // Verwende die neue getCampaignMediaAssets Methode
       const assets = await mediaService.getCampaignMediaAssets(shareLink);
       
-      console.log('Loaded campaign assets:', assets.length);
       setMediaItems(assets);
       
       if (assets.length === 0) {
         setError('Keine Medien in dieser Kampagne gefunden.');
       }
     } catch (error) {
-      console.error('Fehler beim Laden der Kampagnen-Medien:', error);
       setError('Kampagnen-Medien konnten nicht geladen werden.');
     }
   };
@@ -137,7 +130,6 @@ export default function SharePage() {
       const assets = await mediaService.getMediaAssetsInFolder(folderId);
       setMediaItems(assets);
     } catch (error) {
-      console.error('Fehler beim Laden des Ordner-Inhalts:', error);
       setError('Ordner konnte nicht geladen werden.');
     }
   };
@@ -152,7 +144,6 @@ export default function SharePage() {
         setError('Datei nicht gefunden.');
       }
     } catch (error) {
-      console.error('Fehler beim Laden der Datei:', error);
       setError('Datei konnte nicht geladen werden.');
     }
   };
@@ -194,7 +185,7 @@ export default function SharePage() {
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+        <div className="max-w-md w-full bg-white rounded-lg border border-gray-200 p-8 text-center">
           <ExclamationTriangleIcon className="h-16 w-16 text-red-500 mx-auto mb-4" />
           <Heading level={2} className="text-red-900 mb-2">Fehler</Heading>
           <Text className="text-gray-600 mb-6">{error}</Text>
@@ -210,7 +201,7 @@ export default function SharePage() {
   if (passwordRequired) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
+        <div className="max-w-md w-full bg-white rounded-lg border border-gray-200 p-8">
           <div className="text-center mb-6">
             <LockClosedIcon className="h-16 w-16 text-[#005fab] mx-auto mb-4" />
             <Heading level={2} className="text-gray-900">Passwort erforderlich</Heading>
@@ -253,7 +244,7 @@ export default function SharePage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
@@ -294,7 +285,7 @@ export default function SharePage() {
                   ) : (
                     <>
                       <div className="text-xs text-gray-400 mb-1">Freigabe-System</div>
-                      <div className="text-sm font-medium text-[#005fab]">SKAMP</div>
+                      <div className="text-sm font-medium text-[#005fab]">Media Share</div>
                     </>
                   )}
                 </>
@@ -325,7 +316,7 @@ export default function SharePage() {
                 return (
                   <div
                     key={asset.id}
-                    className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+                    className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:border-gray-300 transition-colors"
                   >
                     {/* Preview */}
                     <div className="aspect-square bg-gray-50 flex items-center justify-center relative">
@@ -448,13 +439,13 @@ export default function SharePage() {
                   {/* Copyright-Zeile */}
                   {brandingSettings.showCopyright && (
                     <div className="text-center text-xs text-gray-500">
-                      <p>Copyright © {new Date().getFullYear()} SKAMP. Alle Rechte vorbehalten.</p>
+                      <p>Copyright © {new Date().getFullYear()} Media Share System. Alle Rechte vorbehalten.</p>
                     </div>
                   )}
                 </div>
               ) : (
                 <div className="text-center text-sm text-gray-500">
-                  <p>Geteilt über SKAMP Marketing Suite</p>
+                  <p>Geteilt über Media Share System</p>
                 </div>
               )}
             </>

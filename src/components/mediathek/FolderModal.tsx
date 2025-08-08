@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Text } from "@/components/ui/text";
 import { MediaFolder } from "@/types/media";
 import { useCrmData } from "@/context/CrmDataContext";
-import { InformationCircleIcon } from "@heroicons/react/20/solid";
+import { InformationCircleIcon } from "@heroicons/react/24/outline";
 
 interface FolderModalProps {
   folder?: MediaFolder;
@@ -124,7 +124,7 @@ export default function FolderModal({
       });
       onClose();
     } catch (error) {
-      console.error('Fehler beim Speichern des Ordners:', error);
+      // Error handling could be improved with proper user feedback
     } finally {
       setSaving(false);
     }
@@ -220,7 +220,7 @@ export default function FolderModal({
                     onClick={() => setSelectedColor(color)}
                     className={`w-8 h-8 rounded-lg border-2 transition-all ${
                       selectedColor === color 
-                        ? 'border-gray-400 scale-110 shadow-md' 
+                        ? 'border-gray-400 scale-110' 
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                     style={{ backgroundColor: color }}

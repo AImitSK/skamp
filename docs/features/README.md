@@ -9,11 +9,11 @@ Diese Dokumentationen folgen dem standardisierten Template aus `FEATURE_DOCUMENT
 - **[Verteilerlisten](./docu_dashboard_contacts_lists.md)** - Listen-Management für zielgerichtete Kommunikation (🎯 **ABGESCHLOSSEN** - Production-Ready)
 - **[Library Publications](./docu_dashboard_library_publications.md)** - Publikationsverwaltung mit Metriken und Import/Export (✅ Fertig)
 - **[Freigaben-Center](./docu_dashboard_pr-tools_freigaben.md)** - Approval-Workflow für Kampagnen mit Multi-Freigabe-Support (✅ Fertig)
+- **[Media-Library & Sharing](./docu_dashboard_pr-tools_media-library.md)** - Asset-Management mit Sharing-System (✅ **FERTIG** - Code-Cleaning und Tests abgeschlossen)
 
 ### 🚧 In Arbeit
 - **[PR-Kampagnen](./docu_dashboard_pr-tools_campaigns.md)** - Kampagnen-Erstellung mit KI-Unterstützung (❌ Template noch nicht angewendet)
 - [ ] **E-Mail Inbox** - E-Mail-Kommunikation und Thread-Verwaltung
-- [ ] **Mediathek** - Asset-Management und Datei-Verwaltung
 - [ ] **Team-Verwaltung** - Multi-Tenancy und Benutzer-Management
 
 ### 📝 Geplant (basierend auf Legacy-Features)

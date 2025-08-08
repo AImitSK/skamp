@@ -17,7 +17,7 @@ import {
   FolderIcon, 
   BuildingOfficeIcon,
   InformationCircleIcon
-} from "@heroicons/react/20/solid";
+} from "@heroicons/react/24/outline";
 
 // Alert Component
 function Alert({ 
@@ -120,7 +120,6 @@ export default function UploadModal({
   const handleUpload = async () => {
     if (selectedFiles.length === 0) return;
 
-    console.log('🔍 Upload starting with organizationId:', organizationId, 'userId:', userId);
 
     setUploading(true);
     setUploadProgress({});
@@ -143,7 +142,6 @@ export default function UploadModal({
           { userId } // NEW: Pass userId in context
         );
         
-        console.log('Upload completed, asset:', uploadedAsset);
 
         if (selectedClientId && uploadedAsset.id) {
           await mediaService.updateAsset(uploadedAsset.id, {
@@ -157,7 +155,6 @@ export default function UploadModal({
       await onUploadSuccess();
       onClose();
     } catch (error) {
-      console.error("Upload-Fehler:", error);
       showAlert('error', 'Fehler beim Hochladen der Dateien. Bitte versuchen Sie es erneut.');
     } finally {
       setUploading(false);

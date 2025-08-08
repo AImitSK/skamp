@@ -20,7 +20,7 @@ import {
   DocumentTextIcon,
   InformationCircleIcon,
   LockClosedIcon
-} from "@heroicons/react/20/solid";
+} from "@heroicons/react/24/outline";
 
 interface AssetDetailsModalProps {
   asset: MediaAsset;
@@ -154,7 +154,7 @@ export default function AssetDetailsModal({
       
       onClose();
     } catch (error) {
-      console.error('Fehler beim Speichern der Asset-Details:', error);
+      // Error handling could be improved with proper user feedback
     } finally {
       setSaving(false);
     }

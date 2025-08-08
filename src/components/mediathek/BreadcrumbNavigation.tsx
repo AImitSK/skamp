@@ -2,7 +2,7 @@
 "use client";
 
 import { FolderBreadcrumb } from "@/types/media";
-import { HomeIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
+import { HomeIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/button";
 
 interface BreadcrumbNavigationProps {

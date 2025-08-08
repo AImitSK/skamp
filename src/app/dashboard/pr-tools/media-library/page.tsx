@@ -30,7 +30,6 @@ import {
   ListBulletIcon,
   EyeIcon,
   TrashIcon,
-  // DocumentIcon ersetzt durch DocumentTextIcon,
   VideoCameraIcon,
   DocumentTextIcon,
   FolderPlusIcon,
@@ -42,9 +41,9 @@ import {
   ExclamationTriangleIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  MagnifyingGlassIcon
-} from "@heroicons/react/20/solid";
-import { FolderIcon } from "@heroicons/react/24/solid";
+  MagnifyingGlassIcon,
+  FolderIcon
+} from "@heroicons/react/24/outline";
 import Link from 'next/link';
 import UploadModal from "./UploadModal";
 import FolderCard from "@/components/mediathek/FolderCard";
@@ -188,22 +187,17 @@ export default function MediathekPage() {
       if (!user) return;
       
       try {
-        console.log('🔍 Initializing organization for user:', user.uid);
         const orgs = await teamMemberService.getUserOrganizations(user.uid);
-        console.log('🔍 Found organizations:', orgs);
         
         if (orgs.length > 0) {
           setOrganizationId(orgs[0].organization.id);
           setCurrentUserId(user.uid);
-          console.log('✅ Set organizationId:', orgs[0].organization.id);
         } else {
           // Fallback für Legacy-User
-          console.log('⚠️ No organizations found, using userId as fallback:', user.uid);
           setOrganizationId(user.uid);
           setCurrentUserId(user.uid);
         }
       } catch (error) {
-        console.error('Error loading organization:', error);
         // Fallback
         setOrganizationId(user.uid);
         setCurrentUserId(user.uid);
@@ -238,11 +232,9 @@ export default function MediathekPage() {
 
   const loadData = async () => {
     if (!organizationId) {
-      console.warn('⚠️ loadData called without organizationId');
       return;
     }
     
-    console.log('📁 Loading data for organizationId:', organizationId);
     setLoading(true);
     
     try {
@@ -270,7 +262,6 @@ export default function MediathekPage() {
         setBreadcrumbs([]);
       }
     } catch (error) {
-      console.error("Fehler beim Laden der Daten:", error);
       showAlert('error', 'Fehler beim Laden', 'Die Mediathek konnte nicht geladen werden.');
     } finally {
       setLoading(false);
@@ -296,7 +287,6 @@ export default function MediathekPage() {
       showAlert('success', 'Ordner verschoben');
       
     } catch (error) {
-      console.error('Error moving folder:', error);
       showAlert('error', 'Fehler beim Verschieben', 'Der Ordner konnte nicht verschoben werden.');
     } finally {
       setMoving(false);
@@ -363,7 +353,6 @@ export default function MediathekPage() {
           await loadData();
           showAlert('success', `${count} ${count === 1 ? 'Datei' : 'Dateien'} gelöscht`);
         } catch (error) {
-          console.error('Fehler beim Bulk-Löschen:', error);
           showAlert('error', 'Fehler beim Löschen', 'Die Dateien konnten nicht gelöscht werden.');
         } finally {
           setMoving(false);
@@ -388,7 +377,6 @@ export default function MediathekPage() {
       await loadData();
       showAlert('success', 'Dateien verschoben');
     } catch (error) {
-      console.error('Fehler beim Bulk-Verschieben:', error);
       showAlert('error', 'Fehler beim Verschieben', 'Die Dateien konnten nicht verschoben werden.');
     } finally {
       setMoving(false);
@@ -495,7 +483,6 @@ export default function MediathekPage() {
       }
       
     } catch (error) {
-      console.error('Error moving assets:', error);
       showAlert('error', 'Fehler beim Verschieben', 'Die Dateien konnten nicht verschoben werden.');
     } finally {
       setMoving(false);
@@ -527,7 +514,6 @@ export default function MediathekPage() {
         showAlert('success', 'Ordner in Root verschoben');
         
       } catch (error) {
-        console.error('Error moving folder to root:', error);
         showAlert('error', 'Fehler beim Verschieben', 'Der Ordner konnte nicht verschoben werden.');
       } finally {
         setMoving(false);
@@ -572,7 +558,6 @@ export default function MediathekPage() {
       showAlert('success', `${count} ${count === 1 ? 'Datei' : 'Dateien'} in Root verschoben`);
       
     } catch (error) {
-      console.error('Error moving assets to root:', error);
       showAlert('error', 'Fehler beim Verschieben', 'Die Dateien konnten nicht verschoben werden.');
     } finally {
       setMoving(false);
@@ -610,7 +595,6 @@ export default function MediathekPage() {
       await loadData();
       showAlert('success', editingFolder ? 'Ordner aktualisiert' : 'Ordner erstellt');
     } catch (error) {
-      console.error("Fehler beim Speichern des Ordners:", error);
       throw error;
     }
   };
@@ -627,7 +611,6 @@ export default function MediathekPage() {
           await loadData();
           showAlert('success', 'Ordner gelöscht');
         } catch (error) {
-          console.error("Fehler beim Löschen des Ordners:", error);
           showAlert('error', 'Fehler beim Löschen', 'Der Ordner konnte nicht gelöscht werden. Stellen Sie sicher, dass er leer ist.');
         }
       }
@@ -671,7 +654,6 @@ export default function MediathekPage() {
           await loadData();
           showAlert('success', 'Datei gelöscht');
         } catch(error) {
-          console.error("Fehler beim Löschen der Datei: ", error);
           showAlert('error', 'Fehler beim Löschen', 'Die Datei konnte nicht gelöscht werden.');
         }
       }
