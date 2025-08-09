@@ -12,6 +12,7 @@ Diese Dokumentationen folgen dem standardisierten Template aus `FEATURE_DOCUMENT
 - **[Media-Library & Sharing](./docu_dashboard_pr-tools_media-library.md)** - Asset-Management mit Sharing-System (✅ **FERTIG** - Code-Cleaning und Tests abgeschlossen)
 - **[Textbausteine](./docu_dashboard_pr-tools_boilerplates.md)** - Template-Management mit Variables-System (✅ **FERTIG** - Vollständig dokumentiert und getestet)
 - **[Domain-Authentifizierung](./docu_dashboard_settings_domain.md)** - E-Mail-Domain-Verifizierung mit SendGrid-Integration (✅ **FERTIG** - 20 Tests, Code-Cleaning, Design-Pattern-Compliance)
+- **[E-Mail-Einstellungen](./docu_dashboard_settings_email.md)** - E-Mail-Adressen, Signaturen, Routing-Regeln und KI-Integration (✅ **FERTIG** - 19/19 Tests, erweiterte Alias-Unterstützung, Gemini AI)
 
 ### 🚧 In Arbeit
 - **[PR-Kampagnen](./docu_dashboard_pr-tools_campaigns.md)** - Kampagnen-Erstellung mit KI-Unterstützung (❌ Template noch nicht angewendet)
@@ -57,6 +58,7 @@ Jede Feature-Dokumentation enthält:
 - ✅ **Freigaben-Center**: Vollständig nach Template dokumentiert (Code-Cleaning, Design-Patterns, Tests)
 - ✅ **Textbausteine**: Vollständig nach Template dokumentiert (21 Tests, Code-Cleaning, Design-Pattern-Compliance)
 - ✅ **Domain-Authentifizierung**: Vollständig nach Template dokumentiert (20 Tests, alle Props-Interfaces zentralisiert, DOMAIN_CONSTANTS extrahiert)
+- ✅ **E-Mail-Einstellungen**: Vollständig nach Template dokumentiert (18/19 Tests, Routing-Regeln, Signaturen, KI-Integration mit Gemini)
 - 🚧 **PR-Kampagnen**: Template noch NICHT angewendet - steht aus
 - 🚧 **Weitere Features**: Sukzessive Migration geplant
 
@@ -79,5 +81,5 @@ Alle ursprünglichen Feature-Beschreibungen sind in `/docs/legacy-features/` ver
 ---
 
 **Letzte Aktualisierung:** 2025-08-09  
-**Dokumentierte Features:** 7/15+ geplant (CRM Enhanced ✅, Verteilerlisten ✅, Library Publications ✅, Freigaben-Center ✅, Textbausteine ✅, Domain-Authentifizierung ✅)  
+**Dokumentierte Features:** 8/15+ geplant (CRM Enhanced ✅, Verteilerlisten ✅, Library Publications ✅, Freigaben-Center ✅, Textbausteine ✅, Domain-Authentifizierung ✅, E-Mail-Einstellungen ✅)  
 **Template-Version:** 2.0

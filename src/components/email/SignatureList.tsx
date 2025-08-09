@@ -16,7 +16,7 @@ import {
   CheckCircleIcon,
   DocumentDuplicateIcon,
   EyeIcon
-} from '@heroicons/react/20/solid';
+} from '@heroicons/react/24/outline';
 
 interface SignatureListProps {
   signatures: EmailSignature[];
@@ -40,25 +40,21 @@ export function SignatureList({
   const [showPreview, setShowPreview] = useState<string | null>(null);
 
   const handleAdd = () => {
-    console.log('🔵 handleAdd clicked - opening editor for new signature');
     setEditingSignature(null);
     setShowEditor(true);
   };
 
   const handleEdit = (signature: EmailSignature) => {
-    console.log('🔵 handleEdit clicked - opening editor for:', signature.name);
     setEditingSignature(signature);
     setShowEditor(true);
   };
 
   const handleSave = async (data: Partial<EmailSignature>) => {
-    console.log('💾 handleSave called with data:', data);
     try {
       await onSave(data, editingSignature?.id);
       setShowEditor(false);
       setEditingSignature(null);
     } catch (error) {
-      console.error('❌ Error in handleSave:', error);
       // Don't close modal on error
     }
   };
@@ -117,7 +113,6 @@ export function SignatureList({
   };
 
   // Debug log für showEditor state
-  console.log('🔍 SignatureList render - showEditor:', showEditor);
 
   if (loading) {
     return (
@@ -152,7 +147,6 @@ export function SignatureList({
             signature={editingSignature}
             isOpen={showEditor}
             onClose={() => {
-              console.log('🔴 Closing signature editor');
               setShowEditor(false);
               setEditingSignature(null);
             }}
@@ -327,7 +321,6 @@ export function SignatureList({
           signature={editingSignature}
           isOpen={showEditor}
           onClose={() => {
-            console.log('🔴 Closing signature editor');
             setShowEditor(false);
             setEditingSignature(null);
           }}

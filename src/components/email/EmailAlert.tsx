@@ -5,7 +5,7 @@ import {
   InformationCircleIcon, 
   XCircleIcon,
   XMarkIcon
-} from "@heroicons/react/20/solid";
+} from "@heroicons/react/24/outline";
 import { ICON_SIZES } from "@/constants/ui";
 
 interface EmailAlertProps {

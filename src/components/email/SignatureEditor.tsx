@@ -14,7 +14,7 @@ import {
   PencilSquareIcon,
   CheckCircleIcon,
   EyeIcon
-} from '@heroicons/react/20/solid';
+} from '@heroicons/react/24/outline';
 
 interface SignatureEditorProps {
   signature: EmailSignature | null;
@@ -108,7 +108,6 @@ export function SignatureEditor({
       await onSave(formData);
       onClose();
     } catch (error) {
-      console.error('Fehler beim Speichern der Signatur:', error);
       setErrors({ submit: 'Fehler beim Speichern. Bitte versuchen Sie es erneut.' });
     } finally {
       setSaving(false);

@@ -38,7 +38,7 @@ import {
   DocumentTextIcon,
   PencilSquareIcon,
   DocumentDuplicateIcon
-} from '@heroicons/react/20/solid';
+} from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import { domainServiceEnhanced } from '@/lib/firebase/domain-service-enhanced';
 
@@ -50,10 +50,8 @@ import { TeamMember } from '@/types/international';
 const showToast = (message: string, type: 'success' | 'error' = 'success') => {
   // Temporäre Lösung ohne react-hot-toast
   if (type === 'error') {
-    console.error(message);
     alert(`Fehler: ${message}`);
   } else {
-    console.log(message);
     // In Production würde hier eine Toast-Library verwendet
   }
 };
@@ -120,7 +118,6 @@ export default function EmailSettingsPage() {
       const activeMembers = members.filter(m => m.status === 'active');
       setTeamMembers(activeMembers);
     } catch (error) {
-      console.error('Error loading team members:', error);
       showToast('Fehler beim Laden der Team-Mitglieder', 'error');
       
       // Fallback: Erstelle das erste Team-Mitglied (Owner) wenn keines existiert
@@ -140,7 +137,6 @@ export default function EmailSettingsPage() {
           };
           setTeamMembers([ownerMember]);
         } catch (err) {
-          console.error('Error creating fallback team member:', err);
         }
       }
     } finally {
@@ -165,7 +161,6 @@ export default function EmailSettingsPage() {
       
       setDomains(emailDomains);
     } catch (error) {
-      console.error('Fehler beim Laden der Domains:', error);
       showToast('Fehler beim Laden der Domains', 'error');
     } finally {
       setLoadingDomains(false);
@@ -182,7 +177,6 @@ export default function EmailSettingsPage() {
       );
       setEmailAddresses(addresses);
     } catch (error) {
-      console.error('Fehler beim Laden der E-Mail-Adressen:', error);
       showToast('Fehler beim Laden der E-Mail-Adressen', 'error');
     } finally {
       setLoading(false);
@@ -196,7 +190,6 @@ export default function EmailSettingsPage() {
       const sigs = await emailSignatureService.getByOrganization(organizationId);
       setSignatures(sigs);
     } catch (error) {
-      console.error('❌ Fehler beim Laden der Signaturen:', error);
       showToast('Fehler beim Laden der Signaturen', 'error');
     } finally {
       setLoadingSignatures(false);
@@ -297,7 +290,6 @@ export default function EmailSettingsPage() {
       setShowEditModal(false);
       setSelectedAddress(null);
     } catch (error) {
-      console.error('Fehler beim Speichern:', error);
       if (error instanceof Error) {
         showToast(error.message, 'error');
       } else {
@@ -319,7 +311,6 @@ export default function EmailSettingsPage() {
       setShowDeleteModal(false);
       setSelectedAddress(null);
     } catch (error) {
-      console.error('Fehler beim Löschen:', error);
       if (error instanceof Error) {
         showToast(error.message, 'error');
       } else {
@@ -338,7 +329,6 @@ export default function EmailSettingsPage() {
       showToast('E-Mail-Adresse als Standard gesetzt');
       await loadEmailAddresses();
     } catch (error) {
-      console.error('Fehler beim Setzen als Standard:', error);
       showToast('Fehler beim Setzen als Standard', 'error');
     }
   };
@@ -355,7 +345,6 @@ export default function EmailSettingsPage() {
       }
       await loadSignatures();
     } catch (error) {
-      console.error('❌ Fehler beim Speichern der Signatur:', error);
       throw error;
     }
   };
@@ -366,7 +355,6 @@ export default function EmailSettingsPage() {
       showToast('Signatur erfolgreich gelöscht');
       await loadSignatures();
     } catch (error) {
-      console.error('Fehler beim Löschen der Signatur:', error);
       if (error instanceof Error) {
         showToast(error.message, 'error');
       } else {
@@ -381,7 +369,6 @@ export default function EmailSettingsPage() {
       showToast('Signatur erfolgreich dupliziert');
       await loadSignatures();
     } catch (error) {
-      console.error('Fehler beim Duplizieren der Signatur:', error);
       showToast('Fehler beim Duplizieren der Signatur', 'error');
     }
   };
