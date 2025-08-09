@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { PlusIcon, InformationCircleIcon } from '@heroicons/react/20/solid';
+import { PlusIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
 import { getEventsForDateRange } from '@/lib/calendar/notifications';
 import { CalendarEvent, EVENT_ICONS } from '@/types/calendar';
 import { EventDetailsModal } from '@/components/calendar/EventDetailsModal';

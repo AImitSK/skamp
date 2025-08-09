@@ -13,7 +13,7 @@ import {
   ArrowPathIcon,
   ChevronDownIcon,
   LinkIcon
-} from '@heroicons/react/20/solid';
+} from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { prService } from '@/lib/firebase/pr-service';
 import { PRCampaign } from '@/types/pr';
@@ -85,7 +85,7 @@ export function ApprovalWidget({ userId, onRefresh }: ApprovalWidgetProps) {
       
       setStats(stats);
     } catch (error) {
-      console.error('Fehler beim Laden der Freigaben:', error);
+      // Approval loading failed silently
     } finally {
       setLoading(false);
     }
@@ -145,7 +145,7 @@ export function ApprovalWidget({ userId, onRefresh }: ApprovalWidgetProps) {
       const url = prService.getApprovalUrl(shareId);
       await navigator.clipboard.writeText(url);
     } catch (error) {
-      console.error('Fehler beim Kopieren:', error);
+      // Copy operation failed silently
     }
   };
 

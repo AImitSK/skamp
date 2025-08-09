@@ -10,7 +10,7 @@ import {
   ClockIcon,
   ArrowPathIcon,
   ChevronDownIcon
-} from '@heroicons/react/20/solid';
+} from '@heroicons/react/24/outline';
 import { taskService } from '@/lib/firebase/task-service';
 import { Task } from '@/types/tasks';
 
@@ -50,7 +50,7 @@ export function OverdueTasksWidget({ organizationId, userId, onTaskClick, onRefr
       
       setOverdueTasks(overdue);
     } catch (error) {
-      console.error('Fehler beim Laden überfälliger Tasks:', error);
+      // Task loading failed silently
     } finally {
       setLoading(false);
     }
@@ -72,7 +72,7 @@ export function OverdueTasksWidget({ organizationId, userId, onTaskClick, onRefr
       await loadOverdueTasks();
       onRefresh?.();
     } catch (error) {
-      console.error('Fehler beim Abschließen der Task:', error);
+      // Task completion failed silently
     }
   };
 

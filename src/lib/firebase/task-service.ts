@@ -67,7 +67,7 @@ export const taskService = {
     } catch (error: any) {
       // Fallback ohne orderBy falls Index fehlt
       if (error.code === 'failed-precondition') {
-        console.warn('Firestore Index fehlt für tasks, verwende Fallback ohne orderBy');
+        // Firestore Index missing for tasks, using fallback without orderBy
         const q = query(
           collection(db, 'tasks'),
           where('organizationId', '==', organizationId)
@@ -168,9 +168,9 @@ export const taskService = {
               taskName: currentTask.title
             }
           });
-          console.log('📬 Benachrichtigung gesendet: Task ist überfällig');
+          // Notification sent: Task is overdue
         } catch (notificationError) {
-          console.error('Fehler beim Senden der Überfälligkeits-Benachrichtigung:', notificationError);
+          // Error sending overdue notification
         }
       }
     }
@@ -258,16 +258,16 @@ export const taskService = {
   async checkAndNotifyOverdueTasks(organizationId: string, userId?: string): Promise<void> {
     try {
       if (!userId) {
-        console.log('⚠️ No userId provided for overdue task check');
+        // No userId provided for overdue task check
         return;
       }
       
-      console.log('🔍 Checking for overdue tasks for user:', userId);
+      // Checking for overdue tasks for user
       
       // Hole die Benachrichtigungseinstellungen
       const settings = await notificationsService.getSettings(userId);
       if (!settings.taskOverdue) {
-        console.log('ℹ️ Task overdue notifications disabled for user:', userId);
+        // Task overdue notifications disabled for user
         return;
       }
       
@@ -287,7 +287,7 @@ export const taskService = {
         return dueDate < todayStart;
       });
       
-      console.log(`📊 Found ${overdueTasks.length} overdue tasks`);
+      // Found overdue tasks
       
       // Erstelle Benachrichtigungen für überfällige Tasks
       for (const task of overdueTasks) {
@@ -318,14 +318,14 @@ export const taskService = {
             }
           });
           
-          console.log(`📬 Benachrichtigung gesendet für überfällige Task: ${task.title}`);
+          // Notification sent for overdue task
         } else {
-          console.log(`ℹ️ Benachrichtigung für Task "${task.title}" wurde heute bereits gesendet`);
+          // Notification for task already sent today
         }
       }
       
     } catch (error) {
-      console.error('❌ Error checking overdue tasks:', error);
+      // Error checking overdue tasks
       throw error;
     }
   }

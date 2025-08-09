@@ -17,13 +17,13 @@ Diese Dokumentationen folgen dem standardisierten Template aus `FEATURE_DOCUMENT
 - **[Branding-Einstellungen](./docu_dashboard_settings_branding.md)** - Firmeninformationen, Logo-Management und Copyright-Einstellungen (✅ **FERTIG** - 28/28 Tests, Media-Integration, Multi-Tenancy)
 - **[Communication Inbox](./docu_dashboard_communication_inbox.md)** - E-Mail-Kommunikation mit KI-Integration und Team-Management (✅ **FERTIG** - 19/19 Tests, AI-Sentiment-Analysis, Thread-Management, Enterprise-Grade)
 - **[Notification-Einstellungen](./docu_dashboard_settings_notifications.md)** - Benachrichtigungstypen konfigurieren und Schwellenwerte festlegen (🚧 **BASIC** - Settings-UI funktional, ohne Tests)
+- **[Calendar & Task Management](./docu_dashboard_pr-tools_calendar.md)** - Zentrale Kalender- und Aufgabenverwaltung mit Benachrichtigungsintegration (✅ **FERTIG** - 55/55 Tests, FullCalendar, Drag & Drop, Überfällige Tasks Widget)
 
 ### 🚧 In Arbeit
 - **[PR-Kampagnen](./docu_dashboard_pr-tools_campaigns.md)** - Kampagnen-Erstellung mit KI-Unterstützung (❌ Template noch nicht angewendet)
 
 ### 📝 Geplant (basierend auf Legacy-Features)
 - [ ] **AI-Assistent** - KI-gestützte Textgenerierung
-- [ ] **Kalender** - Terminplanung und Task-Management
 - [ ] **Analytics** - Kampagnen-Auswertung und Reporting
 
 ## 🎯 Dokumentations-Standards
@@ -65,6 +65,7 @@ Jede Feature-Dokumentation enthält:
 - ✅ **Branding-Einstellungen**: Vollständig nach Template dokumentiert (28/28 Tests, Logo-Management, Media-Integration, Validation)
 - 🚧 **Notification-Einstellungen**: Basic nach Template dokumentiert (Settings-UI funktional, oberflächliche Dokumentation ohne Tests)
 - ✅ **Communication Inbox**: Vollständig nach Template dokumentiert (19/19 Tests, AI-Integration mit Gemini, Thread-Management, Team-Assignment, Enterprise-Grade)
+- ✅ **Calendar & Task Management**: Vollständig nach Template dokumentiert (55/55 Tests, Task-Service mit Notification-Integration, FullCalendar mit Drag & Drop, Multi-Tenant-isoliert)
 - 🚧 **PR-Kampagnen**: Template noch NICHT angewendet - steht aus
 - 🚧 **Weitere Features**: Sukzessive Migration geplant
 
@@ -87,5 +88,5 @@ Alle ursprünglichen Feature-Beschreibungen sind in `/docs/legacy-features/` ver
 ---
 
 **Letzte Aktualisierung:** 2025-08-09  
-**Dokumentierte Features:** 12/15+ geplant (CRM Enhanced ✅, Verteilerlisten ✅, Library Publications ✅, Freigaben-Center ✅, Textbausteine ✅, Domain-Authentifizierung ✅, E-Mail-Einstellungen ✅, Team-Verwaltung ✅, Branding-Einstellungen ✅, Communication Inbox ✅, Notification-Einstellungen 🚧)  
+**Dokumentierte Features:** 13/15+ geplant (CRM Enhanced ✅, Verteilerlisten ✅, Library Publications ✅, Freigaben-Center ✅, Textbausteine ✅, Domain-Authentifizierung ✅, E-Mail-Einstellungen ✅, Team-Verwaltung ✅, Branding-Einstellungen ✅, Communication Inbox ✅, Calendar & Task Management ✅, Notification-Einstellungen 🚧)  
 **Template-Version:** 2.1

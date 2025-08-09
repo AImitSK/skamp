@@ -19,7 +19,7 @@ import {
   XCircleIcon,
   EnvelopeIcon,
   ClockIcon
-} from '@heroicons/react/20/solid';
+} from '@heroicons/react/24/outline';
 import { CalendarEvent, EVENT_ICONS } from '@/types/calendar';
 import Link from 'next/link';
 import { taskService } from '@/lib/firebase/task-service';
