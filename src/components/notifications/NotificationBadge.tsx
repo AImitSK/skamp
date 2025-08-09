@@ -9,14 +9,17 @@ interface NotificationBadgeProps {
   className?: string;
   iconOnly?: boolean;
   onClick?: () => void;
+  unreadCount?: number; // Allow external unreadCount for testing
 }
 
 export function NotificationBadge({ 
   className, 
   iconOnly = false,
-  onClick 
+  onClick,
+  unreadCount: externalUnreadCount
 }: NotificationBadgeProps) {
-  const { unreadCount } = useNotifications();
+  const { unreadCount: hookUnreadCount } = useNotifications();
+  const unreadCount = externalUnreadCount !== undefined ? externalUnreadCount : hookUnreadCount;
   const hasUnread = unreadCount > 0;
 
   return (

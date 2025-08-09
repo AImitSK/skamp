@@ -4,7 +4,7 @@
 import { Heading } from "@/components/ui/heading";
 import { NotificationList } from "@/components/notifications/NotificationList";
 import { Button } from "@/components/ui/button";
-import { BellIcon, Cog6ToothIcon } from "@heroicons/react/20/solid";
+import { BellIcon, Cog6ToothIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 
 export default function NotificationsPage() {
@@ -30,7 +30,7 @@ export default function NotificationsPage() {
         </div>
       </div>
 
-      <div className="flex-1 bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl mx-4 mb-4 sm:mx-6 lg:mx-8 overflow-hidden">
+      <div className="flex-1 bg-white ring-1 ring-gray-900/5 sm:rounded-xl mx-4 mb-4 sm:mx-6 lg:mx-8 overflow-hidden">
         <NotificationList />
       </div>
     </div>

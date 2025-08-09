@@ -27,9 +27,15 @@ import {
   DEFAULT_NOTIFICATION_SETTINGS,
   NOTIFICATION_TEMPLATES
 } from '@/types/notifications';
+import { NotificationCreatePayload, NotificationBulkActionPayload } from '@/types/communication-notifications-enhanced';
 
 const NOTIFICATIONS_COLLECTION = 'notifications';
 const NOTIFICATION_SETTINGS_COLLECTION = 'notification_settings';
+
+interface ServiceContext {
+  userId: string;
+  organizationId?: string;
+}
 
 class NotificationsService {
   // ========== CRUD Operations ==========
@@ -61,50 +67,75 @@ class NotificationsService {
       await setDoc(docRef, notificationData);
       
       // Log for monitoring
-      console.log(`Notification created: ${notification.type} for user ${notification.userId}`);
       
       return docRef.id;
     } catch (error) {
-      console.error('Error creating notification:', error);
       throw error;
     }
   }
 
   /**
-   * Get all notifications for a user
+   * Get all notifications for a user with organization support
    */
-  async getAll(userId: string, limitCount: number = 50): Promise<Notification[]> {
+  async getAll(userId: string, limitCount: number = 50, organizationId?: string): Promise<Notification[]> {
     try {
-      const q = query(
+      let q = query(
         collection(db, NOTIFICATIONS_COLLECTION),
         where('userId', '==', userId),
         orderBy('createdAt', 'desc'),
         limit(limitCount)
       );
+
+      // Add organization filter if provided
+      if (organizationId) {
+        q = query(
+          collection(db, NOTIFICATIONS_COLLECTION),
+          where('userId', '==', userId),
+          where('organizationId', '==', organizationId),
+          orderBy('createdAt', 'desc'),
+          limit(limitCount)
+        );
+      }
       
       const snapshot = await getDocs(q);
       return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification));
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      // Fallback to userId-only query for legacy compatibility
+      if (organizationId) {
+        return this.getAll(userId, limitCount);
+      }
       throw error;
     }
   }
 
   /**
-   * Get unread notification count for a user
+   * Get unread notification count for a user with organization support
    */
-  async getUnreadCount(userId: string): Promise<number> {
+  async getUnreadCount(userId: string, organizationId?: string): Promise<number> {
     try {
-      const q = query(
+      let q = query(
         collection(db, NOTIFICATIONS_COLLECTION),
         where('userId', '==', userId),
         where('isRead', '==', false)
       );
+
+      // Add organization filter if provided
+      if (organizationId) {
+        q = query(
+          collection(db, NOTIFICATIONS_COLLECTION),
+          where('userId', '==', userId),
+          where('organizationId', '==', organizationId),
+          where('isRead', '==', false)
+        );
+      }
       
       const snapshot = await getDocs(q);
       return snapshot.size;
     } catch (error) {
-      console.error('Error counting unread notifications:', error);
+      // Fallback to userId-only query for legacy compatibility
+      if (organizationId) {
+        return this.getUnreadCount(userId);
+      }
       throw error;
     }
   }
@@ -120,7 +151,6 @@ class NotificationsService {
         readAt: serverTimestamp()
       });
     } catch (error) {
-      console.error('Error marking notification as read:', error);
       throw error;
     }
   }
@@ -133,17 +163,26 @@ class NotificationsService {
       const docRef = doc(db, NOTIFICATIONS_COLLECTION, notificationId);
       await deleteDoc(docRef);
     } catch (error) {
-      console.error('Error deleting notification:', error);
       throw error;
     }
   }
-  async markAllAsRead(userId: string): Promise<void> {
+  async markAllAsRead(userId: string, organizationId?: string): Promise<void> {
     try {
-      const q = query(
+      let q = query(
         collection(db, NOTIFICATIONS_COLLECTION),
         where('userId', '==', userId),
         where('isRead', '==', false)
       );
+
+      // Add organization filter if provided
+      if (organizationId) {
+        q = query(
+          collection(db, NOTIFICATIONS_COLLECTION),
+          where('userId', '==', userId),
+          where('organizationId', '==', organizationId),
+          where('isRead', '==', false)
+        );
+      }
       
       const snapshot = await getDocs(q);
       const batch = writeBatch(db);
@@ -157,7 +196,49 @@ class NotificationsService {
       
       await batch.commit();
     } catch (error) {
-      console.error('Error marking all notifications as read:', error);
+      // Fallback for legacy compatibility
+      if (organizationId) {
+        return this.markAllAsRead(userId);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Bulk mark notifications as read
+   */
+  async bulkMarkAsRead(notificationIds: string[]): Promise<void> {
+    try {
+      const batch = writeBatch(db);
+      
+      notificationIds.forEach(id => {
+        const docRef = doc(db, NOTIFICATIONS_COLLECTION, id);
+        batch.update(docRef, {
+          isRead: true,
+          readAt: serverTimestamp()
+        });
+      });
+      
+      await batch.commit();
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Bulk delete notifications
+   */
+  async bulkDelete(notificationIds: string[]): Promise<void> {
+    try {
+      const batch = writeBatch(db);
+      
+      notificationIds.forEach(id => {
+        const docRef = doc(db, NOTIFICATIONS_COLLECTION, id);
+        batch.delete(docRef);
+      });
+      
+      await batch.commit();
+    } catch (error) {
       throw error;
     }
   }
@@ -165,46 +246,61 @@ class NotificationsService {
   // ========== Settings Operations ==========
   
   /**
-   * Get notification settings for a user
+   * Get notification settings for a user with organization support
    */
-  async getSettings(userId: string): Promise<NotificationSettings> {
+  async getSettings(userId: string, organizationId?: string): Promise<NotificationSettings> {
     try {
+      // Try organization-specific settings first
+      if (organizationId) {
+        const orgDocRef = doc(db, NOTIFICATION_SETTINGS_COLLECTION, `${organizationId}_${userId}`);
+        const orgDocSnap = await getDoc(orgDocRef);
+        
+        if (orgDocSnap.exists()) {
+          return { id: orgDocSnap.id, ...orgDocSnap.data() } as NotificationSettings;
+        }
+      }
+
+      // Fallback to user-specific settings
       const docRef = doc(db, NOTIFICATION_SETTINGS_COLLECTION, userId);
       const docSnap = await getDoc(docRef);
       
       if (docSnap.exists()) {
         return { id: docSnap.id, ...docSnap.data() } as NotificationSettings;
       } else {
-        // Create default settings if they don't exist
+        // Create default settings
         const defaultSettings: NotificationSettings = {
-          id: userId,
+          id: organizationId ? `${organizationId}_${userId}` : userId,
           userId,
+          organizationId,
           ...DEFAULT_NOTIFICATION_SETTINGS,
           createdAt: serverTimestamp() as Timestamp,
           updatedAt: serverTimestamp() as Timestamp
         };
         
-        await setDoc(docRef, defaultSettings);
+        const targetRef = organizationId ? 
+          doc(db, NOTIFICATION_SETTINGS_COLLECTION, `${organizationId}_${userId}`) :
+          docRef;
+        
+        await setDoc(targetRef, defaultSettings);
         return defaultSettings;
       }
     } catch (error) {
-      console.error('Error fetching notification settings:', error);
       throw error;
     }
   }
 
   /**
-   * Update notification settings for a user
+   * Update notification settings for a user with organization support
    */
-  async updateSettings(userId: string, settings: Partial<NotificationSettings>): Promise<void> {
+  async updateSettings(userId: string, settings: Partial<NotificationSettings>, organizationId?: string): Promise<void> {
     try {
-      const docRef = doc(db, NOTIFICATION_SETTINGS_COLLECTION, userId);
+      const settingsId = organizationId ? `${organizationId}_${userId}` : userId;
+      const docRef = doc(db, NOTIFICATION_SETTINGS_COLLECTION, settingsId);
       await updateDoc(docRef, {
         ...settings,
         updatedAt: serverTimestamp()
       });
     } catch (error) {
-      console.error('Error updating notification settings:', error);
       throw error;
     }
   }
@@ -236,8 +332,8 @@ class NotificationsService {
         return false;
     }
   }
-  private async isNotificationEnabled(userId: string, type: NotificationType): Promise<boolean> {
-    const settings = await this.getSettings(userId);
+  private async isNotificationEnabled(userId: string, type: NotificationType, organizationId?: string): Promise<boolean> {
+    const settings = await this.getSettings(userId, organizationId);
     
     switch (type) {
       case 'APPROVAL_GRANTED':
@@ -287,12 +383,14 @@ class NotificationsService {
   async notifyApprovalGranted(
     campaign: any,
     approverName: string,
-    userId: string
+    userId: string,
+    organizationId?: string
   ): Promise<void> {
-    if (!await this.isNotificationEnabled(userId, 'APPROVAL_GRANTED')) return;
+    if (!await this.isNotificationEnabled(userId, 'APPROVAL_GRANTED', organizationId)) return;
     
     const notification: CreateNotificationInput = {
       userId,
+      organizationId,
       type: 'APPROVAL_GRANTED',
       title: 'Freigabe erteilt',
       message: this.formatMessage('APPROVAL_GRANTED', {

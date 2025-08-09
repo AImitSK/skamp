@@ -13,7 +13,7 @@ import {
   LinkIcon,
   ClockIcon,
   TrashIcon
-} from '@heroicons/react/20/solid';
+} from '@heroicons/react/24/outline';
 import { Notification, NOTIFICATION_COLORS } from '@/types/notifications';
 
 interface NotificationItemProps {

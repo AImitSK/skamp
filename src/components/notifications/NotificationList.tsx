@@ -8,7 +8,7 @@ import {
   BellSlashIcon, 
   CheckIcon,
   ExclamationCircleIcon 
-} from '@heroicons/react/20/solid';
+} from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 
 export function NotificationList() {
@@ -34,7 +34,6 @@ export function NotificationList() {
       setShowMarkAllSuccess(true);
       setTimeout(() => setShowMarkAllSuccess(false), 3000);
     } catch (err) {
-      console.error('Error marking all as read:', err);
     } finally {
       setMarkingAll(false);
     }
@@ -148,7 +147,6 @@ export function NotificationList() {
             className="w-full text-sm"
             onClick={() => {
               // TODO: Implement pagination
-              console.log('Load more notifications');
             }}
           >
             Weitere Benachrichtigungen laden

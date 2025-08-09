@@ -15,7 +15,7 @@ import {
   LinkIcon,
   ArrowDownTrayIcon,
   ClockIcon
-} from '@heroicons/react/20/solid';
+} from '@heroicons/react/24/outline';
 
 interface SettingGroup {
   title: string;
@@ -191,7 +191,6 @@ export function NotificationSettings() {
       // Hide success message after 3 seconds
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
-      console.error('Error saving settings:', err);
     } finally {
       setSaving(false);
     }
