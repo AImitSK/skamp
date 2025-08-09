@@ -55,8 +55,8 @@ function Alert({
 }
 
 export default function DomainsPage() {
-  const { user } = useAuth();
-  const { currentOrganization } = useOrganization();
+  const { user, loading: authLoading } = useAuth();
+  const { currentOrganization, loading: orgLoading } = useOrganization();
   const [domains, setDomains] = useState<EmailDomainEnhanced[]>([]);
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState<string | null>(null);
@@ -74,10 +74,11 @@ export default function DomainsPage() {
 
 
   useEffect(() => {
-    if (user && currentOrganization?.id) {
+    // Only load domains when auth and organization are fully loaded
+    if (!authLoading && !orgLoading && user && currentOrganization?.id) {
       loadDomains();
     }
-  }, [user, currentOrganization?.id, loadDomains]);
+  }, [authLoading, orgLoading, user, currentOrganization?.id, loadDomains]);
 
   const loadDomains = useCallback(async () => {
     if (!user || !currentOrganization?.id) return;
@@ -247,11 +248,13 @@ export default function DomainsPage() {
 
         {/* Rechte Spalte: Hauptinhalt */}
         <div className="flex-1">
-          {loading ? (
+          {(authLoading || orgLoading || loading) ? (
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
                 <ArrowPathIcon className="w-12 h-12 text-gray-400 animate-spin mx-auto" />
-                <Text className="mt-4">Lade Domains...</Text>
+                <Text className="mt-4">
+                  {authLoading ? 'Authentifizierung...' : orgLoading ? 'Organisation wird geladen...' : 'Lade Domains...'}
+                </Text>
               </div>
             </div>
           ) : (
