@@ -1,4 +1,4 @@
-# SKAMP Architektur-Übersicht
+# CeleroPress Architektur-Übersicht
 
 ## 📋 Inhaltsverzeichnis
 - [Technologie-Stack](#technologie-stack)
@@ -13,36 +13,47 @@
 ## 🛠 Technologie-Stack
 
 ### Frontend
-- **Framework**: Next.js 14.2.5 (App Router)
+- **Framework**: Next.js 15.4.4 (App Router)
 - **UI Library**: React 18
-- **Styling**: Tailwind CSS 3.4
-- **UI Components**: Headless UI 2.2
-- **Icons**: Heroicons 2.2
-- **Rich Text Editor**: TipTap 2.22
-- **Kalender**: FullCalendar 6.1
-- **Charts**: Recharts 2.8
-- **Animationen**: Framer Motion 12.18
+- **Styling**: Tailwind CSS 3.4.17
+- **UI Components**: Headless UI 2.2.4
+- **Icons**: Heroicons 2.2.0
+- **Rich Text Editor**: TipTap 2.25.0
+- **Kalender**: FullCalendar 6.1.18
+- **Charts**: Recharts 2.8.0
+- **Animationen**: Framer Motion 12.18.1
+- **Drag & Drop**: Hello Pangea DnD 18.0.1 (React Beautiful DnD Fork)
 - **Sprache**: TypeScript 5
+- **Validation**: Zod 4.0.10
+- **Date Handling**: date-fns 4.1.0
+- **MDX Support**: @next/mdx 15.3.5
 
 ### Backend & Datenbank
-- **BaaS**: Firebase 11.9
+- **BaaS**: Firebase 11.9.1
   - **Datenbank**: Firestore
   - **Authentifizierung**: Firebase Auth
   - **File Storage**: Firebase Storage
   - **Hosting**: Firebase Hosting (optional)
 - **API Routes**: Next.js API Routes
+- **File Processing**: 
+  - CSV: Papaparse 5.5.3
+  - Excel: XLSX 0.18.5
+  - PDF: html2pdf.js 0.10.3
 
 ### Externe Services
-- **E-Mail**: SendGrid 8.1
-- **KI**: Google Gemini (Generative AI 0.24)
-- **Analytics**: Firebase Analytics (geplant)
+- **E-Mail**: SendGrid 8.1.5
+- **KI**: Google Gemini (Generative AI 0.24.1)
+- **Cloud AI**: Google Cloud Vertex AI 1.10.0
+- **Internationalization**: i18n-iso-countries 7.14.0
+- **Security**: DOMPurify 3.2.6
 
 ### Development Tools
 - **Bundler**: Next.js integriert (Turbopack)
-- **Linter**: ESLint 8
-- **CSS Processing**: PostCSS + Autoprefixer
-- **CSV Processing**: Papaparse 5.5
-- **Länder-Daten**: i18n-iso-countries 7.14
+- **Linter**: ESLint 8 + Next.js Config
+- **CSS Processing**: PostCSS + Autoprefixer 10.4.21
+- **Testing**: Jest 30.0.5 + React Testing Library 16.3.0 + Jest DOM 6.6.4
+- **TypeScript**: TypeScript 5 (strict mode)
+- **State Management**: React Query/TanStack Query 5.84.1
 
 ## 🏗 System-Architektur
 
