@@ -39,7 +39,7 @@ describe('CRM Enhanced Constants', () => {
     expect(CONTACT_TABS).toHaveLength(6);
     
     // Company Tab-Struktur testen
-    COMPANY_TABS.forEach(tab => {
+    COMPANY_TABS.forEach((tab: any) => {
       expect(tab).toHaveProperty('id');
       expect(tab).toHaveProperty('label');
       expect(tab).toHaveProperty('icon');
@@ -51,7 +51,7 @@ describe('CRM Enhanced Constants', () => {
     });
 
     // Contact Tab-Struktur testen
-    CONTACT_TABS.forEach(tab => {
+    CONTACT_TABS.forEach((tab: any) => {
       expect(tab).toHaveProperty('id');
       expect(tab).toHaveProperty('label');
       expect(tab).toHaveProperty('icon');
@@ -234,7 +234,7 @@ describe('CRM Enhanced Code Organization', () => {
     const crmPath = path.join(process.cwd(), 'src/app/dashboard/contacts/crm');
     const files = fs.readdirSync(crmPath, { recursive: true });
     
-    files.forEach(file => {
+    files.forEach((file: any) => {
       if (file.endsWith('.tsx') || file.endsWith('.ts')) {
         const filePath = path.join(crmPath, file);
         const content = fs.readFileSync(filePath, 'utf-8');

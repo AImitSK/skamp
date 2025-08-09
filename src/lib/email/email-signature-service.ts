@@ -61,7 +61,6 @@ export class EmailSignatureService {
         signature
       );
 
-      console.log('✅ Signatur erfolgreich erstellt:', docRef.id);
       return docRef.id;
     } catch (error) {
       console.error('Fehler beim Erstellen der Signatur:', error);
@@ -106,7 +105,6 @@ export class EmailSignatureService {
       });
 
       await updateDoc(docRef, updateData as DocumentData);
-      console.log('✅ Signatur erfolgreich aktualisiert:', id);
     } catch (error) {
       console.error('Fehler beim Aktualisieren der Signatur:', error);
       throw error;
@@ -133,7 +131,6 @@ export class EmailSignatureService {
       }
 
       await deleteDoc(docRef);
-      console.log('✅ Signatur erfolgreich gelöscht:', id);
     } catch (error) {
       console.error('Fehler beim Löschen der Signatur:', error);
       throw error;
@@ -165,7 +162,6 @@ export class EmailSignatureService {
    */
   async getByOrganization(organizationId: string): Promise<EmailSignature[]> {
     try {
-      console.log('📥 getByOrganization aufgerufen mit organizationId:', organizationId);
       
       // Versuche zuerst mit organizationId (ohne orderBy wegen Security Rules)
       let q = query(
@@ -174,17 +170,14 @@ export class EmailSignatureService {
       );
 
       let snapshot = await getDocs(q);
-      console.log(`📊 Gefunden mit organizationId: ${snapshot.size} Signaturen`);
 
       // Wenn keine Ergebnisse, versuche mit userId (Legacy)
       if (snapshot.empty) {
-        console.log('🔄 Keine Signaturen mit organizationId gefunden, versuche mit userId...');
         q = query(
           collection(db, this.collectionName),
           where('userId', '==', organizationId) // organizationId könnte userId sein
         );
         snapshot = await getDocs(q);
-        console.log(`📊 Gefunden mit userId: ${snapshot.size} Signaturen`);
       }
 
       const signatures: EmailSignature[] = [];
@@ -199,7 +192,6 @@ export class EmailSignatureService {
         return bTime - aTime; // Neueste zuerst
       });
 
-      console.log('✅ Signaturen erfolgreich geladen:', signatures.length);
       return signatures;
     } catch (error) {
       console.error('Fehler beim Abrufen der Signaturen:', error);
@@ -297,7 +289,6 @@ export class EmailSignatureService {
       });
 
       await batch.commit();
-      console.log('✅ Standard-Signatur erfolgreich gesetzt:', id);
     } catch (error) {
       console.error('Fehler beim Setzen der Standard-Signatur:', error);
       throw error;
@@ -332,7 +323,6 @@ export class EmailSignatureService {
         duplicate
       );
 
-      console.log('✅ Signatur erfolgreich dupliziert:', docRef.id);
       return docRef.id;
     } catch (error) {
       console.error('Fehler beim Duplizieren der Signatur:', error);
@@ -432,7 +422,6 @@ export class EmailSignatureService {
     
     const snapshot = await getDocs(legacyQuery);
     if (snapshot.empty) {
-      console.log('Keine Signaturen für Migration gefunden');
       return;
     }
     
@@ -449,7 +438,6 @@ export class EmailSignatureService {
     });
     
     await batch.commit();
-    console.log(`✅ ${snapshot.docs.length} Signaturen erfolgreich migriert`);
   }
 }
 

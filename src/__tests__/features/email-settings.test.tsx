@@ -141,7 +141,7 @@ describe('Email Settings Feature', () => {
       ];
 
       expectedAddressMethods.forEach(method => {
-        expect(typeof emailAddressService[method]).toBe('function');
+        expect(typeof (emailAddressService as any)[method]).toBe('function');
       });
 
       const expectedSignatureMethods = [
@@ -154,7 +154,7 @@ describe('Email Settings Feature', () => {
       ];
 
       expectedSignatureMethods.forEach(method => {
-        expect(typeof emailSignatureService[method]).toBe('function');
+        expect(typeof (emailSignatureService as any)[method]).toBe('function');
       });
     });
   });
@@ -186,7 +186,7 @@ describe('Email Settings Feature', () => {
       };
 
       // Mock das findByEmail um keine existierende E-Mail zurückzugeben
-      jest.spyOn(emailAddressService, 'findByEmail')
+      jest.spyOn(emailAddressService as any, 'findByEmail')
         .mockResolvedValueOnce(null);
 
       const result = await emailAddressService.create(

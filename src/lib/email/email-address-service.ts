@@ -55,7 +55,6 @@ async function authenticateWithToken(token: string): Promise<void> {
       // Option 1: Custom Token (benötigt Backend-Endpoint)
       // Option 2: ID Token direkt verwenden (nicht ideal)
       // Für jetzt: Skip auth auf Server-Seite und verlassen uns auf Security Rules
-      console.log('⚠️ Server-side auth skipped - relying on security rules');
     } catch (error) {
       console.error('Auth error:', error);
     }
@@ -76,7 +75,6 @@ export class EmailAddressService {
     }
 
     try {
-      console.log('🔍 Server: getDefaultForOrganization via REST API');
       
       const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
       const baseUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents`;
@@ -144,7 +142,6 @@ export class EmailAddressService {
       const doc = data[0].document;
       const emailAddress = this.convertFirestoreDocument(doc);
       
-      console.log('✅ Found default email via REST:', emailAddress.email);
       return emailAddress;
 
     } catch (error) {
@@ -159,7 +156,6 @@ export class EmailAddressService {
    */
   private async getFirstActiveEmailServer(organizationId: string, authToken?: string): Promise<EmailAddress | null> {
     try {
-      console.log('🔍 Server: Looking for first active email via REST API');
       
       const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
       const baseUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents`;
@@ -215,14 +211,12 @@ export class EmailAddressService {
       const data = await response.json();
       
       if (data.length === 0 || !data[0].document) {
-        console.log('❌ No active email addresses found');
         return null;
       }
 
       const doc = data[0].document;
       const emailAddress = this.convertFirestoreDocument(doc);
       
-      console.log('✅ Found active email via REST:', emailAddress.email);
       return emailAddress;
 
     } catch (error) {
@@ -245,7 +239,6 @@ export class EmailAddressService {
     }
 
     try {
-      console.log('🔍 Server: getByOrganizationServer via REST API');
       
       const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
       const baseUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents`;
@@ -307,7 +300,6 @@ export class EmailAddressService {
         }
       }
       
-      console.log(`✅ Found ${emailAddresses.length} email addresses via REST`);
       return emailAddresses;
 
     } catch (error) {
@@ -622,7 +614,6 @@ export class EmailAddressService {
    */
   async getByOrganization(organizationId: string, userId: string, userRole?: string): Promise<EmailAddress[]> {
     try {
-      console.log('getByOrganization called with:', { organizationId, userId });
       
       const q = query(
         collection(db, this.collectionName),
@@ -852,17 +843,14 @@ export class EmailAddressService {
  */
 async findByReplyToAddress(replyToEmail: string): Promise<EmailAddress | null> {
   try {
-    console.log('🔍 Finding email by reply-to:', replyToEmail);
     
     // Extrahiere den lokalen Teil
     const [localPart, domain] = replyToEmail.split('@');
     const parts = localPart.split('-');
     
-    console.log('📝 Reply-To parts:', { localPart, parts, count: parts.length });
     
     // PR-KAMPAGNEN FORMAT (2 Teile): prefix-campaignId
     if (parts.length === 2) {
-      console.log('🎯 PR Campaign format detected');
       const [prefix, campaignId] = parts;
       
       // Bei PR-Kampagnen suchen wir nach der E-Mail-Adresse mit dem passenden Prefix
@@ -875,18 +863,15 @@ async findByReplyToAddress(replyToEmail: string): Promise<EmailAddress | null> {
       );
       
       const snapshot = await getDocs(q);
-      console.log(`📊 Found ${snapshot.size} email addresses with prefix: ${prefix}`);
       
       if (!snapshot.empty) {
         // Nimm die erste aktive E-Mail-Adresse mit diesem Prefix
         const emailAddress = { ...snapshot.docs[0].data(), id: snapshot.docs[0].id } as EmailAddress;
-        console.log('✅ Found PR campaign email:', emailAddress.email);
         return emailAddress;
       }
       
       // Fallback: Suche nach der Default-E-Mail der Organisation
       // Da wir die campaignId haben, könnten wir theoretisch die Organisation aus der pr_campaigns Collection laden
-      console.log('⚠️ No email with prefix found, using fallback...');
       
       // Für den Moment: Verwende bekannte Test-E-Mail
       const fallbackQuery = query(
@@ -899,20 +884,17 @@ async findByReplyToAddress(replyToEmail: string): Promise<EmailAddress | null> {
       const fallbackSnapshot = await getDocs(fallbackQuery);
       if (!fallbackSnapshot.empty) {
         const emailAddress = { ...fallbackSnapshot.docs[0].data(), id: fallbackSnapshot.docs[0].id } as EmailAddress;
-        console.log('✅ Found fallback email for PR campaign:', emailAddress.email);
         return emailAddress;
       }
     }
     
     // INBOX FORMAT (3 Teile): localpart-orgId-emailId
     else if (parts.length >= 3) {
-      console.log('📧 Inbox format detected');
       
       // Die letzten zwei Teile sind orgId und emailId (lowercase von SendGrid)
       const shortEmailId = parts[parts.length - 1]; // rtedp7rd
       const shortOrgId = parts[parts.length - 2]; // wva3cj7y
       
-      console.log('📝 Extracted IDs:', { shortOrgId, shortEmailId });
       
       // Suche alle E-Mail-Adressen und filtere manuell
       const q = query(
@@ -922,7 +904,6 @@ async findByReplyToAddress(replyToEmail: string): Promise<EmailAddress | null> {
       );
       
       const snapshot = await getDocs(q);
-      console.log(`📊 Found ${snapshot.size} active email addresses`);
       
       // Durchsuche alle E-Mail-Adressen
       for (const doc of snapshot.docs) {
@@ -934,18 +915,15 @@ async findByReplyToAddress(replyToEmail: string): Promise<EmailAddress | null> {
         const orgIdShort = orgId.substring(0, 8).toLowerCase();
         const docIdShort = docId.substring(0, 8).toLowerCase();
         
-        console.log(`🔍 Checking: docId=${docIdShort}, orgId=${orgIdShort}`);
         
         // Vergleiche die Kurzformen (case-insensitive)
         if (orgIdShort === shortOrgId.toLowerCase() && docIdShort === shortEmailId.toLowerCase()) {
           const emailAddress = { ...docData, id: doc.id } as EmailAddress;
-          console.log('✅ Found inbox email address:', emailAddress.email);
           return emailAddress;
         }
       }
       
       // FALLBACK: Direkte Suche mit bekannter Org-ID
-      console.log('⚠️ Trying fallback with specific organization...');
       
       const knownOrgId = 'wVa3cJ7YhYUCQcbwZLLVB6w5Xs23';
       const fallbackQuery = query(
@@ -955,13 +933,11 @@ async findByReplyToAddress(replyToEmail: string): Promise<EmailAddress | null> {
       );
       
       const fallbackSnapshot = await getDocs(fallbackQuery);
-      console.log(`📊 Fallback found ${fallbackSnapshot.size} addresses for org ${knownOrgId}`);
       
       for (const doc of fallbackSnapshot.docs) {
         const docIdLower = doc.id.substring(0, 8).toLowerCase();
         if (docIdLower === shortEmailId.toLowerCase()) {
           const emailAddress = { ...doc.data(), id: doc.id } as EmailAddress;
-          console.log('✅ Found via fallback:', emailAddress.email);
           return emailAddress;
         }
       }
@@ -987,7 +963,6 @@ async findByReplyToAddress(replyToEmail: string): Promise<EmailAddress | null> {
    */
   async getDefaultForOrganization(organizationId: string): Promise<EmailAddress | null> {
     try {
-      console.log('🔍 getDefaultForOrganization called with:', organizationId);
       
       const q = query(
         collection(db, this.collectionName),
@@ -997,10 +972,8 @@ async findByReplyToAddress(replyToEmail: string): Promise<EmailAddress | null> {
       );
 
       const snapshot = await getDocs(q);
-      console.log('📊 Default email query results:', snapshot.size);
       
       if (snapshot.empty) {
-        console.log('⚠️ No default email found, trying fallback to first active...');
         
         // Fallback: Erste aktive E-Mail-Adresse
         const fallbackQ = query(
@@ -1011,22 +984,18 @@ async findByReplyToAddress(replyToEmail: string): Promise<EmailAddress | null> {
         );
         
         const fallbackSnapshot = await getDocs(fallbackQ);
-        console.log('📊 Active email query results:', fallbackSnapshot.size);
         
         if (!fallbackSnapshot.empty) {
           const doc = fallbackSnapshot.docs[0];
           const emailAddress = { ...doc.data(), id: doc.id } as EmailAddress;
-          console.log('✅ Found active email address:', emailAddress.email);
           return emailAddress;
         }
         
-        console.log('❌ No active email addresses found');
         return null;
       }
 
       const doc = snapshot.docs[0];
       const emailAddress = { ...doc.data(), id: doc.id } as EmailAddress;
-      console.log('✅ Found default email address:', emailAddress.email);
       return emailAddress;
     } catch (error) {
       console.error('❌ Error getting default email address:', error);

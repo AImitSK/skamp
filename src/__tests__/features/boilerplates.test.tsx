@@ -251,7 +251,7 @@ describe('Integration Tests', () => {
     ];
 
     expectedMethods.forEach(method => {
-      expect(typeof boilerplatesService[method]).toBe('function');
+      expect(typeof (boilerplatesService as any)[method]).toBe('function');
     });
   });
 });

@@ -42,7 +42,6 @@ const firebaseConfig = {
 let app;
 if (!getApps().length) {
   app = initializeApp(firebaseConfig);
-  console.log('✅ Firebase initialized in domain-service');
 } else {
   app = getApps()[0];
 }

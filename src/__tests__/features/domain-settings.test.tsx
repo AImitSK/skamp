@@ -68,7 +68,7 @@ describe('Domain Service Enhanced', () => {
       ];
 
       expectedMethods.forEach(method => {
-        expect(typeof domainServiceEnhanced[method]).toBe('function');
+        expect(typeof (domainServiceEnhanced as any)[method]).toBe('function');
       });
     });
   });
@@ -290,15 +290,16 @@ describe('Domain Service Enhanced', () => {
       };
 
       const domainWithoutSubdomain = {
-        domain: 'example.com'
+        domain: 'example.com',
+        subdomain: undefined as string | undefined
       };
 
       const displayNameWithSub = domainWithSubdomain.subdomain 
         ? `${domainWithSubdomain.subdomain}.${domainWithSubdomain.domain}`
         : domainWithSubdomain.domain;
 
-      const displayNameWithoutSub = domainWithoutSubdomain.subdomain
-        ? `${domainWithoutSubdomain.subdomain}.${domainWithoutSubdomain.domain}`
+      const displayNameWithoutSub = (domainWithoutSubdomain as any).subdomain
+        ? `${(domainWithoutSubdomain as any).subdomain}.${domainWithoutSubdomain.domain}`
         : domainWithoutSubdomain.domain;
 
       expect(displayNameWithSub).toBe('mail.example.com');
