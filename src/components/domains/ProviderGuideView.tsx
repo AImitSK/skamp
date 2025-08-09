@@ -11,15 +11,11 @@ import {
   ExclamationTriangleIcon,
   LightBulbIcon,
   DocumentTextIcon
-} from '@heroicons/react/20/solid';
+} from '@heroicons/react/24/outline';
 import { ProviderGuide } from '@/lib/domain-providers/provider-guides';
 import { DnsRecord } from '@/types/email-domains';
+import type { ProviderGuideViewProps } from '@/types/email-domains-enhanced';
 import { DnsRecordsList } from './DnsRecordsList';
-
-interface ProviderGuideViewProps {
-  provider: ProviderGuide;
-  dnsRecords: DnsRecord[];
-}
 
 export function ProviderGuideView({ provider, dnsRecords }: ProviderGuideViewProps) {
   const [currentStep, setCurrentStep] = useState(0);

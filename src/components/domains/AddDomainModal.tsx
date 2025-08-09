@@ -15,7 +15,8 @@ import {
   EmailDomainEnhanced, 
   DnsRecord, 
   DomainProvider,
-  DOMAIN_PROVIDER_NAMES 
+  DOMAIN_PROVIDER_NAMES,
+  AddDomainModalProps 
 } from '@/types/email-domains-enhanced';
 import {
   CheckCircleIcon,
@@ -26,14 +27,7 @@ import {
   InformationCircleIcon,
   GlobeAltIcon,
   ArrowPathIcon
-} from '@heroicons/react/20/solid';
-
-interface AddDomainModalProps {
-  open: boolean;
-  onClose: () => void;
-  onSuccess: () => void;
-  existingDomain?: EmailDomainEnhanced | null;
-}
+} from '@heroicons/react/24/outline';
 
 type Step = 'provider' | 'domain' | 'dns' | 'verify';
 
@@ -152,7 +146,6 @@ export function AddDomainModal({
         dnsRecords: response.dnsRecords
       }, context);
       
-      console.log('✅ Domain saved to Firebase:', newDomainId);
       
       setDomainId(newDomainId);
       setDnsRecords(response.dnsRecords);
@@ -235,7 +228,6 @@ export function AddDomainModal({
       setCopySuccess(id);
       setTimeout(() => setCopySuccess(null), 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
     }
   };
 

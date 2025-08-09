@@ -13,7 +13,9 @@ import { apiClient } from '@/lib/api/api-client';
 import { domainServiceEnhanced } from '@/lib/firebase/domain-service-enhanced';
 import { 
   EmailDomainEnhanced,
-  InboxTestResult 
+  InboxTestResult,
+  InboxTestModalProps,
+  TestProvider
 } from '@/types/email-domains-enhanced';
 import {
   CheckCircleIcon,
@@ -24,20 +26,7 @@ import {
   InformationCircleIcon,
   PaperAirplaneIcon,
   ClockIcon
-} from '@heroicons/react/20/solid';
-
-interface InboxTestModalProps {
-  domainId: string;
-  onClose: () => void;
-  onSuccess: () => void;
-}
-
-interface TestProvider {
-  name: string;
-  email?: string;
-  icon?: string;
-  recommended?: boolean;
-}
+} from '@heroicons/react/24/outline';
 
 const defaultTestProviders: TestProvider[] = [
   { name: 'Gmail', icon: '📧', recommended: true },
@@ -70,7 +59,6 @@ export function InboxTestModal({ domainId, onClose, onSuccess }: InboxTestModalP
       );
       setDomain(domainData);
     } catch (err) {
-      console.error('Error loading domain:', err);
       setError('Domain konnte nicht geladen werden');
     } finally {
       setLoading(false);
@@ -148,7 +136,6 @@ export function InboxTestModal({ domainId, onClose, onSuccess }: InboxTestModalP
       setTestComplete(true);
 
     } catch (err: any) {
-      console.error('Inbox test error:', err);
       setError(err.message || 'Test fehlgeschlagen');
     } finally {
       setTesting(false);

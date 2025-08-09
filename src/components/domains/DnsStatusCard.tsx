@@ -4,7 +4,7 @@
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { DnsCheckResult } from '@/types/email-domains-enhanced';
+import { DnsCheckResult, DnsStatusCardProps } from '@/types/email-domains-enhanced';
 import {
   CheckCircleIcon,
   XCircleIcon,
@@ -12,15 +12,9 @@ import {
   ExclamationTriangleIcon,
   InformationCircleIcon,
   ClockIcon
-} from '@heroicons/react/20/solid';
+} from '@heroicons/react/24/outline';
 import { formatDistanceToNow } from 'date-fns/formatDistanceToNow';
 import { de } from 'date-fns/locale/de';
-
-interface DnsStatusCardProps {
-  results: DnsCheckResult[];
-  onRefresh: () => void;
-  isRefreshing: boolean;
-}
 
 export function DnsStatusCard({ results, onRefresh, isRefreshing }: DnsStatusCardProps) {
   // Calculate summary

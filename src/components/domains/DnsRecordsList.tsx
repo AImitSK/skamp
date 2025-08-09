@@ -7,13 +7,9 @@ import {
   ClipboardDocumentIcon, 
   CheckIcon,
   InformationCircleIcon 
-} from '@heroicons/react/20/solid';
+} from '@heroicons/react/24/outline';
 import { DnsRecord } from '@/types/email-domains';
-
-interface DnsRecordsListProps {
-  records: DnsRecord[];
-  compact?: boolean;
-}
+import type { DnsRecordsListProps } from '@/types/email-domains-enhanced';
 
 export function DnsRecordsList({ records, compact = false }: DnsRecordsListProps) {
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
@@ -24,7 +20,6 @@ export function DnsRecordsList({ records, compact = false }: DnsRecordsListProps
       setCopiedIndex(index);
       setTimeout(() => setCopiedIndex(null), 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
     }
   };
 
@@ -38,7 +33,6 @@ export function DnsRecordsList({ records, compact = false }: DnsRecordsListProps
       setCopiedIndex(-1);
       setTimeout(() => setCopiedIndex(null), 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
     }
   };
 

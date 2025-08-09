@@ -14,24 +14,8 @@ import {
   ChevronRightIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon
-} from '@heroicons/react/20/solid';
-
-interface HelpSidebarProps {
-  onClose: () => void;
-  currentStep?: 'start' | 'manage' | 'verify' | 'dns';
-}
-
-interface FAQItem {
-  question: string;
-  answer: string;
-  category?: string;
-}
-
-interface GuideStep {
-  title: string;
-  description: string;
-  tip?: string;
-}
+} from '@heroicons/react/24/outline';
+import type { HelpSidebarProps, FAQItem, GuideStep } from '@/types/email-domains-enhanced';
 
 export function HelpSidebar({ onClose, currentStep = 'start' }: HelpSidebarProps) {
   const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null);
@@ -188,7 +172,7 @@ export function HelpSidebar({ onClose, currentStep = 'start' }: HelpSidebarProps
         <Button
           plain
           className="w-full justify-start gap-2 text-left"
-          onClick={() => window.open('https://help.skamp.de/domains', '_blank')}
+          onClick={() => window.open('https://help.celeropress.de/domains', '_blank')}
         >
           <PlayCircleIcon className="w-5 h-5 text-blue-500" />
           Video-Tutorial ansehen
@@ -196,7 +180,7 @@ export function HelpSidebar({ onClose, currentStep = 'start' }: HelpSidebarProps
         <Button
           plain
           className="w-full justify-start gap-2 text-left"
-          onClick={() => window.open('https://docs.skamp.de/email/domains', '_blank')}
+          onClick={() => window.open('https://docs.celeropress.de/email/domains', '_blank')}
         >
           <DocumentTextIcon className="w-5 h-5 text-gray-500" />
           Dokumentation lesen
@@ -311,7 +295,7 @@ export function HelpSidebar({ onClose, currentStep = 'start' }: HelpSidebarProps
         <Button
           plain
           className="w-full mt-2 justify-center"
-          onClick={() => window.open('mailto:support@skamp.de?subject=Domain-Authentifizierung', '_blank')}
+          onClick={() => window.open('mailto:support@celeropress.de?subject=Domain-Authentifizierung', '_blank')}
         >
           Support kontaktieren
         </Button>

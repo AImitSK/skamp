@@ -64,7 +64,6 @@ class DomainServiceEnhanced extends BaseService<EmailDomainEnhanced> {
       
       return results[0] || null;
     } catch (error) {
-      console.error('Error checking domain existence:', error);
       return null;
     }
   }
@@ -91,7 +90,6 @@ class DomainServiceEnhanced extends BaseService<EmailDomainEnhanced> {
       // Filter domains that can be retried
       return pendingDomains.filter(domain => canRetryVerification(domain));
     } catch (error) {
-      console.error('Error getting domains for verification:', error);
       return [];
     }
   }
@@ -108,7 +106,6 @@ class DomainServiceEnhanced extends BaseService<EmailDomainEnhanced> {
       
       return results[0] || null;
     } catch (error) {
-      console.error('Error getting default domain:', error);
       return null;
     }
   }
@@ -292,7 +289,6 @@ class DomainServiceEnhanced extends BaseService<EmailDomainEnhanced> {
         domain.allowedSenders?.includes(email.toLowerCase())
       );
     } catch (error) {
-      console.error('Error getting domains by allowed sender:', error);
       return [];
     }
   }
@@ -376,7 +372,6 @@ class DomainServiceEnhanced extends BaseService<EmailDomainEnhanced> {
         return hasBounceIssue || hasSpamIssue;
       });
     } catch (error) {
-      console.error('Error getting domains with issues:', error);
       return [];
     }
   }

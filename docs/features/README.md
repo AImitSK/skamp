@@ -11,6 +11,7 @@ Diese Dokumentationen folgen dem standardisierten Template aus `FEATURE_DOCUMENT
 - **[Freigaben-Center](./docu_dashboard_pr-tools_freigaben.md)** - Approval-Workflow für Kampagnen mit Multi-Freigabe-Support (✅ Fertig)
 - **[Media-Library & Sharing](./docu_dashboard_pr-tools_media-library.md)** - Asset-Management mit Sharing-System (✅ **FERTIG** - Code-Cleaning und Tests abgeschlossen)
 - **[Textbausteine](./docu_dashboard_pr-tools_boilerplates.md)** - Template-Management mit Variables-System (✅ **FERTIG** - Vollständig dokumentiert und getestet)
+- **[Domain-Authentifizierung](./docu_dashboard_settings_domain.md)** - E-Mail-Domain-Verifizierung mit SendGrid-Integration (✅ **FERTIG** - 20 Tests, Code-Cleaning, Design-Pattern-Compliance)
 
 ### 🚧 In Arbeit
 - **[PR-Kampagnen](./docu_dashboard_pr-tools_campaigns.md)** - Kampagnen-Erstellung mit KI-Unterstützung (❌ Template noch nicht angewendet)
@@ -55,6 +56,7 @@ Jede Feature-Dokumentation enthält:
 - ✅ **Verteilerlisten**: Vollständig nach Template dokumentiert (Production-Ready mit Tests)
 - ✅ **Freigaben-Center**: Vollständig nach Template dokumentiert (Code-Cleaning, Design-Patterns, Tests)
 - ✅ **Textbausteine**: Vollständig nach Template dokumentiert (21 Tests, Code-Cleaning, Design-Pattern-Compliance)
+- ✅ **Domain-Authentifizierung**: Vollständig nach Template dokumentiert (20 Tests, alle Props-Interfaces zentralisiert, DOMAIN_CONSTANTS extrahiert)
 - 🚧 **PR-Kampagnen**: Template noch NICHT angewendet - steht aus
 - 🚧 **Weitere Features**: Sukzessive Migration geplant
 
@@ -77,5 +79,5 @@ Alle ursprünglichen Feature-Beschreibungen sind in `/docs/legacy-features/` ver
 ---
 
 **Letzte Aktualisierung:** 2025-08-09  
-**Dokumentierte Features:** 5/15+ geplant (CRM Enhanced ✅, Verteilerlisten ✅, Library Publications ✅, Freigaben-Center ✅, Textbausteine ✅)  
+**Dokumentierte Features:** 7/15+ geplant (CRM Enhanced ✅, Verteilerlisten ✅, Library Publications ✅, Freigaben-Center ✅, Textbausteine ✅, Domain-Authentifizierung ✅)  
 **Template-Version:** 2.0

@@ -271,3 +271,97 @@ export const DEFAULT_DNS_RECORDS: Partial<DnsRecord>[] = [
   { type: 'CNAME', valid: false }, // DKIM1
   { type: 'CNAME', valid: false }  // DKIM2
 ];
+
+/**
+ * Component Props Interfaces
+ */
+export interface HelpSidebarProps {
+  onClose: () => void;
+  currentStep?: 'start' | 'manage' | 'verify' | 'dns';
+}
+
+export interface FAQItem {
+  question: string;
+  answer: string;
+  category?: string;
+}
+
+export interface GuideStep {
+  title: string;
+  description: string;
+  tip?: string;
+}
+
+export interface InboxTestModalProps {
+  domainId: string;
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+export interface TestProvider {
+  name: string;
+  email?: string;
+  icon?: string;
+  recommended?: boolean;
+}
+
+export interface AddDomainModalProps {
+  open: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+  existingDomain?: EmailDomainEnhanced | null;
+}
+
+export interface DnsRecordsListProps {
+  records: DnsRecord[];
+  className?: string;
+  compact?: boolean;
+  showStatus?: boolean;
+}
+
+export interface DnsStatusCardProps {
+  results: DnsCheckResult[];
+  onRefresh: () => void;
+  isRefreshing: boolean;
+}
+
+export interface ProviderGuideViewProps {
+  provider: ProviderGuide;
+  dnsRecords: DnsRecord[];
+}
+
+/**
+ * Constants for Domain Settings
+ */
+export const DOMAIN_CONSTANTS = {
+  DNS_PROPAGATION_HOURS: 48,
+  DNS_TTL_LOW: 300,
+  DNS_TTL_MEDIUM: 600,
+  VERIFICATION_RETRY_MINUTES: 5,
+  MAX_VERIFICATION_ATTEMPTS: 10,
+  INBOX_TEST_KEEP_COUNT: 10,
+  INBOX_TEST_GOOD_SCORE: 90,
+  INBOX_TEST_OK_SCORE: 70,
+} as const;
+
+/**
+ * Provider Guide Interface (from provider-guides)
+ */
+export interface ProviderGuide {
+  id: DomainProvider;
+  name: string;
+  logo?: string;
+  steps: Array<{
+    title: string;
+    description: string;
+    screenshots?: string[];
+    warning?: string;
+    tip?: string;
+  }>;
+  commonIssues: Array<{
+    problem: string;
+    solution: string;
+  }>;
+  videoUrl?: string;
+  supportUrl?: string;
+}

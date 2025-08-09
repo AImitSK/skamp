@@ -19,7 +19,7 @@ import {
   InformationCircleIcon,
   PlayCircleIcon,
   EnvelopeIcon,
-} from '@heroicons/react/20/solid';
+} from '@heroicons/react/24/outline';
 import { AddDomainModal } from '@/components/domains/AddDomainModal';
 import { InboxTestModal } from '@/components/domains/InboxTestModal';
 import { DnsStatusCard } from '@/components/domains/DnsStatusCard';
@@ -72,13 +72,6 @@ export default function DomainsPage() {
     userId: user!.uid
   });
 
-  // Debug: Log organization loading state
-  useEffect(() => {
-    console.log('🔍 Organization state:', {
-      currentOrganization: currentOrganization?.id,
-      user: user?.uid
-    });
-  }, [currentOrganization, user]);
 
   useEffect(() => {
     if (user && currentOrganization?.id) {
@@ -93,12 +86,9 @@ export default function DomainsPage() {
       setLoading(true);
       setError(null);
       const context = getContext();
-      console.log('🔍 Loading domains for organizationId:', context.organizationId);
       const data = await domainServiceEnhanced.getAll(context.organizationId);
-      console.log('✅ Loaded domains:', data.length);
       setDomains(data);
     } catch (error: any) {
-      console.error('Error loading domains:', error);
       setError('Domains konnten nicht geladen werden');
     } finally {
       setLoading(false);
@@ -145,7 +135,6 @@ export default function DomainsPage() {
         await loadDomains();
       }
     } catch (error: any) {
-      console.error('Verification error:', error);
       setError(error.message || 'Verifizierung fehlgeschlagen');
     } finally {
       setVerifying(null);
@@ -188,7 +177,6 @@ export default function DomainsPage() {
         }
       }
     } catch (error: any) {
-      console.error('DNS check error:', error);
       setError('DNS-Überprüfung fehlgeschlagen');
     } finally {
       setCheckingDns(null);
@@ -208,7 +196,6 @@ export default function DomainsPage() {
         try {
           await apiClient.delete(`/api/email/domains/${domainId}`);
         } catch (apiError) {
-          console.warn('SendGrid deletion failed, continuing with Firebase deletion');
         }
       }
 
@@ -217,7 +204,6 @@ export default function DomainsPage() {
       await loadDomains();
 
     } catch (error: any) {
-      console.error('Delete error:', error);
       setError('Domain konnte nicht gelöscht werden');
     }
   };
@@ -278,7 +264,7 @@ export default function DomainsPage() {
                   </Text>
                 </div>
                 <div className="mt-6 flex justify-end gap-3">
-                  <Button plain onClick={() => window.open('https://help.skamp.de/domains', '_blank')}>
+                  <Button plain onClick={() => window.open('https://help.celeropress.de/domains', '_blank')}>
                     <PlayCircleIcon className="w-4 h-4 mr-2" />
                     Video-Tutorial
                   </Button>
