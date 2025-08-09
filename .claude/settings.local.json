@@ -29,7 +29,8 @@
       "Bash(ls:*)",
       "Bash(npm run typecheck:*)",
       "Bash(del docu_dashboard_pr-tools_campaigns.md)",
-      "Bash(ren:*)"
+      "Bash(ren:*)",
+      "Bash(npm run:*)"
     ],
     "deny": []
   }

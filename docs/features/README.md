@@ -13,11 +13,11 @@ Diese Dokumentationen folgen dem standardisierten Template aus `FEATURE_DOCUMENT
 - **[Textbausteine](./docu_dashboard_pr-tools_boilerplates.md)** - Template-Management mit Variables-System (✅ **FERTIG** - Vollständig dokumentiert und getestet)
 - **[Domain-Authentifizierung](./docu_dashboard_settings_domain.md)** - E-Mail-Domain-Verifizierung mit SendGrid-Integration (✅ **FERTIG** - 20 Tests, Code-Cleaning, Design-Pattern-Compliance)
 - **[E-Mail-Einstellungen](./docu_dashboard_settings_email.md)** - E-Mail-Adressen, Signaturen, Routing-Regeln und KI-Integration (✅ **FERTIG** - 19/19 Tests, erweiterte Alias-Unterstützung, Gemini AI)
+- **[Team-Verwaltung](./docu_dashboard_settings_team.md)** - Multi-Tenancy, Benutzer-Management und Einladungssystem (✅ **FERTIG** - 24/24 Tests, Role-based Access Control, Owner-Protection)
 
 ### 🚧 In Arbeit
 - **[PR-Kampagnen](./docu_dashboard_pr-tools_campaigns.md)** - Kampagnen-Erstellung mit KI-Unterstützung (❌ Template noch nicht angewendet)
 - [ ] **E-Mail Inbox** - E-Mail-Kommunikation und Thread-Verwaltung
-- [ ] **Team-Verwaltung** - Multi-Tenancy und Benutzer-Management
 
 ### 📝 Geplant (basierend auf Legacy-Features)
 - [ ] **AI-Assistent** - KI-gestützte Textgenerierung
@@ -58,7 +58,8 @@ Jede Feature-Dokumentation enthält:
 - ✅ **Freigaben-Center**: Vollständig nach Template dokumentiert (Code-Cleaning, Design-Patterns, Tests)
 - ✅ **Textbausteine**: Vollständig nach Template dokumentiert (21 Tests, Code-Cleaning, Design-Pattern-Compliance)
 - ✅ **Domain-Authentifizierung**: Vollständig nach Template dokumentiert (20 Tests, alle Props-Interfaces zentralisiert, DOMAIN_CONSTANTS extrahiert)
-- ✅ **E-Mail-Einstellungen**: Vollständig nach Template dokumentiert (18/19 Tests, Routing-Regeln, Signaturen, KI-Integration mit Gemini)
+- ✅ **E-Mail-Einstellungen**: Vollständig nach Template dokumentiert (19/19 Tests, Routing-Regeln, Signaturen, KI-Integration mit Gemini)
+- ✅ **Team-Verwaltung**: Vollständig nach Template dokumentiert (24/24 Tests, Multi-Tenancy, Role-based Access Control, Einladungssystem)
 - 🚧 **PR-Kampagnen**: Template noch NICHT angewendet - steht aus
 - 🚧 **Weitere Features**: Sukzessive Migration geplant
 
@@ -81,5 +82,5 @@ Alle ursprünglichen Feature-Beschreibungen sind in `/docs/legacy-features/` ver
 ---
 
 **Letzte Aktualisierung:** 2025-08-09  
-**Dokumentierte Features:** 8/15+ geplant (CRM Enhanced ✅, Verteilerlisten ✅, Library Publications ✅, Freigaben-Center ✅, Textbausteine ✅, Domain-Authentifizierung ✅, E-Mail-Einstellungen ✅)  
+**Dokumentierte Features:** 9/15+ geplant (CRM Enhanced ✅, Verteilerlisten ✅, Library Publications ✅, Freigaben-Center ✅, Textbausteine ✅, Domain-Authentifizierung ✅, E-Mail-Einstellungen ✅, Team-Verwaltung ✅)  
 **Template-Version:** 2.0

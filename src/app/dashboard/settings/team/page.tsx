@@ -33,16 +33,16 @@ import {
   EllipsisVerticalIcon,
   PaperAirplaneIcon,
   ClockIcon
-} from '@heroicons/react/20/solid';
+} from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 
 // Toast notification helper
 const showToast = (message: string, type: 'success' | 'error' = 'success') => {
   if (type === 'error') {
-    console.error(message);
+    
     alert(`Fehler: ${message}`);
   } else {
-    console.log(message);
+    
     alert(message); // Temporär - später durch echte Toast-Komponente ersetzen
   }
 };
@@ -97,10 +97,10 @@ export default function TeamSettingsPage() {
         
         await teamMemberService.createOwner(ownerData);
         
-        console.log('✅ Owner entry created successfully');
+        
       }
     } catch (error) {
-      console.error('Error ensuring owner exists:', error);
+      
       // Don't block the UI
     }
   };
@@ -128,7 +128,7 @@ export default function TeamSettingsPage() {
       
       setTeamMembers(processedMembers);
     } catch (error) {
-      console.error('Error loading team members:', error);
+      
       setError('Fehler beim Laden der Team-Mitglieder');
     } finally {
       setLoading(false);
@@ -155,7 +155,7 @@ export default function TeamSettingsPage() {
         context
       );
       
-      console.log('✅ Member invited:', memberId);
+      
       
       // Generiere Einladungs-URL
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
@@ -196,11 +196,11 @@ export default function TeamSettingsPage() {
         if (response.ok) {
           showToast('Einladung wurde erfolgreich versendet!');
         } else {
-          console.error('E-Mail konnte nicht versendet werden');
+          
           showToast('Einladung erstellt, aber E-Mail konnte nicht versendet werden', 'error');
         }
       } catch (emailError) {
-        console.error('Error sending email:', emailError);
+        
         showToast('Einladung erstellt, aber E-Mail konnte nicht versendet werden', 'error');
       }
       
@@ -211,7 +211,7 @@ export default function TeamSettingsPage() {
       await loadTeamMembers();
       
     } catch (error: any) {
-      console.error('Error inviting team member:', error);
+      
       setError(error.message || 'Fehler beim Einladen des Team-Mitglieds');
     } finally {
       setInviteLoading(false);
@@ -230,7 +230,7 @@ export default function TeamSettingsPage() {
       await loadTeamMembers();
       showToast(`Rolle wurde auf ${roleConfig[newRole].label} geändert`);
     } catch (error) {
-      console.error('Error updating member role:', error);
+      
       showToast('Fehler beim Ändern der Rolle', 'error');
     }
   };
@@ -251,7 +251,7 @@ export default function TeamSettingsPage() {
       await loadTeamMembers();
       showToast('Mitglied wurde entfernt');
     } catch (error) {
-      console.error('Error removing member:', error);
+      
       showToast('Fehler beim Entfernen des Mitglieds', 'error');
     }
   };
@@ -309,7 +309,7 @@ export default function TeamSettingsPage() {
         throw new Error('E-Mail-Versand fehlgeschlagen');
       }
     } catch (error) {
-      console.error('Error resending invitation:', error);
+      
       showToast('Fehler beim erneuten Versenden der Einladung', 'error');
     }
   };
