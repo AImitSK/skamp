@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Divider } from "@/components/ui/divider";
 import { Avatar } from "@/components/ui/avatar";
+import { ImageCropper } from "@/components/ui/image-cropper";
 import { useState, useRef } from "react";
 import { PhotoIcon, TrashIcon } from "@heroicons/react/24/outline";
 
@@ -17,20 +18,52 @@ export default function ProfilePage() {
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [showCropper, setShowCropper] = useState(false);
+  const [selectedImageSrc, setSelectedImageSrc] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Validierung
+    if (!file.type.startsWith('image/')) {
+      setMessage({ type: 'error', text: 'Bitte wähle eine Bilddatei aus.' });
+      return;
+    }
+
+    const maxSize = 10 * 1024 * 1024; // 10MB für Original (wird dann zugeschnitten)
+    if (file.size > maxSize) {
+      setMessage({ type: 'error', text: 'Datei ist zu groß. Maximum 10MB erlaubt.' });
+      return;
+    }
+
+    // Bild als Data URL laden für Cropper
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (e.target?.result) {
+        setSelectedImageSrc(e.target.result as string);
+        setShowCropper(true);
+        setMessage(null);
+      }
+    };
+    reader.readAsDataURL(file);
+
+    // Input zurücksetzen
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleCropComplete = async (croppedFile: File) => {
     setUploading(true);
-    setMessage(null);
 
     try {
-      const result = await uploadProfileImage(file);
+      const result = await uploadProfileImage(croppedFile);
       
       if (result.success) {
         setMessage({ type: 'success', text: 'Profilbild erfolgreich aktualisiert!' });
+        setShowCropper(false);
       } else {
         setMessage({ type: 'error', text: result.error || 'Fehler beim Upload' });
       }
@@ -38,11 +71,12 @@ export default function ProfilePage() {
       setMessage({ type: 'error', text: 'Unerwarteter Fehler beim Upload' });
     } finally {
       setUploading(false);
-      // Input zurücksetzen
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
     }
+  };
+
+  const handleCropCancel = () => {
+    setShowCropper(false);
+    setSelectedImageSrc('');
   };
 
   const handleDeleteImage = async () => {
@@ -89,13 +123,13 @@ export default function ProfilePage() {
         <div className="flex-1">
           <Subheading level={3}>Profilbild</Subheading>
           <Text className="mt-1 text-zinc-500 dark:text-zinc-400">
-            JPG, PNG oder WebP. Maximal 5MB.
+            JPG, PNG oder WebP. Maximal 10MB. Wird automatisch quadratisch zugeschnitten.
           </Text>
           
           {/* Upload & Delete Buttons */}
           <div className="flex gap-3 mt-4">
             <Button 
-              color="indigo" 
+              className="bg-[#005fab] hover:bg-[#004a8c] px-6 py-2"
               onClick={triggerFileInput}
               disabled={uploading}
             >
@@ -105,7 +139,7 @@ export default function ProfilePage() {
             
             {user?.photoURL && (
               <Button 
-                plain
+                className="!bg-white !border !border-gray-300 !text-gray-700 hover:!bg-gray-100 px-4 py-2"
                 onClick={handleDeleteImage}
                 disabled={deleting}
               >
@@ -163,8 +197,8 @@ export default function ProfilePage() {
       </FieldGroup>
 
       <div className="mt-8 flex gap-3">
-        <Button color="indigo">Änderungen speichern</Button>
-        <Button plain>Abbrechen</Button>
+        <Button className="bg-[#005fab] hover:bg-[#004a8c] px-6 py-2">Änderungen speichern</Button>
+        <Button className="!bg-white !border !border-gray-300 !text-gray-700 hover:!bg-gray-100 px-4 py-2">Abbrechen</Button>
       </div>
 
       <Divider className="my-8" />
@@ -185,6 +219,16 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Image Cropper Modal */}
+      {showCropper && (
+        <ImageCropper
+          src={selectedImageSrc}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+          isProcessing={uploading}
+        />
+      )}
     </div>
   );
 }
