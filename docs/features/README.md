@@ -18,6 +18,8 @@ Diese Dokumentationen folgen dem standardisierten Template aus `FEATURE_DOCUMENT
 - **[Communication Inbox](./docu_dashboard_communication_inbox.md)** - E-Mail-Kommunikation mit KI-Integration und Team-Management (✅ **FERTIG** - 19/19 Tests, AI-Sentiment-Analysis, Thread-Management, Enterprise-Grade)
 - **[Notification-Einstellungen](./docu_dashboard_settings_notifications.md)** - Benachrichtigungstypen konfigurieren und Schwellenwerte festlegen (🚧 **BASIC** - Settings-UI funktional, ohne Tests)
 - **[Calendar & Task Management](./docu_dashboard_pr-tools_calendar.md)** - Zentrale Kalender- und Aufgabenverwaltung mit Benachrichtigungsintegration (✅ **FERTIG** - 55/55 Tests, FullCalendar, Drag & Drop, Überfällige Tasks Widget)
+- **[Dashboard Übersicht](./docu_dashboard_overview.md)** - Zentrale Einstiegsseite mit Multi-Tenancy und Team-Onboarding (✅ **FERTIG** - Welcome-Flow, Organization-Management, ApprovalWidget-Integration)
+- **[Admin-Bereich](./docu_dashboard_admin.md)** - Administrations-Dashboard mit Profilverwaltung (🚧 **FRÜHE ENTWICKLUNG** - Profilseite funktional, Profile-Bilder-TODOs dokumentiert)
 
 ### 🚧 In Arbeit
 - **[PR-Kampagnen](./docu_dashboard_pr-tools_campaigns.md)** - Kampagnen-Erstellung mit KI-Unterstützung (❌ Template noch nicht angewendet)
@@ -66,6 +68,8 @@ Jede Feature-Dokumentation enthält:
 - 🚧 **Notification-Einstellungen**: Basic nach Template dokumentiert (Settings-UI funktional, oberflächliche Dokumentation ohne Tests)
 - ✅ **Communication Inbox**: Vollständig nach Template dokumentiert (19/19 Tests, AI-Integration mit Gemini, Thread-Management, Team-Assignment, Enterprise-Grade)
 - ✅ **Calendar & Task Management**: Vollständig nach Template dokumentiert (55/55 Tests, Task-Service mit Notification-Integration, FullCalendar mit Drag & Drop, Multi-Tenant-isoliert)
+- ✅ **Dashboard Übersicht**: Vollständig nach Template dokumentiert (19 Tests implementiert, Multi-Tenancy, Role-based UI, Welcome-Flow, ApprovalWidget-Integration)
+- 🚧 **Admin-Bereich**: Nach Template dokumentiert (frühe Entwicklungsphase, Profilseite funktional, umfangreiche Profilbild-TODOs, 5x Design-Pattern-Verletzungen identifiziert)
 - 🚧 **PR-Kampagnen**: Template noch NICHT angewendet - steht aus
 - 🚧 **Weitere Features**: Sukzessive Migration geplant
 
@@ -88,5 +92,5 @@ Alle ursprünglichen Feature-Beschreibungen sind in `/docs/legacy-features/` ver
 ---
 
 **Letzte Aktualisierung:** 2025-08-09  
-**Dokumentierte Features:** 13/15+ geplant (CRM Enhanced ✅, Verteilerlisten ✅, Library Publications ✅, Freigaben-Center ✅, Textbausteine ✅, Domain-Authentifizierung ✅, E-Mail-Einstellungen ✅, Team-Verwaltung ✅, Branding-Einstellungen ✅, Communication Inbox ✅, Calendar & Task Management ✅, Notification-Einstellungen 🚧)  
+**Dokumentierte Features:** 15/16+ geplant (CRM Enhanced ✅, Verteilerlisten ✅, Library Publications ✅, Freigaben-Center ✅, Textbausteine ✅, Domain-Authentifizierung ✅, E-Mail-Einstellungen ✅, Team-Verwaltung ✅, Branding-Einstellungen ✅, Communication Inbox ✅, Calendar & Task Management ✅, Dashboard Übersicht ✅, Admin-Bereich 🚧, Notification-Einstellungen 🚧)  
 **Template-Version:** 2.1
