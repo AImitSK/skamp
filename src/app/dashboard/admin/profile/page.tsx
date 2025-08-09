@@ -10,17 +10,49 @@ import { Button } from "@/components/ui/button";
 import { Divider } from "@/components/ui/divider";
 import { Avatar } from "@/components/ui/avatar";
 import { ImageCropper } from "@/components/ui/image-cropper";
-import { useState, useRef } from "react";
+import { EmailVerification } from "@/components/profile/EmailVerification";
+import { PasswordChange } from "@/components/profile/PasswordChange";
+import { TwoFactorSettings } from "@/components/profile/TwoFactorSettings";
+import { SocialProviders } from "@/components/profile/SocialProviders";
+import { useState, useRef, useEffect } from "react";
 import { PhotoIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { useOrganization } from "@/context/OrganizationContext";
 
 export default function ProfilePage() {
-  const { user, uploadProfileImage, deleteProfileImage, getAvatarUrl, getInitials } = useAuth();
+  const { user, uploadProfileImage, deleteProfileImage, getAvatarUrl, getInitials, updateUserProfile } = useAuth();
+  const { currentOrganization } = useOrganization();
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [showCropper, setShowCropper] = useState(false);
   const [selectedImageSrc, setSelectedImageSrc] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  
+  // Form states
+  const [formData, setFormData] = useState({
+    displayName: user?.displayName || '',
+    phoneNumber: ''
+  });
+
+  // Lade Benutzerprofil aus Firestore
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      if (user) {
+        const { userService } = await import('@/lib/firebase/user-service');
+        const profile = await userService.getProfile(user.uid);
+        if (profile) {
+          setUserProfile(profile);
+          setFormData({
+            displayName: profile.displayName || user.displayName || '',
+            phoneNumber: profile.phoneNumber || ''
+          });
+        }
+      }
+    };
+    loadUserProfile();
+  }, [user]);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -104,6 +136,35 @@ export default function ProfilePage() {
     fileInputRef.current?.click();
   };
 
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    setMessage(null);
+
+    try {
+      await updateUserProfile({
+        displayName: formData.displayName,
+        phoneNumber: formData.phoneNumber
+      });
+      
+      setMessage({ type: 'success', text: 'Profil erfolgreich gespeichert!' });
+    } catch (error) {
+      setMessage({ 
+        type: 'error', 
+        text: error instanceof Error ? error.message : 'Fehler beim Speichern des Profils' 
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setFormData({
+      displayName: user?.displayName || '',
+      phoneNumber: ''
+    });
+    setMessage(null);
+  };
+
   return (
     <div>
       <Heading>Profil</Heading>
@@ -185,21 +246,59 @@ export default function ProfilePage() {
           <Label>Anzeigename</Label>
           <Input
             type="text"
-            defaultValue={user?.displayName || ""}
+            value={formData.displayName}
+            onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
             placeholder="Dein Name"
           />
         </Field>
 
         <Field>
           <Label>Telefonnummer</Label>
-          <Input type="tel" placeholder="+49 123 456789" />
+          <Input 
+            type="tel" 
+            value={formData.phoneNumber}
+            onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+            placeholder="+49 123 456789" 
+          />
         </Field>
       </FieldGroup>
 
       <div className="mt-8 flex gap-3">
-        <Button className="bg-[#005fab] hover:bg-[#004a8c] px-6 py-2">Änderungen speichern</Button>
-        <Button className="!bg-white !border !border-gray-300 !text-gray-700 hover:!bg-gray-100 px-4 py-2">Abbrechen</Button>
+        <Button 
+          className="bg-[#005fab] hover:bg-[#004a8c] px-6 py-2"
+          onClick={handleSaveProfile}
+          disabled={saving}
+        >
+          {saving ? 'Speichere...' : 'Änderungen speichern'}
+        </Button>
+        <Button 
+          className="!bg-white !border !border-gray-300 !text-gray-700 hover:!bg-gray-100 px-4 py-2"
+          onClick={handleCancel}
+          disabled={saving}
+        >
+          Abbrechen
+        </Button>
       </div>
+
+      <Divider className="my-8" />
+
+      {/* E-Mail-Verifizierung */}
+      <EmailVerification />
+
+      <Divider className="my-8" />
+
+      {/* Passwort ändern */}
+      <PasswordChange />
+
+      <Divider className="my-8" />
+
+      {/* 2FA Einstellungen */}
+      <TwoFactorSettings />
+
+      <Divider className="my-8" />
+
+      {/* Social Login Provider */}
+      <SocialProviders />
 
       <Divider className="my-8" />
 
@@ -213,9 +312,20 @@ export default function ProfilePage() {
           </div>
           <div>
             <span className="text-zinc-500 dark:text-zinc-400">
-              E-Mail verifiziert:
+              Rolle:
             </span>{" "}
-            {user?.emailVerified ? "✓ Ja" : "✗ Nein"}
+            <span className="font-medium">
+              {currentOrganization?.role === 'owner' && 'Inhaber'}
+              {currentOrganization?.role === 'admin' && 'Administrator'}
+              {currentOrganization?.role === 'member' && 'Mitglied'}
+              {!currentOrganization?.role && 'Nicht zugewiesen'}
+            </span>
+          </div>
+          <div>
+            <span className="text-zinc-500 dark:text-zinc-400">
+              Organisation:
+            </span>{" "}
+            <span className="font-medium">{currentOrganization?.name || 'Keine'}</span>
           </div>
         </div>
       </div>

@@ -162,14 +162,14 @@ export function ImageCropper({ src, onCropComplete, onCancel, isProcessing }: Im
         {/* Actions */}
         <div className="flex gap-3 justify-end">
           <Button 
-            plain 
+            className="!bg-white !border !border-gray-300 !text-gray-700 hover:!bg-gray-100 px-4 py-2"
             onClick={onCancel}
             disabled={isProcessing}
           >
             Abbrechen
           </Button>
           <Button 
-            color="indigo" 
+            className="bg-[#005fab] hover:bg-[#004a8c] px-6 py-2"
             onClick={handleCropComplete}
             disabled={!completedCrop || isProcessing}
           >

@@ -8,6 +8,7 @@ import {
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword, 
     signOut,
+    sendEmailVerification,
     Auth, // Importiere Auth
     // Importiere weitere benötigte Typen, z.B. UserCredential
 } from 'firebase/auth';
@@ -21,6 +22,8 @@ type LoginFunction = (email: string, password: string) => Promise<any>; // Passe
 type LogoutFunction = () => Promise<void>;
 type UploadProfileImageFunction = (file: File) => Promise<{ success: boolean; url?: string; error?: string }>;
 type DeleteProfileImageFunction = () => Promise<{ success: boolean; error?: string }>;
+type UpdateUserProfileFunction = (updateData: { displayName?: string; phoneNumber?: string }) => Promise<void>;
+type SendEmailVerificationFunction = () => Promise<void>;
 
 // 1. Erweitere den Context-Typ
 type AuthContextType = {
@@ -33,6 +36,8 @@ type AuthContextType = {
     deleteProfileImage: DeleteProfileImageFunction;
     getAvatarUrl: () => string | null;
     getInitials: () => string;
+    updateUserProfile: UpdateUserProfileFunction;
+    sendVerificationEmail: SendEmailVerificationFunction;
 };
 
 // 2. Erweitere den Default-Wert des Contexts
@@ -46,7 +51,9 @@ export const AuthContext = createContext<AuthContextType>({
     uploadProfileImage: async () => ({ success: false, error: 'Not initialized' }),
     deleteProfileImage: async () => ({ success: false, error: 'Not initialized' }),
     getAvatarUrl: () => null,
-    getInitials: () => '?'
+    getInitials: () => '?',
+    updateUserProfile: async () => {},
+    sendVerificationEmail: async () => {}
 });
 
 export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
@@ -112,6 +119,22 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
         if (!user) return '?';
         return ProfileImageService.generateInitials(user);
     };
+
+    const updateUserProfile: UpdateUserProfileFunction = async (updateData) => {
+        if (!user) throw new Error('Nicht angemeldet');
+        
+        const { userService } = await import('@/lib/firebase/user-service');
+        await userService.updateProfile(user, updateData);
+        
+        // Auth Context wird automatisch durch onAuthStateChanged aktualisiert
+    };
+
+    const sendVerificationEmail: SendEmailVerificationFunction = async () => {
+        if (!user) throw new Error('Nicht angemeldet');
+        if (user.emailVerified) throw new Error('E-Mail bereits verifiziert');
+        
+        await sendEmailVerification(user);
+    };
     
     // 5. Übergebe die Funktionen an den Provider
     return (
@@ -124,7 +147,9 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
             uploadProfileImage,
             deleteProfileImage,
             getAvatarUrl,
-            getInitials
+            getInitials,
+            updateUserProfile,
+            sendVerificationEmail
         }}>
             {children}
         </AuthContext.Provider>
