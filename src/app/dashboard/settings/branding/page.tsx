@@ -62,8 +62,8 @@ function Alert({
 }
 
 export default function BrandingPage() {
-  const { user } = useAuth();
-  const { currentOrganization } = useOrganization();
+  const { user, loading: authLoading } = useAuth();
+  const { currentOrganization, loading: orgLoading } = useOrganization();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [loading, setLoading] = useState(true);
@@ -89,10 +89,11 @@ export default function BrandingPage() {
 
   // Lade Branding Settings wenn organizationId verfügbar ist
   useEffect(() => {
-    if (user && organizationId) {
+    // Only load when auth and organization are fully loaded
+    if (!authLoading && !orgLoading && user && organizationId) {
       loadBrandingSettings();
     }
-  }, [user, organizationId]);
+  }, [authLoading, orgLoading, user, organizationId]);
 
   const loadBrandingSettings = async () => {
     if (!user || !organizationId) return;
@@ -245,7 +246,7 @@ export default function BrandingPage() {
       </aside>
 
       <div className="flex-1">
-        {loading ? (
+        {(authLoading || orgLoading || loading) ? (
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#005fab] mx-auto"></div>

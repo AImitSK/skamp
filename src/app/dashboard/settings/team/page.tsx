@@ -48,8 +48,8 @@ const showToast = (message: string, type: 'success' | 'error' = 'success') => {
 };
 
 export default function TeamSettingsPage() {
-  const { user } = useAuth();
-  const { currentOrganization } = useOrganization();
+  const { user, loading: authLoading } = useAuth();
+  const { currentOrganization, loading: orgLoading } = useOrganization();
   const organizationId = currentOrganization?.id || '';
   
   // State
@@ -66,11 +66,12 @@ export default function TeamSettingsPage() {
   
   // Load team members on mount
   useEffect(() => {
-    if (user) {
+    // Only load when auth and organization are fully loaded
+    if (!authLoading && !orgLoading && user && organizationId) {
       loadTeamMembers();
       // Entfernt: ensureOwnerExists() - erstellt falsche Owner-Einträge für eingeladene User
     }
-  }, [user]);
+  }, [authLoading, orgLoading, user, organizationId]);
   
   const ensureOwnerExists = async () => {
     if (!user) return;
@@ -486,7 +487,7 @@ export default function TeamSettingsPage() {
 
           {/* Table Body */}
           <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
-            {loading ? (
+            {(authLoading || orgLoading || loading) ? (
               <div className="px-6 py-8 text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#005fab] mx-auto"></div>
               </div>
