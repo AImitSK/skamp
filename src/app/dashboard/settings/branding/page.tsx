@@ -22,7 +22,7 @@ import {
   CheckCircleIcon,
   ExclamationCircleIcon,
   ArrowUpTrayIcon
-} from "@heroicons/react/20/solid";
+} from "@heroicons/react/24/outline";
 
 // Alert Component
 function Alert({
@@ -100,7 +100,6 @@ export default function BrandingPage() {
     try {
       setLoading(true);
 
-      console.log('🟢 Loading branding settings for organizationId:', organizationId);
 
       // Versuche Migration wenn nötig
       await brandingService.migrateFromUserToOrg(user.uid, organizationId);
@@ -120,7 +119,6 @@ export default function BrandingPage() {
         });
       }
     } catch (error) {
-      console.error('Fehler beim Laden der Branding-Einstellungen:', error);
       showAlert('error', 'Fehler beim Laden der Einstellungen');
     } finally {
       setLoading(false);
@@ -158,7 +156,6 @@ export default function BrandingPage() {
         organizationId, // Verwende organizationId statt userId
         undefined, // Kein Ordner = Root, aber wir markieren es speziell
         (progress) => {
-          console.log(`Upload-Fortschritt: ${progress}%`);
         }
       );
 
@@ -177,7 +174,6 @@ export default function BrandingPage() {
 
       showAlert('success', 'Logo erfolgreich hochgeladen');
     } catch (error) {
-      console.error('Fehler beim Logo-Upload:', error);
       showAlert('error', 'Fehler beim Hochladen des Logos');
     } finally {
       setUploadingLogo(false);
@@ -185,10 +181,8 @@ export default function BrandingPage() {
   };
 
   const handleRemoveLogo = async () => {
-    console.log('🟢 handleRemoveLogo called with:', { user: !!user, organizationId });
 
     if (!user || !organizationId) {
-      console.error('❌ Cannot remove logo: missing user or organizationId');
       showAlert('error', 'Bitte warten Sie, bis die Daten geladen sind');
       return;
     }
@@ -206,7 +200,6 @@ export default function BrandingPage() {
 
       showAlert('success', 'Logo erfolgreich entfernt');
     } catch (error) {
-      console.error('Fehler beim Entfernen des Logos:', error);
       showAlert('error', 'Fehler beim Entfernen des Logos');
     }
   };
@@ -214,14 +207,7 @@ export default function BrandingPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    console.log('🟢 handleSubmit called with:', {
-      user: !!user,
-      organizationId,
-      organizationIdType: typeof organizationId
-    });
-
     if (!user || !organizationId) {
-      console.error('❌ Cannot submit: missing user or organizationId');
       showAlert('error', 'Bitte warten Sie, bis die Daten geladen sind');
       return;
     }
@@ -237,7 +223,6 @@ export default function BrandingPage() {
     setSaving(true);
 
     try {
-      console.log('🟢 Saving branding settings with context:', { organizationId, userId: user.uid });
 
       await brandingService.updateBrandingSettings(
         formData,
@@ -246,7 +231,6 @@ export default function BrandingPage() {
 
       showAlert('success', 'Branding-Einstellungen erfolgreich gespeichert');
     } catch (error) {
-      console.error('Fehler beim Speichern:', error);
       showAlert('error', 'Fehler beim Speichern der Einstellungen');
     } finally {
       setSaving(false);
@@ -458,7 +442,7 @@ export default function BrandingPage() {
                       <div>
                         <div className="font-medium text-sm text-gray-900">Copyright-Zeile anzeigen</div>
                         <Text className="text-sm text-gray-600 mt-1">
-                          Zeigt "Copyright © {new Date().getFullYear()} SKAMP. Alle Rechte vorbehalten." in der Fußzeile
+                          Zeigt "Copyright © {new Date().getFullYear()} CeleroPress. Alle Rechte vorbehalten." in der Fußzeile
                         </Text>
                       </div>
                     </div>

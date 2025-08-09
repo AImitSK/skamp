@@ -14,6 +14,7 @@ Diese Dokumentationen folgen dem standardisierten Template aus `FEATURE_DOCUMENT
 - **[Domain-Authentifizierung](./docu_dashboard_settings_domain.md)** - E-Mail-Domain-Verifizierung mit SendGrid-Integration (✅ **FERTIG** - 20 Tests, Code-Cleaning, Design-Pattern-Compliance)
 - **[E-Mail-Einstellungen](./docu_dashboard_settings_email.md)** - E-Mail-Adressen, Signaturen, Routing-Regeln und KI-Integration (✅ **FERTIG** - 19/19 Tests, erweiterte Alias-Unterstützung, Gemini AI)
 - **[Team-Verwaltung](./docu_dashboard_settings_team.md)** - Multi-Tenancy, Benutzer-Management und Einladungssystem (✅ **FERTIG** - 24/24 Tests, Role-based Access Control, Owner-Protection)
+- **[Branding-Einstellungen](./docu_dashboard_settings_branding.md)** - Firmeninformationen, Logo-Management und Copyright-Einstellungen (✅ **FERTIG** - 28/28 Tests, Media-Integration, Multi-Tenancy)
 
 ### 🚧 In Arbeit
 - **[PR-Kampagnen](./docu_dashboard_pr-tools_campaigns.md)** - Kampagnen-Erstellung mit KI-Unterstützung (❌ Template noch nicht angewendet)
@@ -60,6 +61,7 @@ Jede Feature-Dokumentation enthält:
 - ✅ **Domain-Authentifizierung**: Vollständig nach Template dokumentiert (20 Tests, alle Props-Interfaces zentralisiert, DOMAIN_CONSTANTS extrahiert)
 - ✅ **E-Mail-Einstellungen**: Vollständig nach Template dokumentiert (19/19 Tests, Routing-Regeln, Signaturen, KI-Integration mit Gemini)
 - ✅ **Team-Verwaltung**: Vollständig nach Template dokumentiert (24/24 Tests, Multi-Tenancy, Role-based Access Control, Einladungssystem)
+- ✅ **Branding-Einstellungen**: Vollständig nach Template dokumentiert (28/28 Tests, Logo-Management, Media-Integration, Validation)
 - 🚧 **PR-Kampagnen**: Template noch NICHT angewendet - steht aus
 - 🚧 **Weitere Features**: Sukzessive Migration geplant
 
@@ -81,6 +83,6 @@ Alle ursprünglichen Feature-Beschreibungen sind in `/docs/legacy-features/` ver
 
 ---
 
-**Letzte Aktualisierung:** 2025-08-09  
-**Dokumentierte Features:** 9/15+ geplant (CRM Enhanced ✅, Verteilerlisten ✅, Library Publications ✅, Freigaben-Center ✅, Textbausteine ✅, Domain-Authentifizierung ✅, E-Mail-Einstellungen ✅, Team-Verwaltung ✅)  
+**Letzte Aktualisierung:** 2025-01-21  
+**Dokumentierte Features:** 10/15+ geplant (CRM Enhanced ✅, Verteilerlisten ✅, Library Publications ✅, Freigaben-Center ✅, Textbausteine ✅, Domain-Authentifizierung ✅, E-Mail-Einstellungen ✅, Team-Verwaltung ✅, Branding-Einstellungen ✅)  
 **Template-Version:** 2.0

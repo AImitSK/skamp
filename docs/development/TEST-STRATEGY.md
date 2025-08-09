@@ -35,11 +35,37 @@
   - Error-Handling
   - Response-Validierung
 
+## 📊 Aktuelle Test-Abdeckung (Stand: 2025-01-21)
+
+### ✅ Vollständig getestete Features
+- **Domain Settings:** 20/20 Tests ✅ (DNS-Validierung, Multi-Domain-Support)
+- **E-Mail Settings:** 19/19 Tests ✅ (Adressen, Signaturen, Routing-Regeln)
+- **Team Settings:** 24/24 Tests ✅ (RBAC, Einladungen, Multi-Tenancy)
+- **Branding Settings:** 28/28 Tests ✅ (Logo-Upload, Validation, Migration)
+- **Boilerplates:** 21/21 Tests ✅ (Template-System, Variables)
+- **CRM Enhanced:** Tests vollständig (Kontakte, Firmen, Import/Export)
+
+**Gesamt Settings-Module: 112+ Tests mit 100% Erfolgsrate**
+
+### 🚧 Teilweise getestete Features
+- **Media Library:** Service-Tests vorhanden, UI-Tests erweitert
+- **Freigaben-Center:** Core-Funktionalität getestet
+- **PR-Kampagnen:** Tests in Bearbeitung
+
+### ⚠️ Noch nicht getestete Features
+- **E-Mail Inbox:** Komplett zu testen
+- **Analytics Dashboard:** Tests ausstehend
+- **Kalender-Integration:** Tests erforderlich
+
 ## 📝 Test-Commands
 
 ```bash
 # Einzelnen Test ausführen
 npm test button.test.tsx
+
+# Feature-spezifische Tests
+npm test -- src/__tests__/features/branding-settings.test.tsx
+npm test -- src/__tests__/features/team-settings.test.tsx
 
 # Tests im Watch-Mode (während Entwicklung)
 npm run test:watch
@@ -49,6 +75,9 @@ npm run test:coverage
 
 # CI/CD Pipeline
 npm run test:ci
+
+# Alle Feature-Tests ausführen
+npm test -- src/__tests__/features/
 ```
 
 ## 🚀 Nächste Schritte
