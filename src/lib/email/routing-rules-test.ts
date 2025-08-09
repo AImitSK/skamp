@@ -89,8 +89,6 @@ export class RoutingRulesTestService {
       isRead: false,
       isStarred: false,
       importance: 'normal' as const,
-      labels: [],
-      attachments: [],
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
       receivedAt: Timestamp.now()
@@ -184,34 +182,23 @@ export class RoutingRulesTestService {
    * Teste Routing Rules mit Test-Daten
    */
   async testRoutingRules(): Promise<void> {
-    console.log('🧪 Starting Routing Rules Test...');
     
     const emailAddress = this.createTestEmailAddress();
     const testMessages = this.createTestMessages();
     
-    console.log('📧 Test Email Address:', emailAddress.email);
-    console.log('📋 Routing Rules:', emailAddress.routingRules?.length);
     
     // Teste jede Nachricht
     for (const message of testMessages) {
-      console.log(`\n🔍 Testing message: "${message.subject}"`);
-      console.log(`📨 From: ${message.from.email}`);
-      console.log(`📝 Content: ${message.textContent.substring(0, 50)}...`);
       
       try {
         // Simuliere applyRoutingRules()
         await this.simulateRoutingRules(message, emailAddress);
         
-        console.log(`✅ Processed message: ${message.id}`);
-        console.log(`🏷️ Final labels: ${message.labels?.join(', ') || 'none'}`);
-        console.log(`🚨 Priority: ${message.importance}`);
         
       } catch (error) {
-        console.error(`❌ Error processing message ${message.id}:`, error);
       }
     }
     
-    console.log('\n🎉 Routing Rules Test completed!');
   }
 
   /**
@@ -219,11 +206,9 @@ export class RoutingRulesTestService {
    */
   private async simulateRoutingRules(message: EmailMessage, emailAddress: EmailAddress): Promise<void> {
     if (!emailAddress.routingRules || emailAddress.routingRules.length === 0) {
-      console.log('📭 No routing rules defined');
       return;
     }
 
-    console.log('📋 Applying routing rules...');
 
     // Sortiere Regeln nach Priorität
     const sortedRules = [...emailAddress.routingRules].sort((a, b) => 
@@ -233,14 +218,11 @@ export class RoutingRulesTestService {
     // Durchlaufe alle Regeln
     for (const rule of sortedRules) {
       if (rule.enabled === false) {
-        console.log(`⏭️ Skipping disabled rule: ${rule.name}`);
         continue;
       }
 
-      console.log(`🔍 Checking rule: ${rule.name}`);
       
       if (this.matchesRuleConditions(message, rule.conditions)) {
-        console.log(`✅ Rule matched: ${rule.name}`);
         
         // Simuliere Actions
         const updates: any = {
@@ -249,14 +231,12 @@ export class RoutingRulesTestService {
 
         // Team-Zuweisung
         if (rule.actions.assignTo && rule.actions.assignTo.length > 0) {
-          console.log(`👥 Assigning to: ${rule.actions.assignTo.join(', ')}`);
           const assignmentLabels = rule.actions.assignTo.map(userId => `assigned:${userId}`);
           updates.labels = [...updates.labels, ...assignmentLabels, 'assigned'];
         }
 
         // Tags hinzufügen
         if (rule.actions.addTags && rule.actions.addTags.length > 0) {
-          console.log(`🏷️ Adding tags: ${rule.actions.addTags.join(', ')}`);
           rule.actions.addTags.forEach(tag => {
             if (!updates.labels.includes(tag)) {
               updates.labels.push(tag);
@@ -266,14 +246,12 @@ export class RoutingRulesTestService {
 
         // Priorität setzen
         if (rule.actions.setPriority) {
-          console.log(`🚨 Setting priority: ${rule.actions.setPriority}`);
           updates.importance = rule.actions.setPriority;
           updates.labels.push(`priority:${rule.actions.setPriority}`);
         }
 
         // Auto-Reply
         if (rule.actions.autoReply) {
-          console.log(`📨 Auto-reply template: ${rule.actions.autoReply}`);
           updates.labels.push(`auto-reply:${rule.actions.autoReply}`, 'auto-reply-pending');
         }
 
@@ -284,10 +262,8 @@ export class RoutingRulesTestService {
         // Wende Updates an
         Object.assign(message, updates);
         
-        console.log('✅ Rule actions applied');
         break; // Stoppe nach erster passender Regel
       } else {
-        console.log(`❌ Rule did not match: ${rule.name}`);
       }
     }
   }
@@ -308,9 +284,7 @@ export class RoutingRulesTestService {
       conditionsChecked++;
       if (message.subject.toLowerCase().includes(conditions.subject.toLowerCase())) {
         conditionsMet++;
-        console.log(`  ✅ Subject condition met: "${conditions.subject}"`);
       } else {
-        console.log(`  ❌ Subject condition NOT met: "${conditions.subject}"`);
       }
     }
 
@@ -324,9 +298,7 @@ export class RoutingRulesTestService {
       
       if (emailMatches || nameMatches) {
         conditionsMet++;
-        console.log(`  ✅ From condition met: "${conditions.from}"`);
       } else {
-        console.log(`  ❌ From condition NOT met: "${conditions.from}"`);
       }
     }
 
@@ -344,15 +316,12 @@ export class RoutingRulesTestService {
       
       if (matchedKeywords.length > 0) {
         conditionsMet++;
-        console.log(`  ✅ Keywords condition met: ${matchedKeywords.join(', ')}`);
       } else {
-        console.log(`  ❌ Keywords condition NOT met: none of [${conditions.keywords.join(', ')}] found`);
       }
     }
 
     // Alle Bedingungen müssen erfüllt sein (AND-Verknüpfung)
     const allConditionsMet = conditionsChecked > 0 && conditionsMet === conditionsChecked;
-    console.log(`  📊 Conditions: ${conditionsMet}/${conditionsChecked} met`);
     
     return allConditionsMet;
   }

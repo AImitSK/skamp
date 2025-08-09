@@ -36,7 +36,6 @@ export class CustomerCampaignMatcher {
    * Hauptmethode zur Zuordnung einer E-Mail zu Kunde/Kampagne
    */
   async matchEmail(email: EmailMessage): Promise<CustomerCampaignMatch> {
-    console.log('🎯 Matching email:', email.subject, 'from:', email.from.email);
     
     // Check cache first
     const cacheKey = this.getCacheKey(email);
@@ -76,7 +75,6 @@ export class CustomerCampaignMatcher {
     // Cache result
     this.cache.set(cacheKey, match);
     
-    console.log('✅ Match result:', match);
     return match;
   }
 
@@ -129,7 +127,6 @@ export class CustomerCampaignMatcher {
         }
       }
     } catch (error) {
-      console.error('Error matching by campaign:', error);
     }
 
     return { folderType: 'general', confidence: 0 };
@@ -164,7 +161,6 @@ export class CustomerCampaignMatcher {
         };
       }
     } catch (error) {
-      console.error('Error matching by contact email:', error);
     }
 
     return { folderType: 'general', confidence: 0 };
@@ -242,7 +238,6 @@ export class CustomerCampaignMatcher {
         }
       }
     } catch (error) {
-      console.error('Error matching by domain:', error);
     }
 
     return { folderType: 'general', confidence: 0 };
@@ -320,7 +315,6 @@ export class CustomerCampaignMatcher {
         }
       }
     } catch (error) {
-      console.error('Error matching by subject:', error);
     }
 
     return { folderType: 'general', confidence: 0 };

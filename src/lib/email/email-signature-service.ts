@@ -63,7 +63,6 @@ export class EmailSignatureService {
 
       return docRef.id;
     } catch (error) {
-      console.error('Fehler beim Erstellen der Signatur:', error);
       throw error;
     }
   }
@@ -106,7 +105,6 @@ export class EmailSignatureService {
 
       await updateDoc(docRef, updateData as DocumentData);
     } catch (error) {
-      console.error('Fehler beim Aktualisieren der Signatur:', error);
       throw error;
     }
   }
@@ -132,7 +130,6 @@ export class EmailSignatureService {
 
       await deleteDoc(docRef);
     } catch (error) {
-      console.error('Fehler beim Löschen der Signatur:', error);
       throw error;
     }
   }
@@ -151,7 +148,6 @@ export class EmailSignatureService {
 
       return { ...docSnap.data(), id: docSnap.id } as EmailSignature;
     } catch (error) {
-      console.error('Fehler beim Abrufen der Signatur:', error);
       throw error;
     }
   }
@@ -194,7 +190,6 @@ export class EmailSignatureService {
 
       return signatures;
     } catch (error) {
-      console.error('Fehler beim Abrufen der Signaturen:', error);
       throw error;
     }
   }
@@ -211,7 +206,6 @@ export class EmailSignatureService {
         sig.emailAddressIds?.includes(emailAddressId)
       );
     } catch (error) {
-      console.error('Fehler beim Abrufen der Signaturen für E-Mail-Adresse:', error);
       throw error;
     }
   }
@@ -247,7 +241,6 @@ export class EmailSignatureService {
       const doc = querySnapshot.docs[0];
       return { ...doc.data(), id: doc.id } as EmailSignature;
     } catch (error) {
-      console.error('Fehler beim Abrufen der Standard-Signatur:', error);
       return null;
     }
   }
@@ -290,7 +283,6 @@ export class EmailSignatureService {
 
       await batch.commit();
     } catch (error) {
-      console.error('Fehler beim Setzen der Standard-Signatur:', error);
       throw error;
     }
   }
@@ -325,7 +317,6 @@ export class EmailSignatureService {
 
       return docRef.id;
     } catch (error) {
-      console.error('Fehler beim Duplizieren der Signatur:', error);
       throw error;
     }
   }
@@ -350,7 +341,6 @@ export class EmailSignatureService {
         });
       }
     } catch (error) {
-      console.error('Fehler beim Hinzufügen der E-Mail-Adresse:', error);
       throw error;
     }
   }
@@ -373,7 +363,6 @@ export class EmailSignatureService {
         updatedAt: serverTimestamp()
       });
     } catch (error) {
-      console.error('Fehler beim Entfernen der E-Mail-Adresse:', error);
       throw error;
     }
   }

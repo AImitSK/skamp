@@ -29,7 +29,6 @@ export class SmartFolderService {
    * Erstellt die Standard System-Ordner für eine Organisation
    */
   async createSystemFolders(organizationId: string): Promise<void> {
-    console.log('📁 Creating system folders for organization:', organizationId);
 
     const systemFolders: Partial<SmartFolder>[] = [
       {
@@ -101,16 +100,13 @@ export class SmartFolderService {
       try {
         await addDoc(collection(db, this.collectionName), {
           ...folder,
-          count: 0,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         });
       } catch (error) {
-        console.error('Error creating system folder:', folder.name, error);
       }
     }
 
-    console.log('✅ System folders created successfully');
   }
 
   /**
@@ -139,7 +135,6 @@ export class SmartFolderService {
 
       return folders;
     } catch (error) {
-      console.error('Error fetching smart folders:', error);
       return [];
     }
   }
@@ -154,17 +149,14 @@ export class SmartFolderService {
     try {
       const docRef = await addDoc(collection(db, this.collectionName), {
         ...folder,
-        count: 0,
         isSystem: false,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         createdBy: userId
       });
 
-      console.log('✅ Custom folder created:', docRef.id);
       return docRef.id;
     } catch (error) {
-      console.error('Error creating custom folder:', error);
       throw error;
     }
   }
@@ -184,9 +176,7 @@ export class SmartFolderService {
         updatedBy: userId
       });
 
-      console.log('✅ Folder updated:', folderId);
     } catch (error) {
-      console.error('Error updating folder:', error);
       throw error;
     }
   }
@@ -209,9 +199,7 @@ export class SmartFolderService {
       }
 
       await deleteDoc(doc(db, this.collectionName, folderId));
-      console.log('✅ Folder deleted:', folderId);
     } catch (error) {
-      console.error('Error deleting folder:', error);
       throw error;
     }
   }
@@ -225,7 +213,6 @@ export class SmartFolderService {
     limitCount: number = 50
   ): Promise<EmailThread[]> {
     try {
-      console.log('📁 Getting threads for folder:', folder.name, folder.filters);
 
       // Basis-Query für alle Threads der Organisation
       let threadsQuery = query(
@@ -238,7 +225,6 @@ export class SmartFolderService {
       
       return threads;
     } catch (error) {
-      console.error('Error getting threads for folder:', error);
       return [];
     }
   }
@@ -254,7 +240,6 @@ export class SmartFolderService {
       const threads = await this.getThreadsForFolder(folder, organizationId, 1000);
       return threads.length;
     } catch (error) {
-      console.error('Error calculating folder count:', error);
       return 0;
     }
   }
@@ -343,7 +328,6 @@ export class SmartFolderService {
 
       return filteredThreads.slice(0, limitCount);
     } catch (error) {
-      console.error('Error applying filters:', error);
       return [];
     }
   }
@@ -353,7 +337,6 @@ export class SmartFolderService {
    */
   async createCustomerFolders(organizationId: string): Promise<void> {
     try {
-      console.log('👥 Creating customer folders...');
 
       // Hole alle Kunden mit E-Mail-Threads
       const customersQuery = query(
@@ -386,18 +369,15 @@ export class SmartFolderService {
             filters: { customerId: customerDoc.id },
             color: this.getCustomerColor(customer),
             icon: '🏢',
-            count: 0,
             organizationId,
             isSystem: false,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp()
           });
 
-          console.log('✅ Created customer folder:', customer.name);
         }
       }
     } catch (error) {
-      console.error('Error creating customer folders:', error);
     }
   }
 
@@ -406,7 +386,6 @@ export class SmartFolderService {
    */
   async createCampaignFolders(organizationId: string): Promise<void> {
     try {
-      console.log('📈 Creating campaign folders...');
 
       const campaignsQuery = query(
         collection(db, 'pr_campaigns'),
@@ -438,18 +417,15 @@ export class SmartFolderService {
             filters: { campaignId: campaignDoc.id },
             color: '#059669',
             icon: '📈',
-            count: 0,
             organizationId,
             isSystem: false,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp()
           });
 
-          console.log('✅ Created campaign folder:', campaign.title);
         }
       }
     } catch (error) {
-      console.error('Error creating campaign folders:', error);
     }
   }
 
@@ -489,9 +465,7 @@ export class SmartFolderService {
         }
       }
       
-      console.log('✅ All folder counts updated');
     } catch (error) {
-      console.error('Error updating folder counts:', error);
     }
   }
 }

@@ -56,7 +56,6 @@ async function authenticateWithToken(token: string): Promise<void> {
       // Option 2: ID Token direkt verwenden (nicht ideal)
       // Für jetzt: Skip auth auf Server-Seite und verlassen uns auf Security Rules
     } catch (error) {
-      console.error('Auth error:', error);
     }
   }
 }
@@ -125,7 +124,6 @@ export class EmailAddressService {
 
       if (!response.ok) {
         const error = await response.text();
-        console.error('Firestore REST API error:', error);
         
         // Fallback auf normale SDK-Methode
         return this.getDefaultForOrganization(organizationId);
@@ -145,7 +143,6 @@ export class EmailAddressService {
       return emailAddress;
 
     } catch (error) {
-      console.error('❌ Server getDefaultForOrganization error:', error);
       // Fallback auf Client SDK
       return this.getDefaultForOrganization(organizationId);
     }
@@ -204,7 +201,6 @@ export class EmailAddressService {
       });
 
       if (!response.ok) {
-        console.error('Firestore REST API error:', await response.text());
         return null;
       }
 
@@ -220,7 +216,6 @@ export class EmailAddressService {
       return emailAddress;
 
     } catch (error) {
-      console.error('❌ Server getFirstActiveEmail error:', error);
       return null;
     }
   }
@@ -283,7 +278,6 @@ export class EmailAddressService {
 
       if (!response.ok) {
         const error = await response.text();
-        console.error('Firestore REST API error:', error);
         // Fallback auf normale SDK-Methode
         return this.getByOrganization(organizationId, userId);
       }
@@ -303,7 +297,6 @@ export class EmailAddressService {
       return emailAddresses;
 
     } catch (error) {
-      console.error('❌ Server getByOrganizationServer error:', error);
       // Fallback auf Client SDK
       return this.getByOrganization(organizationId, userId);
     }
@@ -430,8 +423,6 @@ export class EmailAddressService {
           write: [...data.assignedUserIds, userId],
           manage: [userId]
         },
-        emailsSent: 0,
-        emailsReceived: 0,
         organizationId,
         userId,
         createdAt: serverTimestamp() as Timestamp,
@@ -475,7 +466,6 @@ export class EmailAddressService {
 
       return { ...emailAddress, id: docRef.id } as EmailAddress;
     } catch (error) {
-      console.error('Fehler beim Erstellen der E-Mail-Adresse:', error);
       throw error;
     }
   }
@@ -550,7 +540,6 @@ export class EmailAddressService {
 
       await updateDoc(docRef, updateData);
     } catch (error) {
-      console.error('Fehler beim Aktualisieren der E-Mail-Adresse:', error);
       throw error;
     }
   }
@@ -581,7 +570,6 @@ export class EmailAddressService {
 
       await deleteDoc(docRef);
     } catch (error) {
-      console.error('Fehler beim Löschen der E-Mail-Adresse:', error);
       throw error;
     }
   }
@@ -600,7 +588,6 @@ export class EmailAddressService {
 
       return { ...docSnap.data(), id: docSnap.id } as EmailAddress;
     } catch (error) {
-      console.error('Fehler beim Abrufen der E-Mail-Adresse:', error);
       throw error;
     }
   }
@@ -646,7 +633,6 @@ export class EmailAddressService {
 
       return emailAddresses;
     } catch (error) {
-      console.error('Fehler beim Abrufen der E-Mail-Adressen:', error);
       throw error;
     }
   }
@@ -679,7 +665,6 @@ export class EmailAddressService {
 
       await batch.commit();
     } catch (error) {
-      console.error('Fehler beim Setzen der Standard E-Mail-Adresse:', error);
       throw error;
     }
   }
@@ -711,7 +696,6 @@ export class EmailAddressService {
         updatedBy: userId
       });
     } catch (error) {
-      console.error('Fehler beim Hinzufügen der Routing-Regel:', error);
       throw error;
     }
   }
@@ -744,7 +728,6 @@ export class EmailAddressService {
         updatedBy: userId
       });
     } catch (error) {
-      console.error('Fehler beim Entfernen der Routing-Regel:', error);
       throw error;
     }
   }
@@ -775,7 +758,6 @@ export class EmailAddressService {
         updatedBy: userId
       });
     } catch (error) {
-      console.error('Fehler beim Aktualisieren der Routing-Regeln:', error);
       throw error;
     }
   }
@@ -809,7 +791,6 @@ export class EmailAddressService {
 
       await updateDoc(docRef, updateData as DocumentData);
     } catch (error) {
-      console.error('Fehler beim Aktualisieren der Statistiken:', error);
       // Fehler nicht werfen, da Statistiken nicht kritisch sind
     }
   }
@@ -945,15 +926,12 @@ async findByReplyToAddress(replyToEmail: string): Promise<EmailAddress | null> {
     
     // UNBEKANNTES FORMAT
     else {
-      console.error('❌ Unknown reply-to format:', replyToEmail, { parts });
       return null;
     }
     
-    console.error('❌ No email address found for reply-to:', replyToEmail);
     return null;
     
   } catch (error) {
-    console.error('❌ Error finding email by reply-to:', error);
     return null;
   }
 }
@@ -998,7 +976,6 @@ async findByReplyToAddress(replyToEmail: string): Promise<EmailAddress | null> {
       const emailAddress = { ...doc.data(), id: doc.id } as EmailAddress;
       return emailAddress;
     } catch (error) {
-      console.error('❌ Error getting default email address:', error);
       return null;
     }
   }
@@ -1051,7 +1028,6 @@ async findByReplyToAddress(replyToEmail: string): Promise<EmailAddress | null> {
         }
       });
     } catch (error) {
-      console.error('Fehler beim Laden der Domains:', error);
       // Fallback auf leere Domain-Objekte
       emailAddresses.forEach(ea => {
         ea.domain = {

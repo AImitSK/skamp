@@ -63,12 +63,6 @@ export class FlexibleThreadMatcherService {
    */
   async findOrCreateThread(criteria: ThreadMatchingCriteria): Promise<ThreadMatchResult> {
     try {
-      console.log('🔍 Matching thread for:', {
-        subject: criteria.subject,
-        inReplyTo: criteria.inReplyTo,
-        hasReferences: !!criteria.references?.length,
-        isServerSide: this.isServerSide
-      });
 
       // Server-Side: Vereinfachtes Matching ohne Firestore-Zugriff
       if (this.isServerSide) {
@@ -79,7 +73,6 @@ export class FlexibleThreadMatcherService {
       return this.clientSideThreadMatching(criteria);
 
     } catch (error) {
-      console.error('❌ Thread matching error:', error);
       return {
         success: false
       };
@@ -94,7 +87,6 @@ export class FlexibleThreadMatcherService {
     // Generiere eine deterministische Thread-ID basierend auf Subject und Teilnehmern
     const threadId = this.generateThreadId(criteria);
     
-    console.log('📝 Server-side thread ID generated:', threadId);
     
     return {
       success: true,
@@ -113,7 +105,6 @@ export class FlexibleThreadMatcherService {
     if (criteria.inReplyTo || (criteria.references && criteria.references.length > 0)) {
       const headerMatch = await this.matchByHeaders(criteria);
       if (headerMatch.success && headerMatch.thread) {
-        console.log('✅ Thread matched by headers');
         await this.updateThreadActivity(headerMatch.thread.id!, criteria);
         return headerMatch;
       }
@@ -122,7 +113,6 @@ export class FlexibleThreadMatcherService {
     // 2. Subject-basiertes Matching
     const subjectMatch = await this.matchBySubject(criteria);
     if (subjectMatch.success && subjectMatch.thread) {
-      console.log('✅ Thread matched by subject');
       await this.updateThreadActivity(subjectMatch.thread.id!, criteria);
       return subjectMatch;
     }
@@ -131,7 +121,6 @@ export class FlexibleThreadMatcherService {
     const deferredThreadId = this.generateThreadId(criteria);
     const existingThread = await this.checkDeferredThread(deferredThreadId, criteria);
     if (existingThread) {
-      console.log('✅ Found deferred thread, converting to full thread');
       return {
         success: true,
         thread: existingThread,
@@ -142,7 +131,6 @@ export class FlexibleThreadMatcherService {
     }
 
     // 4. Neuen Thread erstellen
-    console.log('📝 Creating new thread');
     const newThread = await this.createThread(criteria, deferredThreadId);
     return {
       success: true,
@@ -227,7 +215,6 @@ export class FlexibleThreadMatcherService {
       
       return null;
     } catch (error) {
-      console.error('Error checking deferred thread:', error);
       return null;
     }
   }
@@ -282,7 +269,6 @@ export class FlexibleThreadMatcherService {
 
       return { success: false };
     } catch (error) {
-      console.error('Header matching error:', error);
       return { success: false };
     }
   }
@@ -333,7 +319,6 @@ export class FlexibleThreadMatcherService {
 
       return { success: false };
     } catch (error) {
-      console.error('Subject matching error:', error);
       return { success: false };
     }
   }
@@ -357,8 +342,6 @@ export class FlexibleThreadMatcherService {
         normalizedSubject: normalizedSubject || 'kein-betreff',
         participants: participants,
         lastMessageAt: serverTimestamp() as Timestamp,
-        messageCount: 1,
-        unreadCount: 1,
         
         organizationId: criteria.organizationId,
         userId: '', // Wird später durch Email Address userId gesetzt
@@ -377,7 +360,6 @@ export class FlexibleThreadMatcherService {
       };
 
       // Debug: Log die Daten vor der Bereinigung
-      console.log('🔍 Thread data before cleanup:', JSON.stringify(threadData, null, 2));
 
       // Entferne alle undefined-Werte und prüfe auf nested undefined
       const cleanedData = Object.entries(threadData).reduce((acc, [key, value]) => {
@@ -413,7 +395,6 @@ export class FlexibleThreadMatcherService {
       }, {} as any);
 
       // Debug: Log die bereinigten Daten
-      console.log('✅ Cleaned thread data:', JSON.stringify(cleanedData, null, 2));
 
       // Wenn threadId vorgegeben, verwende diese als Document ID
       if (threadId) {
@@ -428,7 +409,6 @@ export class FlexibleThreadMatcherService {
         return { ...cleanedData, id: docRef.id } as EmailThread;
       }
     } catch (error) {
-      console.error('Error creating thread:', error);
       throw error;
     }
   }
@@ -463,7 +443,6 @@ export class FlexibleThreadMatcherService {
         updatedAt: serverTimestamp()
       });
     } catch (error) {
-      console.error('Error updating thread activity:', error);
     }
   }
 
@@ -486,7 +465,6 @@ export class FlexibleThreadMatcherService {
 
       return { ...docSnap.data(), id: docSnap.id } as EmailThread;
     } catch (error) {
-      console.error('Error getting thread:', error);
       return null;
     }
   }
@@ -512,7 +490,6 @@ export class FlexibleThreadMatcherService {
         updatedAt: serverTimestamp()
       });
     } catch (error) {
-      console.error('Error updating thread analysis:', error);
       throw error;
     }
   }
@@ -530,11 +507,9 @@ export class FlexibleThreadMatcherService {
       if (!thread) return;
 
       await updateDoc(doc(db, this.collectionName, threadId), {
-        unreadCount: 0,
         updatedAt: serverTimestamp()
       });
     } catch (error) {
-      console.error('Error marking thread as read:', error);
     }
   }
 
@@ -586,9 +561,7 @@ export class FlexibleThreadMatcherService {
         );
       }
       
-      console.log(`✅ Thread ${threadId} ${userId ? `assigned to ${userId}` : 'unassigned'}`);
     } catch (error) {
-      console.error('Error assigning thread:', error);
       throw error;
     }
   }
@@ -610,9 +583,7 @@ export class FlexibleThreadMatcherService {
         updatedAt: serverTimestamp()
       });
       
-      console.log(`✅ Thread ${threadId} status updated to ${status}`);
     } catch (error) {
-      console.error('Error updating thread status:', error);
       throw error;
     }
   }
@@ -634,9 +605,7 @@ export class FlexibleThreadMatcherService {
         updatedAt: serverTimestamp()
       });
       
-      console.log(`✅ Thread ${threadId} priority updated to ${priority}`);
     } catch (error) {
-      console.error('Error updating thread priority:', error);
       throw error;
     }
   }
@@ -651,7 +620,6 @@ export class FlexibleThreadMatcherService {
     }
 
     try {
-      console.log('🔄 Resolving deferred threads...');
       
       // Finde alle E-Mails ohne zugehörigen Thread
       const orphanedMessages = query(
@@ -684,7 +652,6 @@ export class FlexibleThreadMatcherService {
         }
       }
       
-      console.log(`📊 Found ${missingThreadIds.length} missing threads`);
       
       // Erstelle fehlende Threads
       for (const threadId of missingThreadIds) {
@@ -716,12 +683,10 @@ export class FlexibleThreadMatcherService {
           references: firstMessage.references
         }, threadId);
         
-        console.log(`✅ Created deferred thread: ${threadId}`);
       }
       
       return missingThreadIds.length;
     } catch (error) {
-      console.error('Error resolving deferred threads:', error);
       return 0;
     }
   }
@@ -891,7 +856,6 @@ export class FlexibleThreadMatcherService {
         createdAt: serverTimestamp()
       });
     } catch (error) {
-      console.error('Error logging assignment change:', error);
       // Don't throw - this is just for logging
     }
   }

@@ -219,7 +219,6 @@ export class DnsCheckerService {
 
       return null;
     } catch (error) {
-      console.error('Provider detection failed:', error);
       return null;
     }
   }

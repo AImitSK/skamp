@@ -66,17 +66,11 @@ export class ThreadMatcherService {
    */
   async findOrCreateThread(criteria: ThreadMatchingCriteria): Promise<ThreadMatchResult> {
     try {
-      console.log('🔍 Matching thread for:', {
-        subject: criteria.subject,
-        inReplyTo: criteria.inReplyTo,
-        hasReferences: !!criteria.references?.length
-      });
 
       // 1. Header-basiertes Matching (höchste Priorität)
       if (criteria.inReplyTo || (criteria.references && criteria.references.length > 0)) {
         const headerMatch = await this.matchByHeaders(criteria);
         if (headerMatch.success && headerMatch.thread) {
-          console.log('✅ Thread matched by headers');
           await this.updateThreadActivity(headerMatch.thread.id!, criteria);
           return headerMatch;
         }
@@ -85,13 +79,11 @@ export class ThreadMatcherService {
       // 2. Subject-basiertes Matching
       const subjectMatch = await this.matchBySubject(criteria);
       if (subjectMatch.success && subjectMatch.thread) {
-        console.log('✅ Thread matched by subject');
         await this.updateThreadActivity(subjectMatch.thread.id!, criteria);
         return subjectMatch;
       }
 
       // 3. Neuen Thread erstellen
-      console.log('📝 Creating new thread');
       const newThread = await this.createThread(criteria);
       return {
         success: true,
@@ -102,7 +94,6 @@ export class ThreadMatcherService {
       };
 
     } catch (error) {
-      console.error('❌ Thread matching error:', error);
       return {
         success: false
       };
@@ -159,7 +150,6 @@ export class ThreadMatcherService {
 
       return { success: false };
     } catch (error) {
-      console.error('Header matching error:', error);
       return { success: false };
     }
   }
@@ -228,7 +218,6 @@ export class ThreadMatcherService {
 
       return { success: false };
     } catch (error) {
-      console.error('Subject matching error:', error);
       return { success: false };
     }
   }
@@ -245,8 +234,6 @@ export class ThreadMatcherService {
         subject: criteria.subject,
         participants,
         lastMessageAt: serverTimestamp() as Timestamp,
-        messageCount: 1,
-        unreadCount: 1,
         
         organizationId: criteria.organizationId,
         userId: '', // Wird später durch Email Address userId gesetzt
@@ -254,6 +241,9 @@ export class ThreadMatcherService {
         updatedAt: serverTimestamp() as Timestamp,
         
         contactIds: [], // TODO: Contact-Verknüpfung implementieren
+        
+        messageCount: 1, // Erste Nachricht
+        unreadCount: 1, // Erste Nachricht ist ungelesen
         
         threadingStrategy: 'headers',
         confidence: 100,
@@ -268,7 +258,6 @@ export class ThreadMatcherService {
 
       return { ...threadData, id: docRef.id } as EmailThread;
     } catch (error) {
-      console.error('Error creating thread:', error);
       throw error;
     }
   }
@@ -298,7 +287,6 @@ export class ThreadMatcherService {
         updatedAt: serverTimestamp()
       });
     } catch (error) {
-      console.error('Error updating thread activity:', error);
     }
   }
 
@@ -316,7 +304,6 @@ export class ThreadMatcherService {
 
       return { ...docSnap.data(), id: docSnap.id } as EmailThread;
     } catch (error) {
-      console.error('Error getting thread:', error);
       return null;
     }
   }
@@ -338,7 +325,6 @@ export class ThreadMatcherService {
         updatedAt: serverTimestamp()
       });
     } catch (error) {
-      console.error('Error updating thread analysis:', error);
       throw error;
     }
   }
@@ -352,11 +338,9 @@ export class ThreadMatcherService {
       if (!thread) return;
 
       await updateDoc(doc(db, this.collectionName, threadId), {
-        unreadCount: 0,
         updatedAt: serverTimestamp()
       });
     } catch (error) {
-      console.error('Error marking thread as read:', error);
     }
   }
 

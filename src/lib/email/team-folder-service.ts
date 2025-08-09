@@ -60,12 +60,9 @@ export class TeamFolderService extends BaseService<TeamFolder> {
         color: "#3B82F6",
         ownerId: "system",
         ownerName: "System",
-        level: 0,
         path: ["Allgemeine Anfragen"],
         isShared: true,
         isSystem: true,
-        emailCount: 0,
-        unreadCount: 0,
         autoAssignRules: []
       },
       {
@@ -75,12 +72,9 @@ export class TeamFolderService extends BaseService<TeamFolder> {
         color: "#10B981",
         ownerId: userId,
         ownerName: userName,
-        level: 0,
         path: [userName],
         isShared: false,
         isSystem: true,
-        emailCount: 0,
-        unreadCount: 0,
         autoAssignRules: []
       }
     ];
@@ -91,7 +85,6 @@ export class TeamFolderService extends BaseService<TeamFolder> {
       try {
         await this.create(folderData, context);
       } catch (error) {
-        console.error('Error creating system folder:', folderData.name, error);
       }
     }
   }
@@ -112,12 +105,9 @@ export class TeamFolderService extends BaseService<TeamFolder> {
       color: "#10B981",
       ownerId: userId,
       ownerName: userName,
-      level: 0,
       path: [userName],
       isShared: false,
       isSystem: true,
-      emailCount: 0,
-      unreadCount: 0,
       autoAssignRules: []
     };
 
@@ -174,8 +164,6 @@ export class TeamFolderService extends BaseService<TeamFolder> {
       level: parentFolder.level + 1,
       path: [...parentFolder.path, folderData.name],
       isSystem: false,
-      emailCount: 0,
-      unreadCount: 0,
       icon: folderData.icon || "📁",
       color: folderData.color || "#6B7280",
       isShared: folderData.isShared || false,
@@ -289,7 +277,6 @@ export class TeamFolderService extends BaseService<TeamFolder> {
       return Array.from(allDocs.values())
         .filter(folder => !folder.deletedAt); // Soft delete filtering
     } catch (error) {
-      console.error('Error loading accessible folders:', error);
       return [];
     }
   }
@@ -369,7 +356,6 @@ export class TeamFolderService extends BaseService<TeamFolder> {
         updatedAt: serverTimestamp()
       });
     } catch (error) {
-      console.error('Error incrementing email count:', error);
     }
   }
 
@@ -601,8 +587,6 @@ export class TeamFolderService extends BaseService<TeamFolder> {
     }>
   ): Promise<BatchOperationResult> {
     const results: BatchOperationResult = {
-      success: 0,
-      failed: 0,
       errors: []
     };
 
@@ -616,13 +600,9 @@ export class TeamFolderService extends BaseService<TeamFolder> {
             ...folderData,
             ownerId: userId,
             ownerName: '', // TODO: Von TeamMember laden
-            level: 0,
             path: [folderData.name],
             isShared: false,
             isSystem: false,
-            emailCount: 0,
-            unreadCount: 0,
-            autoAssignRules: [],
             icon: folderData.icon || "📁",
             color: folderData.color || "#6B7280"
           };

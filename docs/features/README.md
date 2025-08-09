@@ -15,11 +15,11 @@ Diese Dokumentationen folgen dem standardisierten Template aus `FEATURE_DOCUMENT
 - **[E-Mail-Einstellungen](./docu_dashboard_settings_email.md)** - E-Mail-Adressen, Signaturen, Routing-Regeln und KI-Integration (✅ **FERTIG** - 19/19 Tests, erweiterte Alias-Unterstützung, Gemini AI)
 - **[Team-Verwaltung](./docu_dashboard_settings_team.md)** - Multi-Tenancy, Benutzer-Management und Einladungssystem (✅ **FERTIG** - 24/24 Tests, Role-based Access Control, Owner-Protection)
 - **[Branding-Einstellungen](./docu_dashboard_settings_branding.md)** - Firmeninformationen, Logo-Management und Copyright-Einstellungen (✅ **FERTIG** - 28/28 Tests, Media-Integration, Multi-Tenancy)
+- **[Communication Inbox](./docu_dashboard_communication_inbox.md)** - E-Mail-Kommunikation mit KI-Integration und Team-Management (✅ **FERTIG** - 19/19 Tests, AI-Sentiment-Analysis, Thread-Management, Enterprise-Grade)
 - **[Notification-Einstellungen](./docu_dashboard_settings_notifications.md)** - Benachrichtigungstypen konfigurieren und Schwellenwerte festlegen (🚧 **BASIC** - Settings-UI funktional, ohne Tests)
 
 ### 🚧 In Arbeit
 - **[PR-Kampagnen](./docu_dashboard_pr-tools_campaigns.md)** - Kampagnen-Erstellung mit KI-Unterstützung (❌ Template noch nicht angewendet)
-- **[Communication Inbox](./docu_dashboard_communication_inbox.md)** - E-Mail-Kommunikation mit KI-Integration und Team-Management (🔄 Tests und Design-Pattern-Compliance erforderlich)
 
 ### 📝 Geplant (basierend auf Legacy-Features)
 - [ ] **AI-Assistent** - KI-gestützte Textgenerierung
@@ -64,6 +64,7 @@ Jede Feature-Dokumentation enthält:
 - ✅ **Team-Verwaltung**: Vollständig nach Template dokumentiert (24/24 Tests, Multi-Tenancy, Role-based Access Control, Einladungssystem)
 - ✅ **Branding-Einstellungen**: Vollständig nach Template dokumentiert (28/28 Tests, Logo-Management, Media-Integration, Validation)
 - 🚧 **Notification-Einstellungen**: Basic nach Template dokumentiert (Settings-UI funktional, oberflächliche Dokumentation ohne Tests)
+- ✅ **Communication Inbox**: Vollständig nach Template dokumentiert (19/19 Tests, AI-Integration mit Gemini, Thread-Management, Team-Assignment, Enterprise-Grade)
 - 🚧 **PR-Kampagnen**: Template noch NICHT angewendet - steht aus
 - 🚧 **Weitere Features**: Sukzessive Migration geplant
 
@@ -85,6 +86,6 @@ Alle ursprünglichen Feature-Beschreibungen sind in `/docs/legacy-features/` ver
 
 ---
 
-**Letzte Aktualisierung:** 2025-01-21  
-**Dokumentierte Features:** 11/15+ geplant (CRM Enhanced ✅, Verteilerlisten ✅, Library Publications ✅, Freigaben-Center ✅, Textbausteine ✅, Domain-Authentifizierung ✅, E-Mail-Einstellungen ✅, Team-Verwaltung ✅, Branding-Einstellungen ✅, Notification-Einstellungen 🚧)  
-**Template-Version:** 2.0
+**Letzte Aktualisierung:** 2025-08-09  
+**Dokumentierte Features:** 12/15+ geplant (CRM Enhanced ✅, Verteilerlisten ✅, Library Publications ✅, Freigaben-Center ✅, Textbausteine ✅, Domain-Authentifizierung ✅, E-Mail-Einstellungen ✅, Team-Verwaltung ✅, Branding-Einstellungen ✅, Communication Inbox ✅, Notification-Einstellungen 🚧)  
+**Template-Version:** 2.1

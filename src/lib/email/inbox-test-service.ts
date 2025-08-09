@@ -81,7 +81,6 @@ export class InboxTestService {
         testId
       };
     } catch (error: any) {
-      console.error('SendGrid error:', error);
       throw new Error(`E-Mail-Versand fehlgeschlagen: ${error.message}`);
     }
   }

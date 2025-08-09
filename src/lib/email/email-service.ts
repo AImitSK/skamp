@@ -124,9 +124,7 @@ export class EmailService {
           result.summary.success,
           campaign.userId
         );
-        console.log('📬 Benachrichtigung gesendet: E-Mail-Kampagne erfolgreich versendet');
       } catch (notificationError) {
-        console.error('Fehler beim Senden der Erfolgs-Benachrichtigung:', notificationError);
         // Fehler bei Benachrichtigung sollte den Hauptprozess nicht stoppen
       }
     }
@@ -154,9 +152,7 @@ export class EmailService {
             campaign.userId
           );
         }
-        console.log(`📬 Benachrichtigung gesendet: ${bouncedEmails.length} E-Mail Bounces`);
       } catch (notificationError) {
-        console.error('Fehler beim Senden der Bounce-Benachrichtigungen:', notificationError);
         // Fehler bei Benachrichtigung sollte den Hauptprozess nicht stoppen
       }
     }
@@ -169,7 +165,6 @@ export class EmailService {
    */
   async sendTestEmail(request: TestEmailRequest): Promise<SendTestEmailResponse> {
     try {
-      console.log('📧 Sending test email to:', request.recipientEmail);
 
       // Erstelle einen Test-Kontakt
       const testContact: Contact = {
@@ -208,7 +203,6 @@ export class EmailService {
       return result;
 
     } catch (error) {
-      console.error('❌ Error sending test email:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unbekannter Fehler'
@@ -315,7 +309,6 @@ export class EmailService {
    */
   async scheduleEmail(request: ScheduleEmailRequest): Promise<ScheduleEmailResult> {
     try {
-      console.log('📅 Scheduling email campaign for:', request.scheduledDate);
 
       // Validiere Datum (mindestens 15 Minuten in der Zukunft)
       const now = new Date();
@@ -380,7 +373,6 @@ export class EmailService {
             }
           });
         } catch (notificationError) {
-          console.error('Fehler beim Senden der Planungs-Benachrichtigung:', notificationError);
         }
       }
       */
@@ -388,7 +380,6 @@ export class EmailService {
       return result;
 
     } catch (error) {
-      console.error('❌ Error scheduling email:', error);
       return {
         success: false,
         scheduledFor: request.scheduledDate,

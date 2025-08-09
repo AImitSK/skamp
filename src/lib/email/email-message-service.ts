@@ -84,7 +84,6 @@ export class EmailMessageService {
 
       return { ...data, id: docRef.id } as EmailMessage;
     } catch (error) {
-      console.error('Fehler beim Erstellen der E-Mail-Nachricht:', error);
       throw error;
     }
   }
@@ -103,7 +102,6 @@ export class EmailMessageService {
 
       return { ...docSnap.data(), id: docSnap.id } as EmailMessage;
     } catch (error) {
-      console.error('Fehler beim Abrufen der E-Mail-Nachricht:', error);
       throw error;
     }
   }
@@ -120,7 +118,6 @@ export class EmailMessageService {
         updatedAt: serverTimestamp()
       });
     } catch (error) {
-      console.error('Fehler beim Aktualisieren der E-Mail-Nachricht:', error);
       throw error;
     }
   }
@@ -130,20 +127,12 @@ export class EmailMessageService {
    */
   async delete(id: string): Promise<void> {
     try {
-      console.log('🗑️ Starting delete for email:', id);
       
       // Hole die E-Mail für Thread-Informationen
       const email = await this.get(id);
       if (!email) {
         throw new Error('E-Mail nicht gefunden');
       }
-
-      console.log('📧 Email details:', {
-        id: email.id,
-        threadId: email.threadId,
-        folder: email.folder,
-        isRead: email.isRead
-      });
 
       // Verschiebe in Trash
       await this.update(id, {
@@ -155,9 +144,7 @@ export class EmailMessageService {
         await this.updateThreadAfterDelete(email.threadId, email);
       }
 
-      console.log('✅ Email successfully moved to trash');
     } catch (error) {
-      console.error('❌ Fehler beim Löschen der E-Mail-Nachricht:', error);
       throw error;
     }
   }
@@ -167,7 +154,6 @@ export class EmailMessageService {
    */
   private async updateThreadAfterDelete(threadId: string, deletedEmail: EmailMessage): Promise<void> {
     try {
-      console.log('🔄 Updating thread after delete:', threadId);
       
       const batch = writeBatch(this.db);
       const threadRef = doc(this.db, this.threadsCollectionName, threadId);
@@ -175,7 +161,6 @@ export class EmailMessageService {
       // Hole aktuelle Thread-Daten
       const threadSnap = await getDoc(threadRef);
       if (!threadSnap.exists()) {
-        console.warn('⚠️ Thread not found:', threadId);
         return;
       }
 
@@ -191,14 +176,10 @@ export class EmailMessageService {
       const remainingSnapshot = await getDocs(remainingEmailsQuery);
       const remainingCount = remainingSnapshot.size;
 
-      console.log(`📊 Remaining emails in thread: ${remainingCount}`);
 
       if (remainingCount === 0) {
         // Keine E-Mails mehr im Thread (außer Trash) - Thread löschen oder archivieren
-        console.log('🗑️ No emails left in thread, archiving thread');
         batch.update(threadRef, {
-          messageCount: 0,
-          unreadCount: 0,
           status: 'archived',
           updatedAt: serverTimestamp()
         });
@@ -230,14 +211,11 @@ export class EmailMessageService {
           updates.lastMessageId = latestSnapshot.docs[0].id;
         }
 
-        console.log('📝 Updating thread with:', updates);
         batch.update(threadRef, updates);
       }
 
       await batch.commit();
-      console.log('✅ Thread updated successfully');
     } catch (error) {
-      console.error('❌ Error updating thread after delete:', error);
       // Fehler nicht werfen, da das Löschen selbst erfolgreich war
     }
   }
@@ -258,7 +236,6 @@ export class EmailMessageService {
         await this.updateThreadAfterDelete(email.threadId, email);
       }
     } catch (error) {
-      console.error('Fehler beim endgültigen Löschen der E-Mail-Nachricht:', error);
       throw error;
     }
   }
@@ -358,7 +335,6 @@ export class EmailMessageService {
         lastDoc
       };
     } catch (error) {
-      console.error('Fehler beim Abrufen der E-Mail-Nachrichten:', error);
       throw error;
     }
   }
@@ -368,7 +344,6 @@ export class EmailMessageService {
    */
   async getThreadMessages(threadId: string): Promise<EmailMessage[]> {
     try {
-      console.log('📨 Getting thread messages for:', threadId);
       
       const q = query(
         collection(this.db, this.collectionName),
@@ -385,14 +360,11 @@ export class EmailMessageService {
         messages.push({ ...doc.data(), id: doc.id } as EmailMessage);
       });
 
-      console.log(`✅ Found ${messages.length} messages in thread`);
       return messages;
     } catch (error) {
-      console.error('❌ Fehler beim Abrufen der Thread-Nachrichten:', error);
       
       // Fallback ohne folder Filter wenn Index fehlt
       try {
-        console.log('⚠️ Trying fallback query without folder filter');
         const fallbackQuery = query(
           collection(this.db, this.collectionName),
           where('threadId', '==', threadId),
@@ -410,10 +382,8 @@ export class EmailMessageService {
           }
         });
         
-        console.log(`✅ Fallback: Found ${messages.length} messages (excluding trash)`);
         return messages;
       } catch (fallbackError) {
-        console.error('❌ Fallback query also failed:', fallbackError);
         throw fallbackError;
       }
     }
@@ -440,7 +410,6 @@ export class EmailMessageService {
         });
       }
     } catch (error) {
-      console.error('Fehler beim Markieren als gelesen:', error);
       throw error;
     }
   }
@@ -473,7 +442,6 @@ export class EmailMessageService {
         await this.updateThreadAfterDelete(email.threadId, email);
       }
     } catch (error) {
-      console.error('Fehler beim Verschieben in Ordner:', error);
       throw error;
     }
   }
@@ -483,7 +451,6 @@ export class EmailMessageService {
    */
   async archive(id: string): Promise<void> {
     try {
-      console.log('📦 Archiving email:', id);
       
       const email = await this.get(id);
       if (!email) {
@@ -504,9 +471,7 @@ export class EmailMessageService {
         });
       }
 
-      console.log('✅ Email archived successfully');
     } catch (error) {
-      console.error('❌ Fehler beim Archivieren:', error);
       throw error;
     }
   }
@@ -555,7 +520,6 @@ export class EmailMessageService {
 
       await batch.commit();
     } catch (error) {
-      console.error('Fehler bei Bulk-Update:', error);
       throw error;
     }
   }
@@ -589,7 +553,6 @@ export class EmailMessageService {
 
       return stats;
     } catch (error) {
-      console.error('Fehler beim Abrufen der Ordner-Statistiken:', error);
       throw error;
     }
   }
@@ -627,7 +590,6 @@ export class EmailMessageService {
 
       return allMessages;
     } catch (error) {
-      console.error('Fehler beim Suchen nach Message-IDs:', error);
       throw error;
     }
   }

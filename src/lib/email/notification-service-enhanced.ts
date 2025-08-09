@@ -338,10 +338,8 @@ class NotificationServiceEnhanced {
   private async createNotification(notification: Omit<NotificationData, 'id'>): Promise<string> {
     try {
       const docRef = await addDoc(collection(db, 'notifications'), notification);
-      console.log('✅ Notification created:', docRef.id);
       return docRef.id;
     } catch (error) {
-      console.error('Error creating notification:', error);
       throw error;
     }
   }
@@ -356,7 +354,6 @@ class NotificationServiceEnhanced {
         readAt: serverTimestamp()
       });
     } catch (error) {
-      console.error('Error marking notification as read:', error);
       throw error;
     }
   }
@@ -383,7 +380,6 @@ class NotificationServiceEnhanced {
       
       await Promise.all(promises);
     } catch (error) {
-      console.error('Error marking all notifications as read:', error);
       throw error;
     }
   }
@@ -403,7 +399,6 @@ class NotificationServiceEnhanced {
       const snapshot = await getDocs(q);
       return snapshot.size;
     } catch (error) {
-      console.error('Error getting unread count:', error);
       return 0;
     }
   }
@@ -502,7 +497,6 @@ class NotificationServiceEnhanced {
         setTimeout(() => notification.close(), 5000);
       }
     } catch (error) {
-      console.error('Error showing browser notification:', error);
     }
   }
 

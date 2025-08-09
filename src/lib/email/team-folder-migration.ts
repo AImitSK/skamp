@@ -30,9 +30,6 @@ interface MigrationResult {
 export async function migrateAllOrganizations(): Promise<MigrationResult> {
   const result: MigrationResult = {
     success: true,
-    processed: 0,
-    created: 0,
-    skipped: 0,
     errors: []
   };
 
@@ -41,7 +38,6 @@ export async function migrateAllOrganizations(): Promise<MigrationResult> {
     const allTeamMembers = await getAllTeamMembers();
     const organizations = getUniqueOrganizations(allTeamMembers);
 
-    console.log(`🔄 Starte Migration für ${organizations.length} Organisationen...`);
 
     for (const org of organizations) {
       try {
@@ -53,7 +49,6 @@ export async function migrateAllOrganizations(): Promise<MigrationResult> {
         });
 
         if (existingFolders.length > 0) {
-          console.log(`⏭️ Organisation ${org.organizationId} bereits migriert (${existingFolders.length} System-Ordner)`);
           result.skipped++;
           continue;
         }
@@ -71,26 +66,18 @@ export async function migrateAllOrganizations(): Promise<MigrationResult> {
           result.created++;
         }
 
-        console.log(`✅ Organisation ${org.organizationId} migriert: ${orgMembers.length + 1} Ordner`);
 
       } catch (error) {
         const errorMsg = `Fehler bei Organisation ${org.organizationId}: ${error instanceof Error ? error.message : 'Unbekannt'}`;
-        console.error(`❌ ${errorMsg}`);
         result.errors.push(errorMsg);
         result.success = false;
       }
     }
 
-    console.log(`🎉 Migration abgeschlossen:`)
-    console.log(`   - Verarbeitet: ${result.processed}`)
-    console.log(`   - Erstellt: ${result.created}`)
-    console.log(`   - Übersprungen: ${result.skipped}`)
-    console.log(`   - Fehler: ${result.errors.length}`)
 
     return result;
 
   } catch (error) {
-    console.error('❌ Migration fehlgeschlagen:', error);
     result.success = false;
     result.errors.push(error instanceof Error ? error.message : 'Unbekannt');
     return result;
@@ -103,9 +90,6 @@ export async function migrateAllOrganizations(): Promise<MigrationResult> {
 export async function migrateOrganization(organizationId: string): Promise<MigrationResult> {
   const result: MigrationResult = {
     success: true,
-    processed: 1,
-    created: 0,
-    skipped: 0,
     errors: []
   };
 
@@ -123,7 +107,6 @@ export async function migrateOrganization(organizationId: string): Promise<Migra
     });
 
     if (existingFolders.length > 0) {
-      console.log(`⏭️ Organisation ${organizationId} bereits migriert`);
       result.skipped = 1;
       return result;
     }
@@ -138,11 +121,9 @@ export async function migrateOrganization(organizationId: string): Promise<Migra
       result.created++;
     }
 
-    console.log(`✅ Organisation ${organizationId} migriert: ${result.created} Ordner`);
     return result;
 
   } catch (error) {
-    console.error(`❌ Migration für ${organizationId} fehlgeschlagen:`, error);
     result.success = false;
     result.errors.push(error instanceof Error ? error.message : 'Unbekannt');
     return result;
@@ -155,14 +136,10 @@ export async function migrateOrganization(organizationId: string): Promise<Migra
 export async function migrateExistingEmails(organizationId?: string): Promise<MigrationResult> {
   const result: MigrationResult = {
     success: true,
-    processed: 0,
-    created: 0,
-    skipped: 0,
     errors: []
   };
 
   try {
-    console.log('🔄 Starte E-Mail-Migration zum Team-Folder System...');
 
     // Alle E-Mail-Threads laden
     const emailThreadsRef = collection(db, 'email_threads');
@@ -178,7 +155,6 @@ export async function migrateExistingEmails(organizationId?: string): Promise<Mi
       ...doc.data()
     }));
 
-    console.log(`📧 Gefunden: ${threads.length} E-Mail-Threads`);
 
     for (const thread of threads) {
       try {
@@ -235,7 +211,6 @@ export async function migrateExistingEmails(organizationId?: string): Promise<Mi
         result.created++;
 
         if (result.processed % 100 === 0) {
-          console.log(`📧 Migriert: ${result.processed}/${threads.length} E-Mails`);
         }
 
       } catch (error) {
@@ -244,16 +219,10 @@ export async function migrateExistingEmails(organizationId?: string): Promise<Mi
       }
     }
 
-    console.log(`🎉 E-Mail-Migration abgeschlossen:`);
-    console.log(`   - Verarbeitet: ${result.processed}`);
-    console.log(`   - Migriert: ${result.created}`);
-    console.log(`   - Übersprungen: ${result.skipped}`);
-    console.log(`   - Fehler: ${result.errors.length}`);
 
     return result;
 
   } catch (error) {
-    console.error('❌ E-Mail-Migration fehlgeschlagen:', error);
     result.success = false;
     result.errors.push(error instanceof Error ? error.message : 'Unbekannt');
     return result;
@@ -277,7 +246,6 @@ async function getAllTeamMembers() {
       ...doc.data()
     })) as any[];
   } catch (error) {
-    console.error('Error loading all team members:', error);
     return [];
   }
 }
@@ -314,12 +282,9 @@ async function createGeneralInboxFolder(organizationId: string, creator: any) {
     color: "#3B82F6",
     ownerId: "system",
     ownerName: "System",
-    level: 0,
     path: ["Allgemeine Anfragen"],
     isShared: true,
     isSystem: true,
-    emailCount: 0,
-    unreadCount: 0,
     autoAssignRules: []
   };
 
@@ -340,12 +305,9 @@ async function createPersonalFolder(organizationId: string, member: any) {
     color: "#10B981",
     ownerId: member.userId,
     ownerName: member.displayName,
-    level: 0,
     path: [member.displayName],
     isShared: false,
     isSystem: true,
-    emailCount: 0,
-    unreadCount: 0,
     autoAssignRules: []
   };
 
@@ -363,11 +325,8 @@ export async function runMigration(args: {
   organizationId?: string;
   dryRun?: boolean;
 }) {
-  console.log('🚀 TEAM-FOLDER MIGRATION TOOL');
-  console.log('================================');
   
   if (args.dryRun) {
-    console.log('⚠️ DRY RUN MODUS - Keine Änderungen werden gespeichert');
   }
 
   let results: MigrationResult[] = [];
@@ -402,16 +361,8 @@ export async function runMigration(args: {
   const totalSkipped = results.reduce((sum, r) => sum + r.skipped, 0);
   const allErrors = results.flatMap(r => r.errors);
 
-  console.log('\n📊 MIGRATION ZUSAMMENFASSUNG');
-  console.log('==============================');
-  console.log(`✅ Verarbeitet: ${totalProcessed}`);
-  console.log(`🆕 Erstellt: ${totalCreated}`);
-  console.log(`⏭️ Übersprungen: ${totalSkipped}`);
-  console.log(`❌ Fehler: ${allErrors.length}`);
 
   if (allErrors.length > 0) {
-    console.log('\n🚨 FEHLER:');
-    allErrors.forEach(error => console.log(`   - ${error}`));
   }
 
   return {

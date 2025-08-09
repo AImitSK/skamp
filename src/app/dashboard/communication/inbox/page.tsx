@@ -141,12 +141,12 @@ export default function InboxPage() {
       
       setLoadingTeam(true);
       try {
-        console.log('👥 Loading team members for organization:', organizationId);
+
         const members = await teamMemberService.getByOrganization(organizationId);
         
         if (members.length === 0) {
           // Fallback: Create mock team members for development
-          console.log('⚠️ No team members found, using fallback data');
+
           const mockMembers = [
             {
               id: '1',
@@ -187,7 +187,7 @@ export default function InboxPage() {
           }));
         }
       } catch (error) {
-        console.error('Error loading team members:', error);
+
         // Fallback bei Fehler
         const fallbackMember = {
           id: '1',
@@ -219,11 +219,11 @@ export default function InboxPage() {
       }
       
       setResolvingThreads(true);
-      console.log('🔄 Resolving deferred threads...');
+
       
       try {
         const resolvedCount = await threadMatcherService.resolveDeferredThreads(organizationId);
-        console.log(`✅ Resolved ${resolvedCount} deferred threads`);
+
         
         setDebugInfo(prev => ({
           ...prev,
@@ -232,7 +232,7 @@ export default function InboxPage() {
         
         threadsResolvedRef.current = true;
       } catch (error) {
-        console.error('Error resolving deferred threads:', error);
+
       } finally {
         setResolvingThreads(false);
       }
@@ -252,9 +252,9 @@ export default function InboxPage() {
       if (!user || !organizationId) return;
       
       try {
-        console.log('📧 Checking email addresses for org:', organizationId);
+
         const addresses = await emailAddressService.getByOrganization(organizationId, user.uid);
-        console.log('📧 Found email addresses:', addresses);
+
         setEmailAddresses(addresses);
         setHasEmailAddresses(addresses.length > 0);
         
@@ -265,7 +265,7 @@ export default function InboxPage() {
           hasEmailAddresses: addresses.length > 0
         }));
       } catch (error) {
-        console.error('Error checking email addresses:', error);
+
         setDebugInfo((prev: DebugInfo) => ({
           ...prev,
           emailAddressError: error
@@ -283,7 +283,7 @@ export default function InboxPage() {
       return;
     }
 
-    console.log('🔄 Setting up real-time listeners...');
+
     setDebugInfo((prev: DebugInfo) => ({
       ...prev,
       listenersSetup: true,
@@ -317,7 +317,7 @@ export default function InboxPage() {
       setupTeamFolderListeners(unsubscribes);
 
     } catch (error: any) {
-      console.error('Error setting up listeners:', error);
+
       setError('Fehler beim Einrichten der Echtzeit-Updates');
       setLoading(false);
       setDebugInfo((prev: DebugInfo) => ({
@@ -344,12 +344,11 @@ export default function InboxPage() {
 
     // HINWEIS: Für Team-Ordner verwenden wir die Basis-Query und filtern client-seitig,
     // da assignedToUserId noch nicht in allen bestehenden Threads vorhanden ist
-    // TODO: Später können wir server-seitige Filterung hinzufügen, wenn alle Threads migriert sind
 
     const threadsUnsubscribe = onSnapshot(
       threadsQuery,
       async (snapshot) => {
-        console.log('📨 Customer/Campaign thread snapshot received, size:', snapshot.size);
+
         let threadsData: EmailThread[] = [];
         
         snapshot.forEach((doc) => {
@@ -370,7 +369,7 @@ export default function InboxPage() {
           );
         }
         
-        console.log(`✅ Found ${threadsData.length} threads for ${selectedFolderType}`);
+
         setThreads(threadsData);
         
         // Update unread counts
@@ -383,7 +382,7 @@ export default function InboxPage() {
         }));
       },
       (error) => {
-        console.error('Error loading threads:', error);
+
         setError('Fehler beim Laden der E-Mail-Threads');
         setDebugInfo((prev: DebugInfo) => ({
           ...prev,
@@ -409,7 +408,7 @@ export default function InboxPage() {
     const messagesUnsubscribe = onSnapshot(
       messagesQuery,
       async (snapshot) => {
-        console.log('📧 Customer/Campaign message snapshot received, size:', snapshot.size);
+
         let messagesData: EmailMessage[] = [];
         
         snapshot.forEach((doc) => {
@@ -444,7 +443,7 @@ export default function InboxPage() {
         }));
       },
       (error) => {
-        console.error('Error loading messages:', error);
+
         setError('Fehler beim Laden der E-Mails');
         setLoading(false);
         setDebugInfo((prev: DebugInfo) => ({
@@ -511,7 +510,7 @@ export default function InboxPage() {
         deferredThreadsResolved: resolvedCount
       }));
     } catch (error) {
-      console.error('Error resolving threads:', error);
+
       alert('Fehler beim Erstellen der Threads');
     } finally {
       setResolvingThreads(false);
@@ -542,7 +541,7 @@ export default function InboxPage() {
     }
 
     try {
-      console.log('🧪 Creating test email...');
+
       const defaultAddress = emailAddresses.find(addr => addr.isDefault) || emailAddresses[0];
       
       // In Customer/Campaign Mode immer inbox
@@ -603,17 +602,17 @@ export default function InboxPage() {
       
       const testMessage = await emailMessageService.create(testMessageData);
 
-      console.log('✅ Test email created:', testMessage);
+
       alert(`Test-E-Mail wurde erstellt!`);
     } catch (error: any) {
-      console.error('❌ Error creating test email:', error);
+
       alert(`Fehler beim Erstellen der Test-E-Mail: ${error.message}`);
     }
   };
 
   // Handle thread selection
   const handleThreadSelect = async (thread: EmailThread) => {
-    console.log('📧 Thread selected:', thread.id, thread.subject);
+
     setSelectedThread(thread);
     setSelectedEmail(null); // Reset selected email when switching threads
     
@@ -633,7 +632,7 @@ export default function InboxPage() {
         threadMessages.push({ ...doc.data(), id: doc.id } as EmailMessage);
       });
       
-      console.log(`📨 Loaded ${threadMessages.length} messages for thread`);
+
       
       // Update the global emails state with thread messages
       if (threadMessages.length > 0) {
@@ -646,7 +645,7 @@ export default function InboxPage() {
         // Select the latest email in the thread
         const latestEmail = threadMessages[threadMessages.length - 1];
         setSelectedEmail(latestEmail);
-        console.log('✅ Selected latest email:', latestEmail.id);
+
         
         // Mark thread as read
         if (thread.unreadCount && thread.unreadCount > 0) {
@@ -660,11 +659,11 @@ export default function InboxPage() {
           }
         }
       } else {
-        console.warn('⚠️ No messages found for thread:', thread.id);
+        // No messages found for thread
         setSelectedEmail(null);
       }
     } catch (error) {
-      console.error('❌ Error loading thread messages:', error);
+
       setError('Fehler beim Laden der Thread-Nachrichten');
     }
   };
@@ -687,7 +686,7 @@ export default function InboxPage() {
     
     try {
       setActionLoading(true);
-      console.log('📦 Archiving email:', emailId);
+
       
       // Speichere aktuelle Auswahl
       const currentThreadId = selectedThread?.id;
@@ -714,9 +713,9 @@ export default function InboxPage() {
         }
       }
       
-      console.log('✅ Email archived successfully');
+
     } catch (error) {
-      console.error('❌ Error archiving email:', error);
+
       alert('Fehler beim Archivieren der E-Mail');
     } finally {
       setActionLoading(false);
@@ -728,7 +727,7 @@ export default function InboxPage() {
     
     try {
       setActionLoading(true);
-      console.log('🗑️ Deleting email:', emailId);
+
       
       // Speichere aktuelle Auswahl
       const currentThreadId = selectedThread?.id;
@@ -739,30 +738,30 @@ export default function InboxPage() {
       
       // Wenn die gelöschte E-Mail die ausgewählte war
       if (currentEmailId === emailId) {
-        console.log('🔄 Deleted email was selected, updating state...');
+
         setSelectedEmail(null);
         
         // In Customer/Campaign mode, check remaining emails
-        console.log('📂 Email deleted, checking remaining emails');
+
         
         // In anderen Ordnern: Prüfe verbleibende E-Mails
         const remainingEmails = emails.filter(e => 
           e.threadId === currentThreadId && e.id !== emailId
         );
         
-        console.log(`📧 Remaining emails in thread: ${remainingEmails.length}`);
+
         
         if (remainingEmails.length === 0) {
           // Kein Thread mehr vorhanden, Thread auch aus Firestore löschen
-          console.log('🔄 No more emails in thread, deleting thread and resetting selection');
+
           
           if (currentThreadId) {
             try {
               // Lösche den Thread direkt aus Firestore
               await deleteDoc(doc(db, 'email_threads', currentThreadId));
-              console.log('🗑️ Thread deleted from Firestore:', currentThreadId);
+
             } catch (error) {
-              console.error('❌ Error deleting thread:', error);
+
             }
           }
           
@@ -770,14 +769,14 @@ export default function InboxPage() {
         } else {
           // Wähle die nächste E-Mail im Thread
           const nextEmail = remainingEmails[remainingEmails.length - 1];
-          console.log('✅ Selecting next email:', nextEmail.id);
+
           setSelectedEmail(nextEmail);
         }
       }
       
-      console.log('✅ Email deleted successfully');
+
     } catch (error) {
-      console.error('❌ Error deleting email:', error);
+
       alert('Fehler beim Löschen der E-Mail');
     } finally {
       setActionLoading(false);
@@ -788,7 +787,7 @@ export default function InboxPage() {
     try {
       await emailMessageService.toggleStar(emailId);
     } catch (error) {
-      console.error('Error starring email:', error);
+
     }
   };
 
@@ -829,9 +828,9 @@ export default function InboxPage() {
         }
       }
       
-      console.log('✅ Thread assigned successfully');
+
     } catch (error) {
-      console.error('Error assigning thread:', error);
+
       
       // Rollback optimistic update bei Fehler
       setThreads(prevThreads => 
@@ -873,7 +872,7 @@ export default function InboxPage() {
         );
       }
       
-      console.log('✅ Thread status updated successfully');
+
       
       // Bei Archivierung: Thread aus der Liste entfernen
       if (status === 'archived') {
@@ -881,7 +880,7 @@ export default function InboxPage() {
         setSelectedEmail(null);
       }
     } catch (error) {
-      console.error('Error updating thread status:', error);
+
       alert('Fehler beim Ändern des Thread-Status');
     }
   };
@@ -892,9 +891,9 @@ export default function InboxPage() {
     
     try {
       await threadMatcherService.updateThreadPriority(selectedThread.id!, priority);
-      console.log('✅ Thread priority updated successfully');
+
     } catch (error) {
-      console.error('Error updating thread priority:', error);
+
       alert('Fehler beim Ändern der Thread-Priorität');
     }
   };
@@ -917,16 +916,16 @@ export default function InboxPage() {
       }
       
       // Store category in thread metadata (could be extended)
-      console.log(`✅ Thread categorized as: ${category}`, assignee ? `→ ${assignee}` : '');
+
       
     } catch (error) {
-      console.error('Error updating thread category:', error);
+
     }
   };
 
   // Handle folder selection from sidebar
   const handleFolderSelect = (type: 'general' | 'team', id?: string) => {
-    console.log('📁 Folder selected:', { type, id });
+
     setSelectedFolderType(type);
     setSelectedTeamMemberId(type === 'team' ? id : undefined);
     setSelectedThread(null);

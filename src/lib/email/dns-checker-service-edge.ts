@@ -11,7 +11,6 @@ export class DnsCheckerServiceEdge {
    * Prüft alle DNS Records über externe API
    */
   async checkAllRecords(dnsRecords: DnsRecord[]): Promise<DnsCheckResult[]> {
-    console.log('🔍 Checking DNS records via external API:', dnsRecords);
     
     const checkPromises = dnsRecords.map(async (record) => {
       try {
@@ -55,7 +54,6 @@ export class DnsCheckerServiceEdge {
         } as DnsCheckResult;
         
       } catch (error: any) {
-        console.error('DNS check error for', record.host, ':', error);
         
         // Fallback to mock for development
         return {
@@ -117,7 +115,6 @@ export class DnsCheckerServiceEdge {
       
       return null;
     } catch (error) {
-      console.error('Provider detection failed:', error);
       return null;
     }
   }

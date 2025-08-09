@@ -35,7 +35,6 @@ export async function updateRoutingRules(
       updatedBy: userId
     });
   } catch (error) {
-    console.error('Fehler beim Aktualisieren der Routing-Regeln:', error);
     throw error;
   }
 }
@@ -67,7 +66,6 @@ export async function updateRoutingRules(
         updatedBy: userId
       });
     } catch (error) {
-      console.error('Fehler beim Aktualisieren der Routing-Regeln:', error);
       throw error;
     }
   }
