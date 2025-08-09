@@ -273,7 +273,7 @@ export default function BrandingPage() {
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="max-w-4xl">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              <div className="bg-white rounded-lg border border-gray-200">
                 <div className="p-6 space-y-6">
                   {/* Logo */}
                   <Field>
@@ -290,7 +290,7 @@ export default function BrandingPage() {
                             type="button"
                             plain
                             onClick={handleRemoveLogo}
-                            className="absolute -top-2 -right-2 p-1 bg-white rounded-full shadow-sm border border-gray-200 hover:bg-gray-50"
+                            className="absolute -top-2 -right-2 p-1 bg-white rounded-full border border-gray-200 hover:bg-gray-50"
                           >
                             <TrashIcon className="h-4 w-4 text-red-500" />
                           </Button>

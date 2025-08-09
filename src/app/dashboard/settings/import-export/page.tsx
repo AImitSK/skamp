@@ -73,7 +73,7 @@ export default function ImportExportPage() {
         {/* Content */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {/* Import Card */}
-          <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+          <div className="rounded-lg border border-zinc-200 bg-white p-6  dark:border-zinc-700 dark:bg-zinc-800">
             <div className="flex items-center gap-3 mb-4">
               <div className="rounded-lg bg-blue-100 p-2 dark:bg-blue-900/20">
                 <ArrowUpTrayIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
@@ -92,7 +92,7 @@ export default function ImportExportPage() {
           </div>
 
           {/* Export Card */}
-          <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+          <div className="rounded-lg border border-zinc-200 bg-white p-6  dark:border-zinc-700 dark:bg-zinc-800">
             <div className="flex items-center gap-3 mb-4">
               <div className="rounded-lg bg-green-100 p-2 dark:bg-green-900/20">
                 <ArrowDownTrayIcon className="h-6 w-6 text-green-600 dark:text-green-400" />
@@ -112,7 +112,7 @@ export default function ImportExportPage() {
 
           {/* Test Data Card - Only in Development */}
           {process.env.NODE_ENV === 'development' && (
-            <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+            <div className="rounded-lg border border-zinc-200 bg-white p-6  dark:border-zinc-700 dark:bg-zinc-800">
               <div className="flex items-center gap-3 mb-4">
                 <div className="rounded-lg bg-purple-100 p-2 dark:bg-purple-900/20">
                   <CircleStackIcon className="h-6 w-6 text-purple-600 dark:text-purple-400" />

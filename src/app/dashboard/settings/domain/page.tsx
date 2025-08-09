@@ -310,7 +310,7 @@ export default function DomainsPage() {
                   {domains.map((domain) => (
                     <div
                       key={domain.id}
-                      className="bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl p-6"
+                      className="bg-white ring-1 ring-gray-900/5 rounded-xl p-6"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">

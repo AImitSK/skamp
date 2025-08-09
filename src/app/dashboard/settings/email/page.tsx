@@ -451,48 +451,64 @@ export default function EmailSettingsPage() {
           <>
             {/* Statistics Cards */}
             <div className="grid grid-cols-4 gap-4 mb-6">
-              <div className="bg-white p-4 rounded-lg border">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600">Aktive Adressen</p>
-                    <p className="text-2xl font-semibold mt-1">
+              <div className="bg-gray-50 rounded-lg p-4" style={{backgroundColor: '#f1f0e2'}}>
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0">
+                    <EnvelopeIcon className="h-5 w-5 text-gray-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
                       {emailAddresses.filter(a => a.isActive).length}
-                    </p>
+                    </div>
+                    <div className="text-sm text-gray-500 truncate">
+                      Aktive Adressen
+                    </div>
                   </div>
-                  <EnvelopeIcon className="h-6 w-6 text-gray-400" />
                 </div>
               </div>
-              <div className="bg-white p-4 rounded-lg border">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600">Mit KI</p>
-                    <p className="text-2xl font-semibold mt-1">
+              <div className="bg-gray-50 rounded-lg p-4" style={{backgroundColor: '#f1f0e2'}}>
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0">
+                    <SparklesIcon className="h-5 w-5 text-gray-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
                       {emailAddresses.filter(a => a.aiSettings?.enabled).length}
-                    </p>
+                    </div>
+                    <div className="text-sm text-gray-500 truncate">
+                      Mit KI
+                    </div>
                   </div>
-                  <SparklesIcon className="h-6 w-6 text-gray-400" />
                 </div>
               </div>
-              <div className="bg-white p-4 rounded-lg border">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600">Routing-Regeln</p>
-                    <p className="text-2xl font-semibold mt-1">
+              <div className="bg-gray-50 rounded-lg p-4" style={{backgroundColor: '#f1f0e2'}}>
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0">
+                    <ArrowPathIcon className="h-5 w-5 text-gray-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
                       {emailAddresses.reduce((sum, a) => sum + (a.routingRules?.length || 0), 0)}
-                    </p>
+                    </div>
+                    <div className="text-sm text-gray-500 truncate">
+                      Routing-Regeln
+                    </div>
                   </div>
-                  <ArrowPathIcon className="h-6 w-6 text-gray-400" />
                 </div>
               </div>
-              <div className="bg-white p-4 rounded-lg border">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600">Team-Mitglieder</p>
-                    <p className="text-2xl font-semibold mt-1">
-                      {loadingTeam ? '...' : teamMembers.length}
-                    </p>
+              <div className="bg-gray-50 rounded-lg p-4" style={{backgroundColor: '#f1f0e2'}}>
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0">
+                    <UserGroupIcon className="h-5 w-5 text-gray-500" />
                   </div>
-                  <UserGroupIcon className="h-6 w-6 text-gray-400" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
+                      {loadingTeam ? '...' : teamMembers.length}
+                    </div>
+                    <div className="text-sm text-gray-500 truncate">
+                      Team-Mitglieder
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -506,7 +522,7 @@ export default function EmailSettingsPage() {
             </div>
 
             {/* Email Addresses Table */}
-            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div className="bg-white rounded-lg overflow-hidden">
               {/* Header */}
               <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
                 <div className="flex items-center">

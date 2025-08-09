@@ -465,7 +465,7 @@ export default function TeamSettingsPage() {
         )}
         
         {/* Team Members Table */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-white rounded-lg overflow-hidden">
           {/* Table Header */}
           <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
             <div className="flex items-center">
@@ -584,38 +584,59 @@ export default function TeamSettingsPage() {
         
         {/* Stats */}
         <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-3">
-          <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
-            <dt className="truncate text-sm font-medium text-gray-500">
-              Aktive Mitglieder
-            </dt>
-            <dd className="mt-1 text-3xl font-semibold tracking-tight text-gray-900">
-              {activeMembersOnly.length}
-            </dd>
+          <div className="bg-gray-50 rounded-lg p-4" style={{backgroundColor: '#f1f0e2'}}>
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0">
+                <UserGroupIcon className="h-5 w-5 text-gray-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
+                  {activeMembersOnly.length}
+                </div>
+                <div className="text-sm text-gray-500 truncate">
+                  Aktive Mitglieder
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
-            <dt className="truncate text-sm font-medium text-gray-500">
-              Ausstehende Einladungen
-            </dt>
-            <dd className="mt-1 text-3xl font-semibold tracking-tight text-gray-900">
-              {pendingMembers.length}
-            </dd>
+          <div className="bg-gray-50 rounded-lg p-4" style={{backgroundColor: '#f1f0e2'}}>
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0">
+                <ClockIcon className="h-5 w-5 text-gray-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
+                  {pendingMembers.length}
+                </div>
+                <div className="text-sm text-gray-500 truncate">
+                  Ausstehende Einladungen
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
-            <dt className="truncate text-sm font-medium text-gray-500">
-              Rollen-Verteilung
-            </dt>
-            <dd className="mt-1 flex items-center gap-2 flex-wrap">
-              {Object.entries(roleConfig).map(([role, config]) => {
-                const count = activeMembers.filter(m => m.role === role).length;
-                if (count === 0) return null;
-                
-                return (
-                  <Badge key={role} color={config.color as any} className="whitespace-nowrap">
-                    {count} {config.label}
-                  </Badge>
-                );
-              })}
-            </dd>
+          <div className="bg-gray-50 rounded-lg p-4" style={{backgroundColor: '#f1f0e2'}}>
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0">
+                <ShieldCheckIcon className="h-5 w-5 text-gray-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm text-gray-500 truncate">
+                  Rollen-Verteilung
+                </div>
+                <div className="mt-1 flex items-center gap-2 flex-wrap">
+                  {Object.entries(roleConfig).map(([role, config]) => {
+                    const count = activeMembers.filter(m => m.role === role).length;
+                    if (count === 0) return null;
+                    
+                    return (
+                      <Badge key={role} color={config.color as any} className="whitespace-nowrap">
+                        {count} {config.label}
+                      </Badge>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         
