@@ -72,14 +72,6 @@ export default function DomainsPage() {
     userId: user?.uid || ''
   }), [currentOrganization?.id, user?.uid]);
 
-
-  useEffect(() => {
-    // Only load domains when auth and organization are fully loaded
-    if (!authLoading && !orgLoading && user && currentOrganization?.id) {
-      loadDomains();
-    }
-  }, [authLoading, orgLoading, user, currentOrganization?.id, loadDomains]);
-
   const loadDomains = useCallback(async () => {
     if (!user || !currentOrganization?.id) return;
 
@@ -96,6 +88,13 @@ export default function DomainsPage() {
       setLoading(false);
     }
   }, [user, currentOrganization?.id, getContext]);
+
+  useEffect(() => {
+    // Only load domains when auth and organization are fully loaded
+    if (!authLoading && !orgLoading && user && currentOrganization?.id) {
+      loadDomains();
+    }
+  }, [authLoading, orgLoading, user, currentOrganization?.id, loadDomains]);
 
   const handleVerify = async (domainId: string) => {
     try {
