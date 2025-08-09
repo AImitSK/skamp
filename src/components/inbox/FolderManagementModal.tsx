@@ -10,7 +10,7 @@ import {
   XMarkIcon,
   FolderIcon,
   PlusIcon
-} from '@heroicons/react/20/solid';
+} from '@heroicons/react/24/outline';
 import { TeamFolder, AutoAssignRule } from '@/types/inbox-enhanced';
 import { teamFolderService } from '@/lib/email/team-folder-service';
 // import { toast } from 'react-hot-toast';

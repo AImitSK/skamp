@@ -37,9 +37,9 @@ export class InboxTestService {
       to: config.toEmail,
       from: {
         email: config.fromEmail,
-        name: 'SKAMP Delivery Test'
+        name: 'CeleroPress Delivery Test'
       },
-      subject: `[SKAMP Test] Domain-Verifizierung für ${config.domain}`,
+      subject: `[CeleroPress Test] Domain-Verifizierung für ${config.domain}`,
       text: this.generateTestEmailText(config, testId, timestamp),
       html: this.generateTestEmailHtml(config, testId, timestamp),
       customArgs: {
@@ -48,9 +48,9 @@ export class InboxTestService {
         type: 'inbox_test'
       },
       headers: {
-        'X-SKAMP-Test-ID': testId,
-        'X-SKAMP-Domain': config.domain,
-        'X-SKAMP-Test-Type': 'inbox-delivery',
+        'X-CeleroPress-Test-ID': testId,
+        'X-CeleroPress-Domain': config.domain,
+        'X-CeleroPress-Test-Type': 'inbox-delivery',
         'List-Unsubscribe': '<mailto:noreply@skamp.de?subject=unsubscribe>',
         'Precedence': 'bulk'
       },
@@ -115,18 +115,18 @@ WAS BEDEUTET DAS?
 • Ihre E-Mails wirken vertrauenswürdiger und professioneller
 
 NÄCHSTE SCHRITTE:
-1. Kehren Sie zu SKAMP zurück
+1. Kehren Sie zu CeleroPress zurück
 2. Die Testergebnisse werden automatisch ausgewertet
 3. Sie können mit dem Versand Ihrer Kampagnen beginnen
 
 ---
-Diese Test-E-Mail wurde automatisch von SKAMP generiert.
+Diese Test-E-Mail wurde automatisch von CeleroPress generiert.
 Sie können auf diese E-Mail nicht antworten.
 
-SKAMP - Ihre PR-Software
-https://app.skamp.de
+CeleroPress - Ihre PR-Software
+https://www.celeropress.com
 
-© ${new Date().getFullYear()} SKAMP. Alle Rechte vorbehalten.
+© ${new Date().getFullYear()} CeleroPress. Alle Rechte vorbehalten.
 `;
   }
 
@@ -140,7 +140,7 @@ https://app.skamp.de
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SKAMP Domain Test</title>
+    <title>CeleroPress Domain Test</title>
     <!--[if mso]>
     <noscript>
         <xml>
@@ -235,13 +235,13 @@ https://app.skamp.de
                             
                             <div style="text-align: center; margin: 30px 0;">
                                 <a href="https://app.skamp.de" style="display: inline-block; padding: 12px 30px; background: #005fab; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;" class="button">
-                                    Zurück zu SKAMP
+                                    Zurück zu CeleroPress
                                 </a>
                             </div>
                             
                             <div style="margin-top: 30px; padding-top: 30px; border-top: 1px solid #e9ecef;">
                                 <p style="margin: 0; color: #999; font-size: 12px; text-align: center;">
-                                    Diese Test-E-Mail wurde automatisch von SKAMP generiert.<br>
+                                    Diese Test-E-Mail wurde automatisch von CeleroPress generiert.<br>
                                     Sie können auf diese E-Mail nicht antworten.
                                 </p>
                             </div>
@@ -252,10 +252,10 @@ https://app.skamp.de
                     <tr>
                         <td style="background: #f8f9fa; padding: 30px; text-align: center; border-radius: 0 0 8px 8px;">
                             <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">
-                                <strong>SKAMP</strong> - Ihre PR-Software
+                                <strong>CeleroPress</strong> - Ihre PR-Software
                             </p>
                             <p style="margin: 0; color: #999; font-size: 12px;">
-                                © ${new Date().getFullYear()} SKAMP. Alle Rechte vorbehalten.
+                                © ${new Date().getFullYear()} CeleroPress. Alle Rechte vorbehalten.
                             </p>
                             <p style="margin: 10px 0 0 0;">
                                 <a href="https://app.skamp.de" style="color: #005fab; text-decoration: none; font-size: 12px;">app.skamp.de</a>
@@ -332,7 +332,7 @@ https://app.skamp.de
 
     // Return-Path Check
     const returnPath = headers['Return-Path'] || headers['return-path'] || '';
-    if (returnPath && !returnPath.includes('@' + headers['X-SKAMP-Domain'])) {
+    if (returnPath && !returnPath.includes('@' + headers['X-CeleroPress-Domain'])) {
       recommendations.push('Konfigurieren Sie einen custom Return-Path für Ihre Domain');
     }
 
@@ -368,7 +368,7 @@ https://app.skamp.de
       headers: {
         'Authentication-Results': 'spf=pass; dkim=pass; dmarc=pass',
         'X-Spam-Score': scenario.spamScore.toString(),
-        'X-SKAMP-Test-ID': nanoid()
+        'X-CeleroPress-Test-ID': nanoid()
       },
       warnings: scenario.spamScore > 3 ? ['Erhöhter Spam-Score festgestellt'] : [],
       recommendations: scenario.deliveryStatus === 'spam' 

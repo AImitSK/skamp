@@ -19,7 +19,7 @@ Diese Dokumentationen folgen dem standardisierten Template aus `FEATURE_DOCUMENT
 
 ### 🚧 In Arbeit
 - **[PR-Kampagnen](./docu_dashboard_pr-tools_campaigns.md)** - Kampagnen-Erstellung mit KI-Unterstützung (❌ Template noch nicht angewendet)
-- [ ] **E-Mail Inbox** - E-Mail-Kommunikation und Thread-Verwaltung
+- **[Communication Inbox](./docu_dashboard_communication_inbox.md)** - E-Mail-Kommunikation mit KI-Integration und Team-Management (🔄 Tests und Design-Pattern-Compliance erforderlich)
 
 ### 📝 Geplant (basierend auf Legacy-Features)
 - [ ] **AI-Assistent** - KI-gestützte Textgenerierung

@@ -19,7 +19,7 @@ import {
   ChartBarIcon,
   ExclamationTriangleIcon,
   FireIcon
-} from '@heroicons/react/20/solid';
+} from '@heroicons/react/24/outline';
 
 interface StatusManagerProps {
   thread: EmailThread;

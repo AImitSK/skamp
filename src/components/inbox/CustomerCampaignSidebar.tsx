@@ -13,7 +13,7 @@ import {
   MagnifyingGlassIcon,
   FolderIcon,
   PlusIcon
-} from '@heroicons/react/20/solid';
+} from '@heroicons/react/24/outline';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client-init';
 

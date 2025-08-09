@@ -12,7 +12,7 @@ import { emailAddressService } from '@/lib/email/email-address-service';
 import { emailMessageService } from '@/lib/email/email-message-service';
 import { threadMatcherService } from '@/lib/email/thread-matcher-service-flexible';
 import { emailSignatureService } from '@/lib/email/email-signature-service';
-import { XMarkIcon, PaperAirplaneIcon, PaperClipIcon } from '@heroicons/react/20/solid';
+import { XMarkIcon, PaperAirplaneIcon, PaperClipIcon } from '@heroicons/react/24/outline';
 import { Select } from '@/components/ui/select';
 import { serverTimestamp, Timestamp } from 'firebase/firestore';
 import { useAuth } from '@/context/AuthContext';

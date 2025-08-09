@@ -7,7 +7,7 @@ import {
   InboxIcon,
   PaperAirplaneIcon,
   TrashIcon
-} from '@heroicons/react/20/solid';
+} from '@heroicons/react/24/outline';
 
 interface InboxSidebarProps {
   selectedFolder: string;

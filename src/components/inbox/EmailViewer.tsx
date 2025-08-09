@@ -23,7 +23,7 @@ import {
   ClockIcon,
   ExclamationCircleIcon,
   ArrowPathIcon
-} from '@heroicons/react/20/solid';
+} from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import DOMPurify from 'dompurify';
 import { useEffect, useRef } from 'react';

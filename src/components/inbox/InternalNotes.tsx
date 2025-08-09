@@ -21,7 +21,7 @@ import {
   ChatBubbleLeftIcon,
   PaperAirplaneIcon,
   AtSymbolIcon
-} from '@heroicons/react/20/solid';
+} from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import format from 'date-fns/format';
 

@@ -622,7 +622,7 @@ export class EmailService {
         </div>
         
         <div class="footer">
-            <p>Diese E-Mail wurde über das SKAMP PR-Tool versendet.</p>
+            <p>Diese E-Mail wurde über CeleroPress versendet.</p>
         </div>
     </div>
 </body>
@@ -649,7 +649,7 @@ ${this.replaceVariables(email.closing, variables)}
 ${this.replaceVariables(email.signature, variables)}
 
 ---
-Diese E-Mail wurde über das SKAMP PR-Tool versendet.
+Diese E-Mail wurde über CeleroPress versendet.
 `;
   }
 

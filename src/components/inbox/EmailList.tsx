@@ -13,7 +13,7 @@ import {
   UserIcon,
   CheckIcon,
   XMarkIcon
-} from '@heroicons/react/20/solid';
+} from '@heroicons/react/24/outline';
 import { teamMemberService } from '@/lib/firebase/organization-service';
 import { TeamMember } from '@/types/international';
 

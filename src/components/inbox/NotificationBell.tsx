@@ -19,7 +19,7 @@ import {
   EnvelopeIcon,
   ClockIcon,
   ArrowTrendingUpIcon
-} from '@heroicons/react/20/solid';
+} from '@heroicons/react/24/outline';
 import format from 'date-fns/format';
 import { de } from 'date-fns/locale/de';
 

@@ -17,7 +17,7 @@ import {
   EyeSlashIcon,
   CheckIcon,
   AdjustmentsHorizontalIcon
-} from '@heroicons/react/20/solid';
+} from '@heroicons/react/24/outline';
 
 interface AIResponseSuggestionsProps {
   email: EmailMessage;
