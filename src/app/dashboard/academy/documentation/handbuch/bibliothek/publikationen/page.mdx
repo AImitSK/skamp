@@ -1,0 +1,339 @@
+export const metadata = {
+  title: 'Publikationen verwalten - CeleroPress Academy',
+  description: 'Verwalte deine Publikationen, Clippings und PR-Erfolge zentral in der Bibliothek'
+}
+
+# 📰 Publikationen verwalten
+
+Die Publikations-Bibliothek ist dein zentraler Ort für die Verwaltung aller veröffentlichten Inhalte, Clippings und PR-Erfolge. Hier dokumentierst und analysierst du deine Medien-Erfolge systematisch.
+
+<div className="not-prose bg-blue-50 border border-blue-200 rounded-lg p-6 my-8">
+  <h3 className="text-lg font-semibold text-blue-900 mb-2">📍 Wo findest du dieses Feature?</h3>
+  <p className="text-blue-700 mb-2">
+    <strong>Navigation:</strong> Dashboard → Bibliothek → Publikationen
+  </p>
+  <p className="text-blue-700">
+    <strong>Direkt-Link:</strong> <code>/dashboard/library/publications</code>
+  </p>
+</div>
+
+<div className="not-prose bg-green-50 border border-green-200 rounded-lg p-6 my-8">
+  <h3 className="text-lg font-semibold text-green-900 mb-2">💡 Das lernst du auf dieser Seite:</h3>
+  <ul className="space-y-2 text-green-700">
+    <li>✓ Publikationen erfassen und kategorisieren</li>
+    <li>✓ Clippings mit Metriken und Bewertungen verwalten</li>
+    <li>✓ Import/Export für Reporting und Analyse</li>
+    <li>✓ Erfolgs-Tracking und ROI-Messung</li>
+    <li>✓ Team-Kollaboration bei Publikations-Management</li>
+  </ul>
+</div>
+
+## Überblick: Deine Publikations-Zentrale
+
+Das Publikationen-Dashboard zeigt dir alle deine PR-Erfolge strukturiert und analysierbar:
+
+<div className="not-prose grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
+  <div className="bg-white border border-gray-200 rounded-lg p-4">
+    <h4 className="font-semibold text-gray-900 mb-2">📊 Performance-Metriken</h4>
+    <p className="text-sm text-gray-600">
+      Reichweite, Engagement und Impact-Werte
+    </p>
+  </div>
+  <div className="bg-white border border-gray-200 rounded-lg p-4">
+    <h4 className="font-semibold text-gray-900 mb-2">🎯 Kategorisierung</h4>
+    <p className="text-sm text-gray-600">
+      Nach Kampagnen, Medien-Typ oder Themen
+    </p>
+  </div>
+  <div className="bg-white border border-gray-200 rounded-lg p-4">
+    <h4 className="font-semibold text-gray-900 mb-2">📈 Trend-Analyse</h4>
+    <p className="text-sm text-gray-600">
+      Entwicklung deiner PR-Performance über Zeit
+    </p>
+  </div>
+</div>
+
+## Neue Publikation erfassen
+
+### Schritt 1: Grunddaten der Publikation
+
+1. Klicke auf **"Neue Publikation"** (grüner Button oben rechts)
+2. Erfasse die Basis-Informationen:
+
+<div className="not-prose bg-gray-50 rounded-lg p-6 my-6">
+  <h4 className="font-medium text-gray-900 mb-4">📝 Publikations-Daten:</h4>
+  <ul className="space-y-3">
+    <li className="flex items-start">
+      <span className="text-red-500 mr-2 mt-0.5">*</span>
+      <div>
+        <strong>Titel/Headline:</strong> Wie die Story veröffentlicht wurde<br/>
+        <span className="text-sm text-gray-500">Beispiel: "KI-Startup revolutioniert Finanzberatung"</span>
+      </div>
+    </li>
+    <li className="flex items-start">
+      <span className="text-red-500 mr-2 mt-0.5">*</span>
+      <div>
+        <strong>Medium:</strong> Wo wurde publiziert<br/>
+        <span className="text-sm text-gray-500">Beispiel: "Handelsblatt Online", "ZDF heute-journal"</span>
+      </div>
+    </li>
+    <li className="flex items-start">
+      <span className="text-red-500 mr-2 mt-0.5">*</span>
+      <div>
+        <strong>Publikations-Datum:</strong> Wann erschienen<br/>
+        <span className="text-sm text-gray-500">Wichtig für Zeitreihen-Analysen</span>
+      </div>
+    </li>
+  </ul>
+</div>
+
+### Schritt 2: Medien-Typ und Kategorisierung
+
+<div className="not-prose grid grid-cols-1 md:grid-cols-2 gap-6 my-8">
+  <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg p-6 border border-blue-200">
+    <h4 className="text-lg font-semibold text-blue-900 mb-3">📺 Medien-Typ</h4>
+    <ul className="space-y-2 text-blue-700 text-sm">
+      <li>• <strong>Print:</strong> Zeitungen, Magazine</li>
+      <li>• <strong>Online:</strong> News-Portale, Blogs</li>
+      <li>• <strong>TV:</strong> Nachrichten, Magazin-Sendungen</li>
+      <li>• <strong>Radio:</strong> News, Talk-Shows</li>
+      <li>• <strong>Social Media:</strong> Influencer-Posts</li>
+    </ul>
+  </div>
+  <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg p-6 border border-purple-200">
+    <h4 className="text-lg font-semibold text-purple-900 mb-3">🏷️ Kategorien</h4>
+    <ul className="space-y-2 text-purple-700 text-sm">
+      <li>• <strong>Nach Kampagne:</strong> Produktlaunch, Event</li>
+      <li>• <strong>Nach Thema:</strong> Tech, Wirtschaft, Lifestyle</li>
+      <li>• <strong>Nach Tonalität:</strong> Positiv, Neutral, Kritisch</li>
+      <li>• <strong>Nach Reichweite:</strong> National, Regional, Fach</li>
+    </ul>
+  </div>
+</div>
+
+### Schritt 3: Performance-Metriken erfassen
+
+<div className="not-prose bg-yellow-50 border border-yellow-200 rounded-lg p-6 my-6">
+  <h4 className="text-yellow-900 font-semibold mb-3">📊 Wichtige Metriken dokumentieren</h4>
+  
+  **Reichweiten-Daten:**
+  <div className="grid grid-cols-2 gap-4 mt-4">
+    <ul className="text-yellow-700 space-y-1 text-sm">
+      <li>• <strong>Auflage/Reichweite:</strong> Wie viele Leser/Zuschauer?</li>
+      <li>• <strong>Page-Views (Online):</strong> Konkrete Traffic-Zahlen</li>
+      <li>• <strong>Social Shares:</strong> Virality-Faktor</li>
+      <li>• <strong>Comments/Engagement:</strong> Interaktions-Rate</li>
+    </ul>
+    <ul className="text-yellow-700 space-y-1 text-sm">
+      <li>• <strong>Ad-Value-Equivalent:</strong> Werbewert der Berichterstattung</li>
+      <li>• <strong>Clipping-Qualität:</strong> Vollständig, Teaser, Erwähnung</li>
+      <li>• <strong>Placement:</strong> Titelseite, Online-Startseite, etc.</li>
+      <li>• <strong>Journalist:</strong> Wer hat geschrieben?</li>
+    </ul>
+  </div>
+</div>
+
+## Content-Upload und -Verwaltung
+
+### Clipping-Formate und Upload
+
+**Unterstützte Dateiformate:**
+
+<div className="not-prose grid grid-cols-2 gap-4 my-6">
+  <div className="bg-white border border-gray-200 rounded-lg p-4">
+    <h5 className="font-medium text-gray-900 mb-3">📄 Dokumente:</h5>
+    <ul className="text-sm space-y-1 text-gray-600">
+      <li>• <strong>PDF:</strong> Print-Clippings, Artikel-Screenshots</li>
+      <li>• <strong>Images:</strong> JPG, PNG für Social Media Posts</li>
+      <li>• <strong>Links:</strong> URLs zu Online-Artikeln</li>
+      <li>• <strong>Word:</strong> Artikel-Texte zur Bearbeitung</li>
+    </ul>
+  </div>
+  <div className="bg-white border border-gray-200 rounded-lg p-4">
+    <h5 className="font-medium text-gray-900 mb-3">🎥 Multimedia:</h5>
+    <ul className="text-sm space-y-1 text-gray-600">
+      <li>• <strong>Video:</strong> MP4 für TV-Beiträge</li>
+      <li>• <strong>Audio:</strong> MP3 für Radio-Interviews</li>
+      <li>• <strong>Screenshots:</strong> Social Media, Online-Artikel</li>
+      <li>• <strong>Transcripts:</strong> Text von Audio/Video-Inhalten</li>
+    </ul>
+  </div>
+</div>
+
+### Bulk-Upload für große Clipping-Mengen
+
+<div className="not-prose bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-6 my-6">
+  <h4 className="text-green-900 font-semibold mb-3">⚡ Effizienter Massen-Upload</h4>
+  
+  **Für große Kampagnen mit vielen Clippings:**
+  <ol className="text-green-700 space-y-2">
+    <li>1. <strong>ZIP-Upload:</strong> Alle Clippings in einen Ordner, als ZIP hochladen</li>
+    <li>2. <strong>Naming-Convention:</strong> "Datum_Medium_Titel.pdf" für automatische Zuordnung</li>
+    <li>3. <strong>CSV-Import:</strong> Metadaten per Excel-Liste importieren</li>
+    <li>4. <strong>Batch-Processing:</strong> Automatische Kategorisierung nach Regeln</li>
+  </ol>
+  
+  <div className="bg-white rounded p-4 mt-4">
+    <strong className="text-green-800">Beispiel ZIP-Struktur:</strong>
+    <ul className="space-y-1 text-sm mt-2">
+      <li>• 2025-01-15_Handelsblatt_KI-Revolution.pdf</li>
+      <li>• 2025-01-16_Spiegel-Online_Startup-Erfolg.jpg</li>
+      <li>• 2025-01-18_ZDF-heute_Interview-Clip.mp4</li>
+    </ul>
+  </div>
+</div>
+
+## Analyse und Reporting
+
+### Performance-Dashboard
+
+<div className="not-prose grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
+  <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200">
+    <h5 className="font-semibold text-green-900 mb-2">📈 Erfolgs-Metriken</h5>
+    <ul className="text-green-700 text-sm space-y-1">
+      <li>• <strong>Gesamt-Reichweite:</strong> Kumulative Leser/Zuschauer</li>
+      <li>• <strong>Ad-Value:</strong> Monetärer PR-Wert</li>
+      <li>• <strong>Share of Voice:</strong> % der Branchenkommunikation</li>
+      <li>• <strong>Sentiment-Score:</strong> Positiv/Negativ-Verhältnis</li>
+    </ul>
+  </div>
+  <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg p-4 border border-blue-200">
+    <h5 className="font-semibold text-blue-900 mb-2">🎯 Medien-Analyse</h5>
+    <ul className="text-blue-700 text-sm space-y-1">
+      <li>• <strong>Top-Medien:</strong> Beste Kooperationspartner</li>
+      <li>• <strong>Medien-Mix:</strong> Print vs. Online vs. TV</li>
+      <li>• <strong>Geographic-Spread:</strong> Regionale Verteilung</li>
+      <li>• <strong>Quality-Score:</strong> Premium vs. Standard-Platzierungen</li>
+    </ul>
+  </div>
+  <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg p-4 border border-purple-200">
+    <h5 className="font-semibold text-purple-900 mb-2">📊 Trend-Analyse</h5>
+    <ul className="text-purple-700 text-sm space-y-1">
+      <li>• <strong>Zeitreihen:</strong> Performance-Entwicklung</li>
+      <li>• <strong>Seasonal-Patterns:</strong> Beste Timing-Fenster</li>
+      <li>• <strong>Topic-Trends:</strong> Welche Themen funktionieren?</li>
+      <li>• <strong>Journalist-Relations:</strong> Erfolgreiche Kontakte</li>
+    </ul>
+  </div>
+</div>
+
+### Export und Reporting
+
+<div className="not-prose bg-blue-50 border border-blue-200 rounded-lg p-6 my-6">
+  <h4 className="text-blue-900 font-semibold mb-3">📄 Professionelle Reports erstellen</h4>
+  
+  **Verfügbare Export-Formate:**
+  <div className="grid grid-cols-2 gap-4 mt-4">
+    <ul className="text-blue-700 space-y-1 text-sm">
+      <li>• <strong>PDF-Report:</strong> Executive Summary für Kunden</li>
+      <li>• <strong>Excel-Export:</strong> Detailierte Daten für Analyse</li>
+      <li>• <strong>PowerPoint:</strong> Präsentation-ready Slides</li>
+      <li>• <strong>CSV-Dump:</strong> Rohdaten für externe Tools</li>
+    </ul>
+    <ul className="text-blue-700 space-y-1 text-sm">
+      <li>• <strong>Clipping-Books:</strong> PDF-Sammlung aller Artikel</li>
+      <li>• <strong>Dashboard-Links:</strong> Live-URLs für Kunden</li>
+      <li>• <strong>API-Export:</strong> Automatische Übertragung</li>
+      <li>• <strong>Print-Layouts:</strong> Für physische Präsentationen</li>
+    </ul>
+  </div>
+  
+  **Report-Templates:**
+  <div className="bg-white rounded p-4 mt-4">
+    <ul className="space-y-1 text-sm">
+      <li>• <strong>Monats-Report:</strong> Standard-Übersicht für regelmäßiges Reporting</li>
+      <li>• <strong>Kampagnen-Report:</strong> Spezifisch für einzelne PR-Aktionen</li>
+      <li>• <strong>Jahres-Review:</strong> Comprehensive Annual Summary</li>
+      <li>• <strong>Crisis-Report:</strong> Speziell für Krisen-Kommunikation</li>
+    </ul>
+  </div>
+</div>
+
+## Team-Kollaboration
+
+### Workflow für Publikations-Management
+
+<div className="not-prose bg-gradient-to-r from-orange-50 to-red-50 rounded-lg p-6 my-6">
+  <h4 className="text-orange-900 font-semibold mb-3">🤝 Team-Prozesse optimieren</h4>
+  
+  **Typischer Workflow:**
+  <ol className="text-orange-700 space-y-2">
+    <li>1. <strong>Monitoring-Team:</strong> Sammelt täglich alle Clippings</li>
+    <li>2. <strong>Account-Manager:</strong> Kategorisiert und bewertet Relevanz</li>
+    <li>3. <strong>Analyst:</strong> Fügt Metriken und Performance-Daten hinzu</li>
+    <li>4. <strong>Reporting-Lead:</strong> Erstellt Kunden-Reports</li>
+  </ol>
+  
+  **Collaboration-Features:**
+  <ul className="text-orange-700 space-y-1 mt-4">
+    <li>• <strong>Kommentar-System:</strong> Interne Notizen zu Publikationen</li>
+    <li>• <strong>Review-Status:</strong> "Neu", "Geprüft", "Freigegeben", "Reportet"</li>
+    <li>• <strong>Assignment:</strong> Publikationen Team-Mitgliedern zuweisen</li>
+    <li>• <strong>Notifications:</strong> Alerts bei wichtigen Erwähnungen</li>
+  </ul>
+</div>
+
+## Best Practices & Tipps
+
+<div className="not-prose space-y-6 my-8">
+  <div className="bg-white border-l-4 border-blue-500 p-6">
+    <h4 className="font-semibold text-gray-900 mb-2">💎 Qualitäts-Standards etablieren</h4>
+    <ul className="text-gray-600 space-y-1">
+      <li>• <strong>Vollständige Daten:</strong> Alle Pflichtfelder ausfüllen</li>
+      <li>• <strong>Einheitliche Bewertung:</strong> Klare Kriterien für Tonalität</li>
+      <li>• <strong>Regelmäßige Reviews:</strong> Wöchentliche Qualitätsprüfung</li>
+      <li>• <strong>Benchmark-Tracking:</strong> Konkurrenz-Vergleiche dokumentieren</li>
+    </ul>
+  </div>
+  
+  <div className="bg-white border-l-4 border-green-500 p-6">
+    <h4 className="font-semibold text-gray-900 mb-2">⚡ Effizienz-Hacks</h4>
+    <ul className="text-gray-600 space-y-1">
+      <li>• <strong>Google Alerts:</strong> Automatisches Monitoring einrichten</li>
+      <li>• <strong>Browser-Bookmarklet:</strong> Schnelles Clipping von Webseiten</li>
+      <li>• <strong>Template-Texte:</strong> Standard-Beschreibungen vorbereiten</li>
+      <li>• <strong>Batch-Processing:</strong> Mehrere Clippings gleichzeitig bearbeiten</li>
+    </ul>
+  </div>
+  
+  <div className="bg-white border-l-4 border-purple-500 p-6">
+    <h4 className="font-semibold text-gray-900 mb-2">📊 Analytics-Optimierung</h4>
+    <ul className="text-gray-600 space-y-1">
+      <li>• <strong>KPI-Definition:</strong> Welche Metriken sind wirklich wichtig?</li>
+      <li>• <strong>Baseline-Messung:</strong> Vor/Nach-Vergleiche bei Kampagnen</li>
+      <li>• <strong>Competitive-Intelligence:</strong> Branchenbenchmarks nutzen</li>
+      <li>• <strong>ROI-Berechnung:</strong> Klare Erfolgs-Messungen etablieren</li>
+    </ul>
+  </div>
+</div>
+
+## Häufige Fragen
+
+**F: Wie kann ich meine bisherigen Clippings importieren?**  
+A: Nutze den Bulk-Upload mit ZIP-Dateien oder den CSV-Import für strukturierte Daten.
+
+**F: Was ist der Unterschied zwischen Ad-Value und Real-Impact?**  
+A: Ad-Value ist der theoretische Werbewert, Real-Impact misst tatsächliche Business-Auswirkungen.
+
+**F: Wie lange werden Publikationen gespeichert?**  
+A: Unbegrenzt! Du kannst auch alte Kampagnen für Trend-Analysen nutzen.
+
+**F: Kann ich Custom-Felder hinzufügen?**  
+A: Ja, über die Admin-Einstellungen kannst du branchenspezifische Felder definieren.
+
+---
+
+<div className="not-prose bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-8 my-8 text-center">
+  <h3 className="text-2xl font-bold text-gray-900 mb-4">
+    🎯 Ready für kreative Assets?
+  </h3>
+  <p className="text-gray-600 mb-6">
+    Du meisterst jetzt das Publikations-Management! Als nächstes lernst du, wie du Werbemittel und kreative Assets verwaltest.
+  </p>
+  <a 
+    href="/dashboard/academy/documentation/handbuch/bibliothek/werbemittel"
+    className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+  >
+    Weiter zu Werbemitteln →
+  </a>
+</div>

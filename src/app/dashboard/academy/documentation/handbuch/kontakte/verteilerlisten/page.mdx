@@ -1,0 +1,373 @@
+export const metadata = {
+  title: 'Verteilerlisten - CeleroPress Academy',
+  description: 'Erstelle intelligente Verteilerlisten für zielgerichtete PR-Kampagnen'
+}
+
+# 📋 Verteilerlisten verwalten
+
+Verteilerlisten sind das Herzstück erfolgreicher PR-Arbeit! Hier organisierst du deine Kontakte in thematische oder projektspezifische Gruppen für präzise und effektive Kampagnen-Kommunikation.
+
+<div className="not-prose bg-blue-50 border border-blue-200 rounded-lg p-6 my-8">
+  <h3 className="text-lg font-semibold text-blue-900 mb-2">📍 Wo findest du dieses Feature?</h3>
+  <p className="text-blue-700 mb-2">
+    <strong>Navigation:</strong> Dashboard → Kontakte → Listen
+  </p>
+  <p className="text-blue-700">
+    <strong>Direkt-Link:</strong> <code>/dashboard/contacts/lists</code>
+  </p>
+</div>
+
+<div className="not-prose bg-green-50 border border-green-200 rounded-lg p-6 my-8">
+  <h3 className="text-lg font-semibold text-green-900 mb-2">💡 Das lernst du auf dieser Seite:</h3>
+  <ul className="space-y-2 text-green-700">
+    <li>✓ Strategische Verteilerlisten erstellen und verwalten</li>
+    <li>✓ Kontakte aus CRM intelligent segmentieren</li>
+    <li>✓ Listen für verschiedene Kampagnen-Typen optimieren</li>
+    <li>✓ Dynamische vs. statische Listen verstehen</li>
+    <li>✓ Performance-Metriken und Erfolg messen</li>
+  </ul>
+</div>
+
+## Überblick: Deine Listen-Zentrale
+
+Das Listen-Dashboard gibt dir den kompletten Überblick über alle deine Verteilerlisten:
+
+<div className="not-prose grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
+  <div className="bg-white border border-gray-200 rounded-lg p-4">
+    <h4 className="font-semibold text-gray-900 mb-2">📊 Listen-Analytics</h4>
+    <p className="text-sm text-gray-600">
+      Größe, Engagement-Raten und Performance-Metriken
+    </p>
+  </div>
+  <div className="bg-white border border-gray-200 rounded-lg p-4">
+    <h4 className="font-semibold text-gray-900 mb-2">🎯 Smart-Segmentierung</h4>
+    <p className="text-sm text-gray-600">
+      Filter-basierte dynamische Listen
+    </p>
+  </div>
+  <div className="bg-white border border-gray-200 rounded-lg p-4">
+    <h4 className="font-semibent text-gray-900 mb-2">⚡ Quick-Actions</h4>
+    <p className="text-sm text-gray-600">
+      Direkt Kampagnen starten oder Listen duplizieren
+    </p>
+  </div>
+</div>
+
+## Neue Verteilerliste erstellen
+
+### Schritt 1: Listen-Typ auswählen
+
+1. Klicke auf **"Neue Liste"** (grüner Button oben rechts)
+2. Wähle deinen Listen-Typ:
+
+<div className="not-prose grid grid-cols-1 md:grid-cols-2 gap-6 my-8">
+  <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg p-6 border border-blue-200">
+    <h4 className="text-lg font-semibold text-blue-900 mb-3">🎯 Statische Liste</h4>
+    <ul className="space-y-2 text-blue-700 text-sm">
+      <li>• <strong>Manuell zusammengestellt</strong></li>
+      <li>• Kontakte bleiben fix in der Liste</li>
+      <li>• Perfekt für: Event-Einladungen, VIP-Listen</li>
+      <li>• Vollständige Kontrolle über jeden Kontakt</li>
+    </ul>
+    <div className="mt-4 text-xs text-blue-600 bg-blue-100 p-2 rounded">
+      <strong>Beispiel:</strong> "CeBIT 2025 VIP-Journalisten" - 25 handverlesene Top-Kontakte
+    </div>
+  </div>
+  <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg p-6 border border-purple-200">
+    <h4 className="text-lg font-semibold text-purple-900 mb-3">⚡ Dynamische Liste</h4>
+    <ul className="space-y-2 text-purple-700 text-sm">
+      <li>• <strong>Filter-basiert automatisch</strong></li>
+      <li>• Aktualisiert sich selbst bei neuen Kontakten</li>
+      <li>• Perfekt für: Themen-Segmente, Regionen</li>
+      <li>• Spart Zeit bei wiederkehrenden Kampagnen</li>
+    </ul>
+    <div className="mt-4 text-xs text-purple-600 bg-purple-100 p-2 rounded">
+      <strong>Beispiel:</strong> "Tech-Journalisten Deutschland" - alle Kontakte mit Tag "Tech" + "Deutschland"
+    </div>
+  </div>
+</div>
+
+### Schritt 2: Listen-Grunddaten
+
+<div className="not-prose bg-gray-50 rounded-lg p-6 my-6">
+  <h4 className="font-medium text-gray-900 mb-4">📝 Listen-Informationen:</h4>
+  <ul className="space-y-3">
+    <li className="flex items-start">
+      <span className="text-red-500 mr-2 mt-0.5">*</span>
+      <div>
+        <strong>Listen-Name:</strong> Eindeutig und beschreibend<br/>
+        <span className="text-sm text-gray-500">Beispiel: "Automotive-Fachpresse Q1-2025"</span>
+      </div>
+    </li>
+    <li className="flex items-start">
+      <span className="text-gray-400 mr-2 mt-0.5">○</span>
+      <div>
+        <strong>Beschreibung:</strong> Zweck und Zielgruppe der Liste<br/>
+        <span className="text-sm text-gray-500">Beispiel: "Relevante Automotive-Journalisten für Produktlaunch"</span>
+      </div>
+    </li>
+    <li className="flex items-start">
+      <span className="text-gray-400 mr-2 mt-0.5">○</span>
+      <div>
+        <strong>Kategorie:</strong> Thematische Gruppierung<br/>
+        <span className="text-sm text-gray-500">Beispiel: "Produktlaunches", "Events", "Crisis Communication"</span>
+      </div>
+    </li>
+  </ul>
+</div>
+
+### Schritt 3A: Statische Liste - Kontakte hinzufügen
+
+**Manuelle Auswahl aus deinem CRM:**
+
+1. **Suche & Filter nutzen:** Verwende die erweiterten CRM-Filter
+2. **Batch-Auswahl:** Wähle mehrere Kontakte mit Checkboxes
+3. **Direkte Suche:** Suche nach Namen oder E-Mail-Adressen
+4. **Import aus CSV:** Lade eine bestehende Kontaktliste hoch
+
+<div className="not-prose bg-yellow-50 border border-yellow-200 rounded-lg p-6 my-6">
+  <h4 className="text-yellow-900 font-semibold mb-3">💡 Pro-Tipp: Effiziente Kontakt-Auswahl</h4>
+  <ol className="text-yellow-700 space-y-2">
+    <li>1. <strong>CRM-Filter nutzen:</strong> Vorsortierung nach Tags, Region, Publikation</li>
+    <li>2. <strong>Bulk-Selection:</strong> Alle gefilterten Kontakte auf einmal auswählen</li>
+    <li>3. <strong>Manuell verfeinern:</strong> Unwichtige Kontakte einzeln entfernen</li>
+    <li>4. <strong>Qualitätskontrolle:</strong> Liste auf Duplikate und Relevanz prüfen</li>
+  </ol>
+</div>
+
+### Schritt 3B: Dynamische Liste - Filter definieren
+
+**Intelligent automatische Segmentierung:**
+
+<div className="not-prose bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-6 my-6">
+  <h4 className="text-green-900 font-semibold mb-3">🤖 Dynamische Filter-Kombinationen</h4>
+  
+  **Verfügbare Filter-Kriterien:**
+  <div className="grid grid-cols-2 gap-4 mt-4">
+    <ul className="text-green-700 space-y-1 text-sm">
+      <li>• <strong>Tags:</strong> Beliebige Kombination</li>
+      <li>• <strong>Publikations-Typ:</strong> Zeitung, Online, TV, Radio</li>
+      <li>• <strong>Region:</strong> Bundesland, Stadt, International</li>
+      <li>• <strong>Reichweite:</strong> Lokal, Regional, National</li>
+    </ul>
+    <ul className="text-green-700 space-y-1 text-sm">
+      <li>• <strong>Branche:</strong> Automotive, Tech, Lifestyle, etc.</li>
+      <li>• <strong>Position:</strong> Redakteur, Chefredakteur, Freelancer</li>
+      <li>• <strong>Aktivität:</strong> Letzte Interaktion, Engagement-Rate</li>
+      <li>• <strong>Firma-Typ:</strong> Verlag, Medienhaus, Agentur</li>
+    </ul>
+  </div>
+  
+  **Beispiel-Filter: "Tech-Startup-Presse"**
+  <div className="bg-white rounded p-4 mt-4">
+    <ul className="space-y-1 text-sm">
+      <li>✓ Tags: "Tech" AND "Innovation" AND "Startups"</li>
+      <li>✓ Region: "Deutschland" OR "DACH-Region"</li>
+      <li>✓ Publikations-Typ: "Online" OR "Magazine"</li>
+      <li>✓ Aktivität: "Letzter Kontakt < 12 Monate"</li>
+    </ul>
+    <div className="text-xs text-gray-500 mt-2">
+      → Ergebnis: 47 Journalisten (aktualisiert sich automatisch bei neuen Kontakten)
+    </div>
+  </div>
+</div>
+
+## Listen-Management & Organisation
+
+### Listen-Kategorien für bessere Übersicht
+
+<div className="not-prose grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
+  <div className="bg-white border border-gray-200 rounded-lg p-4">
+    <h5 className="font-medium text-gray-900 mb-3">🎯 Kampagnen-basierte Listen:</h5>
+    <ul className="text-sm space-y-1 text-gray-600">
+      <li>• <strong>Produktlaunch-Listen</strong> - Nach Thema segmentiert</li>
+      <li>• <strong>Event-Listen</strong> - Messe- und Event-spezifisch</li>
+      <li>• <strong>Crisis-Listen</strong> - Schnelle Kommunikation</li>
+      <li>• <strong>Embargo-Listen</strong> - Vertrauensvolle Kontakte</li>
+    </ul>
+  </div>
+  <div className="bg-white border border-gray-200 rounded-lg p-4">
+    <h5 className="font-medium text-gray-900 mb-3">📊 Performance-basierte Listen:</h5>
+    <ul className="text-sm space-y-1 text-gray-600">
+      <li>• <strong>High-Performer</strong> - Beste Öffnungsraten</li>
+      <li>• <strong>Quick-Responders</strong> - Schnelle Antworten</li>
+      <li>• <strong>Story-Placer</strong> - Hohe Publikationsrate</li>
+      <li>• <strong>A-List</strong> - Premium-Multiplikatoren</li>
+    </ul>
+  </div>
+</div>
+
+### Listen-Aktionen und Workflows
+
+**Verfügbare Aktionen für jede Liste:**
+
+<div className="not-prose bg-blue-50 border border-blue-200 rounded-lg p-6 my-6">
+  <h4 className="text-blue-900 font-semibold mb-3">⚡ Listen-Management-Funktionen</h4>
+  
+  <div className="grid grid-cols-2 gap-6">
+    <div>
+      <strong className="text-blue-800">Standard-Aktionen:</strong>
+      <ul className="text-blue-700 space-y-1 text-sm mt-2">
+        <li>• <strong>Bearbeiten:</strong> Kontakte hinzufügen/entfernen</li>
+        <li>• <strong>Duplizieren:</strong> Als Vorlage für ähnliche Listen</li>
+        <li>• <strong>Exportieren:</strong> CSV-Download für externe Tools</li>
+        <li>• <strong>Archivieren:</strong> Alte Listen aufbewahren</li>
+      </ul>
+    </div>
+    <div>
+      <strong className="text-blue-800">Kampagnen-Aktionen:</strong>
+      <ul className="text-blue-700 space-y-1 text-sm mt-2">
+        <li>• <strong>Kampagne starten:</strong> Direkt E-Mail-Editor öffnen</li>
+        <li>• <strong>Template laden:</strong> Vorgefertigte Nachrichten</li>
+        <li>• <strong>A/B-Test setup:</strong> Listen-Segmente für Tests</li>
+        <li>• <strong>Scheduling:</strong> Zeitgesteuerte Kampagnen</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+## Listen-Performance & Analytics
+
+### Wichtige Kennzahlen verstehen
+
+<div className="not-prose grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
+  <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200">
+    <h5 className="font-semibold text-green-900 mb-2">📈 Engagement-Metriken</h5>
+    <ul className="text-green-700 text-sm space-y-1">
+      <li>• <strong>Öffnungsrate:</strong> % geöffnete E-Mails</li>
+      <li>• <strong>Klickrate:</strong> % Link-Klicks</li>
+      <li>• <strong>Response-Rate:</strong> % Antworten</li>
+      <li>• <strong>Bounce-Rate:</strong> % unzustellbar</li>
+    </ul>
+  </div>
+  <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg p-4 border border-blue-200">
+    <h5 className="font-semibold text-blue-900 mb-2">🎯 Reichweiten-Metriken</h5>
+    <ul className="text-blue-700 text-sm space-y-1">
+      <li>• <strong>Liste-Größe:</strong> Anzahl aktive Kontakte</li>
+      <li>• <strong>Reach-Potenzial:</strong> Geschätzte Leser</li>
+      <li>• <strong>Medien-Mix:</strong> Print/Online/TV/Radio</li>
+      <li>• <strong>Geo-Verteilung:</strong> Regionale Abdeckung</li>
+    </ul>
+  </div>
+  <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg p-4 border border-purple-200">
+    <h5 className="font-semibold text-purple-900 mb-2">📊 Qualitäts-Metriken</h5>
+    <ul className="text-purple-700 text-sm space-y-1">
+      <li>• <strong>Data-Quality:</strong> % vollständige Profile</li>
+      <li>• <strong>Aktualität:</strong> Letzte Kontakt-Validierung</li>
+      <li>• <strong>Relevanz-Score:</strong> Match zur Zielgruppe</li>
+      <li>• <strong>VIP-Anteil:</strong> % High-Value Kontakte</li>
+    </ul>
+  </div>
+</div>
+
+### Performance-Optimierung
+
+<div className="not-prose bg-gradient-to-r from-orange-50 to-red-50 rounded-lg p-6 my-6">
+  <h4 className="text-orange-900 font-semibold mb-3">🔧 Listen-Optimierung Strategies</h4>
+  
+  **Regelmäßige Wartung (monatlich):**
+  <ul className="text-orange-700 space-y-2">
+    <li><strong>🧹 Hygiene-Check:</strong> Bounced E-Mails entfernen, Job-Wechsler aktualisieren</li>
+    <li><strong>📊 Performance-Analyse:</strong> Low-Performer identifizieren und kategorisieren</li>
+    <li><strong>🎯 Relevanz-Prüfung:</strong> Sind alle Kontakte noch target-relevant?</li>
+    <li><strong>💎 Quality-Boost:</strong> Unvollständige Profile ergänzen</li>
+  </ul>
+  
+  **Strategische Optimierung (quartalsweise):**
+  <ul className="text-orange-700 space-y-2">
+    <li><strong>🔄 A/B-Test Insights:</strong> Welche Listen-Segmente performen besser?</li>
+    <li><strong>📈 Trend-Analysis:</strong> Neue Medien und Journalisten identifizieren</li>
+    <li><strong>🎨 Segmentierung verfeinern:</strong> Neue Tags und Filter-Kriterien</li>
+    <li><strong>🚀 Cross-Campaign-Learnings:</strong> Erfolgs-Patterns zwischen Listen</li>
+  </ul>
+</div>
+
+## Praktische Anwendungsfälle
+
+<div className="not-prose space-y-6 my-8">
+  <div className="bg-white border-l-4 border-blue-500 p-6">
+    <h4 className="font-semibold text-gray-900 mb-2">🚀 Use Case 1: Produktlaunch Tech-Startup</h4>
+    <div className="text-gray-600 space-y-2">
+      <p><strong>Ziel:</strong> Launch einer KI-Software für 47 relevante Tech-Medien</p>
+      <p><strong>Listen-Setup:</strong></p>
+      <ul className="ml-4 space-y-1">
+        <li>• <strong>Tier-1 Liste:</strong> 12 überregionale Tech-Magazine (Handversand)</li>
+        <li>• <strong>Tier-2 Liste:</strong> 20 Online-Portale und Blogs (Automated)</li>  
+        <li>• <strong>Tier-3 Liste:</strong> 15 Regionalmedien mit Tech-Ressort (Follow-up)</li>
+      </ul>
+      <p><strong>Ergebnis:</strong> 89% Öffnungsrate, 23 Publikationen, 2,3M Reach</p>
+    </div>
+  </div>
+  
+  <div className="bg-white border-l-4 border-green-500 p-6">
+    <h4 className="font-semibold text-gray-900 mb-2">📅 Use Case 2: Event-Kommunikation</h4>
+    <div className="text-gray-600 space-y-2">
+      <p><strong>Ziel:</strong> Medieneinladung für Messe-Pressekonferenz in München</p>
+      <p><strong>Listen-Setup:</strong></p>
+      <ul className="ml-4 space-y-1">
+        <li>• <strong>VIP-Liste:</strong> 8 persönliche Einladungen mit Anruf</li>
+        <li>• <strong>Regional-Liste:</strong> 35 Münchner/Bayern Medien</li>
+        <li>• <strong>Fachpresse-Liste:</strong> 28 branchenspezifische Journalisten</li>
+        <li>• <strong>Follow-up-Liste:</strong> Nicht-Responder für 2. Wave</li>
+      </ul>
+      <p><strong>Ergebnis:</strong> 43 Anmeldungen, 28 Teilnahmen, 67% Show-up Rate</p>
+    </div>
+  </div>
+  
+  <div className="bg-white border-l-4 border-purple-500 p-6">
+    <h4 className="font-semibold text-gray-900 mb-2">⚠️ Use Case 3: Crisis Communication</h4>
+    <div className="text-gray-600 space-y-2">
+      <p><strong>Ziel:</strong> Schnelle Reaktion auf kritische Berichterstattung</p>
+      <p><strong>Listen-Setup:</strong></p>
+      <ul className="ml-4 space-y-1">
+        <li>• <strong>Emergency-Liste:</strong> 15 Schlüssel-Journalisten (sofort)</li>
+        <li>• <strong>Statement-Liste:</strong> 45 Wirtschaftsmedien (1h später)</li>
+        <li>• <strong>Context-Liste:</strong> 60 weitere relevante Medien (4h später)</li>
+        <li>• <strong>Monitor-Liste:</strong> Beobachtung für Follow-up</li>
+      </ul>
+      <p><strong>Ergebnis:</strong> Narrative-Control, 78% positive/neutrale Coverage</p>
+    </div>
+  </div>
+</div>
+
+## Häufige Fragen & Troubleshooting
+
+**F: Wie groß sollten meine Listen sein?**  
+A: **Qualität vor Quantität!** 20-50 hochrelevante Kontakte sind besser als 200 mittelmäßige. Für große Kampagnen: 100-150 Kontakte maximum.
+
+**F: Statische oder dynamische Listen - was ist besser?**  
+A: **Kommt drauf an:** Dynamisch für wiederkehrende Kampagnen (Tech-News, Regional), statisch für spezielle Events und VIP-Kommunikation.
+
+**F: Wie oft sollte ich meine Listen aktualisieren?**  
+A: **Statische Listen:** Vor jeder Kampagne. **Dynamische Listen:** Die Filter automatisch, manuelle Review monatlich.
+
+**F: Kann ich Listen zwischen Team-Mitgliedern teilen?**  
+A: Ja! Alle Listen sind organisation-weit verfügbar. Du kannst auch Bearbeitungsrechte einschränken.
+
+<div className="not-prose bg-yellow-50 border border-yellow-200 rounded-lg p-6 my-8">
+  <h4 className="text-yellow-900 font-semibold mb-3">🎯 Best Practices für Listen-Management</h4>
+  <ul className="text-yellow-700 space-y-2">
+    <li><strong>🏷️ Naming Convention:</strong> "Thema_Typ_Jahr" (z.B. "Fintech_Launch_2025")</li>
+    <li><strong>📝 Dokumentation:</strong> Beschreibung mit Zweck und letzter Aktualisierung</li>
+    <li><strong>🔄 Lifecycle:</strong> Archiviere alte Listen, aber lösche sie nicht</li>
+    <li><strong>📊 Performance-Tracking:</strong> Notiere Erfolgsmetriken für zukünftige Referenz</li>
+    <li><strong>🤝 Team-Koordination:</strong> Shared Listen vs. persönliche Arbeitslisten</li>
+  </ul>
+</div>
+
+---
+
+<div className="not-prose bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-8 my-8 text-center">
+  <h3 className="text-2xl font-bold text-gray-900 mb-4">
+    🎯 Kontakte gemeistert!
+  </h3>
+  <p className="text-gray-600 mb-6">
+    Du beherrschst jetzt das komplette Kontakt-Management. Als nächstes lernst du, wie du deine Publikationen und Medien-Assets verwaltest.
+  </p>
+  <a 
+    href="/dashboard/academy/documentation/handbuch/bibliothek/publikationen"
+    className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+  >
+    Weiter zur Bibliothek →
+  </a>
+</div>

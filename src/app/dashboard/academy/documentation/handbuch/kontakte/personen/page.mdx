@@ -1,0 +1,345 @@
+export const metadata = {
+  title: 'Personen verwalten - CeleroPress Academy',
+  description: 'Lerne, wie du Journalisten und Ansprechpartner in CeleroPress optimal verwaltest'
+}
+
+# 👤 Personen verwalten
+
+Das Personen-Modul ist dein direkter Draht zu allen individuellen Kontakten - Journalisten, Redakteure, Blogger und andere wichtige Ansprechpartner. Hier lernst du, wie du deine persönlichen Medienkontakte professionell pflegst.
+
+<div className="not-prose bg-blue-50 border border-blue-200 rounded-lg p-6 my-8">
+  <h3 className="text-lg font-semibold text-blue-900 mb-2">📍 Wo findest du dieses Feature?</h3>
+  <p className="text-blue-700 mb-2">
+    <strong>Navigation:</strong> Dashboard → Kontakte → Personen
+  </p>
+  <p className="text-blue-700">
+    <strong>Direkt-Link:</strong> <code>/dashboard/contacts/crm?tab=contacts</code>
+  </p>
+</div>
+
+<div className="not-prose bg-green-50 border border-green-200 rounded-lg p-6 my-8">
+  <h3 className="text-lg font-semibold text-green-900 mb-2">💡 Das lernst du auf dieser Seite:</h3>
+  <ul className="space-y-2 text-green-700">
+    <li>✓ Journalisten und Kontakte professionell anlegen</li>
+    <li>✓ Personen mit Unternehmen und Publikationen verknüpfen</li>
+    <li>✓ Das Tag-System für gezielte Segmentierung</li>
+    <li>✓ Erweiterte Suche für die perfekte Zielgruppe</li>
+    <li>✓ Kontakthistorie und Notizen pflegen</li>
+  </ul>
+</div>
+
+## Überblick: Dein Personen-Dashboard
+
+Die Personen-Übersicht zeigt dir alle deine individuellen Kontakte in einer intelligenten, durchsuchbaren Tabelle:
+
+<div className="not-prose grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
+  <div className="bg-white border border-gray-200 rounded-lg p-4">
+    <h4 className="font-semibold text-gray-900 mb-2">🎯 Smart-Segmentierung</h4>
+    <p className="text-sm text-gray-600">
+      Filtere nach Publikationen, Themen oder Regionen
+    </p>
+  </div>
+  <div className="bg-white border border-gray-200 rounded-lg p-4">
+    <h4 className="font-semibold text-gray-900 mb-2">📱 Kontakt-Details</h4>
+    <p className="text-sm text-gray-600">
+      Telefon, E-Mail, Social Media - alles an einem Ort
+    </p>
+  </div>
+  <div className="bg-white border border-gray-200 rounded-lg p-4">
+    <h4 className="font-semibold text-gray-900 mb-2">🔄 Beziehungs-Tracking</h4>
+    <p className="text-sm text-gray-600">
+      Verfolge die Historie deiner Kontakte
+    </p>
+  </div>
+</div>
+
+## Neue Person anlegen
+
+### Schritt 1: Grunddaten erfassen
+
+1. Klicke auf **"Neue Person"** (grüner Button oben rechts)
+2. Das Kontakt-Modal öffnet sich mit mehreren Registerkarten
+3. Beginne mit den **Grunddaten**:
+
+<div className="not-prose bg-gray-50 rounded-lg p-6 my-6">
+  <h4 className="font-medium text-gray-900 mb-4">🔴 Pflichtfelder:</h4>
+  <ul className="space-y-3">
+    <li className="flex items-start">
+      <span className="text-red-500 mr-2 mt-0.5">*</span>
+      <div>
+        <strong>Vorname & Nachname:</strong> Der vollständige Name der Person<br/>
+        <span className="text-sm text-gray-500">Beispiel: "Lisa", "Schmidt"</span>
+      </div>
+    </li>
+    <li className="flex items-start">
+      <span className="text-red-500 mr-2 mt-0.5">*</span>
+      <div>
+        <strong>E-Mail-Adresse:</strong> Primärer Kommunikationsweg<br/>
+        <span className="text-sm text-gray-500">Beispiel: "l.schmidt@sueddeutsche.de"</span>
+      </div>
+    </li>
+  </ul>
+</div>
+
+### Schritt 2: Berufliche Zuordnung
+
+<div className="not-prose grid grid-cols-1 md:grid-cols-2 gap-6 my-8">
+  <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg p-6 border border-blue-200">
+    <h4 className="text-lg font-semibold text-blue-900 mb-3">🏢 Firmen-Zuordnung</h4>
+    <ul className="space-y-2 text-blue-700 text-sm">
+      <li>• Wähle aus bestehenden Unternehmen</li>
+      <li>• Erstelle neue Firma direkt im Modal</li>
+      <li>• Position/Titel (z.B. "Chefredakteur")</li>
+      <li>• Abteilung (z.B. "Wirtschaftsressort")</li>
+    </ul>
+  </div>
+  <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg p-6 border border-purple-200">
+    <h4 className="text-lg font-semibold text-purple-900 mb-3">📰 Publikations-Zuordnung</h4>
+    <ul className="space-y-2 text-purple-700 text-sm">
+      <li>• Automatische Auswahl bei Firmen-Zuordnung</li>
+      <li>• Multiple Publikationen möglich</li>
+      <li>• Themenschwerpunkte angeben</li>
+      <li>• Ressort-Zugehörigkeit</li>
+    </ul>
+  </div>
+</div>
+
+### Schritt 3: Kontakt-Details
+
+**Erweiterte Kontaktmöglichkeiten:**
+- **Telefon (Mobil/Festnetz):** Für direkte Gespräche
+- **Social Media:** LinkedIn, Twitter, XING Profile
+- **Website/Blog:** Persönliche oder berufliche URLs
+- **Adresse:** Wenn für persönliche Einladungen relevant
+
+<div className="not-prose bg-yellow-50 border border-yellow-200 rounded-lg p-6 my-6">
+  <h4 className="text-yellow-900 font-semibold mb-3">💡 Pro-Tipp: Publikationszuordnung</h4>
+  <p className="text-yellow-700 mb-4">
+    Wenn du einen Journalisten einer Firma zuordnest, die mehrere Publikationen hat:
+  </p>
+  
+  **Beispiel: Journalist bei Axel Springer**
+  <div className="bg-white rounded p-4 mt-3">
+    <ul className="space-y-1 text-sm">
+      <li>✓ <strong>WELT:</strong> Politik & Wirtschaft</li>
+      <li>✓ <strong>BILD:</strong> Boulevard & News</li>
+      <li>✗ <strong>Computer BILD:</strong> Nicht relevant</li>
+    </ul>
+  </div>
+  
+  <p className="text-yellow-700 mt-3">
+    So kannst du später gezielt Kampagnen an die richtigen Redakteure senden!
+  </p>
+</div>
+
+## Intelligente Tags für Personen
+
+Tags helfen dir, deine Kontakte strategisch zu organisieren und die perfekte Zielgruppe für deine Kampagnen zu finden:
+
+### Tag-Kategorien für optimale PR-Arbeit
+
+<div className="not-prose grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
+  <div className="bg-white border border-gray-200 rounded-lg p-4">
+    <h5 className="font-medium text-gray-900 mb-3">👑 Beziehungs-Status:</h5>
+    <div className="space-y-2 text-sm">
+      <div className="flex items-center"><span className="w-3 h-3 bg-red-500 rounded-full mr-2"></span><strong>VIP</strong> - Sehr wichtige Kontakte</div>
+      <div className="flex items-center"><span className="w-3 h-3 bg-green-500 rounded-full mr-2"></span><strong>Aktiv</strong> - Regelmäßiger Austausch</div>
+      <div className="flex items-center"><span className="w-3 h-3 bg-yellow-500 rounded-full mr-2"></span><strong>Warm</strong> - Gelegentlicher Kontakt</div>
+      <div className="flex items-center"><span className="w-3 h-3 bg-gray-400 rounded-full mr-2"></span><strong>Cold</strong> - Lange nicht kontaktiert</div>
+    </div>
+  </div>
+  <div className="bg-white border border-gray-200 rounded-lg p-4">
+    <h5 className="font-medium text-gray-900 mb-3">🎯 Themen-Expertise:</h5>
+    <div className="space-y-2 text-sm">
+      <div className="flex items-center"><span className="w-3 h-3 bg-blue-500 rounded-full mr-2"></span><strong>Tech</strong> - IT & Digital</div>
+      <div className="flex items-center"><span className="w-3 h-3 bg-purple-500 rounded-full mr-2"></span><strong>Wirtschaft</strong> - Business & Finanzen</div>
+      <div className="flex items-center"><span className="w-3 h-3 bg-pink-500 rounded-full mr-2"></span><strong>Lifestyle</strong> - Trends & Kultur</div>
+      <div className="flex items-center"><span className="w-3 h-3 bg-orange-500 rounded-full mr-2"></span><strong>Politik</strong> - News & Gesellschaft</div>
+    </div>
+  </div>
+</div>
+
+### Tag-Strategien für verschiedene Kampagnen-Typen
+
+<div className="not-prose bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-6 my-6">
+  <h4 className="text-green-900 font-semibold mb-3">🎯 Strategische Tag-Kombinationen</h4>
+  
+  **Beispiel-Zielgruppen:**
+  <ul className="text-green-700 space-y-2">
+    <li><strong>Product-Launch Tech:</strong> "Tech" + "VIP" + "Überregional" = 15 Kontakte</li>
+    <li><strong>B2B-Kampagne:</strong> "Wirtschaft" + "Aktiv" + "Fachmedien" = 28 Kontakte</li>
+    <li><strong>Regional-Story:</strong> "München" + "Lifestyle" + "Blogger" = 12 Kontakte</li>
+    <li><strong>Crisis-Communication:</strong> "VIP" + "Politik" + "Breaking-News" = 8 Kontakte</li>
+  </ul>
+</div>
+
+## Erweiterte Such- und Filter-Funktionen
+
+### Power-Search für PR-Profis
+
+Die Suchfunktion durchsucht automatisch alle relevanten Felder:
+
+<div className="not-prose grid grid-cols-2 gap-4 my-6">
+  <div className="space-y-3">
+    <h5 className="font-medium">🔍 Durchsuchte Felder:</h5>
+    <ul className="text-sm space-y-1">
+      <li>• <strong>Namen:</strong> Vor- und Nachname</li>
+      <li>• <strong>E-Mail:</strong> Vollständige Adresse</li>
+      <li>• <strong>Firma:</strong> Unternehmensname</li>
+      <li>• <strong>Position:</strong> Jobtitel und Rolle</li>
+      <li>• <strong>Publikation:</strong> Medien-Zugehörigkeit</li>
+      <li>• <strong>Notizen:</strong> Persönliche Anmerkungen</li>
+    </ul>
+  </div>
+  <div className="space-y-3">
+    <h5 className="font-medium">⚡ Smart-Filter:</h5>
+    <ul className="text-sm space-y-1">
+      <li>• <strong>Nach Firma:</strong> Alle Mitarbeiter eines Medienhauses</li>
+      <li>• <strong>Nach Publikation:</strong> Bestimmte Zeitungen/Magazine</li>
+      <li>• <strong>Nach Region:</strong> Geografische Segmentierung</li>
+      <li>• <strong>Nach Tags:</strong> Beliebige Kombinationen</li>
+      <li>• <strong>Nach Aktivität:</strong> Letzte Kontaktierung</li>
+    </ul>
+  </div>
+</div>
+
+### Filter-Kombinationen für präzise Zielgruppen
+
+**Praktische Beispiele:**
+1. **Tech-Launch in München:** Filter "Tech" + "München" + "VIP" = 12 Journalisten
+2. **Fintech-Story:** Filter "Wirtschaft" + "Innovation" + "Online-Medien" = 24 Kontakte  
+3. **Startup-Funding:** Filter "Wirtschaft" + "Venture Capital" + "Fachmedien" = 18 Redakteure
+
+## Kontakt-Historie und Beziehungsmanagement
+
+### Notizen und Interaktions-History
+
+<div className="not-prose bg-blue-50 border border-blue-200 rounded-lg p-6 my-6">
+  <h4 className="text-blue-900 font-semibold mb-3">📝 Professionelle Kontaktpflege</h4>
+  
+  **Was du in Notizen festhalten solltest:**
+  <ul className="text-blue-700 space-y-1 mb-4">
+    <li>• <strong>Präferenzen:</strong> "Bevorzugt E-Mails am Morgen"</li>
+    <li>• <strong>Themen-Interessen:</strong> "Besonders interessiert an KI-Trends"</li>
+    <li>• <strong>Persönliches:</strong> "Hat zwei Kinder, arbeitet remote"</li>
+    <li>• <strong>Deadlines:</strong> "Redaktionsschluss dienstags 16:00 Uhr"</li>
+    <li>• <strong>Erfolge:</strong> "Hat unsere Q1-Story prominent platziert"</li>
+  </ul>
+  
+  **Automatische Aktivitäts-Verfolgung:**
+  <ul className="text-blue-700 space-y-1">
+    <li>• Letzte E-Mail-Interaktion</li>
+    <li>• Kampagnen-Teilnahme</li>
+    <li>• Öffnungs- und Klickraten</li>
+    <li>• Response-Zeiten</li>
+  </ul>
+</div>
+
+## CSV-Import: Bestehende Kontaktlisten übernehmen
+
+<div className="not-prose bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-6 my-6">
+  <h4 className="text-green-900 font-semibold mb-3">📤 Personen-Import Schritt-für-Schritt</h4>
+  
+  **CSV-Vorbereitung:**
+  <ol className="text-green-700 space-y-1 mb-4">
+    <li>1. <strong>Pflichtfelder prüfen:</strong> Vorname, Nachname, E-Mail müssen gefüllt sein</li>
+    <li>2. <strong>Firmen-Referenzen:</strong> Verwende exakte Firmennamen aus deinem System</li>
+    <li>3. <strong>Tags vorbereiten:</strong> Mehrere Tags mit Komma trennen</li>
+    <li>4. <strong>UTF-8 Kodierung:</strong> Für korrekte Darstellung von Umlauten</li>
+  </ol>
+  
+  **Import-Prozess:**
+  <ol className="text-green-700 space-y-1">
+    <li>1. Klicke <strong>"Importieren"</strong> → Wähle CSV-Datei</li>
+    <li>2. <strong>Spalten-Mapping:</strong> Ordne CSV-Spalten den CeleroPress-Feldern zu</li>
+    <li>3. <strong>Vorschau prüfen:</strong> Kontrolliere die ersten 5 Einträge</li>
+    <li>4. <strong>Import starten:</strong> Überwache den Fortschrittsbalken</li>
+    <li>5. <strong>Ergebnis auswerten:</strong> Erfolgreiche/fehlgeschlagene Imports</li>
+  </ol>
+</div>
+
+<div className="not-prose bg-orange-50 border border-orange-200 rounded-lg p-4 my-6">
+  <h4 className="text-orange-900 font-semibold mb-2">⚠️ Import-Tipps für beste Ergebnisse</h4>
+  <ul className="text-orange-700 text-sm space-y-1">
+    <li>• <strong>Duplikate:</strong> System erkennt gleiche E-Mail-Adressen automatisch</li>
+    <li>• <strong>Firmen-Matching:</strong> Neue Firmen werden automatisch angelegt</li>
+    <li>• <strong>Tag-Handling:</strong> Neue Tags werden automatisch erstellt</li>
+    <li>• <strong>Batch-Size:</strong> Bis zu 500 Personen pro Import für optimale Performance</li>
+  </ul>
+</div>
+
+## Praktische Workflows für den PR-Alltag
+
+<div className="not-prose space-y-6 my-8">
+  <div className="bg-white border-l-4 border-blue-500 p-6">
+    <h4 className="font-semibold text-gray-900 mb-2">🎯 Workflow 1: Kampagnen-Targeting</h4>
+    <ol className="text-gray-600 space-y-1">
+      <li>1. <strong>Zielgruppe definieren:</strong> Tags "Tech" + "VIP" + "Deutschland"</li>
+      <li>2. <strong>Liste verfeinern:</strong> Manuelle Auswahl der 20 wichtigsten Kontakte</li>
+      <li>3. <strong>Personalisierung:</strong> Notizen zu Präferenzen und Themen-Interessen lesen</li>
+      <li>4. <strong>Export für Kampagne:</strong> Ausgewählte Kontakte als Verteilerliste speichern</li>
+    </ol>
+  </div>
+  
+  <div className="bg-white border-l-4 border-green-500 p-6">
+    <h4 className="font-semibold text-gray-900 mb-2">🔄 Workflow 2: Kontakt-Hygiene (monatlich)</h4>
+    <ol className="text-gray-600 space-y-1">
+      <li>1. <strong>Inaktive finden:</strong> Filter "Letzte Aktivität: > 6 Monate"</li>
+      <li>2. <strong>Kontaktdaten prüfen:</strong> Bounced E-Mails, Job-Wechsel recherchieren</li>
+      <li>3. <strong>Tags aktualisieren:</strong> "Cold" für inaktive, "Moved" für Job-Wechsler</li>
+      <li>4. <strong>Re-Engagement:</strong> Persönliche Nachfrage bei wichtigen Kontakten</li>
+    </ol>
+  </div>
+  
+  <div className="bg-white border-l-4 border-purple-500 p-6">
+    <h4 className="font-semibold text-gray-900 mb-2">📊 Workflow 3: Relationship-Scoring</h4>
+    <ol className="text-gray-600 space-y-1">
+      <li>1. <strong>Engagement analysieren:</strong> Öffnungsraten, Response-Zeiten auswerten</li>
+      <li>2. <strong>Tags entsprechend setzen:</strong> "High-Engagement", "Quick-Responder"</li>
+      <li>3. <strong>VIP-Liste erstellen:</strong> Top-20-Kontakte für Breaking News identifizieren</li>
+      <li>4. <strong>Nurturing-Strategie:</strong> Regelmäßige, persönliche Updates für Top-Kontakte</li>
+    </ol>
+  </div>
+</div>
+
+## Häufige Fragen & Best Practices
+
+**F: Kann ich Personen ohne Firma anlegen?**  
+A: Ja! Das ist perfekt für freie Journalisten, Blogger oder wenn du die Firma noch nicht kennst.
+
+**F: Wie viele Publikationen kann ich einer Person zuordnen?**  
+A: Unbegrenzt! Viele Journalisten schreiben für mehrere Medien - erfasse alle relevanten.
+
+**F: Was passiert, wenn sich die Publikationsliste einer Firma ändert?**  
+A: Alle verknüpften Personen werden automatisch aktualisiert. Du kannst dann individuelle Zuordnungen anpassen.
+
+**F: Wie kann ich gelöschte Kontakte wiederherstellen?**  
+A: Leider gar nicht - sei vorsichtig beim Löschen! Nutze lieber Tags wie "Inaktiv" oder "Archiv".
+
+<div className="not-prose bg-yellow-50 border border-yellow-200 rounded-lg p-6 my-8">
+  <h4 className="text-yellow-900 font-semibold mb-3">💡 Pro-Tipps für Relationship-Management</h4>
+  <ul className="text-yellow-700 space-y-2">
+    <li><strong>🎂 Geburtstage notieren:</strong> Persönliche Touch-Points schaffen</li>
+    <li><strong>📅 Regelmäßige Reviews:</strong> Quartalsmäßig Kontakt-Status überprüfen</li>
+    <li><strong>🏆 Erfolge dokumentieren:</strong> Welche Stories wurden gut platziert?</li>
+    <li><strong>⏰ Response-Patterns:</strong> Wann antworten Journalisten am schnellsten?</li>
+    <li><strong>🎯 Micro-Segmentierung:</strong> Je spezifischer die Tags, desto bessere Ergebnisse</li>
+  </ul>
+</div>
+
+---
+
+<div className="not-prose bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-8 my-8 text-center">
+  <h3 className="text-2xl font-bold text-gray-900 mb-4">
+    🎯 Bereit für strategische Listen?
+  </h3>
+  <p className="text-gray-600 mb-6">
+    Du beherrschst jetzt Unternehmen und Personen! Lerne als nächstes, wie du sie in intelligenten Verteilerlisten organisierst.
+  </p>
+  <a 
+    href="/dashboard/academy/documentation/handbuch/kontakte/verteilerlisten"
+    className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+  >
+    Weiter zu Verteilerlisten →
+  </a>
+</div>
