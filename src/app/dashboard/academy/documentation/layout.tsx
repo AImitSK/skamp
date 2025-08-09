@@ -14,16 +14,27 @@ import {
   Cog6ToothIcon,
   ChevronDownIcon,
   ChevronRightIcon,
-  PlayCircleIcon,
-  SparklesIcon,
   QuestionMarkCircleIcon,
-  ClipboardDocumentListIcon,
-  CpuChipIcon,
   ShieldCheckIcon,
-  ChartBarIcon
+  BuildingOfficeIcon,
+  QueueListIcon,
+  MegaphoneIcon,
+  CalendarDaysIcon,
+  DocumentTextIcon,
+  InboxIcon,
+  BellIcon,
+  BellAlertIcon,
+  PaintBrushIcon,
+  ArrowDownTrayIcon,
+  UserIcon,
+  DocumentCheckIcon,
+  CreditCardIcon,
+  CodeBracketIcon,
+  NewspaperIcon,
+  ArchiveBoxIcon
 } from '@heroicons/react/24/outline';
 
-// Navigation Items für die Dokumentation
+// Navigation Items für die Dokumentation - 6 Hauptkategorien basierend auf App-Navigation
 const navigation = [
   { 
     name: 'Übersicht', 
@@ -36,135 +47,159 @@ const navigation = [
     icon: RocketLaunchIcon 
   },
   {
-    name: 'Benutzerhandbuch',
-    icon: BookOpenIcon,
-    href: '/dashboard/academy/documentation/handbuch',
+    name: 'Kontakte',
+    icon: UserGroupIcon,
+    href: '/dashboard/academy/documentation/handbuch/kontakte',
     children: [
       { 
-        name: 'CRM & Kontakte', 
-        href: '/dashboard/academy/documentation/handbuch/crm',
+        name: 'Unternehmen', 
+        href: '/dashboard/academy/documentation/handbuch/kontakte/unternehmen',
+        icon: BuildingOfficeIcon 
+      },
+      { 
+        name: 'Personen', 
+        href: '/dashboard/academy/documentation/handbuch/kontakte/personen',
         icon: UserGroupIcon 
       },
       { 
-        name: 'Kampagnen', 
-        href: '/dashboard/academy/documentation/handbuch/kampagnen',
-        icon: EnvelopeIcon 
-      },
-      { 
         name: 'Verteilerlisten', 
-        href: '/dashboard/academy/documentation/handbuch/verteilerlisten',
-        icon: ClipboardDocumentListIcon 
+        href: '/dashboard/academy/documentation/handbuch/kontakte/verteilerlisten',
+        icon: QueueListIcon 
+      },
+    ]
+  },
+  {
+    name: 'Bibliothek',
+    icon: ArchiveBoxIcon,
+    href: '/dashboard/academy/documentation/handbuch/bibliothek',
+    children: [
+      { 
+        name: 'Publikationen', 
+        href: '/dashboard/academy/documentation/handbuch/bibliothek/publikationen',
+        icon: NewspaperIcon 
       },
       { 
-        name: 'Mediathek', 
-        href: '/dashboard/academy/documentation/handbuch/mediathek',
+        name: 'Werbemittel', 
+        href: '/dashboard/academy/documentation/handbuch/bibliothek/werbemittel',
         icon: PhotoIcon 
       },
+    ]
+  },
+  {
+    name: 'PR-Tools',
+    icon: MegaphoneIcon,
+    href: '/dashboard/academy/documentation/handbuch/pr-tools',
+    children: [
       { 
-        name: 'Kalender', 
-        href: '/dashboard/academy/documentation/handbuch/kalender',
-        icon: CalendarIcon 
-      },
-      { 
-        name: 'Textbausteine', 
-        href: '/dashboard/academy/documentation/handbuch/textbausteine',
-        icon: DocumentTextIcon 
-      },
-      { 
-        name: 'KI-Assistent', 
-        href: '/dashboard/academy/documentation/handbuch/ki-assistent',
-        icon: CpuChipIcon 
+        name: 'Kampagnen', 
+        href: '/dashboard/academy/documentation/handbuch/pr-tools/kampagnen',
+        icon: MegaphoneIcon 
       },
       { 
         name: 'Freigaben', 
-        href: '/dashboard/academy/documentation/handbuch/freigaben',
+        href: '/dashboard/academy/documentation/handbuch/pr-tools/freigaben',
         icon: ShieldCheckIcon 
       },
+      { 
+        name: 'Kalender', 
+        href: '/dashboard/academy/documentation/handbuch/pr-tools/kalender',
+        icon: CalendarDaysIcon 
+      },
+      { 
+        name: 'Mediathek', 
+        href: '/dashboard/academy/documentation/handbuch/pr-tools/mediathek',
+        icon: PhotoIcon 
+      },
+      { 
+        name: 'Textbausteine', 
+        href: '/dashboard/academy/documentation/handbuch/pr-tools/textbausteine',
+        icon: DocumentTextIcon 
+      },
     ]
   },
   {
-    name: 'Video-Tutorials',
-    icon: PlayCircleIcon,
-    href: '/dashboard/academy/documentation/videos',
+    name: 'Kommunikation',
+    icon: EnvelopeIcon,
+    href: '/dashboard/academy/documentation/handbuch/kommunikation',
     children: [
       { 
-        name: 'Schnellstart', 
-        href: '/dashboard/academy/documentation/videos/schnellstart' 
+        name: 'Kampagnen In-Box', 
+        href: '/dashboard/academy/documentation/handbuch/kommunikation/inbox',
+        icon: InboxIcon 
       },
       { 
-        name: 'Kontakte importieren', 
-        href: '/dashboard/academy/documentation/videos/kontakte-import' 
-      },
-      { 
-        name: 'Kampagne erstellen', 
-        href: '/dashboard/academy/documentation/videos/kampagne-erstellen' 
-      },
-      { 
-        name: 'KI nutzen', 
-        href: '/dashboard/academy/documentation/videos/ki-nutzen' 
+        name: 'Benachrichtigungen', 
+        href: '/dashboard/academy/documentation/handbuch/kommunikation/benachrichtigungen',
+        icon: BellIcon 
       },
     ]
   },
   {
-    name: 'Best Practices',
-    icon: SparklesIcon,
-    href: '/dashboard/academy/documentation/best-practices',
-    children: [
-      { 
-        name: 'Perfekte Pressemeldung', 
-        href: '/dashboard/academy/documentation/best-practices/pressemeldung' 
-      },
-      { 
-        name: 'Kontaktpflege', 
-        href: '/dashboard/academy/documentation/best-practices/kontaktpflege' 
-      },
-      { 
-        name: 'E-Mail-Optimierung', 
-        href: '/dashboard/academy/documentation/best-practices/email-optimierung' 
-      },
-      { 
-        name: 'Medienlisten aufbauen', 
-        href: '/dashboard/academy/documentation/best-practices/medienlisten' 
-      },
-    ]
-  },
-  {
-    name: 'Anleitungen',
+    name: 'Einstellungen',
     icon: Cog6ToothIcon,
-    href: '/dashboard/academy/documentation/anleitungen',
+    href: '/dashboard/academy/documentation/handbuch/einstellungen',
     children: [
       { 
-        name: 'CSV-Import', 
-        href: '/dashboard/academy/documentation/anleitungen/csv-import' 
+        name: 'Benachrichtigungen', 
+        href: '/dashboard/academy/documentation/handbuch/einstellungen/benachrichtigungen',
+        icon: BellAlertIcon 
       },
       { 
-        name: 'Freigabe-Workflow', 
-        href: '/dashboard/academy/documentation/anleitungen/freigabe-workflow' 
+        name: 'Branding', 
+        href: '/dashboard/academy/documentation/handbuch/einstellungen/branding',
+        icon: PaintBrushIcon 
       },
       { 
-        name: 'Vorlagen erstellen', 
-        href: '/dashboard/academy/documentation/anleitungen/vorlagen' 
+        name: 'Domains', 
+        href: '/dashboard/academy/documentation/handbuch/einstellungen/domains',
+        icon: EnvelopeIcon 
       },
       { 
-        name: 'Mediathek organisieren', 
-        href: '/dashboard/academy/documentation/anleitungen/mediathek-organisation' 
+        name: 'E-Mail', 
+        href: '/dashboard/academy/documentation/handbuch/einstellungen/email',
+        icon: EnvelopeIcon 
+      },
+      { 
+        name: 'Import/Export', 
+        href: '/dashboard/academy/documentation/handbuch/einstellungen/import-export',
+        icon: ArrowDownTrayIcon 
+      },
+      { 
+        name: 'Team', 
+        href: '/dashboard/academy/documentation/handbuch/einstellungen/team',
+        icon: UserGroupIcon 
       },
     ]
   },
-  { 
-    name: 'FAQ & Support', 
-    href: '/dashboard/academy/documentation/faq', 
-    icon: QuestionMarkCircleIcon 
-  },
-  { 
-    name: 'Changelog', 
-    href: '/dashboard/academy/documentation/changelog', 
-    icon: ChartBarIcon 
+  {
+    name: 'Admin-Center',
+    icon: UserIcon,
+    href: '/dashboard/academy/documentation/handbuch/admin',
+    children: [
+      { 
+        name: 'Profil', 
+        href: '/dashboard/academy/documentation/handbuch/admin/profil',
+        icon: UserIcon 
+      },
+      { 
+        name: 'Vertrag', 
+        href: '/dashboard/academy/documentation/handbuch/admin/vertrag',
+        icon: DocumentCheckIcon 
+      },
+      { 
+        name: 'Abrechnung', 
+        href: '/dashboard/academy/documentation/handbuch/admin/abrechnung',
+        icon: CreditCardIcon 
+      },
+      { 
+        name: 'API', 
+        href: '/dashboard/academy/documentation/handbuch/admin/api',
+        icon: CodeBracketIcon 
+      },
+    ]
   },
 ];
 
-// Fehlende Icons importieren
-import { CalendarIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 
 export default function DocumentationLayout({
   children,

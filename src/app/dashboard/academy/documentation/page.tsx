@@ -7,94 +7,105 @@ import {
   BookOpenIcon, 
   RocketLaunchIcon, 
   UserGroupIcon, 
-  EnvelopeIcon, 
-  PhotoIcon, 
-  SparklesIcon,
+  EnvelopeIcon,
   AcademicCapIcon,
-  PlayCircleIcon,
-  QuestionMarkCircleIcon,
   LightBulbIcon,
-  ChartBarIcon,
-  CogIcon
+  Cog6ToothIcon,
+  MegaphoneIcon,
+  ArchiveBoxIcon,
+  UserIcon
 } from "@heroicons/react/24/outline";
 
 const sections = [
   {
     title: "🚀 Erste Schritte",
-    description: "Der perfekte Einstieg in SKAMP",
+    description: "Der perfekte Einstieg in CeleroPress",
     href: "/dashboard/academy/documentation/erste-schritte",
     icon: RocketLaunchIcon,
     color: "bg-blue-50 text-blue-600 hover:bg-blue-100",
     items: [
-      "Willkommen bei SKAMP",
+      "Willkommen bei CeleroPress",
       "Account einrichten",
       "Erste Kampagne erstellen",
       "Team einladen"
     ]
   },
   {
-    title: "📚 Benutzerhandbuch",
-    description: "Detaillierte Anleitungen für alle Features",
-    href: "/dashboard/academy/documentation/handbuch",
-    icon: BookOpenIcon,
+    title: "👥 Kontakte",
+    description: "Unternehmen, Personen & Verteilerlisten verwalten",
+    href: "/dashboard/academy/documentation/handbuch/kontakte",
+    icon: UserGroupIcon,
     color: "bg-green-50 text-green-600 hover:bg-green-100",
     items: [
-      "CRM & Kontakte",
-      "Kampagnen-Management",
-      "Verteilerlisten",
-      "Mediathek"
+      "Unternehmen anlegen",
+      "Personen-Verwaltung",
+      "Verteilerlisten erstellen",
+      "Kontakt-Import"
     ]
   },
   {
-    title: "🎥 Video-Tutorials",
-    description: "Schritt-für-Schritt Videoanleitungen",
-    href: "/dashboard/academy/documentation/videos",
-    icon: PlayCircleIcon,
+    title: "📚 Bibliothek",
+    description: "Publikationen & Werbemittel verwalten",
+    href: "/dashboard/academy/documentation/handbuch/bibliothek",
+    icon: ArchiveBoxIcon,
     color: "bg-purple-50 text-purple-600 hover:bg-purple-100",
     items: [
-      "SKAMP in 5 Minuten",
-      "Kontakte importieren",
-      "KI-Assistent nutzen",
-      "Kampagne versenden"
+      "Publikationen organisieren",
+      "Werbemittel-Verwaltung",
+      "Asset-Management",
+      "Freigabe-Prozesse"
     ]
   },
   {
-    title: "✨ Best Practices",
-    description: "Tipps & Tricks von PR-Profis",
-    href: "/dashboard/academy/documentation/best-practices",
-    icon: SparklesIcon,
+    title: "📢 PR-Tools",
+    description: "Kampagnen, Freigaben & Medien-Management",
+    href: "/dashboard/academy/documentation/handbuch/pr-tools",
+    icon: MegaphoneIcon,
     color: "bg-yellow-50 text-yellow-600 hover:bg-yellow-100",
     items: [
-      "Perfekte Pressemeldung",
-      "Kontaktpflege-Strategien",
-      "E-Mail-Optimierung",
-      "KI effektiv nutzen"
+      "Kampagnen erstellen",
+      "Freigabe-Workflows",
+      "Redaktionskalender",
+      "Mediathek nutzen"
     ]
   },
   {
-    title: "🛠 Anleitungen",
-    description: "Spezifische How-To Guides",
-    href: "/dashboard/academy/documentation/anleitungen",
-    icon: CogIcon,
+    title: "💬 Kommunikation",
+    description: "Inbox & Benachrichtigungen verwalten",
+    href: "/dashboard/academy/documentation/handbuch/kommunikation",
+    icon: EnvelopeIcon,
     color: "bg-indigo-50 text-indigo-600 hover:bg-indigo-100",
     items: [
-      "CSV-Import Guide",
-      "Freigabe-Workflow",
-      "Mediathek organisieren",
-      "Vorlagen erstellen"
+      "Kampagnen-Inbox",
+      "E-Mail-Verwaltung",
+      "Benachrichtigungen",
+      "Response-Tracking"
     ]
   },
   {
-    title: "❓ FAQ & Support",
-    description: "Antworten auf häufige Fragen",
-    href: "/dashboard/academy/documentation/faq",
-    icon: QuestionMarkCircleIcon,
+    title: "⚙️ Einstellungen",
+    description: "System-Konfiguration & Team-Management",
+    href: "/dashboard/academy/documentation/handbuch/einstellungen",
+    icon: Cog6ToothIcon,
+    color: "bg-cyan-50 text-cyan-600 hover:bg-cyan-100",
+    items: [
+      "Benachrichtigungen",
+      "Branding & Design",
+      "Domain-Verwaltung",
+      "Team-Administration"
+    ]
+  },
+  {
+    title: "👤 Admin-Center",
+    description: "Profil, Vertrag & API-Management",
+    href: "/dashboard/academy/documentation/handbuch/admin",
+    icon: UserIcon,
     color: "bg-red-50 text-red-600 hover:bg-red-100",
     items: [
-      "Häufige Fragen",
-      "Fehlerbehebung",
-      "Kontakt zum Support",
-      "Feature Requests"
+      "Profil verwalten",
+      "Vertrags-Details",
+      "Abrechnungs-Center",
+      "API-Dokumentation"
     ]
   }
 ];
@@ -132,9 +143,9 @@ export default function AcademyOverviewPage() {
             <AcademicCapIcon className="h-12 w-12 text-blue-600" />
           </div>
         </div>
-        <Heading level={1}>SKAMP Academy</Heading>
+        <Heading level={1}>CeleroPress Academy</Heading>
         <p className="mt-4 text-xl text-gray-600 max-w-3xl mx-auto">
-          Willkommen in der SKAMP Academy! Hier findest du alles, was du brauchst, 
+          Willkommen in der CeleroPress Academy! Hier findest du alles, was du brauchst, 
           um das Maximum aus deiner PR-Software herauszuholen.
         </p>
       </div>
@@ -199,7 +210,7 @@ export default function AcademyOverviewPage() {
           Brauchst du persönliche Hilfe?
         </h2>
         <p className="text-gray-600 mb-6">
-          Unser Support-Team hilft dir gerne bei allen Fragen rund um SKAMP.
+          Unser Support-Team hilft dir gerne bei allen Fragen rund um CeleroPress.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link

@@ -57,19 +57,19 @@ Textbausteine sind deine Effizienz-Booster für wiederkehrende PR-Inhalte! Erste
     <div className="bg-white rounded p-3">
       <strong className="text-yellow-800">Kontakt-Daten:</strong>
       <ul className="space-y-1 text-sm mt-1">
-        <li>• <code>{firstName}</code> - Vorname</li>
-        <li>• <code>{lastName}</code> - Nachname</li>
-        <li>• <code>{company}</code> - Unternehmen</li>
-        <li>• <code>{publication}</code> - Medium</li>
+        <li>• <code>{`{firstName}`}</code> - Vorname</li>
+        <li>• <code>{`{lastName}`}</code> - Nachname</li>
+        <li>• <code>{`{company}`}</code> - Unternehmen</li>
+        <li>• <code>{`{publication}`}</code> - Medium</li>
       </ul>
     </div>
     <div className="bg-white rounded p-3">
       <strong className="text-yellow-800">Unternehmen:</strong>
       <ul className="space-y-1 text-sm mt-1">
-        <li>• <code>{companyName}</code> - Firmenname</li>
-        <li>• <code>{ceoName}</code> - Geschäftsführer</li>
-        <li>• <code>{foundingYear}</code> - Gründungsjahr</li>
-        <li>• <code>{headquarters}</code> - Hauptsitz</li>
+        <li>• <code>{`{companyName}`}</code> - Firmenname</li>
+        <li>• <code>{`{ceoName}`}</code> - Geschäftsführer</li>
+        <li>• <code>{`{foundingYear}`}</code> - Gründungsjahr</li>
+        <li>• <code>{`{headquarters}`}</code> - Hauptsitz</li>
       </ul>
     </div>
   </div>
@@ -77,8 +77,8 @@ Textbausteine sind deine Effizienz-Booster für wiederkehrende PR-Inhalte! Erste
   **Beispiel-Template:**
   <div className="bg-white rounded p-4 mt-4">
     <p className="text-sm font-mono">
-      "Hallo <strong>{firstName}</strong>,<br/>
-      als Redakteur bei <strong>{publication}</strong> könnte die neue Lösung von <strong>{companyName}</strong> für Ihre Leser interessant sein..."
+      "Hallo <strong>{`{firstName}`}</strong>,<br/>
+      als Redakteur bei <strong>{`{publication}`}</strong> könnte die neue Lösung von <strong>{`{companyName}`}</strong> für Ihre Leser interessant sein..."
     </p>
   </div>
 </div>
