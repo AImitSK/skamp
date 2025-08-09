@@ -31,52 +31,53 @@ const sections = [
     ]
   },
   {
-    title: "👥 Kontakte",
-    description: "Unternehmen, Personen & Verteilerlisten verwalten",
-    href: "/dashboard/academy/documentation/handbuch/kontakte",
+    title: "👥 CRM & Kontakte",
+    description: "CRM-System, Unternehmen & Personen verwalten",
+    href: "/dashboard/academy/documentation/handbuch/crm",
     icon: UserGroupIcon,
     color: "bg-green-50 text-green-600 hover:bg-green-100",
     items: [
-      "Unternehmen anlegen",
-      "Personen-Verwaltung",
-      "Verteilerlisten erstellen",
-      "Kontakt-Import"
+      "CRM-Dashboard nutzen",
+      "Unternehmen verwalten",
+      "Personen-Management", 
+      "Verteilerlisten erstellen"
     ]
   },
   {
     title: "📚 Bibliothek",
     description: "Publikationen & Werbemittel verwalten",
-    href: "/dashboard/academy/documentation/handbuch/bibliothek",
+    href: "/dashboard/academy/documentation/handbuch/bibliothek/publikationen",
     icon: ArchiveBoxIcon,
     color: "bg-purple-50 text-purple-600 hover:bg-purple-100",
     items: [
-      "Publikationen organisieren",
-      "Werbemittel-Verwaltung",
+      "Publikationen verwalten",
+      "Werbemittel organisieren",
       "Asset-Management",
       "Freigabe-Prozesse"
     ]
   },
   {
     title: "📢 PR-Tools",
-    description: "Kampagnen, Freigaben & Medien-Management",
-    href: "/dashboard/academy/documentation/handbuch/pr-tools",
+    description: "Kampagnen, Freigaben, Kalender & Mediathek",
+    href: "/dashboard/academy/documentation/handbuch/pr-tools/kampagnen",
     icon: MegaphoneIcon,
     color: "bg-yellow-50 text-yellow-600 hover:bg-yellow-100",
     items: [
       "Kampagnen erstellen",
-      "Freigabe-Workflows",
+      "Textbausteine nutzen",
       "Redaktionskalender",
-      "Mediathek nutzen"
+      "Mediathek verwalten",
+      "Freigabe-Workflows"
     ]
   },
   {
     title: "💬 Kommunikation",
     description: "Inbox & Benachrichtigungen verwalten",
-    href: "/dashboard/academy/documentation/handbuch/kommunikation",
+    href: "/dashboard/academy/documentation/handbuch/kommunikation/inbox",
     icon: EnvelopeIcon,
     color: "bg-indigo-50 text-indigo-600 hover:bg-indigo-100",
     items: [
-      "Kampagnen-Inbox",
+      "Kampagnen-Inbox nutzen",
       "E-Mail-Verwaltung",
       "Benachrichtigungen",
       "Response-Tracking"
@@ -85,20 +86,22 @@ const sections = [
   {
     title: "⚙️ Einstellungen",
     description: "System-Konfiguration & Team-Management",
-    href: "/dashboard/academy/documentation/handbuch/einstellungen",
+    href: "/dashboard/academy/documentation/handbuch/einstellungen/benachrichtigungen",
     icon: Cog6ToothIcon,
     color: "bg-cyan-50 text-cyan-600 hover:bg-cyan-100",
     items: [
-      "Benachrichtigungen",
-      "Branding & Design",
+      "Benachrichtigungen einrichten",
+      "Branding & Design anpassen",
       "Domain-Verwaltung",
-      "Team-Administration"
+      "E-Mail-Konfiguration",
+      "Team-Administration",
+      "Import/Export-Tools"
     ]
   },
   {
     title: "👤 Admin-Center",
     description: "Profil, Vertrag & API-Management",
-    href: "/dashboard/academy/documentation/handbuch/admin",
+    href: "/dashboard/academy/documentation/handbuch/admin/profil",
     icon: UserIcon,
     color: "bg-red-50 text-red-600 hover:bg-red-100",
     items: [
