@@ -185,8 +185,8 @@ describe('ApprovalService', () => {
       const result2 = await approvalService.create(mockApprovalData as any, mockContext);
 
       const calls = mockAddDoc.mock.calls;
-      const shareId1 = calls[0][1].shareId;
-      const shareId2 = calls[1][1].shareId;
+      const shareId1 = (calls[0][1] as any).shareId;
+      const shareId2 = (calls[1][1] as any).shareId;
 
       expect(shareId1).not.toBe(shareId2);
       expect(shareId1).toMatch(/^[a-z0-9]{20}$/);
@@ -787,7 +787,7 @@ describe('ApprovalService', () => {
 
       await approvalService.create(dataWithScript as any, mockContext);
 
-      const savedData = mockAddDoc.mock.calls[0][1];
+      const savedData = mockAddDoc.mock.calls[0][1] as any;
       // Teste dass der Inhalt gespeichert wurde (HTML-Sanitization wird möglicherweise nicht durchgeführt)
       expect(savedData.content.html).toBeDefined();
       expect(typeof savedData.content.html).toBe('string');

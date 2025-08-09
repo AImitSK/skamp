@@ -253,17 +253,43 @@ import { UserIcon, TrashIcon } from "@heroicons/react/20/solid";
 - **Potenzielle Probleme:** [z.B. große Listen ohne Pagination]
 - **Vorhandene Optimierungen:** [z.B. useMemo, React.memo gefunden]
 
-## 🧪 Tests (Realistisch)
-- **Tests gefunden:** Ja/Nein (im __tests__ Ordner gesucht)
-- **Kritische Test-Szenarien:**
-  - [Was sollte unbedingt getestet werden]
-  - [Basierend auf Business-Logik]
-- **Test-Priorität:** Hoch/Mittel/Niedrig [mit Begründung]
-- **User-Test-Anleitung:**
+## 🧪 Tests (MUST BE 100% FUNCTIONAL - NO EXCEPTIONS!)
+
+> ⚠️ **CRITICAL**: Tests müssen zu 100% funktionsfähig sein, nicht nur vorbereitet!
+
+- **Test-Implementierung Status:**
+  - [ ] **Tests vollständig implementiert** (nicht nur Skelette/TODOs)
+  - [ ] **Alle Tests bestehen** (npm test zeigt 100% Pass-Rate)
+  - [ ] **Service-Level Tests** bevorzugt über UI-Tests (weniger Mock-Konflikte)
+  - [ ] **Error Handling getestet** (Fehlerfälle, Edge Cases abgedeckt)
+  - [ ] **Multi-Tenancy isoliert** (Organisation/User-spezifische Daten korrekt getrennt)
+
+- **Test-Kategorien (Alle müssen funktionieren):**
+  - [ ] **CRUD Operations:** Create, Read, Update, Delete - alle Basis-Operationen
+  - [ ] **Business Logic:** Kern-Geschäftslogik und Workflows
+  - [ ] **Service Integration:** Firebase/API-Calls und Datenverarbeitung
+  - [ ] **Filter & Search:** Such- und Filterfunktionalität
+  - [ ] **Error Scenarios:** Netzwerkfehler, ungültige Daten, Berechtigungen
+
+- **Test-Infrastruktur Requirements:**
+  - [ ] **Mock-Strategy:** Firebase/Service-Mocks vollständig implementiert
+  - [ ] **No Navigation Issues:** Keine Next.js Router/Navigation Mock-Konflikte
+  - [ ] **Production-Ready:** Tests simulieren reale Produktions-Szenarien
+  - [ ] **Automated Execution:** Tests laufen automatisch ohne manuelle Eingriffe
+
+- **Quality Gates:**
+  - [ ] **100% Pass Rate erforderlich** - Keine fallenden Tests akzeptiert
+  - [ ] **Service-Level Focus** - UI-Tests nur wenn absolut notwendig
+  - [ ] **Real Business Scenarios** - Tests decken echte User-Workflows ab
+
+- **User-Test-Anleitung (Production Verification):**
   1. [Konkreter Schritt basierend auf UI]
   2. [Was der User klicken/eingeben soll]
   3. [Was passieren sollte]
   4. [Wie Erfolg erkennbar ist]
+  5. **Erfolg:** [Definitive Erfolgskriterien ohne Interpretationsspielraum]
+
+**🚨 KEINE AUSNAHMEN:** Jede Test-Suite muss 100% bestehen bevor das Feature als "fertig" markiert wird!
 
 ---
 **Bearbeitet am:** [Datum]

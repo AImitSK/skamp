@@ -200,7 +200,7 @@ describe('CRM Enhanced Feature', () => {
       const result = await contactsEnhancedService.getAll('test-user-123');
       
       // Client-seitige Filterung (simuliert)
-      const filteredContacts = result.filter(contact => 
+      const filteredContacts = result.filter((contact: any) => 
         contact.name.firstName.toLowerCase().includes('max')
       );
       
@@ -261,7 +261,7 @@ describe('CRM Enhanced Feature', () => {
       const tags = await tagsEnhancedService.getAll('test-user-123');
       
       // Client-seitige Tag-Filterung simulieren
-      const contactsWithVIPTag = contacts.filter(contact => 
+      const contactsWithVIPTag = contacts.filter((contact: any) => 
         contact.tagIds && contact.tagIds.includes('tag-1')
       );
       
@@ -375,7 +375,7 @@ describe('CRM Enhanced Feature', () => {
       try {
         await contactsEnhancedService.getAll('test-user-123');
         fail('Should have thrown error');
-      } catch (error) {
+      } catch (error: any) {
         expect(error.message).toBe('Network Error');
       }
       
