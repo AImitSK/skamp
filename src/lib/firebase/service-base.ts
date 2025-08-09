@@ -71,6 +71,17 @@ export abstract class BaseService<T extends BaseEntity> {
   }
 
   /**
+   * Convert raw document data to entity
+   * Override in subclasses for custom transformations
+   */
+  protected toEntity(doc: DocumentData): T {
+    return {
+      id: doc.id,
+      ...doc
+    } as T;
+  }
+
+  /**
    * Basis-Query mit Mandanten-Filter
    */
   protected getBaseQuery(
@@ -248,10 +259,10 @@ export abstract class BaseService<T extends BaseEntity> {
       const q = this.getBaseQuery(organizationId, constraints);
       const snapshot = await getDocs(q);
 
-      const documents = snapshot.docs.map(doc => ({
+      const documents = snapshot.docs.map(doc => this.toEntity({
         id: doc.id,
         ...doc.data()
-      } as T));
+      }));
 
       // Client-seitige Filterung für Soft Delete
       if (!options.includeDeleted) {
@@ -361,10 +372,10 @@ export abstract class BaseService<T extends BaseEntity> {
       const q = this.getBaseQuery(organizationId, constraints);
       const snapshot = await getDocs(q);
 
-      const documents = snapshot.docs.map(doc => ({
+      const documents = snapshot.docs.map(doc => this.toEntity({
         id: doc.id,
         ...doc.data()
-      } as T));
+      }));
 
       // Client-seitige Filterung für Soft Delete
       if (!options.includeDeleted) {

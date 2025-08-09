@@ -1,7 +1,7 @@
 // src/app/dashboard/settings/domain/page.tsx
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { Heading } from '@/components/ui/heading';
@@ -67,19 +67,19 @@ export default function DomainsPage() {
   const [checkingDns, setCheckingDns] = useState<string | null>(null);
 
   // Context for all operations
-  const getContext = () => ({
+  const getContext = useCallback(() => ({
     organizationId: currentOrganization?.id || '', // Use currentOrganization instead of user.uid
-    userId: user!.uid
-  });
+    userId: user?.uid || ''
+  }), [currentOrganization?.id, user?.uid]);
 
 
   useEffect(() => {
     if (user && currentOrganization?.id) {
       loadDomains();
     }
-  }, [user, currentOrganization?.id]);
+  }, [user, currentOrganization?.id, loadDomains]);
 
-  const loadDomains = async () => {
+  const loadDomains = useCallback(async () => {
     if (!user || !currentOrganization?.id) return;
 
     try {
@@ -89,11 +89,12 @@ export default function DomainsPage() {
       const data = await domainServiceEnhanced.getAll(context.organizationId);
       setDomains(data);
     } catch (error: any) {
+      console.error('Domain loading error:', error);
       setError('Domains konnten nicht geladen werden');
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, currentOrganization?.id, getContext]);
 
   const handleVerify = async (domainId: string) => {
     try {
