@@ -12,11 +12,15 @@ import {
     // Importiere weitere benötigte Typen, z.B. UserCredential
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase/client-init';
+import ProfileImageService from '@/lib/services/profile-image-service';
+// OrganizationContext wird separat geholt
 
 // Definiere die Typen für die Login- und Registrierungsfunktionen
 type RegisterFunction = (email: string, password: string) => Promise<any>; // Passe 'any' an, z.B. UserCredential
 type LoginFunction = (email: string, password: string) => Promise<any>; // Passe 'any' an
 type LogoutFunction = () => Promise<void>;
+type UploadProfileImageFunction = (file: File) => Promise<{ success: boolean; url?: string; error?: string }>;
+type DeleteProfileImageFunction = () => Promise<{ success: boolean; error?: string }>;
 
 // 1. Erweitere den Context-Typ
 type AuthContextType = {
@@ -25,6 +29,10 @@ type AuthContextType = {
     register: RegisterFunction;
     login: LoginFunction;
     logout: LogoutFunction;
+    uploadProfileImage: UploadProfileImageFunction;
+    deleteProfileImage: DeleteProfileImageFunction;
+    getAvatarUrl: () => string | null;
+    getInitials: () => string;
 };
 
 // 2. Erweitere den Default-Wert des Contexts
@@ -34,7 +42,11 @@ export const AuthContext = createContext<AuthContextType>({
     // Füge leere Standard-Funktionen hinzu, um TypeScript-Fehler zu vermeiden
     register: async () => {}, 
     login: async () => {}, 
-    logout: async () => {} 
+    logout: async () => {},
+    uploadProfileImage: async () => ({ success: false, error: 'Not initialized' }),
+    deleteProfileImage: async () => ({ success: false, error: 'Not initialized' }),
+    getAvatarUrl: () => null,
+    getInitials: () => '?'
 });
 
 export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
@@ -61,10 +73,59 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
     const logout: LogoutFunction = () => {
         return signOut(auth);
     };
+
+    // 4. Profilbild-Funktionen
+    const uploadProfileImage: UploadProfileImageFunction = async (file: File) => {
+        if (!user) {
+            return { success: false, error: 'Kein User angemeldet' };
+        }
+
+        // organizationId aus localStorage oder einem anderen Context holen
+        const organizationId = localStorage.getItem('currentOrganizationId') || 'default';
+        
+        const result = await ProfileImageService.uploadProfileImage(file, user, organizationId);
+        
+        if (result.success) {
+            // User-State wird automatisch durch onAuthStateChanged aktualisiert
+        }
+        
+        return result;
+    };
+
+    const deleteProfileImage: DeleteProfileImageFunction = async () => {
+        if (!user) {
+            return { success: false, error: 'Kein User angemeldet' };
+        }
+
+        const organizationId = localStorage.getItem('currentOrganizationId') || 'default';
+        
+        const result = await ProfileImageService.deleteProfileImage(user, organizationId);
+        return result;
+    };
+
+    const getAvatarUrl = () => {
+        if (!user) return null;
+        return user.photoURL || ProfileImageService.generateFallbackAvatarUrl(user);
+    };
+
+    const getInitials = () => {
+        if (!user) return '?';
+        return ProfileImageService.generateInitials(user);
+    };
     
-    // 4. Übergebe die Funktionen an den Provider
+    // 5. Übergebe die Funktionen an den Provider
     return (
-        <AuthContext.Provider value={{ user, loading, register, login, logout }}>
+        <AuthContext.Provider value={{ 
+            user, 
+            loading, 
+            register, 
+            login, 
+            logout,
+            uploadProfileImage,
+            deleteProfileImage,
+            getAvatarUrl,
+            getInitials
+        }}>
             {children}
         </AuthContext.Provider>
     );

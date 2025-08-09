@@ -1,28 +1,66 @@
-// src\app\dashboard\admin\api\page.tsx
+// src/app/dashboard/admin/api/page.tsx
 "use client";
 
-import { Heading } from "@/components/ui/heading";
+import { Heading, Subheading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
-import { PencilIcon, RocketLaunchIcon } from "@heroicons/react/20/solid";
+import { Divider } from "@/components/ui/divider";
+import { KeyIcon, DocumentTextIcon } from "@heroicons/react/24/outline";
 
-export default function PlaceholderPage() {
+export default function APIPage() {
   return (
-    <div className="md:flex md:items-center md:justify-between">
-      <div className="min-w-0 flex-1">
-        <Heading>Headline</Heading>
+    <div>
+      <Heading>API-Verwaltung</Heading>
+      <Text className="mt-2">
+        Verwalte API-Keys und Integrationen für externe Services
+      </Text>
+
+      <Divider className="my-8" />
+
+      {/* API Keys Sektion */}
+      <div className="mb-8">
+        <Subheading level={2}>API-Schlüssel</Subheading>
+        <Text className="mt-2 text-zinc-500 dark:text-zinc-400">
+          Erstelle und verwalte API-Keys für die Authentifizierung
+        </Text>
+        
+        <div className="mt-6 p-6 border border-zinc-200 dark:border-zinc-700 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
+          <div className="flex items-center gap-3">
+            <KeyIcon className="h-8 w-8 text-zinc-400" />
+            <div>
+              <Text className="font-medium">API-Management</Text>
+              <Text className="text-sm text-zinc-500">Wird in einer zukünftigen Version verfügbar sein</Text>
+            </div>
+          </div>
+        </div>
       </div>
-      <div className="mt-4 flex md:mt-0 md:ml-4">
-        <Button plain>
-          <PencilIcon className="size-4" />
-          Bearbeiten
+
+      {/* Dokumentation Sektion */}
+      <div className="mb-8">
+        <Subheading level={2}>API-Dokumentation</Subheading>
+        <Text className="mt-2 text-zinc-500 dark:text-zinc-400">
+          Entwicklerressourcen und Integration-Guides
+        </Text>
+        
+        <div className="mt-6 p-6 border border-zinc-200 dark:border-zinc-700 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
+          <div className="flex items-center gap-3">
+            <DocumentTextIcon className="h-8 w-8 text-zinc-400" />
+            <div>
+              <Text className="font-medium">Entwickler-Dokumentation</Text>
+              <Text className="text-sm text-zinc-500">Vollständige API-Docs werden bereitgestellt</Text>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Aktionen */}
+      <div className="flex gap-3">
+        <Button color="indigo" disabled>
+          API-Key erstellen
         </Button>
-        <button
-          type="button"
-          className="ml-3 inline-flex items-center gap-x-2 rounded-lg bg-[#005fab] px-4 py-2 text-sm font-semibold text-white hover:bg-[#004a8c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005fab]"
-        >
-          <RocketLaunchIcon className="size-4" />
-          Veröffentlichen
-        </button>
+        <Button plain disabled>
+          Dokumentation öffnen
+        </Button>
       </div>
     </div>
   );
