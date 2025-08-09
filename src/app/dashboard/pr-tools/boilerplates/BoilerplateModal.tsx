@@ -21,7 +21,7 @@ import type { LanguageCode } from "@/types/international";
 import { 
   ClipboardDocumentIcon,
   CheckIcon
-} from "@heroicons/react/20/solid";
+} from "@heroicons/react/24/outline";
 
 // Kategorie-Optionen
 const CATEGORY_OPTIONS = [
@@ -38,7 +38,7 @@ const BOILERPLATE_VARIABLES = [
     key: '{{company_name}}',
     label: 'Firmenname',
     description: 'Der Name des Unternehmens',
-    example: 'SKAMP GmbH',
+    example: 'CeleroPress GmbH',
     category: 'company' as const,
     isRequired: false
   },
@@ -114,7 +114,6 @@ function VariablesModal({
       onInsert(variable);
       onClose();
     } catch (err) {
-      console.error('Fehler beim Kopieren:', err);
       // Fallback: Direkt einfügen
       onInsert(variable);
       onClose();
@@ -245,12 +244,9 @@ export default function BoilerplateModal({
 
   const loadCompanies = async () => {
     try {
-      console.log('Loading companies for organizationId:', organizationId);
       const companiesData = await companiesEnhancedService.getAll(organizationId);
-      console.log('Loaded companies:', companiesData);
       setCompanies(companiesData);
     } catch (error) {
-      console.error("Fehler beim Laden der Companies:", error);
       setCompanies([]);
     }
   };
@@ -299,7 +295,6 @@ export default function BoilerplateModal({
       
       onSave();
     } catch (error) {
-      console.error("Fehler beim Speichern:", error);
       alert(`Fehler beim Speichern des Textbausteins: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
     } finally {
       setSaving(false);
@@ -412,7 +407,6 @@ export default function BoilerplateModal({
                     <SimpleSwitch
                       checked={formData.isGlobal ?? true}
                       onChange={(checked) => {
-                        console.log('Switch changed to:', checked);
                         setFormData({ 
                           ...formData, 
                           isGlobal: checked,

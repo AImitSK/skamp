@@ -33,7 +33,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   LanguageIcon
-} from "@heroicons/react/20/solid";
+} from "@heroicons/react/24/outline";
 import { StarIcon as StarIconOutline } from "@heroicons/react/24/outline";
 import BoilerplateModal from "./BoilerplateModal";
 import clsx from 'clsx';
@@ -143,11 +143,9 @@ export default function BoilerplatesPage() {
         const companiesData = await companiesService.getAll(organizationId);
         setCompanies(companiesData);
       } catch (error) {
-        console.warn('Companies konnten nicht geladen werden:', error);
         setCompanies([]);
       }
     } catch (error) {
-      console.error("Fehler beim Laden:", error);
     } finally {
       setLoading(false);
     }

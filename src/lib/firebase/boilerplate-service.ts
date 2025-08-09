@@ -480,6 +480,5 @@ export const boilerplatesService = {
     });
     
     await batch.commit();
-    console.log(`Migrated ${snapshot.docs.length} boilerplates from user to organization`);
   }
 };
