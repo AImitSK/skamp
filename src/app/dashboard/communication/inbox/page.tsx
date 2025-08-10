@@ -610,6 +610,22 @@ export default function InboxPage() {
     }
   };
 
+  // Handle manual mark as read for specific email
+  const handleMarkEmailAsRead = async (emailId: string) => {
+    try {
+      await emailMessageService.markAsRead(emailId);
+      
+      // Update local state
+      setEmails(prevEmails =>
+        prevEmails.map(email =>
+          email.id === emailId ? { ...email, isRead: true } : email
+        )
+      );
+    } catch (error) {
+      console.error('Error marking email as read:', error);
+    }
+  };
+
   // Handle thread selection
   const handleThreadSelect = async (thread: EmailThread) => {
 
@@ -647,17 +663,8 @@ export default function InboxPage() {
         setSelectedEmail(latestEmail);
 
         
-        // Mark thread as read
-        if (thread.unreadCount && thread.unreadCount > 0) {
-          await threadMatcherService.markThreadAsRead(thread.id!);
-          
-          // Mark all unread messages in thread as read
-          for (const message of threadMessages) {
-            if (!message.isRead && message.id) {
-              await emailMessageService.markAsRead(message.id);
-            }
-          }
-        }
+        // DON'T automatically mark as read - only when user explicitly views email
+        // Thread selection should not mark emails as read
       } else {
         // No messages found for thread
         setSelectedEmail(null);
@@ -1232,6 +1239,7 @@ export default function InboxPage() {
               onArchive={handleArchive}
               onDelete={handleDelete}
               onStar={handleStar}
+              onMarkAsRead={handleMarkEmailAsRead}
               onStatusChange={handleThreadStatusChange}
               onAssignmentChange={handleThreadAssign}
               onPriorityChange={handleThreadPriorityChange}

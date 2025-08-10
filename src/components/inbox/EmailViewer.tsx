@@ -39,6 +39,7 @@ interface EmailViewerProps {
   onArchive: (emailId: string) => void;
   onDelete: (emailId: string) => void;
   onStar: (emailId: string, starred: boolean) => void;
+  onMarkAsRead?: (emailId: string) => void;
   onStatusChange?: (threadId: string, status: 'active' | 'waiting' | 'resolved' | 'archived') => void;
   onAssignmentChange?: (threadId: string, assignedTo: string | null) => void;
   onPriorityChange?: (priority: 'low' | 'normal' | 'high' | 'urgent') => void;
@@ -156,6 +157,7 @@ export function EmailViewer({
   onArchive,
   onDelete,
   onStar,
+  onMarkAsRead,
   onStatusChange,
   onAssignmentChange,
   onPriorityChange,
@@ -165,6 +167,19 @@ export function EmailViewer({
   showAI = true
 }: EmailViewerProps) {
   const { getAvatarUrl, getInitials } = useAuth();
+  
+  // Mark email as read when selected (but only if it's unread and has an ID)
+  useEffect(() => {
+    if (selectedEmail && selectedEmail.id && !selectedEmail.isRead && onMarkAsRead) {
+      // Add a small delay to avoid marking as read immediately when just browsing
+      const timer = setTimeout(() => {
+        onMarkAsRead(selectedEmail.id!);
+      }, 1000); // 1 second delay
+      
+      return () => clearTimeout(timer);
+    }
+  }, [selectedEmail?.id, selectedEmail?.isRead, onMarkAsRead]);
+  
   if (!selectedEmail || emails.length === 0) {
     return null;
   }
