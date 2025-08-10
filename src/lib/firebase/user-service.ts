@@ -101,7 +101,7 @@ class UserService {
         firestoreUpdateData.displayName = updateData.displayName;
       }
 
-      await updateDoc(userRef, firestoreUpdateData);
+      await setDoc(userRef, firestoreUpdateData, { merge: true });
     } catch (error) {
       console.error('Fehler beim Aktualisieren des Profils:', error);
       throw new Error('Profil konnte nicht aktualisiert werden');
@@ -148,11 +148,11 @@ class UserService {
   async deleteProfile(userId: string): Promise<void> {
     const userRef = doc(db, this.collection, userId);
     // Soft delete - markiere als gelöscht statt echter Löschung
-    await updateDoc(userRef, {
+    await setDoc(userRef, {
       deleted: true,
       deletedAt: serverTimestamp(),
       updatedAt: serverTimestamp()
-    });
+    }, { merge: true });
   }
 }
 
