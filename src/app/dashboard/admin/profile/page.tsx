@@ -175,112 +175,125 @@ export default function ProfilePage() {
 
       <Divider className="my-8" />
 
-      {/* Avatar Bereich */}
-      <div className="flex items-center gap-6 mb-8">
-        <Avatar
-          className="size-20"
-          src={getAvatarUrl()}
-          initials={getInitials()}
-        />
-        <div className="flex-1">
-          <Subheading level={3}>Profilbild</Subheading>
-          <Text className="mt-1 text-zinc-500 dark:text-zinc-400">
-            JPG, PNG oder WebP. Maximal 10MB. Wird automatisch quadratisch zugeschnitten.
-          </Text>
-          
-          {/* Upload & Delete Buttons */}
-          <div className="flex gap-3 mt-4">
-            <Button 
-              className="bg-[#005fab] hover:bg-[#004a8c] px-6 py-2"
-              onClick={triggerFileInput}
-              disabled={uploading}
-            >
-              <PhotoIcon className="h-4 w-4 mr-2" />
-              {uploading ? 'Lädt hoch...' : user?.photoURL ? 'Ändern' : 'Hochladen'}
-            </Button>
-            
-            {user?.photoURL && (
-              <Button 
-                className="!bg-white !border !border-gray-300 !text-gray-700 hover:!bg-gray-100 px-4 py-2"
-                onClick={handleDeleteImage}
-                disabled={deleting}
-              >
-                <TrashIcon className="h-4 w-4 mr-2" />
-                {deleting ? 'Löscht...' : 'Entfernen'}
-              </Button>
-            )}
-          </div>
+      {/* Avatar InfoCard */}
+      <div className="rounded-lg border bg-white overflow-hidden mb-8">
+        <div className="px-4 py-3 bg-gray-50">
+          <Subheading level={3} className="text-gray-900">Profilbild</Subheading>
+        </div>
+        <div className="p-6">
+          <div className="flex items-center gap-6">
+            <Avatar
+              className="size-20"
+              src={getAvatarUrl()}
+              initials={getInitials()}
+            />
+            <div className="flex-1">
+              <Text className="text-zinc-500 dark:text-zinc-400">
+                JPG, PNG oder WebP. Maximal 10MB. Wird automatisch quadratisch zugeschnitten.
+              </Text>
+              
+              {/* Upload & Delete Buttons */}
+              <div className="flex gap-3 mt-4">
+                <Button 
+                  className="bg-[#005fab] hover:bg-[#004a8c] px-6 py-2"
+                  onClick={triggerFileInput}
+                  disabled={uploading}
+                >
+                  <PhotoIcon className="h-4 w-4 mr-2" />
+                  {uploading ? 'Lädt hoch...' : user?.photoURL ? 'Ändern' : 'Hochladen'}
+                </Button>
+                
+                {user?.photoURL && (
+                  <Button 
+                    className="!bg-white !border !border-gray-300 !text-gray-700 hover:!bg-gray-100 px-4 py-2"
+                    onClick={handleDeleteImage}
+                    disabled={deleting}
+                  >
+                    <TrashIcon className="h-4 w-4 mr-2" />
+                    {deleting ? 'Löscht...' : 'Entfernen'}
+                  </Button>
+                )}
+              </div>
 
-          {/* Hidden File Input */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
+              {/* Hidden File Input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
 
-          {/* Success/Error Message */}
-          {message && (
-            <div className={`mt-3 text-sm ${
-              message.type === 'success' 
-                ? 'text-green-600 dark:text-green-400' 
-                : 'text-red-600 dark:text-red-400'
-            }`}>
-              {message.text}
+              {/* Success/Error Message */}
+              {message && (
+                <div className={`mt-3 text-sm ${
+                  message.type === 'success' 
+                    ? 'text-green-600 dark:text-green-400' 
+                    : 'text-red-600 dark:text-red-400'
+                }`}>
+                  {message.text}
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
 
-      {/* Formular */}
-      <FieldGroup>
-        <Field>
-          <Label>E-Mail-Adresse</Label>
-          <Input type="email" value={user?.email || ""} disabled autoComplete="email" />
-          <Text className="mt-2">
-            Deine E-Mail-Adresse kann nicht geändert werden
-          </Text>
-        </Field>
+      {/* Profil-Daten InfoCard */}
+      <div className="rounded-lg border bg-white overflow-hidden mb-8">
+        <div className="px-4 py-3 bg-gray-50">
+          <Subheading level={3} className="text-gray-900">Persönliche Informationen</Subheading>
+        </div>
+        <div className="p-6">
+          <FieldGroup>
+            <Field>
+              <Label>E-Mail-Adresse</Label>
+              <Input type="email" value={user?.email || ""} disabled autoComplete="email" />
+              <Text className="mt-2">
+                Deine E-Mail-Adresse kann nicht geändert werden
+              </Text>
+            </Field>
 
-        <Field>
-          <Label>Anzeigename</Label>
-          <Input
-            type="text"
-            value={formData.displayName}
-            onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-            placeholder="Dein Name"
-            autoComplete="name"
-          />
-        </Field>
+            <Field>
+              <Label>Anzeigename</Label>
+              <Input
+                type="text"
+                value={formData.displayName}
+                onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+                placeholder="Dein Name"
+                autoComplete="name"
+              />
+            </Field>
 
-        <Field>
-          <Label>Telefonnummer</Label>
-          <Input 
-            type="tel" 
-            value={formData.phoneNumber}
-            onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-            placeholder="+49 123 456789" 
-            autoComplete="tel"
-          />
-        </Field>
-      </FieldGroup>
+            <Field>
+              <Label>Telefonnummer</Label>
+              <Input 
+                type="tel" 
+                value={formData.phoneNumber}
+                onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                placeholder="+49 123 456789" 
+                autoComplete="tel"
+              />
+            </Field>
+          </FieldGroup>
 
-      <div className="mt-8 flex gap-3">
-        <Button 
-          className="bg-[#005fab] hover:bg-[#004a8c] px-6 py-2"
-          onClick={handleSaveProfile}
-          disabled={saving}
-        >
-          {saving ? 'Speichere...' : 'Änderungen speichern'}
-        </Button>
-        <Button 
-          className="!bg-white !border !border-gray-300 !text-gray-700 hover:!bg-gray-100 px-4 py-2"
-          onClick={handleCancel}
-          disabled={saving}
-        >
-          Abbrechen
-        </Button>
+          <div className="mt-8 flex gap-3">
+            <Button 
+              className="bg-[#005fab] hover:bg-[#004a8c] px-6 py-2"
+              onClick={handleSaveProfile}
+              disabled={saving}
+            >
+              {saving ? 'Speichere...' : 'Änderungen speichern'}
+            </Button>
+            <Button 
+              className="!bg-white !border !border-gray-300 !text-gray-700 hover:!bg-gray-100 px-4 py-2"
+              onClick={handleCancel}
+              disabled={saving}
+            >
+              Abbrechen
+            </Button>
+          </div>
+        </div>
       </div>
 
       <Divider className="my-8" />
@@ -305,30 +318,30 @@ export default function ProfilePage() {
 
       <Divider className="my-8" />
 
-      {/* Account-Informationen */}
-      <div>
-        <Subheading level={3}>Account-Informationen</Subheading>
-        <div className="mt-4 space-y-2 text-sm">
-          <div>
-            <span className="text-zinc-500 dark:text-zinc-400">User ID:</span>{" "}
-            <span className="font-mono text-xs">{user?.uid}</span>
-          </div>
-          <div>
-            <span className="text-zinc-500 dark:text-zinc-400">
-              Rolle:
-            </span>{" "}
-            <span className="font-medium">
-              {currentOrganization?.role === 'owner' && 'Inhaber'}
-              {currentOrganization?.role === 'admin' && 'Administrator'}
-              {currentOrganization?.role === 'member' && 'Mitglied'}
-              {!currentOrganization?.role && 'Nicht zugewiesen'}
-            </span>
-          </div>
-          <div>
-            <span className="text-zinc-500 dark:text-zinc-400">
-              Organisation:
-            </span>{" "}
-            <span className="font-medium">{currentOrganization?.name || 'Keine'}</span>
+      {/* Account-Informationen InfoCard */}
+      <div className="rounded-lg border bg-white overflow-hidden">
+        <div className="px-4 py-3 bg-gray-50">
+          <Subheading level={3} className="text-gray-900">Account-Informationen</Subheading>
+        </div>
+        <div className="p-6">
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between">
+              <span className="text-zinc-500 dark:text-zinc-400">User ID:</span>
+              <span className="font-mono text-xs">{user?.uid}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-zinc-500 dark:text-zinc-400">Rolle:</span>
+              <span className="font-medium">
+                {currentOrganization?.role === 'owner' && 'Inhaber'}
+                {currentOrganization?.role === 'admin' && 'Administrator'}
+                {currentOrganization?.role === 'member' && 'Mitglied'}
+                {!currentOrganization?.role && 'Nicht zugewiesen'}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-zinc-500 dark:text-zinc-400">Organisation:</span>
+              <span className="font-medium">{currentOrganization?.name || 'Keine'}</span>
+            </div>
           </div>
         </div>
       </div>
