@@ -31,8 +31,13 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
   const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set());
 
   useEffect(() => {
+    console.log('APIKeyManager: organizationId changed:', organizationId);
     if (organizationId) {
       loadAPIKeys();
+    } else {
+      // Wenn keine organizationId vorhanden, trotzdem loading beenden
+      console.log('APIKeyManager: No organizationId available, ending loading state');
+      setLoading(false);
     }
   }, [organizationId]);
 
@@ -153,6 +158,19 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
         <div className="animate-pulse space-y-4">
           <div className="h-4 bg-gray-200 rounded w-1/4"></div>
           <div className="h-32 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Fallback wenn keine organizationId verfügbar ist
+  if (!organizationId) {
+    return (
+      <div className={className}>
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <Text className="text-yellow-800">
+            Organisation wird geladen... Bitte warten Sie einen Moment.
+          </Text>
         </div>
       </div>
     );
