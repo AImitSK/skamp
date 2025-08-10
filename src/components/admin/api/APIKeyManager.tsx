@@ -196,14 +196,13 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
             Erstelle und verwalte API-Keys für externe Integrationen
           </Text>
         </div>
-        <Button 
-          color="indigo" 
+        <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2"
+          className="inline-flex items-center bg-primary hover:bg-primary-hover text-white border-0 rounded-md px-6 py-2 text-sm font-medium"
         >
-          <PlusIcon className="h-4 w-4" />
+          <PlusIcon className="h-4 w-4 mr-2" />
           Neuen API-Key erstellen
-        </Button>
+        </button>
       </div>
 
       {/* Error Message */}
@@ -327,7 +326,10 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
       {/* Create API Key Modal */}
       {showCreateModal && (
         <CreateAPIKeyModal
-          onClose={() => setShowCreateModal(false)}
+          onClose={() => {
+            console.log('Closing modal');
+            setShowCreateModal(false);
+          }}
           onCreate={handleCreateKey}
         />
       )}
