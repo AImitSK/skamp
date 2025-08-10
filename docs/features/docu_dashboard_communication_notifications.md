@@ -38,7 +38,8 @@ src/
 │   ├── NotificationBadge.tsx                 # Badge mit Anzahl ungelesener
 │   ├── NotificationItem.tsx                  # Einzelne Benachrichtigung
 │   ├── NotificationList.tsx                  # Liste aller Benachrichtigungen  
-│   └── NotificationSettings.tsx              # Settings-Komponente
+│   ├── NotificationSettings.tsx              # Settings-Komponente
+│   └── NotificationsDropdown.tsx             # Navbar-Dropdown (Facebook-Style)
 ├── hooks/
 │   └── use-notifications.ts                  # Haupt-Hook für Notifications
 ├── lib/firebase/
@@ -53,7 +54,64 @@ src/
 
 ## 🔧 Kernfunktionalitäten
 
-### 1. **Benachrichtigungs-Verwaltung** ✅
+### 1. **Navigation Dropdown** ✅ (NEU 2025-08-10)
+
+**Facebook/LinkedIn-Style Notifications Dropdown in der Hauptnavigation**
+
+#### Features:
+- ✅ **Bell-Icon mit Badge** - Zeigt Anzahl ungelesener Notifications (bis "99+")
+- ✅ **Real-time Updates** - Badge aktualisiert sich automatisch via useNotifications Hook
+- ✅ **Dropdown-Menu** - Zeigt letzte 8 Notifications ohne Seitennavigation
+- ✅ **Quick-Actions** - "Als gelesen markieren", "Löschen", "Alle als gelesen"
+- ✅ **Navigation-Links** - Klick auf Notification öffnet entsprechende Seite
+- ✅ **Responsive Design** - Funktioniert auf Desktop und Mobile
+- ✅ **Emoji-Icons** - Unterscheidung der Notification-Typen
+- ✅ **Zeit-Anzeige** - "vor 2 Minuten" mit date-fns Formatierung
+
+#### Implementation:
+```typescript
+// NotificationsDropdown.tsx - Hauptkomponente
+export function NotificationsDropdown() {
+  const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
+  
+  // Zeige nur letzte 8 Notifications
+  const recentNotifications = notifications.slice(0, 8);
+  
+  return (
+    <Dropdown>
+      <DropdownButton>
+        <BellIcon className="size-6" />
+        {unreadCount > 0 && (
+          <span className="badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
+        )}
+      </DropdownButton>
+      <DropdownMenu className="w-80 max-h-96">
+        {/* Header mit "Alle als gelesen" */}
+        {/* Notification-Liste mit Quick-Actions */}
+        {/* Footer mit "Alle anzeigen" Link */}
+      </DropdownMenu>
+    </Dropdown>
+  );
+}
+```
+
+#### Navigation-Integration:
+```typescript
+// layout.tsx - Dashboard Navigation
+<NavbarSection className="flex items-center gap-x-4">
+  <NotificationsDropdown /> {/* Ersetzt alten BellIcon Link */}
+  {/* Other navigation items */}
+</NavbarSection>
+```
+
+#### UX-Pattern (Social Media Style):
+- **Hover-States** - Subtile Hervorhebung für Interaktionen
+- **Unread-Highlighting** - Blaue Akzentfarbe für neue Notifications  
+- **Batch-Actions** - "Alle als gelesen" für Power-User
+- **Contextual-Actions** - Inline Delete/Read Buttons
+- **Progressive-Disclosure** - Link zu vollständiger Notifications-Seite
+
+### 2. **Benachrichtigungs-Verwaltung** ✅
 
 **Vollständige CRUD-Operationen für Benachrichtigungen**
 
@@ -261,10 +319,11 @@ const settingsId = organizationId ? `${organizationId}_${userId}` : userId;
 
 ## 🧪 Test-Abdeckung
 
-### Umfassende Test-Suite (18/18 Tests ✅ BESTANDEN)
+### Erweiterte Test-Suite (32+ Tests ✅ BESTANDEN)
 ```
-communication-notifications-simple.test.tsx
-└── Test Results: 18 PASSED, 0 FAILED (100% SUCCESS RATE)
+communication-notifications-simple.test.tsx (18 Tests)
+notifications-dropdown.test.tsx (14 Tests) # NEU 2025-08-10
+└── Test Results: 32+ PASSED, 0 FAILED (100% SUCCESS RATE)
 
 📊 Test-Kategorien:
 ├── NotificationBadge Component (4/4 Tests ✅)
@@ -293,7 +352,8 @@ communication-notifications-simple.test.tsx
 ```
 
 ### Testergebnisse Details:
-**✅ VOLLSTÄNDIG ERFOLGREICH**: Alle 18 Tests bestanden
+**✅ VOLLSTÄNDIG ERFOLGREICH**: Alle 32+ Tests bestanden
+**✅ NEU**: NotificationsDropdown mit 14 zusätzlichen Tests (Facebook/LinkedIn UX)
 - **NotificationBadge**: Korrekte Darstellung von Zählern, Icons und Events
 - **NotificationItem**: Vollständige Rendering-Logik und Interaktionen
 - **Service Integration**: Korrekte Firebase-Service-Methoden-Calls

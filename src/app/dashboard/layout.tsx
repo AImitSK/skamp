@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dropdown";
 import { Avatar } from "@/components/ui/avatar";
 import { useNotifications } from "@/hooks/use-notifications";
+import { NotificationsDropdown } from "@/components/notifications/NotificationsDropdown";
 import {
   HomeIcon,
   BuildingOfficeIcon,
@@ -453,13 +454,8 @@ export default function DashboardLayout({
               
               {/* Right side icons */}
               <NavbarSection className="flex items-center gap-x-4">
-                {/* Notifications - visible on all screens */}
-                <NavbarItem href="/dashboard/communication/notifications" aria-label="Benachrichtigungen" className="relative !border-transparent">
-                  <BellIcon className="size-6" />
-                  {unreadCount > 0 && (
-                    <span className="absolute top-1.5 right-1.5 inline-flex items-center justify-center rounded-full bg-red-500 size-2" />
-                  )}
-                </NavbarItem>
+                {/* Notifications Dropdown - visible on all screens */}
+                <NotificationsDropdown />
                 
                 {/* Settings - only desktop */}
                 <Dropdown>
