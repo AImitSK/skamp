@@ -1,7 +1,7 @@
 // src/lib/firebase/user-service.ts
 import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { updateProfile, User } from 'firebase/auth';
-import { db } from './config';
+import { db } from './client-init';
 
 export interface UserProfileData {
   uid: string;

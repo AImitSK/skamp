@@ -129,14 +129,6 @@ export function TeamAssignmentUI({
     return teamMembers.find(m => m.userId === assignedTo) || null;
   };
 
-  const getInitials = (name: string): string => {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
 
   const getAvatarColor = (name: string): string => {
     const colors = [

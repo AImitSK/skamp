@@ -136,15 +136,6 @@ export function EmailList({
     return teamMembers.find(m => m.userId === assignedTo) || null;
   };
   
-  // NEU: Generiere Initialen für Avatar
-  const getInitials = (name: string): string => {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
   
   // NEU: Generiere Avatar-Farbe basierend auf Name
   const getAvatarColor = (name: string): string => {
