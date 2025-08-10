@@ -214,9 +214,11 @@ async function resolveOrganization(
       }
       
       // 2. Fallback: Suche nach Domain (für Catch-All/Alias-E-Mails)
-      const domain = address.email.split('@')[1];
-      if (domain) {
-        console.log('🌐 Trying domain-based lookup for:', domain);
+      const fullDomain = address.email.split('@')[1];
+      if (fullDomain) {
+        // Versuche verschiedene Domain-Varianten (inkl. übergeordnete Domains)
+        const domainVariants = getDomainVariants(fullDomain);
+        console.log('🌐 Trying domain-based lookup for:', { fullDomain, variants: domainVariants });
         
         const domainQuery = query(
           collection(serverDb, 'email_addresses'),
@@ -229,11 +231,13 @@ async function resolveOrganization(
           const data = doc.data();
           const emailDomain = data.email.split('@')[1];
           
-          if (emailDomain === domain) {
+          // Prüfe exakte Domain oder übergeordnete Domain
+          if (domainVariants.includes(emailDomain) || emailDomain === fullDomain) {
             console.log('📧 Found domain-based match:', {
               id: doc.id,
               email: data.email,
-              domain: emailDomain,
+              emailDomain: emailDomain,
+              matchedAgainst: fullDomain,
               organizationId: data.organizationId
             });
             
@@ -252,6 +256,23 @@ async function resolveOrganization(
 
   console.log('⚠️ No organization found for any of the addresses');
   return {};
+}
+
+/**
+ * Generiert Domain-Varianten für Catch-All Matching
+ * Beispiel: inbox.sk-online-marketing.de -> [sk-online-marketing.de, online-marketing.de, marketing.de]
+ */
+function getDomainVariants(domain: string): string[] {
+  const parts = domain.split('.');
+  const variants: string[] = [];
+  
+  // Generiere übergeordnete Domains
+  for (let i = 1; i < parts.length - 1; i++) {
+    const variant = parts.slice(i).join('.');
+    variants.push(variant);
+  }
+  
+  return variants;
 }
 
 /**
