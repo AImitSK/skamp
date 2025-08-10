@@ -188,20 +188,20 @@ async function resolveOrganization(
     try {
       console.log('🔍 Resolving organization for:', address.email);
       
-      // Direkte Firestore-Query für E-Mail-Adressen
-      const emailAddressesQuery = query(
+      // 1. Exakte E-Mail-Adresse suchen
+      const exactQuery = query(
         collection(serverDb, 'email_addresses'),
         where('email', '==', address.email),
         where('isActive', '==', true)
       );
       
-      const querySnapshot = await getDocs(emailAddressesQuery);
+      const exactSnapshot = await getDocs(exactQuery);
       
-      if (!querySnapshot.empty) {
-        const doc = querySnapshot.docs[0];
+      if (!exactSnapshot.empty) {
+        const doc = exactSnapshot.docs[0];
         const data = doc.data();
         
-        console.log('📧 Found email address:', {
+        console.log('📧 Found exact email address:', {
           id: doc.id,
           email: data.email,
           organizationId: data.organizationId
@@ -212,6 +212,39 @@ async function resolveOrganization(
           emailAccountId: doc.id
         };
       }
+      
+      // 2. Fallback: Suche nach Domain (für Catch-All/Alias-E-Mails)
+      const domain = address.email.split('@')[1];
+      if (domain) {
+        console.log('🌐 Trying domain-based lookup for:', domain);
+        
+        const domainQuery = query(
+          collection(serverDb, 'email_addresses'),
+          where('isActive', '==', true)
+        );
+        
+        const domainSnapshot = await getDocs(domainQuery);
+        
+        for (const doc of domainSnapshot.docs) {
+          const data = doc.data();
+          const emailDomain = data.email.split('@')[1];
+          
+          if (emailDomain === domain) {
+            console.log('📧 Found domain-based match:', {
+              id: doc.id,
+              email: data.email,
+              domain: emailDomain,
+              organizationId: data.organizationId
+            });
+            
+            return {
+              organizationId: data.organizationId,
+              emailAccountId: doc.id
+            };
+          }
+        }
+      }
+      
     } catch (error) {
       console.error('Error resolving organization for', address.email, error);
     }
