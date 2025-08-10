@@ -2,8 +2,9 @@
 import { EmailAddressInfo, EmailAttachment, EmailMessage } from '@/types/email-enhanced';
 import { EmailMessageService } from '@/lib/email/email-message-service';
 import { FlexibleThreadMatcherService } from '@/lib/email/thread-matcher-service-flexible';
-import { EmailAddressService } from '@/lib/email/email-address-service';
 import { nanoid } from 'nanoid';
+import { serverDb } from '@/lib/firebase/server-init';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 export interface IncomingEmailData {
   to: EmailAddressInfo[];
@@ -72,11 +73,10 @@ export async function flexibleEmailProcessor(
 
     // Services initialisieren
     const emailMessageService = new EmailMessageService();
-    const emailAddressService = new EmailAddressService();
     const threadMatcher = new FlexibleThreadMatcherService(true); // Server-side processing
 
     // 1. Organisation über empfangende E-Mail-Adresse ermitteln
-    const { organizationId, emailAccountId } = await resolveOrganization(emailData.to, emailAddressService);
+    const { organizationId, emailAccountId } = await resolveOrganization(emailData.to);
     
     if (!organizationId || !emailAccountId) {
       console.log('⚠️ No organization found for email addresses:', emailData.to.map(addr => addr.email));
@@ -182,19 +182,34 @@ export async function flexibleEmailProcessor(
  * Ermittelt die Organisation anhand der empfangenden E-Mail-Adressen
  */
 async function resolveOrganization(
-  toAddresses: EmailAddressInfo[], 
-  emailAddressService: EmailAddressService
+  toAddresses: EmailAddressInfo[]
 ): Promise<{ organizationId?: string; emailAccountId?: string }> {
   for (const address of toAddresses) {
     try {
-      // Prüfe ob E-Mail-Adresse in unserem System registriert ist
-      const emailAccounts = await emailAddressService.getByEmail(address.email);
+      console.log('🔍 Resolving organization for:', address.email);
       
-      if (emailAccounts.length > 0) {
-        const account = emailAccounts[0];
+      // Direkte Firestore-Query für E-Mail-Adressen
+      const emailAddressesQuery = query(
+        collection(serverDb, 'email_addresses'),
+        where('email', '==', address.email),
+        where('isActive', '==', true)
+      );
+      
+      const querySnapshot = await getDocs(emailAddressesQuery);
+      
+      if (!querySnapshot.empty) {
+        const doc = querySnapshot.docs[0];
+        const data = doc.data();
+        
+        console.log('📧 Found email address:', {
+          id: doc.id,
+          email: data.email,
+          organizationId: data.organizationId
+        });
+        
         return {
-          organizationId: account.organizationId,
-          emailAccountId: account.id
+          organizationId: data.organizationId,
+          emailAccountId: doc.id
         };
       }
     } catch (error) {
@@ -202,6 +217,7 @@ async function resolveOrganization(
     }
   }
 
+  console.log('⚠️ No organization found for any of the addresses');
   return {};
 }
 
