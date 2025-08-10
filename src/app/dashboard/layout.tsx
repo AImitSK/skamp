@@ -343,7 +343,7 @@ export default function DashboardLayout({
                       >
                         <span className="flex items-center gap-2">
                           {child.name}
-                          {child.notificationCount && child.notificationCount > 0 && (
+                          {(child.notificationCount ?? 0) > 0 && (
                             <span className="inline-flex items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
                               {child.notificationCount > 99 ? '99+' : child.notificationCount}
                             </span>
@@ -442,7 +442,7 @@ export default function DashboardLayout({
                         >
                           <span className="flex items-center gap-2">
                             {child.name}
-                            {child.notificationCount && child.notificationCount > 0 && (
+                            {(child.notificationCount ?? 0) > 0 && (
                                <span className="inline-flex items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
                                  {child.notificationCount > 99 ? '99+' : child.notificationCount}
                                </span>
@@ -571,7 +571,7 @@ export default function DashboardLayout({
                           >
                             <span className="flex items-center gap-2">
                               {child.name}
-                              {child.notificationCount && child.notificationCount > 0 && (
+                              {(child.notificationCount ?? 0) > 0 && (
                                  <span className="inline-flex items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
                                    {child.notificationCount > 99 ? '99+' : child.notificationCount}
                                  </span>

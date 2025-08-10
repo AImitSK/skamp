@@ -31,6 +31,9 @@ export function useInboxCount(): InboxCountResult {
 
   useEffect(() => {
     if (!user?.uid || !currentOrganization?.id) {
+      setTotalUnread(0);
+      setAssignedUnread(0);
+      setGeneralUnread(0);
       setLoading(false);
       return;
     }
