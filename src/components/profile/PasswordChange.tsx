@@ -146,7 +146,7 @@ export function PasswordChange() {
       </div>
 
       {isChanging && (
-        <>
+        <form onSubmit={(e) => { e.preventDefault(); handlePasswordChange(); }}>
           <FieldGroup className="mt-6">
             <Field>
               <Label>Aktuelles Passwort</Label>
@@ -196,13 +196,14 @@ export function PasswordChange() {
 
           <div className="mt-6 flex gap-3">
             <Button
+              type="submit"
               className="bg-[#005fab] hover:bg-[#004a8c] px-6 py-2"
-              onClick={handlePasswordChange}
               disabled={saving}
             >
               {saving ? 'Speichere...' : 'Passwort ändern'}
             </Button>
             <Button
+              type="button"
               className="!bg-white !border !border-gray-300 !text-gray-700 hover:!bg-gray-100 px-4 py-2"
               onClick={handleCancel}
               disabled={saving}
@@ -210,7 +211,7 @@ export function PasswordChange() {
               Abbrechen
             </Button>
           </div>
-        </>
+        </form>
       )}
 
       {message && (

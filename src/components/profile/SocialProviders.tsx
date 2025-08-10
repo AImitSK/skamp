@@ -55,6 +55,15 @@ export function SocialProviders() {
 
     try {
       const provider = new GoogleAuthProvider();
+      
+      // Bessere Konfiguration für OAuth
+      provider.addScope('email');
+      provider.addScope('profile');
+      provider.setCustomParameters({
+        prompt: 'consent',
+        access_type: 'offline'
+      });
+      
       const result = await linkWithPopup(user, provider);
       
       updateProvidersList(result.user);
@@ -63,17 +72,29 @@ export function SocialProviders() {
         text: 'Google-Konto erfolgreich verknüpft!' 
       });
     } catch (error: any) {
+      console.error('Google Link Error:', error);
+      
       if (error.code === 'auth/credential-already-in-use') {
         setMessage({ 
           type: 'error', 
           text: 'Dieses Google-Konto ist bereits mit einem anderen Account verknüpft.' 
+        });
+      } else if (error.code === 'auth/unauthorized-domain') {
+        setMessage({ 
+          type: 'error', 
+          text: 'Domain nicht für OAuth autorisiert. Bitte kontaktiere den Support.' 
+        });
+      } else if (error.code === 'auth/popup-blocked') {
+        setMessage({ 
+          type: 'error', 
+          text: 'Popup wurde blockiert. Bitte erlaube Popups für diese Website.' 
         });
       } else if (error.code === 'auth/popup-canceled-by-user') {
         // Benutzer hat Popup geschlossen - keine Fehlermeldung nötig
       } else {
         setMessage({ 
           type: 'error', 
-          text: 'Fehler beim Verknüpfen des Google-Kontos. Bitte versuche es erneut.' 
+          text: `Fehler beim Verknüpfen des Google-Kontos: ${error.message}` 
         });
       }
     } finally {

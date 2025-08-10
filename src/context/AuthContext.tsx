@@ -133,7 +133,22 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
         if (!user) throw new Error('Nicht angemeldet');
         if (user.emailVerified) throw new Error('E-Mail bereits verifiziert');
         
-        await sendEmailVerification(user);
+        // Konfiguriere deutsche E-Mail-Verifizierung mit CeleroPress Branding
+        const actionCodeSettings = {
+            url: `${window.location.origin}/dashboard/admin/profile?verified=true`,
+            handleCodeInApp: true,
+            iOS: {
+                bundleId: 'com.celeropress.app'
+            },
+            android: {
+                packageName: 'com.celeropress.app',
+                installApp: false,
+                minimumVersion: '1'
+            },
+            dynamicLinkDomain: 'celeropress.page.link' // Falls vorhanden
+        };
+        
+        await sendEmailVerification(user, actionCodeSettings);
     };
     
     // 5. Übergebe die Funktionen an den Provider
