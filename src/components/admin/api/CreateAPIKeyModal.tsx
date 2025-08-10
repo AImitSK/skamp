@@ -229,7 +229,7 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
 
                 {/* Permissions */}
                 <div>
-                  <Label className="text-base font-semibold">Berechtigungen</Label>
+                  <h3 className="text-base font-semibold">Berechtigungen</h3>
                   <Text className="text-sm text-gray-500 mt-1 mb-4">
                     Wähle die Aktionen aus, die mit diesem API-Key ausgeführt werden dürfen.
                   </Text>
@@ -245,7 +245,7 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
                                 checked={selectedPermissions.has(permission.value)}
                                 onChange={(checked) => handlePermissionChange(permission.value, checked)}
                               />
-                              <Label className="font-medium">{permission.label}</Label>
+                              <span className="font-medium">{permission.label}</span>
                               <Text className="text-sm text-gray-500">{permission.description}</Text>
                             </CheckboxField>
                           ))}
@@ -297,7 +297,7 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
 
                 <div className="space-y-4">
                   <div>
-                    <Label>Dein neuer API-Key:</Label>
+                    <h4 className="font-medium">Dein neuer API-Key:</h4>
                     <div className="flex items-center gap-2 mt-2">
                       <Input
                         value={createdKey}
