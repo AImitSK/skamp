@@ -110,6 +110,13 @@ export default function HomePage() {
     
     try {
       const provider = new GoogleAuthProvider();
+      provider.addScope('email');
+      provider.addScope('profile');
+      provider.setCustomParameters({ 
+        prompt: 'consent', 
+        access_type: 'offline' 
+      });
+      
       const result = await signInWithPopup(auth, provider);
       const googleUser = result.user;
 
@@ -137,10 +144,30 @@ export default function HomePage() {
       router.push('/dashboard');
     } catch (err: any) {
       console.error("Google Sign-In Fehler:", err);
-      if (err.code === 'auth/popup-closed-by-user') {
+      
+      // 2FA Handling für Google OAuth
+      if (err.code === 'auth/multi-factor-auth-required') {
+        const mfaResolver = getMultiFactorResolver(auth, err);
+        setResolver(mfaResolver);
+        
+        // Wenn SMS 2FA aktiviert ist
+        if (mfaResolver.hints[0]?.factorId === PhoneMultiFactorGenerator.FACTOR_ID) {
+          const phoneInfoOptions = {
+            multiFactorHint: mfaResolver.hints[0],
+            session: mfaResolver.session
+          };
+          
+          const phoneAuthProvider = new PhoneAuthProvider(auth);
+          const verificationId = await phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, undefined as any);
+          setVerificationId(verificationId);
+          setRequires2FA(true);
+        }
+      } else if (err.code === 'auth/popup-closed-by-user') {
         // User hat Popup geschlossen - keine Fehlermeldung nötig
+      } else if (err.code === 'auth/unauthorized-domain') {
+        setError('Domain nicht für OAuth autorisiert. Bitte kontaktiere den Support.');
       } else {
-        setError("Google-Anmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.");
+        setError('Google-Anmeldung fehlgeschlagen. Bitte versuche es erneut.');
       }
     } finally {
       setLoading(false);
@@ -223,7 +250,13 @@ export default function HomePage() {
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* 2FA Verification Screen */}
           {requires2FA ? (
-            <div className="space-y-6">
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                handle2FAVerification();
+              }}
+              className="space-y-6"
+            >
               <div className="text-center">
                 <div className="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4">
                   <ShieldCheckIcon className="h-8 w-8 text-[#005fab]" />
@@ -249,6 +282,7 @@ export default function HomePage() {
                   placeholder="123456"
                   maxLength={6}
                   disabled={loading}
+                  autoComplete="one-time-code"
                 />
               </div>
 
@@ -259,13 +293,13 @@ export default function HomePage() {
               )}
 
               <button
-                onClick={handle2FAVerification}
+                type="submit"
                 className="w-full px-6 py-3 text-white bg-[#005fab] hover:bg-[#004a8c] rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={loading || verificationCode.length !== 6}
               >
                 {loading ? "Verifiziere..." : "Verifizieren"}
               </button>
-            </div>
+            </form>
           ) : (
             <form 
               onSubmit={(e) => {
