@@ -115,19 +115,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Process the email through our flexible pipeline
-    const result = await flexibleEmailProcessor.processIncomingEmail(emailData);
+    const result = await flexibleEmailProcessor(emailData);
     
     if (result.success) {
       console.log('✅ Email processed successfully:', {
-        messageId: result.messageId,
+        emailId: result.emailId,
         threadId: result.threadId,
-        strategy: 'deferred'
+        routingDecision: result.routingDecision
       });
       return NextResponse.json({ 
         success: true, 
-        messageId: result.messageId,
+        emailId: result.emailId,
         threadId: result.threadId,
-        note: 'Thread will be created when accessed in UI'
+        routingDecision: result.routingDecision
       });
     } else {
       console.error('❌ Email processing failed:', result.error);
