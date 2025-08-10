@@ -3,6 +3,7 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { CrmDataProvider } from "@/context/CrmDataContext";
+import { OrganizationProvider } from "@/context/OrganizationContext";
 import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase/client-init";
@@ -412,8 +413,9 @@ export default function DashboardLayout({
 
   return (
     <ProtectedRoute>
-      <CrmDataProvider>
-        <StackedLayout
+      <OrganizationProvider>
+        <CrmDataProvider>
+          <StackedLayout
           navbar={
             <Navbar>
               {/* Logo */}
@@ -594,8 +596,9 @@ export default function DashboardLayout({
         >
           {children}
           <MobileMenu />
-        </StackedLayout>
-      </CrmDataProvider>
+          </StackedLayout>
+        </CrmDataProvider>
+      </OrganizationProvider>
     </ProtectedRoute>
   );
 }

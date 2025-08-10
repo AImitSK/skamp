@@ -7,6 +7,7 @@ import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from '@/context/AuthContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import { 
   KeyIcon, 
   EyeIcon, 
@@ -23,7 +24,9 @@ interface APIKeyManagerProps {
 }
 
 export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
-  const { user, organizationId } = useAuth();
+  const { user } = useAuth();
+  const { currentOrganization, loading: orgLoading } = useOrganization();
+  const organizationId = currentOrganization?.id;
   const [apiKeys, setAPIKeys] = useState<Omit<APIKeyResponse, 'key'>[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,15 +34,21 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
   const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    console.log('APIKeyManager: organizationId changed:', organizationId);
+    console.log('APIKeyManager: organizationId changed:', organizationId, 'orgLoading:', orgLoading);
+    
+    if (orgLoading) {
+      // Organization wird noch geladen, warten
+      return;
+    }
+    
     if (organizationId) {
       loadAPIKeys();
     } else {
-      // Wenn keine organizationId vorhanden, trotzdem loading beenden
+      // Wenn keine organizationId vorhanden, loading beenden
       console.log('APIKeyManager: No organizationId available, ending loading state');
       setLoading(false);
     }
-  }, [organizationId]);
+  }, [organizationId, orgLoading]);
 
   const loadAPIKeys = async () => {
     try {
@@ -152,7 +161,8 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
     return 'blue';
   };
 
-  if (loading) {
+  // Zeige Loading wenn Organization oder API Keys geladen werden
+  if (orgLoading || loading) {
     return (
       <div className={`p-6 ${className}`}>
         <div className="animate-pulse space-y-4">
@@ -163,13 +173,13 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
     );
   }
 
-  // Fallback wenn keine organizationId verfügbar ist
-  if (!organizationId) {
+  // Fallback wenn keine Organization verfügbar ist
+  if (!currentOrganization) {
     return (
       <div className={className}>
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <Text className="text-yellow-800">
-            Organisation wird geladen... Bitte warten Sie einen Moment.
+            Keine Organisation verfügbar. Bitte prüfen Sie Ihre Berechtigung.
           </Text>
         </div>
       </div>
