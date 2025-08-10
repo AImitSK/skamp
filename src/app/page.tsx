@@ -296,6 +296,7 @@ export default function HomePage() {
                     className="block w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#005fab] focus:border-transparent"
                     placeholder="name@firma.de"
                     disabled={loading}
+                    autoComplete="email"
                   />
                 </div>
               </div>
@@ -317,6 +318,7 @@ export default function HomePage() {
                     className="block w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#005fab] focus:border-transparent"
                     placeholder="••••••••"
                     disabled={loading}
+                    autoComplete={isRegisterMode ? "new-password" : "current-password"}
                   />
                 </div>
               </div>

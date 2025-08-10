@@ -92,14 +92,23 @@ export function PasswordChange() {
       });
       setIsChanging(false);
     } catch (error: any) {
+      console.error('Password change error:', error);
+      
       if (error.code === 'auth/wrong-password') {
         setErrors({ currentPassword: 'Falsches Passwort' });
+        // Nur aktuelles Passwort leeren, neue Passwörter behalten
+        setPasswords(prev => ({ ...prev, currentPassword: '' }));
       } else if (error.code === 'auth/weak-password') {
         setErrors({ newPassword: 'Passwort ist zu schwach' });
+      } else if (error.code === 'auth/requires-recent-login') {
+        setMessage({ 
+          type: 'error', 
+          text: 'Bitte melde dich erneut an, um dein Passwort zu ändern.' 
+        });
       } else {
         setMessage({ 
           type: 'error', 
-          text: 'Fehler beim Ändern des Passworts. Bitte versuche es erneut.' 
+          text: `Fehler beim Ändern des Passworts: ${error.message || 'Unbekannter Fehler'}` 
         });
       }
     } finally {
@@ -155,6 +164,7 @@ export function PasswordChange() {
                 value={passwords.currentPassword}
                 onChange={(e) => setPasswords({ ...passwords, currentPassword: e.target.value })}
                 invalid={!!errors.currentPassword}
+                autoComplete="current-password"
               />
               {errors.currentPassword && (
                 <Text className="text-sm text-red-600 mt-1">
@@ -170,6 +180,7 @@ export function PasswordChange() {
                 value={passwords.newPassword}
                 onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })}
                 invalid={!!errors.newPassword}
+                autoComplete="new-password"
               />
               {errors.newPassword && (
                 <Text className="text-sm text-red-600 mt-1">
@@ -185,6 +196,7 @@ export function PasswordChange() {
                 value={passwords.confirmPassword}
                 onChange={(e) => setPasswords({ ...passwords, confirmPassword: e.target.value })}
                 invalid={!!errors.confirmPassword}
+                autoComplete="new-password"
               />
               {errors.confirmPassword && (
                 <Text className="text-sm text-red-600 mt-1">

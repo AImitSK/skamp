@@ -237,7 +237,7 @@ export default function ProfilePage() {
       <FieldGroup>
         <Field>
           <Label>E-Mail-Adresse</Label>
-          <Input type="email" value={user?.email || ""} disabled />
+          <Input type="email" value={user?.email || ""} disabled autoComplete="email" />
           <Text className="mt-2">
             Deine E-Mail-Adresse kann nicht geändert werden
           </Text>
@@ -250,6 +250,7 @@ export default function ProfilePage() {
             value={formData.displayName}
             onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
             placeholder="Dein Name"
+            autoComplete="name"
           />
         </Field>
 
@@ -260,6 +261,7 @@ export default function ProfilePage() {
             value={formData.phoneNumber}
             onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
             placeholder="+49 123 456789" 
+            autoComplete="tel"
           />
         </Field>
       </FieldGroup>

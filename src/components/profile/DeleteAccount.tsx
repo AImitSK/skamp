@@ -232,6 +232,7 @@ export function DeleteAccount() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Dein Passwort"
+                  autoComplete="current-password"
                 />
               </Field>
             </>
