@@ -105,7 +105,7 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
       const request: APIKeyCreateRequest = {
         name: name.trim(),
         permissions: Array.from(selectedPermissions),
-        expiresInDays,
+        expiresInDays: expiresInDays || undefined,
         rateLimit: {
           requestsPerHour
         },
@@ -146,7 +146,7 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
     <Dialog open={true} onClose={onClose} className="relative z-50">
       <div className="fixed inset-0 bg-black/25" />
       <div className="fixed inset-0 flex w-screen items-center justify-center p-4">
-        <DialogPanel className="w-full max-w-2xl bg-white rounded-lg shadow-xl">
+        <DialogPanel className="w-full max-w-2xl max-h-[90vh] bg-white rounded-lg shadow-xl flex flex-col overflow-hidden">
           
           {step === 'config' && (
             <>
@@ -162,7 +162,8 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
               </div>
 
               {/* Form */}
-              <form onSubmit={handleSubmit} className="p-6 space-y-6">
+              <div className="flex-1 overflow-y-auto">
+                <form onSubmit={handleSubmit} className="p-6 space-y-6">
                 {/* Error Message */}
                 {error && (
                   <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -180,7 +181,7 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
                       placeholder="z.B. Salesforce Integration"
                       required
                     />
-                    <Text className="text-sm text-gray-500">
+                    <Text className="text-sm text-gray-500 break-words">
                       Eindeutiger Name zur Identifizierung dieses API-Keys
                     </Text>
                   </Field>
@@ -194,7 +195,7 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
                       min="1"
                       max="10000"
                     />
-                    <Text className="text-sm text-gray-500">
+                    <Text className="text-sm text-gray-500 break-words">
                       Maximale Anzahl API-Anfragen pro Stunde
                     </Text>
                   </Field>
@@ -221,7 +222,7 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
                       onChange={(e) => setAllowedIPs(e.target.value)}
                       placeholder="192.168.1.1, 10.0.0.1 (leer für alle IPs)"
                     />
-                    <Text className="text-sm text-gray-500">
+                    <Text className="text-sm text-gray-500 break-words">
                       Kommagetrennte Liste von IP-Adressen. Leer lassen für unbegrenzt.
                     </Text>
                   </Field>
@@ -230,7 +231,7 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
                 {/* Permissions */}
                 <div>
                   <h3 className="text-base font-semibold">Berechtigungen</h3>
-                  <Text className="text-sm text-gray-500 mt-1 mb-4">
+                  <Text className="text-sm text-gray-500 mt-1 mb-4 break-words">
                     Wähle die Aktionen aus, die mit diesem API-Key ausgeführt werden dürfen.
                   </Text>
                   
@@ -240,13 +241,15 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
                         <Text className="font-medium text-gray-900 mb-3">{category}</Text>
                         <div className="space-y-2 pl-4">
                           {permissions.map((permission) => (
-                            <CheckboxField key={permission.value}>
+                            <CheckboxField key={permission.value} className="flex items-start gap-2">
                               <Checkbox
                                 checked={selectedPermissions.has(permission.value)}
                                 onChange={(checked) => handlePermissionChange(permission.value, checked)}
                               />
-                              <span className="font-medium">{permission.label}</span>
-                              <Text className="text-sm text-gray-500">{permission.description}</Text>
+                              <div className="min-w-0 flex-1">
+                                <div className="font-medium break-words">{permission.label}</div>
+                                <Text className="text-sm text-gray-500 break-words">{permission.description}</Text>
+                              </div>
                             </CheckboxField>
                           ))}
                         </div>
@@ -269,6 +272,7 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
                   </Button>
                 </div>
               </form>
+              </div>
             </>
           )}
 
@@ -286,10 +290,10 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
               </div>
 
               {/* Created Key Display */}
-              <div className="p-6">
+              <div className="flex-1 overflow-y-auto p-6">
                 <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                   <Text className="text-yellow-800 font-medium mb-2">Wichtiger Sicherheitshinweis</Text>
-                  <Text className="text-yellow-700 text-sm">
+                  <Text className="text-yellow-700 text-sm break-words">
                     Dies ist das einzige Mal, dass der vollständige API-Key angezeigt wird. 
                     Bitte kopiere ihn jetzt und bewahre ihn sicher auf.
                   </Text>
