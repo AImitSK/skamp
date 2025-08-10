@@ -30,6 +30,7 @@ import {
 import { Avatar } from "@/components/ui/avatar";
 import { useNotifications } from "@/hooks/use-notifications";
 import { NotificationsDropdown } from "@/components/notifications/NotificationsDropdown";
+import { useInboxCount } from "@/hooks/use-inbox-count";
 import {
   HomeIcon,
   BuildingOfficeIcon,
@@ -79,6 +80,7 @@ export default function DashboardLayout({
   const router = useRouter();
   const pathname = usePathname();
   const { unreadCount } = useNotifications();
+  const { totalUnread: inboxUnread, assignedUnread } = useInboxCount();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -187,7 +189,10 @@ export default function DashboardLayout({
           name: "Kampagnen In-Box", 
           href: "/dashboard/communication/inbox", 
           icon: InboxIcon,
-          description: "Eingehende Nachrichten zu deinen Kampagnen"
+          notificationCount: inboxUnread,
+          description: assignedUnread > 0 
+            ? `${assignedUnread} dir zugewiesene ungelesene E-Mails`
+            : "Eingehende Nachrichten zu deinen Kampagnen"
         },
         { 
           name: "Benachrichtigungen", 

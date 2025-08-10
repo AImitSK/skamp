@@ -65,6 +65,7 @@ Das Communication Inbox System ermöglicht eine professionelle, teambasierte E-M
 5. **KI-Antwort-Vorschläge** - Generierung kontextueller, professioneller Antworten
 6. **Domain-Integration** - Nahtlose Verbindung mit verifizierten E-Mail-Domains
 7. **Inline-Komposition** - Vollständiger E-Mail-Editor mit Signaturen und Templates
+8. **Real-time Badge-System** - Live-Anzeige ungelesener E-Mails mit Unterscheidung zwischen zugewiesenen und allgemeinen Nachrichten
 
 ### Workflow
 1. **E-Mail-Eingang:** Automatische Zuordnung zu Threads und Team-Ordnern
@@ -94,12 +95,17 @@ Das Communication Inbox System ermöglicht eine professionelle, teambasierte E-M
   - StatusManager - Thread-Status-Verwaltung
   - TeamAssignmentUI - Team-Mitglieder-Zuweisung (425 Zeilen)
   - TeamFolderSidebar - Hierarchische Team-Ordner
+
+- Navigation Integration:
+  - useInboxCount Hook - Real-time Zählung ungelesener E-Mails
+  - Dashboard Layout - Badge-Anzeige mit Unterscheidung zwischen zugewiesenen und allgemeinen E-Mails
 ```
 
 ### State Management
 - **Lokaler State:** React useState für UI-Interaktionen (Compose-Modal, Sidebar-Toggle)
 - **Server State:** Real-time Firestore Listeners für Threads, Messages, Team-Assignments
 - **AI State:** KI-Analyse-Ergebnisse werden lokal gecacht für Performance
+- **Badge State:** useInboxCount Hook mit real-time Firestore Listeners für ungelesene E-Mail-Zählung
 
 ### API-Endpunkte
 | Methode | Endpoint | Zweck | Response |
@@ -469,6 +475,7 @@ Das Communication Inbox Feature ist das komplexeste und funktionsreichste Featur
 - **Notification System** - Real-time notifications for assignments and status changes
 - **Multi-Tenancy Security** - Complete organizationId-based data isolation
 - **Real-time Performance** - Firebase listeners with optimized queries and pagination
+- **Badge System** - Live-Anzeige ungelesener E-Mails in Navigation mit useInboxCount Hook
 
 ### 📊 TECHNICAL METRICS:
 - **Components:** 14 (TeamFolderSidebar, EmailList, EmailViewer, AIInsightsPanel, etc.)
