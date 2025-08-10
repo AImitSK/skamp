@@ -68,9 +68,16 @@ export function TwoFactorSettings() {
     setError(null);
 
     try {
-      // Initialize reCAPTCHA
+      // Initialize reCAPTCHA mit erweiterten Optionen
       const recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        size: 'invisible'
+        size: 'invisible',
+        callback: () => {
+          console.log('reCAPTCHA solved successfully');
+        },
+        'expired-callback': () => {
+          console.log('reCAPTCHA expired');
+          setError('reCAPTCHA ist abgelaufen. Bitte versuche es erneut.');
+        }
       });
 
       const mfaUser = multiFactor(user);
@@ -91,8 +98,21 @@ export function TwoFactorSettings() {
       setVerificationId(verificationId);
       setSetupStep('verify');
     } catch (error: any) {
-      setError('Fehler beim Senden des Verifizierungscodes. Bitte versuche es erneut.');
       console.error('2FA setup error:', error);
+      
+      if (error.code === 'auth/operation-not-allowed') {
+        setError('SMS-basierte 2FA ist nicht aktiviert. Bitte kontaktiere den Support.');
+      } else if (error.code === 'auth/captcha-check-failed') {
+        setError('reCAPTCHA-Verifizierung fehlgeschlagen. Bitte versuche es erneut.');
+      } else if (error.code === 'auth/invalid-phone-number') {
+        setError('Ungültige Telefonnummer. Verwende das internationale Format (+49...).');
+      } else if (error.code === 'auth/quota-exceeded') {
+        setError('SMS-Quota überschritten. Versuche es später erneut.');
+      } else if (error.message?.includes('reCAPTCHA Enterprise')) {
+        setError('reCAPTCHA-Konfigurationsfehler. Bitte kontaktiere den Support.');
+      } else {
+        setError(`Fehler beim Senden des Codes: ${error.message || 'Unbekannter Fehler'}`);
+      }
     } finally {
       setLoading(false);
     }

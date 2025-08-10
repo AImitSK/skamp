@@ -12,7 +12,7 @@
 3. ✅ Enable SMS Multi-factor authentication 
 4. ✅ Enable TOTP Multi-factor authentication (optional)
 
-**Status:** ❌ NICHT KONFIGURIERT
+**Status:** ✅ AKTIVIERT
 
 ---
 
@@ -54,17 +54,33 @@
 
 ---
 
-### 4. **reCAPTCHA Enterprise konfigurieren**
+### 4. **reCAPTCHA Enterprise konfigurieren** 🔥 KRITISCH
 
-**Problem:** `Failed to initialize reCAPTCHA Enterprise config`
+**Problem:** 
+- `Failed to initialize reCAPTCHA Enterprise config`
+- `Triggering the reCAPTCHA v2 verification`
+- Websiteschlüssel der Plattform zeigen 0 Bewertungen
 
-**Lösung:**
-1. Firebase Console → Authentication → Settings
-2. reCAPTCHA Enterprise konfigurieren:
-   - Domains hinzufügen: `celeropress.com`, `www.celeropress.com`
-   - Test-Domains: `localhost`, `*.vercel.app`
+**DRINGENDE Lösung:**
+1. **Firebase Console → Authentication → Settings → reCAPTCHA**
+2. **Websiteschlüssel der Plattform konfigurieren:**
+   - Klicken Sie auf jeden "Key for Identity Platform reCAPTCHA integration" 
+   - **Domains hinzufügen:**
+     ```
+     celeropress.com
+     www.celeropress.com
+     localhost (für Development)
+     [your-project].vercel.app (für Staging)
+     ```
+3. **Erzwingungsmodus auf "ENFORCE" setzen** (statt AUDIT)
+4. **Schwellenwert:** Auf 0.7-0.8 erhöhen für weniger aggressive Blockierung
 
-**Status:** ❌ NICHT KONFIGURIERT
+**Warum kritisch:**
+- Ohne korrekte reCAPTCHA-Konfiguration funktioniert 2FA NICHT
+- SMS-Versendung wird blockiert
+- Benutzer können sich nicht mit 2FA anmelden
+
+**Status:** ❌ KRITISCH - SOFORT BEHEBEN ERFORDERLICH
 
 ---
 
@@ -108,20 +124,34 @@
 
 ## 🔧 Sofort-Maßnahmen für den Admin
 
-### Schritt 1: MFA aktivieren (Höchste Priorität)
+### Schritt 1: ✅ MFA aktivieren (ERLEDIGT)
 ```
 Firebase Console → Authentication → Sign-in method → Advanced → Multi-factor
 ✅ Enable SMS Multi-factor authentication
 ```
 
-### Schritt 2: Domain autorisieren
+### Schritt 2: 🔥 reCAPTCHA konfigurieren (KRITISCH - SOFORT!)
+```
+Firebase Console → Authentication → Settings → reCAPTCHA
+Für jeden "Key for Identity Platform reCAPTCHA integration":
+1. Klicken Sie auf den Key
+2. Domains hinzufügen:
+   - celeropress.com
+   - www.celeropress.com  
+   - localhost
+   - [project].vercel.app
+3. Erzwingungsmodus: ENFORCE (statt AUDIT)
+4. Schwellenwert: 0.7-0.8 
+```
+
+### Schritt 3: Domain autorisieren
 ```
 Firebase Console → Authentication → Settings → Authorized domains
 + www.celeropress.com
 + celeropress.com
 ```
 
-### Schritt 3: E-Mail-Templates auf Deutsch
+### Schritt 4: E-Mail-Templates auf Deutsch
 ```
 Firebase Console → Authentication → Templates
 - Email verification: Deutsche Vorlage + CeleroPress Branding
@@ -130,20 +160,25 @@ Firebase Console → Authentication → Templates
 
 ---
 
-## ⚡ Quick-Fix für 2FA (Temporäre Lösung)
+## ⚡ Verbesserte Fehlerbehandlung (Bereits implementiert)
 
-Falls die Firebase-Konfiguration Zeit braucht, kann in `TwoFactorSettings.tsx` eine Fallback-Behandlung implementiert werden:
+✅ **Erweiterte 2FA-Fehlerbehandlung implementiert:**
 
 ```typescript
-// Temporäre Deaktivierung bei MFA-Konfigurationsproblemen
+// Spezifische Fehlerbehandlung für verschiedene reCAPTCHA/2FA-Probleme
 if (error.code === 'auth/operation-not-allowed') {
-  setMessage({ 
-    type: 'info', 
-    text: '2FA ist derzeit nicht verfügbar. Bitte kontaktiere den Support.' 
-  });
-  return;
+  setError('SMS-basierte 2FA ist nicht aktiviert. Bitte kontaktiere den Support.');
+} else if (error.code === 'auth/captcha-check-failed') {
+  setError('reCAPTCHA-Verifizierung fehlgeschlagen. Bitte versuche es erneut.');
+} else if (error.message?.includes('reCAPTCHA Enterprise')) {
+  setError('reCAPTCHA-Konfigurationsfehler. Bitte kontaktiere den Support.');
 }
 ```
+
+✅ **Erweiterte reCAPTCHA-Konfiguration:**
+- Invisible reCAPTCHA mit Callback-Funktionen
+- Expired-Callback für bessere UX
+- Detaillierte Konsolen-Logs für Debugging
 
 ---
 
