@@ -212,7 +212,7 @@ export default function DashboardLayout({
           name: "Einsteiger Tutorials", 
           href: "/dashboard/academy/tutorials", 
           icon: AcademicCapIcon,
-          description: "Lerne SKAMP Schritt für Schritt kennen"
+          description: "Lerne CeleroPress Schritt für Schritt kennen"
         },
         { 
           name: "Blog", 
@@ -235,7 +235,7 @@ export default function DashboardLayout({
       name: "Branding", 
       href: "/dashboard/settings/branding", 
       icon: PaintBrushIcon,
-      description: "Personalisiere dein SKAMP mit eigenem Logo"
+      description: "Personalisiere CeleroPress mit eigenem Logo"
     },
     { 
       name: "Domains", 
@@ -286,7 +286,7 @@ export default function DashboardLayout({
         name: "Integrationen", 
         href: "/dashboard/admin/integrations", 
         icon: PuzzlePieceIcon,
-        description: "Verbinde SKAMP mit anderen Tools"
+        description: "Verbinde CeleroPress mit anderen Tools"
       },
       { 
         name: "API", 
@@ -305,7 +305,7 @@ export default function DashboardLayout({
           <a href="/dashboard" className="-m-1.5 p-1.5">
             <img
               src="/logo_skamp.svg"
-              alt="SKAMP Logo"
+              alt="CeleroPress Logo"
               className="h-8 w-auto"
             />
           </a>
@@ -414,7 +414,7 @@ export default function DashboardLayout({
               <a href="/dashboard" className="flex-shrink-0">
                 <img
                   src="/logo_skamp.svg"
-                  alt="SKAMP Logo"
+                  alt="CeleroPress Logo"
                   className="h-10 w-auto max-w-[100px]"
                 />
               </a>
@@ -517,7 +517,7 @@ export default function DashboardLayout({
                     <DropdownItem 
                       onClick={handleLogout}
                       icon={ArrowRightOnRectangleIcon}
-                      description="Von SKAMP abmelden"
+                      description="Von CeleroPress abmelden"
                     >
                       Abmelden
                     </DropdownItem>
@@ -542,7 +542,7 @@ export default function DashboardLayout({
                 <a href="/dashboard">
                   <img
                     src="/logo_skamp.svg"
-                    alt="SKAMP Logo"
+                    alt="CeleroPress Logo"
                     className="h-10 w-auto max-w-[150px]"
                   />
                 </a>

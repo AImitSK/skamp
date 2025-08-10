@@ -3,7 +3,7 @@
 ## Überblick
 Vollständige Implementierung aller fehlenden Profil-Features für erhöhte Sicherheit und Benutzerfreundlichkeit.
 
-## 🎯 Implementierte Features (✅ Abgeschlossen - Stand: 09.08.2025)
+## 🎯 Implementierte Features (✅ Abgeschlossen - Stand: 10.08.2025)
 - ✅ Avatar-Upload mit Multi-Tenancy
 - ✅ Quadratisches Bild-Cropping
 - ✅ Profilbild löschen
@@ -17,6 +17,9 @@ Vollständige Implementierung aller fehlenden Profil-Features für erhöhte Sich
 - ✅ **Google Sign-In** - Provider Linking/Unlinking
 - ✅ **Design Patterns** - Alle Buttons und Modals angepasst
 - ✅ **Admin-Navigation** - Layout konsistent mit Settings
+- ✅ **Login-Seite** - CeleroPress Branding mit Google Sign-In & 2FA
+- ✅ **Profil löschen** - 3-Stufen-Bestätigung mit Account-Löschung
+- ✅ **Tests** - Unit Tests für User Service und Komponenten
 
 ## 🔧 Noch zu implementierende Features
 

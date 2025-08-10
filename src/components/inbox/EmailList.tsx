@@ -6,6 +6,8 @@ import { EmailThread } from '@/types/inbox-enhanced';
 import { Badge } from '@/components/ui/badge';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
 import { StatusManager } from '@/components/inbox/StatusManager';
+import { Avatar } from '@/components/ui/avatar';
+import { useAuth } from '@/context/AuthContext';
 import clsx from 'clsx';
 import { 
   ChevronDoubleRightIcon,
@@ -36,6 +38,7 @@ export function EmailList({
   onAssign,
   organizationId
 }: EmailListProps) {
+  const { getAvatarUrl, getInitials } = useAuth();
   
   // NEU: State für Team-Mitglieder
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
@@ -206,15 +209,15 @@ export function EmailList({
           >
             <div className="flex items-start gap-3">
               {/* Avatar */}
-              <div className={clsx(
-                "w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0",
-                isSelected ? "bg-[#005fab]" : "bg-gray-400"
-              )}>
-                {primaryParticipant.name 
+              <Avatar
+                className="w-10 h-10 flex-shrink-0"
+                src={null} // E-Mail-Absender haben kein Profilbild
+                initials={primaryParticipant.name 
                   ? primaryParticipant.name.charAt(0).toUpperCase()
                   : primaryParticipant.email.charAt(0).toUpperCase()
                 }
-              </div>
+                title={primaryParticipant.name || primaryParticipant.email}
+              />
 
               {/* Content */}
               <div className="flex-1 min-w-0">
@@ -230,15 +233,12 @@ export function EmailList({
                     {/* NEU: Zugewiesenes Team-Mitglied */}
                     {assignedMember && (
                       <div className="flex items-center">
-                        <div 
-                          className={clsx(
-                            "w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium",
-                            getAvatarColor(assignedMember.displayName)
-                          )}
+                        <Avatar
+                          className="w-6 h-6"
+                          src={getAvatarUrl({ uid: assignedMember.userId } as any)}
+                          initials={getInitials({ displayName: assignedMember.displayName, email: assignedMember.email } as any)}
                           title={`Zugewiesen an ${assignedMember.displayName}`}
-                        >
-                          {getInitials(assignedMember.displayName)}
-                        </div>
+                        />
                       </div>
                     )}
                     
@@ -325,14 +325,12 @@ export function EmailList({
                             >
                               <div className="flex items-center justify-between w-full">
                                 <div className="flex items-center">
-                                  <div 
-                                    className={clsx(
-                                      "w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium mr-2",
-                                      getAvatarColor(member.displayName)
-                                    )}
-                                  >
-                                    {getInitials(member.displayName)}
-                                  </div>
+                                  <Avatar
+                                    className="w-6 h-6 mr-2"
+                                    src={getAvatarUrl({ uid: member.userId } as any)}
+                                    initials={getInitials({ displayName: member.displayName, email: member.email } as any)}
+                                    title={member.displayName}
+                                  />
                                   <span>{member.displayName}</span>
                                 </div>
                                 {assignedMember?.userId === member.userId && (

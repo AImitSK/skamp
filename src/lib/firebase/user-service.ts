@@ -112,9 +112,15 @@ class UserService {
    * Validiert Telefonnummer (einfache Validation)
    */
   validatePhoneNumber(phoneNumber: string): boolean {
-    // Einfache Regex für deutsche/internationale Nummern
-    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
-    return phoneRegex.test(phoneNumber.replace(/[\s\-\(\)]/g, ''));
+    if (!phoneNumber) return false;
+    
+    // Entferne Formatierungszeichen
+    const cleanedNumber = phoneNumber.replace(/[\s\-\(\)]/g, '');
+    
+    // Mindestens 3 Ziffern, maximal 16 (inkl. +)
+    // Darf nicht mit 0 anfangen (außer nach +)
+    const phoneRegex = /^[\+]?[1-9][\d]{2,15}$/;
+    return phoneRegex.test(cleanedNumber);
   }
 
   /**

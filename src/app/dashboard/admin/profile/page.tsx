@@ -14,6 +14,7 @@ import { EmailVerification } from "@/components/profile/EmailVerification";
 import { PasswordChange } from "@/components/profile/PasswordChange";
 import { TwoFactorSettings } from "@/components/profile/TwoFactorSettings";
 import { SocialProviders } from "@/components/profile/SocialProviders";
+import { DeleteAccount } from "@/components/profile/DeleteAccount";
 import { useState, useRef, useEffect } from "react";
 import { PhotoIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useOrganization } from "@/context/OrganizationContext";
@@ -329,6 +330,11 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      <Divider className="my-8" />
+
+      {/* Account löschen */}
+      <DeleteAccount />
 
       {/* Image Cropper Modal */}
       {showCropper && (

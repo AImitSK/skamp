@@ -16,6 +16,7 @@ import { Checkbox, CheckboxField, CheckboxGroup } from '@/components/ui/checkbox
 import { SimpleSwitch } from '@/components/notifications/SimpleSwitch';
 import { SettingsNav } from '@/components/SettingsNav';
 import { Text } from '@/components/ui/text';
+import { Avatar } from '@/components/ui/avatar';
 import { EmailAddress, EmailSignature, EmailTemplate, EmailDomain, EmailAddressFormData } from '@/types/email-enhanced';
 import { emailAddressService } from '@/lib/email/email-address-service';
 import { emailSignatureService } from '@/lib/email/email-signature-service';
@@ -594,15 +595,25 @@ export default function EmailSettingsPage() {
                           <div className="flex -space-x-2">
                             {address.assignedUserIds.slice(0, 3).map((userId: string) => {
                               const member = teamMembers.find(m => m.userId === userId);
-                              return member ? (
-                                <div
+                              if (!member) return null;
+                              
+                              // Generiere Initialen als Fallback
+                              const initials = member.displayName
+                                .split(' ')
+                                .map(n => n[0])
+                                .join('')
+                                .toUpperCase()
+                                .slice(0, 2);
+                              
+                              return (
+                                <Avatar
                                   key={userId}
-                                  className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-white text-xs font-medium ring-2 ring-white"
+                                  className="size-8 ring-2 ring-white"
+                                  src={member.photoUrl}
+                                  initials={initials}
                                   title={member.displayName}
-                                >
-                                  {member.displayName.split(' ').map(n => n[0]).join('')}
-                                </div>
-                              ) : null;
+                                />
+                              );
                             })}
                             {address.assignedUserIds.length > 3 && (
                               <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs font-medium ring-2 ring-white">

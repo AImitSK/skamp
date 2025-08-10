@@ -7,6 +7,8 @@ import { TeamMember } from '@/types/international';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
+import { Avatar } from '@/components/ui/avatar';
+import { useAuth } from '@/context/AuthContext';
 import { teamMemberService } from '@/lib/firebase/organization-service';
 import { threadMatcherService } from '@/lib/email/thread-matcher-service-flexible';
 import clsx from 'clsx';
@@ -35,6 +37,7 @@ export function TeamAssignmentUI({
   compact = false,
   showHistory = false
 }: TeamAssignmentUIProps) {
+  const { getAvatarUrl, getInitials } = useAuth();
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [assigning, setAssigning] = useState(false);
@@ -179,14 +182,12 @@ export function TeamAssignmentUI({
         {/* Current Assignment Display */}
         {assignedMember ? (
           <div className="flex items-center gap-2">
-            <div 
-              className={clsx(
-                "w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium",
-                getAvatarColor(assignedMember.displayName)
-              )}
-            >
-              {getInitials(assignedMember.displayName)}
-            </div>
+            <Avatar
+              className="w-6 h-6"
+              src={getAvatarUrl({ uid: assignedMember.userId } as any)}
+              initials={getInitials({ displayName: assignedMember.displayName, email: assignedMember.email } as any)}
+              title={assignedMember.displayName}
+            />
             <span className="text-sm text-gray-700 font-medium">
               {assignedMember.displayName.split(' ')[0]}
             </span>
@@ -247,14 +248,12 @@ export function TeamAssignmentUI({
                       )}
                     >
                       <div className="flex items-center gap-3">
-                        <div 
-                          className={clsx(
-                            "w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0",
-                            getAvatarColor(member.displayName)
-                          )}
-                        >
-                          {getInitials(member.displayName)}
-                        </div>
+                        <Avatar
+                          className="w-8 h-8 flex-shrink-0"
+                          src={getAvatarUrl({ uid: member.userId } as any)}
+                          initials={getInitials({ displayName: member.displayName, email: member.email } as any)}
+                          title={member.displayName}
+                        />
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-medium text-gray-900 truncate">
                             {member.displayName}
@@ -309,14 +308,12 @@ export function TeamAssignmentUI({
         {assignedMember ? (
           <div className="flex items-center justify-between p-3 bg-white border rounded-lg">
             <div className="flex items-center gap-3">
-              <div 
-                className={clsx(
-                  "w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium",
-                  getAvatarColor(assignedMember.displayName)
-                )}
-              >
-                {getInitials(assignedMember.displayName)}
-              </div>
+              <Avatar
+                className="w-8 h-8"
+                src={getAvatarUrl({ uid: assignedMember.userId } as any)}
+                initials={getInitials({ displayName: assignedMember.displayName, email: assignedMember.email } as any)}
+                title={assignedMember.displayName}
+              />
               <div>
                 <span className="block text-sm font-medium text-gray-900">
                   {assignedMember.displayName}
@@ -361,14 +358,12 @@ export function TeamAssignmentUI({
               onClick={() => !assigning && handleAssign(member.userId)}
             >
               <div className="flex items-center gap-2">
-                <div 
-                  className={clsx(
-                    "w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium",
-                    getAvatarColor(member.displayName)
-                  )}
-                >
-                  {getInitials(member.displayName)}
-                </div>
+                <Avatar
+                  className="w-6 h-6"
+                  src={getAvatarUrl({ uid: member.userId } as any)}
+                  initials={getInitials({ displayName: member.displayName, email: member.email } as any)}
+                  title={member.displayName}
+                />
                 <div>
                   <span className="block text-sm text-gray-900">
                     {member.displayName}

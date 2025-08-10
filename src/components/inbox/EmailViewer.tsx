@@ -4,6 +4,8 @@
 import { EmailMessage, EmailThread } from '@/types/inbox-enhanced';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Avatar } from '@/components/ui/avatar';
+import { useAuth } from '@/context/AuthContext';
 import { InternalNotes } from '@/components/inbox/InternalNotes';
 import { TeamAssignmentUI } from '@/components/inbox/TeamAssignmentUI';
 import { StatusManager } from '@/components/inbox/StatusManager';
@@ -162,6 +164,7 @@ export function EmailViewer({
   teamMembers,
   showAI = true
 }: EmailViewerProps) {
+  const { getAvatarUrl, getInitials } = useAuth();
   if (!selectedEmail || emails.length === 0) {
     return null;
   }
@@ -316,9 +319,12 @@ export function EmailViewer({
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-3">
                   {/* Avatar */}
-                  <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-medium">
-                    {email.from.name ? email.from.name[0].toUpperCase() : email.from.email[0].toUpperCase()}
-                  </div>
+                  <Avatar
+                    className="w-10 h-10"
+                    src={null} // E-Mail-Absender haben kein Profilbild
+                    initials={email.from.name ? email.from.name[0].toUpperCase() : email.from.email[0].toUpperCase()}
+                    title={email.from.name || email.from.email}
+                  />
                   
                   {/* Sender info */}
                   <div>
