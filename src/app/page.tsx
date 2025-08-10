@@ -8,10 +8,12 @@ import { useAuth } from '@/context/AuthContext';
 import { 
   GoogleAuthProvider, 
   signInWithPopup,
+  signInWithRedirect,
   multiFactor,
   PhoneAuthProvider,
   PhoneMultiFactorGenerator,
-  getMultiFactorResolver
+  getMultiFactorResolver,
+  RecaptchaVerifier
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase/client-init';
 import { doc, setDoc } from 'firebase/firestore';
@@ -117,7 +119,20 @@ export default function HomePage() {
         access_type: 'offline' 
       });
       
-      const result = await signInWithPopup(auth, provider);
+      let result;
+      try {
+        // Versuche Popup zuerst
+        result = await signInWithPopup(auth, provider);
+      } catch (popupError: any) {
+        // Fallback auf Redirect bei Cross-Origin-Policy Problemen
+        if (popupError.code === 'auth/popup-blocked' || 
+            popupError.message?.includes('Cross-Origin-Opener-Policy')) {
+          await signInWithRedirect(auth, provider);
+          return; // Redirect läuft, Komponente wird neu geladen
+        }
+        throw popupError; // Andere Fehler weiterwerfen
+      }
+      
       const googleUser = result.user;
 
       // Prüfe ob User-Dokument existiert, wenn nicht erstelle es
@@ -152,15 +167,28 @@ export default function HomePage() {
         
         // Wenn SMS 2FA aktiviert ist
         if (mfaResolver.hints[0]?.factorId === PhoneMultiFactorGenerator.FACTOR_ID) {
-          const phoneInfoOptions = {
-            multiFactorHint: mfaResolver.hints[0],
-            session: mfaResolver.session
-          };
-          
-          const phoneAuthProvider = new PhoneAuthProvider(auth);
-          const verificationId = await phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, undefined as any);
-          setVerificationId(verificationId);
-          setRequires2FA(true);
+          try {
+            // Initialisiere reCAPTCHA für Multi-Factor Auth
+            const recaptchaVerifier = new RecaptchaVerifier(auth, 'sign-in-button', {
+              size: 'invisible',
+              callback: () => {
+                // reCAPTCHA gelöst
+              }
+            });
+
+            const phoneInfoOptions = {
+              multiFactorHint: mfaResolver.hints[0],
+              session: mfaResolver.session
+            };
+            
+            const phoneAuthProvider = new PhoneAuthProvider(auth);
+            const verificationId = await phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, recaptchaVerifier);
+            setVerificationId(verificationId);
+            setRequires2FA(true);
+          } catch (recaptchaError) {
+            console.error("reCAPTCHA-Fehler bei 2FA:", recaptchaError);
+            setError('2FA-Verifizierung fehlgeschlagen. Bitte versuche es erneut.');
+          }
         }
       } else if (err.code === 'auth/popup-closed-by-user') {
         // User hat Popup geschlossen - keine Fehlermeldung nötig
@@ -401,6 +429,7 @@ export default function HomePage() {
 
               {/* Google Sign-In */}
               <button
+                id="sign-in-button"
                 onClick={handleGoogleSignIn}
                 className="w-full flex items-center justify-center px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={loading}
