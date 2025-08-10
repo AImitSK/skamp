@@ -201,7 +201,7 @@ describe('NotificationsDropdown', () => {
     });
   });
 
-  it('sollte zur Notification navigieren beim Klick', async () => {
+  it('sollte Notification als gelesen markieren beim Klick', async () => {
     render(<NotificationsDropdown />);
     
     const bellButton = screen.getByRole('button');
@@ -211,7 +211,8 @@ describe('NotificationsDropdown', () => {
       const notification = screen.getByText('Freigabe erteilt');
       fireEvent.click(notification.closest('div[class*="cursor-pointer"]')!);
       
-      expect(window.location.href).toBe('/dashboard/campaigns/123');
+      // Sollte Notification als gelesen markieren (nicht navigieren)
+      expect(mockUseNotifications.markAsRead).toHaveBeenCalledWith('1');
     });
   });
 

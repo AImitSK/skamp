@@ -85,11 +85,7 @@ export function NotificationsDropdown({ className }: NotificationsDropdownProps)
     if (!notification.isRead) {
       await markAsRead(notification.id);
     }
-    
-    // Navigate to link if available
-    if (notification.linkUrl) {
-      window.location.href = notification.linkUrl;
-    }
+    // No navigation - dropdown is for quick actions only
   };
 
   const handleMarkAllAsRead = async () => {
