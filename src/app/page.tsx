@@ -386,6 +386,7 @@ export default function HomePage() {
                 )}
               </button>
             </form>
+            )}
             
             <div className="space-y-6">
               {/* Divider */}
@@ -429,7 +430,6 @@ export default function HomePage() {
                 </button>
               </div>
             </div>
-          )}
         </div>
 
         {/* Footer */}
