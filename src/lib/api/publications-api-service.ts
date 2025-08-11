@@ -31,6 +31,7 @@ import {
   PublicationFrequency
 } from '@/types/library';
 import { APIError } from '@/lib/api/api-errors';
+import { eventManager } from '@/lib/api/event-manager';
 
 /**
  * Publications API Service
@@ -205,6 +206,14 @@ export class PublicationsAPIService {
         throw new APIError('INTERNAL_SERVER_ERROR', 'Publikation konnte nicht erstellt werden');
       }
 
+      // Triggere Webhook-Event
+      await eventManager.triggerPublicationEvent(
+        'created',
+        created,
+        organizationId,
+        { userId, source: 'api' }
+      );
+
       return this.transformToAPIPublication(created);
     } catch (error) {
       if (error instanceof APIError) throw error;
@@ -355,6 +364,24 @@ export class PublicationsAPIService {
         throw new APIError('INTERNAL_SERVER_ERROR', 'Publikation konnte nicht aktualisiert werden');
       }
 
+      // Triggere Webhook-Event
+      await eventManager.triggerPublicationEvent(
+        'updated',
+        updated,
+        organizationId,
+        { userId, source: 'api' }
+      );
+
+      // Wenn verified status geändert wurde, triggere auch verified event
+      if (data.verified === true && existing.verified !== true) {
+        await eventManager.triggerPublicationEvent(
+          'verified',
+          updated,
+          organizationId,
+          { userId, source: 'api' }
+        );
+      }
+
       return this.transformToAPIPublication(updated);
     } catch (error) {
       if (error instanceof APIError) throw error;
@@ -398,6 +425,14 @@ export class PublicationsAPIService {
       await publicationService.delete(
         publicationId,
         { organizationId, userId }
+      );
+
+      // Triggere Webhook-Event
+      await eventManager.triggerPublicationEvent(
+        'deleted',
+        publication,
+        organizationId,
+        { userId, source: 'api' }
       );
     } catch (error) {
       if (error instanceof APIError) throw error;
@@ -603,6 +638,14 @@ export class PublicationsAPIService {
         throw new APIError('INTERNAL_SERVER_ERROR', 'Media Asset konnte nicht erstellt werden');
       }
 
+      // Triggere Webhook-Event
+      await eventManager.triggerMediaAssetEvent(
+        'created',
+        created,
+        organizationId,
+        { userId, source: 'api' }
+      );
+
       return this.transformToAPIMediaAsset(created, organizationId);
     } catch (error) {
       if (error instanceof APIError) throw error;
@@ -644,6 +687,14 @@ export class PublicationsAPIService {
         throw new APIError('INTERNAL_SERVER_ERROR', 'Media Kit konnte nicht generiert werden');
       }
 
+      // Triggere Webhook-Event
+      await eventManager.triggerMediaKitEvent(
+        'created',
+        mediaKit,
+        organizationId,
+        { userId, source: 'api' }
+      );
+
       return this.transformToAPIMediaKit(mediaKit);
     } catch (error) {
       if (error instanceof APIError) throw error;
@@ -674,6 +725,17 @@ export class PublicationsAPIService {
           message: data.message
         }
       );
+
+      // Triggere Webhook-Event
+      const mediaKit = await mediaKitService.getById(mediaKitId, organizationId);
+      if (mediaKit) {
+        await eventManager.triggerMediaKitEvent(
+          'shared',
+          mediaKit,
+          organizationId,
+          { userId, source: 'api', recipients: data.emails }
+        );
+      }
     } catch (error) {
       throw new APIError(
         'INTERNAL_SERVER_ERROR',
