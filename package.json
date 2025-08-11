@@ -43,6 +43,7 @@
     "@tiptap/starter-kit": "^2.25.0",
     "@types/dompurify": "^3.0.5",
     "@types/qrcode": "^1.5.5",
+    "@types/swagger-ui-react": "^5.18.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "dompurify": "^3.2.6",
@@ -56,7 +57,8 @@
     "react": "^18",
     "react-dom": "^18",
     "react-image-crop": "^11.0.10",
-    "recharts": "^2.8.0",
+    "recharts": "^2.15.4",
+    "swagger-ui-react": "^5.27.1",
     "xlsx": "^0.18.5",
     "zod": "^4.0.10"
   },
