@@ -107,12 +107,9 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
 
       const newKey = await response.json();
       
-      // Return the new key for the modal BEFORE closing it
-      // Don't close modal here - let the modal handle it after showing the key
+      // Return the new key for the modal
+      // Don't refresh here - wait for modal to close
       const result = { ...newKey };
-      
-      // Refresh the API keys list to get the latest state
-      await loadAPIKeys();
       
       return result;
     } catch (err) {
@@ -348,6 +345,8 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
         <CreateAPIKeyModal
           onClose={() => {
             setShowCreateModal(false);
+            // Refresh the API keys list when modal closes
+            loadAPIKeys();
           }}
           onCreate={handleCreateKey}
         />
