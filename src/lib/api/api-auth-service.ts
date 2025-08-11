@@ -34,13 +34,36 @@ import { createHash, randomBytes } from 'crypto';
 export class APIAuthService {
   private readonly collectionName = 'api_keys';
   
+  constructor() {
+    // Debug: Firebase-Initialisierung prüfen
+    console.log('=== FIREBASE INIT DEBUG ===');
+    console.log('DB object:', typeof db);
+    console.log('Firebase Config:', {
+      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? '***SET***' : 'MISSING',
+      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ? '***SET***' : 'MISSING',
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ? '***SET***' : 'MISSING',
+      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ? '***SET***' : 'MISSING',
+      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ? '***SET***' : 'MISSING',
+      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID ? '***SET***' : 'MISSING'
+    });
+  }
+  
   /**
    * Erstellt einen neuen API-Key
    */
   async createAPIKey(
-    request: APIKeyCreateRequest,
-    organizationId: string,
-    userId: string
+    params: {
+      organizationId: string;
+      createdBy: string;
+      name: string;
+      permissions: string[];
+      expiresInDays?: number;
+      rateLimit?: {
+        requestsPerHour?: number;
+        requestsPerMinute?: number;
+      };
+      allowedIPs?: string[];
+    }
   ): Promise<APIKeyResponse> {
     // Generiere sicheren API-Key
     const apiKeySecret = this.generateAPIKey();
@@ -48,23 +71,23 @@ export class APIAuthService {
     const keyPreview = apiKeySecret.substring(0, 8) + '...';
     
     // Berechne Ablaufzeit
-    const expiresAt = request.expiresInDays 
-      ? new Date(Date.now() + request.expiresInDays * 24 * 60 * 60 * 1000)
+    const expiresAt = params.expiresInDays 
+      ? new Date(Date.now() + params.expiresInDays * 24 * 60 * 60 * 1000)
       : undefined;
     
     // Erstelle API-Key-Objekt
     const apiKey: Omit<APIKey, 'id'> = {
-      name: request.name,
+      name: params.name,
       keyHash,
       keyPreview,
-      organizationId,
-      userId,
-      permissions: request.permissions,
+      organizationId: params.organizationId,
+      userId: params.createdBy,
+      permissions: params.permissions,
       isActive: true,
       
       rateLimit: {
-        requestsPerHour: request.rateLimit?.requestsPerHour || 1000,
-        requestsPerMinute: request.rateLimit?.requestsPerMinute || 60,
+        requestsPerHour: params.rateLimit?.requestsPerHour || 1000,
+        requestsPerMinute: params.rateLimit?.requestsPerMinute || 60,
         burstLimit: 10
       },
       
@@ -74,17 +97,41 @@ export class APIAuthService {
         requestsToday: 0
       },
       
-      allowedIPs: request.allowedIPs,
+      allowedIPs: params.allowedIPs,
       expiresAt: expiresAt ? Timestamp.fromDate(expiresAt) : undefined,
       
       createdAt: serverTimestamp() as Timestamp,
       updatedAt: serverTimestamp() as Timestamp,
-      createdBy: userId,
-      updatedBy: userId
+      createdBy: params.createdBy,
+      updatedBy: params.createdBy
     };
     
     // Speichere in Firestore
-    const docRef = await addDoc(collection(db, this.collectionName), apiKey);
+    console.log('=== FIRESTORE CREATE DEBUG ===');
+    console.log('Collection name:', this.collectionName);
+    console.log('DB object type:', typeof db);
+    console.log('DB object constructor:', db?.constructor?.name);
+    console.log('API Key data (without sensitive info):', {
+      name: apiKey.name,
+      organizationId: apiKey.organizationId,
+      permissions: apiKey.permissions,
+      rateLimit: apiKey.rateLimit
+    });
+    
+    // Prüfe ob Firestore verfügbar ist
+    if (!db || typeof db !== 'object' || db.constructor?.name !== 'Firestore') {
+      console.error('Firestore not properly initialized, db object:', db);
+      throw new Error('Firestore service not available');
+    }
+    
+    let docRef;
+    try {
+      docRef = await addDoc(collection(db, this.collectionName), apiKey);
+      console.log('Firestore document created with ID:', docRef.id);
+    } catch (firestoreError) {
+      console.error('Firestore addDoc failed:', firestoreError);
+      throw firestoreError;
+    }
     
     // Gib API-Key-Response zurück (mit echtem Key nur einmalig)
     return {
@@ -207,31 +254,45 @@ export class APIAuthService {
    * Hole alle API-Keys einer Organisation
    */
   async getAPIKeys(organizationId: string, userId: string): Promise<Omit<APIKeyResponse, 'key'>[]> {
+    console.log('=== GET API KEYS DEBUG ===');
+    console.log('OrganizationId:', organizationId);
+    console.log('Collection name:', this.collectionName);
+    
     const q = query(
       collection(db, this.collectionName),
       where('organizationId', '==', organizationId),
       orderBy('createdAt', 'desc')
     );
     
-    const snapshot = await getDocs(q);
-    const apiKeys: Omit<APIKeyResponse, 'key'>[] = [];
+    try {
+      const snapshot = await getDocs(q);
+      console.log('Firestore query result - empty:', snapshot.empty);
+      console.log('Firestore query result - size:', snapshot.size);
+      
+      const apiKeys: Omit<APIKeyResponse, 'key'>[] = [];
     
-    snapshot.forEach(doc => {
-      const data = doc.data() as APIKey;
-      apiKeys.push({
-        id: doc.id,
-        name: data.name,
-        keyPreview: data.keyPreview,
-        permissions: data.permissions,
-        isActive: data.isActive,
-        rateLimit: data.rateLimit,
-        usage: data.usage,
-        createdAt: data.createdAt.toDate().toISOString(),
-        expiresAt: data.expiresAt?.toDate().toISOString()
+      snapshot.forEach(doc => {
+        const data = doc.data() as APIKey;
+        apiKeys.push({
+          id: doc.id,
+          name: data.name,
+          keyPreview: data.keyPreview,
+          permissions: data.permissions,
+          isActive: data.isActive,
+          rateLimit: data.rateLimit,
+          usage: data.usage,
+          createdAt: data.createdAt.toDate().toISOString(),
+          expiresAt: data.expiresAt?.toDate().toISOString()
+        });
       });
-    });
-    
-    return apiKeys;
+      
+      console.log('API Keys found:', apiKeys.length);
+      return apiKeys;
+      
+    } catch (firestoreError) {
+      console.error('Firestore getDocs failed:', firestoreError);
+      throw firestoreError;
+    }
   }
   
   /**
