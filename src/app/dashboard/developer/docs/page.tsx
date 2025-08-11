@@ -35,21 +35,23 @@ export default function APIDocumentation() {
 
     // Lade ersten API Key für Authorization
     if (user) {
-      fetch('/api/v1/auth/keys', {
-        headers: {
-          'Authorization': `Bearer ${user.getIdToken()}`
-        }
-      })
-        .then(res => res.json())
-        .then(keys => {
-          if (keys && keys.length > 0) {
-            const activeKey = keys.find((k: any) => k.status === 'active');
-            if (activeKey) {
-              setApiKey(activeKey.key);
-            }
+      user.getIdToken().then(token => {
+        fetch('/api/v1/auth/keys', {
+          headers: {
+            'Authorization': `Bearer ${token}`
           }
         })
-        .catch(error => console.error('Fehler beim Laden der API Keys:', error));
+          .then(res => res.json())
+          .then(keys => {
+            if (keys && keys.length > 0) {
+              const activeKey = keys.find((k: any) => k.status === 'active');
+              if (activeKey) {
+                setApiKey(activeKey.key);
+              }
+            }
+          })
+          .catch(error => console.error('Fehler beim Laden der API Keys:', error));
+      });
     }
   }, [user]);
 
@@ -58,8 +60,8 @@ export default function APIDocumentation() {
     if (apiKey) {
       req.headers['Authorization'] = `Bearer ${apiKey}`;
     }
-    // Setze Base URL für lokale Entwicklung
-    if (req.url.startsWith('/')) {
+    // Setze Base URL für API calls, aber nicht für OpenAPI spec
+    if (req.url.startsWith('/') && !req.url.includes('openapi.yaml')) {
       req.url = `${window.location.origin}/api${req.url}`;
     }
     return req;

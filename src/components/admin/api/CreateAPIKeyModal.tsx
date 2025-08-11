@@ -156,9 +156,12 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
                   <KeyIcon className="h-6 w-6 text-blue-600" />
                   <DialogTitle className="text-lg font-semibold">Neuen API-Key erstellen</DialogTitle>
                 </div>
-                <Button plain onClick={onClose}>
+                <button 
+                  onClick={onClose}
+                  className="p-2 hover:bg-gray-100 rounded-md"
+                >
                   <XMarkIcon className="h-5 w-5" />
-                </Button>
+                </button>
               </div>
 
               {/* Form */}
@@ -260,16 +263,20 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
 
                 {/* Actions */}
                 <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-                  <Button plain onClick={onClose}>
+                  <button 
+                    type="button"
+                    onClick={onClose}
+                    className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 border-0 rounded-md px-4 py-2 text-sm font-medium"
+                  >
                     Abbrechen
-                  </Button>
-                  <Button 
+                  </button>
+                  <button 
                     type="submit" 
-                    color="indigo"
                     disabled={loading || !name.trim() || selectedPermissions.size === 0}
+                    className="inline-flex items-center bg-primary hover:bg-primary-hover text-white border-0 rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? 'Erstelle...' : 'API-Key erstellen'}
-                  </Button>
+                  </button>
                 </div>
               </form>
               </div>
@@ -284,9 +291,12 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
                   <CheckIcon className="h-6 w-6 text-green-600" />
                   <DialogTitle className="text-lg font-semibold">API-Key erfolgreich erstellt</DialogTitle>
                 </div>
-                <Button plain onClick={onClose}>
+                <button 
+                  onClick={onClose}
+                  className="p-2 hover:bg-gray-100 rounded-md"
+                >
                   <XMarkIcon className="h-5 w-5" />
-                </Button>
+                </button>
               </div>
 
               {/* Created Key Display */}
@@ -308,17 +318,16 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
                         readOnly
                         className="font-mono text-sm"
                       />
-                      <Button
-                        plain
+                      <button
                         onClick={copyToClipboard}
-                        className="p-2 bg-gray-100 hover:bg-gray-200"
+                        className="p-2 bg-gray-100 hover:bg-gray-200 rounded-md"
                       >
                         {copied ? (
                           <CheckIcon className="h-4 w-4 text-green-600" />
                         ) : (
                           <ClipboardIcon className="h-4 w-4" />
                         )}
-                      </Button>
+                      </button>
                     </div>
                     {copied && (
                       <Text className="text-sm text-green-600 mt-1">In Zwischenablage kopiert!</Text>
@@ -337,9 +346,12 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
                 </div>
 
                 <div className="flex justify-end mt-6 pt-4 border-t border-gray-200">
-                  <Button color="indigo" onClick={onClose}>
+                  <button 
+                    onClick={onClose}
+                    className="inline-flex items-center bg-primary hover:bg-primary-hover text-white border-0 rounded-md px-4 py-2 text-sm font-medium"
+                  >
                     Verstanden
-                  </Button>
+                  </button>
                 </div>
               </div>
             </>

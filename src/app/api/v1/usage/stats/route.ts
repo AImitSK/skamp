@@ -1,45 +1,15 @@
 // src/app/api/v1/usage/stats/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { APIMiddleware } from '@/lib/api/api-middleware';
-import { APIError } from '@/lib/api/api-errors';
+import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
 
 export async function GET(request: NextRequest) {
-  try {
-    // Authentifizierung
-    const context = await APIMiddleware.validateAPIKey(request);
-    if (!context) {
-      return NextResponse.json(
-        { error: 'Unauthorized', code: 'auth_required' },
-        { status: 401 }
-      );
-    }
-
-    // Rate Limiting
-    await APIMiddleware.enforceRateLimit(context.apiKey, request.ip || 'unknown');
-
-    // Berechtigungen prüfen
-    APIMiddleware.requirePermissions(['usage:read'], context.permissions);
-
+  return withAuth(request, async (req: NextRequest, context: AuthContext) => {
+    
     // Hole Usage-Statistiken für die Organisation
     const stats = await getUsageStats(context.organizationId, context.userId);
-
-    return NextResponse.json(stats);
-
-  } catch (error: any) {
-    console.error('Usage stats error:', error);
     
-    if (error instanceof APIError) {
-      return NextResponse.json(
-        { error: error.message, code: error.code },
-        { status: error.statusCode }
-      );
-    }
-
-    return NextResponse.json(
-      { error: 'Internal Server Error', code: 'internal_error' },
-      { status: 500 }
-    );
-  }
+    return NextResponse.json(stats);
+  });
 }
 
 async function getUsageStats(organizationId: string, userId: string) {
