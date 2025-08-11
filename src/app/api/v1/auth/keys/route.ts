@@ -12,11 +12,14 @@ import { APIKeyCreateRequest } from '@/types/api';
  * GET /api/v1/auth/keys
  * Hole alle API-Keys der Organisation
  */
-export async function GET(request: NextRequest) {
-  return withAuth(request, async (req: NextRequest, context: AuthContext) => {
-    
-    // Mock API Keys für die UI - in Production würden diese aus Firestore kommen
-    const apiKeys = [
+// In-memory storage für Mock-Daten (in Production: Firestore)
+const mockApiKeys = new Map<string, any[]>();
+export const deletedKeys = new Set<string>();
+
+function getOrganizationKeys(organizationId: string): any[] {
+  if (!mockApiKeys.has(organizationId)) {
+    // Initialisiere mit Beispiel-Key
+    mockApiKeys.set(organizationId, [
       {
         id: 'key_1',
         name: 'Salesforce Integration',
@@ -36,7 +39,19 @@ export async function GET(request: NextRequest) {
         },
         createdAt: '2025-01-10T10:00:00Z'
       }
-    ];
+    ]);
+  }
+  
+  // Filtere gelöschte Keys aus
+  const keys = mockApiKeys.get(organizationId) || [];
+  return keys.filter(key => !deletedKeys.has(key.id));
+}
+
+export async function GET(request: NextRequest) {
+  return withAuth(request, async (req: NextRequest, context: AuthContext) => {
+    
+    // Mock API Keys für die UI - in Production würden diese aus Firestore kommen
+    const apiKeys = getOrganizationKeys(context.organizationId);
     
     return NextResponse.json(apiKeys);
   });
@@ -61,10 +76,12 @@ export async function POST(request: NextRequest) {
     }
     
     // Mock neuer API-Key - in Production würde dieser in Firestore gespeichert
+    const fullKey = `cp_test_${Math.random().toString(36).substring(2)}${Date.now()}abcd1234efgh5678ijkl9012mnop`;
     const newAPIKey = {
       id: `key_${Date.now()}`,
       name: createRequest.name,
-      keyPreview: 'cp_test_xy...',
+      key: fullKey, // Vollständiger Key - nur bei Creation zurückgegeben
+      keyPreview: `${fullKey.substring(0, 10)}...`,
       permissions: createRequest.permissions,
       isActive: true,
       rateLimit: {
@@ -79,6 +96,13 @@ export async function POST(request: NextRequest) {
       },
       createdAt: new Date().toISOString()
     };
+    
+    // Speichere den neuen Key
+    const orgKeys = getOrganizationKeys(context.organizationId);
+    const keyWithoutFullKey = { ...newAPIKey };
+    delete keyWithoutFullKey.key; // Entferne full key für storage
+    orgKeys.push(keyWithoutFullKey);
+    mockApiKeys.set(context.organizationId, orgKeys);
     
     return NextResponse.json(newAPIKey, { status: 201 });
   });

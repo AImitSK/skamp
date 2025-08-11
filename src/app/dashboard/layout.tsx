@@ -227,6 +227,12 @@ export default function DashboardLayout({
           icon: NewspaperIcon,
           description: "Neuigkeiten und Best Practices"
         },
+        { 
+          name: "Developer Portal", 
+          href: "/dashboard/developer", 
+          icon: CodeBracketIcon,
+          description: "API-Dokumentation, Testing-Tools und Integration-Beispiele"
+        },
     ],
   },
 ];

@@ -32,6 +32,7 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set());
+  const [deleteConfirm, setDeleteConfirm] = useState<{ keyId: string; keyName: string } | null>(null);
 
   useEffect(() => {
     console.log('APIKeyManager: organizationId changed:', organizationId, 'orgLoading:', orgLoading);
@@ -109,16 +110,24 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
       // Refresh the API keys list to get the latest state
       await loadAPIKeys();
       setShowCreateModal(false);
+      
+      // Return the new key for the modal
+      return newKey;
     } catch (err) {
       console.error('Failed to create API key:', err);
       setError(err instanceof Error ? err.message : 'Failed to create API key');
     }
   };
 
-  const handleDeleteKey = async (keyId: string) => {
-    if (!confirm('API-Key wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) {
-      return;
-    }
+  const handleDeleteKeyConfirm = (keyId: string, keyName: string) => {
+    setDeleteConfirm({ keyId, keyName });
+  };
+
+  const handleDeleteKey = async () => {
+    if (!deleteConfirm) return;
+
+    const { keyId } = deleteConfirm;
+    setDeleteConfirm(null);
 
     if (!user) {
       setError('User not authenticated');
@@ -284,7 +293,7 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
                   </div>
                 </div>
                 <button
-                  onClick={() => handleDeleteKey(apiKey.id)}
+                  onClick={() => handleDeleteKeyConfirm(apiKey.id, apiKey.name)}
                   className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md"
                 >
                   <TrashIcon className="h-4 w-4" />
@@ -340,6 +349,33 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
           }}
           onCreate={handleCreateKey}
         />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md mx-4">
+            <h3 className="text-lg font-semibold mb-4">API-Key löschen</h3>
+            <p className="text-gray-600 mb-6">
+              Möchtest du den API-Key <strong>"{deleteConfirm.keyName}"</strong> wirklich löschen? 
+              Diese Aktion kann nicht rückgängig gemacht werden.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 border-0 rounded-md px-4 py-2 text-sm font-medium"
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={handleDeleteKey}
+                className="inline-flex items-center bg-red-600 hover:bg-red-700 text-white border-0 rounded-md px-4 py-2 text-sm font-medium"
+              >
+                Löschen
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

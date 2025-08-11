@@ -19,6 +19,10 @@ export async function DELETE(
     // Mock deletion - in Production würde der Key aus Firestore gelöscht
     console.log(`API key ${params.keyId} deleted for organization ${context.organizationId}`);
     
+    // Global deletedKeys import wird verwendet
+    const { deletedKeys } = await import('../route');
+    deletedKeys.add(params.keyId);
+    
     return NextResponse.json({ 
       message: 'API key deleted successfully',
       keyId: params.keyId 

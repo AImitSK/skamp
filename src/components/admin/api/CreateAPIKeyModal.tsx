@@ -113,11 +113,15 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
       };
 
       // In der echten Implementation würde hier der tatsächliche API-Key zurückgegeben
-      await onCreate(request);
+      const newKey = await onCreate(request);
       
-      // Mock für UI-Testing
-      setCreatedKey('cp_test_abcd1234efgh5678ijkl9012mnop3456qrst7890');
-      setStep('created');
+      // Verwende den echten Key vom API-Response
+      if (newKey && newKey.key) {
+        setCreatedKey(newKey.key);
+        setStep('created');
+      } else {
+        throw new Error('API-Key konnte nicht erstellt werden');
+      }
       
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Fehler beim Erstellen des API-Keys');
