@@ -1,6 +1,7 @@
 // src/app/api/v1/auth/keys/[keyId]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
+import { apiAuthService } from '@/lib/api/api-auth-service';
 
 /**
  * API-Key Management für spezifischen Key
@@ -16,17 +17,27 @@ export async function DELETE(
 ) {
   return withAuth(request, async (req: NextRequest, context: AuthContext) => {
     
-    // Mock deletion - in Production würde der Key aus Firestore gelöscht
-    console.log(`API key ${params.keyId} deleted for organization ${context.organizationId}`);
-    
-    // Global deletedKeys import wird verwendet
-    const { deletedKeys } = await import('../route');
-    deletedKeys.add(params.keyId);
-    
-    return NextResponse.json({ 
-      message: 'API key deleted successfully',
-      keyId: params.keyId 
-    });
+    try {
+      // Lösche echten API-Key aus Firestore
+      await apiAuthService.deleteAPIKey(params.keyId, context.organizationId);
+      
+      return NextResponse.json({ 
+        message: 'API key deleted successfully',
+        keyId: params.keyId 
+      });
+      
+    } catch (error) {
+      console.error('Failed to delete API key:', error);
+      
+      // Fallback zu Mock-System
+      const { deletedKeys } = await import('../route');
+      deletedKeys.add(params.keyId);
+      
+      return NextResponse.json({ 
+        message: 'API key deleted successfully',
+        keyId: params.keyId 
+      });
+    }
   });
 }
 

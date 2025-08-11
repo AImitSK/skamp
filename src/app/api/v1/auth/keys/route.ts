@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
 import { APIKeyCreateRequest } from '@/types/api';
+import { apiAuthService } from '@/lib/api/api-auth-service';
 
 /**
  * API-Key Management Endpoints
@@ -50,10 +51,33 @@ function getOrganizationKeys(organizationId: string): any[] {
 export async function GET(request: NextRequest) {
   return withAuth(request, async (req: NextRequest, context: AuthContext) => {
     
-    // Mock API Keys für die UI - in Production würden diese aus Firestore kommen
-    const apiKeys = getOrganizationKeys(context.organizationId);
-    
-    return NextResponse.json(apiKeys);
+    try {
+      // Lade echte API Keys aus Firestore
+      const apiKeys = await apiAuthService.getAPIKeys(context.organizationId, context.userId);
+      
+      // Entferne sensible Daten für UI
+      const safeKeys = apiKeys.map(key => ({
+        id: key.id,
+        name: key.name,
+        keyPreview: key.keyPreview,
+        permissions: key.permissions,
+        isActive: key.isActive,
+        rateLimit: key.rateLimit,
+        usage: key.usage || {
+          totalRequests: 0,
+          requestsThisHour: 0,
+          requestsToday: 0
+        },
+        createdAt: key.createdAt?.toISOString?.() || key.createdAt
+      }));
+      
+      return NextResponse.json(safeKeys);
+    } catch (error) {
+      console.error('Failed to load API keys:', error);
+      // Fallback zu Mock-Daten falls Firestore nicht verfügbar
+      const apiKeys = getOrganizationKeys(context.organizationId);
+      return NextResponse.json(apiKeys);
+    }
   });
 }
 
@@ -64,47 +88,42 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   return withAuth(request, async (req: NextRequest, context: AuthContext) => {
     
-    // Parse Request Body
-    const createRequest = await req.json() as APIKeyCreateRequest;
-    
-    // Validiere erforderliche Felder
-    if (!createRequest.name || !createRequest.permissions || createRequest.permissions.length === 0) {
+    try {
+      // Parse Request Body
+      const createRequest = await req.json() as APIKeyCreateRequest;
+      
+      // Validiere erforderliche Felder
+      if (!createRequest.name || !createRequest.permissions || createRequest.permissions.length === 0) {
+        return NextResponse.json(
+          { error: 'Name and permissions are required' },
+          { status: 400 }
+        );
+      }
+      
+      // Erstelle echten API-Key in Firestore
+      const newAPIKey = await apiAuthService.createAPIKey({
+        organizationId: context.organizationId,
+        createdBy: context.userId,
+        name: createRequest.name,
+        permissions: createRequest.permissions,
+        expiresInDays: createRequest.expiresInDays,
+        rateLimit: {
+          requestsPerHour: createRequest.rateLimit?.requestsPerHour || 1000,
+          requestsPerMinute: createRequest.rateLimit?.requestsPerMinute || 60,
+          burstLimit: 10
+        },
+        allowedIPs: createRequest.allowedIPs
+      });
+      
+      return NextResponse.json(newAPIKey, { status: 201 });
+      
+    } catch (error) {
+      console.error('Failed to create API key:', error);
       return NextResponse.json(
-        { error: 'Name and permissions are required' },
-        { status: 400 }
+        { error: 'Failed to create API key' },
+        { status: 500 }
       );
     }
-    
-    // Mock neuer API-Key - in Production würde dieser in Firestore gespeichert
-    const fullKey = `cp_test_${Math.random().toString(36).substring(2)}${Date.now()}abcd1234efgh5678ijkl9012mnop`;
-    const newAPIKey = {
-      id: `key_${Date.now()}`,
-      name: createRequest.name,
-      key: fullKey, // Vollständiger Key - nur bei Creation zurückgegeben
-      keyPreview: `${fullKey.substring(0, 10)}...`,
-      permissions: createRequest.permissions,
-      isActive: true,
-      rateLimit: {
-        requestsPerHour: createRequest.rateLimit?.requestsPerHour || 1000,
-        requestsPerMinute: createRequest.rateLimit?.requestsPerMinute || 60,
-        burstLimit: 10
-      },
-      usage: {
-        totalRequests: 0,
-        requestsThisHour: 0,
-        requestsToday: 0
-      },
-      createdAt: new Date().toISOString()
-    };
-    
-    // Speichere den neuen Key
-    const orgKeys = getOrganizationKeys(context.organizationId);
-    const keyWithoutFullKey = { ...newAPIKey };
-    delete keyWithoutFullKey.key; // Entferne full key für storage
-    orgKeys.push(keyWithoutFullKey);
-    mockApiKeys.set(context.organizationId, orgKeys);
-    
-    return NextResponse.json(newAPIKey, { status: 201 });
   });
 }
 
