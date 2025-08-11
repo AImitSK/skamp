@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
   console.log('=== API KEYS ROUTE GET DEBUG ===');
   console.log('Request URL:', request.url);
   
-  return withAuth(async (request, context) => {
+  return withAuth(request, async (request, context) => {
     console.log('=== AUTH CONTEXT DEBUG (FIREBASE) ===');
     console.log('Organization ID:', context.organizationId);
     console.log('User ID:', context.userId);
@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
       console.log('Mock keys count:', apiKeys.length);
       return NextResponse.json(apiKeys);
     }
-  })(request);
+  });
 }
 
 /**
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
   console.log('=== API KEYS ROUTE POST DEBUG ===');
   console.log('Request URL:', request.url);
   
-  return withAuth(async (request, context) => {
+  return withAuth(request, async (request, context) => {
     console.log('=== AUTH CONTEXT DEBUG (FIREBASE) ===');
     console.log('Organization ID:', context.organizationId);
     console.log('User ID:', context.userId);
@@ -193,7 +193,7 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-  })(request);
+  });
 }
 
 /**
