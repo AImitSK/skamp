@@ -1,6 +1,7 @@
 // src/app/api/v1/auth/keys/[keyId]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
+import { APIMiddleware } from '@/lib/api/api-middleware';
 import { apiAuthService } from '@/lib/api/api-auth-service';
 
 /**
@@ -15,7 +16,7 @@ export async function DELETE(
   request: NextRequest, 
   { params }: { params: { keyId: string } }
 ) {
-  return withAuth(request, async (req: NextRequest, context: AuthContext) => {
+  return APIMiddleware.withAuth(async (request, context) => {
     
     try {
       // Lösche echten API-Key aus Firestore
@@ -49,7 +50,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: { keyId: string } }
 ) {
-  return withAuth(request, async (req: NextRequest, context: AuthContext) => {
+  return APIMiddleware.withAuth(async (request, context) => {
     
     // Mock deactivation - in Production würde der Key in Firestore deaktiviert
     console.log(`API key ${params.keyId} deactivated for organization ${context.organizationId}`);

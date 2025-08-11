@@ -1,14 +1,14 @@
 // src/app/api/v1/usage/stats/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
+import { APIMiddleware } from '@/lib/api/api-middleware';
 
 export async function GET(request: NextRequest) {
-  return withAuth(request, async (req: NextRequest, context: AuthContext) => {
+  return APIMiddleware.withAuth(async (request, context) => {
     
     // Hole Usage-Statistiken für die Organisation
     const stats = await getUsageStats(context.organizationId, context.userId);
     
-    return NextResponse.json(stats);
+    return APIMiddleware.successResponse(stats);
   });
 }
 

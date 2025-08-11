@@ -1,6 +1,7 @@
 // src/app/api/v1/auth/keys/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
+import { APIMiddleware } from '@/lib/api/api-middleware';
 import { APIKeyCreateRequest } from '@/types/api';
 import { apiAuthService } from '@/lib/api/api-auth-service';
 
@@ -49,7 +50,7 @@ function getOrganizationKeys(organizationId: string): any[] {
 }
 
 export async function GET(request: NextRequest) {
-  return withAuth(request, async (req: NextRequest, context: AuthContext) => {
+  return APIMiddleware.withAuth(async (request, context) => {
     
     try {
       // Lade echte API Keys aus Firestore
@@ -86,11 +87,11 @@ export async function GET(request: NextRequest) {
  * Erstelle neuen API-Key
  */
 export async function POST(request: NextRequest) {
-  return withAuth(request, async (req: NextRequest, context: AuthContext) => {
+  return APIMiddleware.withAuth(async (request, context) => {
     
     try {
       // Parse Request Body
-      const createRequest = await req.json() as APIKeyCreateRequest;
+      const createRequest = await request.json() as APIKeyCreateRequest;
       
       // Validiere erforderliche Felder
       if (!createRequest.name || !createRequest.permissions || createRequest.permissions.length === 0) {
