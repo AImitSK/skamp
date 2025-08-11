@@ -18,11 +18,20 @@ export class APIMiddleware {
    * Authentifiziert API-Request und gibt Context zurück
    */
   static async authenticate(request: NextRequest): Promise<APIRequestContext> {
+    // DEBUG: Log alle eingehenden Headers
+    console.log('=== API MIDDLEWARE DEBUG ===');
+    console.log('Request URL:', request.url);
+    console.log('Request Method:', request.method);
+    
     // Extrahiere API-Key aus Headers
     const authHeader = request.headers.get('authorization');
+    console.log('Authorization Header RAW:', authHeader);
+    
     const apiKey = this.extractAPIKey(authHeader);
+    console.log('Extracted API Key:', apiKey ? `${apiKey.substring(0, 20)}...` : 'NULL');
     
     if (!apiKey) {
+      console.log('ERROR: No API key found in request');
       throw new APIError(
         401, 
         API_ERROR_CODES.INVALID_API_KEY, 
@@ -34,14 +43,29 @@ export class APIMiddleware {
     const clientIP = this.getClientIP(request);
     const userAgent = request.headers.get('user-agent') || 'unknown';
     
+    console.log('Client IP:', clientIP);
+    console.log('User Agent:', userAgent);
+    
     // Validiere API-Key und hole Context
-    const context = await apiAuthService.validateAPIKey(apiKey, clientIP, userAgent);
-    
-    // Prüfe Rate-Limits
-    const endpoint = this.getEndpointName(request);
-    await apiAuthService.checkRateLimit(context, endpoint);
-    
-    return context;
+    console.log('Calling apiAuthService.validateAPIKey...');
+    try {
+      const context = await apiAuthService.validateAPIKey(apiKey, clientIP, userAgent);
+      console.log('API Key validation SUCCESS');
+      console.log('Context organizationId:', context.organizationId);
+      console.log('Context permissions:', context.permissions);
+      
+      // Prüfe Rate-Limits
+      const endpoint = this.getEndpointName(request);
+      await apiAuthService.checkRateLimit(context, endpoint);
+      
+      console.log('=== API MIDDLEWARE SUCCESS ===');
+      return context;
+      
+    } catch (validationError) {
+      console.log('ERROR: API Key validation FAILED');
+      console.log('Validation error:', validationError);
+      throw validationError;
+    }
   }
   
   /**
