@@ -346,8 +346,21 @@ export class APIAuthService {
   
   private generateAPIKey(): string {
     // Format: cp_live_[32 chars] oder cp_test_[32 chars]
-    const prefix = process.env.NODE_ENV === 'production' ? 'cp_live_' : 'cp_test_';
+    // Verwende VERCEL_ENV für echte Produktionsumgebung oder explizite API_ENV Variable
+    const isProduction = process.env.VERCEL_ENV === 'production' || 
+                         process.env.API_ENV === 'production' || 
+                         process.env.NODE_ENV === 'production';
+    
+    const prefix = isProduction ? 'cp_live_' : 'cp_test_';
     const randomPart = randomBytes(16).toString('hex');
+    
+    console.log('=== API KEY GENERATION DEBUG ===');
+    console.log('NODE_ENV:', process.env.NODE_ENV);
+    console.log('VERCEL_ENV:', process.env.VERCEL_ENV);
+    console.log('API_ENV:', process.env.API_ENV);
+    console.log('Is Production:', isProduction);
+    console.log('Using prefix:', prefix);
+    
     return prefix + randomPart;
   }
   
