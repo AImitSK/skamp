@@ -16,7 +16,7 @@ export async function DELETE(
   request: NextRequest, 
   { params }: { params: { keyId: string } }
 ) {
-  return APIMiddleware.withAuth(async (request, context) => {
+  return withAuth(async (request, context) => {
     
     try {
       // Lösche echten API-Key aus Firestore
@@ -39,7 +39,7 @@ export async function DELETE(
         keyId: params.keyId 
       });
     }
-  });
+  })(request, { params });
 }
 
 /**
@@ -50,7 +50,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: { keyId: string } }
 ) {
-  return APIMiddleware.withAuth(async (request, context) => {
+  return withAuth(async (request, context) => {
     
     // Mock deactivation - in Production würde der Key in Firestore deaktiviert
     console.log(`API key ${params.keyId} deactivated for organization ${context.organizationId}`);
@@ -73,5 +73,5 @@ export async function OPTIONS(request: NextRequest) {
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     }
-  });
+  })(request, { params });
 }
