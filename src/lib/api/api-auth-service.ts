@@ -123,7 +123,13 @@ export class APIAuthService {
         organizationId: 'demo_org',
         userId: 'demo_user',
         apiKeyId: 'demo_key',
-        permissions: ['contacts:read', 'contacts:write', 'companies:read', 'companies:write', 'publications:read'] as any[],
+        permissions: [
+          'contacts:read', 'contacts:write', 'contacts:delete',
+          'companies:read', 'companies:write', 'companies:delete',
+          'publications:read', 'publications:write', 'publications:delete',
+          'advertisements:read', 'advertisements:write', 'advertisements:delete',
+          'webhooks:manage', 'analytics:read'
+        ] as any[],
         clientIP,
         userAgent,
         rateLimit: {
