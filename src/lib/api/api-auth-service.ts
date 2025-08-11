@@ -118,11 +118,7 @@ export class APIAuthService {
       rateLimit: apiKey.rateLimit
     });
     
-    // Prüfe ob Firestore verfügbar ist
-    if (!db || typeof db !== 'object' || db.constructor?.name !== 'Firestore') {
-      console.error('Firestore not properly initialized, db object:', db);
-      throw new Error('Firestore service not available');
-    }
+    // Firestore ist korrekt initialisiert - vertraue auf addDoc() Error-Handling
     
     let docRef;
     try {
