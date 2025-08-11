@@ -112,58 +112,25 @@ export class APIAuthService {
     
     console.log('=== API AUTH SERVICE DEBUG ===');
     console.log('Validating API Key:', apiKey ? `${apiKey.substring(0, 25)}...` : 'NULL');
-    console.log('Key starts with cp_test_:', apiKey.startsWith('cp_test_'));
-    console.log('Key includes 1754918946143:', apiKey.includes('1754918946143'));
-    console.log('Key includes 1754920169735:', apiKey.includes('1754920169735'));
-    
-    // Special test keys für Entwicklung/Demo (temporäre Lösung)
-    if (apiKey.startsWith('cp_test_') && (apiKey.includes('1754918946143') || apiKey.includes('1754920169735'))) {
-      console.log('USING HARDCODED TEST KEY VALIDATION');
-      return {
-        organizationId: 'demo_org',
-        userId: 'demo_user',
-        apiKeyId: 'demo_key',
-        permissions: [
-          'contacts:read', 'contacts:write', 'contacts:delete',
-          'companies:read', 'companies:write', 'companies:delete',
-          'publications:read', 'publications:write', 'publications:delete',
-          'advertisements:read', 'advertisements:write', 'advertisements:delete',
-          'webhooks:manage', 'analytics:read'
-        ] as any[],
-        clientIP,
-        userAgent,
-        rateLimit: {
-          requestsPerHour: 1000,
-          requestsPerMinute: 60,
-          burstLimit: 10
-        }
-      };
-    }
     
     console.log('Proceeding with Firestore validation...');
     const keyHash = this.hashAPIKey(apiKey);
     console.log('Key hash:', keyHash.substring(0, 16) + '...');
     
-    try {
-      // Suche API-Key in Firestore
-      console.log('Querying Firestore collection:', this.collectionName);
-      const q = query(
-        collection(db, this.collectionName),
-        where('keyHash', '==', keyHash),
-        where('isActive', '==', true)
-      );
-      
-      const snapshot = await getDocs(q);
-      console.log('Firestore query result - empty:', snapshot.empty);
-      console.log('Firestore query result - size:', snapshot.size);
-      
-      if (snapshot.empty) {
-        console.log('ERROR: API key not found in Firestore');
-        throw new APIError(401, API_ERROR_CODES.INVALID_API_KEY, 'Invalid API key');
-      }
-    } catch (firestoreError) {
-      console.log('ERROR: Firestore query failed completely');
-      console.log('Firestore error:', firestoreError);
+    // Suche API-Key in Firestore
+    console.log('Querying Firestore collection:', this.collectionName);
+    const q = query(
+      collection(db, this.collectionName),
+      where('keyHash', '==', keyHash),
+      where('isActive', '==', true)
+    );
+    
+    const snapshot = await getDocs(q);
+    console.log('Firestore query result - empty:', snapshot.empty);
+    console.log('Firestore query result - size:', snapshot.size);
+    
+    if (snapshot.empty) {
+      console.log('ERROR: API key not found in Firestore');
       throw new APIError(401, API_ERROR_CODES.INVALID_API_KEY, 'Invalid API key');
     }
     
@@ -202,12 +169,6 @@ export class APIAuthService {
   async checkRateLimit(context: APIRequestContext, endpoint: string): Promise<void> {
     console.log('=== RATE LIMIT CHECK DEBUG ===');
     console.log('Checking rate limit for apiKeyId:', context.apiKeyId);
-    
-    // Skip rate limiting für Demo-Keys
-    if (context.apiKeyId === 'demo_key') {
-      console.log('Skipping rate limit check for demo key');
-      return;
-    }
     
     // Hole aktuelle Usage-Daten
     const apiKeyDoc = await getDoc(doc(db, this.collectionName, context.apiKeyId));
