@@ -107,15 +107,18 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
 
       const newKey = await response.json();
       
+      // Return the new key for the modal BEFORE closing it
+      // Don't close modal here - let the modal handle it after showing the key
+      const result = { ...newKey };
+      
       // Refresh the API keys list to get the latest state
       await loadAPIKeys();
-      setShowCreateModal(false);
       
-      // Return the new key for the modal
-      return newKey;
+      return result;
     } catch (err) {
       console.error('Failed to create API key:', err);
       setError(err instanceof Error ? err.message : 'Failed to create API key');
+      throw err; // Re-throw to let the modal handle the error
     }
   };
 
@@ -344,7 +347,6 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
       {showCreateModal && (
         <CreateAPIKeyModal
           onClose={() => {
-            console.log('Closing modal');
             setShowCreateModal(false);
           }}
           onCreate={handleCreateKey}

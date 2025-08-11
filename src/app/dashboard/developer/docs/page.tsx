@@ -16,6 +16,7 @@ export default function APIDocumentation() {
   const router = useRouter();
   const [apiKey, setApiKey] = useState<string>('');
   const [spec, setSpec] = useState<any>(null);
+  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -32,27 +33,6 @@ export default function APIDocumentation() {
         setSpec('/openapi.yaml');
       })
       .catch(error => console.error('Fehler beim Laden der OpenAPI Spec:', error));
-
-    // Lade ersten API Key für Authorization
-    if (user) {
-      user.getIdToken().then(token => {
-        fetch('/api/v1/auth/keys', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
-          .then(res => res.json())
-          .then(keys => {
-            if (keys && keys.length > 0) {
-              const activeKey = keys.find((k: any) => k.status === 'active');
-              if (activeKey) {
-                setApiKey(activeKey.key);
-              }
-            }
-          })
-          .catch(error => console.error('Fehler beim Laden der API Keys:', error));
-      });
-    }
   }, [user]);
 
   const requestInterceptor = (req: any) => {
@@ -97,14 +77,31 @@ export default function APIDocumentation() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              {apiKey && (
-                <div className="text-sm">
-                  <span className="text-gray-600">Aktiver API Key: </span>
-                  <code className="bg-gray-100 px-2 py-1 rounded">
-                    {apiKey.substring(0, 10)}...
-                  </code>
-                </div>
-              )}
+              {/* API Key Status */}
+              <div className="flex items-center space-x-3">
+                {apiKey ? (
+                  <div className="text-sm">
+                    <span className="text-gray-600">API Key: </span>
+                    <code className="bg-green-100 text-green-800 px-2 py-1 rounded">
+                      {apiKey.substring(0, 15)}...
+                    </code>
+                    <button
+                      onClick={() => setApiKey('')}
+                      className="ml-2 text-xs text-red-600 hover:text-red-500"
+                    >
+                      Entfernen
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShowApiKeyInput(true)}
+                    className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded"
+                  >
+                    API Key eingeben
+                  </button>
+                )}
+              </div>
+              
               <a
                 href="/openapi.yaml"
                 download
@@ -117,8 +114,67 @@ export default function APIDocumentation() {
         </div>
       </div>
 
+      {/* API Key Input Modal */}
+      {showApiKeyInput && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md mx-4 w-full">
+            <h3 className="text-lg font-semibold mb-4">API Key eingeben</h3>
+            <p className="text-gray-600 mb-4 text-sm">
+              Gib deinen CeleroPress API Key ein, um die interaktiven Tests zu nutzen. 
+              Du findest deine API Keys unter <strong>Einstellungen → API</strong>.
+            </p>
+            <input
+              type="password"
+              placeholder="cp_test_... oder cp_live_..."
+              className="w-full border border-gray-300 rounded-md px-3 py-2 mb-4 font-mono text-sm"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const value = (e.target as HTMLInputElement).value.trim();
+                  if (value) {
+                    setApiKey(value);
+                    setShowApiKeyInput(false);
+                  }
+                }
+              }}
+              autoFocus
+            />
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowApiKeyInput(false)}
+                className="bg-gray-50 hover:bg-gray-100 text-gray-900 border-0 rounded-md px-4 py-2 text-sm font-medium"
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={() => {
+                  const input = document.querySelector('input[type="password"]') as HTMLInputElement;
+                  const value = input?.value.trim();
+                  if (value) {
+                    setApiKey(value);
+                    setShowApiKeyInput(false);
+                  }
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white border-0 rounded-md px-4 py-2 text-sm font-medium"
+              >
+                Speichern
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Swagger UI */}
       <div className="swagger-ui-wrapper">
+        {!apiKey && (
+          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-yellow-800 font-medium mb-2">⚠️ API Key erforderlich</p>
+            <p className="text-yellow-700 text-sm">
+              Um die API-Endpoints zu testen, musst du zunächst einen API Key eingeben. 
+              Klicke auf "API Key eingeben" oben rechts.
+            </p>
+          </div>
+        )}
+        
         {spec && (
           <SwaggerUI
             url={spec}

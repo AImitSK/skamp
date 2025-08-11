@@ -18,7 +18,7 @@ import { APIKeyCreateRequest, APIPermission } from '@/types/api';
 
 interface CreateAPIKeyModalProps {
   onClose: () => void;
-  onCreate: (request: APIKeyCreateRequest) => Promise<void>;
+  onCreate: (request: APIKeyCreateRequest) => Promise<any>;
 }
 
 const AVAILABLE_PERMISSIONS: { 
@@ -112,7 +112,7 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
         allowedIPs: allowedIPs ? allowedIPs.split(',').map(ip => ip.trim()).filter(Boolean) : undefined
       };
 
-      // In der echten Implementation würde hier der tatsächliche API-Key zurückgegeben
+      // API Key erstellen
       const newKey = await onCreate(request);
       
       // Verwende den echten Key vom API-Response
@@ -120,7 +120,7 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
         setCreatedKey(newKey.key);
         setStep('created');
       } else {
-        throw new Error('API-Key konnte nicht erstellt werden');
+        throw new Error('API-Key konnte nicht erstellt werden - kein Key im Response');
       }
       
     } catch (err) {
@@ -351,7 +351,10 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
 
                 <div className="flex justify-end mt-6 pt-4 border-t border-gray-200">
                   <button 
-                    onClick={onClose}
+                    onClick={() => {
+                      // Schließe das Modal und refreshe die API Key Liste
+                      onClose();
+                    }}
                     className="inline-flex items-center bg-primary hover:bg-primary-hover text-white border-0 rounded-md px-4 py-2 text-sm font-medium"
                   >
                     Verstanden
