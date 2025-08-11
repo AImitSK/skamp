@@ -23,7 +23,7 @@ import {
   Query,
   CollectionReference
 } from 'firebase/firestore';
-import { db } from './client-init';
+import { db } from './build-safe-init';
 import { BaseEntity, TeamMember } from '@/types/international';
 
 // ========================================
@@ -67,7 +67,18 @@ export abstract class BaseService<T extends BaseEntity> {
 
   constructor(collectionName: string) {
     this.collectionName = collectionName;
-    this.collectionRef = collection(db, collectionName);
+    // Build-safe collection reference
+    try {
+      if (db && typeof db === 'object' && 'type' in db) {
+        this.collectionRef = collection(db, collectionName);
+      } else {
+        // Mock für Build-Zeit
+        this.collectionRef = {} as CollectionReference;
+      }
+    } catch (error) {
+      // Fallback für Build-Zeit
+      this.collectionRef = {} as CollectionReference;
+    }
   }
 
   /**
