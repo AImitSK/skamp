@@ -97,8 +97,8 @@ export class APIAuthService {
         requestsToday: 0
       },
       
-      allowedIPs: params.allowedIPs,
-      expiresAt: expiresAt ? Timestamp.fromDate(expiresAt) : undefined,
+      allowedIPs: params.allowedIPs || null,
+      expiresAt: expiresAt ? Timestamp.fromDate(expiresAt) : null,
       
       createdAt: serverTimestamp() as Timestamp,
       updatedAt: serverTimestamp() as Timestamp,
@@ -254,10 +254,11 @@ export class APIAuthService {
     console.log('OrganizationId:', organizationId);
     console.log('Collection name:', this.collectionName);
     
+    // Temporär: Einfache Query ohne orderBy um Index-Problem zu umgehen
     const q = query(
       collection(db, this.collectionName),
-      where('organizationId', '==', organizationId),
-      orderBy('createdAt', 'desc')
+      where('organizationId', '==', organizationId)
+      // orderBy('createdAt', 'desc') - Entfernt bis Index erstellt ist
     );
     
     try {
@@ -283,6 +284,14 @@ export class APIAuthService {
       });
       
       console.log('API Keys found:', apiKeys.length);
+      
+      // Client-seitige Sortierung nach createdAt (neueste zuerst)
+      apiKeys.sort((a, b) => {
+        const dateA = new Date(a.createdAt).getTime();
+        const dateB = new Date(b.createdAt).getTime();
+        return dateB - dateA; // Desc order
+      });
+      
       return apiKeys;
       
     } catch (firestoreError) {
