@@ -20,28 +20,8 @@ export const deletedKeys = new Set<string>();
 
 function getOrganizationKeys(organizationId: string): any[] {
   if (!mockApiKeys.has(organizationId)) {
-    // Initialisiere mit Beispiel-Key
-    mockApiKeys.set(organizationId, [
-      {
-        id: 'key_1',
-        name: 'Salesforce Integration',
-        keyPreview: 'cp_test_ab...',
-        permissions: ['contacts:read', 'contacts:write', 'companies:read'],
-        isActive: true,
-        rateLimit: {
-          requestsPerHour: 1000,
-          requestsPerMinute: 60,
-          burstLimit: 10
-        },
-        usage: {
-          totalRequests: 1250,
-          requestsThisHour: 45,
-          requestsToday: 320,
-          lastUsedAt: undefined
-        },
-        createdAt: '2025-01-10T10:00:00Z'
-      }
-    ]);
+    // Initialisiere mit leerer Liste - KEIN Beispiel-Key mehr
+    mockApiKeys.set(organizationId, []);
   }
   
   // Filtere gelöschte Keys aus
