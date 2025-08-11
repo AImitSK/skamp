@@ -50,11 +50,19 @@ function getOrganizationKeys(organizationId: string): any[] {
 }
 
 export async function GET(request: NextRequest) {
+  console.log('=== API KEYS ROUTE GET DEBUG ===');
+  console.log('Request URL:', request.url);
+  
   return APIMiddleware.withAuth(async (request, context) => {
+    console.log('=== AUTH CONTEXT DEBUG ===');
+    console.log('Organization ID:', context.organizationId);
+    console.log('User ID:', context.userId);
     
     try {
+      console.log('=== CALLING API AUTH SERVICE ===');
       // Lade echte API Keys aus Firestore
       const apiKeys = await apiAuthService.getAPIKeys(context.organizationId, context.userId);
+      console.log('=== API KEYS LOADED ===');
       
       // Entferne sensible Daten für UI
       const safeKeys = apiKeys.map(key => ({
@@ -72,11 +80,20 @@ export async function GET(request: NextRequest) {
         createdAt: key.createdAt?.toISOString?.() || key.createdAt
       }));
       
+      console.log('=== SAFE KEYS PREPARED ===');
+      console.log('Safe keys count:', safeKeys.length);
       return NextResponse.json(safeKeys);
     } catch (error) {
-      console.error('Failed to load API keys:', error);
+      console.error('=== API KEYS ERROR ===');
+      console.error('Error type:', error?.constructor?.name);
+      console.error('Error message:', error?.message);
+      console.error('Error stack:', error?.stack);
+      console.error('Full error:', error);
+      
+      console.log('=== FALLBACK TO MOCK SYSTEM ===');
       // Fallback zu Mock-Daten falls Firestore nicht verfügbar
       const apiKeys = getOrganizationKeys(context.organizationId);
+      console.log('Mock keys count:', apiKeys.length);
       return NextResponse.json(apiKeys);
     }
   });
@@ -87,11 +104,19 @@ export async function GET(request: NextRequest) {
  * Erstelle neuen API-Key
  */
 export async function POST(request: NextRequest) {
+  console.log('=== API KEYS ROUTE POST DEBUG ===');
+  console.log('Request URL:', request.url);
+  
   return APIMiddleware.withAuth(async (request, context) => {
+    console.log('=== AUTH CONTEXT DEBUG ===');
+    console.log('Organization ID:', context.organizationId);
+    console.log('User ID:', context.userId);
     
     try {
+      console.log('=== PARSING REQUEST BODY ===');
       // Parse Request Body
       const createRequest = await request.json() as APIKeyCreateRequest;
+      console.log('Create request:', createRequest);
       
       // Validiere erforderliche Felder
       if (!createRequest.name || !createRequest.permissions || createRequest.permissions.length === 0) {
@@ -102,6 +127,7 @@ export async function POST(request: NextRequest) {
       }
       
       try {
+        console.log('=== CALLING FIRESTORE API KEY SERVICE ===');
         // Versuche echten API-Key in Firestore zu erstellen
         const newAPIKey = await apiAuthService.createAPIKey({
           organizationId: context.organizationId,
@@ -117,6 +143,8 @@ export async function POST(request: NextRequest) {
           allowedIPs: createRequest.allowedIPs
         });
         
+        console.log('=== FIRESTORE API KEY CREATED ===');
+        console.log('New API Key ID:', newAPIKey.id);
         return NextResponse.json(newAPIKey, { status: 201 });
         
       } catch (firestoreError) {
@@ -155,7 +183,11 @@ export async function POST(request: NextRequest) {
       }
       
     } catch (error) {
-      console.error('Failed to create API key:', error);
+      console.error('=== API KEY CREATION ERROR ===');
+      console.error('Error type:', error?.constructor?.name);
+      console.error('Error message:', error?.message);
+      console.error('Error stack:', error?.stack);
+      console.error('Full error:', error);
       return NextResponse.json(
         { error: 'Failed to create API key' },
         { status: 500 }
