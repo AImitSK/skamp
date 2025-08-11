@@ -90,8 +90,14 @@ export async function GET(request: NextRequest) {
       console.error('Error stack:', error?.stack);
       console.error('Full error:', error);
       
-      console.log('=== FALLBACK TO MOCK SYSTEM ===');
-      // Fallback zu Mock-Daten falls Firestore nicht verfügbar
+      // Für Live-System: Kein Fallback zu Mock-Daten - returne leere Liste
+      if (process.env.VERCEL_ENV === 'production' || process.env.API_ENV === 'production') {
+        console.log('=== PRODUCTION: No fallback to mock data ===');
+        return NextResponse.json([]);
+      }
+      
+      console.log('=== DEVELOPMENT: FALLBACK TO MOCK SYSTEM ===');
+      // Fallback zu Mock-Daten nur in Development
       const apiKeys = getOrganizationKeys(context.organizationId);
       console.log('Mock keys count:', apiKeys.length);
       return NextResponse.json(apiKeys);
@@ -148,9 +154,16 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(newAPIKey, { status: 201 });
         
       } catch (firestoreError) {
-        console.warn('Firestore API key creation failed, falling back to mock system:', firestoreError);
+        console.warn('Firestore API key creation failed:', firestoreError);
         
-        // Fallback zu Mock-System für Rückwärts-Kompatibilität
+        // Für Live-System: Kein Fallback zu Mock-System - Fehler weiterwerfen
+        if (process.env.VERCEL_ENV === 'production' || process.env.API_ENV === 'production') {
+          console.log('=== PRODUCTION: No fallback to mock system ===');
+          throw firestoreError;
+        }
+        
+        console.log('=== DEVELOPMENT: FALLBACK TO MOCK SYSTEM ===');
+        // Fallback zu Mock-System nur in Development
         const fullKey = `cp_test_${Math.random().toString(36).substring(2)}${Date.now()}abcd1234efgh5678ijkl9012mnop`;
         const newAPIKey = {
           id: `key_${Date.now()}`,

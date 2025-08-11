@@ -30,7 +30,17 @@ export async function DELETE(
     } catch (error) {
       console.error('Failed to delete API key:', error);
       
-      // Fallback zu Mock-System
+      // Für Live-System: Kein Fallback zu Mock-System - Fehler weiterwerfen
+      if (process.env.VERCEL_ENV === 'production' || process.env.API_ENV === 'production') {
+        console.log('=== PRODUCTION: No fallback to mock system ===');
+        return NextResponse.json(
+          { error: 'Failed to delete API key' },
+          { status: 500 }
+        );
+      }
+      
+      console.log('=== DEVELOPMENT: FALLBACK TO MOCK SYSTEM ===');
+      // Fallback zu Mock-System nur in Development
       const { deletedKeys } = await import('../route');
       deletedKeys.add(params.keyId);
       
