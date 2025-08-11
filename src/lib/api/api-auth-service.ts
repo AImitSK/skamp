@@ -194,9 +194,19 @@ export class APIAuthService {
    * Prüft ob Request innerhalb der Rate-Limits liegt
    */
   async checkRateLimit(context: APIRequestContext, endpoint: string): Promise<void> {
+    console.log('=== RATE LIMIT CHECK DEBUG ===');
+    console.log('Checking rate limit for apiKeyId:', context.apiKeyId);
+    
+    // Skip rate limiting für Demo-Keys
+    if (context.apiKeyId === 'demo_key') {
+      console.log('Skipping rate limit check for demo key');
+      return;
+    }
+    
     // Hole aktuelle Usage-Daten
     const apiKeyDoc = await getDoc(doc(db, this.collectionName, context.apiKeyId));
     if (!apiKeyDoc.exists()) {
+      console.log('ERROR: API key document not found in Firestore for rate limiting');
       throw new APIError(401, API_ERROR_CODES.INVALID_API_KEY, 'API key not found');
     }
     
