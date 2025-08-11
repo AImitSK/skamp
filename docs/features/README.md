@@ -20,6 +20,7 @@ Diese Dokumentationen folgen dem standardisierten Template aus `FEATURE_DOCUMENT
 - **[Calendar & Task Management](./docu_dashboard_pr-tools_calendar.md)** - Zentrale Kalender- und Aufgabenverwaltung mit Benachrichtigungsintegration (✅ **FERTIG** - 55/55 Tests, FullCalendar, Drag & Drop, Überfällige Tasks Widget)
 - **[Dashboard Übersicht](./docu_dashboard_overview.md)** - Zentrale Einstiegsseite mit Multi-Tenancy und Team-Onboarding (✅ **FERTIG** - Welcome-Flow, Organization-Management, ApprovalWidget-Integration)
 - **[Admin-Bereich](./docu_dashboard_admin.md)** - Administrations-Dashboard mit Profilverwaltung (🚧 **FRÜHE ENTWICKLUNG** - Profilseite funktional, Profile-Bilder-TODOs dokumentiert)
+- **[Developer Portal](./docu_dashboard_developer_portal.md)** - Vollständige Developer Experience Plattform mit API-Dokumentation, Testing-Tools und SDKs (✅ **PRODUCTION-READY** - 6 spezialisierte Tools, Swagger UI, Analytics, Code-Examples, 113 Seiten Build)
 
 ### ✅ Abgeschlossen
 - **[PR-Kampagnen](./docu_dashboard_pr-tools_campaigns.md)** - Kampagnen-Erstellung mit KI-Unterstützung (✅ **PRODUCTION-READY** - 499 Zeilen Template-Dokumentation, 100% Test-Coverage, Enterprise-Grade)
@@ -71,6 +72,7 @@ Jede Feature-Dokumentation enthält:
 - ✅ **Dashboard Übersicht**: Vollständig nach Template dokumentiert (19 Tests implementiert, Multi-Tenancy, Role-based UI, Welcome-Flow, ApprovalWidget-Integration)
 - 🚧 **Admin-Bereich**: Nach Template dokumentiert (frühe Entwicklungsphase, Profilseite funktional, umfangreiche Profilbild-TODOs, 5x Design-Pattern-Verletzungen identifiziert)
 - ✅ **PR-Kampagnen**: Vollständig nach Template dokumentiert (499 Zeilen, 100% Test-Coverage, Production-Ready)
+- ✅ **Developer Portal**: Vollständig nach Template dokumentiert (516 Zeilen, 6 Tools, Swagger UI, Analytics Dashboard, Production-Ready mit 113 Seiten Build)
 - 🚧 **Weitere Features**: Sukzessive Migration geplant
 
 **Referenz-Dokumentationen:**
@@ -91,6 +93,6 @@ Alle ursprünglichen Feature-Beschreibungen sind in `/docs/legacy-features/` ver
 
 ---
 
-**Letzte Aktualisierung:** 2025-08-09  
-**Dokumentierte Features:** 16/16+ Core-Features ✅ (CRM Enhanced ✅, Verteilerlisten ✅, Library Publications ✅, Freigaben-Center ✅, Textbausteine ✅, Domain-Authentifizierung ✅, E-Mail-Einstellungen ✅, Team-Verwaltung ✅, Branding-Einstellungen ✅, Communication Inbox ✅, Calendar & Task Management ✅, Dashboard Übersicht ✅, PR-Kampagnen ✅, Admin-Bereich 🚧, Notification-Einstellungen 🚧)  
+**Letzte Aktualisierung:** 2025-08-11  
+**Dokumentierte Features:** 17/17+ Core-Features ✅ (CRM Enhanced ✅, Verteilerlisten ✅, Library Publications ✅, Freigaben-Center ✅, Textbausteine ✅, Domain-Authentifizierung ✅, E-Mail-Einstellungen ✅, Team-Verwaltung ✅, Branding-Einstellungen ✅, Communication Inbox ✅, Calendar & Task Management ✅, Dashboard Übersicht ✅, PR-Kampagnen ✅, Developer Portal ✅, Admin-Bereich 🚧, Notification-Einstellungen 🚧)  
 **Template-Version:** 2.1

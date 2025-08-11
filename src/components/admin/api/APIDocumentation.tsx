@@ -253,16 +253,20 @@ export function APIDocumentation({ className = '' }: APIDocumentationProps) {
           </Text>
         </div>
         <div className="flex gap-3">
-          <Button plain className="flex items-center gap-2">
-            <BookOpenIcon className="h-4 w-4" />
+          <a
+            href="/dashboard/developer/docs"
+            className="inline-flex items-center bg-primary hover:bg-primary-hover text-white border-0 rounded-md px-4 py-2 text-sm font-medium"
+          >
+            <BookOpenIcon className="h-4 w-4 mr-2" />
             Vollständige Docs
-            <ArrowTopRightOnSquareIcon className="h-3 w-3" />
-          </Button>
-          <Button plain className="flex items-center gap-2">
-            <GlobeAltIcon className="h-4 w-4" />
+          </a>
+          <a
+            href="/dashboard/developer/playground"
+            className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 border-0 rounded-md px-4 py-2 text-sm font-medium"
+          >
+            <GlobeAltIcon className="h-4 w-4 mr-2" />
             API Playground
-            <ArrowTopRightOnSquareIcon className="h-3 w-3" />
-          </Button>
+          </a>
         </div>
       </div>
 
@@ -382,9 +386,13 @@ export function APIDocumentation({ className = '' }: APIDocumentationProps) {
           <Text className="text-sm text-gray-600 mb-3">
             Maschinenlesbare API-Spezifikation für automatische Code-Generierung
           </Text>
-          <Button plain className="text-xs">
+          <a
+            href="/openapi.yaml"
+            download
+            className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 border-0 rounded-md px-3 py-2 text-xs font-medium"
+          >
             Download openapi.yaml
-          </Button>
+          </a>
         </div>
 
         <div className="p-4 border border-gray-200 rounded-lg">
@@ -395,9 +403,12 @@ export function APIDocumentation({ className = '' }: APIDocumentationProps) {
           <Text className="text-sm text-gray-600 mb-3">
             Offizielle Client-Bibliotheken für verschiedene Programmiersprachen
           </Text>
-          <Button plain className="text-xs">
+          <a
+            href="/dashboard/developer/sdks"
+            className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 border-0 rounded-md px-3 py-2 text-xs font-medium"
+          >
             Verfügbare SDKs ansehen
-          </Button>
+          </a>
         </div>
 
         <div className="p-4 border border-gray-200 rounded-lg">
@@ -408,9 +419,12 @@ export function APIDocumentation({ className = '' }: APIDocumentationProps) {
           <Text className="text-sm text-gray-600 mb-3">
             Event-basierte Benachrichtigungen für Datenänderungen
           </Text>
-          <Button plain className="text-xs">
-            Webhook-Guide lesen
-          </Button>
+          <a
+            href="/dashboard/developer/examples"
+            className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 border-0 rounded-md px-3 py-2 text-xs font-medium"
+          >
+            Webhook-Beispiele ansehen
+          </a>
         </div>
       </div>
     </div>

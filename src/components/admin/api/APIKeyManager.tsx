@@ -51,39 +51,31 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
   }, [organizationId, orgLoading]);
 
   const loadAPIKeys = async () => {
+    if (!user || !organizationId) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
 
-      // Da wir keinen Admin-Token haben, simulieren wir die Daten
-      // In der echten Implementation würde hier ein interner API-Call stattfinden
-      // TODO: Implement internal API call to fetch keys
-      
-      // Mock-Daten für UI-Testing
-      const mockKeys: Omit<APIKeyResponse, 'key'>[] = [
-        {
-          id: 'key_1',
-          name: 'Salesforce Integration',
-          keyPreview: 'cp_test_ab...',
-          permissions: ['contacts:read', 'contacts:write', 'companies:read'],
-          isActive: true,
-          rateLimit: {
-            requestsPerHour: 1000,
-            requestsPerMinute: 60,
-            burstLimit: 10
-          },
-          usage: {
-            totalRequests: 1250,
-            requestsThisHour: 45,
-            requestsToday: 320,
-            lastUsedAt: undefined
-          },
-          createdAt: '2025-01-10T10:00:00Z'
+      const token = await user.getIdToken();
+      const response = await fetch('/api/v1/auth/keys', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
-      ];
-      
-      setAPIKeys(mockKeys);
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const keys = await response.json();
+      setAPIKeys(keys);
     } catch (err) {
+      console.error('Failed to load API keys:', err);
       setError(err instanceof Error ? err.message : 'Failed to load API keys');
     } finally {
       setLoading(false);
@@ -91,33 +83,34 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
   };
 
   const handleCreateKey = async (request: APIKeyCreateRequest) => {
+    if (!user) {
+      setError('User not authenticated');
+      return;
+    }
+
     try {
-      // TODO: Implement actual API key creation
-      // const response = await fetch('/api/v1/auth/keys', { ... });
-      
-      // Mock-Implementation für UI-Testing
-      const newKey: Omit<APIKeyResponse, 'key'> = {
-        id: `key_${Date.now()}`,
-        name: request.name,
-        keyPreview: 'cp_test_xy...',
-        permissions: request.permissions,
-        isActive: true,
-        rateLimit: {
-          requestsPerHour: request.rateLimit?.requestsPerHour || 1000,
-          requestsPerMinute: request.rateLimit?.requestsPerMinute || 60,
-          burstLimit: 10
+      const token = await user.getIdToken();
+      const response = await fetch('/api/v1/auth/keys', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
-        usage: {
-          totalRequests: 0,
-          requestsThisHour: 0,
-          requestsToday: 0
-        },
-        createdAt: new Date().toISOString()
-      };
+        body: JSON.stringify(request)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const newKey = await response.json();
       
-      setAPIKeys(prev => [newKey, ...prev]);
+      // Refresh the API keys list to get the latest state
+      await loadAPIKeys();
       setShowCreateModal(false);
     } catch (err) {
+      console.error('Failed to create API key:', err);
       setError(err instanceof Error ? err.message : 'Failed to create API key');
     }
   };
@@ -127,12 +120,30 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
       return;
     }
 
+    if (!user) {
+      setError('User not authenticated');
+      return;
+    }
+
     try {
-      // TODO: Implement actual deletion
-      // await fetch(`/api/v1/auth/keys/${keyId}`, { method: 'DELETE' });
+      const token = await user.getIdToken();
+      const response = await fetch(`/api/v1/auth/keys/${keyId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+      }
       
-      setAPIKeys(prev => prev.filter(key => key.id !== keyId));
+      // Refresh the API keys list to get the latest state
+      await loadAPIKeys();
     } catch (err) {
+      console.error('Failed to delete API key:', err);
       setError(err instanceof Error ? err.message : 'Failed to delete API key');
     }
   };
@@ -223,13 +234,13 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
           <Text className="mt-2 text-gray-500">
             Erstelle deinen ersten API-Key um externe Integrationen zu ermöglichen.
           </Text>
-          <Button 
-            color="indigo" 
-            className="mt-4"
+          <button 
+            className="mt-4 inline-flex items-center bg-primary hover:bg-primary-hover text-white border-0 rounded-md px-4 py-2 text-sm font-medium"
             onClick={() => setShowCreateModal(true)}
           >
+            <PlusIcon className="h-4 w-4 mr-2" />
             Ersten API-Key erstellen
-          </Button>
+          </button>
         </div>
       ) : (
         <div className="space-y-4">
@@ -254,33 +265,30 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
                       <Text className="text-sm text-gray-500 font-mono">
                         {visibleKeys.has(apiKey.id) ? 'cp_test_example123...' : apiKey.keyPreview}
                       </Text>
-                      <Button
-                        plain
+                      <button
                         onClick={() => toggleKeyVisibility(apiKey.id)}
-                        className="p-1"
+                        className="p-2 hover:bg-gray-100 rounded-md"
                       >
                         {visibleKeys.has(apiKey.id) ? 
                           <EyeSlashIcon className="h-4 w-4" /> : 
                           <EyeIcon className="h-4 w-4" />
                         }
-                      </Button>
-                      <Button
-                        plain
+                      </button>
+                      <button
                         onClick={() => copyToClipboard(visibleKeys.has(apiKey.id) ? 'cp_test_example123...' : apiKey.keyPreview)}
-                        className="p-1"
+                        className="p-2 hover:bg-gray-100 rounded-md"
                       >
                         <ClipboardIcon className="h-4 w-4" />
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 </div>
-                <Button
-                  plain
+                <button
                   onClick={() => handleDeleteKey(apiKey.id)}
-                  className="p-2 text-red-600 hover:text-red-700"
+                  className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md"
                 >
                   <TrashIcon className="h-4 w-4" />
-                </Button>
+                </button>
               </div>
 
               {/* Permissions */}
