@@ -1,0 +1,1556 @@
+openapi: 3.0.3
+info:
+  title: CeleroPress API
+  description: |
+    Professionelle PR & Kommunikations-API für CRM, Media Management und Kampagnen-Automatisierung.
+    
+    ## Authentifizierung
+    Verwenden Sie API-Keys für die Authentifizierung:
+    ```
+    Authorization: Bearer cp_live_your_api_key_here
+    ```
+    
+    ## Rate Limits
+    - Standard: 1000 Requests/Stunde, 60 Requests/Minute
+    - Pro: 5000 Requests/Stunde, 300 Requests/Minute
+    - Enterprise: Unbegrenzt
+    
+    ## Fehlerbehandlung
+    Die API verwendet standardmäßige HTTP-Status-Codes und strukturierte Fehlermeldungen.
+    
+  version: 1.0.0
+  contact:
+    name: CeleroPress Support
+    url: https://celeropress.de/support
+    email: api-support@celeropress.de
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: https://celeropress.de/terms
+
+servers:
+  - url: https://api.celeropress.de/v1
+    description: Production Server
+  - url: https://staging-api.celeropress.de/v1
+    description: Staging Server
+  - url: http://localhost:3000/api/v1
+    description: Development Server
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  # Authentication Endpoints
+  /auth/test:
+    get:
+      tags: [Authentication]
+      summary: Test API-Key Authentifizierung
+      description: Testet die Gültigkeit des API-Keys und gibt Context-Informationen zurück
+      responses:
+        '200':
+          description: Authentifizierung erfolgreich
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTestResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/keys:
+    get:
+      tags: [API Keys]
+      summary: Liste aller API-Keys
+      description: Holt alle API-Keys der Organisation (ohne Key-Werte)
+      responses:
+        '200':
+          description: Liste der API-Keys
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/APIKeyResponse'
+    post:
+      tags: [API Keys]
+      summary: Neuen API-Key erstellen
+      description: Erstellt einen neuen API-Key für die Organisation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/APIKeyCreateRequest'
+      responses:
+        '201':
+          description: API-Key erfolgreich erstellt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIKeyResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /auth/keys/{keyId}:
+    delete:
+      tags: [API Keys]
+      summary: API-Key löschen
+      description: Löscht einen API-Key permanent
+      parameters:
+        - name: keyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: API-Key erfolgreich gelöscht
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Contacts API
+  /contacts:
+    get:
+      tags: [Contacts]
+      summary: Liste aller Kontakte
+      description: Holt alle Kontakte mit Filterung und Pagination
+      parameters:
+        - name: page
+          in: query
+          description: Seitennummer
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Anzahl pro Seite
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 25
+        - name: search
+          in: query
+          description: Suchbegriff für Name oder Email
+          schema:
+            type: string
+        - name: tags
+          in: query
+          description: Filter nach Tags
+          schema:
+            type: array
+            items:
+              type: string
+        - name: companyId
+          in: query
+          description: Filter nach Firma
+          schema:
+            type: string
+        - name: sortBy
+          in: query
+          description: Sortierfeld
+          schema:
+            type: string
+            enum: [createdAt, updatedAt, firstName, lastName, email]
+            default: updatedAt
+        - name: sortOrder
+          in: query
+          description: Sortierreihenfolge
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: Liste der Kontakte
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  contacts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Contact'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationResponse'
+    post:
+      tags: [Contacts]
+      summary: Neuen Kontakt erstellen
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactCreateRequest'
+      responses:
+        '201':
+          description: Kontakt erfolgreich erstellt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /contacts/{contactId}:
+    get:
+      tags: [Contacts]
+      summary: Kontakt nach ID
+      parameters:
+        - name: contactId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Kontakt-Details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Contacts]
+      summary: Kontakt aktualisieren
+      parameters:
+        - name: contactId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactUpdateRequest'
+      responses:
+        '200':
+          description: Kontakt erfolgreich aktualisiert
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Contacts]
+      summary: Kontakt löschen
+      parameters:
+        - name: contactId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Kontakt erfolgreich gelöscht
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Companies API
+  /companies:
+    get:
+      tags: [Companies]
+      summary: Liste aller Unternehmen
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 25
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: industry
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Liste der Unternehmen
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  companies:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Company'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationResponse'
+    post:
+      tags: [Companies]
+      summary: Neues Unternehmen erstellen
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyCreateRequest'
+      responses:
+        '201':
+          description: Unternehmen erfolgreich erstellt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Company'
+
+  /companies/{companyId}:
+    get:
+      tags: [Companies]
+      summary: Unternehmen nach ID
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Unternehmen-Details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Company'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Companies]
+      summary: Unternehmen aktualisieren
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyUpdateRequest'
+      responses:
+        '200':
+          description: Unternehmen erfolgreich aktualisiert
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Company'
+    delete:
+      tags: [Companies]
+      summary: Unternehmen löschen
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Unternehmen erfolgreich gelöscht
+
+  # Publications API
+  /publications:
+    get:
+      tags: [Publications]
+      summary: Liste aller Publikationen
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 25
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [magazine, newspaper, blog, podcast, newsletter, social_media]
+        - name: verified
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Liste der Publikationen
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  publications:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Publication'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationResponse'
+    post:
+      tags: [Publications]
+      summary: Neue Publikation erstellen
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublicationCreateRequest'
+      responses:
+        '201':
+          description: Publikation erfolgreich erstellt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Publication'
+
+  /publications/{publicationId}:
+    get:
+      tags: [Publications]
+      summary: Publikation nach ID
+      parameters:
+        - name: publicationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Publikation-Details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Publication'
+    put:
+      tags: [Publications]
+      summary: Publikation aktualisieren
+      parameters:
+        - name: publicationId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublicationUpdateRequest'
+      responses:
+        '200':
+          description: Publikation erfolgreich aktualisiert
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Publication'
+    delete:
+      tags: [Publications]
+      summary: Publikation löschen
+      parameters:
+        - name: publicationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Publikation erfolgreich gelöscht
+
+  # Webhooks API
+  /webhooks:
+    get:
+      tags: [Webhooks]
+      summary: Liste aller Webhooks
+      responses:
+        '200':
+          description: Liste der Webhooks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Webhook'
+    post:
+      tags: [Webhooks]
+      summary: Neuen Webhook erstellen
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookCreateRequest'
+      responses:
+        '201':
+          description: Webhook erfolgreich erstellt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+
+  /webhooks/{webhookId}:
+    get:
+      tags: [Webhooks]
+      summary: Webhook nach ID
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Webhook-Details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+    put:
+      tags: [Webhooks]
+      summary: Webhook aktualisieren
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookUpdateRequest'
+      responses:
+        '200':
+          description: Webhook erfolgreich aktualisiert
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+    delete:
+      tags: [Webhooks]
+      summary: Webhook löschen
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Webhook erfolgreich gelöscht
+
+  /webhooks/{webhookId}/test:
+    post:
+      tags: [Webhooks]
+      summary: Webhook testen
+      description: Sendet eine Test-Nachricht an den Webhook-Endpunkt
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Test-Nachricht erfolgreich gesendet
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  response:
+                    type: object
+
+  # Bulk Operations API
+  /export:
+    get:
+      tags: [Bulk Operations]
+      summary: Liste aller Export-Jobs
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, processing, completed, failed, cancelled]
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [export, import]
+      responses:
+        '200':
+          description: Liste der Export-Jobs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BulkJob'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationResponse'
+    post:
+      tags: [Bulk Operations]
+      summary: Neuen Export-Job starten
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkExportRequest'
+      responses:
+        '201':
+          description: Export-Job erfolgreich gestartet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkJob'
+
+  /export/{jobId}:
+    get:
+      tags: [Bulk Operations]
+      summary: Export-Job Status
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job-Status und Details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkJob'
+    delete:
+      tags: [Bulk Operations]
+      summary: Export-Job stornieren
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job erfolgreich storniert
+
+  /import:
+    post:
+      tags: [Bulk Operations]
+      summary: Neuen Import-Job starten
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkImportRequest'
+      responses:
+        '201':
+          description: Import-Job erfolgreich gestartet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkJob'
+
+  /import/{jobId}:
+    get:
+      tags: [Bulk Operations]
+      summary: Import-Job Status
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job-Status und Details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkJob'
+
+  # GraphQL API
+  /graphql:
+    post:
+      tags: [GraphQL]
+      summary: GraphQL-Endpoint
+      description: |
+        GraphQL-Endpoint für flexible Datenabfragen.
+        
+        Beispiel-Query:
+        ```graphql
+        query {
+          getContacts(first: 10) {
+            edges {
+              node {
+                id
+                firstName
+                lastName
+                email
+              }
+            }
+          }
+        }
+        ```
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                  description: GraphQL Query
+                variables:
+                  type: object
+                  description: Query Variables
+                operationName:
+                  type: string
+                  description: Operation Name
+      responses:
+        '200':
+          description: GraphQL Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                  errors:
+                    type: array
+                    items:
+                      type: object
+
+  # Search API
+  /search:
+    get:
+      tags: [Search]
+      summary: Globale Suche
+      description: Durchsucht alle Entitäten (Kontakte, Unternehmen, Publikationen)
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Suchbegriff
+          schema:
+            type: string
+        - name: types
+          in: query
+          description: Entity-Typen zum Durchsuchen
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [contacts, companies, publications]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Suchergebnisse
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  contacts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Contact'
+                  companies:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Company'
+                  publications:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Publication'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: API Key
+
+  responses:
+    BadRequest:
+      description: Ungültige Anfrage
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Nicht autorisiert
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Ressource nicht gefunden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Conflict:
+      description: Ressource bereits vorhanden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    # Core Data Models
+    Contact:
+      type: object
+      properties:
+        id:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        fullName:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        jobTitle:
+          type: string
+        department:
+          type: string
+        company:
+          $ref: '#/components/schemas/CompanyInfo'
+        address:
+          $ref: '#/components/schemas/Address'
+        linkedinUrl:
+          type: string
+        twitterHandle:
+          type: string
+        website:
+          type: string
+        mediaOutlets:
+          type: array
+          items:
+            type: string
+        expertise:
+          type: array
+          items:
+            type: string
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+        preferredContactMethod:
+          type: string
+          enum: [email, phone, linkedin, twitter]
+        communicationFrequency:
+          type: string
+          enum: [weekly, monthly, quarterly, as_needed]
+        lastContactAt:
+          type: string
+          format: date-time
+        notes:
+          type: string
+        isActive:
+          type: boolean
+        contactScore:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Company:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        website:
+          type: string
+        description:
+          type: string
+        industry:
+          type: string
+        employees:
+          type: integer
+        location:
+          $ref: '#/components/schemas/Address'
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Publication:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        type:
+          type: string
+          enum: [magazine, newspaper, blog, podcast, newsletter, social_media]
+        publisher:
+          $ref: '#/components/schemas/Publisher'
+        description:
+          type: string
+        website:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        verified:
+          type: boolean
+        metrics:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Webhook:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        url:
+          type: string
+          format: uri
+        events:
+          type: array
+          items:
+            type: string
+        secret:
+          type: string
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # Request/Response Models
+    ContactCreateRequest:
+      type: object
+      required: [firstName, lastName]
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        jobTitle:
+          type: string
+        department:
+          type: string
+        companyId:
+          type: string
+        address:
+          $ref: '#/components/schemas/Address'
+        linkedinUrl:
+          type: string
+        twitterHandle:
+          type: string
+        website:
+          type: string
+        mediaOutlets:
+          type: array
+          items:
+            type: string
+        expertise:
+          type: array
+          items:
+            type: string
+        tags:
+          type: array
+          items:
+            type: string
+        preferredContactMethod:
+          type: string
+          enum: [email, phone, linkedin, twitter]
+        communicationFrequency:
+          type: string
+          enum: [weekly, monthly, quarterly, as_needed]
+        notes:
+          type: string
+        internalNotes:
+          type: string
+
+    ContactUpdateRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        jobTitle:
+          type: string
+        department:
+          type: string
+        companyId:
+          type: string
+        address:
+          $ref: '#/components/schemas/Address'
+        linkedinUrl:
+          type: string
+        twitterHandle:
+          type: string
+        website:
+          type: string
+        mediaOutlets:
+          type: array
+          items:
+            type: string
+        expertise:
+          type: array
+          items:
+            type: string
+        tags:
+          type: array
+          items:
+            type: string
+        preferredContactMethod:
+          type: string
+        communicationFrequency:
+          type: string
+        notes:
+          type: string
+        internalNotes:
+          type: string
+        isActive:
+          type: boolean
+
+    CompanyCreateRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        website:
+          type: string
+        description:
+          type: string
+        industry:
+          type: string
+        employees:
+          type: integer
+        location:
+          $ref: '#/components/schemas/Address'
+        tags:
+          type: array
+          items:
+            type: string
+
+    CompanyUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        website:
+          type: string
+        description:
+          type: string
+        industry:
+          type: string
+        employees:
+          type: integer
+        location:
+          $ref: '#/components/schemas/Address'
+        tags:
+          type: array
+          items:
+            type: string
+
+    PublicationCreateRequest:
+      type: object
+      required: [title, type, publisherName]
+      properties:
+        title:
+          type: string
+        type:
+          type: string
+          enum: [magazine, newspaper, blog, podcast, newsletter, social_media]
+        publisherName:
+          type: string
+        publisherLogoUrl:
+          type: string
+        description:
+          type: string
+        website:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        verified:
+          type: boolean
+
+    PublicationUpdateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        type:
+          type: string
+        description:
+          type: string
+        website:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        verified:
+          type: boolean
+
+    WebhookCreateRequest:
+      type: object
+      required: [name, url, events]
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+          format: uri
+        events:
+          type: array
+          items:
+            type: string
+            enum: [contact.created, contact.updated, contact.deleted, company.created, company.updated, company.deleted, publication.created, publication.updated, publication.deleted]
+        secret:
+          type: string
+
+    WebhookUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+        events:
+          type: array
+          items:
+            type: string
+        secret:
+          type: string
+        isActive:
+          type: boolean
+
+    BulkExportRequest:
+      type: object
+      required: [entities, format]
+      properties:
+        entities:
+          type: array
+          items:
+            type: string
+            enum: [contacts, companies, publications, media_assets, campaigns, webhooks]
+        format:
+          type: string
+          enum: [csv, json, excel, xml]
+        filters:
+          type: object
+          properties:
+            dateFrom:
+              type: string
+              format: date
+            dateTo:
+              type: string
+              format: date
+            tags:
+              type: array
+              items:
+                type: string
+            includeDeleted:
+              type: boolean
+        options:
+          type: object
+          properties:
+            compression:
+              type: string
+              enum: [none, zip, gzip]
+        notificationEmail:
+          type: string
+          format: email
+
+    BulkImportRequest:
+      type: object
+      required: [entity, format]
+      properties:
+        entity:
+          type: string
+          enum: [contacts, companies, publications]
+        format:
+          type: string
+          enum: [csv, json, excel]
+        fileContent:
+          type: string
+          description: Base64-encoded file content
+        fileUrl:
+          type: string
+          format: uri
+          description: URL to download file
+        options:
+          type: object
+          properties:
+            mode:
+              type: string
+              enum: [create, update, upsert]
+              default: create
+            duplicateHandling:
+              type: string
+              enum: [skip, update, error]
+              default: skip
+            batchSize:
+              type: integer
+              default: 500
+            validateOnly:
+              type: boolean
+              default: false
+        notificationEmail:
+          type: string
+          format: email
+
+    BulkJob:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [export, import]
+        status:
+          type: string
+          enum: [pending, processing, completed, failed, cancelled]
+        progress:
+          type: object
+          properties:
+            current:
+              type: integer
+            total:
+              type: integer
+            percentage:
+              type: integer
+            currentStep:
+              type: string
+        result:
+          type: object
+          properties:
+            downloadUrl:
+              type: string
+            fileSize:
+              type: integer
+            recordCount:
+              type: integer
+            imported:
+              type: object
+              properties:
+                created:
+                  type: integer
+                updated:
+                  type: integer
+                skipped:
+                  type: integer
+                errors:
+                  type: integer
+            errors:
+              type: array
+              items:
+                type: object
+                properties:
+                  row:
+                    type: integer
+                  field:
+                    type: string
+                  message:
+                    type: string
+                  data:
+                    type: object
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+
+    # API Key Models
+    APIKeyCreateRequest:
+      type: object
+      required: [name, permissions]
+      properties:
+        name:
+          type: string
+          description: Beschreibender Name für den API-Key
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [
+              contacts:read, contacts:write, contacts:delete,
+              companies:read, companies:write, companies:delete,
+              publications:read, publications:write, publications:delete,
+              webhooks:read, webhooks:write, webhooks:delete,
+              export:read, import:read
+            ]
+        rateLimit:
+          type: object
+          properties:
+            requestsPerHour:
+              type: integer
+              default: 1000
+            requestsPerMinute:
+              type: integer
+              default: 60
+        allowedIPs:
+          type: array
+          items:
+            type: string
+          description: IP-Adressen die den Key verwenden dürfen (optional)
+        expiresInDays:
+          type: integer
+          description: Ablauf in Tagen (optional, null = kein Ablauf)
+
+    APIKeyResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        key:
+          type: string
+          description: Nur bei Erstellung zurückgegeben
+        keyPreview:
+          type: string
+          description: Verkürzte Ansicht des Keys
+        permissions:
+          type: array
+          items:
+            type: string
+        isActive:
+          type: boolean
+        rateLimit:
+          type: object
+          properties:
+            requestsPerHour:
+              type: integer
+            requestsPerMinute:
+              type: integer
+            burstLimit:
+              type: integer
+        usage:
+          type: object
+          properties:
+            totalRequests:
+              type: integer
+            requestsThisHour:
+              type: integer
+            requestsToday:
+              type: integer
+            lastUsedAt:
+              type: string
+              format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+
+    AuthTestResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        context:
+          type: object
+          properties:
+            organizationId:
+              type: string
+            userId:
+              type: string
+            apiKeyId:
+              type: string
+            permissions:
+              type: array
+              items:
+                type: string
+            clientIP:
+              type: string
+            userAgent:
+              type: string
+            rateLimit:
+              type: object
+
+    # Helper Models
+    Address:
+      type: object
+      properties:
+        street:
+          type: string
+        city:
+          type: string
+        postalCode:
+          type: string
+        country:
+          type: string
+        formatted:
+          type: string
+
+    CompanyInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        domain:
+          type: string
+        industry:
+          type: string
+
+    Publisher:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        logoUrl:
+          type: string
+
+    Tag:
+      type: object
+      properties:
+        name:
+          type: string
+        color:
+          type: string
+
+    PaginationResponse:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        hasNext:
+          type: boolean
+        hasPrevious:
+          type: boolean
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+        meta:
+          type: object
+          properties:
+            requestId:
+              type: string
+            timestamp:
+              type: string
+              format: date-time
+            version:
+              type: string
+
+tags:
+  - name: Authentication
+    description: API-Key Authentifizierung und Validation
+  - name: API Keys
+    description: Verwaltung von API-Keys
+  - name: Contacts
+    description: Kontakt-Management für PR & CRM
+  - name: Companies
+    description: Unternehmen und Firmen-Datenbank
+  - name: Publications
+    description: Media Library und Publikationen
+  - name: Webhooks
+    description: Event-basierte Benachrichtigungen
+  - name: Bulk Operations
+    description: Bulk Export/Import für große Datenmengen
+  - name: GraphQL
+    description: Flexible GraphQL-Abfragen
+  - name: Search
+    description: Globale Suche über alle Entitäten
+
+externalDocs:
+  description: Vollständige API-Dokumentation
+  url: https://docs.celeropress.de/api
