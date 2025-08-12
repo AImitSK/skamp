@@ -1,92 +1,52 @@
 // src/app/api/v1/graphql/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { validateAPIKey } from '@/lib/api/api-middleware';
+import { APIMiddleware, RequestParser } from '@/lib/api/api-middleware';
 import { graphqlResolvers, GraphQLContext } from '@/lib/api/graphql-resolvers';
 import { CELEROPRESS_GRAPHQL_SCHEMA } from '@/lib/api/graphql-schema';
-import { APIError } from '@/lib/api/api-errors';
 import { GraphQLQueryRequest, GraphQLResponse } from '@/types/api-advanced';
 
 /**
  * POST /api/v1/graphql
  * GraphQL Endpoint mit vollständiger Query/Mutation/Subscription Unterstützung
  */
-export async function POST(request: NextRequest) {
-  try {
-    // API-Key Validierung
-    const authResult = await validateAPIKey(request);
-    if (!authResult.success) {
-      return NextResponse.json(
-        { error: authResult.error },
-        { status: 401 }
-      );
-    }
-
-    const { organizationId, userId, apiKeyId } = authResult;
+export const POST = APIMiddleware.withAuth(
+  async (request: NextRequest, context) => {
 
     // Request Body parsen
-    const body: GraphQLQueryRequest = await request.json();
+    const body: GraphQLQueryRequest = await RequestParser.parseJSON<GraphQLQueryRequest>(request);
     
     if (!body.query) {
-      return NextResponse.json(
-        {
-          errors: [{
-            message: 'Query is required',
-            locations: [],
-            path: []
-          }]
-        },
-        { status: 400 }
-      );
+      return APIMiddleware.handleError({
+        name: 'GraphQLError',
+        statusCode: 400,
+        errorCode: 'VALIDATION_ERROR',
+        message: 'Query is required'
+      });
     }
 
     // GraphQL Context erstellen
-    const context: GraphQLContext = {
-      organizationId,
-      userId,
-      apiKeyId
+    const graphqlContext: GraphQLContext = {
+      organizationId: context.organizationId,
+      userId: context.userId,
+      apiKeyId: context.keyId
     };
 
     // Query verarbeiten
-    const result = await processGraphQLRequest(body, context);
+    const result = await processGraphQLRequest(body, graphqlContext);
     
     return NextResponse.json(result);
-
-  } catch (error) {
-    console.error('GraphQL API error:', error);
-    
-    const graphqlError = {
-      errors: [{
-        message: error instanceof Error ? error.message : 'Internal server error',
-        locations: [],
-        path: [],
-        extensions: {
-          code: error instanceof APIError ? error.code : 'INTERNAL_ERROR',
-          details: error instanceof APIError ? error.details : undefined
-        }
-      }]
-    };
-
-    return NextResponse.json(graphqlError, { status: 500 });
-  }
-}
+  },
+  ['graphql:query', 'graphql:mutation']
+);
 
 /**
  * GET /api/v1/graphql
  * GraphQL Introspection und Schema-Dokumentation
  */
-export async function GET(request: NextRequest) {
-  try {
-    // API-Key Validierung
-    const authResult = await validateAPIKey(request);
-    if (!authResult.success) {
-      return NextResponse.json(
-        { error: authResult.error },
-        { status: 401 }
-      );
-    }
-
-    const { searchParams } = new URL(request.url);
-    const format = searchParams.get('format') || 'json';
+export const GET = APIMiddleware.withAuth(
+  async (request: NextRequest, context) => {
+    const query = RequestParser.parseQuery(request);
+    const format = query.format as string || 'json';
 
     if (format === 'schema') {
       // Return SDL (Schema Definition Language)
@@ -99,7 +59,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Return schema as JSON
-    return NextResponse.json({
+    return APIMiddleware.successResponse({
       schema: CELEROPRESS_GRAPHQL_SCHEMA,
       introspection: {
         available: true,
@@ -107,16 +67,9 @@ export async function GET(request: NextRequest) {
         documentation: 'https://docs.celeropress.com/api/graphql'
       }
     });
-
-  } catch (error) {
-    console.error('GraphQL schema error:', error);
-    
-    return NextResponse.json(
-      { error: { code: 'INTERNAL_SERVER_ERROR', message: 'Schema not available' } },
-      { status: 500 }
-    );
-  }
-}
+  },
+  ['graphql:introspect']
+);
 
 /**
  * Verarbeitet GraphQL Request

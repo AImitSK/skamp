@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
 - [ ] ALL /api/v1/websocket/subscriptions ❓
 
 ### GraphQL Route
-- [ ] POST /api/v1/graphql ❌ **ALTES AUTH PATTERN** (validateAPIKey statt APIMiddleware)
+- [x] GET/POST /api/v1/graphql 🔄 **AUTH PATTERN REPARIERT** (GET funktioniert, POST Parser-Fehler)
 
 ## Reparatur-Strategie
 
