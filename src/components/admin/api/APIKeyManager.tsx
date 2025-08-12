@@ -262,12 +262,6 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
                       <Text className="text-sm text-gray-500 font-mono">
                         {apiKey.keyPreview}
                       </Text>
-                      <button
-                        onClick={() => copyToClipboard(apiKey.keyPreview)}
-                        className="p-2 hover:bg-gray-100 rounded-md"
-                      >
-                        <ClipboardIcon className="h-4 w-4" />
-                      </button>
                     </div>
                   </div>
                 </div>

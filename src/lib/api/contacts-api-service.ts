@@ -18,7 +18,7 @@ try {
 } catch (error) {
   // Mock services für Build-Zeit
   contactsEnhancedService = {
-    getAllWithPagination: async () => ({ items: [], total: 0 }),
+    getAll: async () => [],
     get: async () => null,
     create: async () => 'mock-id',
     update: async () => ({}),
@@ -111,10 +111,11 @@ export class ContactsAPIService {
       };
 
       // Get contacts from service
-      const { items: contacts, total } = await contactsEnhancedService.getAllWithPagination(
+      const contacts = await contactsEnhancedService.getAll(
         organizationId,
         queryOptions
       );
+      const total = contacts.length;
 
       // Transform to API Response format
       const apiContacts = await Promise.all(
@@ -408,7 +409,7 @@ export class ContactsAPIService {
     organizationId: string
   ): Promise<ContactEnhanced | null> {
     try {
-      const { items: contacts } = await contactsEnhancedService.getAllWithPagination(
+      const contacts = await contactsEnhancedService.getAll(
         organizationId,
         {
           filters: { 

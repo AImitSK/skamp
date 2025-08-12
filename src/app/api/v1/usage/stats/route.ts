@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const stats = await getUsageStats(context.organizationId, context.userId);
     
     return APIMiddleware.successResponse(stats);
-  });
+  }, ['analytics:read'])(request);
 }
 
 async function getUsageStats(organizationId: string, userId: string) {

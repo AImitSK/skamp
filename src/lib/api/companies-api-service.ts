@@ -17,14 +17,14 @@ try {
 } catch (error) {
   // Mock services für Build-Zeit
   companyServiceEnhanced = {
-    getAllWithPagination: async () => ({ companies: [], total: 0 }),
+    getAll: async () => [],
     get: async () => null,
     create: async () => 'mock-id',
     update: async () => undefined,
     delete: async () => undefined
   };
   contactsEnhancedService = {
-    getAllWithPagination: async () => ({ items: [], total: 0 })
+    getAll: async () => []
   };
 }
 import { 
@@ -130,10 +130,11 @@ export class CompaniesAPIService {
       };
 
       // Get companies from service
-      const { companies, total } = await companyServiceEnhanced.getAllWithPagination(
+      const companies = await companyServiceEnhanced.getAll(
         organizationId,
         queryOptions
       );
+      const total = companies.length;
 
       // Transform to API Response format
       const apiCompanies = await Promise.all(
@@ -333,7 +334,7 @@ export class CompaniesAPIService {
       }
 
       // Prüfe ob Firma noch mit Kontakten verknüpft ist
-      const { items: contacts } = await contactsEnhancedService.getAllWithPagination(
+      const contacts = await contactsEnhancedService.getAll(
         organizationId,
         {
           filters: { companyId },
@@ -474,7 +475,7 @@ export class CompaniesAPIService {
     organizationId: string
   ): Promise<CompanyEnhanced | null> {
     try {
-      const { companies } = await companyServiceEnhanced.getAllWithPagination(
+      const companies = await companyServiceEnhanced.getAll(
         organizationId,
         {
           filters: { 
@@ -526,13 +527,14 @@ export class CompaniesAPIService {
     // Get contact count for this company
     let contactCount = 0;
     try {
-      const { total } = await contactsEnhancedService.getAllWithPagination(
+      const contacts = await contactsEnhancedService.getAll(
         organizationId,
         {
           filters: { companyId: company.id! },
           limit: 0 // Just get count
         }
       );
+      const total = contacts.length;
       contactCount = total;
     } catch (error) {
       // Continue without contact count
