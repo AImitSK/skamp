@@ -166,7 +166,29 @@ export class CompaniesAPIService {
     organizationId: string,
     userId: string
   ): Promise<CompanyAPIResponse> {
-    throw new APIError(501, API_ERROR_CODES.NOT_IMPLEMENTED, 'getCompany not implemented with safe service yet');
+    try {
+      const { safeCompaniesService } = await import('@/lib/api/safe-companies-service');
+      const company = await safeCompaniesService.getCompanyById(companyId, organizationId);
+      
+      if (!company) {
+        throw new APIError(
+          404,
+          API_ERROR_CODES.RESOURCE_NOT_FOUND,
+          'Company not found'
+        );
+      }
+
+      return await this.transformCompanyToAPIResponse(company, organizationId);
+    } catch (error) {
+      if (error instanceof APIError) throw error;
+      
+      console.error('Error getting company:', error);
+      throw new APIError(
+        500,
+        API_ERROR_CODES.DATABASE_ERROR,
+        'Failed to retrieve company'
+      );
+    }
   }
 
   /**
@@ -177,7 +199,34 @@ export class CompaniesAPIService {
     organizationId: string,
     userId: string
   ): Promise<CompanyAPIResponse> {
-    throw new APIError(501, API_ERROR_CODES.NOT_IMPLEMENTED, 'createCompany not implemented with safe service yet');
+    try {
+      // Validierung
+      this.validateCompanyCreateRequest(data);
+      
+      // Transform API request zu Company Service format
+      const companyData = await this.transformAPIRequestToCompany(data, organizationId, userId);
+      
+      // Erstelle Firma
+      const { safeCompaniesService } = await import('@/lib/api/safe-companies-service');
+      const createdCompanyId = await safeCompaniesService.createCompany(companyData);
+
+      // Hole die erstellte Firma
+      const createdCompany = await safeCompaniesService.getCompanyById(createdCompanyId, organizationId);
+      if (!createdCompany) {
+        throw new APIError(500, API_ERROR_CODES.DATABASE_ERROR, 'Failed to retrieve created company');
+      }
+
+      return await this.transformCompanyToAPIResponse(createdCompany, organizationId);
+    } catch (error) {
+      if (error instanceof APIError) throw error;
+      
+      console.error('Error creating company:', error);
+      throw new APIError(
+        500,
+        API_ERROR_CODES.DATABASE_ERROR,
+        'Failed to create company'
+      );
+    }
   }
 
   /**
@@ -316,6 +365,92 @@ export class CompaniesAPIService {
     if (company.founded) score += 5;
     
     return Math.min(100, score);
+  }
+
+  private validateCompanyCreateRequest(data: CompanyCreateRequest): void {
+    if (!data.name?.trim()) {
+      throw new APIError(
+        400,
+        API_ERROR_CODES.REQUIRED_FIELD_MISSING,
+        'name is required'
+      );
+    }
+
+    if (data.website && !this.isValidURL(data.website)) {
+      throw new APIError(
+        400,
+        API_ERROR_CODES.VALIDATION_ERROR,
+        'Invalid website URL format'
+      );
+    }
+
+    if (data.email && !this.isValidEmail(data.email)) {
+      throw new APIError(
+        400,
+        API_ERROR_CODES.VALIDATION_ERROR,
+        'Invalid email format'
+      );
+    }
+  }
+
+  private isValidURL(url: string): boolean {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  private isValidEmail(email: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
+
+  private async transformAPIRequestToCompany(
+    data: CompanyCreateRequest,
+    organizationId: string,
+    userId: string
+  ): Promise<Omit<CompanyEnhanced, 'id' | 'createdAt' | 'updatedAt'>> {
+    return {
+      name: data.name.trim(),
+      tradingName: data.tradingName?.trim() || null,
+      legalName: data.legalName?.trim() || null,
+      
+      industry: data.industry?.trim() || null,
+      companySize: data.companySize?.trim() || null,
+      companyType: data.companyType || null,
+      founded: data.founded || null,
+      
+      website: data.website?.trim() || null,
+      phone: data.phone?.trim() || null,
+      email: data.email?.trim() || null,
+      
+      address: data.address || null,
+      
+      mediaType: data.mediaType || null,
+      coverage: data.coverage || null,
+      circulation: data.circulation || null,
+      audienceSize: data.audienceSize || null,
+      
+      linkedinUrl: data.linkedinUrl?.trim() || null,
+      twitterHandle: data.twitterHandle?.trim() || null,
+      facebookUrl: data.facebookUrl?.trim() || null,
+      instagramHandle: data.instagramHandle?.trim() || null,
+      
+      vatNumber: data.vatNumber?.trim() || null,
+      registrationNumber: data.registrationNumber?.trim() || null,
+      
+      tags: data.tags?.map(tag => ({ name: tag })) || [],
+      
+      notes: data.notes?.trim() || null,
+      internalNotes: data.internalNotes?.trim() || null,
+      
+      isActive: true,
+      organizationId,
+      userId,
+      createdBy: userId
+    };
   }
 }
 

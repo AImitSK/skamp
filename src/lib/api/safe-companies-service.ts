@@ -90,6 +90,102 @@ export class SafeCompaniesService {
       throw error;
     }
   }
+
+  async createCompany(companyData: Omit<CompanyEnhanced, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    console.log('=== SAFE COMPANIES SERVICE CREATE ===');
+    console.log('Creating company with data:', companyData);
+    
+    try {
+      // Lazy import Firebase services zur Laufzeit
+      console.log('Loading Firebase modules for create...');
+      
+      const { collection, addDoc, Timestamp } = await import('firebase/firestore');
+      console.log('Firestore functions imported successfully');
+      
+      const { db } = await import('@/lib/firebase/build-safe-init');
+      console.log('Firebase db imported:', typeof db, !!db);
+      
+      if (!db) {
+        throw new Error('Firebase database not initialized');
+      }
+
+      const now = Timestamp.now();
+      
+      // Create in enhanced collection
+      console.log('Adding document to companies_enhanced collection...');
+      const docRef = await addDoc(collection(db, 'companies_enhanced'), {
+        ...companyData,
+        createdAt: now,
+        updatedAt: now
+      });
+      
+      console.log('Company created successfully with ID:', docRef.id);
+      return docRef.id;
+      
+    } catch (error) {
+      console.error('=== SAFE COMPANIES SERVICE CREATE ERROR ===');
+      console.error('Error details:', error);
+      console.error('Error type:', typeof error);
+      console.error('Error message:', error instanceof Error ? error.message : 'Unknown');
+      
+      if (error instanceof Error) {
+        console.error('Error stack:', error.stack);
+      }
+      
+      throw error;
+    }
+  }
+
+  async getCompanyById(companyId: string, organizationId: string): Promise<CompanyEnhanced | null> {
+    console.log('=== SAFE COMPANIES SERVICE GET BY ID ===');
+    console.log('Getting company by ID:', companyId, 'for org:', organizationId);
+    
+    try {
+      // Lazy import Firebase services
+      const { doc, getDoc } = await import('firebase/firestore');
+      const { db } = await import('@/lib/firebase/build-safe-init');
+      
+      if (!db) {
+        throw new Error('Firebase database not initialized');
+      }
+
+      // Try enhanced collection first
+      console.log('Querying companies_enhanced collection...');
+      const enhancedDoc = await getDoc(doc(db, 'companies_enhanced', companyId));
+      if (enhancedDoc.exists()) {
+        const data = enhancedDoc.data();
+        console.log('Found in enhanced collection');
+        return { id: enhancedDoc.id, ...data } as CompanyEnhanced;
+      }
+
+      // Fallback to legacy collection
+      console.log('Querying companies collection...');
+      const legacyDoc = await getDoc(doc(db, 'companies', companyId));
+      if (legacyDoc.exists()) {
+        const legacyData = legacyDoc.data();
+        console.log('Found in legacy collection, migrating...');
+        
+        // Simple migration inline
+        return {
+          id: legacyDoc.id,
+          name: legacyData.name || '',
+          organizationId,
+          userId: legacyData.userId || organizationId,
+          createdAt: legacyData.createdAt,
+          updatedAt: legacyData.updatedAt,
+          ...legacyData
+        } as CompanyEnhanced;
+      }
+
+      console.log('Company not found');
+      return null;
+      
+    } catch (error) {
+      console.error('=== SAFE COMPANIES SERVICE GET BY ID ERROR ===');
+      console.error('Error details:', error);
+      throw error;
+    }
+  }
 }
 
 export const safeCompaniesService = new SafeCompaniesService();
