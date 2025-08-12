@@ -43,10 +43,14 @@ export default function DeveloperPortal() {
       });
       if (response.ok) {
         const data = await response.json();
-        setApiKeys(data);
+        // API gibt {success: true, data: [...]} zurück
+        setApiKeys(data.data || data || []);
+      } else {
+        setApiKeys([]);
       }
     } catch (error) {
       console.error('Fehler beim Laden der API Keys:', error);
+      setApiKeys([]);
     }
   };
 
