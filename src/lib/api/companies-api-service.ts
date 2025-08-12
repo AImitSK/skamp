@@ -4,11 +4,6 @@
  * Business Logic für Companies API-Endpunkte
  */
 
-// Use Safe Service for all operations
-async function getSafeCompanyService() {
-  const { safeCompaniesService } = await import('@/lib/api/safe-companies-service');
-  return safeCompaniesService;
-}
 import { 
   CompanyCreateRequest, 
   CompanyUpdateRequest, 
@@ -172,30 +167,6 @@ export class CompaniesAPIService {
     userId: string
   ): Promise<CompanyAPIResponse> {
     throw new APIError(501, API_ERROR_CODES.NOT_IMPLEMENTED, 'getCompany not implemented with safe service yet');
-    /*
-    try {
-      const company = await companyServiceEnhanced.getById(companyId, organizationId);
-      
-      if (!company) {
-        throw new APIError(
-          404,
-          API_ERROR_CODES.RESOURCE_NOT_FOUND,
-          'Company not found'
-        );
-      }
-
-      return await this.transformCompanyToAPIResponse(company, organizationId);
-    } catch (error) {
-      if (error instanceof APIError) throw error;
-      
-      console.error('Error getting company:', error);
-      throw new APIError(
-        500,
-        API_ERROR_CODES.DATABASE_ERROR,
-        'Failed to retrieve company'
-      );
-    }
-    */
   }
 
   /**
@@ -206,51 +177,7 @@ export class CompaniesAPIService {
     organizationId: string,
     userId: string
   ): Promise<CompanyAPIResponse> {
-    try {
-      // Validierung
-      this.validateCompanyCreateRequest(data);
-      
-      // Prüfe ob Firma bereits existiert (basierend auf Name + Domain)
-      const existingCompany = await this.findCompanyByNameOrDomain(
-        data.name, 
-        data.website, 
-        organizationId
-      );
-      
-      if (existingCompany) {
-        throw new APIError(
-          409,
-          API_ERROR_CODES.RESOURCE_CONFLICT,
-          'Company with this name or domain already exists'
-        );
-      }
-      
-      // Transform API request zu Company Service format
-      const companyData = await this.transformAPIRequestToCompany(data, organizationId, userId);
-      
-      // Erstelle Firma
-      throw new APIError(501, API_ERROR_CODES.NOT_IMPLEMENTED, 'createCompany not implemented with safe service yet');
-        companyData,
-        { organizationId, userId }
-      );
-
-      // Hole die erstellte Firma
-      const createdCompany = await companyServiceEnhanced.getById(createdCompanyId, organizationId);
-      if (!createdCompany) {
-        throw new APIError(500, API_ERROR_CODES.DATABASE_ERROR, 'Failed to retrieve created company');
-      }
-
-      return await this.transformCompanyToAPIResponse(createdCompany, organizationId);
-    } catch (error) {
-      if (error instanceof APIError) throw error;
-      
-      console.error('Error creating company:', error);
-      throw new APIError(
-        500,
-        API_ERROR_CODES.DATABASE_ERROR,
-        'Failed to create company'
-      );
-    }
+    throw new APIError(501, API_ERROR_CODES.NOT_IMPLEMENTED, 'createCompany not implemented with safe service yet');
   }
 
   /**
@@ -262,61 +189,7 @@ export class CompaniesAPIService {
     organizationId: string,
     userId: string
   ): Promise<CompanyAPIResponse> {
-    try {
-      // Prüfe ob Firma existiert
-      throw new APIError(501, API_ERROR_CODES.NOT_IMPLEMENTED, 'updateCompany not implemented with safe service yet');
-      if (!existingCompany) {
-        throw new APIError(
-          404,
-          API_ERROR_CODES.RESOURCE_NOT_FOUND,
-          'Company not found'
-        );
-      }
-
-      // Prüfe Duplikate (wenn Name oder Website geändert wird)
-      if (data.name || data.website) {
-        const duplicateCompany = await this.findCompanyByNameOrDomain(
-          data.name || existingCompany.name,
-          data.website || existingCompany.website,
-          organizationId
-        );
-        
-        if (duplicateCompany && duplicateCompany.id !== companyId) {
-          throw new APIError(
-            409,
-            API_ERROR_CODES.RESOURCE_CONFLICT,
-            'Another company with this name or domain already exists'
-          );
-        }
-      }
-
-      // Transform Update-Daten
-      const updateData = await this.transformAPIUpdateToCompany(data, organizationId, userId);
-      
-      // Update Firma
-      await companyServiceEnhanced.update(
-        companyId,
-        updateData,
-        { organizationId, userId }
-      );
-
-      // Hole aktualisierte Firma
-      const updatedCompany = await companyServiceEnhanced.getById(companyId, organizationId);
-      if (!updatedCompany) {
-        throw new APIError(500, API_ERROR_CODES.DATABASE_ERROR, 'Failed to retrieve updated company');
-      }
-
-      return await this.transformCompanyToAPIResponse(updatedCompany, organizationId);
-    } catch (error) {
-      if (error instanceof APIError) throw error;
-      
-      console.error('Error updating company:', error);
-      throw new APIError(
-        500,
-        API_ERROR_CODES.DATABASE_ERROR,
-        'Failed to update company'
-      );
-    }
+    throw new APIError(501, API_ERROR_CODES.NOT_IMPLEMENTED, 'updateCompany not implemented with safe service yet');
   }
 
   /**
@@ -327,46 +200,7 @@ export class CompaniesAPIService {
     organizationId: string,
     userId: string
   ): Promise<void> {
-    try {
-      // Prüfe ob Firma existiert
-      throw new APIError(501, API_ERROR_CODES.NOT_IMPLEMENTED, 'updateCompany not implemented with safe service yet');
-      if (!existingCompany) {
-        throw new APIError(
-          404,
-          API_ERROR_CODES.RESOURCE_NOT_FOUND,
-          'Company not found'
-        );
-      }
-
-      // Prüfe ob Firma noch mit Kontakten verknüpft ist
-      // Disabled - implement safe service later
-        organizationId,
-        {
-          filters: { companyId },
-          limit: 1
-        }
-      );
-
-      if (contacts.length > 0) {
-        throw new APIError(
-          409,
-          API_ERROR_CODES.RESOURCE_CONFLICT,
-          'Cannot delete company with associated contacts. Remove contacts first.'
-        );
-      }
-
-      // Soft delete (in Company Service implementiert)
-      throw new APIError(501, API_ERROR_CODES.NOT_IMPLEMENTED, 'deleteCompany not implemented with safe service yet');
-    } catch (error) {
-      if (error instanceof APIError) throw error;
-      
-      console.error('Error deleting company:', error);
-      throw new APIError(
-        500,
-        API_ERROR_CODES.DATABASE_ERROR,
-        'Failed to delete company'
-      );
-    }
+    throw new APIError(501, API_ERROR_CODES.NOT_IMPLEMENTED, 'deleteCompany not implemented with safe service yet');
   }
 
   /**
@@ -377,174 +211,17 @@ export class CompaniesAPIService {
     organizationId: string,
     userId: string
   ): Promise<BulkOperationResponse<CompanyAPIResponse>> {
-    const startTime = Date.now();
-    const results: BulkOperationResponse<CompanyAPIResponse>['results'] = [];
-    
-    let successfulItems = 0;
-    let failedItems = 0;
-
-    for (let i = 0; i < request.companies.length; i++) {
-      const companyData = request.companies[i];
-      
-      try {
-        const createdCompany = await this.createCompany(companyData, organizationId, userId);
-        results.push({
-          index: i,
-          success: true,
-          data: createdCompany
-        });
-        successfulItems++;
-      } catch (error) {
-        const errorResult = {
-          index: i,
-          success: false,
-          error: {
-            code: error instanceof APIError ? error.errorCode : API_ERROR_CODES.INTERNAL_SERVER_ERROR,
-            message: error instanceof Error ? error.message : 'Unknown error'
-          }
-        };
-        results.push(errorResult);
-        failedItems++;
-
-        // Stop processing if continueOnError is false
-        if (!request.continueOnError) {
-          break;
-        }
-      }
-    }
-
-    const endTime = Date.now();
-    const duration = endTime - startTime;
-
-    return {
-      success: failedItems === 0,
-      totalItems: request.companies.length,
-      processedItems: results.length,
-      successfulItems,
-      failedItems,
-      results,
-      summary: {
-        duration,
-        averageTimePerItem: duration / results.length
-      }
-    };
+    throw new APIError(501, API_ERROR_CODES.NOT_IMPLEMENTED, 'createCompaniesBulk not implemented with safe service yet');
   }
 
   /**
-   * Private Helper Methods
+   * Transform Company to API Response format
    */
-
-  private validateCompanyCreateRequest(data: CompanyCreateRequest): void {
-    if (!data.name?.trim()) {
-      throw new APIError(
-        400,
-        API_ERROR_CODES.REQUIRED_FIELD_MISSING,
-        'name is required'
-      );
-    }
-
-    if (data.website && !this.isValidURL(data.website)) {
-      throw new APIError(
-        400,
-        API_ERROR_CODES.VALIDATION_ERROR,
-        'Invalid website URL format'
-      );
-    }
-
-    if (data.email && !this.isValidEmail(data.email)) {
-      throw new APIError(
-        400,
-        API_ERROR_CODES.VALIDATION_ERROR,
-        'Invalid email format'
-      );
-    }
-  }
-
-  private isValidURL(url: string): boolean {
-    try {
-      new URL(url);
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  private isValidEmail(email: string): boolean {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  }
-
-  private async findCompanyByNameOrDomain(
-    name: string,
-    website: string | undefined,
-    organizationId: string
-  ): Promise<CompanyEnhanced | null> {
-    try {
-      // Disabled - use safe service in getCompanies instead
-        organizationId,
-        {
-          filters: { 
-            search: name 
-          },
-          limit: 10
-        }
-      );
-      
-      // Check for name match
-      const nameMatch = companies.find(c => 
-        c.name.toLowerCase() === name.toLowerCase() ||
-        c.tradingName?.toLowerCase() === name.toLowerCase()
-      );
-      
-      if (nameMatch) return nameMatch;
-      
-      // Check for domain match if website provided
-      if (website) {
-        try {
-          const domain = new URL(website).hostname.toLowerCase();
-          const domainMatch = companies.find(c => {
-            if (!c.website) return false;
-            try {
-              const companyDomain = new URL(c.website).hostname.toLowerCase();
-              return companyDomain === domain;
-            } catch {
-              return false;
-            }
-          });
-          
-          if (domainMatch) return domainMatch;
-        } catch {
-          // Invalid URL, skip domain check
-        }
-      }
-      
-      return null;
-    } catch (error) {
-      return null;
-    }
-  }
-
   private async transformCompanyToAPIResponse(
     company: CompanyEnhanced, 
     organizationId: string
   ): Promise<CompanyAPIResponse> {
     
-    // Get contact count for this company
-    let contactCount = 0;
-    try {
-      // Disabled - implement safe service later
-        organizationId,
-        {
-          filters: { companyId: company.id! },
-          limit: 0 // Just get count
-        }
-      );
-      const total = contacts.length;
-      contactCount = total;
-    } catch (error) {
-      // Continue without contact count
-    }
-
     // Extract domain from website
     let domain: string | undefined;
     if (company.website) {
@@ -595,8 +272,8 @@ export class CompaniesAPIService {
         color: typeof tag === 'object' && tag.color ? tag.color : undefined
       })),
       
-      contactCount,
-      publicationCount: 0, // TODO: Implement if needed
+      contactCount: 0, // TODO: Implement
+      publicationCount: 0, // TODO: Implement
       
       notes: company.notes,
       
@@ -605,91 +282,10 @@ export class CompaniesAPIService {
       updatedAt: company.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
       
       // Computed fields
-      lastContactAt: undefined, // TODO: Implement based on contact interactions
-      activityScore: this.calculateActivityScore(company, contactCount),
-      recentActivity: [] // TODO: Implement activity tracking
+      lastContactAt: undefined, // TODO: Implement
+      activityScore: this.calculateActivityScore(company),
+      recentActivity: [] // TODO: Implement
     };
-  }
-
-  private async transformAPIRequestToCompany(
-    data: CompanyCreateRequest,
-    organizationId: string,
-    userId: string
-  ): Promise<Omit<CompanyEnhanced, 'id' | 'createdAt' | 'updatedAt'>> {
-    return {
-      name: data.name.trim(),
-      tradingName: data.tradingName?.trim() || null,
-      legalName: data.legalName?.trim() || null,
-      
-      industry: data.industry?.trim() || null,
-      companySize: data.companySize?.trim() || null,
-      companyType: data.companyType || null,
-      founded: data.founded || null,
-      
-      website: data.website?.trim() || null,
-      phone: data.phone?.trim() || null,
-      email: data.email?.trim() || null,
-      
-      address: data.address || null,
-      
-      mediaType: data.mediaType || null,
-      coverage: data.coverage || null,
-      circulation: data.circulation || null,
-      audienceSize: data.audienceSize || null,
-      
-      linkedinUrl: data.linkedinUrl?.trim() || null,
-      twitterHandle: data.twitterHandle?.trim() || null,
-      facebookUrl: data.facebookUrl?.trim() || null,
-      instagramHandle: data.instagramHandle?.trim() || null,
-      
-      vatNumber: data.vatNumber?.trim() || null,
-      registrationNumber: data.registrationNumber?.trim() || null,
-      
-      tags: data.tags?.map(tag => ({ name: tag })) || [],
-      
-      notes: data.notes?.trim() || null,
-      internalNotes: data.internalNotes?.trim() || null,
-      
-      isActive: true,
-      organizationId,
-      userId
-    };
-  }
-
-  private async transformAPIUpdateToCompany(
-    data: CompanyUpdateRequest,
-    organizationId: string,
-    userId: string
-  ): Promise<Partial<CompanyEnhanced>> {
-    const updateData: Partial<CompanyEnhanced> = {};
-
-    if (data.name !== undefined) updateData.name = data.name.trim();
-    if (data.tradingName !== undefined) updateData.tradingName = data.tradingName?.trim();
-    if (data.legalName !== undefined) updateData.legalName = data.legalName?.trim();
-    if (data.industry !== undefined) updateData.industry = data.industry?.trim();
-    if (data.companySize !== undefined) updateData.companySize = data.companySize?.trim();
-    if (data.companyType !== undefined) updateData.companyType = data.companyType;
-    if (data.founded !== undefined) updateData.founded = data.founded;
-    if (data.website !== undefined) updateData.website = data.website?.trim();
-    if (data.phone !== undefined) updateData.phone = data.phone?.trim();
-    if (data.email !== undefined) updateData.email = data.email?.trim();
-    if (data.address !== undefined) updateData.address = data.address;
-    if (data.mediaType !== undefined) updateData.mediaType = data.mediaType;
-    if (data.coverage !== undefined) updateData.coverage = data.coverage;
-    if (data.circulation !== undefined) updateData.circulation = data.circulation;
-    if (data.audienceSize !== undefined) updateData.audienceSize = data.audienceSize;
-    if (data.linkedinUrl !== undefined) updateData.linkedinUrl = data.linkedinUrl?.trim();
-    if (data.twitterHandle !== undefined) updateData.twitterHandle = data.twitterHandle?.trim();
-    if (data.facebookUrl !== undefined) updateData.facebookUrl = data.facebookUrl?.trim();
-    if (data.instagramHandle !== undefined) updateData.instagramHandle = data.instagramHandle?.trim();
-    if (data.vatNumber !== undefined) updateData.vatNumber = data.vatNumber?.trim();
-    if (data.registrationNumber !== undefined) updateData.registrationNumber = data.registrationNumber?.trim();
-    if (data.tags !== undefined) updateData.tags = data.tags?.map(tag => ({ name: tag }));
-    if (data.notes !== undefined) updateData.notes = data.notes?.trim();
-    if (data.internalNotes !== undefined) updateData.internalNotes = data.internalNotes?.trim();
-    if (data.isActive !== undefined) updateData.isActive = data.isActive;
-
-    return updateData;
   }
 
   private formatAddress(address: any): string {
@@ -701,7 +297,7 @@ export class CompaniesAPIService {
     return parts.join(', ');
   }
 
-  private calculateActivityScore(company: CompanyEnhanced, contactCount: number): number {
+  private calculateActivityScore(company: CompanyEnhanced): number {
     let score = 0;
     
     // Basic info completeness
@@ -718,9 +314,6 @@ export class CompaniesAPIService {
     // Business completeness
     if (company.address) score += 10;
     if (company.founded) score += 5;
-    
-    // Relationship strength
-    score += Math.min(20, contactCount * 2);
     
     return Math.min(100, score);
   }
