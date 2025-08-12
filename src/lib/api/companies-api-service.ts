@@ -110,11 +110,26 @@ export class CompaniesAPIService {
       };
 
       // Get companies from service
-      const companies = await companyServiceEnhanced.getAll(
-        organizationId,
-        queryOptions
-      );
-      const total = companies.length;
+      console.log('DEBUG: Calling companyServiceEnhanced.getAll with:', { organizationId, queryOptions });
+      let companies, total;
+      try {
+        const result = await companyServiceEnhanced.getAll(organizationId, queryOptions);
+        console.log('DEBUG: Company service result:', result);
+        
+        if (Array.isArray(result)) {
+          companies = result;
+          total = result.length;
+        } else if (result && Array.isArray(result.items)) {
+          companies = result.items;
+          total = result.total || result.items.length;
+        } else {
+          companies = [];
+          total = 0;
+        }
+      } catch (serviceError) {
+        console.error('DEBUG: Company service error:', serviceError);
+        throw serviceError;
+      }
 
       // Transform to API Response format
       const apiCompanies = await Promise.all(
