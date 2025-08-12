@@ -36,7 +36,7 @@ export const POST = APIMiddleware.withAuth(
     
     return NextResponse.json(result);
   },
-  ['graphql:query', 'graphql:mutation']
+  ['companies:read', 'contacts:read']
 );
 
 /**
@@ -68,7 +68,7 @@ export const GET = APIMiddleware.withAuth(
       }
     });
   },
-  ['graphql:introspect']
+  ['companies:read', 'contacts:read']
 );
 
 /**

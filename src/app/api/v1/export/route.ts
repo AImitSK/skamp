@@ -29,7 +29,7 @@ export const POST = APIMiddleware.withAuth(
 
     return APIMiddleware.successResponse(job, 201);
   },
-  ['exports:write']
+  ['companies:read', 'contacts:read']
 );
 
 /**
@@ -50,7 +50,7 @@ export const GET = APIMiddleware.withAuth(
 
     return APIMiddleware.successResponse(response);
   },
-  ['exports:read']
+  ['companies:read', 'contacts:read']
 );
 
 /**

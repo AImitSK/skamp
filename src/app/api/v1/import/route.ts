@@ -41,7 +41,7 @@ export const POST = APIMiddleware.withAuth(
 
     return APIMiddleware.successResponse(job, 201);
   },
-  ['imports:write']
+  ['companies:read', 'contacts:read']
 );
 
 /**
@@ -68,7 +68,7 @@ export const GET = APIMiddleware.withAuth(
 
     return APIMiddleware.successResponse(response);
   },
-  ['imports:read']
+  ['companies:read', 'contacts:read']
 );
 
 /**
