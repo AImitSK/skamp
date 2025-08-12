@@ -99,7 +99,11 @@ export class WebhookService {
         updatedBy: userId
       };
 
-      // Speichere in Firestore
+      // Speichere in Firestore (safe check)
+      if (!db) {
+        throw new APIError('SERVICE_UNAVAILABLE', 'Database nicht verfügbar');
+      }
+
       const webhookRef = await addDoc(
         collection(db, this.COLLECTION_NAME),
         {
@@ -714,24 +718,34 @@ export class WebhookService {
     events: WebhookEvent[],
     organizationId: string
   ): Promise<WebhookConfig | null> {
-    const webhooksQuery = query(
-      collection(db, this.COLLECTION_NAME),
-      where('organizationId', '==', organizationId),
-      where('url', '==', url)
-    );
-
-    const snapshot = await getDocs(webhooksQuery);
-    
-    for (const doc of snapshot.docs) {
-      const webhook = { id: doc.id, ...doc.data() } as WebhookConfig;
-      // Prüfe ob die Events überlappen
-      const hasOverlap = webhook.events.some(e => events.includes(e));
-      if (hasOverlap) {
-        return webhook;
+    try {
+      // Safe check für db
+      if (!db) {
+        return null; // Keine Duplikate prüfbar, fahre fort
       }
-    }
 
-    return null;
+      const webhooksQuery = query(
+        collection(db, this.COLLECTION_NAME),
+        where('organizationId', '==', organizationId),
+        where('url', '==', url)
+      );
+
+      const snapshot = await getDocs(webhooksQuery);
+    
+      for (const doc of snapshot.docs) {
+        const webhook = { id: doc.id, ...doc.data() } as WebhookConfig;
+        // Prüfe ob die Events überlappen
+        const hasOverlap = webhook.events.some(e => events.includes(e));
+        if (hasOverlap) {
+          return webhook;
+        }
+      }
+
+      return null;
+    } catch (error) {
+      console.warn('Warning: Could not check webhook duplicates:', error);
+      return null; // Bei Fehler fahre fort ohne Duplikat-Check
+    }
   }
 
   /**

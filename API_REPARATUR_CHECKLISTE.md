@@ -83,15 +83,15 @@ export async function GET(request: NextRequest) {
 - [x] GET /api/v1/publications/[publicationId] ✅ **FUNKTIONIERT** (Getestet 2025-08-12)
 - [x] PUT /api/v1/publications/[publicationId] ✅ **FUNKTIONIERT** (Getestet 2025-08-12)
 - [x] DELETE /api/v1/publications/[publicationId] 🔄 **REPARIERT - WARTET AUF DEPLOYMENT** 
-- [ ] GET /api/v1/publications/statistics ❓
+- [x] GET /api/v1/publications/statistics 🔄 **REPARIERT - WARTET AUF DEPLOYMENT** (Safe companies fetch)
 
 ### Media Assets Routes (Werbemittel)
 - [x] GET /api/v1/media-assets ✅ **FUNKTIONIERT** (Getestet 2025-08-12, 2 Assets)
 - [x] POST /api/v1/media-assets ✅ **FUNKTIONIERT** (Getestet 2025-08-12, ID: lpfLJt3Z3hLp1k9xtkIs)
 
 ### Webhook Routes
-- [x] GET /api/v1/webhooks 🔄 **REPARIERT - WARTET AUF DEPLOYMENT** (Safe collection access)
-- [ ] POST /api/v1/webhooks ❓
+- [x] GET /api/v1/webhooks ✅ **FUNKTIONIERT** (Nach Deployment, leere Liste)
+- [ ] POST /api/v1/webhooks ❌ **500 ERROR** (Andere Fehlerquelle als GET)
 - [ ] GET/PUT/DELETE /api/v1/webhooks/[webhookId] ❓
 - [ ] POST /api/v1/webhooks/[webhookId]/test ❓
 - [ ] GET /api/v1/webhooks/[webhookId]/deliveries ❓
@@ -103,16 +103,15 @@ export async function GET(request: NextRequest) {
 - [ ] GET /api/v1/export/[jobId] ❓
 - [ ] GET/POST /api/v1/import ❓
 - [ ] GET /api/v1/import/[jobId] ❓
-- [ ] GET /api/v1/usage/stats ❓
+- [x] GET /api/v1/usage/stats ✅ **FUNKTIONIERT** (Getestet 2025-08-12, detaillierte Stats)
 
 ### WebSocket Routes  
-- [ ] ALL /api/v1/websocket/** ❓
-- [ ] ALL /api/v1/websocket/connect ❓
+- [x] GET/POST /api/v1/websocket/connect ✅ **FUNKTIONIERT** (HTTP Mock, keine Auth nötig)
 - [ ] ALL /api/v1/websocket/events ❓
 - [ ] ALL /api/v1/websocket/subscriptions ❓
 
 ### GraphQL Route
-- [ ] POST /api/v1/graphql ❓
+- [ ] POST /api/v1/graphql ❌ **ALTES AUTH PATTERN** (validateAPIKey statt APIMiddleware)
 
 ## Reparatur-Strategie
 
