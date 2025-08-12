@@ -427,19 +427,29 @@ export class PublicationsAPIService {
         );
       }
 
-      // Soft delete
-      await publicationService.delete(
-        publicationId,
-        { organizationId, userId }
-      );
+      // Soft delete (safe)
+      try {
+        await publicationService.delete(
+          publicationId,
+          { organizationId, userId }
+        );
+      } catch (deleteError) {
+        console.error('Publication delete service error:', deleteError);
+        throw new APIError('INTERNAL_SERVER_ERROR', 'Fehler beim Löschen der Publikation');
+      }
 
-      // Triggere Webhook-Event
-      await eventManager.triggerPublicationEvent(
-        'deleted',
-        publication,
-        organizationId,
-        { userId, source: 'api' }
-      );
+      // Triggere Webhook-Event (safe)
+      try {
+        await eventManager.triggerPublicationEvent(
+          'deleted',
+          publication,
+          organizationId,
+          { userId, source: 'api' }
+        );
+      } catch (webhookError) {
+        console.warn('Warning: Could not trigger webhook event for deleted publication:', webhookError);
+        // Continue - deletion was successful even if webhook failed
+      }
     } catch (error) {
       if (error instanceof APIError) throw error;
       throw new APIError(

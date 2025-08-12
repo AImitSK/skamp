@@ -82,16 +82,16 @@ export async function GET(request: NextRequest) {
 - [x] POST /api/v1/publications ✅ **FUNKTIONIERT** (Getestet 2025-08-12, ID: GAeMS2A4XyIrVDf1Xnd6)
 - [x] GET /api/v1/publications/[publicationId] ✅ **FUNKTIONIERT** (Getestet 2025-08-12)
 - [x] PUT /api/v1/publications/[publicationId] ✅ **FUNKTIONIERT** (Getestet 2025-08-12)
-- [x] DELETE /api/v1/publications/[publicationId] 🔄 **REPARIERT - WARTET AUF DEPLOYMENT** 
-- [x] GET /api/v1/publications/statistics 🔄 **REPARIERT - WARTET AUF DEPLOYMENT** (Safe companies fetch)
+- [ ] DELETE /api/v1/publications/[publicationId] ❌ **500 ERROR** (Fix war unvollständig)
+- [ ] GET /api/v1/publications/statistics ❌ **500 ERROR** (Fix war unvollständig)
 
 ### Media Assets Routes (Werbemittel)
 - [x] GET /api/v1/media-assets ✅ **FUNKTIONIERT** (Getestet 2025-08-12, 2 Assets)
 - [x] POST /api/v1/media-assets ✅ **FUNKTIONIERT** (Getestet 2025-08-12, ID: lpfLJt3Z3hLp1k9xtkIs)
 
 ### Webhook Routes
-- [x] GET /api/v1/webhooks ✅ **FUNKTIONIERT** (Nach Deployment, leere Liste)
-- [ ] POST /api/v1/webhooks ❌ **500 ERROR** (Andere Fehlerquelle als GET)
+- [x] GET /api/v1/webhooks ✅ **FUNKTIONIERT** (Deployed, leere Liste, korrekt)
+- [ ] POST /api/v1/webhooks ❌ **500 ERROR** (Service-Fehler beim Erstellen)
 - [ ] GET/PUT/DELETE /api/v1/webhooks/[webhookId] ❓
 - [ ] POST /api/v1/webhooks/[webhookId]/test ❓
 - [ ] GET /api/v1/webhooks/[webhookId]/deliveries ❓
