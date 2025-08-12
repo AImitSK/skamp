@@ -863,15 +863,15 @@ export class PublicationsAPIService {
       pricing: asset.pricing,
       specifications: asset.specifications,
       availability: asset.availability ? {
-        startDate: asset.availability.startDate?.toISOString(),
-        endDate: asset.availability.endDate?.toISOString(),
+        startDate: asset.availability.startDate?.toDate?.()?.toISOString() || asset.availability.startDate?.toISOString?.() || undefined,
+        endDate: asset.availability.endDate?.toDate?.()?.toISOString() || asset.availability.endDate?.toISOString?.() || undefined,
         leadTime: asset.availability.leadTime,
         bookingDeadline: asset.availability.bookingDeadline
       } : undefined,
       performance: asset.performance,
       status: asset.status,
-      createdAt: asset.createdAt.toISOString(),
-      updatedAt: asset.updatedAt.toISOString()
+      createdAt: asset.createdAt?.toDate?.()?.toISOString() || asset.createdAt?.toISOString?.() || new Date().toISOString(),
+      updatedAt: asset.updatedAt?.toDate?.()?.toISOString() || asset.updatedAt?.toISOString?.() || new Date().toISOString()
     };
   }
 
@@ -888,8 +888,8 @@ export class PublicationsAPIService {
         name: mediaKit.companyName || 'Unbekannt',
         logoUrl: mediaKit.settings?.customBranding?.logoUrl
       },
-      validFrom: mediaKit.validFrom.toISOString(),
-      validUntil: mediaKit.validUntil?.toISOString(),
+      validFrom: mediaKit.validFrom?.toDate?.()?.toISOString() || mediaKit.validFrom?.toISOString?.() || new Date().toISOString(),
+      validUntil: mediaKit.validUntil?.toDate?.()?.toISOString() || mediaKit.validUntil?.toISOString?.() || undefined,
       publications: mediaKit.publications.map(p => ({
         id: p.publicationId,
         title: 'Publication', // Would need to load actual title
@@ -904,7 +904,7 @@ export class PublicationsAPIService {
       })),
       documents: mediaKit.documents.map(d => ({
         ...d,
-        generatedAt: d.generatedAt?.toISOString()
+        generatedAt: d.generatedAt?.toDate?.()?.toISOString() || d.generatedAt?.toISOString?.() || undefined
       })),
       distribution: mediaKit.distribution ? {
         isPublic: mediaKit.distribution.isPublic,
@@ -912,13 +912,13 @@ export class PublicationsAPIService {
         password: !!mediaKit.distribution.password,
         sharedWith: mediaKit.distribution.sharedWith?.map(s => ({
           email: s.email,
-          sharedAt: s.sharedAt.toISOString(),
-          viewedAt: s.viewedAt?.toISOString()
+          sharedAt: s.sharedAt?.toDate?.()?.toISOString() || s.sharedAt?.toISOString?.() || new Date().toISOString(),
+          viewedAt: s.viewedAt?.toDate?.()?.toISOString() || s.viewedAt?.toISOString?.() || undefined
         }))
       } : undefined,
       settings: mediaKit.settings,
-      createdAt: mediaKit.createdAt.toISOString(),
-      updatedAt: mediaKit.updatedAt.toISOString()
+      createdAt: mediaKit.createdAt?.toDate?.()?.toISOString() || mediaKit.createdAt?.toISOString?.() || new Date().toISOString(),
+      updatedAt: mediaKit.updatedAt?.toDate?.()?.toISOString() || mediaKit.updatedAt?.toISOString?.() || new Date().toISOString()
     };
   }
 
