@@ -13,7 +13,8 @@ interface RouteParams {
  * GET /api/v1/webhooks/{webhookId}
  * Holt einen einzelnen Webhook
  */
-export const GET = APIMiddleware.withAuth(
+export async function GET(request: NextRequest) {
+  return APIMiddleware.withAuth(
   async (request: NextRequest, context, params?: RouteParams) => {
     try {
       if (!params?.webhookId) {
@@ -47,7 +48,8 @@ export const GET = APIMiddleware.withAuth(
  * PUT /api/v1/webhooks/{webhookId}
  * Aktualisiert einen Webhook
  */
-export const PUT = APIMiddleware.withAuth(
+export async function PUT(request: NextRequest) {
+  return APIMiddleware.withAuth(
   async (request: NextRequest, context, params?: RouteParams) => {
     try {
       if (!params?.webhookId) {
@@ -85,7 +87,8 @@ export const PUT = APIMiddleware.withAuth(
  * DELETE /api/v1/webhooks/{webhookId}
  * Löscht einen Webhook
  */
-export const DELETE = APIMiddleware.withAuth(
+export async function DELETE(request: NextRequest) {
+  return APIMiddleware.withAuth(
   async (request: NextRequest, context, params?: RouteParams) => {
     try {
       if (!params?.webhookId) {

@@ -12,7 +12,8 @@ import { APIResponse } from '@/types/api';
  * GET /api/v1/webhooks
  * Holt Liste aller Webhooks mit Filtern
  */
-export const GET = APIMiddleware.withAuth(
+export async function GET(request: NextRequest) {
+  return APIMiddleware.withAuth(
   async (request: NextRequest, context) => {
     try {
       // Parse Query-Parameter
@@ -66,7 +67,8 @@ export const GET = APIMiddleware.withAuth(
  * POST /api/v1/webhooks
  * Erstellt einen neuen Webhook
  */
-export const POST = APIMiddleware.withAuth(
+export async function POST(request: NextRequest) {
+  return APIMiddleware.withAuth(
   async (request: NextRequest, context) => {
     try {
       const body = await request.json() as APIWebhookCreateRequest;

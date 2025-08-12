@@ -13,8 +13,8 @@ import { APIResponse } from '@/types/api';
  * GET /api/v1/publications
  * Holt Liste aller Publikationen mit Filtern
  */
-export const GET = APIMiddleware.withAuth(
-  async (request: NextRequest, context) => {
+export async function GET(request: NextRequest) {
+  return APIMiddleware.withAuth(async (request: NextRequest, context) => {
     try {
       // Parse Query-Parameter
       const { searchParams } = new URL(request.url);
@@ -95,16 +95,15 @@ export const GET = APIMiddleware.withAuth(
     } catch (error) {
       return APIMiddleware.handleError(error);
     }
-  },
-  ['publications:read']
-);
+  }, ['publications:read'])(request);
+}
 
 /**
  * POST /api/v1/publications
  * Erstellt neue Publikation oder Bulk-Import
  */
-export const POST = APIMiddleware.withAuth(
-  async (request: NextRequest, context) => {
+export async function POST(request: NextRequest) {
+  return APIMiddleware.withAuth(async (request: NextRequest, context) => {
     try {
       const body = await request.json();
       
@@ -166,9 +165,8 @@ export const POST = APIMiddleware.withAuth(
     } catch (error) {
       return APIMiddleware.handleError(error);
     }
-  },
-  ['publications:write']
-);
+  }, ['publications:write'])(request);
+}
 
 /**
  * OPTIONS /api/v1/publications

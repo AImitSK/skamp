@@ -9,7 +9,8 @@ import { APIResponse } from '@/types/api';
  * POST /api/v1/media-kits
  * Generiert ein neues Media Kit
  */
-export const POST = APIMiddleware.withAuth(
+export async function POST(request: NextRequest) {
+  return APIMiddleware.withAuth(
   async (request: NextRequest, context) => {
     try {
       const body = await request.json() as APIMediaKitGenerateRequest;

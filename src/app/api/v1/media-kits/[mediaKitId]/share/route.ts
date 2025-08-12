@@ -13,8 +13,8 @@ interface RouteParams {
  * POST /api/v1/media-kits/{mediaKitId}/share
  * Teilt ein Media Kit mit Empfängern
  */
-export const POST = APIMiddleware.withAuth(
-  async (request: NextRequest, context, params?: RouteParams) => {
+export async function POST(request: NextRequest, { params }: { params: RouteParams }) {
+  return APIMiddleware.withAuth(async (request: NextRequest, context) => {
     try {
       if (!params?.mediaKitId) {
         throw new Error('Media Kit ID erforderlich');
@@ -59,9 +59,8 @@ export const POST = APIMiddleware.withAuth(
     } catch (error) {
       return APIMiddleware.handleError(error);
     }
-  },
-  ['publications:write']
-);
+  }, ['publications:write'])(request);
+}
 
 /**
  * OPTIONS /api/v1/media-kits/{mediaKitId}/share
