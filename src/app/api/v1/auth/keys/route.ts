@@ -28,7 +28,7 @@ function getOrganizationKeys(organizationId: string): any[] {
   return keys.filter(key => !deletedKeys.has(key.id));
 }
 
-export const GET = APIMiddleware.withAuth(
+export const GET = APIMiddleware.withFirebaseAuth(
   async (request: NextRequest, context) => {
     console.log('=== API KEYS ROUTE GET DEBUG ===');
     console.log('Request URL:', request.url);
@@ -80,15 +80,14 @@ export const GET = APIMiddleware.withAuth(
       console.log('Mock keys count:', apiKeys.length);
       return APIMiddleware.successResponse(apiKeys);
     }
-  },
-  [] // Admin route - keine spezifischen Permissions nötig
+  }
 );
 
 /**
  * POST /api/v1/auth/keys  
  * Erstelle neuen API-Key
  */
-export const POST = APIMiddleware.withAuth(
+export const POST = APIMiddleware.withFirebaseAuth(
   async (request: NextRequest, context) => {
     console.log('=== API KEYS ROUTE POST DEBUG ===');
     console.log('Request URL:', request.url);
@@ -190,8 +189,7 @@ export const POST = APIMiddleware.withAuth(
         message: 'Failed to create API key'
       });
     }
-  },
-  [] // Admin route - keine spezifischen Permissions nötig
+  }
 );
 
 /**

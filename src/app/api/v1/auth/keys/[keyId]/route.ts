@@ -1,6 +1,5 @@
 // src/app/api/v1/auth/keys/[keyId]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
 import { APIMiddleware } from '@/lib/api/api-middleware';
 import { apiAuthService } from '@/lib/api/api-auth-service';
 
@@ -12,11 +11,8 @@ import { apiAuthService } from '@/lib/api/api-auth-service';
  * DELETE /api/v1/auth/keys/[keyId]
  * Lösche spezifischen API-Key
  */
-export async function DELETE(
-  request: NextRequest, 
-  { params }: { params: { keyId: string } }
-) {
-  return withAuth(request, async (request, context) => {
+export const DELETE = APIMiddleware.withFirebaseAuth(
+  async (request: NextRequest, context, { params }: { params: { keyId: string } }) => {
     
     try {
       // Lösche echten API-Key aus Firestore
@@ -49,18 +45,15 @@ export async function DELETE(
         keyId: params.keyId 
       });
     }
-  });
-}
+  }
+);
 
 /**
  * PATCH /api/v1/auth/keys/[keyId]
  * Deaktiviere API-Key (ohne zu löschen)
  */
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { keyId: string } }
-) {
-  return withAuth(request, async (request, context) => {
+export const PATCH = APIMiddleware.withFirebaseAuth(
+  async (request: NextRequest, context, { params }: { params: { keyId: string } }) => {
     
     // Mock deactivation - in Production würde der Key in Firestore deaktiviert
     console.log(`API key ${params.keyId} deactivated for organization ${context.organizationId}`);
@@ -69,8 +62,8 @@ export async function PATCH(
       message: 'API key deactivated successfully',
       keyId: params.keyId
     });
-  });
-}
+  }
+);
 
 /**
  * OPTIONS-Handler für CORS Preflight
