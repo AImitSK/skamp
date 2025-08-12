@@ -8,11 +8,8 @@ import { ContactUpdateRequest } from '@/types/api-crm';
  * GET /api/v1/contacts/[contactId]
  * Spezifischen Kontakt abrufen
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { contactId: string } }
-) {
-  return APIMiddleware.withAuth(async (request, context) => {
+export const GET = APIMiddleware.withAuth(
+  async (request: NextRequest, context, { params }: { params: { contactId: string } }) => {
     
     const contact = await contactsAPIService.getContact(
       params.contactId,
@@ -22,18 +19,16 @@ export async function GET(
     
     return APIMiddleware.successResponse(contact);
     
-  }, ['contacts:read'])(request);
-}
+  },
+  ['contacts:read']
+);
 
 /**
  * PUT /api/v1/contacts/[contactId]
  * Kontakt aktualisieren
  */
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { contactId: string } }
-) {
-  return APIMiddleware.withAuth(async (request, context) => {
+export const PUT = APIMiddleware.withAuth(
+  async (request: NextRequest, context, { params }: { params: { contactId: string } }) => {
     
     // Parse Request Body
     const updateRequest = await RequestParser.parseJSON<ContactUpdateRequest>(request);
@@ -48,18 +43,16 @@ export async function PUT(
     
     return APIMiddleware.successResponse(updatedContact);
     
-  }, ['contacts:write'])(request);
-}
+  },
+  ['contacts:write']
+);
 
 /**
  * DELETE /api/v1/contacts/[contactId]
  * Kontakt löschen
  */
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { contactId: string } }
-) {
-  return APIMiddleware.withAuth(async (request, context) => {
+export const DELETE = APIMiddleware.withAuth(
+  async (request: NextRequest, context, { params }: { params: { contactId: string } }) => {
     
     await contactsAPIService.deleteContact(
       params.contactId,
@@ -72,8 +65,9 @@ export async function DELETE(
       contactId: params.contactId
     });
     
-  }, ['contacts:delete'])(request);
-}
+  },
+  ['contacts:delete']
+);
 
 /**
  * OPTIONS-Handler für CORS Preflight

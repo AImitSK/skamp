@@ -8,8 +8,8 @@ import { companiesAPIService } from '@/lib/api/companies-api-service';
  * GET /api/v1/search/suggestions
  * Schnelle Auto-Complete Vorschläge für Search-As-You-Type
  */
-export async function GET(request: NextRequest) {
-  return APIMiddleware.withAuth(async (request, context) => {
+export const GET = APIMiddleware.withAuth(
+  async (request: NextRequest, context) => {
     
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q');
@@ -101,8 +101,9 @@ export async function GET(request: NextRequest) {
       });
     }
     
-  }, ['contacts:read', 'companies:read'])(request);
-}
+  },
+  ['contacts:read', 'companies:read']
+);
 
 /**
  * OPTIONS-Handler für CORS Preflight

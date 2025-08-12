@@ -13,9 +13,8 @@ interface RouteParams {
  * POST /api/v1/webhooks/{webhookId}/test
  * Testet einen Webhook
  */
-export async function POST(request: NextRequest, { params }: { params: { webhookId: string } }) {
-  return APIMiddleware.withAuth(
-  async (request: NextRequest, context, params?: RouteParams) => {
+export const POST = APIMiddleware.withAuth(
+  async (request: NextRequest, context, { params }: { params: { webhookId: string } }) => {
     try {
       if (!params?.webhookId) {
         throw new Error('Webhook ID erforderlich');
@@ -47,8 +46,9 @@ export async function POST(request: NextRequest, { params }: { params: { webhook
     } catch (error) {
       return APIMiddleware.handleError(error);
     }
-  }, ['webhooks:manage'])(request);
-}
+  },
+  ['webhooks:manage']
+);
 
 /**
  * OPTIONS /api/v1/webhooks/{webhookId}/test

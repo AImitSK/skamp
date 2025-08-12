@@ -21,9 +21,8 @@ interface RouteParams {
  * GET /api/v1/webhooks/{webhookId}/deliveries
  * Holt Delivery-History eines Webhooks
  */
-export async function GET(request: NextRequest, { params }: { params: RouteParams }) {
-  return APIMiddleware.withAuth(
-  async (request: NextRequest, context, params?: RouteParams) => {
+export const GET = APIMiddleware.withAuth(
+  async (request: NextRequest, context, { params }: { params: RouteParams }) => {
     try {
       if (!params?.webhookId) {
         throw new Error('Webhook ID erforderlich');
@@ -113,8 +112,9 @@ export async function GET(request: NextRequest, { params }: { params: RouteParam
     } catch (error) {
       return APIMiddleware.handleError(error);
     }
-  }, ['webhooks:manage'])(request);
-}
+  },
+  ['webhooks:manage']
+);
 
 /**
  * OPTIONS /api/v1/webhooks/{webhookId}/deliveries

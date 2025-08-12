@@ -8,8 +8,8 @@ import { ContactCreateRequest, ContactListParams, BulkContactCreateRequest } fro
  * GET /api/v1/contacts
  * Liste aller Kontakte mit Filterung und Pagination
  */
-export async function GET(request: NextRequest) {
-  return APIMiddleware.withAuth(async (request, context) => {
+export const GET = APIMiddleware.withAuth(
+  async (request: NextRequest, context) => {
     
     // Parse Query Parameters
     const params = RequestParser.parseQuery(request) as ContactListParams;
@@ -23,15 +23,16 @@ export async function GET(request: NextRequest) {
     
     return APIMiddleware.successResponse(result.contacts, 200, result.pagination);
     
-  }, ['contacts:read'])(request);
-}
+  },
+  ['contacts:read']
+);
 
 /**
  * POST /api/v1/contacts
  * Neuen Kontakt erstellen
  */
-export async function POST(request: NextRequest) {
-  return APIMiddleware.withAuth(async (request, context) => {
+export const POST = APIMiddleware.withAuth(
+  async (request: NextRequest, context) => {
     
     const contentType = request.headers.get('content-type');
     
@@ -77,8 +78,9 @@ export async function POST(request: NextRequest) {
       message: 'Content-Type must be application/json'
     });
     
-  }, ['contacts:write'])(request);
-}
+  },
+  ['contacts:write']
+);
 
 /**
  * OPTIONS-Handler für CORS Preflight

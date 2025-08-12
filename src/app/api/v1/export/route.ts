@@ -8,8 +8,8 @@ import { BulkExportRequest } from '@/types/api-advanced';
  * POST /api/v1/export
  * Startet einen neuen Bulk-Export-Job
  */
-export async function POST(request: NextRequest) {
-  return APIMiddleware.withAuth(async (request, context) => {
+export const POST = APIMiddleware.withAuth(
+  async (request: NextRequest, context) => {
     // Request Body parsen
     const body = await RequestParser.parseJSON<any>(request);
     const exportRequest: BulkExportRequest = {
@@ -28,15 +28,16 @@ export async function POST(request: NextRequest) {
     );
 
     return APIMiddleware.successResponse(job, 201);
-  })(request);
-}
+  },
+  []
+);
 
 /**
  * GET /api/v1/export
  * Listet alle Export-Jobs einer Organisation
  */
-export async function GET(request: NextRequest) {
-  return APIMiddleware.withAuth(async (request, context) => {
+export const GET = APIMiddleware.withAuth(
+  async (request: NextRequest, context) => {
     const query = RequestParser.parseQuery(request);
 
     // Jobs abrufen
@@ -48,8 +49,9 @@ export async function GET(request: NextRequest) {
     });
 
     return APIMiddleware.successResponse(response);
-  })(request);
-}
+  },
+  []
+);
 
 /**
  * OPTIONS-Handler für CORS Preflight

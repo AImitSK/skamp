@@ -12,8 +12,7 @@ import { APIResponse } from '@/types/api';
  * GET /api/v1/media-assets
  * Holt Liste aller Media Assets (Werbemittel) mit Filtern
  */
-export async function GET(request: NextRequest) {
-  return APIMiddleware.withAuth(
+export const GET = APIMiddleware.withAuth(
   async (request: NextRequest, context) => {
     try {
       // Parse Query-Parameter
@@ -91,8 +90,7 @@ export async function GET(request: NextRequest) {
  * POST /api/v1/media-assets
  * Erstellt ein neues Media Asset (Werbemittel)
  */
-export async function POST(request: NextRequest) {
-  return APIMiddleware.withAuth(
+export const POST = APIMiddleware.withAuth(
   async (request: NextRequest, context) => {
     try {
       const body = await request.json() as APIMediaAssetCreateRequest;

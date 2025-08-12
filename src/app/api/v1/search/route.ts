@@ -10,8 +10,8 @@ import { ContactListParams, CompanyListParams } from '@/types/api-crm';
  * Advanced Search Funktionalität für Contacts und Companies
  * Ermöglicht komplexere Suchabfragen als die Standard GET-Endpunkte
  */
-export async function POST(request: NextRequest) {
-  return APIMiddleware.withAuth(async (request, context) => {
+export const POST = APIMiddleware.withAuth(
+  async (request: NextRequest, context) => {
     
     const searchRequest = await RequestParser.parseJSON<{
       query: string;
@@ -82,8 +82,9 @@ export async function POST(request: NextRequest) {
     
     return APIMiddleware.successResponse(response);
     
-  }, ['contacts:read', 'companies:read'])(request);
-}
+  },
+  ['contacts:read', 'companies:read']
+);
 
 /**
  * OPTIONS-Handler für CORS Preflight

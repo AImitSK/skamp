@@ -8,11 +8,8 @@ import { CompanyUpdateRequest } from '@/types/api-crm';
  * GET /api/v1/companies/[companyId]
  * Spezifische Firma abrufen
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { companyId: string } }
-) {
-  return APIMiddleware.withAuth(async (request, context) => {
+export const GET = APIMiddleware.withAuth(
+  async (request: NextRequest, context, { params }: { params: { companyId: string } }) => {
     
     const company = await companiesAPIService.getCompany(
       params.companyId,
@@ -22,18 +19,16 @@ export async function GET(
     
     return APIMiddleware.successResponse(company);
     
-  }, ['companies:read'])(request);
-}
+  },
+  ['companies:read']
+);
 
 /**
  * PUT /api/v1/companies/[companyId]
  * Firma aktualisieren
  */
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { companyId: string } }
-) {
-  return APIMiddleware.withAuth(async (request, context) => {
+export const PUT = APIMiddleware.withAuth(
+  async (request: NextRequest, context, { params }: { params: { companyId: string } }) => {
     
     // Parse Request Body
     const updateRequest = await RequestParser.parseJSON<CompanyUpdateRequest>(request);
@@ -48,18 +43,16 @@ export async function PUT(
     
     return APIMiddleware.successResponse(updatedCompany);
     
-  }, ['companies:write'])(request);
-}
+  },
+  ['companies:write']
+);
 
 /**
  * DELETE /api/v1/companies/[companyId]
  * Firma löschen
  */
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { companyId: string } }
-) {
-  return APIMiddleware.withAuth(async (request, context) => {
+export const DELETE = APIMiddleware.withAuth(
+  async (request: NextRequest, context, { params }: { params: { companyId: string } }) => {
     
     await companiesAPIService.deleteCompany(
       params.companyId,
@@ -72,8 +65,9 @@ export async function DELETE(
       companyId: params.companyId
     });
     
-  }, ['companies:delete'])(request);
-}
+  },
+  ['companies:delete']
+);
 
 /**
  * OPTIONS-Handler für CORS Preflight

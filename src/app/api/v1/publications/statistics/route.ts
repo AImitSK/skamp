@@ -8,8 +8,7 @@ import { APIResponse } from '@/types/api';
  * GET /api/v1/publications/statistics
  * Holt Statistiken über alle Publikationen
  */
-export async function GET(request: NextRequest) {
-  return APIMiddleware.withAuth(
+export const GET = APIMiddleware.withAuth(
   async (request: NextRequest, context) => {
     try {
       const statistics = await publicationsAPIService.getPublicationsStatistics(

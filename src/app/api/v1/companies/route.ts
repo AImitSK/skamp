@@ -8,8 +8,8 @@ import { CompanyCreateRequest, CompanyListParams, BulkCompanyCreateRequest } fro
  * GET /api/v1/companies
  * Liste aller Firmen mit Filterung und Pagination
  */
-export async function GET(request: NextRequest) {
-  return APIMiddleware.withAuth(async (request, context) => {
+export const GET = APIMiddleware.withAuth(
+  async (request: NextRequest, context) => {
     
     // Parse Query Parameters
     const params = RequestParser.parseQuery(request) as CompanyListParams;
@@ -23,15 +23,16 @@ export async function GET(request: NextRequest) {
     
     return APIMiddleware.successResponse(result.companies, 200, result.pagination);
     
-  }, ['companies:read'])(request);
-}
+  },
+  ['companies:read']
+);
 
 /**
  * POST /api/v1/companies
  * Neue Firma erstellen
  */
-export async function POST(request: NextRequest) {
-  return APIMiddleware.withAuth(async (request, context) => {
+export const POST = APIMiddleware.withAuth(
+  async (request: NextRequest, context) => {
     
     const contentType = request.headers.get('content-type');
     
@@ -77,8 +78,9 @@ export async function POST(request: NextRequest) {
       message: 'Content-Type must be application/json'
     });
     
-  }, ['companies:write'])(request);
-}
+  },
+  ['companies:write']
+);
 
 /**
  * OPTIONS-Handler für CORS Preflight

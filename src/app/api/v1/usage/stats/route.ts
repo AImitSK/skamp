@@ -2,15 +2,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { APIMiddleware } from '@/lib/api/api-middleware';
 
-export async function GET(request: NextRequest) {
-  return APIMiddleware.withAuth(async (request, context) => {
+export const GET = APIMiddleware.withAuth(
+  async (request: NextRequest, context) => {
     
     // Hole Usage-Statistiken für die Organisation
     const stats = await getUsageStats(context.organizationId, context.userId);
     
     return APIMiddleware.successResponse(stats);
-  }, ['analytics:read'])(request);
-}
+  },
+  ['analytics:read']
+);
 
 async function getUsageStats(organizationId: string, userId: string) {
   // In einer echten Implementierung würden wir diese Daten aus einer Datenbank holen

@@ -8,8 +8,8 @@ import { APIMiddleware } from '@/lib/api/api-middleware';
  * 
  * Testet ob API-Key korrekt validiert wird und gibt Context-Info zurück
  */
-export async function GET(request: NextRequest) {
-  return APIMiddleware.withAuth(async (request, context) => {
+export const GET = APIMiddleware.withAuth(
+  async (request: NextRequest, context) => {
     
     // Return API-Context für Debugging/Testing
     const responseData = {
@@ -36,8 +36,9 @@ export async function GET(request: NextRequest) {
     
     return APIMiddleware.successResponse(responseData);
     
-  })(request);
-}
+  },
+  []
+);
 
 /**
  * OPTIONS-Handler für CORS Preflight

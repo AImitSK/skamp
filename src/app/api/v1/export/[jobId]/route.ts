@@ -7,37 +7,33 @@ import { bulkExportService } from '@/lib/api/bulk-export-service';
  * GET /api/v1/export/[jobId]
  * Holt den Status eines Export-Jobs
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { jobId: string } }
-) {
-  return APIMiddleware.withAuth(async (request, context, routeParams) => {
+export const GET = APIMiddleware.withAuth(
+  async (request: NextRequest, context, { params }: { params: { jobId: string } }) => {
     const { jobId } = params;
 
     // Job abrufen
     const job = await bulkExportService.getJobById(jobId, context.organizationId);
 
     return APIMiddleware.successResponse(job);
-  })(request, { params });
-}
+  },
+  []
+);
 
 /**
  * DELETE /api/v1/export/[jobId]
  * Storniert einen laufenden Export-Job
  */
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { jobId: string } }
-) {
-  return APIMiddleware.withAuth(async (request, context, routeParams) => {
+export const DELETE = APIMiddleware.withAuth(
+  async (request: NextRequest, context, { params }: { params: { jobId: string } }) => {
     const { jobId } = params;
 
     // Job stornieren
     await bulkExportService.cancelJob(jobId, context.organizationId);
 
     return APIMiddleware.successResponse({ message: 'Export-Job wurde storniert' });
-  })(request, { params });
-}
+  },
+  []
+);
 
 /**
  * OPTIONS-Handler für CORS Preflight
