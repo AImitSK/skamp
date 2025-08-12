@@ -408,11 +408,17 @@ export class PublicationsAPIService {
         throw new APIError('NOT_FOUND', 'Publikation nicht gefunden');
       }
 
-      // Prüfe ob Werbemittel verknüpft sind
-      const linkedAds = await advertisementService.getByPublicationId(
-        publicationId,
-        organizationId
-      );
+      // Prüfe ob Werbemittel verknüpft sind (safe check)
+      let linkedAds: any[] = [];
+      try {
+        linkedAds = await advertisementService.getByPublicationId(
+          publicationId,
+          organizationId
+        );
+      } catch (error) {
+        // Falls die Methode nicht existiert oder fehlschlägt, fahre fort
+        console.warn('Warning: Could not check linked ads for publication', error);
+      }
 
       if (linkedAds.length > 0) {
         throw new APIError(

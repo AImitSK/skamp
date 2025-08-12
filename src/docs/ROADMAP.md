@@ -19,11 +19,9 @@ Diese Roadmap zeigt unsere Vision und geplante Entwicklung für SKAMP - Die Onli
 
 ## 🎯 Vision & Mission
 
-### Vision
-SKAMP wird die führende PR-Management-Plattform im deutschsprachigen Raum - die erste Wahl für PR-Agenturen und Kommunikationsabteilungen, die ihre Medienarbeit digitalisieren und optimieren wollen.
 
-### Mission
-Wir vereinfachen und automatisieren PR-Workflows durch intelligente Tools, nahtlose Integrationen und KI-gestützte Funktionen, damit PR-Profis sich auf das konzentrieren können, was wirklich zählt: Beziehungen und Stories.
+
+
 
 ### Kernprinzipien
 1. **Benutzerfreundlichkeit**: Intuitive Oberfläche, die Spaß macht
