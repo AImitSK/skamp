@@ -4,6 +4,8 @@ import {
   advertisementService,
   mediaKitService 
 } from '@/lib/firebase/library-service';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase/build-safe-init';
 import { companyServiceEnhanced } from '@/lib/firebase/company-service-enhanced';
 import {
   APIPublication,
@@ -402,10 +404,27 @@ export class PublicationsAPIService {
     userId: string
   ): Promise<void> {
     try {
-      // Prüfe ob Publikation existiert
-      const publication = await publicationService.getById(publicationId, organizationId);
-      if (!publication) {
-        throw new APIError('NOT_FOUND', 'Publikation nicht gefunden');
+      // Prüfe ob Publikation existiert (safe check)
+      let publication: any = null;
+      try {
+        publication = await publicationService.getById(publicationId, organizationId);
+      } catch (error) {
+        console.warn('Could not fetch publication for delete check:', error);
+        // Fahre fort, auch wenn Check fehlschlägt
+      }
+      
+      if (publication === null) {
+        // Versuche alternative Abfrage über getPublications
+        try {
+          const allPublications = await this.getPublications(organizationId, { limit: 1000 });
+          const found = allPublications.publications?.find(p => p.id === publicationId);
+          if (!found) {
+            throw new APIError('NOT_FOUND', 'Publikation nicht gefunden');
+          }
+          publication = found;
+        } catch (error) {
+          throw new APIError('NOT_FOUND', 'Publikation nicht gefunden');
+        }
       }
 
       // Prüfe ob Werbemittel verknüpft sind (safe check)
@@ -427,15 +446,38 @@ export class PublicationsAPIService {
         );
       }
 
-      // Soft delete (safe)
+      // Soft delete (safe check)  
       try {
-        await publicationService.delete(
-          publicationId,
-          { organizationId, userId }
-        );
+        if (publicationService.delete) {
+          await publicationService.delete(
+            publicationId,
+            { organizationId, userId }
+          );
+        } else {
+          // Fallback: Verwende Firestore direkt für Delete
+          const publicationRef = doc(db, 'publications', publicationId);
+          await updateDoc(publicationRef, {
+            status: 'deleted',
+            deletedAt: serverTimestamp(),
+            deletedBy: userId,
+            updatedAt: serverTimestamp()
+          });
+        }
       } catch (deleteError) {
-        console.error('Publication delete service error:', deleteError);
-        throw new APIError('INTERNAL_SERVER_ERROR', 'Fehler beim Löschen der Publikation');
+        console.error('Publication delete error:', deleteError);
+        // Safe fallback: Markiere als deleted
+        try {
+          const publicationRef = doc(db, 'publications', publicationId);
+          await updateDoc(publicationRef, {
+            status: 'deleted',
+            deletedAt: serverTimestamp(),
+            deletedBy: userId,
+            updatedAt: serverTimestamp()
+          });
+        } catch (fallbackError) {
+          console.error('Publication delete fallback failed:', fallbackError);
+          throw new APIError('INTERNAL_SERVER_ERROR', 'Fehler beim Löschen der Publikation');
+        }
       }
 
       // Triggere Webhook-Event (safe)
