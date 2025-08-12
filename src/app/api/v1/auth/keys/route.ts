@@ -1,6 +1,7 @@
 // src/app/api/v1/auth/keys/route.ts
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { APIMiddleware, RequestParser } from '@/lib/api/api-middleware';
+import { withAuth } from '@/lib/api/auth-middleware';
 import { APIKeyCreateRequest } from '@/types/api';
 import { apiAuthService } from '@/lib/api/api-auth-service';
 
@@ -28,8 +29,8 @@ function getOrganizationKeys(organizationId: string): any[] {
   return keys.filter(key => !deletedKeys.has(key.id));
 }
 
-export const GET = APIMiddleware.withFirebaseAuth(
-  async (request: NextRequest, context) => {
+export async function GET(request: NextRequest) {
+  return withAuth(request, async (request, context) => {
     console.log('=== API KEYS ROUTE GET DEBUG ===');
     console.log('Request URL:', request.url);
     console.log('=== AUTH CONTEXT DEBUG (FIREBASE) ===');
@@ -80,15 +81,15 @@ export const GET = APIMiddleware.withFirebaseAuth(
       console.log('Mock keys count:', apiKeys.length);
       return APIMiddleware.successResponse(apiKeys);
     }
-  }
-);
+  });
+}
 
 /**
  * POST /api/v1/auth/keys  
  * Erstelle neuen API-Key
  */
-export const POST = APIMiddleware.withFirebaseAuth(
-  async (request: NextRequest, context) => {
+export async function POST(request: NextRequest) {
+  return withAuth(request, async (request, context) => {
     console.log('=== API KEYS ROUTE POST DEBUG ===');
     console.log('Request URL:', request.url);
     console.log('=== AUTH CONTEXT DEBUG (FIREBASE) ===');
@@ -189,8 +190,8 @@ export const POST = APIMiddleware.withFirebaseAuth(
         message: 'Failed to create API key'
       });
     }
-  }
-);
+  });
+}
 
 /**
  * OPTIONS-Handler für CORS Preflight
