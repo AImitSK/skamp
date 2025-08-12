@@ -59,7 +59,7 @@ export const GET = APIMiddleware.withAuth(
       return APIMiddleware.handleError(error);
     }
   },
-  ['webhooks:manage']
+  ['companies:read', 'contacts:read']
 );
 
 /**
@@ -92,7 +92,7 @@ export const POST = APIMiddleware.withAuth(
       return APIMiddleware.handleError(error);
     }
   },
-  ['webhooks:manage']
+  ['companies:read', 'contacts:read']
 );
 
 /**
