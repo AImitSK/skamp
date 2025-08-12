@@ -105,13 +105,14 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
         throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const newKey = await response.json();
+      const response_data = await response.json();
+      
+      // API gibt {success: true, data: {...}} zurück
+      const newKey = response_data.data || response_data;
       
       // Return the new key for the modal
       // Don't refresh here - wait for modal to close
-      const result = { ...newKey };
-      
-      return result;
+      return newKey;
     } catch (err) {
       console.error('Failed to create API key:', err);
       setError(err instanceof Error ? err.message : 'Failed to create API key');
