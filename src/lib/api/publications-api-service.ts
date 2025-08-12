@@ -510,48 +510,77 @@ export class PublicationsAPIService {
     userId: string
   ): Promise<APIPublicationsStatistics> {
     try {
-      // Hole Statistics (safe)
-      let stats: any;
-      try {
-        stats = await publicationService.getStatistics(organizationId);
-      } catch (error) {
-        console.warn('Warning: Could not get publication statistics:', error);
-        // Fallback stats
-        stats = {
-          totalPublications: 0,
-          byType: {},
-          byCountry: {},
-          byLanguage: {},
-          totalCirculation: 0,
-          totalOnlineReach: 0
-        };
-      }
-      
-      // Hole Top-Publisher (safe check)
-      let companies: any[] = [];
-      try {
-        companies = await companyServiceEnhanced.getAll(organizationId);
-      } catch (error) {
-        console.warn('Warning: Could not fetch companies for statistics:', error);
-        companies = [];
-      }
-      const publisherStats = new Map<string, { name: string; count: number }>();
-      
-      // Hole Publications (safe)
+      // Hole Publications über bestehende getPublications Methode
       let publications: any[] = [];
+      let totalCount = 0;
+      
       try {
-        publications = await publicationService.getAll(organizationId);
+        const publicationsResponse = await this.getPublications(organizationId, { 
+          limit: 1000 // Hole alle für Statistiken
+        });
+        publications = publicationsResponse.publications || [];
+        totalCount = publicationsResponse.total || 0;
       } catch (error) {
         console.warn('Warning: Could not fetch publications for statistics:', error);
         publications = [];
+        totalCount = 0;
       }
+      
+      const publisherStats = new Map<string, { name: string; count: number }>();
+      // Baue Statistiken aus den Publications
+      const byType: Record<string, number> = {};
+      const byCountry: Record<string, number> = {};
+      const byLanguage: Record<string, number> = {};
+      const byFormat: Record<PublicationFormat, number> = {
+        print: 0,
+        online: 0,
+        both: 0,
+        broadcast: 0
+      };
+      
+      let totalCirculation = 0;
+      let totalOnlineReach = 0;
+      
       publications.forEach(pub => {
-        const current = publisherStats.get(pub.publisherId) || {
-          name: pub.publisherName || 'Unbekannt',
+        // Publisher Stats
+        const publisherId = pub.publisher?.id || pub.publisherId || 'unknown';
+        const publisherName = pub.publisher?.name || pub.publisherName || 'Unbekannt';
+        const current = publisherStats.get(publisherId) || {
+          name: publisherName,
           count: 0
         };
         current.count++;
-        publisherStats.set(pub.publisherId, current);
+        publisherStats.set(publisherId, current);
+        
+        // Type Stats
+        const type = pub.type || 'unknown';
+        byType[type] = (byType[type] || 0) + 1;
+        
+        // Country Stats
+        if (pub.countries && Array.isArray(pub.countries)) {
+          pub.countries.forEach((country: string) => {
+            byCountry[country] = (byCountry[country] || 0) + 1;
+          });
+        }
+        
+        // Language Stats
+        if (pub.languages && Array.isArray(pub.languages)) {
+          pub.languages.forEach((language: string) => {
+            byLanguage[language] = (byLanguage[language] || 0) + 1;
+          });
+        }
+        
+        // Format Stats
+        const format = pub.format || 'online';
+        byFormat[format] = (byFormat[format] || 0) + 1;
+        
+        // Circulation/Reach
+        if (pub.metrics?.circulation) {
+          totalCirculation += Number(pub.metrics.circulation) || 0;
+        }
+        if (pub.metrics?.monthlyUniqueVisitors) {
+          totalOnlineReach += Number(pub.metrics.monthlyUniqueVisitors) || 0;
+        }
       });
 
       const topPublishers = Array.from(publisherStats.entries())
@@ -562,9 +591,11 @@ export class PublicationsAPIService {
       // Top Focus Areas
       const focusAreaCounts = new Map<string, number>();
       publications.forEach(pub => {
-        pub.focusAreas.forEach(area => {
-          focusAreaCounts.set(area, (focusAreaCounts.get(area) || 0) + 1);
-        });
+        if (pub.focusAreas && Array.isArray(pub.focusAreas)) {
+          pub.focusAreas.forEach((area: string) => {
+            focusAreaCounts.set(area, (focusAreaCounts.get(area) || 0) + 1);
+          });
+        }
       });
 
       const topFocusAreas = Array.from(focusAreaCounts.entries())
@@ -572,26 +603,14 @@ export class PublicationsAPIService {
         .sort((a, b) => b.count - a.count)
         .slice(0, 10);
 
-      // Format counts
-      const byFormat: Record<PublicationFormat, number> = {
-        print: 0,
-        online: 0,
-        both: 0,
-        broadcast: 0
-      };
-      
-      publications.forEach(pub => {
-        byFormat[pub.format] = (byFormat[pub.format] || 0) + 1;
-      });
-
       return {
-        totalPublications: stats.totalPublications,
-        byType: stats.byType,
-        byCountry: stats.byCountry,
-        byLanguage: stats.byLanguage,
+        totalPublications: totalCount,
+        byType,
+        byCountry,
+        byLanguage,
         byFormat,
-        totalCirculation: stats.totalCirculation,
-        totalOnlineReach: stats.totalOnlineReach,
+        totalCirculation,
+        totalOnlineReach,
         verifiedCount: publications.filter(p => p.verified).length,
         activeCount: publications.filter(p => p.status === 'active').length,
         topPublishers,
