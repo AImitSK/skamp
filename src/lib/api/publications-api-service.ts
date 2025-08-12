@@ -468,7 +468,22 @@ export class PublicationsAPIService {
     userId: string
   ): Promise<APIPublicationsStatistics> {
     try {
-      const stats = await publicationService.getStatistics(organizationId);
+      // Hole Statistics (safe)
+      let stats: any;
+      try {
+        stats = await publicationService.getStatistics(organizationId);
+      } catch (error) {
+        console.warn('Warning: Could not get publication statistics:', error);
+        // Fallback stats
+        stats = {
+          totalPublications: 0,
+          byType: {},
+          byCountry: {},
+          byLanguage: {},
+          totalCirculation: 0,
+          totalOnlineReach: 0
+        };
+      }
       
       // Hole Top-Publisher (safe check)
       let companies: any[] = [];
@@ -480,7 +495,14 @@ export class PublicationsAPIService {
       }
       const publisherStats = new Map<string, { name: string; count: number }>();
       
-      const publications = await publicationService.getAll(organizationId);
+      // Hole Publications (safe)
+      let publications: any[] = [];
+      try {
+        publications = await publicationService.getAll(organizationId);
+      } catch (error) {
+        console.warn('Warning: Could not fetch publications for statistics:', error);
+        publications = [];
+      }
       publications.forEach(pub => {
         const current = publisherStats.get(pub.publisherId) || {
           name: pub.publisherName || 'Unbekannt',
