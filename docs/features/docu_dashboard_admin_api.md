@@ -38,9 +38,6 @@ Die CeleroPress API ist eine vollständige Enterprise-Grade API-Platform für PR
 
 **API Endpoints:**
 - `GET /api/v1/auth/test` - API Key Validation
-- `GET /api/v1/auth/keys` - List API Keys  
-- `POST /api/v1/auth/keys` - Create API Key
-- `DELETE /api/v1/auth/keys/:id` - Revoke API Key
 
 ### ✅ **Phase 2: CRM API Endpoints**
 **Status:** 🟢 Production Ready
@@ -221,10 +218,7 @@ Die CeleroPress API ist eine vollständige Enterprise-Grade API-Platform für PR
 ```
 /api/v1/
 ├── /auth/                    ✅ Authentication & API Keys
-│   ├── GET  /test           # API Key Validation
-│   ├── GET  /keys           # List API Keys
-│   ├── POST /keys           # Create API Key
-│   └── DELETE /keys/:id     # Revoke API Key
+│   └── GET  /test           # API Key Validation
 ├── /contacts/               ✅ CRM Contacts Management
 │   ├── GET/POST /           # List/Create Contacts + Bulk
 │   ├── GET /:id             # Get Contact Details

@@ -59,51 +59,35 @@ export async function GET(request: NextRequest) {
 ## ALLE API-Routen (27 Route-Dateien gefunden)
 
 ### Auth Routes
-- [ ] GET /api/v1/auth/test ✅ (FUNKTIONIERT)
-- [x] POST /api/v1/auth/keys ✅ (REPARIERT - Pattern auf APIMiddleware.withAuth umgestellt)
-- [ ] GET/PUT/DELETE /api/v1/auth/keys/[keyId] ❓
+- [x] GET /api/v1/auth/test ✅ (FUNKTIONIERT)
+- [x] ~~POST /api/v1/auth/keys~~ **ENTFERNT** (Admin-Only Route, nicht für Kunden-API)
+- [x] ~~GET/PUT/DELETE /api/v1/auth/keys/[keyId]~~ **ENTFERNT** (Admin-Only Route, nicht für Kunden-API)
 
 ### Contact Routes  
-- [ ] GET /api/v1/contacts ✅ (FUNKTIONIERT)
-- [x] POST /api/v1/contacts ✅ (REPARIERT - API Request Transformation repariert)
-- [x] GET /api/v1/contacts/[contactId] ✅ (REPARIERT - getById statt get verwenden)
-- [x] PUT /api/v1/contacts/[contactId] ✅ (REPARIERT - Next.js 15 Parameter Handling repariert)
-- [x] DELETE /api/v1/contacts/[contactId] ✅ (REPARIERT - softDelete statt delete verwenden)
+- [x] GET /api/v1/contacts ✅ **FUNKTIONIERT** (10 Kontakte, 200 OK)
+- [ ] POST /api/v1/contacts ❓
+- [ ] GET /api/v1/contacts/[contactId] ❓
+- [ ] PUT /api/v1/contacts/[contactId] ❓
+- [ ] DELETE /api/v1/contacts/[contactId] ❓
 
-### Company Routes ✅ VOLLSTÄNDIG FUNKTIONSFÄHIG!
-- [x] GET /api/v1/companies ✅ (REPARIERT - 3 kritische Probleme gelöst, funktioniert perfekt!)
-- [x] POST /api/v1/companies ✅ (REPARIERT - Safe Service CREATE implementiert, funktioniert perfekt!)
-- [x] GET /api/v1/companies/[companyId] ✅ (REPARIERT - Safe Service GET BY ID implementiert, funktioniert perfekt!)
-- [x] PUT /api/v1/companies/[companyId] ✅ (REPARIERT - Safe Service UPDATE implementiert, funktioniert perfekt!)
-- [x] DELETE /api/v1/companies/[companyId] ✅ (REPARIERT - Safe Service SOFT DELETE implementiert, funktioniert perfekt!)
+### Company Routes
+- [ ] GET /api/v1/companies ❓
+- [ ] POST /api/v1/companies ❓
+- [ ] GET /api/v1/companies/[companyId] ❓
+- [ ] PUT /api/v1/companies/[companyId] ❓
+- [ ] DELETE /api/v1/companies/[companyId] ❓
 
-**🎉 ALLE COMPANIES ROUTES ERFOLGREICH REPARIERT - VOLLSTÄNDIGE CRUD-FUNKTIONALITÄT!**
+### Publication Routes
+- [ ] GET /api/v1/publications ❓
+- [ ] POST /api/v1/publications ❓  
+- [ ] GET /api/v1/publications/[publicationId] ❓
+- [ ] PUT /api/v1/publications/[publicationId] ❓
+- [ ] DELETE /api/v1/publications/[publicationId] ❓
+- [ ] GET /api/v1/publications/statistics ❓
 
-### Publication Routes ✅ FAST VOLLSTÄNDIG FUNKTIONSFÄHIG!
-- [x] GET /api/v1/publications ✅ (REPARIERT - Timestamp Transformation Bug gefixt)
-- [x] POST /api/v1/publications ✅ (FUNKTIONIERT - Test Publication erstellt)  
-- [x] GET /api/v1/publications/[publicationId] ✅ (FUNKTIONIERT - Single Publication abruf)
-- [ ] PUT /api/v1/publications/[publicationId] ❓ (Nicht getestet)
-- [ ] DELETE /api/v1/publications/[publicationId] ❓ (Nicht getestet) 
-- [x] GET /api/v1/publications/statistics 🔴 (FEHLER - wahrscheinlich gleiches Timestamp-Problem)
-
-**✅ PROBLEM GELÖST:** `TypeError: a.verifiedAt?.toISOString is not a function`
-- Firestore Timestamps mit `.toDate()?.toISOString()` chain repariert
-- companyServiceEnhanced durch Safe Service ersetzt
-
-**🎉 3 VON 4 KERN-ROUTES FUNKTIONIEREN PERFEKT!**
-
-### Media Assets Routes (Werbemittel) ✅ FUNKTIONSFÄHIG!
-- [x] GET /api/v1/media-assets ✅ (REPARIERT - Timestamp Transformation Bugs in transformToAPIMediaAsset gefixt)
-- [x] POST /api/v1/media-assets ✅ (FUNKTIONIERT - Media Asset erfolgreich erstellt)
-- [ ] PUT/DELETE für einzelne Assets existieren nicht (by design)
-
-**✅ PROBLEM GELÖST:** Gleicher Timestamp-Bug wie bei Publications
-- `asset.availability.startDate?.toISOString()` → Safe Chain Pattern
-- `asset.createdAt.toISOString()` → Safe Chain Pattern  
-- Alle Timestamps in transformToAPIMediaAsset und transformToAPIMediaKit repariert
-
-**🎉 MEDIA ASSETS API VOLLSTÄNDIG FUNKTIONSFÄHIG!**
+### Media Assets Routes (Werbemittel)
+- [ ] GET /api/v1/media-assets ❓
+- [ ] POST /api/v1/media-assets ❓
 
 ### Webhook Routes
 - [ ] GET /api/v1/webhooks ❓

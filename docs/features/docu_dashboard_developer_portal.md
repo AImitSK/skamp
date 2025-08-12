@@ -13,7 +13,7 @@ Das Developer Portal (`/dashboard/developer`) ist eine vollständige Developer E
 
 - **🏠 Developer Dashboard** - Zentrale Übersicht und Navigation
 - **📚 Interactive API Documentation** - Swagger UI mit Live-Testing
-- **🛠️ API Playground** - Browser-basiertes API-Testing-Tool  
+  
 - **📦 SDKs & Libraries** - Multi-Language Client Libraries
 - **💡 Code Examples** - Integration-Beispiele für populäre Plattformen
 - **📊 Analytics Dashboard** - API-Nutzung und Performance-Monitoring

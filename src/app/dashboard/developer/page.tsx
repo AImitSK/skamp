@@ -7,11 +7,9 @@ import {
   DocumentTextIcon, 
   CodeBracketIcon, 
   CloudArrowDownIcon,
-  PlayIcon,
   ChartBarIcon,
   KeyIcon,
-  BookOpenIcon,
-  BeakerIcon
+  BookOpenIcon
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 
@@ -94,13 +92,6 @@ export default function DeveloperPortal() {
       color: 'bg-blue-500'
     },
     {
-      title: 'API Playground',
-      description: 'Teste API-Endpunkte direkt im Browser',
-      icon: BeakerIcon,
-      href: '/dashboard/developer/playground',
-      color: 'bg-purple-500'
-    },
-    {
       title: 'SDKs & Libraries',
       description: 'Vorgefertigte Client-Libraries für verschiedene Sprachen',
       icon: CodeBracketIcon,
@@ -167,11 +158,11 @@ export default function DeveloperPortal() {
                 OpenAPI Spec
               </a>
               <Link
-                href="/dashboard/developer/playground"
+                href="/dashboard/developer/docs"
                 className="inline-flex items-center bg-primary hover:bg-primary-hover text-white border-0 rounded-md px-4 py-2 text-sm font-medium"
               >
-                <PlayIcon className="h-4 w-4 mr-2" />
-                API Playground
+                <DocumentTextIcon className="h-4 w-4 mr-2" />
+                API Dokumentation
               </Link>
             </div>
           </div>

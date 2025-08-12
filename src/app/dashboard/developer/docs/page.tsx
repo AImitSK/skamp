@@ -36,13 +36,13 @@ export default function APIDocumentation() {
   }, [user]);
 
   const requestInterceptor = (req: any) => {
-    // Füge Authorization Header hinzu wenn API Key vorhanden
+    // Füge Authorization Header hinzu wenn API Key vorhanden (KEIN Bearer für unsere API!)
     if (apiKey) {
-      req.headers['Authorization'] = `Bearer ${apiKey}`;
+      req.headers['Authorization'] = apiKey;
     }
     // Setze Base URL für API calls, aber nicht für OpenAPI spec
     if (req.url.startsWith('/') && !req.url.includes('openapi.yaml')) {
-      req.url = `${window.location.origin}/api${req.url}`;
+      req.url = `${window.location.origin}${req.url}`;
     }
     return req;
   };
