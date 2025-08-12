@@ -69,6 +69,7 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
   // Form State
   const [name, setName] = useState('');
   const [selectedPermissions, setSelectedPermissions] = useState<Set<APIPermission>>(new Set());
+  const [selectAllStates, setSelectAllStates] = useState<Record<string, boolean>>({});
   const [expiresInDays, setExpiresInDays] = useState<number | null>(null);
   const [requestsPerHour, setRequestsPerHour] = useState(1000);
   const [allowedIPs, setAllowedIPs] = useState('');
@@ -84,6 +85,56 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
       return newSet;
     });
   };
+
+  const handleSelectAllCategory = (category: string, checked: boolean) => {
+    const categoryPermissions = AVAILABLE_PERMISSIONS
+      .filter(p => p.category === category)
+      .map(p => p.value);
+    
+    setSelectedPermissions(prev => {
+      const newSet = new Set(prev);
+      categoryPermissions.forEach(permission => {
+        if (checked) {
+          newSet.add(permission);
+        } else {
+          newSet.delete(permission);
+        }
+      });
+      return newSet;
+    });
+    
+    setSelectAllStates(prev => ({ ...prev, [category]: checked }));
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedPermissions(new Set(AVAILABLE_PERMISSIONS.map(p => p.value)));
+      const allCategories = [...new Set(AVAILABLE_PERMISSIONS.map(p => p.category))];
+      const newStates: Record<string, boolean> = {};
+      allCategories.forEach(cat => { newStates[cat] = true; });
+      setSelectAllStates(newStates);
+    } else {
+      setSelectedPermissions(new Set());
+      setSelectAllStates({});
+    }
+  };
+
+  // Update category checkboxes when individual permissions change
+  useEffect(() => {
+    const categories = [...new Set(AVAILABLE_PERMISSIONS.map(p => p.category))];
+    const newStates: Record<string, boolean> = {};
+    
+    categories.forEach(category => {
+      const categoryPermissions = AVAILABLE_PERMISSIONS
+        .filter(p => p.category === category)
+        .map(p => p.value);
+      
+      const allSelected = categoryPermissions.every(p => selectedPermissions.has(p));
+      newStates[category] = allSelected;
+    });
+    
+    setSelectAllStates(newStates);
+  }, [selectedPermissions]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -242,22 +293,48 @@ export function CreateAPIKeyModal({ onClose, onCreate }: CreateAPIKeyModalProps)
                     Wähle die Aktionen aus, die mit diesem API-Key ausgeführt werden dürfen.
                   </Text>
                   
+                  {/* Master Select All */}
+                  <div className="mb-4 p-3 bg-gray-50 rounded-md">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedPermissions.size === AVAILABLE_PERMISSIONS.length}
+                        onChange={(e) => handleSelectAll(e.target.checked)}
+                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                      />
+                      <span className="font-medium">Alle Berechtigungen erlauben</span>
+                    </label>
+                  </div>
+                  
                   <div className="space-y-6">
                     {Object.entries(groupedPermissions).map(([category, permissions]) => (
-                      <div key={category}>
-                        <Text className="font-medium text-gray-900 mb-3">{category}</Text>
-                        <div className="space-y-2 pl-4">
+                      <div key={category} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <Text className="font-medium text-gray-900">{category}</Text>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={selectAllStates[category] || false}
+                              onChange={(e) => handleSelectAllCategory(category, e.target.checked)}
+                              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                            />
+                            <span className="text-sm text-gray-600">Alle erlauben</span>
+                          </label>
+                        </div>
+                        <div className="space-y-2 pl-2">
                           {permissions.map((permission) => (
-                            <CheckboxField key={permission.value} className="flex items-start gap-2">
-                              <Checkbox
+                            <label key={permission.value} className="flex items-start gap-3 cursor-pointer">
+                              <input
+                                type="checkbox"
                                 checked={selectedPermissions.has(permission.value)}
-                                onChange={(checked) => handlePermissionChange(permission.value, checked)}
+                                onChange={(e) => handlePermissionChange(permission.value, e.target.checked)}
+                                className="h-4 w-4 mt-0.5 rounded border-gray-300 text-primary focus:ring-primary"
                               />
                               <div className="min-w-0 flex-1">
                                 <div className="font-medium break-words">{permission.label}</div>
                                 <Text className="text-sm text-gray-500 break-words">{permission.description}</Text>
                               </div>
-                            </CheckboxField>
+                            </label>
                           ))}
                         </div>
                       </div>

@@ -26,26 +26,62 @@ let db: Firestore;
 let storage: FirebaseStorage;
 let functions: Functions;
 
-try {
-  // Versuche echte Konfiguration zu laden
-  const { firebaseConfig } = require('./config');
+// Dynamische Konfiguration basierend auf Umgebung
+const getFirebaseConfig = () => {
+  // Prüfe ob wir zur Build-Zeit sind
+  const isBuildTime = typeof window === 'undefined' && !process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
   
-  console.log('=== FIREBASE BUILD-SAFE-INIT DEBUG ===');
-  console.log('Config loaded:', Object.keys(firebaseConfig).map(key => 
-    key + ': ' + (firebaseConfig[key] ? '***SET***' : 'MISSING')
-  ).join(', '));
-  
-  // Prüfe ob alle erforderlichen Config-Werte gesetzt sind
-  const requiredFields = ['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId'];
-  const missingFields = requiredFields.filter(field => !firebaseConfig[field] || firebaseConfig[field] === 'build-placeholder');
-  
-  if (missingFields.length > 0) {
-    console.error('Missing Firebase config fields:', missingFields);
-    throw new Error('Firebase config incomplete');
+  if (isBuildTime) {
+    console.log('Build-time detected, using placeholder config');
+    return defaultConfig;
   }
   
+  // Runtime Konfiguration
+  const runtimeConfig = {
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '',
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '',
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '',
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || ''
+  };
+  
+  console.log('=== FIREBASE BUILD-SAFE-INIT DEBUG ===');
+  console.log('Runtime config loaded:', Object.keys(runtimeConfig).map(key => 
+    key + ': ' + (runtimeConfig[key] ? '***SET***' : 'MISSING')
+  ).join(', '));
+  
+  return runtimeConfig;
+};
+
+try {
+  const firebaseConfig = getFirebaseConfig();
+  
+  // Initialize Firebase
   if (!getApps().length) {
     app = initializeApp(firebaseConfig);
+  } else {
+    app = getApp();
+  }
+  
+  // Initialize services
+  auth = getAuth(app);
+  db = getFirestore(app);
+  storage = getStorage(app);
+  functions = getFunctions(app);
+  
+  console.log('Firebase services initialized successfully');
+} catch (error) {
+  console.error('Firebase initialization error:', error);
+  // Re-throw error in production to catch configuration issues
+  if (process.env.NODE_ENV === 'production') {
+    throw error;
+  }
+  
+  // Development fallback
+  console.warn('Using fallback config for development');
+  if (!getApps().length) {
+    app = initializeApp(defaultConfig);
   } else {
     app = getApp();
   }
@@ -54,23 +90,6 @@ try {
   db = getFirestore(app);
   storage = getStorage(app);
   functions = getFunctions(app);
-  
-  console.log('Firebase services initialized successfully');
-} catch (error) {
-  // Fallback für Build-Zeit ohne Umgebungsvariablen
-  console.warn('Firebase config not available during build, using placeholder:', error);
-  
-  if (!getApps().length) {
-    app = initializeApp(defaultConfig);
-  } else {
-    app = getApp();
-  }
-  
-  // Mock-Services für Build-Zeit
-  auth = {} as Auth;
-  db = {} as Firestore;
-  storage = {} as FirebaseStorage;
-  functions = {} as Functions;
 }
 
 export { app, auth, db, storage, functions };

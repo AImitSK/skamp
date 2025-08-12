@@ -160,17 +160,29 @@ export class APIAuthService {
     const keyHash = this.hashAPIKey(apiKey);
     console.log('Key hash:', keyHash.substring(0, 16) + '...');
     
-    // Suche API-Key in Firestore
-    console.log('Querying Firestore collection:', this.collectionName);
-    const q = query(
-      collection(db, this.collectionName),
-      where('keyHash', '==', keyHash),
-      where('isActive', '==', true)
-    );
+    // Prüfe ob Firestore verfügbar ist
+    if (!db || typeof db === 'object' && Object.keys(db).length === 0) {
+      console.error('ERROR: Firestore not properly initialized');
+      throw new APIError(500, API_ERROR_CODES.INTERNAL_ERROR, 'Database connection error');
+    }
     
-    const snapshot = await getDocs(q);
-    console.log('Firestore query result - empty:', snapshot.empty);
-    console.log('Firestore query result - size:', snapshot.size);
+    let snapshot;
+    try {
+      // Suche API-Key in Firestore
+      console.log('Querying Firestore collection:', this.collectionName);
+      const q = query(
+        collection(db, this.collectionName),
+        where('keyHash', '==', keyHash),
+        where('isActive', '==', true)
+      );
+      
+      snapshot = await getDocs(q);
+      console.log('Firestore query result - empty:', snapshot.empty);
+      console.log('Firestore query result - size:', snapshot.size);
+    } catch (firestoreError: any) {
+      console.error('Firestore query error:', firestoreError);
+      throw new APIError(500, API_ERROR_CODES.INTERNAL_ERROR, 'Database query failed');
+    }
     
     if (snapshot.empty) {
       console.log('ERROR: API key not found in Firestore');

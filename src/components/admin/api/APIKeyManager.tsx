@@ -31,7 +31,6 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set());
   const [deleteConfirm, setDeleteConfirm] = useState<{ keyId: string; keyName: string } | null>(null);
 
   useEffect(() => {
@@ -157,17 +156,6 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
     }
   };
 
-  const toggleKeyVisibility = (keyId: string) => {
-    setVisibleKeys(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(keyId)) {
-        newSet.delete(keyId);
-      } else {
-        newSet.add(keyId);
-      }
-      return newSet;
-    });
-  };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -272,19 +260,10 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
                     </div>
                     <div className="flex items-center gap-2 mt-2">
                       <Text className="text-sm text-gray-500 font-mono">
-                        {visibleKeys.has(apiKey.id) ? 'cp_test_example123...' : apiKey.keyPreview}
+                        {apiKey.keyPreview}
                       </Text>
                       <button
-                        onClick={() => toggleKeyVisibility(apiKey.id)}
-                        className="p-2 hover:bg-gray-100 rounded-md"
-                      >
-                        {visibleKeys.has(apiKey.id) ? 
-                          <EyeSlashIcon className="h-4 w-4" /> : 
-                          <EyeIcon className="h-4 w-4" />
-                        }
-                      </button>
-                      <button
-                        onClick={() => copyToClipboard(visibleKeys.has(apiKey.id) ? 'cp_test_example123...' : apiKey.keyPreview)}
+                        onClick={() => copyToClipboard(apiKey.keyPreview)}
                         className="p-2 hover:bg-gray-100 rounded-md"
                       >
                         <ClipboardIcon className="h-4 w-4" />
