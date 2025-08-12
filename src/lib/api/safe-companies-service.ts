@@ -186,6 +186,69 @@ export class SafeCompaniesService {
       throw error;
     }
   }
+
+  async updateCompany(companyId: string, updates: Partial<CompanyEnhanced>): Promise<void> {
+    console.log('=== SAFE COMPANIES SERVICE UPDATE ===');
+    console.log('Updating company ID:', companyId, 'with updates:', updates);
+    
+    try {
+      // Lazy import Firebase services
+      const { doc, updateDoc, Timestamp } = await import('firebase/firestore');
+      const { db } = await import('@/lib/firebase/build-safe-init');
+      
+      if (!db) {
+        throw new Error('Firebase database not initialized');
+      }
+
+      const now = Timestamp.now();
+      
+      // Update in enhanced collection
+      console.log('Updating document in companies_enhanced collection...');
+      await updateDoc(doc(db, 'companies_enhanced', companyId), {
+        ...updates,
+        updatedAt: now
+      });
+      
+      console.log('Company updated successfully');
+      
+    } catch (error) {
+      console.error('=== SAFE COMPANIES SERVICE UPDATE ERROR ===');
+      console.error('Error details:', error);
+      throw error;
+    }
+  }
+
+  async deleteCompany(companyId: string): Promise<void> {
+    console.log('=== SAFE COMPANIES SERVICE DELETE ===');
+    console.log('Soft deleting company ID:', companyId);
+    
+    try {
+      // Lazy import Firebase services
+      const { doc, updateDoc, Timestamp } = await import('firebase/firestore');
+      const { db } = await import('@/lib/firebase/build-safe-init');
+      
+      if (!db) {
+        throw new Error('Firebase database not initialized');
+      }
+
+      const now = Timestamp.now();
+      
+      // Soft delete (mark as inactive)
+      console.log('Soft deleting company...');
+      await updateDoc(doc(db, 'companies_enhanced', companyId), {
+        isActive: false,
+        deletedAt: now,
+        updatedAt: now
+      });
+      
+      console.log('Company soft deleted successfully');
+      
+    } catch (error) {
+      console.error('=== SAFE COMPANIES SERVICE DELETE ERROR ===');
+      console.error('Error details:', error);
+      throw error;
+    }
+  }
 }
 
 export const safeCompaniesService = new SafeCompaniesService();

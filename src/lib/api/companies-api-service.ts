@@ -238,7 +238,42 @@ export class CompaniesAPIService {
     organizationId: string,
     userId: string
   ): Promise<CompanyAPIResponse> {
-    throw new APIError(501, API_ERROR_CODES.NOT_IMPLEMENTED, 'updateCompany not implemented with safe service yet');
+    try {
+      const { safeCompaniesService } = await import('@/lib/api/safe-companies-service');
+      
+      // Prüfe ob Firma existiert
+      const existingCompany = await safeCompaniesService.getCompanyById(companyId, organizationId);
+      if (!existingCompany) {
+        throw new APIError(
+          404,
+          API_ERROR_CODES.RESOURCE_NOT_FOUND,
+          'Company not found'
+        );
+      }
+
+      // Transform Update-Daten
+      const updateData = await this.transformAPIUpdateToCompany(data, organizationId, userId);
+      
+      // Update Firma
+      await safeCompaniesService.updateCompany(companyId, updateData);
+
+      // Hole aktualisierte Firma
+      const updatedCompany = await safeCompaniesService.getCompanyById(companyId, organizationId);
+      if (!updatedCompany) {
+        throw new APIError(500, API_ERROR_CODES.DATABASE_ERROR, 'Failed to retrieve updated company');
+      }
+
+      return await this.transformCompanyToAPIResponse(updatedCompany, organizationId);
+    } catch (error) {
+      if (error instanceof APIError) throw error;
+      
+      console.error('Error updating company:', error);
+      throw new APIError(
+        500,
+        API_ERROR_CODES.DATABASE_ERROR,
+        'Failed to update company'
+      );
+    }
   }
 
   /**
@@ -249,7 +284,31 @@ export class CompaniesAPIService {
     organizationId: string,
     userId: string
   ): Promise<void> {
-    throw new APIError(501, API_ERROR_CODES.NOT_IMPLEMENTED, 'deleteCompany not implemented with safe service yet');
+    try {
+      const { safeCompaniesService } = await import('@/lib/api/safe-companies-service');
+      
+      // Prüfe ob Firma existiert
+      const existingCompany = await safeCompaniesService.getCompanyById(companyId, organizationId);
+      if (!existingCompany) {
+        throw new APIError(
+          404,
+          API_ERROR_CODES.RESOURCE_NOT_FOUND,
+          'Company not found'
+        );
+      }
+
+      // Soft delete
+      await safeCompaniesService.deleteCompany(companyId);
+    } catch (error) {
+      if (error instanceof APIError) throw error;
+      
+      console.error('Error deleting company:', error);
+      throw new APIError(
+        500,
+        API_ERROR_CODES.DATABASE_ERROR,
+        'Failed to delete company'
+      );
+    }
   }
 
   /**
@@ -451,6 +510,42 @@ export class CompaniesAPIService {
       userId,
       createdBy: userId
     };
+  }
+
+  private async transformAPIUpdateToCompany(
+    data: CompanyUpdateRequest,
+    organizationId: string,
+    userId: string
+  ): Promise<Partial<CompanyEnhanced>> {
+    const updateData: Partial<CompanyEnhanced> = {};
+
+    if (data.name !== undefined) updateData.name = data.name.trim();
+    if (data.tradingName !== undefined) updateData.tradingName = data.tradingName?.trim();
+    if (data.legalName !== undefined) updateData.legalName = data.legalName?.trim();
+    if (data.industry !== undefined) updateData.industry = data.industry?.trim();
+    if (data.companySize !== undefined) updateData.companySize = data.companySize?.trim();
+    if (data.companyType !== undefined) updateData.companyType = data.companyType;
+    if (data.founded !== undefined) updateData.founded = data.founded;
+    if (data.website !== undefined) updateData.website = data.website?.trim();
+    if (data.phone !== undefined) updateData.phone = data.phone?.trim();
+    if (data.email !== undefined) updateData.email = data.email?.trim();
+    if (data.address !== undefined) updateData.address = data.address;
+    if (data.mediaType !== undefined) updateData.mediaType = data.mediaType;
+    if (data.coverage !== undefined) updateData.coverage = data.coverage;
+    if (data.circulation !== undefined) updateData.circulation = data.circulation;
+    if (data.audienceSize !== undefined) updateData.audienceSize = data.audienceSize;
+    if (data.linkedinUrl !== undefined) updateData.linkedinUrl = data.linkedinUrl?.trim();
+    if (data.twitterHandle !== undefined) updateData.twitterHandle = data.twitterHandle?.trim();
+    if (data.facebookUrl !== undefined) updateData.facebookUrl = data.facebookUrl?.trim();
+    if (data.instagramHandle !== undefined) updateData.instagramHandle = data.instagramHandle?.trim();
+    if (data.vatNumber !== undefined) updateData.vatNumber = data.vatNumber?.trim();
+    if (data.registrationNumber !== undefined) updateData.registrationNumber = data.registrationNumber?.trim();
+    if (data.tags !== undefined) updateData.tags = data.tags?.map(tag => ({ name: tag }));
+    if (data.notes !== undefined) updateData.notes = data.notes?.trim();
+    if (data.internalNotes !== undefined) updateData.internalNotes = data.internalNotes?.trim();
+    if (data.isActive !== undefined) updateData.isActive = data.isActive;
+
+    return updateData;
   }
 }
 
