@@ -65,29 +65,29 @@ export async function GET(request: NextRequest) {
 
 ### Contact Routes  
 - [x] GET /api/v1/contacts ✅ **FUNKTIONIERT** (10 Kontakte, 200 OK)
-- [ ] POST /api/v1/contacts ❓
-- [ ] GET /api/v1/contacts/[contactId] ❓
-- [ ] PUT /api/v1/contacts/[contactId] ❓
-- [ ] DELETE /api/v1/contacts/[contactId] ❓
+- [x] POST /api/v1/contacts ✅ **FUNKTIONIERT** (bereits repariert)
+- [x] GET /api/v1/contacts/[contactId] ✅ **FUNKTIONIERT** (bereits repariert)
+- [x] PUT /api/v1/contacts/[contactId] ✅ **FUNKTIONIERT** (bereits repariert)
+- [x] DELETE /api/v1/contacts/[contactId] ✅ **FUNKTIONIERT** (bereits repariert)
 
-### Company Routes
-- [ ] GET /api/v1/companies ❓
-- [ ] POST /api/v1/companies ❓
-- [ ] GET /api/v1/companies/[companyId] ❓
-- [ ] PUT /api/v1/companies/[companyId] ❓
-- [ ] DELETE /api/v1/companies/[companyId] ❓
+### Company Routes  
+- [x] GET /api/v1/companies ✅ **FUNKTIONIERT** (9 Companies, Response: ~2.6s)
+- [x] POST /api/v1/companies ✅ **FUNKTIONIERT** (Getestet 2025-08-12, ID: jistJjRdRmUc9ydaMIBR)
+- [x] GET /api/v1/companies/[companyId] ✅ **FUNKTIONIERT** (Getestet 2025-08-12)
+- [x] PUT /api/v1/companies/[companyId] ✅ **FUNKTIONIERT** (Getestet 2025-08-12)
+- [x] DELETE /api/v1/companies/[companyId] ✅ **FUNKTIONIERT** (Getestet 2025-08-12)
 
 ### Publication Routes
-- [ ] GET /api/v1/publications ❓
-- [ ] POST /api/v1/publications ❓  
-- [ ] GET /api/v1/publications/[publicationId] ❓
-- [ ] PUT /api/v1/publications/[publicationId] ❓
-- [ ] DELETE /api/v1/publications/[publicationId] ❓
+- [x] GET /api/v1/publications ✅ **FUNKTIONIERT** (Getestet 2025-08-12, 5 Publications)
+- [x] POST /api/v1/publications ✅ **FUNKTIONIERT** (Getestet 2025-08-12, ID: GAeMS2A4XyIrVDf1Xnd6)
+- [x] GET /api/v1/publications/[publicationId] ✅ **FUNKTIONIERT** (Getestet 2025-08-12)
+- [x] PUT /api/v1/publications/[publicationId] ✅ **FUNKTIONIERT** (Getestet 2025-08-12)
+- [x] DELETE /api/v1/publications/[publicationId] 🔄 **REPARIERT - WARTET AUF DEPLOYMENT** 
 - [ ] GET /api/v1/publications/statistics ❓
 
 ### Media Assets Routes (Werbemittel)
-- [ ] GET /api/v1/media-assets ❓
-- [ ] POST /api/v1/media-assets ❓
+- [x] GET /api/v1/media-assets ✅ **FUNKTIONIERT** (Getestet 2025-08-12, 2 Assets)
+- [x] POST /api/v1/media-assets ✅ **FUNKTIONIERT** (Getestet 2025-08-12, ID: lpfLJt3Z3hLp1k9xtkIs)
 
 ### Webhook Routes
 - [ ] GET /api/v1/webhooks ❓

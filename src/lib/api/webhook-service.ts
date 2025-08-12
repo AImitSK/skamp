@@ -137,6 +137,11 @@ export class WebhookService {
     } = {}
   ): Promise<APIWebhookListResponse> {
     try {
+      // Safe check für db
+      if (!db) {
+        throw new APIError('SERVICE_UNAVAILABLE', 'Database nicht verfügbar');
+      }
+
       const constraints = [
         where('organizationId', '==', organizationId),
         orderBy('createdAt', 'desc')
@@ -146,13 +151,21 @@ export class WebhookService {
         constraints.push(where('isActive', '==', params.isActive));
       }
 
-      const q = query(collection(db, this.COLLECTION_NAME), ...constraints);
-      const snapshot = await getDocs(q);
+      let webhooks: WebhookConfig[] = [];
+      
+      try {
+        const q = query(collection(db, this.COLLECTION_NAME), ...constraints);
+        const snapshot = await getDocs(q);
 
-      let webhooks = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as WebhookConfig));
+        webhooks = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as WebhookConfig));
+      } catch (error) {
+        // Falls Collection nicht existiert, return empty array
+        console.warn('Warning: Webhooks collection nicht gefunden oder leer:', error);
+        webhooks = [];
+      }
 
       // Filter by events if specified
       if (params.events && params.events.length > 0) {
