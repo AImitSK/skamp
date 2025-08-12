@@ -72,8 +72,9 @@ export function APIKeyManager({ className = '' }: APIKeyManagerProps) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const keys = await response.json();
-      setAPIKeys(keys);
+      const result = await response.json();
+      // API gibt {success: true, data: [...]} zurück
+      setAPIKeys(result.data || result || []);
     } catch (err) {
       console.error('Failed to load API keys:', err);
       setError(err instanceof Error ? err.message : 'Failed to load API keys');
