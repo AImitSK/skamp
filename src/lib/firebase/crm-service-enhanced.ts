@@ -13,7 +13,7 @@ import {
   limit,
   QueryConstraint
 } from 'firebase/firestore';
-import { db } from './client-init';
+import { db } from './build-safe-init';
 import { BaseService, QueryOptions, FilterOptions, PaginationResult } from './service-base';
 import { 
   CompanyEnhanced, 

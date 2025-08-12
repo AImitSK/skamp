@@ -1,6 +1,8 @@
 // src/lib/firebase/company-service-enhanced.ts
-import { collection, doc, getDoc, getDocs, query, where, orderBy, limit, addDoc, updateDoc, deleteDoc, Timestamp, writeBatch } from 'firebase/firestore';
-import { db } from './client-init';
+import { collection, doc, getDoc, getDocs, query, where, orderBy, limit, addDoc, updateDoc, deleteDoc, Timestamp, writeBatch, Firestore } from 'firebase/firestore';
+
+// Direct import - runtime safe wird in build-safe-init.ts gehandhabt
+import { db } from './build-safe-init';
 import { Company } from '@/types/crm';
 import { CompanyEnhanced } from '@/types/crm-enhanced';
 import { migrateCompanyToEnhanced, migrateCompanyFromEnhanced } from './crm-migration-helper';
@@ -18,6 +20,8 @@ class CompanyServiceEnhanced {
    */
   async getById(companyId: string, organizationId: string): Promise<CompanyEnhanced | null> {
     try {
+      // db is already imported
+      
       // First try enhanced collection
       const enhancedDoc = await getDoc(doc(db, this.enhancedCollectionName, companyId));
       if (enhancedDoc.exists()) {
@@ -44,13 +48,25 @@ class CompanyServiceEnhanced {
    */
   async getAll(organizationId: string): Promise<CompanyEnhanced[]> {
     try {
+      console.log('=== COMPANY SERVICE DEBUG ===');
+      console.log('enhancedCollectionName:', this.enhancedCollectionName);
+      console.log('organizationId:', organizationId);
+      
+      // Debug DB instance
+      console.log('DB instance debug:');
+      console.log('- DB type:', typeof db);
+      console.log('- DB truthy:', !!db);
+      console.log('- DB constructor:', db?.constructor?.name);
+      console.log('- DB is Firestore instance:', db && typeof db === 'object');
+      
       const results: CompanyEnhanced[] = [];
 
       // Get enhanced companies
+      console.log('Querying enhanced companies...');
       const enhancedQuery = query(
         collection(db, this.enhancedCollectionName),
-        where('organizationId', '==', organizationId),
-        orderBy('name')
+        where('organizationId', '==', organizationId)
+        // orderBy('name') removed - needs composite index [organizationId ASC, name ASC]
       );
       const enhancedSnapshot = await getDocs(enhancedQuery);
       
@@ -59,10 +75,11 @@ class CompanyServiceEnhanced {
       });
 
       // Get legacy companies and migrate them
+      console.log('Querying legacy companies...');
       const legacyQuery = query(
         collection(db, this.collectionName),
-        where('userId', '==', organizationId), // Legacy uses userId
-        orderBy('name')
+        where('userId', '==', organizationId) // Legacy uses userId
+        // orderBy('name') removed - needs composite index [userId ASC, name ASC]
       );
       const legacySnapshot = await getDocs(legacyQuery);
       
@@ -89,6 +106,7 @@ class CompanyServiceEnhanced {
    */
   async create(companyData: Omit<CompanyEnhanced, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     try {
+      // db is already imported
       const now = Timestamp.now();
       const docRef = await addDoc(collection(db, this.enhancedCollectionName), {
         ...companyData,
@@ -107,6 +125,7 @@ class CompanyServiceEnhanced {
    */
   async update(companyId: string, updates: Partial<CompanyEnhanced>): Promise<void> {
     try {
+      // db is already imported
       const docRef = doc(db, this.enhancedCollectionName, companyId);
       await updateDoc(docRef, {
         ...updates,
@@ -123,6 +142,7 @@ class CompanyServiceEnhanced {
    */
   async delete(companyId: string): Promise<void> {
     try {
+      // db is already imported
       // Delete from both collections to ensure cleanup
       await Promise.all([
         deleteDoc(doc(db, this.enhancedCollectionName, companyId)).catch(() => {}),

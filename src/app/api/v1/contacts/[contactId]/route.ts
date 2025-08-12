@@ -9,10 +9,15 @@ import { ContactUpdateRequest } from '@/types/api-crm';
  * Spezifischen Kontakt abrufen
  */
 export const GET = APIMiddleware.withAuth(
-  async (request: NextRequest, context, { params }: { params: { contactId: string } }) => {
+  async (request: NextRequest, context) => {
+    
+    // Extract contactId from URL
+    const url = new URL(request.url);
+    const pathSegments = url.pathname.split('/');
+    const contactId = pathSegments[pathSegments.length - 1];
     
     const contact = await contactsAPIService.getContact(
-      params.contactId,
+      contactId,
       context.organizationId,
       context.userId
     );
@@ -28,14 +33,19 @@ export const GET = APIMiddleware.withAuth(
  * Kontakt aktualisieren
  */
 export const PUT = APIMiddleware.withAuth(
-  async (request: NextRequest, context, { params }: { params: { contactId: string } }) => {
+  async (request: NextRequest, context) => {
+    
+    // Extract contactId from URL
+    const url = new URL(request.url);
+    const pathSegments = url.pathname.split('/');
+    const contactId = pathSegments[pathSegments.length - 1];
     
     // Parse Request Body
     const updateRequest = await RequestParser.parseJSON<ContactUpdateRequest>(request);
     
     // Update contact
     const updatedContact = await contactsAPIService.updateContact(
-      params.contactId,
+      contactId,
       updateRequest,
       context.organizationId,
       context.userId
@@ -52,17 +62,22 @@ export const PUT = APIMiddleware.withAuth(
  * Kontakt löschen
  */
 export const DELETE = APIMiddleware.withAuth(
-  async (request: NextRequest, context, { params }: { params: { contactId: string } }) => {
+  async (request: NextRequest, context) => {
+    
+    // Extract contactId from URL
+    const url = new URL(request.url);
+    const pathSegments = url.pathname.split('/');
+    const contactId = pathSegments[pathSegments.length - 1];
     
     await contactsAPIService.deleteContact(
-      params.contactId,
+      contactId,
       context.organizationId,
       context.userId
     );
     
     return APIMiddleware.successResponse({
       message: 'Contact deleted successfully',
-      contactId: params.contactId
+      contactId: contactId
     });
     
   },

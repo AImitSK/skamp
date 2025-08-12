@@ -1,7 +1,6 @@
 // src/app/api/v1/auth/keys/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import { withAuth, AuthContext } from '@/lib/api/auth-middleware';
-import { APIMiddleware } from '@/lib/api/api-middleware';
+import { NextRequest } from 'next/server';
+import { APIMiddleware, RequestParser } from '@/lib/api/api-middleware';
 import { APIKeyCreateRequest } from '@/types/api';
 import { apiAuthService } from '@/lib/api/api-auth-service';
 
@@ -29,11 +28,10 @@ function getOrganizationKeys(organizationId: string): any[] {
   return keys.filter(key => !deletedKeys.has(key.id));
 }
 
-export async function GET(request: NextRequest) {
-  console.log('=== API KEYS ROUTE GET DEBUG ===');
-  console.log('Request URL:', request.url);
-  
-  return withAuth(request, async (request, context) => {
+export const GET = APIMiddleware.withAuth(
+  async (request: NextRequest, context) => {
+    console.log('=== API KEYS ROUTE GET DEBUG ===');
+    console.log('Request URL:', request.url);
     console.log('=== AUTH CONTEXT DEBUG (FIREBASE) ===');
     console.log('Organization ID:', context.organizationId);
     console.log('User ID:', context.userId);
@@ -62,7 +60,7 @@ export async function GET(request: NextRequest) {
       
       console.log('=== SAFE KEYS PREPARED ===');
       console.log('Safe keys count:', safeKeys.length);
-      return NextResponse.json(safeKeys);
+      return APIMiddleware.successResponse(safeKeys);
     } catch (error) {
       console.error('=== API KEYS ERROR ===');
       console.error('Error type:', error?.constructor?.name);
@@ -73,27 +71,27 @@ export async function GET(request: NextRequest) {
       // Für Live-System: Kein Fallback zu Mock-Daten - returne leere Liste
       if (process.env.VERCEL_ENV === 'production' || process.env.API_ENV === 'production') {
         console.log('=== PRODUCTION: No fallback to mock data ===');
-        return NextResponse.json([]);
+        return APIMiddleware.successResponse([]);
       }
       
       console.log('=== DEVELOPMENT: FALLBACK TO MOCK SYSTEM ===');
       // Fallback zu Mock-Daten nur in Development
       const apiKeys = getOrganizationKeys(context.organizationId);
       console.log('Mock keys count:', apiKeys.length);
-      return NextResponse.json(apiKeys);
+      return APIMiddleware.successResponse(apiKeys);
     }
-  });
-}
+  },
+  [] // Admin route - keine spezifischen Permissions nötig
+);
 
 /**
  * POST /api/v1/auth/keys  
  * Erstelle neuen API-Key
  */
-export async function POST(request: NextRequest) {
-  console.log('=== API KEYS ROUTE POST DEBUG ===');
-  console.log('Request URL:', request.url);
-  
-  return withAuth(request, async (request, context) => {
+export const POST = APIMiddleware.withAuth(
+  async (request: NextRequest, context) => {
+    console.log('=== API KEYS ROUTE POST DEBUG ===');
+    console.log('Request URL:', request.url);
     console.log('=== AUTH CONTEXT DEBUG (FIREBASE) ===');
     console.log('Organization ID:', context.organizationId);
     console.log('User ID:', context.userId);
@@ -101,15 +99,19 @@ export async function POST(request: NextRequest) {
     try {
       console.log('=== PARSING REQUEST BODY ===');
       // Parse Request Body
-      const createRequest = await request.json() as APIKeyCreateRequest;
+      const createRequest = await RequestParser.parseJSON<APIKeyCreateRequest>(request);
       console.log('Create request:', createRequest);
       
       // Validiere erforderliche Felder
-      if (!createRequest.name || !createRequest.permissions || createRequest.permissions.length === 0) {
-        return NextResponse.json(
-          { error: 'Name and permissions are required' },
-          { status: 400 }
-        );
+      RequestParser.validateRequired(createRequest, ['name', 'permissions']);
+      
+      if (!createRequest.permissions || createRequest.permissions.length === 0) {
+        return APIMiddleware.handleError({
+          name: 'APIError',
+          statusCode: 400,
+          errorCode: 'INVALID_REQUEST_DATA',
+          message: 'Permissions array cannot be empty'
+        });
       }
       
       try {
@@ -131,7 +133,7 @@ export async function POST(request: NextRequest) {
         
         console.log('=== FIRESTORE API KEY CREATED ===');
         console.log('New API Key ID:', newAPIKey.id);
-        return NextResponse.json(newAPIKey, { status: 201 });
+        return APIMiddleware.successResponse(newAPIKey, 201);
         
       } catch (firestoreError) {
         console.warn('Firestore API key creation failed:', firestoreError);
@@ -172,7 +174,7 @@ export async function POST(request: NextRequest) {
         orgKeys.push(keyWithoutFullKey);
         mockApiKeys.set(context.organizationId, orgKeys);
         
-        return NextResponse.json(newAPIKey, { status: 201 });
+        return APIMiddleware.successResponse(newAPIKey, 201);
       }
       
     } catch (error) {
@@ -181,24 +183,20 @@ export async function POST(request: NextRequest) {
       console.error('Error message:', error?.message);
       console.error('Error stack:', error?.stack);
       console.error('Full error:', error);
-      return NextResponse.json(
-        { error: 'Failed to create API key' },
-        { status: 500 }
-      );
+      return APIMiddleware.handleError({
+        name: 'APIError',
+        statusCode: 500,
+        errorCode: 'INTERNAL_ERROR',
+        message: 'Failed to create API key'
+      });
     }
-  });
-}
+  },
+  [] // Admin route - keine spezifischen Permissions nötig
+);
 
 /**
  * OPTIONS-Handler für CORS Preflight
  */
 export async function OPTIONS(request: NextRequest) {
-  return new NextResponse(null, { 
-    status: 200, 
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    }
-  });
+  return APIMiddleware.handlePreflight();
 }

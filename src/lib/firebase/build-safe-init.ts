@@ -48,7 +48,7 @@ const getFirebaseConfig = () => {
   
   console.log('=== FIREBASE BUILD-SAFE-INIT DEBUG ===');
   console.log('Runtime config loaded:', Object.keys(runtimeConfig).map(key => 
-    key + ': ' + (runtimeConfig[key] ? '***SET***' : 'MISSING')
+    key + ': ' + (runtimeConfig[key as keyof typeof runtimeConfig] ? '***SET***' : 'MISSING')
   ).join(', '));
   
   return runtimeConfig;
@@ -57,39 +57,56 @@ const getFirebaseConfig = () => {
 try {
   const firebaseConfig = getFirebaseConfig();
   
+  console.log('=== FIREBASE INIT DEBUG ===');
+  console.log('Config loaded, attempting to initialize...');
+  
   // Initialize Firebase
   if (!getApps().length) {
+    console.log('Initializing new Firebase app');
     app = initializeApp(firebaseConfig);
   } else {
+    console.log('Using existing Firebase app');
     app = getApp();
   }
   
   // Initialize services
+  console.log('Initializing Firebase services...');
   auth = getAuth(app);
   db = getFirestore(app);
   storage = getStorage(app);
   functions = getFunctions(app);
   
   console.log('Firebase services initialized successfully');
+  console.log('DB instance type:', typeof db);
+  console.log('DB instance valid:', !!db);
 } catch (error) {
   console.error('Firebase initialization error:', error);
-  // Re-throw error in production to catch configuration issues
-  if (process.env.NODE_ENV === 'production') {
+  
+  // Always throw error in production and Vercel runtime
+  if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+    console.error('Production/Vercel environment - cannot continue without Firebase');
     throw error;
   }
   
-  // Development fallback
-  console.warn('Using fallback config for development');
-  if (!getApps().length) {
-    app = initializeApp(defaultConfig);
-  } else {
-    app = getApp();
+  // Development fallback only for local development
+  console.warn('Using fallback config for local development only');
+  try {
+    if (!getApps().length) {
+      app = initializeApp(defaultConfig);
+    } else {
+      app = getApp();
+    }
+    
+    auth = getAuth(app);
+    db = getFirestore(app);
+    storage = getStorage(app);
+    functions = getFunctions(app);
+    
+    console.log('Fallback Firebase services initialized');
+  } catch (fallbackError) {
+    console.error('Even fallback initialization failed:', fallbackError);
+    throw fallbackError;
   }
-  
-  auth = getAuth(app);
-  db = getFirestore(app);
-  storage = getStorage(app);
-  functions = getFunctions(app);
 }
 
 export { app, auth, db, storage, functions };

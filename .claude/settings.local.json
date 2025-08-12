@@ -32,7 +32,8 @@
       "Bash(ren:*)",
       "Bash(npm run:*)",
       "Bash(del:*)",
-      "Bash(git rebase:*)"
+      "Bash(git rebase:*)",
+      "Bash(vercel logs:*)"
     ],
     "deny": []
   }

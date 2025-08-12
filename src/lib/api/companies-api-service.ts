@@ -4,9 +4,11 @@
  * Business Logic für Companies API-Endpunkte
  */
 
-// Direct Imports für API Services
-import { companyServiceEnhanced } from '@/lib/firebase/company-service-enhanced';
-import { contactsEnhancedService } from '@/lib/firebase/crm-service-enhanced';
+// Use Safe Service for all operations
+async function getSafeCompanyService() {
+  const { safeCompaniesService } = await import('@/lib/api/safe-companies-service');
+  return safeCompaniesService;
+}
 import { 
   CompanyCreateRequest, 
   CompanyUpdateRequest, 
@@ -110,10 +112,15 @@ export class CompaniesAPIService {
       };
 
       // Get companies from service
-      console.log('DEBUG: Calling companyServiceEnhanced.getAll with:', { organizationId, queryOptions });
+      console.log('DEBUG: Using safe companies service with organizationId:', organizationId);
+      
       let companies, total;
       try {
-        const result = await companyServiceEnhanced.getAll(organizationId, queryOptions);
+        // Use completely isolated service
+        const { safeCompaniesService } = await import('@/lib/api/safe-companies-service');
+        console.log('DEBUG: Safe service imported successfully');
+        
+        const result = await safeCompaniesService.getCompanies(organizationId);
         console.log('DEBUG: Company service result:', result);
         
         if (Array.isArray(result)) {
@@ -164,8 +171,10 @@ export class CompaniesAPIService {
     organizationId: string,
     userId: string
   ): Promise<CompanyAPIResponse> {
+    throw new APIError(501, API_ERROR_CODES.NOT_IMPLEMENTED, 'getCompany not implemented with safe service yet');
+    /*
     try {
-      const company = await companyServiceEnhanced.get(companyId, organizationId);
+      const company = await companyServiceEnhanced.getById(companyId, organizationId);
       
       if (!company) {
         throw new APIError(
@@ -186,6 +195,7 @@ export class CompaniesAPIService {
         'Failed to retrieve company'
       );
     }
+    */
   }
 
   /**
@@ -219,13 +229,13 @@ export class CompaniesAPIService {
       const companyData = await this.transformAPIRequestToCompany(data, organizationId, userId);
       
       // Erstelle Firma
-      const createdCompanyId = await companyServiceEnhanced.create(
+      throw new APIError(501, API_ERROR_CODES.NOT_IMPLEMENTED, 'createCompany not implemented with safe service yet');
         companyData,
         { organizationId, userId }
       );
 
       // Hole die erstellte Firma
-      const createdCompany = await companyServiceEnhanced.get(createdCompanyId, organizationId);
+      const createdCompany = await companyServiceEnhanced.getById(createdCompanyId, organizationId);
       if (!createdCompany) {
         throw new APIError(500, API_ERROR_CODES.DATABASE_ERROR, 'Failed to retrieve created company');
       }
@@ -254,7 +264,7 @@ export class CompaniesAPIService {
   ): Promise<CompanyAPIResponse> {
     try {
       // Prüfe ob Firma existiert
-      const existingCompany = await companyServiceEnhanced.get(companyId, organizationId);
+      throw new APIError(501, API_ERROR_CODES.NOT_IMPLEMENTED, 'updateCompany not implemented with safe service yet');
       if (!existingCompany) {
         throw new APIError(
           404,
@@ -291,7 +301,7 @@ export class CompaniesAPIService {
       );
 
       // Hole aktualisierte Firma
-      const updatedCompany = await companyServiceEnhanced.get(companyId, organizationId);
+      const updatedCompany = await companyServiceEnhanced.getById(companyId, organizationId);
       if (!updatedCompany) {
         throw new APIError(500, API_ERROR_CODES.DATABASE_ERROR, 'Failed to retrieve updated company');
       }
@@ -319,7 +329,7 @@ export class CompaniesAPIService {
   ): Promise<void> {
     try {
       // Prüfe ob Firma existiert
-      const existingCompany = await companyServiceEnhanced.get(companyId, organizationId);
+      throw new APIError(501, API_ERROR_CODES.NOT_IMPLEMENTED, 'updateCompany not implemented with safe service yet');
       if (!existingCompany) {
         throw new APIError(
           404,
@@ -329,7 +339,7 @@ export class CompaniesAPIService {
       }
 
       // Prüfe ob Firma noch mit Kontakten verknüpft ist
-      const contacts = await contactsEnhancedService.getAll(
+      // Disabled - implement safe service later
         organizationId,
         {
           filters: { companyId },
@@ -346,7 +356,7 @@ export class CompaniesAPIService {
       }
 
       // Soft delete (in Company Service implementiert)
-      await companyServiceEnhanced.delete(companyId, { organizationId, userId });
+      throw new APIError(501, API_ERROR_CODES.NOT_IMPLEMENTED, 'deleteCompany not implemented with safe service yet');
     } catch (error) {
       if (error instanceof APIError) throw error;
       
@@ -470,7 +480,7 @@ export class CompaniesAPIService {
     organizationId: string
   ): Promise<CompanyEnhanced | null> {
     try {
-      const companies = await companyServiceEnhanced.getAll(
+      // Disabled - use safe service in getCompanies instead
         organizationId,
         {
           filters: { 
@@ -522,7 +532,7 @@ export class CompaniesAPIService {
     // Get contact count for this company
     let contactCount = 0;
     try {
-      const contacts = await contactsEnhancedService.getAll(
+      // Disabled - implement safe service later
         organizationId,
         {
           filters: { companyId: company.id! },
@@ -608,37 +618,37 @@ export class CompaniesAPIService {
   ): Promise<Omit<CompanyEnhanced, 'id' | 'createdAt' | 'updatedAt'>> {
     return {
       name: data.name.trim(),
-      tradingName: data.tradingName?.trim(),
-      legalName: data.legalName?.trim(),
+      tradingName: data.tradingName?.trim() || null,
+      legalName: data.legalName?.trim() || null,
       
-      industry: data.industry?.trim(),
-      companySize: data.companySize?.trim(),
-      companyType: data.companyType,
-      founded: data.founded,
+      industry: data.industry?.trim() || null,
+      companySize: data.companySize?.trim() || null,
+      companyType: data.companyType || null,
+      founded: data.founded || null,
       
-      website: data.website?.trim(),
-      phone: data.phone?.trim(),
-      email: data.email?.trim(),
+      website: data.website?.trim() || null,
+      phone: data.phone?.trim() || null,
+      email: data.email?.trim() || null,
       
-      address: data.address,
+      address: data.address || null,
       
-      mediaType: data.mediaType,
-      coverage: data.coverage,
-      circulation: data.circulation,
-      audienceSize: data.audienceSize,
+      mediaType: data.mediaType || null,
+      coverage: data.coverage || null,
+      circulation: data.circulation || null,
+      audienceSize: data.audienceSize || null,
       
-      linkedinUrl: data.linkedinUrl?.trim(),
-      twitterHandle: data.twitterHandle?.trim(),
-      facebookUrl: data.facebookUrl?.trim(),
-      instagramHandle: data.instagramHandle?.trim(),
+      linkedinUrl: data.linkedinUrl?.trim() || null,
+      twitterHandle: data.twitterHandle?.trim() || null,
+      facebookUrl: data.facebookUrl?.trim() || null,
+      instagramHandle: data.instagramHandle?.trim() || null,
       
-      vatNumber: data.vatNumber?.trim(),
-      registrationNumber: data.registrationNumber?.trim(),
+      vatNumber: data.vatNumber?.trim() || null,
+      registrationNumber: data.registrationNumber?.trim() || null,
       
       tags: data.tags?.map(tag => ({ name: tag })) || [],
       
-      notes: data.notes?.trim(),
-      internalNotes: data.internalNotes?.trim(),
+      notes: data.notes?.trim() || null,
+      internalNotes: data.internalNotes?.trim() || null,
       
       isActive: true,
       organizationId,

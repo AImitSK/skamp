@@ -151,7 +151,7 @@ export class ContactsAPIService {
     userId: string
   ): Promise<ContactAPIResponse> {
     try {
-      const contact = await contactsEnhancedService.get(contactId, organizationId);
+      const contact = await contactsEnhancedService.getById(contactId, organizationId);
       
       if (!contact) {
         throw new APIError(
@@ -231,7 +231,7 @@ export class ContactsAPIService {
   ): Promise<ContactAPIResponse> {
     try {
       // Prüfe ob Kontakt existiert
-      const existingContact = await contactsEnhancedService.get(contactId, organizationId);
+      const existingContact = await contactsEnhancedService.getById(contactId, organizationId);
       if (!existingContact) {
         throw new APIError(
           404,
@@ -285,7 +285,7 @@ export class ContactsAPIService {
   ): Promise<void> {
     try {
       // Prüfe ob Kontakt existiert
-      const existingContact = await contactsEnhancedService.get(contactId, organizationId);
+      const existingContact = await contactsEnhancedService.getById(contactId, organizationId);
       if (!existingContact) {
         throw new APIError(
           404,
@@ -295,7 +295,7 @@ export class ContactsAPIService {
       }
 
       // Soft delete (in CRM Service implementiert)
-      await contactsEnhancedService.delete(contactId, { organizationId, userId });
+      await contactsEnhancedService.softDelete(contactId, { organizationId, userId });
     } catch (error) {
       if (error instanceof APIError) throw error;
       
@@ -449,9 +449,9 @@ export class ContactsAPIService {
 
     return {
       id: contact.id!,
-      firstName: contact.firstName,
-      lastName: contact.lastName,
-      fullName: `${contact.firstName} ${contact.lastName}`.trim(),
+      firstName: contact.name?.firstName,
+      lastName: contact.name?.lastName,
+      fullName: `${contact.name?.firstName || ''} ${contact.name?.lastName || ''}`.trim(),
       email: contact.email,
       phone: contact.phone,
       jobTitle: contact.jobTitle,
@@ -497,8 +497,10 @@ export class ContactsAPIService {
     userId: string
   ): Promise<Omit<ContactEnhanced, 'id' | 'createdAt' | 'updatedAt'>> {
     return {
-      firstName: data.firstName.trim(),
-      lastName: data.lastName.trim(),
+      name: {
+        firstName: data.firstName.trim(),
+        lastName: data.lastName.trim()
+      },
       email: data.email?.trim(),
       phone: data.phone?.trim(),
       jobTitle: data.jobTitle?.trim(),
