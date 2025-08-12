@@ -13,8 +13,7 @@ interface RouteParams {
  * GET /api/v1/publications/{publicationId}
  * Holt eine einzelne Publikation
  */
-export async function GET(request: NextRequest) {
-  return APIMiddleware.withAuth(
+export const GET = APIMiddleware.withAuth(
   async (request: NextRequest, context, params?: RouteParams) => {
     try {
       if (!params?.publicationId) {
@@ -54,8 +53,7 @@ export async function GET(request: NextRequest) {
  * PUT /api/v1/publications/{publicationId}
  * Aktualisiert eine Publikation
  */
-export async function PUT(request: NextRequest) {
-  return APIMiddleware.withAuth(
+export const PUT = APIMiddleware.withAuth(
   async (request: NextRequest, context, params?: RouteParams) => {
     try {
       if (!params?.publicationId) {
@@ -93,8 +91,7 @@ export async function PUT(request: NextRequest) {
  * DELETE /api/v1/publications/{publicationId}
  * Löscht eine Publikation (Soft Delete)
  */
-export async function DELETE(request: NextRequest) {
-  return APIMiddleware.withAuth(
+export const DELETE = APIMiddleware.withAuth(
   async (request: NextRequest, context, params?: RouteParams) => {
     try {
       if (!params?.publicationId) {
@@ -132,8 +129,7 @@ export async function DELETE(request: NextRequest) {
  * PATCH /api/v1/publications/{publicationId}
  * Partial Update einer Publikation
  */
-export async function PATCH(request: NextRequest) {
-  return APIMiddleware.withAuth(
+export const PATCH = APIMiddleware.withAuth(
   async (request: NextRequest, context, params?: RouteParams) => {
     try {
       if (!params?.publicationId) {
