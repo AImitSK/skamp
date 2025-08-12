@@ -75,6 +75,11 @@ export class BulkImportService {
     userId: string
   ): Promise<APIBulkJobResponse> {
     try {
+      // Safe Database Check
+      if (!db) {
+        throw new APIError('SERVICE_UNAVAILABLE', 'Database nicht verfügbar');
+      }
+
       this.validateImportRequest(request);
 
       // Erstelle Job-Eintrag

@@ -75,6 +75,11 @@ export class BulkExportService {
     userId: string
   ): Promise<APIBulkJobResponse> {
     try {
+      // Safe Database Check
+      if (!db) {
+        throw new APIError('SERVICE_UNAVAILABLE', 'Database nicht verfügbar');
+      }
+
       this.validateExportRequest(request);
 
       // Erstelle Job-Eintrag
@@ -123,6 +128,11 @@ export class BulkExportService {
    */
   async getJobById(jobId: string, organizationId: string): Promise<APIBulkJobResponse> {
     try {
+      // Safe Database Check
+      if (!db) {
+        throw new APIError('SERVICE_UNAVAILABLE', 'Database nicht verfügbar');
+      }
+
       const jobDoc = await getDoc(doc(db, this.COLLECTION_NAME, jobId));
       
       if (!jobDoc.exists()) {
@@ -159,6 +169,11 @@ export class BulkExportService {
     } = {}
   ): Promise<APIBulkJobListResponse> {
     try {
+      // Safe Database Check
+      if (!db) {
+        throw new APIError('SERVICE_UNAVAILABLE', 'Database nicht verfügbar');
+      }
+
       const constraints = [
         where('organizationId', '==', organizationId),
         orderBy('createdAt', 'desc')
