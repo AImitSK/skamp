@@ -57,15 +57,31 @@ export class WebhookService {
     userId: string
   ): Promise<APIWebhook> {
     try {
-      // Validierung
-      this.validateWebhookData(data);
+      // Safe Database Check
+      if (!db) {
+        throw new APIError('SERVICE_UNAVAILABLE', 'Database nicht verfügbar');
+      }
 
-      // Prüfe auf Duplikate
-      const existingWebhook = await this.findDuplicateWebhook(
-        data.url,
-        data.events,
-        organizationId
-      );
+      // Validierung (safe)
+      try {
+        this.validateWebhookData(data);
+      } catch (error) {
+        console.error('Webhook validation error:', error);
+        throw error;
+      }
+
+      // Prüfe auf Duplikate (safe)
+      let existingWebhook = null;
+      try {
+        existingWebhook = await this.findDuplicateWebhook(
+          data.url,
+          data.events,
+          organizationId
+        );
+      } catch (error) {
+        console.warn('Could not check for duplicate webhooks:', error);
+        // Fahre fort ohne Duplikat-Check
+      }
 
       if (existingWebhook) {
         throw new APIError(
@@ -99,25 +115,26 @@ export class WebhookService {
         updatedBy: userId
       };
 
-      // Speichere in Firestore (safe check)
-      if (!db) {
-        throw new APIError('SERVICE_UNAVAILABLE', 'Database nicht verfügbar');
+      // Speichere in Firestore (safe)
+      try {
+        const webhookRef = await addDoc(
+          collection(db, this.COLLECTION_NAME),
+          {
+            ...webhookConfig,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          }
+        );
+
+        // Hole erstellten Webhook
+        const createdWebhook = await getDoc(webhookRef);
+        const webhookData = { id: webhookRef.id, ...createdWebhook.data() } as WebhookConfig;
+
+        return this.transformToAPIWebhook(webhookData);
+      } catch (firestoreError) {
+        console.error('Firestore webhook creation error:', firestoreError);
+        throw new APIError('INTERNAL_SERVER_ERROR', 'Fehler beim Speichern des Webhooks in der Datenbank');
       }
-
-      const webhookRef = await addDoc(
-        collection(db, this.COLLECTION_NAME),
-        {
-          ...webhookConfig,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        }
-      );
-
-      // Hole erstellten Webhook
-      const createdWebhook = await getDoc(webhookRef);
-      const webhookData = { id: webhookRef.id, ...createdWebhook.data() } as WebhookConfig;
-
-      return this.transformToAPIWebhook(webhookData);
     } catch (error) {
       if (error instanceof APIError) throw error;
       throw new APIError(
