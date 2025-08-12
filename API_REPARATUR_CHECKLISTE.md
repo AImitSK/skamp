@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
 - [x] GET /api/v1/search/suggestions ✅ **FUNKTIONIERT** (Getestet 2025-08-12, Auto-complete für "Te" & "Max")
 - [ ] GET/POST /api/v1/export ❓
 - [ ] GET /api/v1/export/[jobId] ❓
-- [ ] GET/POST /api/v1/import ❓
+- [x] GET/POST /api/v1/import 🔄 **AUTH PATTERN REPARIERT** (APIMiddleware.withAuth, Service-Fehler bleibt)
 - [ ] GET /api/v1/import/[jobId] ❓
 - [x] GET /api/v1/usage/stats ✅ **FUNKTIONIERT** (Getestet 2025-08-12, detaillierte Stats)
 
