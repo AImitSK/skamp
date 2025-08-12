@@ -90,15 +90,15 @@ export async function GET(request: NextRequest) {
 - [x] POST /api/v1/media-assets ✅ **FUNKTIONIERT** (Getestet 2025-08-12, ID: lpfLJt3Z3hLp1k9xtkIs)
 
 ### Webhook Routes
-- [ ] GET /api/v1/webhooks ❓
+- [x] GET /api/v1/webhooks 🔄 **REPARIERT - WARTET AUF DEPLOYMENT** (Safe collection access)
 - [ ] POST /api/v1/webhooks ❓
 - [ ] GET/PUT/DELETE /api/v1/webhooks/[webhookId] ❓
 - [ ] POST /api/v1/webhooks/[webhookId]/test ❓
 - [ ] GET /api/v1/webhooks/[webhookId]/deliveries ❓
 
 ### Utility Routes
-- [ ] GET /api/v1/search ❓
-- [ ] GET /api/v1/search/suggestions ❓
+- [x] POST /api/v1/search ✅ **FUNKTIONIERT** (Getestet 2025-08-12, 16 Ergebnisse für "Test")
+- [x] GET /api/v1/search/suggestions ✅ **FUNKTIONIERT** (Getestet 2025-08-12, Auto-complete für "Te" & "Max")
 - [ ] GET/POST /api/v1/export ❓
 - [ ] GET /api/v1/export/[jobId] ❓
 - [ ] GET/POST /api/v1/import ❓
@@ -152,13 +152,28 @@ Jede API-Route braucht:
 
 ## Nächste Schritte - SYSTEMATISCHER WORKFLOW
 1. ✅ **ABGESCHLOSSEN:** Funktionierende Routen analysiert → APIMiddleware.withAuth Pattern identifiziert
-2. ✅ **ABGESCHLOSSEN:** Erste 5 Routen repariert + komplett dokumentiert:
-   - POST /api/v1/auth/keys ✅ 
-   - POST /api/v1/contacts ✅
-   - GET /api/v1/contacts/{contactId} ✅
-   - PUT /api/v1/contacts/{contactId} ✅  
-   - DELETE /api/v1/contacts/{contactId} ✅
-3. 🔄 **AKTUELL:** GET /api/v1/companies - DREI PROBLEME IDENTIFIZIERT + GELÖST!
+2. ✅ **ABGESCHLOSSEN:** Systematische API-Reparatur in Bearbeitung - **13 von 27 Routen getestet (48%)**
+
+### ✅ ERFOLGREICH GETESTETE ROUTEN (13):
+   **Contact Routes (5):** GET, POST, GET/[id], PUT/[id], DELETE/[id]
+   **Company Routes (5):** GET, POST, GET/[id], PUT/[id], DELETE/[id]  
+   **Publication Routes (4):** GET, POST, GET/[id], PUT/[id] (DELETE repariert, wartet auf Deployment)
+   **Media Assets (2):** GET, POST
+   **Search Routes (2):** POST /search, GET /search/suggestions
+
+### 🔄 REPARIERT - WARTEN AUF DEPLOYMENT (2):
+   - DELETE /api/v1/publications/[id] (Advertisement check fix)
+   - GET /api/v1/webhooks (Safe collection access fix)
+
+### ❓ VERBLEIBENDE ROUTEN (14): 
+   - Webhooks: POST + 4 [webhookId] routes
+   - Publications: statistics
+   - Import/Export: 4 routes  
+   - Usage: stats
+   - WebSocket: 4 routes
+   - GraphQL: 1 route
+
+3. 🎯 **NÄCHSTER SCHRITT:** Systematic testing der verbleibenden 14 Routen
    
    **PROBLEM #1: Firestore Index Fehler** ✅ GELÖST
    - `orderBy('name')` ohne entsprechenden Composite Index

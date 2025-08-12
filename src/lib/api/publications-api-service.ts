@@ -460,8 +460,14 @@ export class PublicationsAPIService {
     try {
       const stats = await publicationService.getStatistics(organizationId);
       
-      // Hole Top-Publisher
-      const companies = await companyServiceEnhanced.getAll(organizationId);
+      // Hole Top-Publisher (safe check)
+      let companies: any[] = [];
+      try {
+        companies = await companyServiceEnhanced.getAll(organizationId);
+      } catch (error) {
+        console.warn('Warning: Could not fetch companies for statistics:', error);
+        companies = [];
+      }
       const publisherStats = new Map<string, { name: string; count: number }>();
       
       const publications = await publicationService.getAll(organizationId);
