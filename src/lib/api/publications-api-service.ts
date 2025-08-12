@@ -765,7 +765,9 @@ export class PublicationsAPIService {
 
     if (expand?.includes('publisher')) {
       try {
-        const company = await companyServiceEnhanced.getById(
+        // Use safe companies service
+        const { safeCompaniesService } = await import('@/lib/api/safe-companies-service');
+        const company = await safeCompaniesService.getCompanyById(
           publication.publisherId,
           publication.organizationId!
         );
@@ -803,9 +805,9 @@ export class PublicationsAPIService {
       targetIndustries: publication.targetIndustries,
       status: publication.status || 'active',
       verified: publication.verified || false,
-      verifiedAt: publication.verifiedAt?.toISOString(),
-      createdAt: publication.createdAt.toISOString(),
-      updatedAt: publication.updatedAt.toISOString(),
+      verifiedAt: publication.verifiedAt?.toDate?.()?.toISOString() || publication.verifiedAt?.toISOString?.() || undefined,
+      createdAt: publication.createdAt?.toDate?.()?.toISOString() || publication.createdAt?.toISOString?.() || new Date().toISOString(),
+      updatedAt: publication.updatedAt?.toDate?.()?.toISOString() || publication.updatedAt?.toISOString?.() || new Date().toISOString(),
       website: publication.website,
       mediaKitUrl: publication.mediaKitUrl
     };
