@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
 ### Utility Routes
 - [x] POST /api/v1/search ✅ **FUNKTIONIERT** (Getestet 2025-08-12, 16 Ergebnisse für "Test")
 - [x] GET /api/v1/search/suggestions ✅ **FUNKTIONIERT** (Getestet 2025-08-12, Auto-complete für "Te" & "Max")
-- [ ] GET/POST /api/v1/export ❓
+- [x] GET/POST /api/v1/export 🔄 **AUTH PATTERN OK** (APIMiddleware.withAuth + Permissions, Service-Fehler bleibt)
 - [ ] GET /api/v1/export/[jobId] ❓
 - [x] GET/POST /api/v1/import 🔄 **AUTH PATTERN REPARIERT** (APIMiddleware.withAuth, Service-Fehler bleibt)
 - [ ] GET /api/v1/import/[jobId] ❓
