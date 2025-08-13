@@ -1,18 +1,35 @@
 // src/lib/api/bulk-import-service.ts
-import { 
-  collection,
-  doc,
-  getDocs,
-  getDoc,
-  addDoc,
-  updateDoc,
-  query,
-  where,
-  orderBy,
-  Timestamp,
-  serverTimestamp,
-  writeBatch
-} from 'firebase/firestore';
+// Safe Firestore imports
+let collection: any;
+let doc: any;
+let getDocs: any;
+let getDoc: any;
+let addDoc: any;
+let updateDoc: any;
+let query: any;
+let where: any;
+let orderBy: any;
+let Timestamp: any;
+let serverTimestamp: any;
+let writeBatch: any;
+
+try {
+  const firestoreModule = require('firebase/firestore');
+  collection = firestoreModule.collection;
+  doc = firestoreModule.doc;
+  getDocs = firestoreModule.getDocs;
+  getDoc = firestoreModule.getDoc;
+  addDoc = firestoreModule.addDoc;
+  updateDoc = firestoreModule.updateDoc;
+  query = firestoreModule.query;
+  where = firestoreModule.where;
+  orderBy = firestoreModule.orderBy;
+  Timestamp = firestoreModule.Timestamp;
+  serverTimestamp = firestoreModule.serverTimestamp;
+  writeBatch = firestoreModule.writeBatch;
+} catch (error) {
+  console.warn('Firestore nicht verfügbar');
+}
 import {
   BulkImportRequest,
   BulkJob,

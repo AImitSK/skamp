@@ -371,8 +371,18 @@ export class WebhookService {
         // Test existing webhook
         const webhook = await this.getWebhookById(data.webhookId, organizationId);
         url = webhook.url;
-        const webhookDoc = await getDoc(doc(db, this.COLLECTION_NAME, data.webhookId));
-        secret = webhookDoc.data()?.secret;
+        // Safe DB check für secret
+        if (db) {
+          try {
+            const webhookDoc = await getDoc(doc(db, this.COLLECTION_NAME, data.webhookId));
+            secret = webhookDoc.data()?.secret;
+          } catch (error) {
+            console.warn('Could not fetch webhook secret:', error);
+            secret = undefined;
+          }
+        } else {
+          secret = undefined;
+        }
       } else if (data.url) {
         // Test arbitrary URL
         url = data.url;
@@ -625,13 +635,33 @@ export class WebhookService {
         headers['X-Webhook-Signature'] = signature;
       }
 
-      // Sende Request
-      const response = await fetch(url, {
-        method: 'POST',
-        headers,
-        body,
-        signal: AbortSignal.timeout(this.DEFAULT_TIMEOUT_MS)
-      });
+      // Sende Request mit Safe Timeout
+      let response;
+      try {
+        // Versuche mit AbortSignal (funktioniert möglicherweise nicht in allen Umgebungen)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), this.DEFAULT_TIMEOUT_MS);
+        
+        response = await fetch(url, {
+          method: 'POST',
+          headers,
+          body,
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+      } catch (fetchError: any) {
+        // Fallback ohne AbortSignal wenn es fehlschlägt
+        if (fetchError.name === 'AbortError') {
+          throw new Error(`Request timeout after ${this.DEFAULT_TIMEOUT_MS}ms`);
+        }
+        // Versuche ohne Signal
+        response = await fetch(url, {
+          method: 'POST',
+          headers,
+          body
+        });
+      }
 
       const responseText = await response.text();
       const responseHeaders: Record<string, string> = {};

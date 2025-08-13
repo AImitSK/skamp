@@ -39,11 +39,10 @@ export const GET = APIMiddleware.withAuth(
         : 50;
       const status = searchParams.get('status');
 
-      // Build Query
+      // Build Query (ohne orderBy um Index-Fehler zu vermeiden)
       const constraints = [
         where('webhookId', '==', params.webhookId),
-        where('organizationId', '==', context.organizationId),
-        orderBy('scheduledAt', 'desc')
+        where('organizationId', '==', context.organizationId)
       ];
 
       if (status) {
@@ -62,6 +61,13 @@ export const GET = APIMiddleware.withAuth(
         id: doc.id,
         ...doc.data()
       } as WebhookDelivery));
+
+      // Client-seitige Sortierung nach scheduledAt (neueste zuerst)
+      deliveries.sort((a, b) => {
+        const aTime = a.scheduledAt?.toMillis ? a.scheduledAt.toMillis() : 0;
+        const bTime = b.scheduledAt?.toMillis ? b.scheduledAt.toMillis() : 0;
+        return bTime - aTime;
+      });
 
       // Manual Pagination (da Firestore offset nicht gut unterstützt)
       const startIndex = (page - 1) * pageLimit;

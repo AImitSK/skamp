@@ -1,19 +1,37 @@
 // src/lib/api/bulk-export-service.ts
-import { 
-  collection,
-  doc,
-  getDocs,
-  getDoc,
-  addDoc,
-  updateDoc,
-  query,
-  where,
-  orderBy,
-  limit as firestoreLimit,
-  Timestamp,
-  serverTimestamp,
-  startAfter
-} from 'firebase/firestore';
+// Safe Firestore imports
+let collection: any;
+let doc: any;
+let getDocs: any;
+let getDoc: any;
+let addDoc: any;
+let updateDoc: any;
+let query: any;
+let where: any;
+let orderBy: any;
+let firestoreLimit: any;
+let Timestamp: any;
+let serverTimestamp: any;
+let startAfter: any;
+
+try {
+  const firestoreModule = require('firebase/firestore');
+  collection = firestoreModule.collection;
+  doc = firestoreModule.doc;
+  getDocs = firestoreModule.getDocs;
+  getDoc = firestoreModule.getDoc;
+  addDoc = firestoreModule.addDoc;
+  updateDoc = firestoreModule.updateDoc;
+  query = firestoreModule.query;
+  where = firestoreModule.where;
+  orderBy = firestoreModule.orderBy;
+  firestoreLimit = firestoreModule.limit;
+  Timestamp = firestoreModule.Timestamp;
+  serverTimestamp = firestoreModule.serverTimestamp;
+  startAfter = firestoreModule.startAfter;
+} catch (error) {
+  console.warn('Firestore nicht verfügbar');
+}
 import {
   BulkExportRequest,
   BulkJob,

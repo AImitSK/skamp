@@ -101,11 +101,11 @@ export async function GET(request: NextRequest) {
 ### Utility Routes
 - [x] POST /api/v1/search ✅ **FUNKTIONIERT** (Getestet 2025-08-12, 16 Ergebnisse für "Test")
 - [x] GET /api/v1/search/suggestions ✅ **FUNKTIONIERT** (Getestet 2025-08-12, Auto-complete für "Te" & "Max")
-- [x] GET /api/v1/export 🔄 **MOCK-FALLBACK IMPLEMENTIERT** (Deployment läuft, Test ausstehend)
-- [x] POST /api/v1/export 🔄 **MOCK-FALLBACK IMPLEMENTIERT** (Deployment läuft, Test ausstehend)
+- [x] GET /api/v1/export ✅ **FUNKTIONIERT** (Getestet 2025-08-13, leere Liste)
+- [x] POST /api/v1/export ❌ **FEHLER** (500 Error, validateExportRequest Problem)
 - [x] GET /api/v1/export/[jobId] ✅ **FUNKTIONIERT** (Dynamic Route mit Mock Fallback)
-- [x] GET /api/v1/import 🔄 **MOCK-FALLBACK IMPLEMENTIERT** (Deployment läuft, Test ausstehend)
-- [x] POST /api/v1/import 🔄 **MOCK-FALLBACK IMPLEMENTIERT** (Deployment läuft, Test ausstehend)
+- [x] GET /api/v1/import ✅ **FUNKTIONIERT** (Getestet 2025-08-13, leere Liste)
+- [x] POST /api/v1/import 🔄 **NOCH ZU TESTEN**
 - [x] GET /api/v1/import/[jobId] ✅ **FUNKTIONIERT** (Dynamic Route mit Mock Fallback)
 - [x] GET /api/v1/usage/stats ✅ **FUNKTIONIERT** (Getestet 2025-08-12, detaillierte Stats)
 
@@ -163,10 +163,12 @@ Jede API-Route braucht:
 - **Status:** ✅ 5 von 7 Webhook-Routen funktionieren!
 
 ### **Export/Import Service DB-Fallback:**
-- **Problem:** Services haben direkten DB-Zugriff ohne Fallback
-- **Lösung:** Mock-Service als Fallback wenn DB nicht verfügbar
-- **Commit:** 5ae7c27 - "Fix: Export/Import Services - Mock-Fallback für fehlende DB-Verbindung"
-- **Status:** 🔄 Deployment läuft, Test ausstehend
+- **Problem:** Services haben direkten DB-Zugriff ohne Fallback + Firestore Index-Fehler
+- **Lösung:** Mock-Service als Fallback + orderBy entfernt, client-seitige Sortierung
+- **Commits:** 
+  - 5ae7c27 - "Fix: Export/Import Services - Mock-Fallback für fehlende DB-Verbindung"
+  - 5ca71e6 - "Fix: Export/Import Services - Entferne orderBy um Firestore Index-Fehler zu vermeiden"
+- **Status:** ✅ GET Routes funktionieren, POST hat noch Validierungsprobleme
 
 ## AKTUELLE STATUS - MISSION 100% FUNKTIONALITÄT
 
@@ -210,10 +212,10 @@ API-Key `cp_live_a3cb4788d991b5e0e0a4709e71a216cb` hat nur begrenzte Permissions
 
 **ZIEL:** 100% Live-funktionsfähige API bis Ende der Session!
 
-## 🎯 **STATUS UPDATE (2025-08-13 07:04):**
-### **~83% ERREICHT! Webhook Routes größtenteils repariert**
+## 🎯 **STATUS UPDATE (2025-08-13 07:14):**
+### **~86% ERREICHT! Export/Import GET Routes funktionieren**
 
-### ✅ **VOLLSTÄNDIG FUNKTIONSFÄHIGE ROUTEN (30 von 36 = ~83%):**
+### ✅ **VOLLSTÄNDIG FUNKTIONSFÄHIGE ROUTEN (32 von 37 = ~86%):**
 - **Contact Routes (5):** GET, POST, GET/[id], PUT/[id], DELETE/[id]
 - **Company Routes (5):** GET, POST, GET/[id], PUT/[id], DELETE/[id]
 - **Publication Routes (6):** GET, POST, GET/[id], PUT/[id], DELETE/[id], GET/statistics
@@ -223,16 +225,15 @@ API-Key `cp_live_a3cb4788d991b5e0e0a4709e71a216cb` hat nur begrenzte Permissions
 - **Usage (1):** GET /usage/stats  
 - **GraphQL (2):** GET, POST
 - **WebSocket (3):** GET/POST /connect, ALL /events, ALL /subscriptions
-- **Export/Import Dynamic (2):** GET /export/[jobId], GET /import/[jobId]
+- **Export Routes (2):** GET /export, GET /export/[jobId] ✅ **NEU REPARIERT!**
+- **Import Routes (2):** GET /import, GET /import/[jobId] ✅ **NEU REPARIERT!**
 
-### 🔄 **VERBLEIBENDE PROBLEME (6 Routen = ~17%):**
+### 🔄 **VERBLEIBENDE PROBLEME (5 Routen = ~14%):**
 
 1. **POST /api/v1/webhooks/[webhookId]/test** - 500 Error, Fetch/Timeout Problem
 2. **GET /api/v1/webhooks/[webhookId]/deliveries** - Noch nicht getestet
-3. **GET /api/v1/export** - bulkExportService DB-Probleme
-4. **POST /api/v1/export** - bulkExportService DB-Probleme
-5. **GET /api/v1/import** - bulkImportService DB-Probleme
-6. **POST /api/v1/import** - bulkImportService DB-Probleme
+3. **POST /api/v1/export** - 500 Error, validateExportRequest Problem
+4. **POST /api/v1/import** - Noch nicht getestet
 
 ### ✅ **ALLE ANDEREN ROUTEN 100% FUNKTIONSFÄHIG (22 Routen = ~76%)**
 
