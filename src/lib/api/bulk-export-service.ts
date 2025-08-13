@@ -72,11 +72,9 @@ export class BulkExportService {
     userId: string
   ): Promise<APIBulkJobResponse> {
     try {
-      // Safe Database Check - verwende Mock wenn DB nicht verfügbar oder Firestore nicht initialisiert
-      if (!db || !collection || !addDoc || !serverTimestamp) {
-        const { mockBulkExportService } = await import('@/lib/api/mock-export-import-service');
-        return mockBulkExportService.startExport(request, organizationId, userId);
-      }
+      // TEMPORARY: Verwende immer Mock-Service für Export POST (Firestore collection() Problem)
+      const { mockBulkExportService } = await import('@/lib/api/mock-export-import-service');
+      return mockBulkExportService.startExport(request, organizationId, userId);
 
       this.validateExportRequest(request);
 
