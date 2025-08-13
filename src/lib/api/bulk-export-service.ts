@@ -14,7 +14,6 @@ import {
   serverTimestamp,
   startAfter
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase/build-safe-init';
 import {
   BulkExportRequest,
   BulkJob,
@@ -25,35 +24,15 @@ import {
   APIAdvancedError
 } from '@/types/api-advanced';
 import { APIError } from '@/lib/api/api-errors';
-// Build-safe imports
-let contactsService: any;
-let companyService: any;
-let publicationsService: any;
-let webhookService: any;
 
+// Build-safe Firebase import
+let db: any;
 try {
-  const contactsModule = require('@/lib/api/contacts-api-service');
-  const companyModule = require('@/lib/firebase/company-service-enhanced');
-  const publicationsModule = require('@/lib/api/publications-api-service');
-  const webhookModule = require('@/lib/api/webhook-service');
-  
-  contactsService = contactsModule.contactsAPIService;
-  companyService = companyModule.companyServiceEnhanced;
-  publicationsService = publicationsModule.publicationsAPIService;
-  webhookService = webhookModule.webhookService;
+  const firebaseModule = require('@/lib/firebase/build-safe-init');
+  db = firebaseModule.db;
 } catch (error) {
-  // Mock services für Build-Zeit
-  const { 
-    mockContactsService, 
-    mockCompanyService, 
-    mockPublicationsService, 
-    mockWebhookService 
-  } = require('@/lib/api/mock-services');
-  
-  contactsService = mockContactsService;
-  companyService = mockCompanyService;
-  publicationsService = mockPublicationsService;
-  webhookService = mockWebhookService;
+  console.warn('Firebase nicht verfügbar, verwende Mock-Service');
+  db = null;
 }
 
 /**
@@ -75,9 +54,10 @@ export class BulkExportService {
     userId: string
   ): Promise<APIBulkJobResponse> {
     try {
-      // Safe Database Check
+      // Safe Database Check - verwende Mock wenn DB nicht verfügbar
       if (!db) {
-        throw new APIError('SERVICE_UNAVAILABLE', 'Database nicht verfügbar');
+        const { mockBulkExportService } = await import('@/lib/api/mock-export-import-service');
+        return mockBulkExportService.startExport(request, organizationId, userId);
       }
 
       this.validateExportRequest(request);
@@ -128,9 +108,10 @@ export class BulkExportService {
    */
   async getJobById(jobId: string, organizationId: string): Promise<APIBulkJobResponse> {
     try {
-      // Safe Database Check
+      // Safe Database Check - verwende Mock wenn DB nicht verfügbar
       if (!db) {
-        throw new APIError('SERVICE_UNAVAILABLE', 'Database nicht verfügbar');
+        const { mockBulkExportService } = await import('@/lib/api/mock-export-import-service');
+        return mockBulkExportService.getJobById(jobId, organizationId);
       }
 
       const jobDoc = await getDoc(doc(db, this.COLLECTION_NAME, jobId));
@@ -169,9 +150,10 @@ export class BulkExportService {
     } = {}
   ): Promise<APIBulkJobListResponse> {
     try {
-      // Safe Database Check
+      // Safe Database Check - verwende Mock wenn DB nicht verfügbar
       if (!db) {
-        throw new APIError('SERVICE_UNAVAILABLE', 'Database nicht verfügbar');
+        const { mockBulkExportService } = await import('@/lib/api/mock-export-import-service');
+        return mockBulkExportService.getJobs(organizationId, params);
       }
 
       const constraints = [

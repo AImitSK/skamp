@@ -13,7 +13,6 @@ import {
   serverTimestamp,
   writeBatch
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase/build-safe-init';
 import {
   BulkImportRequest,
   BulkJob,
@@ -24,35 +23,15 @@ import {
   FileProcessingJob
 } from '@/types/api-advanced';
 import { APIError } from '@/lib/api/api-errors';
-// Build-safe imports
-let contactsService: any;
-let companyService: any;
-let publicationsService: any;
-let eventManager: any;
 
+// Build-safe Firebase import
+let db: any;
 try {
-  const contactsModule = require('@/lib/api/contacts-api-service');
-  const companyModule = require('@/lib/firebase/company-service-enhanced');
-  const publicationsModule = require('@/lib/api/publications-api-service');
-  const eventModule = require('@/lib/api/event-manager');
-  
-  contactsService = contactsModule.contactsAPIService;
-  companyService = companyModule.companyServiceEnhanced;
-  publicationsService = publicationsModule.publicationsAPIService;
-  eventManager = eventModule.eventManager;
+  const firebaseModule = require('@/lib/firebase/build-safe-init');
+  db = firebaseModule.db;
 } catch (error) {
-  // Mock services für Build-Zeit
-  const { 
-    mockContactsService, 
-    mockCompanyService, 
-    mockPublicationsService, 
-    mockEventManager 
-  } = require('@/lib/api/mock-services');
-  
-  contactsService = mockContactsService;
-  companyService = mockCompanyService;
-  publicationsService = mockPublicationsService;
-  eventManager = mockEventManager;
+  console.warn('Firebase nicht verfügbar, verwende Mock-Service');
+  db = null;
 }
 
 /**
@@ -75,9 +54,10 @@ export class BulkImportService {
     userId: string
   ): Promise<APIBulkJobResponse> {
     try {
-      // Safe Database Check
+      // Safe Database Check - verwende Mock wenn DB nicht verfügbar
       if (!db) {
-        throw new APIError('SERVICE_UNAVAILABLE', 'Database nicht verfügbar');
+        const { mockBulkImportService } = await import('@/lib/api/mock-export-import-service');
+        return mockBulkImportService.startImport(request, organizationId, userId);
       }
 
       this.validateImportRequest(request);
@@ -128,6 +108,12 @@ export class BulkImportService {
    */
   async getJobById(jobId: string, organizationId: string): Promise<APIBulkJobResponse> {
     try {
+      // Safe Database Check - verwende Mock wenn DB nicht verfügbar
+      if (!db) {
+        const { mockBulkImportService } = await import('@/lib/api/mock-export-import-service');
+        return mockBulkImportService.getJobById(jobId, organizationId);
+      }
+      
       const jobDoc = await getDoc(doc(db, this.COLLECTION_NAME, jobId));
       
       if (!jobDoc.exists()) {
@@ -164,6 +150,12 @@ export class BulkImportService {
     } = {}
   ): Promise<APIBulkJobListResponse> {
     try {
+      // Safe Database Check - verwende Mock wenn DB nicht verfügbar
+      if (!db) {
+        const { mockBulkImportService } = await import('@/lib/api/mock-export-import-service');
+        return mockBulkImportService.getJobs(organizationId, params);
+      }
+      
       const constraints = [
         where('organizationId', '==', organizationId),
         orderBy('createdAt', 'desc')

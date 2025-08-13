@@ -91,10 +91,12 @@ export async function GET(request: NextRequest) {
 
 ### Webhook Routes
 - [x] GET /api/v1/webhooks ✅ **FUNKTIONIERT** (Deployed, leere Liste, korrekt)
-- [x] POST /api/v1/webhooks 🔄 **AUTH PATTERN OK** (Permission gefixt, aber webhookService.createWebhook DB-Problem)
-- [x] GET/PUT/DELETE /api/v1/webhooks/[webhookId] 🔄 **AUTH PATTERN OK** (Getestet 2025-08-12, DB-Service-Problem)
-- [x] POST /api/v1/webhooks/[webhookId]/test 🔄 **AUTH PATTERN OK** (Getestet 2025-08-12, DB-Service-Problem)
-- [x] GET /api/v1/webhooks/[webhookId]/deliveries 🔄 **ROUTE EXISTIERT** (Vermutlich gleiche DB-Probleme)
+- [x] POST /api/v1/webhooks ✅ **FUNKTIONIERT** (Getestet 2025-08-13, Webhook erstellt)
+- [x] GET /api/v1/webhooks/[webhookId] ✅ **FUNKTIONIERT** (Getestet 2025-08-13)
+- [x] PUT /api/v1/webhooks/[webhookId] ✅ **FUNKTIONIERT** (Getestet 2025-08-13)
+- [x] DELETE /api/v1/webhooks/[webhookId] ✅ **FUNKTIONIERT** (Getestet 2025-08-13)
+- [ ] POST /api/v1/webhooks/[webhookId]/test ❌ **FEHLER** (500 Error, noch zu debuggen)
+- [ ] GET /api/v1/webhooks/[webhookId]/deliveries 🔄 **NOCH ZU TESTEN**
 
 ### Utility Routes
 - [x] POST /api/v1/search ✅ **FUNKTIONIERT** (Getestet 2025-08-12, 16 Ergebnisse für "Test")
@@ -150,6 +152,13 @@ Jede API-Route braucht:
 - **Authentifizierung** und Berechtigungen
 - **Rate Limiting** Informationen
 
+## 🔧 **FIX-LOG (2025-08-13):**
+### **Webhook Service Firestore Fix:**
+- **Problem:** `undefined` Felder in Firestore Dokumenten (description, filters)
+- **Lösung:** Optionale Felder nur hinzufügen wenn definiert
+- **Commit:** fbeba60 - "Fix: Webhook Service - Behebe undefined Felder in Firestore Dokumenten"
+- **Status:** ✅ POST /api/v1/webhooks funktioniert jetzt!
+
 ## AKTUELLE STATUS - MISSION 100% FUNKTIONALITÄT
 
 ### 🎯 **BREAKTHROUGH ERKANNT (2025-08-12 16:40):**
@@ -192,29 +201,29 @@ API-Key `cp_live_a3cb4788d991b5e0e0a4709e71a216cb` hat nur begrenzte Permissions
 
 **ZIEL:** 100% Live-funktionsfähige API bis Ende der Session!
 
-## 🎯 **FINALER STATUS UPDATE (2025-08-12 17:11):**
-### **~95% ERREICHT! Alle Route-Handler funktionieren, nur Service-DB-Verbindungsprobleme bleiben**
+## 🎯 **STATUS UPDATE (2025-08-13 07:04):**
+### **~83% ERREICHT! Webhook Routes größtenteils repariert**
 
-### ✅ **VOLLSTÄNDIG FUNKTIONSFÄHIGE ROUTEN (26 von 29 = 90%):**
+### ✅ **VOLLSTÄNDIG FUNKTIONSFÄHIGE ROUTEN (30 von 36 = ~83%):**
 - **Contact Routes (5):** GET, POST, GET/[id], PUT/[id], DELETE/[id]
 - **Company Routes (5):** GET, POST, GET/[id], PUT/[id], DELETE/[id]
 - **Publication Routes (6):** GET, POST, GET/[id], PUT/[id], DELETE/[id], GET/statistics
 - **Media Assets (2):** GET, POST
+- **Webhook Routes (5):** GET, POST, GET/[id], PUT/[id], DELETE/[id] ✅ **NEU REPARIERT!**
 - **Search (2):** POST /search, GET /search/suggestions
 - **Usage (1):** GET /usage/stats  
 - **GraphQL (2):** GET, POST
 - **WebSocket (3):** GET/POST /connect, ALL /events, ALL /subscriptions
 - **Export/Import Dynamic (2):** GET /export/[jobId], GET /import/[jobId]
 
-### 🔄 **SERVICE-DB-VERBINDUNGSPROBLEME (7 Routen = ~24%):**
-**Route-Handler funktionieren alle, Auth-Patterns OK, nur DB-Services kaputt:**
+### 🔄 **VERBLEIBENDE PROBLEME (6 Routen = ~17%):**
 
-1. **POST /api/v1/webhooks** - webhookService.createWebhook DB-Problem
-2. **GET/PUT/DELETE /api/v1/webhooks/[webhookId]** - webhookService DB-Probleme
-3. **POST /api/v1/webhooks/[webhookId]/test** - webhookService DB-Probleme  
-4. **GET /api/v1/webhooks/[webhookId]/deliveries** - webhookService DB-Probleme
-5. **GET/POST /api/v1/export** - bulkExportService DB-Probleme
-6. **GET/POST /api/v1/import** - bulkImportService DB-Probleme
+1. **POST /api/v1/webhooks/[webhookId]/test** - 500 Error, Fetch/Timeout Problem
+2. **GET /api/v1/webhooks/[webhookId]/deliveries** - Noch nicht getestet
+3. **GET /api/v1/export** - bulkExportService DB-Probleme
+4. **POST /api/v1/export** - bulkExportService DB-Probleme
+5. **GET /api/v1/import** - bulkImportService DB-Probleme
+6. **POST /api/v1/import** - bulkImportService DB-Probleme
 
 ### ✅ **ALLE ANDEREN ROUTEN 100% FUNKTIONSFÄHIG (22 Routen = ~76%)**
 
