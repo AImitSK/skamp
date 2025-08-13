@@ -4,6 +4,7 @@
 import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { RichTextEditor } from '@/components/RichTextEditor';
+import { GmailStyleEditor } from '@/components/GmailStyleEditor';
 import IntelligentBoilerplateSection, { BoilerplateSection } from './IntelligentBoilerplateSection';
 import { processBoilerplates } from '@/lib/boilerplate-processor';
 import { Field, Label } from '@/components/ui/fieldset';
@@ -450,24 +451,31 @@ export default function CampaignContentComposer({
           />
         </Field>
 
-        {/* Main Content Editor - nur wenn nicht versteckt */}
+        {/* Gmail-Style Main Content Editor - nur wenn nicht versteckt */}
         {!hideMainContentField && (
           <Field>
             <Label className="flex items-center">
               Hauptinhalt der Pressemitteilung
               <InfoTooltip 
-                content="Pflichtfeld: Verfassen Sie hier den individuellen Inhalt Ihrer Pressemitteilung. Nutzen Sie die Formatierungsoptionen für professionelle Gestaltung."
+                content="Gmail-Style Editor: Verfassen Sie hier den individuellen Inhalt Ihrer Pressemitteilung. Nutzen Sie die minimale Toolbar für professionelle Formatierung."
                 className="ml-1"
               />
             </Label>
-            <div className="mt-2 border rounded-lg">
-              <RichTextEditor
+            <div className="mt-2">
+              <GmailStyleEditor
                 content={mainContent}
                 onChange={onMainContentChange}
+                placeholder="Pressemitteilung schreiben... (Gmail-Style)"
+                autoSave={true}
+                autoSaveDelay={10000}
+                onAutoSave={(content) => {
+                  // Auto-save Funktionalität - kann später erweitert werden
+                  console.log('Auto-saving content:', content.length, 'characters');
+                }}
               />
             </div>
             <p className="mt-2 text-sm text-gray-500">
-              Schreibe hier den individuellen Inhalt deiner Pressemitteilung. Die Textbausteine werden automatisch eingefügt.
+              Gmail-Style Editor: Minimale Toolbar für ablenkungsfreies Schreiben. Die Textbausteine werden automatisch eingefügt.
             </p>
           </Field>
         )}
