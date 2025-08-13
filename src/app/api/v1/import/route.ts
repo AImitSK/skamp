@@ -18,17 +18,18 @@ export const POST = APIMiddleware.withAuth(
       entity: body.entity,
       fileUrl: body.fileUrl,
       fileContent: body.fileContent,
+      data: body.data, // Unterstütze auch direktes data array
       options: body.options,
       notificationEmail: body.notificationEmail
     };
 
-    // Validiere Request
-    if (!importRequest.fileUrl && !importRequest.fileContent) {
+    // Validiere Request - akzeptiere fileUrl, fileContent ODER data
+    if (!importRequest.fileUrl && !importRequest.fileContent && !importRequest.data) {
       return APIMiddleware.handleError({
         name: 'APIError',
         statusCode: 400,
         errorCode: 'VALIDATION_ERROR',
-        message: 'fileUrl oder fileContent ist erforderlich'
+        message: 'fileUrl, fileContent oder data ist erforderlich'
       });
     }
 

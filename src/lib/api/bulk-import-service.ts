@@ -71,15 +71,10 @@ export class BulkImportService {
     userId: string
   ): Promise<APIBulkJobResponse> {
     try {
-      // TEMPORARY: Verwende immer Mock-Service für Import POST (bypasse Validierung)
-      // Minimale Validierung für Mock
-      if (!request.entity) {
-        throw new APIError('VALIDATION_ERROR', 'Entity ist erforderlich');
-      }
-      if (!request.format) {
-        throw new APIError('VALIDATION_ERROR', 'Format ist erforderlich');
-      }
+      // Validiere Request
+      this.validateImportRequest(request);
       
+      // TEMPORARY: Verwende immer Mock-Service für Import POST
       const { mockBulkImportService } = await import('@/lib/api/mock-export-import-service');
       return mockBulkImportService.startImport(request, organizationId, userId);
 
