@@ -72,10 +72,11 @@ export class BulkImportService {
   ): Promise<APIBulkJobResponse> {
     try {
       // TEMPORARY: Verwende immer Mock-Service für Import POST (Firestore collection() Problem)
+      // Aber validiere trotzdem die Eingabe
+      this.validateImportRequest(request);
+      
       const { mockBulkImportService } = await import('@/lib/api/mock-export-import-service');
       return mockBulkImportService.startImport(request, organizationId, userId);
-
-      this.validateImportRequest(request);
 
       // Erstelle Job-Eintrag
       const job: Omit<BulkJob, 'id'> = {
