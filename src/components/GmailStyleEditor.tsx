@@ -5,6 +5,8 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import Heading from '@tiptap/extension-heading';
+import TextStyle from '@tiptap/extension-text-style';
+import Color from '@tiptap/extension-color';
 import { useEffect, useCallback } from 'react';
 import { GmailStyleToolbar } from './GmailStyleToolbar';
 
@@ -75,6 +77,10 @@ export const GmailStyleEditor = ({
           target: '_blank'
         },
       }),
+      TextStyle,
+      Color.configure({
+        types: ['textStyle'],
+      }),
     ],
     content: content,
     immediatelyRender: false, 
@@ -136,10 +142,10 @@ export const GmailStyleEditor = ({
           }
 
           .gmail-editor-content {
-            min-height: 400px;
-            padding: 1.5rem;
-            font-size: 16px;
-            line-height: 1.6;
+            min-height: 500px;
+            padding: 2rem 3rem;
+            font-size: 18px;
+            line-height: 1.7;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
           }
           

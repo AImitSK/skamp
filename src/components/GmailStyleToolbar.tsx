@@ -9,6 +9,9 @@ import {
   ItalicIcon,
   LinkIcon,
   ListBulletIcon,
+  PlusIcon,
+  MinusIcon,
+  DocumentIcon,
 } from '@heroicons/react/24/outline'; // CeleroPress Design Pattern: nur 24/outline
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -21,6 +24,7 @@ type GmailStyleToolbarProps = {
 
 export const GmailStyleToolbar = ({ editor }: GmailStyleToolbarProps) => {
   const [showLinkDialog, setShowLinkDialog] = useState(false);
+  const [showColorDropdown, setShowColorDropdown] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
 
   if (!editor) {
@@ -74,6 +78,39 @@ export const GmailStyleToolbar = ({ editor }: GmailStyleToolbarProps) => {
     const previousUrl = editor.getAttributes('link').href || '';
     setLinkUrl(previousUrl);
     setShowLinkDialog(true);
+  };
+
+  // Farben für Text (CeleroPress konform)
+  const textColors = [
+    { name: 'Schwarz', value: '#000000' },
+    { name: 'Grau', value: '#6B7280' },
+    { name: 'Primary', value: '#005fab' },
+    { name: 'Rot', value: '#EF4444' },
+    { name: 'Grün', value: '#10B981' },
+    { name: 'Blau', value: '#3B82F6' },
+  ];
+
+  const handleFontSizeIncrease = () => {
+    const selection = editor.view.state.selection;
+    if (!selection.empty) {
+      editor.chain().focus().setFontSize('20px').run();
+    }
+  };
+
+  const handleFontSizeDecrease = () => {
+    const selection = editor.view.state.selection;
+    if (!selection.empty) {
+      editor.chain().focus().setFontSize('14px').run();
+    }
+  };
+
+  const handleClearFormatting = () => {
+    editor.chain().focus().clearNodes().unsetAllMarks().run();
+  };
+
+  const handleColorChange = (color: string) => {
+    editor.chain().focus().setColor(color).run();
+    setShowColorDropdown(false);
   };
 
   return (
@@ -140,6 +177,72 @@ export const GmailStyleToolbar = ({ editor }: GmailStyleToolbarProps) => {
           >
             <LinkIcon className="h-4 w-4" />
           </button>
+
+          {/* Separator */}
+          <div className="w-px h-6 bg-gray-300 mx-2" />
+
+          {/* Textgröße Buttons */}
+          <button
+            type="button"
+            onClick={handleFontSizeIncrease}
+            className="p-2 w-8 h-8 flex items-center justify-center rounded transition-colors hover:bg-gray-100 text-gray-700"
+            title="Text vergrößern"
+          >
+            <PlusIcon className="h-4 w-4" />
+          </button>
+          
+          <button
+            type="button"
+            onClick={handleFontSizeDecrease}
+            className="p-2 w-8 h-8 flex items-center justify-center rounded transition-colors hover:bg-gray-100 text-gray-700"
+            title="Text verkleinern"
+          >
+            <MinusIcon className="h-4 w-4" />
+          </button>
+
+          {/* Separator */}
+          <div className="w-px h-6 bg-gray-300 mx-2" />
+
+          {/* Formatierung löschen */}
+          <button
+            type="button"
+            onClick={handleClearFormatting}
+            className="p-2 w-8 h-8 flex items-center justify-center rounded transition-colors hover:bg-gray-100 text-gray-700"
+            title="Formatierung entfernen"
+          >
+            <DocumentIcon className="h-4 w-4" />
+          </button>
+
+          {/* Farben Dropdown */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowColorDropdown(!showColorDropdown)}
+              className="p-2 w-8 h-8 flex items-center justify-center rounded transition-colors hover:bg-gray-100 text-gray-700"
+              title="Textfarbe"
+            >
+              <div className="w-4 h-4 rounded border border-gray-300" style={{background: 'linear-gradient(45deg, #000 25%, #005fab 25%, #005fab 50%, #EF4444 50%, #EF4444 75%, #10B981 75%)'}} />
+            </button>
+            
+            {showColorDropdown && (
+              <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-md shadow-sm z-10 min-w-[120px]">
+                {textColors.map(color => (
+                  <button
+                    key={color.value}
+                    type="button"
+                    onClick={() => handleColorChange(color.value)}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 first:rounded-t-md last:rounded-b-md"
+                  >
+                    <div 
+                      className="w-4 h-4 rounded border border-gray-300" 
+                      style={{backgroundColor: color.value}}
+                    />
+                    {color.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Rechts: Zusätzliche Gmail-Style Actions (später) */}
