@@ -16,12 +16,16 @@ const INTEGRATION_EXAMPLES = [
     description: 'Synchronisiere CeleroPress Kontakte mit Salesforce CRM',
     category: 'CRM',
     code: `// Salesforce Integration mit CeleroPress API
-const { CeleroPress } = require('@celeropress/sdk');
+// NPM Package noch nicht verfügbar - verwende direkte API-Calls
+const axios = require('axios');
 const jsforce = require('jsforce');
 
-// Initialisiere beide Clients
-const celeropress = new CeleroPress({
-  apiKey: process.env.CELEROPRESS_API_KEY
+// Initialisiere API Client
+const api = axios.create({
+  baseURL: 'https://www.celeropress.com/api/v1',
+  headers: {
+    'Authorization': process.env.CELEROPRESS_API_KEY // Ohne 'Bearer' prefix!
+  }
 });
 
 const sf = new jsforce.Connection({
@@ -34,10 +38,13 @@ const sf = new jsforce.Connection({
 async function syncContactsToSalesforce() {
   try {
     // Hole alle Kontakte von CeleroPress
-    const contacts = await celeropress.contacts.list({
-      limit: 100,
-      tags: ['journalist', 'media']
+    const response = await api.get('/contacts', {
+      params: {
+        limit: 100,
+        tags: ['journalist', 'media']
+      }
     });
+    const contacts = response.data;
 
     // Transformiere und erstelle in Salesforce
     const sfContacts = contacts.data.map(contact => ({
@@ -96,7 +103,7 @@ async function handleCeleroPressWebhook(req, res) {
 }
 
 // Registriere Webhook
-await celeropress.webhooks.create({
+const webhook = await api.post('/webhooks', {
   url: 'https://your-app.com/webhooks/celeropress',
   events: ['contact.created', 'contact.updated', 'contact.deleted'],
   active: true
@@ -108,12 +115,16 @@ await celeropress.webhooks.create({
     description: 'Bidirektionale Synchronisation zwischen CeleroPress und HubSpot',
     category: 'Marketing',
     code: `// HubSpot Integration mit CeleroPress API
-const { CeleroPress } = require('@celeropress/sdk');
+// NPM Package noch nicht verfügbar - verwende direkte API-Calls
+const axios = require('axios');
 const hubspot = require('@hubspot/api-client');
 
-// Initialisiere Clients
-const celeropress = new CeleroPress({
-  apiKey: process.env.CELEROPRESS_API_KEY
+// Initialisiere API Client
+const api = axios.create({
+  baseURL: 'https://www.celeropress.com/api/v1',
+  headers: {
+    'Authorization': process.env.CELEROPRESS_API_KEY // Ohne 'Bearer' prefix!
+  }
 });
 
 const hubspotClient = new hubspot.Client({
@@ -123,10 +134,13 @@ const hubspotClient = new hubspot.Client({
 // Sync Companies von CeleroPress zu HubSpot
 async function syncCompaniesToHubSpot() {
   // Hole Media Houses von CeleroPress
-  const companies = await celeropress.companies.list({
-    type: 'media_house',
-    limit: 100
+  const response = await api.get('/companies', {
+    params: {
+      type: 'media_house',
+      limit: 100
+    }
   });
+  const companies = response.data;
 
   const hubspotCompanies = [];
 
@@ -171,9 +185,12 @@ async function syncCompaniesToHubSpot() {
 
 // Sync Contacts mit Engagement Score
 async function syncContactsWithEngagement() {
-  const contacts = await celeropress.contacts.list({
-    includeEngagement: true
+  const response = await api.get('/contacts', {
+    params: {
+      includeEngagement: true
+    }
   });
+  const contacts = response.data;
 
   for (const contact of contacts.data) {
     const properties = {
@@ -207,7 +224,7 @@ class BidirectionalSync {
   }
 
   async setupCeleroPressWebhooks() {
-    await celeropress.webhooks.create({
+    await api.post('/webhooks', {
       url: 'https://your-app.com/webhooks/celeropress-to-hubspot',
       events: [
         'contact.created',
@@ -235,8 +252,8 @@ class BidirectionalSync {
     // Sync von HubSpot zu CeleroPress
     if (event.subscriptionType === 'contact.propertyChange') {
       const contact = await this.getHubSpotContact(data.objectId);
-      await celeropress.contacts.update(
-        contact.properties.celeropress_id,
+      await api.put(
+        `/contacts/${contact.properties.celeropress_id}`,
         this.transformHubSpotContact(contact)
       );
     }
@@ -246,10 +263,13 @@ class BidirectionalSync {
 // Marketing Campaign Integration
 async function createTargetedCampaign() {
   // Hole Journalisten aus CeleroPress
-  const journalists = await celeropress.contacts.list({
-    tags: ['journalist', 'tech'],
-    expertise: ['AI', 'Software']
+  const response = await api.get('/contacts', {
+    params: {
+      tags: ['journalist', 'tech'],
+      expertise: ['AI', 'Software']
+    }
   });
+  const journalists = response.data;
 
   // Erstelle HubSpot Liste
   const list = await hubspotClient.crm.lists.create({
@@ -284,7 +304,7 @@ async function createTargetedCampaign() {
 const authentication = {
   type: 'custom',
   test: {
-    url: 'https://api.celeropress.de/v1/auth/test',
+    url: 'https://www.celeropress.com/api/v1/auth/test',
     method: 'GET',
     headers: {
       'Authorization': 'Bearer {{bundle.authData.api_key}}'
@@ -313,7 +333,7 @@ const newContactTrigger = {
     type: 'hook',
     performSubscribe: async (z, bundle) => {
       const response = await z.request({
-        url: 'https://api.celeropress.de/v1/webhooks',
+        url: 'https://www.celeropress.com/api/v1/webhooks',
         method: 'POST',
         body: {
           url: bundle.targetUrl,
@@ -324,7 +344,7 @@ const newContactTrigger = {
     },
     performUnsubscribe: async (z, bundle) => {
       await z.request({
-        url: \`https://api.celeropress.de/v1/webhooks/\${bundle.subscribeData.id}\`,
+        url: \`https://www.celeropress.com/api/v1/webhooks/\${bundle.subscribeData.id}\`,
         method: 'DELETE'
       });
     },
@@ -333,7 +353,7 @@ const newContactTrigger = {
     },
     performList: async (z, bundle) => {
       const response = await z.request({
-        url: 'https://api.celeropress.de/v1/contacts',
+        url: 'https://www.celeropress.com/api/v1/contacts',
         params: {
           limit: 10,
           sort: 'createdAt:desc'
@@ -385,7 +405,7 @@ const createContactAction = {
     ],
     perform: async (z, bundle) => {
       const response = await z.request({
-        url: 'https://api.celeropress.de/v1/contacts',
+        url: 'https://www.celeropress.com/api/v1/contacts',
         method: 'POST',
         body: bundle.inputData
       });
@@ -412,7 +432,7 @@ const searchContactSearch = {
     ],
     perform: async (z, bundle) => {
       const response = await z.request({
-        url: 'https://api.celeropress.de/v1/search',
+        url: 'https://www.celeropress.com/api/v1/search',
         method: 'POST',
         body: {
           query: bundle.inputData.email,
@@ -462,13 +482,17 @@ module.exports = {
     code: `// Express.js Webhook Handler für CeleroPress Events
 const express = require('express');
 const crypto = require('crypto');
-const { CeleroPress } = require('@celeropress/sdk');
+// NPM Package noch nicht verfügbar - verwende direkte API-Calls
+const axios = require('axios');
 
 const app = express();
 app.use(express.json());
 
-const celeropress = new CeleroPress({
-  apiKey: process.env.CELEROPRESS_API_KEY
+const api = axios.create({
+  baseURL: 'https://www.celeropress.com/api/v1',
+  headers: {
+    'Authorization': process.env.CELEROPRESS_API_KEY
+  }
 });
 
 // Webhook Signature Verification
@@ -571,7 +595,7 @@ async function handleCompanyCreated(company) {
   const enrichedData = await enrichCompanyData(company.website);
   
   // Update in CeleroPress
-  await celeropress.companies.update(company.id, enrichedData);
+  await api.put(`/companies/${company.id}`, enrichedData);
   
   // Benachrichtige Sales Team
   await notifySalesTeam(company);
@@ -610,7 +634,7 @@ async function handleCampaignCompleted(campaign) {
 async function registerWebhooks() {
   const webhookUrl = 'https://your-app.com/webhooks/celeropress';
   
-  const webhook = await celeropress.webhooks.create({
+  const response = await api.post('/webhooks', {
     url: webhookUrl,
     events: [
       'contact.created',
@@ -626,6 +650,7 @@ async function registerWebhooks() {
     active: true,
     secret: process.env.WEBHOOK_SECRET
   });
+  const webhook = response.data;
   
   console.log(\`Webhook registered: \${webhook.id}\`);
   return webhook;
@@ -688,7 +713,7 @@ import { createHttpLink } from '@apollo/client/link/http';
 
 // HTTP Link für Queries und Mutations
 const httpLink = createHttpLink({
-  uri: 'https://api.celeropress.de/v1/graphql',
+  uri: 'https://www.celeropress.com/api/v1/graphql',
   headers: {
     authorization: \`Bearer \${process.env.CELEROPRESS_API_KEY}\`
   }
@@ -696,7 +721,7 @@ const httpLink = createHttpLink({
 
 // WebSocket Link für Subscriptions
 const wsLink = new WebSocketLink({
-  uri: 'wss://api.celeropress.de/v1/graphql',
+  uri: 'wss://www.celeropress.com/api/v1/graphql',
   options: {
     reconnect: true,
     connectionParams: {

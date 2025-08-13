@@ -170,9 +170,9 @@ TypeError: S.map is not a function
 - ✅ Mock-Daten werden korrekt angezeigt  
 - ✅ Charts und Tabellen rendern fehlerfrei
 
-### ⏳ IN ARBEIT: Schritt 2 - Developer Hauptseite
+### ✅ ABGESCHLOSSEN: Schritt 2 - Developer Hauptseite
 **Problem:** Hauptseite machte auch 401 API-Calls  
-**Status:** ✅ IMPLEMENTIERT (Commit 624b823) - WARTE AUF DEPLOYMENT
+**Status:** ✅ ERFOLGREICH - Keine 401 Errors mehr!
 
 #### Schritt 2.1: Problem identifiziert ✅
 - ✅ fetchUsageStats() machte Bearer Token API-Calls
@@ -183,8 +183,22 @@ TypeError: S.map is not a function
 - ✅ Commit 624b823 gepusht
 - ⏳ Warte auf Deployment-Abschluss
 
-### 📋 WARTESCHLANGE (nach Schritt 2):
-3. **Examples bereinigen** - Funktionierende Code-Beispiele
+### ⏳ IN ARBEIT: Schritt 3 - Examples bereinigen
+**Problem:** Code-Beispiele verwenden nicht-existentes NPM Package  
+**Status:** IN BEARBEITUNG
+
+#### Schritt 3.1: Probleme identifiziert ✅
+- ✅ @celeropress/sdk existiert nicht auf NPM
+- ✅ Falsche API-URLs (api.celeropress.de statt .com)
+- ✅ GraphQL/WebSocket Beispiele für nicht-existierende Features
+
+#### Schritt 3.2: Lösungen implementiert ⏳
+- ✅ SDK-Referenzen durch axios ersetzt
+- ✅ API-URLs korrigiert auf .com
+- ⏳ Test ob Beispiele sinnvoll sind
+- ⏳ Commit und Push ausstehend
+
+### 📋 WARTESCHLANGE (nach Schritt 3):
 4. **SDK-Problem** - Alternative ohne NPM
 
 ## Erfolgskriterien pro Schritt
