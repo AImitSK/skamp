@@ -22,9 +22,15 @@ interface RouteParams {
  * Holt Delivery-History eines Webhooks
  */
 export const GET = APIMiddleware.withAuth(
-  async (request: NextRequest, context, { params }: { params: RouteParams }) => {
+  async (request: NextRequest, context) => {
     try {
-      if (!params?.webhookId) {
+      // Extract webhookId from URL
+      const url = new URL(request.url);
+      const pathParts = url.pathname.split('/');
+      const webhookIdIndex = pathParts.indexOf('webhooks') + 1;
+      const webhookId = pathParts[webhookIdIndex];
+      
+      if (!webhookId || webhookId === 'deliveries') {
         throw new Error('Webhook ID erforderlich');
       }
 
@@ -41,7 +47,7 @@ export const GET = APIMiddleware.withAuth(
 
       // Build Query (ohne orderBy um Index-Fehler zu vermeiden)
       const constraints = [
-        where('webhookId', '==', params.webhookId),
+        where('webhookId', '==', webhookId),
         where('organizationId', '==', context.organizationId)
       ];
 
