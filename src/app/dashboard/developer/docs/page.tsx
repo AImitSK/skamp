@@ -114,11 +114,18 @@ export default function APIDocumentation() {
             requestInterceptor={requestInterceptor}
             persistAuthorization={true}
             supportedSubmitMethods={['get', 'post', 'put', 'delete', 'patch']}
-            serverVariableNameResolver={() => 'production'}
             onComplete={() => {
-              // Server-Auswahl komplett verstecken
-              const servers = document.querySelectorAll('.servers, .servers-dropdown, .opblock-servers');
-              servers.forEach(el => el.style.display = 'none');
+              // Server-Auswahl und SERVERS Text komplett verstecken
+              const servers = document.querySelectorAll(
+                '.servers, .servers-dropdown, .opblock-servers, .servers-title, .scheme-container, ' +
+                '.info hgroup + div, .swagger-ui .info .main h3'
+              );
+              servers.forEach((el: any) => {
+                if (el && (el.textContent?.includes('SERVERS') || el.textContent?.includes('Server'))) {
+                  el.style.display = 'none';
+                }
+                el.style.display = 'none';
+              });
             }}
           />
         )}
@@ -138,7 +145,9 @@ export default function APIDocumentation() {
         .swagger-ui .servers,
         .swagger-ui .servers-dropdown,
         .swagger-ui .opblock-servers,
-        .swagger-ui .servers-container {
+        .swagger-ui .servers-container,
+        .swagger-ui .servers-title,
+        .swagger-ui .scheme-container {
           display: none !important;
         }
         

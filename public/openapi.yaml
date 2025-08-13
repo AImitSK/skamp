@@ -1404,6 +1404,3 @@ tags:
   - name: Search
     description: Globale Suche über alle Entitäten
 
-externalDocs:
-  description: Vollständige API-Dokumentation
-  url: https://docs.celeropress.de/api
