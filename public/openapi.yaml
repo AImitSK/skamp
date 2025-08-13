@@ -21,22 +21,10 @@ info:
     Die API verwendet standardmäßige HTTP-Status-Codes und strukturierte Fehlermeldungen.
     
   version: 1.0.0
-  contact:
-    name: CeleroPress Support
-    url: https://celeropress.de/support
-    email: api-support@celeropress.de
-  license:
-    name: MIT
-    url: https://opensource.org/licenses/MIT
-  termsOfService: https://celeropress.de/terms
 
 servers:
   - url: https://skamp.vercel.app/api/v1
-    description: Production Server
-  - url: https://www.celeropress.com/api/v1
-    description: Main Production Server
-  - url: http://localhost:3000/api/v1
-    description: Development Server
+    description: CeleroPress API
 
 security:
   - ApiKeyAuth: []
@@ -57,57 +45,6 @@ paths:
                 $ref: '#/components/schemas/AuthTestResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
-  /auth/keys:
-    get:
-      tags: [API Keys]
-      summary: Liste aller API-Keys
-      description: Holt alle API-Keys der Organisation (ohne Key-Werte)
-      responses:
-        '200':
-          description: Liste der API-Keys
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/APIKeyResponse'
-    post:
-      tags: [API Keys]
-      summary: Neuen API-Key erstellen
-      description: Erstellt einen neuen API-Key für die Organisation
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/APIKeyCreateRequest'
-      responses:
-        '201':
-          description: API-Key erfolgreich erstellt
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIKeyResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-
-  /auth/keys/{keyId}:
-    delete:
-      tags: [API Keys]
-      summary: API-Key löschen
-      description: Löscht einen API-Key permanent
-      parameters:
-        - name: keyId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '204':
-          description: API-Key erfolgreich gelöscht
-        '404':
-          $ref: '#/components/responses/NotFound'
 
   # Contacts API
   /contacts:
@@ -1340,90 +1277,6 @@ components:
           type: string
           format: date-time
 
-    # API Key Models
-    APIKeyCreateRequest:
-      type: object
-      required: [name, permissions]
-      properties:
-        name:
-          type: string
-          description: Beschreibender Name für den API-Key
-        permissions:
-          type: array
-          items:
-            type: string
-            enum: [
-              contacts:read, contacts:write, contacts:delete,
-              companies:read, companies:write, companies:delete,
-              publications:read, publications:write, publications:delete,
-              webhooks:read, webhooks:write, webhooks:delete,
-              export:read, import:read
-            ]
-        rateLimit:
-          type: object
-          properties:
-            requestsPerHour:
-              type: integer
-              default: 1000
-            requestsPerMinute:
-              type: integer
-              default: 60
-        allowedIPs:
-          type: array
-          items:
-            type: string
-          description: IP-Adressen die den Key verwenden dürfen (optional)
-        expiresInDays:
-          type: integer
-          description: Ablauf in Tagen (optional, null = kein Ablauf)
-
-    APIKeyResponse:
-      type: object
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        key:
-          type: string
-          description: Nur bei Erstellung zurückgegeben
-        keyPreview:
-          type: string
-          description: Verkürzte Ansicht des Keys
-        permissions:
-          type: array
-          items:
-            type: string
-        isActive:
-          type: boolean
-        rateLimit:
-          type: object
-          properties:
-            requestsPerHour:
-              type: integer
-            requestsPerMinute:
-              type: integer
-            burstLimit:
-              type: integer
-        usage:
-          type: object
-          properties:
-            totalRequests:
-              type: integer
-            requestsThisHour:
-              type: integer
-            requestsToday:
-              type: integer
-            lastUsedAt:
-              type: string
-              format: date-time
-        createdAt:
-          type: string
-          format: date-time
-        expiresAt:
-          type: string
-          format: date-time
-
     AuthTestResponse:
       type: object
       properties:
@@ -1537,8 +1390,6 @@ components:
 tags:
   - name: Authentication
     description: API-Key Authentifizierung und Validation
-  - name: API Keys
-    description: Verwaltung von API-Keys
   - name: Contacts
     description: Kontakt-Management für PR & CRM
   - name: Companies

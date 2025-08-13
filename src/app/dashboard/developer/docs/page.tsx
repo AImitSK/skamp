@@ -129,6 +129,10 @@ export default function APIDocumentation() {
           display: none;
         }
         
+        .swagger-ui .servers {
+          display: none;
+        }
+        
         .swagger-ui .info {
           margin: 2rem 0;
         }
@@ -147,11 +151,13 @@ export default function APIDocumentation() {
         .swagger-ui .btn.authorize {
           background-color: #3b82f6;
           border-color: #3b82f6;
+          color: white !important;
         }
         
         .swagger-ui .btn.authorize:hover {
           background-color: #2563eb;
           border-color: #2563eb;
+          color: white !important;
         }
         
         .swagger-ui .btn.execute {
