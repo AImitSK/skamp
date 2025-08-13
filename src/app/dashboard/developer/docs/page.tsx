@@ -23,10 +23,33 @@ export default function APIDocumentation() {
   }, [user, loading, router]);
 
   useEffect(() => {
-    // Lade OpenAPI Spec - verwende direkte URL und setze sofort
+    // Lade OpenAPI Spec - teste verschiedene Ansätze
     if (user) {
       console.log('Loading OpenAPI spec...');
-      setSpec('/openapi.yaml');
+      
+      // Versuche verschiedene URLs
+      const specUrls = [
+        'https://www.celeropress.com/openapi.yaml',
+        '/openapi.yaml',
+        '/api/openapi.yaml'
+      ];
+      
+      // Teste welche URL funktioniert
+      fetch('https://www.celeropress.com/openapi.yaml')
+        .then(res => {
+          console.log('OpenAPI fetch response:', res.status);
+          if (res.ok) {
+            setSpec('https://www.celeropress.com/openapi.yaml');
+            console.log('OpenAPI spec set to:', 'https://www.celeropress.com/openapi.yaml');
+          } else {
+            console.error('Failed to load OpenAPI spec:', res.status);
+            setSpec('/openapi.yaml'); // Fallback
+          }
+        })
+        .catch(err => {
+          console.error('OpenAPI fetch error:', err);
+          setSpec('/openapi.yaml'); // Fallback
+        });
     }
   }, [user]);
 
@@ -97,7 +120,7 @@ export default function APIDocumentation() {
           </p>
         </div>
         
-        {spec && (
+        {spec ? (
           <SwaggerUI
             url={spec}
             docExpansion="list"
@@ -112,6 +135,7 @@ export default function APIDocumentation() {
             persistAuthorization={true}
             supportedSubmitMethods={['get', 'post', 'put', 'delete', 'patch']}
             onComplete={() => {
+              console.log('SwaggerUI loaded successfully');
               // Server-Auswahl und SERVERS Text komplett verstecken
               const servers = document.querySelectorAll(
                 '.servers, .servers-dropdown, .opblock-servers, .servers-title, .scheme-container, ' +
@@ -125,6 +149,11 @@ export default function APIDocumentation() {
               });
             }}
           />
+        ) : (
+          <div className="p-8 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">OpenAPI Dokumentation wird geladen...</p>
+          </div>
         )}
       </div>
 
