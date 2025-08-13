@@ -23,8 +23,7 @@ info:
   version: 1.0.0
 
 servers:
-  - url: https://skamp.vercel.app/api/v1
-    description: CeleroPress API
+  - url: https://www.celeropress.com/api/v1
 
 security:
   - ApiKeyAuth: []

@@ -34,12 +34,12 @@ export default function APIDocumentation() {
   }, [user]);
 
   const requestInterceptor = (req: any) => {
-    // Korrigiere URL für API calls - verwende Production Server
+    // Korrigiere URL für API calls - verwende CeleroPress Domain
     if (req.url && req.url.includes('/api/v1/')) {
       // Wenn es bereits eine vollständige URL ist, lasse sie unverändert
       if (!req.url.startsWith('http')) {
-        // Für relative URLs, verwende die Production API
-        req.url = `https://skamp.vercel.app${req.url}`;
+        // Für relative URLs, verwende die CeleroPress API
+        req.url = `https://www.celeropress.com${req.url}`;
       }
     }
     
@@ -114,6 +114,12 @@ export default function APIDocumentation() {
             requestInterceptor={requestInterceptor}
             persistAuthorization={true}
             supportedSubmitMethods={['get', 'post', 'put', 'delete', 'patch']}
+            serverVariableNameResolver={() => 'production'}
+            onComplete={() => {
+              // Server-Auswahl komplett verstecken
+              const servers = document.querySelectorAll('.servers, .servers-dropdown, .opblock-servers');
+              servers.forEach(el => el.style.display = 'none');
+            }}
           />
         )}
       </div>
@@ -129,8 +135,11 @@ export default function APIDocumentation() {
           display: none;
         }
         
-        .swagger-ui .servers {
-          display: none;
+        .swagger-ui .servers,
+        .swagger-ui .servers-dropdown,
+        .swagger-ui .opblock-servers,
+        .swagger-ui .servers-container {
+          display: none !important;
         }
         
         .swagger-ui .info {
