@@ -172,6 +172,10 @@ export class BulkExportService {
     } = {}
   ): Promise<APIBulkJobListResponse> {
     try {
+      // TEMPORARY: Verwende immer Mock-Service für Export GET (Firestore collection() Problem)
+      const { mockBulkExportService } = await import('@/lib/api/mock-export-import-service');
+      return mockBulkExportService.getJobs(organizationId, params);
+      
       // Safe Database Check - verwende Mock wenn DB nicht verfügbar
       if (!db) {
         const { mockBulkExportService } = await import('@/lib/api/mock-export-import-service');
