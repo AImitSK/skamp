@@ -9,6 +9,56 @@ import TextStyle from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
 import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
+import { Extension } from '@tiptap/core';
+
+// Custom FontSize Extension
+const FontSize = Extension.create({
+  name: 'fontSize',
+  
+  addOptions() {
+    return {
+      types: ['textStyle'],
+    }
+  },
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: this.options.types,
+        attributes: {
+          fontSize: {
+            default: null,
+            parseHTML: element => element.style.fontSize?.replace('px', '') || null,
+            renderHTML: attributes => {
+              if (!attributes.fontSize) {
+                return {}
+              }
+              return {
+                style: `font-size: ${attributes.fontSize}px`,
+              }
+            },
+          },
+        },
+      },
+    ]
+  },
+
+  addCommands() {
+    return {
+      setFontSize: (fontSize: string) => ({ chain }) => {
+        return chain()
+          .setMark('textStyle', { fontSize })
+          .run()
+      },
+      unsetFontSize: () => ({ chain }) => {
+        return chain()
+          .setMark('textStyle', { fontSize: null })
+          .removeEmptyTextStyle()
+          .run()
+      },
+    }
+  },
+});
 import { useEffect, useCallback } from 'react';
 import { GmailStyleToolbar } from './GmailStyleToolbar';
 
@@ -87,6 +137,7 @@ export const GmailStyleEditor = ({
       TextAlign.configure({
         types: ['heading', 'paragraph'],
       }),
+      FontSize,
     ],
     content: content,
     immediatelyRender: false, 

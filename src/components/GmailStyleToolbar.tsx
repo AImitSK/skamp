@@ -28,6 +28,7 @@ type GmailStyleToolbarProps = {
 export const GmailStyleToolbar = ({ editor }: GmailStyleToolbarProps) => {
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [showColorDropdown, setShowColorDropdown] = useState(false);
+  const [showFontSizeDropdown, setShowFontSizeDropdown] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
 
   if (!editor) {
@@ -136,18 +137,25 @@ export const GmailStyleToolbar = ({ editor }: GmailStyleToolbarProps) => {
     ],
   ];
 
-  const handleFontSizeIncrease = () => {
-    const selection = editor.view.state.selection;
-    if (!selection.empty) {
-      editor.chain().focus().setFontSize('20px').run();
-    }
+  // Schriftgrößen wie in deinem Screenshot
+  const fontSizes = [
+    { name: 'Klein', value: '14px', class: 'text-sm' },
+    { name: 'Normal', value: '16px', class: 'text-base' },
+    { name: 'Groß', value: '20px', class: 'text-lg' },
+    { name: 'Riesig', value: '24px', class: 'text-xl' },
+  ];
+
+  const handleFontSizeChange = (fontSize: string) => {
+    // Verwende CSS-Style statt TipTap FontSize Extension
+    editor.chain().focus().setFontSize(fontSize).run();
+    setShowFontSizeDropdown(false);
   };
 
-  const handleFontSizeDecrease = () => {
-    const selection = editor.view.state.selection;
-    if (!selection.empty) {
-      editor.chain().focus().setFontSize('14px').run();
-    }
+  // Aktuell aktive Schriftgröße ermitteln (fallback auf Normal)
+  const getCurrentFontSize = () => {
+    const attrs = editor.getAttributes('textStyle');
+    const currentSize = attrs.fontSize || '16px';
+    return fontSizes.find(size => size.value === currentSize) || fontSizes[1];
   };
 
   const handleClearFormatting = () => {
@@ -269,24 +277,38 @@ export const GmailStyleToolbar = ({ editor }: GmailStyleToolbarProps) => {
           {/* Separator */}
           <div className="w-px h-6 bg-gray-300 mx-2" />
 
-          {/* Textgröße Buttons */}
-          <button
-            type="button"
-            onClick={handleFontSizeIncrease}
-            className="p-2 w-8 h-8 flex items-center justify-center rounded transition-colors hover:bg-gray-100 text-gray-700"
-            title="Text vergrößern"
-          >
-            <PlusIcon className="h-4 w-4" />
-          </button>
-          
-          <button
-            type="button"
-            onClick={handleFontSizeDecrease}
-            className="p-2 w-8 h-8 flex items-center justify-center rounded transition-colors hover:bg-gray-100 text-gray-700"
-            title="Text verkleinern"
-          >
-            <MinusIcon className="h-4 w-4" />
-          </button>
+          {/* Schriftgröße Dropdown */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowFontSizeDropdown(!showFontSizeDropdown)}
+              className="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors min-w-[70px] text-left"
+              title="Schriftgröße"
+            >
+              {getCurrentFontSize().name}
+            </button>
+            
+            {showFontSizeDropdown && (
+              <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-md shadow-sm z-10 min-w-[100px]">
+                {fontSizes.map(size => (
+                  <button
+                    key={size.value}
+                    type="button"
+                    onClick={() => handleFontSizeChange(size.value)}
+                    className={clsx(
+                      'w-full text-left px-3 py-2 hover:bg-gray-50 first:rounded-t-md last:rounded-b-md',
+                      size.class,
+                      {
+                        'bg-blue-50 text-blue-700': getCurrentFontSize().value === size.value
+                      }
+                    )}
+                  >
+                    {size.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Separator */}
           <div className="w-px h-6 bg-gray-300 mx-2" />
