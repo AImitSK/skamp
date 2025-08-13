@@ -40,6 +40,7 @@ import {
   FileProcessingJob
 } from '@/types/api-advanced';
 import { APIError } from '@/lib/api/api-errors';
+import { mockBulkImportService } from '@/lib/api/mock-export-import-service';
 
 // Build-safe Firebase import
 let db: any;
@@ -75,7 +76,6 @@ export class BulkImportService {
       this.validateImportRequest(request);
       
       // TEMPORARY: Verwende immer Mock-Service für Import POST
-      const { mockBulkImportService } = await import('@/lib/api/mock-export-import-service');
       return mockBulkImportService.startImport(request, organizationId, userId);
 
       // Erstelle Job-Eintrag
@@ -102,7 +102,6 @@ export class BulkImportService {
       // Speichere Job (mit Safe Check)
       if (!collection || !addDoc) {
         // Fallback wenn Firestore nicht verfügbar
-        const { mockBulkImportService } = await import('@/lib/api/mock-export-import-service');
         return mockBulkImportService.startImport(request, organizationId, userId);
       }
       
@@ -132,7 +131,6 @@ export class BulkImportService {
     try {
       // Safe Database Check - verwende Mock wenn DB nicht verfügbar
       if (!db) {
-        const { mockBulkImportService } = await import('@/lib/api/mock-export-import-service');
         return mockBulkImportService.getJobById(jobId, organizationId);
       }
       
@@ -174,7 +172,6 @@ export class BulkImportService {
     try {
       // Safe Database Check - verwende Mock wenn DB nicht verfügbar
       if (!db) {
-        const { mockBulkImportService } = await import('@/lib/api/mock-export-import-service');
         return mockBulkImportService.getJobs(organizationId, params);
       }
       
