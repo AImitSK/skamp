@@ -526,6 +526,7 @@ export default function DashboardLayout({
                     <DropdownItem 
                       onClick={handleLogout}
                       icon={ArrowRightOnRectangleIcon}
+                      description="Von CeleroPress abmelden"
                     >
                       Abmelden
                     </DropdownItem>

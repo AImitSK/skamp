@@ -8,11 +8,13 @@
 @import '../styles/email-content.css';
 
 /* Fix für Avatar-Dropdown-Menü Abstände */
-.avatar-dropdown-menu a {
+.avatar-dropdown-menu a,
+.avatar-dropdown-menu button {
   display: flex !important;
   align-items: center !important;
   gap: 0.75rem !important;
   width: 100% !important;
+  text-align: left !important;
 }
 
 /* Entfernt die Navbar-spezifischen Icon-Styles im Avatar-Dropdown */
