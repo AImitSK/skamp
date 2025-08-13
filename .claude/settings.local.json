@@ -35,7 +35,8 @@
       "Bash(git rebase:*)",
       "Bash(vercel logs:*)",
       "Bash(curl:*)",
-      "Bash(vercel ls:*)"
+      "Bash(vercel ls:*)",
+      "Bash(timeout:*)"
     ],
     "deny": []
   }
