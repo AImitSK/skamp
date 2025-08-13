@@ -127,7 +127,16 @@ TypeError: S.map is not a function
 - ✅ Download-Statistiken verfügbar
 - ✅ Automatische Updates für Nutzer
 
-## ⚠️ WICHTIGE REGEL: KEINE MOCK-DATEN!
+## ⚠️ WICHTIGE REGELN!
+
+### NIEMALS Firebase Admin SDK verwenden!
+- ❌ **KEIN Firebase Admin SDK** - Wir haben es NICHT und können es NICHT nutzen!
+- ❌ **KEINE firebase-admin Imports** - Verursacht Build-Fehler!
+- ❌ **KEINE verifyIdToken() aus Admin SDK** - Nicht verfügbar!
+- ✅ **NUR Client-seitiges Firebase** aus @/lib/firebase/config
+- ✅ **Validation über bestehende Services** wenn nötig
+
+### NIEMALS Mock/Test-Daten verwenden!
 
 ### NIEMALS Mock/Test-Daten verwenden!
 - ❌ **KEINE Mock-Daten** - Alles muss ECHT sein

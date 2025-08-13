@@ -106,27 +106,62 @@ export default function AnalyticsPage() {
 
   const fetchUsageStats = async () => {
     try {
-      // Echte Stats vom neuen Developer Endpoint
-      const response = await fetch('/api/v1/developer/stats', {
-        headers: {
-          'Authorization': `Bearer ${await user?.getIdToken()}`
+      // DIREKT aus Firestore - KEIN Server-Endpoint nötig!
+      if (!user) return;
+      
+      const { db } = await import('@/lib/firebase/config');
+      const { collection, query, where, getDocs, Timestamp } = await import('firebase/firestore');
+      
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      
+      // API Logs für heute und Monat
+      const todayLogsQuery = query(
+        collection(db, 'api_logs'),
+        where('userId', '==', user.uid),
+        where('timestamp', '>=', Timestamp.fromDate(todayStart))
+      );
+      const todayLogsSnapshot = await getDocs(todayLogsQuery);
+      const requestsToday = todayLogsSnapshot.size;
+      
+      const monthLogsQuery = query(
+        collection(db, 'api_logs'),
+        where('userId', '==', user.uid),
+        where('timestamp', '>=', Timestamp.fromDate(monthStart))
+      );
+      const monthLogsSnapshot = await getDocs(monthLogsQuery);
+      const requestsMonth = monthLogsSnapshot.size;
+      
+      // Fehlerrate und Latenz berechnen
+      let errorCount = 0;
+      let totalLatency = 0;
+      let latencyCount = 0;
+      
+      monthLogsSnapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.status >= 400) {
+          errorCount++;
+        }
+        if (data.latency) {
+          totalLatency += data.latency;
+          latencyCount++;
         }
       });
       
-      if (response.ok) {
-        const data = await response.json();
-        setStats({
-          totalRequests: data.requests_total || data.requests_month,
-          requestsToday: data.requests_today,
-          errorRate: data.error_rate,
-          avgLatency: data.avg_latency,
-          activeKeys: apiKeys.filter(k => k.status === 'active').length,
-          remainingQuota: data.quota_limit - data.quota_used,
-          quotaLimit: data.quota_limit
-        });
-      } else {
-        console.error('Failed to fetch usage stats:', response.status);
-      }
+      const errorRate = requestsMonth > 0 ? (errorCount / requestsMonth) * 100 : 0;
+      const avgLatency = latencyCount > 0 ? Math.round(totalLatency / latencyCount) : 0;
+      const quotaLimit = 100000; // Default
+      
+      setStats({
+        totalRequests: requestsMonth,
+        requestsToday: requestsToday,
+        errorRate: parseFloat(errorRate.toFixed(2)),
+        avgLatency: avgLatency,
+        activeKeys: apiKeys.filter(k => k.status === 'active').length,
+        remainingQuota: quotaLimit - requestsMonth,
+        quotaLimit: quotaLimit
+      });
     } catch (error) {
       console.error('Fehler beim Laden der Usage Stats:', error);
     }
@@ -134,20 +169,33 @@ export default function AnalyticsPage() {
 
   const fetchApiKeys = async () => {
     try {
-      // Echte API Keys vom neuen Developer Endpoint
-      const response = await fetch('/api/v1/developer/keys', {
-        headers: {
-          'Authorization': `Bearer ${await user?.getIdToken()}`
-        }
+      // DIREKT aus Firestore - KEIN Server-Endpoint nötig!
+      if (!user) return;
+      
+      const { db } = await import('@/lib/firebase/config');
+      const { collection, query, where, getDocs } = await import('firebase/firestore');
+      
+      const keysQuery = query(
+        collection(db, 'api_keys'),
+        where('userId', '==', user.uid)
+      );
+      
+      const keysSnapshot = await getDocs(keysQuery);
+      const apiKeysData = [];
+      
+      keysSnapshot.forEach(doc => {
+        const data = doc.data();
+        apiKeysData.push({
+          id: doc.id,
+          name: data.name || 'Unnamed Key',
+          key: data.key,
+          status: data.status || 'active',
+          createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+          lastUsed: data.lastUsed?.toDate?.()?.toISOString() || null
+        });
       });
       
-      if (response.ok) {
-        const data = await response.json();
-        setApiKeys(data.data || []);
-      } else {
-        console.error('Failed to fetch API keys:', response.status);
-        setApiKeys([]);
-      }
+      setApiKeys(apiKeysData);
     } catch (error) {
       console.error('Fehler beim Laden der API Keys:', error);
       setApiKeys([]);
