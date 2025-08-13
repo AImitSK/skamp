@@ -281,6 +281,13 @@ export const GmailStyleEditor = ({
             line-height: 1.7;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
           }
+
+          /* Zusätzliches Padding für ProseMirror Editor */
+          .gmail-editor-content .ProseMirror {
+            padding: 1rem 1.5rem;
+            min-height: 400px;
+            outline: none;
+          }
           
           /* Gmail-like placeholder */
           .gmail-editor-content:empty:before {
