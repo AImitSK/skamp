@@ -71,8 +71,8 @@ export class BulkImportService {
     userId: string
   ): Promise<APIBulkJobResponse> {
     try {
-      // Safe Database Check - verwende Mock wenn DB nicht verfügbar
-      if (!db) {
+      // Safe Database Check - verwende Mock wenn DB nicht verfügbar oder Firestore nicht initialisiert
+      if (!db || !collection || !addDoc || !serverTimestamp) {
         const { mockBulkImportService } = await import('@/lib/api/mock-export-import-service');
         return mockBulkImportService.startImport(request, organizationId, userId);
       }
