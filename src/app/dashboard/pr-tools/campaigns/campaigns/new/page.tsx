@@ -429,7 +429,7 @@ export default function NewPRCampaignPage() {
                 onFullContentChange={setPressReleaseContent}
                 onBoilerplateSectionsChange={setBoilerplateSections}
                 initialBoilerplateSections={boilerplateSections}
-                hideMainContentField={true}
+                hideMainContentField={false}
               />
             </div>
 
