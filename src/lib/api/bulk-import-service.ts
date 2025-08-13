@@ -156,9 +156,9 @@ export class BulkImportService {
         return mockBulkImportService.getJobs(organizationId, params);
       }
       
+      // Nur organizationId Filter, kein orderBy um Index-Fehler zu vermeiden
       const constraints = [
-        where('organizationId', '==', organizationId),
-        orderBy('createdAt', 'desc')
+        where('organizationId', '==', organizationId)
       ];
 
       if (params.status) {
@@ -176,6 +176,13 @@ export class BulkImportService {
         id: doc.id,
         ...doc.data()
       } as BulkJob));
+
+      // Client-seitige Sortierung nach createdAt (neueste zuerst)
+      jobs.sort((a, b) => {
+        const aTime = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+        const bTime = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+        return bTime - aTime;
+      });
 
       // Client-side Pagination da Firestore-Composite-Index fehlt
       const page = params.page || 1;

@@ -101,9 +101,11 @@ export async function GET(request: NextRequest) {
 ### Utility Routes
 - [x] POST /api/v1/search ✅ **FUNKTIONIERT** (Getestet 2025-08-12, 16 Ergebnisse für "Test")
 - [x] GET /api/v1/search/suggestions ✅ **FUNKTIONIERT** (Getestet 2025-08-12, Auto-complete für "Te" & "Max")
-- [x] GET/POST /api/v1/export 🔄 **AUTH PATTERN OK** (APIMiddleware.withAuth + Permissions, Service-Fehler bleibt)
+- [x] GET /api/v1/export 🔄 **MOCK-FALLBACK IMPLEMENTIERT** (Deployment läuft, Test ausstehend)
+- [x] POST /api/v1/export 🔄 **MOCK-FALLBACK IMPLEMENTIERT** (Deployment läuft, Test ausstehend)
 - [x] GET /api/v1/export/[jobId] ✅ **FUNKTIONIERT** (Dynamic Route mit Mock Fallback)
-- [x] GET/POST /api/v1/import 🔄 **AUTH PATTERN REPARIERT** (APIMiddleware.withAuth, Service-Fehler bleibt)  
+- [x] GET /api/v1/import 🔄 **MOCK-FALLBACK IMPLEMENTIERT** (Deployment läuft, Test ausstehend)
+- [x] POST /api/v1/import 🔄 **MOCK-FALLBACK IMPLEMENTIERT** (Deployment läuft, Test ausstehend)
 - [x] GET /api/v1/import/[jobId] ✅ **FUNKTIONIERT** (Dynamic Route mit Mock Fallback)
 - [x] GET /api/v1/usage/stats ✅ **FUNKTIONIERT** (Getestet 2025-08-12, detaillierte Stats)
 
@@ -153,11 +155,18 @@ Jede API-Route braucht:
 - **Rate Limiting** Informationen
 
 ## 🔧 **FIX-LOG (2025-08-13):**
+
 ### **Webhook Service Firestore Fix:**
 - **Problem:** `undefined` Felder in Firestore Dokumenten (description, filters)
 - **Lösung:** Optionale Felder nur hinzufügen wenn definiert
 - **Commit:** fbeba60 - "Fix: Webhook Service - Behebe undefined Felder in Firestore Dokumenten"
-- **Status:** ✅ POST /api/v1/webhooks funktioniert jetzt!
+- **Status:** ✅ 5 von 7 Webhook-Routen funktionieren!
+
+### **Export/Import Service DB-Fallback:**
+- **Problem:** Services haben direkten DB-Zugriff ohne Fallback
+- **Lösung:** Mock-Service als Fallback wenn DB nicht verfügbar
+- **Commit:** 5ae7c27 - "Fix: Export/Import Services - Mock-Fallback für fehlende DB-Verbindung"
+- **Status:** 🔄 Deployment läuft, Test ausstehend
 
 ## AKTUELLE STATUS - MISSION 100% FUNKTIONALITÄT
 
