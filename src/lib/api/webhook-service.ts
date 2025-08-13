@@ -93,10 +93,9 @@ export class WebhookService {
       // Generiere Secret wenn nicht vorhanden
       const secret = data.secret || this.generateWebhookSecret();
 
-      // Erstelle Webhook-Config
-      const webhookConfig: Omit<WebhookConfig, 'id' | 'createdAt' | 'updatedAt'> = {
+      // Erstelle Webhook-Config (ohne undefined Felder)
+      const webhookConfig: any = {
         name: data.name,
-        description: data.description,
         url: data.url,
         events: data.events,
         secret,
@@ -109,11 +108,18 @@ export class WebhookService {
           maxDelayMs: data.retryPolicy?.maxDelayMs || this.DEFAULT_MAX_DELAY_MS
         },
         timeoutMs: data.timeoutMs || this.DEFAULT_TIMEOUT_MS,
-        filters: data.filters,
         organizationId,
         createdBy: userId,
         updatedBy: userId
       };
+
+      // Füge optionale Felder nur hinzu wenn sie definiert sind
+      if (data.description !== undefined) {
+        webhookConfig.description = data.description;
+      }
+      if (data.filters !== undefined) {
+        webhookConfig.filters = data.filters;
+      }
 
       // Speichere in Firestore (safe)
       try {
@@ -897,12 +903,12 @@ export class WebhookService {
         failedDeliveries: stats?.deliveries.failed || 0,
         successRate: stats?.deliveries.successRate || 0,
         avgResponseTime: stats?.performance.avgResponseTime,
-        lastDeliveryAt: stats?.lastDeliveryAt?.toDate().toISOString(),
-        lastSuccessAt: stats?.lastSuccessAt?.toDate().toISOString(),
-        lastFailureAt: stats?.lastFailureAt?.toDate().toISOString()
+        lastDeliveryAt: stats?.lastDeliveryAt?.toDate ? stats.lastDeliveryAt.toDate().toISOString() : undefined,
+        lastSuccessAt: stats?.lastSuccessAt?.toDate ? stats.lastSuccessAt.toDate().toISOString() : undefined,
+        lastFailureAt: stats?.lastFailureAt?.toDate ? stats.lastFailureAt.toDate().toISOString() : undefined
       },
-      createdAt: webhook.createdAt.toDate().toISOString(),
-      updatedAt: webhook.updatedAt.toDate().toISOString()
+      createdAt: webhook.createdAt?.toDate ? webhook.createdAt.toDate().toISOString() : new Date().toISOString(),
+      updatedAt: webhook.updatedAt?.toDate ? webhook.updatedAt.toDate().toISOString() : new Date().toISOString()
     };
   }
 
