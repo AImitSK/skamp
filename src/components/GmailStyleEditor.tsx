@@ -7,6 +7,8 @@ import Link from '@tiptap/extension-link';
 import Heading from '@tiptap/extension-heading';
 import TextStyle from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
+import Underline from '@tiptap/extension-underline';
+import TextAlign from '@tiptap/extension-text-align';
 import { useEffect, useCallback } from 'react';
 import { GmailStyleToolbar } from './GmailStyleToolbar';
 
@@ -80,6 +82,10 @@ export const GmailStyleEditor = ({
       TextStyle,
       Color.configure({
         types: ['textStyle'],
+      }),
+      Underline,
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
       }),
     ],
     content: content,

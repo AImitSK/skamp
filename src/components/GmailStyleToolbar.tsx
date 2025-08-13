@@ -12,6 +12,9 @@ import {
   PlusIcon,
   MinusIcon,
   DocumentIcon,
+  Bars3BottomLeftIcon,
+  Bars3Icon,
+  Bars3BottomRightIcon,
 } from '@heroicons/react/24/outline'; // CeleroPress Design Pattern: nur 24/outline
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -31,7 +34,7 @@ export const GmailStyleToolbar = ({ editor }: GmailStyleToolbarProps) => {
     return null;
   }
 
-  // Minimale Gmail-Style Actions (nur essentials)
+  // Gmail-Style Actions (erweitert)
   const toolbarActions = [
     { 
       command: 'toggleBold', 
@@ -48,11 +51,42 @@ export const GmailStyleToolbar = ({ editor }: GmailStyleToolbarProps) => {
       shortcut: 'Strg+I'
     },
     { 
+      command: 'toggleUnderline', 
+      icon: () => <span className="font-bold underline text-sm">U</span>, 
+      label: 'Unterstreichen', 
+      activeName: 'underline',
+      shortcut: 'Strg+U'
+    },
+    { 
       command: 'toggleBulletList', 
       icon: ListBulletIcon, 
       label: 'Aufzählung', 
       activeName: 'bulletList',
       shortcut: 'Strg+Shift+8'
+    },
+  ];
+
+  const alignmentActions = [
+    { 
+      command: () => editor.chain().focus().setTextAlign('left').run(), 
+      icon: Bars3BottomLeftIcon, 
+      label: 'Linksbündig', 
+      activeName: { textAlign: 'left' },
+      shortcut: 'Strg+Shift+L'
+    },
+    { 
+      command: () => editor.chain().focus().setTextAlign('center').run(), 
+      icon: Bars3Icon, 
+      label: 'Zentriert', 
+      activeName: { textAlign: 'center' },
+      shortcut: 'Strg+Shift+E'
+    },
+    { 
+      command: () => editor.chain().focus().setTextAlign('right').run(), 
+      icon: Bars3BottomRightIcon, 
+      label: 'Rechtsbündig', 
+      activeName: { textAlign: 'right' },
+      shortcut: 'Strg+Shift+R'
     },
   ];
 
@@ -80,14 +114,26 @@ export const GmailStyleToolbar = ({ editor }: GmailStyleToolbarProps) => {
     setShowLinkDialog(true);
   };
 
-  // Farben für Text (CeleroPress konform)
-  const textColors = [
-    { name: 'Schwarz', value: '#000000' },
-    { name: 'Grau', value: '#6B7280' },
-    { name: 'Primary', value: '#005fab' },
-    { name: 'Rot', value: '#EF4444' },
-    { name: 'Grün', value: '#10B981' },
-    { name: 'Blau', value: '#3B82F6' },
+  // Elegante Farben-Organisation wie in deinem Screenshot
+  const colorRows = [
+    [
+      { name: 'Schwarz', value: '#000000' },
+      { name: 'Dunkelgrau', value: '#374151' },
+      { name: 'Grau', value: '#6B7280' },
+      { name: 'Hellgrau', value: '#9CA3AF' },
+    ],
+    [
+      { name: 'Primary', value: '#005fab' },
+      { name: 'Blau', value: '#3B82F6' },
+      { name: 'Indigo', value: '#4F46E5' },
+      { name: 'Lila', value: '#7C3AED' },
+    ],
+    [
+      { name: 'Rot', value: '#EF4444' },
+      { name: 'Orange', value: '#F97316' },
+      { name: 'Gelb', value: '#EAB308' },
+      { name: 'Grün', value: '#10B981' },
+    ],
   ];
 
   const handleFontSizeIncrease = () => {
@@ -129,25 +175,37 @@ export const GmailStyleToolbar = ({ editor }: GmailStyleToolbarProps) => {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                (editor.chain().focus() as any)[action.command]().run();
+                if (typeof action.command === 'function') {
+                  action.command();
+                } else {
+                  (editor.chain().focus() as any)[action.command]().run();
+                }
               }}
               onMouseDown={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
               }}
-              disabled={!(editor.can() as any)[action.command]()}
+              disabled={typeof action.command === 'string' ? !(editor.can() as any)[action.command]() : false}
               className={clsx(
                 'p-2 w-8 h-8 flex items-center justify-center rounded transition-colors',
                 // CeleroPress Design Pattern: Primary-Farben
                 {
-                  'bg-[#005fab] text-white': editor.isActive(action.activeName),
-                  'hover:bg-gray-100 text-gray-700': !editor.isActive(action.activeName),
-                  'text-gray-400 cursor-not-allowed': !(editor.can() as any)[action.command]()
+                  'bg-[#005fab] text-white': typeof action.activeName === 'string' ? 
+                    editor.isActive(action.activeName) : 
+                    editor.isActive(action.activeName),
+                  'hover:bg-gray-100 text-gray-700': typeof action.activeName === 'string' ? 
+                    !editor.isActive(action.activeName) : 
+                    !editor.isActive(action.activeName),
+                  'text-gray-400 cursor-not-allowed': typeof action.command === 'string' ? 
+                    !(editor.can() as any)[action.command]() : false
                 }
               )}
               title={`${action.label} (${action.shortcut})`}
             >
-              <action.icon className="h-4 w-4" />
+              {typeof action.icon === 'function' ? 
+                action.icon() : 
+                <action.icon className="h-4 w-4" />
+              }
             </button>
           ))}
 
@@ -177,6 +235,36 @@ export const GmailStyleToolbar = ({ editor }: GmailStyleToolbarProps) => {
           >
             <LinkIcon className="h-4 w-4" />
           </button>
+
+          {/* Separator */}
+          <div className="w-px h-6 bg-gray-300 mx-2" />
+
+          {/* Ausrichtung Buttons */}
+          {alignmentActions.map(action => (
+            <button
+              key={action.label}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                action.command();
+              }}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              className={clsx(
+                'p-2 w-8 h-8 flex items-center justify-center rounded transition-colors',
+                {
+                  'bg-[#005fab] text-white': editor.isActive(action.activeName),
+                  'hover:bg-gray-100 text-gray-700': !editor.isActive(action.activeName),
+                }
+              )}
+              title={`${action.label} (${action.shortcut})`}
+            >
+              <action.icon className="h-4 w-4" />
+            </button>
+          ))}
 
           {/* Separator */}
           <div className="w-px h-6 bg-gray-300 mx-2" />
@@ -225,20 +313,21 @@ export const GmailStyleToolbar = ({ editor }: GmailStyleToolbarProps) => {
             </button>
             
             {showColorDropdown && (
-              <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-md shadow-sm z-10 min-w-[120px]">
-                {textColors.map(color => (
-                  <button
-                    key={color.value}
-                    type="button"
-                    onClick={() => handleColorChange(color.value)}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 first:rounded-t-md last:rounded-b-md"
-                  >
-                    <div 
-                      className="w-4 h-4 rounded border border-gray-300" 
-                      style={{backgroundColor: color.value}}
-                    />
-                    {color.name}
-                  </button>
+              <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-md shadow-sm z-10 p-2">
+                <div className="text-xs font-medium text-gray-600 mb-2 px-1">Schriftfarbe</div>
+                {colorRows.map((row, rowIndex) => (
+                  <div key={rowIndex} className="flex gap-1 mb-1">
+                    {row.map(color => (
+                      <button
+                        key={color.value}
+                        type="button"
+                        onClick={() => handleColorChange(color.value)}
+                        className="w-6 h-6 rounded border border-gray-300 hover:border-gray-400 transition-colors"
+                        style={{backgroundColor: color.value}}
+                        title={color.name}
+                      />
+                    ))}
+                  </div>
                 ))}
               </div>
             )}
