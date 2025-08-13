@@ -415,6 +415,150 @@ paths:
         '204':
           description: Publikation erfolgreich gelöscht
 
+  # Media Assets API  
+  /media-assets:
+    get:
+      tags: [Media Assets]
+      summary: Liste aller Media Assets
+      description: Holt alle verfügbaren Werbemittel/Media Assets mit Filtern
+      parameters:
+        - name: search
+          in: query
+          description: Textsuche in Namen und Beschreibungen
+          schema:
+            type: string
+        - name: publicationIds[]
+          in: query
+          description: Filter nach Publikations-IDs
+          schema:
+            type: array
+            items:
+              type: string
+        - name: types[]
+          in: query
+          description: Filter nach Asset-Typen
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [display, native, sponsored, video, banner]
+      responses:
+        '200':
+          description: Liste der Media Assets
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MediaAsset'
+    post:
+      tags: [Media Assets]
+      summary: Neues Media Asset erstellen
+      description: Erstellt ein neues Werbemittel/Media Asset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - publicationIds
+                - type
+                - pricing
+              properties:
+                name:
+                  type: string
+                  example: "Test Media Asset"
+                displayName:
+                  type: string
+                description:
+                  type: string
+                publicationIds:
+                  type: array
+                  items:
+                    type: string
+                  example: ["pub123"]
+                type:
+                  type: string
+                  enum: [display, native, sponsored, video, banner]
+                  example: "display"
+                pricing:
+                  type: object
+                  required:
+                    - listPrice
+                    - priceModel
+                  properties:
+                    listPrice:
+                      type: object
+                      properties:
+                        amount:
+                          type: number
+                          example: 100
+                        currency:
+                          type: string
+                          example: "EUR"
+                    priceModel:
+                      type: string
+                      enum: [fixed, cpm, cpc, cpa]
+                      example: "fixed"
+      responses:
+        '201':
+          description: Media Asset erfolgreich erstellt
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/MediaAsset'
+
+  # WebSocket API
+  /websocket/connect:
+    get:
+      tags: [WebSocket]
+      summary: WebSocket Verbindungsinfo
+      description: |
+        Informationen über WebSocket-Unterstützung und Alternativen.
+        Next.js Edge Runtime unterstützt keine nativen WebSockets.
+      responses:
+        '200':
+          description: WebSocket-Informationen und Alternativen
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  websocket:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                        example: "not_supported"
+                      message:
+                        type: string
+                        example: "Next.js Edge Runtime unterstützt keine nativen WebSockets"
+                      alternatives:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            type:
+                              type: string
+                            endpoint:
+                              type: string
+                            description:
+                              type: string
+
   # Webhooks API
   /webhooks:
     get:
@@ -888,6 +1032,96 @@ components:
           type: boolean
         metrics:
           type: object
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    MediaAsset:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "media_123"
+        name:
+          type: string
+          example: "Premium Display Ad"
+        displayName:
+          type: string
+        description:
+          type: string
+        publications:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              title:
+                type: string
+        type:
+          type: string
+          enum: [display, native, sponsored, video, banner]
+          example: "display"
+        category:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        pricing:
+          type: object
+          properties:
+            listPrice:
+              type: object
+              properties:
+                amount:
+                  type: number
+                  example: 100
+                currency:
+                  type: string
+                  example: "EUR"
+            priceModel:
+              type: string
+              enum: [fixed, cpm, cpc, cpa]
+              example: "fixed"
+            discounts:
+              type: array
+              items:
+                type: object
+        specifications:
+          type: object
+          properties:
+            dimensions:
+              type: object
+              properties:
+                width:
+                  type: number
+                height:
+                  type: number
+            format:
+              type: string
+            fileTypes:
+              type: array
+              items:
+                type: string
+        availability:
+          type: object
+          properties:
+            startDate:
+              type: string
+              format: date
+            endDate:
+              type: string
+              format: date
+            inventory:
+              type: number
+        status:
+          type: string
+          enum: [draft, active, inactive, archived]
+          example: "active"
         createdAt:
           type: string
           format: date-time
