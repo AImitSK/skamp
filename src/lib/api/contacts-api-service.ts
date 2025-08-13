@@ -256,11 +256,21 @@ export class ContactsAPIService {
       const updateData = await this.transformAPIUpdateToContact(data, organizationId, userId);
       
       // Update Kontakt
-      const updatedContact = await contactsEnhancedService.update(
+      await contactsEnhancedService.update(
         contactId,
         updateData,
         { organizationId, userId }
       );
+
+      // Lade aktualisierten Kontakt
+      const updatedContact = await contactsEnhancedService.getById(contactId, organizationId);
+      if (!updatedContact) {
+        throw new APIError(
+          404,
+          API_ERROR_CODES.RESOURCE_NOT_FOUND,
+          'Contact not found after update'
+        );
+      }
 
       return await this.transformContactToAPIResponse(updatedContact, organizationId);
     } catch (error) {
