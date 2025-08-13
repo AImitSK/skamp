@@ -260,7 +260,7 @@ export const GmailStyleEditor = ({
       <GmailStyleToolbar editor={editor} />
       
       {/* Editor Content (Clean white space) */}
-      <div className="relative">
+      <div className="relative p-6">
         <EditorContent editor={editor} />
         
         {/* Gmail-Style Styling */}
