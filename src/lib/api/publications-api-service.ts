@@ -5,7 +5,7 @@ import {
   mediaKitService 
 } from '@/lib/firebase/library-service';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase/build-safe-init';
+import { db } from '@/lib/firebase/config';
 import { companyServiceEnhanced } from '@/lib/firebase/company-service-enhanced';
 import {
   APIPublication,

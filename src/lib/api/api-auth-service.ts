@@ -14,7 +14,7 @@ import {
   Timestamp,
   increment
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase/build-safe-init';
+import { db } from '@/lib/firebase/config';
 import { 
   APIKey, 
   APIKeyCreateRequest, 

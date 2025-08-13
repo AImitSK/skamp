@@ -13,7 +13,7 @@ import {
   Timestamp,
   QueryConstraint
 } from 'firebase/firestore';
-import { db } from './build-safe-init';
+import { db } from '@/lib/firebase/config';
 import { BaseService, QueryOptions, FilterOptions } from './service-base';
 import { 
   Publication, 

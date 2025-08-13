@@ -2,7 +2,7 @@
 import { collection, doc, getDoc, getDocs, query, where, orderBy, limit, addDoc, updateDoc, deleteDoc, Timestamp, writeBatch, Firestore } from 'firebase/firestore';
 
 // Direct import - runtime safe wird in build-safe-init.ts gehandhabt
-import { db } from './build-safe-init';
+import { db } from '@/lib/firebase/config';
 import { Company } from '@/types/crm';
 import { CompanyEnhanced } from '@/types/crm-enhanced';
 import { migrateCompanyToEnhanced, migrateCompanyFromEnhanced } from './crm-migration-helper';

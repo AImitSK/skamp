@@ -23,7 +23,7 @@ import {
   Query,
   CollectionReference
 } from 'firebase/firestore';
-import { db } from './build-safe-init';
+import { db } from './config';
 import { BaseEntity, TeamMember } from '@/types/international';
 
 // ========================================

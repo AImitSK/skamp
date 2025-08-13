@@ -9,7 +9,7 @@ import {
   limit,
   getDocs
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase/build-safe-init';
+import { db } from '@/lib/firebase/config';
 import { WebhookDelivery, APIWebhookDelivery } from '@/types/api-webhooks';
 import { APIResponse } from '@/types/api';
 
