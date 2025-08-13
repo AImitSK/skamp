@@ -7,11 +7,9 @@ import Link from '@tiptap/extension-link';
 import Heading from '@tiptap/extension-heading';
 import TextStyle from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
-import Underline from '@tiptap/extension-underline';
-import TextAlign from '@tiptap/extension-text-align';
 import { Extension } from '@tiptap/core';
 
-// Custom FontSize Extension
+// Custom Extensions für TipTap v2 Kompatibilität
 const FontSize = Extension.create({
   name: 'fontSize',
   
@@ -50,11 +48,91 @@ const FontSize = Extension.create({
           .setMark('textStyle', { fontSize })
           .run()
       },
-      unsetFontSize: () => ({ chain }) => {
-        return chain()
-          .setMark('textStyle', { fontSize: null })
-          .removeEmptyTextStyle()
-          .run()
+    }
+  },
+});
+
+// Custom Underline Extension (kompatibel mit TipTap v2)
+const CustomUnderline = Extension.create({
+  name: 'customUnderline',
+  
+  addOptions() {
+    return {
+      types: ['textStyle'],
+    }
+  },
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: this.options.types,
+        attributes: {
+          underline: {
+            default: null,
+            parseHTML: element => element.style.textDecoration?.includes('underline') ? 'underline' : null,
+            renderHTML: attributes => {
+              if (!attributes.underline) {
+                return {}
+              }
+              return {
+                style: 'text-decoration: underline',
+              }
+            },
+          },
+        },
+      },
+    ]
+  },
+
+  addCommands() {
+    return {
+      toggleUnderline: () => ({ chain, editor }) => {
+        const isActive = editor.isActive('textStyle', { underline: 'underline' });
+        if (isActive) {
+          return chain().setMark('textStyle', { underline: null }).run();
+        }
+        return chain().setMark('textStyle', { underline: 'underline' }).run();
+      },
+    }
+  },
+});
+
+// Custom TextAlign Extension (kompatibel mit TipTap v2) 
+const CustomTextAlign = Extension.create({
+  name: 'customTextAlign',
+  
+  addOptions() {
+    return {
+      types: ['paragraph', 'heading'],
+    }
+  },
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: this.options.types,
+        attributes: {
+          textAlign: {
+            default: 'left',
+            parseHTML: element => element.style.textAlign || 'left',
+            renderHTML: attributes => {
+              if (!attributes.textAlign || attributes.textAlign === 'left') {
+                return {}
+              }
+              return {
+                style: `text-align: ${attributes.textAlign}`,
+              }
+            },
+          },
+        },
+      },
+    ]
+  },
+
+  addCommands() {
+    return {
+      setTextAlign: (alignment: string) => ({ chain }) => {
+        return chain().updateAttributes('paragraph', { textAlign: alignment }).run();
       },
     }
   },
@@ -133,11 +211,9 @@ export const GmailStyleEditor = ({
       Color.configure({
         types: ['textStyle'],
       }),
-      Underline,
-      TextAlign.configure({
-        types: ['heading', 'paragraph'],
-      }),
       FontSize,
+      CustomUnderline,
+      CustomTextAlign,
     ],
     content: content,
     immediatelyRender: false, 

@@ -72,21 +72,21 @@ export const GmailStyleToolbar = ({ editor }: GmailStyleToolbarProps) => {
       command: () => editor.chain().focus().setTextAlign('left').run(), 
       icon: Bars3BottomLeftIcon, 
       label: 'Linksbündig', 
-      activeName: { textAlign: 'left' },
+      activeName: 'left',
       shortcut: 'Strg+Shift+L'
     },
     { 
       command: () => editor.chain().focus().setTextAlign('center').run(), 
       icon: Bars3Icon, 
       label: 'Zentriert', 
-      activeName: { textAlign: 'center' },
+      activeName: 'center',
       shortcut: 'Strg+Shift+E'
     },
     { 
       command: () => editor.chain().focus().setTextAlign('right').run(), 
       icon: Bars3BottomRightIcon, 
       label: 'Rechtsbündig', 
-      activeName: { textAlign: 'right' },
+      activeName: 'right',
       shortcut: 'Strg+Shift+R'
     },
   ];
@@ -264,8 +264,10 @@ export const GmailStyleToolbar = ({ editor }: GmailStyleToolbarProps) => {
               className={clsx(
                 'p-2 w-8 h-8 flex items-center justify-center rounded transition-colors',
                 {
-                  'bg-[#005fab] text-white': editor.isActive(action.activeName),
-                  'hover:bg-gray-100 text-gray-700': !editor.isActive(action.activeName),
+                  'bg-[#005fab] text-white': editor.isActive('paragraph', { textAlign: action.activeName }) || 
+                                           (action.activeName === 'left' && !editor.getAttributes('paragraph').textAlign),
+                  'hover:bg-gray-100 text-gray-700': !editor.isActive('paragraph', { textAlign: action.activeName }) && 
+                                                   !(action.activeName === 'left' && !editor.getAttributes('paragraph').textAlign),
                 }
               )}
               title={`${action.label} (${action.shortcut})`}
