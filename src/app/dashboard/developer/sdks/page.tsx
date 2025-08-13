@@ -480,28 +480,24 @@ export default function SDKsPage() {
                 Beispiele für Salesforce, HubSpot und Zapier Integration
               </p>
             </a>
-            <a
-              href="https://github.com/celeropress/sdk-examples"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-sm transition-all"
-            >
-              <h3 className="font-medium text-gray-900 mb-1">GitHub Examples</h3>
-              <p className="text-sm text-gray-600">
+            <div className="block p-4 border border-gray-200 rounded-lg opacity-60 cursor-not-allowed relative">
+              <div className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs px-2 py-1 rounded-full">
+                Coming Soon
+              </div>
+              <h3 className="font-medium text-gray-500 mb-1">GitHub Examples</h3>
+              <p className="text-sm text-gray-400">
                 Vollständige Beispielprojekte auf GitHub
               </p>
-            </a>
-            <a
-              href="https://discord.gg/celeropress"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block p-4 border border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-sm transition-all"
-            >
-              <h3 className="font-medium text-gray-900 mb-1">Community Support</h3>
-              <p className="text-sm text-gray-600">
+            </div>
+            <div className="block p-4 border border-gray-200 rounded-lg opacity-60 cursor-not-allowed relative">
+              <div className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs px-2 py-1 rounded-full">
+                Coming Soon
+              </div>
+              <h3 className="font-medium text-gray-500 mb-1">Community Support</h3>
+              <p className="text-sm text-gray-400">
                 Hilfe und Diskussionen in unserer Discord Community
               </p>
-            </a>
+            </div>
           </div>
         </div>
       </div>

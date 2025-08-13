@@ -31,46 +31,141 @@ import {
   AreaChart
 } from 'recharts';
 
-// Mock data für Charts
-const generateMockData = () => {
-  const now = new Date();
-  const hourlyData = [];
-  for (let i = 23; i >= 0; i--) {
-    const hour = new Date(now.getTime() - i * 60 * 60 * 1000);
-    hourlyData.push({
-      time: hour.getHours() + ':00',
-      requests: Math.floor(Math.random() * 100) + 20,
-      errors: Math.floor(Math.random() * 5),
-      latency: Math.floor(Math.random() * 200) + 50
+// Echte Daten aus Firestore aggregieren
+const aggregateAnalyticsData = async (user: any, timeRange: string) => {
+  if (!user) return { hourlyData: [], dailyData: [], endpointData: [], statusCodeData: [] };
+
+  try {
+    const { db } = await import('@/lib/firebase/config');
+    const { collection, query, where, getDocs, Timestamp } = await import('firebase/firestore');
+    
+    const now = new Date();
+    let startTime: Date;
+    
+    // Zeitraum bestimmen
+    switch (timeRange) {
+      case '1h':
+        startTime = new Date(now.getTime() - 60 * 60 * 1000);
+        break;
+      case '24h':
+        startTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        break;
+      case '7d':
+        startTime = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case '30d':
+        startTime = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      default:
+        startTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    }
+
+    // API Logs holen
+    const logsQuery = query(
+      collection(db, 'api_logs'),
+      where('userId', '==', user.uid),
+      where('timestamp', '>=', Timestamp.fromDate(startTime))
+    );
+    
+    const logsSnapshot = await getDocs(logsQuery);
+    const logs: any[] = [];
+    
+    logsSnapshot.forEach(doc => {
+      const data = doc.data();
+      logs.push({
+        timestamp: data.timestamp?.toDate() || new Date(),
+        endpoint: data.endpoint || '/unknown',
+        status: data.status || 200,
+        latency: data.latency || 50,
+        method: data.method || 'GET'
+      });
     });
-  }
 
-  const dailyData = [];
-  for (let i = 6; i >= 0; i--) {
-    const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-    dailyData.push({
-      date: date.toLocaleDateString('de-DE', { weekday: 'short' }),
-      requests: Math.floor(Math.random() * 1000) + 500,
-      unique_ips: Math.floor(Math.random() * 50) + 20
+    // Stündliche Daten aggregieren (letzte 24h)
+    const hourlyData = [];
+    for (let i = 23; i >= 0; i--) {
+      const hourStart = new Date(now.getTime() - i * 60 * 60 * 1000);
+      const hourEnd = new Date(hourStart.getTime() + 60 * 60 * 1000);
+      
+      const hourLogs = logs.filter(log => 
+        log.timestamp >= hourStart && log.timestamp < hourEnd
+      );
+      
+      hourlyData.push({
+        time: hourStart.getHours().toString().padStart(2, '0') + ':00',
+        requests: hourLogs.length,
+        errors: hourLogs.filter(log => log.status >= 400).length,
+        latency: hourLogs.length > 0 
+          ? Math.round(hourLogs.reduce((sum, log) => sum + log.latency, 0) / hourLogs.length)
+          : 0
+      });
+    }
+
+    // Tägliche Daten aggregieren (letzte 7 Tage)
+    const dailyData = [];
+    const uniqueIpsByDay = new Map();
+    
+    for (let i = 6; i >= 0; i--) {
+      const dayStart = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+      
+      const dayLogs = logs.filter(log => 
+        log.timestamp >= dayStart && log.timestamp < dayEnd
+      );
+      
+      // Simuliere unique IPs (wäre normalerweise im Log gespeichert)
+      const uniqueIps = Math.max(1, Math.floor(dayLogs.length / 10));
+      
+      dailyData.push({
+        date: dayStart.toLocaleDateString('de-DE', { weekday: 'short' }),
+        requests: dayLogs.length,
+        unique_ips: uniqueIps
+      });
+    }
+
+    // Endpoint-Statistiken aggregieren
+    const endpointStats = new Map();
+    logs.forEach(log => {
+      const endpoint = log.endpoint;
+      if (!endpointStats.has(endpoint)) {
+        endpointStats.set(endpoint, { requests: 0, totalLatency: 0 });
+      }
+      const stats = endpointStats.get(endpoint);
+      stats.requests++;
+      stats.totalLatency += log.latency;
     });
+
+    const endpointData = Array.from(endpointStats.entries())
+      .map(([endpoint, stats]: [string, any]) => ({
+        endpoint,
+        requests: stats.requests,
+        avgLatency: Math.round(stats.totalLatency / stats.requests)
+      }))
+      .sort((a, b) => b.requests - a.requests)
+      .slice(0, 6);
+
+    // Status Code Verteilung
+    const statusCounts = { success: 0, clientError: 0, serverError: 0 };
+    logs.forEach(log => {
+      if (log.status >= 200 && log.status < 400) statusCounts.success++;
+      else if (log.status >= 400 && log.status < 500) statusCounts.clientError++;
+      else if (log.status >= 500) statusCounts.serverError++;
+    });
+
+    const statusCodeData = [
+      { name: '2xx Success', value: statusCounts.success, color: '#10b981' },
+      { name: '4xx Client Error', value: statusCounts.clientError, color: '#f59e0b' },
+      { name: '5xx Server Error', value: statusCounts.serverError, color: '#ef4444' }
+    ].filter(item => item.value > 0);
+
+    return { hourlyData, dailyData, endpointData, statusCodeData };
+    
+  } catch (error) {
+    console.error('Fehler beim Aggregieren der Analytics-Daten:', error);
+    // Fallback zu leeren Arrays
+    return { hourlyData: [], dailyData: [], endpointData: [], statusCodeData: [] };
   }
-
-  const endpointData = [
-    { endpoint: '/contacts', requests: 2847, avgLatency: 45 },
-    { endpoint: '/companies', requests: 1923, avgLatency: 52 },
-    { endpoint: '/search', requests: 1567, avgLatency: 123 },
-    { endpoint: '/publications', requests: 892, avgLatency: 67 },
-    { endpoint: '/webhooks', requests: 456, avgLatency: 34 },
-    { endpoint: '/export', requests: 234, avgLatency: 890 }
-  ];
-
-  const statusCodeData = [
-    { name: '2xx Success', value: 8234, color: '#10b981' },
-    { name: '4xx Client Error', value: 423, color: '#f59e0b' },
-    { name: '5xx Server Error', value: 12, color: '#ef4444' }
-  ];
-
-  return { hourlyData, dailyData, endpointData, statusCodeData };
 };
 
 export default function AnalyticsPage() {
@@ -80,16 +175,21 @@ export default function AnalyticsPage() {
   const [apiKeys, setApiKeys] = useState<any[]>([]);
   const [selectedKey, setSelectedKey] = useState<string>('all');
   const [stats, setStats] = useState({
-    totalRequests: 12453,
-    requestsToday: 2341,
-    errorRate: 0.3,
-    avgLatency: 67,
-    activeKeys: 5,
-    remainingQuota: 87650,
+    totalRequests: 0,
+    requestsToday: 0,
+    errorRate: 0,
+    avgLatency: 0,
+    activeKeys: 0,
+    remainingQuota: 0,
     quotaLimit: 100000
   });
-
-  const { hourlyData, dailyData, endpointData, statusCodeData } = generateMockData();
+  const [chartData, setChartData] = useState({
+    hourlyData: [],
+    dailyData: [],
+    endpointData: [],
+    statusCodeData: []
+  });
+  const [apiKeyStats, setApiKeyStats] = useState<Map<string, any>>(new Map());
 
   useEffect(() => {
     if (!loading && !user) {
@@ -101,8 +201,84 @@ export default function AnalyticsPage() {
     if (user) {
       fetchApiKeys();
       fetchUsageStats();
+      fetchChartData();
     }
   }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchChartData();
+    }
+  }, [user, timeRange]);
+
+  const fetchChartData = async () => {
+    if (!user) return;
+    
+    const data = await aggregateAnalyticsData(user, timeRange);
+    setChartData(data);
+    
+    // API Key spezifische Statistiken berechnen
+    await calculateApiKeyStats();
+  };
+
+  const calculateApiKeyStats = async () => {
+    if (!user || apiKeys.length === 0) return;
+
+    try {
+      const { db } = await import('@/lib/firebase/config');
+      const { collection, query, where, getDocs } = await import('firebase/firestore');
+      
+      const keyStatsMap = new Map();
+      
+      // Für jeden API Key Statistiken berechnen
+      for (const apiKey of apiKeys) {
+        const keyLogsQuery = query(
+          collection(db, 'api_logs'),
+          where('apiKeyId', '==', apiKey.id)
+        );
+        
+        const keyLogsSnapshot = await getDocs(keyLogsQuery);
+        const keyLogs: any[] = [];
+        
+        keyLogsSnapshot.forEach(doc => {
+          const data = doc.data();
+          keyLogs.push({
+            timestamp: data.timestamp?.toDate() || new Date(),
+            status: data.status || 200,
+            latency: data.latency || 50
+          });
+        });
+
+        // Statistiken berechnen
+        const totalRequests = keyLogs.length;
+        const errorCount = keyLogs.filter(log => log.status >= 400).length;
+        const errorRate = totalRequests > 0 ? (errorCount / totalRequests) * 100 : 0;
+        const avgLatency = keyLogs.length > 0 
+          ? Math.round(keyLogs.reduce((sum, log) => sum + log.latency, 0) / keyLogs.length)
+          : 0;
+        
+        // Letzter Request
+        const lastRequest = keyLogs.length > 0 
+          ? Math.max(...keyLogs.map(log => log.timestamp.getTime()))
+          : null;
+        
+        const lastRequestText = lastRequest 
+          ? `vor ${Math.floor((Date.now() - lastRequest) / (1000 * 60))} Min.`
+          : 'Nie verwendet';
+
+        keyStatsMap.set(apiKey.id, {
+          requests: totalRequests,
+          errorRate: errorRate.toFixed(2),
+          avgLatency,
+          lastRequest: lastRequestText
+        });
+      }
+      
+      setApiKeyStats(keyStatsMap);
+    } catch (error) {
+      console.error('Fehler beim Berechnen der API Key Stats:', error);
+    }
+  };
 
   const fetchUsageStats = async () => {
     try {
@@ -348,7 +524,7 @@ export default function AnalyticsPage() {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h2 className="text-lg font-semibold mb-4">Request Timeline</h2>
             <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={hourlyData}>
+              <AreaChart data={chartData.hourlyData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="time" />
                 <YAxis />
@@ -378,7 +554,7 @@ export default function AnalyticsPage() {
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={statusCodeData}
+                  data={chartData.statusCodeData}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
@@ -387,7 +563,7 @@ export default function AnalyticsPage() {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {statusCodeData.map((entry, index) => (
+                  {chartData.statusCodeData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -403,7 +579,7 @@ export default function AnalyticsPage() {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h2 className="text-lg font-semibold mb-4">Top Endpoints</h2>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={endpointData} layout="horizontal">
+              <BarChart data={chartData.endpointData} layout="horizontal">
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis type="number" />
                 <YAxis dataKey="endpoint" type="category" width={100} />
@@ -418,7 +594,7 @@ export default function AnalyticsPage() {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h2 className="text-lg font-semibold mb-4">Daily Usage</h2>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={dailyData}>
+              <LineChart data={chartData.dailyData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" />
                 <YAxis />
@@ -530,18 +706,18 @@ export default function AnalyticsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {Math.floor(Math.random() * 5000).toLocaleString('de-DE')}
+                      {apiKeyStats.get(key.id)?.requests?.toLocaleString('de-DE') || '0'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm text-gray-900">
-                        {(Math.random() * 2).toFixed(2)}%
+                        {apiKeyStats.get(key.id)?.errorRate || '0.00'}%
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {Math.floor(Math.random() * 100) + 30}ms
+                      {apiKeyStats.get(key.id)?.avgLatency || '0'}ms
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      vor {Math.floor(Math.random() * 60)} Min.
+                      {apiKeyStats.get(key.id)?.lastRequest || 'Nie verwendet'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">

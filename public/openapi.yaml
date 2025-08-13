@@ -1629,8 +1629,6 @@ components:
 tags:
   - name: Authentication
     description: API-Key Authentifizierung und Validation
-  - name: Developer Dashboard
-    description: Dashboard-spezifische Endpoints (Firebase Auth erforderlich)
   - name: Contacts
     description: Kontakt-Management für PR & CRM
   - name: Companies
