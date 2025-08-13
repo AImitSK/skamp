@@ -7,8 +7,10 @@ info:
     ## Authentifizierung
     Verwenden Sie API-Keys für die Authentifizierung:
     ```
-    Authorization: Bearer cp_live_your_api_key_here
+    Authorization: cp_live_your_api_key_here
     ```
+    
+    **Wichtig:** Verwenden Sie NICHT das "Bearer" Prefix!
     
     ## Rate Limits
     - Standard: 1000 Requests/Stunde, 60 Requests/Minute
@@ -29,10 +31,10 @@ info:
   termsOfService: https://celeropress.de/terms
 
 servers:
-  - url: https://api.celeropress.de/v1
+  - url: https://skamp.vercel.app/api/v1
     description: Production Server
-  - url: https://staging-api.celeropress.de/v1
-    description: Staging Server
+  - url: https://www.celeropress.com/api/v1
+    description: Main Production Server
   - url: http://localhost:3000/api/v1
     description: Development Server
 
@@ -801,9 +803,10 @@ paths:
 components:
   securitySchemes:
     ApiKeyAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: API Key
+      type: apiKey
+      in: header
+      name: Authorization
+      description: API Key without Bearer prefix (e.g., "cp_live_your_api_key_here")
 
   responses:
     BadRequest:

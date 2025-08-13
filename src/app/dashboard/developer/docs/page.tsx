@@ -40,10 +40,16 @@ export default function APIDocumentation() {
     if (apiKey) {
       req.headers['Authorization'] = apiKey;
     }
-    // Setze Base URL für API calls, aber nicht für OpenAPI spec
-    if (req.url.startsWith('/') && !req.url.includes('openapi.yaml')) {
-      req.url = `${window.location.origin}${req.url}`;
+    
+    // Korrigiere URL für API calls - verwende Production Server
+    if (req.url && req.url.includes('/api/v1/')) {
+      // Wenn es bereits eine vollständige URL ist, lasse sie unverändert
+      if (!req.url.startsWith('http')) {
+        // Für relative URLs, verwende die Production API
+        req.url = `https://skamp.vercel.app${req.url}`;
+      }
     }
+    
     return req;
   };
 
