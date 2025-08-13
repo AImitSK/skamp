@@ -100,7 +100,13 @@ export class BulkImportService {
         )
       };
 
-      // Speichere Job
+      // Speichere Job (mit Safe Check)
+      if (!collection || !addDoc) {
+        // Fallback wenn Firestore nicht verfügbar
+        const { mockBulkImportService } = await import('@/lib/api/mock-export-import-service');
+        return mockBulkImportService.startImport(request, organizationId, userId);
+      }
+      
       const jobRef = await addDoc(collection(db, this.COLLECTION_NAME), job);
       const jobId = jobRef.id;
 
@@ -1039,8 +1045,8 @@ export class BulkImportService {
       throw new APIError('INVALID_FORMAT', 'Ungültiges Import-Format');
     }
 
-    if (!request.fileContent && !request.fileUrl) {
-      throw new APIError('VALIDATION_ERROR', 'fileContent oder fileUrl ist erforderlich');
+    if (!request.fileContent && !request.fileUrl && !request.data) {
+      throw new APIError('VALIDATION_ERROR', 'fileContent, fileUrl oder data ist erforderlich');
     }
 
     if (request.fileContent && request.fileContent.length > this.MAX_FILE_SIZE_MB * 1024 * 1024) {

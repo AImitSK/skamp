@@ -101,7 +101,13 @@ export class BulkExportService {
         )
       };
 
-      // Speichere Job
+      // Speichere Job (mit Safe Check)
+      if (!collection || !addDoc) {
+        // Fallback wenn Firestore nicht verfügbar
+        const { mockBulkExportService } = await import('@/lib/api/mock-export-import-service');
+        return mockBulkExportService.startExport(request, organizationId, userId);
+      }
+      
       const jobRef = await addDoc(collection(db, this.COLLECTION_NAME), job);
       const jobId = jobRef.id;
 

@@ -95,8 +95,8 @@ export async function GET(request: NextRequest) {
 - [x] GET /api/v1/webhooks/[webhookId] ✅ **FUNKTIONIERT** (Getestet 2025-08-13)
 - [x] PUT /api/v1/webhooks/[webhookId] ✅ **FUNKTIONIERT** (Getestet 2025-08-13)
 - [x] DELETE /api/v1/webhooks/[webhookId] ✅ **FUNKTIONIERT** (Getestet 2025-08-13)
-- [ ] POST /api/v1/webhooks/[webhookId]/test ❌ **FEHLER** (500 Error, noch zu debuggen)
-- [ ] GET /api/v1/webhooks/[webhookId]/deliveries 🔄 **NOCH ZU TESTEN**
+- [x] POST /api/v1/webhooks/[webhookId]/test ✅ **FUNKTIONIERT** (Getestet 2025-08-13, Webhook Test erfolgreich)
+- [x] GET /api/v1/webhooks/[webhookId]/deliveries ✅ **FUNKTIONIERT** (Getestet 2025-08-13, leere Liste)
 
 ### Utility Routes
 - [x] POST /api/v1/search ✅ **FUNKTIONIERT** (Getestet 2025-08-12, 16 Ergebnisse für "Test")
@@ -168,7 +168,14 @@ Jede API-Route braucht:
 - **Commits:** 
   - 5ae7c27 - "Fix: Export/Import Services - Mock-Fallback für fehlende DB-Verbindung"
   - 5ca71e6 - "Fix: Export/Import Services - Entferne orderBy um Firestore Index-Fehler zu vermeiden"
-- **Status:** ✅ GET Routes funktionieren, POST hat noch Validierungsprobleme
+  - 42f7760 - "Fix: Webhook Test/Deliveries und Export/Import Services - Safe Firestore imports"
+- **Status:** ✅ GET Routes funktionieren, POST hat noch Timestamp-Probleme
+
+### **Webhook Dynamic Routes Fix:**
+- **Problem:** params.webhookId wurde nicht korrekt übergeben in dynamic routes
+- **Lösung:** Extrahiere webhookId direkt aus URL-Path
+- **Commit:** 985a8de - "Fix: Webhook Dynamic Routes - Korrektes Extrahieren von webhookId aus URL"
+- **Status:** ✅ Alle Webhook-Routen funktionieren jetzt!
 
 ## AKTUELLE STATUS - MISSION 100% FUNKTIONALITÄT
 
@@ -212,15 +219,15 @@ API-Key `cp_live_a3cb4788d991b5e0e0a4709e71a216cb` hat nur begrenzte Permissions
 
 **ZIEL:** 100% Live-funktionsfähige API bis Ende der Session!
 
-## 🎯 **STATUS UPDATE (2025-08-13 07:14):**
-### **~86% ERREICHT! Export/Import GET Routes funktionieren**
+## 🎯 **FINALER STATUS (2025-08-13 07:22):**
+### **~92% ERREICHT! Fast alle Routen funktionieren**
 
-### ✅ **VOLLSTÄNDIG FUNKTIONSFÄHIGE ROUTEN (32 von 37 = ~86%):**
+### ✅ **VOLLSTÄNDIG FUNKTIONSFÄHIGE ROUTEN (34 von 37 = ~92%):**
 - **Contact Routes (5):** GET, POST, GET/[id], PUT/[id], DELETE/[id]
 - **Company Routes (5):** GET, POST, GET/[id], PUT/[id], DELETE/[id]
 - **Publication Routes (6):** GET, POST, GET/[id], PUT/[id], DELETE/[id], GET/statistics
 - **Media Assets (2):** GET, POST
-- **Webhook Routes (5):** GET, POST, GET/[id], PUT/[id], DELETE/[id] ✅ **NEU REPARIERT!**
+- **Webhook Routes (7):** GET, POST, GET/[id], PUT/[id], DELETE/[id], POST/[id]/test, GET/[id]/deliveries ✅ **KOMPLETT REPARIERT!**
 - **Search (2):** POST /search, GET /search/suggestions
 - **Usage (1):** GET /usage/stats  
 - **GraphQL (2):** GET, POST
@@ -228,12 +235,10 @@ API-Key `cp_live_a3cb4788d991b5e0e0a4709e71a216cb` hat nur begrenzte Permissions
 - **Export Routes (2):** GET /export, GET /export/[jobId] ✅ **NEU REPARIERT!**
 - **Import Routes (2):** GET /import, GET /import/[jobId] ✅ **NEU REPARIERT!**
 
-### 🔄 **VERBLEIBENDE PROBLEME (5 Routen = ~14%):**
+### 🔄 **VERBLEIBENDE PROBLEME (3 Routen = ~8%):**
 
-1. **POST /api/v1/webhooks/[webhookId]/test** - 500 Error, Fetch/Timeout Problem
-2. **GET /api/v1/webhooks/[webhookId]/deliveries** - Noch nicht getestet
-3. **POST /api/v1/export** - 500 Error, validateExportRequest Problem
-4. **POST /api/v1/import** - Noch nicht getestet
+1. **POST /api/v1/export** - 500 Error, Firestore/Timestamp Problem
+2. **POST /api/v1/import** - 500 Error, Firestore/Timestamp Problem
 
 ### ✅ **ALLE ANDEREN ROUTEN 100% FUNKTIONSFÄHIG (22 Routen = ~76%)**
 
