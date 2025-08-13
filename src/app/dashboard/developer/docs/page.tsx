@@ -136,16 +136,19 @@ export default function APIDocumentation() {
             supportedSubmitMethods={['get', 'post', 'put', 'delete', 'patch']}
             onComplete={() => {
               console.log('SwaggerUI loaded successfully');
-              // Server-Auswahl und SERVERS Text komplett verstecken
+              
+              // Schaue nach Authorize Button
+              const authButton = document.querySelector('.btn.authorize, .authorize');
+              console.log('Authorize button found:', !!authButton);
+              
+              // Server-Auswahl verstecken aber NICHT den Authorize Button!
               const servers = document.querySelectorAll(
-                '.servers, .servers-dropdown, .opblock-servers, .servers-title, .scheme-container, ' +
-                '.info hgroup + div, .swagger-ui .info .main h3'
+                '.servers, .servers-dropdown, .opblock-servers, .servers-title'
               );
               servers.forEach((el: any) => {
                 if (el && (el.textContent?.includes('SERVERS') || el.textContent?.includes('Server'))) {
                   el.style.display = 'none';
                 }
-                el.style.display = 'none';
               });
             }}
           />
@@ -172,9 +175,16 @@ export default function APIDocumentation() {
         .swagger-ui .servers-dropdown,
         .swagger-ui .opblock-servers,
         .swagger-ui .servers-container,
-        .swagger-ui .servers-title,
-        .swagger-ui .scheme-container {
+        .swagger-ui .servers-title {
           display: none !important;
+        }
+        
+        /* Authorize Button IMMER anzeigen */
+        .swagger-ui .btn.authorize,
+        .swagger-ui .auth-wrapper,
+        .swagger-ui .auth-container {
+          display: block !important;
+          visibility: visible !important;
         }
         
         .swagger-ui .info {
