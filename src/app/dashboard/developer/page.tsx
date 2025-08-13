@@ -53,7 +53,7 @@ export default function DeveloperPortal() {
         apiKeysData.push({
           id: doc.id,
           name: data.name || 'Unnamed Key',
-          key: data.key,
+          key: data.key || data.keyPreview || 'N/A',
           status: data.status || 'active',
           createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
           lastUsed: data.lastUsed?.toDate?.()?.toISOString() || null

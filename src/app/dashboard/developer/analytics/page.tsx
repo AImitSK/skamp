@@ -188,7 +188,7 @@ export default function AnalyticsPage() {
         apiKeysData.push({
           id: doc.id,
           name: data.name || 'Unnamed Key',
-          key: data.key,
+          key: data.key || data.keyPreview || 'N/A',
           status: data.status || 'active',
           createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
           lastUsed: data.lastUsed?.toDate?.()?.toISOString() || null
@@ -251,7 +251,7 @@ export default function AnalyticsPage() {
                 <option value="all">Alle API Keys</option>
                 {apiKeys.map(key => (
                   <option key={key.id} value={key.id}>
-                    {key.name} ({key.key.substring(0, 10)}...)
+                    {key.name} ({key.key?.substring(0, 10) || 'N/A'}...)
                   </option>
                 ))}
               </select>
