@@ -34,67 +34,50 @@ export default function DeveloperPortal() {
 
   const fetchApiKeys = async () => {
     try {
-      // TEMPORARY: Verwende Mock-Daten da /api/v1/auth/keys Auth-Problem hat
-      console.log('Loading API keys with mock data...');
-      
-      // Simuliere API-Call delay
-      await new Promise(resolve => setTimeout(resolve, 200));
-      
-      // Mock API Keys für Hauptseite
-      const mockApiKeys = [
-        {
-          id: 'key_1',
-          name: 'Live API Key',
-          key: 'cp_live_a3cb4788d991b5e0e0a4709e71a216cb',
-          status: 'active',
-          lastUsed: new Date().toISOString(),
-          createdAt: '2025-08-10T10:00:00Z'
-        },
-        {
-          id: 'key_2', 
-          name: 'Test API Key',
-          key: 'cp_test_b4d5e6f7890abcdef123456789abcdef',
-          status: 'active',
-          lastUsed: new Date(Date.now() - 3600000).toISOString(),
-          createdAt: '2025-08-11T14:30:00Z'
+      // Echte API Keys vom neuen Developer Endpoint
+      const response = await fetch('/api/v1/developer/keys', {
+        headers: {
+          'Authorization': `Bearer ${await user?.getIdToken()}`
         }
-      ];
+      });
       
-      // Setze als Array (nicht Object) um .map() Error zu vermeiden
-      setApiKeys(mockApiKeys);
-      
+      if (response.ok) {
+        const data = await response.json();
+        setApiKeys(data.data || []);
+      } else {
+        console.error('Failed to fetch API keys:', response.status);
+        setApiKeys([]);
+      }
     } catch (error) {
       console.error('Fehler beim Laden der API Keys:', error);
-      // Fallback zu leerem Array um .map() Error zu vermeiden
       setApiKeys([]);
     }
   };
 
   const fetchUsageStats = async () => {
     try {
-      // TEMPORARY: Verwende Mock-Daten da /api/v1/usage/stats Auth-Problem hat
-      console.log('Loading usage stats with mock data...');
-      
-      // Simuliere API-Call delay
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      // Mock-Daten für Hauptseite Stats
-      setUsage({
-        requests_today: 342,
-        requests_month: 8453,
-        rate_limit: '1000/hour',
-        last_request: new Date().toISOString()
+      // Echte Stats vom neuen Developer Endpoint
+      const response = await fetch('/api/v1/developer/stats', {
+        headers: {
+          'Authorization': `Bearer ${await user?.getIdToken()}`
+        }
       });
       
+      if (response.ok) {
+        const data = await response.json();
+        setUsage({
+          requests_today: data.requests_today,
+          requests_month: data.requests_month,
+          rate_limit: data.rate_limit,
+          last_request: data.last_request
+        });
+      } else {
+        console.error('Failed to fetch usage stats:', response.status);
+        setUsage(null);
+      }
     } catch (error) {
       console.error('Fehler beim Laden der Usage Stats:', error);
-      // Fallback zu Mock-Daten
-      setUsage({
-        requests_today: 342,
-        requests_month: 8453,
-        rate_limit: '1000/hour',
-        last_request: new Date().toISOString()
-      });
+      setUsage(null);
     }
   };
 

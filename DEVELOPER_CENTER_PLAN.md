@@ -127,6 +127,23 @@ TypeError: S.map is not a function
 - ✅ Download-Statistiken verfügbar
 - ✅ Automatische Updates für Nutzer
 
+## ⚠️ WICHTIGE REGEL: KEINE MOCK-DATEN!
+
+### NIEMALS Mock/Test-Daten verwenden!
+- ❌ **KEINE Mock-Daten** - Alles muss ECHT sein
+- ❌ **KEINE Fake-Responses** - Echte API-Calls oder gar nichts
+- ❌ **KEINE Placeholder** - Lieber Error als Fake-Daten
+- ✅ **NUR echte Daten** aus echten Backend-Calls
+- ✅ **Bei Problemen:** Backend fixen, nicht mocken!
+
+### KEINE SEITENEFFEKTE ERZEUGEN!
+- ⚠️ **Nichts kaputt machen** - Andere Features müssen weiter funktionieren
+- ⚠️ **Bei kritischen Änderungen:** Neue Service-Dateien erstellen
+- ⚠️ **Separation of Concerns** - Developer-API getrennt von App-API
+- ✅ **Neue Endpoints** statt bestehende ändern wenn riskant
+- ✅ **Neue Service-Klassen** für Developer-spezifische Logik
+- ✅ **Testen:** Prüfen ob andere Bereiche noch funktionieren
+
 ## 🔄 ARBEITSWEISE
 
 ### Schritt-für-Schritt Vorgehen
@@ -136,6 +153,7 @@ TypeError: S.map is not a function
 4. **Tests implementieren** - Für jeden Fix Tests in `src/__tests__/` erstellen und durchführen
 5. **Commit → Push → Deployment warten** - Immer kompletten Zyklus abwarten
 6. **Manuelle Verifikation** - Stefan testet Browser-seitig und gibt frei
+7. **KEINE MOCK-DATEN** - Immer echte Backend-Calls!
 
 ### Workflow pro Schritt:
 ```
@@ -198,20 +216,41 @@ TypeError: S.map is not a function
 - ✅ Commit 624b823 gepusht
 - ⏳ Warte auf Deployment-Abschluss
 
-### ⏳ IN ARBEIT: Schritt 3 - Examples bereinigen
+### ✅ ABGESCHLOSSEN: Schritt 3 - Examples bereinigen
 **Problem:** Code-Beispiele verwenden nicht-existentes NPM Package  
-**Status:** IN BEARBEITUNG
+**Status:** ✅ ERFOLGREICH - Code-Beispiele funktionsfähig
 
 #### Schritt 3.1: Probleme identifiziert ✅
 - ✅ @celeropress/sdk existiert nicht auf NPM
 - ✅ Falsche API-URLs (api.celeropress.de statt .com)
 - ✅ GraphQL/WebSocket Beispiele für nicht-existierende Features
 
-#### Schritt 3.2: Lösungen implementiert ⏳
+#### Schritt 3.2: Lösungen implementiert ✅
 - ✅ SDK-Referenzen durch axios ersetzt
 - ✅ API-URLs korrigiert auf .com
-- ⏳ Test ob Beispiele sinnvoll sind
-- ⏳ Commit und Push ausstehend
+- ✅ Commit d26fd65 gepusht
+- ✅ Code-Beispiele verwenden jetzt funktionierende API-Calls
+
+### ⏳ IN ARBEIT: Schritt 4 - Echte Daten statt Mock-Daten
+**Problem:** Dashboard zeigt Mock-Daten statt echte API-Stats  
+**Status:** IN BEARBEITUNG
+
+#### Schritt 4.1: Backend-Fix implementiert ✅
+- ✅ Neue Developer-Endpoints erstellt (Firebase Auth)
+  - `/api/v1/developer/stats` - Echte Nutzungsstatistiken
+  - `/api/v1/developer/keys` - API Key Management
+- ✅ Keine Kollision mit bestehenden API-Endpoints
+- ✅ User-spezifische Daten (jeder sieht nur seine eigenen)
+
+#### Schritt 4.2: Frontend umgestellt ✅
+- ✅ Dashboard Hauptseite nutzt `/developer/stats` und `/developer/keys`
+- ✅ Analytics-Seite nutzt neue Endpoints
+- ✅ Mock-Daten komplett entfernt
+
+#### Schritt 4.3: OpenAPI Dokumentation ✅
+- ✅ Neue Developer-Endpoints in openapi.yaml aufgenommen
+- ✅ BearerAuth Security Schema dokumentiert
+- ✅ Unterschied zwischen API Key und Firebase Auth erklärt
 
 ### 📋 WARTESCHLANGE (nach Schritt 3):
 4. **SDK-Problem** - NPM Account erstellen und echtes SDK publishen

@@ -253,7 +253,7 @@ class BidirectionalSync {
     if (event.subscriptionType === 'contact.propertyChange') {
       const contact = await this.getHubSpotContact(data.objectId);
       await api.put(
-        `/contacts/${contact.properties.celeropress_id}`,
+        \`/contacts/\${contact.properties.celeropress_id}\`,
         this.transformHubSpotContact(contact)
       );
     }
@@ -595,7 +595,7 @@ async function handleCompanyCreated(company) {
   const enrichedData = await enrichCompanyData(company.website);
   
   // Update in CeleroPress
-  await api.put(`/companies/${company.id}`, enrichedData);
+  await api.put(\`/companies/\${company.id}\`, enrichedData);
   
   // Benachrichtige Sales Team
   await notifySalesTeam(company);

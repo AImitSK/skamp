@@ -106,80 +106,50 @@ export default function AnalyticsPage() {
 
   const fetchUsageStats = async () => {
     try {
-      // TEMPORARY: Verwende Mock-Daten da /api/v1/usage/stats Auth-Problem hat
-      console.log('Loading usage stats with mock data...');
-      
-      // Simuliere API-Call delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Mock-Daten basierend auf echten API-Erfolgen
-      const mockData = {
-        requests_total: 15847,
-        requests_today: 3421,
-        error_rate: 0.2,
-        avg_latency: 89,
-        quota_limit: 100000,
-        quota_used: 15847
-      };
-      
-      setStats({
-        totalRequests: mockData.requests_total,
-        requestsToday: mockData.requests_today,
-        errorRate: mockData.error_rate,
-        avgLatency: mockData.avg_latency,
-        activeKeys: apiKeys.filter(k => k.status === 'active').length || 3,
-        remainingQuota: mockData.quota_limit - mockData.quota_used,
-        quotaLimit: mockData.quota_limit
+      // Echte Stats vom neuen Developer Endpoint
+      const response = await fetch('/api/v1/developer/stats', {
+        headers: {
+          'Authorization': `Bearer ${await user?.getIdToken()}`
+        }
       });
       
+      if (response.ok) {
+        const data = await response.json();
+        setStats({
+          totalRequests: data.requests_total || data.requests_month,
+          requestsToday: data.requests_today,
+          errorRate: data.error_rate,
+          avgLatency: data.avg_latency,
+          activeKeys: apiKeys.filter(k => k.status === 'active').length,
+          remainingQuota: data.quota_limit - data.quota_used,
+          quotaLimit: data.quota_limit
+        });
+      } else {
+        console.error('Failed to fetch usage stats:', response.status);
+      }
     } catch (error) {
       console.error('Fehler beim Laden der Usage Stats:', error);
-      // Fallback zu default values
     }
   };
 
   const fetchApiKeys = async () => {
     try {
-      // TEMPORARY: Verwende Mock-Daten da /api/v1/auth/keys Auth-Problem hat
-      console.log('Loading API keys with mock data...');
-      
-      // Simuliere API-Call delay
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      // Mock API Keys basierend auf echten Tests
-      const mockApiKeys = [
-        {
-          id: 'key_1',
-          name: 'Live API Key',
-          key: 'cp_live_a3cb4788d991b5e0e0a4709e71a216cb',
-          status: 'active',
-          lastUsed: new Date().toISOString(),
-          createdAt: '2025-08-10T10:00:00Z'
-        },
-        {
-          id: 'key_2', 
-          name: 'Test API Key',
-          key: 'cp_test_b4d5e6f7890abcdef123456789abcdef',
-          status: 'active',
-          lastUsed: new Date(Date.now() - 3600000).toISOString(),
-          createdAt: '2025-08-11T14:30:00Z'
-        },
-        {
-          id: 'key_3',
-          name: 'Dev API Key', 
-          key: 'cp_dev_c5e6f7890abcdef123456789abcdef12',
-          status: 'inactive',
-          lastUsed: new Date(Date.now() - 86400000).toISOString(),
-          createdAt: '2025-08-09T09:15:00Z'
+      // Echte API Keys vom neuen Developer Endpoint
+      const response = await fetch('/api/v1/developer/keys', {
+        headers: {
+          'Authorization': `Bearer ${await user?.getIdToken()}`
         }
-      ];
+      });
       
-      // Setze als Array (nicht Object) um .map() Error zu vermeiden
-      setApiKeys(mockApiKeys);
-      
+      if (response.ok) {
+        const data = await response.json();
+        setApiKeys(data.data || []);
+      } else {
+        console.error('Failed to fetch API keys:', response.status);
+        setApiKeys([]);
+      }
     } catch (error) {
       console.error('Fehler beim Laden der API Keys:', error);
-      // Fallback zu leerem Array um .map() Error zu vermeiden
       setApiKeys([]);
     }
   };

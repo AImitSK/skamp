@@ -833,6 +833,187 @@ paths:
                     items:
                       type: object
 
+  # Developer Dashboard API (Firebase Auth)
+  /developer/stats:
+    get:
+      tags: [Developer Dashboard]
+      summary: Persönliche API-Nutzungsstatistiken
+      description: |
+        Liefert Nutzungsstatistiken für den authentifizierten Benutzer.
+        **Benötigt Firebase Bearer Token** (nicht API Key!)
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Nutzungsstatistiken
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requests_today:
+                    type: integer
+                    example: 342
+                  requests_month:
+                    type: integer
+                    example: 8453
+                  requests_total:
+                    type: integer
+                    example: 15847
+                  error_rate:
+                    type: number
+                    example: 0.2
+                  avg_latency:
+                    type: integer
+                    example: 89
+                  rate_limit:
+                    type: string
+                    example: "1000/hour"
+                  quota_limit:
+                    type: integer
+                    example: 100000
+                  quota_used:
+                    type: integer
+                    example: 15847
+                  last_request:
+                    type: string
+                    format: date-time
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /developer/keys:
+    get:
+      tags: [Developer Dashboard]
+      summary: Liste eigener API Keys
+      description: |
+        Zeigt alle API Keys des authentifizierten Benutzers.
+        **Benötigt Firebase Bearer Token** (nicht API Key!)
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Liste der API Keys
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        key:
+                          type: string
+                          example: "cp_live_a3cb4788d991b5e0e0a4709e71a216cb"
+                        status:
+                          type: string
+                          enum: [active, inactive, revoked]
+                        permissions:
+                          type: array
+                          items:
+                            type: string
+                        createdAt:
+                          type: string
+                          format: date-time
+                        lastUsed:
+                          type: string
+                          format: date-time
+                        usageCount:
+                          type: integer
+                  count:
+                    type: integer
+    post:
+      tags: [Developer Dashboard]
+      summary: Neuen API Key erstellen
+      description: |
+        Erstellt einen neuen API Key für den authentifizierten Benutzer.
+        **Benötigt Firebase Bearer Token** (nicht API Key!)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Production API Key"
+                environment:
+                  type: string
+                  enum: [live, test]
+                  default: live
+                permissions:
+                  type: array
+                  items:
+                    type: string
+                    enum: [read, write, delete]
+                  default: [read, write]
+      responses:
+        '201':
+          description: API Key erfolgreich erstellt
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      name:
+                        type: string
+                      key:
+                        type: string
+                        description: Der neue API Key - speichern Sie ihn sicher!
+                      environment:
+                        type: string
+                      status:
+                        type: string
+                      createdAt:
+                        type: string
+                        format: date-time
+    delete:
+      tags: [Developer Dashboard]
+      summary: API Key löschen
+      description: |
+        Löscht einen API Key des authentifizierten Benutzers.
+        **Benötigt Firebase Bearer Token** (nicht API Key!)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: ID des zu löschenden API Keys
+          schema:
+            type: string
+      responses:
+        '200':
+          description: API Key erfolgreich gelöscht
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   # Search API
   /search:
     get:
@@ -887,6 +1068,11 @@ components:
       in: header
       name: Authorization
       description: API Key without Bearer prefix (e.g., "cp_live_your_api_key_here")
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Firebase ID Token mit Bearer prefix (e.g., "Bearer eyJhbGc...")
 
   responses:
     BadRequest:
@@ -1623,6 +1809,8 @@ components:
 tags:
   - name: Authentication
     description: API-Key Authentifizierung und Validation
+  - name: Developer Dashboard
+    description: Dashboard-spezifische Endpoints (Firebase Auth erforderlich)
   - name: Contacts
     description: Kontakt-Management für PR & CRM
   - name: Companies
