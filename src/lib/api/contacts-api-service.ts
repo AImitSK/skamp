@@ -537,25 +537,66 @@ export class ContactsAPIService {
   ): Promise<Partial<ContactEnhanced>> {
     const updateData: Partial<ContactEnhanced> = {};
 
-    if (data.firstName !== undefined) updateData.firstName = data.firstName.trim();
-    if (data.lastName !== undefined) updateData.lastName = data.lastName.trim();
-    if (data.email !== undefined) updateData.email = data.email?.trim();
-    if (data.phone !== undefined) updateData.phone = data.phone?.trim();
-    if (data.jobTitle !== undefined) updateData.jobTitle = data.jobTitle?.trim();
-    if (data.department !== undefined) updateData.department = data.department?.trim();
-    if (data.companyId !== undefined) updateData.companyId = data.companyId;
-    if (data.address !== undefined) updateData.address = data.address;
-    if (data.linkedinUrl !== undefined) updateData.linkedinUrl = data.linkedinUrl?.trim();
-    if (data.twitterHandle !== undefined) updateData.twitterHandle = data.twitterHandle?.trim();
-    if (data.website !== undefined) updateData.website = data.website?.trim();
-    if (data.mediaOutlets !== undefined) updateData.mediaOutlets = data.mediaOutlets;
-    if (data.expertise !== undefined) updateData.expertise = data.expertise;
-    if (data.tags !== undefined) updateData.tags = data.tags?.map(tag => ({ name: tag }));
-    if (data.preferredContactMethod !== undefined) updateData.preferredContactMethod = data.preferredContactMethod;
-    if (data.communicationFrequency !== undefined) updateData.communicationFrequency = data.communicationFrequency;
-    if (data.notes !== undefined) updateData.notes = data.notes?.trim();
-    if (data.internalNotes !== undefined) updateData.internalNotes = data.internalNotes?.trim();
-    if (data.isActive !== undefined) updateData.isActive = data.isActive;
+    // Name-Objekt korrekt strukturieren für ContactEnhanced
+    if (data.firstName !== undefined && data.firstName !== null) {
+      if (!updateData.name) updateData.name = {};
+      updateData.name.firstName = data.firstName.trim() || '';
+    }
+    if (data.lastName !== undefined && data.lastName !== null) {
+      if (!updateData.name) updateData.name = {};
+      updateData.name.lastName = data.lastName.trim() || '';
+    }
+    if (data.email !== undefined && data.email !== null) {
+      updateData.email = data.email.trim();
+    }
+    if (data.phone !== undefined && data.phone !== null) {
+      updateData.phone = data.phone.trim();
+    }
+    if (data.jobTitle !== undefined && data.jobTitle !== null) {
+      updateData.jobTitle = data.jobTitle.trim();
+    }
+    if (data.department !== undefined && data.department !== null) {
+      updateData.department = data.department.trim();
+    }
+    if (data.companyId !== undefined && data.companyId !== null) {
+      updateData.companyId = data.companyId;
+    }
+    if (data.address !== undefined && data.address !== null) {
+      updateData.address = data.address;
+    }
+    if (data.linkedinUrl !== undefined && data.linkedinUrl !== null) {
+      updateData.linkedinUrl = data.linkedinUrl.trim();
+    }
+    if (data.twitterHandle !== undefined && data.twitterHandle !== null) {
+      updateData.twitterHandle = data.twitterHandle.trim();
+    }
+    if (data.website !== undefined && data.website !== null) {
+      updateData.website = data.website.trim();
+    }
+    if (data.mediaOutlets !== undefined && data.mediaOutlets !== null) {
+      updateData.mediaOutlets = data.mediaOutlets;
+    }
+    if (data.expertise !== undefined && data.expertise !== null) {
+      updateData.expertise = data.expertise;
+    }
+    if (data.tags !== undefined && data.tags !== null) {
+      updateData.tags = data.tags.map(tag => ({ name: tag }));
+    }
+    if (data.preferredContactMethod !== undefined && data.preferredContactMethod !== null) {
+      updateData.preferredContactMethod = data.preferredContactMethod;
+    }
+    if (data.communicationFrequency !== undefined && data.communicationFrequency !== null) {
+      updateData.communicationFrequency = data.communicationFrequency;
+    }
+    if (data.notes !== undefined && data.notes !== null) {
+      updateData.notes = data.notes.trim();
+    }
+    if (data.internalNotes !== undefined && data.internalNotes !== null) {
+      updateData.internalNotes = data.internalNotes.trim();
+    }
+    if (data.isActive !== undefined && data.isActive !== null) {
+      updateData.isActive = data.isActive;
+    }
 
     return updateData;
   }
