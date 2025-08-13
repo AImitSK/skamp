@@ -60,13 +60,13 @@ export function Dialog({ open, onClose, children, size = 'lg', className }: Dial
 
 // Kleinere Komponenten für den Dialog-Aufbau
 export function DialogTitle({ className, ...props }: React.ComponentProps<typeof HeadlessDialogTitle>) {
-    return <HeadlessDialogTitle className={clsx("text-lg font-medium leading-6 text-gray-900", className)} {...props} />;
+    return <HeadlessDialogTitle className={clsx("text-lg font-medium leading-6 text-gray-900 px-6 py-4", className)} {...props} />;
 }
 
 export function DialogBody({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-    return <div className={clsx("text-sm text-gray-500", className)} {...props} />;
+    return <div className={clsx("text-sm text-gray-500 px-6 py-4", className)} {...props} />;
 }
 
 export function DialogActions({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-    return <div className={clsx("flex justify-end gap-4 bg-gray-50", className)} {...props} />;
+    return <div className={clsx("flex justify-end gap-4 bg-gray-50 px-6 py-4", className)} {...props} />;
 }

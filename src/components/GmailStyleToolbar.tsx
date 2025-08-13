@@ -146,8 +146,8 @@ export const GmailStyleToolbar = ({ editor }: GmailStyleToolbarProps) => {
   ];
 
   const handleFontSizeChange = (fontSize: string) => {
-    // Verwende CSS-Style statt TipTap FontSize Extension
-    editor.chain().focus().setFontSize(fontSize).run();
+    // Setze FontSize über TextStyle Mark
+    editor.chain().focus().setMark('textStyle', { fontSize }).run();
     setShowFontSizeDropdown(false);
   };
 
