@@ -23,14 +23,11 @@ export default function APIDocumentation() {
   }, [user, loading, router]);
 
   useEffect(() => {
-    // Lade OpenAPI Spec
-    fetch('/openapi.yaml')
-      .then(res => res.text())
-      .then(yamlText => {
-        // Parse YAML to JSON (vereinfacht - normalerweise würde man js-yaml verwenden)
-        setSpec('/openapi.yaml');
-      })
-      .catch(error => console.error('Fehler beim Laden der OpenAPI Spec:', error));
+    // Lade OpenAPI Spec - verwende direkte URL und setze sofort
+    if (user) {
+      console.log('Loading OpenAPI spec...');
+      setSpec('/openapi.yaml');
+    }
   }, [user]);
 
   const requestInterceptor = (req: any) => {
