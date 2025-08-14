@@ -11,6 +11,83 @@ import {
   XMarkIcon
 } from '@heroicons/react/24/outline';
 
+// KI-QUALITY TEST RUNNER
+async function testAIFeatures() {
+  console.log('🧪 FLOATING AI TOOLBAR QUALITÄTS-TESTS\n');
+  console.log('=====================================');
+  
+  const testTexts = {
+    short: "SK Online Marketing bietet B2B-Marketing.",
+    medium: "SK Online Marketing ist die digitalen Werbeagentur aus Bad Oeynhausen, spezialisiert auf B2B-Marketing für Industrie, Maschinenbau und Dienstleister. Wir verbinden 20+ Jahre Erfahrung im Online-Marketing mit frischen Ideen, um Unternehmen ins beste Licht zu rücken."
+  };
+  
+  const testRephrase = async (text: string) => {
+    try {
+      const originalWords = text.split(' ').length;
+      const originalParagraphs = text.split('\n\n').length;
+      
+      const response = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          prompt: `Du bist ein Synonym-Experte. Ersetze Wörter durch Synonyme - MEHR NICHT! EXAKT ${originalWords} Wörter (±5 max!): EXAKT ${originalParagraphs} Absatz(e): ${text}`,
+          mode: 'generate'
+        })
+      });
+      
+      const data = await response.json();
+      const result = parseTextFromAIOutput(data.generatedText || text);
+      
+      const resultWords = result.split(' ').length;
+      const resultParagraphs = result.split('\n\n').length;
+      const hasPM = /reagiert damit|plant.*Angebot|kommenden Monaten|Digitalisierung erfordert|Über SK Online Marketing/.test(result);
+      const hasFormat = /\*\*|<b>|<strong>/.test(result);
+      
+      return {
+        originalWords,
+        resultWords,
+        originalParagraphs, 
+        resultParagraphs,
+        hasPM,
+        hasFormat,
+        result: result.substring(0, 100) + '...',
+        wordDiff: resultWords - originalWords,
+        success: Math.abs(resultWords - originalWords) <= 15 && resultParagraphs === originalParagraphs && !hasPM && !hasFormat
+      };
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : String(error), success: false };
+    }
+  };
+  
+  console.log('\n🔄 REPHRASE TESTS:');
+  console.log('------------------');
+  
+  for (const [name, text] of Object.entries(testTexts)) {
+    console.log(`\n📝 Testing ${name} text...`);
+    const result = await testRephrase(text);
+    
+    if (result.error) {
+      console.log(`❌ ERROR: ${result.error}`);
+      continue;
+    }
+    
+    console.log(`📏 Wörter: ${result.originalWords} → ${result.resultWords} (${result.wordDiff >= 0 ? '+' : ''}${result.wordDiff})`);
+    console.log(`📄 Absätze: ${result.originalParagraphs} → ${result.resultParagraphs}`);
+    console.log(`🚫 PM-Struktur: ${result.hasPM ? '❌ Gefunden' : '✅ Sauber'}`);
+    console.log(`🎨 Formatierung: ${result.hasFormat ? '❌ Gefunden' : '✅ Sauber'}`);
+    console.log(`📝 Result: "${result.result}"`);
+    console.log(`${result.success ? '✅ BESTANDEN' : '❌ DURCHGEFALLEN'}`);
+  }
+  
+  console.log('\n🎯 QUALITÄTS-SUMMARY:');
+  console.log('====================');
+  console.log('Teste selbst mit: window.testFloatingAI()');
+  console.log('Oder in Konsole: testAIFeatures()');
+}
+
+// Global verfügbar machen
+(window as any).testFloatingAI = testAIFeatures;
+
 // Text-Parser: Extrahiert nur den eigentlichen Inhalt aus KI-Ausgabe
 function parseTextFromAIOutput(aiOutput: string): string {
   console.log('🔍 Parsing AI Output:', aiOutput.substring(0, 200) + '...');
@@ -729,7 +806,22 @@ Antworte NUR mit dem Text im neuen Ton.`;
         )}
       </div>
 
-      {/* SEO wurde entfernt - kommt später als separates Widget */}
+      {/* Test-Button - nur in Development */}
+      {process.env.NODE_ENV === 'development' && (
+        <button
+          onClick={() => {
+            console.log('🧪 Starting AI Quality Tests...');
+            testAIFeatures();
+          }}
+          className="
+            px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-md
+            hover:bg-yellow-200 transition-colors border border-yellow-300
+          "
+          title="KI-Qualitäts-Tests ausführen"
+        >
+          🧪 Test AI
+        </button>
+      )}
 
       {/* Processing Indicator */}
       {isProcessing && (
