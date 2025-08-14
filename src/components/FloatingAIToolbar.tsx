@@ -38,6 +38,36 @@ function parseTextFromAIOutput(aiOutput: string): string {
       continue;
     }
     
+    // Skip PM-typische Phrasen (viel aggressiver)
+    if (line.includes('reagiert damit auf') || 
+        line.includes('plant, das Angebot') ||
+        line.includes('in den kommenden Monaten') ||
+        line.includes('Die zunehmende Digitalisierung') ||
+        line.includes('professionelle Online-Präsenz') ||
+        line.includes('ganzheitlichen Ansatz') ||
+        line.includes('digitale Sichtbarkeit') ||
+        line.includes('Marketing-Effizienz') ||
+        line.includes('zentralen Ansprechpartner') ||
+        line.includes('optimierten Workflow') ||
+        line.includes('weiter auszubauen')) {
+      console.log('⏭️ Skipping PM phrase:', line.substring(0, 50) + '...');
+      continue;
+    }
+    
+    // Skip Future-Pläne und Marketing-Sprech
+    if (line.includes('plant') || line.includes('wird') || line.includes('sollen') ||
+        line.includes('künftig') || line.includes('zukünftig') || line.includes('Vision')) {
+      console.log('⏭️ Skipping future/marketing:', line.substring(0, 50) + '...');
+      continue;
+    }
+    
+    // Skip zu allgemeine/aufgeblähte Sätze (über 150 Zeichen ohne konkreten Inhalt)
+    if (line.length > 150 && (line.includes('erfordert') || line.includes('unterstützt') || 
+                              line.includes('dabei') || line.includes('können'))) {
+      console.log('⏭️ Skipping bloated sentence:', line.substring(0, 50) + '...');
+      continue;
+    }
+    
     // Skip Zitate (beginnen mit " oder enthalten "sagt")
     if (line.startsWith('"') || line.includes('sagt ') || line.includes(', sagt ')) {
       console.log('⏭️ Skipping quote:', line);
@@ -74,7 +104,8 @@ function parseTextFromAIOutput(aiOutput: string): string {
     originalLines: lines.length,
     extractedLines: textContent.length,
     firstLine: textContent[0]?.substring(0, 50) + '...',
-    resultLength: result.length
+    resultLength: result.length,
+    wordCount: result.split(' ').length
   });
   
   return result || aiOutput; // Fallback falls nichts extrahiert wurde
@@ -128,24 +159,28 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
       
       switch (action) {
         case 'rephrase':
-          systemPrompt = `Du bist ein professioneller Texter. Analysiere erst die Tonalität des Textes und formuliere dann um.
+          systemPrompt = `Du bist ein professioneller Texter. Analysiere die Tonalität und formuliere dann um - OHNE ZU ERWEITERN.
+
+KRITISCHE LÄNGEN-REGEL:
+- Original hat ${text.split(' ').length} Wörter
+- Deine Umformulierung MUSS zwischen ${Math.max(1, text.split(' ').length - 10)} und ${text.split(' ').length + 10} Wörter haben
+- Original hat ${text.split('\n\n').length} Absatz(e) → Du machst EXAKT ${text.split('\n\n').length} Absatz(e)
 
 SCHRITT 1 - TONALITÄT ERKENNEN:
 - Sachlich/Professionell: Fakten, neutrale Sprache, B2B-Kontext
 - Verkäuferisch: Superlative, Werbesprache, Call-to-Actions  
 - Emotional: Persönliche Ansprache, Gefühle, Stories
-- Technisch: Fachbegriffe, Spezifikationen, Details
 
-SCHRITT 2 - UMFORMULIEREN:
+SCHRITT 2 - UMFORMULIEREN (NICHT ERWEITERN!):
 - Verwende andere Worte und Satzstrukturen
 - BEHALTE die erkannte Tonalität exakt bei
-- Ähnliche Textlänge wie das Original
-- Gleiche Verkaufsstärke/Sachlichkeit beibehalten
-- Vorhandene Überschriften umformulieren, aber keine neuen hinzufügen
-- Gleiche Anzahl Absätze beibehalten
+- KEINE neuen Informationen hinzufügen
+- KEINE neuen Absätze erstellen
+- KEINE Pressemitteilungs-Struktur aufbauen
+- NUR umformulieren, nicht ausbauen
 
 Antworte NUR mit dem umformulierten Text (nicht die Analyse).`;
-          userPrompt = `Analysiere die Tonalität und formuliere dann um:\n\n${text}`;
+          userPrompt = `UMFORMULIEREN (nicht erweitern!) - Original hat ${text.split(' ').length} Wörter und ${text.split('\n\n').length} Absatz(e):\n\n${text}`;
           break;
         case 'shorten':
           systemPrompt = `Du bist ein professioneller Textredakteur. Analysiere die Tonalität und kürze dann um ca. 30%.
