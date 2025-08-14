@@ -94,11 +94,18 @@ function parseTextFromAIOutput(aiOutput: string): string {
   
   let text = aiOutput;
   
-  // 1. Entferne ALLE HTML Tags komplett (auch h1, h2, etc.)
-  // Behalte nur Listen-Tags
-  text = text.replace(/<h[1-6]>/gi, '');  // Entferne Opening Headlines
-  text = text.replace(/<\/h[1-6]>/gi, ''); // Entferne Closing Headlines  
-  text = text.replace(/<(?!\/?(?:ul|ol|li)(?:\s|>))[^>]*>/g, ''); // Alle anderen Tags außer Listen
+  // 1. Entferne ALLE HTML Tags komplett - SEHR AGGRESSIV
+  // Erst spezifische Tags, dann alle anderen
+  text = text.replace(/<\/?h[1-6][^>]*>/gi, '');     // Headlines komplett
+  text = text.replace(/<\/?strong[^>]*>/gi, '');     // Strong-Tags
+  text = text.replace(/<\/?b[^>]*>/gi, '');          // Bold-Tags
+  text = text.replace(/<\/?em[^>]*>/gi, '');         // Em-Tags
+  text = text.replace(/<\/?i[^>]*>/gi, '');          // Italic-Tags
+  text = text.replace(/<\/?p[^>]*>/gi, '');          // Paragraph-Tags
+  text = text.replace(/<\/?div[^>]*>/gi, '');        // Div-Tags
+  text = text.replace(/<\/?span[^>]*>/gi, '');       // Span-Tags
+  // Dann alle anderen außer Listen
+  text = text.replace(/<(?!\/?(?:ul|ol|li)(?:\s|>))[^>]*>/gi, '');
   
   // 2. Entferne ALLE Markdown-Formatierungen (außer Listen)
   text = text
@@ -488,12 +495,13 @@ Antworte NUR mit dem Text im neuen Ton.`;
       
       console.log('🎵 Ton geändert:', { from, to, tone, newTextLength: newText.length });
       
-      // Text mit HTML-Formatierung ersetzen
+      // Text als PLAIN TEXT ohne Formatierung einfügen
       editor.chain()
         .focus()
         .setTextSelection({ from, to })
         .deleteSelection()
         .insertContent(newText)
+        .unsetAllMarks()  // Entfernt alle Formatierungen nach dem Einfügen
         .run();
       
       // Kurz warten, dann neue Selection setzen für potentielle Weiterbearbeitung  
@@ -551,12 +559,13 @@ Antworte NUR mit dem Text im neuen Ton.`;
         newTextLength: newText.length 
       });
       
-      // Text mit HTML-Formatierung ersetzen
+      // Text als PLAIN TEXT ohne Formatierung einfügen
       editor.chain()
         .focus()
         .setTextSelection({ from, to })
         .deleteSelection()
         .insertContent(newText)
+        .unsetAllMarks()  // Entfernt alle Formatierungen nach dem Einfügen
         .run();
       
       // Kurz warten, dann neue Selection setzen für potentielle Weiterbearbeitung  
