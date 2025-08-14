@@ -159,28 +159,32 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
       
       switch (action) {
         case 'rephrase':
-          systemPrompt = `Du bist ein professioneller Texter. Analysiere die Tonalität und formuliere dann um - OHNE ZU ERWEITERN.
+          systemPrompt = `Du bist ein Synonym-Experte. Ersetze Wörter durch Synonyme - MEHR NICHT!
 
-KRITISCHE LÄNGEN-REGEL:
-- Original hat ${text.split(' ').length} Wörter
-- Deine Umformulierung MUSS zwischen ${Math.max(1, text.split(' ').length - 10)} und ${text.split(' ').length + 10} Wörter haben
-- Original hat ${text.split('\n\n').length} Absatz(e) → Du machst EXAKT ${text.split('\n\n').length} Absatz(e)
+❌ DU DARFST NICHT:
+- Neue Sätze hinzufügen
+- Neue Absätze erstellen  
+- Boilerplates/Über-Abschnitte schreiben
+- Pressemitteilungs-Struktur aufbauen
+- Informationen erweitern oder erklären
 
-SCHRITT 1 - TONALITÄT ERKENNEN:
-- Sachlich/Professionell: Fakten, neutrale Sprache, B2B-Kontext
-- Verkäuferisch: Superlative, Werbesprache, Call-to-Actions  
-- Emotional: Persönliche Ansprache, Gefühle, Stories
+✅ DU DARFST NUR:
+- Wörter durch Synonyme ersetzen
+- Satzstellung leicht ändern
+- Tonalität beibehalten
 
-SCHRITT 2 - UMFORMULIEREN (NICHT ERWEITERN!):
-- Verwende andere Worte und Satzstrukturen
-- BEHALTE die erkannte Tonalität exakt bei
-- KEINE neuen Informationen hinzufügen
-- KEINE neuen Absätze erstellen
-- KEINE Pressemitteilungs-Struktur aufbauen
-- NUR umformulieren, nicht ausbauen
+STRENGE REGELN:
+- EXAKT ${text.split(' ').length} Wörter (±5 max!)
+- EXAKT ${text.split('\n\n').length} Absatz(e)
+- KEINE Formatierung ändern
+- KEINE Headlines/Überschriften hinzufügen
 
-Antworte NUR mit dem umformulierten Text (nicht die Analyse).`;
-          userPrompt = `UMFORMULIEREN (nicht erweitern!) - Original hat ${text.split(' ').length} Wörter und ${text.split('\n\n').length} Absatz(e):\n\n${text}`;
+BEISPIEL:
+Original: "Die Firma bietet Services an."
+Umformuliert: "Das Unternehmen stellt Dienstleistungen bereit."
+
+Antworte NUR mit dem umformulierten Text - keine Erklärungen!`;
+          userPrompt = `Synonym-Austausch für ${text.split(' ').length} Wörter:\n\n${text}`;
           break;
         case 'shorten':
           systemPrompt = `Du bist ein professioneller Textredakteur. Analysiere die Tonalität und kürze dann um ca. 30%.
@@ -242,7 +246,27 @@ Antworte NUR mit dem erweiterten Text.`;
       // PARSER: Nur den eigentlichen Text extrahieren (keine PM-Struktur)
       result = parseTextFromAIOutput(result);
       
-      console.log(`✅ KI-Antwort bereinigt (${result.length} Zeichen):`, result.substring(0, 100) + '...');
+      // FORMATIERUNG bereinigen: Entferne unerwünschte HTML/Markdown
+      result = result
+        .replace(/\*\*(.*?)\*\*/g, '$1')  // **fett** → normal
+        .replace(/\*(.*?)\*/g, '$1')      // *kursiv* → normal
+        .replace(/<\/?b>/g, '')           // <b></b> → weg
+        .replace(/<\/?strong>/g, '')      // <strong></strong> → weg
+        .replace(/<\/?em>/g, '')          // <em></em> → weg
+        .replace(/<\/?i>/g, '');          // <i></i> → weg
+      
+      // ZUSÄTZLICHE SICHERUNG: Wort-Limit prüfen
+      const originalWords = text.split(' ').length;
+      const resultWords = result.split(' ').length;
+      if (action === 'rephrase' && resultWords > originalWords + 15) {
+        console.warn(`⚠️ KI-Result zu lang: ${resultWords} statt max ${originalWords + 15} Wörter`);
+        // Schneide ab und nehme nur ersten Teil der ähnlichen Länge
+        const words = result.split(' ');
+        result = words.slice(0, originalWords + 10).join(' ');
+        console.log(`✂️ Gekürzt auf ${result.split(' ').length} Wörter`);
+      }
+      
+      console.log(`✅ KI-Antwort bereinigt (${result.length} Zeichen, ${result.split(' ').length} Wörter):`, result.substring(0, 100) + '...');
       
       return result;
     } catch (error) {
