@@ -264,6 +264,7 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
   const [showToneDropdown, setShowToneDropdown] = useState(false);
   const [isInteracting, setIsInteracting] = useState(false);
   const [customInstruction, setCustomInstruction] = useState(''); // Neues Eingabefeld
+  const [inputProtection, setInputProtection] = useState(false); // Schutz vor Input-Klick-Chaos
   const toolbarRef = useRef<HTMLDivElement>(null);
   const hideTimeoutRef = useRef<NodeJS.Timeout>();
   const lastSelectionRef = useRef<{ from: number; to: number } | null>(null);
@@ -873,8 +874,15 @@ Antworte NUR mit dem Text im neuen Ton.`;
         target: (target as HTMLElement).tagName,
         className: (target as HTMLElement).className,
         isInToolbar: toolbarRef.current?.contains(target),
-        toolbarVisible: isVisible
+        toolbarVisible: isVisible,
+        inputProtection: inputProtection
       });
+      
+      // SCHUTZ: Ignoriere alle Klicks während Input-Protection
+      if (inputProtection) {
+        console.log('🛡️ INPUT PROTECTION AKTIV - Klick ignoriert');
+        return;
+      }
       
       // Prüfe ob Klick außerhalb der Toolbar
       if (toolbarRef.current && !toolbarRef.current.contains(target)) {
@@ -1241,9 +1249,19 @@ REGELN:
             type="text"
             value={customInstruction}
             onChange={(e) => setCustomInstruction(e.target.value)}
+            onFocus={(e) => {
+              console.log('🎯 INPUT FOCUS - Aktiviere Protection');
+              setInputProtection(true); // Aktiviere Schutz
+              setTimeout(() => {
+                setInputProtection(false); // Deaktiviere nach 500ms
+                console.log('🛡️ INPUT PROTECTION deaktiviert');
+              }, 500);
+            }}
             onClick={(e) => {
               console.log('🎯 INPUT CLICK - stopPropagation');
               e.stopPropagation(); // Verhindere Click-Event-Bubbling
+              setInputProtection(true); // Zusätzlicher Schutz
+              setTimeout(() => setInputProtection(false), 300);
             }}
             onMouseDown={(e) => {
               console.log('🎯 INPUT MOUSEDOWN - stopPropagation');
