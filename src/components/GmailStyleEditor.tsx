@@ -280,7 +280,7 @@ export const GmailStyleEditor = ({
       attributes: {
         class: `gmail-editor-content focus:outline-none ${className || ''}`,
         'data-placeholder': placeholder,
-        style: 'min-height: 350px; padding: 1.5rem;',
+        style: 'min-height: 350px; padding: 1.5rem; font-size: 18px !important; line-height: 1.8 !important;',
       },
     },
     onUpdate({ editor }) {
@@ -349,11 +349,13 @@ export const GmailStyleEditor = ({
           <div className="flex-1 overflow-y-auto">
             <div className="max-w-4xl mx-auto p-8">
               <FloatingAIToolbar editor={editor} />
-              <EditorContent 
-                editor={editor} 
-                className="prose prose-lg max-w-none fullscreen-editor"
-                style={{ minHeight: 'calc(100vh - 300px)' }}
-              />
+              <div className="relative bg-white rounded-lg border border-gray-200 p-6">
+                <EditorContent 
+                  editor={editor} 
+                  className="prose prose-lg max-w-none fullscreen-editor gmail-editor-content"
+                  style={{ minHeight: 'calc(100vh - 400px)' }}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -440,10 +442,22 @@ export const GmailStyleEditor = ({
             line-height: 1.8 !important;
           }
 
-          /* Alle Textknoten im Editor */
+          /* Alle Textknoten im Editor - sehr spezifisch */
           .gmail-editor-content .ProseMirror p,
           .gmail-editor-content .ProseMirror div,
-          .gmail-editor-content .ProseMirror span {
+          .gmail-editor-content .ProseMirror span,
+          .prose .gmail-editor-content .ProseMirror p,
+          .prose .gmail-editor-content .ProseMirror div,
+          .prose .gmail-editor-content .ProseMirror span,
+          .prose-lg .gmail-editor-content .ProseMirror p,
+          .prose-lg .gmail-editor-content .ProseMirror div,
+          .prose-lg .gmail-editor-content .ProseMirror span {
+            font-size: 18px !important;
+            line-height: 1.8 !important;
+          }
+
+          /* Direkte ProseMirror-Übersteuerung */
+          .ProseMirror {
             font-size: 18px !important;
             line-height: 1.8 !important;
           }
@@ -558,13 +572,26 @@ export const GmailStyleEditor = ({
 
           .fullscreen-editor .ProseMirror p,
           .fullscreen-editor .ProseMirror div,
-          .fullscreen-editor .ProseMirror span {
+          .fullscreen-editor .ProseMirror span,
+          .prose .fullscreen-editor .ProseMirror p,
+          .prose .fullscreen-editor .ProseMirror div,
+          .prose .fullscreen-editor .ProseMirror span,
+          .prose-lg .fullscreen-editor .ProseMirror p,
+          .prose-lg .fullscreen-editor .ProseMirror div,
+          .prose-lg .fullscreen-editor .ProseMirror span {
             font-size: 20px !important;
             line-height: 2.0 !important;
           }
 
           /* Fullscreen Editor Container */
           .fullscreen-editor {
+            font-size: 20px !important;
+            line-height: 2.0 !important;
+          }
+
+          /* Direkter Fullscreen-ProseMirror */
+          .fullscreen-editor.ProseMirror,
+          .fullscreen-editor .ProseMirror {
             font-size: 20px !important;
             line-height: 2.0 !important;
           }
