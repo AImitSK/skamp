@@ -1215,8 +1215,41 @@ REGELN:
             type="text"
             value={customInstruction}
             onChange={(e) => setCustomInstruction(e.target.value)}
-            onMouseDown={(e) => e.stopPropagation()} // Verhindert preventDefault vom Container
-            onFocus={(e) => e.stopPropagation()} // Verhindert Interferenz mit Toolbar-Logic
+            onMouseDown={(e) => {
+              e.stopPropagation(); // Verhindert preventDefault vom Container
+              // KRITISCH: Verhindere, dass Editor die Selection verliert
+              setIsInteracting(true);
+            }}
+            onFocus={(e) => {
+              e.stopPropagation(); // Verhindert Interferenz mit Toolbar-Logic
+              // KRITISCH: Markiere als interacting um Toolbar-Hide zu verhindern
+              setIsInteracting(true);
+              
+              // EXTRA: Sichere die aktuelle Editor-Selection explizit
+              if (editor && editor.state.selection) {
+                const selection = editor.state.selection;
+                lastSelectionRef.current = { from: selection.from, to: selection.to };
+                console.log('💾 Input Focus - Selection gesichert:', lastSelectionRef.current);
+              }
+            }}
+            onBlur={() => {
+              // Wenn Eingabefeld verlassen wird, kann Toolbar wieder normal reagieren
+              setIsInteracting(false);
+              
+              // EXTRA: Stelle Editor-Selection wieder her, falls sie verloren ging
+              if (editor && lastSelectionRef.current) {
+                setTimeout(() => {
+                  try {
+                    editor.chain()
+                      .setTextSelection(lastSelectionRef.current!)
+                      .run();
+                    console.log('🔄 Input Blur - Selection wiederhergestellt:', lastSelectionRef.current);
+                  } catch (error) {
+                    console.log('Selection restore failed:', error);
+                  }
+                }, 50); // Kurze Verzögerung
+              }
+            }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey && customInstruction.trim()) {
                 e.preventDefault();
