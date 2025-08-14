@@ -908,7 +908,6 @@ Antworte NUR mit dem Text im neuen Ton.`;
     const handleMouseMove = (event: MouseEvent) => {
       // WICHTIG: Prüfe auch ob Toolbar wirklich DA ist (nicht nur isVisible=true)
       if (!isVisible || !toolbarRef.current || isInteracting || inputProtectionRef.current) {
-        console.log('🚫 MouseMove ignoriert:', { isVisible, hasToolbar: !!toolbarRef.current, isInteracting, inputProtection: inputProtectionRef.current });
         return;
       }
       
