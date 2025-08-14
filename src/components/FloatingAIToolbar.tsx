@@ -833,12 +833,16 @@ Antworte NUR mit dem Text im neuen Ton.`;
         
       } else {
         // Toolbar ausblenden wenn keine Selektion
+        console.log('⚠️ KEINE SELEKTION - verstecke Toolbar in 200ms');
         setSelectedText('');
         lastSelectionRef.current = null;
         hideTimeoutRef.current = setTimeout(() => {
-          if (!isInteracting) {
+          if (!isInteracting && !inputProtection) {
+            console.log('🚫 Verstecke Toolbar - keine Text-Selektion');
             setIsVisible(false);
             setShowToneDropdown(false);
+          } else {
+            console.log('🛡️ Selection-Hide blockiert:', { isInteracting, inputProtection });
           }
         }, 200);
       }
