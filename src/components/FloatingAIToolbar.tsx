@@ -58,22 +58,25 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
       
       switch (action) {
         case 'rephrase':
-          prompt = `Formuliere den folgenden Text um. Verwende andere Worte und Satzstrukturen, aber behalte die Kernaussage und die ursprüngliche Textlänge bei. 
+          prompt = `Formuliere den folgenden Text um. Verwende andere Worte und Satzstrukturen, aber behalte die Kernaussage und die ursprüngliche Textlänge bei.
 
-WICHTIGE FORMATIERUNGS-REGELN:
+KRITISCHE FORMATIERUNG - EXAKT BEFOLGEN:
 - Vorhandene Überschriften umformulieren, aber keine neuen hinzufügen
-- Maximal EINE Leerzeile zwischen Absätzen (nicht 3 oder 4!)
-- Keine Leerzeile vor dem ersten Absatz
-- Ähnliche Textlänge wie das Original
-- Gleiche Struktur beibehalten (gleiche Anzahl Absätze)
-- Nur umformulieren, nicht erweitern
+- Zwischen Absätzen: EXAKT eine Leerzeile (Enter-Enter, nicht mehr!)
+- Vor dem ersten Absatz: KEINE Leerzeile
+- Nach dem letzten Absatz: KEINE Leerzeile
+- Keine mehrfachen Leerzeilen (nicht \\n\\n\\n\\n sondern nur \\n\\n)
 
-FORMAT-BEISPIEL:
-Absatz 1 text hier.
+EXAKTES FORMAT (kopiere diese Struktur):
+Erster Absatz text.
 
-Absatz 2 text hier.
+Zweiter Absatz text.
 
-Text: "${text}"`;
+Dritter Absatz text.
+
+Text zum Umformulieren: "${text}"
+
+WICHTIG: Befolge die Leerzeichenregel exakt - nur eine Leerzeile zwischen Absätzen!`;
           break;
         case 'shorten':
           prompt = `Kürze den Text um mindestens 30%. Entferne unnötige Details und Wiederholungen, aber behalte alle wichtigen Informationen und die Kernaussage.`;
