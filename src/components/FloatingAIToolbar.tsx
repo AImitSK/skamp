@@ -52,51 +52,46 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
       return onAIAction(action, text);
     }
 
-    // Fallback zur bestehenden KI-API
+    // Verwende strukturierte KI-API für bessere Formatierung
     try {
       let prompt = '';
       
       switch (action) {
         case 'rephrase':
-          prompt = `Formuliere den folgenden Text um. Verwende andere Worte und Satzstrukturen, aber behalte die Kernaussage und die ursprüngliche Textlänge bei.
+          prompt = `Formuliere diesen Text um: "${text}"
 
-KRITISCHE FORMATIERUNG - EXAKT BEFOLGEN:
+WICHTIGE REGELN:
+- Verwende andere Worte und Satzstrukturen
+- Behalte die Kernaussage bei
+- Ähnliche Textlänge wie das Original
 - Vorhandene Überschriften umformulieren, aber keine neuen hinzufügen
-- Zwischen Absätzen: EXAKT eine Leerzeile (Enter-Enter, nicht mehr!)
-- Vor dem ersten Absatz: KEINE Leerzeile
-- Nach dem letzten Absatz: KEINE Leerzeile
-- Keine mehrfachen Leerzeilen (nicht \\n\\n\\n\\n sondern nur \\n\\n)
-
-EXAKTES FORMAT (kopiere diese Struktur):
-Erster Absatz text.
-
-Zweiter Absatz text.
-
-Dritter Absatz text.
-
-Text zum Umformulieren: "${text}"
-
-WICHTIG: Befolge die Leerzeichenregel exakt - nur eine Leerzeile zwischen Absätzen!`;
+- Gleiche Struktur beibehalten (gleiche Anzahl Absätze)`;
           break;
         case 'shorten':
-          prompt = `Kürze den Text um mindestens 30%. Entferne unnötige Details und Wiederholungen, aber behalte alle wichtigen Informationen und die Kernaussage.`;
+          prompt = `Kürze diesen Text um 30%: "${text}"
+
+Entferne unnötige Details und Wiederholungen, aber behalte alle wichtigen Informationen und die Kernaussage.`;
           break;
         case 'expand':
-          prompt = `Erweitere den Text um mindestens 50%. Füge konkrete Details, Beispiele und weiterführende Informationen hinzu. Mache ihn informativer und ausführlicher.`;
+          prompt = `Erweitere diesen Text um 50%: "${text}"
+
+Füge konkrete Details, Beispiele und weiterführende Informationen hinzu. Mache ihn informativer und ausführlicher.`;
           break;
         default:
           return text;
       }
 
-      console.log(`🤖 KI-${action}:`, prompt.substring(0, 100) + '...');
+      console.log(`🤖 KI-${action} (strukturiert):`, prompt.substring(0, 100) + '...');
       
-      const response = await fetch('/api/ai/generate', {
+      const response = await fetch('/api/ai/generate-structured', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           prompt,
-          mode: 'improve',
-          existingContent: text
+          context: {
+            tone: 'modern',
+            audience: 'b2b'
+          }
         })
       });
 
@@ -106,9 +101,10 @@ WICHTIG: Befolge die Leerzeichenregel exakt - nur eine Leerzeile zwischen Absät
       }
       
       const data = await response.json();
-      const result = data.generatedText || text;
+      // Verwende HTML-Content für perfekte Formatierung
+      const result = data.htmlContent || text;
       
-      console.log(`✅ KI-Antwort (${result.length} Zeichen):`, result.substring(0, 100) + '...');
+      console.log(`✅ KI-Antwort strukturiert (${result.length} Zeichen):`, result.substring(0, 100) + '...');
       
       return result;
     } catch (error) {
@@ -128,17 +124,21 @@ WICHTIG: Befolge die Leerzeichenregel exakt - nur eine Leerzeile zwischen Absät
     const { from, to } = currentSelection;
     
     try {
-      const prompt = `Ändere den Ton zu ${tone}. Behalte den Inhalt bei, aber ändere die Wortwahl und den Stil entsprechend.`;
+      const prompt = `Ändere den Ton dieses Textes zu ${tone}: "${selectedText}"
+
+Behalte den Inhalt bei, aber ändere die Wortwahl und den Stil entsprechend.`;
       
-      console.log(`🎵 Ton-Änderung zu "${tone}":`, prompt.substring(0, 100) + '...');
+      console.log(`🎵 Ton-Änderung zu "${tone}" (strukturiert):`, prompt.substring(0, 100) + '...');
       
-      const response = await fetch('/api/ai/generate', {
+      const response = await fetch('/api/ai/generate-structured', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           prompt,
-          mode: 'improve',
-          existingContent: selectedText
+          context: {
+            tone: tone.toLowerCase(),
+            audience: 'b2b'
+          }
         })
       });
 
@@ -148,7 +148,7 @@ WICHTIG: Befolge die Leerzeichenregel exakt - nur eine Leerzeile zwischen Absät
       }
       
       const data = await response.json();
-      const newText = data.generatedText || selectedText;
+      const newText = data.htmlContent || selectedText;
       
       console.log('🎵 Ton geändert:', { from, to, tone, newTextLength: newText.length });
       
