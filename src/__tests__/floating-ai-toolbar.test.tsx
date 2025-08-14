@@ -22,20 +22,45 @@ describe('FloatingAIToolbar', () => {
     // Reset mocks
     jest.clearAllMocks();
     
-    // Mock Editor Setup
+    // Mock Editor Setup - Erweitert für FloatingAIToolbar
     mockEditor = {
       state: {
         selection: {
           from: 0,
-          to: 10
+          to: 10,
+          constructor: {
+            create: jest.fn().mockReturnValue({
+              from: 0,
+              to: 10
+            })
+          }
         },
         doc: {
-          textBetween: jest.fn().mockReturnValue('Test Text')
+          textBetween: jest.fn().mockReturnValue('Test Text'),
+          content: { size: 1000 }
+        },
+        schema: {
+          text: jest.fn().mockImplementation((text) => ({ text }))
+        },
+        tr: {
+          setSelection: jest.fn().mockReturnThis(),
+          replaceSelectionWith: jest.fn().mockReturnThis()
         }
       },
+      view: {
+        dispatch: jest.fn(),
+        state: {
+          doc: {
+            content: { size: 1000 }
+          }
+        },
+        dom: document.createElement('div')
+      },
+      getHTML: jest.fn().mockReturnValue('<p>Test Content</p>'),
       chain: jest.fn().mockReturnThis(),
       focus: jest.fn().mockReturnThis(),
       insertContent: jest.fn().mockReturnThis(),
+      setTextSelection: jest.fn().mockReturnThis(),
       run: jest.fn(),
       on: jest.fn(),
       off: jest.fn(),
@@ -130,8 +155,8 @@ describe('FloatingAIToolbar', () => {
 
     await waitFor(() => {
       expect(mockAIAction).toHaveBeenCalledWith('rephrase', 'Test Text');
-      expect(mockEditor.chain).toHaveBeenCalled();
-      expect(mockEditor.insertContent).toHaveBeenCalledWith('Neuer Text');
+      // FloatingAIToolbar nutzt jetzt view.dispatch statt chain().insertContent()
+      expect(mockEditor.view.dispatch).toHaveBeenCalled();
     });
   });
 

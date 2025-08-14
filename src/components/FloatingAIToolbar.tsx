@@ -642,8 +642,9 @@ Antworte NUR mit dem Text im neuen Ton.`;
           setIsVisible(true);
         } catch (error) {
           console.log('Selection update failed:', error);
-          // Toolbar verstecken wenn Selection fehlschlägt
-          setIsVisible(false);
+          // WICHTIG: Toolbar NICHT verstecken bei Selection-Fehlern
+          // Selection-Update-Fehler sind normal und sollten die Toolbar nicht verstecken
+          // setIsVisible(false); // ENTFERNT - das war der Bug!
         }
       }, 100);
     } catch (error) {
@@ -742,8 +743,9 @@ Antworte NUR mit dem Text im neuen Ton.`;
           setIsVisible(true);
         } catch (error) {
           console.log('Selection update failed:', error);
-          // Toolbar verstecken wenn Selection fehlschlägt
-          setIsVisible(false);
+          // WICHTIG: Toolbar NICHT verstecken bei Selection-Fehlern
+          // Selection-Update-Fehler sind normal und sollten die Toolbar nicht verstecken
+          // setIsVisible(false); // ENTFERNT - das war der Bug!
         }
       }, 100);
     } catch (error) {
@@ -873,7 +875,18 @@ Antworte NUR mit dem Text im neuen Ton.`;
         // Schließe nur das Dropdown, nicht die ganze Toolbar
         setShowToneDropdown(false);
         
-        // NUR bei Klick außerhalb des Editors die Toolbar verstecken
+        // WICHTIG: Ignoriere Klicks auf Input-Felder in der Toolbar
+        const targetElement = target as HTMLElement;
+        const isInputClick = targetElement.tagName === 'INPUT' || 
+                           targetElement.tagName === 'TEXTAREA' ||
+                           targetElement.closest('.input-area');
+                           
+        if (isInputClick) {
+          console.log('🎯 Input-Klick erkannt - Toolbar bleibt sichtbar');
+          return; // Toolbar NICHT verstecken bei Input-Klicks
+        }
+        
+        // NUR bei Klick außerhalb des Editors UND nicht auf Inputs die Toolbar verstecken
         const editorElement = editor?.view.dom;
         if (editorElement && !editorElement.contains(target)) {
           // Toolbar verstecken aber selectedText NICHT löschen
