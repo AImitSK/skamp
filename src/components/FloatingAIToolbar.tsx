@@ -110,8 +110,18 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
       const data = await response.json();
       const newText = data.text || selectedText;
       
-      // Text im Editor ersetzen
-      editor.chain().focus().insertContent(newText).run();
+      // Markierten Text ersetzen
+      if (lastSelectionRef.current) {
+        const { from, to } = lastSelectionRef.current;
+        editor.chain()
+          .focus()
+          .setTextSelection({ from, to })
+          .insertContent(newText)
+          .run();
+      } else {
+        editor.chain().focus().insertContent(newText).run();
+      }
+      
       setIsVisible(false);
     } catch (error) {
       console.error('Ton-Änderung fehlgeschlagen:', error);
@@ -128,8 +138,19 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
     try {
       const newText = await handleAIAction(action, selectedText);
       
-      // Text im Editor ersetzen
-      editor.chain().focus().insertContent(newText).run();
+      // Markierten Text ersetzen (nicht nur hinzufügen)
+      if (lastSelectionRef.current) {
+        const { from, to } = lastSelectionRef.current;
+        editor.chain()
+          .focus()
+          .setTextSelection({ from, to })
+          .insertContent(newText)
+          .run();
+      } else {
+        // Fallback: Einfach einfügen
+        editor.chain().focus().insertContent(newText).run();
+      }
+      
       setIsVisible(false);
     } catch (error) {
       console.error('Aktion fehlgeschlagen:', error);
