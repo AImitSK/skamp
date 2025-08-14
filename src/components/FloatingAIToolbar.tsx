@@ -1097,6 +1097,10 @@ REGELN:
         if (!target.closest('.input-area')) {
           e.preventDefault();
         }
+        // WICHTIG: Verhindere Event-Bubbling vom Input-Bereich nach außen
+        if (target.closest('.input-area')) {
+          e.stopPropagation();
+        }
       }}
     >
       {/* Button-Leiste oben */}
@@ -1237,6 +1241,14 @@ REGELN:
             type="text"
             value={customInstruction}
             onChange={(e) => setCustomInstruction(e.target.value)}
+            onClick={(e) => {
+              console.log('🎯 INPUT CLICK - stopPropagation');
+              e.stopPropagation(); // Verhindere Click-Event-Bubbling
+            }}
+            onMouseDown={(e) => {
+              console.log('🎯 INPUT MOUSEDOWN - stopPropagation');
+              e.stopPropagation(); // Verhindere MouseDown-Event-Bubbling
+            }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey && customInstruction.trim()) {
                 e.preventDefault();
