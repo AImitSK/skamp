@@ -497,16 +497,24 @@ grep -r "h-8 w-8.*text-zinc-400" src/
 - **Status:** Feature komplett abgeschlossen, User zufrieden
 - **Nächster Termin:** Morgen - nächstes Feature aus Masterplan
 
-### 📝 **Aktuelle Session (14.08.2025) - Floating AI Toolbar 100% PERFEKT:**
-✅ **Floating AI Toolbar** - ALLE Probleme final behoben:
-- ✅ **Input-Feld Problem**: Click-Outside Handler ignoriert Input-Klicks
-- ✅ **Button-Click Problem**: Toolbar verschwindet nicht mehr permanent  
-- ✅ **Zeitverzögerung**: 600ms für perfekte Maus-Positionierung 
-- ✅ **Distance-Check**: 200px Toleranz mit Race-Condition-Protection
-- ✅ **Multi-Step-Workflow**: Text bleibt markiert für weitere KI-Iterationen
-- ✅ **6 KI-Funktionen**: Umformulieren, Kürzen, Erweitern, Ton ändern, Ausformulieren, Custom Instructions
-- ✅ **Volltext-Kontext-Analyse**: KI sieht gesamtes Dokument für intelligente Bearbeitung
-- ✅ **Evolutionäre Prompt-Optimierung**: 30 Generationen getestet und dokumentiert
+### 📝 **Aktuelle Session (14.08.2025) - Floating AI Toolbar Input-Feld BEHOBEN:**
+✅ **Input-Feld Problem FINAL GELÖST**:
+- ✅ **Root-Cause**: Editor-Blur versteckte Toolbar beim Input-Klick
+- ✅ **Lösung**: inputProtectionRef (useRef) blockiert Blur-Timer sofort
+- ✅ **Funktionalität**: Input-Feld ist klickbar, Custom Instructions werden verarbeitet
+- ✅ **Logs bestätigen**: 'Custom Instruction Ergebnis' erscheint erfolgreich
+
+❌ **BEKANNTES PROBLEM**: Custom Instructions funktionieren nicht korrekt
+- ✅ **Input-Feld**: Anweisung wird entgegengenommen
+- ✅ **API-Call**: Request wird gesendet  
+- ❌ **Text-Verarbeitung**: Text wird NICHT entsprechend der Anweisung umgeschrieben
+- 📋 **Status**: Anweisung wird ignoriert, Original-Text bleibt unverändert
+- 🔧 **Nächste Session**: KI-Prompt für Custom Instructions debuggen/reparieren
+
+### 📋 **Nächste Session (15.08.2025):**
+1. **PRIO 1**: Debug-Logs aus FloatingAIToolbar.tsx entfernen 
+2. **PRIO 2**: Custom Instructions KI-Prompt reparieren (Text wird nicht umgeschrieben)
+3. **PRIO 3**: Key Visual Media Library Extension (wie im Masterplan)
 
 ### 📝 **Nächstes Feature:** Key Visual Media Library Extension
 1. **Bestehende AssetSelectorModal erweitern** für Key Visual Modus

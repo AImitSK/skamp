@@ -833,16 +833,12 @@ Antworte NUR mit dem Text im neuen Ton.`;
         
       } else {
         // Toolbar ausblenden wenn keine Selektion
-        console.log('⚠️ KEINE SELEKTION - verstecke Toolbar in 200ms');
         setSelectedText('');
         lastSelectionRef.current = null;
         hideTimeoutRef.current = setTimeout(() => {
           if (!isInteracting && !inputProtectionRef.current) {
-            console.log('🚫 Verstecke Toolbar - keine Text-Selektion');
             setIsVisible(false);
             setShowToneDropdown(false);
-          } else {
-            console.log('🛡️ Selection-Hide blockiert:', { isInteracting, inputProtection: inputProtectionRef.current });
           }
         }, 200);
       }
@@ -851,17 +847,13 @@ Antworte NUR mit dem Text im neuen Ton.`;
     editor.on('selectionUpdate', handleSelectionUpdate);
     editor.on('blur', () => {
       // Cleanup bei Blur
-      console.log('📝 EDITOR BLUR - verstecke Toolbar in 200ms');
       clearTimeout(selectionTimeout);
       
       // Verzögertes Ausblenden beim Verlassen des Editors
       hideTimeoutRef.current = setTimeout(() => {
         if (!isInteracting && !inputProtectionRef.current) {
-          console.log('🚫 Verstecke Toolbar - Editor Blur');
           setIsVisible(false);
           setShowToneDropdown(false);
-        } else {
-          console.log('🛡️ Editor-Blur blockiert:', { isInteracting, inputProtection: inputProtectionRef.current });
         }
       }, 200);
     });
@@ -878,17 +870,9 @@ Antworte NUR mit dem Text im neuen Ton.`;
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
-      console.log('🖱️ CLICK EVENT:', {
-        target: (target as HTMLElement).tagName,
-        className: (target as HTMLElement).className,
-        isInToolbar: toolbarRef.current?.contains(target),
-        toolbarVisible: isVisible,
-        inputProtection: inputProtectionRef.current
-      });
       
       // SCHUTZ: Ignoriere alle Klicks während Input-Protection
       if (inputProtectionRef.current) {
-        console.log('🛡️ INPUT PROTECTION AKTIV - Klick ignoriert');
         return;
       }
       
@@ -904,9 +888,6 @@ Antworte NUR mit dem Text im neuen Ton.`;
                            targetElement.closest('.input-area');
                            
         if (isInputClick) {
-          console.log('🎯 Input-Klick erkannt - Toolbar bleibt sichtbar');
-          console.log('🔍 Target Element:', targetElement.tagName, targetElement.className);
-          console.log('🔍 Closest input-area:', targetElement.closest('.input-area'));
           return; // Toolbar NICHT verstecken bei Input-Klicks
         }
         
@@ -914,7 +895,6 @@ Antworte NUR mit dem Text im neuen Ton.`;
         const editorElement = editor?.view.dom;
         if (editorElement && !editorElement.contains(target)) {
           // Toolbar verstecken aber selectedText NICHT löschen
-          console.log('🚫 Verstecke Toolbar - Klick außerhalb Editor');
           setIsVisible(false);
           // selectedText bleibt erhalten für Re-Aktivierung
         }
@@ -966,14 +946,10 @@ Antworte NUR mit dem Text im neuen Ton.`;
       
       // Toolbar ausblenden wenn Maus zu weit weg UND nicht über Editor
       if (!isNearToolbar && !isOverEditor) {
-        console.log('🚫 Maus zu weit weg - starte Hide-Timer');
         hideTimeoutRef.current = setTimeout(() => {
           if (!isInteracting && !inputProtectionRef.current) {
-            console.log('🚫 Verstecke Toolbar - Maus zu weit weg');
             setIsVisible(false);
             setShowToneDropdown(false);
-          } else {
-            console.log('🛡️ Hide-Timer blockiert:', { isInteracting, inputProtection: inputProtectionRef.current });
           }
         }, 800); // Längere Verzögerung
       } else {
@@ -1113,13 +1089,11 @@ REGELN:
         minWidth: '520px'
       }}
       onMouseEnter={() => {
-        console.log('🐭 TOOLBAR MOUSE ENTER - isInteracting = true');
         setIsInteracting(true);
       }}
       onMouseLeave={() => {
-        console.log('🐭 TOOLBAR MOUSE LEAVE - isInteracting = false');
         setIsInteracting(false);
-      }}
+      })
       onMouseDown={(e) => {
         // NUR Buttons sollen preventDefault haben, Input-Bereich NICHT
         const target = e.target as HTMLElement;
@@ -1271,19 +1245,13 @@ REGELN:
             value={customInstruction}
             onChange={(e) => setCustomInstruction(e.target.value)}
             onMouseDown={(e) => {
-              console.log('🎯 INPUT MOUSEDOWN - Aktiviere Protection SOFORT');
               e.stopPropagation(); // Verhindere MouseDown-Event-Bubbling
               inputProtectionRef.current = true; // SOFORT aktivieren vor Focus/Blur
               setTimeout(() => {
                 inputProtectionRef.current = false;
-                console.log('🛡️ INPUT PROTECTION deaktiviert');
               }, 1000); // Längerer Schutz
             }}
-            onFocus={(e) => {
-              console.log('🎯 INPUT FOCUS - Protection bereits aktiv');
-            }}
             onClick={(e) => {
-              console.log('🎯 INPUT CLICK - stopPropagation');
               e.stopPropagation(); // Verhindere Click-Event-Bubbling
             }}
             onKeyDown={(e) => {
