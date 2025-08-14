@@ -222,9 +222,16 @@ Antworte NUR mit dem erweiterten Text.`;
     setIsProcessing(true);
     setShowToneDropdown(false);
     
-    // Aktuelle Selection sichern
-    const currentSelection = editor.state.selection;
-    const { from, to } = currentSelection;
+    // Verwende gespeicherte Selection falls vorhanden, sonst aktuelle
+    let from: number, to: number;
+    if (lastSelectionRef.current) {
+      from = lastSelectionRef.current.from;
+      to = lastSelectionRef.current.to;
+    } else {
+      const currentSelection = editor.state.selection;
+      from = currentSelection.from;
+      to = currentSelection.to;
+    }
     
     try {
       const systemPrompt = `Du bist ein professioneller Texter. Analysiere die aktuelle Tonalität und ändere sie dann gezielt.
@@ -290,9 +297,16 @@ Antworte NUR mit dem Text im neuen Ton.`;
     
     setIsProcessing(true);
     
-    // Aktuelle Selection sichern BEVOR der async Call
-    const currentSelection = editor.state.selection;
-    const { from, to } = currentSelection;
+    // Verwende gespeicherte Selection falls vorhanden, sonst aktuelle
+    let from: number, to: number;
+    if (lastSelectionRef.current) {
+      from = lastSelectionRef.current.from;
+      to = lastSelectionRef.current.to;
+    } else {
+      const currentSelection = editor.state.selection;
+      from = currentSelection.from;
+      to = currentSelection.to;
+    }
     
     try {
       const newText = await handleAIAction(action, selectedText);
@@ -431,17 +445,23 @@ Antworte NUR mit dem Text im neuen Ton.`;
   // Click-Outside und Mouse-Distance Handler
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      
       // Prüfe ob Klick außerhalb der Toolbar
-      if (toolbarRef.current && !toolbarRef.current.contains(event.target as Node)) {
+      if (toolbarRef.current && !toolbarRef.current.contains(target)) {
+        // Schließe nur das Dropdown, nicht die ganze Toolbar
         setShowToneDropdown(false);
         
-        // Prüfe ob Klick auch außerhalb des Editors ist
+        // NUR bei Klick außerhalb des Editors die Toolbar verstecken
         const editorElement = editor?.view.dom;
-        if (editorElement && !editorElement.contains(event.target as Node)) {
-          // Klick außerhalb Editor - Toolbar verstecken aber State nicht permanent löschen
+        if (editorElement && !editorElement.contains(target)) {
+          // Toolbar verstecken aber selectedText NICHT löschen
           setIsVisible(false);
-          // selectedText NICHT löschen - damit kann Toolbar wieder erscheinen
+          // selectedText bleibt erhalten für Re-Aktivierung
         }
+      } else {
+        // Klick innerhalb der Toolbar - nichts verstecken
+        return;
       }
     };
 
@@ -565,7 +585,12 @@ Antworte NUR mit dem Text im neuen Ton.`;
       {/* Ton ändern Dropdown */}
       <div className="relative">
         <button
-          onClick={() => setShowToneDropdown(!showToneDropdown)}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setShowToneDropdown(!showToneDropdown);
+          }}
+          onMouseDown={(e) => e.preventDefault()}
           disabled={isProcessing}
           className="
             flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-md
@@ -587,7 +612,12 @@ Antworte NUR mit dem Text im neuen Ton.`;
             {toneOptions.map((tone) => (
               <button
                 key={tone.value}
-                onClick={() => handleToneChange(tone.value)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleToneChange(tone.value);
+                }}
+                onMouseDown={(e) => e.preventDefault()}
                 className="
                   w-full text-left px-3 py-1.5 text-sm text-gray-700
                   hover:bg-gray-50 transition-colors
