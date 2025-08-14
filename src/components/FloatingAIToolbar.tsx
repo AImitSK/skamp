@@ -94,8 +94,11 @@ function parseTextFromAIOutput(aiOutput: string): string {
   
   let text = aiOutput;
   
-  // 1. Entferne HTML Tags (außer Listen)
-  text = text.replace(/<(?!\/?(ul|ol|li))[^>]*>/g, '');
+  // 1. Entferne ALLE HTML Tags komplett (auch h1, h2, etc.)
+  // Behalte nur Listen-Tags
+  text = text.replace(/<h[1-6]>/gi, '');  // Entferne Opening Headlines
+  text = text.replace(/<\/h[1-6]>/gi, ''); // Entferne Closing Headlines  
+  text = text.replace(/<(?!\/?(?:ul|ol|li)(?:\s|>))[^>]*>/g, ''); // Alle anderen Tags außer Listen
   
   // 2. Entferne ALLE Markdown-Formatierungen (außer Listen)
   text = text
@@ -198,6 +201,12 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
     // Hole den kompletten Dokument-Kontext für intelligentere KI-Verarbeitung
     const fullDocument = editor?.getHTML() || '';
     const hasFullContext = fullDocument.length > 0 && fullDocument.length > text.length;
+    
+    console.log('📋 Kontext-Check:', { 
+      fullDocLength: fullDocument.length, 
+      textLength: text.length, 
+      hasFullContext 
+    });
     
     // Direkte Gemini-API für Text-Umformulierung (mit Volltext-Kontext wenn verfügbar)
     try {
@@ -336,7 +345,7 @@ Antworte NUR mit dem erweiterten Text.`;
           return text;
       }
 
-      console.log(`🤖 KI-${action} (direkt):`, userPrompt.substring(0, 100) + '...');
+      console.log(`🤖 KI-${action} (${hasFullContext ? 'mit Kontext' : 'direkt'}):`, userPrompt.substring(0, 100) + '...');
       
       const response = await fetch('/api/ai/generate', {
         method: 'POST',
@@ -355,8 +364,12 @@ Antworte NUR mit dem erweiterten Text.`;
       const data = await response.json();
       let result = data.generatedText || text;
       
+      console.log('🔧 RAW KI-Antwort:', result.substring(0, 200) + '...');
+      
       // PARSER: Nur den eigentlichen Text extrahieren (keine PM-Struktur)
       result = parseTextFromAIOutput(result);
+      
+      console.log('🧹 Nach Parser:', result.substring(0, 200) + '...');
       
       // FORMATIERUNG bereinigen: Entferne unerwünschte HTML/Markdown
       result = result
@@ -366,6 +379,8 @@ Antworte NUR mit dem erweiterten Text.`;
         .replace(/<\/?strong>/g, '')      // <strong></strong> → weg
         .replace(/<\/?em>/g, '')          // <em></em> → weg
         .replace(/<\/?i>/g, '');          // <i></i> → weg
+      
+      console.log('✨ Nach Formatierung:', result.substring(0, 200) + '...');
       
       // ZUSÄTZLICHE SICHERUNG: Wort-Limit prüfen
       const originalWords = text.split(' ').length;
