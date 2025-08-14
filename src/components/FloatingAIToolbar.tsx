@@ -58,7 +58,16 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
       
       switch (action) {
         case 'rephrase':
-          prompt = `Formuliere den Text komplett um, verwende andere Worte und Satzstrukturen, aber behalte die Kernaussage bei. Mache den Text lebendiger und abwechslungsreicher.`;
+          prompt = `Formuliere den folgenden Text um. Verwende andere Worte und Satzstrukturen, aber behalte die Kernaussage und die ursprüngliche Textlänge bei. 
+
+WICHTIGE REGELN:
+- Keine Headlines oder Überschriften hinzufügen
+- Nur eine Leerzeile zwischen Absätzen
+- Ähnliche Textlänge wie das Original
+- Gleiche Struktur beibehalten
+- Nur umformulieren, nicht erweitern
+
+Text: "${text}"`;
           break;
         case 'shorten':
           prompt = `Kürze den Text um mindestens 30%. Entferne unnötige Details und Wiederholungen, aber behalte alle wichtigen Informationen und die Kernaussage.`;
