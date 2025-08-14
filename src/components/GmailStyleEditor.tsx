@@ -139,6 +139,7 @@ const CustomTextAlign = Extension.create({
 });
 import { useEffect, useCallback } from 'react';
 import { GmailStyleToolbar } from './GmailStyleToolbar';
+import { FloatingAIToolbar } from './FloatingAIToolbar';
 
 // Debounce utility function
 function debounce<T extends (...args: any[]) => any>(
@@ -221,6 +222,7 @@ export const GmailStyleEditor = ({
       attributes: {
         class: `gmail-editor-content focus:outline-none ${className || ''}`,
         'data-placeholder': placeholder,
+        style: 'min-height: 350px; padding: 1.5rem;',
       },
     },
     onUpdate({ editor }) {
@@ -243,6 +245,9 @@ export const GmailStyleEditor = ({
 
   return (
     <div className="gmail-style-editor bg-white rounded-lg border border-gray-200">
+      {/* Floating AI Toolbar - erscheint bei Text-Markierung */}
+      <FloatingAIToolbar editor={editor} />
+      
       {/* Titel-Bereich (wie Gmail Subject Line) */}
       {onTitleChange && (
         <div className="border-b border-gray-200">
@@ -260,8 +265,12 @@ export const GmailStyleEditor = ({
       <GmailStyleToolbar editor={editor} />
       
       {/* Editor Content (Clean white space) */}
-      <div className="relative p-6">
-        <EditorContent editor={editor} />
+      <div className="relative p-6" style={{ minHeight: '400px' }}>
+        <EditorContent 
+          editor={editor} 
+          className="prose prose-lg max-w-none"
+          style={{ minHeight: '350px' }}
+        />
         
         {/* Gmail-Style Styling */}
         <style jsx>{`
@@ -275,16 +284,16 @@ export const GmailStyleEditor = ({
           }
 
           .gmail-editor-content {
-            min-height: 600px;
-            font-size: 18px;
-            line-height: 1.7;
+            min-height: 400px;
+            font-size: 16px;
+            line-height: 1.6;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
           }
 
           /* ProseMirror Editor mit richtigem Padding */
           .gmail-editor-content .ProseMirror {
-            padding: 2rem 3rem;
-            min-height: 500px;
+            padding: 1rem 1.5rem;
+            min-height: 350px;
             outline: none;
             box-sizing: border-box;
           }
