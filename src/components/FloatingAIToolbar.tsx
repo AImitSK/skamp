@@ -97,6 +97,10 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
     setIsProcessing(true);
     setShowToneDropdown(false);
     
+    // Aktuelle Selection sichern
+    const currentSelection = editor.state.selection;
+    const { from, to } = currentSelection;
+    
     try {
       const prompt = `Ändere den Ton des folgenden Textes zu ${tone}: "${selectedText}"`;
       const response = await fetch('/api/ai/generate', {
@@ -110,17 +114,16 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
       const data = await response.json();
       const newText = data.text || selectedText;
       
-      // Markierten Text ersetzen
-      if (lastSelectionRef.current) {
-        const { from, to } = lastSelectionRef.current;
-        editor.chain()
-          .focus()
-          .setTextSelection({ from, to })
-          .insertContent(newText)
-          .run();
-      } else {
-        editor.chain().focus().insertContent(newText).run();
-      }
+      console.log('🎵 Ton geändert:', { from, to, tone, newTextLength: newText.length });
+      
+      // Text direkt mit Transaction ersetzen
+      editor.chain()
+        .focus()
+        .command(({ tr, state }) => {
+          tr.replaceWith(from, to, state.schema.text(newText));
+          return true;
+        })
+        .run();
       
       setIsVisible(false);
     } catch (error) {
@@ -135,21 +138,30 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
     
     setIsProcessing(true);
     
+    // Aktuelle Selection sichern BEVOR der async Call
+    const currentSelection = editor.state.selection;
+    const { from, to } = currentSelection;
+    
     try {
       const newText = await handleAIAction(action, selectedText);
       
-      // Markierten Text ersetzen (nicht nur hinzufügen)
-      if (lastSelectionRef.current) {
-        const { from, to } = lastSelectionRef.current;
-        editor.chain()
-          .focus()
-          .setTextSelection({ from, to })
-          .insertContent(newText)
-          .run();
-      } else {
-        // Fallback: Einfach einfügen
-        editor.chain().focus().insertContent(newText).run();
-      }
+      // Debug-Logs
+      console.log('🔄 Ersetze Text:', { 
+        from, 
+        to, 
+        selectedText: selectedText.substring(0, 50) + '...', 
+        newTextLength: newText.length 
+      });
+      
+      // Text direkt mit den gespeicherten Positionen ersetzen
+      editor.chain()
+        .focus()
+        .command(({ tr, state }) => {
+          // Direkte Text-Ersetzung mit Transaction
+          tr.replaceWith(from, to, state.schema.text(newText));
+          return true;
+        })
+        .run();
       
       setIsVisible(false);
     } catch (error) {
