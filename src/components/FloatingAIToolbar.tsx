@@ -1270,23 +1270,21 @@ REGELN:
             type="text"
             value={customInstruction}
             onChange={(e) => setCustomInstruction(e.target.value)}
-            onFocus={(e) => {
-              console.log('🎯 INPUT FOCUS - Aktiviere Protection');
-              setInputProtection(true); // Aktiviere Schutz
+            onMouseDown={(e) => {
+              console.log('🎯 INPUT MOUSEDOWN - Aktiviere Protection SOFORT');
+              e.stopPropagation(); // Verhindere MouseDown-Event-Bubbling
+              setInputProtection(true); // SOFORT aktivieren vor Focus/Blur
               setTimeout(() => {
-                setInputProtection(false); // Deaktiviere nach 500ms
+                setInputProtection(false);
                 console.log('🛡️ INPUT PROTECTION deaktiviert');
-              }, 500);
+              }, 1000); // Längerer Schutz
+            }}
+            onFocus={(e) => {
+              console.log('🎯 INPUT FOCUS - Protection bereits aktiv');
             }}
             onClick={(e) => {
               console.log('🎯 INPUT CLICK - stopPropagation');
               e.stopPropagation(); // Verhindere Click-Event-Bubbling
-              setInputProtection(true); // Zusätzlicher Schutz
-              setTimeout(() => setInputProtection(false), 300);
-            }}
-            onMouseDown={(e) => {
-              console.log('🎯 INPUT MOUSEDOWN - stopPropagation');
-              e.stopPropagation(); // Verhindere MouseDown-Event-Bubbling
             }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey && customInstruction.trim()) {
