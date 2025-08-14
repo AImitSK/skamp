@@ -1093,7 +1093,7 @@ REGELN:
       }}
       onMouseLeave={() => {
         setIsInteracting(false);
-      })
+      }}
       onMouseDown={(e) => {
         // NUR Buttons sollen preventDefault haben, Input-Bereich NICHT
         const target = e.target as HTMLElement;
