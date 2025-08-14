@@ -919,7 +919,10 @@ Antworte NUR mit dem Text im neuen Ton.`;
     // Mouse-Distance Check - nur wenn Toolbar sichtbar UND vollständig geladen ist
     const handleMouseMove = (event: MouseEvent) => {
       // WICHTIG: Prüfe auch ob Toolbar wirklich DA ist (nicht nur isVisible=true)
-      if (!isVisible || !toolbarRef.current || isInteracting) return;
+      if (!isVisible || !toolbarRef.current || isInteracting || inputProtection) {
+        console.log('🚫 MouseMove ignoriert:', { isVisible, hasToolbar: !!toolbarRef.current, isInteracting, inputProtection });
+        return;
+      }
       
       // RACE CONDITION PROTECTION: Ignoriere Mouse-Distance wenn gerade Show-Animation läuft
       if (showTimeoutRef.current) {
@@ -955,10 +958,14 @@ Antworte NUR mit dem Text im neuen Ton.`;
       
       // Toolbar ausblenden wenn Maus zu weit weg UND nicht über Editor
       if (!isNearToolbar && !isOverEditor) {
+        console.log('🚫 Maus zu weit weg - starte Hide-Timer');
         hideTimeoutRef.current = setTimeout(() => {
-          if (!isInteracting) {
+          if (!isInteracting && !inputProtection) {
+            console.log('🚫 Verstecke Toolbar - Maus zu weit weg');
             setIsVisible(false);
             setShowToneDropdown(false);
+          } else {
+            console.log('🛡️ Hide-Timer blockiert:', { isInteracting, inputProtection });
           }
         }, 800); // Längere Verzögerung
       } else {
