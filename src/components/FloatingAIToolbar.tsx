@@ -11,6 +11,75 @@ import {
   XMarkIcon
 } from '@heroicons/react/24/outline';
 
+// Text-Parser: Extrahiert nur den eigentlichen Inhalt aus KI-Ausgabe
+function parseTextFromAIOutput(aiOutput: string): string {
+  console.log('🔍 Parsing AI Output:', aiOutput.substring(0, 200) + '...');
+  
+  // Entferne HTML Tags zuerst
+  let text = aiOutput.replace(/<[^>]*>/g, '');
+  
+  // Split in Zeilen
+  const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+  
+  const textContent: string[] = [];
+  let skipNext = false;
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    
+    if (skipNext) {
+      skipNext = false;
+      continue;
+    }
+    
+    // Skip Headlines am Anfang (erkenne an Position und Länge)
+    if (i === 0 && line.length < 100 && !line.includes('.') && !line.includes(',')) {
+      console.log('⏭️ Skipping headline:', line);
+      continue;
+    }
+    
+    // Skip Zitate (beginnen mit " oder enthalten "sagt")
+    if (line.startsWith('"') || line.includes('sagt ') || line.includes(', sagt ')) {
+      console.log('⏭️ Skipping quote:', line);
+      continue;
+    }
+    
+    // Skip Boilerplate (beginnen mit *Über oder About)
+    if (line.startsWith('*Über ') || line.startsWith('*About ') || 
+        line.startsWith('Über ') && line.includes('Unternehmen')) {
+      console.log('⏭️ Skipping boilerplate:', line);
+      continue;
+    }
+    
+    // Skip Platzhalter
+    if (line.includes('[Name]') || line.includes('[Position]') || line.includes('[Unternehmen]')) {
+      console.log('⏭️ Skipping placeholder:', line);
+      continue;
+    }
+    
+    // Skip leere Zeilen und zu kurze Fragmente
+    if (line.length < 20) {
+      console.log('⏭️ Skipping short line:', line);
+      continue;
+    }
+    
+    // Alles andere ist Content
+    textContent.push(line);
+  }
+  
+  // Zusammenfügen mit einzelnen Leerzeilen
+  const result = textContent.join('\n\n');
+  
+  console.log('✅ Parsed result:', {
+    originalLines: lines.length,
+    extractedLines: textContent.length,
+    firstLine: textContent[0]?.substring(0, 50) + '...',
+    resultLength: result.length
+  });
+  
+  return result || aiOutput; // Fallback falls nichts extrahiert wurde
+}
+
 interface FloatingAIToolbarProps {
   editor: Editor | null;
   onAIAction?: (action: AIAction, selectedText: string) => Promise<string>;
@@ -120,12 +189,8 @@ Antworte NUR mit dem erweiterten Text.`;
       const data = await response.json();
       let result = data.generatedText || text;
       
-      // BEREINIGUNG: Mehrfache Leerzeilen entfernen
-      result = result
-        .replace(/<p><\/p>/g, '') // Leere <p> Tags entfernen
-        .replace(/\n\n\n+/g, '\n\n') // 3+ Zeilenumbrüche → 2
-        .replace(/(<\/p>)\s*(<p>)/g, '$1\n\n$2') // Korrekte Abstände zwischen <p> Tags
-        .trim();
+      // PARSER: Nur den eigentlichen Text extrahieren (keine PM-Struktur)
+      result = parseTextFromAIOutput(result);
       
       console.log(`✅ KI-Antwort bereinigt (${result.length} Zeichen):`, result.substring(0, 100) + '...');
       
@@ -180,12 +245,8 @@ Antworte NUR mit dem Text im neuen Ton.`;
       const data = await response.json();
       let newText = data.generatedText || selectedText;
       
-      // BEREINIGUNG: Mehrfache Leerzeilen entfernen
-      newText = newText
-        .replace(/<p><\/p>/g, '') // Leere <p> Tags entfernen
-        .replace(/\n\n\n+/g, '\n\n') // 3+ Zeilenumbrüche → 2
-        .replace(/(<\/p>)\s*(<p>)/g, '$1\n\n$2') // Korrekte Abstände zwischen <p> Tags
-        .trim();
+      // PARSER: Nur den eigentlichen Text extrahieren (keine PM-Struktur)
+      newText = parseTextFromAIOutput(newText);
       
       console.log('🎵 Ton geändert:', { from, to, tone, newTextLength: newText.length });
       
