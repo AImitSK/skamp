@@ -1054,25 +1054,31 @@ REGELN:
   if (!isVisible || !editor) return null;
 
   return (
-    <>
-      {/* Haupttoolbar - NUR Buttons, KEIN Eingabefeld */}
-      <div
-        ref={toolbarRef}
-        className={`
-          fixed z-50 bg-white border border-gray-300 rounded-lg p-1 
-          flex items-center gap-1 transition-all duration-200
-          ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}
-          ${isProcessing ? 'pointer-events-none' : ''}
-        `}
-        style={{
-          top: `${position.top}px`,
-          left: `${position.left}px`,
-          transform: 'translateX(-50%)',
-        }}
-        onMouseEnter={() => setIsInteracting(true)}
-        onMouseLeave={() => setIsInteracting(false)}
-        onMouseDown={(e) => e.preventDefault()} // Verhindert Verlust der Text-Selection
-      >
+    <div
+      ref={toolbarRef}
+      className={`
+        fixed z-50 bg-white border border-gray-300 rounded-lg transition-all duration-200
+        ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}
+        ${isProcessing ? 'pointer-events-none' : ''}
+      `}
+      style={{
+        top: `${position.top}px`,
+        left: `${position.left}px`,
+        transform: 'translateX(-50%)',
+        minWidth: '520px'
+      }}
+      onMouseEnter={() => setIsInteracting(true)}
+      onMouseLeave={() => setIsInteracting(false)}
+      onMouseDown={(e) => {
+        // NUR Buttons sollen preventDefault haben, Input-Bereich NICHT
+        const target = e.target as HTMLElement;
+        if (!target.closest('.input-area')) {
+          e.preventDefault();
+        }
+      }}
+    >
+      {/* Button-Leiste oben */}
+      <div className="flex items-center gap-1 p-1">
       {/* Umformulieren */}
       <button
         onClick={() => executeAction('rephrase')}
@@ -1197,29 +1203,10 @@ REGELN:
           🧪 Test AI
         </button>
       )}
+      </div>
 
-      {/* Processing Indicator */}
-      {isProcessing && (
-        <div className="absolute inset-0 bg-white bg-opacity-75 rounded-lg flex items-center justify-center">
-          <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#005fab] border-t-transparent"></div>
-        </div>
-      )}
-    </div>
-
-    {/* SEPARATES EINGABEFELD - Unabhängig von Toolbar-Logic */}
-    {isVisible && (
-      <div
-        className={`
-          fixed z-40 bg-white border border-gray-300 rounded-lg p-2 transition-all duration-200
-          ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}
-        `}
-        style={{
-          top: `${position.top + 60}px`, // 60px unter der Haupttoolbar
-          left: `${position.left}px`,
-          transform: 'translateX(-50%)',
-          minWidth: '400px'
-        }}
-      >
+      {/* Eingabefeld-Bereich - MIT input-area Klasse */}
+      <div className="border-t border-gray-200 p-2 input-area">
         <div className="flex items-center gap-2">
           <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
             Anweisung:
@@ -1256,7 +1243,13 @@ REGELN:
           </button>
         </div>
       </div>
-    )}
-    </>
+
+      {/* Processing Indicator */}
+      {isProcessing && (
+        <div className="absolute inset-0 bg-white bg-opacity-75 rounded-lg flex items-center justify-center">
+          <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#005fab] border-t-transparent"></div>
+        </div>
+      )}
+    </div>
   );
 };
