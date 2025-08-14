@@ -1054,31 +1054,25 @@ REGELN:
   if (!isVisible || !editor) return null;
 
   return (
-    <div
-      ref={toolbarRef}
-      className={`
-        fixed z-50 bg-white border border-gray-300 rounded-lg transition-all duration-200
-        ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}
-        ${isProcessing ? 'pointer-events-none' : ''}
-      `}
-      style={{
-        top: `${position.top}px`,
-        left: `${position.left}px`,
-        transform: 'translateX(-50%)',
-        minWidth: '520px' // Feste Mindestbreite für das Layout
-      }}
-      onMouseEnter={() => setIsInteracting(true)}
-      onMouseLeave={() => setIsInteracting(false)}
-      onMouseDown={(e) => {
-        // Verhindert Verlust der Text-Selection, AUSSER bei Input-Feldern
-        const target = e.target as HTMLElement;
-        if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
-          e.preventDefault();
-        }
-      }}
-    >
-      {/* Button-Leiste oben */}
-      <div className="flex items-center gap-1 p-1">
+    <>
+      {/* Haupttoolbar - NUR Buttons, KEIN Eingabefeld */}
+      <div
+        ref={toolbarRef}
+        className={`
+          fixed z-50 bg-white border border-gray-300 rounded-lg p-1 
+          flex items-center gap-1 transition-all duration-200
+          ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}
+          ${isProcessing ? 'pointer-events-none' : ''}
+        `}
+        style={{
+          top: `${position.top}px`,
+          left: `${position.left}px`,
+          transform: 'translateX(-50%)',
+        }}
+        onMouseEnter={() => setIsInteracting(true)}
+        onMouseLeave={() => setIsInteracting(false)}
+        onMouseDown={(e) => e.preventDefault()} // Verhindert Verlust der Text-Selection
+      >
       {/* Umformulieren */}
       <button
         onClick={() => executeAction('rephrase')}
@@ -1203,18 +1197,28 @@ REGELN:
           🧪 Test AI
         </button>
       )}
-      </div>
 
-      {/* Anweisungs-Eingabefeld */}
-      <div 
-        className="border-t border-gray-200 p-2"
-        onMouseDown={(e) => {
-          // Verhindere, dass Container-onMouseDown triggert
-          e.stopPropagation();
-          // Aber NICHT preventDefault() - Input soll normal funktionieren
+      {/* Processing Indicator */}
+      {isProcessing && (
+        <div className="absolute inset-0 bg-white bg-opacity-75 rounded-lg flex items-center justify-center">
+          <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#005fab] border-t-transparent"></div>
+        </div>
+      )}
+    </div>
+
+    {/* SEPARATES EINGABEFELD - Unabhängig von Toolbar-Logic */}
+    {isVisible && (
+      <div
+        className={`
+          fixed z-40 bg-white border border-gray-300 rounded-lg p-2 transition-all duration-200
+          ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}
+        `}
+        style={{
+          top: `${position.top + 60}px`, // 60px unter der Haupttoolbar
+          left: `${position.left}px`,
+          transform: 'translateX(-50%)',
+          minWidth: '400px'
         }}
-        onMouseEnter={() => setIsInteracting(true)}
-        onMouseLeave={() => setIsInteracting(false)}
       >
         <div className="flex items-center gap-2">
           <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
@@ -1224,12 +1228,6 @@ REGELN:
             type="text"
             value={customInstruction}
             onChange={(e) => setCustomInstruction(e.target.value)}
-            onFocus={() => {
-              console.log('💾 Input Focus - Selection bleibt erhalten');
-            }}
-            onBlur={() => {
-              console.log('🔄 Input Blur - normale Toolbar-Logic wieder aktiv');
-            }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey && customInstruction.trim()) {
                 e.preventDefault();
@@ -1258,13 +1256,7 @@ REGELN:
           </button>
         </div>
       </div>
-
-      {/* Processing Indicator */}
-      {isProcessing && (
-        <div className="absolute inset-0 bg-white bg-opacity-75 rounded-lg flex items-center justify-center">
-          <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#005fab] border-t-transparent"></div>
-        </div>
-      )}
-    </div>
+    )}
+    </>
   );
 };
