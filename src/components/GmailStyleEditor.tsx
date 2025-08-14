@@ -145,7 +145,7 @@ const CustomTextAlign = Extension.create({
     }
   },
 });
-import { useEffect, useCallback } from 'react';
+
 import { GmailStyleToolbar } from './GmailStyleToolbar';
 import { FloatingAIToolbar } from './FloatingAIToolbar';
 
