@@ -1,6 +1,7 @@
 // src/components/GmailStyleEditor.tsx
 "use client";
 
+import { useState, useEffect, useCallback } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
@@ -11,6 +12,10 @@ import BulletList from '@tiptap/extension-bullet-list';
 import OrderedList from '@tiptap/extension-ordered-list';
 import ListItem from '@tiptap/extension-list-item';
 import { Extension } from '@tiptap/core';
+import { 
+  ArrowsPointingOutIcon, 
+  ArrowsPointingInIcon 
+} from '@heroicons/react/24/outline';
 
 // Custom Extensions für TipTap v2 Kompatibilität
 const FontSize = Extension.create({
@@ -180,6 +185,9 @@ export const GmailStyleEditor = ({
   onTitleChange
 }: GmailStyleEditorProps) => {
   
+  // Fullscreen state
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  
   // Auto-save functionality
   const debouncedAutoSave = useCallback(
     debounce((content: string) => {
@@ -189,6 +197,32 @@ export const GmailStyleEditor = ({
     }, autoSaveDelay),
     [onAutoSave, autoSaveDelay]
   );
+
+  // Fullscreen handlers
+  const toggleFullscreen = useCallback(() => {
+    setIsFullscreen(prev => !prev);
+  }, []);
+
+  // ESC key handler for fullscreen
+  useEffect(() => {
+    const handleEscKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isFullscreen) {
+        setIsFullscreen(false);
+      }
+    };
+
+    if (isFullscreen) {
+      document.addEventListener('keydown', handleEscKey);
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscKey);
+      document.body.style.overflow = 'auto';
+    };
+  }, [isFullscreen]);
 
   const editor = useEditor({
     extensions: [
@@ -268,33 +302,96 @@ export const GmailStyleEditor = ({
   }, [content, editor]);
 
   return (
-    <div className="gmail-style-editor bg-white rounded-lg border border-gray-200">
-      {/* Floating AI Toolbar - erscheint bei Text-Markierung */}
-      <FloatingAIToolbar editor={editor} />
-      
-      {/* Titel-Bereich (wie Gmail Subject Line) */}
-      {onTitleChange && (
-        <div className="border-b border-gray-200">
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => onTitleChange(e.target.value)}
-            placeholder="Titel der Pressemitteilung..."
-            className="w-full px-6 py-4 text-2xl font-semibold text-gray-900 bg-transparent border-none focus:outline-none placeholder-gray-400"
-          />
+    <>
+      {/* Fullscreen Overlay */}
+      {isFullscreen && (
+        <div className="fixed inset-0 z-50 bg-white flex flex-col">
+          {/* Fullscreen Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Fokussiertes Schreiben
+              </h2>
+              <span className="text-sm text-gray-500">ESC zum Beenden</span>
+            </div>
+            <button
+              onClick={toggleFullscreen}
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Fullscreen beenden (ESC)"
+            >
+              <ArrowsPointingInIcon className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* Titel-Bereich im Fullscreen */}
+          {onTitleChange && (
+            <div className="border-b border-gray-200">
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => onTitleChange(e.target.value)}
+                placeholder="Titel der Pressemitteilung..."
+                className="w-full px-6 py-4 text-2xl font-semibold text-gray-900 bg-transparent border-none focus:outline-none placeholder-gray-400"
+              />
+            </div>
+          )}
+
+          {/* Toolbar im Fullscreen */}
+          <GmailStyleToolbar editor={editor} />
+
+          {/* Fullscreen Editor */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="max-w-4xl mx-auto p-8">
+              <FloatingAIToolbar editor={editor} />
+              <EditorContent 
+                editor={editor} 
+                className="prose prose-lg max-w-none"
+                style={{ minHeight: 'calc(100vh - 300px)' }}
+              />
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Minimale Toolbar (Gmail-Style) */}
-      <GmailStyleToolbar editor={editor} />
-      
-      {/* Editor Content (Clean white space) */}
-      <div className="relative p-6" style={{ minHeight: '400px' }}>
-        <EditorContent 
-          editor={editor} 
-          className="prose prose-lg max-w-none"
-          style={{ minHeight: '350px' }}
-        />
+      {/* Normal Editor */}
+      <div className={`gmail-style-editor bg-white rounded-lg border border-gray-200 ${isFullscreen ? 'hidden' : ''}`}>
+        {/* Floating AI Toolbar - erscheint bei Text-Markierung */}
+        <FloatingAIToolbar editor={editor} />
+        
+        {/* Titel-Bereich (wie Gmail Subject Line) */}
+        {onTitleChange && (
+          <div className="border-b border-gray-200">
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => onTitleChange(e.target.value)}
+              placeholder="Titel der Pressemitteilung..."
+              className="w-full px-6 py-4 text-2xl font-semibold text-gray-900 bg-transparent border-none focus:outline-none placeholder-gray-400"
+            />
+          </div>
+        )}
+
+        {/* Minimale Toolbar (Gmail-Style) mit Fullscreen Button */}
+        <div className="relative">
+          <GmailStyleToolbar editor={editor} />
+          
+          {/* Fullscreen Button */}
+          <button
+            onClick={toggleFullscreen}
+            className="absolute right-4 top-3 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Vollbild-Modus (fokussiertes Schreiben)"
+          >
+            <ArrowsPointingOutIcon className="h-4 w-4" />
+          </button>
+        </div>
+        
+        {/* Editor Content (Clean white space) */}
+        <div className="relative p-6" style={{ minHeight: '400px' }}>
+          <EditorContent 
+            editor={editor} 
+            className="prose prose-lg max-w-none"
+            style={{ minHeight: '350px' }}
+          />
         
         {/* Gmail-Style Styling */}
         <style jsx>{`
@@ -309,8 +406,8 @@ export const GmailStyleEditor = ({
 
           .gmail-editor-content {
             min-height: 400px;
-            font-size: 16px;
-            line-height: 1.6;
+            font-size: 18px;
+            line-height: 1.8;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
           }
 
@@ -421,8 +518,17 @@ export const GmailStyleEditor = ({
           .gmail-style-editor * {
             box-shadow: none !important;
           }
+
+          /* Fullscreen styles - etwas größer als normal */
+          .fullscreen-editor .ProseMirror {
+            font-size: 20px;
+            line-height: 2.0;
+            max-width: none;
+            padding: 2rem;
+          }
         `}</style>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
