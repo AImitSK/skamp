@@ -869,6 +869,12 @@ Antworte NUR mit dem Text im neuen Ton.`;
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
+      console.log('🖱️ CLICK EVENT:', {
+        target: (target as HTMLElement).tagName,
+        className: (target as HTMLElement).className,
+        isInToolbar: toolbarRef.current?.contains(target),
+        toolbarVisible: isVisible
+      });
       
       // Prüfe ob Klick außerhalb der Toolbar
       if (toolbarRef.current && !toolbarRef.current.contains(target)) {
@@ -883,6 +889,8 @@ Antworte NUR mit dem Text im neuen Ton.`;
                            
         if (isInputClick) {
           console.log('🎯 Input-Klick erkannt - Toolbar bleibt sichtbar');
+          console.log('🔍 Target Element:', targetElement.tagName, targetElement.className);
+          console.log('🔍 Closest input-area:', targetElement.closest('.input-area'));
           return; // Toolbar NICHT verstecken bei Input-Klicks
         }
         
@@ -890,6 +898,7 @@ Antworte NUR mit dem Text im neuen Ton.`;
         const editorElement = editor?.view.dom;
         if (editorElement && !editorElement.contains(target)) {
           // Toolbar verstecken aber selectedText NICHT löschen
+          console.log('🚫 Verstecke Toolbar - Klick außerhalb Editor');
           setIsVisible(false);
           // selectedText bleibt erhalten für Re-Aktivierung
         }
