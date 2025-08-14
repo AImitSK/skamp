@@ -8,7 +8,8 @@ import {
   ArrowsPointingOutIcon,
   ArrowsPointingInIcon,
   SpeakerWaveIcon,
-  XMarkIcon
+  XMarkIcon,
+  DocumentTextIcon
 } from '@heroicons/react/24/outline';
 
 // KI-QUALITY TEST RUNNER
@@ -173,7 +174,8 @@ export type AIAction =
   | 'rephrase' 
   | 'shorten' 
   | 'expand' 
-  | 'change-tone';
+  | 'change-tone'
+  | 'elaborate'; // Neuer "Ausformulieren" Button
 
 interface ToneOption {
   value: string;
@@ -198,6 +200,7 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
   const toolbarRef = useRef<HTMLDivElement>(null);
   const hideTimeoutRef = useRef<NodeJS.Timeout>();
   const lastSelectionRef = useRef<{ from: number; to: number } | null>(null);
+  const showTimeoutRef = useRef<NodeJS.Timeout>(); // Race Condition Protection
 
   // Default KI-Action Handler falls keiner übergeben wurde
   const handleAIAction = useCallback(async (action: AIAction, text: string): Promise<string> => {
@@ -348,6 +351,32 @@ Antworte NUR mit dem erweiterten Text.`;
             userPrompt = `Analysiere die Tonalität und erweitere dann:\n\n${text}`;
           }
           break;
+        case 'elaborate':
+          if (hasFullContext) {
+            // NEU: Ausformulieren mit Volltext-Kontext
+            systemPrompt = `Du bist ein professioneller Content-Creator. Du siehst den GESAMTEN Text und erkennst dass der markierte Teil eine ANWEISUNG oder ein BRIEFING ist.
+
+AUFGABE:
+1. Analysiere die Anweisung in der markierten Stelle
+2. Erkenne was erstellt werden soll (PR, Text, Artikel, etc.)
+3. Führe die Anweisung aus und erstelle den gewünschten Content
+4. Nutze alle Informationen aus dem Gesamttext als Basis
+
+BEISPIEL ANWEISUNG:
+"Neues Produkt: Spielzeug-Bohrer. Features: günstig, schnell. Mach eine PR für Fachpublikum."
+
+DEINE AUFGABE: Erstelle den gewünschten Content basierend auf der Anweisung!`;
+            userPrompt = `GESAMTER TEXT:\n${fullDocument}\n\nANWEISUNG ZUM AUSFÜHREN:\n${text}`;
+          } else {
+            // Fallback: Ohne Kontext
+            systemPrompt = `Du bist ein professioneller Content-Creator. 
+
+Der markierte Text enthält eine Anweisung oder ein Briefing. Analysiere was gewünscht wird und erstelle den entsprechenden Content.
+
+Führe die Anweisung aus und erstelle den gewünschten Text/Content.`;
+            userPrompt = `Führe diese Anweisung aus:\n\n${text}`;
+          }
+          break;
         default:
           return text;
       }
@@ -373,8 +402,21 @@ Antworte NUR mit dem erweiterten Text.`;
       
       console.log('🔧 RAW KI-Antwort:', result.substring(0, 200) + '...');
       
-      // PARSER: Nur den eigentlichen Text extrahieren (keine PM-Struktur)
-      result = parseTextFromAIOutput(result);
+      // PARSER: Für "Ausformulieren" weniger aggressiv (PM-Struktur kann erwünscht sein)
+      if (action === 'elaborate') {
+        // Nur Formatierung entfernen, Content beibehalten
+        result = result
+          .replace(/<\/?h[1-6][^>]*>/gi, '')     // Headlines entfernen
+          .replace(/<\/?strong[^>]*>/gi, '')     // Strong-Tags
+          .replace(/<\/?b[^>]*>/gi, '')          // Bold-Tags  
+          .replace(/<\/?em[^>]*>/gi, '')         // Em-Tags
+          .replace(/<\/?i[^>]*>/gi, '')          // Italic-Tags
+          .replace(/\*\*(.*?)\*\*/g, '$1')       // **fett** → normal
+          .replace(/\*(.*?)\*/g, '$1');          // *kursiv* → normal
+      } else {
+        // Normaler Parser für andere Aktionen
+        result = parseTextFromAIOutput(result);
+      }
       
       console.log('🧹 Nach Parser:', result.substring(0, 200) + '...');
       
@@ -618,6 +660,7 @@ Antworte NUR mit dem Text im neuen Ton.`;
         
         // Längere Verzögerung für bessere Maus-Positionierung
         selectionTimeout = setTimeout(() => {
+        showTimeoutRef.current = selectionTimeout; // Track show timeout
           // Position ERST nach Verzögerung berechnen (Maus ist näher)
           const selection = window.getSelection();
           if (selection && selection.rangeCount > 0) {
@@ -663,6 +706,7 @@ Antworte NUR mit dem Text im neuen Ton.`;
               });
               
               setIsVisible(true);
+              showTimeoutRef.current = undefined; // Clear show timeout - Toolbar ist jetzt da
             }, 50); // 50ms um Mausposition zu erfassen
           }
         }, 600); // 600ms Gesamtverzögerung
@@ -698,6 +742,7 @@ Antworte NUR mit dem Text im neuen Ton.`;
       editor.off('selectionUpdate', handleSelectionUpdate);
       clearTimeout(selectionTimeout);
       clearTimeout(hideTimeoutRef.current);
+      clearTimeout(showTimeoutRef.current);
     };
   }, [editor, isInteracting]);
 
@@ -724,11 +769,20 @@ Antworte NUR mit dem Text im neuen Ton.`;
       }
     };
 
-    // Mouse-Distance Check - nur wenn Toolbar sichtbar ist
+    // Mouse-Distance Check - nur wenn Toolbar sichtbar UND vollständig geladen ist
     const handleMouseMove = (event: MouseEvent) => {
+      // WICHTIG: Prüfe auch ob Toolbar wirklich DA ist (nicht nur isVisible=true)
       if (!isVisible || !toolbarRef.current || isInteracting) return;
       
+      // RACE CONDITION PROTECTION: Ignoriere Mouse-Distance wenn gerade Show-Animation läuft
+      if (showTimeoutRef.current) {
+        return; // Toolbar ist gerade am Erscheinen - keine Mouse-Distance-Checks
+      }
+      
+      // ZUSÄTZLICH: Ignore Mouse-Distance wenn Toolbar noch nicht gerendert
       const toolbarRect = toolbarRef.current.getBoundingClientRect();
+      if (toolbarRect.height === 0 || toolbarRect.width === 0) return; // Toolbar noch nicht gerendert
+      
       const mouseX = event.clientX;
       const mouseY = event.clientY;
       
@@ -839,6 +893,21 @@ Antworte NUR mit dem Text im neuen Ton.`;
       >
         <ArrowsPointingOutIcon className="h-4 w-4" />
         <span>Erweitern</span>
+      </button>
+
+      {/* Ausformulieren */}
+      <button
+        onClick={() => executeAction('elaborate')}
+        disabled={isProcessing}
+        className="
+          flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-md
+          bg-white hover:bg-gray-50 text-gray-700 transition-colors
+          disabled:opacity-50 disabled:cursor-not-allowed
+        "
+        title="Ausformulieren (Anweisung ausführen)"
+      >
+        <DocumentTextIcon className="h-4 w-4" />
+        <span>Ausformulieren</span>
       </button>
 
       {/* Ton ändern Dropdown */}
