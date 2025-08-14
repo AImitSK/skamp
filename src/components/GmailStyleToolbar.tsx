@@ -371,11 +371,11 @@ export const GmailStyleToolbar = ({ editor }: GmailStyleToolbarProps) => {
           </div>
         </div>
 
-        {/* Rechts: Zusätzliche Gmail-Style Actions (später) */}
+        {/* Rechts: Auto-Save Indicator (links neben Formatierung) */}
         <div className="flex-1" />
         
-        {/* Auto-Save Indicator (später für Floating Toolbar) */}
-        <div className="text-xs text-gray-500">
+        {/* Auto-Save Indicator - weiter links positioniert */}
+        <div className="text-xs text-gray-500 mr-12">
           Auto-Speichern aktiv
         </div>
       </div>

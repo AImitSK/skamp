@@ -315,9 +315,15 @@ export const GmailStyleEditor = ({
               <span className="text-sm text-gray-500">ESC zum Beenden</span>
             </div>
             <button
-              onClick={toggleFullscreen}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleFullscreen();
+              }}
+              onMouseDown={(e) => e.preventDefault()}
               className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
               title="Fullscreen beenden (ESC)"
+              type="button"
             >
               <ArrowsPointingInIcon className="h-5 w-5" />
             </button>
@@ -345,7 +351,7 @@ export const GmailStyleEditor = ({
               <FloatingAIToolbar editor={editor} />
               <EditorContent 
                 editor={editor} 
-                className="prose prose-lg max-w-none"
+                className="prose prose-lg max-w-none fullscreen-editor"
                 style={{ minHeight: 'calc(100vh - 300px)' }}
               />
             </div>
@@ -377,9 +383,15 @@ export const GmailStyleEditor = ({
           
           {/* Fullscreen Button */}
           <button
-            onClick={toggleFullscreen}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              toggleFullscreen();
+            }}
+            onMouseDown={(e) => e.preventDefault()}
             className="absolute right-4 top-3 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
             title="Vollbild-Modus (fokussiertes Schreiben)"
+            type="button"
           >
             <ArrowsPointingOutIcon className="h-4 w-4" />
           </button>
@@ -406,17 +418,34 @@ export const GmailStyleEditor = ({
 
           .gmail-editor-content {
             min-height: 400px;
-            font-size: 18px;
-            line-height: 1.8;
+            font-size: 18px !important;
+            line-height: 1.8 !important;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
           }
 
-          /* ProseMirror Editor mit richtigem Padding */
+          /* ProseMirror Editor mit richtigem Padding und Textgröße */
           .gmail-editor-content .ProseMirror {
             padding: 1rem 1.5rem;
             min-height: 350px;
             outline: none;
             box-sizing: border-box;
+            font-size: 18px !important;
+            line-height: 1.8 !important;
+          }
+
+          /* Überschreibt Prose-Styles spezifisch */
+          .prose.prose-lg .gmail-editor-content .ProseMirror,
+          .prose .gmail-editor-content .ProseMirror {
+            font-size: 18px !important;
+            line-height: 1.8 !important;
+          }
+
+          /* Alle Textknoten im Editor */
+          .gmail-editor-content .ProseMirror p,
+          .gmail-editor-content .ProseMirror div,
+          .gmail-editor-content .ProseMirror span {
+            font-size: 18px !important;
+            line-height: 1.8 !important;
           }
           
           /* Gmail-like placeholder */
@@ -521,10 +550,23 @@ export const GmailStyleEditor = ({
 
           /* Fullscreen styles - etwas größer als normal */
           .fullscreen-editor .ProseMirror {
-            font-size: 20px;
-            line-height: 2.0;
+            font-size: 20px !important;
+            line-height: 2.0 !important;
             max-width: none;
             padding: 2rem;
+          }
+
+          .fullscreen-editor .ProseMirror p,
+          .fullscreen-editor .ProseMirror div,
+          .fullscreen-editor .ProseMirror span {
+            font-size: 20px !important;
+            line-height: 2.0 !important;
+          }
+
+          /* Fullscreen Editor Container */
+          .fullscreen-editor {
+            font-size: 20px !important;
+            line-height: 2.0 !important;
           }
         `}</style>
         </div>
