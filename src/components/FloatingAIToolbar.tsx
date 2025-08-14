@@ -89,6 +89,72 @@ async function testAIFeatures() {
 // Global verfügbar machen
 (window as any).testFloatingAI = testAIFeatures;
 
+// NEUE HTML-Parser für "Ausformulieren" - behält HTML-Formatierung
+function parseHTMLFromAIOutput(aiOutput: string): string {
+  console.log('🎨 Parsing HTML Output für Ausformulieren:', aiOutput.substring(0, 200) + '...');
+  
+  let text = aiOutput;
+  
+  // 1. Entferne nur störende PM-Struktur-Tags, behalte Formatierungs-Tags
+  text = text.replace(/<\/?h[1-6][^>]*>/gi, '');     // Headlines entfernen (keine PM-Struktur)
+  text = text.replace(/<\/?div[^>]*>/gi, '');        // Div-Tags entfernen
+  text = text.replace(/<\/?span[^>]*>/gi, '');       // Span-Tags entfernen
+  
+  // 2. BEHALTE wichtige Formatierungs-Tags für TipTap
+  // <p>, <strong>, <em>, <b>, <i> bleiben erhalten!
+  
+  // 3. Entferne Markdown-Formatierungen (werden zu HTML konvertiert)
+  text = text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // **fett** → <strong>
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')             // *kursiv* → <em>
+    .replace(/__(.*?)__/g, '<strong>$1</strong>')      // __fett__ → <strong>
+    .replace(/_(.*?)_/g, '<em>$1</em>')               // _kursiv_ → <em>
+    .replace(/`(.*?)`/g, '<code>$1</code>')           // `code` → <code>
+    .replace(/~~(.*?)~~/g, '<del>$1</del>');          // ~~durch~~ → <del>
+  
+  // 4. Entferne Heading-Marker und konvertiere zu normalen Absätzen
+  text = text.replace(/^#{1,6}\s+(.+)$/gm, '<p><strong>$1</strong></p>');
+  
+  // 5. Extrahiere Antwort aus Volltext-Kontext falls vorhanden
+  const hasFullContext = text.includes('GESAMTER TEXT:') || text.includes('ANWEISUNG ZUM AUSFÜHREN:');
+  if (hasFullContext) {
+    const parts = text.split(/(?:ANWEISUNG ZUM AUSFÜHREN:|MARKIERTE STELLE).*?:\s*/);
+    if (parts.length > 1) {
+      text = parts[parts.length - 1].trim();
+    }
+  }
+  
+  // 6. Minimale Bereinigung - nur extreme PM-Phrasen filtern
+  const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+  const htmlContent: string[] = [];
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    
+    // Filtere nur extreme PM-Boilerplate, behalte alles andere
+    if (line.includes('Die Pressemitteilung endet hier') ||
+        line.includes('Über [Unternehmen]') ||
+        line.includes('Pressekontakt:') ||
+        line.includes('Weitere Informationen unter:')) {
+      continue; // Diese Zeilen überspringen
+    }
+    
+    htmlContent.push(line);
+  }
+  
+  // 7. Füge automatische Paragraph-Tags hinzu wenn nicht vorhanden
+  const finalText = htmlContent.join('\n');
+  if (finalText && !finalText.includes('<p>') && !finalText.includes('<div>')) {
+    // Teile in Absätze und wrappe in <p> Tags
+    return finalText.split('\n\n').map(paragraph => 
+      paragraph.trim() ? `<p>${paragraph.trim()}</p>` : ''
+    ).filter(p => p).join('\n');
+  }
+  
+  console.log('✅ HTML Content bereit:', finalText.substring(0, 150) + '...');
+  return finalText;
+}
+
 // VERBESSERTER Text-Parser: Entfernt NUR Formatierungen, behält Content
 function parseTextFromAIOutput(aiOutput: string): string {
   console.log('🔍 Parsing AI Output:', aiOutput.substring(0, 200) + '...');
@@ -197,6 +263,7 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
   const [isProcessing, setIsProcessing] = useState(false);
   const [showToneDropdown, setShowToneDropdown] = useState(false);
   const [isInteracting, setIsInteracting] = useState(false);
+  const [customInstruction, setCustomInstruction] = useState(''); // Neues Eingabefeld
   const toolbarRef = useRef<HTMLDivElement>(null);
   const hideTimeoutRef = useRef<NodeJS.Timeout>();
   const lastSelectionRef = useRef<{ from: number; to: number } | null>(null);
@@ -595,22 +662,60 @@ Antworte NUR mit dem Text im neuen Ton.`;
       
       // Debug-Logs
       console.log('🔄 Ersetze Text:', { 
+        action,
         from, 
         to, 
         selectedText: selectedText.substring(0, 50) + '...', 
         newTextLength: newText.length 
       });
       
-      // Text als REINER PLAIN TEXT einfügen
-      editor.view.dispatch(
-        editor.view.state.tr
-          .setSelection(editor.state.selection.constructor.create(editor.view.state.doc, from, to))
-          .replaceSelectionWith(editor.state.schema.text(newText), false)
-      );
+      if (action === 'elaborate') {
+        // Für "Ausformulieren": HTML-Content mit Formatierung einfügen
+        const htmlContent = parseHTMLFromAIOutput(newText);
+        console.log('🎨 Füge HTML Content ein:', htmlContent.substring(0, 100) + '...');
+        
+        // Erst Selection setzen, dann HTML-Content einfügen
+        editor.chain()
+          .setTextSelection({ from, to })
+          .insertContent(htmlContent)
+          .run();
+      } else {
+        // Für alle anderen Aktionen: PLAIN TEXT wie bisher
+        const plainText = parseTextFromAIOutput(newText);
+        editor.view.dispatch(
+          editor.view.state.tr
+            .setSelection(editor.state.selection.constructor.create(editor.view.state.doc, from, to))
+            .replaceSelectionWith(editor.state.schema.text(plainText), false)
+        );
+      }
       
       // Kurz warten, dann neue Selection setzen für potentielle Weiterbearbeitung  
       setTimeout(() => {
-        const newTo = from + newText.replace(/<[^>]*>/g, '').length;
+        let newTo: number;
+        
+        if (action === 'elaborate') {
+          // Für HTML-Content: Berechne Länge basierend auf tatsächlichem Content im Editor
+          try {
+            const currentDoc = editor.state.doc;
+            newTo = Math.min(from + 500, currentDoc.content.size); // Schätzung für HTML-Content
+            
+            // Finde das tatsächliche Ende basierend auf dem neuen Content
+            const docText = currentDoc.textBetween(0, currentDoc.content.size);
+            const beforeText = currentDoc.textBetween(0, from);
+            const afterFrom = docText.indexOf(beforeText) + beforeText.length;
+            
+            // Suche nach dem Ende des eingefügten Contents (heuristisch)
+            let searchEnd = Math.min(afterFrom + 1000, currentDoc.content.size);
+            newTo = searchEnd;
+          } catch (error) {
+            console.log('HTML content length calculation failed:', error);
+            newTo = from + 100; // Fallback
+          }
+        } else {
+          // Für Plain Text: Wie bisher
+          newTo = from + newText.replace(/<[^>]*>/g, '').length;
+        }
+        
         try {
           editor.chain()
             .setTextSelection({ from, to: newTo })
@@ -830,14 +935,117 @@ Antworte NUR mit dem Text im neuen Ton.`;
     };
   }, [editor, isVisible, isInteracting]);
 
+  // Custom Instruction Handler
+  const handleCustomInstruction = useCallback(async () => {
+    if (!editor || !selectedText || !customInstruction.trim() || isProcessing) return;
+    
+    setIsProcessing(true);
+    
+    // Verwende gespeicherte Selection falls vorhanden, sonst aktuelle
+    let from: number, to: number;
+    if (lastSelectionRef.current) {
+      from = lastSelectionRef.current.from;
+      to = lastSelectionRef.current.to;
+    } else {
+      const currentSelection = editor.state.selection;
+      from = currentSelection.from;
+      to = currentSelection.to;
+    }
+    
+    try {
+      const fullDocument = editor?.getHTML() || '';
+      
+      // Erstelle Prompt für custom instruction
+      const systemPrompt = `Du bist ein professioneller Content-Editor. Du siehst den GESAMTEN Text und sollst die markierte Stelle nach der gegebenen Anweisung bearbeiten.
+
+AUFGABE:
+1. Analysiere die Anweisung genau
+2. Bearbeite nur den markierten Text entsprechend der Anweisung
+3. Behalte den Kontext des Gesamttexts im Auge
+4. Antworte nur mit dem bearbeiteten Text
+
+REGELN:
+- Keine PM-Phrasen wie "reagiert damit auf", "steigenden Bedarf"
+- Keine Headlines oder Überschriften erstellen
+- Behalte die ursprüngliche Textlänge bei (±20% ok)
+- Antworte NUR mit dem bearbeiteten Text`;
+
+      const userPrompt = `GESAMTER TEXT:\n${fullDocument}\n\nMARKIERTE STELLE ZU BEARBEITEN:\n${selectedText}\n\nANWEISUNG:\n${customInstruction}`;
+
+      console.log('🎯 Custom Instruction:', { 
+        instruction: customInstruction, 
+        selectedText: selectedText.substring(0, 50) + '...' 
+      });
+
+      const response = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          mode: 'generate'
+        })
+      });
+
+      const data = await response.json();
+      const newText = parseTextFromAIOutput(data.generatedText || selectedText);
+
+      // Debug-Logs
+      console.log('🎯 Custom Instruction Ergebnis:', { 
+        from, 
+        to, 
+        instruction: customInstruction,
+        selectedText: selectedText.substring(0, 50) + '...', 
+        newTextLength: newText.length 
+      });
+      
+      // Text als PLAIN TEXT einfügen (wie andere Aktionen)
+      editor.view.dispatch(
+        editor.view.state.tr
+          .setSelection(editor.state.selection.constructor.create(editor.view.state.doc, from, to))
+          .replaceSelectionWith(editor.state.schema.text(newText), false)
+      );
+      
+      // Eingabefeld leeren nach erfolgreicher Ausführung
+      setCustomInstruction('');
+      
+      // Kurz warten, dann neue Selection setzen
+      setTimeout(() => {
+        const newTo = from + newText.replace(/<[^>]*>/g, '').length;
+        
+        try {
+          editor.chain()
+            .setTextSelection({ from, to: newTo })
+            .run();
+          
+          // Selection-State für Toolbar aktualisieren
+          const plainText = editor.state.doc.textBetween(from, newTo);
+          setSelectedText(plainText);
+          lastSelectionRef.current = { from, to: newTo };
+          
+          // Toolbar wieder anzeigen
+          setIsVisible(true);
+        } catch (error) {
+          console.log('Selection update failed:', error);
+          setIsVisible(false);
+        }
+      }, 100);
+    } catch (error) {
+      console.error('Custom Instruction fehlgeschlagen:', error);
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [editor, selectedText, customInstruction, isProcessing]);
+
   if (!isVisible || !editor) return null;
 
   return (
     <div
       ref={toolbarRef}
       className={`
-        fixed z-50 bg-white border border-gray-300 rounded-lg p-1 
-        flex items-center gap-1 transition-all duration-200
+        fixed z-50 bg-white border border-gray-300 rounded-lg transition-all duration-200
         ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}
         ${isProcessing ? 'pointer-events-none' : ''}
       `}
@@ -845,11 +1053,14 @@ Antworte NUR mit dem Text im neuen Ton.`;
         top: `${position.top}px`,
         left: `${position.left}px`,
         transform: 'translateX(-50%)',
+        minWidth: '520px' // Feste Mindestbreite für das Layout
       }}
       onMouseEnter={() => setIsInteracting(true)}
       onMouseLeave={() => setIsInteracting(false)}
       onMouseDown={(e) => e.preventDefault()} // Verhindert Verlust der Text-Selection
     >
+      {/* Button-Leiste oben */}
+      <div className="flex items-center gap-1 p-1">
       {/* Umformulieren */}
       <button
         onClick={() => executeAction('rephrase')}
@@ -974,6 +1185,46 @@ Antworte NUR mit dem Text im neuen Ton.`;
           🧪 Test AI
         </button>
       )}
+      </div>
+
+      {/* Anweisungs-Eingabefeld */}
+      <div className="border-t border-gray-200 p-2">
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+            Anweisung:
+          </label>
+          <input
+            type="text"
+            value={customInstruction}
+            onChange={(e) => setCustomInstruction(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey && customInstruction.trim()) {
+                e.preventDefault();
+                handleCustomInstruction();
+              }
+            }}
+            placeholder="z.B. Das ist mir zu langweilig. Schreib das werblicher."
+            className="
+              flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded-md
+              focus:outline-none focus:ring-1 focus:ring-[#005fab] focus:border-[#005fab]
+              placeholder-gray-400
+            "
+            disabled={isProcessing}
+          />
+          <button
+            onClick={handleCustomInstruction}
+            disabled={isProcessing || !customInstruction.trim()}
+            className="
+              px-3 py-1.5 text-sm font-medium rounded-md transition-colors
+              bg-[#005fab] hover:bg-[#004a8c] text-white
+              disabled:opacity-50 disabled:cursor-not-allowed
+            "
+            title="Anweisung ausführen"
+          >
+            →
+          </button>
+        </div>
+      </div>
 
       {/* Processing Indicator */}
       {isProcessing && (
