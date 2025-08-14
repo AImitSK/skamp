@@ -264,7 +264,7 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
   const [showToneDropdown, setShowToneDropdown] = useState(false);
   const [isInteracting, setIsInteracting] = useState(false);
   const [customInstruction, setCustomInstruction] = useState(''); // Neues Eingabefeld
-  const [inputProtection, setInputProtection] = useState(false); // Schutz vor Input-Klick-Chaos
+  const inputProtectionRef.currentRef = useRef(false); // Schutz vor Input-Klick-Chaos - SOFORT verfügbar!
   const toolbarRef = useRef<HTMLDivElement>(null);
   const hideTimeoutRef = useRef<NodeJS.Timeout>();
   const lastSelectionRef = useRef<{ from: number; to: number } | null>(null);
@@ -837,12 +837,12 @@ Antworte NUR mit dem Text im neuen Ton.`;
         setSelectedText('');
         lastSelectionRef.current = null;
         hideTimeoutRef.current = setTimeout(() => {
-          if (!isInteracting && !inputProtection) {
+          if (!isInteracting && !inputProtectionRef.current) {
             console.log('🚫 Verstecke Toolbar - keine Text-Selektion');
             setIsVisible(false);
             setShowToneDropdown(false);
           } else {
-            console.log('🛡️ Selection-Hide blockiert:', { isInteracting, inputProtection });
+            console.log('🛡️ Selection-Hide blockiert:', { isInteracting, inputProtectionRef.current });
           }
         }, 200);
       }
@@ -856,12 +856,12 @@ Antworte NUR mit dem Text im neuen Ton.`;
       
       // Verzögertes Ausblenden beim Verlassen des Editors
       hideTimeoutRef.current = setTimeout(() => {
-        if (!isInteracting && !inputProtection) {
+        if (!isInteracting && !inputProtectionRef.current) {
           console.log('🚫 Verstecke Toolbar - Editor Blur');
           setIsVisible(false);
           setShowToneDropdown(false);
         } else {
-          console.log('🛡️ Editor-Blur blockiert:', { isInteracting, inputProtection });
+          console.log('🛡️ Editor-Blur blockiert:', { isInteracting, inputProtectionRef.current });
         }
       }, 200);
     });
@@ -883,11 +883,11 @@ Antworte NUR mit dem Text im neuen Ton.`;
         className: (target as HTMLElement).className,
         isInToolbar: toolbarRef.current?.contains(target),
         toolbarVisible: isVisible,
-        inputProtection: inputProtection
+        inputProtectionRef.current: inputProtectionRef.current
       });
       
       // SCHUTZ: Ignoriere alle Klicks während Input-Protection
-      if (inputProtection) {
+      if (inputProtectionRef.current) {
         console.log('🛡️ INPUT PROTECTION AKTIV - Klick ignoriert');
         return;
       }
@@ -927,8 +927,8 @@ Antworte NUR mit dem Text im neuen Ton.`;
     // Mouse-Distance Check - nur wenn Toolbar sichtbar UND vollständig geladen ist
     const handleMouseMove = (event: MouseEvent) => {
       // WICHTIG: Prüfe auch ob Toolbar wirklich DA ist (nicht nur isVisible=true)
-      if (!isVisible || !toolbarRef.current || isInteracting || inputProtection) {
-        console.log('🚫 MouseMove ignoriert:', { isVisible, hasToolbar: !!toolbarRef.current, isInteracting, inputProtection });
+      if (!isVisible || !toolbarRef.current || isInteracting || inputProtectionRef.current) {
+        console.log('🚫 MouseMove ignoriert:', { isVisible, hasToolbar: !!toolbarRef.current, isInteracting, inputProtectionRef.current });
         return;
       }
       
@@ -968,12 +968,12 @@ Antworte NUR mit dem Text im neuen Ton.`;
       if (!isNearToolbar && !isOverEditor) {
         console.log('🚫 Maus zu weit weg - starte Hide-Timer');
         hideTimeoutRef.current = setTimeout(() => {
-          if (!isInteracting && !inputProtection) {
+          if (!isInteracting && !inputProtectionRef.current) {
             console.log('🚫 Verstecke Toolbar - Maus zu weit weg');
             setIsVisible(false);
             setShowToneDropdown(false);
           } else {
-            console.log('🛡️ Hide-Timer blockiert:', { isInteracting, inputProtection });
+            console.log('🛡️ Hide-Timer blockiert:', { isInteracting, inputProtectionRef.current });
           }
         }, 800); // Längere Verzögerung
       } else {
@@ -1273,9 +1273,9 @@ REGELN:
             onMouseDown={(e) => {
               console.log('🎯 INPUT MOUSEDOWN - Aktiviere Protection SOFORT');
               e.stopPropagation(); // Verhindere MouseDown-Event-Bubbling
-              setInputProtection(true); // SOFORT aktivieren vor Focus/Blur
+              inputProtectionRef.current = true; // SOFORT aktivieren vor Focus/Blur
               setTimeout(() => {
-                setInputProtection(false);
+                inputProtectionRef.current = false;
                 console.log('🛡️ INPUT PROTECTION deaktiviert');
               }, 1000); // Längerer Schutz
             }}
