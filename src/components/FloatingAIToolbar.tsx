@@ -8,7 +8,6 @@ import {
   ArrowsPointingOutIcon,
   ArrowsPointingInIcon,
   SpeakerWaveIcon,
-  MagnifyingGlassIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
 
@@ -21,8 +20,7 @@ export type AIAction =
   | 'rephrase' 
   | 'shorten' 
   | 'expand' 
-  | 'change-tone'
-  | 'seo-optimize';
+  | 'change-tone';
 
 interface ToneOption {
   value: string;
@@ -67,9 +65,6 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
           break;
         case 'expand':
           prompt = `Erweitere den folgenden Text um mindestens 50%, füge konkrete Details, Beispiele und weiterführende Informationen hinzu: "${text}"`;
-          break;
-        case 'seo-optimize':
-          prompt = `Optimiere den folgenden Text für SEO: Füge relevante Keywords für B2B-Marketing, Online-Marketing und Digitalagentur hinzu, verbessere die Struktur und mache den Text suchmaschinenfreundlicher: "${text}"`;
           break;
         default:
           return text;
@@ -462,20 +457,7 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
         )}
       </div>
 
-      {/* SEO Optimieren */}
-      <button
-        onClick={() => executeAction('seo-optimize')}
-        disabled={isProcessing}
-        className="
-          flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-md
-          bg-[#005fab] hover:bg-[#004a8c] text-white transition-colors
-          disabled:opacity-50 disabled:cursor-not-allowed
-        "
-        title="SEO optimieren"
-      >
-        <MagnifyingGlassIcon className="h-4 w-4" />
-        <span>SEO</span>
-      </button>
+      {/* SEO wurde entfernt - kommt später als separates Widget */}
 
       {/* Processing Indicator */}
       {isProcessing && (
