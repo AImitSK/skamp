@@ -7,6 +7,9 @@ import Link from '@tiptap/extension-link';
 import Heading from '@tiptap/extension-heading';
 import TextStyle from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
+import BulletList from '@tiptap/extension-bullet-list';
+import OrderedList from '@tiptap/extension-ordered-list';
+import ListItem from '@tiptap/extension-list-item';
 import { Extension } from '@tiptap/core';
 
 // Custom Extensions für TipTap v2 Kompatibilität
@@ -191,8 +194,9 @@ export const GmailStyleEditor = ({
     extensions: [
       StarterKit.configure({
         heading: false,
-        bulletList: { keepMarks: true, keepAttributes: false },
-        orderedList: { keepMarks: true, keepAttributes: false },
+        bulletList: false, // Deaktivieren um eigene zu verwenden
+        orderedList: false, // Deaktivieren um eigene zu verwenden
+        listItem: false, // Deaktivieren um eigene zu verwenden
       }),
       Heading.configure({
         levels: [1, 2, 3],
@@ -206,6 +210,26 @@ export const GmailStyleEditor = ({
           class: 'text-[#005fab] underline hover:text-[#004a8c] cursor-pointer',
           rel: 'noopener noreferrer',
           target: '_blank'
+        },
+      }),
+      // Explizite Listen-Konfiguration
+      ListItem.configure({
+        HTMLAttributes: {
+          class: 'ml-4',
+        },
+      }),
+      BulletList.configure({
+        keepMarks: true,
+        keepAttributes: false,
+        HTMLAttributes: {
+          class: 'list-disc list-outside ml-6 space-y-1',
+        },
+      }),
+      OrderedList.configure({
+        keepMarks: true,
+        keepAttributes: false,
+        HTMLAttributes: {
+          class: 'list-decimal list-outside ml-6 space-y-1',
         },
       }),
       TextStyle,
@@ -335,15 +359,34 @@ export const GmailStyleEditor = ({
             color: var(--text-primary);
           }
           
-          /* List styling */
+          /* List styling mit besserer Sichtbarkeit */
           .gmail-editor-content ul,
           .gmail-editor-content ol {
             margin: 1rem 0;
-            padding-left: 1.5rem;
+            padding-left: 2rem;
+          }
+          
+          .gmail-editor-content ul {
+            list-style-type: disc;
+            list-style-position: outside;
+          }
+          
+          .gmail-editor-content ol {
+            list-style-type: decimal;
+            list-style-position: outside;
           }
           
           .gmail-editor-content li {
-            margin: 0.25rem 0;
+            margin: 0.5rem 0;
+            padding-left: 0.5rem;
+            position: relative;
+          }
+          
+          /* Ensure list markers are visible */
+          .gmail-editor-content ul li::marker,
+          .gmail-editor-content ol li::marker {
+            color: var(--text-primary);
+            font-weight: normal;
           }
           
           /* Link styling (CeleroPress Primary) */
