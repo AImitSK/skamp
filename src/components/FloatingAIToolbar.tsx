@@ -52,46 +52,63 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
       return onAIAction(action, text);
     }
 
-    // Verwende strukturierte KI-API für bessere Formatierung
+    // Direkte Gemini-API für Text-Umformulierung (ohne PM-Struktur)
     try {
-      let prompt = '';
+      let systemPrompt = '';
+      let userPrompt = '';
       
       switch (action) {
         case 'rephrase':
-          prompt = `Formuliere diesen Text um: "${text}"
+          systemPrompt = `Du bist ein professioneller Texter. Formuliere Texte um, ohne die Struktur zu verändern.
 
 WICHTIGE REGELN:
 - Verwende andere Worte und Satzstrukturen
 - Behalte die Kernaussage bei
-- Ähnliche Textlänge wie das Original
+- Ähnliche Textlänge wie das Original (nicht länger/kürzer)
+- Vorhandene Formatierungen (fett/kursiv) nur übernehmen wenn im Original vorhanden
 - Vorhandene Überschriften umformulieren, aber keine neuen hinzufügen
-- Gleiche Struktur beibehalten (gleiche Anzahl Absätze)`;
+- Gleiche Anzahl Absätze beibehalten
+- Nur eine Leerzeile zwischen Absätzen
+
+Antworte NUR mit dem umformulierten Text.`;
+          userPrompt = `Formuliere diesen Text um:\n\n${text}`;
           break;
         case 'shorten':
-          prompt = `Kürze diesen Text um 30%: "${text}"
+          systemPrompt = `Du bist ein professioneller Textredakteur. Kürze Texte um ca. 30%.
 
-Entferne unnötige Details und Wiederholungen, aber behalte alle wichtigen Informationen und die Kernaussage.`;
+REGELN:
+- Entferne unnötige Details und Wiederholungen
+- Behalte alle wichtigen Informationen und Kernaussage
+- Gleiche Struktur beibehalten
+- Nur eine Leerzeile zwischen Absätzen
+
+Antworte NUR mit dem gekürzten Text.`;
+          userPrompt = `Kürze diesen Text:\n\n${text}`;
           break;
         case 'expand':
-          prompt = `Erweitere diesen Text um 50%: "${text}"
+          systemPrompt = `Du bist ein professioneller Content-Writer. Erweitere Texte um ca. 50%.
 
-Füge konkrete Details, Beispiele und weiterführende Informationen hinzu. Mache ihn informativer und ausführlicher.`;
+REGELN:
+- Füge konkrete Details, Beispiele und weiterführende Informationen hinzu
+- Mache ihn informativer und ausführlicher
+- Gleiche Struktur beibehalten
+- Nur eine Leerzeile zwischen Absätzen
+
+Antworte NUR mit dem erweiterten Text.`;
+          userPrompt = `Erweitere diesen Text:\n\n${text}`;
           break;
         default:
           return text;
       }
 
-      console.log(`🤖 KI-${action} (strukturiert):`, prompt.substring(0, 100) + '...');
+      console.log(`🤖 KI-${action} (direkt):`, userPrompt.substring(0, 100) + '...');
       
-      const response = await fetch('/api/ai/generate-structured', {
+      const response = await fetch('/api/ai/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          prompt,
-          context: {
-            tone: 'modern',
-            audience: 'b2b'
-          }
+          prompt: systemPrompt + '\n\n' + userPrompt,
+          mode: 'generate'
         })
       });
 
@@ -101,10 +118,16 @@ Füge konkrete Details, Beispiele und weiterführende Informationen hinzu. Mache
       }
       
       const data = await response.json();
-      // Verwende HTML-Content für perfekte Formatierung
-      const result = data.htmlContent || text;
+      let result = data.generatedText || text;
       
-      console.log(`✅ KI-Antwort strukturiert (${result.length} Zeichen):`, result.substring(0, 100) + '...');
+      // BEREINIGUNG: Mehrfache Leerzeilen entfernen
+      result = result
+        .replace(/<p><\/p>/g, '') // Leere <p> Tags entfernen
+        .replace(/\n\n\n+/g, '\n\n') // 3+ Zeilenumbrüche → 2
+        .replace(/(<\/p>)\s*(<p>)/g, '$1\n\n$2') // Korrekte Abstände zwischen <p> Tags
+        .trim();
+      
+      console.log(`✅ KI-Antwort bereinigt (${result.length} Zeichen):`, result.substring(0, 100) + '...');
       
       return result;
     } catch (error) {
@@ -124,21 +147,28 @@ Füge konkrete Details, Beispiele und weiterführende Informationen hinzu. Mache
     const { from, to } = currentSelection;
     
     try {
-      const prompt = `Ändere den Ton dieses Textes zu ${tone}: "${selectedText}"
+      const systemPrompt = `Du bist ein professioneller Texter. Ändere nur den Ton eines Textes.
 
-Behalte den Inhalt bei, aber ändere die Wortwahl und den Stil entsprechend.`;
+WICHTIGE REGELN:
+- Behalte den Inhalt und die Struktur exakt bei
+- Ändere nur Wortwahl und Stil entsprechend dem gewünschten Ton
+- Ähnliche Textlänge wie das Original
+- Gleiche Anzahl Absätze beibehalten
+- Nur eine Leerzeile zwischen Absätzen
+- Keine neuen Headlines hinzufügen
+
+Antworte NUR mit dem Text im neuen Ton.`;
+
+      const userPrompt = `Ändere den Ton dieses Textes zu ${tone}:\n\n${selectedText}`;
       
-      console.log(`🎵 Ton-Änderung zu "${tone}" (strukturiert):`, prompt.substring(0, 100) + '...');
+      console.log(`🎵 Ton-Änderung zu "${tone}" (direkt):`, userPrompt.substring(0, 100) + '...');
       
-      const response = await fetch('/api/ai/generate-structured', {
+      const response = await fetch('/api/ai/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          prompt,
-          context: {
-            tone: tone.toLowerCase(),
-            audience: 'b2b'
-          }
+          prompt: systemPrompt + '\n\n' + userPrompt,
+          mode: 'generate'
         })
       });
 
@@ -148,7 +178,14 @@ Behalte den Inhalt bei, aber ändere die Wortwahl und den Stil entsprechend.`;
       }
       
       const data = await response.json();
-      const newText = data.htmlContent || selectedText;
+      let newText = data.generatedText || selectedText;
+      
+      // BEREINIGUNG: Mehrfache Leerzeilen entfernen
+      newText = newText
+        .replace(/<p><\/p>/g, '') // Leere <p> Tags entfernen
+        .replace(/\n\n\n+/g, '\n\n') // 3+ Zeilenumbrüche → 2
+        .replace(/(<\/p>)\s*(<p>)/g, '$1\n\n$2') // Korrekte Abstände zwischen <p> Tags
+        .trim();
       
       console.log('🎵 Ton geändert:', { from, to, tone, newTextLength: newText.length });
       
