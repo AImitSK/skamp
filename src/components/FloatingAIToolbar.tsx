@@ -883,7 +883,7 @@ Antworte NUR mit dem Text im neuen Ton.`;
         className: (target as HTMLElement).className,
         isInToolbar: toolbarRef.current?.contains(target),
         toolbarVisible: isVisible,
-        inputProtectionRef.current: inputProtectionRef.current
+        inputProtection: inputProtectionRef.current
       });
       
       // SCHUTZ: Ignoriere alle Klicks während Input-Protection
@@ -928,7 +928,7 @@ Antworte NUR mit dem Text im neuen Ton.`;
     const handleMouseMove = (event: MouseEvent) => {
       // WICHTIG: Prüfe auch ob Toolbar wirklich DA ist (nicht nur isVisible=true)
       if (!isVisible || !toolbarRef.current || isInteracting || inputProtectionRef.current) {
-        console.log('🚫 MouseMove ignoriert:', { isVisible, hasToolbar: !!toolbarRef.current, isInteracting, inputProtectionRef.current });
+        console.log('🚫 MouseMove ignoriert:', { isVisible, hasToolbar: !!toolbarRef.current, isInteracting, inputProtection: inputProtectionRef.current });
         return;
       }
       
