@@ -466,12 +466,9 @@ export default function CampaignContentComposer({
                 content={mainContent}
                 onChange={onMainContentChange}
                 placeholder="Pressemitteilung schreiben... (Gmail-Style)"
-                autoSave={true}
-                autoSaveDelay={10000}
-                onAutoSave={(content) => {
-                  // Auto-save Funktionalität - kann später erweitert werden
-                  console.log('Auto-saving content:', content.length, 'characters');
-                }}
+                autoSave={false}
+                // Auto-Save deaktiviert für neue Kampagnen wegen Pflichtfeldern
+                // Kann später für Edit-Mode aktiviert werden
               />
             </div>
             <p className="mt-2 text-sm text-gray-500">
