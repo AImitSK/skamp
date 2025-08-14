@@ -175,7 +175,13 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
   useEffect(() => {
     if (!editor) return;
 
+    let selectionTimeout: NodeJS.Timeout;
+
     const handleSelectionUpdate = () => {
+      // Clear existing timeout
+      clearTimeout(selectionTimeout);
+      clearTimeout(hideTimeoutRef.current);
+      
       // Nicht updaten wenn User gerade mit der Toolbar interagiert
       if (isInteracting) return;
       
@@ -187,24 +193,60 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
         setSelectedText(text);
         lastSelectionRef.current = { from, to };
         
-        // Position berechnen
-        const selection = window.getSelection();
-        if (selection && selection.rangeCount > 0) {
-          const range = selection.getRangeAt(0);
-          const rect = range.getBoundingClientRect();
-          
-          // Toolbar über dem markierten Text positionieren
-          setPosition({
-            top: rect.top - 60, // 60px über dem Text
-            left: rect.left + (rect.width / 2) // Zentriert über der Markierung
-          });
-          
-          // Verzögert anzeigen (300ms damit Maus Zeit hat näher zu kommen)
-          clearTimeout(hideTimeoutRef.current);
-          setTimeout(() => setIsVisible(true), 300);
-        }
+        // Längere Verzögerung für bessere Maus-Positionierung
+        selectionTimeout = setTimeout(() => {
+          // Position ERST nach Verzögerung berechnen (Maus ist näher)
+          const selection = window.getSelection();
+          if (selection && selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const rect = range.getBoundingClientRect();
+            
+            // Aktuelle Mausposition holen
+            const mousePos = { x: 0, y: 0 };
+            
+            // Event-Listener für einmalige Mausposition
+            const getMousePos = (e: MouseEvent) => {
+              mousePos.x = e.clientX;
+              mousePos.y = e.clientY;
+              document.removeEventListener('mousemove', getMousePos);
+            };
+            document.addEventListener('mousemove', getMousePos);
+            
+            // Kleine Verzögerung um Mausposition zu erfassen
+            setTimeout(() => {
+              document.removeEventListener('mousemove', getMousePos);
+              
+              // Intelligente Positionierung: Näher zur Maus, aber über dem Text
+              let toolbarX = rect.left + (rect.width / 2); // Standard: Mitte des Textes
+              let toolbarY = rect.top - 60; // 60px über dem Text
+              
+              // Wenn Maus weit links/rechts ist, Toolbar näher zur Maus positionieren
+              if (mousePos.x > 0) {
+                const mouseDistance = Math.abs(mousePos.x - toolbarX);
+                if (mouseDistance > 100) {
+                  // Toolbar zwischen Text-Mitte und Maus positionieren
+                  toolbarX = (toolbarX + mousePos.x) / 2;
+                }
+              }
+              
+              // Toolbar nicht zu weit rechts/links positionieren
+              const minX = rect.left - 50;
+              const maxX = rect.right + 50;
+              toolbarX = Math.max(minX, Math.min(maxX, toolbarX));
+              
+              setPosition({
+                top: toolbarY,
+                left: toolbarX
+              });
+              
+              setIsVisible(true);
+            }, 50); // 50ms um Mausposition zu erfassen
+          }
+        }, 600); // 600ms Gesamtverzögerung
+        
       } else {
         // Toolbar ausblenden wenn keine Selektion
+        setSelectedText('');
         lastSelectionRef.current = null;
         hideTimeoutRef.current = setTimeout(() => {
           if (!isInteracting) {
@@ -217,6 +259,9 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
 
     editor.on('selectionUpdate', handleSelectionUpdate);
     editor.on('blur', () => {
+      // Cleanup bei Blur
+      clearTimeout(selectionTimeout);
+      
       // Verzögertes Ausblenden beim Verlassen des Editors
       hideTimeoutRef.current = setTimeout(() => {
         if (!isInteracting) {
@@ -228,6 +273,7 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
 
     return () => {
       editor.off('selectionUpdate', handleSelectionUpdate);
+      clearTimeout(selectionTimeout);
       clearTimeout(hideTimeoutRef.current);
     };
   }, [editor, isInteracting]);
@@ -242,10 +288,9 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
         // Prüfe ob Klick auch außerhalb des Editors ist
         const editorElement = editor?.view.dom;
         if (editorElement && !editorElement.contains(event.target as Node)) {
-          // Klick außerhalb Editor - Toolbar verstecken
-          // Aber sie kann wieder erscheinen bei neuer Selektion
+          // Klick außerhalb Editor - Toolbar verstecken aber State nicht permanent löschen
           setIsVisible(false);
-          setSelectedText('');
+          // selectedText NICHT löschen - damit kann Toolbar wieder erscheinen
         }
       }
     };
