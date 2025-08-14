@@ -58,13 +58,13 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
       
       switch (action) {
         case 'rephrase':
-          prompt = `Formuliere den folgenden Text komplett um, verwende andere Worte und Satzstrukturen, aber behalte die Kernaussage bei: "${text}"`;
+          prompt = `Formuliere den Text komplett um, verwende andere Worte und Satzstrukturen, aber behalte die Kernaussage bei. Mache den Text lebendiger und abwechslungsreicher.`;
           break;
         case 'shorten':
-          prompt = `Kürze den folgenden Text um mindestens 30%, entferne unnötige Details aber behalte die wichtigsten Informationen: "${text}"`;
+          prompt = `Kürze den Text um mindestens 30%. Entferne unnötige Details und Wiederholungen, aber behalte alle wichtigen Informationen und die Kernaussage.`;
           break;
         case 'expand':
-          prompt = `Erweitere den folgenden Text um mindestens 50%, füge konkrete Details, Beispiele und weiterführende Informationen hinzu: "${text}"`;
+          prompt = `Erweitere den Text um mindestens 50%. Füge konkrete Details, Beispiele und weiterführende Informationen hinzu. Mache ihn informativer und ausführlicher.`;
           break;
         default:
           return text;
@@ -75,7 +75,11 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
       const response = await fetch('/api/ai/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt })
+        body: JSON.stringify({ 
+          prompt,
+          mode: 'improve',
+          existingContent: text
+        })
       });
 
       if (!response.ok) {
@@ -84,7 +88,7 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
       }
       
       const data = await response.json();
-      const result = data.text || text;
+      const result = data.generatedText || text;
       
       console.log(`✅ KI-Antwort (${result.length} Zeichen):`, result.substring(0, 100) + '...');
       
@@ -106,14 +110,18 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
     const { from, to } = currentSelection;
     
     try {
-      const prompt = `Ändere den Ton des folgenden Textes zu ${tone}, behalte den Inhalt aber ändere die Wortwahl und den Stil entsprechend: "${selectedText}"`;
+      const prompt = `Ändere den Ton zu ${tone}. Behalte den Inhalt bei, aber ändere die Wortwahl und den Stil entsprechend.`;
       
       console.log(`🎵 Ton-Änderung zu "${tone}":`, prompt.substring(0, 100) + '...');
       
       const response = await fetch('/api/ai/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt })
+        body: JSON.stringify({ 
+          prompt,
+          mode: 'improve',
+          existingContent: selectedText
+        })
       });
 
       if (!response.ok) {
@@ -122,7 +130,7 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
       }
       
       const data = await response.json();
-      const newText = data.text || selectedText;
+      const newText = data.generatedText || selectedText;
       
       console.log('🎵 Ton geändert:', { from, to, tone, newTextLength: newText.length });
       
