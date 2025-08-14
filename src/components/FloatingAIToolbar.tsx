@@ -420,27 +420,39 @@ Antworte NUR mit dem erweiterten Text.`;
           break;
         case 'elaborate':
           if (hasFullContext) {
-            // NEU: Ausformulieren mit Volltext-Kontext
-            systemPrompt = `Du bist ein professioneller Content-Creator. Du siehst den GESAMTEN Text und erkennst dass der markierte Teil eine ANWEISUNG oder ein BRIEFING ist.
+            // NEU: Ausformulieren mit Volltext-Kontext - KEINE HEADLINES!
+            systemPrompt = `Du bist ein professioneller Text-Creator. Du siehst den GESAMTEN Text und erkennst dass der markierte Teil eine ANWEISUNG oder ein BRIEFING ist.
+
+WICHTIGE REGELN:
+- NIEMALS Headlines, Überschriften oder Titel erstellen (# ## ###)
+- NIEMALS <h1>, <h2>, <h3> Tags verwenden
+- NIEMALS "Pressemitteilung:", "Titel:" oder ähnliche Label
+- NUR den reinen Fließtext erstellen
+- Titel gibt es bereits in einem separaten Feld oben
 
 AUFGABE:
 1. Analysiere die Anweisung in der markierten Stelle
-2. Erkenne was erstellt werden soll (PR, Text, Artikel, etc.)
-3. Führe die Anweisung aus und erstelle den gewünschten Content
-4. Nutze alle Informationen aus dem Gesamttext als Basis
+2. Erstelle NUR den Fließtext-Content (keine Headlines!)
+3. Nutze Informationen aus dem Gesamttext als Basis
+4. Antworte mit reinem Text-Content in Absätzen
 
 BEISPIEL ANWEISUNG:
-"Neues Produkt: Spielzeug-Bohrer. Features: günstig, schnell. Mach eine PR für Fachpublikum."
+"Spielzeug-Bohrer. Features: günstig, schnell. Mach Text für Fachpublikum."
 
-DEINE AUFGABE: Erstelle den gewünschten Content basierend auf der Anweisung!`;
+DEINE AUFGABE: Erstelle NUR Fließtext-Content, KEINE Überschriften!`;
             userPrompt = `GESAMTER TEXT:\n${fullDocument}\n\nANWEISUNG ZUM AUSFÜHREN:\n${text}`;
           } else {
-            // Fallback: Ohne Kontext
-            systemPrompt = `Du bist ein professioneller Content-Creator. 
+            // Fallback: Ohne Kontext - KEINE HEADLINES!
+            systemPrompt = `Du bist ein professioneller Text-Creator. 
 
-Der markierte Text enthält eine Anweisung oder ein Briefing. Analysiere was gewünscht wird und erstelle den entsprechenden Content.
+WICHTIGE REGELN:
+- NIEMALS Headlines, Überschriften oder Titel erstellen (# ## ###)  
+- NIEMALS <h1>, <h2>, <h3> Tags verwenden
+- NIEMALS "Pressemitteilung:", "Titel:" oder ähnliche Label
+- NUR reinen Fließtext erstellen
+- Titel gibt es bereits in einem separaten Feld
 
-Führe die Anweisung aus und erstelle den gewünschten Text/Content.`;
+Der markierte Text enthält eine Anweisung oder ein Briefing. Erstelle NUR Fließtext-Content, KEINE Überschriften!`;
             userPrompt = `Führe diese Anweisung aus:\n\n${text}`;
           }
           break;
@@ -1057,7 +1069,13 @@ REGELN:
       }}
       onMouseEnter={() => setIsInteracting(true)}
       onMouseLeave={() => setIsInteracting(false)}
-      onMouseDown={(e) => e.preventDefault()} // Verhindert Verlust der Text-Selection
+      onMouseDown={(e) => {
+        // Verhindert Verlust der Text-Selection, AUSSER bei Input-Feldern
+        const target = e.target as HTMLElement;
+        if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+        }
+      }}
     >
       {/* Button-Leiste oben */}
       <div className="flex items-center gap-1 p-1">
@@ -1197,6 +1215,8 @@ REGELN:
             type="text"
             value={customInstruction}
             onChange={(e) => setCustomInstruction(e.target.value)}
+            onMouseDown={(e) => e.stopPropagation()} // Verhindert preventDefault vom Container
+            onFocus={(e) => e.stopPropagation()} // Verhindert Interferenz mit Toolbar-Logic
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey && customInstruction.trim()) {
                 e.preventDefault();
