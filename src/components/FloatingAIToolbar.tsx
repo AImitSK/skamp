@@ -1206,7 +1206,16 @@ REGELN:
       </div>
 
       {/* Anweisungs-Eingabefeld */}
-      <div className="border-t border-gray-200 p-2">
+      <div 
+        className="border-t border-gray-200 p-2"
+        onMouseDown={(e) => {
+          // Verhindere, dass Container-onMouseDown triggert
+          e.stopPropagation();
+          // Aber NICHT preventDefault() - Input soll normal funktionieren
+        }}
+        onMouseEnter={() => setIsInteracting(true)}
+        onMouseLeave={() => setIsInteracting(false)}
+      >
         <div className="flex items-center gap-2">
           <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
             Anweisung:
@@ -1215,40 +1224,11 @@ REGELN:
             type="text"
             value={customInstruction}
             onChange={(e) => setCustomInstruction(e.target.value)}
-            onMouseDown={(e) => {
-              e.stopPropagation(); // Verhindert preventDefault vom Container
-              // KRITISCH: Verhindere, dass Editor die Selection verliert
-              setIsInteracting(true);
-            }}
-            onFocus={(e) => {
-              e.stopPropagation(); // Verhindert Interferenz mit Toolbar-Logic
-              // KRITISCH: Markiere als interacting um Toolbar-Hide zu verhindern
-              setIsInteracting(true);
-              
-              // EXTRA: Sichere die aktuelle Editor-Selection explizit
-              if (editor && editor.state.selection) {
-                const selection = editor.state.selection;
-                lastSelectionRef.current = { from: selection.from, to: selection.to };
-                console.log('💾 Input Focus - Selection gesichert:', lastSelectionRef.current);
-              }
+            onFocus={() => {
+              console.log('💾 Input Focus - Selection bleibt erhalten');
             }}
             onBlur={() => {
-              // Wenn Eingabefeld verlassen wird, kann Toolbar wieder normal reagieren
-              setIsInteracting(false);
-              
-              // EXTRA: Stelle Editor-Selection wieder her, falls sie verloren ging
-              if (editor && lastSelectionRef.current) {
-                setTimeout(() => {
-                  try {
-                    editor.chain()
-                      .setTextSelection(lastSelectionRef.current!)
-                      .run();
-                    console.log('🔄 Input Blur - Selection wiederhergestellt:', lastSelectionRef.current);
-                  } catch (error) {
-                    console.log('Selection restore failed:', error);
-                  }
-                }, 50); // Kurze Verzögerung
-              }
+              console.log('🔄 Input Blur - normale Toolbar-Logic wieder aktiv');
             }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey && customInstruction.trim()) {
