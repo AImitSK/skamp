@@ -435,22 +435,24 @@ Antworte NUR mit dem erweiterten Text.`;
       let userPrompt = '';
       
       if (hasFullContext) {
-        // NEU: Mit Volltext-Kontext
-        systemPrompt = `Du bist ein professioneller Texter. Du siehst den GESAMTEN Text und sollst NUR die Tonalität der markierten Stelle ändern.
+        // NEU: Mit Volltext-Kontext - ABER SEHR STRIKT für Ton-Änderung
+        systemPrompt = `Du bist ein professioneller Texter. Du siehst den GESAMTEN Text, aber sollst NUR die Tonalität der markierten Stelle ändern.
 
-KONTEXT-ANALYSE:
-1. Verstehe den Gesamttext und seine Zielgruppe
-2. Erkenne die aktuelle Tonalität der markierten Stelle
-3. Ändere NUR die Tonalität zu: ${tone}
+WICHTIGE REGELN:
+- Ändere NUR die Wortwahl der markierten Stelle
+- KEINE neuen Absätze oder Struktur hinzufügen
+- KEINE Headlines oder Überschriften erstellen
+- EXAKT die gleiche Textlänge beibehalten
+- NUR Synonym-Austausch für gewünschten Ton: ${tone}
 
-TON-ÄNDERUNG DER MARKIERTEN STELLE:
-- Ändere Wortwahl und Stil zum gewünschten Ton
-- Behalte alle Informationen bei
-- Halte die Länge ähnlich
-- Passe nahtlos zum Rest des Textes
+VERBOTEN:
+- Neue Informationen hinzufügen
+- Text erweitern oder strukturieren
+- Headlines wie h1, h2 verwenden
+- Pressemitteilungs-Format erstellen
 
-Antworte NUR mit der umformulierten markierten Stelle!`;
-        userPrompt = `GESAMTER TEXT:\n${fullDocument}\n\nMARKIERTE STELLE (Ton ändern zu ${tone}):\n${selectedText}`;
+Antworte NUR mit der umformulierten markierten Stelle - sonst nichts!`;
+        userPrompt = `GESAMTER TEXT:\n${fullDocument}\n\nMARKIERTE STELLE (nur Ton ändern zu ${tone}):\n${selectedText}`;
       } else {
         // Fallback: Original-Prompt
         systemPrompt = `Du bist ein professioneller Texter. Analysiere die aktuelle Tonalität und ändere sie dann gezielt.
@@ -495,14 +497,12 @@ Antworte NUR mit dem Text im neuen Ton.`;
       
       console.log('🎵 Ton geändert:', { from, to, tone, newTextLength: newText.length });
       
-      // Text als PLAIN TEXT ohne Formatierung einfügen
-      editor.chain()
-        .focus()
-        .setTextSelection({ from, to })
-        .deleteSelection()
-        .insertContent(newText)
-        .unsetAllMarks()  // Entfernt alle Formatierungen nach dem Einfügen
-        .run();
+      // Text als REINER PLAIN TEXT einfügen
+      editor.view.dispatch(
+        editor.view.state.tr
+          .setSelection(editor.state.selection.constructor.create(editor.view.state.doc, from, to))
+          .replaceSelectionWith(editor.state.schema.text(newText), false)
+      );
       
       // Kurz warten, dann neue Selection setzen für potentielle Weiterbearbeitung  
       setTimeout(() => {
@@ -559,14 +559,12 @@ Antworte NUR mit dem Text im neuen Ton.`;
         newTextLength: newText.length 
       });
       
-      // Text als PLAIN TEXT ohne Formatierung einfügen
-      editor.chain()
-        .focus()
-        .setTextSelection({ from, to })
-        .deleteSelection()
-        .insertContent(newText)
-        .unsetAllMarks()  // Entfernt alle Formatierungen nach dem Einfügen
-        .run();
+      // Text als REINER PLAIN TEXT einfügen
+      editor.view.dispatch(
+        editor.view.state.tr
+          .setSelection(editor.state.selection.constructor.create(editor.view.state.doc, from, to))
+          .replaceSelectionWith(editor.state.schema.text(newText), false)
+      );
       
       // Kurz warten, dann neue Selection setzen für potentielle Weiterbearbeitung  
       setTimeout(() => {
