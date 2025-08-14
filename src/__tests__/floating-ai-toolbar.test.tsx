@@ -99,7 +99,7 @@ describe('FloatingAIToolbar', () => {
     expect(screen.getByText('Kürzen')).toBeInTheDocument();
     expect(screen.getByText('Erweitern')).toBeInTheDocument();
     expect(screen.getByText('Ton ändern')).toBeInTheDocument();
-    expect(screen.getByText('SEO')).toBeInTheDocument();
+    expect(screen.getByText('Ton ändern')).toBeInTheDocument();
   });
 
   test('sollte Umformulieren-Aktion ausführen', async () => {
@@ -242,8 +242,8 @@ describe('FloatingAIToolbar', () => {
     });
   });
 
-  test('sollte SEO-Optimierung ausführen', async () => {
-    const mockAIAction = jest.fn().mockResolvedValue('SEO-optimierter Text');
+  test('sollte alle Aktions-Buttons anzeigen', async () => {
+    const mockAIAction = jest.fn().mockResolvedValue('Bearbeiteter Text');
     
     render(
       <FloatingAIToolbar 
@@ -261,14 +261,12 @@ describe('FloatingAIToolbar', () => {
       selectionHandler();
     }
 
+    // SEO-Button wurde entfernt - prüfe nur ob andere Buttons da sind
     await waitFor(() => {
-      expect(screen.getByText('SEO')).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByText('SEO'));
-
-    await waitFor(() => {
-      expect(mockAIAction).toHaveBeenCalledWith('seo-optimize', 'Test Text');
+      expect(screen.getByText('Umformulieren')).toBeInTheDocument();
+      expect(screen.getByText('Kürzen')).toBeInTheDocument();
+      expect(screen.getByText('Erweitern')).toBeInTheDocument();
+      expect(screen.getByText('Ton ändern')).toBeInTheDocument();
     });
   });
 

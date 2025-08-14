@@ -88,89 +88,55 @@ async function testAIFeatures() {
 // Global verfügbar machen
 (window as any).testFloatingAI = testAIFeatures;
 
-// Text-Parser: Extrahiert nur den eigentlichen Inhalt aus KI-Ausgabe
+// VERBESSERTER Text-Parser: Entfernt NUR Formatierungen, behält Content
 function parseTextFromAIOutput(aiOutput: string): string {
   console.log('🔍 Parsing AI Output:', aiOutput.substring(0, 200) + '...');
   
-  // Entferne HTML Tags zuerst
-  let text = aiOutput.replace(/<[^>]*>/g, '');
+  let text = aiOutput;
   
-  // Split in Zeilen
+  // 1. Entferne HTML Tags (außer Listen)
+  text = text.replace(/<(?!\/?(ul|ol|li))[^>]*>/g, '');
+  
+  // 2. Entferne ALLE Markdown-Formatierungen (außer Listen)
+  text = text
+    .replace(/\*\*(.*?)\*\*/g, '$1')  // **fett** → normal
+    .replace(/\*(.*?)\*/g, '$1')      // *kursiv* → normal  
+    .replace(/__(.*?)__/g, '$1')      // __fett__ → normal
+    .replace(/_(.*?)_/g, '$1')       // _kursiv_ → normal
+    .replace(/`(.*?)`/g, '$1')       // `code` → normal
+    .replace(/~~(.*?)~~/g, '$1');    // ~~durchgestrichen~~ → normal
+  
+  // 3. Entferne Heading-Marker (# ## ### etc.)
+  text = text.replace(/^#{1,6}\s+/gm, '');
+  
+  // NEU: Mit Volltext-Kontext ist Parser weniger aggressiv
+  // Wir vertrauen der KI mehr, da sie den Kontext kennt
+  const hasFullContext = text.includes('GESAMTER TEXT:') || text.includes('MARKIERTE STELLE:');
+  if (hasFullContext) {
+    // Extrahiere nur die eigentliche Antwort (nach dem Kontext)
+    const parts = text.split(/MARKIERTE STELLE.*?:\s*/);
+    if (parts.length > 1) {
+      text = parts[parts.length - 1].trim();
+    }
+  }
+  
+  // 4. Minimale Bereinigung - nur offensichtliche PM-Phrasen
   const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-  
   const textContent: string[] = [];
-  let skipNext = false;
   
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     
-    if (skipNext) {
-      skipNext = false;
+    // BEHALTE fast alles - nur extreme PM-Phrasen filtern
+    if (line.includes('Die Pressemitteilung endet hier') ||
+        line.includes('Über [Unternehmen]') ||
+        line.includes('Pressekontakt:') ||
+        line.includes('ENDE DER PRESSEMITTEILUNG')) {
+      console.log('⏭️ Skipping obvious PM boilerplate:', line.substring(0, 50) + '...');
       continue;
     }
     
-    // Skip Headlines am Anfang (erkenne an Position und Länge)
-    if (i === 0 && line.length < 100 && !line.includes('.') && !line.includes(',')) {
-      console.log('⏭️ Skipping headline:', line);
-      continue;
-    }
-    
-    // Skip PM-typische Phrasen (viel aggressiver)
-    if (line.includes('reagiert damit auf') || 
-        line.includes('plant, das Angebot') ||
-        line.includes('in den kommenden Monaten') ||
-        line.includes('Die zunehmende Digitalisierung') ||
-        line.includes('professionelle Online-Präsenz') ||
-        line.includes('ganzheitlichen Ansatz') ||
-        line.includes('digitale Sichtbarkeit') ||
-        line.includes('Marketing-Effizienz') ||
-        line.includes('zentralen Ansprechpartner') ||
-        line.includes('optimierten Workflow') ||
-        line.includes('weiter auszubauen')) {
-      console.log('⏭️ Skipping PM phrase:', line.substring(0, 50) + '...');
-      continue;
-    }
-    
-    // Skip Future-Pläne und Marketing-Sprech
-    if (line.includes('plant') || line.includes('wird') || line.includes('sollen') ||
-        line.includes('künftig') || line.includes('zukünftig') || line.includes('Vision')) {
-      console.log('⏭️ Skipping future/marketing:', line.substring(0, 50) + '...');
-      continue;
-    }
-    
-    // Skip zu allgemeine/aufgeblähte Sätze (über 150 Zeichen ohne konkreten Inhalt)
-    if (line.length > 150 && (line.includes('erfordert') || line.includes('unterstützt') || 
-                              line.includes('dabei') || line.includes('können'))) {
-      console.log('⏭️ Skipping bloated sentence:', line.substring(0, 50) + '...');
-      continue;
-    }
-    
-    // Skip Zitate (beginnen mit " oder enthalten "sagt")
-    if (line.startsWith('"') || line.includes('sagt ') || line.includes(', sagt ')) {
-      console.log('⏭️ Skipping quote:', line);
-      continue;
-    }
-    
-    // Skip Boilerplate (beginnen mit *Über oder About)
-    if (line.startsWith('*Über ') || line.startsWith('*About ') || 
-        line.startsWith('Über ') && line.includes('Unternehmen')) {
-      console.log('⏭️ Skipping boilerplate:', line);
-      continue;
-    }
-    
-    // Skip Platzhalter
-    if (line.includes('[Name]') || line.includes('[Position]') || line.includes('[Unternehmen]')) {
-      console.log('⏭️ Skipping placeholder:', line);
-      continue;
-    }
-    
-    // Skip leere Zeilen und zu kurze Fragmente
-    if (line.length < 20) {
-      console.log('⏭️ Skipping short line:', line);
-      continue;
-    }
-    
-    // Alles andere ist Content
+    // Alles andere behalten - wir vertrauen der KI mit Kontext
     textContent.push(line);
   }
   
@@ -229,14 +195,42 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
       return onAIAction(action, text);
     }
 
-    // Direkte Gemini-API für Text-Umformulierung (ohne PM-Struktur)
+    // Hole den kompletten Dokument-Kontext für intelligentere KI-Verarbeitung
+    const fullDocument = editor?.getHTML() || '';
+    const hasFullContext = fullDocument.length > 0 && fullDocument.length > text.length;
+    
+    // Direkte Gemini-API für Text-Umformulierung (mit Volltext-Kontext wenn verfügbar)
     try {
       let systemPrompt = '';
       let userPrompt = '';
       
       switch (action) {
         case 'rephrase':
-          systemPrompt = `Du bist ein Synonym-Experte. Ersetze Wörter durch Synonyme - MEHR NICHT!
+          if (hasFullContext) {
+            // NEU: Mit Volltext-Kontext für intelligentere Umformulierung
+            systemPrompt = `Du bist ein professioneller Redakteur. Du siehst den GESAMTEN Text und sollst NUR die markierte Stelle umformulieren.
+
+KONTEXT-ANALYSE:
+1. Verstehe den Zweck des Gesamttextes (PR, Marketing, Info)
+2. Erkenne die Rolle der markierten Stelle im Kontext
+3. Behalte die Tonalität passend zum Gesamttext
+
+UMFORMULIERUNG DER MARKIERTEN STELLE:
+- Ersetze Wörter durch passende Synonyme
+- Halte die Länge ähnlich (±5 Wörter max)
+- Behalte die Struktur bei
+- Passe zum Stil des Gesamttextes
+
+❌ VERMEIDE:
+- Neue Informationen hinzufügen
+- PM-Strukturen erstellen
+- Den Kontext zu verändern
+
+Antworte NUR mit der umformulierten markierten Stelle!`;
+            userPrompt = `GESAMTER TEXT:\n${fullDocument}\n\nMARKIERTE STELLE ZUM UMFORMULIEREN:\n${text}`;
+          } else {
+            // Fallback: Original-Prompt ohne Kontext
+            systemPrompt = `Du bist ein Synonym-Experte. Ersetze Wörter durch Synonyme - MEHR NICHT!
 
 ❌ DU DARFST NICHT:
 - Neue Sätze hinzufügen
@@ -262,9 +256,29 @@ Umformuliert: "Das Unternehmen stellt Dienstleistungen bereit."
 
 Antworte NUR mit dem umformulierten Text - keine Erklärungen!`;
           userPrompt = `Synonym-Austausch für ${text.split(' ').length} Wörter:\n\n${text}`;
+          }
           break;
         case 'shorten':
-          systemPrompt = `Du bist ein professioneller Textredakteur. Analysiere die Tonalität und kürze dann um ca. 30%.
+          if (hasFullContext) {
+            // NEU: Mit Volltext-Kontext
+            systemPrompt = `Du bist ein professioneller Textredakteur. Du siehst den GESAMTEN Text und sollst NUR die markierte Stelle kürzen.
+
+KONTEXT-ANALYSE:
+1. Verstehe die Funktion der markierten Stelle im Gesamttext
+2. Erkenne welche Informationen essentiell sind
+3. Behalte den Stil des Gesamttextes
+
+KÜRZEN DER MARKIERTEN STELLE (ca. 30%):
+- Entferne Redundanzen und Füllwörter
+- Behalte alle wichtigen Fakten
+- Bewahre die Kernaussage
+- Halte die Tonalität des Gesamttextes
+
+Antworte NUR mit der gekürzten markierten Stelle!`;
+            userPrompt = `GESAMTER TEXT:\n${fullDocument}\n\nMARKIERTE STELLE ZUM KÜRZEN:\n${text}`;
+          } else {
+            // Fallback: Original-Prompt
+            systemPrompt = `Du bist ein professioneller Textredakteur. Analysiere die Tonalität und kürze dann um ca. 30%.
 
 SCHRITT 1 - TONALITÄT ERKENNEN:
 - Sachlich/Professionell: Fakten, neutrale Sprache, B2B-Kontext
@@ -278,10 +292,30 @@ SCHRITT 2 - KÜRZEN:
 - Gleiche Struktur beibehalten
 
 Antworte NUR mit dem gekürzten Text.`;
-          userPrompt = `Analysiere die Tonalität und kürze dann:\n\n${text}`;
+            userPrompt = `Analysiere die Tonalität und kürze dann:\n\n${text}`;
+          }
           break;
         case 'expand':
-          systemPrompt = `Du bist ein professioneller Content-Writer. Analysiere die Tonalität und erweitere dann um ca. 50%.
+          if (hasFullContext) {
+            // NEU: Mit Volltext-Kontext
+            systemPrompt = `Du bist ein professioneller Content-Writer. Du siehst den GESAMTEN Text und sollst NUR die markierte Stelle erweitern.
+
+KONTEXT-ANALYSE:
+1. Verstehe den Zweck und Stil des Gesamttextes
+2. Erkenne welche Details zur markierten Stelle passen würden
+3. Behalte die Tonalität des Gesamttextes
+
+ERWEITERN DER MARKIERTEN STELLE (ca. 50%):
+- Füge relevante Details hinzu die zum Kontext passen
+- Ergänze sinnvolle Informationen
+- Bewahre den Schreibstil
+- Halte die Struktur konsistent
+
+Antworte NUR mit der erweiterten markierten Stelle!`;
+            userPrompt = `GESAMTER TEXT:\n${fullDocument}\n\nMARKIERTE STELLE ZUM ERWEITERN:\n${text}`;
+          } else {
+            // Fallback: Original-Prompt
+            systemPrompt = `Du bist ein professioneller Content-Writer. Analysiere die Tonalität und erweitere dann um ca. 50%.
 
 SCHRITT 1 - TONALITÄT ERKENNEN:
 - Sachlich/Professionell: Fakten, neutrale Sprache, B2B-Kontext
@@ -295,7 +329,8 @@ SCHRITT 2 - ERWEITERN:
 - Gleiche Struktur beibehalten
 
 Antworte NUR mit dem erweiterten Text.`;
-          userPrompt = `Analysiere die Tonalität und erweitere dann:\n\n${text}`;
+            userPrompt = `Analysiere die Tonalität und erweitere dann:\n\n${text}`;
+          }
           break;
         default:
           return text;
@@ -350,7 +385,7 @@ Antworte NUR mit dem erweiterten Text.`;
       console.error('KI-Aktion fehlgeschlagen:', error);
       return text;
     }
-  }, [onAIAction]);
+  }, [onAIAction, editor]);
 
   const handleToneChange = useCallback(async (tone: string) => {
     if (!editor || !selectedText) return;
@@ -369,8 +404,34 @@ Antworte NUR mit dem erweiterten Text.`;
       to = currentSelection.to;
     }
     
+    // Hole den kompletten Dokument-Kontext
+    const fullDocument = editor.getHTML() || '';
+    const hasFullContext = fullDocument.length > 0 && fullDocument.length > selectedText.length;
+    
     try {
-      const systemPrompt = `Du bist ein professioneller Texter. Analysiere die aktuelle Tonalität und ändere sie dann gezielt.
+      let systemPrompt = '';
+      let userPrompt = '';
+      
+      if (hasFullContext) {
+        // NEU: Mit Volltext-Kontext
+        systemPrompt = `Du bist ein professioneller Texter. Du siehst den GESAMTEN Text und sollst NUR die Tonalität der markierten Stelle ändern.
+
+KONTEXT-ANALYSE:
+1. Verstehe den Gesamttext und seine Zielgruppe
+2. Erkenne die aktuelle Tonalität der markierten Stelle
+3. Ändere NUR die Tonalität zu: ${tone}
+
+TON-ÄNDERUNG DER MARKIERTEN STELLE:
+- Ändere Wortwahl und Stil zum gewünschten Ton
+- Behalte alle Informationen bei
+- Halte die Länge ähnlich
+- Passe nahtlos zum Rest des Textes
+
+Antworte NUR mit der umformulierten markierten Stelle!`;
+        userPrompt = `GESAMTER TEXT:\n${fullDocument}\n\nMARKIERTE STELLE (Ton ändern zu ${tone}):\n${selectedText}`;
+      } else {
+        // Fallback: Original-Prompt
+        systemPrompt = `Du bist ein professioneller Texter. Analysiere die aktuelle Tonalität und ändere sie dann gezielt.
 
 SCHRITT 1 - AKTUELLE TONALITÄT ERKENNEN:
 - Sachlich/Professionell: Fakten, neutrale Sprache
@@ -385,10 +446,10 @@ SCHRITT 2 - TONALITÄT ÄNDERN:
 - Keine neuen Headlines hinzufügen
 
 Antworte NUR mit dem Text im neuen Ton.`;
-
-      const userPrompt = `Analysiere die aktuelle Tonalität und ändere sie zu ${tone}:\n\n${selectedText}`;
+        userPrompt = `Analysiere die aktuelle Tonalität und ändere sie zu ${tone}:\n\n${selectedText}`;
+      }
       
-      console.log(`🎵 Ton-Änderung zu "${tone}" (direkt):`, userPrompt.substring(0, 100) + '...');
+      console.log(`🎵 Ton-Änderung zu "${tone}" (${hasFullContext ? 'mit Kontext' : 'ohne Kontext'}):`, userPrompt.substring(0, 100) + '...');
       
       const response = await fetch('/api/ai/generate', {
         method: 'POST',
