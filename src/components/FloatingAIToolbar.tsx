@@ -851,13 +851,17 @@ Antworte NUR mit dem Text im neuen Ton.`;
     editor.on('selectionUpdate', handleSelectionUpdate);
     editor.on('blur', () => {
       // Cleanup bei Blur
+      console.log('📝 EDITOR BLUR - verstecke Toolbar in 200ms');
       clearTimeout(selectionTimeout);
       
       // Verzögertes Ausblenden beim Verlassen des Editors
       hideTimeoutRef.current = setTimeout(() => {
-        if (!isInteracting) {
+        if (!isInteracting && !inputProtection) {
+          console.log('🚫 Verstecke Toolbar - Editor Blur');
           setIsVisible(false);
           setShowToneDropdown(false);
+        } else {
+          console.log('🛡️ Editor-Blur blockiert:', { isInteracting, inputProtection });
         }
       }, 200);
     });
@@ -1108,8 +1112,14 @@ REGELN:
         transform: 'translateX(-50%)',
         minWidth: '520px'
       }}
-      onMouseEnter={() => setIsInteracting(true)}
-      onMouseLeave={() => setIsInteracting(false)}
+      onMouseEnter={() => {
+        console.log('🐭 TOOLBAR MOUSE ENTER - isInteracting = true');
+        setIsInteracting(true);
+      }}
+      onMouseLeave={() => {
+        console.log('🐭 TOOLBAR MOUSE LEAVE - isInteracting = false');
+        setIsInteracting(false);
+      }}
       onMouseDown={(e) => {
         // NUR Buttons sollen preventDefault haben, Input-Bereich NICHT
         const target = e.target as HTMLElement;
