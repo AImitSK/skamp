@@ -59,11 +59,24 @@ export const GmailStyleToolbar = ({ editor }: GmailStyleToolbarProps) => {
       shortcut: 'Strg+U'
     },
     { 
-      command: 'toggleBulletList', 
+      command: () => editor.chain().focus().toggleBulletList().run(), 
       icon: ListBulletIcon, 
       label: 'Aufzählung', 
       activeName: 'bulletList',
-      shortcut: 'Strg+Shift+8'
+      shortcut: 'Strg+Shift+8',
+      isActive: () => editor.isActive('bulletList')
+    },
+    { 
+      command: () => editor.chain().focus().toggleOrderedList().run(), 
+      icon: () => (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+        </svg>
+      ), 
+      label: 'Nummerierte Liste', 
+      activeName: 'orderedList',
+      shortcut: 'Strg+Shift+7',
+      isActive: () => editor.isActive('orderedList')
     },
   ];
 
@@ -198,11 +211,11 @@ export const GmailStyleToolbar = ({ editor }: GmailStyleToolbarProps) => {
                 'p-2 w-8 h-8 flex items-center justify-center rounded transition-colors',
                 // CeleroPress Design Pattern: Primary-Farben
                 {
-                  'bg-[#005fab] text-white': typeof action.activeName === 'string' ? 
-                    editor.isActive(action.activeName) : 
+                  'bg-[#005fab] text-white': action.isActive ? 
+                    action.isActive() : 
                     editor.isActive(action.activeName),
-                  'hover:bg-gray-100 text-gray-700': typeof action.activeName === 'string' ? 
-                    !editor.isActive(action.activeName) : 
+                  'hover:bg-gray-100 text-gray-700': action.isActive ? 
+                    !action.isActive() : 
                     !editor.isActive(action.activeName),
                   'text-gray-400 cursor-not-allowed': typeof action.command === 'string' ? 
                     !(editor.can() as any)[action.command]() : false

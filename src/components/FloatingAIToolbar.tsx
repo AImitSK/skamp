@@ -43,8 +43,10 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
   const [selectedText, setSelectedText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showToneDropdown, setShowToneDropdown] = useState(false);
+  const [isInteracting, setIsInteracting] = useState(false);
   const toolbarRef = useRef<HTMLDivElement>(null);
   const hideTimeoutRef = useRef<NodeJS.Timeout>();
+  const lastSelectionRef = useRef<{ from: number; to: number } | null>(null);
 
   // Default KI-Action Handler falls keiner übergeben wurde
   const handleAIAction = useCallback(async (action: AIAction, text: string): Promise<string> => {
@@ -141,12 +143,16 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
     if (!editor) return;
 
     const handleSelectionUpdate = () => {
+      // Nicht updaten wenn User gerade mit der Toolbar interagiert
+      if (isInteracting) return;
+      
       const { from, to } = editor.state.selection;
       const text = editor.state.doc.textBetween(from, to);
       
       // Nur anzeigen wenn Text markiert ist (mindestens 3 Zeichen)
       if (text.length > 2) {
         setSelectedText(text);
+        lastSelectionRef.current = { from, to };
         
         // Position berechnen
         const selection = window.getSelection();
@@ -166,9 +172,12 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
         }
       } else {
         // Toolbar ausblenden wenn keine Selektion
+        lastSelectionRef.current = null;
         hideTimeoutRef.current = setTimeout(() => {
-          setIsVisible(false);
-          setShowToneDropdown(false);
+          if (!isInteracting) {
+            setIsVisible(false);
+            setShowToneDropdown(false);
+          }
         }, 200);
       }
     };
@@ -177,8 +186,10 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
     editor.on('blur', () => {
       // Verzögertes Ausblenden beim Verlassen des Editors
       hideTimeoutRef.current = setTimeout(() => {
-        setIsVisible(false);
-        setShowToneDropdown(false);
+        if (!isInteracting) {
+          setIsVisible(false);
+          setShowToneDropdown(false);
+        }
       }, 200);
     });
 
@@ -186,18 +197,23 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
       editor.off('selectionUpdate', handleSelectionUpdate);
       clearTimeout(hideTimeoutRef.current);
     };
-  }, [editor]);
+  }, [editor, isInteracting]);
 
-  // Click-Outside Handler
+  // Click-Outside Handler - nur für Dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      // Prüfe ob Klick außerhalb der Toolbar - nur Dropdown schließen
       if (toolbarRef.current && !toolbarRef.current.contains(event.target as Node)) {
         setShowToneDropdown(false);
+        // NICHT die ganze Toolbar ausblenden - nur wenn Text-Selektion verloren geht
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   if (!isVisible || !editor) return null;
@@ -216,6 +232,8 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
         left: `${position.left}px`,
         transform: 'translateX(-50%)',
       }}
+      onMouseEnter={() => setIsInteracting(true)}
+      onMouseLeave={() => setIsInteracting(false)}
       onMouseDown={(e) => e.preventDefault()} // Verhindert Verlust der Text-Selection
     >
       {/* Umformulieren */}
