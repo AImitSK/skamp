@@ -284,7 +284,27 @@ Antworte NUR mit dem Text im neuen Ton.`;
         .insertContent(newText)
         .run();
       
-      setIsVisible(false);
+      // Kurz warten, dann neue Selection setzen für potentielle Weiterbearbeitung  
+      setTimeout(() => {
+        const newTo = from + newText.replace(/<[^>]*>/g, '').length;
+        try {
+          editor.chain()
+            .setTextSelection({ from, to: newTo })
+            .run();
+          
+          // Selection-State für Toolbar aktualisieren
+          const plainText = editor.state.doc.textBetween(from, newTo);
+          setSelectedText(plainText);
+          lastSelectionRef.current = { from, to: newTo };
+          
+          // Toolbar wieder anzeigen
+          setIsVisible(true);
+        } catch (error) {
+          console.log('Selection update failed:', error);
+          // Toolbar verstecken wenn Selection fehlschlägt
+          setIsVisible(false);
+        }
+      }, 100);
     } catch (error) {
       console.error('Ton-Änderung fehlgeschlagen:', error);
     } finally {
@@ -327,7 +347,27 @@ Antworte NUR mit dem Text im neuen Ton.`;
         .insertContent(newText)
         .run();
       
-      setIsVisible(false);
+      // Kurz warten, dann neue Selection setzen für potentielle Weiterbearbeitung  
+      setTimeout(() => {
+        const newTo = from + newText.replace(/<[^>]*>/g, '').length;
+        try {
+          editor.chain()
+            .setTextSelection({ from, to: newTo })
+            .run();
+          
+          // Selection-State für Toolbar aktualisieren
+          const plainText = editor.state.doc.textBetween(from, newTo);
+          setSelectedText(plainText);
+          lastSelectionRef.current = { from, to: newTo };
+          
+          // Toolbar wieder anzeigen
+          setIsVisible(true);
+        } catch (error) {
+          console.log('Selection update failed:', error);
+          // Toolbar verstecken wenn Selection fehlschlägt
+          setIsVisible(false);
+        }
+      }, 100);
     } catch (error) {
       console.error('Aktion fehlgeschlagen:', error);
     } finally {
