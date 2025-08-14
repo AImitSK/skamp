@@ -128,43 +128,58 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
       
       switch (action) {
         case 'rephrase':
-          systemPrompt = `Du bist ein professioneller Texter. Formuliere Texte um, ohne die Struktur zu verändern.
+          systemPrompt = `Du bist ein professioneller Texter. Analysiere erst die Tonalität des Textes und formuliere dann um.
 
-WICHTIGE REGELN:
+SCHRITT 1 - TONALITÄT ERKENNEN:
+- Sachlich/Professionell: Fakten, neutrale Sprache, B2B-Kontext
+- Verkäuferisch: Superlative, Werbesprache, Call-to-Actions  
+- Emotional: Persönliche Ansprache, Gefühle, Stories
+- Technisch: Fachbegriffe, Spezifikationen, Details
+
+SCHRITT 2 - UMFORMULIEREN:
 - Verwende andere Worte und Satzstrukturen
-- Behalte die Kernaussage bei
-- Ähnliche Textlänge wie das Original (nicht länger/kürzer)
-- Vorhandene Formatierungen (fett/kursiv) nur übernehmen wenn im Original vorhanden
+- BEHALTE die erkannte Tonalität exakt bei
+- Ähnliche Textlänge wie das Original
+- Gleiche Verkaufsstärke/Sachlichkeit beibehalten
 - Vorhandene Überschriften umformulieren, aber keine neuen hinzufügen
 - Gleiche Anzahl Absätze beibehalten
-- Nur eine Leerzeile zwischen Absätzen
 
-Antworte NUR mit dem umformulierten Text.`;
-          userPrompt = `Formuliere diesen Text um:\n\n${text}`;
+Antworte NUR mit dem umformulierten Text (nicht die Analyse).`;
+          userPrompt = `Analysiere die Tonalität und formuliere dann um:\n\n${text}`;
           break;
         case 'shorten':
-          systemPrompt = `Du bist ein professioneller Textredakteur. Kürze Texte um ca. 30%.
+          systemPrompt = `Du bist ein professioneller Textredakteur. Analysiere die Tonalität und kürze dann um ca. 30%.
 
-REGELN:
+SCHRITT 1 - TONALITÄT ERKENNEN:
+- Sachlich/Professionell: Fakten, neutrale Sprache, B2B-Kontext
+- Verkäuferisch: Superlative, Werbesprache, Call-to-Actions
+- Emotional: Persönliche Ansprache, Gefühle, Stories
+
+SCHRITT 2 - KÜRZEN:
 - Entferne unnötige Details und Wiederholungen
+- BEHALTE die erkannte Tonalität und Verkaufsstärke
 - Behalte alle wichtigen Informationen und Kernaussage
 - Gleiche Struktur beibehalten
-- Nur eine Leerzeile zwischen Absätzen
 
 Antworte NUR mit dem gekürzten Text.`;
-          userPrompt = `Kürze diesen Text:\n\n${text}`;
+          userPrompt = `Analysiere die Tonalität und kürze dann:\n\n${text}`;
           break;
         case 'expand':
-          systemPrompt = `Du bist ein professioneller Content-Writer. Erweitere Texte um ca. 50%.
+          systemPrompt = `Du bist ein professioneller Content-Writer. Analysiere die Tonalität und erweitere dann um ca. 50%.
 
-REGELN:
-- Füge konkrete Details, Beispiele und weiterführende Informationen hinzu
-- Mache ihn informativer und ausführlicher
+SCHRITT 1 - TONALITÄT ERKENNEN:
+- Sachlich/Professionell: Fakten, neutrale Sprache, B2B-Kontext
+- Verkäuferisch: Superlative, Werbesprache, Call-to-Actions
+- Emotional: Persönliche Ansprache, Gefühle, Stories
+
+SCHRITT 2 - ERWEITERN:
+- Füge passende Details und Informationen hinzu
+- BEHALTE die erkannte Tonalität exakt bei
+- Mache ihn informativer im gleichen Stil
 - Gleiche Struktur beibehalten
-- Nur eine Leerzeile zwischen Absätzen
 
 Antworte NUR mit dem erweiterten Text.`;
-          userPrompt = `Erweitere diesen Text:\n\n${text}`;
+          userPrompt = `Analysiere die Tonalität und erweitere dann:\n\n${text}`;
           break;
         default:
           return text;
@@ -212,19 +227,23 @@ Antworte NUR mit dem erweiterten Text.`;
     const { from, to } = currentSelection;
     
     try {
-      const systemPrompt = `Du bist ein professioneller Texter. Ändere nur den Ton eines Textes.
+      const systemPrompt = `Du bist ein professioneller Texter. Analysiere die aktuelle Tonalität und ändere sie dann gezielt.
 
-WICHTIGE REGELN:
+SCHRITT 1 - AKTUELLE TONALITÄT ERKENNEN:
+- Sachlich/Professionell: Fakten, neutrale Sprache
+- Verkäuferisch: Superlative, Werbesprache
+- Emotional: Persönliche Ansprache, Gefühle
+
+SCHRITT 2 - TONALITÄT ÄNDERN:
+- Ändere nur Wortwahl und Stil zum gewünschten Ton: ${tone}
 - Behalte den Inhalt und die Struktur exakt bei
-- Ändere nur Wortwahl und Stil entsprechend dem gewünschten Ton
 - Ähnliche Textlänge wie das Original
 - Gleiche Anzahl Absätze beibehalten
-- Nur eine Leerzeile zwischen Absätzen
 - Keine neuen Headlines hinzufügen
 
 Antworte NUR mit dem Text im neuen Ton.`;
 
-      const userPrompt = `Ändere den Ton dieses Textes zu ${tone}:\n\n${selectedText}`;
+      const userPrompt = `Analysiere die aktuelle Tonalität und ändere sie zu ${tone}:\n\n${selectedText}`;
       
       console.log(`🎵 Ton-Änderung zu "${tone}" (direkt):`, userPrompt.substring(0, 100) + '...');
       
