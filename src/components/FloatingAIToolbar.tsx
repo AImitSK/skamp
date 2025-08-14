@@ -166,9 +166,9 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
             left: rect.left + (rect.width / 2) // Zentriert über der Markierung
           });
           
-          // Verzögert anzeigen für smoothe Animation
+          // Verzögert anzeigen (300ms damit Maus Zeit hat näher zu kommen)
           clearTimeout(hideTimeoutRef.current);
-          setTimeout(() => setIsVisible(true), 100);
+          setTimeout(() => setIsVisible(true), 300);
         }
       } else {
         // Toolbar ausblenden wenn keine Selektion
@@ -199,22 +199,75 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
     };
   }, [editor, isInteracting]);
 
-  // Click-Outside Handler - nur für Dropdown
+  // Click-Outside und Mouse-Distance Handler
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      // Prüfe ob Klick außerhalb der Toolbar - nur Dropdown schließen
+      // Prüfe ob Klick außerhalb der Toolbar
       if (toolbarRef.current && !toolbarRef.current.contains(event.target as Node)) {
         setShowToneDropdown(false);
-        // NICHT die ganze Toolbar ausblenden - nur wenn Text-Selektion verloren geht
+        
+        // Prüfe ob Klick auch außerhalb des Editors ist
+        const editorElement = editor?.view.dom;
+        if (editorElement && !editorElement.contains(event.target as Node)) {
+          // Klick außerhalb Editor - Toolbar verstecken
+          // Aber sie kann wieder erscheinen bei neuer Selektion
+          setIsVisible(false);
+          setSelectedText('');
+        }
+      }
+    };
+
+    // Mouse-Distance Check - nur wenn Toolbar sichtbar ist
+    const handleMouseMove = (event: MouseEvent) => {
+      if (!isVisible || !toolbarRef.current || isInteracting) return;
+      
+      const toolbarRect = toolbarRef.current.getBoundingClientRect();
+      const mouseX = event.clientX;
+      const mouseY = event.clientY;
+      
+      // Berechne Distanz zur Toolbar (größere Toleranz)
+      const tolerance = 200; // 200px Toleranz-Bereich
+      const isNearToolbar = 
+        mouseX >= toolbarRect.left - tolerance &&
+        mouseX <= toolbarRect.right + tolerance &&
+        mouseY >= toolbarRect.top - tolerance &&
+        mouseY <= toolbarRect.bottom + tolerance;
+      
+      // Prüfe auch ob Maus über dem Editor ist
+      const editorElement = editor?.view.dom;
+      let isOverEditor = false;
+      if (editorElement) {
+        const editorRect = editorElement.getBoundingClientRect();
+        isOverEditor = 
+          mouseX >= editorRect.left &&
+          mouseX <= editorRect.right &&
+          mouseY >= editorRect.top &&
+          mouseY <= editorRect.bottom;
+      }
+      
+      // Toolbar ausblenden wenn Maus zu weit weg UND nicht über Editor
+      if (!isNearToolbar && !isOverEditor) {
+        hideTimeoutRef.current = setTimeout(() => {
+          if (!isInteracting) {
+            setIsVisible(false);
+            setShowToneDropdown(false);
+          }
+        }, 800); // Längere Verzögerung
+      } else {
+        // Maus ist nah genug oder über Editor - Cancel Hide
+        clearTimeout(hideTimeoutRef.current);
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('mousemove', handleMouseMove);
     
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('mousemove', handleMouseMove);
+      clearTimeout(hideTimeoutRef.current);
     };
-  }, []);
+  }, [editor, isVisible, isInteracting]);
 
   if (!isVisible || !editor) return null;
 
