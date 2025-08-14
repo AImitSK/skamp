@@ -60,31 +60,40 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
       
       switch (action) {
         case 'rephrase':
-          prompt = `Formuliere den folgenden Text um, behalte aber die Kernaussage bei: "${text}"`;
+          prompt = `Formuliere den folgenden Text komplett um, verwende andere Worte und Satzstrukturen, aber behalte die Kernaussage bei: "${text}"`;
           break;
         case 'shorten':
-          prompt = `Kürze den folgenden Text auf das Wesentliche: "${text}"`;
+          prompt = `Kürze den folgenden Text um mindestens 30%, entferne unnötige Details aber behalte die wichtigsten Informationen: "${text}"`;
           break;
         case 'expand':
-          prompt = `Erweitere den folgenden Text mit mehr Details und Kontext: "${text}"`;
+          prompt = `Erweitere den folgenden Text um mindestens 50%, füge konkrete Details, Beispiele und weiterführende Informationen hinzu: "${text}"`;
           break;
         case 'seo-optimize':
-          prompt = `Optimiere den folgenden Text für SEO, füge relevante Keywords hinzu: "${text}"`;
+          prompt = `Optimiere den folgenden Text für SEO: Füge relevante Keywords für B2B-Marketing, Online-Marketing und Digitalagentur hinzu, verbessere die Struktur und mache den Text suchmaschinenfreundlicher: "${text}"`;
           break;
         default:
           return text;
       }
 
+      console.log(`🤖 KI-${action}:`, prompt.substring(0, 100) + '...');
+      
       const response = await fetch('/api/ai/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt })
       });
 
-      if (!response.ok) throw new Error('KI-Anfrage fehlgeschlagen');
+      if (!response.ok) {
+        console.error('KI-API Error:', response.status, response.statusText);
+        throw new Error('KI-Anfrage fehlgeschlagen');
+      }
       
       const data = await response.json();
-      return data.text || text;
+      const result = data.text || text;
+      
+      console.log(`✅ KI-Antwort (${result.length} Zeichen):`, result.substring(0, 100) + '...');
+      
+      return result;
     } catch (error) {
       console.error('KI-Aktion fehlgeschlagen:', error);
       return text;
@@ -102,27 +111,32 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
     const { from, to } = currentSelection;
     
     try {
-      const prompt = `Ändere den Ton des folgenden Textes zu ${tone}: "${selectedText}"`;
+      const prompt = `Ändere den Ton des folgenden Textes zu ${tone}, behalte den Inhalt aber ändere die Wortwahl und den Stil entsprechend: "${selectedText}"`;
+      
+      console.log(`🎵 Ton-Änderung zu "${tone}":`, prompt.substring(0, 100) + '...');
+      
       const response = await fetch('/api/ai/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt })
       });
 
-      if (!response.ok) throw new Error('KI-Anfrage fehlgeschlagen');
+      if (!response.ok) {
+        console.error('Ton-Änderung API Error:', response.status, response.statusText);
+        throw new Error('KI-Anfrage fehlgeschlagen');
+      }
       
       const data = await response.json();
       const newText = data.text || selectedText;
       
       console.log('🎵 Ton geändert:', { from, to, tone, newTextLength: newText.length });
       
-      // Text direkt mit Transaction ersetzen
+      // Text mit HTML-Formatierung ersetzen
       editor.chain()
         .focus()
-        .command(({ tr, state }) => {
-          tr.replaceWith(from, to, state.schema.text(newText));
-          return true;
-        })
+        .setTextSelection({ from, to })
+        .deleteSelection()
+        .insertContent(newText)
         .run();
       
       setIsVisible(false);
@@ -153,14 +167,12 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
         newTextLength: newText.length 
       });
       
-      // Text direkt mit den gespeicherten Positionen ersetzen
+      // Text mit HTML-Formatierung ersetzen
       editor.chain()
         .focus()
-        .command(({ tr, state }) => {
-          // Direkte Text-Ersetzung mit Transaction
-          tr.replaceWith(from, to, state.schema.text(newText));
-          return true;
-        })
+        .setTextSelection({ from, to })
+        .deleteSelection()
+        .insertContent(newText)
         .run();
       
       setIsVisible(false);
