@@ -842,7 +842,7 @@ Antworte NUR mit dem Text im neuen Ton.`;
             setIsVisible(false);
             setShowToneDropdown(false);
           } else {
-            console.log('🛡️ Selection-Hide blockiert:', { isInteracting, inputProtectionRef.current });
+            console.log('🛡️ Selection-Hide blockiert:', { isInteracting, inputProtection: inputProtectionRef.current });
           }
         }, 200);
       }
@@ -861,7 +861,7 @@ Antworte NUR mit dem Text im neuen Ton.`;
           setIsVisible(false);
           setShowToneDropdown(false);
         } else {
-          console.log('🛡️ Editor-Blur blockiert:', { isInteracting, inputProtectionRef.current });
+          console.log('🛡️ Editor-Blur blockiert:', { isInteracting, inputProtection: inputProtectionRef.current });
         }
       }, 200);
     });
@@ -973,7 +973,7 @@ Antworte NUR mit dem Text im neuen Ton.`;
             setIsVisible(false);
             setShowToneDropdown(false);
           } else {
-            console.log('🛡️ Hide-Timer blockiert:', { isInteracting, inputProtectionRef.current });
+            console.log('🛡️ Hide-Timer blockiert:', { isInteracting, inputProtection: inputProtectionRef.current });
           }
         }, 800); // Längere Verzögerung
       } else {
