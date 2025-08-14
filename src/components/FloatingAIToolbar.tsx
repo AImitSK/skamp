@@ -60,12 +60,18 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
         case 'rephrase':
           prompt = `Formuliere den folgenden Text um. Verwende andere Worte und Satzstrukturen, aber behalte die Kernaussage und die ursprüngliche Textlänge bei. 
 
-WICHTIGE REGELN:
-- Keine Headlines oder Überschriften hinzufügen
-- Nur eine Leerzeile zwischen Absätzen
+WICHTIGE FORMATIERUNGS-REGELN:
+- Vorhandene Überschriften umformulieren, aber keine neuen hinzufügen
+- Maximal EINE Leerzeile zwischen Absätzen (nicht 3 oder 4!)
+- Keine Leerzeile vor dem ersten Absatz
 - Ähnliche Textlänge wie das Original
-- Gleiche Struktur beibehalten
+- Gleiche Struktur beibehalten (gleiche Anzahl Absätze)
 - Nur umformulieren, nicht erweitern
+
+FORMAT-BEISPIEL:
+Absatz 1 text hier.
+
+Absatz 2 text hier.
 
 Text: "${text}"`;
           break;
