@@ -534,6 +534,7 @@ Der markierte Text enthält eine Anweisung oder ein Briefing. Erstelle NUR Flie�
       }
       
       console.log(`✅ KI-Antwort bereinigt (${result.length} Zeichen, ${result.split(' ').length} Wörter):`, result.substring(0, 100) + '...');
+      console.log(`📄 VOLLSTÄNDIGE KI-AUSGABE:`, result);
       
       return result;
     } catch (error) {
