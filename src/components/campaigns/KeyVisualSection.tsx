@@ -184,7 +184,7 @@ export function KeyVisualSection({
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-3">
             <Button
               onClick={handleEditKeyVisual}
-              className="bg-white hover:bg-gray-50 text-gray-900 border border-gray-200 shadow-sm px-4 py-2 font-medium"
+              className="bg-white hover:bg-gray-50 text-gray-900 border-2 border-gray-800 shadow-lg px-4 py-2 font-bold"
             >
               <PencilIcon className="h-4 w-4 mr-2" />
               Bearbeiten

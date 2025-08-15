@@ -159,6 +159,9 @@ export const prService = {
       if (campaignData.approvalData) {
         dataToSave.approvalData = removeUndefinedValues(campaignData.approvalData);
       }
+      if (campaignData.keyVisual) {
+        dataToSave.keyVisual = removeUndefinedValues(campaignData.keyVisual);
+      }
       if (campaignData.scheduledAt) {
         dataToSave.scheduledAt = campaignData.scheduledAt;
       }
