@@ -103,12 +103,30 @@ export function KeyVisualSection({
     }
   };
 
-  const handleAssetSelected = (assets: any[]) => {
+  const handleAssetSelected = async (assets: any[]) => {
     if (assets.length > 0 && assets[0].type === 'asset') {
-      // Asset aus Media Library ausgewählt - zum Cropper
+      // Asset aus Media Library ausgewählt - lade als Data URL für CORS-freies Cropping
       const asset = assets[0];
-      setSelectedImageSrc(asset.metadata.thumbnailUrl);
-      setShowCropper(true);
+      
+      try {
+        // Lade das Bild als Blob
+        const response = await fetch(asset.metadata.thumbnailUrl);
+        const blob = await response.blob();
+        
+        // Konvertiere zu Data URL (wie bei direktem Upload)
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          if (e.target?.result) {
+            setSelectedImageSrc(e.target.result as string);
+            setShowCropper(true);
+          }
+        };
+        reader.readAsDataURL(blob);
+        
+      } catch (error) {
+        console.error('Fehler beim Laden des Bildes:', error);
+        alert('Fehler beim Laden des Bildes aus der Media Library');
+      }
     }
   };
 

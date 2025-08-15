@@ -15,83 +15,64 @@ interface KeyVisualCropperProps {
   isProcessing?: boolean;
 }
 
-// Canvas utility für das 16:9 Cropping mit CORS-Handling
+// Canvas utility für das 16:9 Cropping (vereinfacht, da wir Data URLs verwenden)
 function getCroppedImg(
   image: HTMLImageElement,
   crop: PixelCrop,
   fileName: string = 'key-visual.jpg'
 ): Promise<{ file: File; cropData: any }> {
-  return new Promise((resolve, reject) => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
 
-    if (!ctx) {
-      reject(new Error('Canvas context not available'));
-      return;
-    }
+  if (!ctx) {
+    throw new Error('Canvas context not available');
+  }
 
-    // Neues Image Element für CORS-sicheres Laden
-    const corsImage = new Image();
-    corsImage.crossOrigin = 'anonymous';
-    
-    corsImage.onload = () => {
-      try {
-        const scaleX = corsImage.naturalWidth / image.width;
-        const scaleY = corsImage.naturalHeight / image.height;
+  const scaleX = image.naturalWidth / image.width;
+  const scaleY = image.naturalHeight / image.height;
 
-        // Key Visual Größe: 1920x1080 (16:9) für hohe Qualität
-        const targetWidth = 1920;
-        const targetHeight = 1080;
-        canvas.width = targetWidth;
-        canvas.height = targetHeight;
+  // Key Visual Größe: 1920x1080 (16:9) für hohe Qualität
+  const targetWidth = 1920;
+  const targetHeight = 1080;
+  canvas.width = targetWidth;
+  canvas.height = targetHeight;
 
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
 
-        ctx.drawImage(
-          corsImage,
-          crop.x * scaleX,
-          crop.y * scaleY,
-          crop.width * scaleX,
-          crop.height * scaleY,
-          0,
-          0,
-          targetWidth,
-          targetHeight
-        );
+  ctx.drawImage(
+    image,
+    crop.x * scaleX,
+    crop.y * scaleY,
+    crop.width * scaleX,
+    crop.height * scaleY,
+    0,
+    0,
+    targetWidth,
+    targetHeight
+  );
 
-        // Crop-Daten für spätere Wiederverwendung speichern
-        const cropData = {
-          x: crop.x,
-          y: crop.y,
-          width: crop.width,
-          height: crop.height,
-          unit: crop.unit
-        };
+  // Crop-Daten für spätere Wiederverwendung speichern
+  const cropData = {
+    x: crop.x,
+    y: crop.y,
+    width: crop.width,
+    height: crop.height,
+    unit: crop.unit
+  };
 
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) {
-              reject(new Error('Canvas toBlob failed'));
-              return;
-            }
-            const file = new File([blob], fileName, { type: 'image/jpeg' });
-            resolve({ file, cropData });
-          },
-          'image/jpeg',
-          0.9 // Hohe Qualität
-        );
-      } catch (error) {
-        reject(error);
-      }
-    };
-
-    corsImage.onerror = () => {
-      reject(new Error('Failed to load image with CORS'));
-    };
-
-    // Lade das Bild neu mit CORS
-    corsImage.src = image.src;
+  return new Promise((resolve) => {
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          throw new Error('Canvas toBlob failed');
+        }
+        const file = new File([blob], fileName, { type: 'image/jpeg' });
+        resolve({ file, cropData });
+      },
+      'image/jpeg',
+      0.9 // Hohe Qualität
+    );
   });
 }
 
@@ -172,7 +153,6 @@ export function KeyVisualCropper({ src, onCropComplete, onCancel, isProcessing }
                 src={src}
                 style={{ maxWidth: '100%', maxHeight: '500px' }}
                 onLoad={onImageLoad}
-                crossOrigin="anonymous"
               />
             </ReactCrop>
           </div>
