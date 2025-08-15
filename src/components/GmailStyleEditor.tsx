@@ -149,6 +149,7 @@ const CustomTextAlign = Extension.create({
 
 import { GmailStyleToolbar } from './GmailStyleToolbar';
 import { FloatingAIToolbar } from './FloatingAIToolbar';
+import { SEOHeaderBar } from './campaigns/SEOHeaderBar';
 
 // Debounce utility function
 function debounce<T extends (...args: any[]) => any>(
@@ -172,6 +173,8 @@ interface GmailStyleEditorProps {
   className?: string;
   title?: string;
   onTitleChange?: (title: string) => void;
+  showSEOFeatures?: boolean; // Neue SEO-Features aktivieren
+  seoTitle?: string; // SEO-spezifischer Titel für Header
 }
 
 export const GmailStyleEditor = ({ 
@@ -183,11 +186,16 @@ export const GmailStyleEditor = ({
   onAutoSave,
   className,
   title = '',
-  onTitleChange
+  onTitleChange,
+  showSEOFeatures = false,
+  seoTitle = "PR-Kampagne erstellen"
 }: GmailStyleEditorProps) => {
   
   // Fullscreen state
   const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  // SEO Features state
+  const [keywords, setKeywords] = useState<string[]>([]);
   
   // Auto-save functionality
   const debouncedAutoSave = useCallback(
@@ -335,7 +343,7 @@ export const GmailStyleEditor = ({
       )}
 
       {/* Floating AI Toolbar - immer da */}
-      <FloatingAIToolbar editor={editor} />
+      <FloatingAIToolbar editor={editor} keywords={keywords} />
       
       {/* Titel-Bereich */}
       {onTitleChange && (
@@ -348,6 +356,16 @@ export const GmailStyleEditor = ({
             className="w-full px-6 py-4 text-2xl font-semibold text-gray-900 bg-transparent border-none focus:outline-none placeholder-gray-400"
           />
         </div>
+      )}
+
+      {/* SEO Header Bar - nur wenn SEO Features aktiviert */}
+      {showSEOFeatures && (
+        <SEOHeaderBar 
+          title={seoTitle}
+          content={content}
+          keywords={keywords}
+          onKeywordsChange={setKeywords}
+        />
       )}
 
       {/* Toolbar mit Fullscreen Button */}

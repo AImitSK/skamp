@@ -1136,7 +1136,7 @@ WICHTIG: Mache wirklich NUR die eine genannte Änderung!`;
         title="Umformulieren"
       >
         <SparklesIcon className="h-4 w-4" />
-        <span>Umformulieren</span>
+        <span className="whitespace-nowrap">Umformulieren</span>
       </button>
 
       {/* Kürzen */}
@@ -1151,7 +1151,7 @@ WICHTIG: Mache wirklich NUR die eine genannte Änderung!`;
         title="Kürzen"
       >
         <ArrowsPointingInIcon className="h-4 w-4" />
-        <span>Kürzen</span>
+        <span className="whitespace-nowrap">Kürzen</span>
       </button>
 
       {/* Erweitern */}
@@ -1166,7 +1166,7 @@ WICHTIG: Mache wirklich NUR die eine genannte Änderung!`;
         title="Erweitern"
       >
         <ArrowsPointingOutIcon className="h-4 w-4" />
-        <span>Erweitern</span>
+        <span className="whitespace-nowrap">Erweitern</span>
       </button>
 
       {/* Ausformulieren */}
@@ -1181,7 +1181,7 @@ WICHTIG: Mache wirklich NUR die eine genannte Änderung!`;
         title="Ausformulieren (Anweisung ausführen)"
       >
         <DocumentTextIcon className="h-4 w-4" />
-        <span>Ausformulieren</span>
+        <span className="whitespace-nowrap">Ausformulieren</span>
       </button>
 
       {/* SEO optimieren - nur aktiv wenn Keywords vorhanden */}
@@ -1199,7 +1199,7 @@ WICHTIG: Mache wirklich NUR die eine genannte Änderung!`;
         title={keywords.length === 0 ? "SEO-Optimierung (Keywords erforderlich)" : `SEO optimieren für: ${keywords.join(', ')}`}
       >
         <MagnifyingGlassIcon className="h-4 w-4" />
-        <span>SEO optimieren</span>
+        <span className="whitespace-nowrap">SEO</span>
       </button>
 
       {/* Ton ändern Dropdown */}
@@ -1220,7 +1220,7 @@ WICHTIG: Mache wirklich NUR die eine genannte Änderung!`;
           title="Ton ändern"
         >
           <SpeakerWaveIcon className="h-4 w-4" />
-          <span>Ton ändern</span>
+          <span className="whitespace-nowrap">Ton ändern</span>
           <svg className="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>

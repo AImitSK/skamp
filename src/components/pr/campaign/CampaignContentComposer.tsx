@@ -82,6 +82,7 @@ interface CampaignContentComposerProps {
   onBoilerplateSectionsChange?: (sections: BoilerplateSection[]) => void;
   initialBoilerplateSections?: BoilerplateSection[];
   hideMainContentField?: boolean;
+  enableSEOFeatures?: boolean; // Neue SEO-Features aktivieren
 }
 
 // Folder Selector Dialog Component
@@ -246,7 +247,8 @@ export default function CampaignContentComposer({
   onFullContentChange,
   onBoilerplateSectionsChange,
   initialBoilerplateSections = [],
-  hideMainContentField = false
+  hideMainContentField = false,
+  enableSEOFeatures = false
 }: CampaignContentComposerProps) {
   const [boilerplateSections, setBoilerplateSections] = useState<BoilerplateSection[]>(initialBoilerplateSections);
   const [processedContent, setProcessedContent] = useState('');
@@ -467,6 +469,8 @@ export default function CampaignContentComposer({
                 onChange={onMainContentChange}
                 placeholder="Pressemitteilung schreiben... (Gmail-Style)"
                 autoSave={false}
+                showSEOFeatures={enableSEOFeatures}
+                seoTitle={enableSEOFeatures ? "PR-Kampagne erstellen" : undefined}
                 // Auto-Save deaktiviert für neue Kampagnen wegen Pflichtfeldern
                 // Kann später für Edit-Mode aktiviert werden
               />

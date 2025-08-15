@@ -519,6 +519,7 @@ export default function EditPRCampaignPage() {
                 onBoilerplateSectionsChange={setBoilerplateSections}
                 initialBoilerplateSections={boilerplateSections}
                 hideMainContentField={true}
+                enableSEOFeatures={true}
               />
             </div>
 
