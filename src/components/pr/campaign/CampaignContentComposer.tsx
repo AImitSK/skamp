@@ -481,7 +481,7 @@ export default function CampaignContentComposer({
               <div className="mt-4">
                 <SEOHeaderBar 
                   title="SEO-Optimierung"
-                  content={`${title ? `<h1>${title}</h1>\n\n` : ''}${mainContent}`}
+                  content={`${title ? `${title}\n\n` : ''}${mainContent}`}
                   keywords={keywords}
                   onKeywordsChange={setKeywords}
                 />
