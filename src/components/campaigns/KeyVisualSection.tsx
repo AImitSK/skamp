@@ -79,10 +79,10 @@ export function KeyVisualSection({
   const handleCropComplete = async (croppedFile: File, cropData?: any) => {
     setIsProcessing(true);
     try {
-      // Upload zu Firebase Storage
+      // Upload zu Firebase Storage - verwende userId für Media Library Kompatibilität
       const timestamp = Date.now();
       const originalName = croppedFile.name.replace(/\.[^/.]+$/, ''); // Remove extension
-      const fileName = `organizations/${organizationId}/media/${timestamp}-${originalName}-key-visual.jpg`;
+      const fileName = `organizations/${userId}/media/${timestamp}-${originalName}-key-visual.jpg`;
       const storageRef = ref(storage, fileName);
       
       const snapshot = await uploadBytes(storageRef, croppedFile);
