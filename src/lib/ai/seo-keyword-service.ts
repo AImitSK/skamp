@@ -282,6 +282,81 @@ class SEOKeywordService {
   }
 
   /**
+   * Generiere konkrete SEO-Empfehlungen basierend auf Analyse
+   */
+  generateRecommendations(text: string, keywords: string[], title?: string): string[] {
+    const recommendations: string[] = [];
+    
+    if (!text || text.length < 50) {
+      recommendations.push("📝 Schreibe mindestens 50 Zeichen Text für eine aussagekräftige Analyse");
+      return recommendations;
+    }
+
+    const analytics = this.analyzeKeywords(text, keywords);
+    const readability = this.calculateReadability(text);
+    const wordCount = text.split(/\s+/).filter(w => w.length > 0).length;
+    
+    // 1. Keyword-Dichte Empfehlungen
+    if (keywords.length === 0) {
+      recommendations.push("🎯 Füge 2-3 relevante Keywords hinzu für bessere SEO-Bewertung");
+    } else {
+      const avgDensity = analytics.reduce((sum, a) => sum + a.density, 0) / analytics.length;
+      
+      if (avgDensity < 0.5) {
+        recommendations.push(`📊 Erhöhe Keyword-Dichte von ${(avgDensity * 100).toFixed(1)}% auf 1-2%`);
+      } else if (avgDensity > 4) {
+        recommendations.push(`⚠️ Reduziere Keyword-Dichte von ${(avgDensity * 100).toFixed(1)}% auf unter 3%`);
+      }
+
+      // Keyword im Titel prüfen
+      if (title && keywords.length > 0) {
+        const titleLower = title.toLowerCase();
+        const missingInTitle = keywords.filter(k => !titleLower.includes(k.toLowerCase()));
+        if (missingInTitle.length > 0) {
+          recommendations.push(`🎯 Verwende "${missingInTitle[0]}" im Titel für bessere SEO-Wirkung`);
+        }
+      }
+    }
+
+    // 2. Lesbarkeits-Empfehlungen
+    if (readability.score < 50) {
+      recommendations.push(`📖 Verbessere Lesbarkeit von ${readability.score} auf 60+ Punkte (aktuell: ${readability.level})`);
+    }
+    
+    // Satzlänge analysieren
+    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+    if (sentences.length > 0) {
+      const avgSentenceLength = wordCount / sentences.length;
+      if (avgSentenceLength > 20) {
+        recommendations.push(`📝 Schreibe kürzere Sätze (aktuell ${Math.round(avgSentenceLength)} Wörter/Satz, optimal: 12-15)`);
+      }
+    }
+
+    // 3. Text-Länge Empfehlungen
+    if (wordCount < 150) {
+      recommendations.push(`📏 Schreibe mindestens ${150 - wordCount} weitere Wörter für bessere SEO-Bewertung`);
+    } else if (wordCount > 800) {
+      recommendations.push(`✂️ Kürze den Text um ca. ${wordCount - 600} Wörter für optimale Länge`);
+    }
+
+    // 4. Strukturelle Empfehlungen
+    const textWithoutHtml = text.replace(/<[^>]*>/g, ' ').trim();
+    const conjunctions = (textWithoutHtml.match(/\b(und|oder|aber|denn|jedoch|außerdem|zudem|darüber hinaus)\b/gi) || []).length;
+    const conjunctionRatio = conjunctions / wordCount * 100;
+    
+    if (conjunctionRatio < 2) {
+      recommendations.push("🔗 Verwende mehr Bindewörter (und, außerdem, jedoch) für besseren Textfluss");
+    }
+
+    // 5. Positive Bestätigung wenn alles gut ist
+    if (recommendations.length === 0) {
+      recommendations.push("✅ Ausgezeichnet! Dein Text erfüllt alle SEO-Kriterien optimal");
+    }
+
+    return recommendations.slice(0, 5); // Max 5 Empfehlungen
+  }
+
+  /**
    * Berechne SEO-Score basierend auf Keywords
    */
   calculateSEOScore(text: string, keywords: string[]): number {

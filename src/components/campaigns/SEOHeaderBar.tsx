@@ -22,6 +22,7 @@ interface SEOHeaderBarProps {
   keywords: string[];
   onKeywordsChange: (keywords: string[]) => void;
   className?: string;
+  documentTitle?: string; // Titel für Empfehlungen
 }
 
 interface SEOMetrics {
@@ -37,7 +38,8 @@ export function SEOHeaderBar({
   content, 
   keywords, 
   onKeywordsChange,
-  className = ""
+  className = "",
+  documentTitle
 }: SEOHeaderBarProps) {
   const [seoMetrics, setSeoMetrics] = useState<SEOMetrics>({
     score: 0,
@@ -50,6 +52,7 @@ export function SEOHeaderBar({
   const [showKeywordInput, setShowKeywordInput] = useState(false);
   const [newKeyword, setNewKeyword] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [recommendations, setRecommendations] = useState<string[]>([]);
 
   // Metrics-Update ohne Auto-Detection
   useEffect(() => {
@@ -94,7 +97,11 @@ export function SEOHeaderBar({
       readability: readabilityResult.score,
       readabilityLevel: readabilityResult.level
     });
-  }, [content, keywords]);
+
+    // Generiere Empfehlungen
+    const newRecommendations = seoKeywordService.generateRecommendations(content, keywords, documentTitle);
+    setRecommendations(newRecommendations);
+  }, [content, keywords, documentTitle]);
 
   // Separate useEffect für Score-Updates nach manuellen Keyword-Änderungen
   useEffect(() => {
@@ -147,8 +154,12 @@ export function SEOHeaderBar({
         readability: readabilityResult.score,
         readabilityLevel: readabilityResult.level
       });
+
+      // Empfehlungen auch beim manuellen Update aktualisieren
+      const newRecommendations = seoKeywordService.generateRecommendations(content, keywords, documentTitle);
+      setRecommendations(newRecommendations);
       
-      console.log('✅ SEO-Analyse aktualisiert:', { score, wordCount, keywordDensity });
+      console.log('✅ SEO-Analyse aktualisiert:', { score, wordCount, keywordDensity, recommendations: newRecommendations.length });
       
     } catch (error) {
       console.error('SEO analysis update failed:', error);
@@ -313,6 +324,26 @@ export function SEOHeaderBar({
           <div className="flex items-center gap-1">
             <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
             <span className="text-xs">Analysiere...</span>
+          </div>
+        )}
+
+        {/* SEO-Empfehlungen */}
+        {recommendations.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <h4 className="text-sm font-medium text-gray-700 mb-2">
+              💡 Verbesserungsvorschläge
+            </h4>
+            <ul className="space-y-2">
+              {recommendations.map((recommendation, index) => (
+                <li 
+                  key={index}
+                  className="text-sm text-gray-600 flex items-start gap-2 p-2 bg-blue-50 rounded-md"
+                >
+                  <span className="text-blue-600">•</span>
+                  <span>{recommendation}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
       </div>

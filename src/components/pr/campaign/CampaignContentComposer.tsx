@@ -484,6 +484,7 @@ export default function CampaignContentComposer({
                   content={`${title ? `${title}\n\n` : ''}${mainContent}`}
                   keywords={keywords}
                   onKeywordsChange={setKeywords}
+                  documentTitle={title}
                 />
               </div>
             )}
