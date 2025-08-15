@@ -142,10 +142,33 @@ export function KeyVisualSection({
     onChange(undefined);
   };
 
-  const handleEditKeyVisual = () => {
+  const handleEditKeyVisual = async () => {
     if (value?.url) {
-      setSelectedImageSrc(value.url);
-      setShowCropper(true);
+      try {
+        // Verwende Proxy-Route für CORS-freies Cropping (genau wie handleAssetSelected)
+        const proxyUrl = `/api/proxy-firebase-image?url=${encodeURIComponent(value.url)}`;
+        const response = await fetch(proxyUrl);
+        
+        if (!response.ok) {
+          throw new Error(`Proxy request failed: ${response.status}`);
+        }
+        
+        const blob = await response.blob();
+        
+        // Konvertiere zu Data URL (wie bei direktem Upload)
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          if (e.target?.result) {
+            setSelectedImageSrc(e.target.result as string);
+            setShowCropper(true);
+          }
+        };
+        reader.readAsDataURL(blob);
+        
+      } catch (error) {
+        console.error('Fehler beim Laden des Bildes:', error);
+        alert('CORS-Fehler: Das Bild kann nicht verarbeitet werden. Bitte lade das Bild erneut hoch.');
+      }
     }
   };
 
