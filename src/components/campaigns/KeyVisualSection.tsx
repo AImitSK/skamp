@@ -110,8 +110,9 @@ export function KeyVisualSection({
       const asset = assets[0];
       
       try {
-        // Verwende Proxy-Route statt direkter Firebase URL
-        const proxyUrl = `/api/proxy-firebase-image?url=${encodeURIComponent(asset.metadata.thumbnailUrl)}`;
+        // Verwende Proxy-Route statt direkter Firebase URL - verwende originalUrl als Fallback
+        const imageUrl = asset.metadata.thumbnailUrl || asset.metadata.originalUrl || asset.metadata.downloadUrl;
+        const proxyUrl = `/api/proxy-firebase-image?url=${encodeURIComponent(imageUrl)}`;
         const response = await fetch(proxyUrl);
         
         if (!response.ok) {
@@ -132,7 +133,7 @@ export function KeyVisualSection({
         
       } catch (error) {
         console.error('Fehler beim Laden des Bildes:', error);
-        alert('Fehler beim Laden des Bildes aus der Media Library. Bitte versuchen Sie es erneut.');
+        alert('CORS-Fehler: Das Bild kann nicht verarbeitet werden. Bitte lade das Bild erneut hoch.');
       }
     }
   };
