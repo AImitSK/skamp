@@ -82,17 +82,25 @@ export function SEOHeaderBar({
       content,
       sessionId,
       (result: KeywordResult) => {
+        console.log('✅ SEOHeaderBar: Auto-detected keywords:', result.keywords);
         setAutoDetectedKeywords(result.keywords);
         setIsAnalyzing(false);
         
-        // Update score with auto-detected keywords if no manual keywords
-        if (keywords.length === 0) {
-          const updatedScore = seoKeywordService.calculateSEOScore(content, result.keywords);
-          setSeoMetrics(prev => ({
-            ...prev,
-            score: updatedScore
-          }));
+        // Wenn neue Keywords erkannt wurden und noch keine manuellen Keywords gesetzt sind
+        if (result.keywords.length > 0 && keywords.length === 0) {
+          console.log('🎯 SEOHeaderBar: Setting auto-detected keywords as active:', result.keywords);
+          onKeywordsChange?.(result.keywords.slice(0, 3)); // Max 3 Keywords
         }
+        
+        // Update score with detected keywords
+        const updatedScore = seoKeywordService.calculateSEOScore(
+          content, 
+          keywords.length > 0 ? keywords : result.keywords
+        );
+        setSeoMetrics(prev => ({
+          ...prev,
+          score: updatedScore
+        }));
       },
       { debounceMs: 2000 }
     );
@@ -100,7 +108,22 @@ export function SEOHeaderBar({
     return () => {
       seoKeywordService.clearDebounceTimers();
     };
-  }, [content, keywords]);
+  }, [content, keywords, onKeywordsChange]);
+
+  // Separate useEffect für Score-Updates nach manuellen Keyword-Änderungen
+  useEffect(() => {
+    if (content && keywords.length > 0) {
+      const updatedScore = seoKeywordService.calculateSEOScore(content, keywords);
+      const analytics = seoKeywordService.analyzeKeywords(content, keywords);
+      const keywordDensity = analytics.reduce((sum, a) => sum + a.density, 0) / analytics.length;
+      
+      setSeoMetrics(prev => ({
+        ...prev,
+        score: updatedScore,
+        keywordDensity
+      }));
+    }
+  }, [keywords, content]);
 
   const handleAddKeyword = (keyword: string) => {
     const trimmedKeyword = keyword.trim();

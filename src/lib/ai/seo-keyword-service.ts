@@ -62,6 +62,12 @@ class SEOKeywordService {
       // KI-Prompt für Keyword-Erkennung
       const prompt = this.buildKeywordDetectionPrompt(text, opts);
       
+      console.log('🔍 SEO Service: Detecting keywords for text:', { 
+        textLength: text.length, 
+        textPreview: text.substring(0, 100) + '...',
+        prompt: prompt.substring(0, 200) + '...'
+      });
+      
       // API-Call zur bestehenden KI-Integration
       const response = await fetch('/api/ai/generate', {
         method: 'POST',
@@ -82,9 +88,13 @@ class SEOKeywordService {
       const data = await response.json();
       const rawKeywords = data.content || data.text || '';
       
+      console.log('🎯 SEO Service: Raw API response:', { rawKeywords });
+      
       // Parse und validiere Keywords
       const keywords = this.parseAndValidateKeywords(rawKeywords, opts);
       const confidence = this.calculateConfidence(keywords, text);
+
+      console.log('✅ SEO Service: Parsed keywords:', { keywords, confidence });
 
       const result: KeywordResult = {
         keywords,
