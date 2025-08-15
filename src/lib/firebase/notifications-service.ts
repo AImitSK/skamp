@@ -79,27 +79,71 @@ class NotificationsService {
    */
   async getAll(userId: string, limitCount: number = 50, organizationId?: string): Promise<Notification[]> {
     try {
-      let q = query(
-        collection(db, NOTIFICATIONS_COLLECTION),
-        where('userId', '==', userId),
-        orderBy('createdAt', 'desc'),
-        limit(limitCount)
-      );
-
-      // Add organization filter if provided
+      console.log('🔥 DEBUG - getAll with organizationId:', organizationId);
+      
       if (organizationId) {
-        q = query(
+        // First get organization-specific notifications
+        const orgQuery = query(
           collection(db, NOTIFICATIONS_COLLECTION),
           where('userId', '==', userId),
           where('organizationId', '==', organizationId),
           orderBy('createdAt', 'desc'),
           limit(limitCount)
         );
+        
+        const orgSnapshot = await getDocs(orgQuery);
+        let notifications = orgSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification));
+        
+        console.log('🔥 DEBUG - Found', notifications.length, 'organization-specific notifications');
+        
+        // If we have fewer than 10 notifications, also include legacy notifications
+        if (notifications.length < 10) {
+          console.log('🔥 DEBUG - Adding legacy notifications as fallback');
+          
+          const legacyQuery = query(
+            collection(db, NOTIFICATIONS_COLLECTION),
+            where('userId', '==', userId),
+            orderBy('createdAt', 'desc'),
+            limit(limitCount)
+          );
+          
+          const legacySnapshot = await getDocs(legacyQuery);
+          const legacyNotifications = legacySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification));
+          
+          // Filter out notifications that already have organizationId to avoid duplicates
+          const filteredLegacy = legacyNotifications.filter(n => !n.organizationId);
+          
+          console.log('🔥 DEBUG - Found', filteredLegacy.length, 'legacy notifications');
+          
+          // Combine and sort by creation date
+          notifications = [...notifications, ...filteredLegacy]
+            .sort((a, b) => {
+              const aTime = a.createdAt ? (a.createdAt as any).toDate?.() || new Date(a.createdAt) : new Date(0);
+              const bTime = b.createdAt ? (b.createdAt as any).toDate?.() || new Date(b.createdAt) : new Date(0);
+              return bTime.getTime() - aTime.getTime();
+            })
+            .slice(0, limitCount);
+            
+          console.log('🔥 DEBUG - Total notifications after merge:', notifications.length);
+        }
+        
+        return notifications;
+      } else {
+        // Fallback to userId-only query when no organizationId
+        const q = query(
+          collection(db, NOTIFICATIONS_COLLECTION),
+          where('userId', '==', userId),
+          orderBy('createdAt', 'desc'),
+          limit(limitCount)
+        );
+        
+        const snapshot = await getDocs(q);
+        const notifications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification));
+        console.log('🔥 DEBUG - Fallback: Found', notifications.length, 'userId-only notifications');
+        return notifications;
       }
-      
-      const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification));
     } catch (error) {
+      console.log('🔥 DEBUG - getAll error, falling back to userId-only');
       // Fallback to userId-only query for legacy compatibility
       if (organizationId) {
         return this.getAll(userId, limitCount);
@@ -574,23 +618,84 @@ class NotificationsService {
     callback: (notifications: Notification[]) => void,
     organizationId?: string
   ): Unsubscribe {
-    let q = query(
-      collection(db, NOTIFICATIONS_COLLECTION),
-      where('userId', '==', userId),
-      orderBy('createdAt', 'desc'),
-      limit(50)
-    );
-
-    // Add organization filter if provided for true multi-tenancy
+    console.log('🔥 DEBUG - subscribeToNotifications with organizationId:', organizationId);
+    
+    // Smart fallback strategy for legacy compatibility
     if (organizationId) {
-      console.log('🔥 DEBUG - subscribeToNotifications with organizationId:', organizationId);
-      q = query(
+      // First try organization-specific notifications
+      const orgQuery = query(
         collection(db, NOTIFICATIONS_COLLECTION),
         where('userId', '==', userId),
         where('organizationId', '==', organizationId),
         orderBy('createdAt', 'desc'),
         limit(50)
       );
+      
+      return onSnapshot(orgQuery, async (orgSnapshot) => {
+        let notifications = orgSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as Notification));
+        
+        console.log('🔥 DEBUG - Found', notifications.length, 'organization-specific notifications');
+        
+        // If we have fewer than 10 notifications, also include legacy notifications
+        if (notifications.length < 10) {
+          console.log('🔥 DEBUG - Adding legacy notifications as fallback');
+          
+          const legacyQuery = query(
+            collection(db, NOTIFICATIONS_COLLECTION),
+            where('userId', '==', userId),
+            orderBy('createdAt', 'desc'),
+            limit(50 - notifications.length)
+          );
+          
+          try {
+            const legacySnapshot = await getDocs(legacyQuery);
+            const legacyNotifications = legacySnapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            } as Notification));
+            
+            // Filter out notifications that already have organizationId to avoid duplicates
+            const filteredLegacy = legacyNotifications.filter(n => !n.organizationId);
+            
+            console.log('🔥 DEBUG - Found', filteredLegacy.length, 'legacy notifications');
+            
+            // Combine and sort by creation date
+            notifications = [...notifications, ...filteredLegacy]
+              .sort((a, b) => {
+                const aTime = a.createdAt ? (a.createdAt as any).toDate?.() || new Date(a.createdAt) : new Date(0);
+                const bTime = b.createdAt ? (b.createdAt as any).toDate?.() || new Date(b.createdAt) : new Date(0);
+                return bTime.getTime() - aTime.getTime();
+              })
+              .slice(0, 50);
+              
+            console.log('🔥 DEBUG - Total notifications after merge:', notifications.length);
+          } catch (error) {
+            console.log('🔥 DEBUG - Legacy query failed, using only org notifications');
+          }
+        }
+        
+        callback(notifications);
+      });
+    } else {
+      // Fallback to userId-only query when no organizationId
+      const q = query(
+        collection(db, NOTIFICATIONS_COLLECTION),
+        where('userId', '==', userId),
+        orderBy('createdAt', 'desc'),
+        limit(50)
+      );
+      
+      return onSnapshot(q, (snapshot) => {
+        const notifications = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as Notification));
+        console.log('🔥 DEBUG - Fallback: Found', notifications.length, 'userId-only notifications');
+        callback(notifications);
+      });
     }
     
     return onSnapshot(q, (snapshot) => {
@@ -610,21 +715,54 @@ class NotificationsService {
     callback: (count: number) => void,
     organizationId?: string
   ): Unsubscribe {
-    let q = query(
-      collection(db, NOTIFICATIONS_COLLECTION),
-      where('userId', '==', userId),
-      where('isRead', '==', false)
-    );
-
-    // Add organization filter if provided for true multi-tenancy
+    console.log('🔥 DEBUG - subscribeToUnreadCount with organizationId:', organizationId);
+    
     if (organizationId) {
-      console.log('🔥 DEBUG - subscribeToUnreadCount with organizationId:', organizationId);
-      q = query(
+      // Count organization-specific unread notifications
+      const orgQuery = query(
         collection(db, NOTIFICATIONS_COLLECTION),
         where('userId', '==', userId),
         where('organizationId', '==', organizationId),
         where('isRead', '==', false)
       );
+      
+      return onSnapshot(orgQuery, async (orgSnapshot) => {
+        let totalCount = orgSnapshot.size;
+        console.log('🔥 DEBUG - Organization unread count:', totalCount);
+        
+        // Also count legacy unread notifications without organizationId
+        try {
+          const legacyQuery = query(
+            collection(db, NOTIFICATIONS_COLLECTION),
+            where('userId', '==', userId),
+            where('isRead', '==', false)
+          );
+          
+          const legacySnapshot = await getDocs(legacyQuery);
+          // Filter out those that already have organizationId to avoid double counting
+          const legacyCount = legacySnapshot.docs.filter(doc => !doc.data().organizationId).length;
+          console.log('🔥 DEBUG - Legacy unread count:', legacyCount);
+          
+          totalCount += legacyCount;
+          console.log('🔥 DEBUG - Total unread count:', totalCount);
+        } catch (error) {
+          console.log('🔥 DEBUG - Legacy unread count query failed');
+        }
+        
+        callback(totalCount);
+      });
+    } else {
+      // Fallback to userId-only query when no organizationId
+      const q = query(
+        collection(db, NOTIFICATIONS_COLLECTION),
+        where('userId', '==', userId),
+        where('isRead', '==', false)
+      );
+      
+      return onSnapshot(q, (snapshot) => {
+        console.log('🔥 DEBUG - Fallback unread count:', snapshot.size);
+        callback(snapshot.size);
+      });
     }
     
     return onSnapshot(q, (snapshot) => {
