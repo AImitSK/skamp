@@ -16,12 +16,9 @@ interface CustomInstructionRequest {
 
 export async function POST(request: NextRequest) {
   try {
-    // API Key Check
+    // API Key Check - wie in generate route
     if (!GEMINI_API_KEY) {
-      return NextResponse.json(
-        { error: 'KI-Service ist nicht konfiguriert' },
-        { status: 500 }
-      );
+      console.error('GEMINI_API_KEY ist nicht verfügbar in custom-instruction route');
     }
 
     // Request Body parsen
@@ -43,10 +40,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('📝 Custom Instruction API:', { 
-      originalLength: originalText.length,
-      instruction: instruction.substring(0, 100) + '...'
-    });
 
     // Gemini initialisieren
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
@@ -82,21 +75,12 @@ ${instruction}
 
 Mache nur diese eine Änderung und behalte alles andere exakt bei:`;
 
-    console.log('🤖 Sende an Gemini:', {
-      systemPromptLength: systemPrompt.length,
-      userPromptLength: userPrompt.length
-    });
 
     // KI-Anfrage
     const result = await model.generateContent(systemPrompt + '\n\n' + userPrompt);
     const response = await result.response;
     const generatedText = response.text();
 
-    console.log('✅ Gemini Antwort erhalten:', {
-      originalLength: originalText.length,
-      resultLength: generatedText.length,
-      instruction
-    });
 
     return NextResponse.json({
       generatedText,
