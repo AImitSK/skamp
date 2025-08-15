@@ -28,6 +28,8 @@ interface SEOMetrics {
   score: number;
   wordCount: number;
   keywordDensity: number;
+  readability: number;
+  readabilityLevel: string;
 }
 
 export function SEOHeaderBar({ 
@@ -40,7 +42,9 @@ export function SEOHeaderBar({
   const [seoMetrics, setSeoMetrics] = useState<SEOMetrics>({
     score: 0,
     wordCount: 0,
-    keywordDensity: 0
+    keywordDensity: 0,
+    readability: 0,
+    readabilityLevel: 'Unbekannt'
   });
   const [autoDetectedKeywords, setAutoDetectedKeywords] = useState<string[]>([]);
   const [showKeywordInput, setShowKeywordInput] = useState(false);
@@ -51,11 +55,12 @@ export function SEOHeaderBar({
   useEffect(() => {
     console.log('📊 SEO Metrics Update:', { 
       contentLength: content?.length || 0,
-      contentPreview: content?.substring(0, 100) + '...'
+      contentPreview: content?.substring(0, 200) + '...',
+      fullContent: content
     });
     
     if (!content || content.length < 50) {
-      setSeoMetrics({ score: 0, wordCount: 0, keywordDensity: 0 });
+      setSeoMetrics({ score: 0, wordCount: 0, keywordDensity: 0, readability: 0, readabilityLevel: 'Unbekannt' });
       return;
     }
 
@@ -70,6 +75,7 @@ export function SEOHeaderBar({
     });
     
     const score = seoKeywordService.calculateSEOScore(content, keywords);
+    const readabilityResult = seoKeywordService.calculateReadability(content);
     
     let keywordDensity = 0;
     if (keywords.length > 0) {
@@ -80,7 +86,9 @@ export function SEOHeaderBar({
     setSeoMetrics({
       score,
       wordCount,
-      keywordDensity
+      keywordDensity,
+      readability: readabilityResult.score,
+      readabilityLevel: readabilityResult.level
     });
   }, [content, keywords]);
 
@@ -88,18 +96,21 @@ export function SEOHeaderBar({
   useEffect(() => {
     if (content && keywords.length > 0) {
       const updatedScore = seoKeywordService.calculateSEOScore(content, keywords);
+      const readabilityResult = seoKeywordService.calculateReadability(content);
       const analytics = seoKeywordService.analyzeKeywords(content, keywords);
       const keywordDensity = analytics.reduce((sum, a) => sum + a.density, 0) / analytics.length;
       
       setSeoMetrics(prev => ({
         ...prev,
         score: updatedScore,
-        keywordDensity
+        keywordDensity,
+        readability: readabilityResult.score,
+        readabilityLevel: readabilityResult.level
       }));
     }
   }, [keywords, content]);
 
-  // Manuelle Keyword-Erkennung
+  // SEO-Analyse aktualisieren (KEINE Keywords generieren!)
   const handleRefreshKeywords = async () => {
     if (!content || content.length < 50) {
       return;
@@ -107,16 +118,36 @@ export function SEOHeaderBar({
 
     setIsAnalyzing(true);
     try {
-      const result = await seoKeywordService.detectKeywords(content);
-      console.log('🎯 Manual keyword detection:', result.keywords);
+      console.log('🔄 SEO-Analyse Update:', { 
+        contentLength: content.length,
+        keywordsCount: keywords.length,
+        keywords: keywords
+      });
       
-      // Nur als Vorschläge setzen, NICHT automatisch als aktive Keywords
-      setAutoDetectedKeywords(result.keywords);
+      // Nur die SEO-Metriken neu berechnen - KEINE neuen Keywords!
+      const textContent = content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      const wordCount = textContent.split(/\s+/).filter(word => word.length > 0).length;
+      const score = seoKeywordService.calculateSEOScore(content, keywords);
+      const readabilityResult = seoKeywordService.calculateReadability(content);
       
-      // NICHT automatisch hinzufügen - nur als Vorschläge anzeigen
-      // Benutzer muss manuell auf die Vorschläge klicken
+      let keywordDensity = 0;
+      if (keywords.length > 0) {
+        const analytics = seoKeywordService.analyzeKeywords(content, keywords);
+        keywordDensity = analytics.reduce((sum, a) => sum + a.density, 0) / analytics.length;
+      }
+
+      setSeoMetrics({
+        score,
+        wordCount,
+        keywordDensity,
+        readability: readabilityResult.score,
+        readabilityLevel: readabilityResult.level
+      });
+      
+      console.log('✅ SEO-Analyse aktualisiert:', { score, wordCount, keywordDensity });
+      
     } catch (error) {
-      console.error('Keyword detection failed:', error);
+      console.error('SEO analysis update failed:', error);
     } finally {
       setIsAnalyzing(false);
     }
@@ -179,6 +210,10 @@ export function SEOHeaderBar({
           <div className="text-sm text-gray-600">
             <span className="font-medium">{(seoMetrics.keywordDensity * 100).toFixed(1)}%</span> Keyword-Dichte
           </div>
+          <div className="text-sm text-gray-600">
+            <span className="font-medium">{seoMetrics.readability}</span> Lesbarkeit
+            <span className="ml-1 text-xs">({seoMetrics.readabilityLevel})</span>
+          </div>
           <Badge color={getSEOScoreBadgeColor(seoMetrics.score)} className="text-xs">
             SEO-Score: {Math.round(seoMetrics.score)}
           </Badge>
@@ -196,7 +231,7 @@ export function SEOHeaderBar({
               }
               disabled:opacity-50 disabled:cursor-not-allowed
             `}
-            title={content && content.length >= 50 ? "Keywords automatisch erkennen" : "Text zu kurz für Keyword-Analyse"}
+            title={content && content.length >= 50 ? "SEO-Analyse aktualisieren" : "Text zu kurz für SEO-Analyse"}
           >
             <ArrowPathIcon className="h-4 w-4" />
           </button>

@@ -191,6 +191,97 @@ class SEOKeywordService {
   }
 
   /**
+   * Berechne deutsche Textlesbarkeit (angepasster Flesch-Index)
+   */
+  calculateReadability(text: string): { score: number; level: string } {
+    if (!text || text.length < 10) {
+      return { score: 0, level: 'Unbekannt' };
+    }
+
+    // Text bereinigen
+    const cleanText = text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    
+    // Sätze zählen (. ! ? als Satzende)
+    const sentences = cleanText.split(/[.!?]+/).filter(s => s.trim().length > 0);
+    const sentenceCount = sentences.length;
+    
+    // Wörter zählen
+    const words = cleanText.split(/\s+/).filter(w => w.length > 0);
+    const wordCount = words.length;
+    
+    // Silben zählen (vereinfachte deutsche Silbenzählung)
+    let syllableCount = 0;
+    words.forEach(word => {
+      syllableCount += this.countGermanSyllables(word);
+    });
+    
+    if (sentenceCount === 0 || wordCount === 0) {
+      return { score: 0, level: 'Unbekannt' };
+    }
+    
+    // ASL = Durchschnittliche Satzlänge
+    const averageSentenceLength = wordCount / sentenceCount;
+    
+    // ASW = Durchschnittliche Silben pro Wort
+    const averageSyllablesPerWord = syllableCount / wordCount;
+    
+    // Deutsche Flesch-Formel: 180 - (ASL × 1.0) - (ASW × 58.5)
+    const fleschScore = 180 - (averageSentenceLength * 1.0) - (averageSyllablesPerWord * 58.5);
+    
+    // Score auf 0-100 begrenzen
+    const normalizedScore = Math.max(0, Math.min(100, fleschScore));
+    
+    // Level bestimmen
+    let level: string;
+    if (normalizedScore >= 90) level = 'Sehr leicht';
+    else if (normalizedScore >= 80) level = 'Leicht';
+    else if (normalizedScore >= 65) level = 'Normal';
+    else if (normalizedScore >= 50) level = 'Etwas schwer';
+    else if (normalizedScore >= 30) level = 'Schwer';
+    else level = 'Sehr schwer';
+    
+    return { score: Math.round(normalizedScore), level };
+  }
+
+  /**
+   * Vereinfachte deutsche Silbenzählung
+   */
+  private countGermanSyllables(word: string): number {
+    if (!word || word.length === 0) return 0;
+    
+    const cleanWord = word.toLowerCase().replace(/[^a-zäöüß]/g, '');
+    if (cleanWord.length === 0) return 1;
+    
+    // Deutsche Vokale (inkl. Umlaute)
+    const vowels = 'aeiouäöüy';
+    let syllables = 0;
+    let previousWasVowel = false;
+    
+    for (let i = 0; i < cleanWord.length; i++) {
+      const char = cleanWord[i];
+      const isVowel = vowels.includes(char);
+      
+      if (isVowel && !previousWasVowel) {
+        syllables++;
+      }
+      
+      previousWasVowel = isVowel;
+    }
+    
+    // Deutsche Sonderregeln
+    if (cleanWord.endsWith('e') && syllables > 1) {
+      syllables--; // Stummes -e
+    }
+    
+    if (cleanWord.endsWith('le') && syllables > 1) {
+      syllables++; // -le zählt als Silbe
+    }
+    
+    // Mindestens 1 Silbe
+    return Math.max(1, syllables);
+  }
+
+  /**
    * Berechne SEO-Score basierend auf Keywords
    */
   calculateSEOScore(text: string, keywords: string[]): number {

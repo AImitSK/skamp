@@ -478,16 +478,23 @@ KONTEXT-ANALYSE:
 2. Erkenne die Rolle der markierten Stelle
 3. Behalte die Tonalität des Gesamttextes
 
-SEO-OPTIMIERUNG DER MARKIERTEN STELLE:
-- Integriere Keywords natürlich (1-3% Dichte)
-- Verbessere Lesbarkeit und Struktur
-- Behalte die ursprüngliche Aussage bei
-- Optimiere für Suchmaschinen UND Menschen
+GANZHEITLICHE SEO-OPTIMIERUNG:
+- KEYWORDS: Integriere Keywords natürlich (1-3% Dichte), nicht forciert
+- LESBARKEIT: Verkürze komplexe Sätze (max. 15-20 Wörter), vereinfache schwere Wörter
+- STRUKTUR: Verbessere Satzfluss und logische Verknüpfungen
+- VERSTÄNDLICHKEIT: Schreibe für Zielgruppe verständlich
+- SCANBARKEIT: Nutze aktive Sprache und klare Aussagen
+
+DEUTSCHE LESBARKEITS-REGELN:
+- Kurze, klare Sätze (ideal 12-15 Wörter)
+- Weniger Silben pro Wort wenn möglich
+- Aktive statt passive Konstruktionen
+- Konkrete statt abstrakte Begriffe
 
 WICHTIGE REGELN:
-- Nutze Keywords sinnvoll, nicht forciert
-- Behalte den natürlichen Textfluss
-- Keine künstlichen Keyword-Wiederholungen
+- Behalte die ursprüngliche Aussage und Kernbotschaft
+- Natürlicher Textfluss hat Priorität vor Keywords
+- Optimiere für Menschen UND Suchmaschinen
 - Ähnliche Textlänge beibehalten
 
 Antworte NUR mit der SEO-optimierten markierten Stelle!`;
@@ -495,6 +502,19 @@ Antworte NUR mit der SEO-optimierten markierten Stelle!`;
           } else {
             // SEO-Optimierung ohne Kontext
             systemPrompt = `Du bist ein SEO-Experte. Optimiere den Text für diese Keywords: ${keywords.join(', ')}
+
+GANZHEITLICHE SEO-OPTIMIERUNG:
+- KEYWORDS: Integriere Keywords natürlich (1-3% Dichte), nicht forciert
+- LESBARKEIT: Verkürze komplexe Sätze (max. 15-20 Wörter), vereinfache schwere Wörter  
+- STRUKTUR: Verbessere Satzfluss und logische Verknüpfungen
+- VERSTÄNDLICHKEIT: Schreibe für Zielgruppe verständlich
+- SCANBARKEIT: Nutze aktive Sprache und klare Aussagen
+
+DEUTSCHE LESBARKEITS-REGELN:
+- Kurze, klare Sätze (ideal 12-15 Wörter)
+- Weniger Silben pro Wort wenn möglich
+- Aktive statt passive Konstruktionen  
+- Konkrete statt abstrakte Begriffe
 
 SEO-OPTIMIERUNG:
 - Integriere Keywords natürlich in den Text (1-3% Dichte)
