@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import { Alert } from "@/components/common/Alert";
 import { StatusBadge } from "@/components/campaigns/StatusBadge";
+import { Badge } from "@/components/ui/badge";
 import { useAlert } from "@/hooks/useAlert";
 import { formatDate } from "@/utils/dateHelpers";
 import { LOADING_SPINNER_SIZE, LOADING_SPINNER_BORDER } from "@/constants/ui";
@@ -348,6 +349,20 @@ export default function CampaignDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Key Visual Preview */}
+          {campaign.keyVisual && (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h2 className="text-lg font-semibold mb-4">Key Visual</h2>
+              <div className="aspect-[16/9] rounded-lg overflow-hidden border border-gray-200">
+                <img 
+                  src={campaign.keyVisual.url} 
+                  alt="Key Visual" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+          )}
+
           {/* Content Preview */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h2 className="text-lg font-semibold mb-4">Inhalt</h2>
