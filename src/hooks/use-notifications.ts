@@ -22,18 +22,18 @@ import { db } from '@/lib/firebase/client-init';
 // Removed - now imported from enhanced types
 
 // Helper function für überfällige Checks
-async function checkForOverdueItems(userId: string, settings: NotificationSettings | null) {
+async function checkForOverdueItems(userId: string, settings: NotificationSettings | null, organizationId?: string) {
   if (!settings) return;
   
   const checks = [];
   
   // Nur prüfen wenn aktiviert
   if (settings.overdueApprovals) {
-    checks.push(checkOverdueApprovals(userId, settings.overdueApprovalDays || 3));
+    checks.push(checkOverdueApprovals(userId, settings.overdueApprovalDays || 3, organizationId));
   }
   
   if (settings.taskOverdue) {
-    checks.push(checkOverdueTasks(userId));
+    checks.push(checkOverdueTasks(userId, organizationId));
   }
   
   if (checks.length > 0) {
@@ -208,10 +208,10 @@ export function useNotifications(): UseNotificationsReturn {
     if (now - lastCheckRef.current < 5 * 60 * 1000) return;
     
     lastCheckRef.current = now;
-    checkForOverdueItems(user.uid, settingsRef.current).catch(err => {
+    checkForOverdueItems(user.uid, settingsRef.current, currentOrganization?.id).catch(err => {
       // Overdue check error - silent fail
     });
-  }, [pathname, user?.uid]);
+  }, [pathname, user?.uid, currentOrganization?.id]);
 
   // Check wenn Tab aktiv wird
   useEffect(() => {
@@ -222,7 +222,7 @@ export function useNotifications(): UseNotificationsReturn {
       if (now - lastCheckRef.current < 5 * 60 * 1000) return;
       
       lastCheckRef.current = now;
-      checkForOverdueItems(user.uid, settingsRef.current).catch(err => {
+      checkForOverdueItems(user.uid, settingsRef.current, currentOrganization?.id).catch(err => {
         // Overdue check on focus error - silent fail
       });
     };
@@ -234,7 +234,7 @@ export function useNotifications(): UseNotificationsReturn {
       window.removeEventListener('focus', handleFocus);
       document.removeEventListener('visibilitychange', handleFocus);
     };
-  }, [user?.uid]);
+  }, [user?.uid, currentOrganization?.id]);
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -242,20 +242,23 @@ export function useNotifications(): UseNotificationsReturn {
     let unsubscribeNotifications: Unsubscribe | null = null;
     let unsubscribeCount: Unsubscribe | null = null;
 
-    // Subscribe to notifications
+    // Subscribe to notifications with organizationId for multi-tenancy
+    console.log('🔥 DEBUG - Subscribing to notifications with organizationId:', currentOrganization?.id);
     unsubscribeNotifications = notificationsService.subscribeToNotifications(
       user.uid,
       (updatedNotifications) => {
         setNotifications(updatedNotifications);
-      }
+      },
+      currentOrganization?.id
     );
 
-    // Subscribe to unread count
+    // Subscribe to unread count with organizationId for multi-tenancy
     unsubscribeCount = notificationsService.subscribeToUnreadCount(
       user.uid,
       (count) => {
         setUnreadCount(count);
-      }
+      },
+      currentOrganization?.id
     );
 
     // Initial load
@@ -266,7 +269,7 @@ export function useNotifications(): UseNotificationsReturn {
       if (unsubscribeNotifications) unsubscribeNotifications();
       if (unsubscribeCount) unsubscribeCount();
     };
-  }, [user?.uid, loadNotifications]);
+  }, [user?.uid, currentOrganization?.id, loadNotifications]);
 
   return {
     notifications,
@@ -378,13 +381,18 @@ export function useNotificationSettings(): UseNotificationSettingsReturn {
 }
 
 // Helper functions für überfällige Checks
-async function checkOverdueApprovals(userId: string, overdueDays: number) {
+async function checkOverdueApprovals(userId: string, overdueDays: number, organizationId?: string) {
   const thresholdDate = new Date();
   thresholdDate.setDate(thresholdDate.getDate() - overdueDays);
 
+  // Use organizationId for multi-tenancy if available
+  const whereField = organizationId ? 'organizationId' : 'userId';
+  const whereValue = organizationId || userId;
+  console.log('🔥 DEBUG - checkOverdueApprovals using', whereField, ':', whereValue);
+
   const campaignsQuery = query(
     collection(db, 'pr_campaigns'),
-    where('userId', '==', userId),
+    where(whereField, '==', whereValue),
     where('status', '==', 'in_review'),
     where('updatedAt', '<=', Timestamp.fromDate(thresholdDate))
   );
@@ -416,6 +424,7 @@ async function checkOverdueApprovals(userId: string, overdueDays: number) {
       
       await notificationsService.create({
         userId: userId,
+        organizationId: organizationId,
         type: 'OVERDUE_APPROVAL',
         title: 'Überfällige Freigabe-Anfrage',
         message: `Die Freigabe-Anfrage für "${campaign.title}" ist seit ${daysOverdue} Tagen überfällig.`,
@@ -433,12 +442,17 @@ async function checkOverdueApprovals(userId: string, overdueDays: number) {
   }
 }
 
-async function checkOverdueTasks(userId: string) {
+async function checkOverdueTasks(userId: string, organizationId?: string) {
   const now = Timestamp.now();
+  
+  // Use organizationId for multi-tenancy if available
+  const whereField = organizationId ? 'organizationId' : 'userId';
+  const whereValue = organizationId || userId;
+  console.log('🔥 DEBUG - checkOverdueTasks using', whereField, ':', whereValue);
   
   const tasksQuery = query(
     collection(db, 'tasks'),
-    where('userId', '==', userId),
+    where(whereField, '==', whereValue),
     where('status', '!=', 'completed'),
     where('dueDate', '<=', now)
   );
@@ -465,6 +479,7 @@ async function checkOverdueTasks(userId: string) {
     if (existingNotifications.empty) {
       await notificationsService.create({
         userId: userId,
+        organizationId: organizationId,
         type: 'TASK_OVERDUE',
         title: 'Überfälliger Task',
         message: `Dein Task "${task.title}" ist überfällig.`,

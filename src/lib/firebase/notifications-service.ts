@@ -571,14 +571,27 @@ class NotificationsService {
    */
   subscribeToNotifications(
     userId: string,
-    callback: (notifications: Notification[]) => void
+    callback: (notifications: Notification[]) => void,
+    organizationId?: string
   ): Unsubscribe {
-    const q = query(
+    let q = query(
       collection(db, NOTIFICATIONS_COLLECTION),
       where('userId', '==', userId),
       orderBy('createdAt', 'desc'),
       limit(50)
     );
+
+    // Add organization filter if provided for true multi-tenancy
+    if (organizationId) {
+      console.log('🔥 DEBUG - subscribeToNotifications with organizationId:', organizationId);
+      q = query(
+        collection(db, NOTIFICATIONS_COLLECTION),
+        where('userId', '==', userId),
+        where('organizationId', '==', organizationId),
+        orderBy('createdAt', 'desc'),
+        limit(50)
+      );
+    }
     
     return onSnapshot(q, (snapshot) => {
       const notifications = snapshot.docs.map(doc => ({
@@ -594,13 +607,25 @@ class NotificationsService {
    */
   subscribeToUnreadCount(
     userId: string,
-    callback: (count: number) => void
+    callback: (count: number) => void,
+    organizationId?: string
   ): Unsubscribe {
-    const q = query(
+    let q = query(
       collection(db, NOTIFICATIONS_COLLECTION),
       where('userId', '==', userId),
       where('isRead', '==', false)
     );
+
+    // Add organization filter if provided for true multi-tenancy
+    if (organizationId) {
+      console.log('🔥 DEBUG - subscribeToUnreadCount with organizationId:', organizationId);
+      q = query(
+        collection(db, NOTIFICATIONS_COLLECTION),
+        where('userId', '==', userId),
+        where('organizationId', '==', organizationId),
+        where('isRead', '==', false)
+      );
+    }
     
     return onSnapshot(q, (snapshot) => {
       callback(snapshot.size);
