@@ -90,7 +90,8 @@ export class EmailService {
       email?: string;
     },
     contacts: Contact[],
-    mediaShareUrl?: string
+    mediaShareUrl?: string,
+    keyVisual?: { url: string; cropData?: any }
   ): Promise<EmailSendResult> {
     
     // Kontakte zu Empfängern konvertieren
@@ -113,7 +114,8 @@ export class EmailService {
       recipients,
       campaignEmail: emailContent,
       senderInfo,
-      mediaShareUrl
+      mediaShareUrl,
+      keyVisual
     });
 
     // ========== NOTIFICATION INTEGRATION: Email Sent Success ==========
@@ -401,7 +403,8 @@ export class EmailService {
       phone?: string;
       email?: string;
     },
-    mediaShareUrl?: string
+    mediaShareUrl?: string,
+    keyVisual?: { url: string; cropData?: any }
   ): EmailPreviewData {
     
     const recipient = {
@@ -431,7 +434,7 @@ export class EmailService {
       mediaShareUrl: mediaShareUrl || ''
     };
 
-    const html = this.buildPreviewHtml(campaignEmail, variables, mediaShareUrl);
+    const html = this.buildPreviewHtml(campaignEmail, variables, mediaShareUrl, keyVisual);
     const text = this.buildPreviewText(campaignEmail, variables, mediaShareUrl);
     const subject = this.replaceVariables(campaignEmail.subject, variables);
 
@@ -500,13 +503,20 @@ export class EmailService {
   /**
    * Preview HTML aufbauen
    */
-  private buildPreviewHtml(email: PRCampaignEmail, variables: Record<string, string>, mediaShareUrl?: string): string {
+  private buildPreviewHtml(email: PRCampaignEmail, variables: Record<string, string>, mediaShareUrl?: string, keyVisual?: { url: string; cropData?: any }): string {
     const mediaButtonHtml = mediaShareUrl ? `
             <div style="text-align: center; margin: 30px 0;">
                 <a href="${mediaShareUrl}" 
                    style="display: inline-block; padding: 12px 30px; background-color: #667eea; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
                     📎 Medien ansehen
                 </a>
+            </div>` : '';
+
+    const keyVisualHtml = keyVisual ? `
+            <div style="text-align: center; margin: 0 0 20px 0;">
+                <img src="${keyVisual.url}" 
+                     alt="Key Visual" 
+                     style="width: 100%; max-width: 600px; height: auto; display: block; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
             </div>` : '';
 
     return `
@@ -598,6 +608,7 @@ export class EmailService {
             </div>
             
             <div class="press-release">
+                ${keyVisualHtml}
                 ${this.replaceVariables(email.pressReleaseHtml, variables)}
             </div>
             

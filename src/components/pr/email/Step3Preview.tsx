@@ -140,7 +140,8 @@ export default function Step3Preview({
         phone: senderInfo?.phone || '',
         email: senderInfo?.email || ''
       },
-      campaign.assetShareUrl
+      campaign.assetShareUrl,
+      campaign.keyVisual
     );
 
     return preview.html;

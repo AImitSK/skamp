@@ -39,6 +39,7 @@ interface SendPRCampaignRequest {
   campaignId?: string;
   campaignTitle?: string;
   mediaShareUrl?: string;
+  keyVisual?: { url: string; cropData?: any };
 }
 
 // NEU: Geschützte Route mit Auth
@@ -246,7 +247,7 @@ export async function POST(request: NextRequest) {
         for (const recipient of batch) {
           try {
             // HTML E-Mail aufbauen
-            const htmlContent = buildPREmailHtml(data.campaignEmail, data.senderInfo, recipient, data.mediaShareUrl);
+            const htmlContent = buildPREmailHtml(data.campaignEmail, data.senderInfo, recipient, data.mediaShareUrl, data.keyVisual);
             const textContent = buildPREmailText(data.campaignEmail, data.senderInfo, recipient, data.mediaShareUrl);
             const personalizedSubject = replaceVariables(data.campaignEmail.subject, recipient, data.senderInfo);
 
@@ -410,7 +411,8 @@ function buildPREmailHtml(
   email: SendPRCampaignRequest['campaignEmail'], 
   sender: SendPRCampaignRequest['senderInfo'],
   recipient: SendPRCampaignRequest['recipients'][0],
-  mediaShareUrl?: string
+  mediaShareUrl?: string,
+  keyVisual?: { url: string; cropData?: any }
 ): string {
   // NEU: Media Button HTML
   const mediaButtonHtml = mediaShareUrl ? `
@@ -419,6 +421,14 @@ function buildPREmailHtml(
                    style="display: inline-block; padding: 12px 30px; background-color: #667eea; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
                     📎 Medien ansehen
                 </a>
+            </div>` : '';
+
+  // NEU: Key Visual HTML
+  const keyVisualHtml = keyVisual ? `
+            <div style="text-align: center; margin: 0 0 20px 0;">
+                <img src="${keyVisual.url}" 
+                     alt="Key Visual" 
+                     style="width: 100%; max-width: 600px; height: auto; display: block; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
             </div>` : '';
 
   return `
@@ -514,6 +524,7 @@ function buildPREmailHtml(
             </div>
             
             <div class="press-release">
+                ${keyVisualHtml}
                 ${replaceVariables(email.pressReleaseHtml, recipient, sender)}
             </div>
             

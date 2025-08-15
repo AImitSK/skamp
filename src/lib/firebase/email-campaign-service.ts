@@ -88,7 +88,7 @@ export const emailCampaignService = {
         companyName: previewContact.companyName
       };
 
-      const preview = emailService.generatePreview(contactForPreview as any, emailContent, senderInfo);
+      const preview = emailService.generatePreview(contactForPreview as any, emailContent, senderInfo, undefined, campaign.keyVisual);
       
       console.log('✅ Preview generated successfully');
       
@@ -232,7 +232,8 @@ export const emailCampaignService = {
         emailContent,
         senderInfo,
         contactsForEmail as any, // Temporärer Cast bis emailService auch updated ist
-        mediaShareUrl // Pass the share URL
+        mediaShareUrl, // Pass the share URL
+        campaign.keyVisual // Pass the key visual
       );
 
       // 5. Versand-Status in Datenbank speichern
