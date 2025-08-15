@@ -10,7 +10,8 @@ import {
   PlusIcon, 
   XMarkIcon,
   ChartBarIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import { seoKeywordService } from '@/lib/ai/seo-keyword-service';
 import type { KeywordResult } from '@/lib/ai/seo-keyword-service';
@@ -46,16 +47,10 @@ export function SEOHeaderBar({
   const [newKeyword, setNewKeyword] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  // Auto-Keyword-Detection mit Debouncing
+  // Metrics-Update ohne Auto-Detection
   useEffect(() => {
-    console.log('🔍 SEO HeaderBar: Content check:', { 
-      contentLength: content?.length || 0, 
-      content: content?.substring(0, 100) + '...' 
-    });
-    
     if (!content || content.length < 50) {
       setSeoMetrics({ score: 0, wordCount: 0, keywordDensity: 0 });
-      setAutoDetectedKeywords([]);
       return;
     }
 
@@ -74,41 +69,7 @@ export function SEOHeaderBar({
       wordCount,
       keywordDensity
     });
-
-    setIsAnalyzing(true);
-
-    const sessionId = 'seo-header-detection';
-    seoKeywordService.detectKeywordsDebounced(
-      content,
-      sessionId,
-      (result: KeywordResult) => {
-        console.log('✅ SEOHeaderBar: Auto-detected keywords:', result.keywords);
-        setAutoDetectedKeywords(result.keywords);
-        setIsAnalyzing(false);
-        
-        // Wenn neue Keywords erkannt wurden und noch keine manuellen Keywords gesetzt sind
-        if (result.keywords.length > 0 && keywords.length === 0) {
-          console.log('🎯 SEOHeaderBar: Setting auto-detected keywords as active:', result.keywords);
-          onKeywordsChange?.(result.keywords.slice(0, 3)); // Max 3 Keywords
-        }
-        
-        // Update score with detected keywords
-        const updatedScore = seoKeywordService.calculateSEOScore(
-          content, 
-          keywords.length > 0 ? keywords : result.keywords
-        );
-        setSeoMetrics(prev => ({
-          ...prev,
-          score: updatedScore
-        }));
-      },
-      { debounceMs: 2000 }
-    );
-
-    return () => {
-      seoKeywordService.clearDebounceTimers();
-    };
-  }, [content, keywords, onKeywordsChange]);
+  }, [content, keywords]);
 
   // Separate useEffect für Score-Updates nach manuellen Keyword-Änderungen
   useEffect(() => {
@@ -124,6 +85,30 @@ export function SEOHeaderBar({
       }));
     }
   }, [keywords, content]);
+
+  // Manuelle Keyword-Erkennung
+  const handleRefreshKeywords = async () => {
+    if (!content || content.length < 50) {
+      return;
+    }
+
+    setIsAnalyzing(true);
+    try {
+      const result = await seoKeywordService.detectKeywords(content);
+      console.log('🎯 Manual keyword detection:', result.keywords);
+      
+      setAutoDetectedKeywords(result.keywords);
+      
+      // Optional: Automatisch als aktive Keywords setzen wenn keine vorhanden
+      if (keywords.length === 0 && result.keywords.length > 0) {
+        onKeywordsChange?.(result.keywords.slice(0, 3)); // Max 3 Keywords
+      }
+    } catch (error) {
+      console.error('Keyword detection failed:', error);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   const handleAddKeyword = (keyword: string) => {
     const trimmedKeyword = keyword.trim();
@@ -185,6 +170,24 @@ export function SEOHeaderBar({
           <Badge color={getSEOScoreBadgeColor(seoMetrics.score)} className="text-xs">
             SEO-Score: {Math.round(seoMetrics.score)}
           </Badge>
+          
+          {/* Refresh Keywords Button */}
+          <button
+            type="button"
+            onClick={handleRefreshKeywords}
+            disabled={isAnalyzing || !content || content.length < 50}
+            className={`
+              p-2 rounded-md transition-colors
+              ${isAnalyzing 
+                ? 'text-blue-500 animate-spin' 
+                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+              }
+              disabled:opacity-50 disabled:cursor-not-allowed
+            `}
+            title={content && content.length >= 50 ? "Keywords automatisch erkennen" : "Text zu kurz für Keyword-Analyse"}
+          >
+            <ArrowPathIcon className="h-4 w-4" />
+          </button>
         </div>
       </div>
       

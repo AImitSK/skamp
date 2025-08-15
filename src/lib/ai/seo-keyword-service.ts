@@ -76,8 +76,10 @@ class SEOKeywordService {
         },
         body: JSON.stringify({
           prompt,
-          maxTokens: 100,
-          temperature: 0.3, // Niedrig für konsistente Ergebnisse
+          mode: 'generate', // Required by API route
+          context: {
+            tone: 'professional'
+          }
         }),
       });
 
@@ -86,9 +88,13 @@ class SEOKeywordService {
       }
 
       const data = await response.json();
-      const rawKeywords = data.content || data.text || '';
+      const rawKeywords = data.generatedText || data.content || data.text || '';
       
-      console.log('🎯 SEO Service: Raw API response:', { rawKeywords });
+      console.log('🎯 SEO Service: Raw API response:', { 
+        fullResponse: data, 
+        rawKeywords,
+        success: data.success 
+      });
       
       // Parse und validiere Keywords
       const keywords = this.parseAndValidateKeywords(rawKeywords, opts);
