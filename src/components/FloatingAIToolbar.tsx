@@ -464,12 +464,13 @@ Der markierte Text enthält eine Anweisung oder ein Briefing. Erstelle NUR Flie�
 
       console.log(`🤖 KI-${action} (${hasFullContext ? 'mit Kontext' : 'direkt'}):`, userPrompt.substring(0, 100) + '...');
       
-      const response = await fetch('/api/ai/generate', {
+      // NUTZE CUSTOM INSTRUCTION API für alle normalen KI-Funktionen
+      const response = await fetch('/api/ai/custom-instruction', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          prompt: systemPrompt + '\n\n' + userPrompt,
-          mode: 'generate'
+        body: JSON.stringify({
+          originalText: text,
+          instruction: `${action.toUpperCase()}: ${systemPrompt}\n\n${userPrompt}`
         })
       });
 
