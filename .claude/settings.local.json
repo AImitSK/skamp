@@ -37,7 +37,8 @@
       "Bash(curl:*)",
       "Bash(vercel ls:*)",
       "Bash(timeout:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(npx jest:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

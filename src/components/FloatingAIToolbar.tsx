@@ -10,7 +10,8 @@ import {
   ArrowsPointingInIcon,
   SpeakerWaveIcon,
   XMarkIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  MagnifyingGlassIcon
 } from '@heroicons/react/24/outline';
 
 // KI-QUALITY TEST RUNNER
@@ -235,6 +236,7 @@ function parseTextFromAIOutput(aiOutput: string): string {
 interface FloatingAIToolbarProps {
   editor: Editor | null;
   onAIAction?: (action: AIAction, selectedText: string) => Promise<string>;
+  keywords?: string[]; // SEO-Keywords für SEO-Optimierung
 }
 
 export type AIAction = 
@@ -242,7 +244,8 @@ export type AIAction =
   | 'shorten' 
   | 'expand' 
   | 'change-tone'
-  | 'elaborate'; // Neuer "Ausformulieren" Button
+  | 'elaborate' // Neuer "Ausformulieren" Button
+  | 'seo-optimize'; // Neuer "SEO optimieren" Button
 
 interface ToneOption {
   value: string;
@@ -257,7 +260,7 @@ const toneOptions: ToneOption[] = [
   { value: 'confident', label: 'Selbstbewusst' }
 ];
 
-export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps) => {
+export const FloatingAIToolbar = ({ editor, onAIAction, keywords = [] }: FloatingAIToolbarProps) => {
   const [isVisible, setIsVisible] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const [selectedText, setSelectedText] = useState('');
@@ -456,6 +459,57 @@ WICHTIGE REGELN:
 
 Der markierte Text enthält eine Anweisung oder ein Briefing. Erstelle NUR Fließtext-Content, KEINE Überschriften!`;
             userPrompt = `Führe diese Anweisung aus:\n\n${text}`;
+          }
+          break;
+        case 'seo-optimize':
+          if (keywords.length === 0) {
+            console.warn('⚠️ SEO-Optimierung ohne Keywords nicht möglich');
+            return text; // Fallback wenn keine Keywords
+          }
+          
+          if (hasFullContext) {
+            // SEO-Optimierung mit Volltext-Kontext
+            systemPrompt = `Du bist ein SEO-Experte und professioneller Content-Writer. Du siehst den GESAMTEN Text und sollst NUR die markierte Stelle für SEO optimieren.
+
+ZIEL-KEYWORDS: ${keywords.join(', ')}
+
+KONTEXT-ANALYSE:
+1. Verstehe den Zweck des Gesamttextes
+2. Erkenne die Rolle der markierten Stelle
+3. Behalte die Tonalität des Gesamttextes
+
+SEO-OPTIMIERUNG DER MARKIERTEN STELLE:
+- Integriere Keywords natürlich (1-3% Dichte)
+- Verbessere Lesbarkeit und Struktur
+- Behalte die ursprüngliche Aussage bei
+- Optimiere für Suchmaschinen UND Menschen
+
+WICHTIGE REGELN:
+- Nutze Keywords sinnvoll, nicht forciert
+- Behalte den natürlichen Textfluss
+- Keine künstlichen Keyword-Wiederholungen
+- Ähnliche Textlänge beibehalten
+
+Antworte NUR mit der SEO-optimierten markierten Stelle!`;
+            userPrompt = `GESAMTER TEXT:\n${fullDocument}\n\nMARKIERTE STELLE ZUM SEO-OPTIMIEREN für Keywords "${keywords.join(', ')}":\n${text}`;
+          } else {
+            // SEO-Optimierung ohne Kontext
+            systemPrompt = `Du bist ein SEO-Experte. Optimiere den Text für diese Keywords: ${keywords.join(', ')}
+
+SEO-OPTIMIERUNG:
+- Integriere Keywords natürlich in den Text (1-3% Dichte)
+- Verbessere Lesbarkeit und Struktur für SEO
+- Behalte die Kernaussage und Tonalität bei
+- Mache den Text suchmaschinenfreundlicher
+
+WICHTIGE REGELN:
+- Keywords nicht forciert einbauen
+- Natürlicher Textfluss bleibt erhalten
+- Keine Keyword-Stuffing
+- Ähnliche Textlänge wie Original
+
+Antworte NUR mit dem SEO-optimierten Text.`;
+            userPrompt = `Optimiere für SEO mit Keywords "${keywords.join(', ')}":\n\n${text}`;
           }
           break;
         default:
@@ -1048,7 +1102,7 @@ WICHTIG: Mache wirklich NUR die eine genannte Änderung!`;
         top: `${position.top}px`,
         left: `${position.left}px`,
         transform: 'translateX(-50%)',
-        minWidth: '520px'
+        minWidth: '650px'
       }}
       onMouseEnter={() => {
         setIsInteracting(true);
@@ -1128,6 +1182,24 @@ WICHTIG: Mache wirklich NUR die eine genannte Änderung!`;
       >
         <DocumentTextIcon className="h-4 w-4" />
         <span>Ausformulieren</span>
+      </button>
+
+      {/* SEO optimieren - nur aktiv wenn Keywords vorhanden */}
+      <button
+        onClick={() => executeAction('seo-optimize')}
+        disabled={isProcessing || keywords.length === 0}
+        className={`
+          flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors
+          ${keywords.length === 0 
+            ? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-50'
+            : 'bg-white hover:bg-gray-50 text-gray-700'
+          }
+          disabled:opacity-50 disabled:cursor-not-allowed
+        `}
+        title={keywords.length === 0 ? "SEO-Optimierung (Keywords erforderlich)" : `SEO optimieren für: ${keywords.join(', ')}`}
+      >
+        <MagnifyingGlassIcon className="h-4 w-4" />
+        <span>SEO optimieren</span>
       </button>
 
       {/* Ton ändern Dropdown */}
