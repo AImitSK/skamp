@@ -172,18 +172,33 @@ class SEOKeywordService {
    * Berechne Keyword-Dichte und Analytik
    */
   analyzeKeywords(text: string, keywords: string[]): KeywordAnalytics[] {
-    const cleanText = text.toLowerCase();
-    const words = cleanText.split(/\s+/);
+    // HTML-Tags entfernen für korrekte Wortzählung
+    const cleanText = text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+    const words = cleanText.split(/\s+/).filter(w => w.length > 0);
     const totalWords = words.length;
+    
+    console.log('🔍 Keyword Analysis:', { 
+      originalTextLength: text.length,
+      cleanTextLength: cleanText.length,
+      totalWords,
+      keywords
+    });
 
     return keywords.map(keyword => {
       const keywordLower = keyword.toLowerCase();
       const regex = new RegExp(`\\b${this.escapeRegex(keywordLower)}\\b`, 'gi');
       const matches = [...cleanText.matchAll(regex)];
+      const density = totalWords > 0 ? (matches.length / totalWords) * 100 : 0;
+      
+      console.log(`📊 Keyword "${keyword}":`, {
+        occurrences: matches.length,
+        totalWords,
+        density: density.toFixed(2) + '%'
+      });
       
       return {
         keyword,
-        density: totalWords > 0 ? (matches.length / totalWords) * 100 : 0,
+        density,
         occurrences: matches.length,
         positions: matches.map(match => match.index || 0)
       };
@@ -318,17 +333,33 @@ class SEOKeywordService {
       }
     }
 
-    // 2. Lesbarkeits-Empfehlungen
+    // 2. Spezifische Lesbarkeits-Empfehlungen
     if (readability.score < 50) {
-      recommendations.push(`📖 Verbessere Lesbarkeit von ${readability.score} auf 60+ Punkte (aktuell: ${readability.level})`);
+      // Konkrete Verbesserungsvorschläge je nach Lesbarkeits-Level
+      if (readability.level === 'Sehr schwer') {
+        recommendations.push(`📖 Text vereinfachen: Verwende einfachere Wörter und kürzere Sätze (Lesbarkeit: ${readability.score})`);
+      } else if (readability.level === 'Schwer') {
+        recommendations.push(`📝 Sätze kürzen und Fremdwörter erklären (Lesbarkeit: ${readability.score}, Ziel: 60+)`);
+      } else {
+        recommendations.push(`📚 Mehr Bindewörter und aktive Sprache verwenden (Lesbarkeit: ${readability.score}, Ziel: 60+)`);
+      }
     }
     
-    // Satzlänge analysieren
-    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+    // Konkrete Satzlängen-Analyse
+    const cleanTextForSentences = text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    const sentences = cleanTextForSentences.split(/[.!?]+/).filter(s => s.trim().length > 0);
     if (sentences.length > 0) {
       const avgSentenceLength = wordCount / sentences.length;
-      if (avgSentenceLength > 20) {
-        recommendations.push(`📝 Schreibe kürzere Sätze (aktuell ${Math.round(avgSentenceLength)} Wörter/Satz, optimal: 12-15)`);
+      if (avgSentenceLength > 25) {
+        recommendations.push(`✂️ Teile lange Sätze auf: ${Math.round(avgSentenceLength)} Wörter/Satz → maximal 20 Wörter`);
+      } else if (avgSentenceLength > 20) {
+        recommendations.push(`📝 Sätze etwas kürzen: ${Math.round(avgSentenceLength)} Wörter/Satz → optimal 12-15 Wörter`);
+      }
+      
+      // Prüfe sehr lange Einzelsätze
+      const longSentences = sentences.filter(s => s.split(/\s+/).length > 30).length;
+      if (longSentences > 0) {
+        recommendations.push(`🔍 ${longSentences} sehr lange Sätze (>30 Wörter) aufteilen oder mit Punkten strukturieren`);
       }
     }
 
@@ -339,13 +370,27 @@ class SEOKeywordService {
       recommendations.push(`✂️ Kürze den Text um ca. ${wordCount - 600} Wörter für optimale Länge`);
     }
 
-    // 4. Strukturelle Empfehlungen
+    // 4. Spezifische Strukturelle Empfehlungen
     const textWithoutHtml = text.replace(/<[^>]*>/g, ' ').trim();
-    const conjunctions = (textWithoutHtml.match(/\b(und|oder|aber|denn|jedoch|außerdem|zudem|darüber hinaus)\b/gi) || []).length;
+    const conjunctions = (textWithoutHtml.match(/\b(und|oder|aber|denn|jedoch|außerdem|zudem|darüber hinaus|deshalb|daher|trotzdem|dennoch)\b/gi) || []).length;
     const conjunctionRatio = conjunctions / wordCount * 100;
     
-    if (conjunctionRatio < 2) {
-      recommendations.push("🔗 Verwende mehr Bindewörter (und, außerdem, jedoch) für besseren Textfluss");
+    if (conjunctionRatio < 1.5) {
+      recommendations.push(`🔗 Mehr Verbindungswörter verwenden: "jedoch", "außerdem", "deshalb" (aktuell ${conjunctionRatio.toFixed(1)}%)`);
+    }
+    
+    // Passiv-Konstruktionen prüfen
+    const passiveIndicators = (textWithoutHtml.match(/\b(wird|wurden|worden|geworden)\s+\w+/gi) || []).length;
+    const passiveRatio = passiveIndicators / sentences.length * 100;
+    
+    if (passiveRatio > 20) {
+      recommendations.push(`🎯 Weniger Passiv-Konstruktionen: ${Math.round(passiveRatio)}% → unter 15% für aktivere Sprache`);
+    }
+    
+    // Füllwörter prüfen
+    const fillerWords = (textWithoutHtml.match(/\b(eigentlich|sozusagen|gewissermaßen|quasi|irgendwie|ziemlich|relativ|durchaus)\b/gi) || []).length;
+    if (fillerWords > wordCount * 0.02) {
+      recommendations.push(`💪 ${fillerWords} Füllwörter entfernen: "eigentlich", "sozusagen", "irgendwie" schwächen den Text`);
     }
 
     // 5. Positive Bestätigung wenn alles gut ist
