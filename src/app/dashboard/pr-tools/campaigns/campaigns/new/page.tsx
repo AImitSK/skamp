@@ -444,7 +444,7 @@ export default function NewPRCampaignPage() {
                 onChange={setKeyVisual}
                 clientId={selectedCompanyId}
                 clientName={selectedCompanyName}
-                organizationId={currentOrganization!.id}
+                organizationId={user!.uid}
                 userId={user!.uid}
               />
             </div>

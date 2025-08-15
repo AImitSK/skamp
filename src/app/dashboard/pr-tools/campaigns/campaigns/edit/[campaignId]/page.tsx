@@ -529,7 +529,7 @@ export default function EditPRCampaignPage() {
                 onChange={setKeyVisual}
                 clientId={selectedCompanyId}
                 clientName={selectedCompanyName}
-                organizationId={currentOrganization!.id}
+                organizationId={user!.uid}
                 userId={user!.uid}
               />
             </div>
