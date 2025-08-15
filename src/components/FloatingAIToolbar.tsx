@@ -3,6 +3,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { Editor } from '@tiptap/react';
+import { TextSelection } from '@tiptap/pm/state';
 import {
   SparklesIcon,
   ArrowsPointingOutIcon,
@@ -72,7 +73,7 @@ async function testAIFeatures() {
       continue;
     }
     
-    console.log(`📏 Wörter: ${result.originalWords} → ${result.resultWords} (${result.wordDiff >= 0 ? '+' : ''}${result.wordDiff})`);
+    console.log(`📏 Wörter: ${result.originalWords} → ${result.resultWords} (${result.wordDiff && result.wordDiff >= 0 ? '+' : ''}${result.wordDiff || 0})`);
     console.log(`📄 Absätze: ${result.originalParagraphs} → ${result.resultParagraphs}`);
     console.log(`🚫 PM-Struktur: ${result.hasPM ? '❌ Gefunden' : '✅ Sauber'}`);
     console.log(`🎨 Formatierung: ${result.hasFormat ? '❌ Gefunden' : '✅ Sauber'}`);
@@ -622,7 +623,7 @@ Antworte NUR mit dem Text im neuen Ton.`;
       // Text als REINER PLAIN TEXT einfügen
       editor.view.dispatch(
         editor.view.state.tr
-          .setSelection(editor.state.selection.constructor.create(editor.view.state.doc, from, to))
+          .setSelection(TextSelection.create(editor.view.state.doc, from, to))
           .replaceSelectionWith(editor.state.schema.text(newText), false)
       );
       
@@ -698,7 +699,7 @@ Antworte NUR mit dem Text im neuen Ton.`;
         const plainText = parseTextFromAIOutput(newText);
         editor.view.dispatch(
           editor.view.state.tr
-            .setSelection(editor.state.selection.constructor.create(editor.view.state.doc, from, to))
+            .setSelection(TextSelection.create(editor.view.state.doc, from, to))
             .replaceSelectionWith(editor.state.schema.text(plainText), false)
         );
       }
@@ -1033,7 +1034,7 @@ REGELN:
       // Text als PLAIN TEXT einfügen (wie andere Aktionen)
       editor.view.dispatch(
         editor.view.state.tr
-          .setSelection(editor.state.selection.constructor.create(editor.view.state.doc, from, to))
+          .setSelection(TextSelection.create(editor.view.state.doc, from, to))
           .replaceSelectionWith(editor.state.schema.text(newText), false)
       );
       
