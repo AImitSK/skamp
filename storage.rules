@@ -57,7 +57,7 @@ service firebase.storage {
         // Allow organization members to upload branding files
         allow create: if request.auth != null && 
                       isOrganizationMember(organizationId) &&
-                      request.resource.size < 10 * 1024 * 1024; // Max 10MB for branding
+                      request.resource.size < 50 * 1024 * 1024; // Max 50MB for branding
         
         // Allow organization members to read branding files
         allow read: if request.auth != null && isOrganizationMember(organizationId);
