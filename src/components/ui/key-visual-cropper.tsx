@@ -151,6 +151,7 @@ export function KeyVisualCropper({ src, onCropComplete, onCancel, isProcessing }
                 ref={imgRef}
                 alt="Zu schneidendes Key Visual"
                 src={src}
+                crossOrigin="anonymous"
                 style={{ maxWidth: '100%', maxHeight: '500px' }}
                 onLoad={onImageLoad}
               />
