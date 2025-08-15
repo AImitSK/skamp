@@ -643,6 +643,7 @@ Antworte NUR mit dem Text im neuen Ton.`;
         setIsVisible(false);
         setSelectedText('');
         lastSelectionRef.current = null;
+        setIsInteracting(false); // WICHTIG: Interacting-State zurücksetzen
       }, 100);
     } catch (error) {
       console.error('Ton-Änderung fehlgeschlagen:', error);
@@ -704,6 +705,7 @@ Antworte NUR mit dem Text im neuen Ton.`;
         setIsVisible(false);
         setSelectedText('');
         lastSelectionRef.current = null;
+        setIsInteracting(false); // WICHTIG: Interacting-State zurücksetzen
       }, 100);
     } catch (error) {
       console.error('Aktion fehlgeschlagen:', error);
