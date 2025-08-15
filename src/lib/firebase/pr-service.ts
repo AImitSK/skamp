@@ -741,20 +741,6 @@ export const prService = {
       
       console.log('⚠️ Freigabe erstellt, E-Mail-Versand folgt später');
 
-      // ========== NOTIFICATION INTEGRATION ==========
-      try {
-        await notificationsService.notifyChangesRequested(
-          campaign,
-          'System', // Oder campaign.clientName || 'Kunde'
-          campaign.userId,
-          campaign.organizationId
-        );
-        console.log('📬 Benachrichtigung gesendet: Freigabe angefordert');
-      } catch (notificationError) {
-        console.error('❌ Fehler beim Senden der Benachrichtigung:', notificationError);
-        // Nicht den ganzen Prozess stoppen wenn Notification fehlschlägt
-      }
-
       // Update Kampagne mit Approval-Daten
       const approvalData: ApprovalData = {
         shareId: approval.shareId,
@@ -1282,6 +1268,22 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
         });
         
         console.log('Updated campaign with approvalDataStatus: viewed');
+        
+        // ========== NOTIFICATION INTEGRATION ==========
+        try {
+          const campaign = await this.getById(currentData.campaignId);
+          if (campaign) {
+            await notificationsService.notifyMediaAccessed(
+              { id: shareId, assetName: campaign.title || 'Pressemitteilung' },
+              campaign.userId,
+              campaign.organizationId || undefined
+            );
+            console.log('📬 Benachrichtigung gesendet: Link aufgerufen');
+          }
+        } catch (notificationError) {
+          console.error('Fehler beim Senden der Link-Zugriff Benachrichtigung:', notificationError);
+          // Fehler bei Benachrichtigung sollte den Hauptprozess nicht stoppen
+        }
       }
     }
   },
