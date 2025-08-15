@@ -79,7 +79,32 @@ class NotificationsService {
    */
   async getAll(userId: string, limitCount: number = 50, organizationId?: string): Promise<Notification[]> {
     try {
+      console.log('🔥 DEBUG - getAll with userId:', userId);
       console.log('🔥 DEBUG - getAll with organizationId:', organizationId);
+      
+      // DEBUG: Let's see what notifications exist in the collection
+      const allNotificationsQuery = query(
+        collection(db, NOTIFICATIONS_COLLECTION),
+        orderBy('createdAt', 'desc'),
+        limit(5)
+      );
+      
+      try {
+        const allSnapshot = await getDocs(allNotificationsQuery);
+        console.log('🔥 DEBUG - Sample notifications in collection:');
+        allSnapshot.docs.forEach((doc, index) => {
+          const data = doc.data();
+          console.log(`🔥 DEBUG - Sample ${index + 1}:`, {
+            id: doc.id,
+            userId: data.userId,
+            organizationId: data.organizationId,
+            title: data.title,
+            createdAt: data.createdAt?.toDate?.() || data.createdAt
+          });
+        });
+      } catch (debugError) {
+        console.log('🔥 DEBUG - Could not fetch sample notifications:', debugError);
+      }
       
       if (organizationId) {
         // First get organization-specific notifications

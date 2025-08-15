@@ -62,6 +62,9 @@ export function useNotifications(): UseNotificationsReturn {
     try {
       setLoading(true);
       setError(null);
+      console.log('🔥 DEBUG - loadNotifications with userId:', user.uid);
+      console.log('🔥 DEBUG - loadNotifications with organizationId:', currentOrganization?.id);
+      console.log('🔥 DEBUG - Current user object:', user);
       const data = await notificationsService.getAll(user.uid, 50, currentOrganization?.id);
       setNotifications(data);
       setTotalCount(data.length);
