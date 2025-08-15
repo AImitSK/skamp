@@ -95,12 +95,12 @@ class NotificationsService {
         allSnapshot.docs.forEach((doc, index) => {
           const data = doc.data();
           // console.log(`DEBUG - Sample ${index + 1}:`, {
-            id: doc.id,
-            userId: data.userId,
-            organizationId: data.organizationId,
-            title: data.title,
-            createdAt: data.createdAt?.toDate?.() || data.createdAt
-          });
+          //   id: doc.id,
+          //   userId: data.userId,
+          //   organizationId: data.organizationId,
+          //   title: data.title,
+          //   createdAt: data.createdAt?.toDate?.() || data.createdAt
+          // });
         });
       } catch (debugError) {
         // console.log('DEBUG - Could not fetch sample notifications:', debugError);
