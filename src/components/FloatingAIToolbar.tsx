@@ -236,7 +236,7 @@ function parseTextFromAIOutput(aiOutput: string): string {
 interface FloatingAIToolbarProps {
   editor: Editor | null;
   onAIAction?: (action: AIAction, selectedText: string) => Promise<string>;
-  keywords?: string[]; // SEO-Keywords für SEO-Optimierung
+  // Keywords entfernt - SEO-Optimierung nicht mehr benötigt
 }
 
 export type AIAction = 
@@ -245,7 +245,7 @@ export type AIAction =
   | 'expand' 
   | 'change-tone'
   | 'elaborate' // Neuer "Ausformulieren" Button
-  | 'seo-optimize'; // Neuer "SEO optimieren" Button
+  ; // SEO-Optimierung entfernt - PR-Tool braucht nur Analyse
 
 interface ToneOption {
   value: string;
@@ -260,7 +260,7 @@ const toneOptions: ToneOption[] = [
   { value: 'confident', label: 'Selbstbewusst' }
 ];
 
-export const FloatingAIToolbar = ({ editor, onAIAction, keywords = [] }: FloatingAIToolbarProps) => {
+export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps) => {
   const [isVisible, setIsVisible] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const [selectedText, setSelectedText] = useState('');
@@ -461,83 +461,7 @@ Der markierte Text enthält eine Anweisung oder ein Briefing. Erstelle NUR Flie�
             userPrompt = `Führe diese Anweisung aus:\n\n${text}`;
           }
           break;
-        case 'seo-optimize':
-          console.log('🔍 SEO-Optimize Debug:', { 
-            keywordsLength: keywords.length, 
-            keywords: keywords,
-            keywordsType: typeof keywords,
-            action: action
-          });
-          if (keywords.length === 0) {
-            console.warn('⚠️ SEO-Optimierung ohne Keywords nicht möglich');
-            return text; // Fallback wenn keine Keywords
-          }
-          
-          if (hasFullContext) {
-            // SEO-Optimierung mit Volltext-Kontext
-            systemPrompt = `Du bist ein SEO-Experte und professioneller Content-Writer. Du siehst den GESAMTEN Text und sollst NUR die markierte Stelle für SEO optimieren.
-
-ZIEL-KEYWORDS: ${keywords.join(', ')}
-
-KONTEXT-ANALYSE:
-1. Verstehe den Zweck des Gesamttextes
-2. Erkenne die Rolle der markierten Stelle
-3. Behalte die Tonalität des Gesamttextes
-
-GANZHEITLICHE SEO-OPTIMIERUNG:
-- KEYWORDS: Integriere Keywords natürlich (1-3% Dichte), nicht forciert
-- LESBARKEIT: Verkürze komplexe Sätze (max. 15-20 Wörter), vereinfache schwere Wörter
-- STRUKTUR: Verbessere Satzfluss und logische Verknüpfungen
-- VERSTÄNDLICHKEIT: Schreibe für Zielgruppe verständlich
-- SCANBARKEIT: Nutze aktive Sprache und klare Aussagen
-
-DEUTSCHE LESBARKEITS-REGELN:
-- Kurze, klare Sätze (ideal 12-15 Wörter)
-- Weniger Silben pro Wort wenn möglich
-- Aktive statt passive Konstruktionen
-- Konkrete statt abstrakte Begriffe
-
-WICHTIGE REGELN:
-- Behalte die ursprüngliche Aussage und Kernbotschaft
-- Natürlicher Textfluss hat Priorität vor Keywords
-- Optimiere für Menschen UND Suchmaschinen
-- Ähnliche Textlänge beibehalten
-
-Antworte NUR mit der SEO-optimierten markierten Stelle!`;
-            userPrompt = `GESAMTER TEXT:\n${fullDocument}\n\nMARKIERTE STELLE ZUM SEO-OPTIMIEREN für Keywords "${keywords.join(', ')}":\n${text}`;
-          } else {
-            // SEO-Optimierung ohne Kontext
-            systemPrompt = `Du bist ein SEO-Experte. Optimiere den Text für diese Keywords: ${keywords.join(', ')}
-
-GANZHEITLICHE SEO-OPTIMIERUNG:
-- KEYWORDS: Integriere Keywords natürlich (1-3% Dichte), nicht forciert
-- LESBARKEIT: Verkürze komplexe Sätze (max. 15-20 Wörter), vereinfache schwere Wörter  
-- STRUKTUR: Verbessere Satzfluss und logische Verknüpfungen
-- VERSTÄNDLICHKEIT: Schreibe für Zielgruppe verständlich
-- SCANBARKEIT: Nutze aktive Sprache und klare Aussagen
-
-DEUTSCHE LESBARKEITS-REGELN:
-- Kurze, klare Sätze (ideal 12-15 Wörter)
-- Weniger Silben pro Wort wenn möglich
-- Aktive statt passive Konstruktionen  
-- Konkrete statt abstrakte Begriffe
-
-SEO-OPTIMIERUNG:
-- Integriere Keywords natürlich in den Text (1-3% Dichte)
-- Verbessere Lesbarkeit und Struktur für SEO
-- Behalte die Kernaussage und Tonalität bei
-- Mache den Text suchmaschinenfreundlicher
-
-WICHTIGE REGELN:
-- Keywords nicht forciert einbauen
-- Natürlicher Textfluss bleibt erhalten
-- Keine Keyword-Stuffing
-- Ähnliche Textlänge wie Original
-
-Antworte NUR mit dem SEO-optimierten Text.`;
-            userPrompt = `Optimiere für SEO mit Keywords "${keywords.join(', ')}":\n\n${text}`;
-          }
-          break;
+        // SEO-Optimierung entfernt - PR-Tool fokussiert auf Analyse statt Optimierung
         default:
           return text;
       }
@@ -1232,24 +1156,7 @@ WICHTIG: Mache wirklich NUR die eine genannte Änderung!`;
         <span className="whitespace-nowrap">Ausformulieren</span>
       </button>
 
-      {/* SEO optimieren - nur aktiv wenn Keywords vorhanden */}
-      <button
-        type="button"
-        onClick={() => executeAction('seo-optimize')}
-        disabled={isProcessing || keywords.length === 0}
-        className={`
-          flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors
-          ${keywords.length === 0 
-            ? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-50'
-            : 'bg-white hover:bg-gray-50 text-gray-700'
-          }
-          disabled:opacity-50 disabled:cursor-not-allowed
-        `}
-        title={keywords.length === 0 ? "SEO-Optimierung (Keywords erforderlich)" : `SEO optimieren für: ${keywords.join(', ')}`}
-      >
-        <MagnifyingGlassIcon className="h-4 w-4" />
-        <span className="whitespace-nowrap">SEO</span>
-      </button>
+      {/* SEO-Optimierung entfernt - PR-Tool fokussiert auf Analyse */}
 
       {/* Ton ändern Dropdown */}
       <div className="relative">

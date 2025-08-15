@@ -173,7 +173,7 @@ interface GmailStyleEditorProps {
   className?: string;
   title?: string;
   onTitleChange?: (title: string) => void;
-  keywords?: string[]; // Keywords für SEO-Features
+  // Keywords entfernt - SEO-Optimierung nicht mehr benötigt
 }
 
 export const GmailStyleEditor = ({ 
@@ -185,8 +185,8 @@ export const GmailStyleEditor = ({
   onAutoSave,
   className,
   title = '',
-  onTitleChange,
-  keywords = []
+  onTitleChange
+  // Keywords entfernt
 }: GmailStyleEditorProps) => {
   
   // Fullscreen state
@@ -338,13 +338,7 @@ export const GmailStyleEditor = ({
       )}
 
       {/* Floating AI Toolbar - immer da */}
-      <FloatingAIToolbar editor={editor} keywords={keywords} />
-      {/* Debug Keywords */}
-      {process.env.NODE_ENV === 'development' && (
-        <div style={{ display: 'none' }}>
-          📊 GmailStyleEditor Keywords Debug: {JSON.stringify(keywords)}
-        </div>
-      )}
+      <FloatingAIToolbar editor={editor} />
       
       {/* Titel-Bereich */}
       {onTitleChange && (

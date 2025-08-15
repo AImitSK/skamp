@@ -471,16 +471,10 @@ export default function CampaignContentComposer({
                 onChange={onMainContentChange}
                 placeholder="Pressemitteilung schreiben... (Gmail-Style)"
                 autoSave={false}
-                keywords={keywords}
+                // Keywords entfernt - SEO-Optimierung nicht mehr im Floating Toolbar
                 // Auto-Save deaktiviert für neue Kampagnen wegen Pflichtfeldern
                 // Kann später für Edit-Mode aktiviert werden
               />
-              {/* Debug Keywords */}
-              {process.env.NODE_ENV === 'development' && (
-                <div style={{ fontSize: '10px', color: 'red', padding: '5px' }}>
-                  🔍 CampaignContentComposer Keywords: {JSON.stringify(keywords)} (Length: {keywords.length})
-                </div>
-              )}
             </div>
             {/* SEO-Features nach dem Editor */}
             {enableSEOFeatures && (
