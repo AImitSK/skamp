@@ -610,12 +610,14 @@ class NotificationsService {
   async notifyMediaDownloaded(
     shareLink: any,
     assetName: string,
-    userId: string
+    userId: string,
+    organizationId?: string
   ): Promise<void> {
-    if (!await this.isNotificationEnabled(userId, 'MEDIA_DOWNLOADED')) return;
+    if (!await this.isNotificationEnabled(userId, 'MEDIA_DOWNLOADED', organizationId)) return;
     
     const notification: CreateNotificationInput = {
       userId,
+      organizationId,
       type: 'MEDIA_DOWNLOADED',
       title: 'Datei heruntergeladen',
       message: this.formatMessage('MEDIA_DOWNLOADED', {

@@ -306,6 +306,7 @@ export const taskService = {
           // Keine Benachrichtigung heute, also senden
           await notificationsService.create({
             userId: userId,
+            organizationId: organizationId,
             type: 'TASK_OVERDUE',
             title: 'Überfälliger Task',
             message: `Dein Task "${task.title}" ist überfällig.`,

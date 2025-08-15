@@ -338,16 +338,19 @@ export const mediaService = {
   // ========== NOTIFICATION INTEGRATION: Track Downloads ==========
   async trackMediaDownload(shareLink: ShareLink, assetName: string): Promise<void> {
     try {
-      // Extract createdBy from the share link
+      // Extract createdBy and organizationId from the share link
       const docRef = doc(db, 'media_shares', shareLink.id!);
       const docSnap = await getDoc(docRef);
-      const createdBy = docSnap.data()?.createdBy;
+      const shareData = docSnap.data();
+      const createdBy = shareData?.createdBy;
+      const organizationId = shareData?.organizationId;
       
       if (createdBy) {
         await notificationsService.notifyMediaDownloaded(
           shareLink,
           assetName,
-          createdBy
+          createdBy,
+          organizationId
         );
         console.log('📬 Benachrichtigung gesendet: Datei heruntergeladen');
       }

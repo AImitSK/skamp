@@ -111,7 +111,8 @@ export default function TestNotificationsPage() {
           await notificationsService.notifyMediaDownloaded(
             mockShareLink,
             mockShareLink.assetName,
-            user.uid
+            user.uid,
+            currentOrganization?.id
           );
           break;
           

@@ -595,6 +595,7 @@ async function checkExpiredMediaLinks() {
         // Create notification
         await createDocument('notifications', {
           userId: shareLink.userId,
+          ...(shareLink.organizationId && { organizationId: shareLink.organizationId }),
           type: 'MEDIA_LINK_EXPIRED',
           title: 'Link abgelaufen',
           message: `Der geteilte Link für "${assetName}" ist heute abgelaufen.`,
