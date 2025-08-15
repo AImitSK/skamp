@@ -655,7 +655,7 @@ export default function EditPRCampaignPage() {
             const mergedAssets = [...attachedAssets, ...newAssets];
             setAttachedAssets(mergedAssets);
           }}
-          organizationId={currentOrganization!.id}
+          organizationId={user.uid}
           legacyUserId={user.uid}
         />
       )}
