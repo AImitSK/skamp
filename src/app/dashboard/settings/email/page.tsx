@@ -148,8 +148,12 @@ export default function EmailSettingsPage() {
   const loadDomains = async () => {
     try {
       setLoadingDomains(true);
+      console.log('🔍 Loading domains for organizationId:', organizationId);
       const allDomains = await domainServiceEnhanced.getAll(organizationId);
+      console.log('📧 All domains loaded:', allDomains);
+      
       const verifiedDomains = allDomains.filter(d => d.status === 'verified' || d.status === 'pending');
+      console.log('✅ Verified/Pending domains:', verifiedDomains);
       
       const emailDomains: EmailDomain[] = verifiedDomains.map(d => ({
         id: d.id!,
@@ -162,6 +166,7 @@ export default function EmailSettingsPage() {
       
       setDomains(emailDomains);
     } catch (error) {
+      console.error('❌ Error loading domains:', error);
       showToast('Fehler beim Laden der Domains', 'error');
     } finally {
       setLoadingDomains(false);
@@ -171,13 +176,22 @@ export default function EmailSettingsPage() {
   const loadEmailAddresses = async () => {
     try {
       setLoading(true);
+      console.log('🔍 Loading email addresses for:', {
+        organizationId,
+        userId: user?.uid,
+        role: currentOrganization?.role
+      });
+      
       const addresses = await emailAddressService.getByOrganization(
         organizationId,
         user?.uid || '',
         currentOrganization?.role // Rolle für erweiterte Berechtigungen
       );
+      
+      console.log('📬 Email addresses loaded:', addresses);
       setEmailAddresses(addresses);
     } catch (error) {
+      console.error('❌ Error loading email addresses:', error);
       showToast('Fehler beim Laden der E-Mail-Adressen', 'error');
     } finally {
       setLoading(false);

@@ -252,9 +252,14 @@ export default function InboxPage() {
       if (!user || !organizationId) return;
       
       try {
-
+        console.log('🔍 Inbox: Loading email addresses for:', {
+          organizationId,
+          userId: user.uid
+        });
+        
         const addresses = await emailAddressService.getByOrganization(organizationId, user.uid);
-
+        
+        console.log('📬 Inbox: Email addresses found:', addresses);
         setEmailAddresses(addresses);
         setHasEmailAddresses(addresses.length > 0);
         
