@@ -85,6 +85,7 @@ export default function NewPRCampaignPage() {
   const [recipientCount, setRecipientCount] = useState(0);
   const [campaignTitle, setCampaignTitle] = useState('');
   const [pressReleaseContent, setPressReleaseContent] = useState('');
+  const [editorContent, setEditorContent] = useState<string>(''); // Editor-Inhalt für SEO
   const [boilerplateSections, setBoilerplateSections] = useState<BoilerplateSection[]>([]);
   const [attachedAssets, setAttachedAssets] = useState<CampaignAssetAttachment[]>([]);
   const [keyVisual, setKeyVisual] = useState<KeyVisualData | undefined>(undefined);
@@ -131,7 +132,7 @@ export default function NewPRCampaignPage() {
     if (!campaignTitle.trim()) {
       errors.push('Titel ist erforderlich');
     }
-    if (!pressReleaseContent.trim() || pressReleaseContent === '<p></p>') {
+    if (!editorContent.trim() || editorContent === '<p></p>') {
       errors.push('Inhalt ist erforderlich');
     }
     
@@ -428,8 +429,8 @@ export default function NewPRCampaignPage() {
                 clientName={selectedCompanyName}
                 title={campaignTitle}
                 onTitleChange={setCampaignTitle}
-                mainContent=""
-                onMainContentChange={() => {}}
+                mainContent={editorContent}
+                onMainContentChange={setEditorContent}
                 onFullContentChange={setPressReleaseContent}
                 onBoilerplateSectionsChange={setBoilerplateSections}
                 initialBoilerplateSections={boilerplateSections}

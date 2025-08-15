@@ -101,6 +101,7 @@ export default function EditPRCampaignPage() {
   const [recipientCount, setRecipientCount] = useState(0);
   const [campaignTitle, setCampaignTitle] = useState('');
   const [pressReleaseContent, setPressReleaseContent] = useState('');
+  const [editorContent, setEditorContent] = useState<string>(''); // Editor-Inhalt für SEO
   const [boilerplateSections, setBoilerplateSections] = useState<BoilerplateSection[]>([]);
   const [attachedAssets, setAttachedAssets] = useState<CampaignAssetAttachment[]>([]);
   const [keyVisual, setKeyVisual] = useState<KeyVisualData | undefined>(undefined);
@@ -513,8 +514,8 @@ export default function EditPRCampaignPage() {
                 clientName={selectedCompanyName}
                 title={campaignTitle}
                 onTitleChange={setCampaignTitle}
-                mainContent=""
-                onMainContentChange={() => {}}
+                mainContent={editorContent}
+                onMainContentChange={setEditorContent}
                 onFullContentChange={setPressReleaseContent}
                 onBoilerplateSectionsChange={setBoilerplateSections}
                 initialBoilerplateSections={boilerplateSections}

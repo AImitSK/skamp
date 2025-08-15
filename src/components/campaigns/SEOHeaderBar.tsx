@@ -56,7 +56,11 @@ export function SEOHeaderBar({
     console.log('📊 SEO Metrics Update:', { 
       contentLength: content?.length || 0,
       contentPreview: content?.substring(0, 200) + '...',
-      fullContent: content
+      fullContent: content,
+      contentType: typeof content,
+      contentLines: content?.split('\n').length || 0,
+      firstLine: content?.split('\n')[0] || '',
+      lastLine: content?.split('\n').slice(-1)[0] || ''
     });
     
     if (!content || content.length < 50) {
