@@ -741,6 +741,20 @@ export const prService = {
       
       console.log('⚠️ Freigabe erstellt, E-Mail-Versand folgt später');
 
+      // ========== NOTIFICATION INTEGRATION ==========
+      try {
+        await notificationsService.notifyChangesRequested(
+          campaign,
+          'System', // Oder campaign.clientName || 'Kunde'
+          campaign.userId,
+          campaign.organizationId
+        );
+        console.log('📬 Benachrichtigung gesendet: Freigabe angefordert');
+      } catch (notificationError) {
+        console.error('❌ Fehler beim Senden der Benachrichtigung:', notificationError);
+        // Nicht den ganzen Prozess stoppen wenn Notification fehlschlägt
+      }
+
       // Update Kampagne mit Approval-Daten
       const approvalData: ApprovalData = {
         shareId: approval.shareId,
