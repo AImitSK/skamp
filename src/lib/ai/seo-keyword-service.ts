@@ -193,8 +193,19 @@ class SEOKeywordService {
       console.log(`📊 Keyword "${keyword}":`, {
         occurrences: matches.length,
         totalWords,
-        density: density.toFixed(2) + '%'
+        density: density.toFixed(2) + '%',
+        regex: regex.toString(),
+        sampleMatches: matches.slice(0, 3).map(m => ({
+          match: m[0],
+          position: m.index,
+          context: cleanText.substring((m.index || 0) - 20, (m.index || 0) + 20)
+        }))
       });
+      
+      // Warnung bei unrealistischen Werten
+      if (density > 10) {
+        console.warn(`⚠️ Unrealistische Keyword-Dichte für "${keyword}": ${density.toFixed(1)}%`);
+      }
       
       return {
         keyword,
@@ -309,18 +320,29 @@ class SEOKeywordService {
 
     const analytics = this.analyzeKeywords(text, keywords);
     const readability = this.calculateReadability(text);
-    const wordCount = text.split(/\s+/).filter(w => w.length > 0).length;
+    const cleanText = text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    const wordCount = cleanText.split(/\s+/).filter(w => w.length > 0).length;
     
     // 1. Keyword-Dichte Empfehlungen
     if (keywords.length === 0) {
       recommendations.push("🎯 Füge 2-3 relevante Keywords hinzu für bessere SEO-Bewertung");
     } else {
-      const avgDensity = analytics.reduce((sum, a) => sum + a.density, 0) / analytics.length;
+      // Filter unrealistische Keyword-Dichten (>15% deutet auf häufige Wörter hin)
+      const validAnalytics = analytics.filter(a => a.density <= 15);
+      const problematicKeywords = analytics.filter(a => a.density > 15);
       
-      if (avgDensity < 0.5) {
-        recommendations.push(`📊 Erhöhe Keyword-Dichte von ${(avgDensity * 100).toFixed(1)}% auf 1-2%`);
-      } else if (avgDensity > 4) {
-        recommendations.push(`⚠️ Reduziere Keyword-Dichte von ${(avgDensity * 100).toFixed(1)}% auf unter 3%`);
+      if (problematicKeywords.length > 0) {
+        recommendations.push(`⚠️ Zu häufige Keywords entfernen: "${problematicKeywords.map(k => k.keyword).join('", "')}" (${problematicKeywords[0].density.toFixed(1)}% Dichte)`);
+      }
+      
+      if (validAnalytics.length > 0) {
+        const avgDensity = validAnalytics.reduce((sum, a) => sum + a.density, 0) / validAnalytics.length;
+        
+        if (avgDensity < 0.5) {
+          recommendations.push(`📊 Erhöhe Keyword-Dichte von ${avgDensity.toFixed(1)}% auf 1-2%`);
+        } else if (avgDensity > 4) {
+          recommendations.push(`⚠️ Reduziere Keyword-Dichte von ${avgDensity.toFixed(1)}% auf unter 3%`);
+        }
       }
 
       // Keyword im Titel prüfen

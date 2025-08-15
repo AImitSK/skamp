@@ -87,7 +87,14 @@ export function SEOHeaderBar({
     let keywordDensity = 0;
     if (keywords.length > 0) {
       const analytics = seoKeywordService.analyzeKeywords(content, keywords);
-      keywordDensity = analytics.reduce((sum, a) => sum + a.density, 0) / analytics.length;
+      // Filter unrealistische Werte (>15% deutet auf häufige Wörter hin)
+      const validAnalytics = analytics.filter(a => a.density <= 15);
+      if (validAnalytics.length > 0) {
+        keywordDensity = validAnalytics.reduce((sum, a) => sum + a.density, 0) / validAnalytics.length;
+      } else {
+        // Falls alle Werte unrealistisch sind, zeige 0
+        keywordDensity = 0;
+      }
     }
 
     setSeoMetrics({
@@ -109,7 +116,11 @@ export function SEOHeaderBar({
       const updatedScore = seoKeywordService.calculateSEOScore(content, keywords);
       const readabilityResult = seoKeywordService.calculateReadability(content);
       const analytics = seoKeywordService.analyzeKeywords(content, keywords);
-      const keywordDensity = analytics.reduce((sum, a) => sum + a.density, 0) / analytics.length;
+      // Filter unrealistische Werte
+      const validAnalytics = analytics.filter(a => a.density <= 15);
+      const keywordDensity = validAnalytics.length > 0 
+        ? validAnalytics.reduce((sum, a) => sum + a.density, 0) / validAnalytics.length
+        : 0;
       
       setSeoMetrics(prev => ({
         ...prev,
@@ -144,7 +155,11 @@ export function SEOHeaderBar({
       let keywordDensity = 0;
       if (keywords.length > 0) {
         const analytics = seoKeywordService.analyzeKeywords(content, keywords);
-        keywordDensity = analytics.reduce((sum, a) => sum + a.density, 0) / analytics.length;
+        // Filter unrealistische Werte
+        const validAnalytics = analytics.filter(a => a.density <= 15);
+        if (validAnalytics.length > 0) {
+          keywordDensity = validAnalytics.reduce((sum, a) => sum + a.density, 0) / validAnalytics.length;
+        }
       }
 
       setSeoMetrics({
