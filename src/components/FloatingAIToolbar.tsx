@@ -988,22 +988,16 @@ Antworte NUR mit dem Text im neuen Ton.`;
     try {
       const fullDocument = editor?.getHTML() || '';
       
-      // Erstelle Prompt für custom instruction
-      const systemPrompt = `Du bist ein professioneller Content-Editor. Du siehst den GESAMTEN Text und sollst die markierte Stelle nach der gegebenen Anweisung bearbeiten.
+      // Vereinfachter Prompt für Custom Instructions
+      const prompt = `Bearbeite folgenden Text nach der Anweisung.
 
-AUFGABE:
-1. Analysiere die Anweisung genau
-2. Bearbeite nur den markierten Text entsprechend der Anweisung
-3. Behalte den Kontext des Gesamttexts im Auge
-4. Antworte nur mit dem bearbeiteten Text
+ORIGINALTEXT:
+${selectedText}
 
-REGELN:
-- Keine PM-Phrasen wie "reagiert damit auf", "steigenden Bedarf"
-- Keine Headlines oder Überschriften erstellen
-- Behalte die ursprüngliche Textlänge bei (±20% ok)
-- Antworte NUR mit dem bearbeiteten Text`;
+ANWEISUNG:
+${customInstruction}
 
-      const userPrompt = `GESAMTER TEXT:\n${fullDocument}\n\nMARKIERTE STELLE ZU BEARBEITEN:\n${selectedText}\n\nANWEISUNG:\n${customInstruction}`;
+Antworte NUR mit dem bearbeiteten Text. Keine Erklärungen, keine Formatierung.`;
 
       console.log('🎯 Custom Instruction:', { 
         instruction: customInstruction, 
@@ -1014,7 +1008,7 @@ REGELN:
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          prompt: `${systemPrompt}\n\n${userPrompt}`,
+          prompt: prompt,
           mode: 'generate'
         })
       });
