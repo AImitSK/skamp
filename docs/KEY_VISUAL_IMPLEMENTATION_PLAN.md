@@ -40,6 +40,23 @@
 - ✅ KeyVisualSection nach Editor, vor Anhängen positioniert
 - ✅ KeyVisual in create/update Daten integriert
 
+### 5.1 🔧 **Multi-Tenancy Kompatibilitätsproblem behoben**
+**Problem:** Key Visual und Media Library verwendeten unterschiedliche Organization IDs
+- **Key Visual:** `organizationId` (echte Organization ID: `wVa3cJ7Y...`)
+- **Media Library:** `legacyUserId` (Legacy User ID: `XXHOADV6...`)
+- **Auswirkung:** Assets wurden in verschiedenen "Silos" gespeichert und nicht zusammen angezeigt
+
+**Lösung (15.08.2025):**
+- ✅ **Firebase Storage Pfad** auf Legacy User ID umgestellt: `organizations/{userId}/media/`
+- ✅ **AssetSelectorModal organizationId** auf `userId` Parameter geändert
+- ✅ **Storage Rules Limit** auf 50MB erhöht für große Key Visual Dateien
+- ✅ **Deduplizierung** auf Asset-ID basis statt fileName für eindeutige Assets
+
+**Technischer Debt:** 
+- Media Library System nutzt Legacy User IDs als Organization IDs (funktional aber architektonisch unsauber)
+- 23+ andere Media Library Integrationen verwenden weiterhin Legacy System
+- Für zukünftige Refactoring: Einheitliche Organization ID Struktur implementieren
+
 ### 6. ⏳ **E-Mail Template anpassen**
 **Dateien:**
 - `src/components/pr/email/Step3Preview.tsx` 

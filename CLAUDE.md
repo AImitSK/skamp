@@ -18,6 +18,11 @@
 - Console-Statements vor Commits entfernen
 - Multi-Tenancy-Architektur mit organizationId
 
+## Firebase-Beschränkungen
+- **NIEMALS Firebase Admin SDK verwenden** - Organisationsrichtlinie verhindert Admin SDK Nutzung
+- Nur Client SDK und bestehende Services verwenden
+- Für Backend-Operationen: API Routes mit Client SDK oder bestehende Services nutzen
+
 ## Git Workflow
 - Feature-Branches verwenden
 - Deutsche Commit-Messages
