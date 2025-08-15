@@ -638,27 +638,11 @@ Antworte NUR mit dem Text im neuen Ton.`;
           .replaceSelectionWith(editor.state.schema.text(newText), false)
       );
       
-      // Kurz warten, dann neue Selection setzen für potentielle Weiterbearbeitung  
+      // Toolbar schließen nach erfolgreicher Ton-Änderung - User muss neu markieren
       setTimeout(() => {
-        const newTo = from + newText.replace(/<[^>]*>/g, '').length;
-        try {
-          editor.chain()
-            .setTextSelection({ from, to: newTo })
-            .run();
-          
-          // Selection-State für Toolbar aktualisieren
-          const plainText = editor.state.doc.textBetween(from, newTo);
-          setSelectedText(plainText);
-          lastSelectionRef.current = { from, to: newTo };
-          
-          // Toolbar wieder anzeigen
-          setIsVisible(true);
-        } catch (error) {
-          console.log('Selection update failed:', error);
-          // WICHTIG: Toolbar NICHT verstecken bei Selection-Fehlern
-          // Selection-Update-Fehler sind normal und sollten die Toolbar nicht verstecken
-          // setIsVisible(false); // ENTFERNT - das war der Bug!
-        }
+        setIsVisible(false);
+        setSelectedText('');
+        lastSelectionRef.current = null;
       }, 100);
     } catch (error) {
       console.error('Ton-Änderung fehlgeschlagen:', error);
@@ -715,51 +699,11 @@ Antworte NUR mit dem Text im neuen Ton.`;
         );
       }
       
-      // Kurz warten, dann neue Selection setzen für potentielle Weiterbearbeitung  
+      // Toolbar schließen nach erfolgreicher Aktion - User muss neu markieren
       setTimeout(() => {
-        let newTo: number;
-        
-        if (action === 'elaborate') {
-          // Für HTML-Content: Berechne Länge basierend auf tatsächlichem Content im Editor
-          try {
-            const currentDoc = editor.state.doc;
-            newTo = Math.min(from + 500, currentDoc.content.size); // Schätzung für HTML-Content
-            
-            // Finde das tatsächliche Ende basierend auf dem neuen Content
-            const docText = currentDoc.textBetween(0, currentDoc.content.size);
-            const beforeText = currentDoc.textBetween(0, from);
-            const afterFrom = docText.indexOf(beforeText) + beforeText.length;
-            
-            // Suche nach dem Ende des eingefügten Contents (heuristisch)
-            let searchEnd = Math.min(afterFrom + 1000, currentDoc.content.size);
-            newTo = searchEnd;
-          } catch (error) {
-            console.log('HTML content length calculation failed:', error);
-            newTo = from + 100; // Fallback
-          }
-        } else {
-          // Für Plain Text: Wie bisher
-          newTo = from + newText.replace(/<[^>]*>/g, '').length;
-        }
-        
-        try {
-          editor.chain()
-            .setTextSelection({ from, to: newTo })
-            .run();
-          
-          // Selection-State für Toolbar aktualisieren
-          const plainText = editor.state.doc.textBetween(from, newTo);
-          setSelectedText(plainText);
-          lastSelectionRef.current = { from, to: newTo };
-          
-          // Toolbar wieder anzeigen
-          setIsVisible(true);
-        } catch (error) {
-          console.log('Selection update failed:', error);
-          // WICHTIG: Toolbar NICHT verstecken bei Selection-Fehlern
-          // Selection-Update-Fehler sind normal und sollten die Toolbar nicht verstecken
-          // setIsVisible(false); // ENTFERNT - das war der Bug!
-        }
+        setIsVisible(false);
+        setSelectedText('');
+        lastSelectionRef.current = null;
       }, 100);
     } catch (error) {
       console.error('Aktion fehlgeschlagen:', error);
