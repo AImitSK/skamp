@@ -1122,7 +1122,8 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
           await notificationsService.notifyChangesRequested(
             campaign,
             author || 'Kunde',
-            campaign.userId
+            campaign.userId,
+            campaign.organizationId || undefined  // Explizit undefined wenn nicht vorhanden
           );
           console.log('📬 Benachrichtigung gesendet: Änderungen erbeten');
         }

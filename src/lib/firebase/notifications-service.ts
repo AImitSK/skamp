@@ -340,7 +340,7 @@ class NotificationsService {
         const defaultSettings: NotificationSettings = {
           id: organizationId ? `${organizationId}_${userId}` : userId,
           userId,
-          organizationId,
+          ...(organizationId && { organizationId }),  // Nur hinzufügen wenn nicht undefined
           ...DEFAULT_NOTIFICATION_SETTINGS,
           createdAt: serverTimestamp() as Timestamp,
           updatedAt: serverTimestamp() as Timestamp
