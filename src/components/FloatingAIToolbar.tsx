@@ -277,9 +277,9 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
       return onAIAction(action, text);
     }
 
-    // Hole den kompletten Dokument-Kontext für intelligentere KI-Verarbeitung
+    // VOLLTEXT-KONTEXT DEAKTIVIERT - verwirrt die KI bei normalen Funktionen
     const fullDocument = editor?.getHTML() || '';
-    const hasFullContext = fullDocument.length > 0 && fullDocument.length > text.length;
+    const hasFullContext = false; // IMMER false für normale Funktionen
     
     console.log('📋 Kontext-Check:', { 
       fullDocLength: fullDocument.length, 
