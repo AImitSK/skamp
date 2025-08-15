@@ -81,7 +81,7 @@ export function KeyVisualSection({
     try {
       // Upload zu Firebase Storage
       const timestamp = Date.now();
-      const fileName = `organizations/${organizationId}/branding/${timestamp}-key-visual.jpg`;
+      const fileName = `organizations/${organizationId}/media/${timestamp}-key-visual.jpg`;
       const storageRef = ref(storage, fileName);
       
       const snapshot = await uploadBytes(storageRef, croppedFile);
@@ -180,17 +180,17 @@ export function KeyVisualSection({
           />
           
           {/* Overlay mit Edit/Remove Buttons */}
-          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-3">
             <Button
               onClick={handleEditKeyVisual}
-              className="bg-white hover:bg-gray-100 text-gray-900 px-4 py-2"
+              className="bg-white hover:bg-gray-50 text-gray-900 border border-gray-200 shadow-sm px-4 py-2 font-medium"
             >
               <PencilIcon className="h-4 w-4 mr-2" />
               Bearbeiten
             </Button>
             <Button
               onClick={handleRemoveKeyVisual}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2"
+              className="bg-red-600 hover:bg-red-700 text-white shadow-sm px-4 py-2 font-medium"
             >
               <TrashIcon className="h-4 w-4 mr-2" />
               Entfernen
