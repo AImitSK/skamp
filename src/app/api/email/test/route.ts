@@ -332,7 +332,8 @@ export async function POST(request: NextRequest) {
         data.testMode,
         mediaShareUrl,
         campaign,
-        replyToAddress // NEU: Reply-To für Info im Footer
+        replyToAddress, // NEU: Reply-To für Info im Footer
+        campaign?.keyVisual // NEU: Key Visual für Test-E-Mails
       );
       
       const textContent = buildTestEmailText(
@@ -464,7 +465,8 @@ function buildTestEmailHtml(
   isTest: boolean,
   mediaShareUrl?: string,
   campaign?: PRCampaign | null,
-  replyToAddress?: string
+  replyToAddress?: string,
+  keyVisual?: { url: string; cropData?: any }
 ): string {
   const testBanner = isTest ? `
     <div style="background: #ff6b6b; color: white; padding: 10px; text-align: center; font-weight: bold;">
@@ -478,6 +480,14 @@ function buildTestEmailHtml(
            style="display: inline-block; padding: 12px 30px; background-color: #667eea; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
             📎 Medien ansehen
         </a>
+    </div>` : '';
+
+  // NEU: Key Visual HTML
+  const keyVisualHtml = keyVisual ? `
+    <div style="text-align: center; margin: 0 0 20px 0;">
+        <img src="${keyVisual.url}" 
+             alt="Key Visual" 
+             style="width: 100%; max-width: 600px; height: auto; display: block; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
     </div>` : '';
 
   // NEU: Anhang-Information
@@ -598,6 +608,7 @@ function buildTestEmailHtml(
             </div>
             
             <div class="press-release">
+                ${keyVisualHtml}
                 ${formattedPressRelease}
             </div>
             
