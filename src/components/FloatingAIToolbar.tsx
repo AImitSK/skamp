@@ -988,8 +988,8 @@ Antworte NUR mit dem Text im neuen Ton.`;
     try {
       const fullDocument = editor?.getHTML() || '';
       
-      // Vereinfachter Prompt für Custom Instructions
-      const prompt = `Bearbeite folgenden Text nach der Anweisung.
+      // Präziser Prompt für Custom Instructions
+      const prompt = `WICHTIG: Ändere NUR das, was in der Anweisung steht. Behalte ALLES andere EXAKT wie im Original bei.
 
 ORIGINALTEXT:
 ${selectedText}
@@ -997,7 +997,11 @@ ${selectedText}
 ANWEISUNG:
 ${customInstruction}
 
-Antworte NUR mit dem bearbeiteten Text. Keine Erklärungen, keine Formatierung.`;
+REGELN:
+- Ändere NUR was explizit in der Anweisung genannt wird
+- Behalte Struktur, Stil und alle anderen Inhalte EXAKT bei
+- Keine zusätzlichen Änderungen oder Umformulierungen
+- Antworte NUR mit dem minimal veränderten Text`;
 
       console.log('🎯 Custom Instruction:', { 
         instruction: customInstruction, 
