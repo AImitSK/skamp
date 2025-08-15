@@ -173,8 +173,7 @@ interface GmailStyleEditorProps {
   className?: string;
   title?: string;
   onTitleChange?: (title: string) => void;
-  showSEOFeatures?: boolean; // Neue SEO-Features aktivieren
-  seoTitle?: string; // SEO-spezifischer Titel für Header
+  keywords?: string[]; // Keywords für SEO-Features
 }
 
 export const GmailStyleEditor = ({ 
@@ -187,15 +186,11 @@ export const GmailStyleEditor = ({
   className,
   title = '',
   onTitleChange,
-  showSEOFeatures = false,
-  seoTitle = "PR-Kampagne erstellen"
+  keywords = []
 }: GmailStyleEditorProps) => {
   
   // Fullscreen state
   const [isFullscreen, setIsFullscreen] = useState(false);
-  
-  // SEO Features state
-  const [keywords, setKeywords] = useState<string[]>([]);
   
   // Auto-save functionality
   const debouncedAutoSave = useCallback(
@@ -358,15 +353,6 @@ export const GmailStyleEditor = ({
         </div>
       )}
 
-      {/* SEO Header Bar - nur wenn SEO Features aktiviert */}
-      {showSEOFeatures && (
-        <SEOHeaderBar 
-          title={seoTitle}
-          content={content}
-          keywords={keywords}
-          onKeywordsChange={setKeywords}
-        />
-      )}
 
       {/* Toolbar mit Fullscreen Button */}
       <div className="relative">

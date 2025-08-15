@@ -139,16 +139,31 @@ export function SEOHeaderBar({
   };
 
   return (
-    <div className={`flex items-center justify-between border-b border-gray-200 pb-4 mb-6 ${className}`}>
-      {/* Left Side: Title + Keywords */}
-      <div className="flex items-center gap-6">
-        <h2 className="text-xl font-semibold text-gray-900">
-          {title}
-        </h2>
+    <div className={`bg-gray-50 rounded-lg p-6 ${className}`}>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-900">
+          🔍 {title}
+        </h3>
         
-        {/* Keywords Section */}
+        {/* SEO Metrics */}
+        <div className="flex items-center gap-4">
+          <div className="text-sm text-gray-600">
+            <span className="font-medium">{seoMetrics.wordCount}</span> Wörter
+          </div>
+          <div className="text-sm text-gray-600">
+            <span className="font-medium">{(seoMetrics.keywordDensity * 100).toFixed(1)}%</span> Keyword-Dichte
+          </div>
+          <Badge color={getSEOScoreBadgeColor(seoMetrics.score)} className="text-xs">
+            SEO-Score: {Math.round(seoMetrics.score)}
+          </Badge>
+        </div>
+      </div>
+      
+      {/* Keywords Section */}
+      <div className="space-y-3">
         <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-500 font-medium">Keywords:</span>
+          <span className="text-sm text-gray-700 font-medium">Keywords:</span>
           
           {/* Active Keywords */}
           <div className="flex items-center gap-2 flex-wrap">
@@ -210,36 +225,7 @@ export function SEOHeaderBar({
             )}
           </div>
         </div>
-      </div>
-
-      {/* Right Side: Live Metrics (Vercel Deploy Status Style) */}
-      <div className="flex items-center gap-6 text-sm text-gray-500">
-        {/* SEO Score */}
-        <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${getSEOScoreColor(seoMetrics.score)}`} />
-          <span className="font-medium">SEO:</span>
-          <Badge 
-            color={getSEOScoreBadgeColor(seoMetrics.score)}
-            className="text-xs px-2 py-0.5"
-          >
-            {seoMetrics.score}/100
-          </Badge>
-        </div>
-
-        {/* Word Count */}
-        <div className="flex items-center gap-1">
-          <DocumentTextIcon className="h-4 w-4" />
-          <span>{seoMetrics.wordCount} Wörter</span>
-        </div>
-
-        {/* Keyword Density (nur wenn Keywords vorhanden) */}
-        {keywords.length > 0 && (
-          <div className="flex items-center gap-1">
-            <ChartBarIcon className="h-4 w-4" />
-            <span>{seoMetrics.keywordDensity.toFixed(1)}% Dichte</span>
-          </div>
-        )}
-
+        
         {/* Analysis Status */}
         {isAnalyzing && (
           <div className="flex items-center gap-1">

@@ -22,6 +22,7 @@ import { MediaFolder } from '@/types/media';
 import { Text } from '@/components/ui/text';
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/solid';
 import { InfoTooltip } from '@/components/InfoTooltip';
+import { SEOHeaderBar } from '@/components/campaigns/SEOHeaderBar';
 
 // Dynamic import für html2pdf to avoid SSR issues
 const loadHtml2Pdf = () => import('html2pdf.js');
@@ -257,6 +258,7 @@ export default function CampaignContentComposer({
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [pdfDownloadUrl, setPdfDownloadUrl] = useState<string | null>(null);
   const [alertMessage, setAlertMessage] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [keywords, setKeywords] = useState<string[]>([]);
   const previewRef = useRef<HTMLDivElement>(null);
 
   // Konvertiere Legacy-Sections mit position zu neuen ohne position
@@ -469,15 +471,22 @@ export default function CampaignContentComposer({
                 onChange={onMainContentChange}
                 placeholder="Pressemitteilung schreiben... (Gmail-Style)"
                 autoSave={false}
-                showSEOFeatures={enableSEOFeatures}
-                seoTitle={enableSEOFeatures ? "PR-Kampagne erstellen" : undefined}
+                keywords={keywords}
                 // Auto-Save deaktiviert für neue Kampagnen wegen Pflichtfeldern
                 // Kann später für Edit-Mode aktiviert werden
               />
             </div>
-            <p className="mt-2 text-sm text-gray-500">
-              Gmail-Style Editor: Minimale Toolbar für ablenkungsfreies Schreiben. Die Textbausteine werden automatisch eingefügt.
-            </p>
+            {/* SEO-Features nach dem Editor */}
+            {enableSEOFeatures && (
+              <div className="mt-4">
+                <SEOHeaderBar 
+                  title="SEO-Optimierung"
+                  content={mainContent}
+                  keywords={keywords}
+                  onKeywordsChange={setKeywords}
+                />
+              </div>
+            )}
           </Field>
         )}
 
