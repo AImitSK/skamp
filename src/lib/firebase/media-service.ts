@@ -1269,14 +1269,16 @@ export const mediaService = {
       const allAssets = [...directAssets, ...folderAssets];
       console.log('📊 Total assets before validation:', allAssets.length);
 
-      // 5. DEDUPLIZIERUNG: Entferne Duplikate basierend auf fileName
-      const seenFileNames = new Set<string>();
+      // 5. DEDUPLIZIERUNG: Entferne Duplikate basierend auf id (nicht fileName)
+      const seenIds = new Set<string>();
       const deduplicatedAssets = allAssets.filter(asset => {
-        if (seenFileNames.has(asset.fileName)) {
-          console.log(`🔁 Removing duplicate: ${asset.fileName}`);
+        if (!asset.id || seenIds.has(asset.id)) {
+          if (asset.id) {
+            console.log(`🔁 Removing duplicate ID: ${asset.id} (${asset.fileName})`);
+          }
           return false;
         }
-        seenFileNames.add(asset.fileName);
+        seenIds.add(asset.id);
         return true;
       });
       
