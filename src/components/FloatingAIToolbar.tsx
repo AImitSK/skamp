@@ -483,7 +483,9 @@ Der markierte Text enthält eine Anweisung oder ein Briefing. Erstelle NUR Flie�
       
       console.log('🔧 RAW KI-Antwort:', result.substring(0, 200) + '...');
       
-      // PARSER: Für "Ausformulieren" weniger aggressiv (PM-Struktur kann erwünscht sein)
+      // INTELLIGENTER PARSER: Prüfe ob Text bereits bearbeitet wurde
+      const isAlreadyParsed = !result.includes('<') && !result.includes('**') && !result.includes('GESAMTER TEXT:');
+      
       if (action === 'elaborate') {
         // Nur Formatierung entfernen, Content beibehalten
         result = result
@@ -494,8 +496,16 @@ Der markierte Text enthält eine Anweisung oder ein Briefing. Erstelle NUR Flie�
           .replace(/<\/?i[^>]*>/gi, '')          // Italic-Tags
           .replace(/\*\*(.*?)\*\*/g, '$1')       // **fett** → normal
           .replace(/\*(.*?)\*/g, '$1');          // *kursiv* → normal
+      } else if (isAlreadyParsed) {
+        // Text bereits bearbeitet - MINIMALES Parsing um Doppel-Parsing zu vermeiden
+        console.log('⚡ Text bereits geparsed - verwende minimales Parsing');
+        result = result
+          .replace(/\*\*(.*?)\*\*/g, '$1')       // Nur noch Markdown entfernen
+          .replace(/\*(.*?)\*/g, '$1')
+          .replace(/#{1,6}\s+/gm, '');           // Nur noch Heading-Marker entfernen
       } else {
-        // Normaler Parser für andere Aktionen
+        // Normaler Parser für RAW KI-Antworten
+        console.log('🔍 RAW KI-Antwort - verwende vollständiges Parsing');
         result = parseTextFromAIOutput(result);
       }
       
@@ -988,32 +998,41 @@ Antworte NUR mit dem Text im neuen Ton.`;
     try {
       const fullDocument = editor?.getHTML() || '';
       
-      // Präziser Prompt für Custom Instructions
-      const prompt = `WICHTIG: Ändere NUR das, was in der Anweisung steht. Behalte ALLES andere EXAKT wie im Original bei.
+      // ULTRA-PRÄZISER Prompt für Custom Instructions - NUR minimale Änderungen
+      const prompt = `Du bist ein präziser Text-Editor. Du machst NUR die minimal notwendige Änderung und behältst alles andere 1:1 bei.
 
-ORIGINALTEXT:
+ORIGINALTEXT (EXAKT beibehalten außer der spezifischen Änderung):
 ${selectedText}
 
-ANWEISUNG:
+SPEZIFISCHE ÄNDERUNG:
 ${customInstruction}
 
-REGELN:
-- Ändere NUR was explizit in der Anweisung genannt wird
-- Behalte Struktur, Stil und alle anderen Inhalte EXAKT bei
-- Keine zusätzlichen Änderungen oder Umformulierungen
-- Antworte NUR mit dem minimal veränderten Text`;
+ABSOLUTE REGELN:
+- Ändere AUSSCHLIESSLICH das, was in der Anweisung steht (z.B. nur Firmennamen ersetzen)
+- EXAKT die gleiche Textlänge und Struktur beibehalten
+- KEINE Umformulierungen, KEINE Ergänzungen, KEINE Kürzungen
+- KEINE neuen Inhalte hinzufügen
+- KEINE Verbesserungen oder Optimierungen
+- Antworte NUR mit dem Text mit der einen spezifischen Änderung
+
+BEISPIEL:
+Original: "SK Online Marketing bietet Services an."
+Anweisung: "Firma heißt jetzt XYZ Corp"
+Antwort: "XYZ Corp bietet Services an."
+
+WICHTIG: Mache wirklich NUR die eine genannte Änderung!`;
 
       console.log('🎯 Custom Instruction:', { 
         instruction: customInstruction, 
         selectedText: selectedText.substring(0, 50) + '...' 
       });
 
-      const response = await fetch('/api/ai/generate', {
+      const response = await fetch('/api/ai/custom-instruction', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          prompt: prompt,
-          mode: 'generate'
+          originalText: selectedText,
+          instruction: customInstruction
         })
       });
 
