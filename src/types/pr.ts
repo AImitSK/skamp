@@ -42,6 +42,19 @@ export interface CampaignBoilerplateSection {
   };
 }
 
+// Key Visual Daten für Hero-Bilder
+export interface KeyVisualData {
+  assetId?: string;  // Optional: Referenz zur Media Library
+  url: string;       // Download URL des gecroppten Bildes
+  cropData?: {       // Optional: Crop-Koordinaten für spätere Bearbeitung
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    unit: string;
+  };
+}
+
 export interface PRCampaign {
   id?: string;
   userId: string;
@@ -66,6 +79,9 @@ export interface PRCampaign {
   // Customer
   clientId?: string;
   clientName?: string;
+  
+  // Key Visual (Hero Image)
+  keyVisual?: KeyVisualData;
   
   // Attached Media
   attachedAssets?: CampaignAssetAttachment[];

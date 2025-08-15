@@ -12,9 +12,16 @@ import {
   FolderIcon,
   DocumentTextIcon,
   PhotoIcon,
-  ArrowUpTrayIcon
+  ArrowUpTrayIcon,
+  CloudArrowUpIcon
 } from "@heroicons/react/20/solid";
 import Link from "next/link";
+import dynamic from 'next/dynamic';
+
+// Lazy load UploadModal to avoid circular dependencies
+const UploadModal = dynamic(() => import('@/app/dashboard/pr-tools/media-library/UploadModal'), {
+  ssr: false
+});
 import { serverTimestamp } from 'firebase/firestore';
 import { mediaService } from "@/lib/firebase/media-service";
 import { MediaAsset, MediaFolder } from "@/types/media";
@@ -29,6 +36,8 @@ interface AssetSelectorModalProps {
   onAssetsSelected: (assets: CampaignAssetAttachment[]) => void;
   organizationId: string;
   legacyUserId?: string;
+  selectionMode?: 'multiple' | 'single'; // Für Key Visual nur single selection
+  onUploadSuccess?: () => void; // Callback nach erfolgreichem Upload
 }
 
 export function AssetSelectorModal({
@@ -38,13 +47,16 @@ export function AssetSelectorModal({
   clientName,
   onAssetsSelected,
   organizationId,
-  legacyUserId
+  legacyUserId,
+  selectionMode = 'multiple',
+  onUploadSuccess
 }: AssetSelectorModalProps) {
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [folders, setFolders] = useState<MediaFolder[]>([]);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showUploadModal, setShowUploadModal] = useState(false);
 
   useEffect(() => {
     if (isOpen && clientId) {
@@ -85,11 +97,24 @@ export function AssetSelectorModal({
 
   const handleItemToggle = (itemId: string, checked: boolean) => {
     const newSelection = new Set(selectedItems);
-    if (checked) {
-      newSelection.add(itemId);
+    
+    if (selectionMode === 'single') {
+      // Bei single mode: Nur ein Item kann ausgewählt werden
+      if (checked) {
+        newSelection.clear();
+        newSelection.add(itemId);
+      } else {
+        newSelection.delete(itemId);
+      }
     } else {
-      newSelection.delete(itemId);
+      // Bei multiple mode: Normale Mehrfachauswahl
+      if (checked) {
+        newSelection.add(itemId);
+      } else {
+        newSelection.delete(itemId);
+      }
     }
+    
     setSelectedItems(newSelection);
   };
 
@@ -138,11 +163,33 @@ export function AssetSelectorModal({
 
   if (!isOpen) return null;
 
+  const handleUploadSuccess = async () => {
+    // Nach erfolgreichem Upload: Medien neu laden
+    await loadClientMedia();
+    setShowUploadModal(false);
+    
+    // Optional: Callback für Parent Component
+    if (onUploadSuccess) {
+      onUploadSuccess();
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onClose={onClose} size="3xl">
-      <DialogTitle className="px-6 py-4">
-        Medien auswählen{clientName && ` für ${clientName}`}
-      </DialogTitle>
+    <>
+      <Dialog open={isOpen} onClose={onClose} size="3xl">
+        <DialogTitle className="px-6 py-4 flex items-center justify-between">
+          <span>
+            {selectionMode === 'single' ? 'Key Visual' : 'Medien'} auswählen
+            {clientName && ` für ${clientName}`}
+          </span>
+          <Button
+            onClick={() => setShowUploadModal(true)}
+            className="bg-[#005fab] hover:bg-[#004a8c] text-white px-4 py-2"
+          >
+            <CloudArrowUpIcon className="h-4 w-4 mr-2" />
+            Neue Datei hochladen
+          </Button>
+        </DialogTitle>
       
       <DialogBody className="px-6">
         {/* Search */}
@@ -258,9 +305,24 @@ export function AssetSelectorModal({
           disabled={selectedItems.size === 0}
           className="bg-primary hover:bg-primary-hover text-white whitespace-nowrap"
         >
-          {selectedItems.size} Medien übernehmen
+          {selectionMode === 'single' 
+            ? 'Als Key Visual verwenden'
+            : `${selectedItems.size} Medien übernehmen`
+          }
         </Button>
       </DialogActions>
     </Dialog>
+
+    {/* Upload Modal */}
+    {showUploadModal && (
+      <UploadModal
+        onClose={() => setShowUploadModal(false)}
+        onUploadSuccess={handleUploadSuccess}
+        preselectedClientId={clientId}
+        organizationId={organizationId}
+        userId={legacyUserId || ''}
+      />
+    )}
+    </>
   );
 }

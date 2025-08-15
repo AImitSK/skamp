@@ -11,6 +11,8 @@ import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AssetSelectorModal } from "@/components/campaigns/AssetSelectorModal";
+import { KeyVisualSection } from "@/components/campaigns/KeyVisualSection";
+import { KeyVisualData } from "@/types/pr";
 import { LOADING_SPINNER_SIZE, LOADING_SPINNER_BORDER } from "@/constants/ui";
 import { Field, Label, FieldGroup } from "@/components/ui/fieldset";
 import { Select } from "@/components/ui/select";
@@ -85,6 +87,7 @@ export default function NewPRCampaignPage() {
   const [pressReleaseContent, setPressReleaseContent] = useState('');
   const [boilerplateSections, setBoilerplateSections] = useState<BoilerplateSection[]>([]);
   const [attachedAssets, setAttachedAssets] = useState<CampaignAssetAttachment[]>([]);
+  const [keyVisual, setKeyVisual] = useState<KeyVisualData | undefined>(undefined);
   const [approvalRequired, setApprovalRequired] = useState(false);
   
   // UI State
@@ -186,6 +189,7 @@ export default function NewPRCampaignPage() {
         recipientCount: recipientCount || 0,
         clientId: selectedCompanyId || null,
         clientName: selectedCompanyName || null,
+        keyVisual: keyVisual || null,
         attachedAssets: cleanedAttachedAssets,
         approvalRequired: approvalRequired || false
       };
@@ -430,6 +434,18 @@ export default function NewPRCampaignPage() {
                 onBoilerplateSectionsChange={setBoilerplateSections}
                 initialBoilerplateSections={boilerplateSections}
                 hideMainContentField={false}
+              />
+            </div>
+
+            {/* Key Visual */}
+            <div className="border-t pt-6 mt-6">
+              <KeyVisualSection
+                value={keyVisual}
+                onChange={setKeyVisual}
+                clientId={selectedCompanyId}
+                clientName={selectedCompanyName}
+                organizationId={currentOrganization!.id}
+                userId={user!.uid}
               />
             </div>
 
