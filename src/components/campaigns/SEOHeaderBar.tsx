@@ -49,13 +49,26 @@ export function SEOHeaderBar({
 
   // Metrics-Update ohne Auto-Detection
   useEffect(() => {
+    console.log('📊 SEO Metrics Update:', { 
+      contentLength: content?.length || 0,
+      contentPreview: content?.substring(0, 100) + '...'
+    });
+    
     if (!content || content.length < 50) {
       setSeoMetrics({ score: 0, wordCount: 0, keywordDensity: 0 });
       return;
     }
 
-    // Update metrics immediately for wordCount
-    const wordCount = content.split(/\s+/).length;
+    // HTML-Tags für Wortzählung entfernen
+    const textContent = content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    const wordCount = textContent.split(/\s+/).filter(word => word.length > 0).length;
+    
+    console.log('📊 Word Count Calculation:', { 
+      originalLength: content.length,
+      textContent: textContent.substring(0, 100) + '...',
+      wordCount 
+    });
+    
     const score = seoKeywordService.calculateSEOScore(content, keywords);
     
     let keywordDensity = 0;
@@ -97,12 +110,11 @@ export function SEOHeaderBar({
       const result = await seoKeywordService.detectKeywords(content);
       console.log('🎯 Manual keyword detection:', result.keywords);
       
+      // Nur als Vorschläge setzen, NICHT automatisch als aktive Keywords
       setAutoDetectedKeywords(result.keywords);
       
-      // Optional: Automatisch als aktive Keywords setzen wenn keine vorhanden
-      if (keywords.length === 0 && result.keywords.length > 0) {
-        onKeywordsChange?.(result.keywords.slice(0, 3)); // Max 3 Keywords
-      }
+      // NICHT automatisch hinzufügen - nur als Vorschläge anzeigen
+      // Benutzer muss manuell auf die Vorschläge klicken
     } catch (error) {
       console.error('Keyword detection failed:', error);
     } finally {

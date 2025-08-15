@@ -245,33 +245,107 @@ class SEOKeywordService {
   // Private Hilfsmethoden
 
   private buildKeywordDetectionPrompt(text: string, options: Required<KeywordDetectionOptions>): string {
-    return `Du bist ein SEO-Experte. Analysiere diesen PR-Text und extrahiere die ${options.maxKeywords} wichtigsten Keywords/Keyphrases für SEO.
+    return `Du bist ein SEO-Spezialist. Analysiere den folgenden Text und extrahiere die wichtigsten Keywords.
 
-KRITERIEN:
-- Fokus auf: Unternehmensnamen, Produktnamen, Branchen-Keywords, Action-Verben
-- Minimum ${options.minWordLength} Zeichen pro Keyword
-- Relevante Keyphrases (2-3 Wörter) bevorzugt
-- Keine allgemeinen Wörter wie "und", "oder", "das"
+AUFGABE: Extrahiere GENAU ${options.maxKeywords} SEO-Keywords aus dem Text.
 
-TEXT:
+KRITISCHE REGELN:
+- Antworte NUR mit den Keywords
+- KEINE Erklärungen, KEINE Sätze, KEINE Pressemitteilung schreiben!
+- Trenne Keywords nur mit Komma
+- Maximal 3 Wörter pro Keyword
+- Fokus auf: Unternehmensnamen, Produkte, Branchen-Begriffe
+
+BEISPIEL ANTWORT:
+Softwareentwicklung, Digitale Transformation, KI-Technologie, Startup Berlin, Cloud Computing
+
+TEXT ZUR ANALYSE:
 ${text}
 
-ANTWORT:
-Gib nur die Keywords zurück, getrennt durch Kommas, ohne weitere Erklärungen.
-Beispiel: "Digitale Transformation, KI-Lösung, Automatisierung, Effizienzsteigerung, Innovation"`;
+DEINE ANTWORT (nur Keywords mit Komma):`;
   }
 
   private parseAndValidateKeywords(rawKeywords: string, options: Required<KeywordDetectionOptions>): string[] {
     if (!rawKeywords) return [];
 
-    const keywords = rawKeywords
-      .split(',')
-      .map(k => k.trim())
+    console.log('🔧 Parsing raw keywords:', rawKeywords.substring(0, 200) + '...');
+
+    // Bereinige den Text komplett
+    let cleanText = rawKeywords
+      .replace(/<[^>]*>/g, '') // HTML-Tags entfernen
+      .replace(/\*\*/g, '') // Markdown Bold entfernen
+      .replace(/\n+/g, ' ') // Zeilenumbrüche zu Leerzeichen
+      .replace(/\s+/g, ' ') // Mehrfache Leerzeichen
+      .trim();
+
+    // AGGRESSIVES PARSING für verschiedene AI-Antworten
+    let keywords: string[] = [];
+    
+    // 1. Prüfe ob es Komma-getrennte Keywords sind (erwünscht)
+    if (cleanText.includes(',') && cleanText.length < 200) {
+      keywords = cleanText
+        .split(/[,;]/)
+        .map(k => k.trim())
+        .filter(k => k.length > 0);
+    }
+    
+    // 2. Falls langer Text oder keine Kommas: Suche nach Keyword-Pattern
+    else if (cleanText.length > 100 || keywords.length === 0) {
+      console.log('⚠️ Long response or no commas, extracting patterns...');
+      
+      // Suche nach typischen Keyword-Mustern
+      const patterns = [
+        // Nach "Keywords:" oder "Antwort:"
+        /(?:keywords?|antwort|ausgabe):\s*(.+)/i,
+        // Letzte Zeile wenn sie kurz ist und Kommas hat
+        /([^.!?]*(?:,\s*[^.!?]*){2,})\s*$/,
+        // Zeile mit mehreren Begriffen getrennt durch Komma
+        /^([^.!?]*,\s*[^.!?]*,.*?)$/m
+      ];
+      
+      for (const pattern of patterns) {
+        const match = cleanText.match(pattern);
+        if (match && match[1]) {
+          keywords = match[1]
+            .split(/[,;]/)
+            .map(k => k.trim())
+            .filter(k => k.length > 0);
+          if (keywords.length >= 2) break;
+        }
+      }
+      
+      // 3. Fallback: Häufigste Wörter extrahieren
+      if (keywords.length === 0) {
+        console.log('⚠️ No keyword patterns found, using fallback...');
+        return this.extractKeywordsFallback(cleanText, options);
+      }
+    }
+
+    // Keywords validieren und filtern
+    const validKeywords = keywords
       .filter(k => k.length >= options.minWordLength)
+      .filter(k => k.length <= 50) // Max 50 Zeichen pro Keyword
+      .filter(k => k.split(' ').length <= 3) // Max 3 Wörter pro Keyword
+      .filter(k => !k.includes('.') || k.endsWith('.de')) // Keine Sätze, außer Domains
+      .filter(k => !k.match(/^(der|die|das|und|oder|aber|mit|für|auf|von|zu|in|an|bei)\s/i)) // Keine Füllwörter am Anfang
+      .filter(k => !this.isLikelyGeneratedContent(k))
       .filter(k => options.excludeCommonWords ? !this.isCommonWord(k, true) : true)
       .slice(0, options.maxKeywords);
 
-    return [...new Set(keywords)]; // Remove duplicates
+    console.log('✅ Final parsed keywords:', validKeywords);
+    return [...new Set(validKeywords)]; // Remove duplicates
+  }
+  
+  private isLikelyGeneratedContent(text: string): boolean {
+    const indicators = [
+      'pressemitteilung', 'heute bekannt gegeben', 'freut sich',
+      'mitteilen zu können', 'ist stolz', 'gibt bekannt',
+      'weitere informationen', 'über das unternehmen',
+      'für weitere fragen', 'kontaktieren sie'
+    ];
+    
+    const lowerText = text.toLowerCase();
+    return indicators.some(indicator => lowerText.includes(indicator));
   }
 
   private extractKeywordsFallback(text: string, options: Required<KeywordDetectionOptions>): string[] {
