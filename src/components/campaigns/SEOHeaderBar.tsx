@@ -238,7 +238,7 @@ export function SEOHeaderBar({
             <span className="font-medium">{seoMetrics.wordCount}</span> Wörter
           </div>
           <div className="text-sm text-gray-600">
-            <span className="font-medium">{(seoMetrics.keywordDensity * 100).toFixed(1)}%</span> Keyword-Dichte
+            <span className="font-medium">{seoMetrics.keywordDensity.toFixed(1)}%</span> Keyword-Dichte
           </div>
           <div className="text-sm text-gray-600">
             <span className="font-medium">{seoMetrics.readability}</span> Lesbarkeit
