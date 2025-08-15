@@ -164,9 +164,13 @@ export function AssetSelectorModal({
   if (!isOpen) return null;
 
   const handleUploadSuccess = async () => {
-    // Nach erfolgreichem Upload: Medien neu laden
-    await loadClientMedia();
+    // Nach erfolgreichem Upload: Modal schließen
     setShowUploadModal(false);
+    
+    // Längeres Warten bevor neu laden (Firebase braucht Zeit für Konsistenz)
+    setTimeout(async () => {
+      await loadClientMedia();
+    }, 2000); // Erhöht von 1000ms auf 2000ms
     
     // Optional: Callback für Parent Component
     if (onUploadSuccess) {

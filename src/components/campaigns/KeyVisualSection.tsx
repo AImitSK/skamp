@@ -105,12 +105,18 @@ export function KeyVisualSection({
 
   const handleAssetSelected = async (assets: any[]) => {
     if (assets.length > 0 && assets[0].type === 'asset') {
-      // Asset aus Media Library ausgewählt - lade als Data URL für CORS-freies Cropping
+      // Asset aus Media Library ausgewählt - lade über Proxy-Route für CORS-freies Cropping
       const asset = assets[0];
       
       try {
-        // Lade das Bild als Blob
-        const response = await fetch(asset.metadata.thumbnailUrl);
+        // Verwende Proxy-Route statt direkter Firebase URL
+        const proxyUrl = `/api/proxy-firebase-image?url=${encodeURIComponent(asset.metadata.thumbnailUrl)}`;
+        const response = await fetch(proxyUrl);
+        
+        if (!response.ok) {
+          throw new Error(`Proxy request failed: ${response.status}`);
+        }
+        
         const blob = await response.blob();
         
         // Konvertiere zu Data URL (wie bei direktem Upload)
@@ -125,7 +131,7 @@ export function KeyVisualSection({
         
       } catch (error) {
         console.error('Fehler beim Laden des Bildes:', error);
-        alert('Fehler beim Laden des Bildes aus der Media Library');
+        alert('Fehler beim Laden des Bildes aus der Media Library. Bitte versuchen Sie es erneut.');
       }
     }
   };
