@@ -76,10 +76,19 @@ ${instruction}
 Mache nur diese eine Änderung und behalte alles andere exakt bei:`;
 
 
-    // KI-Anfrage
-    const result = await model.generateContent(systemPrompt + '\n\n' + userPrompt);
-    const response = await result.response;
-    const generatedText = response.text();
+    // KI-Anfrage mit Error Handling
+    let generatedText: string;
+    try {
+      const result = await model.generateContent(systemPrompt + '\n\n' + userPrompt);
+      const response = await result.response;
+      generatedText = response.text();
+    } catch (geminiError) {
+      console.error('Gemini API Error:', geminiError);
+      return NextResponse.json(
+        { error: 'KI-Verarbeitung fehlgeschlagen', details: geminiError instanceof Error ? geminiError.message : String(geminiError) },
+        { status: 500 }
+      );
+    }
 
 
     return NextResponse.json({

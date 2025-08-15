@@ -62,9 +62,9 @@ export function useNotifications(): UseNotificationsReturn {
     try {
       setLoading(true);
       setError(null);
-      console.log('🔥 DEBUG - loadNotifications with userId:', user.uid);
-      console.log('🔥 DEBUG - loadNotifications with organizationId:', currentOrganization?.id);
-      console.log('🔥 DEBUG - Current user object:', user);
+      // console.log('DEBUG - loadNotifications with userId:', user.uid);
+      // console.log('DEBUG - loadNotifications with organizationId:', currentOrganization?.id);
+      // console.log('DEBUG - Current user object:', user);
       const data = await notificationsService.getAll(user.uid, 50, currentOrganization?.id);
       setNotifications(data);
       setTotalCount(data.length);
@@ -246,7 +246,7 @@ export function useNotifications(): UseNotificationsReturn {
     let unsubscribeCount: Unsubscribe | null = null;
 
     // Subscribe to notifications with organizationId for multi-tenancy
-    console.log('🔥 DEBUG - Subscribing to notifications with organizationId:', currentOrganization?.id);
+    // console.log('DEBUG - Subscribing to notifications with organizationId:', currentOrganization?.id);
     unsubscribeNotifications = notificationsService.subscribeToNotifications(
       user.uid,
       (updatedNotifications) => {
@@ -391,7 +391,7 @@ async function checkOverdueApprovals(userId: string, overdueDays: number, organi
   // Use organizationId for multi-tenancy if available
   const whereField = organizationId ? 'organizationId' : 'userId';
   const whereValue = organizationId || userId;
-  console.log('🔥 DEBUG - checkOverdueApprovals using', whereField, ':', whereValue);
+  // console.log('DEBUG - checkOverdueApprovals using', whereField, ':', whereValue);
 
   const campaignsQuery = query(
     collection(db, 'pr_campaigns'),
@@ -451,7 +451,7 @@ async function checkOverdueTasks(userId: string, organizationId?: string) {
   // Use organizationId for multi-tenancy if available
   const whereField = organizationId ? 'organizationId' : 'userId';
   const whereValue = organizationId || userId;
-  console.log('🔥 DEBUG - checkOverdueTasks using', whereField, ':', whereValue);
+  // console.log('DEBUG - checkOverdueTasks using', whereField, ':', whereValue);
   
   const tasksQuery = query(
     collection(db, 'tasks'),
