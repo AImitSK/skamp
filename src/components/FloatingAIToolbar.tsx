@@ -741,18 +741,36 @@ Antworte NUR mit dem Text im neuen Ton.`;
         console.log('🎨 Füge HTML Content ein:', htmlContent.substring(0, 100) + '...');
         
         // Erst Selection setzen, dann HTML-Content einfügen
-        editor.chain()
-          .setTextSelection({ from, to })
-          .insertContent(htmlContent)
-          .run();
+        try {
+          const docSize = editor.state.doc.content.size;
+          const validFrom = Math.min(Math.max(0, from), docSize);
+          const validTo = Math.min(Math.max(validFrom, to), docSize);
+          
+          editor.chain()
+            .setTextSelection({ from: validFrom, to: validTo })
+            .insertContent(htmlContent)
+            .run();
+        } catch (error) {
+          console.warn('TextSelection error, using fallback:', error);
+          editor.chain().insertContent(htmlContent).run();
+        }
       } else {
         // Für alle anderen Aktionen: PLAIN TEXT wie bisher
         const plainText = parseTextFromAIOutput(newText);
-        editor.view.dispatch(
-          editor.view.state.tr
-            .setSelection(TextSelection.create(editor.view.state.doc, from, to))
-            .replaceSelectionWith(editor.state.schema.text(plainText), false)
-        );
+        try {
+          const docSize = editor.state.doc.content.size;
+          const validFrom = Math.min(Math.max(0, from), docSize);
+          const validTo = Math.min(Math.max(validFrom, to), docSize);
+          
+          editor.view.dispatch(
+            editor.view.state.tr
+              .setSelection(TextSelection.create(editor.view.state.doc, validFrom, validTo))
+              .replaceSelectionWith(editor.state.schema.text(plainText), false)
+          );
+        } catch (error) {
+          console.warn('TextSelection error in plain text, using fallback:', error);
+          editor.commands.insertContent(plainText);
+        }
       }
       
       // Toolbar schließen nach erfolgreicher Aktion - User muss neu markieren
@@ -1126,6 +1144,7 @@ WICHTIG: Mache wirklich NUR die eine genannte Änderung!`;
       <div className="flex items-center gap-1 p-1">
       {/* Umformulieren */}
       <button
+        type="button"
         onClick={() => executeAction('rephrase')}
         disabled={isProcessing}
         className="
@@ -1141,6 +1160,7 @@ WICHTIG: Mache wirklich NUR die eine genannte Änderung!`;
 
       {/* Kürzen */}
       <button
+        type="button"
         onClick={() => executeAction('shorten')}
         disabled={isProcessing}
         className="
@@ -1156,6 +1176,7 @@ WICHTIG: Mache wirklich NUR die eine genannte Änderung!`;
 
       {/* Erweitern */}
       <button
+        type="button"
         onClick={() => executeAction('expand')}
         disabled={isProcessing}
         className="
@@ -1171,6 +1192,7 @@ WICHTIG: Mache wirklich NUR die eine genannte Änderung!`;
 
       {/* Ausformulieren */}
       <button
+        type="button"
         onClick={() => executeAction('elaborate')}
         disabled={isProcessing}
         className="
@@ -1186,6 +1208,7 @@ WICHTIG: Mache wirklich NUR die eine genannte Änderung!`;
 
       {/* SEO optimieren - nur aktiv wenn Keywords vorhanden */}
       <button
+        type="button"
         onClick={() => executeAction('seo-optimize')}
         disabled={isProcessing || keywords.length === 0}
         className={`
@@ -1205,6 +1228,7 @@ WICHTIG: Mache wirklich NUR die eine genannte Änderung!`;
       {/* Ton ändern Dropdown */}
       <div className="relative">
         <button
+          type="button"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();

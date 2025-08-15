@@ -48,6 +48,11 @@ export function SEOHeaderBar({
 
   // Auto-Keyword-Detection mit Debouncing
   useEffect(() => {
+    console.log('🔍 SEO HeaderBar: Content check:', { 
+      contentLength: content?.length || 0, 
+      content: content?.substring(0, 100) + '...' 
+    });
+    
     if (!content || content.length < 50) {
       setSeoMetrics({ score: 0, wordCount: 0, keywordDensity: 0 });
       setAutoDetectedKeywords([]);
