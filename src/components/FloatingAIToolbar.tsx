@@ -1246,6 +1246,29 @@ REGELN:
             onMouseDown={(e) => {
               e.stopPropagation(); // Verhindere MouseDown-Event-Bubbling
               inputProtectionRef.current = true; // SOFORT aktivieren vor Focus/Blur
+              
+              // WICHTIG: Selektion vor Input-Focus sichern
+              if (selectedText && lastSelectionRef.current) {
+                // Selektion temporär sichern falls sie durch Input-Focus verloren geht
+                const savedSelection = {
+                  text: selectedText,
+                  from: lastSelectionRef.current.from,
+                  to: lastSelectionRef.current.to
+                };
+                
+                // Nach kurzer Zeit prüfen ob Selektion verloren ging
+                setTimeout(() => {
+                  if (!selectedText && savedSelection.text) {
+                    // Selektion wiederherstellen
+                    setSelectedText(savedSelection.text);
+                    lastSelectionRef.current = {
+                      from: savedSelection.from,
+                      to: savedSelection.to
+                    };
+                  }
+                }, 100);
+              }
+              
               setTimeout(() => {
                 inputProtectionRef.current = false;
               }, 1000); // Längerer Schutz
