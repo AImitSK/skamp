@@ -81,7 +81,7 @@ export function KeyVisualSection({
     try {
       // Upload zu Firebase Storage
       const timestamp = Date.now();
-      const fileName = `key-visuals/${organizationId}/${timestamp}-${croppedFile.name}`;
+      const fileName = `organizations/${organizationId}/branding/${timestamp}-key-visual.jpg`;
       const storageRef = ref(storage, fileName);
       
       const snapshot = await uploadBytes(storageRef, croppedFile);
