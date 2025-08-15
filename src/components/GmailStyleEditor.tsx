@@ -339,6 +339,12 @@ export const GmailStyleEditor = ({
 
       {/* Floating AI Toolbar - immer da */}
       <FloatingAIToolbar editor={editor} keywords={keywords} />
+      {/* Debug Keywords */}
+      {process.env.NODE_ENV === 'development' && (
+        <div style={{ display: 'none' }}>
+          📊 GmailStyleEditor Keywords Debug: {JSON.stringify(keywords)}
+        </div>
+      )}
       
       {/* Titel-Bereich */}
       {onTitleChange && (

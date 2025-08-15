@@ -462,6 +462,12 @@ Der markierte Text enthält eine Anweisung oder ein Briefing. Erstelle NUR Flie�
           }
           break;
         case 'seo-optimize':
+          console.log('🔍 SEO-Optimize Debug:', { 
+            keywordsLength: keywords.length, 
+            keywords: keywords,
+            keywordsType: typeof keywords,
+            action: action
+          });
           if (keywords.length === 0) {
             console.warn('⚠️ SEO-Optimierung ohne Keywords nicht möglich');
             return text; // Fallback wenn keine Keywords
