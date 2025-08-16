@@ -102,9 +102,8 @@ function KIAnalysisBox({ metrics, isLoading }: KIAnalysisBoxProps) {
   return (
     <div className={`${boxClasses} ${borderGradientClasses} text-purple-700`}>
       <SparklesIcon className="h-3 w-3" />
-      <span>
-        Relevanz {metrics.semanticRelevance || 0}%{relevanceTrend}
-      </span>
+      <span className="font-semibold">Relevanz:</span>
+      <span>{metrics.semanticRelevance || 0}%{relevanceTrend}</span>
     </div>
   );
 }
@@ -655,12 +654,6 @@ Beispiel-Format (nutze deine eigenen Werte):
             Hinzufügen
           </Button>
         </div>
-        
-        {keywords.length >= 2 && (
-          <p className="text-xs text-gray-600 mt-1">
-            Maximum 2 Keywords für fokussierte PR-Texte erreicht.
-          </p>
-        )}
       </div>
 
       {/* Keywords - NEW One-Line Layout */}
