@@ -447,7 +447,8 @@ export default function NewPRCampaignPage() {
                 onBoilerplateSectionsChange={setBoilerplateSections}
                 initialBoilerplateSections={boilerplateSections}
                 hideMainContentField={false}
-                enableSEOFeatures={true}
+                keywords={keywords}
+                onKeywordsChange={setKeywords}
               />
             </div>
 

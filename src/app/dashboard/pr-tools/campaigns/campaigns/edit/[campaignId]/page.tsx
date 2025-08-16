@@ -508,16 +508,6 @@ export default function EditPRCampaignPage() {
                 </div>
               </div>
 
-              {/* PR-SEO Analyse Header */}
-              <PRSEOHeaderBar
-                title="PR-SEO Analyse 2.0"
-                content={editorContent}
-                keywords={keywords}
-                onKeywordsChange={setKeywords}
-                documentTitle={campaignTitle}
-                className="mb-6"
-              />
-
               {/* Content Composer */}
               <CampaignContentComposer
                 key={`composer-${boilerplateSections.length}`}
@@ -532,7 +522,8 @@ export default function EditPRCampaignPage() {
                 onBoilerplateSectionsChange={setBoilerplateSections}
                 initialBoilerplateSections={boilerplateSections}
                 hideMainContentField={true}
-                enableSEOFeatures={true}
+                keywords={keywords}
+                onKeywordsChange={setKeywords}
               />
             </div>
 

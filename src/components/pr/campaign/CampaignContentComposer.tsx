@@ -22,7 +22,7 @@ import { MediaFolder } from '@/types/media';
 import { Text } from '@/components/ui/text';
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/solid';
 import { InfoTooltip } from '@/components/InfoTooltip';
-import { SEOHeaderBar } from '@/components/campaigns/SEOHeaderBar';
+import { PRSEOHeaderBar } from '@/components/campaigns/PRSEOHeaderBar';
 
 // Dynamic import für html2pdf to avoid SSR issues
 const loadHtml2Pdf = () => import('html2pdf.js');
@@ -83,7 +83,9 @@ interface CampaignContentComposerProps {
   onBoilerplateSectionsChange?: (sections: BoilerplateSection[]) => void;
   initialBoilerplateSections?: BoilerplateSection[];
   hideMainContentField?: boolean;
-  enableSEOFeatures?: boolean; // Neue SEO-Features aktivieren
+  // PR-SEO props
+  keywords?: string[];
+  onKeywordsChange?: (keywords: string[]) => void;
 }
 
 // Folder Selector Dialog Component
@@ -249,7 +251,8 @@ export default function CampaignContentComposer({
   onBoilerplateSectionsChange,
   initialBoilerplateSections = [],
   hideMainContentField = false,
-  enableSEOFeatures = false
+  keywords = [],
+  onKeywordsChange
 }: CampaignContentComposerProps) {
   const [boilerplateSections, setBoilerplateSections] = useState<BoilerplateSection[]>(initialBoilerplateSections);
   const [processedContent, setProcessedContent] = useState('');
@@ -258,7 +261,7 @@ export default function CampaignContentComposer({
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [pdfDownloadUrl, setPdfDownloadUrl] = useState<string | null>(null);
   const [alertMessage, setAlertMessage] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-  const [keywords, setKeywords] = useState<string[]>([]);
+  // Keywords werden jetzt als Props übergeben
   const previewRef = useRef<HTMLDivElement>(null);
 
   // Konvertiere Legacy-Sections mit position zu neuen ohne position
@@ -476,14 +479,14 @@ export default function CampaignContentComposer({
                 // Kann später für Edit-Mode aktiviert werden
               />
             </div>
-            {/* SEO-Features nach dem Editor */}
-            {enableSEOFeatures && (
+            {/* PR-SEO Analyse */}
+            {onKeywordsChange && (
               <div className="mt-4">
-                <SEOHeaderBar 
-                  title="SEO-Optimierung"
+                <PRSEOHeaderBar
+                  title="PR-SEO Analyse 2.0"
                   content={`${title ? `${title}\n\n` : ''}${mainContent}`}
                   keywords={keywords}
-                  onKeywordsChange={setKeywords}
+                  onKeywordsChange={onKeywordsChange}
                   documentTitle={title}
                 />
               </div>

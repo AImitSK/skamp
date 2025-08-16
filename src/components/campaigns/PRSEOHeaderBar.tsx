@@ -259,6 +259,16 @@ Antworte im JSON-Format:
 
       if (response.ok) {
         const data = await response.json();
+        console.log('📡 Raw KI-Response:', data);
+        
+        if (!data || !data.content) {
+          console.warn('⚠️ KI-Response ist leer oder fehlerhaft:', data);
+          return {
+            semanticRelevance: 50,
+            contextQuality: 50,
+            relatedTerms: []
+          };
+        }
         
         try {
           // Versuche JSON zu parsen
@@ -271,10 +281,14 @@ Antworte im JSON-Format:
               contextQuality: Math.min(100, Math.max(0, result.contextQuality || 50)),
               relatedTerms: Array.isArray(result.relatedTerms) ? result.relatedTerms.slice(0, 3) : []
             };
+          } else {
+            console.warn('⚠️ Kein JSON in KI-Response gefunden:', data.content);
           }
         } catch (parseError) {
-          console.warn('⚠️ KI-Response konnte nicht geparst werden:', data.content);
+          console.warn('⚠️ KI-Response JSON-Parse Fehler:', parseError, 'Content:', data.content);
         }
+      } else {
+        console.error('❌ KI-API HTTP Error:', response.status, response.statusText);
       }
     } catch (error) {
       console.error('❌ KI-Analyse Fehler:', error);
@@ -414,7 +428,12 @@ Antworte im JSON-Format:
             type="text"
             value={newKeyword}
             onChange={(e) => setNewKeyword(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleAddKeyword()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleAddKeyword();
+              }
+            }}
             placeholder={keywords.length >= 2 ? "Maximum 2 Keywords erreicht" : "Keyword hinzufügen..."}
             disabled={keywords.length >= 2}
             className="flex-1"
