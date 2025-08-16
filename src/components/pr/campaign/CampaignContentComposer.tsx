@@ -23,6 +23,7 @@ import { Text } from '@/components/ui/text';
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/solid';
 import { InfoTooltip } from '@/components/InfoTooltip';
 import { PRSEOHeaderBar } from '@/components/campaigns/PRSEOHeaderBar';
+import { HeadlineGenerator } from '@/components/pr/ai/HeadlineGenerator';
 
 // Dynamic import für html2pdf to avoid SSR issues
 const loadHtml2Pdf = () => import('html2pdf.js');
@@ -449,13 +450,20 @@ export default function CampaignContentComposer({
         {/* Title Input */}
         {!readOnlyTitle ? (
           <Field>
-            <Label className="flex items-center">
-              Titel der Pressemitteilung
-              <InfoTooltip 
-                content="Pflichtfeld: Der Titel sollte prägnant und aussagekräftig sein. Er wird als Überschrift in der Pressemitteilung und im E-Mail-Betreff verwendet."
-                className="ml-1"
+            <div className="flex items-center justify-between mb-2">
+              <Label className="flex items-center">
+                Titel der Pressemitteilung
+                <InfoTooltip 
+                  content="Pflichtfeld: Der Titel sollte prägnant und aussagekräftig sein. Er wird als Überschrift in der Pressemitteilung und im E-Mail-Betreff verwendet."
+                  className="ml-1"
+                />
+              </Label>
+              <HeadlineGenerator
+                currentTitle={title}
+                content={mainContent}
+                onTitleSelect={onTitleChange}
               />
-            </Label>
+            </div>
             <Input
               type="text"
               value={title}
