@@ -49,6 +49,7 @@ import { AssetSelectorModal } from "@/components/campaigns/AssetSelectorModal";
 import { KeyVisualSection } from "@/components/campaigns/KeyVisualSection";
 import { KeyVisualData } from "@/types/pr";
 import { LOADING_SPINNER_SIZE, LOADING_SPINNER_BORDER } from "@/constants/ui";
+import { SEOHeaderBar } from "@/components/campaigns/SEOHeaderBar";
 
 // Dynamic import für AI Modal
 import dynamic from 'next/dynamic';
@@ -106,6 +107,7 @@ export default function EditPRCampaignPage() {
   const [attachedAssets, setAttachedAssets] = useState<CampaignAssetAttachment[]>([]);
   const [keyVisual, setKeyVisual] = useState<KeyVisualData | undefined>(undefined);
   const [approvalRequired, setApprovalRequired] = useState(false);
+  const [keywords, setKeywords] = useState<string[]>([]); // SEO Keywords
   
   // UI State
   const [loading, setLoading] = useState(true);
@@ -505,6 +507,16 @@ export default function EditPRCampaignPage() {
                   </div>
                 </div>
               </div>
+
+              {/* SEO-Analyse Header */}
+              <SEOHeaderBar
+                title="PR-SEO Analyse"
+                content={editorContent}
+                keywords={keywords}
+                onKeywordsChange={setKeywords}
+                documentTitle={campaignTitle}
+                className="mb-6"
+              />
 
               {/* Content Composer */}
               <CampaignContentComposer

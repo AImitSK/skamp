@@ -41,6 +41,7 @@ import { CampaignAssetAttachment } from "@/types/pr";
 import { BoilerplateSection } from "@/components/pr/campaign/IntelligentBoilerplateSection";
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { serverTimestamp } from 'firebase/firestore';
+import { SEOHeaderBar } from "@/components/campaigns/SEOHeaderBar";
 
 // Dynamic import für AI Modal
 import dynamic from 'next/dynamic';
@@ -90,6 +91,7 @@ export default function NewPRCampaignPage() {
   const [attachedAssets, setAttachedAssets] = useState<CampaignAssetAttachment[]>([]);
   const [keyVisual, setKeyVisual] = useState<KeyVisualData | undefined>(undefined);
   const [approvalRequired, setApprovalRequired] = useState(false);
+  const [keywords, setKeywords] = useState<string[]>([]); // SEO Keywords
   
   // UI State
   const [loading, setLoading] = useState(true);
@@ -420,6 +422,16 @@ export default function NewPRCampaignPage() {
                   </div>
                 </div>
               </div>
+
+              {/* SEO-Analyse Header */}
+              <SEOHeaderBar
+                title="PR-SEO Analyse"
+                content={editorContent}
+                keywords={keywords}
+                onKeywordsChange={setKeywords}
+                documentTitle={campaignTitle}
+                className="mb-6"
+              />
 
               {/* Content Composer mit SEO-Features */}
               <CampaignContentComposer
