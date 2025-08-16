@@ -792,14 +792,10 @@ Beispiel-Format (nutze deine eigenen Werte):
               </p>
               <ul className="text-xs text-gray-700 space-y-2">
                 {(showAllRecommendations ? recommendations : recommendations.slice(0, 3)).map((rec, index) => (
-                  <li key={index} className="flex items-start gap-1.5 leading-relaxed">
-                    {rec.startsWith('[KI]') ? (
-                      <>
-                        <Badge color="purple" className="text-[9px] px-1 py-0 mt-1 flex-shrink-0 leading-none h-3">KI</Badge>
-                        <span className="leading-relaxed">• {rec.replace('[KI] ', '')}</span>
-                      </>
-                    ) : (
-                      <span className="leading-relaxed">• {rec}</span>
+                  <li key={index} className="flex items-start justify-between gap-2 leading-relaxed">
+                    <span className="leading-relaxed">• {rec.replace('[KI] ', '')}</span>
+                    {rec.startsWith('[KI]') && (
+                      <Badge color="purple" className="text-[9px] px-1 py-0 mt-0.5 flex-shrink-0 leading-none h-3">KI</Badge>
                     )}
                   </li>
                 ))}

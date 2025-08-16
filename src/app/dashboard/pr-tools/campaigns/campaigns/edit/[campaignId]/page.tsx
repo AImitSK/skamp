@@ -477,7 +477,7 @@ export default function EditPRCampaignPage() {
           <div className="bg-white rounded-lg border p-6">
             <FieldGroup>
               {/* Absender */}
-              <div className="mb-6">
+              <div className="mb-8">
                 <div className="bg-gray-50 rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Absender</h3>
                   
@@ -493,7 +493,7 @@ export default function EditPRCampaignPage() {
               </div>
 
               {/* Pressemeldung */}
-              <div className="mb-6">
+              <div className="mb-8 border-t pt-8">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-900">Pressemeldung</h3>
                   <Button
@@ -507,7 +507,7 @@ export default function EditPRCampaignPage() {
                 </div>
                 
                 {/* Info-Box für KI-Nutzung */}
-                <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                   <div className="flex items-start gap-2">
                     <InformationCircleIcon className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                     <div className="text-sm text-blue-700">
@@ -536,18 +536,18 @@ export default function EditPRCampaignPage() {
                   keywords={keywords}
                   onKeywordsChange={setKeywords}
                 />
+              </div>
 
-                {/* Key Visual */}
-                <div className="mt-4">
-                  <KeyVisualSection
-                    value={keyVisual}
-                    onChange={setKeyVisual}
-                    clientId={selectedCompanyId}
-                    clientName={selectedCompanyName}
-                    organizationId={user!.uid}
-                    userId={user!.uid}
-                  />
-                </div>
+              {/* Key Visual */}
+              <div className="border-t pt-8">
+                <KeyVisualSection
+                  value={keyVisual}
+                  onChange={setKeyVisual}
+                  clientId={selectedCompanyId}
+                  clientName={selectedCompanyName}
+                  organizationId={user!.uid}
+                  userId={user!.uid}
+                />
               </div>
             </FieldGroup>
           </div>
@@ -559,7 +559,7 @@ export default function EditPRCampaignPage() {
             <FieldGroup>
               {/* Textbausteine & Elemente */}
               <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Textbausteine & Elemente</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Textbausteine</h3>
                 <div className="bg-gray-50 rounded-lg p-4">
                   <IntelligentBoilerplateSection
                     organizationId={currentOrganization!.id}
@@ -567,6 +567,7 @@ export default function EditPRCampaignPage() {
                     clientName={selectedCompanyName}
                     onContentChange={setBoilerplateSections}
                     initialSections={boilerplateSections}
+                    readOnlyMode={false}
                   />
                 </div>
               </div>
