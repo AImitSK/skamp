@@ -41,7 +41,7 @@ import { CampaignAssetAttachment } from "@/types/pr";
 import { BoilerplateSection } from "@/components/pr/campaign/IntelligentBoilerplateSection";
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { serverTimestamp } from 'firebase/firestore';
-import { PRSEOHeaderBar } from "@/components/campaigns/PRSEOHeaderBar";
+// PRSEOHeaderBar now integrated in CampaignContentComposer
 
 // Dynamic import für AI Modal
 import dynamic from 'next/dynamic';
@@ -423,15 +423,7 @@ export default function NewPRCampaignPage() {
                 </div>
               </div>
 
-              {/* PR-SEO Analyse Header */}
-              <PRSEOHeaderBar
-                title="PR-SEO Analyse 2.0"
-                content={editorContent}
-                keywords={keywords}
-                onKeywordsChange={setKeywords}
-                documentTitle={campaignTitle}
-                className="mb-6"
-              />
+              {/* PR-SEO ist jetzt im CampaignContentComposer integriert */}
 
               {/* Content Composer mit SEO-Features */}
               <CampaignContentComposer
