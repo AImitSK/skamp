@@ -43,13 +43,14 @@ export function HeadlineGenerator({
       const prompt = `Du bist ein erfahrener PR-Experte. Erstelle 3 professionelle Headlines für diese Pressemitteilung.
 
 WICHTIGE REGELN:
-- Jede Headline maximal 70 Zeichen
+- Jede Headline zwischen 40-60 Zeichen (optimal für PR-SEO)
 - Prägnant und aufmerksamkeitserregend
 - Für deutsche Medien geeignet
-- SEO-optimiert
+- Keine HTML-Tags, keine Formatierung
 - Keine Nummerierung, keine Anführungszeichen
+- Nur reiner Text
 
-${currentTitle ? `Aktuelle Headline: "${currentTitle}"\n\n` : ''}Inhalt der Pressemitteilung:\n${contentToAnalyze}\n\nGib NUR die 3 Headlines zurück, jede in einer neuen Zeile:`;
+${currentTitle ? `Aktuelle Headline: "${currentTitle}"\n\n` : ''}Inhalt der Pressemitteilung:\n${contentToAnalyze}\n\nGib NUR die 3 Headlines zurück als reinen Text, jede in einer neuen Zeile:`;
 
       const response = await fetch('/api/ai/generate', {
         method: 'POST',
@@ -69,17 +70,29 @@ ${currentTitle ? `Aktuelle Headline: "${currentTitle}"\n\n` : ''}Inhalt der Pres
       const data = await response.json();
       const generatedText = data.generatedText || '';
       
-      // Parse Headlines aus der Antwort
+      // Parse Headlines aus der Antwort - AGGRESSIVES HTML-Cleaning
       const headlineLines = generatedText
         .split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 0 && !line.match(/^\d+\./)) // Entferne Nummerierungen
+        .map(line => {
+          // Entferne ALLE HTML-Tags komplett
+          let cleaned = line.replace(/<[^>]*>/g, '');
+          // Entferne Markdown-Formatierung
+          cleaned = cleaned.replace(/\*\*(.*?)\*\*/g, '$1');
+          cleaned = cleaned.replace(/\*(.*?)\*/g, '$1');
+          cleaned = cleaned.replace(/__(.*?)__/g, '$1');
+          cleaned = cleaned.replace(/_(.*?)_/g, '$1');
+          // Entferne Anführungszeichen und Nummerierung
+          cleaned = cleaned.replace(/^\d+\.\s*/, '');
+          cleaned = cleaned.replace(/^["“”\-\s]*|["“”\s]*$/g, '');
+          return cleaned.trim();
+        })
+        .filter(line => line.length > 0 && line.length >= 20 && line.length <= 80) // Nur sinnvolle Längen
         .slice(0, 3); // Maximal 3 Headlines
       
       if (headlineLines.length > 0) {
         const headlineOptions: HeadlineOption[] = headlineLines.map((title: string, index: number) => ({
           id: `headline-${index}`,
-          title: title.trim().replace(/^["“”]|["“”]$/g, '') // Entferne Anführungszeichen
+          title: title // Bereits komplett gereinigt
         }));
         
         setHeadlines(headlineOptions);
@@ -143,7 +156,7 @@ ${currentTitle ? `Aktuelle Headline: "${currentTitle}"\n\n` : ''}Inhalt der Pres
 
       {/* Headlines Suggestions */}
       {showSuggestions && headlines.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-20 p-4">
+        <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-20 p-4 min-w-[500px] max-w-[600px]">
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-sm font-semibold text-gray-900">KI-generierte Headlines</h4>
             <button
@@ -164,9 +177,14 @@ ${currentTitle ? `Aktuelle Headline: "${currentTitle}"\n\n` : ''}Inhalt der Pres
                 className="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-[#005fab] hover:bg-[#005fab]/5 transition-colors group"
               >
                 <div className="flex items-start justify-between">
-                  <p className="text-sm text-gray-900 leading-relaxed pr-2">
-                    {headline.title}
-                  </p>
+                  <div className="flex-1 pr-2">
+                    <p className="text-sm text-gray-900 leading-relaxed break-words">
+                      {headline.title}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {headline.title.length} Zeichen
+                    </p>
+                  </div>
                   <CheckIcon className="h-4 w-4 text-gray-400 group-hover:text-[#005fab] flex-shrink-0 mt-0.5" />
                 </div>
               </button>
