@@ -83,6 +83,7 @@ interface CampaignContentComposerProps {
   onBoilerplateSectionsChange?: (sections: BoilerplateSection[]) => void;
   initialBoilerplateSections?: BoilerplateSection[];
   hideMainContentField?: boolean;
+  hidePreview?: boolean; // Neue Option um Vorschau zu verstecken
   // PR-SEO props
   keywords?: string[];
   onKeywordsChange?: (keywords: string[]) => void;
@@ -251,6 +252,7 @@ export default function CampaignContentComposer({
   onBoilerplateSectionsChange,
   initialBoilerplateSections = [],
   hideMainContentField = false,
+  hidePreview = false,
   keywords = [],
   onKeywordsChange
 }: CampaignContentComposerProps) {
@@ -505,55 +507,57 @@ export default function CampaignContentComposer({
           />
         </div>
 
-        {/* Preview Toggle */}
-        <div className="border-t pt-4">
-          <div className="flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => setShowPreview(!showPreview)}
-              className="text-sm font-medium text-indigo-600 hover:text-indigo-500 flex items-center gap-2"
-            >
-              <span>{showPreview ? '▼' : '▶'}</span>
-              Vorschau der vollständigen Pressemitteilung
-            </button>
+        {/* Preview Toggle - nur anzeigen wenn nicht versteckt */}
+        {!hidePreview && (
+          <div className="border-t pt-4">
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setShowPreview(!showPreview)}
+                className="text-sm font-medium text-indigo-600 hover:text-indigo-500 flex items-center gap-2"
+              >
+                <span>{showPreview ? '▼' : '▶'}</span>
+                Vorschau der vollständigen Pressemitteilung
+              </button>
+              
+              {showPreview && (
+                <div className="flex items-center gap-3">
+                  {pdfDownloadUrl && (
+                    <a
+                      href={pdfDownloadUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-[#005fab] hover:text-[#004a8c] underline"
+                    >
+                      PDF öffnen
+                    </a>
+                  )}
+                  <Button
+                    type="button"
+                    onClick={handlePdfExport}
+                    disabled={generatingPdf || !processedContent}
+                    className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
+                  >
+                    <DocumentArrowDownIcon className="h-4 w-4 mr-1" />
+                    {generatingPdf ? 'PDF wird erstellt...' : 'Als PDF exportieren'}
+                  </Button>
+                </div>
+              )}
+            </div>
             
             {showPreview && (
-              <div className="flex items-center gap-3">
-                {pdfDownloadUrl && (
-                  <a
-                    href={pdfDownloadUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-[#005fab] hover:text-[#004a8c] underline"
-                  >
-                    PDF öffnen
-                  </a>
-                )}
-                <Button
-                  type="button"
-                  onClick={handlePdfExport}
-                  disabled={generatingPdf || !processedContent}
-                  className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
-                >
-                  <DocumentArrowDownIcon className="h-4 w-4 mr-1" />
-                  {generatingPdf ? 'PDF wird erstellt...' : 'Als PDF exportieren'}
-                </Button>
+              <div className="mt-4 p-6 bg-white border rounded-lg shadow-sm">
+                <h3 className="text-lg font-semibold mb-4">Vorschau</h3>
+                <div 
+                  ref={previewRef}
+                  className="prose prose-sm sm:prose-base lg:prose-lg max-w-none [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mt-6 [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mt-5 [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:mt-4 [&_h3]:mb-2"
+                  style={{ paddingBottom: '20px' }}
+                  dangerouslySetInnerHTML={{ __html: processedContent || '<p class="text-gray-500">Noch kein Inhalt vorhanden</p>' }}
+                />
               </div>
             )}
           </div>
-          
-          {showPreview && (
-            <div className="mt-4 p-6 bg-white border rounded-lg shadow-sm">
-              <h3 className="text-lg font-semibold mb-4">Vorschau</h3>
-              <div 
-                ref={previewRef}
-                className="prose prose-sm sm:prose-base lg:prose-lg max-w-none [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mt-6 [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mt-5 [&_h2]:mb-3 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:mt-4 [&_h3]:mb-2"
-                style={{ paddingBottom: '20px' }}
-                dangerouslySetInnerHTML={{ __html: processedContent || '<p class="text-gray-500">Noch kein Inhalt vorhanden</p>' }}
-              />
-            </div>
-          )}
-        </div>
+        )}
 
         {/* Folder Selector Dialog */}
         <FolderSelectorDialog

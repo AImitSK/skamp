@@ -38,7 +38,7 @@ import { listsService } from "@/lib/firebase/lists-service";
 import { prService } from "@/lib/firebase/pr-service";
 import { DistributionList } from "@/types/lists";
 import { CampaignAssetAttachment } from "@/types/pr";
-import { BoilerplateSection } from "@/components/pr/campaign/IntelligentBoilerplateSection";
+import IntelligentBoilerplateSection, { BoilerplateSection } from "@/components/pr/campaign/IntelligentBoilerplateSection";
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { serverTimestamp } from 'firebase/firestore';
 // PRSEOHeaderBar now integrated in CampaignContentComposer
@@ -373,14 +373,6 @@ export default function NewPRCampaignPage() {
     <div>
       {/* Header */}
       <div className="mb-8">
-        <button
-          onClick={() => router.push('/dashboard/pr-tools/campaigns')}
-          className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 border-0 rounded-md px-3 py-2 text-sm font-medium mb-4"
-        >
-          <ArrowLeftIcon className="h-4 w-4 mr-2" />
-          Zurück zur Übersicht
-        </button>
-        
         <Heading>Neue PR-Kampagne</Heading>
       </div>
 
@@ -442,8 +434,8 @@ export default function NewPRCampaignPage() {
                   <div className="flex items-start gap-2">
                     <InformationCircleIcon className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                     <div className="text-sm text-blue-700">
-                      <p className="font-medium">Tipp: Nutze den KI-Assistenten!</p>
-                      <p className="mt-1">Der KI-Assistent erstellt automatisch alle Inhalte deiner Pressemitteilung: Titel, Lead-Absatz, Haupttext und Zitat. Diese erscheinen dann als verschiebbare Elemente, die du mit Textbausteinen kombinieren kannst.</p>
+                      <p className="font-semibold">Tipp: Nutze den KI-Assistenten!</p>
+                      <p className="mt-1">Der KI-Assistent liefert dir einen kompletten Rohentwurf deiner Pressemitteilung mit Titel, Lead-Absatz, Haupttext und Zitat. Diesen kannst du dann im Editor verfeinern und mit Textbausteinen erweitern.</p>
                     </div>
                   </div>
                 </div>
@@ -462,6 +454,7 @@ export default function NewPRCampaignPage() {
                   onBoilerplateSectionsChange={setBoilerplateSections}
                   initialBoilerplateSections={boilerplateSections}
                   hideMainContentField={false}
+                  hidePreview={true}
                   keywords={keywords}
                   onKeywordsChange={setKeywords}
                 />
@@ -486,27 +479,43 @@ export default function NewPRCampaignPage() {
         {currentStep === 2 && (
           <div className="bg-white rounded-lg border p-6">
             <FieldGroup>
-              {/* Verteiler */}
-              <Field>
-                <Label className="flex items-center">
-                  Verteiler
-                  <InfoTooltip 
-                    content="Pflichtfeld: Wählen Sie eine Verteilerliste aus. Die Pressemitteilung wird an alle Kontakte in dieser Liste gesendet."
-                    className="ml-1"
+              {/* Textbausteine & Elemente */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Textbausteine & Elemente</h3>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <IntelligentBoilerplateSection
+                    organizationId={currentOrganization!.id}
+                    clientId={selectedCompanyId}
+                    clientName={selectedCompanyName}
+                    onContentChange={setBoilerplateSections}
+                    initialSections={boilerplateSections}
                   />
-                </Label>
-                <ListSelector
-                  value={selectedListId}
-                  onChange={(listId, listName, contactCount) => {
-                    setSelectedListId(listId);
-                    setSelectedListName(listName);
-                    setRecipientCount(contactCount);
-                  }}
-                  lists={availableLists}
-                  loading={false}
-                  required
-                />
-              </Field>
+                </div>
+              </div>
+
+              {/* Verteiler */}
+              <div className="border-t pt-6 mt-6">
+                <Field>
+                  <Label className="flex items-center">
+                    Verteiler
+                    <InfoTooltip 
+                      content="Pflichtfeld: Wählen Sie eine Verteilerliste aus. Die Pressemitteilung wird an alle Kontakte in dieser Liste gesendet."
+                      className="ml-1"
+                    />
+                  </Label>
+                  <ListSelector
+                    value={selectedListId}
+                    onChange={(listId, listName, contactCount) => {
+                      setSelectedListId(listId);
+                      setSelectedListName(listName);
+                      setRecipientCount(contactCount);
+                    }}
+                    lists={availableLists}
+                    loading={false}
+                    required
+                  />
+                </Field>
+              </div>
 
               {/* Medien */}
               <div className="border-t pt-6 mt-6">
@@ -594,16 +603,25 @@ export default function NewPRCampaignPage() {
         {/* Step 3: Vorschau */}
         {currentStep === 3 && (
           <div className="bg-white rounded-lg border p-6">
-            <div className="text-center py-12">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Kampagnen-Vorschau</h3>
-              <p className="text-gray-600 mb-8">Hier wird später die komplette Vorschau der Kampagne angezeigt</p>
-              
-              {/* Preview Placeholder */}
-              <div className="bg-gray-50 rounded-lg p-8 mb-8">
-                <DocumentTextIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">Vorschau wird implementiert...</p>
-              </div>
-            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Vorschau</h3>
+            
+            {/* Campaign Preview mit PDF-Export */}
+            <CampaignContentComposer
+              organizationId={currentOrganization!.id}
+              clientId={selectedCompanyId}
+              clientName={selectedCompanyName}
+              title={campaignTitle}
+              onTitleChange={setCampaignTitle}
+              mainContent={editorContent}
+              onMainContentChange={setEditorContent}
+              onFullContentChange={setPressReleaseContent}
+              onBoilerplateSectionsChange={setBoilerplateSections}
+              initialBoilerplateSections={boilerplateSections}
+              hideMainContentField={true}
+              hidePreview={false}
+              keywords={keywords}
+              onKeywordsChange={setKeywords}
+            />
           </div>
         )}
 

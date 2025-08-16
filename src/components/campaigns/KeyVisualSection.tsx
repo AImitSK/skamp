@@ -174,15 +174,15 @@ export function KeyVisualSection({
 
   return (
     <div className="mb-6">
-      <div className="flex items-center justify-between mb-2">
-        <Text className="font-medium text-gray-900">Key Visual (Optional)</Text>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-900">Key Visual</h3>
         <Text className="text-sm text-gray-500">16:9 Format • Erscheint über der Headline</Text>
       </div>
 
       {!value ? (
         // Platzhalter wenn kein Key Visual
         <div 
-          className="relative aspect-[16/9] border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:bg-[#f1f0e2] hover:border-[#005fab] transition-all cursor-pointer group"
+          className="relative aspect-[16/9] border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:bg-gray-100 hover:border-[#005fab] transition-all cursor-pointer group"
           onClick={() => setShowAssetSelector(true)}
         >
           <div className="absolute inset-0 flex flex-col items-center justify-center">
