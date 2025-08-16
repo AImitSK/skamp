@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { companiesEnhancedService } from '@/lib/firebase/crm-service-enhanced';
+import CompanyModal from '@/app/dashboard/contacts/crm/CompanyModal';
 import { 
   BuildingOfficeIcon, 
   PlusIcon,
@@ -42,56 +43,43 @@ export function ModernCustomerSelector({
   const [searchQuery, setSearchQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showCompanyModal, setShowCompanyModal] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Load companies
-  useEffect(() => {
-    let mounted = true;
-
-    const loadCompanies = async () => {
-      if (!user?.uid || !currentOrganization) {
-        if (mounted) {
-          setLoading(false);
-        }
-        return;
-      }
+  const loadCompanies = async () => {
+    if (!user?.uid || !currentOrganization) {
+      setLoading(false);
+      return;
+    }
+    
+    try {
+      const companiesData = await companiesEnhancedService.getAll(currentOrganization.id);
       
-      try {
-        const companiesData = await companiesEnhancedService.getAll(currentOrganization.id);
-        
-        if (mounted) {
-          if (companiesData.length === 0) {
-            setCompanies([]);
-            setError('Keine Kunden gefunden. Bitte legen Sie zuerst einen Kunden an.');
-          } else {
-            setCompanies(companiesData.map(company => ({
-              id: company.id!,
-              name: company.name,
-              industry: company.industryClassification?.primary || undefined,
-              website: company.website || undefined,
-            })));
-            setError(null);
-          }
-        }
-      } catch (error) {
-        console.error('CustomerSelector: Error loading companies:', error);
-        if (mounted) {
-          setError('Fehler beim Laden der Kunden');
-          setCompanies([]);
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
+      if (companiesData.length === 0) {
+        setCompanies([]);
+        setError('Keine Kunden gefunden. Bitte legen Sie zuerst einen Kunden an.');
+      } else {
+        setCompanies(companiesData.map(company => ({
+          id: company.id!,
+          name: company.name,
+          industry: company.industryClassification?.primary || undefined,
+          website: company.website || undefined,
+        })));
+        setError(null);
       }
-    };
+    } catch (error) {
+      console.error('CustomerSelector: Error loading companies:', error);
+      setError('Fehler beim Laden der Kunden');
+      setCompanies([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadCompanies();
-
-    return () => {
-      mounted = false;
-    };
   }, [user, currentOrganization]);
 
   // Close dropdown when clicking outside
@@ -122,6 +110,18 @@ export function ModernCustomerSelector({
     onChange(company.id, company.name);
     setIsOpen(false);
     setSearchQuery('');
+  };
+
+  const handleCompanyCreated = () => {
+    setShowCompanyModal(false);
+    loadCompanies(); // Reload companies after creation
+  };
+
+  const handleNewCompanyClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowCompanyModal(true);
+    setIsOpen(false);
   };
 
   const handleInputClick = () => {
@@ -194,17 +194,16 @@ export function ModernCustomerSelector({
       {/* Dropdown */}
       {isOpen && !disabled && !loading && (
         <div className="absolute z-50 mt-1 w-full rounded-md bg-white border border-gray-200 shadow-lg">
-          {/* Header with "New Customer" link */}
+          {/* Header with "New Customer" button */}
           <div className="border-b border-gray-100 p-3">
-            <a
-              href="/dashboard/contacts/crm/companies/new"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-sm font-medium text-[#005fab] hover:text-[#004a8c] transition-colors"
+            <button
+              type="button"
+              onClick={handleNewCompanyClick}
+              className="flex items-center gap-2 text-sm font-medium text-[#005fab] hover:text-[#004a8c] transition-colors w-full text-left"
             >
               <PlusIcon className="h-4 w-4" />
               Neuen Kunden anlegen
-            </a>
+            </button>
           </div>
 
           {/* Options */}
@@ -263,6 +262,17 @@ export function ModernCustomerSelector({
         <p className="mt-1 text-xs text-gray-500">
           * Pflichtfeld
         </p>
+      )}
+      
+      {/* Company Modal */}
+      {showCompanyModal && user && currentOrganization && (
+        <CompanyModal
+          company={null}
+          onClose={() => setShowCompanyModal(false)}
+          onSave={handleCompanyCreated}
+          userId={user.uid}
+          organizationId={currentOrganization.id}
+        />
       )}
     </div>
   );
