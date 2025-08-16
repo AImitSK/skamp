@@ -1,0 +1,35 @@
+/* PR-SEO TipTap Extensions Styles */
+
+/* Quote Extension */
+.pr-quote {
+  @apply border-l-4 border-gray-300 pl-4 italic text-gray-700 my-4 bg-gray-50;
+}
+
+.pr-quote:hover {
+  @apply border-blue-400 bg-blue-50;
+}
+
+/* CTA Extension */
+.cta-text {
+  @apply font-bold text-[#005fab] bg-blue-50 px-1 rounded;
+  position: relative;
+}
+
+.cta-text:hover {
+  @apply bg-blue-100;
+}
+
+.cta-text::before {
+  content: "📢";
+  margin-right: 2px;
+  font-size: 0.8em;
+}
+
+/* Editor Focus States */
+.ProseMirror .pr-quote:focus {
+  @apply outline-none border-blue-500 bg-blue-50;
+}
+
+.ProseMirror .cta-text:focus {
+  @apply outline-none bg-blue-200;
+}

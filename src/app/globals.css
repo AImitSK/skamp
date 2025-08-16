@@ -7,6 +7,9 @@
 /* Email Content Styling */
 @import '../styles/email-content.css';
 
+/* PR-SEO Extensions Styling */
+@import '../styles/pr-seo-extensions.css';
+
 /* Fix für Avatar-Dropdown-Menü Abstände */
 .avatar-dropdown-menu a,
 .avatar-dropdown-menu button {

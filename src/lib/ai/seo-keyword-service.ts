@@ -111,11 +111,7 @@ class SEOKeywordService {
       // KI-Prompt für Keyword-Erkennung
       const prompt = this.buildKeywordDetectionPrompt(text, opts);
       
-      console.log('🔍 SEO Service: Detecting keywords for text:', { 
-        textLength: text.length, 
-        textPreview: text.substring(0, 100) + '...',
-        prompt: prompt.substring(0, 200) + '...'
-      });
+      // Removed verbose logging for better performance
       
       // API-Call zur bestehenden KI-Integration
       const response = await fetch('/api/ai/generate', {
@@ -149,7 +145,7 @@ class SEOKeywordService {
       const keywords = this.parseAndValidateKeywords(rawKeywords, opts);
       const confidence = this.calculateConfidence(keywords, text);
 
-      console.log('✅ SEO Service: Parsed keywords:', { keywords, confidence });
+      // Keyword detection completed successfully
 
       const result: KeywordResult = {
         keywords,
@@ -226,12 +222,7 @@ class SEOKeywordService {
     const words = cleanText.split(/\s+/).filter(w => w.length > 0);
     const totalWords = words.length;
     
-    console.log('🔍 Keyword Analysis:', { 
-      originalTextLength: text.length,
-      cleanTextLength: cleanText.length,
-      totalWords,
-      keywords
-    });
+    // Keyword analysis in progress
 
     return keywords.map(keyword => {
       const keywordLower = keyword.toLowerCase();
@@ -239,21 +230,12 @@ class SEOKeywordService {
       const matches = [...cleanText.matchAll(regex)];
       const density = totalWords > 0 ? (matches.length / totalWords) * 100 : 0;
       
-      console.log(`📊 Keyword "${keyword}":`, {
-        occurrences: matches.length,
-        totalWords,
-        density: density.toFixed(2) + '%',
-        regex: regex.toString(),
-        sampleMatches: matches.slice(0, 3).map(m => ({
-          match: m[0],
-          position: m.index,
-          context: cleanText.substring((m.index || 0) - 20, (m.index || 0) + 20)
-        }))
-      });
+      // Keyword metrics calculated
       
-      // Warnung bei unrealistischen Werten
-      if (density > 10) {
-        console.warn(`⚠️ Unrealistische Keyword-Dichte für "${keyword}": ${density.toFixed(1)}%`);
+      // Filter unrealistic keyword density values
+      if (density > 15) {
+        console.log(`⚙️ PR-SEO: Filtering unrealistic density for "${keyword}": ${density.toFixed(1)}%`);
+        return null; // This will be filtered out
       }
       
       return {
@@ -262,7 +244,7 @@ class SEOKeywordService {
         occurrences: matches.length,
         positions: matches.map(match => match.index || 0)
       };
-    });
+    }).filter(result => result !== null);
   }
 
   /**
@@ -874,7 +856,7 @@ DEINE ANTWORT (nur Keywords mit Komma):`;
       .filter(k => options.excludeCommonWords ? !this.isCommonWord(k, true) : true)
       .slice(0, options.maxKeywords);
 
-    console.log('✅ Final parsed keywords:', validKeywords);
+    console.log('🎯 PR-SEO Keywords parsed:', validKeywords.length > 0 ? validKeywords.join(', ') : 'none');
     return [...new Set(validKeywords)]; // Remove duplicates
   }
   

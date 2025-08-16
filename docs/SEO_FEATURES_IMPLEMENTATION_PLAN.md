@@ -63,7 +63,7 @@ interface PerKeywordMetrics {
 }
 ```
 
-### 3. 🤖 **KI-Analyse Integration**
+### 3. 🤖 **KI-Analyse Integration mit direktem Trigger**
 **Datei:** `src/lib/ai/seo-keyword-service.ts`
 ```typescript
 // Neue Methoden
@@ -72,6 +72,8 @@ async checkSemanticRelevance(keyword: string, text: string): Promise<number>
 async findRelatedTerms(keyword: string, text: string): Promise<string[]>
 ```
 - [ ] Nutze `/api/ai/generate` Route
+- [ ] **SOFORTIGER KI-TRIGGER**: Nach Keyword-Eingabe automatisch KI-Analyse
+- [ ] **REAL-TIME UPDATE**: KI-Analyse läuft bei jeder Keyword-Änderung
 - [ ] Präzise Prompts für Keyword-Analyse
 - [ ] Response-Parsing für strukturierte Daten
 - [ ] Error-Handling und Fallbacks
@@ -137,12 +139,27 @@ calculatePRScore(text: string, perKeywordMetrics: PerKeywordMetrics[], prMetrics
 }
 ```
 
-### 6. 🎯 **Zitat-Erkennung System**
-**Datei:** `src/components/editor/TipTapEditor.tsx` (erweitern)
-- [ ] Zitat-Button in Editor-Toolbar
-- [ ] Setzt `<blockquote>` Tags
-- [ ] CSS-Styling für Zitate
-- [ ] Parser in SEO-Service erkennt `<blockquote>`
+### 6. 🎯 **Zitat & CTA Editor Extensions**
+**Dateien:** 
+- `src/components/GmailStyleToolbar.tsx` (erweitern)
+- `src/lib/ai/seo-keyword-service.ts` (Parser erweitern)
+
+#### 6.1 Zitat-Button Integration
+- [ ] Zitat-Button zur GmailStyleToolbar hinzufügen
+- [ ] Custom TipTap Extension für `<blockquote>` mit spezieller CSS-Klasse
+- [ ] Visuelle Darstellung: Grauer linker Rand + Kursiv-Text
+- [ ] Keyboard Shortcut: Strg+Shift+Q
+
+#### 6.2 CTA-Button Integration  
+- [ ] CTA-Button zur GmailStyleToolbar hinzufügen
+- [ ] Custom TipTap Extension für `<span class="cta-text">` 
+- [ ] Visuelle Darstellung: Fetter Text + Primary-Color (#005fab)
+- [ ] Keyboard Shortcut: Strg+Shift+C
+
+#### 6.3 Parser-Integration
+- [ ] SEO-Service erkennt `<blockquote>` für Zitat-Zählung
+- [ ] SEO-Service erkennt `.cta-text` für CTA-Erkennung
+- [ ] KEINE Regex-basierte Erkennung mehr - 100% Markup-basiert
 
 ### 7. 💡 **Intelligente Empfehlungen**
 **Datei:** `src/lib/ai/seo-keyword-service.ts`
@@ -159,13 +176,24 @@ generatePRRecommendations(metrics: PRMetrics, keywordMetrics: PerKeywordMetrics[
 }
 ```
 
-### 8. 🧪 **Test-Suite Update**
-**Datei:** `src/__tests__/seo-pr-metrics.test.tsx`
+### 8. 🧪 **Test-Suite Update & Log-Bereinigung**
+**Dateien:**
+- `src/__tests__/seo-pr-metrics.test.tsx`
+- `src/lib/ai/seo-keyword-service.ts` (Log-Cleanup)
+- `src/components/campaigns/SEOHeaderBar.tsx` (Log-Cleanup)
+
+#### 8.1 Test-Implementation
 - [ ] Tests für 2-Keyword-Limit
-- [ ] Tests für Pro-Keyword-Metriken
+- [ ] Tests für Pro-Keyword-Metriken  
 - [ ] Tests für PR-Score-Berechnung
 - [ ] Mock KI-Responses
 - [ ] Performance-Tests (Debouncing)
+- [ ] Tests für Zitat/CTA-Erkennung
+
+#### 8.2 Log-Bereinigung
+- [ ] Entferne überflüssige Debug-Logs (🔍, 📊, ✅)
+- [ ] Behalte nur relevante Qualitäts-Logs für PR-SEO Tools
+- [ ] Ergänze fehlende Logs für wichtige Funktionen
 
 ## 🔄 Implementierungs-Flow
 

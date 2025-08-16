@@ -13,6 +13,8 @@ import BulletList from '@tiptap/extension-bullet-list';
 import OrderedList from '@tiptap/extension-ordered-list';
 import ListItem from '@tiptap/extension-list-item';
 import { Extension } from '@tiptap/core';
+import { QuoteExtension } from './editor/QuoteExtension';
+import { CTAExtension } from './editor/CTAExtension';
 import { 
   ArrowsPointingOutIcon, 
   ArrowsPointingInIcon 
@@ -277,6 +279,8 @@ export const GmailStyleEditor = ({
       FontSize,
       CustomUnderline,
       CustomTextAlign,
+      QuoteExtension,
+      CTAExtension,
     ],
     content: content,
     immediatelyRender: false, 

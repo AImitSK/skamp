@@ -49,7 +49,7 @@ import { AssetSelectorModal } from "@/components/campaigns/AssetSelectorModal";
 import { KeyVisualSection } from "@/components/campaigns/KeyVisualSection";
 import { KeyVisualData } from "@/types/pr";
 import { LOADING_SPINNER_SIZE, LOADING_SPINNER_BORDER } from "@/constants/ui";
-import { SEOHeaderBar } from "@/components/campaigns/SEOHeaderBar";
+import { PRSEOHeaderBar } from "@/components/campaigns/PRSEOHeaderBar";
 
 // Dynamic import für AI Modal
 import dynamic from 'next/dynamic';
@@ -508,9 +508,9 @@ export default function EditPRCampaignPage() {
                 </div>
               </div>
 
-              {/* SEO-Analyse Header */}
-              <SEOHeaderBar
-                title="PR-SEO Analyse"
+              {/* PR-SEO Analyse Header */}
+              <PRSEOHeaderBar
+                title="PR-SEO Analyse 2.0"
                 content={editorContent}
                 keywords={keywords}
                 onKeywordsChange={setKeywords}

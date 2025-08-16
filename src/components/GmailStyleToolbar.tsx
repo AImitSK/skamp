@@ -15,6 +15,8 @@ import {
   Bars3BottomLeftIcon,
   Bars3Icon,
   Bars3BottomRightIcon,
+  ChatBubbleLeftRightIcon,
+  MegaphoneIcon,
 } from '@heroicons/react/24/outline'; // CeleroPress Design Pattern: nur 24/outline
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -77,6 +79,22 @@ export const GmailStyleToolbar = ({ editor }: GmailStyleToolbarProps) => {
       activeName: 'orderedList',
       shortcut: 'Strg+Shift+7',
       isActive: () => editor.isActive('orderedList')
+    },
+    { 
+      command: () => editor.chain().focus().toggleQuote().run(), 
+      icon: ChatBubbleLeftRightIcon, 
+      label: 'Zitat', 
+      activeName: 'quote',
+      shortcut: 'Strg+Shift+Q',
+      isActive: () => editor.isActive('quote')
+    },
+    { 
+      command: () => editor.chain().focus().toggleCTA().run(), 
+      icon: MegaphoneIcon, 
+      label: 'Call-to-Action', 
+      activeName: 'ctaText',
+      shortcut: 'Strg+Shift+C',
+      isActive: () => editor.isActive('ctaText')
     },
   ];
 
