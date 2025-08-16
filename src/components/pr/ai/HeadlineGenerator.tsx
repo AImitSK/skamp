@@ -39,14 +39,26 @@ export function HeadlineGenerator({
     }
 
     try {
-      const response = await fetch('/api/ai/generate-headlines', {
+      // Nutze bestehende KI-Infrastruktur wie im FloatingAIToolbar
+      const prompt = `Du bist ein erfahrener PR-Experte. Erstelle 3 professionelle Headlines für diese Pressemitteilung.
+
+WICHTIGE REGELN:
+- Jede Headline maximal 70 Zeichen
+- Prägnant und aufmerksamkeitserregend
+- Für deutsche Medien geeignet
+- SEO-optimiert
+- Keine Nummerierung, keine Anführungszeichen
+
+${currentTitle ? `Aktuelle Headline: "${currentTitle}"\n\n` : ''}Inhalt der Pressemitteilung:\n${contentToAnalyze}\n\nGib NUR die 3 Headlines zurück, jede in einer neuen Zeile:`;
+
+      const response = await fetch('/api/ai/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          content: contentToAnalyze,
-          currentTitle: currentTitle || ''
+          prompt: prompt,
+          mode: 'generate'
         }),
       });
 
@@ -55,11 +67,19 @@ export function HeadlineGenerator({
       }
 
       const data = await response.json();
+      const generatedText = data.generatedText || '';
       
-      if (data.headlines && data.headlines.length > 0) {
-        const headlineOptions: HeadlineOption[] = data.headlines.map((title: string, index: number) => ({
+      // Parse Headlines aus der Antwort
+      const headlineLines = generatedText
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0 && !line.match(/^\d+\./)) // Entferne Nummerierungen
+        .slice(0, 3); // Maximal 3 Headlines
+      
+      if (headlineLines.length > 0) {
+        const headlineOptions: HeadlineOption[] = headlineLines.map((title: string, index: number) => ({
           id: `headline-${index}`,
-          title: title.trim()
+          title: title.trim().replace(/^["“”]|["“”]$/g, '') // Entferne Anführungszeichen
         }));
         
         setHeadlines(headlineOptions);
