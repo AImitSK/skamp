@@ -40,7 +40,7 @@ import { prService } from "@/lib/firebase/pr-service";
 import { mediaService } from "@/lib/firebase/media-service";
 import { DistributionList } from "@/types/lists";
 import { CampaignAssetAttachment, PRCampaign } from "@/types/pr";
-import { BoilerplateSection } from "@/components/pr/campaign/IntelligentBoilerplateSection";
+import IntelligentBoilerplateSection, { BoilerplateSection } from "@/components/pr/campaign/IntelligentBoilerplateSection";
 import { MediaAsset, MediaFolder } from "@/types/media";
 import { Input } from "@/components/ui/input";
 import { InfoTooltip } from "@/components/InfoTooltip";
@@ -115,6 +115,9 @@ export default function EditPRCampaignPage() {
   const [showAssetSelector, setShowAssetSelector] = useState(false);
   const [showAiModal, setShowAiModal] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  
+  // 3-Step Navigation State
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
 
   // Load OrganizationId
   useEffect(() => {
@@ -410,20 +413,56 @@ export default function EditPRCampaignPage() {
     );
   }
 
+  // Step Navigation Component
+  const StepNavigation = () => {
+    const steps = [
+      { id: 1, name: 'Pressemeldung', icon: DocumentTextIcon },
+      { id: 2, name: 'Einstellungen', icon: UsersIcon },
+      { id: 3, name: 'Vorschau', icon: InformationCircleIcon }
+    ];
+
+    return (
+      <div className="border-b border-gray-200 mb-8">
+        <nav className="-mb-px flex space-x-8">
+          {steps.map((step) => {
+            const isActive = currentStep === step.id;
+            const isCompleted = currentStep > step.id;
+            const Icon = step.icon;
+            
+            return (
+              <button
+                key={step.id}
+                onClick={() => setCurrentStep(step.id as 1 | 2 | 3)}
+                className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
+                  isActive
+                    ? 'border-[#005fab] text-[#005fab]'
+                    : isCompleted
+                    ? 'border-green-500 text-green-600 hover:text-green-700'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <Icon className="h-4 w-4 mr-2" />
+                {step.name}
+                {isCompleted && (
+                  <span className="ml-2 text-green-500">✓</span>
+                )}
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+    );
+  };
+
   return (
     <div>
       {/* Header */}
       <div className="mb-8">
-        <button
-          onClick={() => router.push('/dashboard/pr-tools/campaigns')}
-          className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 border-0 rounded-md px-3 py-2 text-sm font-medium mb-4"
-        >
-          <ArrowLeftIcon className="h-4 w-4 mr-2" />
-          Zurück zur Übersicht
-        </button>
-        
         <Heading>PR-Kampagne bearbeiten</Heading>
       </div>
+
+      {/* Step Navigation */}
+      <StepNavigation />
 
       {/* Fehlermeldungen oben auf der Seite */}
       {validationErrors.length > 0 && (
@@ -433,218 +472,292 @@ export default function EditPRCampaignPage() {
       )}
 
       <form ref={formRef} onSubmit={handleSubmit}>
-        {/* Main Form */}
-        <div className="bg-white rounded-lg border p-6">
-          <FieldGroup>
-            {/* Kunde */}
-            <Field>
-              <Label className="flex items-center">
-                Kunde
-                <InfoTooltip 
-                  content="Pflichtfeld: Wählen Sie den Kunden aus, für den diese PR-Kampagne erstellt wird. Die Kampagne wird diesem Kunden zugeordnet."
-                  className="ml-1"
+        {/* Step Content */}
+        {currentStep === 1 && (
+          <div className="bg-white rounded-lg border p-6">
+            <FieldGroup>
+              {/* Absender */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Absender</h3>
+                
+                <CustomerSelector
+                  value={selectedCompanyId}
+                  onChange={(companyId, companyName) => {
+                    setSelectedCompanyId(companyId);
+                    setSelectedCompanyName(companyName);
+                  }}
+                  required
                 />
-              </Label>
-              <CustomerSelector
-                value={selectedCompanyId}
-                onChange={(companyId, companyName) => {
-                  setSelectedCompanyId(companyId);
-                  setSelectedCompanyName(companyName);
-                }}
-                required
-              />
-            </Field>
-
-            {/* Verteiler */}
-            <Field>
-              <Label className="flex items-center">
-                Verteiler
-                <InfoTooltip 
-                  content="Pflichtfeld: Wählen Sie eine Verteilerliste aus. Die Pressemitteilung wird an alle Kontakte in dieser Liste gesendet."
-                  className="ml-1"
-                />
-              </Label>
-              <ListSelector
-                value={selectedListId}
-                onChange={(listId, listName, contactCount) => {
-                  setSelectedListId(listId);
-                  setSelectedListName(listName);
-                  setRecipientCount(contactCount);
-                }}
-                lists={availableLists}
-                loading={false}
-                required
-              />
-            </Field>
-
-            {/* Inhalt */}
-            <div className="border-t pt-6 mt-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base font-semibold flex items-center">
-                  Pressemitteilung
-                  <InfoTooltip 
-                    content="Pflichtfeld: Erstellen Sie hier den Inhalt Ihrer Pressemitteilung. Sie müssen einen Titel und Inhalt eingeben."
-                    className="ml-1"
-                  />
-                </h3>
-                <Button
-                  type="button"
-                  onClick={() => setShowAiModal(true)}
-                  className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white whitespace-nowrap"
-                >
-                  <SparklesIcon className="h-4 w-4" />
-                  KI-Assistent
-                </Button>
-              </div>
-              
-              {/* Info-Box für KI-Nutzung */}
-              <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex items-start gap-2">
-                  <InformationCircleIcon className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                  <div className="text-sm text-blue-700">
-                    <p className="font-medium">Tipp: Nutze den KI-Assistenten!</p>
-                    <p className="mt-1">Der KI-Assistent erstellt automatisch alle Inhalte deiner Pressemitteilung: Titel, Lead-Absatz, Haupttext und Zitat. Diese erscheinen dann als verschiebbare Elemente, die du mit Textbausteinen kombinieren kannst.</p>
-                  </div>
-                </div>
               </div>
 
-              {/* Content Composer */}
-              <CampaignContentComposer
-                key={`composer-${boilerplateSections.length}`}
-                organizationId={currentOrganization!.id}
-                clientId={selectedCompanyId}
-                clientName={selectedCompanyName}
-                title={campaignTitle}
-                onTitleChange={setCampaignTitle}
-                mainContent={editorContent}
-                onMainContentChange={setEditorContent}
-                onFullContentChange={setPressReleaseContent}
-                onBoilerplateSectionsChange={setBoilerplateSections}
-                initialBoilerplateSections={boilerplateSections}
-                hideMainContentField={true}
-                keywords={keywords}
-                onKeywordsChange={setKeywords}
-              />
-            </div>
-
-            {/* Key Visual */}
-            <div className="border-t pt-6 mt-6">
-              <KeyVisualSection
-                value={keyVisual}
-                onChange={setKeyVisual}
-                clientId={selectedCompanyId}
-                clientName={selectedCompanyName}
-                organizationId={user!.uid}
-                userId={user!.uid}
-              />
-            </div>
-
-            {/* Medien */}
-            <div className="border-t pt-6 mt-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base font-semibold">Medien (optional)</h3>
-                {selectedCompanyId && (
+              {/* Pressemeldung */}
+              <div className="border-t pt-6 mt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Pressemeldung</h3>
                   <Button
                     type="button"
-                    onClick={() => setShowAssetSelector(true)}
-                    plain
-                    className="whitespace-nowrap"
+                    onClick={() => setShowAiModal(true)}
+                    className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white whitespace-nowrap"
                   >
-                    <PlusIcon className="h-4 w-4" />
-                    Medien hinzufügen
+                    <SparklesIcon className="h-4 w-4" />
+                    KI-Assistent
                   </Button>
-                )}
-              </div>
-              
-              {attachedAssets.length > 0 ? (
-                <div className="space-y-2">
-                  {attachedAssets.map((attachment) => (
-                    <div
-                      key={attachment.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                    >
-                      <div className="flex items-center gap-3">
-                        {attachment.type === 'folder' ? (
-                          <FolderIcon className="h-5 w-5 text-gray-400" />
-                        ) : attachment.metadata.fileType?.startsWith('image/') ? (
-                          <img
-                            src={attachment.metadata.thumbnailUrl}
-                            alt={attachment.metadata.fileName}
-                            className="h-8 w-8 object-cover rounded"
-                          />
-                        ) : (
-                          <DocumentTextIcon className="h-5 w-5 text-gray-400" />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate" title={attachment.metadata.fileName || attachment.metadata.folderName}>
-                            {attachment.metadata.fileName || attachment.metadata.folderName}
-                          </p>
-                          {attachment.type === 'folder' && (
-                            <Badge color="blue" className="text-xs">Ordner</Badge>
-                          )}
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveAsset(attachment.assetId || attachment.folderId || '')}
-                        className="text-red-600 hover:text-red-500"
-                      >
-                        <XMarkIcon className="h-4 w-4" />
-                      </button>
+                </div>
+                
+                {/* Info-Box für KI-Nutzung */}
+                <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <InformationCircleIcon className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div className="text-sm text-blue-700">
+                      <p className="font-semibold">Tipp: Nutze den KI-Assistenten!</p>
+                      <p className="mt-1">Der KI-Assistent liefert dir einen kompletten Rohentwurf deiner Pressemitteilung mit Titel, Lead-Absatz, Haupttext und Zitat. Diesen kannst du dann im Editor verfeinern und mit Textbausteinen erweitern.</p>
                     </div>
-                  ))}
+                  </div>
                 </div>
-              ) : (
-                <div className="text-center py-8 bg-gray-50 rounded-lg">
-                  <PhotoIcon className="h-10 w-10 text-gray-400 mx-auto mb-2" />
-                  <Text>Noch keine Medien angehängt</Text>
-                </div>
-              )}
-            </div>
 
-            {/* Freigabe */}
-            <div className="border-t pt-6 mt-6">
-              <label className="flex items-start gap-3">
-                <Checkbox
-                  checked={approvalRequired}
-                  onChange={setApprovalRequired}
-                  className="mt-1"
+                {/* Content Composer mit SEO-Features */}
+                <CampaignContentComposer
+                  key={`composer-${boilerplateSections.length}`}
+                  organizationId={currentOrganization!.id}
+                  clientId={selectedCompanyId}
+                  clientName={selectedCompanyName}
+                  title={campaignTitle}
+                  onTitleChange={setCampaignTitle}
+                  mainContent={editorContent}
+                  onMainContentChange={setEditorContent}
+                  onFullContentChange={setPressReleaseContent}
+                  onBoilerplateSectionsChange={setBoilerplateSections}
+                  initialBoilerplateSections={boilerplateSections}
+                  hideMainContentField={false}
+                  hidePreview={true}
+                  hideBoilerplates={true}
+                  keywords={keywords}
+                  onKeywordsChange={setKeywords}
                 />
-                <div>
-                  <div className="font-medium">Freigabe vom Kunden erforderlich</div>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Wenn aktiviert, muss der Kunde die Pressemitteilung vor dem Versand freigeben.
-                  </p>
-                  {campaign.approvalData && (
-                    <div className="mt-2">
-                      <Badge color={
-                        campaign.status === 'approved' ? 'green' :
-                        campaign.status === 'changes_requested' ? 'orange' :
-                        campaign.status === 'in_review' ? 'blue' : 'zinc'
-                      }>
-                        {campaign.status === 'approved' ? 'Freigegeben' :
-                         campaign.status === 'changes_requested' ? 'Änderungen angefordert' :
-                         campaign.status === 'in_review' ? 'In Prüfung' : 'Entwurf'}
-                      </Badge>
-                    </div>
+
+                {/* Key Visual */}
+                <div className="mt-6">
+                  <KeyVisualSection
+                    value={keyVisual}
+                    onChange={setKeyVisual}
+                    clientId={selectedCompanyId}
+                    clientName={selectedCompanyName}
+                    organizationId={user!.uid}
+                    userId={user!.uid}
+                  />
+                </div>
+              </div>
+            </FieldGroup>
+          </div>
+        )}
+
+        {/* Step 2: Einstellungen */}
+        {currentStep === 2 && (
+          <div className="bg-white rounded-lg border p-6">
+            <FieldGroup>
+              {/* Textbausteine & Elemente */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Textbausteine & Elemente</h3>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <IntelligentBoilerplateSection
+                    organizationId={currentOrganization!.id}
+                    clientId={selectedCompanyId}
+                    clientName={selectedCompanyName}
+                    onContentChange={setBoilerplateSections}
+                    initialSections={boilerplateSections}
+                  />
+                </div>
+              </div>
+
+              {/* Verteiler */}
+              <div className="border-t pt-6 mt-6">
+                <Field>
+                  <Label className="flex items-center">
+                    Verteiler
+                    <InfoTooltip 
+                      content="Pflichtfeld: Wählen Sie eine Verteilerliste aus. Die Pressemitteilung wird an alle Kontakte in dieser Liste gesendet."
+                      className="ml-1"
+                    />
+                  </Label>
+                  <ListSelector
+                    value={selectedListId}
+                    onChange={(listId, listName, contactCount) => {
+                      setSelectedListId(listId);
+                      setSelectedListName(listName);
+                      setRecipientCount(contactCount);
+                    }}
+                    lists={availableLists}
+                    loading={false}
+                    required
+                  />
+                </Field>
+              </div>
+
+              {/* Medien */}
+              <div className="border-t pt-6 mt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base font-semibold">Medien (optional)</h3>
+                  {selectedCompanyId && (
+                    <Button
+                      type="button"
+                      onClick={() => setShowAssetSelector(true)}
+                      plain
+                      className="whitespace-nowrap"
+                    >
+                      <PlusIcon className="h-4 w-4" />
+                      Medien hinzufügen
+                    </Button>
                   )}
                 </div>
-              </label>
-            </div>
-          </FieldGroup>
-        </div>
+                
+                {attachedAssets.length > 0 ? (
+                  <div className="space-y-2">
+                    {attachedAssets.map((attachment) => (
+                      <div
+                        key={attachment.id}
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                      >
+                        <div className="flex items-center gap-3">
+                          {attachment.type === 'folder' ? (
+                            <FolderIcon className="h-5 w-5 text-gray-400" />
+                          ) : attachment.metadata.fileType?.startsWith('image/') ? (
+                            <img
+                              src={attachment.metadata.thumbnailUrl}
+                              alt={attachment.metadata.fileName}
+                              className="h-8 w-8 object-cover rounded"
+                            />
+                          ) : (
+                            <DocumentTextIcon className="h-5 w-5 text-gray-400" />
+                          )}
+                          <div>
+                            <p className="font-medium text-sm">
+                              {attachment.metadata.fileName || attachment.metadata.folderName}
+                            </p>
+                            {attachment.type === 'folder' && (
+                              <Badge color="blue" className="text-xs">Ordner</Badge>
+                            )}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveAsset(attachment.assetId || attachment.folderId || '')}
+                          className="text-red-600 hover:text-red-500"
+                        >
+                          <XMarkIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 bg-gray-50 rounded-lg">
+                    <PhotoIcon className="h-10 w-10 text-gray-400 mx-auto mb-2" />
+                    <Text>Noch keine Medien angehängt</Text>
+                  </div>
+                )}
+              </div>
 
-        <div className="mt-6 flex justify-end gap-3">
-          <Button type="button" plain onClick={() => router.push('/dashboard/pr-tools/campaigns')}>
-            Abbrechen
-          </Button>
-          <Button
-            type="submit"
-            disabled={saving}
-            className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
-          >
-            {saving ? 'Speichert...' : 'Änderungen speichern'}
-          </Button>
+              {/* Freigabe */}
+              <div className="border-t pt-6 mt-6">
+                <label className="flex items-start gap-3">
+                  <Checkbox
+                    checked={approvalRequired}
+                    onChange={setApprovalRequired}
+                    className="mt-1"
+                  />
+                  <div>
+                    <div className="font-medium">Freigabe vom Kunden erforderlich</div>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Wenn aktiviert, muss der Kunde die Pressemitteilung vor dem Versand freigeben.
+                    </p>
+                    {campaign.approvalData && (
+                      <div className="mt-2">
+                        <Badge color={
+                          campaign.status === 'approved' ? 'green' :
+                          campaign.status === 'changes_requested' ? 'orange' :
+                          campaign.status === 'in_review' ? 'blue' : 'zinc'
+                        }>
+                          {campaign.status === 'approved' ? 'Freigegeben' :
+                           campaign.status === 'changes_requested' ? 'Änderungen angefordert' :
+                           campaign.status === 'in_review' ? 'In Prüfung' : 'Entwurf'}
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+                </label>
+              </div>
+            </FieldGroup>
+          </div>
+        )}
+
+        {/* Step 3: Vorschau */}
+        {currentStep === 3 && (
+          <div className="bg-white rounded-lg border p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Vorschau</h3>
+            
+            {/* Campaign Preview mit PDF-Export */}
+            <CampaignContentComposer
+              organizationId={currentOrganization!.id}
+              clientId={selectedCompanyId}
+              clientName={selectedCompanyName}
+              title={campaignTitle}
+              onTitleChange={setCampaignTitle}
+              mainContent={editorContent}
+              onMainContentChange={setEditorContent}
+              onFullContentChange={setPressReleaseContent}
+              onBoilerplateSectionsChange={setBoilerplateSections}
+              initialBoilerplateSections={boilerplateSections}
+              hideMainContentField={true}
+              hidePreview={false}
+              hideBoilerplates={true}
+              readOnlyTitle={true}
+              keywords={keywords}
+              onKeywordsChange={setKeywords}
+            />
+          </div>
+        )}
+
+        {/* Navigation Buttons */}
+        <div className="mt-6 flex justify-between">
+          <div className="flex gap-3">
+            <Button 
+              type="button" 
+              onClick={() => router.push('/dashboard/pr-tools/campaigns')}
+              className="bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-300"
+            >
+              Abbrechen
+            </Button>
+            {currentStep > 1 && (
+              <Button
+                type="button"
+                onClick={() => setCurrentStep((currentStep - 1) as 1 | 2 | 3)}
+                className="bg-gray-50 hover:bg-gray-100 text-gray-900"
+              >
+                <ArrowLeftIcon className="h-4 w-4 mr-2" />
+                Zurück
+              </Button>
+            )}
+          </div>
+          
+          <div className="flex gap-3">
+            {currentStep < 3 ? (
+              <Button
+                type="button"
+                onClick={() => setCurrentStep((currentStep + 1) as 1 | 2 | 3)}
+                className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
+              >
+                Weiter
+                <ArrowLeftIcon className="h-4 w-4 ml-2 rotate-180" />
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                disabled={saving}
+                className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
+              >
+                {saving ? 'Speichert...' : 'Änderungen speichern'}
+              </Button>
+            )}
+          </div>
         </div>
       </form>
 

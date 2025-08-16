@@ -624,7 +624,7 @@ export default function NewPRCampaignPage() {
             <Button 
               type="button" 
               onClick={() => router.push('/dashboard/pr-tools/campaigns')}
-              className="bg-gray-50 hover:bg-gray-100 text-gray-900"
+              className="bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-300"
             >
               Abbrechen
             </Button>
