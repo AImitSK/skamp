@@ -788,16 +788,16 @@ Beispiel-Format (nutze deine eigenen Werte):
             <InformationCircleIcon className="h-4 w-4 text-gray-600 mt-0.5 flex-shrink-0" />
             <div>
               <p className="text-sm font-medium text-gray-900 mb-1">Empfehlungen:</p>
-              <ul className="text-xs text-gray-700 space-y-1">
+              <ul className="text-xs text-gray-700 space-y-2">
                 {(showAllRecommendations ? recommendations : recommendations.slice(0, 3)).map((rec, index) => (
-                  <li key={index} className="flex items-start gap-2">
+                  <li key={index} className="flex items-start gap-1.5 leading-relaxed">
                     {rec.startsWith('[KI]') ? (
                       <>
-                        <Badge color="purple" className="text-xs mt-0.5 flex-shrink-0">KI</Badge>
-                        <span>• {rec.replace('[KI] ', '')}</span>
+                        <Badge color="purple" className="text-[9px] px-1 py-0 mt-1 flex-shrink-0 leading-none h-3">KI</Badge>
+                        <span className="leading-relaxed">• {rec.replace('[KI] ', '')}</span>
                       </>
                     ) : (
-                      <span>• {rec}</span>
+                      <span className="leading-relaxed">• {rec}</span>
                     )}
                   </li>
                 ))}
