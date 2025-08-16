@@ -74,24 +74,28 @@ interface KIAnalysisBoxProps {
 }
 
 function KIAnalysisBox({ metrics, isLoading }: KIAnalysisBoxProps) {
-  // Badge mit Farbverlauf-Rand Design
-  const boxClasses = "inline-flex items-center gap-2 px-3 py-1 rounded-md text-xs bg-purple-50 border border-transparent bg-clip-padding";
-  const borderGradientClasses = "relative before:absolute before:inset-0 before:rounded-md before:p-[1px] before:bg-gradient-to-r before:from-indigo-500 before:to-purple-600 before:-z-10";
+  // Badge mit Farbverlauf-Rand Design  
+  const wrapperClasses = "relative inline-flex p-[1px] rounded-md bg-gradient-to-r from-indigo-500 to-purple-600";
+  const innerClasses = "inline-flex items-center gap-2 px-3 py-1 rounded-[5px] text-xs bg-purple-50 text-purple-700";
   
   if (isLoading) {
     return (
-      <div className={`${boxClasses} ${borderGradientClasses} text-purple-700`}>
-        <div className="w-3 h-3 border border-purple-600 border-t-transparent rounded-full animate-spin"></div>
-        <span>KI analysiert...</span>
+      <div className={wrapperClasses}>
+        <div className={innerClasses}>
+          <div className="w-3 h-3 border border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+          <span>KI analysiert...</span>
+        </div>
       </div>
     );
   }
   
   if (!metrics.semanticRelevance && !metrics.targetAudience && !metrics.tonality) {
     return (
-      <div className={`${boxClasses} ${borderGradientClasses} text-purple-700`}>
-        <SparklesIcon className="h-3 w-3" />
-        <span>Bereit für Analyse</span>
+      <div className={wrapperClasses}>
+        <div className={innerClasses}>
+          <SparklesIcon className="h-3 w-3" />
+          <span>Bereit für Analyse</span>
+        </div>
       </div>
     );
   }
@@ -100,10 +104,12 @@ function KIAnalysisBox({ metrics, isLoading }: KIAnalysisBoxProps) {
   const relevanceTrend = ""; // Später: "↑" oder "↓" basierend auf vorherigem Wert
   
   return (
-    <div className={`${boxClasses} ${borderGradientClasses} text-purple-700`}>
-      <SparklesIcon className="h-3 w-3" />
-      <span className="font-semibold">Relevanz:</span>
-      <span>{metrics.semanticRelevance || 0}%{relevanceTrend}</span>
+    <div className={wrapperClasses}>
+      <div className={innerClasses}>
+        <SparklesIcon className="h-3 w-3" />
+        <span className="font-semibold">Relevanz:</span>
+        <span>{metrics.semanticRelevance || 0}%{relevanceTrend}</span>
+      </div>
     </div>
   );
 }
@@ -728,20 +734,22 @@ Beispiel-Format (nutze deine eigenen Werte):
           
           {/* Globale KI-Analyse für gesamten Text */}
           {keywordMetrics.length > 0 && keywordMetrics.some(km => km.targetAudience || km.tonality) && (
-            <div className="bg-purple-50 rounded-md p-3 mb-4">
-              <div className="flex items-center gap-2 text-xs text-purple-700">
-                <SparklesIcon className="h-4 w-4" />
-                <div className="flex items-center gap-4">
-                  {keywordMetrics[0]?.targetAudience && (
-                    <span>
-                      <strong>Zielgruppe:</strong> {keywordMetrics[0].targetAudience}
-                    </span>
-                  )}
-                  {keywordMetrics[0]?.tonality && (
-                    <span>
-                      <strong>Tonalität:</strong> {keywordMetrics[0].tonality}
-                    </span>
-                  )}
+            <div className="relative p-[1px] rounded-md bg-gradient-to-r from-indigo-500 to-purple-600 mb-4">
+              <div className="bg-purple-50 rounded-[5px] p-3">
+                <div className="flex items-center gap-2 text-xs text-purple-700">
+                  <SparklesIcon className="h-4 w-4" />
+                  <div className="flex items-center gap-4">
+                    {keywordMetrics[0]?.targetAudience && (
+                      <span>
+                        <strong>Zielgruppe:</strong> {keywordMetrics[0].targetAudience}
+                      </span>
+                    )}
+                    {keywordMetrics[0]?.tonality && (
+                      <span>
+                        <strong>Tonalität:</strong> {keywordMetrics[0].tonality}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
