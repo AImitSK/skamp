@@ -622,22 +622,11 @@ Beispiel-Format (nutze deine eigenen Werte):
         <div className="flex items-center gap-2">
           <MagnifyingGlassIcon className="h-5 w-5 text-gray-500" />
           <h3 className="font-semibold text-gray-900">{title}</h3>
-          <Badge color={getScoreBadgeColor(prScore)}>
-            PR-Score: {prScore}/100
-          </Badge>
         </div>
         
-        {keywords.length > 0 && (
-          <Button
-            type="button"
-            onClick={handleRefreshAnalysis}
-            disabled={isAnalyzing}
-            className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white whitespace-nowrap px-3 py-1.5 text-sm"
-          >
-            <SparklesIcon className="h-4 w-4" />
-            {isAnalyzing ? 'Analysiert...' : 'KI-Analyse aktualisieren'}
-          </Button>
-        )}
+        <Badge color={getScoreBadgeColor(prScore)} className="text-base font-semibold px-4 py-2">
+          PR-Score: {prScore}/100
+        </Badge>
       </div>
 
       {/* Keyword-Eingabe */}
@@ -813,6 +802,21 @@ Beispiel-Format (nutze deine eigenen Werte):
               )}
             </div>
           </div>
+        </div>
+      )}
+      
+      {/* KI-Button rechtsbündig unter Empfehlungen */}
+      {keywords.length > 0 && (
+        <div className="flex justify-end mt-4">
+          <Button
+            type="button"
+            onClick={handleRefreshAnalysis}
+            disabled={isAnalyzing}
+            className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white whitespace-nowrap px-3 py-1.5 text-sm"
+          >
+            <SparklesIcon className="h-4 w-4" />
+            {isAnalyzing ? 'Analysiert...' : 'KI-Analyse aktualisieren'}
+          </Button>
         </div>
       )}
     </div>
