@@ -618,7 +618,7 @@ Beispiel-Format (nutze deine eigenen Werte):
     <div className={clsx('bg-gray-50 rounded-lg p-4 border border-gray-200', className)}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <MagnifyingGlassIcon className="h-5 w-5 text-gray-500" />
+          <MagnifyingGlassIcon className="h-5 w-5 text-gray-600" />
           <h3 className="font-semibold text-gray-900">{title}</h3>
         </div>
         
@@ -631,7 +631,7 @@ Beispiel-Format (nutze deine eigenen Werte):
               className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
               title="KI-Analyse aktualisieren"
             >
-              <ArrowPathIcon className={clsx('h-5 w-5', isAnalyzing && 'animate-spin')} />
+              <ArrowPathIcon className={clsx('h-5 w-5 text-gray-600', isAnalyzing && 'animate-spin')} />
             </button>
           )}
           <Badge color={getScoreBadgeColor(prScore)} className="text-base font-semibold px-4 py-2">
@@ -660,9 +660,12 @@ Beispiel-Format (nutze deine eigenen Werte):
             />
             <Button
               type="button"
-              onClick={handleAddKeyword}
-              disabled={!newKeyword.trim() || keywords.includes(newKeyword.trim()) || keywords.length >= 2}
-              className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap px-3 py-1.5 text-sm disabled:bg-[#005fab] disabled:text-white disabled:opacity-100"
+              onClick={() => {
+                if (newKeyword.trim() && !keywords.includes(newKeyword.trim()) && keywords.length < 2) {
+                  handleAddKeyword();
+                }
+              }}
+              className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap px-3 py-1.5 text-sm"
             >
               Hinzufügen
             </Button>
@@ -708,7 +711,7 @@ Beispiel-Format (nutze deine eigenen Werte):
                   onClick={() => handleRemoveKeyword(metrics.keyword)}
                   className="bg-white text-gray-400 hover:text-red-500 p-1 rounded"
                 >
-                  <XMarkIcon className="h-4 w-4" />
+                  <XMarkIcon className="h-4 w-4 text-gray-600" />
                 </button>
               </div>
             </div>
@@ -757,7 +760,7 @@ Beispiel-Format (nutze deine eigenen Werte):
           
           {/* Globale KI-Analyse für gesamten Text */}
           {keywordMetrics.length > 0 && keywordMetrics.some(km => km.targetAudience || km.tonality) && (
-            <div className="bg-purple-50 rounded-md p-3 mb-4">
+            <div className="bg-purple-50 rounded-md p-3 mb-3">
               <div className="flex items-center gap-2 text-xs text-purple-700">
                 <SparklesIcon className="h-4 w-4" />
                 <div className="flex items-center gap-4">
@@ -816,7 +819,7 @@ Beispiel-Format (nutze deine eigenen Werte):
                     </>
                   ) : (
                     <>
-                      {recommendations.length - 3} weitere anzeigen
+                      <span className="font-semibold">{recommendations.length - 3} weitere anzeigen</span>
                       <ChevronDownIcon className="h-3 w-3" />
                     </>
                   )}
