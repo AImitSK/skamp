@@ -1,221 +1,288 @@
-# 🎯 SEO-Features Campaign Editor - Implementierungsplan
+# 🎯 PR-SEO Analyse System 2.0 - Implementierungsplan
 
-## 📋 Aktueller Status: 🟡 IN PLANUNG
-**Start:** 15.08.2025  
-**Abschluss:** TBD  
-**Fortschritt:** 0/7 Aufgaben geplant
+## 📋 Status: 🔴 NEU GEPLANT
+**Stand:** 16.08.2025  
+**Konzept:** PR-optimierte SEO-Analyse mit KI-Integration
+**Fortschritt:** 0/8 Aufgaben
 
-## 🎨 Design-Philosophie: Vercel-Style Minimalismus
+## 🏗️ Architektur-Übersicht
 
 ### Kernprinzipien:
-- **Minimal & Clean** - Keine großen Widgets, subtile Integration
-- **Intelligent** - KI erkennt Keywords automatisch
-- **Progressive Disclosure** - Features erscheinen when needed
-- **Non-intrusive** - Unterstützt Workflow, stört nicht
+- **2-Keyword-Limit** für fokussierte PR-Texte
+- **Pro-Keyword Metriken** für präzise Analyse
+- **KI nur bei manueller Aktion** (Keyword-Eingabe oder Aktualisieren)
+- **PR-spezifische Metriken** statt generisches SEO
 
-## 📝 TODO-Liste:
+### KI-Integration:
+- **NUTZE:** `/api/ai/generate` für SEO-Analyse (NICHT generate-structured!)
+- Generate-structured ist für PR-Assistenten, nicht für Analyse
+- Sparsame API-Calls nur bei User-Interaktion
 
-### 1. ⚡ **Auto-Keyword-Detection Service** ✅ FERTIG
-**Datei:** `src/lib/ai/seo-keyword-service.ts`
-- [x] KI-Service für automatische Keyword-Erkennung aus Text ✅ IMPLEMENTIERT
-- [x] Google Gemini 1.5 Flash Integration (bestehende API nutzen) ✅ NUTZT /api/ai/generate
-- [x] Debounced Analysis (nicht bei jedem Tastendruck) ✅ 2s DEBOUNCE
-- [x] Intelligente Filterung (nur relevante Keywords) ✅ COMMON WORDS FILTER
-- [x] Cache-System für Performance ✅ 5 MIN CACHE
+## 📁 Relevante Dateien
 
-**Prompt-Engineering:**
-```
-Analysiere diesen PR-Text und extrahiere die 3-5 wichtigsten Keywords/Keyphrases für SEO.
-Fokus auf: Unternehmensnamen, Produktnamen, Branchen-Keywords, Action-Verben.
-Gib nur die Keywords zurück, getrennt durch Kommas.
-```
+### Bestehende Komponenten:
+- `src/components/campaigns/SEOHeaderBar.tsx` - Header mit Metriken
+- `src/components/FloatingAIToolbar.tsx` - Toolbar (SEO-Button entfernt)
+- `src/lib/ai/seo-keyword-service.ts` - SEO-Service Layer
 
-### 2. 🎨 **Subtile Header-Integration** ✅ FERTIG
+### API Routes:
+- `src/app/api/ai/generate/route.ts` - ✅ DIESE für SEO-Analyse nutzen
+- `src/app/api/ai/generate-structured/route.ts` - ❌ NICHT nutzen (PR-Assistent)
+- `src/app/api/ai/custom-instruction/route.ts` - Für Custom Instructions
+
+### Tests:
+- `src/__tests__/seo-header-bar.test.tsx` - Bestehende Tests
+- `src/__tests__/seo-keyword-service.test.tsx` - Service Tests (TODO)
+
+## 📝 Implementierungs-Tasks
+
+### 1. ⚡ **Keyword-Limit System** 
 **Datei:** `src/components/campaigns/SEOHeaderBar.tsx`
-- [x] Vercel-Style Keyword-Tags im Editor-Header ✅ IMPLEMENTIERT
-- [x] Inline "+ hinzufügen" Button für manuelle Keywords ✅ IMPLEMENTIERT
-- [x] Live SEO-Score Anzeige (Punkt-Indikator wie Vercel Deploy-Status) ✅ IMPLEMENTIERT
-- [x] Wort-Count Integration ✅ IMPLEMENTIERT
-- [x] Clean, minimalistisches Design ohne gelbe Widgets ✅ IMPLEMENTIERT
-- [x] Auto-Keyword-Detection Integration mit Vorschlägen ✅ IMPLEMENTIERT
-- [x] Live-Metriken (SEO-Score, Wortanzahl, Keyword-Dichte) ✅ IMPLEMENTIERT
-- [x] Tests (23/23 ✅) - 100% Pass Rate ✅ IMPLEMENTIERT
+- [ ] Max. 2 Keywords enforced
+- [ ] Warnung bei Versuch 3. Keyword hinzuzufügen
+- [ ] UI-Anpassung für 2-Keyword-Layout
+- [ ] Badge-Design für Pro-Keyword-Scores
 
-**Design Pattern:**
+### 2. 📊 **Pro-Keyword Metriken**
+**Datei:** `src/lib/ai/seo-keyword-service.ts`
+```typescript
+interface PerKeywordMetrics {
+  keyword: string;
+  
+  // Basis-Metriken (ohne KI)
+  density: number;              // 0.5-2% optimal
+  occurrences: number;
+  inHeadline: boolean;
+  inFirstParagraph: boolean;
+  distribution: 'gut' | 'mittel' | 'schlecht';
+  
+  // KI-Metriken (nur bei Aktualisieren)
+  semanticRelevance?: number;   // 0-100
+  contextQuality?: number;       // 0-100
+  relatedTermsFound?: string[];
+}
+```
+
+### 3. 🤖 **KI-Analyse Integration**
+**Datei:** `src/lib/ai/seo-keyword-service.ts`
+```typescript
+// Neue Methoden
+async analyzeKeywordWithAI(keyword: string, text: string): Promise<KeywordAIAnalysis>
+async checkSemanticRelevance(keyword: string, text: string): Promise<number>
+async findRelatedTerms(keyword: string, text: string): Promise<string[]>
+```
+- [ ] Nutze `/api/ai/generate` Route
+- [ ] Präzise Prompts für Keyword-Analyse
+- [ ] Response-Parsing für strukturierte Daten
+- [ ] Error-Handling und Fallbacks
+
+### 4. 🎨 **PR-spezifische Metriken**
+**Datei:** `src/lib/ai/seo-keyword-service.ts`
+```typescript
+interface PRMetrics {
+  // Headline-Qualität
+  headlineLength: number;
+  headlineHasKeywords: boolean;
+  headlineHasActiveVerb: boolean;
+  
+  // Lead-Analyse (erste 150 Zeichen)
+  leadLength: number;
+  leadHasNumbers: boolean;
+  leadKeywordMentions: number;
+  
+  // Zitat-Erkennung
+  quoteCount: number;
+  avgQuoteLength: number;
+  
+  // Call-to-Action (im Text)
+  hasActionVerbs: boolean;
+  hasLearnMore: boolean;
+  
+  // Struktur
+  avgParagraphLength: number;
+  hasBulletPoints: boolean;
+  hasSubheadings: boolean;
+  
+  // Konkretheit
+  numberCount: number;
+  hasSpecificDates: boolean;
+  hasCompanyNames: boolean;
+}
+```
+
+### 5. 📈 **Neue Score-Berechnung**
+**Datei:** `src/lib/ai/seo-keyword-service.ts`
+```typescript
+calculatePRScore(text: string, perKeywordMetrics: PerKeywordMetrics[], prMetrics: PRMetrics) {
+  // Gewichtung:
+  // 25% Headline & Lead-Qualität
+  // 20% Keyword-Performance (Durchschnitt beider)
+  // 20% Struktur & Lesbarkeit
+  // 15% Semantische Relevanz (KI)
+  // 10% Konkretheit (Zahlen, Fakten)
+  // 10% Zitate & CTA
+  
+  return {
+    totalScore: number,
+    breakdown: {
+      headline: number,
+      keywords: number,
+      structure: number,
+      relevance: number,
+      concreteness: number,
+      engagement: number
+    },
+    recommendations: string[]
+  };
+}
+```
+
+### 6. 🎯 **Zitat-Erkennung System**
+**Datei:** `src/components/editor/TipTapEditor.tsx` (erweitern)
+- [ ] Zitat-Button in Editor-Toolbar
+- [ ] Setzt `<blockquote>` Tags
+- [ ] CSS-Styling für Zitate
+- [ ] Parser in SEO-Service erkennt `<blockquote>`
+
+### 7. 💡 **Intelligente Empfehlungen**
+**Datei:** `src/lib/ai/seo-keyword-service.ts`
+```typescript
+generatePRRecommendations(metrics: PRMetrics, keywordMetrics: PerKeywordMetrics[]) {
+  // Spezifische, umsetzbare Empfehlungen:
+  // Statt: "Keyword-Dichte erhöhen"
+  // Neu: "Erwähne 'Produktname' im ersten Absatz"
+  
+  // Priorisierte Liste:
+  // 1. Kritische Fehler (z.B. Headline zu lang)
+  // 2. Quick Wins (z.B. Zahl hinzufügen)
+  // 3. Optimierungen (z.B. Satz kürzen)
+}
+```
+
+### 8. 🧪 **Test-Suite Update**
+**Datei:** `src/__tests__/seo-pr-metrics.test.tsx`
+- [ ] Tests für 2-Keyword-Limit
+- [ ] Tests für Pro-Keyword-Metriken
+- [ ] Tests für PR-Score-Berechnung
+- [ ] Mock KI-Responses
+- [ ] Performance-Tests (Debouncing)
+
+## 🔄 Implementierungs-Flow
+
+### User-Workflow:
+1. **User schreibt PR-Text** → Basis-Metriken live berechnet (ohne KI)
+2. **User gibt Keyword ein** → KI analysiert NUR dieses Keyword
+3. **User klickt "Aktualisieren"** → KI analysiert alle Keywords neu
+4. **Feedback pro Keyword** → Individuelle Scores und Empfehlungen
+
+### KI-Aufruf-Strategie:
+```typescript
+// Bei Keyword-Eingabe
+onKeywordAdd = async (keyword) => {
+  // 1. Basis-Metriken sofort berechnen
+  const basicMetrics = calculateBasicMetrics(keyword, text);
+  
+  // 2. KI-Analyse async im Hintergrund
+  const aiAnalysis = await analyzeWithAI(keyword, text);
+  
+  // 3. UI updaten mit KI-Ergebnissen
+  updateKeywordMetrics(keyword, { ...basicMetrics, ...aiAnalysis });
+};
+
+// Bei Aktualisieren-Button
+onRefresh = async () => {
+  // Batch-Analyse für alle Keywords
+  const promises = keywords.map(k => analyzeWithAI(k, text));
+  const results = await Promise.all(promises);
+  updateAllMetrics(results);
+};
+```
+
+## ⚡ Performance-Optimierungen
+
+### Caching:
+- 5-Minuten Cache für KI-Analysen
+- LocalStorage für letzte Analyse-Ergebnisse
+- Debouncing bei Text-Änderungen (2 Sekunden)
+
+### API-Optimierung:
+```typescript
+// Batching für mehrere Keywords
+const batchAnalyze = async (keywords: string[], text: string) => {
+  const prompt = `
+    Analysiere diese Keywords für den PR-Text:
+    Keywords: ${keywords.join(', ')}
+    
+    Gib für JEDES Keyword zurück:
+    - Semantische Relevanz (0-100)
+    - Kontext-Qualität (0-100)
+    - 3 verwandte Begriffe
+    
+    Format: JSON
+  `;
+  
+  // Ein API-Call statt mehrere
+  return await callAPI('/api/ai/generate', { prompt });
+};
+```
+
+## 🎨 UI/UX Verbesserungen
+
+### Keyword-Badges:
 ```tsx
-<div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-4">
-  <div className="flex items-center gap-3">
-    <h2>PR-Kampagne</h2>
-    <KeywordTags keywords={keywords} onAdd={addKeyword} onRemove={removeKeyword} />
+<Badge color={getScoreColor(metrics.semanticRelevance)}>
+  {keyword}
+  <div className="flex gap-1 ml-2">
+    <span title="Relevanz">{metrics.semanticRelevance}%</span>
+    <span title="Dichte">{metrics.density.toFixed(1)}%</span>
   </div>
-  <LiveMetrics seoScore={score} wordCount={words} />
-</div>
+</Badge>
 ```
 
-### 3. 🤖 **Floating Toolbar SEO-Integration** ✅ FERTIG
-**Datei:** `src/components/FloatingAIToolbar.tsx` (erweitern)
-- [x] SEO-Button hinzufügen (nur aktiv wenn Keywords + Text markiert) ✅ IMPLEMENTIERT
-- [x] Disabled State für SEO-Button wenn keine Keywords ✅ IMPLEMENTIERT  
-- [x] KI-Integration für SEO-Optimierung von markiertem Text ✅ IMPLEMENTIERT
-- [x] Visual State Management (grau/grün für disabled/enabled) ✅ IMPLEMENTIERT
-- [x] Prompt-Engineering für SEO-Text-Optimierung ✅ IMPLEMENTIERT
-- [x] SEO-Optimierung mit Volltext-Kontext ✅ IMPLEMENTIERT
-- [x] Keyword-Dichte-Optimierung (1-3%) ✅ IMPLEMENTIERT
-- [x] Tests für SEO-Features (15/15 ✅) ✅ IMPLEMENTIERT
+### Visual Feedback:
+- 🟢 Grün: Score > 70
+- 🟡 Gelb: Score 40-70
+- 🔴 Rot: Score < 40
+- ⚡ Animation bei KI-Analyse
+- ✅ Check-Icon wenn optimal
 
-**SEO-Optimierung Prompt:**
-```
-Du bist ein SEO-Experte. Optimiere diesen markierten Text für die Keywords: {keywords}
-Ziele: 1-3% Keyword-Dichte, bessere Lesbarkeit, natürlicher Textfluss.
-Behalte die ursprüngliche Bedeutung und den Ton bei.
-```
+## 🚀 Migration von Alt zu Neu
 
-### 4. 📊 **Live SEO-Metrics Service**
-**Datei:** `src/lib/seo/seo-analytics-service.ts`
-- [ ] Keyword-Dichte Berechnung (live während Eingabe)
-- [ ] SEO-Score Algorithmus (Gewichtung verschiedener Faktoren)
-- [ ] Readability-Score (Flesch-Reading-Ease mit KI)
-- [ ] Performance-optimiert mit Debouncing
-- [ ] Text-Struktur-Analyse (Absätze, Satzlängen)
+### Phase 1: Basis-Implementation
+1. Keyword-Limit einführen
+2. Pro-Keyword-Metriken ohne KI
+3. UI-Anpassungen
 
-**Score-Faktoren:**
-- Keyword-Dichte (1-3% = optimal)
-- Text-Länge (300-800 Wörter = optimal)  
-- Lesbarkeit (Flesch-Score > 60)
-- Struktur (angemessene Absätze)
+### Phase 2: KI-Integration
+1. API-Anbindung implementieren
+2. Semantic Relevance hinzufügen
+3. Cache-System aktivieren
 
-### 5. 🎯 **Smart Keyword Management**
-**Datei:** `src/components/campaigns/SmartKeywordManager.tsx`
-- [ ] Auto-Suggestion basierend auf Text-Analyse
-- [ ] Manual Override für User-spezifische Keywords
-- [ ] Keyword-Validation (keine Duplikate, sinnvolle Länge)
-- [ ] Badge-System für Keyword-Tags (Vercel-Style)
-- [ ] Drag & Drop für Keyword-Reihenfolge
+### Phase 3: PR-Features
+1. Zitat-Erkennung
+2. Headline-Analyse
+3. Erweiterte Empfehlungen
 
-### 6. 📈 **SEO-Score Visualization**
-**Datei:** `src/components/campaigns/SEOScoreIndicator.tsx`
-- [ ] Dezente Punkt-Anzeige wie Vercel Deploy-Status
-- [ ] Farb-Codierung: Grün (>70), Gelb (40-70), Rot (<40)
-- [ ] Hover-Tooltip mit Breakdown der Score-Faktoren
-- [ ] Smooth Transitions bei Score-Änderungen
-- [ ] Integration in Editor-Header
+## 📊 Erfolgsmetriken
 
-### 7. 🧪 **SEO-Features Test-Suite**
-**Datei:** `src/__tests__/seo-features.test.tsx`
-- [ ] Auto-Keyword-Detection Tests
-- [ ] SEO-Score-Berechnung Tests
-- [ ] Floating Toolbar SEO-Integration Tests
-- [ ] Live-Metrics Performance Tests
-- [ ] User-Workflow Integration Tests
-
-## 🏗️ Technische Integration:
-
-### Bestehende Services erweitern:
-- ✅ **Google Gemini 1.5 Flash** (bereits implementiert)
-- ✅ **FloatingAIToolbar** (für SEO-Button erweitern)
-- ✅ **GmailStyleEditor** (für Header-Integration)
-- ✅ **Campaign Editor Pages** (für SEO-Features)
-
-### Neue Service-Layer:
-- 🆕 **SEO-Keyword-Service** (KI-basierte Keyword-Erkennung)
-- 🆕 **SEO-Analytics-Service** (Live-Metriken und Score-Berechnung)
-- 🆕 **SEO-Optimization-Service** (Text-Optimierung via KI)
-
-## 🎨 Design-Spezifikationen:
-
-### Vercel-Style Guidelines:
-- **Farben:** Grau-Töne, subtile Akzente
-- **Typography:** Clean, moderne Schriften
-- **Spacing:** Großzügige Abstände, luftiges Design
-- **States:** Dezente Hover-Effekte, sanfte Transitions
-- **Icons:** Minimale, outline-only Icons
-
-### Keine CeleroPress gelben Widgets:
-- ❌ Große `#f1f0e2` Status-Cards
-- ❌ Aufdringliche Widgets unterhalb Editor
-- ✅ Subtile Header-Integration
-- ✅ Inline-Keyword-Tags
-- ✅ Dezente Status-Indikatoren
-
-## 📱 User-Workflow:
-
-### Optimaler Flow:
-1. **User schreibt Text** im Gmail-Style Editor
-2. **KI erkennt Keywords** automatisch nach 2-3 Sekunden
-3. **Keywords erscheinen** als Tags im Header
-4. **User kann Keywords** bestätigen/anpassen/ergänzen
-5. **SEO-Score wird live** berechnet und angezeigt
-6. **Text markieren** → SEO-Button in Floating Toolbar aktiv
-7. **SEO-Optimierung** durch KI für markierten Text
-
-### Edge Cases:
-- Kein Text → Keine Keyword-Erkennung
-- Sehr kurzer Text → Warnung "Text zu kurz für SEO-Analyse"
-- Keine Keywords → SEO-Button disabled in Floating Toolbar
-- API-Fehler → Graceful Fallback auf manuelle Keyword-Eingabe
-
-## ⚡ Performance-Anforderungen:
-
-- **Keyword-Detection:** < 2 Sekunden nach Text-Eingabe
-- **Live-Score-Update:** < 100ms bei Text-Änderungen
-- **SEO-Optimization:** < 3 Sekunden für markierten Text
-- **Memory-Efficient:** Debouncing und Caching für KI-Calls
-
-## 🧪 Testing-Strategie:
-
-### Unit Tests:
-- Keyword-Extraction-Algorithmus
-- SEO-Score-Berechnung
-- Text-Optimization-Prompts
-
-### Integration Tests:
-- Editor + SEO-Features Zusammenspiel
-- Floating Toolbar + SEO-Button
-- Live-Metrics + Performance
-
-### User-Tests:
-- Workflow-Optimierung
-- UX-Feedback für Vercel-Style Design
-- Performance unter realen Bedingungen
-
-## 🎯 Erfolgsmetriken:
+### Performance:
+- [ ] KI-Response < 2 Sekunden
+- [ ] Basis-Metriken < 100ms
+- [ ] Cache-Hit-Rate > 60%
 
 ### User Experience:
-- [ ] Time-to-Keywords: < 5 Sekunden
-- [ ] SEO-Score-Verbesserung: > 20 Punkte durchschnittlich
-- [ ] User-Adoption: > 80% nutzen SEO-Features
+- [ ] Klare Pro-Keyword-Bewertung
+- [ ] Umsetzbare Empfehlungen
+- [ ] Verständliche Score-Aufschlüsselung
 
-### Technical Performance:
-- [ ] Keyword-Detection: 95% Accuracy
-- [ ] Score-Calculation: < 100ms Response Time
-- [ ] SEO-Optimization: > 90% User-Zufriedenheit
-
-## 📊 Fortschritts-Tracking:
-
-```
-[██████▪▪▪▪ ] 43% Complete - DRITTE KOMPONENTE FERTIG
-✅ Auto-Keyword-Detection Service + Tests (23/23 ✅)
-✅ Subtile Header-Integration (SEOHeaderBar) + Tests (23/23 ✅)  
-✅ Floating Toolbar SEO-Integration + Tests (15/15 ✅)
-⏳ Live SEO-Metrics Service
-⏳ Smart Keyword Management
-⏳ SEO-Score Visualization
-⏳ SEO-Features Test-Suite
-```
-
-## 🚀 NÄCHSTE SCHRITTE:
-
-### Sprint-Planung:
-1. **Tag 1-2:** Auto-Keyword-Detection Service + Tests
-2. **Tag 3-4:** Subtile Header-Integration + SEO-Score-Viz
-3. **Tag 5-6:** Floating Toolbar Integration + Live-Metrics
-4. **Tag 7:** Smart Keyword Management + User-Testing
+### Accuracy:
+- [ ] Semantic Relevance Präzision > 80%
+- [ ] Falsch-Positive Keywords < 10%
+- [ ] Empfehlungs-Qualität > 85% hilfreich
 
 ---
 
-**Status:** 🟡 **BEREIT FÜR IMPLEMENTIERUNG**  
-**Design-Vorbild:** Vercel's minimalistisches, intelligentes UI  
-**Erstellt:** 15.08.2025  
-**Author:** CeleroPress Team  
-**Workflow:** Step-by-Step Development mit deutscher Kommunikation  
-**Wichtig:** Vercel-Style Design - minimal, clean, intelligent!
+**Status:** 🔴 **BEREIT FÜR IMPLEMENTIERUNG**  
+**Priorität:** Hoch  
+**Geschätzte Zeit:** 3-4 Tage  
+**Nächster Schritt:** Keyword-Limit in SEOHeaderBar implementieren

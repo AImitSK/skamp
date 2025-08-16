@@ -22,6 +22,55 @@ interface KeywordAnalytics {
   positions: number[];
 }
 
+// Neue Interfaces für Pro-Keyword-Metriken
+export interface PerKeywordMetrics {
+  keyword: string;
+  
+  // Basis-Metriken (ohne KI)
+  density: number;              // 0.5-2% optimal für PR
+  occurrences: number;
+  inHeadline: boolean;
+  inFirstParagraph: boolean;
+  distribution: 'gut' | 'mittel' | 'schlecht';
+  
+  // KI-Metriken (nur bei Aktualisieren)
+  semanticRelevance?: number;   // 0-100
+  contextQuality?: number;       // 0-100
+  relatedTermsFound?: string[];
+  keywordStrength?: 'stark' | 'mittel' | 'schwach';
+}
+
+// PR-spezifische Metriken
+export interface PRMetrics {
+  // Headline-Qualität
+  headlineLength: number;
+  headlineHasKeywords: boolean;
+  headlineHasActiveVerb: boolean;
+  
+  // Lead-Analyse (erste 150 Zeichen)
+  leadLength: number;
+  leadHasNumbers: boolean;
+  leadKeywordMentions: number;
+  
+  // Zitat-Erkennung
+  quoteCount: number;
+  avgQuoteLength: number;
+  
+  // Call-to-Action (im Text)
+  hasActionVerbs: boolean;
+  hasLearnMore: boolean;
+  
+  // Struktur
+  avgParagraphLength: number;
+  hasBulletPoints: boolean;
+  hasSubheadings: boolean;
+  
+  // Konkretheit
+  numberCount: number;
+  hasSpecificDates: boolean;
+  hasCompanyNames: boolean;
+}
+
 class SEOKeywordService {
   private debounceTimers: Map<string, NodeJS.Timeout> = new Map();
   private cache: Map<string, KeywordResult> = new Map();
@@ -424,7 +473,267 @@ class SEOKeywordService {
   }
 
   /**
-   * Berechne SEO-Score basierend auf Keywords
+   * KI-Analyse für einzelnes Keyword
+   */
+  async analyzeKeywordWithAI(keyword: string, text: string): Promise<PerKeywordMetrics> {
+    // Erst Basis-Metriken berechnen (ohne KI)
+    const basicMetrics = this.calculateBasicKeywordMetrics(keyword, text);
+    
+    try {
+      // KI-Analyse für semantische Relevanz
+      const prompt = `Analysiere das Keyword "${keyword}" im folgenden PR-Text.
+
+Bewerte:
+1. Semantische Relevanz (0-100): Wie zentral ist das Keyword für den Text?
+2. Kontext-Qualität (0-100): Wie natürlich ist das Keyword eingebunden?
+3. Verwandte Begriffe: Nenne 3 thematisch verwandte Begriffe aus dem Text.
+
+Antworte NUR im Format:
+RELEVANZ: [Zahl]
+QUALITÄT: [Zahl]
+BEGRIFFE: [Begriff1, Begriff2, Begriff3]
+
+Text (erste 1000 Zeichen): ${text.substring(0, 1000)}`;
+
+      const response = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt,
+          mode: 'generate'
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const result = data.generatedText || '';
+        
+        // Parse KI-Antwort
+        const relevanceMatch = result.match(/RELEVANZ:\s*(\d+)/);
+        const qualityMatch = result.match(/QUALITÄT:\s*(\d+)/);
+        const termsMatch = result.match(/BEGRIFFE:\s*(.+)/);
+        
+        const semanticRelevance = relevanceMatch ? parseInt(relevanceMatch[1]) : undefined;
+        const contextQuality = qualityMatch ? parseInt(qualityMatch[1]) : undefined;
+        const relatedTerms = termsMatch ? 
+          termsMatch[1].split(',').map(t => t.trim()).slice(0, 3) : 
+          undefined;
+        
+        // Keyword-Stärke basierend auf Scores
+        let keywordStrength: 'stark' | 'mittel' | 'schwach' = 'mittel';
+        if (semanticRelevance && semanticRelevance >= 70) keywordStrength = 'stark';
+        else if (semanticRelevance && semanticRelevance < 40) keywordStrength = 'schwach';
+        
+        return {
+          ...basicMetrics,
+          semanticRelevance,
+          contextQuality,
+          relatedTermsFound: relatedTerms,
+          keywordStrength
+        };
+      }
+    } catch (error) {
+      console.error('KI-Analyse fehlgeschlagen:', error);
+    }
+    
+    // Fallback: Nur Basis-Metriken
+    return basicMetrics;
+  }
+
+  /**
+   * Basis-Metriken für Keyword (ohne KI)
+   */
+  private calculateBasicKeywordMetrics(keyword: string, text: string): PerKeywordMetrics {
+    const cleanText = text.replace(/<[^>]*>/g, ' ').toLowerCase();
+    const wordCount = cleanText.split(/\s+/).filter(w => w.length > 0).length;
+    
+    // Vorkommen zählen
+    const regex = new RegExp(`\\b${keyword.toLowerCase()}\\b`, 'gi');
+    const matches = [...cleanText.matchAll(regex)];
+    const occurrences = matches.length;
+    const density = (occurrences / wordCount) * 100;
+    
+    // Headline prüfen (erste Zeile oder <h1>)
+    const firstLine = text.split('\n')[0] || '';
+    const inHeadline = firstLine.toLowerCase().includes(keyword.toLowerCase());
+    
+    // Erste 150 Zeichen prüfen (Lead)
+    const first150 = cleanText.substring(0, 150);
+    const inFirstParagraph = first150.includes(keyword.toLowerCase());
+    
+    // Verteilung bewerten
+    let distribution: 'gut' | 'mittel' | 'schlecht' = 'schlecht';
+    if (occurrences >= 3) {
+      const positions = matches.map(m => m.index || 0);
+      const textLength = cleanText.length;
+      const firstThird = positions.filter(p => p < textLength / 3).length;
+      const middleThird = positions.filter(p => p >= textLength / 3 && p < (textLength * 2) / 3).length;
+      const lastThird = positions.filter(p => p >= (textLength * 2) / 3).length;
+      
+      if (firstThird > 0 && middleThird > 0 && lastThird > 0) {
+        distribution = 'gut';
+      } else if (firstThird > 0 || lastThird > 0) {
+        distribution = 'mittel';
+      }
+    }
+    
+    return {
+      keyword,
+      density,
+      occurrences,
+      inHeadline,
+      inFirstParagraph,
+      distribution
+    };
+  }
+
+  /**
+   * PR-spezifische Metriken berechnen
+   */
+  calculatePRMetrics(text: string, headline?: string): PRMetrics {
+    const cleanText = text.replace(/<[^>]*>/g, ' ').trim();
+    const lines = text.split('\n').filter(l => l.trim());
+    
+    // Headline-Analyse
+    const headlineText = headline || lines[0] || '';
+    const headlineLength = headlineText.length;
+    const activeVerbs = ['startet', 'präsentiert', 'entwickelt', 'führt ein', 'erweitert', 'optimiert', 'lanciert'];
+    const headlineHasActiveVerb = activeVerbs.some(v => headlineText.toLowerCase().includes(v));
+    
+    // Lead-Analyse (erste 150 Zeichen)
+    const leadText = cleanText.substring(0, 150);
+    const leadHasNumbers = /\d+/.test(leadText);
+    
+    // Zitat-Erkennung
+    const quotes = [
+      ...text.matchAll(/"([^"]{50,300})"/g),
+      ...text.matchAll(/„([^"]{50,300})"/g),
+      ...text.matchAll(/<blockquote>(.*?)<\/blockquote>/g)
+    ];
+    const quoteCount = quotes.length;
+    const avgQuoteLength = quotes.length > 0 
+      ? quotes.reduce((sum, q) => sum + q[1].length, 0) / quotes.length 
+      : 0;
+    
+    // Call-to-Action
+    const actionPhrases = ['besuchen sie', 'erfahren sie mehr', 'kontaktieren sie', 'weitere informationen', 'jetzt anmelden'];
+    const hasActionVerbs = actionPhrases.some(p => cleanText.toLowerCase().includes(p));
+    const hasLearnMore = cleanText.toLowerCase().includes('weitere informationen') || 
+                         cleanText.toLowerCase().includes('mehr erfahren');
+    
+    // Struktur
+    const paragraphs = text.split(/\n\n+/).filter(p => p.trim().length > 50);
+    const avgParagraphLength = paragraphs.length > 0
+      ? paragraphs.reduce((sum, p) => sum + p.split(/\s+/).length, 0) / paragraphs.length
+      : 0;
+    const hasBulletPoints = /[•\-\*]\s+.+/.test(text) || /<li>/.test(text);
+    const hasSubheadings = /<h[2-6]>/.test(text) || /^##\s+/m.test(text);
+    
+    // Konkretheit
+    const numbers = text.match(/\d+/g) || [];
+    const numberCount = numbers.length;
+    const datePattern = /\d{1,2}\.\s*(Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember|\d{1,2}\.)\s*\d{2,4}/gi;
+    const hasSpecificDates = datePattern.test(text);
+    const hasCompanyNames = /GmbH|AG|SE|KG|OHG|Ltd|Inc|Corp/i.test(text);
+    
+    return {
+      headlineLength,
+      headlineHasKeywords: false, // Wird später mit Keywords gefüllt
+      headlineHasActiveVerb,
+      leadLength: leadText.length,
+      leadHasNumbers,
+      leadKeywordMentions: 0, // Wird später mit Keywords gefüllt
+      quoteCount,
+      avgQuoteLength: Math.round(avgQuoteLength),
+      hasActionVerbs,
+      hasLearnMore,
+      avgParagraphLength: Math.round(avgParagraphLength),
+      hasBulletPoints,
+      hasSubheadings,
+      numberCount,
+      hasSpecificDates,
+      hasCompanyNames
+    };
+  }
+
+  /**
+   * Neuer PR-optimierter Score
+   */
+  calculatePRScore(
+    text: string, 
+    perKeywordMetrics: PerKeywordMetrics[], 
+    prMetrics: PRMetrics
+  ): { totalScore: number; breakdown: any; recommendations: string[] } {
+    let breakdown = {
+      headline: 0,
+      keywords: 0,
+      structure: 0,
+      relevance: 0,
+      concreteness: 0,
+      engagement: 0
+    };
+    
+    // 25% Headline & Lead-Qualität
+    if (prMetrics.headlineLength >= 60 && prMetrics.headlineLength <= 80) breakdown.headline += 10;
+    if (prMetrics.headlineHasActiveVerb) breakdown.headline += 10;
+    if (prMetrics.leadHasNumbers) breakdown.headline += 5;
+    
+    // 20% Keyword-Performance (Durchschnitt beider)
+    if (perKeywordMetrics.length > 0) {
+      const avgDensity = perKeywordMetrics.reduce((sum, m) => sum + m.density, 0) / perKeywordMetrics.length;
+      if (avgDensity >= 0.5 && avgDensity <= 2) breakdown.keywords += 10;
+      
+      const allInHeadline = perKeywordMetrics.every(m => m.inHeadline);
+      if (allInHeadline) breakdown.keywords += 5;
+      
+      const allInLead = perKeywordMetrics.every(m => m.inFirstParagraph);
+      if (allInLead) breakdown.keywords += 5;
+    }
+    
+    // 20% Struktur & Lesbarkeit
+    if (prMetrics.avgParagraphLength <= 50) breakdown.structure += 10;
+    if (prMetrics.hasBulletPoints || prMetrics.hasSubheadings) breakdown.structure += 10;
+    
+    // 15% Semantische Relevanz (wenn KI-Daten vorhanden)
+    if (perKeywordMetrics.some(m => m.semanticRelevance !== undefined)) {
+      const avgRelevance = perKeywordMetrics
+        .filter(m => m.semanticRelevance !== undefined)
+        .reduce((sum, m) => sum + (m.semanticRelevance || 0), 0) / perKeywordMetrics.length;
+      breakdown.relevance = Math.round(avgRelevance * 0.15);
+    }
+    
+    // 10% Konkretheit
+    if (prMetrics.numberCount >= 3) breakdown.concreteness += 5;
+    if (prMetrics.hasSpecificDates) breakdown.concreteness += 3;
+    if (prMetrics.hasCompanyNames) breakdown.concreteness += 2;
+    
+    // 10% Zitate & CTA
+    if (prMetrics.quoteCount >= 1) breakdown.engagement += 5;
+    if (prMetrics.hasActionVerbs || prMetrics.hasLearnMore) breakdown.engagement += 5;
+    
+    const totalScore = Object.values(breakdown).reduce((sum, val) => sum + val, 0);
+    
+    // Empfehlungen generieren
+    const recommendations: string[] = [];
+    
+    if (breakdown.headline < 15) {
+      recommendations.push('📝 Optimiere die Headline: 60-80 Zeichen mit aktivem Verb');
+    }
+    if (breakdown.keywords < 10) {
+      recommendations.push('🎯 Keywords besser verteilen: In Headline und erstem Absatz platzieren');
+    }
+    if (prMetrics.quoteCount === 0) {
+      recommendations.push('💬 Füge ein Zitat hinzu für mehr Glaubwürdigkeit');
+    }
+    if (!prMetrics.hasActionVerbs) {
+      recommendations.push('🎬 Call-to-Action ergänzen: "Erfahren Sie mehr..." oder "Besuchen Sie..."');
+    }
+    
+    return { totalScore, breakdown, recommendations };
+  }
+
+  /**
+   * Alter Score (für Rückwärtskompatibilität)
    */
   calculateSEOScore(text: string, keywords: string[]): number {
     if (keywords.length === 0) return 0;
@@ -662,4 +971,10 @@ DEINE ANTWORT (nur Keywords mit Komma):`;
 
 // Singleton-Export
 export const seoKeywordService = new SEOKeywordService();
-export type { KeywordDetectionOptions, KeywordResult, KeywordAnalytics };
+export type { 
+  KeywordDetectionOptions, 
+  KeywordResult, 
+  KeywordAnalytics,
+  PerKeywordMetrics,
+  PRMetrics
+};

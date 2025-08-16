@@ -14,7 +14,7 @@ import {
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import { seoKeywordService } from '@/lib/ai/seo-keyword-service';
-import type { KeywordResult } from '@/lib/ai/seo-keyword-service';
+import type { KeywordResult, PerKeywordMetrics, PRMetrics } from '@/lib/ai/seo-keyword-service';
 
 interface SEOHeaderBarProps {
   title?: string;
@@ -53,6 +53,10 @@ export function SEOHeaderBar({
   const [newKeyword, setNewKeyword] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [recommendations, setRecommendations] = useState<string[]>([]);
+  const [keywordWarning, setKeywordWarning] = useState<string>('');
+  const [perKeywordMetrics, setPerKeywordMetrics] = useState<Map<string, PerKeywordMetrics>>(new Map());
+  const [prMetrics, setPrMetrics] = useState<PRMetrics | null>(null);
+  const [prScore, setPrScore] = useState<{ totalScore: number; breakdown: any } | null>(null);
 
   // Metrics-Update ohne Auto-Detection
   useEffect(() => {
@@ -132,7 +136,7 @@ export function SEOHeaderBar({
     }
   }, [keywords, content]);
 
-  // SEO-Analyse aktualisieren (KEINE Keywords generieren!)
+  // SEO-Analyse aktualisieren mit KI für alle Keywords
   const handleRefreshKeywords = async () => {
     if (!content || content.length < 50) {
       return;
@@ -140,41 +144,66 @@ export function SEOHeaderBar({
 
     setIsAnalyzing(true);
     try {
-      console.log('🔄 SEO-Analyse Update:', { 
+      console.log('🔄 SEO-Analyse Update mit KI:', { 
         contentLength: content.length,
         keywordsCount: keywords.length,
         keywords: keywords
       });
       
-      // Nur die SEO-Metriken neu berechnen - KEINE neuen Keywords!
+      // PR-Metriken berechnen
+      const newPrMetrics = seoKeywordService.calculatePRMetrics(content, documentTitle);
+      setPrMetrics(newPrMetrics);
+      
+      // KI-Analyse für alle Keywords parallel
+      const keywordAnalysisPromises = keywords.map(keyword => 
+        seoKeywordService.analyzeKeywordWithAI(keyword, content)
+      );
+      
+      const keywordAnalysisResults = await Promise.all(keywordAnalysisPromises);
+      
+      // Update Pro-Keyword-Metriken
+      const newMetricsMap = new Map<string, PerKeywordMetrics>();
+      keywordAnalysisResults.forEach(result => {
+        newMetricsMap.set(result.keyword, result);
+      });
+      setPerKeywordMetrics(newMetricsMap);
+      
+      // Neuen PR-Score berechnen
+      const scoreResult = seoKeywordService.calculatePRScore(
+        content, 
+        keywordAnalysisResults, 
+        newPrMetrics
+      );
+      setPrScore(scoreResult);
+      
+      // Basis-Metriken auch aktualisieren (für Rückwärtskompatibilität)
       const textContent = content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
       const wordCount = textContent.split(/\s+/).filter(word => word.length > 0).length;
-      const score = seoKeywordService.calculateSEOScore(content, keywords);
       const readabilityResult = seoKeywordService.calculateReadability(content);
       
       let keywordDensity = 0;
       if (keywords.length > 0) {
-        const analytics = seoKeywordService.analyzeKeywords(content, keywords);
-        // Filter unrealistische Werte
-        const validAnalytics = analytics.filter(a => a.density <= 15);
-        if (validAnalytics.length > 0) {
-          keywordDensity = validAnalytics.reduce((sum, a) => sum + a.density, 0) / validAnalytics.length;
-        }
+        const avgDensity = keywordAnalysisResults.reduce((sum, m) => sum + m.density, 0) / keywordAnalysisResults.length;
+        keywordDensity = avgDensity;
       }
 
       setSeoMetrics({
-        score,
+        score: scoreResult.totalScore,
         wordCount,
         keywordDensity,
         readability: readabilityResult.score,
         readabilityLevel: readabilityResult.level
       });
 
-      // Empfehlungen auch beim manuellen Update aktualisieren
-      const newRecommendations = seoKeywordService.generateRecommendations(content, keywords, documentTitle);
-      setRecommendations(newRecommendations);
+      // Empfehlungen aus PR-Score verwenden
+      setRecommendations(scoreResult.recommendations);
       
-      console.log('✅ SEO-Analyse aktualisiert:', { score, wordCount, keywordDensity, recommendations: newRecommendations.length });
+      console.log('✅ SEO-Analyse mit KI aktualisiert:', { 
+        prScore: scoreResult.totalScore, 
+        wordCount, 
+        keywordMetrics: keywordAnalysisResults,
+        recommendations: scoreResult.recommendations.length 
+      });
       
     } catch (error) {
       console.error('SEO analysis update failed:', error);
@@ -183,10 +212,31 @@ export function SEOHeaderBar({
     }
   };
 
-  const handleAddKeyword = (keyword: string) => {
+  const handleAddKeyword = async (keyword: string) => {
     const trimmedKeyword = keyword.trim();
+    
+    // Keyword-Limit prüfen (max. 2)
+    if (keywords.length >= 2) {
+      setKeywordWarning('Maximal 2 Keywords für optimale PR-Qualität. Entferne erst ein Keyword.');
+      setTimeout(() => setKeywordWarning(''), 5000);
+      return;
+    }
+    
     if (trimmedKeyword && !keywords.includes(trimmedKeyword)) {
       onKeywordsChange([...keywords, trimmedKeyword]);
+      
+      // KI-Analyse für neues Keyword starten
+      if (content && content.length >= 50) {
+        setIsAnalyzing(true);
+        try {
+          const analysis = await seoKeywordService.analyzeKeywordWithAI(trimmedKeyword, content);
+          setPerKeywordMetrics(prev => new Map(prev).set(trimmedKeyword, analysis));
+        } catch (error) {
+          console.error('KI-Analyse fehlgeschlagen:', error);
+        } finally {
+          setIsAnalyzing(false);
+        }
+      }
     }
     setNewKeyword('');
     setShowKeywordInput(false);
@@ -194,6 +244,12 @@ export function SEOHeaderBar({
 
   const handleRemoveKeyword = (keywordToRemove: string) => {
     onKeywordsChange(keywords.filter(k => k !== keywordToRemove));
+    // Auch die Metriken für dieses Keyword entfernen
+    setPerKeywordMetrics(prev => {
+      const newMap = new Map(prev);
+      newMap.delete(keywordToRemove);
+      return newMap;
+    });
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -273,21 +329,60 @@ export function SEOHeaderBar({
         <div className="flex items-center gap-3">
           <span className="text-sm text-gray-700 font-medium">Keywords:</span>
           
-          {/* Active Keywords */}
+          {/* Active Keywords mit Pro-Keyword-Scores */}
           <div className="flex items-center gap-2 flex-wrap">
-            {keywords.map((keyword, index) => (
-              <Badge
-                key={`active-${index}`}
-                color="blue"
-                className="text-xs px-2 py-1 cursor-pointer hover:bg-blue-200 transition-colors"
-              >
-                {keyword}
-                <XMarkIcon 
-                  className="ml-1 h-3 w-3 hover:text-red-600 transition-colors" 
-                  onClick={() => handleRemoveKeyword(keyword)}
-                />
-              </Badge>
-            ))}
+            {keywords.map((keyword, index) => {
+              const metrics = perKeywordMetrics.get(keyword);
+              const hasKIData = metrics?.semanticRelevance !== undefined;
+              const scoreColor = hasKIData 
+                ? (metrics.semanticRelevance! >= 70 ? 'green' : 
+                   metrics.semanticRelevance! >= 40 ? 'yellow' : 'red')
+                : 'blue';
+              
+              return (
+                <div key={`active-${index}`} className="relative group">
+                  <Badge
+                    color={scoreColor as any}
+                    className="text-xs px-2 py-1 cursor-pointer hover:bg-opacity-80 transition-all"
+                  >
+                    <span>{keyword}</span>
+                    {hasKIData && (
+                      <span className="ml-2 font-bold">
+                        {metrics.semanticRelevance}%
+                      </span>
+                    )}
+                    <XMarkIcon 
+                      className="ml-1 h-3 w-3 hover:text-red-600 transition-colors" 
+                      onClick={() => handleRemoveKeyword(keyword)}
+                    />
+                  </Badge>
+                  
+                  {/* Hover-Tooltip mit Details */}
+                  {metrics && (
+                    <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block z-10 
+                                    bg-white border border-gray-200 rounded-lg shadow-lg p-3 min-w-[200px]">
+                      <div className="text-xs space-y-1">
+                        <div className="font-semibold mb-2">{keyword}</div>
+                        <div>Dichte: {metrics.density.toFixed(1)}%</div>
+                        <div>Vorkommen: {metrics.occurrences}x</div>
+                        <div>In Headline: {metrics.inHeadline ? '✅' : '❌'}</div>
+                        <div>Im Lead: {metrics.inFirstParagraph ? '✅' : '❌'}</div>
+                        <div>Verteilung: {metrics.distribution}</div>
+                        {hasKIData && (
+                          <>
+                            <div className="border-t pt-1 mt-1">
+                              <div>Relevanz: {metrics.semanticRelevance}%</div>
+                              <div>Qualität: {metrics.contextQuality}%</div>
+                              <div>Stärke: {metrics.keywordStrength}</div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
 
             {/* Auto-Detected Keywords (als Vorschläge) */}
             {autoDetectedKeywords
@@ -334,11 +429,18 @@ export function SEOHeaderBar({
           </div>
         </div>
         
+        {/* Keyword Warning */}
+        {keywordWarning && (
+          <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-md">
+            <p className="text-sm text-yellow-800">⚠️ {keywordWarning}</p>
+          </div>
+        )}
+        
         {/* Analysis Status */}
         {isAnalyzing && (
           <div className="flex items-center gap-1">
             <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-            <span className="text-xs">Analysiere...</span>
+            <span className="text-xs">Analysiere mit KI...</span>
           </div>
         )}
 
