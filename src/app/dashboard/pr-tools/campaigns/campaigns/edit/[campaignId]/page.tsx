@@ -16,7 +16,7 @@ import { Select } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import CampaignContentComposer from '@/components/pr/campaign/CampaignContentComposer';
-import { CustomerSelector } from "@/components/pr/CustomerSelector";
+import { ModernCustomerSelector } from "@/components/pr/ModernCustomerSelector";
 import { ListSelector } from "@/components/pr/ListSelector";
 import {
   PlusIcon,
@@ -480,7 +480,7 @@ export default function EditPRCampaignPage() {
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Absender</h3>
                 
-                <CustomerSelector
+                <ModernCustomerSelector
                   value={selectedCompanyId}
                   onChange={(companyId, companyName) => {
                     setSelectedCompanyId(companyId);
@@ -722,7 +722,8 @@ export default function EditPRCampaignPage() {
             <Button 
               type="button" 
               onClick={() => router.push('/dashboard/pr-tools/campaigns')}
-              className="bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-300"
+              plain
+              className="!bg-gray-50 hover:!bg-gray-100 !text-gray-700 !border !border-gray-300"
             >
               Abbrechen
             </Button>
