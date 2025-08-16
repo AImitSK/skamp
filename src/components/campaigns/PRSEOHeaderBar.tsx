@@ -787,7 +787,9 @@ Beispiel-Format (nutze deine eigenen Werte):
           <div className="flex items-start gap-2">
             <InformationCircleIcon className="h-4 w-4 text-gray-600 mt-0.5 flex-shrink-0" />
             <div>
-              <p className="text-sm font-medium text-gray-900 mb-1">Empfehlungen:</p>
+              <p className="text-sm font-medium text-gray-900 mb-1">
+                Empfehlungen: ({recommendations.length})
+              </p>
               <ul className="text-xs text-gray-700 space-y-2">
                 {(showAllRecommendations ? recommendations : recommendations.slice(0, 3)).map((rec, index) => (
                   <li key={index} className="flex items-start gap-1.5 leading-relaxed">
