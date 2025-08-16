@@ -588,6 +588,56 @@ grep -r "h-8 w-8.*text-zinc-400" src/
 - **Phase 3: Workflow-Optimierung** ← OPTION VERFÜGBAR
 - **Phase 4: Advanced Features** ← OPTION VERFÜGBAR
 
+### 🎯 **AKTUELLE SESSION (16.08.2025 Nachmittag) - 3-STEP WORKFLOW REDESIGN:**
+
+**📋 NEUE AUFGABE:** Campaign Editor in 3 übersichtliche Steps aufteilen
+
+#### 🚀 **3-Step Navigation System:**
+```
+Step 1: Pressemeldung    Step 2: Einstellungen    Step 3: Vorschau
+     ✍️                       ⚙️                    👁️
+```
+
+**🎯 Step 1: Pressemeldung** (Focus auf Content)
+- Kunde (Absender-Bereich)
+- KI-Assistent Button
+- Titel
+- Haupttext Editor mit Floating AI Toolbar
+- PR-SEO Box (vollständig integriert)
+- Key Visual Selection
+
+**Zwischenüberschriften (einheitliche Optik):**
+- "Absender" 
+- "Pressemeldung"
+
+**🎯 Step 2: Einstellungen** (Distribution & Assets)
+- Textbausteine (Boilerplate Sections)
+- Anhänge (Media Library)
+- Verteiler (Distribution Lists)
+- Freigaben (Approval Settings)
+- (weitere Features wenn vorhanden)
+
+**🎯 Step 3: Vorschau** (Review & Submit)
+- Komplette Kampagnen-Vorschau
+- Entwurf speichern
+- Versenden
+- Freigabe erbitten (falls ausgewählt)
+
+#### 🎨 **Design Pattern:**
+- **Tab-Navigation:** Clean Tabs ohne border-b
+- **Aktive Tabs:** Primary-Farbe #005fab Unterstreichung
+- **Icons:** h-4 w-4 mr-2 für Tab-Icons
+- **Progressive Disclosure:** Nur relevante Felder pro Step
+- **Navigation:** Vor/Zurück Buttons zwischen Steps
+
+#### 🔧 **Technische Implementation:**
+- **State Management:** currentStep (1|2|3) State hinzufügen
+- **Validation:** Step-basierte Validierung
+- **Auto-Save:** Funktioniert Step-übergreifend
+- **URL-Parameter:** ?step=1,2,3 für direkte Navigation
+
+**🎯 Ziel:** Weniger überwältigend für neue User, fokussierter Workflow
+
 ### 📋 **Für später vorgemerkt:**
 - **SEO Tool Widget** - Separates Widget unterhalb des Editors mit:
   - Keyword-Eingabe Felder
