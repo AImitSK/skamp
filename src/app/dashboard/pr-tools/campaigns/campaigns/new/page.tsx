@@ -408,7 +408,7 @@ export default function NewPRCampaignPage() {
               </div>
 
               {/* Pressemeldung */}
-              <div className="mb-8 border-t pt-8">
+              <div className="mb-8 mt-8">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-900">Pressemeldung</h3>
                   <Button
@@ -454,7 +454,7 @@ export default function NewPRCampaignPage() {
               </div>
 
               {/* Key Visual */}
-              <div className="border-t pt-8">
+              <div className="mt-8">
                 <KeyVisualSection
                   value={keyVisual}
                   onChange={setKeyVisual}

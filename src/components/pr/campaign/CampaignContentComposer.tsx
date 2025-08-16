@@ -480,7 +480,7 @@ export default function CampaignContentComposer({
 
         {/* Gmail-Style Main Content Editor - nur wenn nicht versteckt */}
         {!hideMainContentField && (
-          <Field>
+          <Field className="mt-8">
             <Label className="flex items-center">
               Hauptinhalt der Pressemitteilung
               <InfoTooltip 
@@ -501,7 +501,7 @@ export default function CampaignContentComposer({
             </div>
             {/* PR-SEO Analyse */}
             {onKeywordsChange && (
-              <div className="mt-4">
+              <div className="mt-8">
                 <PRSEOHeaderBar
                   title="PR-SEO Analyse 2.0"
                   content={`${title ? `${title}\n\n` : ''}${mainContent}`}
