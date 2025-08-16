@@ -724,30 +724,24 @@ Beispiel-Format (nutze deine eigenen Werte):
       {keywords.length > 0 && (
         <>
           <div className="grid grid-cols-3 gap-2 mb-3">
-            <div className="bg-white rounded-md p-3">
-              <div className={clsx('font-bold text-center text-xl', 
-                getScoreColor(scoreBreakdown.headline) === 'green' ? 'text-green-600' : 
-                getScoreColor(scoreBreakdown.headline) === 'orange' ? 'text-orange-600' : 'text-red-600')}>
+            <Badge color={getScoreBadgeColor(scoreBreakdown.headline)} className="py-3 flex flex-col items-center">
+              <div className="font-bold text-xl">
                 {scoreBreakdown.headline}/100
               </div>
-              <div className="text-gray-600 text-center text-xs">Headline</div>
-            </div>
-            <div className="bg-white rounded-md p-3">
-              <div className={clsx('font-bold text-center text-xl', 
-                getScoreColor(scoreBreakdown.keywords) === 'green' ? 'text-green-600' : 
-                getScoreColor(scoreBreakdown.keywords) === 'orange' ? 'text-orange-600' : 'text-red-600')}>
+              <div className="text-xs mt-1">Headline</div>
+            </Badge>
+            <Badge color={getScoreBadgeColor(scoreBreakdown.keywords)} className="py-3 flex flex-col items-center">
+              <div className="font-bold text-xl">
                 {scoreBreakdown.keywords}/100
               </div>
-              <div className="text-gray-600 text-center text-xs">Keywords</div>
-            </div>
-            <div className="bg-white rounded-md p-3">
-              <div className={clsx('font-bold text-center text-xl', 
-                getScoreColor(scoreBreakdown.structure) === 'green' ? 'text-green-600' : 
-                getScoreColor(scoreBreakdown.structure) === 'orange' ? 'text-orange-600' : 'text-red-600')}>
+              <div className="text-xs mt-1">Keywords</div>
+            </Badge>
+            <Badge color={getScoreBadgeColor(scoreBreakdown.structure)} className="py-3 flex flex-col items-center">
+              <div className="font-bold text-xl">
                 {scoreBreakdown.structure}/100
               </div>
-              <div className="text-gray-600 text-center text-xs">Struktur</div>
-            </div>
+              <div className="text-xs mt-1">Struktur</div>
+            </Badge>
           </div>
           
           {/* Globale KI-Analyse für gesamten Text */}
