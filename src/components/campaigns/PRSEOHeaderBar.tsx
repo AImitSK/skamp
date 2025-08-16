@@ -196,25 +196,33 @@ export function PRSEOHeaderBar({
 
     // 20% Struktur & Lesbarkeit
     let structureScore = 0;
-    if (prMetrics.avgParagraphLength >= 100 && prMetrics.avgParagraphLength <= 200) {
+    
+    // Absatzlänge bewerten (flexiblere Bewertung)
+    if (prMetrics.avgParagraphLength >= 100 && prMetrics.avgParagraphLength <= 300) {
       structureScore += 30;
+    } else if (prMetrics.avgParagraphLength >= 50 && prMetrics.avgParagraphLength <= 500) {
+      structureScore += 20; // Teilpunkte für ok Länge
     } else {
       recommendations.push(`Absatzlänge optimieren (aktuell: ${prMetrics.avgParagraphLength.toFixed(0)} Zeichen)`);
     }
+    
+    // Bullet Points (optional)
     if (prMetrics.hasBulletPoints) {
       structureScore += 20;
-    } else {
-      recommendations.push('Aufzählungspunkte für bessere Struktur hinzufügen');
     }
+    
+    // Zwischenüberschriften (optional)
     if (prMetrics.hasSubheadings) {
       structureScore += 25;
-    } else {
-      recommendations.push('Zwischenüberschriften für bessere Gliederung verwenden');
     }
-    if (prMetrics.leadLength >= 120 && prMetrics.leadLength <= 200) {
+    
+    // Lead-Länge bewerten (flexiblere Bewertung)
+    if (prMetrics.leadLength >= 80 && prMetrics.leadLength <= 250) {
       structureScore += 25;
+    } else if (prMetrics.leadLength >= 40 && prMetrics.leadLength <= 400) {
+      structureScore += 15; // Teilpunkte für ok Länge
     } else {
-      recommendations.push(`Lead-Absatz sollte 120-200 Zeichen haben (aktuell: ${prMetrics.leadLength})`);
+      recommendations.push(`Lead-Absatz sollte 80-250 Zeichen haben (aktuell: ${prMetrics.leadLength})`);
     }
     
     console.log('📊 Struktur-Score Details:', {
@@ -306,7 +314,7 @@ Bewerte auf einer Skala von 0-100:
 2. Kontext-Qualität: Wie natürlich ist das Keyword im Text eingebunden?
 3. Verwandte Begriffe: Nenne 3 verwandte Begriffe, die im Text vorkommen
 
-Antworte im JSON-Format:
+WICHTIG: Antworte ausschließlich mit einem JSON-Objekt, keine zusätzlichen Texte oder HTML:
 {
   "semanticRelevance": 85,
   "contextQuality": 78,
@@ -332,21 +340,32 @@ Antworte im JSON-Format:
         }
         
         try {
-          // Versuche JSON zu parsen
-          const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            const result = JSON.parse(jsonMatch[0]);
-            console.log(`✅ KI-Analyse für "${keyword}":`, result);
-            return {
-              semanticRelevance: Math.min(100, Math.max(0, result.semanticRelevance || 50)),
-              contextQuality: Math.min(100, Math.max(0, result.contextQuality || 50)),
-              relatedTerms: Array.isArray(result.relatedTerms) ? result.relatedTerms.slice(0, 3) : []
-            };
-          } else {
-            console.warn('⚠️ Kein JSON in KI-Response gefunden:', responseText);
-          }
+          // Versuche direktes JSON-Parse
+          const result = JSON.parse(responseText);
+          console.log(`✅ KI-Analyse für "${keyword}":`, result);
+          return {
+            semanticRelevance: Math.min(100, Math.max(0, result.semanticRelevance || 50)),
+            contextQuality: Math.min(100, Math.max(0, result.contextQuality || 50)),
+            relatedTerms: Array.isArray(result.relatedTerms) ? result.relatedTerms.slice(0, 3) : []
+          };
         } catch (parseError) {
-          console.warn('⚠️ KI-Response JSON-Parse Fehler:', parseError, 'Content:', responseText);
+          // Fallback: Versuche JSON aus Text zu extrahieren
+          try {
+            const jsonMatch = responseText.match(/\{[\s\S]*?\}/);
+            if (jsonMatch) {
+              const result = JSON.parse(jsonMatch[0]);
+              console.log(`✅ KI-Analyse für "${keyword}" (extracted):`, result);
+              return {
+                semanticRelevance: Math.min(100, Math.max(0, result.semanticRelevance || 50)),
+                contextQuality: Math.min(100, Math.max(0, result.contextQuality || 50)),
+                relatedTerms: Array.isArray(result.relatedTerms) ? result.relatedTerms.slice(0, 3) : []
+              };
+            } else {
+              console.warn('⚠️ Kein JSON in KI-Response gefunden:', responseText.substring(0, 200) + '...');
+            }
+          } catch (secondParseError) {
+            console.warn('⚠️ KI-Response JSON-Parse Fehler:', secondParseError, 'Content:', responseText.substring(0, 200) + '...');
+          }
         }
       } else {
         console.error('❌ KI-API HTTP Error:', response.status, response.statusText);
@@ -474,7 +493,7 @@ Antworte im JSON-Format:
             onClick={handleRefreshAnalysis}
             disabled={isAnalyzing}
             size="sm"
-            className="bg-[#005fab] hover:bg-[#004a8c] text-white"
+            className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white whitespace-nowrap"
           >
             <SparklesIcon className="h-4 w-4" />
             {isAnalyzing ? 'Analysiert...' : 'KI-Analyse aktualisieren'}
