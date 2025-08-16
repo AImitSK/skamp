@@ -681,18 +681,27 @@ Beispiel-Format (nutze deine eigenen Werte):
             <div key={metrics.keyword} className="flex items-center bg-white rounded-md p-3 gap-4">
               {/* Links: Keyword + Basis-Metriken */}
               <div className="flex items-center gap-3 flex-1">
-                <Badge color="zinc">
+                <div className="text-base font-medium text-gray-900">
                   {metrics.keyword}
-                </Badge>
-                <div className="flex gap-4 text-sm text-gray-600">
-                  <span title="Keyword-Dichte">{metrics.density.toFixed(1)}% Dichte</span>
-                  <span title="Anzahl Vorkommen">{metrics.occurrences}x Vorkommen</span>
-                  <span title="Keyword-Verteilung" className={clsx(
-                    metrics.distribution === 'gut' ? 'text-green-600' :
-                    metrics.distribution === 'mittel' ? 'text-orange-600' : 'text-red-600'
+                </div>
+                <div className="flex gap-2 items-center">
+                  <div className="inline-flex items-center gap-1 bg-white border border-gray-300 rounded-md px-2 py-0.5 text-xs">
+                    <span className="font-semibold">Dichte:</span>
+                    <span>{metrics.density.toFixed(1)}%</span>
+                  </div>
+                  <div className="inline-flex items-center gap-1 bg-white border border-gray-300 rounded-md px-2 py-0.5 text-xs">
+                    <span className="font-semibold">Vorkommen:</span>
+                    <span>{metrics.occurrences}x</span>
+                  </div>
+                  <div className={clsx(
+                    "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs",
+                    metrics.distribution === 'gut' ? 'bg-green-50 text-green-700 border border-green-300' :
+                    metrics.distribution === 'mittel' ? 'bg-orange-50 text-orange-700 border border-orange-300' : 
+                    'bg-red-50 text-red-700 border border-red-300'
                   )}>
-                    {metrics.distribution} Verteilung
-                  </span>
+                    <span className="font-semibold">Verteilung:</span>
+                    <span>{metrics.distribution}</span>
+                  </div>
                 </div>
               </div>
               
@@ -714,30 +723,30 @@ Beispiel-Format (nutze deine eigenen Werte):
       {/* Score-Aufschlüsselung in 3 Boxen */}
       {keywords.length > 0 && (
         <>
-          <div className="grid grid-cols-3 gap-2 text-xs mb-3">
-            <div className="bg-white rounded-md p-2">
-              <div className={clsx('font-semibold text-center', 
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            <div className="bg-white rounded-md p-3">
+              <div className={clsx('font-bold text-center text-xl', 
                 getScoreColor(scoreBreakdown.headline) === 'green' ? 'text-green-600' : 
                 getScoreColor(scoreBreakdown.headline) === 'orange' ? 'text-orange-600' : 'text-red-600')}>
                 {scoreBreakdown.headline}/100
               </div>
-              <div className="text-gray-600 text-center">Headline</div>
+              <div className="text-gray-600 text-center text-xs">Headline</div>
             </div>
-            <div className="bg-white rounded-md p-2">
-              <div className={clsx('font-semibold text-center', 
+            <div className="bg-white rounded-md p-3">
+              <div className={clsx('font-bold text-center text-xl', 
                 getScoreColor(scoreBreakdown.keywords) === 'green' ? 'text-green-600' : 
                 getScoreColor(scoreBreakdown.keywords) === 'orange' ? 'text-orange-600' : 'text-red-600')}>
                 {scoreBreakdown.keywords}/100
               </div>
-              <div className="text-gray-600 text-center">Keywords</div>
+              <div className="text-gray-600 text-center text-xs">Keywords</div>
             </div>
-            <div className="bg-white rounded-md p-2">
-              <div className={clsx('font-semibold text-center', 
+            <div className="bg-white rounded-md p-3">
+              <div className={clsx('font-bold text-center text-xl', 
                 getScoreColor(scoreBreakdown.structure) === 'green' ? 'text-green-600' : 
                 getScoreColor(scoreBreakdown.structure) === 'orange' ? 'text-orange-600' : 'text-red-600')}>
                 {scoreBreakdown.structure}/100
               </div>
-              <div className="text-gray-600 text-center">Struktur</div>
+              <div className="text-gray-600 text-center text-xs">Struktur</div>
             </div>
           </div>
           
