@@ -104,8 +104,6 @@ function KIAnalysisBox({ metrics, isLoading }: KIAnalysisBoxProps) {
       <SparklesIcon className="h-3 w-3" />
       <span>
         Relevanz {metrics.semanticRelevance || 0}%{relevanceTrend}
-        {metrics.targetAudience && `     ${metrics.targetAudience}`}
-        {metrics.tonality && `     ${metrics.tonality}`}
       </span>
     </div>
   );
@@ -715,32 +713,55 @@ Beispiel-Format (nutze deine eigenen Werte):
 
       {/* Score-Aufschlüsselung in 3 Boxen */}
       {keywords.length > 0 && (
-        <div className="grid grid-cols-3 gap-2 text-xs mb-4">
-          <div className="bg-white rounded-md p-2 border border-gray-200">
-            <div className={clsx('font-semibold text-center', 
-              getScoreColor(scoreBreakdown.headline) === 'green' ? 'text-green-600' : 
-              getScoreColor(scoreBreakdown.headline) === 'orange' ? 'text-orange-600' : 'text-red-600')}>
-              {scoreBreakdown.headline}/100
+        <>
+          <div className="grid grid-cols-3 gap-2 text-xs mb-3">
+            <div className="bg-white rounded-md p-2">
+              <div className={clsx('font-semibold text-center', 
+                getScoreColor(scoreBreakdown.headline) === 'green' ? 'text-green-600' : 
+                getScoreColor(scoreBreakdown.headline) === 'orange' ? 'text-orange-600' : 'text-red-600')}>
+                {scoreBreakdown.headline}/100
+              </div>
+              <div className="text-gray-600 text-center">Headline</div>
             </div>
-            <div className="text-gray-600 text-center">Headline</div>
-          </div>
-          <div className="bg-white rounded-md p-2 border border-gray-200">
-            <div className={clsx('font-semibold text-center', 
-              getScoreColor(scoreBreakdown.keywords) === 'green' ? 'text-green-600' : 
-              getScoreColor(scoreBreakdown.keywords) === 'orange' ? 'text-orange-600' : 'text-red-600')}>
-              {scoreBreakdown.keywords}/100
+            <div className="bg-white rounded-md p-2">
+              <div className={clsx('font-semibold text-center', 
+                getScoreColor(scoreBreakdown.keywords) === 'green' ? 'text-green-600' : 
+                getScoreColor(scoreBreakdown.keywords) === 'orange' ? 'text-orange-600' : 'text-red-600')}>
+                {scoreBreakdown.keywords}/100
+              </div>
+              <div className="text-gray-600 text-center">Keywords</div>
             </div>
-            <div className="text-gray-600 text-center">Keywords</div>
-          </div>
-          <div className="bg-white rounded-md p-2 border border-gray-200">
-            <div className={clsx('font-semibold text-center', 
-              getScoreColor(scoreBreakdown.structure) === 'green' ? 'text-green-600' : 
-              getScoreColor(scoreBreakdown.structure) === 'orange' ? 'text-orange-600' : 'text-red-600')}>
-              {scoreBreakdown.structure}/100
+            <div className="bg-white rounded-md p-2">
+              <div className={clsx('font-semibold text-center', 
+                getScoreColor(scoreBreakdown.structure) === 'green' ? 'text-green-600' : 
+                getScoreColor(scoreBreakdown.structure) === 'orange' ? 'text-orange-600' : 'text-red-600')}>
+                {scoreBreakdown.structure}/100
+              </div>
+              <div className="text-gray-600 text-center">Struktur</div>
             </div>
-            <div className="text-gray-600 text-center">Struktur</div>
           </div>
-        </div>
+          
+          {/* Globale KI-Analyse für gesamten Text */}
+          {keywordMetrics.length > 0 && keywordMetrics.some(km => km.targetAudience || km.tonality) && (
+            <div className="bg-purple-50 rounded-md p-3 mb-4">
+              <div className="flex items-center gap-2 text-xs text-purple-700">
+                <SparklesIcon className="h-4 w-4" />
+                <div className="flex items-center gap-4">
+                  {keywordMetrics[0]?.targetAudience && (
+                    <span>
+                      <strong>Zielgruppe:</strong> {keywordMetrics[0].targetAudience}
+                    </span>
+                  )}
+                  {keywordMetrics[0]?.tonality && (
+                    <span>
+                      <strong>Tonalität:</strong> {keywordMetrics[0].tonality}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Empfehlungen */}
