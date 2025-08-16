@@ -166,7 +166,7 @@ export function PRSEOHeaderBar({
   }, [keywords]);
 
   // PR-Score berechnen
-  const calculatePRScore = useCallback((prMetrics: PRMetrics, keywordMetrics: KeywordMetrics[]): { totalScore: number, breakdown: PRScoreBreakdown, recommendations: string[] } => {
+  const calculatePRScore = useCallback((prMetrics: PRMetrics, keywordMetrics: KeywordMetrics[], text: string): { totalScore: number, breakdown: PRScoreBreakdown, recommendations: string[] } => {
     const recommendations: string[] = [];
     
     // 25% Headline & Lead-Qualität
@@ -437,7 +437,7 @@ Antworte im JSON-Format:
   // PR-Score berechnen
   useEffect(() => {
     const prMetrics = calculatePRMetrics(content, documentTitle);
-    const { totalScore, breakdown, recommendations: newRecommendations } = calculatePRScore(prMetrics, keywordMetrics);
+    const { totalScore, breakdown, recommendations: newRecommendations } = calculatePRScore(prMetrics, keywordMetrics, content);
     
     setPrScore(totalScore);
     setScoreBreakdown(breakdown);
