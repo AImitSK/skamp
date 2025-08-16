@@ -445,6 +445,7 @@ export default function NewPRCampaignPage() {
                   initialBoilerplateSections={boilerplateSections}
                   hideMainContentField={false}
                   hidePreview={true}
+                  hideBoilerplates={true}
                   keywords={keywords}
                   onKeywordsChange={setKeywords}
                 />
@@ -609,6 +610,8 @@ export default function NewPRCampaignPage() {
               initialBoilerplateSections={boilerplateSections}
               hideMainContentField={true}
               hidePreview={false}
+              hideBoilerplates={true}
+              readOnlyTitle={true}
               keywords={keywords}
               onKeywordsChange={setKeywords}
             />
@@ -618,7 +621,11 @@ export default function NewPRCampaignPage() {
         {/* Navigation Buttons */}
         <div className="mt-6 flex justify-between">
           <div className="flex gap-3">
-            <Button type="button" plain onClick={() => router.push('/dashboard/pr-tools/campaigns')}>
+            <Button 
+              type="button" 
+              onClick={() => router.push('/dashboard/pr-tools/campaigns')}
+              className="bg-gray-50 hover:bg-gray-100 text-gray-900"
+            >
               Abbrechen
             </Button>
             {currentStep > 1 && (

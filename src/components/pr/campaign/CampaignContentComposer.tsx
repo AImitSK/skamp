@@ -84,6 +84,8 @@ interface CampaignContentComposerProps {
   initialBoilerplateSections?: BoilerplateSection[];
   hideMainContentField?: boolean;
   hidePreview?: boolean; // Neue Option um Vorschau zu verstecken
+  hideBoilerplates?: boolean; // Neue Option um Boilerplates zu verstecken
+  readOnlyTitle?: boolean; // Neue Option für read-only Titel in Vorschau
   // PR-SEO props
   keywords?: string[];
   onKeywordsChange?: (keywords: string[]) => void;
@@ -253,6 +255,8 @@ export default function CampaignContentComposer({
   initialBoilerplateSections = [],
   hideMainContentField = false,
   hidePreview = false,
+  hideBoilerplates = false,
+  readOnlyTitle = false,
   keywords = [],
   onKeywordsChange
 }: CampaignContentComposerProps) {
@@ -443,22 +447,28 @@ export default function CampaignContentComposer({
 
       <div className="space-y-6">
         {/* Title Input */}
-        <Field>
-          <Label className="flex items-center">
-            Titel der Pressemitteilung
-            <InfoTooltip 
-              content="Pflichtfeld: Der Titel sollte prägnant und aussagekräftig sein. Er wird als Überschrift in der Pressemitteilung und im E-Mail-Betreff verwendet."
-              className="ml-1"
+        {!readOnlyTitle ? (
+          <Field>
+            <Label className="flex items-center">
+              Titel der Pressemitteilung
+              <InfoTooltip 
+                content="Pflichtfeld: Der Titel sollte prägnant und aussagekräftig sein. Er wird als Überschrift in der Pressemitteilung und im E-Mail-Betreff verwendet."
+                className="ml-1"
+              />
+            </Label>
+            <Input
+              type="text"
+              value={title}
+              onChange={(e) => onTitleChange(e.target.value)}
+              placeholder="z.B. Neue Partnerschaft revolutioniert die Branche"
+              required
             />
-          </Label>
-          <Input
-            type="text"
-            value={title}
-            onChange={(e) => onTitleChange(e.target.value)}
-            placeholder="z.B. Neue Partnerschaft revolutioniert die Branche"
-            required
-          />
-        </Field>
+          </Field>
+        ) : (
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">{title || 'Kein Titel vorhanden'}</h2>
+          </div>
+        )}
 
         {/* Gmail-Style Main Content Editor - nur wenn nicht versteckt */}
         {!hideMainContentField && (
@@ -496,16 +506,18 @@ export default function CampaignContentComposer({
           </Field>
         )}
 
-        {/* Boilerplate Sections */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <IntelligentBoilerplateSection
-            organizationId={organizationId}
-            clientId={clientId}
-            clientName={clientName}
-            onContentChange={handleBoilerplateSectionsChange}
-            initialSections={boilerplateSections}
-          />
-        </div>
+        {/* Boilerplate Sections - nur wenn nicht versteckt */}
+        {!hideBoilerplates && (
+          <div className="bg-gray-50 rounded-lg p-4">
+            <IntelligentBoilerplateSection
+              organizationId={organizationId}
+              clientId={clientId}
+              clientName={clientName}
+              onContentChange={handleBoilerplateSectionsChange}
+              initialSections={boilerplateSections}
+            />
+          </div>
+        )}
 
         {/* Preview Toggle - nur anzeigen wenn nicht versteckt */}
         {!hidePreview && (
