@@ -662,7 +662,7 @@ Beispiel-Format (nutze deine eigenen Werte):
               type="button"
               onClick={handleAddKeyword}
               disabled={!newKeyword.trim() || keywords.includes(newKeyword.trim()) || keywords.length >= 2}
-              className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap px-3 py-1.5 text-sm"
+              className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap px-3 py-1.5 text-sm disabled:bg-[#005fab] disabled:text-white disabled:opacity-100"
             >
               Hinzufügen
             </Button>
@@ -720,24 +720,39 @@ Beispiel-Format (nutze deine eigenen Werte):
       {keywords.length > 0 && (
         <>
           <div className="grid grid-cols-3 gap-2 mb-3">
-            <Badge color={getScoreBadgeColor(scoreBreakdown.headline)} className="py-3 flex flex-col items-center">
-              <div className="font-bold text-xl">
-                {scoreBreakdown.headline}/100
+            <div className="bg-gray-100 rounded-md p-3 flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                scoreBreakdown.headline >= 70 ? 'bg-green-500' :
+                scoreBreakdown.headline >= 40 ? 'bg-orange-500' : 'bg-red-500'
+              }`}></div>
+              <div className="flex-1">
+                <div className="text-base font-semibold text-gray-900">
+                  Headline: {scoreBreakdown.headline}/100
+                </div>
               </div>
-              <div className="text-xs mt-1">Headline</div>
-            </Badge>
-            <Badge color={getScoreBadgeColor(scoreBreakdown.keywords)} className="py-3 flex flex-col items-center">
-              <div className="font-bold text-xl">
-                {scoreBreakdown.keywords}/100
+            </div>
+            <div className="bg-gray-100 rounded-md p-3 flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                scoreBreakdown.keywords >= 70 ? 'bg-green-500' :
+                scoreBreakdown.keywords >= 40 ? 'bg-orange-500' : 'bg-red-500'
+              }`}></div>
+              <div className="flex-1">
+                <div className="text-base font-semibold text-gray-900">
+                  Keywords: {scoreBreakdown.keywords}/100
+                </div>
               </div>
-              <div className="text-xs mt-1">Keywords</div>
-            </Badge>
-            <Badge color={getScoreBadgeColor(scoreBreakdown.structure)} className="py-3 flex flex-col items-center">
-              <div className="font-bold text-xl">
-                {scoreBreakdown.structure}/100
+            </div>
+            <div className="bg-gray-100 rounded-md p-3 flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                scoreBreakdown.structure >= 70 ? 'bg-green-500' :
+                scoreBreakdown.structure >= 40 ? 'bg-orange-500' : 'bg-red-500'
+              }`}></div>
+              <div className="flex-1">
+                <div className="text-base font-semibold text-gray-900">
+                  Struktur: {scoreBreakdown.structure}/100
+                </div>
               </div>
-              <div className="text-xs mt-1">Struktur</div>
-            </Badge>
+            </div>
           </div>
           
           {/* Globale KI-Analyse für gesamten Text */}
@@ -765,12 +780,12 @@ Beispiel-Format (nutze deine eigenen Werte):
 
       {/* Empfehlungen */}
       {recommendations.length > 0 && keywords.length > 0 && (
-        <div className="mt-4 p-3 bg-blue-50 rounded-md">
+        <div className="mt-4 p-3 bg-gray-100 rounded-md">
           <div className="flex items-start gap-2">
-            <InformationCircleIcon className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+            <InformationCircleIcon className="h-4 w-4 text-gray-600 mt-0.5 flex-shrink-0" />
             <div>
-              <p className="text-sm font-medium text-blue-900 mb-1">Empfehlungen:</p>
-              <ul className="text-xs text-blue-800 space-y-1">
+              <p className="text-sm font-medium text-gray-900 mb-1">Empfehlungen:</p>
+              <ul className="text-xs text-gray-700 space-y-1">
                 {(showAllRecommendations ? recommendations : recommendations.slice(0, 3)).map((rec, index) => (
                   <li key={index} className="flex items-start gap-2">
                     {rec.startsWith('[KI]') ? (
@@ -792,7 +807,7 @@ Beispiel-Format (nutze deine eigenen Werte):
                     e.stopPropagation();
                     setShowAllRecommendations(!showAllRecommendations);
                   }}
-                  className="text-xs text-blue-600 hover:text-blue-800 mt-2 flex items-center gap-1 transition-colors"
+                  className="text-xs text-gray-600 hover:text-gray-800 mt-2 flex items-center gap-1 transition-colors"
                 >
                   {showAllRecommendations ? (
                     <>
