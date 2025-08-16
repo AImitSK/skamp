@@ -9,7 +9,9 @@ import {
   MagnifyingGlassIcon,
   SparklesIcon,
   XMarkIcon,
-  InformationCircleIcon
+  InformationCircleIcon,
+  ChevronDownIcon,
+  ChevronUpIcon
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 
@@ -83,6 +85,7 @@ export function PRSEOHeaderBar({
     engagement: 0
   });
   const [recommendations, setRecommendations] = useState<string[]>([]);
+  const [showAllRecommendations, setShowAllRecommendations] = useState(false);
 
   // Basis-Metriken berechnen (ohne KI)
   const calculateBasicMetrics = useCallback((keyword: string, text: string): Omit<KeywordMetrics, 'semanticRelevance' | 'contextQuality' | 'relatedTerms'> => {
@@ -123,7 +126,11 @@ export function PRSEOHeaderBar({
   // PR-spezifische Metriken berechnen
   const calculatePRMetrics = useCallback((text: string, title: string): PRMetrics => {
     const cleanText = text.replace(/<[^>]*>/g, '');
-    const paragraphs = cleanText.split('\n').filter(p => p.trim().length > 0);
+    
+    // Absätze korrekt aus HTML <p> Tags extrahieren
+    const paragraphMatches = text.match(/<p[^>]*>(.*?)<\/p>/gs) || [];
+    const paragraphs = paragraphMatches.map(p => p.replace(/<[^>]*>/g, '').trim()).filter(p => p.length > 0);
+    
     
     // Zitate zählen (markup-basiert)
     const prQuoteMatches = text.match(/<blockquote[^>]*data-type="pr-quote"[^>]*>/g) || [];
@@ -288,13 +295,6 @@ export function PRSEOHeaderBar({
       engagementScore += 25;
     }
     
-    console.log('📊 Engagement-Score Details:', {
-      quoteCount: prMetrics.quoteCount,
-      ctaCount,
-      hasActionVerbs: prMetrics.hasActionVerbs,
-      hasLearnMore: prMetrics.hasLearnMore,
-      engagementScore
-    });
 
     const breakdown: PRScoreBreakdown = {
       headline: headlineScore,
@@ -628,10 +628,28 @@ Antworte NUR mit diesem JSON-Format (ohne Markdown, HTML oder zusätzlichen Text
             <div>
               <p className="text-sm font-medium text-blue-900 mb-1">Empfehlungen:</p>
               <ul className="text-xs text-blue-800 space-y-1">
-                {recommendations.slice(0, 3).map((rec, index) => (
+                {(showAllRecommendations ? recommendations : recommendations.slice(0, 3)).map((rec, index) => (
                   <li key={index}>• {rec}</li>
                 ))}
               </ul>
+              {recommendations.length > 3 && (
+                <button
+                  onClick={() => setShowAllRecommendations(!showAllRecommendations)}
+                  className="text-xs text-blue-600 hover:text-blue-800 mt-2 flex items-center gap-1 transition-colors"
+                >
+                  {showAllRecommendations ? (
+                    <>
+                      weniger anzeigen
+                      <ChevronUpIcon className="h-3 w-3" />
+                    </>
+                  ) : (
+                    <>
+                      {recommendations.length - 3} weitere anzeigen
+                      <ChevronDownIcon className="h-3 w-3" />
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           </div>
         </div>
