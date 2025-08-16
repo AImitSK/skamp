@@ -305,21 +305,20 @@ export function PRSEOHeaderBar({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          prompt: `Analysiere das Keyword "${keyword}" im folgenden PR-Text:
+          prompt: `Du bist ein SEO-Analyst. Analysiere das Keyword "${keyword}" im folgenden PR-Text und bewerte es objektiv.
 
+Text:
+"""
 ${text}
+"""
 
-Bewerte auf einer Skala von 0-100:
-1. Semantische Relevanz: Wie gut passt das Keyword zum Inhalt?
-2. Kontext-Qualität: Wie natürlich ist das Keyword im Text eingebunden?
-3. Verwandte Begriffe: Nenne 3 verwandte Begriffe, die im Text vorkommen
+Aufgabe:
+1. Semantische Relevanz (0-100): Wie gut passt das Keyword zum Inhalt?
+2. Kontext-Qualität (0-100): Wie natürlich ist das Keyword eingebunden?
+3. Verwandte Begriffe: 3 Begriffe die im Text vorkommen und zum Keyword passen
 
-WICHTIG: Antworte ausschließlich mit einem JSON-Objekt, keine zusätzlichen Texte oder HTML:
-{
-  "semanticRelevance": 85,
-  "contextQuality": 78,
-  "relatedTerms": ["Begriff1", "Begriff2", "Begriff3"]
-}`
+Antworte NUR mit diesem JSON-Format (ohne Markdown, HTML oder zusätzlichen Text):
+{"semanticRelevance": 85, "contextQuality": 78, "relatedTerms": ["Begriff1", "Begriff2", "Begriff3"]}`
         })
       });
 
@@ -492,8 +491,7 @@ WICHTIG: Antworte ausschließlich mit einem JSON-Objekt, keine zusätzlichen Tex
             type="button"
             onClick={handleRefreshAnalysis}
             disabled={isAnalyzing}
-            size="sm"
-            className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white whitespace-nowrap"
+            className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white whitespace-nowrap px-3 py-1.5 text-sm"
           >
             <SparklesIcon className="h-4 w-4" />
             {isAnalyzing ? 'Analysiert...' : 'KI-Analyse aktualisieren'}
@@ -522,8 +520,7 @@ WICHTIG: Antworte ausschließlich mit einem JSON-Objekt, keine zusätzlichen Tex
             type="button"
             onClick={handleAddKeyword}
             disabled={!newKeyword.trim() || keywords.includes(newKeyword.trim()) || keywords.length >= 2}
-            size="sm"
-            className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
+            className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap px-3 py-1.5 text-sm"
           >
             Hinzufügen
           </Button>
