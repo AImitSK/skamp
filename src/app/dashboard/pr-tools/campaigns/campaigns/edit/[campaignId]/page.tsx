@@ -478,20 +478,22 @@ export default function EditPRCampaignPage() {
             <FieldGroup>
               {/* Absender */}
               <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Absender</h3>
-                
-                <ModernCustomerSelector
-                  value={selectedCompanyId}
-                  onChange={(companyId, companyName) => {
-                    setSelectedCompanyId(companyId);
-                    setSelectedCompanyName(companyName);
-                  }}
-                  required
-                />
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Absender</h3>
+                  
+                  <ModernCustomerSelector
+                    value={selectedCompanyId}
+                    onChange={(companyId, companyName) => {
+                      setSelectedCompanyId(companyId);
+                      setSelectedCompanyName(companyName);
+                    }}
+                    required
+                  />
+                </div>
               </div>
 
               {/* Pressemeldung */}
-              <div className="border-t pt-6 mt-6">
+              <div>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-900">Pressemeldung</h3>
                   <Button
