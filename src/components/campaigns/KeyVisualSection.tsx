@@ -174,9 +174,8 @@ export function KeyVisualSection({
 
   return (
     <div className="mb-6">
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-4">
         <h3 className="text-lg font-semibold text-gray-900">Key Visual</h3>
-        <Text className="text-sm text-gray-500">16:9 Format • Erscheint über der Headline</Text>
       </div>
 
       {!value ? (
