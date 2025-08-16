@@ -11,7 +11,8 @@ import {
   XMarkIcon,
   InformationCircleIcon,
   ChevronDownIcon,
-  ChevronUpIcon
+  ChevronUpIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 
@@ -74,28 +75,22 @@ interface KIAnalysisBoxProps {
 }
 
 function KIAnalysisBox({ metrics, isLoading }: KIAnalysisBoxProps) {
-  // Badge mit Farbverlauf-Rand Design  
-  const wrapperClasses = "relative inline-flex p-[1px] rounded-md bg-gradient-to-r from-indigo-500 to-purple-600";
-  const innerClasses = "inline-flex items-center gap-2 px-3 py-1 rounded-[5px] text-xs bg-purple-50 text-purple-700";
+  const boxClasses = "inline-flex items-center gap-2 px-3 py-1 rounded-md text-xs bg-purple-50 text-purple-700 border border-purple-300";
   
   if (isLoading) {
     return (
-      <div className={wrapperClasses}>
-        <div className={innerClasses}>
-          <div className="w-3 h-3 border border-purple-600 border-t-transparent rounded-full animate-spin"></div>
-          <span>KI analysiert...</span>
-        </div>
+      <div className={boxClasses}>
+        <div className="w-3 h-3 border border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+        <span>KI analysiert...</span>
       </div>
     );
   }
   
   if (!metrics.semanticRelevance && !metrics.targetAudience && !metrics.tonality) {
     return (
-      <div className={wrapperClasses}>
-        <div className={innerClasses}>
-          <SparklesIcon className="h-3 w-3" />
-          <span>Bereit für Analyse</span>
-        </div>
+      <div className={boxClasses}>
+        <SparklesIcon className="h-3 w-3" />
+        <span>Bereit für Analyse</span>
       </div>
     );
   }
@@ -104,12 +99,10 @@ function KIAnalysisBox({ metrics, isLoading }: KIAnalysisBoxProps) {
   const relevanceTrend = ""; // Später: "↑" oder "↓" basierend auf vorherigem Wert
   
   return (
-    <div className={wrapperClasses}>
-      <div className={innerClasses}>
-        <SparklesIcon className="h-3 w-3" />
-        <span className="font-semibold">Relevanz:</span>
-        <span>{metrics.semanticRelevance || 0}%{relevanceTrend}</span>
-      </div>
+    <div className={boxClasses}>
+      <SparklesIcon className="h-3 w-3" />
+      <span className="font-semibold">Relevanz:</span>
+      <span>{metrics.semanticRelevance || 0}%{relevanceTrend}</span>
     </div>
   );
 }
@@ -629,36 +622,51 @@ Beispiel-Format (nutze deine eigenen Werte):
           <h3 className="font-semibold text-gray-900">{title}</h3>
         </div>
         
-        <Badge color={getScoreBadgeColor(prScore)} className="text-base font-semibold px-4 py-2">
-          PR-Score: {prScore}/100
-        </Badge>
+        <div className="flex items-center gap-2">
+          {keywords.length > 0 && (
+            <button
+              type="button"
+              onClick={handleRefreshAnalysis}
+              disabled={isAnalyzing}
+              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+              title="KI-Analyse aktualisieren"
+            >
+              <ArrowPathIcon className={clsx('h-5 w-5', isAnalyzing && 'animate-spin')} />
+            </button>
+          )}
+          <Badge color={getScoreBadgeColor(prScore)} className="text-base font-semibold px-4 py-2">
+            PR-Score: {prScore}/100
+          </Badge>
+        </div>
       </div>
 
-      {/* Keyword-Eingabe */}
+      {/* Keyword-Eingabe - halbe Breite */}
       <div className="mb-4">
-        <div className="flex gap-2">
-          <Input
-            type="text"
-            value={newKeyword}
-            onChange={(e) => setNewKeyword(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                handleAddKeyword();
-              }
-            }}
-            placeholder={keywords.length >= 2 ? "Maximum 2 Keywords erreicht" : "Keyword hinzufügen..."}
-            disabled={keywords.length >= 2}
-            className="flex-1"
-          />
-          <Button
-            type="button"
-            onClick={handleAddKeyword}
-            disabled={!newKeyword.trim() || keywords.includes(newKeyword.trim()) || keywords.length >= 2}
-            className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap px-3 py-1.5 text-sm"
-          >
-            Hinzufügen
-          </Button>
+        <div className="flex">
+          <div className="flex gap-2 w-1/2">
+            <Input
+              type="text"
+              value={newKeyword}
+              onChange={(e) => setNewKeyword(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAddKeyword();
+                }
+              }}
+              placeholder={keywords.length >= 2 ? "Maximum 2 Keywords erreicht" : "Keyword hinzufügen..."}
+              disabled={keywords.length >= 2}
+              className="flex-1"
+            />
+            <Button
+              type="button"
+              onClick={handleAddKeyword}
+              disabled={!newKeyword.trim() || keywords.includes(newKeyword.trim()) || keywords.length >= 2}
+              className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap px-3 py-1.5 text-sm"
+            >
+              Hinzufügen
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -734,22 +742,20 @@ Beispiel-Format (nutze deine eigenen Werte):
           
           {/* Globale KI-Analyse für gesamten Text */}
           {keywordMetrics.length > 0 && keywordMetrics.some(km => km.targetAudience || km.tonality) && (
-            <div className="relative p-[1px] rounded-md bg-gradient-to-r from-indigo-500 to-purple-600 mb-4">
-              <div className="bg-purple-50 rounded-[5px] p-3">
-                <div className="flex items-center gap-2 text-xs text-purple-700">
-                  <SparklesIcon className="h-4 w-4" />
-                  <div className="flex items-center gap-4">
-                    {keywordMetrics[0]?.targetAudience && (
-                      <span>
-                        <strong>Zielgruppe:</strong> {keywordMetrics[0].targetAudience}
-                      </span>
-                    )}
-                    {keywordMetrics[0]?.tonality && (
-                      <span>
-                        <strong>Tonalität:</strong> {keywordMetrics[0].tonality}
-                      </span>
-                    )}
-                  </div>
+            <div className="bg-purple-50 border border-purple-300 rounded-md p-3 mb-4">
+              <div className="flex items-center gap-2 text-xs text-purple-700">
+                <SparklesIcon className="h-4 w-4" />
+                <div className="flex items-center gap-4">
+                  {keywordMetrics[0]?.targetAudience && (
+                    <span>
+                      <strong>Zielgruppe:</strong> {keywordMetrics[0].targetAudience}
+                    </span>
+                  )}
+                  {keywordMetrics[0]?.tonality && (
+                    <span>
+                      <strong>Tonalität:</strong> {keywordMetrics[0].tonality}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -803,21 +809,6 @@ Beispiel-Format (nutze deine eigenen Werte):
               )}
             </div>
           </div>
-        </div>
-      )}
-      
-      {/* KI-Button rechtsbündig unter Empfehlungen */}
-      {keywords.length > 0 && (
-        <div className="flex justify-end mt-4">
-          <Button
-            type="button"
-            onClick={handleRefreshAnalysis}
-            disabled={isAnalyzing}
-            className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white whitespace-nowrap px-3 py-1.5 text-sm"
-          >
-            <SparklesIcon className="h-4 w-4" />
-            {isAnalyzing ? 'Analysiert...' : 'KI-Analyse aktualisieren'}
-          </Button>
         </div>
       )}
     </div>
