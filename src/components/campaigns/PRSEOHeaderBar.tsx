@@ -128,7 +128,7 @@ export function PRSEOHeaderBar({
     const cleanText = text.replace(/<[^>]*>/g, '');
     
     // Absätze korrekt aus HTML <p> Tags extrahieren
-    const paragraphMatches = text.match(/<p[^>]*>(.*?)<\/p>/gs) || [];
+    const paragraphMatches = text.match(/<p[^>]*>([\s\S]*?)<\/p>/g) || [];
     const paragraphs = paragraphMatches.map(p => p.replace(/<[^>]*>/g, '').trim()).filter(p => p.length > 0);
     
     
