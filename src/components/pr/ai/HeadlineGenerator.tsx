@@ -156,7 +156,7 @@ ${currentTitle ? `Aktuelle Headline: "${currentTitle}"\n\n` : ''}Inhalt der Pres
 
       {/* Headlines Suggestions */}
       {showSuggestions && headlines.length > 0 && (
-        <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-20 p-4 min-w-[500px] max-w-[600px]">
+        <div className="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-20 p-4 min-w-[500px] max-w-[600px]">
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-sm font-semibold text-gray-900">KI-generierte Headlines</h4>
             <button
