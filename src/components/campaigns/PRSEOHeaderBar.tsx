@@ -186,10 +186,29 @@ export function PRSEOHeaderBar({
       const avgDensity = keywordMetrics.reduce((sum, km) => sum + km.density, 0) / keywordMetrics.length;
       const avgRelevance = keywordMetrics.reduce((sum, km) => sum + (km.semanticRelevance || 50), 0) / keywordMetrics.length;
       
-      if (avgDensity >= 0.5 && avgDensity <= 2.0) keywordScore += 50;
-      else recommendations.push(`Keyword-Dichte optimieren (aktuell: ${avgDensity.toFixed(1)}%)`);
+      // Individuelle Keyword-Empfehlungen statt Durchschnitt
+      if (avgDensity >= 0.5 && avgDensity <= 2.0) {
+        keywordScore += 50;
+      } else if (avgDensity < 0.5) {
+        recommendations.push(`Keywords öfter verwenden (Dichte: ${avgDensity.toFixed(1)}% - optimal: 0.5-2.0%)`);
+      } else {
+        recommendations.push(`Keyword-Häufigkeit reduzieren (Dichte: ${avgDensity.toFixed(1)}% - optimal: 0.5-2.0%)`);
+      }
       
       keywordScore += Math.min(50, avgRelevance / 2);
+      
+      // Spezifische Empfehlungen pro Keyword
+      keywordMetrics.forEach(km => {
+        if (km.density < 0.5) {
+          recommendations.push(`"${km.keyword}" öfter verwenden (nur ${km.occurrences}x erwähnt)`);
+        } else if (km.density > 2.0) {
+          recommendations.push(`"${km.keyword}" weniger verwenden (${km.occurrences}x = ${km.density.toFixed(1)}%)`);
+        }
+        
+        if (!km.inHeadline && !km.inFirstParagraph) {
+          recommendations.push(`"${km.keyword}" in Headline oder ersten Absatz einbauen`);
+        }
+      });
     } else {
       recommendations.push('Keywords hinzufügen für bessere SEO-Bewertung');
     }
@@ -197,13 +216,15 @@ export function PRSEOHeaderBar({
     // 20% Struktur & Lesbarkeit
     let structureScore = 0;
     
-    // Absatzlänge bewerten (flexiblere Bewertung)
+    // Absatzlänge bewerten (Web-optimiert)
     if (prMetrics.avgParagraphLength >= 100 && prMetrics.avgParagraphLength <= 300) {
-      structureScore += 30;
+      structureScore += 30; // Optimal für Web-Lesbarkeit
     } else if (prMetrics.avgParagraphLength >= 50 && prMetrics.avgParagraphLength <= 500) {
-      structureScore += 20; // Teilpunkte für ok Länge
-    } else {
-      recommendations.push(`Absatzlänge optimieren (aktuell: ${prMetrics.avgParagraphLength.toFixed(0)} Zeichen)`);
+      structureScore += 20; // Akzeptabel
+    } else if (prMetrics.avgParagraphLength > 500) {
+      recommendations.push(`Absätze kürzen für bessere Lesbarkeit (aktuell: ${prMetrics.avgParagraphLength.toFixed(0)} Zeichen - optimal: 100-300)`);
+    } else if (prMetrics.avgParagraphLength < 50 && prMetrics.avgParagraphLength > 0) {
+      recommendations.push(`Absätze etwas ausführlicher gestalten (aktuell: ${prMetrics.avgParagraphLength.toFixed(0)} Zeichen - optimal: 100-300)`);
     }
     
     // Bullet Points (optional)
