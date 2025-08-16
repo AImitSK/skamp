@@ -395,24 +395,14 @@ export default function NewPRCampaignPage() {
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Absender</h3>
                 
-                {/* Kunde */}
-                <Field>
-                  <Label className="flex items-center">
-                    Kunde
-                    <InfoTooltip 
-                      content="Pflichtfeld: Wählen Sie den Kunden aus, für den diese PR-Kampagne erstellt wird. Die Kampagne wird diesem Kunden zugeordnet."
-                      className="ml-1"
-                    />
-                  </Label>
-                  <CustomerSelector
-                    value={selectedCompanyId}
-                    onChange={(companyId, companyName) => {
-                      setSelectedCompanyId(companyId);
-                      setSelectedCompanyName(companyName);
-                    }}
-                    required
-                  />
-                </Field>
+                <CustomerSelector
+                  value={selectedCompanyId}
+                  onChange={(companyId, companyName) => {
+                    setSelectedCompanyId(companyId);
+                    setSelectedCompanyName(companyName);
+                  }}
+                  required
+                />
               </div>
 
               {/* Pressemeldung */}
