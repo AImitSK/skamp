@@ -74,29 +74,38 @@ interface KIAnalysisBoxProps {
 }
 
 function KIAnalysisBox({ metrics, isLoading }: KIAnalysisBoxProps) {
+  // Badge mit Farbverlauf-Rand Design
+  const boxClasses = "inline-flex items-center gap-2 px-3 py-1 rounded-md text-xs bg-purple-50 border border-transparent bg-clip-padding";
+  const borderGradientClasses = "relative before:absolute before:inset-0 before:rounded-md before:p-[1px] before:bg-gradient-to-r before:from-indigo-500 before:to-purple-600 before:-z-10";
+  
   if (isLoading) {
     return (
-      <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-3 py-1.5 rounded-md flex items-center gap-2">
-        <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
-        <span className="text-xs">KI analysiert...</span>
+      <div className={`${boxClasses} ${borderGradientClasses} text-purple-700`}>
+        <div className="w-3 h-3 border border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+        <span>KI analysiert...</span>
       </div>
     );
   }
   
   if (!metrics.semanticRelevance && !metrics.targetAudience && !metrics.tonality) {
     return (
-      <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-3 py-1.5 rounded-md">
-        <span className="text-xs">KI: Bereit für Analyse</span>
+      <div className={`${boxClasses} ${borderGradientClasses} text-purple-700`}>
+        <SparklesIcon className="h-3 w-3" />
+        <span>Bereit für Analyse</span>
       </div>
     );
   }
   
+  // Trend-Indikator für Relevanz (später implementierbar)
+  const relevanceTrend = ""; // Später: "↑" oder "↓" basierend auf vorherigem Wert
+  
   return (
-    <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-3 py-1.5 rounded-md">
-      <span className="text-xs">
-        KI: Relevanz {metrics.semanticRelevance || 0}%
-        {metrics.targetAudience && ` | Zielgruppe ${metrics.targetAudience}`}
-        {metrics.tonality && ` | Tonalität ${metrics.tonality}`}
+    <div className={`${boxClasses} ${borderGradientClasses} text-purple-700`}>
+      <SparklesIcon className="h-3 w-3" />
+      <span>
+        Relevanz {metrics.semanticRelevance || 0}%{relevanceTrend}
+        {metrics.targetAudience && `     ${metrics.targetAudience}`}
+        {metrics.tonality && `     ${metrics.tonality}`}
       </span>
     </div>
   );
@@ -260,20 +269,27 @@ export function PRSEOHeaderBar({
 
     // 20% Keyword-Performance
     let keywordScore = 0;
-    if (keywordMetrics.length > 0) {
+    if (keywordMetrics.length > 0 && keywords.length > 0) {
       const avgDensity = keywordMetrics.reduce((sum, km) => sum + km.density, 0) / keywordMetrics.length;
-      const avgRelevance = keywordMetrics.reduce((sum, km) => sum + (km.semanticRelevance || 50), 0) / keywordMetrics.length;
+      const avgRelevance = keywordMetrics.reduce((sum, km) => sum + (km.semanticRelevance || 0), 0) / keywordMetrics.length;
       
-      // Individuelle Keyword-Empfehlungen statt Durchschnitt
+      // Density-basierte Bewertung (50% des Keyword-Scores)
       if (avgDensity >= 0.5 && avgDensity <= 2.0) {
         keywordScore += 50;
+      } else if (avgDensity >= 0.3 && avgDensity <= 3.0) {
+        keywordScore += 30;
       } else if (avgDensity < 0.5) {
+        keywordScore += 10;
         recommendations.push(`Keywords öfter verwenden (Dichte: ${avgDensity.toFixed(1)}% - optimal: 0.5-2.0%)`);
       } else {
+        keywordScore += 10;
         recommendations.push(`Keyword-Häufigkeit reduzieren (Dichte: ${avgDensity.toFixed(1)}% - optimal: 0.5-2.0%)`);
       }
       
-      keywordScore += Math.min(50, avgRelevance / 2);
+      // Relevanz-basierte Bewertung (50% des Keyword-Scores) - nur wenn KI-Analyse vorhanden
+      if (avgRelevance > 0) {
+        keywordScore += Math.min(50, (avgRelevance / 100) * 50);
+      }
       
       // Spezifische Empfehlungen pro Keyword
       keywordMetrics.forEach(km => {
@@ -397,7 +413,8 @@ export function PRSEOHeaderBar({
       engagement: engagementScore
     };
 
-    const totalScore = Math.round(
+    // Ohne Keywords kein Score
+    const totalScore = keywords.length === 0 ? 0 : Math.round(
       (breakdown.headline * 0.25) +
       (breakdown.keywords * 0.20) +
       (breakdown.structure * 0.20) +
@@ -407,7 +424,7 @@ export function PRSEOHeaderBar({
     );
 
     return { totalScore, breakdown, recommendations };
-  }, []);
+  }, [keywords, getThresholds]);
 
   // KI-Analyse für einzelnes Keyword
   const analyzeKeywordWithAI = useCallback(async (keyword: string, text: string): Promise<Partial<KeywordMetrics>> => {
@@ -432,8 +449,10 @@ Aufgabe:
 4. Tonalität: Erkenne den Schreibstil (Sachlich, Emotional, Verkäuferisch, Professionell, etc.)
 5. Verwandte Begriffe: 3 Begriffe die im Text vorkommen und zum Keyword passen
 
-Antworte NUR mit diesem JSON-Format (ohne Markdown, HTML oder zusätzlichen Text):
-{"semanticRelevance": 85, "contextQuality": 78, "targetAudience": "B2B", "tonality": "Sachlich", "relatedTerms": ["Begriff1", "Begriff2", "Begriff3"]}`
+Antworte NUR mit diesem JSON-Format (ohne Markdown, HTML oder zusätzlichen Text).
+Gib ECHTE BEWERTUNGEN, keine Beispielwerte!
+Beispiel-Format (nutze deine eigenen Werte):
+{"semanticRelevance": DEIN_WERT, "contextQuality": DEIN_WERT, "targetAudience": "DEINE_ANALYSE", "tonality": "DEINE_ANALYSE", "relatedTerms": ["ECHTER_BEGRIFF1", "ECHTER_BEGRIFF2", "ECHTER_BEGRIFF3"]}`
         })
       });
 
@@ -592,7 +611,8 @@ Antworte NUR mit diesem JSON-Format (ohne Markdown, HTML oder zusätzlichen Text
     return 'red';
   };
 
-  const getScoreBadgeColor = (score: number): 'green' | 'yellow' | 'red' => {
+  const getScoreBadgeColor = (score: number): 'green' | 'yellow' | 'red' | 'zinc' => {
+    if (score === 0 && keywords.length === 0) return 'zinc';
     if (score >= 76) return 'green';
     if (score >= 51) return 'yellow'; 
     return 'red';
@@ -660,10 +680,10 @@ Antworte NUR mit diesem JSON-Format (ohne Markdown, HTML oder zusätzlichen Text
       {keywords.length > 0 && (
         <div className="space-y-2 mb-4">
           {keywordMetrics.map((metrics) => (
-            <div key={metrics.keyword} className="flex items-center justify-between bg-white rounded-md p-3 gap-4">
+            <div key={metrics.keyword} className="flex items-center bg-white rounded-md p-3 gap-4">
               {/* Links: Keyword + Basis-Metriken */}
-              <div className="flex items-center gap-3">
-                <Badge color={getScoreBadgeColor(metrics.semanticRelevance || 50)}>
+              <div className="flex items-center gap-3 flex-1">
+                <Badge color="zinc">
                   {metrics.keyword}
                 </Badge>
                 <div className="flex gap-4 text-sm text-gray-600">
@@ -678,43 +698,47 @@ Antworte NUR mit diesem JSON-Format (ohne Markdown, HTML oder zusätzlichen Text
                 </div>
               </div>
               
-              {/* Mitte: KI-Analysis-Box */}
-              <div className="flex-1 flex justify-center">
+              {/* Rechts: KI-Analysis-Box + Delete Button */}
+              <div className="flex items-center gap-3">
                 <KIAnalysisBox metrics={metrics} isLoading={isAnalyzing} />
+                <button
+                  onClick={() => handleRemoveKeyword(metrics.keyword)}
+                  className="bg-white text-gray-400 hover:text-red-500 p-1 rounded"
+                >
+                  <XMarkIcon className="h-4 w-4" />
+                </button>
               </div>
-              
-              {/* Rechts: Delete Button */}
-              <button
-                onClick={() => handleRemoveKeyword(metrics.keyword)}
-                className="bg-white text-gray-400 hover:text-red-500 p-1 rounded"
-              >
-                <XMarkIcon className="h-4 w-4" />
-              </button>
             </div>
           ))}
         </div>
       )}
 
-      {/* Score-Aufschlüsselung */}
+      {/* Score-Aufschlüsselung in 3 Boxen */}
       {keywords.length > 0 && (
-        <div className="grid grid-cols-3 gap-2 text-xs">
-          <div className="text-center">
-            <div className={clsx('font-semibold', getScoreColor(scoreBreakdown.headline) === 'green' ? 'text-green-600' : getScoreColor(scoreBreakdown.headline) === 'orange' ? 'text-orange-600' : 'text-red-600')}>
+        <div className="grid grid-cols-3 gap-2 text-xs mb-4">
+          <div className="bg-white rounded-md p-2 border border-gray-200">
+            <div className={clsx('font-semibold text-center', 
+              getScoreColor(scoreBreakdown.headline) === 'green' ? 'text-green-600' : 
+              getScoreColor(scoreBreakdown.headline) === 'orange' ? 'text-orange-600' : 'text-red-600')}>
               {scoreBreakdown.headline}/100
             </div>
-            <div className="text-gray-600">Headline</div>
+            <div className="text-gray-600 text-center">Headline</div>
           </div>
-          <div className="text-center">
-            <div className={clsx('font-semibold', getScoreColor(scoreBreakdown.keywords) === 'green' ? 'text-green-600' : getScoreColor(scoreBreakdown.keywords) === 'orange' ? 'text-orange-600' : 'text-red-600')}>
+          <div className="bg-white rounded-md p-2 border border-gray-200">
+            <div className={clsx('font-semibold text-center', 
+              getScoreColor(scoreBreakdown.keywords) === 'green' ? 'text-green-600' : 
+              getScoreColor(scoreBreakdown.keywords) === 'orange' ? 'text-orange-600' : 'text-red-600')}>
               {scoreBreakdown.keywords}/100
             </div>
-            <div className="text-gray-600">Keywords</div>
+            <div className="text-gray-600 text-center">Keywords</div>
           </div>
-          <div className="text-center">
-            <div className={clsx('font-semibold', getScoreColor(scoreBreakdown.structure) === 'green' ? 'text-green-600' : getScoreColor(scoreBreakdown.structure) === 'orange' ? 'text-orange-600' : 'text-red-600')}>
+          <div className="bg-white rounded-md p-2 border border-gray-200">
+            <div className={clsx('font-semibold text-center', 
+              getScoreColor(scoreBreakdown.structure) === 'green' ? 'text-green-600' : 
+              getScoreColor(scoreBreakdown.structure) === 'orange' ? 'text-orange-600' : 'text-red-600')}>
               {scoreBreakdown.structure}/100
             </div>
-            <div className="text-gray-600">Struktur</div>
+            <div className="text-gray-600 text-center">Struktur</div>
           </div>
         </div>
       )}
