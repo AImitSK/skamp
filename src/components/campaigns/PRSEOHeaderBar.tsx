@@ -25,6 +25,9 @@ interface KeywordMetrics {
   semanticRelevance?: number;
   contextQuality?: number;
   relatedTerms?: string[];
+  // NEUE KI-Felder für 3.0
+  targetAudience?: string;  // 'B2B', 'B2C', 'Verbraucher', etc.
+  tonality?: string;        // 'Sachlich', 'Emotional', 'Verkäuferisch', etc.
 }
 
 interface PRMetrics {
@@ -62,6 +65,41 @@ interface PRSEOHeaderBarProps {
   onKeywordsChange: (keywords: string[]) => void;
   documentTitle?: string;
   className?: string;
+}
+
+// KI-Analysis-Box Komponente
+interface KIAnalysisBoxProps {
+  metrics: KeywordMetrics;
+  isLoading: boolean;
+}
+
+function KIAnalysisBox({ metrics, isLoading }: KIAnalysisBoxProps) {
+  if (isLoading) {
+    return (
+      <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-3 py-1.5 rounded-md flex items-center gap-2">
+        <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
+        <span className="text-xs">KI analysiert...</span>
+      </div>
+    );
+  }
+  
+  if (!metrics.semanticRelevance && !metrics.targetAudience && !metrics.tonality) {
+    return (
+      <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-3 py-1.5 rounded-md">
+        <span className="text-xs">KI: Bereit für Analyse</span>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-3 py-1.5 rounded-md">
+      <span className="text-xs">
+        KI: Relevanz {metrics.semanticRelevance || 0}%
+        {metrics.targetAudience && ` | Zielgruppe ${metrics.targetAudience}`}
+        {metrics.tonality && ` | Tonalität ${metrics.tonality}`}
+      </span>
+    </div>
+  );
 }
 
 export function PRSEOHeaderBar({
@@ -110,7 +148,9 @@ export function PRSEOHeaderBar({
     let distribution: 'gut' | 'mittel' | 'schlecht' = 'schlecht';
     if (keywordPositions.length >= 3) {
       const spread = Math.max(...keywordPositions) - Math.min(...keywordPositions);
-      distribution = spread > 0.6 ? 'gut' : spread > 0.3 ? 'mittel' : 'schlecht';
+      distribution = spread > 0.4 ? 'gut' : spread > 0.2 ? 'mittel' : 'schlecht';
+    } else if (keywordPositions.length >= 2) {
+      distribution = 'mittel'; // Bei 2 Vorkommen = mittel
     }
 
     return {
@@ -164,9 +204,48 @@ export function PRSEOHeaderBar({
     };
   }, [keywords]);
 
+  // Zielgruppen-basierte Schwellenwerte
+  const getThresholds = useCallback((targetAudience: string) => {
+    switch (targetAudience) {
+      case 'B2B':
+        return {
+          paragraphLength: { min: 150, max: 500 },  // Längere Absätze OK
+          sentenceComplexity: { max: 25 },          // Komplexere Sätze erlaubt
+          technicalTerms: { bonus: 10 }             // Fachbegriffe positiv
+        };
+      case 'B2C':
+        return {
+          paragraphLength: { min: 80, max: 250 },   // Kürzere Absätze
+          sentenceComplexity: { max: 15 },          // Einfachere Sätze
+          technicalTerms: { penalty: 5 }            // Fachbegriffe negativ
+        };
+      case 'Verbraucher':
+        return {
+          paragraphLength: { min: 60, max: 200 },   // Sehr kurze Absätze
+          sentenceComplexity: { max: 12 },          // Sehr einfache Sätze
+          technicalTerms: { penalty: 10 }           // Fachbegriffe sehr negativ
+        };
+      default:
+        return {
+          paragraphLength: { min: 100, max: 300 },
+          sentenceComplexity: { max: 20 },
+          technicalTerms: { neutral: 0 }
+        };
+    }
+  }, []);
+
   // PR-Score berechnen
   const calculatePRScore = useCallback((prMetrics: PRMetrics, keywordMetrics: KeywordMetrics[], text: string): { totalScore: number, breakdown: PRScoreBreakdown, recommendations: string[] } => {
     const recommendations: string[] = [];
+    
+    // Ermittle dominante Zielgruppe aus Keywords
+    const targetAudiences = keywordMetrics
+      .map(km => km.targetAudience)
+      .filter((ta): ta is string => ta !== undefined && ta !== 'Unbekannt');
+    const dominantAudience = targetAudiences.length > 0 ? targetAudiences[0] : 'Standard';
+    
+    // Nutze zielgruppenspezifische Schwellenwerte
+    const thresholds = getThresholds(dominantAudience);
     
     // 25% Headline & Lead-Qualität
     let headlineScore = 0;
@@ -200,7 +279,7 @@ export function PRSEOHeaderBar({
       keywordMetrics.forEach(km => {
         if (km.density < 0.5) {
           recommendations.push(`"${km.keyword}" öfter verwenden (nur ${km.occurrences}x erwähnt)`);
-        } else if (km.density > 2.0) {
+        } else if (km.density > 2.5) {
           recommendations.push(`"${km.keyword}" weniger verwenden (${km.occurrences}x = ${km.density.toFixed(1)}%)`);
         }
         
@@ -213,23 +292,42 @@ export function PRSEOHeaderBar({
         } else if (km.distribution === 'schlecht' && km.occurrences >= 3) {
           recommendations.push(`"${km.keyword}" gleichmäßiger im Text verteilen`);
         }
+        
+        // KI-basierte Empfehlungen aus Keywords generieren
+        if (km.semanticRelevance && km.semanticRelevance < 70) {
+          recommendations.push(`[KI] "${km.keyword}" Relevanz erhöhen durch mehr thematische Verbindungen`);
+        }
+        
+        if (km.tonality && km.targetAudience) {
+          if (km.targetAudience === 'B2B' && km.tonality === 'Emotional') {
+            recommendations.push(`[KI] "${km.keyword}" Tonalität für B2B-Zielgruppe zu emotional - sachlicher formulieren`);
+          }
+          if (km.targetAudience === 'B2C' && km.tonality === 'Sachlich') {
+            recommendations.push(`[KI] "${km.keyword}" Tonalität für B2C-Zielgruppe zu sachlich - emotionaler gestalten`);
+          }
+          if (km.targetAudience === 'Verbraucher' && (km.tonality === 'Professionell' || km.tonality === 'Fachlich')) {
+            recommendations.push(`[KI] "${km.keyword}" Tonalität für Verbraucher-Zielgruppe zu komplex - verständlicher formulieren`);
+          }
+        }
       });
     } else {
       recommendations.push('Keywords hinzufügen für bessere SEO-Bewertung');
     }
 
-    // 20% Struktur & Lesbarkeit
+    // 20% Struktur & Lesbarkeit (zielgruppenspezifisch)
     let structureScore = 0;
     
-    // Absatzlänge bewerten (Web-optimiert)
-    if (prMetrics.avgParagraphLength >= 100 && prMetrics.avgParagraphLength <= 300) {
-      structureScore += 30; // Optimal für Web-Lesbarkeit
-    } else if (prMetrics.avgParagraphLength >= 50 && prMetrics.avgParagraphLength <= 500) {
+    // Absatzlänge bewerten (zielgruppenbasiert)
+    if (prMetrics.avgParagraphLength >= thresholds.paragraphLength.min && 
+        prMetrics.avgParagraphLength <= thresholds.paragraphLength.max) {
+      structureScore += 30; // Optimal für Zielgruppe
+    } else if (prMetrics.avgParagraphLength >= (thresholds.paragraphLength.min * 0.7) && 
+               prMetrics.avgParagraphLength <= (thresholds.paragraphLength.max * 1.3)) {
       structureScore += 20; // Akzeptabel
-    } else if (prMetrics.avgParagraphLength > 500) {
-      recommendations.push(`Absätze kürzen für bessere Lesbarkeit (aktuell: ${prMetrics.avgParagraphLength.toFixed(0)} Zeichen - optimal: 100-300)`);
-    } else if (prMetrics.avgParagraphLength < 50 && prMetrics.avgParagraphLength > 0) {
-      recommendations.push(`Absätze etwas ausführlicher gestalten (aktuell: ${prMetrics.avgParagraphLength.toFixed(0)} Zeichen - optimal: 100-300)`);
+    } else if (prMetrics.avgParagraphLength > thresholds.paragraphLength.max) {
+      recommendations.push(`[KI] Absätze für ${dominantAudience}-Zielgruppe kürzen (aktuell: ${prMetrics.avgParagraphLength.toFixed(0)} Zeichen - optimal: ${thresholds.paragraphLength.min}-${thresholds.paragraphLength.max})`);
+    } else if (prMetrics.avgParagraphLength < thresholds.paragraphLength.min && prMetrics.avgParagraphLength > 0) {
+      recommendations.push(`[KI] Absätze für ${dominantAudience}-Zielgruppe ausführlicher gestalten (aktuell: ${prMetrics.avgParagraphLength.toFixed(0)} Zeichen - optimal: ${thresholds.paragraphLength.min}-${thresholds.paragraphLength.max})`);
     }
     
     // Bullet Points (optional)
@@ -330,10 +428,12 @@ ${text}
 Aufgabe:
 1. Semantische Relevanz (0-100): Wie gut passt das Keyword zum Inhalt?
 2. Kontext-Qualität (0-100): Wie natürlich ist das Keyword eingebunden?
-3. Verwandte Begriffe: 3 Begriffe die im Text vorkommen und zum Keyword passen
+3. Zielgruppe: Erkenne die Hauptzielgruppe (B2B, B2C, Verbraucher, Fachpublikum, etc.)
+4. Tonalität: Erkenne den Schreibstil (Sachlich, Emotional, Verkäuferisch, Professionell, etc.)
+5. Verwandte Begriffe: 3 Begriffe die im Text vorkommen und zum Keyword passen
 
 Antworte NUR mit diesem JSON-Format (ohne Markdown, HTML oder zusätzlichen Text):
-{"semanticRelevance": 85, "contextQuality": 78, "relatedTerms": ["Begriff1", "Begriff2", "Begriff3"]}`
+{"semanticRelevance": 85, "contextQuality": 78, "targetAudience": "B2B", "tonality": "Sachlich", "relatedTerms": ["Begriff1", "Begriff2", "Begriff3"]}`
         })
       });
 
@@ -360,6 +460,8 @@ Antworte NUR mit diesem JSON-Format (ohne Markdown, HTML oder zusätzlichen Text
           return {
             semanticRelevance: Math.min(100, Math.max(0, result.semanticRelevance || 50)),
             contextQuality: Math.min(100, Math.max(0, result.contextQuality || 50)),
+            targetAudience: result.targetAudience || 'Unbekannt',
+            tonality: result.tonality || 'Neutral',
             relatedTerms: Array.isArray(result.relatedTerms) ? result.relatedTerms.slice(0, 3) : []
           };
         } catch (parseError) {
@@ -372,6 +474,8 @@ Antworte NUR mit diesem JSON-Format (ohne Markdown, HTML oder zusätzlichen Text
               return {
                 semanticRelevance: Math.min(100, Math.max(0, result.semanticRelevance || 50)),
                 contextQuality: Math.min(100, Math.max(0, result.contextQuality || 50)),
+                targetAudience: result.targetAudience || 'Unbekannt',
+                tonality: result.tonality || 'Neutral',
                 relatedTerms: Array.isArray(result.relatedTerms) ? result.relatedTerms.slice(0, 3) : []
               };
             } else {
@@ -394,6 +498,8 @@ Antworte NUR mit diesem JSON-Format (ohne Markdown, HTML oder zusätzlichen Text
     return {
       semanticRelevance: 50,
       contextQuality: 50,
+      targetAudience: 'Unbekannt',
+      tonality: 'Neutral',
       relatedTerms: []
     };
   }, []);
@@ -460,6 +566,8 @@ Antworte NUR mit diesem JSON-Format (ohne Markdown, HTML oder zusätzlichen Text
         ...basicMetrics,
         semanticRelevance: existing?.semanticRelevance,
         contextQuality: existing?.contextQuality,
+        targetAudience: existing?.targetAudience,
+        tonality: existing?.tonality,
         relatedTerms: existing?.relatedTerms
       };
     });
@@ -484,10 +592,10 @@ Antworte NUR mit diesem JSON-Format (ohne Markdown, HTML oder zusätzlichen Text
     return 'red';
   };
 
-  const getScoreBadgeColor = (score: number) => {
-    if (score >= 76) return 'bg-green-100 text-green-800 border-green-200';
-    if (score >= 51) return 'bg-yellow-100 text-yellow-800 border-yellow-200'; 
-    return 'bg-red-100 text-red-800 border-red-200';
+  const getScoreBadgeColor = (score: number): 'green' | 'yellow' | 'red' => {
+    if (score >= 76) return 'green';
+    if (score >= 51) return 'yellow'; 
+    return 'red';
   };
 
   return (
@@ -496,7 +604,7 @@ Antworte NUR mit diesem JSON-Format (ohne Markdown, HTML oder zusätzlichen Text
         <div className="flex items-center gap-2">
           <MagnifyingGlassIcon className="h-5 w-5 text-gray-500" />
           <h3 className="font-semibold text-gray-900">{title}</h3>
-          <Badge className={getScoreBadgeColor(prScore)}>
+          <Badge color={getScoreBadgeColor(prScore)}>
             PR-Score: {prScore}/100
           </Badge>
         </div>
@@ -548,40 +656,37 @@ Antworte NUR mit diesem JSON-Format (ohne Markdown, HTML oder zusätzlichen Text
         )}
       </div>
 
-      {/* Keywords */}
+      {/* Keywords - NEW One-Line Layout */}
       {keywords.length > 0 && (
         <div className="space-y-2 mb-4">
           {keywordMetrics.map((metrics) => (
-            <div key={metrics.keyword} className="flex items-center justify-between bg-white rounded-md p-3">
+            <div key={metrics.keyword} className="flex items-center justify-between bg-white rounded-md p-3 gap-4">
+              {/* Links: Keyword + Basis-Metriken */}
               <div className="flex items-center gap-3">
-                <Badge className={getScoreBadgeColor(metrics.semanticRelevance || 50)}>
+                <Badge color={getScoreBadgeColor(metrics.semanticRelevance || 50)}>
                   {metrics.keyword}
                 </Badge>
-                
                 <div className="flex gap-4 text-sm text-gray-600">
-                  <span title="Dichte">
-                    {metrics.density.toFixed(1)}%
-                  </span>
-                  <span title="Vorkommen">
-                    {metrics.occurrences}x
-                  </span>
-                  {metrics.semanticRelevance && (
-                    <span title="KI-Relevanz" className="text-blue-600">
-                      {metrics.semanticRelevance}%
-                    </span>
-                  )}
-                  <span title="Verteilung" className={clsx(
+                  <span title="Keyword-Dichte">{metrics.density.toFixed(1)}% Dichte</span>
+                  <span title="Anzahl Vorkommen">{metrics.occurrences}x Vorkommen</span>
+                  <span title="Keyword-Verteilung" className={clsx(
                     metrics.distribution === 'gut' ? 'text-green-600' :
                     metrics.distribution === 'mittel' ? 'text-orange-600' : 'text-red-600'
                   )}>
-                    {metrics.distribution}
+                    {metrics.distribution} Verteilung
                   </span>
                 </div>
               </div>
               
+              {/* Mitte: KI-Analysis-Box */}
+              <div className="flex-1 flex justify-center">
+                <KIAnalysisBox metrics={metrics} isLoading={isAnalyzing} />
+              </div>
+              
+              {/* Rechts: Delete Button */}
               <button
                 onClick={() => handleRemoveKeyword(metrics.keyword)}
-                className="text-gray-400 hover:text-red-500"
+                className="bg-white text-gray-400 hover:text-red-500 p-1 rounded"
               >
                 <XMarkIcon className="h-4 w-4" />
               </button>
@@ -615,7 +720,7 @@ Antworte NUR mit diesem JSON-Format (ohne Markdown, HTML oder zusätzlichen Text
       )}
 
       {/* Empfehlungen */}
-      {recommendations.length > 0 && (
+      {recommendations.length > 0 && keywords.length > 0 && (
         <div className="mt-4 p-3 bg-blue-50 rounded-md">
           <div className="flex items-start gap-2">
             <InformationCircleIcon className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
@@ -623,7 +728,16 @@ Antworte NUR mit diesem JSON-Format (ohne Markdown, HTML oder zusätzlichen Text
               <p className="text-sm font-medium text-blue-900 mb-1">Empfehlungen:</p>
               <ul className="text-xs text-blue-800 space-y-1">
                 {(showAllRecommendations ? recommendations : recommendations.slice(0, 3)).map((rec, index) => (
-                  <li key={index}>• {rec}</li>
+                  <li key={index} className="flex items-start gap-2">
+                    {rec.startsWith('[KI]') ? (
+                      <>
+                        <Badge color="purple" className="text-xs mt-0.5 flex-shrink-0">KI</Badge>
+                        <span>• {rec.replace('[KI] ', '')}</span>
+                      </>
+                    ) : (
+                      <span>• {rec}</span>
+                    )}
+                  </li>
                 ))}
               </ul>
               {recommendations.length > 3 && (
