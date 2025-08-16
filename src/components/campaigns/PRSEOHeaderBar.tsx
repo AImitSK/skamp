@@ -742,7 +742,7 @@ Beispiel-Format (nutze deine eigenen Werte):
           
           {/* Globale KI-Analyse für gesamten Text */}
           {keywordMetrics.length > 0 && keywordMetrics.some(km => km.targetAudience || km.tonality) && (
-            <div className="bg-purple-50 border border-purple-300 rounded-md p-3 mb-4">
+            <div className="bg-purple-50 rounded-md p-3 mb-4">
               <div className="flex items-center gap-2 text-xs text-purple-700">
                 <SparklesIcon className="h-4 w-4" />
                 <div className="flex items-center gap-4">
