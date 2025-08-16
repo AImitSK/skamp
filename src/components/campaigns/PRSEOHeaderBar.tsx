@@ -729,7 +729,7 @@ Beispiel-Format (nutze deine eigenen Werte):
                 scoreBreakdown.headline >= 40 ? 'bg-orange-500' : 'bg-red-500'
               }`}></div>
               <div className="flex-1">
-                <div className="text-base font-semibold text-gray-900">
+                <div className="text-sm font-semibold text-gray-900">
                   Headline: {scoreBreakdown.headline}/100
                 </div>
               </div>
@@ -740,7 +740,7 @@ Beispiel-Format (nutze deine eigenen Werte):
                 scoreBreakdown.keywords >= 40 ? 'bg-orange-500' : 'bg-red-500'
               }`}></div>
               <div className="flex-1">
-                <div className="text-base font-semibold text-gray-900">
+                <div className="text-sm font-semibold text-gray-900">
                   Keywords: {scoreBreakdown.keywords}/100
                 </div>
               </div>
@@ -751,7 +751,7 @@ Beispiel-Format (nutze deine eigenen Werte):
                 scoreBreakdown.structure >= 40 ? 'bg-orange-500' : 'bg-red-500'
               }`}></div>
               <div className="flex-1">
-                <div className="text-base font-semibold text-gray-900">
+                <div className="text-sm font-semibold text-gray-900">
                   Struktur: {scoreBreakdown.structure}/100
                 </div>
               </div>
