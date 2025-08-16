@@ -141,14 +141,6 @@ export function PRSEOHeaderBar({
     const ctaMatches = text.match(/<span[^>]*data-type="cta-text"[^>]*>/g) || [];
     const ctaCount = ctaMatches.length;
     
-    console.log('🔍 Markup-Erkennung:', { 
-      prQuotes: prQuoteMatches.length, 
-      regularQuotes: regularQuoteMatches.length, 
-      totalQuotes: quoteCount,
-      ctas: ctaCount,
-      prQuoteMatches,
-      ctaMatches 
-    });
     
     return {
       headlineLength: title.length,
@@ -168,7 +160,7 @@ export function PRSEOHeaderBar({
       hasSubheadings: /<h[1-6]>/i.test(text),
       numberCount: (cleanText.match(/\d+/g) || []).length,
       hasSpecificDates: /\b\d{1,2}\.\d{1,2}\.\d{4}\b|\b\d{4}\b/.test(cleanText),
-      hasCompanyNames: /\b[A-Z][a-z]+ (GmbH|AG|Inc|Corp|Ltd)\b/.test(cleanText)
+      hasCompanyNames: /\b[A-Z][a-z]+ (GmbH|AG|Inc|Corp|Ltd)\b/.test(cleanText) || /\b[A-Z]{2,}(\s+[A-Z][a-z]+){1,3}\b/.test(cleanText)
     };
   }, [keywords]);
 
@@ -215,6 +207,12 @@ export function PRSEOHeaderBar({
         if (!km.inHeadline && !km.inFirstParagraph) {
           recommendations.push(`"${km.keyword}" in Headline oder ersten Absatz einbauen`);
         }
+        
+        if (km.distribution === 'schlecht' && km.occurrences < 3) {
+          recommendations.push(`"${km.keyword}" mindestens 3x verwenden für bessere Verteilung`);
+        } else if (km.distribution === 'schlecht' && km.occurrences >= 3) {
+          recommendations.push(`"${km.keyword}" gleichmäßiger im Text verteilen`);
+        }
       });
     } else {
       recommendations.push('Keywords hinzufügen für bessere SEO-Bewertung');
@@ -253,13 +251,6 @@ export function PRSEOHeaderBar({
       recommendations.push(`Lead-Absatz sollte 80-250 Zeichen haben (aktuell: ${prMetrics.leadLength})`);
     }
     
-    console.log('📊 Struktur-Score Details:', {
-      avgParagraphLength: prMetrics.avgParagraphLength,
-      hasBulletPoints: prMetrics.hasBulletPoints,
-      hasSubheadings: prMetrics.hasSubheadings,
-      leadLength: prMetrics.leadLength,
-      structureScore
-    });
 
     // 15% Semantische Relevanz (KI)
     const relevanceScore = keywordMetrics.length > 0 ? 
@@ -267,10 +258,13 @@ export function PRSEOHeaderBar({
 
     // 10% Konkretheit
     let concretenessScore = 0;
-    if (prMetrics.numberCount >= 3) concretenessScore += 40;
+    if (prMetrics.numberCount >= 2) concretenessScore += 40;
     if (prMetrics.hasSpecificDates) concretenessScore += 30;
     if (prMetrics.hasCompanyNames) concretenessScore += 30;
-    else recommendations.push('Konkrete Zahlen, Daten und Firmennamen verwenden');
+    
+    if (prMetrics.numberCount < 2 && !prMetrics.hasSpecificDates && !prMetrics.hasCompanyNames) {
+      recommendations.push('Konkrete Zahlen, Daten und Firmennamen verwenden');
+    }
 
     // 10% Zitate & CTA
     let engagementScore = 0;
@@ -491,9 +485,9 @@ Antworte NUR mit diesem JSON-Format (ohne Markdown, HTML oder zusätzlichen Text
   };
 
   const getScoreBadgeColor = (score: number) => {
-    if (score >= 70) return 'bg-green-100 text-green-800';
-    if (score >= 40) return 'bg-orange-100 text-orange-800'; 
-    return 'bg-red-100 text-red-800';
+    if (score >= 76) return 'bg-green-100 text-green-800 border-green-200';
+    if (score >= 51) return 'bg-yellow-100 text-yellow-800 border-yellow-200'; 
+    return 'bg-red-100 text-red-800 border-red-200';
   };
 
   return (
@@ -634,7 +628,12 @@ Antworte NUR mit diesem JSON-Format (ohne Markdown, HTML oder zusätzlichen Text
               </ul>
               {recommendations.length > 3 && (
                 <button
-                  onClick={() => setShowAllRecommendations(!showAllRecommendations)}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowAllRecommendations(!showAllRecommendations);
+                  }}
                   className="text-xs text-blue-600 hover:text-blue-800 mt-2 flex items-center gap-1 transition-colors"
                 >
                   {showAllRecommendations ? (
