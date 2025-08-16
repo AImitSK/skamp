@@ -126,10 +126,22 @@ export function PRSEOHeaderBar({
     const paragraphs = cleanText.split('\n').filter(p => p.trim().length > 0);
     
     // Zitate zählen (markup-basiert)
-    const quoteCount = (text.match(/<blockquote[^>]*data-type="pr-quote"[^>]*>/g) || []).length;
+    const prQuoteMatches = text.match(/<blockquote[^>]*data-type="pr-quote"[^>]*>/g) || [];
+    const regularQuoteMatches = text.match(/<blockquote(?![^>]*data-type)[^>]*>/g) || [];
+    const quoteCount = prQuoteMatches.length + regularQuoteMatches.length;
     
     // CTA zählen (markup-basiert)  
-    const ctaCount = (text.match(/<span[^>]*data-type="cta-text"[^>]*>/g) || []).length;
+    const ctaMatches = text.match(/<span[^>]*data-type="cta-text"[^>]*>/g) || [];
+    const ctaCount = ctaMatches.length;
+    
+    console.log('🔍 Markup-Erkennung:', { 
+      prQuotes: prQuoteMatches.length, 
+      regularQuotes: regularQuoteMatches.length, 
+      totalQuotes: quoteCount,
+      ctas: ctaCount,
+      prQuoteMatches,
+      ctaMatches 
+    });
     
     return {
       headlineLength: title.length,
@@ -184,11 +196,34 @@ export function PRSEOHeaderBar({
 
     // 20% Struktur & Lesbarkeit
     let structureScore = 0;
-    if (prMetrics.avgParagraphLength >= 100 && prMetrics.avgParagraphLength <= 200) structureScore += 30;
-    if (prMetrics.hasBulletPoints) structureScore += 20;
-    if (prMetrics.hasSubheadings) structureScore += 25;
-    if (prMetrics.leadLength >= 120 && prMetrics.leadLength <= 200) structureScore += 25;
-    else recommendations.push('Lead-Absatz sollte 120-200 Zeichen haben');
+    if (prMetrics.avgParagraphLength >= 100 && prMetrics.avgParagraphLength <= 200) {
+      structureScore += 30;
+    } else {
+      recommendations.push(`Absatzlänge optimieren (aktuell: ${prMetrics.avgParagraphLength.toFixed(0)} Zeichen)`);
+    }
+    if (prMetrics.hasBulletPoints) {
+      structureScore += 20;
+    } else {
+      recommendations.push('Aufzählungspunkte für bessere Struktur hinzufügen');
+    }
+    if (prMetrics.hasSubheadings) {
+      structureScore += 25;
+    } else {
+      recommendations.push('Zwischenüberschriften für bessere Gliederung verwenden');
+    }
+    if (prMetrics.leadLength >= 120 && prMetrics.leadLength <= 200) {
+      structureScore += 25;
+    } else {
+      recommendations.push(`Lead-Absatz sollte 120-200 Zeichen haben (aktuell: ${prMetrics.leadLength})`);
+    }
+    
+    console.log('📊 Struktur-Score Details:', {
+      avgParagraphLength: prMetrics.avgParagraphLength,
+      hasBulletPoints: prMetrics.hasBulletPoints,
+      hasSubheadings: prMetrics.hasSubheadings,
+      leadLength: prMetrics.leadLength,
+      structureScore
+    });
 
     // 15% Semantische Relevanz (KI)
     const relevanceScore = keywordMetrics.length > 0 ? 
@@ -203,11 +238,34 @@ export function PRSEOHeaderBar({
 
     // 10% Zitate & CTA
     let engagementScore = 0;
-    if (prMetrics.quoteCount >= 1) engagementScore += 50;
-    else recommendations.push('Mindestens ein Zitat hinzufügen');
     
-    if (prMetrics.hasActionVerbs) engagementScore += 25;
-    if (prMetrics.hasLearnMore) engagementScore += 25;
+    // CTA zählen aus Markup (markup-basiert)
+    const ctaMatches = text.match(/<span[^>]*data-type="cta-text"[^>]*>/g) || [];
+    const ctaCount = ctaMatches.length;
+    
+    if (prMetrics.quoteCount >= 1) {
+      engagementScore += 40;
+    } else {
+      recommendations.push('Mindestens ein Zitat hinzufügen (Strg+Shift+Q)');
+    }
+    
+    if (ctaCount >= 1) {
+      engagementScore += 35;
+    } else {
+      recommendations.push('Call-to-Action Texte hinzufügen (Strg+Shift+C)');
+    }
+    
+    if (prMetrics.hasActionVerbs) {
+      engagementScore += 25;
+    }
+    
+    console.log('📊 Engagement-Score Details:', {
+      quoteCount: prMetrics.quoteCount,
+      ctaCount,
+      hasActionVerbs: prMetrics.hasActionVerbs,
+      hasLearnMore: prMetrics.hasLearnMore,
+      engagementScore
+    });
 
     const breakdown: PRScoreBreakdown = {
       headline: headlineScore,
@@ -261,7 +319,10 @@ Antworte im JSON-Format:
         const data = await response.json();
         console.log('📡 Raw KI-Response:', data);
         
-        if (!data || !data.content) {
+        // Check both possible response formats
+        const responseText = data.generatedText || data.content;
+        
+        if (!data || !responseText) {
           console.warn('⚠️ KI-Response ist leer oder fehlerhaft:', data);
           return {
             semanticRelevance: 50,
@@ -272,7 +333,7 @@ Antworte im JSON-Format:
         
         try {
           // Versuche JSON zu parsen
-          const jsonMatch = data.content.match(/\{[\s\S]*\}/);
+          const jsonMatch = responseText.match(/\{[\s\S]*\}/);
           if (jsonMatch) {
             const result = JSON.parse(jsonMatch[0]);
             console.log(`✅ KI-Analyse für "${keyword}":`, result);
@@ -282,10 +343,10 @@ Antworte im JSON-Format:
               relatedTerms: Array.isArray(result.relatedTerms) ? result.relatedTerms.slice(0, 3) : []
             };
           } else {
-            console.warn('⚠️ Kein JSON in KI-Response gefunden:', data.content);
+            console.warn('⚠️ Kein JSON in KI-Response gefunden:', responseText);
           }
         } catch (parseError) {
-          console.warn('⚠️ KI-Response JSON-Parse Fehler:', parseError, 'Content:', data.content);
+          console.warn('⚠️ KI-Response JSON-Parse Fehler:', parseError, 'Content:', responseText);
         }
       } else {
         console.error('❌ KI-API HTTP Error:', response.status, response.statusText);
@@ -397,7 +458,7 @@ Antworte im JSON-Format:
   };
 
   return (
-    <div className={clsx('bg-[#f1f0e2] rounded-lg p-4 border border-gray-200', className)}>
+    <div className={clsx('bg-gray-50 rounded-lg p-4 border border-gray-200', className)}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <MagnifyingGlassIcon className="h-5 w-5 text-gray-500" />
