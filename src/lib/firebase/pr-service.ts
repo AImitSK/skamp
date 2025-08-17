@@ -210,10 +210,33 @@ export const prService = {
       );
       
       const snapshot = await getDocs(q);
-      const campaigns = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as PRCampaign));
+      const campaigns = snapshot.docs.map(doc => {
+        const data = doc.data();
+        
+        // KRITISCHER FIX: Firestore Timestamp Konvertierung
+        const campaign = {
+          id: doc.id,
+          ...data
+        } as PRCampaign;
+        
+        // Explizite Timestamp-Konvertierung für Sortierung
+        if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+          campaign.createdAt = data.createdAt; // Behalte Original Timestamp für toMillis()
+        }
+        if (data.updatedAt && typeof data.updatedAt.toDate === 'function') {
+          campaign.updatedAt = data.updatedAt;
+        }
+        if (data.sentAt && typeof data.sentAt.toDate === 'function') {
+          campaign.sentAt = data.sentAt;
+        }
+        if (data.scheduledAt && typeof data.scheduledAt.toDate === 'function') {
+          campaign.scheduledAt = data.scheduledAt;
+        }
+        
+        console.log(`🔧 Campaign "${campaign.title?.substring(0, 20)}..." - createdAt fixed:`, campaign.createdAt?.constructor?.name);
+        
+        return campaign;
+      });
       
       // Client-seitige Sortierung nach createdAt (neueste zuerst)
       console.log('🔄 Sortiere', campaigns.length, 'Kampagnen nach createdAt...');

@@ -471,15 +471,13 @@ export default function NewPRCampaignPage() {
 
       <form ref={formRef} onSubmit={(e) => {
         e.preventDefault();
-        console.log('🎯 Form-Submit Event ausgelöst! CurrentStep:', currentStep, 'Event:', e.type, 'Target:', e.target);
+        console.log('🎯 AUTOMATISCHES Form-Submit Event! CurrentStep:', currentStep);
+        console.log('🔍 Event Details:', e.type, 'Target:', e.target, 'Submitter:', e.submitter);
+        console.log('🔍 Form Elements:', Array.from(e.target.elements).filter(el => el.type === 'submit').map(el => ({ type: el.type, value: el.value, className: el.className })));
         
-        // Nur in Step 3 erlauben - für alle anderen Steps preventDefault
-        if (currentStep === 3) {
-          console.log('✅ Step 3 - handleSubmit wird aufgerufen');
-          handleSubmit(e);
-        } else {
-          console.log('🚫 Form-Submit in Step', currentStep, 'verhindert - Event blockiert');
-        }
+        // BLOCKIERE ALLE AUTOMATISCHEN SUBMITS - NUR MANUELLER KLICK ERLAUBT
+        console.log('🚫 ALLE Form-Submits werden blockiert - nur manuelle Speichern-Clicks erlaubt');
+        return false;
       }}>
         {/* Step Content */}
         {currentStep === 1 && (
@@ -771,7 +769,11 @@ export default function NewPRCampaignPage() {
               </Button>
             ) : (
               <Button
-                type="submit"
+                type="button"
+                onClick={(e) => {
+                  console.log('🖱️ MANUELLER Speichern-Click!');
+                  handleSubmit(e as any);
+                }}
                 disabled={saving}
                 className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
               >
