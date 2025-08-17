@@ -21,6 +21,8 @@ import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/
 import CampaignContentComposer from '@/components/pr/campaign/CampaignContentComposer';
 import { ModernCustomerSelector } from "@/components/pr/ModernCustomerSelector";
 import CampaignRecipientManager from "@/components/pr/campaign/CampaignRecipientManager";
+import { ApprovalSettings } from "@/components/campaigns/ApprovalSettings";
+import { EnhancedApprovalData, createDefaultEnhancedApprovalData } from "@/types/approvals-enhanced";
 import {
   PlusIcon,
   ArrowLeftIcon,
@@ -109,7 +111,8 @@ export default function NewPRCampaignPage() {
   const [boilerplateSections, setBoilerplateSections] = useState<BoilerplateSection[]>([]);
   const [attachedAssets, setAttachedAssets] = useState<CampaignAssetAttachment[]>([]);
   const [keyVisual, setKeyVisual] = useState<KeyVisualData | undefined>(undefined);
-  const [approvalRequired, setApprovalRequired] = useState(false);
+  const [approvalRequired, setApprovalRequired] = useState(false); // Legacy - wird durch approvalData ersetzt
+  const [approvalData, setApprovalData] = useState<EnhancedApprovalData>(createDefaultEnhancedApprovalData());
   const [keywords, setKeywords] = useState<string[]>([]); // SEO Keywords
   
   // UI State
@@ -230,7 +233,8 @@ export default function NewPRCampaignPage() {
         clientName: selectedCompanyName || null,
         keyVisual: keyVisual || null,
         attachedAssets: cleanedAttachedAssets,
-        approvalRequired: approvalRequired || false
+        approvalRequired: approvalData.teamApprovalRequired || approvalData.customerApprovalRequired || false,
+        approvalData: (approvalData.teamApprovalRequired || approvalData.customerApprovalRequired) ? approvalData : undefined
       };
 
       // Entferne alle null Werte (Firebase mag keine null-Werte)
@@ -242,7 +246,24 @@ export default function NewPRCampaignPage() {
 
       const newCampaignId = await prService.create(campaignData);
 
-      if (approvalRequired) {
+      // Erstelle erweiterten Approval-Workflow falls erforderlich
+      if (approvalData.teamApprovalRequired || approvalData.customerApprovalRequired) {
+        try {
+          // Import approval workflow service dynamically to avoid circular imports
+          const { approvalWorkflowService } = await import('@/lib/firebase/approval-workflow-service');
+          
+          await approvalWorkflowService.createWorkflow(
+            newCampaignId,
+            currentOrganization!.id,
+            approvalData
+          );
+        } catch (error) {
+          console.error('Fehler beim Erstellen des Approval-Workflows:', error);
+          // Workflow-Fehler sollten nicht die Campaign-Erstellung blockieren
+          setValidationErrors(['Die Kampagne wurde gespeichert, aber der Freigabe-Workflow konnte nicht erstellt werden.']);
+        }
+      } else if (approvalRequired) {
+        // Legacy approval fallback
         try {
           const shareId = await prService.requestApproval(newCampaignId);
           if (!shareId) {
@@ -631,21 +652,17 @@ export default function NewPRCampaignPage() {
                 )}
               </div>
 
-              {/* Freigabe */}
+              {/* Erweiterte Freigabe-Einstellungen */}
               <div className="mt-8">
-                <label className="flex items-start gap-3">
-                  <Checkbox
-                    checked={approvalRequired}
-                    onChange={setApprovalRequired}
-                    className="mt-1"
+                <div className="bg-white rounded-lg border p-6">
+                  <ApprovalSettings
+                    value={approvalData}
+                    onChange={setApprovalData}
+                    organizationId={currentOrganization!.id}
+                    clientId={selectedCompanyId}
+                    clientName={selectedCompanyName}
                   />
-                  <div>
-                    <div className="font-medium">Freigabe vom Kunden erforderlich</div>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Wenn aktiviert, muss der Kunde die Pressemitteilung vor dem Versand freigeben.
-                    </p>
-                  </div>
-                </label>
+                </div>
               </div>
             </FieldGroup>
           </div>
@@ -717,7 +734,7 @@ export default function NewPRCampaignPage() {
                 disabled={saving}
                 className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
               >
-                {saving ? 'Speichert...' : approvalRequired ? (
+                {saving ? 'Speichert...' : (approvalData.teamApprovalRequired || approvalData.customerApprovalRequired || approvalRequired) ? (
                   <>
                     <PaperAirplaneIcon className="h-4 w-4 mr-2" />
                     Freigabe anfordern

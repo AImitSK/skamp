@@ -1,5 +1,6 @@
 // src/types/pr.ts - VOLLSTÄNDIG mit Multi-List Support, Freigabe-Workflow, Boilerplate-Integration und Multi-Tenancy
 import { Timestamp } from 'firebase/firestore';
+import type { EnhancedApprovalData } from './approvals-enhanced';
 
 // ERWEITERT: Neue Status für den Freigabe-Workflow hinzugefügt
 export type PRCampaignStatus =
@@ -132,10 +133,10 @@ export interface PRCampaign {
     password?: string;
   };
 
-  // --- NEUE FELDER FÜR DEN FREIGABE-WORKFLOW ---
+  // --- FREIGABE-WORKFLOW FELDER ---
   approvalRequired: boolean;
-  approvalData?: ApprovalData;
-  // --- ENDE DER NEUEN FELDER ---
+  approvalData?: ApprovalData | EnhancedApprovalData; // Legacy + Enhanced Support
+  // --- ENDE DER FREIGABE-FELDER ---
 
   // Timestamps
   createdAt?: Timestamp;
