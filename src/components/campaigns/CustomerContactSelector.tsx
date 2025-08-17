@@ -6,7 +6,7 @@ import { CustomerContactSelectorProps, CustomerContact } from '@/types/approvals
 import { Select } from '@/components/ui/select';
 import { Text } from '@/components/ui/text';
 import { Badge } from '@/components/ui/badge';
-import { contactEnhancedService } from '@/lib/firebase/crm-service-enhanced';
+import { contactsEnhancedService } from '@/lib/firebase/crm-service-enhanced';
 import { ContactEnhanced } from '@/types/crm-enhanced';
 import { useOrganization } from '@/context/OrganizationContext';
 import { 
@@ -44,7 +44,7 @@ export function CustomerContactSelector({
       setError(null);
       
       // Lade echte Kontakte aus dem CRM
-      const crmContacts = await contactEnhancedService.searchEnhanced(
+      const crmContacts = await contactsEnhancedService.searchEnhanced(
         currentOrganization.id,
         {
           companyIds: [clientId]
