@@ -95,7 +95,7 @@ export const approvalWorkflowService = {
 
       // Robuster Retry-Mechanismus für Campaign Update
       try {
-        const campaignRef = doc(db, 'campaigns', campaignId);
+        const campaignRef = doc(db, 'pr_campaigns', campaignId);
         const maxRetries = 5;
         let retryCount = 0;
         let lastError: Error | null = null;
@@ -303,7 +303,7 @@ export const approvalWorkflowService = {
         const workflow = workflowDoc.data() as ApprovalWorkflow;
         
         // Update Campaign Status direkt in Firestore
-        const campaignRef = doc(db, 'campaigns', workflow.campaignId);
+        const campaignRef = doc(db, 'pr_campaigns', workflow.campaignId);
         await updateDoc(campaignRef, {
           status: finalStatus === 'approved' ? 'approved' : 'changes_requested'
         });
