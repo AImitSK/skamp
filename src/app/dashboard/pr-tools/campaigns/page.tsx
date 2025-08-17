@@ -490,8 +490,8 @@ export default function PRCampaignsPage() {
           <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm overflow-hidden">
             {/* Header */}
             <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
-              <div className="flex items-center">
-                <div className="flex items-center w-[25%]">
+              <div className="flex items-center gap-8">
+                <div className="flex items-center w-[40%]">
                   <Checkbox
                     checked={paginatedCampaigns.length > 0 && selectedCampaignIds.size === paginatedCampaigns.length}
                     indeterminate={selectedCampaignIds.size > 0 && selectedCampaignIds.size < paginatedCampaigns.length}
@@ -501,24 +501,16 @@ export default function PRCampaignsPage() {
                     Kampagne
                   </span>
                 </div>
-                <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                <div className="w-[25%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Kunde
                 </div>
-                <div className="w-[12%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Status
                 </div>
-                <div className="w-[8%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-center">
-                  Medien
-                </div>
-                <div className="w-[10%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-center">
-                  Empfänger
-                </div>
-                <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                  Erstellt
-                </div>
-                <div className="flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right pr-14">
+                <div className="flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Versendet
                 </div>
+                <div className="w-12"></div>
               </div>
             </div>
 
@@ -526,9 +518,9 @@ export default function PRCampaignsPage() {
             <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
               {paginatedCampaigns.map((campaign) => (
                 <div key={campaign.id} className="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
-                  <div className="flex items-center">
+                  <div className="flex items-center gap-8">
                     {/* Kampagne */}
-                    <div className="flex items-center w-[25%]">
+                    <div className="flex items-center w-[40%]">
                       <Checkbox
                         checked={selectedCampaignIds.has(campaign.id!)}
                         onChange={(checked: boolean) => {
@@ -555,7 +547,7 @@ export default function PRCampaignsPage() {
                     </div>
 
                     {/* Kunde */}
-                    <div className="w-[15%]">
+                    <div className="w-[25%]">
                       {campaign.clientId ? (
                         <Link 
                           href={`/dashboard/contacts/crm/companies/${campaign.clientId}`}
@@ -570,44 +562,23 @@ export default function PRCampaignsPage() {
                     </div>
 
                     {/* Status */}
-                    <div className="w-[12%]">
+                    <div className="w-[15%]">
                       <StatusBadge status={campaign.status} />
                     </div>
 
-                    {/* Medien */}
-                    <div className="w-[8%] text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <PhotoIcon className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm">{campaign.attachedAssets?.length || 0}</span>
-                      </div>
-                    </div>
-
-                    {/* Empfänger */}
-                    <div className="w-[10%] text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <UsersIcon className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm font-medium">
-                          {(campaign.recipientCount || 0).toLocaleString('de-DE')}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Erstellt */}
-                    <div className="w-[15%]">
-                      <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                        {formatDateShort(campaign.createdAt)}
-                      </span>
-                    </div>
-
                     {/* Versendet */}
-                    <div className="flex-1 text-right pr-14">
-                      <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                        {campaign.sentAt ? formatDateShort(campaign.sentAt) : '—'}
-                      </span>
+                    <div className="flex-1">
+                      {campaign.sentAt ? (
+                        <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                          {formatDateShort(campaign.sentAt)}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-zinc-400">—</span>
+                      )}
                     </div>
 
                     {/* Actions */}
-                    <div className="ml-4">
+                    <div className="w-12 flex justify-end">
                       <Dropdown>
                         <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700">
                           <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />

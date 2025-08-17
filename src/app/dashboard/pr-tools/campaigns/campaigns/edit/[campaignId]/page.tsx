@@ -17,7 +17,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import CampaignContentComposer from '@/components/pr/campaign/CampaignContentComposer';
 import { ModernCustomerSelector } from "@/components/pr/ModernCustomerSelector";
-import { ListSelector } from "@/components/pr/ListSelector";
+import CampaignRecipientManager from "@/components/pr/campaign/CampaignRecipientManager";
+import { ApprovalSettings } from "@/components/campaigns/ApprovalSettings";
+import { EnhancedApprovalData, createDefaultEnhancedApprovalData } from "@/types/approvals-enhanced";
 import {
   PlusIcon,
   ArrowLeftIcon,
@@ -97,16 +99,34 @@ export default function EditPRCampaignPage() {
   const [availableLists, setAvailableLists] = useState<DistributionList[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState('');
   const [selectedCompanyName, setSelectedCompanyName] = useState('');
+  // Multi-List Support (wie in New-Seite)
+  const [selectedListIds, setSelectedListIds] = useState<string[]>([]);
+  const [selectedListNames, setSelectedListNames] = useState<string[]>([]);
+  const [listRecipientCount, setListRecipientCount] = useState(0);
+  
+  // Manual Recipients
+  const [manualRecipients, setManualRecipients] = useState<Array<{
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    companyName?: string;
+    isValid: boolean;
+    validationError?: string;
+  }>>([]);
+  
+  // Legacy single list (für Kompatibilität)
   const [selectedListId, setSelectedListId] = useState('');
   const [selectedListName, setSelectedListName] = useState('');
   const [recipientCount, setRecipientCount] = useState(0);
   const [campaignTitle, setCampaignTitle] = useState('');
   const [pressReleaseContent, setPressReleaseContent] = useState('');
-  const [editorContent, setEditorContent] = useState<string>(''); // Editor-Inhalt für SEO
+  const [editorContent, setEditorContent] = useState<string>(''); // Editor-Inhalt für SEO - FIXED: wird jetzt mit mainContent synchronisiert
   const [boilerplateSections, setBoilerplateSections] = useState<BoilerplateSection[]>([]);
   const [attachedAssets, setAttachedAssets] = useState<CampaignAssetAttachment[]>([]);
   const [keyVisual, setKeyVisual] = useState<KeyVisualData | undefined>(undefined);
-  const [approvalRequired, setApprovalRequired] = useState(false);
+  const [approvalRequired, setApprovalRequired] = useState(false); // Legacy - wird durch approvalData ersetzt
+  const [approvalData, setApprovalData] = useState<EnhancedApprovalData>(createDefaultEnhancedApprovalData());
   const [keywords, setKeywords] = useState<string[]>([]); // SEO Keywords
   
   // UI State
@@ -166,14 +186,46 @@ export default function EditPRCampaignPage() {
         // Setze alle Formularfelder mit den geladenen Daten
         setCampaignTitle(campaignData.title || '');
         setPressReleaseContent(campaignData.contentHtml || '');
+        setEditorContent(campaignData.mainContent || ''); // FIXED: Lade mainContent in editorContent
         setSelectedCompanyId(campaignData.clientId || '');
         setSelectedCompanyName(campaignData.clientName || '');
+        
+        // Multi-List Support
+        setSelectedListIds(campaignData.distributionListIds || []);
+        setSelectedListNames(campaignData.distributionListNames || []);
+        setListRecipientCount(campaignData.recipientCount || 0);
+        
+        // Legacy Single List (Rückwärtskompatibilität)
         setSelectedListId(campaignData.distributionListId || '');
         setSelectedListName(campaignData.distributionListName || '');
         setRecipientCount(campaignData.recipientCount || 0);
+        
+        // Manual Recipients
+        setManualRecipients(campaignData.manualRecipients || []);
+        
+        // Legacy Approval
         setApprovalRequired(campaignData.approvalRequired || false);
+        
+        // Enhanced Approval Data
+        if (campaignData.approvalData && typeof campaignData.approvalData === 'object') {
+          // Prüfe ob es Enhanced Approval Data ist
+          if ('teamApprovalRequired' in campaignData.approvalData || 'customerApprovalRequired' in campaignData.approvalData) {
+            setApprovalData(campaignData.approvalData as EnhancedApprovalData);
+          } else {
+            // Legacy ApprovalData - konvertiere zu Enhanced
+            const legacyData = campaignData.approvalData as any;
+            setApprovalData({
+              ...createDefaultEnhancedApprovalData(),
+              shareId: legacyData.shareId
+            });
+          }
+        } else {
+          setApprovalData(createDefaultEnhancedApprovalData());
+        }
+        
         setAttachedAssets(campaignData.attachedAssets || []);
         setKeyVisual(campaignData.keyVisual || undefined);
+        setKeywords(campaignData.keywords || []);
         
         // Konvertiere boilerplateSections falls nötig
         if (campaignData.boilerplateSections) {
@@ -216,13 +268,11 @@ export default function EditPRCampaignPage() {
     if (!selectedCompanyId) {
       errors.push('Bitte wählen Sie einen Kunden aus');
     }
-    if (!selectedListId) {
-      errors.push('Bitte wählen Sie einen Verteiler aus');
-    }
+    // Verteiler-Auswahl ist jetzt optional - kann vor dem Versand gemacht werden
     if (!campaignTitle.trim()) {
       errors.push('Titel ist erforderlich');
     }
-    if (!pressReleaseContent.trim() || pressReleaseContent === '<p></p>') {
+    if (!editorContent.trim() || editorContent === '<p></p>') {
       errors.push('Inhalt ist erforderlich');
     }
     
@@ -271,15 +321,29 @@ export default function EditPRCampaignPage() {
       const updateData: Partial<PRCampaign> = {
         title: campaignTitle.trim(),
         contentHtml: pressReleaseContent || '',
+        mainContent: editorContent || '', // FIXED: Speichere editorContent als mainContent
         boilerplateSections: cleanedSections,
-        distributionListId: selectedListId,
-        distributionListName: selectedListName || '',
-        recipientCount: recipientCount || 0,
+        // Multi-List Support
+        distributionListIds: selectedListIds,
+        distributionListNames: selectedListNames,
+        // Legacy fields (für Abwärtskompatibilität)
+        distributionListId: selectedListIds[0] || '',
+        distributionListName: selectedListNames[0] || '',
+        recipientCount: listRecipientCount + manualRecipients.length,
+        // Manual Recipients
+        manualRecipients: manualRecipients,
+        // SEO Data
+        keywords: keywords,
+        seoMetrics: {
+          lastAnalyzed: serverTimestamp(),
+          // TODO: SEO-Metriken aus PRSEOHeaderBar übernehmen
+        },
         clientId: selectedCompanyId || undefined,
         clientName: selectedCompanyName || undefined,
         keyVisual: keyVisual,
         attachedAssets: cleanedAttachedAssets,
-        approvalRequired: approvalRequired || false
+        approvalRequired: approvalData.teamApprovalRequired || approvalData.customerApprovalRequired || approvalRequired || false,
+        approvalData: (approvalData.teamApprovalRequired || approvalData.customerApprovalRequired) ? approvalData : undefined
       };
 
       // Entferne undefined Werte
@@ -518,24 +582,26 @@ export default function EditPRCampaignPage() {
                 </div>
 
                 {/* Content Composer mit SEO-Features */}
-                <CampaignContentComposer
-                  key={`composer-${boilerplateSections.length}`}
-                  organizationId={currentOrganization!.id}
-                  clientId={selectedCompanyId}
-                  clientName={selectedCompanyName}
-                  title={campaignTitle}
-                  onTitleChange={setCampaignTitle}
-                  mainContent={editorContent}
-                  onMainContentChange={setEditorContent}
-                  onFullContentChange={setPressReleaseContent}
-                  onBoilerplateSectionsChange={setBoilerplateSections}
-                  initialBoilerplateSections={boilerplateSections}
-                  hideMainContentField={false}
-                  hidePreview={true}
-                  hideBoilerplates={true}
-                  keywords={keywords}
-                  onKeywordsChange={setKeywords}
-                />
+                {currentOrganization && (
+                  <CampaignContentComposer
+                    key={`composer-${boilerplateSections.length}`}
+                    organizationId={currentOrganization.id}
+                    clientId={selectedCompanyId}
+                    clientName={selectedCompanyName}
+                    title={campaignTitle}
+                    onTitleChange={setCampaignTitle}
+                    mainContent={editorContent}
+                    onMainContentChange={setEditorContent}
+                    onFullContentChange={setPressReleaseContent}
+                    onBoilerplateSectionsChange={setBoilerplateSections}
+                    initialBoilerplateSections={boilerplateSections}
+                    hideMainContentField={false}
+                    hidePreview={true}
+                    hideBoilerplates={true}
+                    keywords={keywords}
+                    onKeywordsChange={setKeywords}
+                  />
+                )}
               </div>
 
               {/* Key Visual */}
@@ -568,28 +634,36 @@ export default function EditPRCampaignPage() {
                 />
               </div>
 
-              {/* Verteiler */}
-              <div className="border-t pt-6 mt-6">
-                <Field>
-                  <Label className="flex items-center">
-                    Verteiler
-                    <InfoTooltip 
-                      content="Pflichtfeld: Wählen Sie eine Verteilerliste aus. Die Pressemitteilung wird an alle Kontakte in dieser Liste gesendet."
-                      className="ml-1"
-                    />
-                  </Label>
-                  <ListSelector
-                    value={selectedListId}
-                    onChange={(listId, listName, contactCount) => {
-                      setSelectedListId(listId);
-                      setSelectedListName(listName);
-                      setRecipientCount(contactCount);
-                    }}
-                    lists={availableLists}
-                    loading={false}
-                    required
-                  />
-                </Field>
+              {/* Verteiler mit Multi-List Support */}
+              <div className="mt-8">
+                <CampaignRecipientManager
+                  selectedListIds={selectedListIds}
+                  selectedListNames={selectedListNames}
+                  manualRecipients={manualRecipients}
+                  onListsChange={(listIds, listNames, totalFromLists) => {
+                    setSelectedListIds(listIds);
+                    setSelectedListNames(listNames);
+                    setListRecipientCount(totalFromLists);
+                    // Legacy fields aktualisieren
+                    setSelectedListId(listIds[0] || '');
+                    setSelectedListName(listNames[0] || '');
+                  }}
+                  onAddManualRecipient={(recipient) => {
+                    const newRecipient = {
+                      ...recipient,
+                      id: `manual_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                    };
+                    setManualRecipients([...manualRecipients, newRecipient]);
+                  }}
+                  onRemoveManualRecipient={(id) => {
+                    setManualRecipients(manualRecipients.filter(r => r.id !== id));
+                  }}
+                  recipientCount={listRecipientCount + manualRecipients.length}
+                  // Campaign Integration (existierende Campaign Daten)
+                  campaignDistributionListIds={selectedListIds}
+                  campaignDistributionListNames={selectedListNames}
+                  campaignRecipientCount={listRecipientCount + manualRecipients.length}
+                />
               </div>
 
               {/* Medien */}
@@ -655,47 +729,32 @@ export default function EditPRCampaignPage() {
                 )}
               </div>
 
-              {/* Freigabe */}
-              <div className="border-t pt-6 mt-6">
-                <label className="flex items-start gap-3">
-                  <Checkbox
-                    checked={approvalRequired}
-                    onChange={setApprovalRequired}
-                    className="mt-1"
-                  />
-                  <div>
-                    <div className="font-medium">Freigabe vom Kunden erforderlich</div>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Wenn aktiviert, muss der Kunde die Pressemitteilung vor dem Versand freigeben.
-                    </p>
-                    {campaign.approvalData && (
-                      <div className="mt-2">
-                        <Badge color={
-                          campaign.status === 'approved' ? 'green' :
-                          campaign.status === 'changes_requested' ? 'orange' :
-                          campaign.status === 'in_review' ? 'blue' : 'zinc'
-                        }>
-                          {campaign.status === 'approved' ? 'Freigegeben' :
-                           campaign.status === 'changes_requested' ? 'Änderungen angefordert' :
-                           campaign.status === 'in_review' ? 'In Prüfung' : 'Entwurf'}
-                        </Badge>
-                      </div>
-                    )}
+              {/* Erweiterte Freigabe-Einstellungen */}
+              {currentOrganization && (
+                <div className="mt-8">
+                  <div className="bg-white rounded-lg border p-6">
+                    <ApprovalSettings
+                      value={approvalData}
+                      onChange={setApprovalData}
+                      organizationId={currentOrganization.id}
+                      clientId={selectedCompanyId}
+                      clientName={selectedCompanyName}
+                    />
                   </div>
-                </label>
-              </div>
+                </div>
+              )}
             </FieldGroup>
           </div>
         )}
 
         {/* Step 3: Vorschau */}
-        {currentStep === 3 && (
+        {currentStep === 3 && currentOrganization && (
           <div className="bg-white rounded-lg border p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Vorschau</h3>
             
             {/* Campaign Preview mit PDF-Export */}
             <CampaignContentComposer
-              organizationId={currentOrganization!.id}
+              organizationId={currentOrganization.id}
               clientId={selectedCompanyId}
               clientName={selectedCompanyName}
               title={campaignTitle}
