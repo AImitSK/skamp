@@ -628,7 +628,6 @@ export default function NewPRCampaignPage() {
                   </Button>
                 )}
               </div>
-              </div>
 
               {/* Freigabe */}
               <div className="mt-8">
@@ -736,8 +735,12 @@ export default function NewPRCampaignPage() {
           clientId={selectedCompanyId}
           clientName={selectedCompanyName}
           onAssetsSelected={setAttachedAssets}
-          organizationId={currentOrganization!.id}
+          organizationId={user.uid}
           legacyUserId={user.uid}
+          selectionMode="multiple"
+          onUploadSuccess={() => {
+            // Optional: Refresh or additional logic after upload
+          }}
         />
       )}
 

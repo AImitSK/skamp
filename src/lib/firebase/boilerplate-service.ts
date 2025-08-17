@@ -173,23 +173,8 @@ export const boilerplatesService = {
     client: Record<string, Boilerplate[]>;
     favorites: Boilerplate[];
   }> {
-    if (!clientId) {
-      const all = await this.getGroupedByCategory(organizationId);
-      return {
-        global: all,
-        client: {},
-        favorites: Object.values(all).flat().filter(bp => bp.isFavorite)
-      };
-    }
-
-    // FIXED: Lade sowohl globale als auch kunden-spezifische Boilerplates
+    // KOMPLETT NEU: Nutze getAll() wie das Boilerplates-Modul
     const allBoilerplates = await this.getAll(organizationId);
-    
-    // Filtere: Global (ohne clientId) + Client-spezifisch (mit der clientId)
-    const boilerplates = allBoilerplates.filter(bp => 
-      !bp.clientId || // Globale Boilerplates (kein clientId)
-      bp.clientId === clientId // Oder passende clientId
-    );
     
     // Helper function zum Gruppieren
     const groupByCategory = (boilerplates: Boilerplate[]): Record<string, Boilerplate[]> => {
@@ -203,13 +188,19 @@ export const boilerplatesService = {
       }, {} as Record<string, Boilerplate[]>);
     };
     
-    const globalBoilerplates = boilerplates.filter(bp => bp.isGlobal);
-    const clientBoilerplates = boilerplates.filter(bp => !bp.isGlobal);
+    // Filtere nach isGlobal UND clientId
+    const globalBoilerplates = allBoilerplates.filter(bp => 
+      bp.isGlobal === true || !bp.clientId // Global = kein clientId ODER explizit isGlobal
+    );
+    
+    const clientBoilerplates = allBoilerplates.filter(bp => 
+      bp.clientId === clientId // Nur die für diesen spezifischen Client
+    );
     
     const globalGrouped = groupByCategory(globalBoilerplates);
     const clientGrouped = groupByCategory(clientBoilerplates);
     
-    const favorites = boilerplates.filter(bp => bp.isFavorite);
+    const favorites = allBoilerplates.filter(bp => bp.isFavorite);
     
     return {
       global: globalGrouped,
