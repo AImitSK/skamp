@@ -612,6 +612,9 @@ export default function NewPRCampaignPage() {
                     onClick={() => {
                       if (selectedCompanyId) {
                         setShowAssetSelector(true);
+                      } else {
+                        // Zeige Fehlermeldung wenn kein Kunde ausgewählt
+                        setValidationErrors(['Bitte wählen Sie zuerst einen Kunden aus, um Medien hinzuzufügen']);
                       }
                     }}
                   >

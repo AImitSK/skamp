@@ -1143,8 +1143,6 @@ export const mediaService = {
 
   async getMediaByClientId(organizationId: string, clientId: string, cleanupInvalid = false, legacyUserId?: string): Promise<{folders: MediaFolder[], assets: MediaAsset[], totalCount: number}> {
     try {
-      console.log('🔍 DEBUG: Loading media for client:', clientId, '(Organization:', organizationId, ')');
-      
       // 1. Lade Ordner und Assets parallel - mit Fallback auf userId
       // WICHTIG: Wir suchen zuerst nach Assets MIT clientId
       let [foldersSnapshot, assetsSnapshot] = await Promise.all([
@@ -1162,8 +1160,6 @@ export const mediaService = {
 
       // Fallback auf userId wenn keine Ergebnisse mit organizationId
       if (foldersSnapshot.empty && assetsSnapshot.empty) {
-        console.log('🔄 No results with organizationId, trying userId fallback...');
-        console.log('🔍 Searching with userId:', organizationId, 'clientId:', clientId);
         [foldersSnapshot, assetsSnapshot] = await Promise.all([
           getDocs(query(
             collection(db, 'media_folders'),
@@ -1179,7 +1175,6 @@ export const mediaService = {
         
         // Wenn immer noch keine Ergebnisse und legacyUserId verfügbar, versuche mit legacyUserId
         if (foldersSnapshot.empty && assetsSnapshot.empty && legacyUserId && legacyUserId !== organizationId) {
-          console.log('🔄 Still no results, trying with legacyUserId:', legacyUserId);
           [foldersSnapshot, assetsSnapshot] = await Promise.all([
             getDocs(query(
               collection(db, 'media_folders'),
@@ -1196,15 +1191,10 @@ export const mediaService = {
         
         // NEUE LOGIK: Wenn keine client-spezifischen Medien gefunden werden, return leer
         if (foldersSnapshot.empty && assetsSnapshot.empty) {
-          console.log('ℹ️ No client-specific media found for clientId:', clientId);
-          console.log('✅ Returning empty result (correct behavior)');
+          // Return empty result (correct behavior)
         }
       }
 
-      console.log('📊 Raw data loaded:', {
-        folders: foldersSnapshot.docs.length,
-        directAssets: assetsSnapshot.docs.length
-      });
 
       // 2. Konvertiere zu Objekten
       const folders = foldersSnapshot.docs.map(doc => {
@@ -1230,38 +1220,29 @@ export const mediaService = {
       // 3. Lade Assets aus Ordnern (falls vorhanden)
       let folderAssets: MediaAsset[] = [];
       if (folders.length > 0) {
-        console.log('📁 Loading assets from folders...');
         const folderAssetPromises = folders.map(folder => 
           this.getMediaAssetsInFolder(folder.id!)
         );
         const folderAssetArrays = await Promise.all(folderAssetPromises);
         folderAssets = folderAssetArrays.flat();
-        console.log('📎 Assets from folders:', folderAssets.length);
       }
 
       // 4. Kombiniere alle Assets
       const allAssets = [...directAssets, ...folderAssets];
-      console.log('📊 Total assets before validation:', allAssets.length);
 
       // 5. DEDUPLIZIERUNG: Entferne Duplikate basierend auf id (nicht fileName)
       const seenIds = new Set<string>();
       const deduplicatedAssets = allAssets.filter(asset => {
         if (!asset.id || seenIds.has(asset.id)) {
-          if (asset.id) {
-            console.log(`🔁 Removing duplicate ID: ${asset.id} (${asset.fileName})`);
-          }
           return false;
         }
         seenIds.add(asset.id);
         return true;
       });
-      
-      console.log(`📊 After deduplication: ${deduplicatedAssets.length} unique assets`);
 
       // 6. EINFACHE Asset-Validation (nur downloadUrl-Check)
       const validAssets = deduplicatedAssets.filter(asset => {
         if (!asset.downloadUrl) {
-          console.warn(`❌ Asset ${asset.fileName} (${asset.id}) has no downloadUrl - removing`);
           return false;
         }
         return true;
@@ -1270,10 +1251,7 @@ export const mediaService = {
       // 7. OPTIONALE BEREINIGUNG: Entferne tatsächlich defekte Assets
       let finalAssets = validAssets;
       if (cleanupInvalid && validAssets.length <= 20) {
-        console.log('🧹 Running deep cleanup for invalid assets...');
         finalAssets = await this.cleanupInvalidAssets(organizationId, validAssets);
-      } else if (cleanupInvalid) {
-        console.log(`ℹ️ Skipping deep cleanup for ${validAssets.length} assets (too many for performance)`);
       }
       
       // 8. Sortiere Assets nach Erstellungsdatum
@@ -1283,8 +1261,6 @@ export const mediaService = {
         return bTime - aTime;
       });
 
-      console.log(`✅ Found ${folders.length} folders and ${finalAssets.length} assets for client`);
-      
       return {
         folders: folders.sort((a, b) => a.name.localeCompare(b.name)),
         assets: finalAssets,
@@ -1292,8 +1268,6 @@ export const mediaService = {
       };
 
     } catch (error) {
-      console.error("❌ Fehler beim Laden der Kunden-Medien:", error);
-      
       // Fallback: Return leeres Ergebnis statt Fehler
       return {
         folders: [],

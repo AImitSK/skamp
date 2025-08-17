@@ -73,8 +73,6 @@ export function AssetSelectorModal({
   const loadClientMedia = async () => {
     setLoading(true);
     try {
-      console.log('🔍 Loading media for client:', clientId, 'showAll:', showAllAssets);
-      
       if (showAllAssets) {
         // Zeige client-spezifische + nicht-zugeordnete Medien
         const [clientResult, allResult] = await Promise.all([
@@ -96,23 +94,15 @@ export function AssetSelectorModal({
           return true;
         });
         
-        console.log('📊 Combined view:', {
-          clientSpecific: clientResult.assets.length,
-          unassigned: unassignedAssets.length,
-          total: uniqueAssets.length
-        });
-        
         setAssets(uniqueAssets);
         setFolders(clientResult.folders);
       } else {
         // Zeige nur client-spezifische Medien
         const result = await mediaService.getMediaByClientId(organizationId, clientId, false, legacyUserId);
-        console.log('📊 Client-only view:', result.assets.length, 'assets');
         setAssets(result.assets);
         setFolders(result.folders);
       }
     } catch (error) {
-      console.error('❌ Error loading media:', error);
       setAssets([]);
       setFolders([]);
     } finally {
