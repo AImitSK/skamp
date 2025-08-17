@@ -179,13 +179,13 @@ export function KeyVisualSection({
       </div>
 
       {!value ? (
-        // Platzhalter wenn kein Key Visual
+        // Platzhalter wenn kein Key Visual - kompakte Höhe wie Medien-Platzhalter
         <div 
-          className="relative aspect-[16/9] border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:bg-gray-100 hover:border-[#005fab] transition-all cursor-pointer group"
+          className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:bg-gray-100 hover:border-[#005fab] transition-all cursor-pointer group py-8"
           onClick={() => setShowAssetSelector(true)}
         >
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <PhotoIcon className="h-12 w-12 text-gray-400 group-hover:text-[#005fab] mb-3" />
+          <div className="flex flex-col items-center justify-center">
+            <PhotoIcon className="h-10 w-10 text-gray-400 group-hover:text-[#005fab] mb-2" />
             <Text className="text-gray-600 group-hover:text-[#005fab] font-medium">
               Key Visual hinzufügen
             </Text>

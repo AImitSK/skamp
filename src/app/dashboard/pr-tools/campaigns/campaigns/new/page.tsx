@@ -552,18 +552,16 @@ export default function NewPRCampaignPage() {
 
               {/* Medien */}
               <div className="mt-8">
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <div className="flex items-center gap-2 mb-4">
-                    <PhotoIcon className="h-5 w-5 text-gray-600" />
-                    <h3 className="text-lg font-semibold text-gray-900">Medien (optional)</h3>
-                  </div>
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Medien (optional)</h3>
+                </div>
                 
                 {attachedAssets.length > 0 ? (
                   <div className="space-y-2">
                     {attachedAssets.map((attachment) => (
                       <div
                         key={attachment.id}
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                        className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200"
                       >
                         <div className="flex items-center gap-3">
                           {attachment.type === 'folder' ? (
@@ -595,6 +593,18 @@ export default function NewPRCampaignPage() {
                         </button>
                       </div>
                     ))}
+                    
+                    {/* Button für weitere Medien wenn bereits welche vorhanden */}
+                    {selectedCompanyId && (
+                      <Button
+                        type="button"
+                        onClick={() => setShowAssetSelector(true)}
+                        className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm px-3 py-1.5 flex items-center gap-2 mt-3"
+                      >
+                        <PlusIcon className="h-4 w-4" />
+                        Weitere Medien hinzufügen
+                      </Button>
+                    )}
                   </div>
                 ) : (
                   <div 
@@ -616,19 +626,6 @@ export default function NewPRCampaignPage() {
                     </div>
                   </div>
                 )}
-                
-                {/* Button für weitere Medien wenn bereits welche vorhanden */}
-                {attachedAssets.length > 0 && selectedCompanyId && (
-                  <Button
-                    type="button"
-                    onClick={() => setShowAssetSelector(true)}
-                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm px-3 py-1.5 flex items-center gap-2 mt-3"
-                  >
-                    <PlusIcon className="h-4 w-4" />
-                    Weitere Medien hinzufügen
-                  </Button>
-                )}
-                </div>
               </div>
 
               {/* Freigabe */}

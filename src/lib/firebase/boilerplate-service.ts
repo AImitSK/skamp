@@ -166,14 +166,14 @@ export const boilerplatesService = {
   },
 
   /**
-   * Für Campaign Editor strukturiert
+   * Für Campaign Editor strukturiert - VEREINFACHT: Nutze exakt wie Boilerplates-Modul
    */
   async getForCampaignEditor(organizationId: string, clientId?: string): Promise<{
     global: Record<string, Boilerplate[]>;
     client: Record<string, Boilerplate[]>;
     favorites: Boilerplate[];
   }> {
-    // KOMPLETT NEU: Nutze getAll() wie das Boilerplates-Modul
+    // VEREINFACHT: Nutze getAll() genau wie das funktionierende Boilerplates-Modul
     const allBoilerplates = await this.getAll(organizationId);
     
     // Helper function zum Gruppieren
@@ -188,16 +188,13 @@ export const boilerplatesService = {
       }, {} as Record<string, Boilerplate[]>);
     };
     
-    // Filtere nach isGlobal UND clientId
-    const globalBoilerplates = allBoilerplates.filter(bp => 
-      bp.isGlobal === true || !bp.clientId // Global = kein clientId ODER explizit isGlobal
-    );
+    // EINFACH: Alle Textbausteine in global gruppieren (wie Boilerplates-Modul)
+    const globalGrouped = groupByCategory(allBoilerplates);
     
+    // Client-spezifische extra filtern (für spezielle Anzeige)
     const clientBoilerplates = allBoilerplates.filter(bp => 
-      bp.clientId === clientId // Nur die für diesen spezifischen Client
+      bp.clientId === clientId
     );
-    
-    const globalGrouped = groupByCategory(globalBoilerplates);
     const clientGrouped = groupByCategory(clientBoilerplates);
     
     const favorites = allBoilerplates.filter(bp => bp.isFavorite);
