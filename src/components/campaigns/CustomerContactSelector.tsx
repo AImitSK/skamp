@@ -52,13 +52,19 @@ export function CustomerContactSelector({
       );
       
       // Konvertiere CRM-Kontakte zu CustomerContact Format
-      const customerContacts: CustomerContact[] = crmContacts.map(contact => ({
-        contactId: contact.id!,
-        name: `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || contact.email,
-        email: contact.email,
-        companyName: contact.companyDetails?.name || '',
-        role: contact.position || undefined
-      }));
+      const customerContacts: CustomerContact[] = crmContacts.map(contact => {
+        const firstName = contact.firstName || '';
+        const lastName = contact.lastName || '';
+        const fullName = `${firstName} ${lastName}`.trim();
+        
+        return {
+          contactId: contact.id!,
+          name: fullName || contact.email || 'Unbekannter Kontakt',
+          email: contact.email || '',
+          companyName: contact.companyDetails?.name || '',
+          role: contact.position || contact.jobTitle || undefined
+        };
+      });
       
       setContacts(customerContacts);
     } catch (error) {
@@ -146,7 +152,7 @@ export function CustomerContactSelector({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <Text className="font-medium text-green-900">
-                      {selectedContactData.name}
+                      {selectedContactData.name || 'Name nicht verfügbar'}
                     </Text>
                     {selectedContactData.role && (
                       <Badge color={getContactRoleBadgeColor(selectedContactData.role)}>
@@ -156,14 +162,18 @@ export function CustomerContactSelector({
                   </div>
                   
                   <div className="space-y-1">
-                    <div className="flex items-center gap-1 text-sm text-green-700">
-                      <EnvelopeIcon className="h-4 w-4" />
-                      {selectedContactData.email}
-                    </div>
-                    <div className="flex items-center gap-1 text-sm text-green-700">
-                      <BuildingOfficeIcon className="h-4 w-4" />
-                      {selectedContactData.companyName}
-                    </div>
+                    {selectedContactData.email && (
+                      <div className="flex items-center gap-1 text-sm text-green-700">
+                        <EnvelopeIcon className="h-4 w-4" />
+                        {selectedContactData.email}
+                      </div>
+                    )}
+                    {selectedContactData.companyName && (
+                      <div className="flex items-center gap-1 text-sm text-green-700">
+                        <BuildingOfficeIcon className="h-4 w-4" />
+                        {selectedContactData.companyName}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

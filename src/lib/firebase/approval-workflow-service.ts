@@ -21,7 +21,6 @@ import {
   CustomerContact
 } from '@/types/approvals-enhanced';
 import { teamApprovalService } from './team-approval-service';
-import { prService } from './pr-service';
 import { nanoid } from 'nanoid';
 
 export const approvalWorkflowService = {
@@ -94,7 +93,9 @@ export const approvalWorkflowService = {
         workflowStartedAt: now
       };
 
-      await prService.updateCampaign(campaignId, {
+      // Update Campaign direkt in Firestore
+      const campaignRef = doc(db, 'campaigns', campaignId);
+      await updateDoc(campaignRef, {
         approvalData: updatedApprovalData
       });
 
@@ -259,7 +260,9 @@ export const approvalWorkflowService = {
       if (workflowDoc.exists()) {
         const workflow = workflowDoc.data() as ApprovalWorkflow;
         
-        await prService.updateCampaign(workflow.campaignId, {
+        // Update Campaign Status direkt in Firestore
+        const campaignRef = doc(db, 'campaigns', workflow.campaignId);
+        await updateDoc(campaignRef, {
           status: finalStatus === 'approved' ? 'approved' : 'changes_requested'
         });
       }

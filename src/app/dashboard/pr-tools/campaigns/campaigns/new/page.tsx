@@ -153,9 +153,7 @@ export default function NewPRCampaignPage() {
     if (!selectedCompanyId) {
       errors.push('Bitte wählen Sie einen Kunden aus');
     }
-    if (selectedListIds.length === 0 && manualRecipients.length === 0) {
-      errors.push('Bitte wählen Sie mindestens einen Verteiler aus oder fügen Sie manuelle Empfänger hinzu');
-    }
+    // Verteiler-Auswahl ist jetzt optional - kann vor dem Versand gemacht werden
     if (!campaignTitle.trim()) {
       errors.push('Titel ist erforderlich');
     }
