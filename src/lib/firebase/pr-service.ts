@@ -130,8 +130,8 @@ export const prService = {
         distributionListName: campaignData.distributionListName || '',
         recipientCount: campaignData.recipientCount || 0,
         approvalRequired: campaignData.approvalRequired === true,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        createdAt: Timestamp.now(), // FIX: Verwende Timestamp.now() statt serverTimestamp()
+        updatedAt: Timestamp.now()  // FIX: Verwende Timestamp.now() statt serverTimestamp()
       };
 
       // Optionale Felder nur hinzufügen wenn sie einen Wert haben
@@ -314,13 +314,22 @@ export const prService = {
   async update(campaignId: string, data: Partial<Omit<PRCampaign, 'id'| 'userId'>>): Promise<void> {
     const docRef = doc(db, 'pr_campaigns', campaignId);
     
+    // 🔍 DEBUG: Was kommt im Update an?
+    console.log('🔍 PR-SERVICE UPDATE DEBUG:');
+    console.log('🏷️ data.keywords:', data.keywords);
+    console.log('📝 data.mainContent length:', data.mainContent?.length || 0);
+    console.log('🗄️ Alle Update-Felder:', Object.keys(data));
+    
     // Bereinige die Update-Daten
     const cleanedData = removeUndefinedValues({
       ...data,
-      updatedAt: serverTimestamp(),
+      updatedAt: Timestamp.now(), // FIX: Verwende Timestamp.now() statt serverTimestamp()
     });
     
-    console.log('Updating campaign:', campaignId, 'with cleaned data:', cleanedData);
+    console.log('🔍 PR-SERVICE UPDATE FINAL - Was wird wirklich upgedatet:');
+    console.log('🏷️ cleanedData.keywords:', cleanedData.keywords);
+    console.log('📝 cleanedData.mainContent length:', cleanedData.mainContent?.length || 0);
+    console.log('🗄️ Alle finalen Update-Felder:', Object.keys(cleanedData));
     
     await updateDoc(docRef, cleanedData);
   },
@@ -443,11 +452,11 @@ export const prService = {
     const docRef = doc(db, 'pr_campaigns', campaignId);
     const updateData: any = {
       status,
-      updatedAt: serverTimestamp(),
+      updatedAt: Timestamp.now(), // FIX: Verwende Timestamp.now() statt serverTimestamp()
     };
 
     if (status === 'sent') {
-      updateData.sentAt = serverTimestamp();
+      updateData.sentAt = Timestamp.now(); // FIX: Verwende Timestamp.now() statt serverTimestamp()
     }
 
     await updateDoc(docRef, updateData);
