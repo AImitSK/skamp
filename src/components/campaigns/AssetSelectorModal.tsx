@@ -181,33 +181,31 @@ export function AssetSelectorModal({
   return (
     <>
       <Dialog open={isOpen} onClose={onClose} size="3xl">
-        <DialogTitle className="px-6 py-4 flex items-center justify-between">
-          <span>
-            {selectionMode === 'single' ? 'Key Visual' : 'Medien'} auswählen
-            {clientName && ` für ${clientName}`}
-          </span>
-          <Button
-            onClick={() => setShowUploadModal(true)}
-            className="bg-[#005fab] hover:bg-[#004a8c] text-white px-4 py-2"
-          >
-            <CloudArrowUpIcon className="h-4 w-4 mr-2" />
-            Neue Datei hochladen
-          </Button>
+        <DialogTitle className="px-6 py-4">
+          <div className="flex items-center justify-between">
+            <span>
+              {selectionMode === 'single' ? 'Key Visual' : 'Medien'} auswählen
+              {clientName && ` für ${clientName}`}
+            </span>
+            <Button
+              onClick={() => setShowUploadModal(true)}
+              className="bg-[#005fab] hover:bg-[#004a8c] text-white px-4 py-2 mr-8"
+            >
+              <CloudArrowUpIcon className="h-4 w-4 mr-2" />
+              Neue Datei hochladen
+            </Button>
+          </div>
         </DialogTitle>
       
       <DialogBody className="px-6">
         {/* Search */}
         <div className="mb-4">
-          <div className="relative">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Medien suchen..."
-              className="pl-9"
-            />
-          </div>
+          <Input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Medien suchen..."
+          />
         </div>
 
         {loading ? (

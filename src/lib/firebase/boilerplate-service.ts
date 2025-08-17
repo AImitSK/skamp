@@ -182,7 +182,14 @@ export const boilerplatesService = {
       };
     }
 
-    const boilerplates = await this.getForClient(organizationId, clientId);
+    // FIXED: Lade sowohl globale als auch kunden-spezifische Boilerplates
+    const allBoilerplates = await this.getAll(organizationId);
+    
+    // Filtere: Global (ohne clientId) + Client-spezifisch (mit der clientId)
+    const boilerplates = allBoilerplates.filter(bp => 
+      !bp.clientId || // Globale Boilerplates (kein clientId)
+      bp.clientId === clientId // Oder passende clientId
+    );
     
     // Helper function zum Gruppieren
     const groupByCategory = (boilerplates: Boilerplate[]): Record<string, Boilerplate[]> => {
