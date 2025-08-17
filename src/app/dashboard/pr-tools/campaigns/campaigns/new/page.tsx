@@ -38,7 +38,7 @@ import { listsService } from "@/lib/firebase/lists-service";
 import { prService } from "@/lib/firebase/pr-service";
 import { DistributionList } from "@/types/lists";
 import { CampaignAssetAttachment } from "@/types/pr";
-import IntelligentBoilerplateSection, { BoilerplateSection } from "@/components/pr/campaign/IntelligentBoilerplateSection";
+import SimpleBoilerplateLoader, { BoilerplateSection } from "@/components/pr/campaign/SimpleBoilerplateLoader";
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { serverTimestamp } from 'firebase/firestore';
 // PRSEOHeaderBar now integrated in CampaignContentComposer
@@ -472,18 +472,15 @@ export default function NewPRCampaignPage() {
         {currentStep === 2 && (
           <div className="bg-white rounded-lg border p-6">
             <FieldGroup>
-              {/* Textbausteine & Elemente */}
+              {/* Textbausteine */}
               <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Textbausteine & Elemente</h3>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <IntelligentBoilerplateSection
-                    organizationId={currentOrganization!.id}
-                    clientId={selectedCompanyId}
-                    clientName={selectedCompanyName}
-                    onContentChange={setBoilerplateSections}
-                    initialSections={boilerplateSections}
-                  />
-                </div>
+                <SimpleBoilerplateLoader
+                  organizationId={currentOrganization!.id}
+                  clientId={selectedCompanyId}
+                  clientName={selectedCompanyName}
+                  onSectionsChange={setBoilerplateSections}
+                  initialSections={boilerplateSections}
+                />
               </div>
 
               {/* Verteiler */}
