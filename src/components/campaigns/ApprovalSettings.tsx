@@ -147,9 +147,9 @@ export function ApprovalSettings({
         {/* Team-Freigabe */}
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <Label className="text-sm font-medium text-gray-900">
+            <h4 className="text-sm font-medium text-gray-900">
               Team-Freigabe erforderlich
-            </Label>
+            </h4>
             <Text className="text-sm text-gray-600 mt-1">
               Kampagne muss von ausgewählten Team-Mitgliedern freigegeben werden
             </Text>
@@ -188,9 +188,9 @@ export function ApprovalSettings({
         {/* Kunden-Freigabe */}
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <Label className="text-sm font-medium text-gray-900">
+            <h4 className="text-sm font-medium text-gray-900">
               Kunden-Freigabe erforderlich
-            </Label>
+            </h4>
             <Text className="text-sm text-gray-600 mt-1">
               Kampagne muss vom Kunden freigegeben werden
             </Text>
