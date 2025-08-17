@@ -240,7 +240,7 @@ export function KeyVisualSection({
           clientId={clientId}
           clientName={clientName}
           onAssetsSelected={handleAssetSelected}
-          organizationId={organizationId}
+          organizationId={userId}
           legacyUserId={userId}
           selectionMode="single"
           onUploadSuccess={() => {
