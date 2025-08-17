@@ -112,6 +112,12 @@ export const prService = {
         return cleanAsset;
       });
 
+      // 🔍 DEBUG: Was kommt in pr-service.create an?
+      console.log('🔍 PR-SERVICE CREATE DEBUG:');
+      console.log('🏷️ campaignData.keywords:', campaignData.keywords);
+      console.log('📝 campaignData.mainContent length:', campaignData.mainContent?.length || 0);
+      console.log('🗄️ Alle übergebenen Felder:', Object.keys(campaignData));
+
       // Erstelle die zu speichernden Daten
       const dataToSave: any = {
         userId: campaignData.userId,
@@ -140,6 +146,12 @@ export const prService = {
       }
       if (campaignData.mainContent && campaignData.mainContent !== '') {
         dataToSave.mainContent = campaignData.mainContent;
+      }
+      if (campaignData.keywords && Array.isArray(campaignData.keywords) && campaignData.keywords.length > 0) {
+        dataToSave.keywords = campaignData.keywords;
+        console.log('🔍 Keywords werden gespeichert:', campaignData.keywords);
+      } else {
+        console.log('🔍 KEINE Keywords gefunden oder leer:', campaignData.keywords);
       }
       if (campaignData.distributionListIds && campaignData.distributionListIds.length > 0) {
         dataToSave.distributionListIds = campaignData.distributionListIds;
@@ -178,6 +190,10 @@ export const prService = {
       // Finale Bereinigung: Entferne alle undefined Werte
       const finalData = removeUndefinedValues(dataToSave);
 
+      console.log('🔍 PR-SERVICE FINAL - Was wird wirklich gespeichert:');
+      console.log('🏷️ finalData.keywords:', finalData.keywords);
+      console.log('📝 finalData.mainContent length:', finalData.mainContent?.length || 0);
+      console.log('🗄️ Alle Felder die gespeichert werden:', Object.keys(finalData));
       console.log('Creating campaign with cleaned data:', finalData);
       
       const docRef = await addDoc(collection(db, 'pr_campaigns'), finalData);
@@ -203,6 +219,9 @@ export const prService = {
     try {
       const fieldName = useOrganizationId ? 'organizationId' : 'userId';
       
+      console.log('🔍 SORTIERUNG DEBUG - Query wird ausgeführt:');
+      console.log('🔍 fieldName:', fieldName, 'userOrOrgId:', userOrOrgId);
+      
       // SERVER-SEITIGE Sortierung - neueste Kampagnen zuerst
       const q = query(
         collection(db, 'pr_campaigns'),
@@ -210,18 +229,64 @@ export const prService = {
         orderBy('createdAt', 'desc')
       );
       
+      console.log('🔍 Firestore Query mit orderBy(createdAt, desc) wird ausgeführt...');
       const snapshot = await getDocs(q);
-      const campaigns = snapshot.docs.map(doc => {
+      console.log('🔍 Anzahl gefundene Dokumente:', snapshot.docs.length);
+      
+      const campaigns = snapshot.docs.map((doc, index) => {
         const data = doc.data();
-        return {
+        const campaign = {
           id: doc.id,
           ...data
         } as PRCampaign;
+        
+        // Debug für jede Kampagne
+        console.log(`🔍 Kampagne ${index + 1}: "${campaign.title}" (${doc.id.substring(0,8)})`);
+        console.log(`🔍   createdAt:`, campaign.createdAt);
+        console.log(`🔍   createdAt type:`, typeof campaign.createdAt);
+        if (campaign.createdAt && typeof campaign.createdAt === 'object') {
+          console.log(`🔍   createdAt keys:`, Object.keys(campaign.createdAt));
+          if (campaign.createdAt.toDate) {
+            console.log(`🔍   createdAt.toDate():`, campaign.createdAt.toDate());
+          }
+        }
+        
+        return campaign;
+      });
+      
+      console.log('🔍 SORTIERUNG ERGEBNIS - Reihenfolge der ersten 5:');
+      campaigns.slice(0, 5).forEach((c, i) => {
+        console.log(`${i + 1}. "${c.title}" (${c.id?.substring(0,8)})`);
       });
       
       return campaigns; // Bereits server-seitig sortiert!
     } catch (error) {
-      console.error('Fehler beim Laden der Kampagnen:', error);
+      console.error('❌ Fehler beim Laden der Kampagnen:', error);
+      if (error.code === 'failed-precondition') {
+        console.error('❌ Firestore Index fehlt für orderBy! Fallback ohne orderBy...');
+        // Fallback ohne orderBy
+        const q = query(
+          collection(db, 'pr_campaigns'),
+          where(useOrganizationId ? 'organizationId' : 'userId', '==', userOrOrgId)
+        );
+        const snapshot = await getDocs(q);
+        const campaigns = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as PRCampaign));
+        
+        // Client-seitige Sortierung als Fallback
+        return campaigns.sort((a, b) => {
+          if (!a.createdAt && !b.createdAt) return 0;
+          if (!a.createdAt) return 1;
+          if (!b.createdAt) return -1;
+          
+          const aTime = a.createdAt.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt).getTime();
+          const bTime = b.createdAt.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt).getTime();
+          
+          return bTime - aTime; // DESC
+        });
+      }
       throw error;
     }
   },

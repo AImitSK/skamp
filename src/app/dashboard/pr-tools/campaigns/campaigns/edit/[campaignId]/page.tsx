@@ -535,7 +535,11 @@ export default function EditPRCampaignPage() {
         </div>
       )}
 
-      <form ref={formRef} onSubmit={handleSubmit}>
+      <form ref={formRef} onSubmit={(e) => {
+        console.log('🚨 EDIT FORM onSubmit ausgelöst! Event:', e.type, 'Target:', e.target);
+        e.preventDefault(); // VERHINDERE automatisches Submit
+        console.log('🚨 Form Submit wurde verhindert!');
+      }}>
         {/* Step Content */}
         {currentStep === 1 && (
           <div className="bg-white rounded-lg border p-6">
@@ -842,7 +846,11 @@ export default function EditPRCampaignPage() {
               </Button>
             ) : (
               <Button
-                type="submit"
+                type="button"
+                onClick={(e) => {
+                  console.log('🖱️ EDIT - Manueller Speichern-Click!');
+                  handleSubmit(e as any);
+                }}
                 disabled={saving}
                 className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
               >

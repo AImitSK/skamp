@@ -210,6 +210,14 @@ export default function NewPRCampaignPage() {
         attachedAt: asset.attachedAt || serverTimestamp()
       }));
 
+      // 🔍 DEBUG: Aktuelle Werte vor dem Speichern
+      console.log('🔍 NEW CAMPAIGN DEBUG - Vor dem Speichern:');
+      console.log('🏷️ Keywords:', keywords, 'length:', keywords.length);
+      console.log('📝 EditorContent length:', editorContent.length);
+      console.log('📰 PressReleaseContent length:', pressReleaseContent?.length || 0);
+      console.log('👤 User:', user?.uid);
+      console.log('🏢 Organization:', currentOrganization?.id);
+
       const campaignData: any = {
         userId: user!.uid,
         organizationId: currentOrganization!.id,
@@ -243,6 +251,12 @@ export default function NewPRCampaignPage() {
         approvalData: (approvalData.teamApprovalRequired || approvalData.customerApprovalRequired) ? approvalData : undefined
       };
 
+      // 🔍 DEBUG: Campaign-Data vor Bereinigung
+      console.log('🔍 NEW CAMPAIGN DEBUG - campaignData vor Bereinigung:');
+      console.log('🏷️ campaignData.keywords:', campaignData.keywords);
+      console.log('📝 campaignData.mainContent:', campaignData.mainContent?.substring(0, 100) + '...');
+      console.log('📰 campaignData.contentHtml:', campaignData.contentHtml?.substring(0, 100) + '...');
+
       // Entferne alle null Werte (Firebase mag keine null-Werte)
       Object.keys(campaignData).forEach(key => {
         if (campaignData[key] === null) {
@@ -250,7 +264,15 @@ export default function NewPRCampaignPage() {
         }
       });
 
+      // 🔍 DEBUG: Campaign-Data nach Bereinigung
+      console.log('🔍 NEW CAMPAIGN DEBUG - campaignData nach Bereinigung:');
+      console.log('🏷️ campaignData.keywords FINAL:', campaignData.keywords);
+      console.log('📝 campaignData.mainContent FINAL:', campaignData.mainContent?.substring(0, 100) + '...');
+      console.log('🗄️ Alle Felder:', Object.keys(campaignData));
+
+      console.log('💾 Starte prService.create mit campaignData...');
       const newCampaignId = await prService.create(campaignData);
+      console.log('✅ Kampagne erstellt mit ID:', newCampaignId);
 
       // Erstelle erweiterten Approval-Workflow falls erforderlich (NACH Campaign-Erstellung)
       if (approvalData.teamApprovalRequired || approvalData.customerApprovalRequired) {
