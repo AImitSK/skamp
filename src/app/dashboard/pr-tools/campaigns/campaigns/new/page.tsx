@@ -384,14 +384,14 @@ export default function NewPRCampaignPage() {
                   isActive
                     ? 'border-[#005fab] text-[#005fab]'
                     : isCompleted
-                    ? 'border-[#dedc00] text-[#dedc00] hover:text-[#b8b600]'
+                    ? 'border-[#004a8c] text-[#004a8c] hover:text-[#003d7a]'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
                 <Icon className="h-4 w-4 mr-2" />
                 {step.name}
                 {isCompleted && (
-                  <span className="ml-2 text-[#dedc00]">✓</span>
+                  <span className="ml-2 text-[#004a8c]">✓</span>
                 )}
               </button>
             );
@@ -425,17 +425,19 @@ export default function NewPRCampaignPage() {
             <FieldGroup>
               {/* Absender */}
               <div className="mb-8">
-                <div className="bg-gray-50 rounded-lg p-4">
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Absender</h3>
                   
-                  <ModernCustomerSelector
-                    value={selectedCompanyId}
-                    onChange={(companyId, companyName) => {
-                      setSelectedCompanyId(companyId);
-                      setSelectedCompanyName(companyName);
-                    }}
-                    required
-                  />
+                  <div className="mb-1">
+                    <ModernCustomerSelector
+                      value={selectedCompanyId}
+                      onChange={(companyId, companyName) => {
+                        setSelectedCompanyId(companyId);
+                        setSelectedCompanyName(companyName);
+                      }}
+                      required
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -516,7 +518,7 @@ export default function NewPRCampaignPage() {
               </div>
 
               {/* Verteiler mit Multi-List Support */}
-              <div className="border-t pt-6 mt-6">
+              <div className="mt-8">
                 <CampaignRecipientManager
                   selectedListIds={selectedListIds}
                   selectedListNames={selectedListNames}
@@ -548,7 +550,7 @@ export default function NewPRCampaignPage() {
               </div>
 
               {/* Medien */}
-              <div className="border-t pt-6 mt-6">
+              <div className="mt-8">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-base font-semibold">Medien (optional)</h3>
                   {selectedCompanyId && (
@@ -611,7 +613,7 @@ export default function NewPRCampaignPage() {
               </div>
 
               {/* Freigabe */}
-              <div className="border-t pt-6 mt-6">
+              <div className="mt-8">
                 <label className="flex items-start gap-3">
                   <Checkbox
                     checked={approvalRequired}

@@ -18,6 +18,7 @@ import {
   MagnifyingGlassIcon,
   UsersIcon
 } from '@heroicons/react/24/outline';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface ManualRecipient {
   id: string;
@@ -141,7 +142,7 @@ export default function CampaignRecipientManager({
 
   if (loading) {
     return (
-      <div className={`bg-gray-50 rounded-lg p-4 ${className}`}>
+      <div className={`bg-gray-50 rounded-lg p-4 border border-gray-200 ${className}`}>
         <div className="flex items-center justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#005fab]"></div>
         </div>
@@ -150,7 +151,7 @@ export default function CampaignRecipientManager({
   }
 
   return (
-    <div className={`bg-gray-50 rounded-lg p-4 ${className}`}>
+    <div className={`bg-gray-50 rounded-lg p-4 border border-gray-200 ${className}`}>
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Verteiler</h3>
       
       {/* Info-Box wenn Kampagnen-Listen vorausgewählt wurden */}
@@ -196,11 +197,10 @@ export default function CampaignRecipientManager({
                       key={list.id}
                       className="flex items-center p-3 hover:bg-gray-50 cursor-pointer"
                     >
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={selectedListIds.includes(list.id!)}
                         onChange={() => handleListToggle(list.id!)}
-                        className="h-4 w-4 text-[#dedc00] border-gray-300 focus:ring-[#dedc00] checked:bg-[#dedc00] checked:border-[#dedc00]"
+                        className="h-4 w-4"
                       />
                       <div className="ml-3 flex-1">
                         <div className="flex items-center justify-between">
