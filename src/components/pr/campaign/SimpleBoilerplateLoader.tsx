@@ -231,20 +231,17 @@ export default function SimpleBoilerplateLoader({
                   onClick={() => handleAddBoilerplate(bp)}
                   className="text-left p-3 rounded-lg border border-gray-200 hover:border-[#005fab] hover:bg-[#005fab]/5 transition-colors"
                 >
-                  <div className="flex items-start gap-3">
-                    <span className="text-lg mt-0.5">{getCategoryIcon(bp.category)}</span>
-                    <div className="flex-1">
-                      <div className="font-medium text-sm text-gray-900">{bp.title}</div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        {bp.clientId ? (
-                          <Badge color="blue" className="text-xs">Kunde</Badge>
-                        ) : (
-                          <Badge color="zinc" className="text-xs">Global</Badge>
-                        )}
-                        {bp.category && (
-                          <span className="ml-2 capitalize">{bp.category}</span>
-                        )}
-                      </div>
+                  <div className="flex-1">
+                    <div className="font-medium text-sm text-gray-900 mb-2">{bp.title}</div>
+                    <div className="flex items-center gap-2">
+                      {bp.clientId ? (
+                        <Badge color="blue" className="text-xs">Kunde</Badge>
+                      ) : (
+                        <Badge color="zinc" className="text-xs">Global</Badge>
+                      )}
+                      {bp.category && (
+                        <Badge color="gray" className="text-xs capitalize">{bp.category}</Badge>
+                      )}
                     </div>
                   </div>
                 </button>
