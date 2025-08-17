@@ -260,6 +260,18 @@ export const prService = {
         
         const result = bTime - aTime; // Descending order (neueste zuerst)
         
+        // Sekundäre Sortierung bei gleichen Timestamps: Nach Document-ID (neuere IDs = später erstellt)
+        if (result === 0) {
+          const idA = a.id || '';
+          const idB = b.id || '';
+          // Lexikographische Sortierung der IDs (spätere IDs sind größer)
+          const secondaryResult = idB.localeCompare(idA); // B vor A = neueste zuerst
+          
+          // Debug-Log für gleiche Timestamps
+          console.log(`🔄 Gleiche Zeit - sekundäre Sortierung nach Document-ID: "${a.title}" (${idA.substring(0,8)}...) vs "${b.title}" (${idB.substring(0,8)}...) = ${secondaryResult}`);
+          return secondaryResult;
+        }
+        
         // Debug-Log für erste 2 Elemente
         if (campaigns.indexOf(a) < 2 && campaigns.indexOf(b) < 2) {
           console.log(`📊 Sortierung: "${a.title?.substring(0, 30)}..." (${new Date(aTime).toLocaleString('de-DE')}) vs "${b.title?.substring(0, 30)}..." (${new Date(bTime).toLocaleString('de-DE')}) = ${result}`);
