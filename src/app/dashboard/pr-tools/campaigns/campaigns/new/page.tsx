@@ -598,12 +598,20 @@ export default function NewPRCampaignPage() {
                 ) : (
                   <div 
                     className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:bg-gray-100 hover:border-[#005fab] transition-all cursor-pointer group py-8"
-                    onClick={() => setShowAssetSelector(true)}
+                    onClick={() => {
+                      if (selectedCompanyId) {
+                        setShowAssetSelector(true);
+                      }
+                    }}
                   >
                     <div className="flex flex-col items-center justify-center">
                       <PhotoIcon className="h-10 w-10 text-gray-400 group-hover:text-[#005fab] mb-2" />
-                      <p className="text-gray-600 group-hover:text-[#005fab] font-medium">Medien hinzufügen</p>
-                      <p className="text-sm text-gray-500 mt-1">Klicken zum Auswählen</p>
+                      <p className="text-gray-600 group-hover:text-[#005fab] font-medium">
+                        {selectedCompanyId ? 'Medien hinzufügen' : 'Zuerst Kunden auswählen'}
+                      </p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {selectedCompanyId ? 'Klicken zum Auswählen' : 'Wählen Sie einen Kunden aus'}
+                      </p>
                     </div>
                   </div>
                 )}
