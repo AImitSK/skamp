@@ -428,7 +428,7 @@ export default function NewPRCampaignPage() {
                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Absender</h3>
                   
-                  <div className="mb-1">
+                  <div className="mb-3">
                     <ModernCustomerSelector
                       value={selectedCompanyId}
                       onChange={(companyId, companyName) => {
