@@ -188,12 +188,15 @@ export const boilerplatesService = {
       }, {} as Record<string, Boilerplate[]>);
     };
     
-    // EINFACH: Alle Textbausteine in global gruppieren (wie Boilerplates-Modul)
-    const globalGrouped = groupByCategory(allBoilerplates);
+    // KORREKT: Filtere globale vs. client-spezifische Textbausteine
+    const globalBoilerplates = allBoilerplates.filter(bp => 
+      bp.isGlobal === true || !bp.clientId  // Global = explizit isGlobal ODER keine Kundenzuordnung
+    );
+    const globalGrouped = groupByCategory(globalBoilerplates);
     
-    // Client-spezifische extra filtern (für spezielle Anzeige)
+    // Client-spezifische nur für den ausgewählten Kunden
     const clientBoilerplates = allBoilerplates.filter(bp => 
-      bp.clientId === clientId
+      bp.clientId === clientId && !bp.isGlobal  // Kundenspezifisch UND nicht global
     );
     const clientGrouped = groupByCategory(clientBoilerplates);
     

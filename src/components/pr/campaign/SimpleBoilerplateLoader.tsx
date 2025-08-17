@@ -304,6 +304,7 @@ export default function SimpleBoilerplateLoader({
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
                               <button
+                                type="button"
                                 onClick={() => handleToggleCollapse(section.id)}
                                 className="text-gray-500 hover:text-gray-700"
                               >
@@ -334,6 +335,7 @@ export default function SimpleBoilerplateLoader({
                           {/* Actions */}
                           <div className="flex items-center gap-1">
                             <button
+                              type="button"
                               onClick={() => handleToggleLock(section.id)}
                               className="p-1 text-gray-400 hover:text-gray-600"
                               title={section.isLocked ? 'Entsperren' : 'Sperren'}
@@ -346,6 +348,7 @@ export default function SimpleBoilerplateLoader({
                             </button>
                             {!section.isLocked && (
                               <button
+                                type="button"
                                 onClick={() => handleRemoveSection(section.id)}
                                 className="p-1 text-red-400 hover:text-red-600"
                                 title="Entfernen"
