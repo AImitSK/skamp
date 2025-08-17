@@ -364,17 +364,15 @@ export default function SimpleBoilerplateLoader({
           </Droppable>
         </DragDropContext>
       ) : (
-        <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <DocumentTextIcon className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-          <p className="text-gray-500 mb-3">Noch keine Textbausteine hinzugefügt</p>
-          <Button
-            type="button"
-            onClick={() => setShowSelector(true)}
-            className="bg-[#005fab] hover:bg-[#004a8c] text-white"
-          >
-            <PlusIcon className="h-4 w-4 mr-2" />
-            Ersten Textbaustein hinzufügen
-          </Button>
+        <div 
+          className="border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:bg-gray-100 hover:border-[#005fab] transition-all cursor-pointer group py-12"
+          onClick={() => setShowSelector(true)}
+        >
+          <div className="flex flex-col items-center justify-center">
+            <DocumentTextIcon className="h-12 w-12 text-gray-400 group-hover:text-[#005fab] mb-3" />
+            <p className="text-gray-600 group-hover:text-[#005fab] font-medium">Textbausteine hinzufügen</p>
+            <p className="text-sm text-gray-500 mt-1">Klicken zum Auswählen</p>
+          </div>
         </div>
       )}
     </div>
