@@ -243,9 +243,16 @@ export const prService = {
             console.log(`🔧 Plain Object Timestamp - seconds: ${data.createdAt.seconds}, nanoseconds: ${data.createdAt.nanoseconds}`);
             // Konvertiere zu Date für Sortierung
             campaign.createdAt = new Date(data.createdAt.seconds * 1000 + data.createdAt.nanoseconds / 1000000);
+          } else if (data.createdAt._methodName === 'serverTimestamp') {
+            // KRITISCHER BUG: serverTimestamp() wurde nicht konvertiert!
+            console.log(`🚨 ServerTimestamp Platzhalter gefunden! Verwende Document ID als Fallback für Sortierung`);
+            // Fallback: Verwende Document-ID für Sortierung (neuere IDs = später erstellt)
+            campaign.createdAt = new Date(); // Aktuelle Zeit als Fallback
+            campaign._sortByDocId = true; // Flag für Sortierung
           } else {
             console.log(`❌ Unbekanntes Timestamp-Format:`, data.createdAt);
-            campaign.createdAt = data.createdAt;
+            campaign.createdAt = new Date(); // Fallback zu aktueller Zeit
+            campaign._sortByDocId = true;
           }
         }
         
@@ -274,6 +281,16 @@ export const prService = {
       });
       
       return campaigns.sort((a, b) => {
+        // SPEZIAL-BEHANDLUNG für serverTimestamp Bug: Sortiere nach Document-ID
+        if (a._sortByDocId || b._sortByDocId) {
+          const idA = a.id || '';
+          const idB = b.id || '';
+          const result = idB.localeCompare(idA); // Neuere IDs zuerst
+          console.log(`🆔 Document-ID Sortierung: "${a.title?.substring(0, 20)}..." (${idA.substring(0,8)}) vs "${b.title?.substring(0, 20)}..." (${idB.substring(0,8)}) = ${result}`);
+          return result;
+        }
+        
+        // Normale Timestamp-Sortierung
         // Konvertiere createdAt zu Millisekunden, egal ob Timestamp, Date oder undefined
         let aTime: number;
         let bTime: number;
