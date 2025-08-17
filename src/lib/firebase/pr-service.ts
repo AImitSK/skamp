@@ -214,7 +214,7 @@ export const prService = {
     return null;
   },
 
-  // ERWEITERT: Unterstützt jetzt organizationId ODER userId
+  // ERWEITERT: Unterstützt jetzt organizationId ODER userId mit CLIENT-SEITIGER Sortierung
   async getAll(userOrOrgId: string, useOrganizationId: boolean = false): Promise<PRCampaign[]> {
     try {
       const fieldName = useOrganizationId ? 'organizationId' : 'userId';
@@ -222,14 +222,14 @@ export const prService = {
       console.log('🔍 SORTIERUNG DEBUG - Query wird ausgeführt:');
       console.log('🔍 fieldName:', fieldName, 'userOrOrgId:', userOrOrgId);
       
-      // SERVER-SEITIGE Sortierung - neueste Kampagnen zuerst
+      // WICHTIG: Verzichte auf server-seitige Sortierung wegen serverTimestamp() Problemen
+      // Lade alle Dokumente ohne orderBy und sortiere client-seitig
       const q = query(
         collection(db, 'pr_campaigns'),
-        where(fieldName, '==', userOrOrgId),
-        orderBy('createdAt', 'desc')
+        where(fieldName, '==', userOrOrgId)
       );
       
-      console.log('🔍 Firestore Query mit orderBy(createdAt, desc) wird ausgeführt...');
+      console.log('🔍 Firestore Query OHNE orderBy wird ausgeführt...');
       const snapshot = await getDocs(q);
       console.log('🔍 Anzahl gefundene Dokumente:', snapshot.docs.length);
       
@@ -240,53 +240,66 @@ export const prService = {
           ...data
         } as PRCampaign;
         
-        // Debug für jede Kampagne
-        console.log(`🔍 Kampagne ${index + 1}: "${campaign.title}" (${doc.id.substring(0,8)})`);
-        console.log(`🔍   createdAt:`, campaign.createdAt);
-        console.log(`🔍   createdAt type:`, typeof campaign.createdAt);
-        if (campaign.createdAt && typeof campaign.createdAt === 'object') {
-          console.log(`🔍   createdAt keys:`, Object.keys(campaign.createdAt));
-          if (campaign.createdAt.toDate) {
-            console.log(`🔍   createdAt.toDate():`, campaign.createdAt.toDate());
+        // Debug für jede Kampagne (nur erste 5)
+        if (index < 5) {
+          console.log(`🔍 Kampagne ${index + 1}: "${campaign.title}" (${doc.id.substring(0,8)})`);
+          console.log(`🔍   createdAt:`, campaign.createdAt);
+          console.log(`🔍   createdAt type:`, typeof campaign.createdAt);
+          if (campaign.createdAt && typeof campaign.createdAt === 'object') {
+            console.log(`🔍   createdAt keys:`, Object.keys(campaign.createdAt));
           }
         }
         
         return campaign;
       });
       
-      console.log('🔍 SORTIERUNG ERGEBNIS - Reihenfolge der ersten 5:');
-      campaigns.slice(0, 5).forEach((c, i) => {
-        console.log(`${i + 1}. "${c.title}" (${c.id?.substring(0,8)})`);
+      // CLIENT-SEITIGE Sortierung: Behandle serverTimestamp() Platzhalter und echte Timestamps
+      const sortedCampaigns = campaigns.sort((a, b) => {
+        // Hilfsfunktion um Timestamp zu extrahieren
+        const getTimestamp = (campaign: PRCampaign): number => {
+          if (!campaign.createdAt) {
+            // Fallback: Verwende Dokument-ID für chronologische Sortierung
+            return campaign.id ? parseInt(campaign.id.slice(-8), 36) : 0;
+          }
+          
+          // Prüfe ob es ein serverTimestamp() Platzhalter ist
+          if (typeof campaign.createdAt === 'object' && 
+              '_methodName' in campaign.createdAt &&
+              campaign.createdAt._methodName === 'serverTimestamp') {
+            // Es ist ein serverTimestamp() Platzhalter - verwende Dokument-ID
+            return campaign.id ? parseInt(campaign.id.slice(-8), 36) : 0;
+          }
+          
+          // Es ist ein echter Timestamp
+          if (campaign.createdAt.toDate) {
+            return campaign.createdAt.toDate().getTime();
+          }
+          
+          // Fallback für andere Timestamp-Formate
+          try {
+            return new Date(campaign.createdAt as any).getTime();
+          } catch {
+            return campaign.id ? parseInt(campaign.id.slice(-8), 36) : 0;
+          }
+        };
+        
+        const aTime = getTimestamp(a);
+        const bTime = getTimestamp(b);
+        
+        return bTime - aTime; // DESC - neueste zuerst
       });
       
-      return campaigns; // Bereits server-seitig sortiert!
+      console.log('🔍 CLIENT-SEITIGE SORTIERUNG ERGEBNIS - Reihenfolge der ersten 5:');
+      sortedCampaigns.slice(0, 5).forEach((c, i) => {
+        const timestamp = c.createdAt && typeof c.createdAt === 'object' && '_methodName' in c.createdAt
+          ? 'serverTimestamp()' 
+          : c.createdAt?.toDate?.() || 'no timestamp';
+        console.log(`${i + 1}. "${c.title}" (${c.id?.substring(0,8)}) - ${timestamp}`);
+      });
+      
+      return sortedCampaigns;
     } catch (error) {
       console.error('❌ Fehler beim Laden der Kampagnen:', error);
-      if (error.code === 'failed-precondition') {
-        console.error('❌ Firestore Index fehlt für orderBy! Fallback ohne orderBy...');
-        // Fallback ohne orderBy
-        const q = query(
-          collection(db, 'pr_campaigns'),
-          where(useOrganizationId ? 'organizationId' : 'userId', '==', userOrOrgId)
-        );
-        const snapshot = await getDocs(q);
-        const campaigns = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as PRCampaign));
-        
-        // Client-seitige Sortierung als Fallback
-        return campaigns.sort((a, b) => {
-          if (!a.createdAt && !b.createdAt) return 0;
-          if (!a.createdAt) return 1;
-          if (!b.createdAt) return -1;
-          
-          const aTime = a.createdAt.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt).getTime();
-          const bTime = b.createdAt.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt).getTime();
-          
-          return bTime - aTime; // DESC
-        });
-      }
       throw error;
     }
   },
