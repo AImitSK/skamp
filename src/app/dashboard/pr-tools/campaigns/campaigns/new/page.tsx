@@ -230,6 +230,7 @@ export default function NewPRCampaignPage() {
         
         // SEO Data
         keywords: keywords,
+        mainContent: editorContent, // Editor-Inhalt für SEO
         seoMetrics: {
           lastAnalyzed: serverTimestamp(),
           // TODO: SEO-Metriken aus PRSEOHeaderBar übernehmen

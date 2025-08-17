@@ -247,11 +247,11 @@ export const prService = {
             // KRITISCHER BUG: serverTimestamp() wurde nicht konvertiert!
             console.log(`🚨 ServerTimestamp Platzhalter gefunden! Verwende Document ID als Fallback für Sortierung`);
             // Fallback: Verwende Document-ID für Sortierung (neuere IDs = später erstellt)
-            campaign.createdAt = new Date(); // Aktuelle Zeit als Fallback
+            campaign.createdAt = data.createdAt; // ORIGINAL-Timestamp beibehalten - NICHT überschreiben!
             campaign._sortByDocId = true; // Flag für Sortierung
           } else {
             console.log(`❌ Unbekanntes Timestamp-Format:`, data.createdAt);
-            campaign.createdAt = new Date(); // Fallback zu aktueller Zeit
+            campaign.createdAt = data.createdAt; // ORIGINAL-Timestamp beibehalten - NICHT überschreiben!
             campaign._sortByDocId = true;
           }
         }
