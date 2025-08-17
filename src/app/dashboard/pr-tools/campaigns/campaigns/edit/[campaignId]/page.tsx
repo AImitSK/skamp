@@ -748,30 +748,62 @@ export default function EditPRCampaignPage() {
         )}
 
         {/* Step 3: Vorschau */}
-        {currentStep === 3 && currentOrganization && (
+        {currentStep === 3 && (
           <div className="bg-white rounded-lg border p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Vorschau</h3>
             
-            {/* Campaign Preview mit PDF-Export */}
-            <CampaignContentComposer
-              organizationId={currentOrganization.id}
-              clientId={selectedCompanyId}
-              clientName={selectedCompanyName}
-              title={campaignTitle}
-              onTitleChange={setCampaignTitle}
-              mainContent={editorContent}
-              onMainContentChange={setEditorContent}
-              onFullContentChange={setPressReleaseContent}
-              onBoilerplateSectionsChange={setBoilerplateSections}
-              initialBoilerplateSections={boilerplateSections}
-              hideMainContentField={true}
-              hidePreview={false}
-              hideBoilerplates={false}
-              readOnlyTitle={true}
-              readOnlyBoilerplates={true}
-              keywords={keywords}
-              onKeywordsChange={setKeywords}
-            />
+            {/* Einfache HTML-Vorschau ohne Textbausteine-Editor */}
+            <div className="border rounded-lg p-6 bg-gray-50">
+              <div className="prose max-w-none">
+                {/* Titel */}
+                <h1 className="text-2xl font-bold mb-4">{campaignTitle || 'Titel der Pressemitteilung'}</h1>
+                
+                {/* Hauptinhalt aus Editor */}
+                {editorContent && (
+                  <div 
+                    className="mb-6"
+                    dangerouslySetInnerHTML={{ __html: editorContent }} 
+                  />
+                )}
+                
+                {/* Boilerplate Sections */}
+                {boilerplateSections.map((section, index) => (
+                  <div key={section.id} className="mb-4">
+                    {section.content && (
+                      <div dangerouslySetInnerHTML={{ __html: section.content }} />
+                    )}
+                    {section.metadata && section.type === 'quote' && (
+                      <div className="italic text-gray-600 mt-2">
+                        — {section.metadata.person}, {section.metadata.role}
+                        {section.metadata.company && `, ${section.metadata.company}`}
+                      </div>
+                    )}
+                  </div>
+                ))}
+                
+                {/* Datum */}
+                <p className="text-sm text-gray-600 mt-8">
+                  {new Date().toLocaleDateString('de-DE', { 
+                    day: '2-digit', 
+                    month: 'long', 
+                    year: 'numeric' 
+                  })}
+                </p>
+              </div>
+            </div>
+            
+            {/* Statistiken */}
+            <div className="mt-4 grid grid-cols-3 gap-4 text-sm text-gray-600">
+              <div>
+                <span className="font-medium">Zeichen:</span> {(editorContent || '').replace(/<[^>]*>/g, '').length}
+              </div>
+              <div>
+                <span className="font-medium">Textbausteine:</span> {boilerplateSections.length}
+              </div>
+              <div>
+                <span className="font-medium">Keywords:</span> {keywords.length}
+              </div>
+            </div>
           </div>
         )}
 

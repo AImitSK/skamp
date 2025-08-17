@@ -219,21 +219,35 @@ export const prService = {
           ...data
         } as PRCampaign;
         
-        // Explizite Timestamp-Konvertierung für Sortierung
-        if (data.createdAt && typeof data.createdAt.toDate === 'function') {
-          campaign.createdAt = data.createdAt; // Behalte Original Timestamp für toMillis()
-        }
-        if (data.updatedAt && typeof data.updatedAt.toDate === 'function') {
-          campaign.updatedAt = data.updatedAt;
-        }
-        if (data.sentAt && typeof data.sentAt.toDate === 'function') {
-          campaign.sentAt = data.sentAt;
-        }
-        if (data.scheduledAt && typeof data.scheduledAt.toDate === 'function') {
-          campaign.scheduledAt = data.scheduledAt;
-        }
+        // TIEFERE TIMESTAMP-DIAGNOSE - schaue in die Objekt-Struktur
+        console.log(`🔍 RAW createdAt für "${campaign.title?.substring(0, 20)}...":`, {
+          raw: data.createdAt,
+          type: typeof data.createdAt,
+          isTimestamp: data.createdAt?.constructor?.name,
+          hasToDate: typeof data.createdAt?.toDate,
+          hasToMillis: typeof data.createdAt?.toMillis,
+          keys: data.createdAt ? Object.keys(data.createdAt) : 'no keys'
+        });
         
-        console.log(`🔧 Campaign "${campaign.title?.substring(0, 20)}..." - createdAt fixed:`, campaign.createdAt?.constructor?.name);
+        // Explizite Timestamp-Konvertierung für Sortierung
+        if (data.createdAt) {
+          // Versuche verschiedene Timestamp-Formate
+          if (typeof data.createdAt.toMillis === 'function') {
+            campaign.createdAt = data.createdAt; // Firestore Timestamp
+            console.log(`✅ Timestamp mit toMillis(): ${data.createdAt.toMillis()}`);
+          } else if (typeof data.createdAt.toDate === 'function') {
+            campaign.createdAt = data.createdAt; // Firestore Timestamp mit toDate
+            console.log(`✅ Timestamp mit toDate(): ${data.createdAt.toDate()}`);
+          } else if (data.createdAt.seconds !== undefined) {
+            // Plain Object mit seconds/nanoseconds (serialisierter Timestamp)
+            console.log(`🔧 Plain Object Timestamp - seconds: ${data.createdAt.seconds}, nanoseconds: ${data.createdAt.nanoseconds}`);
+            // Konvertiere zu Date für Sortierung
+            campaign.createdAt = new Date(data.createdAt.seconds * 1000 + data.createdAt.nanoseconds / 1000000);
+          } else {
+            console.log(`❌ Unbekanntes Timestamp-Format:`, data.createdAt);
+            campaign.createdAt = data.createdAt;
+          }
+        }
         
         return campaign;
       });
