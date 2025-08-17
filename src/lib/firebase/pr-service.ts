@@ -216,6 +216,7 @@ export const prService = {
       } as PRCampaign));
       
       // Client-seitige Sortierung nach createdAt (neueste zuerst)
+      console.log('🔄 Sortiere', campaigns.length, 'Kampagnen nach createdAt...');
       return campaigns.sort((a, b) => {
         // Konvertiere createdAt zu Millisekunden, egal ob Timestamp, Date oder undefined
         let aTime: number;
@@ -257,7 +258,14 @@ export const prService = {
           bTime = Date.now();
         }
         
-        return bTime - aTime; // Descending order (neueste zuerst)
+        const result = bTime - aTime; // Descending order (neueste zuerst)
+        
+        // Debug-Log für erste 2 Elemente
+        if (campaigns.indexOf(a) < 2 && campaigns.indexOf(b) < 2) {
+          console.log(`📊 Sortierung: "${a.title?.substring(0, 30)}..." (${new Date(aTime).toLocaleString('de-DE')}) vs "${b.title?.substring(0, 30)}..." (${new Date(bTime).toLocaleString('de-DE')}) = ${result}`);
+        }
+        
+        return result;
       });
     } catch (error) {
       console.error('Fehler beim Laden der Kampagnen:', error);

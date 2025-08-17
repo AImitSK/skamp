@@ -149,6 +149,12 @@ export default function NewPRCampaignPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // KRITISCH: Nur in Step 3 speichern erlauben!
+    if (currentStep !== 3) {
+      console.log('🚫 Form-Submit verhindert - nicht in Step 3:', currentStep);
+      return;
+    }
+    
     // Validierung
     const errors: string[] = [];
     if (!selectedCompanyId) {
@@ -463,7 +469,15 @@ export default function NewPRCampaignPage() {
         </div>
       )}
 
-      <form ref={formRef} onSubmit={handleSubmit}>
+      <form ref={formRef} onSubmit={(e) => {
+        e.preventDefault();
+        // Nur in Step 3 erlauben - für alle anderen Steps preventDefault
+        if (currentStep === 3) {
+          handleSubmit(e);
+        } else {
+          console.log('🚫 Form-Submit in Step', currentStep, 'verhindert');
+        }
+      }}>
         {/* Step Content */}
         {currentStep === 1 && (
           <div className="bg-white rounded-lg border p-6">
