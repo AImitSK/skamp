@@ -64,21 +64,26 @@ export default function SimpleBoilerplateLoader({
   const loadBoilerplates = async () => {
     setLoading(true);
     try {
+      console.log('🔄 Loading boilerplates for clientId:', clientId, 'organizationId:', organizationId);
       const data = await boilerplatesService.getForCampaignEditor(organizationId, clientId || undefined);
+      console.log('📦 Boilerplate data received:', data);
       
       // Sammle alle verfügbaren Boilerplates (global + client-spezifisch)
       let filteredBoilerplates: Boilerplate[] = [];
       
       // Globale Boilerplates
       filteredBoilerplates = [...Object.values(data.global).flat()];
+      console.log('🌍 Global boilerplates:', filteredBoilerplates.length);
       
       // Client-spezifische Boilerplates
       if (clientId && data.client) {
         const clientBoilerplates = Object.values(data.client).flat()
           .filter(bp => bp.clientId === clientId);
+        console.log('👤 Client boilerplates found:', clientBoilerplates.length);
         filteredBoilerplates = [...filteredBoilerplates, ...clientBoilerplates];
       }
       
+      console.log('📋 Total available boilerplates:', filteredBoilerplates.length);
       setAvailableBoilerplates(filteredBoilerplates);
       
       // Lade vollständige Boilerplate-Daten für existierende Sections
