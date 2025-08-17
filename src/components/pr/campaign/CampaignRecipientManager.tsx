@@ -151,10 +151,7 @@ export default function CampaignRecipientManager({
 
   return (
     <div className={`bg-gray-50 rounded-lg p-4 ${className}`}>
-      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-        <UsersIcon className="h-5 w-5 text-gray-500" />
-        Verteiler
-      </h3>
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">Verteiler</h3>
       
       {/* Info-Box wenn Kampagnen-Listen vorausgewählt wurden */}
       {campaignDistributionListIds && campaignDistributionListIds.length > 0 && (
@@ -175,23 +172,16 @@ export default function CampaignRecipientManager({
       <div className="space-y-6">
         {/* Verteilerlisten */}
         <div>
-          <h4 className="font-medium mb-3 flex items-center gap-2">
-            <UserGroupIcon className="h-5 w-5 text-gray-500" />
-            Verteilerlisten
-          </h4>
+          <h4 className="text-base font-medium text-gray-900 mb-3">Verteilerlisten</h4>
           
           <div className="space-y-3">
             {/* Suche */}
-            <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <Input
-                type="text"
-                placeholder="Listen durchsuchen..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+            <Input
+              type="text"
+              placeholder="Listen durchsuchen..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
 
             {/* Listen */}
             <div className="max-h-60 overflow-y-auto border rounded-lg bg-white">
@@ -210,7 +200,7 @@ export default function CampaignRecipientManager({
                         type="checkbox"
                         checked={selectedListIds.includes(list.id!)}
                         onChange={() => handleListToggle(list.id!)}
-                        className="h-4 w-4 text-[#005fab] rounded border-gray-300 focus:ring-[#005fab]"
+                        className="h-4 w-4 text-[#dedc00] border-gray-300 focus:ring-[#dedc00] checked:bg-[#dedc00] checked:border-[#dedc00]"
                       />
                       <div className="ml-3 flex-1">
                         <div className="flex items-center justify-between">
@@ -243,10 +233,7 @@ export default function CampaignRecipientManager({
 
         {/* Manuelle Empfänger */}
         <div>
-          <h4 className="font-medium mb-3 flex items-center gap-2">
-            <UserPlusIcon className="h-5 w-5 text-gray-500" />
-            Zusätzliche Empfänger
-          </h4>
+          <h4 className="text-base font-medium text-gray-900 mb-3">Zusätzliche Empfänger</h4>
 
           {manualRecipients.length > 0 && (
             <div className="space-y-2 mb-3">
@@ -284,9 +271,8 @@ export default function CampaignRecipientManager({
 
           <Button
             type="button"
-            plain
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2"
+            className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm px-3 py-1.5 flex items-center gap-2"
           >
             <UserPlusIcon className="h-4 w-4" />
             Empfänger manuell hinzufügen

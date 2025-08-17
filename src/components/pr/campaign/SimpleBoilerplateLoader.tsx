@@ -176,7 +176,7 @@ export default function SimpleBoilerplateLoader({
     <div className="space-y-4">
       {/* Header mit Add Button und Link */}
       <div className="flex items-center justify-between">
-        <h3 className="text-base font-medium text-gray-900">Textbausteine</h3>
+        <h3 className="text-lg font-semibold text-gray-900">Textbausteine</h3>
         <div className="flex items-center gap-2">
           <Link 
             href="/dashboard/pr-tools/boilerplates"
