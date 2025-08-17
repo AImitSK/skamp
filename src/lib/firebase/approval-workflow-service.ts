@@ -93,31 +93,51 @@ export const approvalWorkflowService = {
         workflowStartedAt: now
       };
 
-      // Warte kurz und versuche Campaign zu updaten
+      // Robuster Retry-Mechanismus für Campaign Update
       try {
-        // Prüfe erst ob das Document existiert
         const campaignRef = doc(db, 'campaigns', campaignId);
-        const campaignDoc = await getDoc(campaignRef);
+        const maxRetries = 5;
+        let retryCount = 0;
+        let lastError: Error | null = null;
         
-        if (campaignDoc.exists()) {
-          await updateDoc(campaignRef, {
-            approvalData: updatedApprovalData
-          });
-        } else {
-          console.warn('Campaign document does not exist yet:', campaignId);
-          // Retry nach kurzer Wartezeit
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          const retryDoc = await getDoc(campaignRef);
-          if (retryDoc.exists()) {
-            await updateDoc(campaignRef, {
-              approvalData: updatedApprovalData
-            });
-          } else {
-            throw new Error('Campaign document not found after retry');
+        while (retryCount < maxRetries) {
+          try {
+            const campaignDoc = await getDoc(campaignRef);
+            
+            if (campaignDoc.exists()) {
+              await updateDoc(campaignRef, {
+                approvalData: updatedApprovalData
+              });
+              console.log('✅ Campaign erfolgreich mit Approval-Data aktualisiert');
+              break; // Erfolgreich - verlasse die Schleife
+            } else {
+              console.warn(`⏳ Campaign document existiert noch nicht (Versuch ${retryCount + 1}/${maxRetries}):`, campaignId);
+              
+              // Exponentieller Backoff: 500ms, 1s, 2s, 4s, 8s
+              const delay = Math.min(500 * Math.pow(2, retryCount), 8000);
+              await new Promise(resolve => setTimeout(resolve, delay));
+              retryCount++;
+              
+              if (retryCount >= maxRetries) {
+                throw new Error(`Campaign document not found after ${maxRetries} retries`);
+              }
+            }
+          } catch (error) {
+            lastError = error as Error;
+            console.error(`❌ Fehler bei Campaign Update (Versuch ${retryCount + 1}):`, error);
+            
+            if (retryCount >= maxRetries - 1) {
+              throw lastError;
+            }
+            
+            // Warte bei Fehlern ebenfalls mit Backoff
+            const delay = Math.min(500 * Math.pow(2, retryCount), 8000);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            retryCount++;
           }
         }
       } catch (updateError) {
-        console.error('Fehler beim Campaign Update:', updateError);
+        console.error('❌ Finaler Fehler beim Campaign Update:', updateError);
         throw updateError;
       }
 

@@ -244,7 +244,7 @@ export default function NewPRCampaignPage() {
 
       const newCampaignId = await prService.create(campaignData);
 
-      // Erstelle erweiterten Approval-Workflow falls erforderlich
+      // Erstelle erweiterten Approval-Workflow falls erforderlich (NACH Campaign-Erstellung)
       if (approvalData.teamApprovalRequired || approvalData.customerApprovalRequired) {
         try {
           // Import approval workflow service dynamically to avoid circular imports
@@ -255,8 +255,9 @@ export default function NewPRCampaignPage() {
             currentOrganization!.id,
             approvalData
           );
+          console.log('✅ Approval-Workflow erfolgreich erstellt');
         } catch (error) {
-          console.error('Fehler beim Erstellen des Approval-Workflows:', error);
+          console.error('❌ Fehler beim Erstellen des Approval-Workflows:', error);
           // Workflow-Fehler sollten nicht die Campaign-Erstellung blockieren
           setValidationErrors(['Die Kampagne wurde gespeichert, aber der Freigabe-Workflow konnte nicht erstellt werden.']);
         }
