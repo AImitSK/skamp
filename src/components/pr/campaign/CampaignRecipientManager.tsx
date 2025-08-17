@@ -200,7 +200,7 @@ export default function CampaignRecipientManager({
                       <Checkbox
                         checked={selectedListIds.includes(list.id!)}
                         onChange={() => handleListToggle(list.id!)}
-                        className="h-4 w-4 !rounded-[2px]"
+                        className="!h-4 !w-4 !min-h-[16px] !min-w-[16px] !max-h-[16px] !max-w-[16px]"
                       />
                       <div className="ml-3 flex-1">
                         <div className="flex items-center justify-between">
