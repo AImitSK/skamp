@@ -363,18 +363,49 @@ export default function CampaignDetailPage() {
             </div>
           )}
 
-          {/* Content Preview */}
+          {/* SEO & Content Preview */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold mb-4">Inhalt</h2>
+            <h2 className="text-lg font-semibold mb-4">Inhalt & SEO</h2>
             
-            {/* Email Subject würde hier stehen, wenn es das Feld gäbe */}
+            {/* Keywords */}
+            {campaign.keywords && campaign.keywords.length > 0 && (
+              <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <h3 className="text-sm font-semibold text-blue-900 mb-2">SEO Keywords</h3>
+                <div className="flex flex-wrap gap-2">
+                  {campaign.keywords.map((keyword, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-blue-100 text-blue-800 border border-blue-200"
+                    >
+                      {keyword}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Main Content (Editor-Text) */}
+            {campaign.mainContent && (
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">SEO-Content (Editor)</h3>
+                <div className="prose prose-sm max-w-none">
+                  <div 
+                    dangerouslySetInnerHTML={{ __html: campaign.mainContent }} 
+                    className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+                  />
+                </div>
+              </div>
+            )}
             
-            {/* Content */}
-            <div className="prose prose-sm max-w-none">
-              <div 
-                dangerouslySetInnerHTML={{ __html: campaign.contentHtml }} 
-                className="bg-gray-50 rounded-lg p-4 border"
-              />
+            {/* PR-Content */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 mb-3">Pressemitteilung</h3>
+              <div className="prose prose-sm max-w-none">
+                <div 
+                  dangerouslySetInnerHTML={{ __html: campaign.contentHtml }} 
+                  className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+                />
+              </div>
             </div>
           </div>
 
@@ -497,6 +528,20 @@ export default function CampaignDetailPage() {
                   <Text className="text-sm text-gray-500 mt-1">
                     {campaign.recipientCount} Empfänger
                   </Text>
+                </div>
+              )}
+
+              {/* SEO Metrics */}
+              {campaign.keywords && campaign.keywords.length > 0 && (
+                <div>
+                  <Text className="text-sm font-medium text-gray-700">SEO Keywords</Text>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {campaign.keywords.map((keyword, index) => (
+                      <Badge key={index} color="blue" className="text-xs">
+                        {keyword}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               )}
 
