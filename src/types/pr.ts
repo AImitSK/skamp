@@ -85,6 +85,44 @@ export interface PRCampaign {
   
   // Attached Media
   attachedAssets?: CampaignAssetAttachment[];
+  
+  // SEO & Content Analytics
+  keywords?: string[];
+  seoMetrics?: {
+    score?: number;
+    lastAnalyzed?: Timestamp;
+    keywordMetrics?: Array<{
+      keyword: string;
+      density: number;
+      occurrences: number;
+      inHeadline: boolean;
+      inFirstParagraph: boolean;
+      distribution: 'gut' | 'mittel' | 'schlecht';
+      semanticRelevance?: number;
+      contextQuality?: number;
+      targetAudience?: string;
+      tonality?: string;
+    }>;
+    prMetrics?: {
+      headlineLength: number;
+      wordCount: number;
+      readabilityScore: number;
+      avgParagraphLength: number;
+      hasQuotes: boolean;
+      hasNumbers: boolean;
+    };
+  };
+  
+  // Manual Recipients (zusätzlich zu Listen)
+  manualRecipients?: Array<{
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    companyName?: string;
+    isValid: boolean;
+    validationError?: string;
+  }>;
   assetShareLinkId?: string;
   assetShareUrl?: string;
   assetSettings?: {

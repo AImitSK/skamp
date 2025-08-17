@@ -20,7 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import CampaignContentComposer from '@/components/pr/campaign/CampaignContentComposer';
 import { ModernCustomerSelector } from "@/components/pr/ModernCustomerSelector";
-import { ListSelector } from "@/components/pr/ListSelector";
+import CampaignRecipientManager from "@/components/pr/campaign/CampaignRecipientManager";
 import {
   PlusIcon,
   ArrowLeftIcon,
@@ -81,6 +81,24 @@ export default function NewPRCampaignPage() {
   const [availableLists, setAvailableLists] = useState<DistributionList[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState('');
   const [selectedCompanyName, setSelectedCompanyName] = useState('');
+  
+  // Multi-List Support
+  const [selectedListIds, setSelectedListIds] = useState<string[]>([]);
+  const [selectedListNames, setSelectedListNames] = useState<string[]>([]);
+  const [listRecipientCount, setListRecipientCount] = useState(0);
+  
+  // Manual Recipients
+  const [manualRecipients, setManualRecipients] = useState<Array<{
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    companyName?: string;
+    isValid: boolean;
+    validationError?: string;
+  }>>([]);
+  
+  // Legacy single list (für Validierung)
   const [selectedListId, setSelectedListId] = useState('');
   const [selectedListName, setSelectedListName] = useState('');
   const [recipientCount, setRecipientCount] = useState(0);
@@ -131,8 +149,8 @@ export default function NewPRCampaignPage() {
     if (!selectedCompanyId) {
       errors.push('Bitte wählen Sie einen Kunden aus');
     }
-    if (!selectedListId) {
-      errors.push('Bitte wählen Sie einen Verteiler aus');
+    if (selectedListIds.length === 0 && manualRecipients.length === 0) {
+      errors.push('Bitte wählen Sie mindestens einen Verteiler aus oder fügen Sie manuelle Empfänger hinzu');
     }
     if (!campaignTitle.trim()) {
       errors.push('Titel ist erforderlich');
@@ -190,9 +208,23 @@ export default function NewPRCampaignPage() {
         contentHtml: pressReleaseContent || '',
         boilerplateSections: cleanedSections,
         status: 'draft' as const,
-        distributionListId: selectedListId,
-        distributionListName: selectedListName || '',
-        recipientCount: recipientCount || 0,
+        // Multi-List Support
+        distributionListIds: selectedListIds,
+        distributionListNames: selectedListNames,
+        // Legacy fields (für Abwärtskompatibilität)
+        distributionListId: selectedListIds[0] || '',
+        distributionListName: selectedListNames[0] || '',
+        recipientCount: listRecipientCount + manualRecipients.length,
+        
+        // Manual Recipients
+        manualRecipients: manualRecipients,
+        
+        // SEO Data
+        keywords: keywords,
+        seoMetrics: {
+          lastAnalyzed: serverTimestamp(),
+          // TODO: SEO-Metriken aus PRSEOHeaderBar übernehmen
+        },
         clientId: selectedCompanyId || null,
         clientName: selectedCompanyName || null,
         keyVisual: keyVisual || null,
@@ -483,28 +515,36 @@ export default function NewPRCampaignPage() {
                 />
               </div>
 
-              {/* Verteiler */}
+              {/* Verteiler mit Multi-List Support */}
               <div className="border-t pt-6 mt-6">
-                <Field>
-                  <Label className="flex items-center">
-                    Verteiler
-                    <InfoTooltip 
-                      content="Pflichtfeld: Wählen Sie eine Verteilerliste aus. Die Pressemitteilung wird an alle Kontakte in dieser Liste gesendet."
-                      className="ml-1"
-                    />
-                  </Label>
-                  <ListSelector
-                    value={selectedListId}
-                    onChange={(listId, listName, contactCount) => {
-                      setSelectedListId(listId);
-                      setSelectedListName(listName);
-                      setRecipientCount(contactCount);
-                    }}
-                    lists={availableLists}
-                    loading={false}
-                    required
-                  />
-                </Field>
+                <CampaignRecipientManager
+                  selectedListIds={selectedListIds}
+                  selectedListNames={selectedListNames}
+                  manualRecipients={manualRecipients}
+                  onListsChange={(listIds, listNames, totalFromLists) => {
+                    setSelectedListIds(listIds);
+                    setSelectedListNames(listNames);
+                    setListRecipientCount(totalFromLists);
+                    // Legacy fields aktualisieren
+                    setSelectedListId(listIds[0] || '');
+                    setSelectedListName(listNames[0] || '');
+                  }}
+                  onAddManualRecipient={(recipient) => {
+                    const newRecipient = {
+                      ...recipient,
+                      id: `manual_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                    };
+                    setManualRecipients([...manualRecipients, newRecipient]);
+                  }}
+                  onRemoveManualRecipient={(id) => {
+                    setManualRecipients(manualRecipients.filter(r => r.id !== id));
+                  }}
+                  recipientCount={listRecipientCount + manualRecipients.length}
+                  // PM-Integration (falls Kampagne bereits Verteiler-Daten hat)
+                  campaignDistributionListIds={[]} // Neu erstellte Kampagne hat keine Vordaten
+                  campaignDistributionListNames={[]}
+                  campaignRecipientCount={0}
+                />
               </div>
 
               {/* Medien */}
