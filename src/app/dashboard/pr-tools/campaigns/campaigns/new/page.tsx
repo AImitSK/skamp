@@ -471,11 +471,14 @@ export default function NewPRCampaignPage() {
 
       <form ref={formRef} onSubmit={(e) => {
         e.preventDefault();
+        console.log('🎯 Form-Submit Event ausgelöst! CurrentStep:', currentStep, 'Event:', e.type, 'Target:', e.target);
+        
         // Nur in Step 3 erlauben - für alle anderen Steps preventDefault
         if (currentStep === 3) {
+          console.log('✅ Step 3 - handleSubmit wird aufgerufen');
           handleSubmit(e);
         } else {
-          console.log('🚫 Form-Submit in Step', currentStep, 'verhindert');
+          console.log('🚫 Form-Submit in Step', currentStep, 'verhindert - Event blockiert');
         }
       }}>
         {/* Step Content */}

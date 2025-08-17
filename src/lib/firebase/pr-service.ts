@@ -220,7 +220,20 @@ export const prService = {
       
       // Debug: Zeige ALLE createdAt Werte VOR der Sortierung
       campaigns.forEach((c, i) => {
-        console.log(`📅 Campaign ${i}: "${c.title}" - createdAt:`, c.createdAt, typeof c.createdAt);
+        const rawCreatedAt = c.createdAt;
+        let debugInfo = '';
+        if (rawCreatedAt) {
+          if (typeof rawCreatedAt.toMillis === 'function') {
+            debugInfo = `Timestamp(${rawCreatedAt.toMillis()}) = ${new Date(rawCreatedAt.toMillis()).toISOString()}`;
+          } else if (rawCreatedAt instanceof Date) {
+            debugInfo = `Date(${rawCreatedAt.getTime()}) = ${rawCreatedAt.toISOString()}`;
+          } else {
+            debugInfo = `Unknown type: ${typeof rawCreatedAt} = ${rawCreatedAt}`;
+          }
+        } else {
+          debugInfo = 'UNDEFINED/NULL!!!';
+        }
+        console.log(`📅 Campaign ${i}: "${c.title?.substring(0, 30)}..." - createdAt: ${debugInfo}`);
       });
       
       return campaigns.sort((a, b) => {
