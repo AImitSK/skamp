@@ -57,6 +57,7 @@ export function AssetSelectorModal({
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showAllAssets, setShowAllAssets] = useState(false);
 
   useEffect(() => {
     if (isOpen && clientId) {
@@ -65,22 +66,55 @@ export function AssetSelectorModal({
       // Reset state when modal closes
       setSelectedItems(new Set());
       setSearchTerm('');
+      setShowAllAssets(false);
     }
-  }, [isOpen, clientId]);
+  }, [isOpen, clientId, showAllAssets]);
 
   const loadClientMedia = async () => {
     setLoading(true);
     try {
-      const { assets: clientAssets, folders: clientFolders } = await mediaService.getMediaByClientId(
-        organizationId,
-        clientId,
-        false,
-        legacyUserId
-      );
-      setAssets(clientAssets);
-      setFolders(clientFolders);
+      console.log('🔍 Loading media for client:', clientId, 'showAll:', showAllAssets);
+      
+      if (showAllAssets) {
+        // Zeige client-spezifische + nicht-zugeordnete Medien
+        const [clientResult, allResult] = await Promise.all([
+          mediaService.getMediaByClientId(organizationId, clientId, false, legacyUserId),
+          mediaService.getMediaAssets(organizationId)
+        ]);
+        
+        // Filtere nicht-zugeordnete Assets (ohne clientId)
+        const unassignedAssets = allResult.filter(asset => !asset.clientId);
+        
+        // Kombiniere client-spezifische + nicht-zugeordnete
+        const combinedAssets = [...clientResult.assets, ...unassignedAssets];
+        
+        // Deduplizierung
+        const seenIds = new Set<string>();
+        const uniqueAssets = combinedAssets.filter(asset => {
+          if (!asset.id || seenIds.has(asset.id)) return false;
+          seenIds.add(asset.id);
+          return true;
+        });
+        
+        console.log('📊 Combined view:', {
+          clientSpecific: clientResult.assets.length,
+          unassigned: unassignedAssets.length,
+          total: uniqueAssets.length
+        });
+        
+        setAssets(uniqueAssets);
+        setFolders(clientResult.folders);
+      } else {
+        // Zeige nur client-spezifische Medien
+        const result = await mediaService.getMediaByClientId(organizationId, clientId, false, legacyUserId);
+        console.log('📊 Client-only view:', result.assets.length, 'assets');
+        setAssets(result.assets);
+        setFolders(result.folders);
+      }
     } catch (error) {
-      // Error loading media - could show toast notification here
+      console.error('❌ Error loading media:', error);
+      setAssets([]);
+      setFolders([]);
     } finally {
       setLoading(false);
     }
@@ -208,6 +242,19 @@ export function AssetSelectorModal({
           />
         </div>
 
+        {/* Show All Assets Checkbox */}
+        <div className="mb-4">
+          <label className="flex items-center gap-2">
+            <Checkbox
+              checked={showAllAssets}
+              onChange={setShowAllAssets}
+            />
+            <Text className="text-sm text-gray-700">
+              Alle Bilder zeigen (inkl. nicht zugeordnete)
+            </Text>
+          </label>
+        </div>
+
         {loading ? (
           <div className="text-center py-12">
             <div className={`animate-spin rounded-full ${LOADING_SPINNER_SIZE} ${LOADING_SPINNER_BORDER} mx-auto`}></div>
@@ -283,7 +330,17 @@ export function AssetSelectorModal({
             {assets.length === 0 && folders.length === 0 && !loading && (
               <div className="text-center py-12">
                 <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <Text>Keine Medien für diesen Kunden gefunden</Text>
+                <Text>
+                  {showAllAssets 
+                    ? 'Keine Medien gefunden'
+                    : 'Keine Medien für diesen Kunden gefunden'
+                  }
+                </Text>
+                {!showAllAssets && (
+                  <Text className="text-sm text-gray-500 mt-2">
+                    Aktivieren Sie "Alle Bilder zeigen" oder laden Sie Medien für diesen Kunden hoch
+                  </Text>
+                )}
                 <Link
                   href={`/dashboard/pr-tools/media-library?uploadFor=${clientId}`}
                   target="_blank"

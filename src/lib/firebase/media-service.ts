@@ -1194,36 +1194,10 @@ export const mediaService = {
           ]);
         }
         
-        // Wenn immer noch keine Ergebnisse, versuche ohne clientId Filter (für global gespeicherte Medien)
+        // NEUE LOGIK: Wenn keine client-spezifischen Medien gefunden werden, return leer
         if (foldersSnapshot.empty && assetsSnapshot.empty) {
-          console.log('🔄 Still no results, trying without clientId filter for global media...');
-          
-          // TEMPORÄRE LÖSUNG: Zeige ALLE Assets der Organisation
-          // Dies ist notwendig, da existierende Assets keine clientId haben
-          console.log('📌 TEMPORARY: Showing ALL organization assets (no clientId filter)');
-          
-          let [globalFoldersSnapshot, globalAssetsSnapshot] = await Promise.all([
-            getDocs(query(
-              collection(db, 'media_folders'),
-              where('organizationId', '==', organizationId)
-            )),
-            getDocs(query(
-              collection(db, 'media_assets'),
-              where('organizationId', '==', organizationId)
-            ))
-          ]);
-          
-          // Assets gefunden - verwende sie
-          if (!globalFoldersSnapshot.empty || !globalAssetsSnapshot.empty) {
-            console.log('✅ Found organization media');
-            foldersSnapshot = globalFoldersSnapshot;
-            assetsSnapshot = globalAssetsSnapshot;
-          }
-          
-          console.log('📊 Organization media found:', {
-            folders: foldersSnapshot.docs.length,
-            assets: assetsSnapshot.docs.length
-          });
+          console.log('ℹ️ No client-specific media found for clientId:', clientId);
+          console.log('✅ Returning empty result (correct behavior)');
         }
       }
 
