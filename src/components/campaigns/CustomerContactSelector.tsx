@@ -53,8 +53,9 @@ export function CustomerContactSelector({
       
       // Konvertiere CRM-Kontakte zu CustomerContact Format
       const customerContacts: CustomerContact[] = crmContacts.map(contact => {
-        const firstName = contact.firstName || '';
-        const lastName = contact.lastName || '';
+        // Korrekte Struktur: contact.name.firstName/lastName
+        const firstName = contact.name?.firstName || '';
+        const lastName = contact.name?.lastName || '';
         const fullName = `${firstName} ${lastName}`.trim();
         
         return {
@@ -62,7 +63,7 @@ export function CustomerContactSelector({
           name: fullName || contact.email || 'Unbekannter Kontakt',
           email: contact.email || '',
           companyName: contact.companyDetails?.name || '',
-          role: contact.position || contact.jobTitle || undefined
+          role: contact.position || undefined
         };
       });
       

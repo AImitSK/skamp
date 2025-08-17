@@ -93,11 +93,33 @@ export const approvalWorkflowService = {
         workflowStartedAt: now
       };
 
-      // Update Campaign direkt in Firestore
-      const campaignRef = doc(db, 'campaigns', campaignId);
-      await updateDoc(campaignRef, {
-        approvalData: updatedApprovalData
-      });
+      // Warte kurz und versuche Campaign zu updaten
+      try {
+        // Prüfe erst ob das Document existiert
+        const campaignRef = doc(db, 'campaigns', campaignId);
+        const campaignDoc = await getDoc(campaignRef);
+        
+        if (campaignDoc.exists()) {
+          await updateDoc(campaignRef, {
+            approvalData: updatedApprovalData
+          });
+        } else {
+          console.warn('Campaign document does not exist yet:', campaignId);
+          // Retry nach kurzer Wartezeit
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          const retryDoc = await getDoc(campaignRef);
+          if (retryDoc.exists()) {
+            await updateDoc(campaignRef, {
+              approvalData: updatedApprovalData
+            });
+          } else {
+            throw new Error('Campaign document not found after retry');
+          }
+        }
+      } catch (updateError) {
+        console.error('Fehler beim Campaign Update:', updateError);
+        throw updateError;
+      }
 
       console.log('✅ Approval-Workflow erstellt:', workflowId);
 
