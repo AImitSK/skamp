@@ -152,7 +152,10 @@ export default function CampaignRecipientManager({
 
   return (
     <div className={`bg-gray-50 rounded-lg p-4 border border-gray-200 ${className}`}>
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Verteiler</h3>
+      <div className="flex items-center gap-2 mb-4">
+        <UsersIcon className="h-5 w-5 text-gray-600" />
+        <h3 className="text-lg font-semibold text-gray-900">Verteiler</h3>
+      </div>
       
       {/* Info-Box wenn Kampagnen-Listen vorausgewählt wurden */}
       {campaignDistributionListIds && campaignDistributionListIds.length > 0 && (
