@@ -135,7 +135,7 @@ ${currentTitle ? `Aktuelle Headline: "${currentTitle}"\n\n` : ''}Inhalt der Pres
 
       {/* Error Message */}
       {error && (
-        <div className="absolute top-full left-0 right-0 mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg z-10">
+        <div className="absolute top-full right-0 mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg z-10 min-w-[500px] max-w-[600px]">
           <div className="flex items-start gap-2">
             <div className="w-4 h-4 rounded-full bg-amber-400 flex-shrink-0 mt-0.5"></div>
             <div className="text-sm text-amber-800">
