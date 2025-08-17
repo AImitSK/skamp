@@ -32,7 +32,8 @@ import {
   XCircleIcon,
   SparklesIcon,
   InformationCircleIcon,
-  PaperAirplaneIcon
+  PaperAirplaneIcon,
+  FolderIcon
 } from "@heroicons/react/20/solid";
 import { listsService } from "@/lib/firebase/lists-service";
 import { prService } from "@/lib/firebase/pr-service";
@@ -627,6 +628,7 @@ export default function NewPRCampaignPage() {
                     Weitere Medien hinzufügen
                   </Button>
                 )}
+                </div>
               </div>
 
               {/* Freigabe */}
