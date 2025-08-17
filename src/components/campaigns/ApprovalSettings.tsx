@@ -7,7 +7,7 @@ import {
   ApprovalSettingsProps,
   createDefaultEnhancedApprovalData 
 } from '@/types/approvals-enhanced';
-import { Switch, SwitchField, SwitchGroup } from '@/components/ui/switch';
+import { SimpleSwitch } from '@/components/notifications/SimpleSwitch';
 import { Textarea } from '@/components/ui/textarea';
 import { Field, Label } from '@/components/ui/fieldset';
 import { Text } from '@/components/ui/text';
@@ -143,21 +143,22 @@ export function ApprovalSettings({
       </div>
 
       {/* Switch-Optionen */}
-      <SwitchGroup>
+      <div className="space-y-6">
         {/* Team-Freigabe */}
-        <SwitchField>
-          <Label className="text-sm font-medium text-gray-900">
-            Team-Freigabe erforderlich
-          </Label>
-          <Text className="text-sm text-gray-600">
-            Kampagne muss von ausgewählten Team-Mitgliedern freigegeben werden
-          </Text>
-          <Switch
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <Label className="text-sm font-medium text-gray-900">
+              Team-Freigabe erforderlich
+            </Label>
+            <Text className="text-sm text-gray-600 mt-1">
+              Kampagne muss von ausgewählten Team-Mitgliedern freigegeben werden
+            </Text>
+          </div>
+          <SimpleSwitch
             checked={localData.teamApprovalRequired}
             onChange={handleTeamApprovalToggle}
-            color="blue"
           />
-        </SwitchField>
+        </div>
 
         {/* Team-Mitglieder Auswahl */}
         {localData.teamApprovalRequired && (
@@ -185,19 +186,20 @@ export function ApprovalSettings({
         )}
 
         {/* Kunden-Freigabe */}
-        <SwitchField>
-          <Label className="text-sm font-medium text-gray-900">
-            Kunden-Freigabe erforderlich
-          </Label>
-          <Text className="text-sm text-gray-600">
-            Kampagne muss vom Kunden freigegeben werden
-          </Text>
-          <Switch
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <Label className="text-sm font-medium text-gray-900">
+              Kunden-Freigabe erforderlich
+            </Label>
+            <Text className="text-sm text-gray-600 mt-1">
+              Kampagne muss vom Kunden freigegeben werden
+            </Text>
+          </div>
+          <SimpleSwitch
             checked={localData.customerApprovalRequired}
             onChange={handleCustomerApprovalToggle}
-            color="green"
           />
-        </SwitchField>
+        </div>
 
         {/* Kunden-Kontakt Auswahl */}
         {localData.customerApprovalRequired && (
@@ -234,7 +236,7 @@ export function ApprovalSettings({
             </Field>
           </div>
         )}
-      </SwitchGroup>
+      </div>
 
       {/* Workflow-Vorschau */}
       {hasAnyApproval && (

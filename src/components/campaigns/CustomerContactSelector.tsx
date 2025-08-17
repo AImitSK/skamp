@@ -6,6 +6,9 @@ import { CustomerContactSelectorProps, CustomerContact } from '@/types/approvals
 import { Select } from '@/components/ui/select';
 import { Text } from '@/components/ui/text';
 import { Badge } from '@/components/ui/badge';
+import { contactEnhancedService } from '@/lib/firebase/crm-service-enhanced';
+import { ContactEnhanced } from '@/types/crm-enhanced';
+import { useOrganization } from '@/context/OrganizationContext';
 import { 
   BuildingOfficeIcon,
   UserIcon,
@@ -13,47 +16,24 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 
-// Placeholder für CRM-Integration
-// TODO: Replace with actual CRM service
-const mockContacts: CustomerContact[] = [
-  {
-    contactId: 'contact-1',
-    name: 'Maria Schmidt',
-    email: 'maria.schmidt@kunde.de',
-    companyName: 'Musterfirma GmbH',
-    role: 'Marketing Manager'
-  },
-  {
-    contactId: 'contact-2', 
-    name: 'Thomas Weber',
-    email: 'thomas.weber@kunde.de',
-    companyName: 'Musterfirma GmbH',
-    role: 'Geschäftsführer'
-  },
-  {
-    contactId: 'contact-3',
-    name: 'Anna Müller',
-    email: 'anna.mueller@kunde.de', 
-    companyName: 'Musterfirma GmbH',
-    role: 'PR-Leiterin'
-  }
-];
-
 export function CustomerContactSelector({
   selectedContact,
   onContactChange,
   clientId
 }: CustomerContactSelectorProps) {
+  const { currentOrganization } = useOrganization();
   const [contacts, setContacts] = useState<CustomerContact[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadCustomerContacts();
-  }, [clientId]);
+    if (currentOrganization) {
+      loadCustomerContacts();
+    }
+  }, [clientId, currentOrganization]);
 
   const loadCustomerContacts = async () => {
-    if (!clientId) {
+    if (!clientId || !currentOrganization) {
       setContacts([]);
       setLoading(false);
       return;
@@ -63,18 +43,24 @@ export function CustomerContactSelector({
       setLoading(true);
       setError(null);
       
-      // TODO: Replace with actual CRM service call
-      // const contacts = await crmService.getContactsByClientId(clientId);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Filter contacts for this specific client
-      const clientContacts = mockContacts.filter(contact => 
-        contact.contactId.includes(clientId) || mockContacts.includes(contact)
+      // Lade echte Kontakte aus dem CRM
+      const crmContacts = await contactEnhancedService.searchEnhanced(
+        currentOrganization.id,
+        {
+          companyIds: [clientId]
+        }
       );
       
-      setContacts(clientContacts);
+      // Konvertiere CRM-Kontakte zu CustomerContact Format
+      const customerContacts: CustomerContact[] = crmContacts.map(contact => ({
+        contactId: contact.id!,
+        name: `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || contact.email,
+        email: contact.email,
+        companyName: contact.companyDetails?.name || '',
+        role: contact.position || undefined
+      }));
+      
+      setContacts(customerContacts);
     } catch (error) {
       console.error('Fehler beim Laden der Kunden-Kontakte:', error);
       setError('Kunden-Kontakte konnten nicht geladen werden');

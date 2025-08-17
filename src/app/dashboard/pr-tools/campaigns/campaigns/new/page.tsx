@@ -669,13 +669,13 @@ export default function NewPRCampaignPage() {
         )}
 
         {/* Step 3: Vorschau */}
-        {currentStep === 3 && (
+        {currentStep === 3 && currentOrganization && (
           <div className="bg-white rounded-lg border p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Vorschau</h3>
             
             {/* Campaign Preview mit PDF-Export */}
             <CampaignContentComposer
-              organizationId={currentOrganization!.id}
+              organizationId={currentOrganization.id}
               clientId={selectedCompanyId}
               clientName={selectedCompanyName}
               title={campaignTitle}
