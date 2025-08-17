@@ -203,153 +203,23 @@ export const prService = {
     try {
       const fieldName = useOrganizationId ? 'organizationId' : 'userId';
       
-      // Versuche zuerst ohne orderBy (braucht keinen Index)
+      // SERVER-SEITIGE Sortierung - neueste Kampagnen zuerst
       const q = query(
         collection(db, 'pr_campaigns'),
-        where(fieldName, '==', userOrOrgId)
+        where(fieldName, '==', userOrOrgId),
+        orderBy('createdAt', 'desc')
       );
       
       const snapshot = await getDocs(q);
       const campaigns = snapshot.docs.map(doc => {
         const data = doc.data();
-        
-        // KRITISCHER FIX: Firestore Timestamp Konvertierung
-        const campaign = {
+        return {
           id: doc.id,
           ...data
         } as PRCampaign;
-        
-        // TIEFERE TIMESTAMP-DIAGNOSE - schaue in die Objekt-Struktur
-        console.log(`🔍 RAW createdAt für "${campaign.title?.substring(0, 20)}...":`, {
-          raw: data.createdAt,
-          type: typeof data.createdAt,
-          isTimestamp: data.createdAt?.constructor?.name,
-          hasToDate: typeof data.createdAt?.toDate,
-          hasToMillis: typeof data.createdAt?.toMillis,
-          keys: data.createdAt ? Object.keys(data.createdAt) : 'no keys'
-        });
-        
-        // Explizite Timestamp-Konvertierung für Sortierung
-        if (data.createdAt) {
-          // Versuche verschiedene Timestamp-Formate
-          if (typeof data.createdAt.toMillis === 'function') {
-            campaign.createdAt = data.createdAt; // Firestore Timestamp
-            console.log(`✅ Timestamp mit toMillis(): ${data.createdAt.toMillis()}`);
-          } else if (typeof data.createdAt.toDate === 'function') {
-            campaign.createdAt = data.createdAt; // Firestore Timestamp mit toDate
-            console.log(`✅ Timestamp mit toDate(): ${data.createdAt.toDate()}`);
-          } else if (data.createdAt.seconds !== undefined) {
-            // Plain Object mit seconds/nanoseconds (serialisierter Timestamp)
-            console.log(`🔧 Plain Object Timestamp - seconds: ${data.createdAt.seconds}, nanoseconds: ${data.createdAt.nanoseconds}`);
-            // Konvertiere zu Date für Sortierung
-            campaign.createdAt = new Date(data.createdAt.seconds * 1000 + data.createdAt.nanoseconds / 1000000);
-          } else if (data.createdAt._methodName === 'serverTimestamp') {
-            // KRITISCHER BUG: serverTimestamp() wurde nicht konvertiert!
-            console.log(`🚨 ServerTimestamp Platzhalter gefunden! Verwende Document ID als Fallback für Sortierung`);
-            // Fallback: Verwende Document-ID für Sortierung (neuere IDs = später erstellt)
-            campaign.createdAt = data.createdAt; // ORIGINAL-Timestamp beibehalten - NICHT überschreiben!
-            campaign._sortByDocId = true; // Flag für Sortierung
-          } else {
-            console.log(`❌ Unbekanntes Timestamp-Format:`, data.createdAt);
-            campaign.createdAt = data.createdAt; // ORIGINAL-Timestamp beibehalten - NICHT überschreiben!
-            campaign._sortByDocId = true;
-          }
-        }
-        
-        return campaign;
       });
       
-      // Client-seitige Sortierung nach createdAt (neueste zuerst)
-      console.log('🔄 Sortiere', campaigns.length, 'Kampagnen nach createdAt...');
-      
-      // Debug: Zeige ALLE createdAt Werte VOR der Sortierung
-      campaigns.forEach((c, i) => {
-        const rawCreatedAt = c.createdAt;
-        let debugInfo = '';
-        if (rawCreatedAt) {
-          if (typeof rawCreatedAt.toMillis === 'function') {
-            debugInfo = `Timestamp(${rawCreatedAt.toMillis()}) = ${new Date(rawCreatedAt.toMillis()).toISOString()}`;
-          } else if (rawCreatedAt instanceof Date) {
-            debugInfo = `Date(${rawCreatedAt.getTime()}) = ${rawCreatedAt.toISOString()}`;
-          } else {
-            debugInfo = `Unknown type: ${typeof rawCreatedAt} = ${rawCreatedAt}`;
-          }
-        } else {
-          debugInfo = 'UNDEFINED/NULL!!!';
-        }
-        console.log(`📅 Campaign ${i}: "${c.title?.substring(0, 30)}..." - createdAt: ${debugInfo}`);
-      });
-      
-      return campaigns.sort((a, b) => {
-        // SPEZIAL-BEHANDLUNG für serverTimestamp Bug: Sortiere nach Document-ID
-        if (a._sortByDocId || b._sortByDocId) {
-          const idA = a.id || '';
-          const idB = b.id || '';
-          const result = idB.localeCompare(idA); // Neuere IDs zuerst
-          console.log(`🆔 Document-ID Sortierung: "${a.title?.substring(0, 20)}..." (${idA.substring(0,8)}) vs "${b.title?.substring(0, 20)}..." (${idB.substring(0,8)}) = ${result}`);
-          return result;
-        }
-        
-        // Normale Timestamp-Sortierung
-        // Konvertiere createdAt zu Millisekunden, egal ob Timestamp, Date oder undefined
-        let aTime: number;
-        let bTime: number;
-        
-        if (a.createdAt) {
-          if (typeof a.createdAt.toMillis === 'function') {
-            // Firestore Timestamp
-            aTime = a.createdAt.toMillis();
-          } else if (a.createdAt instanceof Date) {
-            // JavaScript Date
-            aTime = a.createdAt.getTime();
-          } else if (typeof a.createdAt === 'number') {
-            // Bereits Millisekunden
-            aTime = a.createdAt;
-          } else {
-            // Fallback
-            aTime = Date.now();
-          }
-        } else {
-          aTime = Date.now();
-        }
-        
-        if (b.createdAt) {
-          if (typeof b.createdAt.toMillis === 'function') {
-            // Firestore Timestamp
-            bTime = b.createdAt.toMillis();
-          } else if (b.createdAt instanceof Date) {
-            // JavaScript Date
-            bTime = b.createdAt.getTime();
-          } else if (typeof b.createdAt === 'number') {
-            // Bereits Millisekunden
-            bTime = b.createdAt;
-          } else {
-            // Fallback
-            bTime = Date.now();
-          }
-        } else {
-          bTime = Date.now();
-        }
-        
-        const result = bTime - aTime; // Descending order (neueste zuerst)
-        
-        // Sekundäre Sortierung bei gleichen Timestamps: Nach Document-ID (neuere IDs = später erstellt)
-        if (result === 0) {
-          const idA = a.id || '';
-          const idB = b.id || '';
-          // Lexikographische Sortierung der IDs (spätere IDs sind größer)
-          const secondaryResult = idB.localeCompare(idA); // B vor A = neueste zuerst
-          
-          // Debug-Log für gleiche Timestamps
-          console.log(`🔄 Gleiche Zeit - sekundäre Sortierung nach Document-ID: "${a.title}" (${idA.substring(0,8)}...) vs "${b.title}" (${idB.substring(0,8)}...) = ${secondaryResult}`);
-          return secondaryResult;
-        }
-        
-        // Debug-Log für ALLE Sortierungen um das Problem zu finden
-        console.log(`📊 Sortierung: "${a.title?.substring(0, 25)}..." (aTime: ${aTime}, ${new Date(aTime).toLocaleString('de-DE')}) vs "${b.title?.substring(0, 25)}..." (bTime: ${bTime}, ${new Date(bTime).toLocaleString('de-DE')}) = ${result}`);
-        
-        return result;
-      });
+      return campaigns; // Bereits server-seitig sortiert!
     } catch (error) {
       console.error('Fehler beim Laden der Kampagnen:', error);
       throw error;
