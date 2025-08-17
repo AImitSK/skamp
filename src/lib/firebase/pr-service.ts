@@ -217,6 +217,12 @@ export const prService = {
       
       // Client-seitige Sortierung nach createdAt (neueste zuerst)
       console.log('🔄 Sortiere', campaigns.length, 'Kampagnen nach createdAt...');
+      
+      // Debug: Zeige ALLE createdAt Werte VOR der Sortierung
+      campaigns.forEach((c, i) => {
+        console.log(`📅 Campaign ${i}: "${c.title}" - createdAt:`, c.createdAt, typeof c.createdAt);
+      });
+      
       return campaigns.sort((a, b) => {
         // Konvertiere createdAt zu Millisekunden, egal ob Timestamp, Date oder undefined
         let aTime: number;
@@ -272,10 +278,8 @@ export const prService = {
           return secondaryResult;
         }
         
-        // Debug-Log für erste 2 Elemente
-        if (campaigns.indexOf(a) < 2 && campaigns.indexOf(b) < 2) {
-          console.log(`📊 Sortierung: "${a.title?.substring(0, 30)}..." (${new Date(aTime).toLocaleString('de-DE')}) vs "${b.title?.substring(0, 30)}..." (${new Date(bTime).toLocaleString('de-DE')}) = ${result}`);
-        }
+        // Debug-Log für ALLE Sortierungen um das Problem zu finden
+        console.log(`📊 Sortierung: "${a.title?.substring(0, 25)}..." (aTime: ${aTime}, ${new Date(aTime).toLocaleString('de-DE')}) vs "${b.title?.substring(0, 25)}..." (bTime: ${bTime}, ${new Date(bTime).toLocaleString('de-DE')}) = ${result}`);
         
         return result;
       });
