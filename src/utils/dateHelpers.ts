@@ -19,10 +19,14 @@ export function formatDate(timestamp: any): string {
  */
 export function formatDateShort(timestamp: any): string {
   if (!timestamp || !timestamp.toDate) return '—';
-  return timestamp.toDate().toLocaleDateString('de-DE', {
+  const date = timestamp.toDate();
+  const now = new Date();
+  const isThisYear = date.getFullYear() === now.getFullYear();
+  
+  return date.toLocaleDateString('de-DE', {
     day: '2-digit',
-    month: 'short',
-    year: 'numeric',
+    month: '2-digit',
+    year: isThisYear ? undefined : '2-digit', // Nur Jahr anzeigen wenn nicht aktuelles Jahr
     hour: '2-digit',
     minute: '2-digit'
   });

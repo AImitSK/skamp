@@ -121,6 +121,7 @@ export default function NewPRCampaignPage() {
   const [showAssetSelector, setShowAssetSelector] = useState(false);
   const [showAiModal, setShowAiModal] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [successMessage, setSuccessMessage] = useState<string>('');
   
   // 3-Step Navigation State
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
@@ -278,8 +279,14 @@ export default function NewPRCampaignPage() {
         }
       }
 
-      // Erfolgreiche Navigation mit Refresh-Parameter
-      router.push('/dashboard/pr-tools/campaigns?refresh=true');
+      // Zeige Erfolgs-Bestätigung vor Navigation
+      setValidationErrors([]); // Lösche vorherige Fehler
+      setSuccessMessage('Kampagne erfolgreich gespeichert! Weiterleitung...');
+      
+      // Kurze Verzögerung für UX - zeige "Gespeichert!" bevor navigiert wird
+      setTimeout(() => {
+        router.push('/dashboard/pr-tools/campaigns?refresh=true');
+      }, 1500);
 
     } catch (error) {
 
@@ -432,10 +439,27 @@ export default function NewPRCampaignPage() {
       {/* Step Navigation */}
       <StepNavigation />
 
-      {/* Fehlermeldungen oben auf der Seite */}
+      {/* Fehlermeldungen und Erfolgs-Nachrichten oben auf der Seite */}
       {validationErrors.length > 0 && (
         <div className="mb-6 animate-shake">
           <SimpleAlert type="error" message={validationErrors[0]} />
+        </div>
+      )}
+      
+      {successMessage && (
+        <div className="mb-6">
+          <div className="rounded-md p-4 bg-green-50">
+            <div className="flex">
+              <div className="shrink-0">
+                <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <Text className="text-sm text-green-700">{successMessage}</Text>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -686,8 +710,9 @@ export default function NewPRCampaignPage() {
               initialBoilerplateSections={boilerplateSections}
               hideMainContentField={true}
               hidePreview={false}
-              hideBoilerplates={true}
+              hideBoilerplates={false}
               readOnlyTitle={true}
+              readOnlyBoilerplates={true}
               keywords={keywords}
               onKeywordsChange={setKeywords}
             />
@@ -733,12 +758,22 @@ export default function NewPRCampaignPage() {
                 disabled={saving}
                 className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
               >
-                {saving ? 'Speichert...' : (approvalData.teamApprovalRequired || approvalData.customerApprovalRequired || approvalRequired) ? (
+                {saving ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Speichert...
+                  </>
+                ) : (approvalData.teamApprovalRequired || approvalData.customerApprovalRequired || approvalRequired) ? (
                   <>
                     <PaperAirplaneIcon className="h-4 w-4 mr-2" />
                     Freigabe anfordern
                   </>
-                ) : 'Als Entwurf speichern'}
+                ) : (
+                  <>
+                    <DocumentTextIcon className="h-4 w-4 mr-2" />
+                    Als Entwurf speichern
+                  </>
+                )}
               </Button>
             )}
           </div>

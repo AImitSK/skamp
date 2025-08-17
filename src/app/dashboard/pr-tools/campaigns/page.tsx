@@ -491,7 +491,7 @@ export default function PRCampaignsPage() {
             {/* Header */}
             <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
               <div className="flex items-center gap-8">
-                <div className="flex items-center w-[40%]">
+                <div className="flex items-center w-[35%]">
                   <Checkbox
                     checked={paginatedCampaigns.length > 0 && selectedCampaignIds.size === paginatedCampaigns.length}
                     indeterminate={selectedCampaignIds.size > 0 && selectedCampaignIds.size < paginatedCampaigns.length}
@@ -501,13 +501,13 @@ export default function PRCampaignsPage() {
                     Kampagne
                   </span>
                 </div>
-                <div className="w-[25%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Kunde
                 </div>
                 <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Status
                 </div>
-                <div className="flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                <div className="w-[18%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Versendet
                 </div>
                 <div className="w-12"></div>
@@ -520,7 +520,7 @@ export default function PRCampaignsPage() {
                 <div key={campaign.id} className="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                   <div className="flex items-center gap-8">
                     {/* Kampagne */}
-                    <div className="flex items-center w-[40%]">
+                    <div className="flex items-center w-[35%]">
                       <Checkbox
                         checked={selectedCampaignIds.has(campaign.id!)}
                         onChange={(checked: boolean) => {
@@ -540,14 +540,14 @@ export default function PRCampaignsPage() {
                         {campaign.scheduledAt && (
                           <div className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1 mt-1">
                             <CalendarIcon className={ICON_SIZES.xs} />
-                            Geplant für: {formatDateShort(campaign.scheduledAt)}
+                            Geplant: {formatDateShort(campaign.scheduledAt)}
                           </div>
                         )}
                       </div>
                     </div>
 
                     {/* Kunde */}
-                    <div className="w-[25%]">
+                    <div className="w-[20%]">
                       {campaign.clientId ? (
                         <Link 
                           href={`/dashboard/contacts/crm/companies/${campaign.clientId}`}
@@ -567,7 +567,7 @@ export default function PRCampaignsPage() {
                     </div>
 
                     {/* Versendet */}
-                    <div className="flex-1">
+                    <div className="w-[18%]">
                       {campaign.sentAt ? (
                         <span className="text-sm text-zinc-600 dark:text-zinc-400">
                           {formatDateShort(campaign.sentAt)}

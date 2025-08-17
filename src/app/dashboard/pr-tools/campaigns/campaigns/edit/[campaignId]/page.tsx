@@ -766,8 +766,9 @@ export default function EditPRCampaignPage() {
               initialBoilerplateSections={boilerplateSections}
               hideMainContentField={true}
               hidePreview={false}
-              hideBoilerplates={true}
+              hideBoilerplates={false}
               readOnlyTitle={true}
+              readOnlyBoilerplates={true}
               keywords={keywords}
               onKeywordsChange={setKeywords}
             />
