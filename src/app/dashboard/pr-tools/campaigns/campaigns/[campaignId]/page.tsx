@@ -489,9 +489,19 @@ export default function CampaignDetailPage() {
                 
                 return (
                   <div key={index} className="border-l-4 border-gray-300 pl-4">
-                    {headline && (
-                      <h4 className="font-semibold text-gray-900 mb-2">{headline}</h4>
-                    )}
+                    <div className="flex items-center gap-2 mb-2">
+                      {headline && (
+                        <h4 className="font-semibold text-gray-900">{headline}</h4>
+                      )}
+                      {boilerplate && (
+                        <Badge 
+                          color={boilerplate.isGlobal ? "blue" : "green"} 
+                          className="text-xs"
+                        >
+                          {boilerplate.isGlobal ? "Global" : boilerplate.clientName || "Kunde"}
+                        </Badge>
+                      )}
+                    </div>
                     <div className="prose prose-sm max-w-none text-gray-700">
                       <div dangerouslySetInnerHTML={{ __html: content }} />
                     </div>
