@@ -112,11 +112,6 @@ export const prService = {
         return cleanAsset;
       });
 
-      // 🔍 DEBUG: Was kommt in pr-service.create an?
-      console.log('🔍 PR-SERVICE CREATE DEBUG:');
-      console.log('🏷️ campaignData.keywords:', campaignData.keywords);
-      console.log('📝 campaignData.mainContent length:', campaignData.mainContent?.length || 0);
-      console.log('🗄️ Alle übergebenen Felder:', Object.keys(campaignData));
 
       // Erstelle die zu speichernden Daten
       const dataToSave: any = {
@@ -149,9 +144,6 @@ export const prService = {
       }
       if (campaignData.keywords && Array.isArray(campaignData.keywords) && campaignData.keywords.length > 0) {
         dataToSave.keywords = campaignData.keywords;
-        console.log('🔍 Keywords werden gespeichert:', campaignData.keywords);
-      } else {
-        console.log('🔍 KEINE Keywords gefunden oder leer:', campaignData.keywords);
       }
       if (campaignData.distributionListIds && campaignData.distributionListIds.length > 0) {
         dataToSave.distributionListIds = campaignData.distributionListIds;
@@ -190,11 +182,6 @@ export const prService = {
       // Finale Bereinigung: Entferne alle undefined Werte
       const finalData = removeUndefinedValues(dataToSave);
 
-      console.log('🔍 PR-SERVICE FINAL - Was wird wirklich gespeichert:');
-      console.log('🏷️ finalData.keywords:', finalData.keywords);
-      console.log('📝 finalData.mainContent length:', finalData.mainContent?.length || 0);
-      console.log('🗄️ Alle Felder die gespeichert werden:', Object.keys(finalData));
-      console.log('Creating campaign with cleaned data:', finalData);
       
       const docRef = await addDoc(collection(db, 'pr_campaigns'), finalData);
       return docRef.id;
@@ -219,8 +206,6 @@ export const prService = {
     try {
       const fieldName = useOrganizationId ? 'organizationId' : 'userId';
       
-      console.log('🔍 SORTIERUNG DEBUG - Query wird ausgeführt:');
-      console.log('🔍 fieldName:', fieldName, 'userOrOrgId:', userOrOrgId);
       
       // WICHTIG: Verzichte auf server-seitige Sortierung wegen serverTimestamp() Problemen
       // Lade alle Dokumente ohne orderBy und sortiere client-seitig
@@ -229,9 +214,7 @@ export const prService = {
         where(fieldName, '==', userOrOrgId)
       );
       
-      console.log('🔍 Firestore Query OHNE orderBy wird ausgeführt...');
       const snapshot = await getDocs(q);
-      console.log('🔍 Anzahl gefundene Dokumente:', snapshot.docs.length);
       
       const campaigns = snapshot.docs.map((doc, index) => {
         const data = doc.data();
@@ -240,15 +223,6 @@ export const prService = {
           ...data
         } as PRCampaign;
         
-        // Debug für jede Kampagne (nur erste 5)
-        if (index < 5) {
-          console.log(`🔍 Kampagne ${index + 1}: "${campaign.title}" (${doc.id.substring(0,8)})`);
-          console.log(`🔍   createdAt:`, campaign.createdAt);
-          console.log(`🔍   createdAt type:`, typeof campaign.createdAt);
-          if (campaign.createdAt && typeof campaign.createdAt === 'object') {
-            console.log(`🔍   createdAt keys:`, Object.keys(campaign.createdAt));
-          }
-        }
         
         return campaign;
       });
@@ -289,13 +263,6 @@ export const prService = {
         return bTime - aTime; // DESC - neueste zuerst
       });
       
-      console.log('🔍 CLIENT-SEITIGE SORTIERUNG ERGEBNIS - Reihenfolge der ersten 5:');
-      sortedCampaigns.slice(0, 5).forEach((c, i) => {
-        const timestamp = c.createdAt && typeof c.createdAt === 'object' && '_methodName' in c.createdAt
-          ? 'serverTimestamp()' 
-          : c.createdAt?.toDate?.() || 'no timestamp';
-        console.log(`${i + 1}. "${c.title}" (${c.id?.substring(0,8)}) - ${timestamp}`);
-      });
       
       return sortedCampaigns;
     } catch (error) {
@@ -327,11 +294,6 @@ export const prService = {
   async update(campaignId: string, data: Partial<Omit<PRCampaign, 'id'| 'userId'>>): Promise<void> {
     const docRef = doc(db, 'pr_campaigns', campaignId);
     
-    // 🔍 DEBUG: Was kommt im Update an?
-    console.log('🔍 PR-SERVICE UPDATE DEBUG:');
-    console.log('🏷️ data.keywords:', data.keywords);
-    console.log('📝 data.mainContent length:', data.mainContent?.length || 0);
-    console.log('🗄️ Alle Update-Felder:', Object.keys(data));
     
     // Bereinige die Update-Daten
     const cleanedData = removeUndefinedValues({
@@ -339,10 +301,6 @@ export const prService = {
       updatedAt: Timestamp.now(), // FIX: Verwende Timestamp.now() statt serverTimestamp()
     });
     
-    console.log('🔍 PR-SERVICE UPDATE FINAL - Was wird wirklich upgedatet:');
-    console.log('🏷️ cleanedData.keywords:', cleanedData.keywords);
-    console.log('📝 cleanedData.mainContent length:', cleanedData.mainContent?.length || 0);
-    console.log('🗄️ Alle finalen Update-Felder:', Object.keys(cleanedData));
     
     await updateDoc(docRef, cleanedData);
   },
@@ -854,16 +812,13 @@ export const prService = {
  */
 async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
   try {
-    console.log('🔍 getCampaignByShareId called with shareId:', shareId);
     
     // Versuche zuerst Enhanced Approval zu finden
     const approval = await approvalService.getByShareId(shareId);
-    console.log('🔍 Enhanced Approval found:', !!approval);
     
     if (approval) {
       // Lade die zugehörige Kampagne
       const campaign = await this.getById(approval.campaignId);
-      console.log('🔍 Campaign found:', !!campaign);
       
       if (campaign) {
         // Stelle sicher, dass history ein Array ist
@@ -886,7 +841,6 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
       }
     }
 
-    console.log('🔍 Falling back to legacy method');
     
     // Fallback zu Legacy-Methode
     const q = query(
@@ -1040,12 +994,10 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
    * Speichert Kunden-Feedback und aktualisiert den Status
    */
   async submitFeedback(shareId: string, feedback: string, author: string = 'Kunde'): Promise<void> {
-    console.log('🔍 submitFeedback called with:', { shareId, feedback, author });
     
     // Versuche Enhanced Approval zu verwenden
     const approval = await approvalService.getByShareId(shareId);
     if (approval) {
-      console.log('🔍 Enhanced Approval recipients:', approval.recipients);
       
       // Für Legacy/Public Access: Verwende den ersten Empfänger oder erstelle einen temporären
       let recipientEmail = approval.recipients[0]?.email;
@@ -1054,9 +1006,6 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
       // verwende eine Public-Access E-Mail
       if (!recipientEmail || recipientEmail.includes('kunde-')) {
         recipientEmail = 'public-access@freigabe.system';
-        console.log('🔍 Using public access email:', recipientEmail);
-      } else {
-        console.log('🔍 Using recipient email:', recipientEmail);
       }
       
       // Verwende requestChanges mit öffentlichem Zugriff
@@ -1086,7 +1035,6 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
             history: arrayUnion(historyEntry)
           });
           
-          console.log('🔍 Updated via direct method');
         }
       }
     }
@@ -1105,7 +1053,6 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
     const docRef = snapshot.docs[0].ref;
     const currentData = snapshot.docs[0].data();
     
-    console.log('🔍 Current approval share data:', currentData);
     
     // Füge neues Feedback zur Historie hinzu
     const newFeedback = {
@@ -1133,12 +1080,6 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
         status: 'commented', // WICHTIG: Dieser Status muss gesetzt werden!
         feedbackHistory: updatedFeedbackHistory
       };
-
-      console.log('🔍 Updating campaign with:', {
-        campaignId: currentData.campaignId,
-        status: 'changes_requested',
-        approvalData: updatedApprovalData
-      });
 
       // Update mit dem kompletten neuen Objekt
       await this.update(currentData.campaignId, {
@@ -1180,12 +1121,10 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
     // Versuche Enhanced Approval zu verwenden
     const approval = await approvalService.getByShareId(shareId);
     if (approval) {
-      console.log('🔍 Using Enhanced Approval for approval');
       
       // Für öffentlichen Zugriff: Verwende submitDecisionPublic
       try {
         await approvalService.submitDecisionPublic(shareId, 'approved', undefined, 'Kunde');
-        console.log('🔍 Approved via public method');
       } catch (error) {
         console.error('🔍 Error with public approval:', error);
         
@@ -1193,7 +1132,6 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
         if (approval.recipients && approval.recipients.length > 0) {
           const recipientEmail = approval.recipients[0].email;
           await approvalService.submitDecision(shareId, recipientEmail, 'approved');
-          console.log('🔍 Approved via recipient method');
         }
       }
     }
