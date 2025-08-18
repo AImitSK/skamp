@@ -110,6 +110,7 @@ function ApprovalTooltipContent({ campaign, teamMembers }: { campaign: PRCampaig
               <UserGroupIcon className="h-4 w-4 text-gray-900" />
               <Text className="font-medium text-sm">Team-Freigabe</Text>
             </div>
+            <div className="border-t border-gray-200 mb-2"></div>
             
             <div className="space-y-2">
               {approvalData.teamApprovers.map((approver) => {
@@ -164,11 +165,6 @@ function ApprovalTooltipContent({ campaign, teamMembers }: { campaign: PRCampaig
           </div>
         )}
 
-        {/* Trennstrich zwischen Team- und Kunden-Freigabe */}
-        {hasTeamApproval && hasCustomerApproval && (
-          <div className="border-t border-gray-200"></div>
-        )}
-
         {/* Kunden-Freigabe */}
         {hasCustomerApproval && (
           <div>
@@ -176,6 +172,7 @@ function ApprovalTooltipContent({ campaign, teamMembers }: { campaign: PRCampaig
               <BuildingOfficeIcon className="h-4 w-4 text-gray-900" />
               <Text className="font-medium text-sm">Kunden-Freigabe</Text>
             </div>
+            <div className="border-t border-gray-200 mb-2"></div>
             
             {approvalData.customerContact ? (
               <div className="flex items-center gap-3">
