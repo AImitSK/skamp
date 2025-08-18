@@ -67,7 +67,7 @@ service firebase.storage {
       }
       
       // Special rules for user profile avatars (MULTI-TENANCY AVATARS)
-      match /profiles/{userId}/avatar.{fileExtension} {
+      match /profiles/{userId}/avatar.jpg {
         // Only the user can upload/update their own avatar
         allow create, update, delete: if request.auth != null && 
                                        request.auth.uid == userId &&
@@ -75,6 +75,33 @@ service firebase.storage {
                                        request.resource.size < 10 * 1024 * 1024; // Max 10MB
         
         // All organization members can read profile avatars (CRITICAL FOR MULTI-TENANCY)
+        allow read: if request.auth != null && isOrganizationMember(organizationId);
+      }
+      
+      // Profile avatars - PNG format
+      match /profiles/{userId}/avatar.png {
+        allow create, update, delete: if request.auth != null && 
+                                       request.auth.uid == userId &&
+                                       isOrganizationMember(organizationId) &&
+                                       request.resource.size < 10 * 1024 * 1024;
+        allow read: if request.auth != null && isOrganizationMember(organizationId);
+      }
+      
+      // Profile avatars - WebP format  
+      match /profiles/{userId}/avatar.webp {
+        allow create, update, delete: if request.auth != null && 
+                                       request.auth.uid == userId &&
+                                       isOrganizationMember(organizationId) &&
+                                       request.resource.size < 10 * 1024 * 1024;
+        allow read: if request.auth != null && isOrganizationMember(organizationId);
+      }
+      
+      // Profile avatars - JPEG format
+      match /profiles/{userId}/avatar.jpeg {
+        allow create, update, delete: if request.auth != null && 
+                                       request.auth.uid == userId &&
+                                       isOrganizationMember(organizationId) &&
+                                       request.resource.size < 10 * 1024 * 1024;
         allow read: if request.auth != null && isOrganizationMember(organizationId);
       }
     }
