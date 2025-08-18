@@ -387,49 +387,62 @@ export default function CampaignDetailPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Key Visual Preview */}
+      <div className="space-y-6">
+        {/* First Box: Content without headers */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-6">
+          {/* Key Visual */}
           {campaign.keyVisual && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold mb-4">Key Visual</h2>
-              <div className="aspect-[16/9] rounded-lg overflow-hidden border border-gray-200">
-                <img 
-                  src={campaign.keyVisual.url} 
-                  alt="Key Visual" 
-                  className="w-full h-full object-cover"
-                />
+            <div className="aspect-[16/9] rounded-lg overflow-hidden border border-gray-200">
+              <img 
+                src={campaign.keyVisual.url} 
+                alt="Key Visual" 
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+
+          {/* Editor Content (mainContent) */}
+          {campaign.mainContent && (
+            <div className="prose prose-sm max-w-none">
+              <div 
+                dangerouslySetInnerHTML={{ __html: campaign.mainContent }} 
+                className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+              />
+            </div>
+          )}
+
+          {/* PR Keywords */}
+          {campaign.keywords && campaign.keywords.length > 0 && (
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex flex-wrap gap-2">
+                {campaign.keywords.map((keyword, index) => (
+                  <span
+                    key={index}
+                    className="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-blue-100 text-blue-800 border border-blue-200"
+                  >
+                    {keyword}
+                  </span>
+                ))}
               </div>
             </div>
           )}
 
-          {/* Content Preview */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">            
-            {/* PR-Content */}
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">Pressemitteilung:</h3>
-              <div className="prose prose-sm max-w-none">
-                <div 
-                  dangerouslySetInnerHTML={{ __html: campaign.contentHtml }} 
-                  className="bg-gray-50 rounded-lg p-4 border border-gray-200"
-                />
-              </div>
-            </div>
-
-            {/* Boilerplates - falls vorhanden */}
-            {campaign.mainContent && (
-              <div className="mt-6">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">Ausgewählte Boiler Plates:</h3>
-                <div className="prose prose-sm max-w-none">
-                  <div 
-                    dangerouslySetInnerHTML={{ __html: campaign.mainContent }} 
-                    className="bg-gray-50 rounded-lg p-4 border border-gray-200"
-                  />
+          {/* Boilerplate Sections */}
+          {campaign.boilerplateSections && campaign.boilerplateSections.length > 0 && (
+            <div className="space-y-4">
+              {campaign.boilerplateSections.map((section, index) => (
+                <div key={index} className="border-l-4 border-gray-300 pl-4">
+                  {section.headline && (
+                    <h4 className="font-semibold text-gray-900 mb-2">{section.headline}</h4>
+                  )}
+                  <div className="prose prose-sm max-w-none text-gray-700">
+                    <div dangerouslySetInnerHTML={{ __html: section.content }} />
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              ))}
+            </div>
+          )}
+        </div>
 
           {/* Approval Feedback */}
           {campaign.approvalData?.feedbackHistory && campaign.approvalData.feedbackHistory.length > 0 && (
@@ -513,117 +526,6 @@ export default function CampaignDetailPage() {
               )}
             </div>
           )}
-        </div>
-
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Campaign Info */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="mb-4">
-              <StatusBadge 
-                status={campaign.status} 
-                campaign={campaign}
-                showApprovalTooltip={true}
-                teamMembers={teamMembers}
-              />
-            </div>
-
-            {/* Approval Links - only if approval is required */}
-            {campaign.approvalRequired && campaign.approvalData?.shareId && (
-              <div className="space-y-2">
-                <Text className="text-sm text-gray-700">Freigabe-Link:</Text>
-                <div className="p-2 bg-gray-50 rounded border text-xs break-all text-gray-600">
-                  {prService.getApprovalUrl(campaign.approvalData.shareId)}
-                </div>
-                <div className="flex flex-col gap-2">
-                  <button
-                    onClick={() => window.open(prService.getApprovalUrl(campaign.approvalData!.shareId), '_blank')}
-                    className="inline-flex items-center border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-md px-3 py-2 text-sm font-medium"
-                  >
-                    <EyeIconOutline className="h-4 w-4 mr-2" />
-                    Freigabe-Seite
-                  </button>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(prService.getApprovalUrl(campaign.approvalData!.shareId));
-                      showAlert('success', 'Link kopiert');
-                    }}
-                    className="inline-flex items-center border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-md px-3 py-2 text-sm font-medium"
-                  >
-                    <DocumentDuplicateIconOutline className="h-4 w-4 mr-2" />
-                    Link kopieren
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Admin Section */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold mb-4">Kampagnen-Administrator</h2>
-            
-            <div className="space-y-4">
-              {/* Current Admin */}
-              {currentAdmin && (
-                <div className="flex items-center gap-3">
-                  <img
-                    src={getTeamMemberAvatar(currentAdmin)}
-                    alt={currentAdmin.displayName}
-                    className="w-10 h-10 rounded-full"
-                  />
-                  <div>
-                    <Text className="font-medium">{currentAdmin.displayName}</Text>
-                    <Text className="text-sm text-gray-500">{currentAdmin.email}</Text>
-                  </div>
-                </div>
-              )}
-              
-              {/* Change Admin */}
-              {teamMembers.length > 1 && (
-                <div>
-                  <Text className="text-sm font-medium text-gray-700 mb-2">Admin ändern</Text>
-                  <Dropdown>
-                    <DropdownButton className="w-full justify-between text-sm bg-gray-50 hover:bg-gray-100 text-gray-600 border border-gray-300">
-                      Admin wechseln
-                      <EllipsisVerticalIcon className="h-4 w-4" />
-                    </DropdownButton>
-                    <DropdownMenu anchor="bottom start" className="w-64">
-                      {teamMembers
-                        .filter(member => member.userId !== campaign?.userId)
-                        .map((member) => (
-                          <DropdownItem 
-                            key={member.userId}
-                            onClick={() => handleChangeAdmin(member.userId)}
-                            className="text-left justify-start items-start"
-                          >
-                            <div className="flex items-center gap-2 w-full">
-                              <img
-                                src={getTeamMemberAvatar(member, 32)}
-                                alt={member.displayName}
-                                className="w-8 h-8 rounded-full"
-                              />
-                              <div className="text-left">
-                                <div className="font-medium">{member.displayName}</div>
-                                <div className="text-xs text-gray-500">{member.email}</div>
-                              </div>
-                            </div>
-                          </DropdownItem>
-                        ))}
-                    </DropdownMenu>
-                  </Dropdown>
-                </div>
-              )}
-              
-              {teamMembers.length <= 1 && (
-                <Text className="text-sm text-gray-500">
-                  Keine weiteren Teammitglieder verfügbar
-                </Text>
-              )}
-            </div>
-          </div>
-
-          {/* Email Stats - würden hier stehen wenn das Feld existieren würde */}
-        </div>
       </div>
 
       {/* Send Modal */}
