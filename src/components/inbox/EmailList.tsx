@@ -16,7 +16,7 @@ import {
   CheckIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
-import { teamMemberService } from '@/lib/firebase/organization-service';
+import { teamMemberService } from '@/lib/firebase/team-service-enhanced';
 import { TeamMember } from '@/types/international';
 
 interface EmailListProps {
@@ -136,6 +136,18 @@ export function EmailList({
     return teamMembers.find(m => m.userId === assignedTo) || null;
   };
   
+  // NEU: Hilfsfunktion für TeamMember-Avatar (Multi-Tenancy)
+  const getTeamMemberAvatar = (member: TeamMember): string => {
+    if (member.photoUrl) {
+      // Echtes Avatar verfügbar (Multi-Tenancy Avatar-System)
+      return member.photoUrl;
+    }
+    
+    // Fallback zu generiertem Avatar
+    const displayName = member.displayName || 'Admin';
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=005fab&color=fff&size=32`;
+  };
+  
   
   // NEU: Generiere Avatar-Farbe basierend auf Name
   const getAvatarColor = (name: string): string => {
@@ -226,8 +238,8 @@ export function EmailList({
                       <div className="flex items-center">
                         <Avatar
                           className="w-6 h-6"
-                          src={getAvatarUrl({ uid: assignedMember.userId } as any)}
-                          initials={getInitials({ displayName: assignedMember.displayName, email: assignedMember.email } as any)}
+                          src={getTeamMemberAvatar(assignedMember)}
+                          initials={assignedMember.displayName ? assignedMember.displayName.charAt(0).toUpperCase() : 'A'}
                           title={`Zugewiesen an ${assignedMember.displayName}`}
                         />
                       </div>
@@ -318,8 +330,8 @@ export function EmailList({
                                 <div className="flex items-center">
                                   <Avatar
                                     className="w-6 h-6 mr-2"
-                                    src={getAvatarUrl({ uid: member.userId } as any)}
-                                    initials={getInitials({ displayName: member.displayName, email: member.email } as any)}
+                                    src={getTeamMemberAvatar(member)}
+                                    initials={member.displayName ? member.displayName.charAt(0).toUpperCase() : 'A'}
                                     title={member.displayName}
                                   />
                                   <span>{member.displayName}</span>

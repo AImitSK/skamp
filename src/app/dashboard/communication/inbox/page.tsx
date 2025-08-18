@@ -17,7 +17,7 @@ import { emailMessageService } from '@/lib/email/email-message-service';
 import { threadMatcherService } from '@/lib/email/thread-matcher-service-flexible';
 import { emailAddressService } from '@/lib/email/email-address-service';
 import { getCustomerCampaignMatcher } from '@/lib/email/customer-campaign-matcher';
-import { teamMemberService } from '@/lib/firebase/organization-service';
+import { teamMemberService } from '@/lib/firebase/team-service-enhanced';
 import { notificationService } from '@/lib/email/notification-service-enhanced';
 import { 
   onSnapshot,
@@ -154,7 +154,9 @@ export default function InboxPage() {
               displayName: user?.displayName || user?.email || 'Aktueller Benutzer',
               email: user?.email || 'user@example.com',
               role: 'owner',
-              status: 'active'
+              status: 'active',
+              photoUrl: user?.photoURL || null,
+              organizationId: organizationId
             },
             {
               id: '2',
@@ -162,7 +164,9 @@ export default function InboxPage() {
               displayName: 'Max Mustermann',
               email: 'max@example.com',
               role: 'admin',
-              status: 'active'
+              status: 'active',
+              photoUrl: null,
+              organizationId: organizationId
             },
             {
               id: '3',
@@ -170,7 +174,9 @@ export default function InboxPage() {
               displayName: 'Anna Schmidt',
               email: 'anna@example.com',
               role: 'member',
-              status: 'active'
+              status: 'active',
+              photoUrl: null,
+              organizationId: organizationId
             }
           ];
           setTeamMembers(mockMembers);
@@ -195,7 +201,9 @@ export default function InboxPage() {
           displayName: user?.displayName || user?.email || 'Aktueller Benutzer',
           email: user?.email || 'user@example.com',
           role: 'owner',
-          status: 'active'
+          status: 'active',
+          photoUrl: user?.photoURL || null,
+          organizationId: organizationId
         };
         setTeamMembers([fallbackMember]);
         setDebugInfo(prev => ({
