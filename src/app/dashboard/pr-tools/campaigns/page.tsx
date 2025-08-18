@@ -619,7 +619,11 @@ export default function PRCampaignsPage() {
 
                       {/* Status mit Datum */}
                       <div className="w-40 px-4">
-                        <StatusBadge status={campaign.status} />
+                        <StatusBadge 
+                          status={campaign.status} 
+                          campaign={campaign}
+                          showApprovalTooltip={true}
+                        />
                         <div className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
                           {getStatusDate()}
                         </div>
