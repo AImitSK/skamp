@@ -364,11 +364,11 @@ export default function CampaignDetailPage() {
             {/* Admin Dropdown */}
             {teamMembers.length > 1 && (
               <Dropdown>
-                <DropdownButton className="inline-flex items-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-600 border border-gray-300">
+                <DropdownButton className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300 rounded-full text-sm">
                   <img
-                    src={getTeamMemberAvatar(currentAdmin, 20)}
+                    src={getTeamMemberAvatar(currentAdmin, 16)}
                     alt={currentAdmin?.displayName}
-                    className="w-5 h-5 rounded-full"
+                    className="w-4 h-4 rounded-full"
                   />
                   Admin
                 </DropdownButton>
@@ -474,12 +474,6 @@ export default function CampaignDetailPage() {
             </div>
           )}
 
-          {/* DEBUG: Textbausteine Info */}
-          <div className="bg-yellow-100 p-2 text-xs">
-            <div>boilerplateSections: {campaign.boilerplateSections ? campaign.boilerplateSections.length : 'undefined'}</div>
-            <div>loadedBoilerplates: {loadedBoilerplates.length}</div>
-            {campaign.boilerplateSections && <pre>{JSON.stringify(campaign.boilerplateSections, null, 2)}</pre>}
-          </div>
 
           {/* Textbausteine/Boilerplate Sections */}
           {campaign.boilerplateSections && campaign.boilerplateSections.length > 0 && (
@@ -541,26 +535,7 @@ export default function CampaignDetailPage() {
           )}
         </div>
 
-          {/* Approval Feedback */}
-          {campaign.approvalData?.feedbackHistory && campaign.approvalData.feedbackHistory.length > 0 && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold mb-4">Feedback-Historie</h2>
-              <div className="space-y-4">
-                {campaign.approvalData.feedbackHistory.map((feedback, index) => (
-                  <div key={index} className="border-l-4 border-gray-200 pl-4">
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <span className="font-medium">{feedback.author || 'Kunde'}</span>
-                      <span>•</span>
-                      <span>{formatDate(feedback.requestedAt)}</span>
-                    </div>
-                    <Text className="mt-1">{feedback.comment}</Text>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Attached Assets */}
+        {/* Second Box: Attached Assets */}
           {(assets.length > 0 || folders.length > 0) && (
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-hidden">
               <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
