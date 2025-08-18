@@ -364,7 +364,7 @@ export default function CampaignDetailPage() {
             {/* Admin Dropdown */}
             {teamMembers.length > 1 && (
               <Dropdown>
-                <DropdownButton className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300 rounded-full text-sm">
+                <DropdownButton className="inline-flex items-center gap-2 px-3 py-1.5 !bg-gray-100 hover:!bg-gray-200 !text-gray-700 !border-gray-300 rounded-full text-sm">
                   <img
                     src={getTeamMemberAvatar(currentAdmin, 16)}
                     alt={currentAdmin?.displayName}
