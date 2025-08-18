@@ -105,8 +105,8 @@ function ApprovalTooltipContent({ campaign, teamMembers }: { campaign: PRCampaig
       <div className="space-y-3">
         {/* Team-Freigabe */}
         {hasTeamApproval && (
-          <div className="bg-gray-100 p-3 rounded">
-            <div className="flex items-center gap-2 mb-2">
+          <div>
+            <div className="flex items-center gap-2 mb-2 bg-gray-100 px-3 py-2 -mx-4 rounded">
               <UserGroupIcon className="h-4 w-4 text-gray-900" />
               <Text className="font-medium text-sm">Team-Freigabe</Text>
             </div>
@@ -166,8 +166,8 @@ function ApprovalTooltipContent({ campaign, teamMembers }: { campaign: PRCampaig
 
         {/* Kunden-Freigabe */}
         {hasCustomerApproval && (
-          <div className="bg-gray-100 p-3 rounded">
-            <div className="flex items-center gap-2 mb-2">
+          <div>
+            <div className="flex items-center gap-2 mb-2 bg-gray-100 px-3 py-2 -mx-4 rounded">
               <BuildingOfficeIcon className="h-4 w-4 text-gray-900" />
               <Text className="font-medium text-sm">Kunden-Freigabe</Text>
             </div>
