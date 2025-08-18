@@ -142,46 +142,29 @@ function ApprovalTooltipContent({ campaign, teamMembers }: { campaign: PRCampaig
                         {displayName}
                       </Text>
                     </div>
-                    <div className="flex items-center gap-1">
-                    {approver.status === 'approved' && (
-                      <CheckCircleIcon className="h-4 w-4 text-green-500" />
-                    )}
-                    {approver.status === 'rejected' && (
-                      <XCircleIcon className="h-4 w-4 text-red-500" />
-                    )}
-                    {approver.status === 'pending' && (
-                      <ClockIcon className="h-4 w-4 text-yellow-500" />
-                    )}
-                    <Text className={clsx("text-xs font-medium", {
-                      "text-green-600": approver.status === 'approved',
-                      "text-red-600": approver.status === 'rejected',
-                      "text-yellow-600": approver.status === 'pending'
-                    })}>
-                      {approver.status === 'approved' && 'Freigegeben'}
-                      {approver.status === 'rejected' && 'Abgelehnt'}
-                      {approver.status === 'pending' && 'Ausstehend'}
-                    </Text>
-                  </div>
+                    <div className="flex items-center">
+                      {approver.status === 'approved' && (
+                        <CheckCircleIcon 
+                          className="h-4 w-4 text-green-500" 
+                          title="Freigegeben"
+                        />
+                      )}
+                      {approver.status === 'rejected' && (
+                        <XCircleIcon 
+                          className="h-4 w-4 text-red-500" 
+                          title="Abgelehnt"
+                        />
+                      )}
+                      {approver.status === 'pending' && (
+                        <ClockIcon 
+                          className="h-4 w-4 text-yellow-500" 
+                          title="Ausstehend"
+                        />
+                      )}
+                    </div>
                 </div>
               );
               })}
-            </div>
-            
-            {/* Team-Zusammenfassung */}
-            <div className="mt-2 p-2 bg-gray-50 rounded text-xs">
-              {(() => {
-                const approved = approvalData.teamApprovers.filter(a => a.status === 'approved').length;
-                const total = approvalData.teamApprovers.length;
-                const rejected = approvalData.teamApprovers.filter(a => a.status === 'rejected').length;
-                
-                if (rejected > 0) {
-                  return <span className="text-red-600 font-medium">{rejected} Ablehnung(en)</span>;
-                }
-                if (approved === total) {
-                  return <span className="text-green-600 font-medium">Alle {total} Team-Mitglieder haben freigegeben</span>;
-                }
-                return <span className="text-gray-600">{approved} von {total} Freigaben erhalten</span>;
-              })()}
             </div>
           </div>
         )}
@@ -207,11 +190,8 @@ function ApprovalTooltipContent({ campaign, teamMembers }: { campaign: PRCampaig
                     {approvalData.customerContact.companyName}
                   </Text>
                 </div>
-                <div className="flex items-center gap-1">
-                  <ClockIcon className="h-4 w-4 text-yellow-500" />
-                  <Text className="text-xs font-medium text-yellow-600">
-                    Ausstehend
-                  </Text>
+                <div className="flex items-center">
+                  <ClockIcon className="h-4 w-4 text-yellow-500" title="Ausstehend" />
                 </div>
               </div>
             ) : (
