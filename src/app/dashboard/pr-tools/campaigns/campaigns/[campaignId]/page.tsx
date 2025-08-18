@@ -190,11 +190,13 @@ export default function CampaignDetailPage() {
         
         if (boilerplateIds.length > 0) {
           promises.push(
-            Promise.all(boilerplateIds.map(id => 
-              boilerplatesService.getById(id)
-            ))
-            .then(boilerplatesData => {
-              setLoadedBoilerplates(boilerplatesData.filter(bp => bp !== null));
+            // Load all boilerplates for organization and then filter by IDs
+            boilerplatesService.getAll(currentOrganization.id)
+            .then(allBoilerplates => {
+              const matchingBoilerplates = allBoilerplates.filter(bp => 
+                boilerplateIds.includes(bp.id!)
+              );
+              setLoadedBoilerplates(matchingBoilerplates);
             })
             .catch(err => console.error('Error loading boilerplates:', err))
           );
