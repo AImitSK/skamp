@@ -14,7 +14,6 @@ import {
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase/client-init';
 import ProfileImageService from '@/lib/services/profile-image-service';
-// OrganizationContext wird separat geholt
 
 // Definiere die Typen für die Login- und Registrierungsfunktionen
 type RegisterFunction = (email: string, password: string) => Promise<any>; // Passe 'any' an, z.B. UserCredential
@@ -56,7 +55,12 @@ export const AuthContext = createContext<AuthContextType>({
     sendVerificationEmail: async () => {}
 });
 
-export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
+interface AuthContextProviderProps {
+    children: ReactNode;
+    getOrganizationId?: () => string | null;
+}
+
+export const AuthContextProvider = ({ children, getOrganizationId }: AuthContextProviderProps) => {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -67,6 +71,58 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
         });
         return () => unsubscribe();
     }, []);
+
+    // Hilfsfunktion zur organizationId-Ermittlung
+    const getCurrentOrganizationId = (): string => {
+        console.log('🔍 getCurrentOrganizationId gestartet...');
+        
+        // 1. Versuche über callback (falls OrganizationContext verfügbar)
+        if (getOrganizationId) {
+            const orgId = getOrganizationId();
+            if (orgId && orgId !== 'default') {
+                console.log('🎯 OrganizationId von Callback:', orgId);
+                return orgId;
+            }
+        }
+        
+        // 2. Prüfe verschiedene localStorage Keys (PRIORISIERT currentOrganizationId)
+        const possibleKeys = ['currentOrganizationId', 'organizationId', 'org_id'];
+        for (const key of possibleKeys) {
+            const storedOrgId = localStorage.getItem(key);
+            console.log(`📍 localStorage ${key}:`, storedOrgId);
+            if (storedOrgId && storedOrgId !== 'default' && storedOrgId !== 'null' && storedOrgId !== 'undefined') {
+                console.log(`🎯 OrganizationId von localStorage ${key}:`, storedOrgId);
+                return storedOrgId;
+            }
+        }
+        
+        // 3. Prüfe URL Parameter
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const orgFromUrl = urlParams.get('org');
+            if (orgFromUrl && orgFromUrl !== 'default') {
+                console.log('🎯 OrganizationId von URL:', orgFromUrl);
+                return orgFromUrl;
+            }
+        } catch (error) {
+            console.warn('Fehler beim URL-Parsing:', error);
+        }
+        
+        // 4. Fallback zu userId (eigene Organisation)
+        if (user?.uid) {
+            console.log('⚠️ OrganizationId Fallback zu userId:', user.uid);
+            return user.uid;
+        }
+        
+        // 5. Letzter Fallback - SOLLTE NICHT PASSIEREN
+        console.error('❌ OrganizationId Fallback zu "default" - KRITISCHES PROBLEM!');
+        console.log('📊 Debug Info:', {
+            user: user?.uid || 'nicht verfügbar',
+            localStorage: Object.keys(localStorage),
+            url: window?.location?.href || 'nicht verfügbar'
+        });
+        return 'default';
+    };
 
     // 3. Definiere die Authentifizierungs-Funktionen
     const register: RegisterFunction = (email, password) => {
@@ -87,10 +143,15 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
             return { success: false, error: 'Kein User angemeldet' };
         }
 
-        // organizationId aus localStorage holen (sollte von OrganizationContext gesetzt werden)
-        const organizationId = localStorage.getItem('currentOrganizationId') || 'default';
+        const organizationId = getCurrentOrganizationId();
         
         console.log('🔍 AVATAR-UPLOAD OrganizationId:', organizationId);
+        console.log('🔍 AVATAR-UPLOAD LocalStorage keys:', Object.keys(localStorage));
+        console.log('🔍 AVATAR-UPLOAD LocalStorage values:', {
+            currentOrganizationId: localStorage.getItem('currentOrganizationId'),
+            organizationId: localStorage.getItem('organizationId'),
+            org_id: localStorage.getItem('org_id')
+        });
         
         const result = await ProfileImageService.uploadProfileImage(file, user, organizationId);
         
@@ -106,9 +167,10 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
             return { success: false, error: 'Kein User angemeldet' };
         }
 
-        const organizationId = localStorage.getItem('currentOrganizationId') || 'default';
+        const organizationId = getCurrentOrganizationId();
         
         console.log('🔍 AVATAR-DELETE OrganizationId:', organizationId);
+        console.log('🔍 AVATAR-DELETE LocalStorage keys:', Object.keys(localStorage));
         
         const result = await ProfileImageService.deleteProfileImage(user, organizationId);
         return result;

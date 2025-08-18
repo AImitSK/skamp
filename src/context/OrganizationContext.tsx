@@ -121,19 +121,34 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     const urlParams = new URLSearchParams(window.location.search);
     const orgFromUrl = urlParams.get('org');
     
+    let selectedOrg: Organization;
+    
     if (orgFromUrl && orgs.find(o => o.id === orgFromUrl)) {
-      setCurrentOrganization(orgs.find(o => o.id === orgFromUrl)!);
+      selectedOrg = orgs.find(o => o.id === orgFromUrl)!;
     } else if (orgs.length > 0) {
       // Priorisiere die eigene Organisation
       const ownOrg = orgs.find(o => o.id === user?.uid);
-      setCurrentOrganization(ownOrg || orgs[0]);
+      selectedOrg = ownOrg || orgs[0];
+    } else {
+      return;
     }
+    
+    setCurrentOrganization(selectedOrg);
+    
+    // KRITISCH: Speichere die aktuelle organizationId in localStorage
+    localStorage.setItem('currentOrganizationId', selectedOrg.id);
+    console.log('🔄 Iniziale OrganizationId gespeichert:', selectedOrg.id);
   };
 
   const switchOrganization = (orgId: string) => {
     const org = organizations.find(o => o.id === orgId);
     if (org) {
       setCurrentOrganization(org);
+      
+      // KRITISCH: Speichere organizationId in localStorage für AuthContext
+      localStorage.setItem('currentOrganizationId', orgId);
+      console.log('🔄 OrganizationContext speichert organizationId:', orgId);
+      
       // Optional: URL aktualisieren
       const url = new URL(window.location.href);
       url.searchParams.set('org', orgId);
