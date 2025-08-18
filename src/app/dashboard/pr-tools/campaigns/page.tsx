@@ -557,7 +557,7 @@ export default function PRCampaignsPage() {
                   if (campaign.status === 'sent' && campaign.sentAt) {
                     return formatDateShort(campaign.sentAt);
                   }
-                  return '-';
+                  return '';
                 };
                 
                 return (
