@@ -87,8 +87,10 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
             return { success: false, error: 'Kein User angemeldet' };
         }
 
-        // organizationId aus localStorage oder einem anderen Context holen
+        // organizationId aus localStorage holen (sollte von OrganizationContext gesetzt werden)
         const organizationId = localStorage.getItem('currentOrganizationId') || 'default';
+        
+        console.log('🔍 AVATAR-UPLOAD OrganizationId:', organizationId);
         
         const result = await ProfileImageService.uploadProfileImage(file, user, organizationId);
         
@@ -105,6 +107,8 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
         }
 
         const organizationId = localStorage.getItem('currentOrganizationId') || 'default';
+        
+        console.log('🔍 AVATAR-DELETE OrganizationId:', organizationId);
         
         const result = await ProfileImageService.deleteProfileImage(user, organizationId);
         return result;

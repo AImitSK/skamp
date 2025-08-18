@@ -176,6 +176,12 @@ export class ProfileImageService {
     photoUrl: string | null
   ): Promise<void> {
     try {
+      console.log('🔄 AVATAR-SYNC START:', {
+        userId: userId,
+        organizationId: organizationId,
+        photoUrl: photoUrl ? photoUrl.substring(0, 50) + '...' : 'null'
+      });
+
       // Suche TeamMember-Dokument für diesen User in dieser Organisation
       const teamMembersQuery = query(
         collection(db, 'team_members'),
@@ -185,18 +191,38 @@ export class ProfileImageService {
       
       const querySnapshot = await getDocs(teamMembersQuery);
       
+      console.log('🔍 TeamMember Query Ergebnis:', {
+        found: querySnapshot.size,
+        isEmpty: querySnapshot.empty
+      });
+
       if (querySnapshot.empty) {
-        console.warn(`Kein TeamMember-Dokument gefunden für User ${userId} in Organisation ${organizationId}`);
+        console.warn(`❌ Kein TeamMember-Dokument gefunden für User ${userId} in Organisation ${organizationId}`);
+        
+        // Debug: Zeige alle TeamMembers für diese Organisation
+        const allMembersQuery = query(
+          collection(db, 'team_members'),
+          where('organizationId', '==', organizationId)
+        );
+        const allMembers = await getDocs(allMembersQuery);
+        console.log('🔍 Alle TeamMembers in dieser Organisation:', 
+          allMembers.docs.map(doc => ({ id: doc.id, userId: doc.data().userId, displayName: doc.data().displayName }))
+        );
         return;
       }
 
       // Update alle gefundenen TeamMember-Dokumente (sollte nur 1 sein)
-      const updatePromises = querySnapshot.docs.map(doc => 
-        updateDoc(doc.ref, {
-          photoUrl: photoUrl,
-          avatarUpdatedAt: new Date()
-        })
-      );
+      const updateData = {
+        photoUrl: photoUrl,
+        avatarUpdatedAt: new Date()
+      };
+
+      console.log('📝 Updating TeamMember mit Daten:', updateData);
+
+      const updatePromises = querySnapshot.docs.map(doc => {
+        console.log('📄 Updating TeamMember Dokument:', doc.id);
+        return updateDoc(doc.ref, updateData);
+      });
 
       await Promise.all(updatePromises);
       
