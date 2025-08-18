@@ -643,7 +643,7 @@ export default function PRCampaignsPage() {
                       {/* Actions */}
                       <div className="w-12 flex justify-end">
                         <Dropdown>
-                          <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700 focus:outline-none">
+                          <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2">
                             <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
                           </DropdownButton>
                           <DropdownMenu anchor="bottom end">
