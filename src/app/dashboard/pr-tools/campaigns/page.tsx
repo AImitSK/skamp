@@ -553,9 +553,9 @@ export default function PRCampaignsPage() {
 
                       {/* Kunde mit Projekt */}
                       <div className="w-72 px-4">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <BuildingOfficeIcon className="h-4 w-4 text-zinc-400 flex-shrink-0" />
+                        <div className="flex items-start gap-2">
+                          <BuildingOfficeIcon className="h-4 w-4 text-zinc-400 flex-shrink-0 mt-0.5" />
+                          <div className="min-w-0">
                             {campaign.clientName ? (
                               <Link 
                                 href={`/dashboard/contacts/crm/companies/${campaign.clientId}`}
@@ -567,9 +567,9 @@ export default function PRCampaignsPage() {
                             ) : (
                               <span className="text-sm text-zinc-900 dark:text-white">SK Online Marketing</span>
                             )}
-                          </div>
-                          <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate ml-6" title={projectName}>
-                            {truncateProject(projectName)}
+                            <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate" title={projectName}>
+                              {truncateProject(projectName)}
+                            </div>
                           </div>
                         </div>
                       </div>
