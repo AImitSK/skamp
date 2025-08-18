@@ -20,6 +20,7 @@ import { useAlert } from "@/hooks/useAlert";
 import { formatDateShort } from "@/utils/dateHelpers";
 import { statusConfig } from "@/utils/campaignStatus";
 import { DEFAULT_ITEMS_PER_PAGE, LOADING_SPINNER_SIZE, LOADING_SPINNER_BORDER, MAX_VISIBLE_PAGES, ICON_SIZES } from "@/constants/ui";
+import { teamMemberService } from "@/lib/firebase/team-service-enhanced";
 import { 
   PlusIcon, 
   EyeIcon, 

@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import { teamMemberService } from "@/lib/firebase/organization-service";
+import { teamMemberService } from "@/lib/firebase/team-service-enhanced";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";

@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import { teamMemberService } from "@/lib/firebase/organization-service";
+import { teamMemberService } from "@/lib/firebase/team-service-enhanced";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ import {
   EllipsisVerticalIcon,
   BuildingOfficeIcon,
   UsersIcon,
+  ExclamationTriangleIcon,
   PhotoIcon,
   CalendarIcon,
   LinkIcon,
@@ -748,7 +749,7 @@ export default function CampaignDetailPage() {
         <DialogTitle>Kampagne löschen</DialogTitle>
         <DialogBody>
           <Text>
-            Möchten Sie die Kampagne "{campaign.title}" wirklich löschen? 
+            Möchten Sie die Kampagne &ldquo;{campaign.title}&rdquo; wirklich löschen? 
             Diese Aktion kann nicht rückgängig gemacht werden.
           </Text>
         </DialogBody>
