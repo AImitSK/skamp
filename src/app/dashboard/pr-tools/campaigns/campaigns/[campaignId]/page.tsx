@@ -251,7 +251,6 @@ export default function CampaignDetailPage() {
         ...campaign,
         title: `${campaign.title} (Kopie)`,
         status: 'draft' as const,
-        sentAt: null,
         scheduledAt: null,
         emailStats: {
           sent: 0,
@@ -266,6 +265,7 @@ export default function CampaignDetailPage() {
       delete (newCampaignData as any).id;
       delete (newCampaignData as any).createdAt;
       delete (newCampaignData as any).updatedAt;
+      delete (newCampaignData as any).sentAt; // WICHTIG: sentAt nicht kopieren!
 
       const newCampaignId = await prService.create(newCampaignData);
       showAlert('success', 'Kampagne dupliziert');

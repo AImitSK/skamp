@@ -169,9 +169,10 @@ export const prService = {
       if (campaignData.scheduledAt) {
         dataToSave.scheduledAt = campaignData.scheduledAt;
       }
-      if (campaignData.sentAt) {
-        dataToSave.sentAt = campaignData.sentAt;
-      }
+      // sentAt sollte NIEMALS beim Erstellen gesetzt werden - nur beim tatsächlichen Versand
+      // if (campaignData.sentAt) {
+      //   dataToSave.sentAt = campaignData.sentAt;
+      // }
       if (campaignData.aiGenerated === true) {
         dataToSave.aiGenerated = true;
         if (campaignData.aiMetadata) {
