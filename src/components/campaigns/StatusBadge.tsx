@@ -34,7 +34,7 @@ function getApproverAvatar(approver: TeamApprover): string {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(approver.displayName)}&background=005fab&color=fff&size=24`;
 }
 
-// Hover-Tooltip mit intelligenter Positionierung (wie Vercel)
+// Hover-Tooltip mit intelligenter Positionierung (links neben Badge)
 function HoverTooltip({ 
   campaign, 
   isVisible, 
@@ -44,11 +44,13 @@ function HoverTooltip({
 }: { 
   campaign: PRCampaign;
   isVisible: boolean;
-  position: { top: number; left: number; right?: number };
+  position: { top: number; left: number; right?: number; arrowSide?: 'left' | 'right' };
   onMouseEnter: () => void;
   onMouseLeave: () => void;
 }) {
   if (!isVisible) return null;
+
+  const arrowOnRight = position.arrowSide !== 'left'; // Standard: Pfeil rechts (Tooltip links vom Badge)
 
   return createPortal(
     <div
@@ -61,7 +63,31 @@ function HoverTooltip({
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      <div className="bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 max-w-sm">
+      <div className="relative bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 max-w-sm">
+        {/* Pfeil der auf das Badge zeigt */}
+        {arrowOnRight ? (
+          // Pfeil rechts vom Tooltip (zeigt nach rechts zum Badge)
+          <div 
+            className="absolute right-0 top-1/2 transform translate-x-1/2 -translate-y-1/2 w-0 h-0"
+            style={{
+              borderLeft: '6px solid white',
+              borderTop: '6px solid transparent',
+              borderBottom: '6px solid transparent',
+              filter: 'drop-shadow(1px 0 1px rgba(0, 0, 0, 0.1))',
+            }}
+          />
+        ) : (
+          // Pfeil links vom Tooltip (zeigt nach links zum Badge)
+          <div 
+            className="absolute left-0 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-0 h-0"
+            style={{
+              borderRight: '6px solid white',
+              borderTop: '6px solid transparent',
+              borderBottom: '6px solid transparent',
+              filter: 'drop-shadow(-1px 0 1px rgba(0, 0, 0, 0.1))',
+            }}
+          />
+        )}
         <ApprovalTooltipContent campaign={campaign} />
       </div>
     </div>,
@@ -235,7 +261,7 @@ export function StatusBadge({
   
   // Hover-Tooltip State
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
-  const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
+  const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0, arrowSide: 'right' as 'left' | 'right' });
   const badgeRef = useRef<HTMLDivElement>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout>();
   
@@ -245,35 +271,41 @@ export function StatusBadge({
      (campaign.approvalData as any)?.teamApprovalRequired || 
      (campaign.approvalData as any)?.customerApprovalRequired);
 
-  // Berechne Tooltip-Position (wie Vercel: zentriert zum Badge, öffnet nach links)
+  // Berechne Tooltip-Position (links neben Badge, vertikal zentriert)
   const calculateTooltipPosition = () => {
     if (!badgeRef.current) return;
 
     const badgeRect = badgeRef.current.getBoundingClientRect();
     const tooltipWidth = 320; // max-w-sm entspricht ca. 320px
+    const tooltipHeight = 200; // Geschätzte Höhe für Zentrierung
     const viewportWidth = window.innerWidth;
     const scrollY = window.scrollY;
     
-    // Standard: zentriert zum Badge, öffnet nach links
-    let left = badgeRect.left + (badgeRect.width / 2) - (tooltipWidth / 2);
+    // Standard: links neben Badge, vertikal zentriert
+    let left = badgeRect.left - tooltipWidth - 12; // 12px gap zum Badge
+    const top = badgeRect.top + scrollY + (badgeRect.height / 2) - (tooltipHeight / 2);
     let right: number | undefined = undefined;
+    let arrowSide: 'left' | 'right' = 'right'; // Standard: Pfeil rechts (Tooltip links)
     
-    // Falls Tooltip über rechten Rand geht, an rechte Seite anhängen
-    if (left + tooltipWidth > viewportWidth - 16) { // 16px margin
-      right = viewportWidth - badgeRect.right;
-      left = badgeRect.right - tooltipWidth;
+    // Falls Tooltip über linken Rand geht, auf rechte Seite wechseln
+    if (left < 16) { // 16px margin
+      left = badgeRect.right + 12; // 12px gap rechts vom Badge
+      right = undefined;
+      arrowSide = 'left'; // Pfeil links (Tooltip rechts)
     }
     
-    // Falls Tooltip über linken Rand geht, an linke Seite anhängen  
-    if (left < 16) { // 16px margin
-      left = badgeRect.left;
+    // Falls auch rechts kein Platz ist, wieder links aber mit minimum margin
+    if (left + tooltipWidth > viewportWidth - 16) {
+      left = Math.max(16, badgeRect.left - tooltipWidth - 12);
       right = undefined;
+      arrowSide = 'right'; // Pfeil rechts (Tooltip links)
     }
 
     setTooltipPosition({
-      top: badgeRect.bottom + scrollY + 8, // 8px gap unter dem Badge
-      left: Math.max(16, left), // Minimum 16px from left edge
-      right
+      top: Math.max(16, top), // Minimum 16px from top edge
+      left: left,
+      right,
+      arrowSide
     });
   };
 
