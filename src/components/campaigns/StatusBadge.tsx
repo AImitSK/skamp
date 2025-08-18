@@ -119,7 +119,12 @@ function ApprovalTooltipContent({ campaign }: { campaign: PRCampaign }) {
                   <img 
                     src={getApproverAvatar(approver)}
                     alt={approver.displayName}
-                    className="w-6 h-6 rounded-full"
+                    className="w-6 h-6 rounded-full object-cover"
+                    onError={(e) => {
+                      // Fallback bei Ladefehler
+                      const target = e.target as HTMLImageElement;
+                      target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(approver.displayName)}&background=005fab&color=fff&size=24`;
+                    }}
                   />
                   <div className="flex-1 min-w-0">
                     <Text className="text-xs font-medium truncate">
