@@ -119,15 +119,22 @@ export default function PRCampaignsPage() {
     if (!user || !currentOrganization) return;
     setLoading(true);
     try {
-      // Load campaigns and team members in parallel
-      const [campaignsData, membersData] = await Promise.all([
-        prService.getAllByOrganization(currentOrganization.id),
-        teamMemberService.getByOrganization(currentOrganization.id)
-      ]);
-      
+      // Load campaigns (KRITISCH) - muss funktionieren
+      const campaignsData = await prService.getAllByOrganization(currentOrganization.id);
       setCampaigns(campaignsData);
-      setTeamMembers(membersData);
+      
+      // Load team members (OPTIONAL) - Fehler dürfen Kampagnen nicht blockieren
+      try {
+        const membersData = await teamMemberService.getByOrganization(currentOrganization.id);
+        setTeamMembers(membersData);
+      } catch (teamError) {
+        console.error('⚠️ TeamMembers konnten nicht geladen werden:', teamError);
+        setTeamMembers([]); // Fallback zu leerem Array
+        // Nicht showAlert - Avatar-Problem sollte nicht User nerven
+      }
+      
     } catch (error) {
+      console.error('❌ Kampagnen-Laden fehlgeschlagen:', error);
       showAlert('error', 'Fehler beim Laden', 'Die Kampagnen konnten nicht geladen werden.');
     } finally {
       setLoading(false);
@@ -505,7 +512,7 @@ export default function PRCampaignsPage() {
                 // Placeholder-Daten für Demo
                 const projectName = "Hier steht der Projektname";
                 
-                // Find the actual admin for this campaign
+                // Find the actual admin for this campaign (robust gegen leere teamMembers)
                 const campaignAdmin = teamMembers.find(member => member.userId === campaign.userId);
                 
                 // Robuste Avatar-Logik mit Multi-Tenancy Support
@@ -514,8 +521,17 @@ export default function PRCampaignsPage() {
                     // Echtes Avatar verfügbar (nach Avatar-Sync)
                     return campaignAdmin.photoUrl;
                   }
+                  
                   // Fallback zu generiertem Avatar
-                  const displayName = campaignAdmin?.displayName || 'Admin';
+                  let displayName = 'Admin';
+                  
+                  if (campaignAdmin?.displayName) {
+                    displayName = campaignAdmin.displayName;
+                  } else if (teamMembers.length === 0) {
+                    // Keine TeamMembers geladen - fallback zu current user
+                    displayName = user?.displayName || user?.email || 'Admin';
+                  }
+                  
                   return `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=005fab&color=fff&size=32`;
                 };
                 
