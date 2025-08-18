@@ -16,7 +16,6 @@ import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider }
 import { Popover, Transition } from '@headlessui/react';
 import { Alert } from "@/components/common/Alert";
 import { StatusBadge } from "@/components/campaigns/StatusBadge";
-import { ViewToggle, ViewMode } from "@/components/campaigns/ViewToggle";
 import { useAlert } from "@/hooks/useAlert";
 import { formatDateShort } from "@/utils/dateHelpers";
 import { statusConfig } from "@/utils/campaignStatus";
@@ -24,7 +23,6 @@ import { DEFAULT_ITEMS_PER_PAGE, LOADING_SPINNER_SIZE, LOADING_SPINNER_BORDER, M
 import { 
   PlusIcon, 
   EyeIcon, 
-  PencilIcon, 
   TrashIcon,
   CalendarIcon,
   EnvelopeIcon,
@@ -41,6 +39,13 @@ import {
   BuildingOfficeIcon,
   FunnelIcon
 } from "@heroicons/react/20/solid";
+import {
+  PencilIcon as PencilIconOutline,
+  EyeIcon as EyeIconOutline,
+  TrashIcon as TrashIconOutline,
+  ChartBarIcon as ChartBarIconOutline,
+  PaperAirplaneIcon as PaperAirplaneIconOutline
+} from "@heroicons/react/24/outline";
 import { prService } from "@/lib/firebase/pr-service";
 import { PRCampaign, PRCampaignStatus } from "@/types/pr";
 import EmailSendModal from "@/components/pr/EmailSendModal";
@@ -71,8 +76,6 @@ export default function PRCampaignsPage() {
     type?: 'danger' | 'warning';
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
-  // View Mode
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -361,8 +364,6 @@ export default function PRCampaignsPage() {
             </Transition>
           </Popover>
 
-          {/* View Toggle */}
-          <ViewToggle value={viewMode} onChange={setViewMode} />
 
           {/* Add Button */}
           <Button 
@@ -415,29 +416,6 @@ export default function PRCampaignsPage() {
         </div>
       </div>
 
-      {/* Status Filter Pills */}
-      <div className="mb-4 flex gap-2 flex-wrap">
-        {Object.entries({
-          all: { label: 'Alle', count: campaigns.length },
-          ...Object.entries(statusConfig).reduce((acc, [status, config]) => {
-            const count = campaigns.filter(c => c.status === status).length;
-            if (count > 0) {
-              acc[status] = { ...config, count };
-            }
-            return acc;
-          }, {} as Record<string, any>)
-        }).map(([status, data]) => (
-          <Button
-            key={status}
-            plain={selectedStatus !== status}
-            color={selectedStatus === status ? "zinc" : undefined}
-            onClick={() => setSelectedStatus(status as PRCampaignStatus | 'all')}
-            className="whitespace-nowrap"
-          >
-            {data.label} ({data.count})
-          </Button>
-        ))}
-      </div>
 
       {/* Results Info */}
       <div className="mb-4 flex items-center justify-between">
@@ -485,30 +463,30 @@ export default function PRCampaignsPage() {
               </Button>
             )}
           </div>
-        ) : viewMode === 'list' ? (
+        ) : (
           // Table View
           <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm overflow-hidden">
             {/* Header */}
-            <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
-              <div className="flex items-center gap-8">
-                <div className="flex items-center w-[35%]">
+            <div className="px-8 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
+              <div className="flex items-center">
+                <div className="w-12 flex items-center">
                   <Checkbox
                     checked={paginatedCampaigns.length > 0 && selectedCampaignIds.size === paginatedCampaigns.length}
                     indeterminate={selectedCampaignIds.size > 0 && selectedCampaignIds.size < paginatedCampaigns.length}
                     onChange={(checked: boolean) => handleSelectAll(checked)}
                   />
-                  <span className="ml-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                    Kampagne
-                  </span>
                 </div>
-                <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                  Kunde
+                <div className="flex-1 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Kampagne
                 </div>
-                <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                <div className="w-72 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Kunde / Projekt
+                </div>
+                <div className="w-40 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Status
                 </div>
-                <div className="w-[18%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                  Versendet
+                <div className="w-20 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                  Admin
                 </div>
                 <div className="w-12"></div>
               </div>
@@ -516,204 +494,145 @@ export default function PRCampaignsPage() {
 
             {/* Body */}
             <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
-              {paginatedCampaigns.map((campaign) => (
-                <div key={campaign.id} className="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
-                  <div className="flex items-center gap-8">
-                    {/* Kampagne */}
-                    <div className="flex items-center w-[35%]">
-                      <Checkbox
-                        checked={selectedCampaignIds.has(campaign.id!)}
-                        onChange={(checked: boolean) => {
-                          const newIds = new Set(selectedCampaignIds);
-                          if (checked) newIds.add(campaign.id!);
-                          else newIds.delete(campaign.id!);
-                          setSelectedCampaignIds(newIds);
-                        }}
-                      />
-                      <div className="ml-4 min-w-0 flex-1">
+              {paginatedCampaigns.map((campaign) => {
+                // Placeholder-Daten für Demo
+                const projectName = "Hier steht der Projektname";
+                const adminAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || 'Admin')}&background=005fab&color=fff&size=32`;
+                
+                // Titel kürzen wenn zu lang
+                const truncateTitle = (title: string, maxLength: number = 50) => {
+                  return title.length > maxLength ? title.substring(0, maxLength) + '...' : title;
+                };
+                
+                // Projektname kürzen
+                const truncateProject = (name: string, maxLength: number = 30) => {
+                  return name.length > maxLength ? name.substring(0, maxLength) + '...' : name;
+                };
+                
+                // Status-Datum bestimmen
+                const getStatusDate = () => {
+                  if (campaign.status === 'sent' && campaign.sentAt) {
+                    return formatDateShort(campaign.sentAt);
+                  } else if (campaign.status === 'scheduled' && campaign.scheduledAt) {
+                    return formatDateShort(campaign.scheduledAt);
+                  } else if (campaign.updatedAt) {
+                    return formatDateShort(campaign.updatedAt);
+                  }
+                  return '-';
+                };
+                
+                return (
+                  <div key={campaign.id} className="px-8 py-5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                    <div className="flex items-center">
+                      {/* Checkbox */}
+                      <div className="w-12 flex items-center">
+                        <Checkbox
+                          checked={selectedCampaignIds.has(campaign.id!)}
+                          onChange={(checked: boolean) => {
+                            const newIds = new Set(selectedCampaignIds);
+                            if (checked) newIds.add(campaign.id!);
+                            else newIds.delete(campaign.id!);
+                            setSelectedCampaignIds(newIds);
+                          }}
+                        />
+                      </div>
+                      
+                      {/* Kampagne Title mit Datum */}
+                      <div className="flex-1 px-4 min-w-0">
                         <Link 
                           href={`/dashboard/pr-tools/campaigns/campaigns/${campaign.id}`} 
-                          className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-[#005fab] truncate block"
+                          className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-[#005fab] block truncate"
+                          title={campaign.title}
                         >
-                          {campaign.title}
+                          {truncateTitle(campaign.title)}
                         </Link>
-                        {campaign.scheduledAt && (
-                          <div className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1 mt-1">
-                            <CalendarIcon className={ICON_SIZES.xs} />
-                            Geplant: {formatDateShort(campaign.scheduledAt)}
+                        <div className="text-xs text-zinc-900 dark:text-zinc-300 mt-1">
+                          {formatDateShort(campaign.createdAt)}
+                        </div>
+                      </div>
+
+                      {/* Kunde mit Projekt */}
+                      <div className="w-72 px-4">
+                        <div className="flex items-center gap-2">
+                          <BuildingOfficeIcon className="h-4 w-4 text-zinc-400 flex-shrink-0" />
+                          <div className="min-w-0">
+                            {campaign.clientName ? (
+                              <Link 
+                                href={`/dashboard/contacts/crm/companies/${campaign.clientId}`}
+                                className="text-sm text-zinc-900 dark:text-white hover:text-[#005fab] block truncate"
+                                title={campaign.clientName}
+                              >
+                                {campaign.clientName}
+                              </Link>
+                            ) : (
+                              <span className="text-sm text-zinc-900 dark:text-white">SK Online Marketing</span>
+                            )}
+                            <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate" title={projectName}>
+                              {truncateProject(projectName)}
+                            </div>
                           </div>
-                        )}
+                        </div>
+                      </div>
+
+                      {/* Status mit Datum */}
+                      <div className="w-40 px-4">
+                        <StatusBadge status={campaign.status} />
+                        <div className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
+                          {getStatusDate()}
+                        </div>
+                      </div>
+
+                      {/* Admin Avatar */}
+                      <div className="w-20 px-4 flex justify-center">
+                        <img 
+                          src={adminAvatar}
+                          alt="Admin"
+                          className="w-8 h-8 rounded-full"
+                        />
+                      </div>
+
+                      {/* Actions */}
+                      <div className="w-12 flex justify-end">
+                        <Dropdown>
+                          <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700">
+                            <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                          </DropdownButton>
+                          <DropdownMenu anchor="bottom end">
+                            {campaign.status === 'sent' && (
+                              <DropdownItem href={`/dashboard/pr-tools/campaigns/campaigns/${campaign.id}/analytics`}>
+                                <ChartBarIconOutline className="h-4 w-4" />
+                                Analytics
+                              </DropdownItem>
+                            )}
+                            <DropdownItem href={`/dashboard/pr-tools/campaigns/campaigns/${campaign.id}`}>
+                              <EyeIconOutline className="h-4 w-4" />
+                              Vorschau
+                            </DropdownItem>
+                            {(campaign.status === 'draft' || campaign.status === 'changes_requested') && (
+                              <DropdownItem href={`/dashboard/pr-tools/campaigns/campaigns/edit/${campaign.id}`}>
+                                <PencilIconOutline className="h-4 w-4" />
+                                Bearbeiten
+                              </DropdownItem>
+                            )}
+                            {(campaign.status === 'draft' || campaign.status === 'approved') && (
+                              <DropdownItem onClick={() => setShowSendModal(campaign)}>
+                                <PaperAirplaneIconOutline className="h-4 w-4" />
+                                Versenden
+                              </DropdownItem>
+                            )}
+                            <DropdownDivider />
+                            <DropdownItem onClick={() => handleDelete(campaign.id!, campaign.title)}>
+                              <TrashIconOutline className="h-4 w-4" />
+                              <span className="text-red-600">Löschen</span>
+                            </DropdownItem>
+                          </DropdownMenu>
+                        </Dropdown>
                       </div>
                     </div>
-
-                    {/* Kunde */}
-                    <div className="w-[20%]">
-                      {campaign.clientId ? (
-                        <Link 
-                          href={`/dashboard/contacts/crm/companies/${campaign.clientId}`}
-                          className="inline-flex items-center gap-1 text-sm text-[#005fab] hover:text-[#004a8c]"
-                        >
-                          <BuildingOfficeIcon className={ICON_SIZES.sm} />
-                          <span className="truncate">{campaign.clientName}</span>
-                        </Link>
-                      ) : (
-                        <Text className="text-sm text-zinc-400">—</Text>
-                      )}
-                    </div>
-
-                    {/* Status */}
-                    <div className="w-[15%]">
-                      <StatusBadge status={campaign.status} />
-                    </div>
-
-                    {/* Versendet */}
-                    <div className="w-[18%]">
-                      {campaign.sentAt ? (
-                        <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                          {formatDateShort(campaign.sentAt)}
-                        </span>
-                      ) : (
-                        <span className="text-sm text-zinc-400">—</span>
-                      )}
-                    </div>
-
-                    {/* Actions */}
-                    <div className="w-12 flex justify-end">
-                      <Dropdown>
-                        <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700">
-                          <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
-                        </DropdownButton>
-                        <DropdownMenu anchor="bottom end">
-                          {campaign.status === 'sent' && (
-                            <DropdownItem href={`/dashboard/pr-tools/campaigns/campaigns/${campaign.id}/analytics`}>
-                              <ChartBarIcon className="h-4 w-4" />
-                              Analytics
-                            </DropdownItem>
-                          )}
-                          <DropdownItem href={`/dashboard/pr-tools/campaigns/campaigns/${campaign.id}`}>
-                            <EyeIcon className="h-4 w-4" />
-                            Vorschau
-                          </DropdownItem>
-                          {(campaign.status === 'draft' || campaign.status === 'changes_requested') && (
-                            <DropdownItem href={`/dashboard/pr-tools/campaigns/campaigns/edit/${campaign.id}`}>
-                              <PencilIcon className="h-4 w-4" />
-                              Bearbeiten
-                            </DropdownItem>
-                          )}
-                          {(campaign.status === 'draft' || campaign.status === 'approved') && (
-                            <DropdownItem onClick={() => setShowSendModal(campaign)}>
-                              <PaperAirplaneIcon className="h-4 w-4" />
-                              Versenden
-                            </DropdownItem>
-                          )}
-                          <DropdownDivider />
-                          <DropdownItem onClick={() => handleDelete(campaign.id!, campaign.title)}>
-                            <TrashIcon className="h-4 w-4" />
-                            <span className="text-red-600">Löschen</span>
-                          </DropdownItem>
-                        </DropdownMenu>
-                      </Dropdown>
-                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
-          </div>
-        ) : (
-          // Grid View
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {paginatedCampaigns.map((campaign) => (
-              <div
-                key={campaign.id}
-                className="relative rounded-lg border border-zinc-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md dark:border-zinc-700 dark:bg-zinc-800"
-              >
-                {/* Checkbox */}
-                <div className="absolute top-4 right-4">
-                  <Checkbox
-                    checked={selectedCampaignIds.has(campaign.id!)}
-                    onChange={(checked: boolean) => {
-                      const newIds = new Set(selectedCampaignIds);
-                      if (checked) newIds.add(campaign.id!);
-                      else newIds.delete(campaign.id!);
-                      setSelectedCampaignIds(newIds);
-                    }}
-                  />
-                </div>
-
-                {/* Campaign Info */}
-                <div className="pr-8">
-                  <h3 className="text-lg font-semibold text-zinc-900 dark:text-white">
-                    <Link href={`/dashboard/pr-tools/campaigns/campaigns/${campaign.id}`} className="hover:text-[#005fab]">
-                      {campaign.title}
-                    </Link>
-                  </h3>
-                  {campaign.clientName && (
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
-                      {campaign.clientName}
-                    </p>
-                  )}
-                  <div className="mt-3">
-                    <StatusBadge status={campaign.status} />
-                  </div>
-                </div>
-
-                {/* Stats */}
-                <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-zinc-500 dark:text-zinc-400">Empfänger</span>
-                    <p className="font-semibold text-zinc-900 dark:text-white">
-                      {(campaign.recipientCount || 0).toLocaleString('de-DE')}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-zinc-500 dark:text-zinc-400">Medien</span>
-                    <p className="font-semibold text-zinc-900 dark:text-white">
-                      {campaign.attachedAssets?.length || 0}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="mt-4 flex items-center justify-between border-t border-zinc-100 pt-4 dark:border-zinc-700">
-                  <Link
-                    href={`/dashboard/pr-tools/campaigns/campaigns/${campaign.id}`}
-                    className="text-sm text-[#005fab] hover:text-[#004a8c]"
-                  >
-                    Anzeigen
-                  </Link>
-                  <Dropdown>
-                    <DropdownButton plain className="p-1 hover:bg-zinc-100 rounded dark:hover:bg-zinc-700">
-                      <EllipsisVerticalIcon className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
-                    </DropdownButton>
-                    <DropdownMenu anchor="bottom end">
-                      {campaign.status === 'sent' && (
-                        <DropdownItem href={`/dashboard/pr-tools/campaigns/campaigns/${campaign.id}/analytics`}>
-                          <ChartBarIcon />
-                          Analytics
-                        </DropdownItem>
-                      )}
-                      {(campaign.status === 'draft' || campaign.status === 'changes_requested') && (
-                        <DropdownItem href={`/dashboard/pr-tools/campaigns/campaigns/edit/${campaign.id}`}>
-                          <PencilIcon />
-                          Bearbeiten
-                        </DropdownItem>
-                      )}
-                      {(campaign.status === 'draft' || campaign.status === 'approved') && (
-                        <DropdownItem onClick={() => setShowSendModal(campaign)}>
-                          <PaperAirplaneIcon />
-                          Versenden
-                        </DropdownItem>
-                      )}
-                      <DropdownDivider />
-                      <DropdownItem onClick={() => handleDelete(campaign.id!, campaign.title)}>
-                        <TrashIcon />
-                        <span className="text-red-600">Löschen</span>
-                      </DropdownItem>
-                    </DropdownMenu>
-                  </Dropdown>
-                </div>
-              </div>
-            ))}
           </div>
         )}
       </div>
