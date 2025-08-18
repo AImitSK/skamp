@@ -6,8 +6,8 @@ import { Text } from "@/components/ui/text";
 import { PRCampaignStatus, PRCampaign } from "@/types/pr";
 import { EnhancedApprovalData, TeamApprover, isEnhancedApprovalData } from "@/types/approvals-enhanced";
 import { statusConfig } from "@/utils/campaignStatus";
-import { Popover, Transition } from '@headlessui/react';
-import { Fragment, useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   UserGroupIcon,
   BuildingOfficeIcon,
@@ -34,8 +34,43 @@ function getApproverAvatar(approver: TeamApprover): string {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(approver.displayName)}&background=005fab&color=fff&size=24`;
 }
 
-// Approval-Tooltip Komponente
-function ApprovalTooltip({ campaign }: { campaign: PRCampaign }) {
+// Hover-Tooltip mit intelligenter Positionierung (wie Vercel)
+function HoverTooltip({ 
+  campaign, 
+  isVisible, 
+  position, 
+  onMouseEnter, 
+  onMouseLeave 
+}: { 
+  campaign: PRCampaign;
+  isVisible: boolean;
+  position: { top: number; left: number; right?: number };
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
+}) {
+  if (!isVisible) return null;
+
+  return createPortal(
+    <div
+      className="fixed z-50 transition-opacity duration-200"
+      style={{
+        top: position.top,
+        left: position.left,
+        right: position.right,
+      }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+      <div className="bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 max-w-sm">
+        <ApprovalTooltipContent campaign={campaign} />
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+// Approval-Tooltip Inhalt (separiert für bessere Organisation)
+function ApprovalTooltipContent({ campaign }: { campaign: PRCampaign }) {
   if (!campaign.approvalData || !isEnhancedApprovalData(campaign.approvalData)) {
     return (
       <div className="p-3 min-w-64">
@@ -198,82 +233,128 @@ export function StatusBadge({
   const config = statusConfig[status];
   const Icon = config.icon;
   
+  // Hover-Tooltip State
+  const [isTooltipVisible, setIsTooltipVisible] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
+  const badgeRef = useRef<HTMLDivElement>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout>();
+  
   // Prüfe ob erweiterte Freigabe-Info verfügbar ist
   const hasApprovalInfo = campaign?.approvalData && 
     (campaign.status === 'pending_approval' || campaign.status === 'approved' || 
      (campaign.approvalData as any)?.teamApprovalRequired || 
      (campaign.approvalData as any)?.customerApprovalRequired);
+
+  // Berechne Tooltip-Position (wie Vercel: zentriert zum Badge, öffnet nach links)
+  const calculateTooltipPosition = () => {
+    if (!badgeRef.current) return;
+
+    const badgeRect = badgeRef.current.getBoundingClientRect();
+    const tooltipWidth = 320; // max-w-sm entspricht ca. 320px
+    const viewportWidth = window.innerWidth;
+    const scrollY = window.scrollY;
+    
+    // Standard: zentriert zum Badge, öffnet nach links
+    let left = badgeRect.left + (badgeRect.width / 2) - (tooltipWidth / 2);
+    let right: number | undefined = undefined;
+    
+    // Falls Tooltip über rechten Rand geht, an rechte Seite anhängen
+    if (left + tooltipWidth > viewportWidth - 16) { // 16px margin
+      right = viewportWidth - badgeRect.right;
+      left = badgeRect.right - tooltipWidth;
+    }
+    
+    // Falls Tooltip über linken Rand geht, an linke Seite anhängen  
+    if (left < 16) { // 16px margin
+      left = badgeRect.left;
+      right = undefined;
+    }
+
+    setTooltipPosition({
+      top: badgeRect.bottom + scrollY + 8, // 8px gap unter dem Badge
+      left: Math.max(16, left), // Minimum 16px from left edge
+      right
+    });
+  };
+
+  // Mouse Event Handlers
+  const handleMouseEnter = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    calculateTooltipPosition();
+    setIsTooltipVisible(true);
+  };
+
+  const handleMouseLeave = () => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setIsTooltipVisible(false);
+    }, 100); // 100ms delay um flackern zu verhindern
+  };
+
+  const handleTooltipMouseEnter = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+  };
+
+  const handleTooltipMouseLeave = () => {
+    setIsTooltipVisible(false);
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
   
-  // Badge-Inhalt (mit oder ohne Tooltip)
+  // Badge-Inhalt mit Hover-Events
   const badgeContent = (
-    <Badge 
-      color={config.color} 
-      className={clsx(
-        "inline-flex items-center gap-1 whitespace-nowrap",
-        showApprovalTooltip && hasApprovalInfo && "cursor-help",
-        className
-      )}
+    <div 
+      ref={badgeRef}
+      onMouseEnter={showApprovalTooltip && hasApprovalInfo ? handleMouseEnter : undefined}
+      onMouseLeave={showApprovalTooltip && hasApprovalInfo ? handleMouseLeave : undefined}
     >
-      <Icon className="h-3 w-3" />
-      {config.label}
-    </Badge>
+      <Badge 
+        color={config.color} 
+        className={clsx(
+          "inline-flex items-center gap-1 whitespace-nowrap",
+          showApprovalTooltip && hasApprovalInfo && "cursor-help",
+          className
+        )}
+      >
+        <Icon className="h-3 w-3" />
+        {config.label}
+      </Badge>
+    </div>
   );
   
-  if (showDescription) {
-    return (
-      <div className={`flex items-center gap-3`}>
-        {showApprovalTooltip && hasApprovalInfo ? (
-          <Popover className="relative">
-            <Popover.Button as="div">
-              {badgeContent}
-            </Popover.Button>
-            <Transition
-              as={Fragment}
-              enter="transition ease-out duration-200"
-              enterFrom="opacity-0 translate-y-1"
-              enterTo="opacity-100 translate-y-0"
-              leave="transition ease-in duration-150"
-              leaveFrom="opacity-100 translate-y-0"
-              leaveTo="opacity-0 translate-y-1"
-            >
-              <Popover.Panel className="absolute z-10 mt-2 left-0 bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                <ApprovalTooltip campaign={campaign!} />
-              </Popover.Panel>
-            </Transition>
-          </Popover>
-        ) : (
-          badgeContent
-        )}
-        {config.description && (
-          <Text className="text-sm text-gray-500">{config.description}</Text>
-        )}
-      </div>
-    );
-  }
-
-  // Einfache Badge ohne showDescription
-  if (showApprovalTooltip && hasApprovalInfo && campaign) {
-    return (
-      <Popover className="relative">
-        <Popover.Button as="div">
+  return (
+    <>
+      {showDescription ? (
+        <div className={`flex items-center gap-3`}>
           {badgeContent}
-        </Popover.Button>
-        <Transition
-          as={Fragment}
-          enter="transition ease-out duration-200"
-          enterFrom="opacity-0 translate-y-1"
-          enterTo="opacity-100 translate-y-0"
-          leave="transition ease-in duration-150"
-          leaveFrom="opacity-100 translate-y-0"
-          leaveTo="opacity-0 translate-y-1"
-        >
-          <Popover.Panel className="absolute z-10 mt-2 left-0 bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-            <ApprovalTooltip campaign={campaign} />
-          </Popover.Panel>
-        </Transition>
-      </Popover>
-    );
-  }
-
-  return badgeContent;
+          {config.description && (
+            <Text className="text-sm text-gray-500">{config.description}</Text>
+          )}
+        </div>
+      ) : (
+        badgeContent
+      )}
+      
+      {/* Hover-Tooltip (via Portal) */}
+      {showApprovalTooltip && hasApprovalInfo && campaign && (
+        <HoverTooltip
+          campaign={campaign}
+          isVisible={isTooltipVisible}
+          position={tooltipPosition}
+          onMouseEnter={handleTooltipMouseEnter}
+          onMouseLeave={handleTooltipMouseLeave}
+        />
+      )}
+    </>
+  );
 }
