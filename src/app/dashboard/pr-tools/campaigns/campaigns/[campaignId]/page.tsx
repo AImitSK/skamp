@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { useOrganization } from "@/context/OrganizationContext";
 import { teamMemberService } from "@/lib/firebase/team-service-enhanced";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
@@ -55,10 +56,10 @@ export default function CampaignDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const campaignId = params.campaignId as string;
 
   const [campaign, setCampaign] = useState<PRCampaign | null>(null);
-  const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [company, setCompany] = useState<CompanyEnhanced | null>(null);
   const [distributionList, setDistributionList] = useState<DistributionList | null>(null);
   const [assets, setAssets] = useState<MediaAsset[]>([]);
@@ -76,34 +77,24 @@ export default function CampaignDetailPage() {
 
   // Alert Management
   const { alert, showAlert } = useAlert();
-
-  // Load OrganizationId
-  useEffect(() => {
-    const loadOrganizationId = async () => {
-      if (!user) return;
-      
-      try {
-        const orgs = await teamMemberService.getUserOrganizations(user.uid);
-        if (orgs.length > 0) {
-          setOrganizationId(orgs[0].organization.id!);
-        } else {
-          // Fallback auf userId für Backwards Compatibility
-          setOrganizationId(user.uid);
-        }
-      } catch (error) {
-        // Organization loading failed, using userId as fallback
-        setOrganizationId(user.uid);
-      }
-    };
+  
+  // Multi-Tenancy Avatar Helper
+  const getTeamMemberAvatar = (member: TeamMember, size: number = 40): string => {
+    if (member.photoUrl) {
+      // Echtes Avatar verfügbar (Multi-Tenancy Avatar-System)
+      return member.photoUrl;
+    }
     
-    loadOrganizationId();
-  }, [user]);
+    // Fallback zu generiertem Avatar
+    const displayName = member.displayName || 'Admin';
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=005fab&color=fff&size=${size}`;
+  };
 
   useEffect(() => {
-    if (campaignId && user && organizationId) {
+    if (campaignId && user && currentOrganization) {
       loadCampaignData();
     }
-  }, [campaignId, user, organizationId]);
+  }, [campaignId, user, currentOrganization]);
 
   const loadCampaignData = async () => {
     setLoading(true);
@@ -122,16 +113,16 @@ export default function CampaignDetailPage() {
       const promises: Promise<any>[] = [];
 
       // Load company if exists
-      if (campaignData.clientId && organizationId) {
+      if (campaignData.clientId && currentOrganization?.id) {
         promises.push(
-          companiesEnhancedService.getById(organizationId, campaignData.clientId)
+          companiesEnhancedService.getById(currentOrganization.id, campaignData.clientId)
             .then(companyData => setCompany(companyData))
             .catch(err => {})
         );
       }
 
       // Load distribution list
-      if (campaignData.distributionListId && organizationId) {
+      if (campaignData.distributionListId && currentOrganization?.id) {
         promises.push(
           listsService.getById(campaignData.distributionListId)
             .then(listData => setDistributionList(listData))
@@ -167,9 +158,9 @@ export default function CampaignDetailPage() {
       }
 
       // Load team members and find current admin
-      if (organizationId) {
+      if (currentOrganization?.id) {
         promises.push(
-          teamMemberService.getByOrganization(organizationId)
+          teamMemberService.getByOrganization(currentOrganization.id)
             .then(members => {
               setTeamMembers(members);
               // Find current admin (campaign creator)
@@ -201,7 +192,7 @@ export default function CampaignDetailPage() {
   };
 
   const handleChangeAdmin = async (newAdminId: string) => {
-    if (!campaign || !organizationId) return;
+    if (!campaign || !currentOrganization) return;
 
     try {
       // Update campaign with new admin
@@ -649,7 +640,7 @@ export default function CampaignDetailPage() {
               {currentAdmin && (
                 <div className="flex items-center gap-3">
                   <img
-                    src={currentAdmin.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentAdmin.displayName)}&background=005fab&color=fff&size=40`}
+                    src={getTeamMemberAvatar(currentAdmin)}
                     alt={currentAdmin.displayName}
                     className="w-10 h-10 rounded-full"
                   />
@@ -665,7 +656,7 @@ export default function CampaignDetailPage() {
                 <div>
                   <Text className="text-sm font-medium text-gray-700 mb-2">Admin ändern</Text>
                   <Dropdown>
-                    <DropdownButton className="w-full justify-between text-sm">
+                    <DropdownButton className="w-full justify-between text-sm bg-gray-50 hover:bg-gray-100 text-gray-600 border border-gray-300">
                       Admin wechseln
                       <EllipsisVerticalIcon className="h-4 w-4" />
                     </DropdownButton>
@@ -679,7 +670,7 @@ export default function CampaignDetailPage() {
                           >
                             <div className="flex items-center gap-2">
                               <img
-                                src={member.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.displayName)}&background=005fab&color=fff&size=32`}
+                                src={getTeamMemberAvatar(member, 32)}
                                 alt={member.displayName}
                                 className="w-8 h-8 rounded-full"
                               />
