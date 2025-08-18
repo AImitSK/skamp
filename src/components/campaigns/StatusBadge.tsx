@@ -101,17 +101,17 @@ function ApprovalTooltipContent({ campaign, teamMembers }: { campaign: PRCampaig
   }
 
   return (
-    <div className="p-4 min-w-80 max-w-sm">
+    <div className="min-w-80 max-w-sm">
       <div className="space-y-3">
         {/* Team-Freigabe */}
         {hasTeamApproval && (
           <div>
-            <div className="flex items-center gap-2 mb-2 bg-gray-100 px-3 py-2 -mx-4 rounded">
+            <div className="flex items-center gap-2 mb-2 bg-gray-100 px-4 py-2 rounded-t-lg">
               <UserGroupIcon className="h-4 w-4 text-gray-900" />
               <Text className="font-medium text-sm">Team-Freigabe</Text>
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-2 px-4">
               {approvalData.teamApprovers.map((approver) => {
                 // Lade echte TeamMember-Daten für bessere Namen und Avatare
                 const realTeamMember = teamMembers?.find(member => member.id === approver.userId);
@@ -167,11 +167,12 @@ function ApprovalTooltipContent({ campaign, teamMembers }: { campaign: PRCampaig
         {/* Kunden-Freigabe */}
         {hasCustomerApproval && (
           <div>
-            <div className="flex items-center gap-2 mb-2 bg-gray-100 px-3 py-2 -mx-4 rounded">
+            <div className="flex items-center gap-2 mb-2 bg-gray-100 px-4 py-2">
               <BuildingOfficeIcon className="h-4 w-4 text-gray-900" />
               <Text className="font-medium text-sm">Kunden-Freigabe</Text>
             </div>
             
+            <div className="px-4">
             {approvalData.customerContact ? (
               <div className="flex items-center gap-3">
                 <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
@@ -194,11 +195,12 @@ function ApprovalTooltipContent({ campaign, teamMembers }: { campaign: PRCampaig
                 </Text>
               </div>
             )}
+            </div>
           </div>
         )}
 
         {/* Aktueller Workflow-Stand */}
-        <div className="pt-2 border-t border-gray-200">
+        <div className="pt-2 border-t border-gray-200 px-4">
           <Text className="text-xs text-gray-500">
             <strong>Aktuelle Stufe:</strong> {
               approvalData.currentStage === 'team' ? 'Team-Freigabe' :
