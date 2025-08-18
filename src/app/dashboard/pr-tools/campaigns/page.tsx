@@ -623,6 +623,7 @@ export default function PRCampaignsPage() {
                           status={campaign.status} 
                           campaign={campaign}
                           showApprovalTooltip={true}
+                          teamMembers={teamMembers}
                         />
                         <div className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
                           {getStatusDate()}
@@ -642,7 +643,7 @@ export default function PRCampaignsPage() {
                       {/* Actions */}
                       <div className="w-12 flex justify-end">
                         <Dropdown>
-                          <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-1">
+                          <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700 focus:outline-none">
                             <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
                           </DropdownButton>
                           <DropdownMenu anchor="bottom end">

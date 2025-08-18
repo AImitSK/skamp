@@ -24,6 +24,7 @@ interface StatusBadgeProps {
   className?: string;
   campaign?: PRCampaign; // Für erweiterte Freigabe-Info
   showApprovalTooltip?: boolean; // Enable approval tooltip
+  teamMembers?: any[]; // Team members for name/avatar lookup
 }
 
 // Hilfsfunktion für Avatar-URLs (Multi-Tenancy)
@@ -40,13 +41,15 @@ function HoverTooltip({
   isVisible, 
   position, 
   onMouseEnter, 
-  onMouseLeave 
+  onMouseLeave,
+  teamMembers 
 }: { 
   campaign: PRCampaign;
   isVisible: boolean;
   position: { top: number; left: number; right?: number };
   onMouseEnter: () => void;
   onMouseLeave: () => void;
+  teamMembers?: any[];
 }) {
   if (!isVisible) return null;
 
@@ -62,7 +65,7 @@ function HoverTooltip({
       onMouseLeave={onMouseLeave}
     >
       <div className="bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 max-w-sm">
-        <ApprovalTooltipContent campaign={campaign} />
+        <ApprovalTooltipContent campaign={campaign} teamMembers={teamMembers} />
       </div>
     </div>,
     document.body
@@ -70,7 +73,7 @@ function HoverTooltip({
 }
 
 // Approval-Tooltip Inhalt (separiert für bessere Organisation)
-function ApprovalTooltipContent({ campaign }: { campaign: PRCampaign }) {
+function ApprovalTooltipContent({ campaign, teamMembers }: { campaign: PRCampaign; teamMembers?: any[] }) {
   if (!campaign.approvalData || !isEnhancedApprovalData(campaign.approvalData)) {
     return (
       <div className="p-3 min-w-64">
@@ -114,24 +117,32 @@ function ApprovalTooltipContent({ campaign }: { campaign: PRCampaign }) {
             </div>
             
             <div className="space-y-2">
-              {approvalData.teamApprovers.map((approver) => (
-                <div key={approver.userId} className="flex items-center gap-3">
-                  <img 
-                    src={getApproverAvatar(approver)}
-                    alt={approver.displayName}
-                    className="w-6 h-6 rounded-full object-cover"
-                    onError={(e) => {
-                      // Fallback bei Ladefehler
-                      const target = e.target as HTMLImageElement;
-                      target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(approver.displayName)}&background=005fab&color=fff&size=24`;
-                    }}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <Text className="text-xs font-medium truncate">
-                      {approver.displayName}
-                    </Text>
-                  </div>
-                  <div className="flex items-center gap-1">
+              {approvalData.teamApprovers.map((approver) => {
+                // Lade echte TeamMember-Daten für bessere Namen und Avatare
+                const realTeamMember = teamMembers?.find(member => member.id === approver.userId);
+                const displayName = realTeamMember?.displayName || approver.displayName;
+                const photoUrl = realTeamMember?.photoUrl || approver.photoUrl;
+                
+                const avatarSrc = photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=005fab&color=fff&size=24`;
+                
+                return (
+                  <div key={approver.userId} className="flex items-center gap-3">
+                    <img 
+                      src={avatarSrc}
+                      alt={displayName}
+                      className="w-6 h-6 rounded-full object-cover"
+                      onError={(e) => {
+                        // Fallback bei Ladefehler
+                        const target = e.target as HTMLImageElement;
+                        target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=005fab&color=fff&size=24`;
+                      }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <Text className="text-xs font-medium truncate">
+                        {displayName}
+                      </Text>
+                    </div>
+                    <div className="flex items-center gap-1">
                     {approver.status === 'approved' && (
                       <CheckCircleIcon className="h-4 w-4 text-green-500" />
                     )}
@@ -152,7 +163,8 @@ function ApprovalTooltipContent({ campaign }: { campaign: PRCampaign }) {
                     </Text>
                   </div>
                 </div>
-              ))}
+              );
+              })}
             </div>
             
             {/* Team-Zusammenfassung */}
@@ -233,7 +245,8 @@ export function StatusBadge({
   showDescription = false, 
   className = "",
   campaign,
-  showApprovalTooltip = false
+  showApprovalTooltip = false,
+  teamMembers
 }: StatusBadgeProps) {
   const config = statusConfig[status];
   const Icon = config.icon;
@@ -368,6 +381,7 @@ export function StatusBadge({
           position={tooltipPosition}
           onMouseEnter={handleTooltipMouseEnter}
           onMouseLeave={handleTooltipMouseLeave}
+          teamMembers={teamMembers}
         />
       )}
     </>
