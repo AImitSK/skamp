@@ -21,7 +21,6 @@ import { formatDateShort } from "@/utils/dateHelpers";
 import { statusConfig } from "@/utils/campaignStatus";
 import { DEFAULT_ITEMS_PER_PAGE, LOADING_SPINNER_SIZE, LOADING_SPINNER_BORDER, MAX_VISIBLE_PAGES, ICON_SIZES } from "@/constants/ui";
 import { teamMemberService } from "@/lib/firebase/team-service-enhanced";
-import { syncAllTeamMemberAvatars, debugTeamMemberAvatars } from "@/lib/utils/avatar-sync-utils";
 import { 
   PlusIcon, 
   EyeIcon, 
@@ -68,7 +67,6 @@ export default function PRCampaignsPage() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [syncingAvatars, setSyncingAvatars] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<PRCampaignStatus | 'all'>('all');
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
   const [selectedCampaignIds, setSelectedCampaignIds] = useState<Set<string>>(new Set());
@@ -131,14 +129,7 @@ export default function PRCampaignsPage() {
         const membersData = await teamMemberService.getByOrganization(currentOrganization.id);
         setTeamMembers(membersData);
         
-        // Debug: Avatar-Status der TeamMembers
-        console.log('DEBUG TeamMembers geladen:', membersData.length);
-        membersData.forEach((member, index) => {
-          console.log('Member ' + index + ':', member.displayName, 'photoUrl:', member.photoUrl ? 'VORHANDEN' : 'LEER');
-        });
         
-        // TEMPORÄRER DEBUG: Detaillierte Avatar-Info
-        await debugTeamMemberAvatars(currentOrganization.id);
         
       } catch (teamError) {
         console.error('TeamMembers konnten nicht geladen werden:', teamError);
@@ -153,27 +144,6 @@ export default function PRCampaignsPage() {
     }
   };
 
-  const handleManualAvatarSync = async () => {
-    if (!currentOrganization) return;
-    
-    setSyncingAvatars(true);
-    try {
-      console.log('🚀 Starte manuellen Avatar-Sync...');
-      const result = await syncAllTeamMemberAvatars(currentOrganization.id);
-      
-      if (result.success) {
-        showAlert('success', 'Avatar-Sync erfolgreich', `${result.synced} Avatare synchronisiert`);
-        // Reload TeamMembers
-        loadCampaigns();
-      } else {
-        showAlert('error', 'Avatar-Sync Fehler', `${result.errors.length} Fehler aufgetreten`);
-      }
-    } catch (error) {
-      showAlert('error', 'Avatar-Sync fehlgeschlagen');
-    } finally {
-      setSyncingAvatars(false);
-    }
-  };
 
   // Filtered campaigns
   const filteredCampaigns = useMemo(() => {
@@ -421,14 +391,6 @@ export default function PRCampaignsPage() {
             Neue Kampagne
           </Button>
           
-          {/* TEMPORÄRER DEBUG BUTTON */}
-          <Button 
-            className="bg-orange-500 hover:bg-orange-600 text-white whitespace-nowrap h-10 px-4"
-            onClick={handleManualAvatarSync}
-            disabled={syncingAvatars}
-          >
-            {syncingAvatars ? 'Syncing...' : 'Debug: Avatar Sync'}
-          </Button>
 
           {/* Actions Button */}
           <Popover className="relative">

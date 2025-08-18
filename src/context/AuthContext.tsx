@@ -74,13 +74,10 @@ export const AuthContextProvider = ({ children, getOrganizationId }: AuthContext
 
     // Hilfsfunktion zur organizationId-Ermittlung
     const getCurrentOrganizationId = (): string => {
-        console.log('🔍 getCurrentOrganizationId gestartet...');
-        
         // 1. Versuche über callback (falls OrganizationContext verfügbar)
         if (getOrganizationId) {
             const orgId = getOrganizationId();
             if (orgId && orgId !== 'default') {
-                console.log('🎯 OrganizationId von Callback:', orgId);
                 return orgId;
             }
         }
@@ -89,9 +86,7 @@ export const AuthContextProvider = ({ children, getOrganizationId }: AuthContext
         const possibleKeys = ['currentOrganizationId', 'organizationId', 'org_id'];
         for (const key of possibleKeys) {
             const storedOrgId = localStorage.getItem(key);
-            console.log(`📍 localStorage ${key}:`, storedOrgId);
             if (storedOrgId && storedOrgId !== 'default' && storedOrgId !== 'null' && storedOrgId !== 'undefined') {
-                console.log(`🎯 OrganizationId von localStorage ${key}:`, storedOrgId);
                 return storedOrgId;
             }
         }
@@ -101,7 +96,6 @@ export const AuthContextProvider = ({ children, getOrganizationId }: AuthContext
             const urlParams = new URLSearchParams(window.location.search);
             const orgFromUrl = urlParams.get('org');
             if (orgFromUrl && orgFromUrl !== 'default') {
-                console.log('🎯 OrganizationId von URL:', orgFromUrl);
                 return orgFromUrl;
             }
         } catch (error) {
@@ -110,7 +104,7 @@ export const AuthContextProvider = ({ children, getOrganizationId }: AuthContext
         
         // 4. Fallback zu userId (eigene Organisation)
         if (user?.uid) {
-            console.log('⚠️ OrganizationId Fallback zu userId:', user.uid);
+            console.warn('⚠️ OrganizationId Fallback zu userId - prüfe OrganizationContext Setup');
             return user.uid;
         }
         
@@ -145,13 +139,6 @@ export const AuthContextProvider = ({ children, getOrganizationId }: AuthContext
 
         const organizationId = getCurrentOrganizationId();
         
-        console.log('🔍 AVATAR-UPLOAD OrganizationId:', organizationId);
-        console.log('🔍 AVATAR-UPLOAD LocalStorage keys:', Object.keys(localStorage));
-        console.log('🔍 AVATAR-UPLOAD LocalStorage values:', {
-            currentOrganizationId: localStorage.getItem('currentOrganizationId'),
-            organizationId: localStorage.getItem('organizationId'),
-            org_id: localStorage.getItem('org_id')
-        });
         
         const result = await ProfileImageService.uploadProfileImage(file, user, organizationId);
         
@@ -169,8 +156,6 @@ export const AuthContextProvider = ({ children, getOrganizationId }: AuthContext
 
         const organizationId = getCurrentOrganizationId();
         
-        console.log('🔍 AVATAR-DELETE OrganizationId:', organizationId);
-        console.log('🔍 AVATAR-DELETE LocalStorage keys:', Object.keys(localStorage));
         
         const result = await ProfileImageService.deleteProfileImage(user, organizationId);
         return result;

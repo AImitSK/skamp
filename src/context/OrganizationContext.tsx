@@ -137,7 +137,6 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     
     // KRITISCH: Speichere die aktuelle organizationId in localStorage
     localStorage.setItem('currentOrganizationId', selectedOrg.id);
-    console.log('🔄 Iniziale OrganizationId gespeichert:', selectedOrg.id);
   };
 
   const switchOrganization = (orgId: string) => {
@@ -147,7 +146,6 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       
       // KRITISCH: Speichere organizationId in localStorage für AuthContext
       localStorage.setItem('currentOrganizationId', orgId);
-      console.log('🔄 OrganizationContext speichert organizationId:', orgId);
       
       // Optional: URL aktualisieren
       const url = new URL(window.location.href);
