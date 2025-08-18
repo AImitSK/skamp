@@ -128,10 +128,16 @@ export default function PRCampaignsPage() {
       try {
         const membersData = await teamMemberService.getByOrganization(currentOrganization.id);
         setTeamMembers(membersData);
+        
+        // Debug: Avatar-Status der TeamMembers
+        console.log('DEBUG TeamMembers geladen:', membersData.length);
+        membersData.forEach((member, index) => {
+          console.log('Member ' + index + ':', member.displayName, 'photoUrl:', member.photoUrl ? 'VORHANDEN' : 'LEER');
+        });
+        
       } catch (teamError) {
-        console.error('⚠️ TeamMembers konnten nicht geladen werden:', teamError);
+        console.error('TeamMembers konnten nicht geladen werden:', teamError);
         setTeamMembers([]); // Fallback zu leerem Array
-        // Nicht showAlert - Avatar-Problem sollte nicht User nerven
       }
       
     } catch (error) {
