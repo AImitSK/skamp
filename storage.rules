@@ -6,9 +6,9 @@ service firebase.storage {
     
     // Helper function to check if user is member of organization
     function isOrganizationMember(organizationId) {
-      // Check if there's a team_member document where userId == request.auth.uid AND organizationId == organizationId
-      // Since we can't do queries in storage rules, we need a simpler approach
-      // We'll check if the user has any active membership (this is a simplified version)
+      // TEMPORARY: Allow all authenticated users to read avatars within organizations
+      // TODO: Implement Custom Claims for proper organization membership validation
+      // For now, this enables Multi-Tenancy avatar viewing while maintaining organization structure
       return request.auth != null && request.auth.uid != null;
     }
     
@@ -64,6 +64,18 @@ service firebase.storage {
         
         // Allow organization members to update/delete branding files
         allow update, delete: if request.auth != null && isOrganizationMember(organizationId);
+      }
+      
+      // Special rules for user profile avatars (MULTI-TENANCY AVATARS)
+      match /profiles/{userId}/avatar.{fileExtension} {
+        // Only the user can upload/update their own avatar
+        allow create, update, delete: if request.auth != null && 
+                                       request.auth.uid == userId &&
+                                       isOrganizationMember(organizationId) &&
+                                       request.resource.size < 10 * 1024 * 1024; // Max 10MB
+        
+        // All organization members can read profile avatars (CRITICAL FOR MULTI-TENANCY)
+        allow read: if request.auth != null && isOrganizationMember(organizationId);
       }
     }
     
