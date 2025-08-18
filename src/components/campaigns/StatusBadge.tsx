@@ -102,11 +102,6 @@ function ApprovalTooltipContent({ campaign, teamMembers }: { campaign: PRCampaig
 
   return (
     <div className="p-4 min-w-80 max-w-sm">
-      <div className="flex items-center gap-2 mb-3">
-        <ClockIcon className="h-4 w-4 text-blue-500" />
-        <Text className="font-semibold text-sm">Freigabe-Status</Text>
-      </div>
-
       <div className="space-y-3">
         {/* Team-Freigabe */}
         {hasTeamApproval && (
@@ -184,9 +179,6 @@ function ApprovalTooltipContent({ campaign, teamMembers }: { campaign: PRCampaig
                 </div>
                 <div className="flex-1 min-w-0">
                   <Text className="text-xs font-medium truncate">
-                    {approvalData.customerContact.name}
-                  </Text>
-                  <Text className="text-xs text-gray-500 truncate">
                     {approvalData.customerContact.companyName}
                   </Text>
                 </div>
