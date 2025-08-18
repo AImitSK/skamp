@@ -50,6 +50,7 @@ import { prService } from "@/lib/firebase/pr-service";
 import { listsService } from "@/lib/firebase/lists-service";
 import { companiesEnhancedService } from "@/lib/firebase/crm-service-enhanced";
 import { mediaService } from "@/lib/firebase/media-service";
+import { boilerplatesService } from "@/lib/firebase/boilerplate-service";
 import { PRCampaign, PRCampaignStatus } from "@/types/pr";
 import { DistributionList } from "@/types/lists";
 import { CompanyEnhanced } from "@/types/crm-enhanced";
@@ -75,6 +76,7 @@ export default function CampaignDetailPage() {
   const [folders, setFolders] = useState<MediaFolder[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [currentAdmin, setCurrentAdmin] = useState<TeamMember | null>(null);
+  const [loadedBoilerplates, setLoadedBoilerplates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -178,6 +180,25 @@ export default function CampaignDetailPage() {
             })
             .catch(err => {})
         );
+      }
+
+      // Load boilerplates if campaign has boilerplateSections with IDs
+      if (campaignData.boilerplateSections && campaignData.boilerplateSections.length > 0 && currentOrganization?.id) {
+        const boilerplateIds = campaignData.boilerplateSections
+          .filter(section => section.boilerplateId)
+          .map(section => section.boilerplateId);
+        
+        if (boilerplateIds.length > 0) {
+          promises.push(
+            Promise.all(boilerplateIds.map(id => 
+              boilerplatesService.getById(currentOrganization.id, id)
+            ))
+            .then(boilerplatesData => {
+              setLoadedBoilerplates(boilerplatesData.filter(bp => bp !== null));
+            })
+            .catch(err => console.error('Error loading boilerplates:', err))
+          );
+        }
       }
 
       await Promise.all(promises);
@@ -441,13 +462,48 @@ export default function CampaignDetailPage() {
             </div>
           )}
 
-          {/* Pressemitteilung (Main Text) */}
-          {campaign.contentHtml && (
+          {/* Editor Content */}
+          {campaign.mainContent && (
             <div className="prose prose-sm max-w-none">
               <div 
-                dangerouslySetInnerHTML={{ __html: campaign.contentHtml }} 
+                dangerouslySetInnerHTML={{ __html: campaign.mainContent }} 
                 className="bg-gray-50 rounded-lg p-4 border border-gray-200"
               />
+            </div>
+          )}
+
+          {/* Textbausteine/Boilerplate Sections */}
+          {campaign.boilerplateSections && campaign.boilerplateSections.length > 0 && (
+            <div className="space-y-4">
+              {campaign.boilerplateSections.map((section, index) => {
+                // Find the loaded boilerplate for this section
+                const boilerplate = section.boilerplateId 
+                  ? loadedBoilerplates.find(bp => bp.id === section.boilerplateId)
+                  : null;
+                
+                // Use boilerplate content if available, otherwise use section content
+                const content = boilerplate?.content || section.content;
+                const headline = boilerplate?.name || section.headline;
+                
+                if (!content) return null;
+                
+                return (
+                  <div key={index} className="border-l-4 border-gray-300 pl-4">
+                    {headline && (
+                      <h4 className="font-semibold text-gray-900 mb-2">{headline}</h4>
+                    )}
+                    <div className="prose prose-sm max-w-none text-gray-700">
+                      <div dangerouslySetInnerHTML={{ __html: content }} />
+                    </div>
+                    {section.metadata && section.type === 'quote' && (
+                      <div className="italic text-gray-600 mt-2">
+                        — {section.metadata.person}, {section.metadata.role}
+                        {section.metadata.company && `, ${section.metadata.company}`}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
 
@@ -465,22 +521,6 @@ export default function CampaignDetailPage() {
                   </span>
                 ))}
               </div>
-            </div>
-          )}
-
-          {/* Boilerplate Sections */}
-          {campaign.boilerplateSections && campaign.boilerplateSections.length > 0 && (
-            <div className="space-y-4">
-              {campaign.boilerplateSections.map((section, index) => (
-                <div key={index} className="border-l-4 border-gray-300 pl-4">
-                  {section.headline && (
-                    <h4 className="font-semibold text-gray-900 mb-2">{section.headline}</h4>
-                  )}
-                  <div className="prose prose-sm max-w-none text-gray-700">
-                    <div dangerouslySetInnerHTML={{ __html: section.content }} />
-                  </div>
-                </div>
-              ))}
             </div>
           )}
         </div>
