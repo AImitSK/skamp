@@ -37,6 +37,15 @@ import {
   DocumentTextIcon,
   ShieldCheckIcon,
 } from "@heroicons/react/20/solid";
+import {
+  PencilIcon as PencilIconOutline,
+  TrashIcon as TrashIconOutline, 
+  PaperAirplaneIcon as PaperAirplaneIconOutline,
+  DocumentDuplicateIcon as DocumentDuplicateIconOutline,
+  EyeIcon as EyeIconOutline,
+  ArrowDownTrayIcon as ArrowDownTrayIconOutline,
+  ChartBarIcon as ChartBarIconOutline
+} from "@heroicons/react/24/outline";
 import { prService } from "@/lib/firebase/pr-service";
 import { listsService } from "@/lib/firebase/lists-service";
 import { companiesEnhancedService } from "@/lib/firebase/crm-service-enhanced";
@@ -319,8 +328,11 @@ export default function CampaignDetailPage() {
         <div className="flex items-start justify-between">
           <div>
             <Heading level={1}>{campaign.title}</Heading>
-            <div className="mt-2">
-              <StatusBadge status={campaign.status} showDescription={true} />
+            <div className="mt-2 flex items-center gap-4">
+              <StatusBadge status={campaign.status} showDescription={false} />
+              <Text className="text-sm text-gray-600">
+                Erstellt am {formatDate(campaign.createdAt)}
+              </Text>
             </div>
           </div>
           
@@ -333,7 +345,7 @@ export default function CampaignDetailPage() {
             <DropdownMenu anchor="bottom end" className="min-w-48">
               {canSend && (
                 <DropdownItem onClick={() => setShowSendModal(true)}>
-                  <PaperAirplaneIcon className="h-4 w-4" />
+                  <PaperAirplaneIconOutline className="h-4 w-4" />
                   Versenden
                 </DropdownItem>
               )}
@@ -345,29 +357,29 @@ export default function CampaignDetailPage() {
               )}
               {canResubmit && (
                 <DropdownItem onClick={handleResubmit}>
-                  <PaperAirplaneIcon className="h-4 w-4" />
+                  <PaperAirplaneIconOutline className="h-4 w-4" />
                   Erneut einreichen
                 </DropdownItem>
               )}
               {canEdit && (
                 <DropdownItem href={`/dashboard/pr-tools/campaigns/campaigns/edit/${campaignId}`}>
-                  <PencilIcon className="h-4 w-4" />
+                  <PencilIconOutline className="h-4 w-4" />
                   Bearbeiten
                 </DropdownItem>
               )}
               <DropdownItem onClick={handleDuplicate}>
-                <DocumentDuplicateIcon className="h-4 w-4" />
+                <DocumentDuplicateIconOutline className="h-4 w-4" />
                 Duplizieren
               </DropdownItem>
               {campaign.status === 'sent' && (
                 <DropdownItem href={`/dashboard/pr-tools/campaigns/campaigns/${campaignId}/analytics`}>
-                  <ChartBarIcon className="h-4 w-4" />
+                  <ChartBarIconOutline className="h-4 w-4" />
                   Analytics
                 </DropdownItem>
               )}
               <DropdownDivider />
               <DropdownItem onClick={() => setShowDeleteDialog(true)}>
-                <TrashIcon className="h-4 w-4" />
+                <TrashIconOutline className="h-4 w-4" />
                 <span className="text-red-600">Löschen</span>
               </DropdownItem>
             </DropdownMenu>
@@ -392,31 +404,23 @@ export default function CampaignDetailPage() {
             </div>
           )}
 
-          {/* SEO & Content Preview */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold mb-4">Inhalt & SEO</h2>
-            
-            {/* Keywords */}
-            {campaign.keywords && campaign.keywords.length > 0 && (
-              <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <h3 className="text-sm font-semibold text-blue-900 mb-2">SEO Keywords</h3>
-                <div className="flex flex-wrap gap-2">
-                  {campaign.keywords.map((keyword, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-blue-100 text-blue-800 border border-blue-200"
-                    >
-                      {keyword}
-                    </span>
-                  ))}
-                </div>
+          {/* Content Preview */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">            
+            {/* PR-Content */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 mb-3">Pressemitteilung:</h3>
+              <div className="prose prose-sm max-w-none">
+                <div 
+                  dangerouslySetInnerHTML={{ __html: campaign.contentHtml }} 
+                  className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+                />
               </div>
-            )}
+            </div>
 
-            {/* Main Content (Editor-Text) */}
+            {/* Boilerplates - falls vorhanden */}
             {campaign.mainContent && (
-              <div className="mb-6">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">SEO-Content (Editor)</h3>
+              <div className="mt-6">
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">Ausgewählte Boiler Plates:</h3>
                 <div className="prose prose-sm max-w-none">
                   <div 
                     dangerouslySetInnerHTML={{ __html: campaign.mainContent }} 
@@ -425,17 +429,6 @@ export default function CampaignDetailPage() {
                 </div>
               </div>
             )}
-            
-            {/* PR-Content */}
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">Pressemitteilung</h3>
-              <div className="prose prose-sm max-w-none">
-                <div 
-                  dangerouslySetInnerHTML={{ __html: campaign.contentHtml }} 
-                  className="bg-gray-50 rounded-lg p-4 border border-gray-200"
-                />
-              </div>
-            </div>
           </div>
 
           {/* Approval Feedback */}
@@ -526,109 +519,43 @@ export default function CampaignDetailPage() {
         <div className="space-y-6">
           {/* Campaign Info */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold mb-4">Details</h2>
-            
-            <div className="space-y-4">
-              {/* Customer */}
-              {company && (
-                <div>
-                  <Text className="text-sm font-medium text-gray-700">Kunde</Text>
-                  <Link 
-                    href={`/dashboard/contacts/crm/companies/${company.id}`}
-                    className="mt-1 flex items-center gap-2 text-[#005fab] hover:text-[#004a8c]"
-                  >
-                    <BuildingOfficeIcon className="h-4 w-4" />
-                    <span>{company.name}</span>
-                  </Link>
-                </div>
-              )}
-
-              {/* Distribution List */}
-              {distributionList && (
-                <div>
-                  <Text className="text-sm font-medium text-gray-700">Verteiler</Text>
-                  <Link 
-                    href={`/dashboard/contacts/lists/${distributionList.id}`}
-                    className="mt-1 flex items-center gap-2 text-[#005fab] hover:text-[#004a8c]"
-                  >
-                    <UsersIcon className="h-4 w-4" />
-                    <span>{distributionList.name}</span>
-                  </Link>
-                  <Text className="text-sm text-gray-500 mt-1">
-                    {campaign.recipientCount} Empfänger
-                  </Text>
-                </div>
-              )}
-
-              {/* SEO Metrics */}
-              {campaign.keywords && campaign.keywords.length > 0 && (
-                <div>
-                  <Text className="text-sm font-medium text-gray-700">SEO Keywords</Text>
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {campaign.keywords.map((keyword, index) => (
-                      <Badge key={index} color="blue" className="text-xs">
-                        {keyword}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Dates */}
-              <div>
-                <Text className="text-sm font-medium text-gray-700">Erstellt</Text>
-                <Text className="text-sm text-gray-600 mt-1">
-                  {formatDate(campaign.createdAt)}
-                </Text>
-              </div>
-
-              {campaign.sentAt && (
-                <div>
-                  <Text className="text-sm font-medium text-gray-700">Versendet</Text>
-                  <Text className="text-sm text-gray-600 mt-1">
-                    {formatDate(campaign.sentAt)}
-                  </Text>
-                </div>
-              )}
-
-              {/* Approval Info */}
-              {campaign.approvalRequired && (
-                <div className="pt-4 border-t">
-                  <div className="flex items-center gap-2 mb-2">
-                    <ShieldCheckIcon className="h-5 w-5 text-blue-500" />
-                    <Text className="font-medium">Freigabe erforderlich</Text>
-                  </div>
-                  
-                  {campaign.approvalData?.shareId && (
-                    <div className="mt-2 space-y-2">
-                      <Text className="text-sm text-gray-700">Freigabe-Link:</Text>
-                      <div className="p-2 bg-gray-50 rounded border text-xs break-all text-gray-600">
-                        {prService.getApprovalUrl(campaign.approvalData.shareId)}
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        <button
-                          onClick={() => window.open(prService.getApprovalUrl(campaign.approvalData!.shareId), '_blank')}
-                          className="inline-flex items-center border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-md px-3 py-2 text-sm font-medium"
-                        >
-                          <EyeIcon className="h-4 w-4 mr-2" />
-                          Freigabe-Seite
-                        </button>
-                        <button
-                          onClick={() => {
-                            navigator.clipboard.writeText(prService.getApprovalUrl(campaign.approvalData!.shareId));
-                            showAlert('success', 'Link kopiert');
-                          }}
-                          className="inline-flex items-center border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-md px-3 py-2 text-sm font-medium"
-                        >
-                          <DocumentDuplicateIcon className="h-4 w-4 mr-2" />
-                          Link kopieren
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
+            <div className="mb-4">
+              <StatusBadge 
+                status={campaign.status} 
+                campaign={campaign}
+                showApprovalTooltip={true}
+                teamMembers={teamMembers}
+              />
             </div>
+
+            {/* Approval Links - only if approval is required */}
+            {campaign.approvalRequired && campaign.approvalData?.shareId && (
+              <div className="space-y-2">
+                <Text className="text-sm text-gray-700">Freigabe-Link:</Text>
+                <div className="p-2 bg-gray-50 rounded border text-xs break-all text-gray-600">
+                  {prService.getApprovalUrl(campaign.approvalData.shareId)}
+                </div>
+                <div className="flex flex-col gap-2">
+                  <button
+                    onClick={() => window.open(prService.getApprovalUrl(campaign.approvalData!.shareId), '_blank')}
+                    className="inline-flex items-center border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-md px-3 py-2 text-sm font-medium"
+                  >
+                    <EyeIconOutline className="h-4 w-4 mr-2" />
+                    Freigabe-Seite
+                  </button>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(prService.getApprovalUrl(campaign.approvalData!.shareId));
+                      showAlert('success', 'Link kopiert');
+                    }}
+                    className="inline-flex items-center border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-md px-3 py-2 text-sm font-medium"
+                  >
+                    <DocumentDuplicateIconOutline className="h-4 w-4 mr-2" />
+                    Link kopieren
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Admin Section */}
@@ -667,14 +594,15 @@ export default function CampaignDetailPage() {
                           <DropdownItem 
                             key={member.userId}
                             onClick={() => handleChangeAdmin(member.userId)}
+                            className="text-left justify-start items-start"
                           >
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 w-full">
                               <img
                                 src={getTeamMemberAvatar(member, 32)}
                                 alt={member.displayName}
                                 className="w-8 h-8 rounded-full"
                               />
-                              <div>
+                              <div className="text-left">
                                 <div className="font-medium">{member.displayName}</div>
                                 <div className="text-xs text-gray-500">{member.email}</div>
                               </div>
