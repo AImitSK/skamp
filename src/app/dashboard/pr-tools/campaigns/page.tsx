@@ -469,7 +469,7 @@ export default function PRCampaignsPage() {
             {/* Header */}
             <div className="px-8 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
               <div className="flex items-center">
-                <div className="w-12 flex items-center">
+                <div className="w-10 flex items-center">
                   <Checkbox
                     checked={paginatedCampaigns.length > 0 && selectedCampaignIds.size === paginatedCampaigns.length}
                     indeterminate={selectedCampaignIds.size > 0 && selectedCampaignIds.size < paginatedCampaigns.length}
@@ -525,7 +525,7 @@ export default function PRCampaignsPage() {
                   <div key={campaign.id} className="px-8 py-5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                     <div className="flex items-center">
                       {/* Checkbox */}
-                      <div className="w-12 flex items-center">
+                      <div className="w-10 flex items-center">
                         <Checkbox
                           checked={selectedCampaignIds.has(campaign.id!)}
                           onChange={(checked: boolean) => {
@@ -553,9 +553,9 @@ export default function PRCampaignsPage() {
 
                       {/* Kunde mit Projekt */}
                       <div className="w-72 px-4">
-                        <div className="flex items-center gap-2">
-                          <BuildingOfficeIcon className="h-4 w-4 text-zinc-400 flex-shrink-0" />
-                          <div className="min-w-0">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <BuildingOfficeIcon className="h-4 w-4 text-zinc-400 flex-shrink-0" />
                             {campaign.clientName ? (
                               <Link 
                                 href={`/dashboard/contacts/crm/companies/${campaign.clientId}`}
@@ -567,9 +567,9 @@ export default function PRCampaignsPage() {
                             ) : (
                               <span className="text-sm text-zinc-900 dark:text-white">SK Online Marketing</span>
                             )}
-                            <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate" title={projectName}>
-                              {truncateProject(projectName)}
-                            </div>
+                          </div>
+                          <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate ml-6" title={projectName}>
+                            {truncateProject(projectName)}
                           </div>
                         </div>
                       </div>
