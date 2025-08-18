@@ -7,6 +7,8 @@ import {
   ApprovalSettingsProps,
   createDefaultEnhancedApprovalData 
 } from '@/types/approvals-enhanced';
+import { teamMemberService } from '@/lib/firebase/team-service-enhanced';
+import { TeamMember } from '@/types/international';
 import { SimpleSwitch } from '@/components/notifications/SimpleSwitch';
 import { Textarea } from '@/components/ui/textarea';
 import { Field, Label } from '@/components/ui/fieldset';
@@ -41,6 +43,25 @@ export function ApprovalSettings({
     }
     return value;
   });
+  
+  // TeamMembers für Name-Lookup
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+
+  // Lade TeamMembers
+  useEffect(() => {
+    if (organizationId) {
+      loadTeamMembers();
+    }
+  }, [organizationId]);
+
+  const loadTeamMembers = async () => {
+    try {
+      const members = await teamMemberService.getByOrganization(organizationId);
+      setTeamMembers(members);
+    } catch (error) {
+      console.error('Fehler beim Laden der TeamMembers:', error);
+    }
+  };
 
   // Sync local state with props
   useEffect(() => {
@@ -70,14 +91,17 @@ export function ApprovalSettings({
   };
 
   const handleTeamMembersChange = (memberIds: string[]) => {
-    // Here we would need to load full team member data
-    // For now, just store the IDs - this would be enhanced in the actual implementation
-    const teamApprovers = memberIds.map(id => ({
-      userId: id,
-      displayName: `Team Member ${id}`, // Placeholder - would be loaded from team service
-      email: `member${id}@company.com`, // Placeholder
-      status: 'pending' as const
-    }));
+    // Konvertiere TeamMember IDs zu TeamApprover-Objekten mit echten Daten
+    const teamApprovers = memberIds.map(id => {
+      const teamMember = teamMembers.find(member => member.id === id);
+      return {
+        userId: id,
+        displayName: teamMember?.displayName || 'Unbekannt',
+        email: teamMember?.email || 'unknown@company.com',
+        photoUrl: teamMember?.photoUrl,
+        status: 'pending' as const
+      };
+    });
 
     handleDataChange({
       teamApprovers
