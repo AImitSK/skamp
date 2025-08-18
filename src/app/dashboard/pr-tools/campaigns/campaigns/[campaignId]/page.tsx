@@ -336,12 +336,51 @@ export default function CampaignDetailPage() {
             </div>
           </div>
           
-          {/* Actions Dropdown */}
-          <Dropdown>
-            <DropdownButton className="inline-flex items-center gap-2">
-              Aktionen
-              <EllipsisVerticalIcon className="h-5 w-5" />
-            </DropdownButton>
+          {/* Actions and Admin */}
+          <div className="flex items-center gap-2">
+            {/* Admin Dropdown */}
+            {teamMembers.length > 1 && (
+              <Dropdown>
+                <DropdownButton className="inline-flex items-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-600 border border-gray-300">
+                  <img
+                    src={getTeamMemberAvatar(currentAdmin, 20)}
+                    alt={currentAdmin?.displayName}
+                    className="w-5 h-5 rounded-full"
+                  />
+                  Admin
+                </DropdownButton>
+                <DropdownMenu anchor="bottom end" className="w-64">
+                  {teamMembers
+                    .filter(member => member.userId !== campaign?.userId)
+                    .map((member) => (
+                      <DropdownItem 
+                        key={member.userId}
+                        onClick={() => handleChangeAdmin(member.userId)}
+                        className="text-left justify-start items-start"
+                      >
+                        <div className="flex items-center gap-2 w-full">
+                          <img
+                            src={getTeamMemberAvatar(member, 32)}
+                            alt={member.displayName}
+                            className="w-8 h-8 rounded-full"
+                          />
+                          <div className="text-left">
+                            <div className="font-medium">{member.displayName}</div>
+                            <div className="text-xs text-gray-500">{member.email}</div>
+                          </div>
+                        </div>
+                      </DropdownItem>
+                    ))}
+                </DropdownMenu>
+              </Dropdown>
+            )}
+
+            {/* Actions Dropdown */}
+            <Dropdown>
+              <DropdownButton className="inline-flex items-center gap-2">
+                Aktionen
+                <EllipsisVerticalIcon className="h-5 w-5" />
+              </DropdownButton>
             <DropdownMenu anchor="bottom end" className="min-w-48">
               {canSend && (
                 <DropdownItem onClick={() => setShowSendModal(true)}>
@@ -384,6 +423,7 @@ export default function CampaignDetailPage() {
               </DropdownItem>
             </DropdownMenu>
           </Dropdown>
+          </div>
         </div>
       </div>
 
@@ -401,11 +441,11 @@ export default function CampaignDetailPage() {
             </div>
           )}
 
-          {/* Editor Content (mainContent) */}
-          {campaign.mainContent && (
+          {/* Pressemitteilung (Main Text) */}
+          {campaign.contentHtml && (
             <div className="prose prose-sm max-w-none">
               <div 
-                dangerouslySetInnerHTML={{ __html: campaign.mainContent }} 
+                dangerouslySetInnerHTML={{ __html: campaign.contentHtml }} 
                 className="bg-gray-50 rounded-lg p-4 border border-gray-200"
               />
             </div>
@@ -414,6 +454,7 @@ export default function CampaignDetailPage() {
           {/* PR Keywords */}
           {campaign.keywords && campaign.keywords.length > 0 && (
             <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <h3 className="text-sm font-semibold text-blue-900 mb-2">PR-SEO Keywords</h3>
               <div className="flex flex-wrap gap-2">
                 {campaign.keywords.map((keyword, index) => (
                   <span
