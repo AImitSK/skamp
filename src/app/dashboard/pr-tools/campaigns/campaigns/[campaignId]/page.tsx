@@ -472,6 +472,13 @@ export default function CampaignDetailPage() {
             </div>
           )}
 
+          {/* DEBUG: Textbausteine Info */}
+          <div className="bg-yellow-100 p-2 text-xs">
+            <div>boilerplateSections: {campaign.boilerplateSections ? campaign.boilerplateSections.length : 'undefined'}</div>
+            <div>loadedBoilerplates: {loadedBoilerplates.length}</div>
+            {campaign.boilerplateSections && <pre>{JSON.stringify(campaign.boilerplateSections, null, 2)}</pre>}
+          </div>
+
           {/* Textbausteine/Boilerplate Sections */}
           {campaign.boilerplateSections && campaign.boilerplateSections.length > 0 && (
             <div className="space-y-4">
