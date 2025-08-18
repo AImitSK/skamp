@@ -1,10 +1,16 @@
 // src/__tests__/features/communication-notifications.test.tsx
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, renderHook } from '@testing-library/react';
 import { notificationsService } from '@/lib/firebase/notifications-service';
 import { NotificationItem } from '@/components/notifications/NotificationItem';
 import { NotificationBadge } from '@/components/notifications/NotificationBadge';
+import { NotificationList } from '@/components/notifications/NotificationList';
+import { useNotifications, useNotificationSettings } from '@/hooks/use-notifications';
+import { TestWrapper } from '../test-utils';
+import { NotificationsPage } from '@/app/dashboard/communication/notifications/page';
+import { OrganizationProvider } from '@/context/OrganizationContext';
+import { AuthProvider } from '@/context/AuthContext';
 
 // Mock Firebase
 jest.mock('@/lib/firebase/notifications-service');

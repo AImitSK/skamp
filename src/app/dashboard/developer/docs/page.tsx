@@ -114,7 +114,7 @@ export default function APIDocumentation() {
         <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-blue-800 font-medium mb-2">🔑 API Key für Tests</p>
           <p className="text-blue-700 text-sm">
-            Um die API-Endpoints zu testen, klicke auf den grünen <strong>"Authorize"</strong> Button 
+            Um die API-Endpoints zu testen, klicke auf den grünen <strong>&quot;Authorize&quot;</strong> Button 
             in der Swagger UI unten und gib deinen API Key ein. 
             Du findest deine API Keys unter <strong>Einstellungen → API</strong>.
           </p>
