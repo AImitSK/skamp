@@ -552,14 +552,10 @@ export default function PRCampaignsPage() {
                   return name.length > maxLength ? name.substring(0, maxLength) + '...' : name;
                 };
                 
-                // Status-Datum bestimmen
-                const getStatusDate = () => {
+                // Versanddatum bestimmen
+                const getSentDate = () => {
                   if (campaign.status === 'sent' && campaign.sentAt) {
                     return formatDateShort(campaign.sentAt);
-                  } else if (campaign.status === 'scheduled' && campaign.scheduledAt) {
-                    return formatDateShort(campaign.scheduledAt);
-                  } else if (campaign.updatedAt) {
-                    return formatDateShort(campaign.updatedAt);
                   }
                   return '-';
                 };
@@ -626,7 +622,7 @@ export default function PRCampaignsPage() {
                           teamMembers={teamMembers}
                         />
                         <div className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
-                          {getStatusDate()}
+                          {getSentDate()}
                         </div>
                       </div>
 
