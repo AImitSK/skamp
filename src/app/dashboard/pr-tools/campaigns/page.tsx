@@ -48,6 +48,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { prService } from "@/lib/firebase/pr-service";
 import { PRCampaign, PRCampaignStatus } from "@/types/pr";
+import { TeamMember } from "@/types/international";
 import EmailSendModal from "@/components/pr/EmailSendModal";
 import Papa from 'papaparse';
 import clsx from 'clsx';
@@ -62,6 +63,7 @@ export default function PRCampaignsPage() {
   const { currentOrganization } = useOrganization();
   const searchParams = useSearchParams();
   const [campaigns, setCampaigns] = useState<PRCampaign[]>([]);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<PRCampaignStatus | 'all'>('all');
@@ -117,9 +119,14 @@ export default function PRCampaignsPage() {
     if (!user || !currentOrganization) return;
     setLoading(true);
     try {
-      // Verwende currentOrganization.id für Multi-Tenancy
-      const campaignsData = await prService.getAllByOrganization(currentOrganization.id);
+      // Load campaigns and team members in parallel
+      const [campaignsData, membersData] = await Promise.all([
+        prService.getAllByOrganization(currentOrganization.id),
+        teamMemberService.getByOrganization(currentOrganization.id)
+      ]);
+      
       setCampaigns(campaignsData);
+      setTeamMembers(membersData);
     } catch (error) {
       showAlert('error', 'Fehler beim Laden', 'Die Kampagnen konnten nicht geladen werden.');
     } finally {
@@ -497,7 +504,22 @@ export default function PRCampaignsPage() {
               {paginatedCampaigns.map((campaign) => {
                 // Placeholder-Daten für Demo
                 const projectName = "Hier steht der Projektname";
-                const adminAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || 'Admin')}&background=005fab&color=fff&size=32`;
+                
+                // Find the actual admin for this campaign
+                const campaignAdmin = teamMembers.find(member => member.userId === campaign.userId);
+                
+                // Robuste Avatar-Logik mit Multi-Tenancy Support
+                const getAdminAvatar = () => {
+                  if (campaignAdmin?.photoUrl) {
+                    // Echtes Avatar verfügbar (nach Avatar-Sync)
+                    return campaignAdmin.photoUrl;
+                  }
+                  // Fallback zu generiertem Avatar
+                  const displayName = campaignAdmin?.displayName || 'Admin';
+                  return `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=005fab&color=fff&size=32`;
+                };
+                
+                const adminAvatar = getAdminAvatar();
                 
                 // Titel kürzen wenn zu lang
                 const truncateTitle = (title: string, maxLength: number = 50) => {
@@ -553,9 +575,9 @@ export default function PRCampaignsPage() {
 
                       {/* Kunde mit Projekt */}
                       <div className="w-72 px-4">
-                        <div className="flex items-start gap-2">
-                          <BuildingOfficeIcon className="h-4 w-4 text-zinc-400 flex-shrink-0 mt-0.5" />
-                          <div className="min-w-0">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <BuildingOfficeIcon className="h-4 w-4 text-zinc-400 flex-shrink-0" />
                             {campaign.clientName ? (
                               <Link 
                                 href={`/dashboard/contacts/crm/companies/${campaign.clientId}`}
@@ -567,9 +589,9 @@ export default function PRCampaignsPage() {
                             ) : (
                               <span className="text-sm text-zinc-900 dark:text-white">SK Online Marketing</span>
                             )}
-                            <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate" title={projectName}>
-                              {truncateProject(projectName)}
-                            </div>
+                          </div>
+                          <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate" title={projectName}>
+                            {truncateProject(projectName)}
                           </div>
                         </div>
                       </div>
@@ -586,8 +608,9 @@ export default function PRCampaignsPage() {
                       <div className="w-20 px-4 flex justify-center">
                         <img 
                           src={adminAvatar}
-                          alt="Admin"
+                          alt={campaignAdmin?.displayName || 'Admin'}
                           className="w-8 h-8 rounded-full"
+                          title={campaignAdmin?.displayName || 'Admin'}
                         />
                       </div>
 

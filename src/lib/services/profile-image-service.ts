@@ -1,6 +1,6 @@
 // src/lib/services/profile-image-service.ts
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase/client-init';
 import { updateProfile } from 'firebase/auth';
 import { User } from 'firebase/auth';
@@ -110,6 +110,9 @@ export class ProfileImageService {
         console.warn('Firestore User-Dokument nicht gefunden oder nicht aktualisierbar:', error);
       }
 
+      // TeamMember-Tabelle aktualisieren (KRITISCH für Multi-Tenancy Avatare)
+      await this.updateTeamMemberAvatar(user.uid, organizationId, downloadURL);
+
       return {
         success: true,
         url: downloadURL
@@ -147,6 +150,9 @@ export class ProfileImageService {
         console.warn('Firestore User-Dokument nicht aktualisierbar:', error);
       }
 
+      // TeamMember-Tabelle aktualisieren (Avatar löschen)
+      await this.updateTeamMemberAvatar(user.uid, organizationId, null);
+
       return {
         success: true
       };
@@ -157,6 +163,48 @@ export class ProfileImageService {
         success: false,
         error: error instanceof Error ? error.message : 'Fehler beim Löschen'
       };
+    }
+  }
+
+  /**
+   * KRITISCH: Aktualisiert TeamMember-Avatar für Multi-Tenancy
+   * Damit alle Kollegen das richtige Avatar sehen
+   */
+  private async updateTeamMemberAvatar(
+    userId: string, 
+    organizationId: string, 
+    photoUrl: string | null
+  ): Promise<void> {
+    try {
+      // Suche TeamMember-Dokument für diesen User in dieser Organisation
+      const teamMembersQuery = query(
+        collection(db, 'team_members'),
+        where('userId', '==', userId),
+        where('organizationId', '==', organizationId)
+      );
+      
+      const querySnapshot = await getDocs(teamMembersQuery);
+      
+      if (querySnapshot.empty) {
+        console.warn(`Kein TeamMember-Dokument gefunden für User ${userId} in Organisation ${organizationId}`);
+        return;
+      }
+
+      // Update alle gefundenen TeamMember-Dokumente (sollte nur 1 sein)
+      const updatePromises = querySnapshot.docs.map(doc => 
+        updateDoc(doc.ref, {
+          photoUrl: photoUrl,
+          avatarUpdatedAt: new Date()
+        })
+      );
+
+      await Promise.all(updatePromises);
+      
+      console.log(`✅ TeamMember Avatar aktualisiert für User ${userId}:`, photoUrl ? 'Neues Bild' : 'Avatar gelöscht');
+      
+    } catch (error) {
+      console.error('❌ Fehler beim Aktualisieren des TeamMember-Avatars:', error);
+      // Nicht werfen - Avatar-Sync sollte Upload nicht blockieren
     }
   }
 

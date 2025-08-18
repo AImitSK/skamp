@@ -129,12 +129,21 @@ export const organizationService = {
         
         console.log('✅ Owner entry created successfully');
       } else {
-        // Update lastActiveAt
-        await updateDoc(ownerRef, {
+        // Update lastActiveAt und Avatar-Sync
+        const existingData = ownerDoc.data();
+        const updateData: any = {
           lastActiveAt: serverTimestamp(),
-          photoUrl: userData.photoUrl, // Update photo if changed
-          displayName: userData.displayName || userData.email // Update name if changed
-        });
+          displayName: userData.displayName || userData.email
+        };
+
+        // Nur Avatar aktualisieren wenn sich etwas geändert hat
+        if (existingData?.photoUrl !== userData.photoUrl) {
+          updateData.photoUrl = userData.photoUrl;
+          updateData.avatarSyncedAt = new Date();
+          console.log('🔄 Avatar-Sync beim Login:', userData.photoUrl ? 'Neues Bild' : 'Kein Avatar');
+        }
+
+        await updateDoc(ownerRef, updateData);
       }
     } catch (error) {
       console.error('Error ensuring owner exists:', error);

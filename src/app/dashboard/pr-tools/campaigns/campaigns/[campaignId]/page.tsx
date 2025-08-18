@@ -43,6 +43,7 @@ import { PRCampaign, PRCampaignStatus } from "@/types/pr";
 import { DistributionList } from "@/types/lists";
 import { CompanyEnhanced } from "@/types/crm-enhanced";
 import { MediaAsset, MediaFolder } from "@/types/media";
+import { TeamMember } from "@/types/international";
 import EmailSendModal from "@/components/pr/EmailSendModal";
 
 
@@ -61,6 +62,8 @@ export default function CampaignDetailPage() {
   const [distributionList, setDistributionList] = useState<DistributionList | null>(null);
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [folders, setFolders] = useState<MediaFolder[]>([]);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [currentAdmin, setCurrentAdmin] = useState<TeamMember | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -162,6 +165,20 @@ export default function CampaignDetailPage() {
         }
       }
 
+      // Load team members and find current admin
+      if (organizationId) {
+        promises.push(
+          teamMemberService.getByOrganization(organizationId)
+            .then(members => {
+              setTeamMembers(members);
+              // Find current admin (campaign creator)
+              const admin = members.find(member => member.userId === campaignData.userId);
+              setCurrentAdmin(admin || null);
+            })
+            .catch(err => {})
+        );
+      }
+
       await Promise.all(promises);
     } catch (error) {
       setError('Fehler beim Laden der Kampagne');
@@ -179,6 +196,26 @@ export default function CampaignDetailPage() {
     } catch (error) {
       showAlert('error', 'Fehler beim Löschen');
       setDeleting(false);
+    }
+  };
+
+  const handleChangeAdmin = async (newAdminId: string) => {
+    if (!campaign || !organizationId) return;
+
+    try {
+      // Update campaign with new admin
+      await prService.update(campaignId, { userId: newAdminId });
+      
+      // Update local state
+      const newAdmin = teamMembers.find(member => member.userId === newAdminId);
+      setCurrentAdmin(newAdmin || null);
+      
+      // Reload campaign data to reflect changes
+      await loadCampaignData();
+      
+      showAlert('success', 'Admin geändert', `${newAdmin?.displayName || 'Neuer Admin'} ist jetzt der Kampagnen-Administrator.`);
+    } catch (error) {
+      showAlert('error', 'Fehler beim Ändern des Admins');
     }
   };
 
@@ -598,6 +635,69 @@ export default function CampaignDetailPage() {
                     </div>
                   )}
                 </div>
+              )}
+            </div>
+          </div>
+
+          {/* Admin Section */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h2 className="text-lg font-semibold mb-4">Kampagnen-Administrator</h2>
+            
+            <div className="space-y-4">
+              {/* Current Admin */}
+              {currentAdmin && (
+                <div className="flex items-center gap-3">
+                  <img
+                    src={currentAdmin.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentAdmin.displayName)}&background=005fab&color=fff&size=40`}
+                    alt={currentAdmin.displayName}
+                    className="w-10 h-10 rounded-full"
+                  />
+                  <div>
+                    <Text className="font-medium">{currentAdmin.displayName}</Text>
+                    <Text className="text-sm text-gray-500">{currentAdmin.email}</Text>
+                  </div>
+                </div>
+              )}
+              
+              {/* Change Admin */}
+              {teamMembers.length > 1 && (
+                <div>
+                  <Text className="text-sm font-medium text-gray-700 mb-2">Admin ändern</Text>
+                  <Dropdown>
+                    <DropdownButton className="w-full justify-between text-sm">
+                      Admin wechseln
+                      <EllipsisVerticalIcon className="h-4 w-4" />
+                    </DropdownButton>
+                    <DropdownMenu anchor="bottom start" className="w-64">
+                      {teamMembers
+                        .filter(member => member.userId !== campaign?.userId)
+                        .map((member) => (
+                          <DropdownItem 
+                            key={member.userId}
+                            onClick={() => handleChangeAdmin(member.userId)}
+                          >
+                            <div className="flex items-center gap-2">
+                              <img
+                                src={member.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.displayName)}&background=005fab&color=fff&size=32`}
+                                alt={member.displayName}
+                                className="w-8 h-8 rounded-full"
+                              />
+                              <div>
+                                <div className="font-medium">{member.displayName}</div>
+                                <div className="text-xs text-gray-500">{member.email}</div>
+                              </div>
+                            </div>
+                          </DropdownItem>
+                        ))}
+                    </DropdownMenu>
+                  </Dropdown>
+                </div>
+              )}
+              
+              {teamMembers.length <= 1 && (
+                <Text className="text-sm text-gray-500">
+                  Keine weiteren Teammitglieder verfügbar
+                </Text>
               )}
             </div>
           </div>
