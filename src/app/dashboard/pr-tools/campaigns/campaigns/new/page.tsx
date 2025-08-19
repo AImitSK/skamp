@@ -399,8 +399,8 @@ export default function NewPRCampaignPage() {
         });
       }
       
-      // Füge die AI-Sections zu den bestehenden hinzu
-      const newSections = [...boilerplateSections, ...aiSections];
+      // Füge die AI-Sections zu den bestehenden hinzu und sortiere nach order
+      const newSections = [...boilerplateSections, ...aiSections].sort((a, b) => (a.order || 0) - (b.order || 0));
       setBoilerplateSections(newSections);
     }
     
@@ -733,49 +733,13 @@ export default function NewPRCampaignPage() {
         {currentStep === 3 && (
           <div className="bg-white rounded-lg border p-6">
             <FieldGroup>
-              {/* Verteiler mit Multi-List Support (optional) */}
-              <div className="mb-8">
-                <div className="mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Verteiler (optional)</h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Sie können Verteiler jetzt festlegen oder später beim Versand auswählen.
-                  </p>
-                </div>
-                
-                <CampaignRecipientManager
-                  selectedListIds={selectedListIds}
-                  selectedListNames={selectedListNames}
-                  manualRecipients={manualRecipients}
-                  onListsChange={(listIds, listNames, totalFromLists) => {
-                    setSelectedListIds(listIds);
-                    setSelectedListNames(listNames);
-                    setListRecipientCount(totalFromLists);
-                    // Legacy fields aktualisieren
-                    setSelectedListId(listIds[0] || '');
-                    setSelectedListName(listNames[0] || '');
-                  }}
-                  onAddManualRecipient={(recipient) => {
-                    const newRecipient = {
-                      ...recipient,
-                      id: `manual_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-                    };
-                    setManualRecipients([...manualRecipients, newRecipient]);
-                  }}
-                  onRemoveManualRecipient={(id) => {
-                    setManualRecipients(manualRecipients.filter(r => r.id !== id));
-                  }}
-                  recipientCount={listRecipientCount + manualRecipients.length}
-                  // PM-Integration (falls Kampagne bereits Verteiler-Daten hat)
-                  campaignDistributionListIds={[]} // Neu erstellte Kampagne hat keine Vordaten
-                  campaignDistributionListNames={[]}
-                  campaignRecipientCount={0}
-                />
-              </div>
-
-              {/* Erweiterte Freigabe-Einstellungen */}
+              {/* Freigabe-Einstellungen */}
               <div className="mb-6">
                 <div className="mb-4">
                   <h3 className="text-lg font-semibold text-gray-900">Freigabe-Einstellungen</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Legen Sie fest, wer die Kampagne vor dem Versand freigeben muss.
+                  </p>
                 </div>
                 <ApprovalSettings
                   value={approvalData}
@@ -797,10 +761,28 @@ export default function NewPRCampaignPage() {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Live-Vorschau</h3>
               <div className="border rounded-lg p-6 bg-gray-50">
                 <div className="prose max-w-none">
-                  {/* Titel */}
+                  {/* 1. Key Visual (oben) */}
+                  {keyVisual && (
+                    <div className="mb-6">
+                      {keyVisual.type === 'image' && keyVisual.url && (
+                        <img 
+                          src={keyVisual.url} 
+                          alt={keyVisual.alt || 'Key Visual'}
+                          className="w-full max-w-2xl mx-auto rounded-lg shadow-sm"
+                        />
+                      )}
+                      {keyVisual.caption && (
+                        <p className="text-sm text-gray-600 text-center mt-2 italic">
+                          {keyVisual.caption}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* 2. Headline */}
                   <h1 className="text-2xl font-bold mb-4">{campaignTitle || 'Titel der Pressemitteilung'}</h1>
                   
-                  {/* Hauptinhalt aus Editor */}
+                  {/* 3. Hauptinhalt/Text */}
                   {editorContent && (
                     <div 
                       className="mb-6"
@@ -808,7 +790,7 @@ export default function NewPRCampaignPage() {
                     />
                   )}
                   
-                  {/* Boilerplate Sections */}
+                  {/* 4. Textbausteine */}
                   {boilerplateSections.map((section, index) => (
                     <div key={section.id} className="mb-4">
                       {section.content && (

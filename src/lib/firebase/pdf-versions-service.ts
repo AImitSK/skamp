@@ -121,7 +121,7 @@ class PDFVersionsService {
         createdAt: serverTimestamp() as Timestamp,
         createdBy: context.userId,
         status: context.status || 'draft',
-        approvalId: context.approvalId,
+        ...(context.approvalId && { approvalId: context.approvalId }), // Nur setzen wenn nicht undefined
         downloadUrl: mockPdfUrl,
         fileName,
         fileSize: mockFileSize,
@@ -130,7 +130,9 @@ class PDFVersionsService {
           mainContent: content.mainContent,
           boilerplateSections: content.boilerplateSections,
           keyVisual: content.keyVisual,
-          createdForApproval: context.status === 'pending_customer'
+          createdForApproval: context.status === 'pending_customer',
+          // PDF-Layout Struktur: 1. KeyVisual, 2. Headline, 3. Text, 4. Textbausteine
+          layoutOrder: ['keyVisual', 'title', 'mainContent', 'boilerplateSections']
         },
         metadata: {
           wordCount,
