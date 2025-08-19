@@ -737,7 +737,7 @@ class PDFVersionsService {
       
       if (content.keyVisual?.url) {
         try {
-          // Extrahiere KeyVisual aus DOM anstatt Firebase URL zu fetchen
+          // BREAKTHROUGH SOLUTION: Verwende Proxy + FileReader Base64 (umgeht Canvas CORS-Problem)
           const imageData = await this.extractImageFromDOM(content.keyVisual.url);
           
           if (imageData) {
@@ -1097,485 +1097,96 @@ class PDFVersionsService {
   }
 
   /**
-   * EXTENSIVE DEBUG VERSION: Extrahiert KeyVisual aus bereits geladenem DOM
-   * Implementiert mehrere Fallback-Strategien um das CORS-Problem endgültig zu lösen
+   * BREAKTHROUGH SOLUTION: Proxy + FileReader Base64 (umgeht Canvas komplett!)
+   * Löst das "Tainted canvas may not be exported" Problem endgültig
    */
   private async extractImageFromDOM(imageUrl: string): Promise<{ base64: string; format: string; width: number; height: number } | null> {
-    console.log('🔍 === KEYVISUAL EXTRACTION DEBUG START ===');
+    console.log('🚀 === BREAKTHROUGH KEYVISUAL SOLUTION ===');
     console.log('🎯 Target URL:', imageUrl);
     
     try {
-      // SCHRITT 1: DOM-ANALYSE
-      console.log('📋 Schritt 1: Analysiere DOM nach KeyVisual Images...');
-      const allImages = document.querySelectorAll('img');
-      console.log(`📊 Gefunden: ${allImages.length} img-Elemente im DOM`);
+      // Verwende Proxy-Route die bekanntermaßen funktioniert
+      const proxyUrl = `/api/proxy-firebase-image?url=${encodeURIComponent(imageUrl)}`;
+      console.log('🌐 Using working proxy route:', proxyUrl);
       
-      // Logge alle gefundenen Bilder zur Analyse
-      allImages.forEach((img, index) => {
-        const htmlImg = img as HTMLImageElement;
-        console.log(`📷 Bild ${index + 1}:`, {
-          src: htmlImg.src,
-          complete: htmlImg.complete,
-          naturalWidth: htmlImg.naturalWidth,
-          naturalHeight: htmlImg.naturalHeight,
-          crossOrigin: htmlImg.crossOrigin,
-          className: htmlImg.className,
-          id: htmlImg.id,
-          parentClasses: htmlImg.parentElement?.className
-        });
+      // Lade Bild als Blob über Proxy (das funktioniert!)
+      const response = await fetch(proxyUrl);
+      if (!response.ok) {
+        console.error(`❌ Proxy request failed: ${response.status} ${response.statusText}`);
+        return null;
+      }
+      
+      const blob = await response.blob();
+      console.log('✅ Blob loaded successfully:', {
+        size: blob.size,
+        type: blob.type
       });
       
-      let targetImage: HTMLImageElement | null = null;
+      // Konvertiere Blob zu Base64 mit FileReader (NICHT Canvas!)
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          if (typeof reader.result === 'string') {
+            resolve(reader.result);
+          } else {
+            reject(new Error('FileReader result is not a string'));
+          }
+        };
+        reader.onerror = () => reject(new Error('FileReader failed'));
+        reader.readAsDataURL(blob);
+      });
       
-      // SCHRITT 2: INTELLIGENTE BILDERSUCHE
-      console.log('🔍 Schritt 2: Suche nach passendem Bild...');
+      // Bestimme Bildformat
+      let format = 'JPEG';
+      if (blob.type.includes('png')) format = 'PNG';
+      else if (blob.type.includes('webp')) format = 'WEBP';
+      else if (blob.type.includes('gif')) format = 'GIF';
       
-      // Strategie 2.1: Exakte URL-Übereinstimmung
-      for (let i = 0; i < allImages.length; i++) {
-        const img = allImages[i] as HTMLImageElement;
-        if (img.src === imageUrl) {
-          console.log('✅ Strategie 2.1: Exakte URL gefunden!', img.src);
-          targetImage = img;
+      // Ermittle Bilddimensionen (falls im DOM verfügbar)
+      let width = 800; // Default
+      let height = 600; // Default
+      
+      // Versuche Dimensionen aus DOM zu extrahieren
+      const domImages = document.querySelectorAll('img');
+      for (let i = 0; i < domImages.length; i++) {
+        const img = domImages[i] as HTMLImageElement;
+        if (img.src === imageUrl || 
+            img.src.includes(imageUrl) || 
+            imageUrl.includes(img.src)) {
+          width = img.naturalWidth || img.width || width;
+          height = img.naturalHeight || img.height || height;
+          console.log('✅ Found DOM dimensions:', { width, height });
           break;
         }
       }
       
-      // Strategie 2.2: URL-Teilübereinstimmung
-      if (!targetImage) {
-        console.log('🔄 Strategie 2.2: Suche nach URL-Teilübereinstimmung...');
-        for (let i = 0; i < allImages.length; i++) {
-          const img = allImages[i] as HTMLImageElement;
-          if (img.src.includes(imageUrl) || 
-              imageUrl.includes(img.src) ||
-              this.urlsMatch(img.src, imageUrl)) {
-            console.log('✅ Strategie 2.2: URL-Match gefunden!', {
-              imgSrc: img.src,
-              targetUrl: imageUrl,
-              match: 'partial'
-            });
-            targetImage = img;
-            break;
-          }
-        }
-      }
-      
-      // Strategie 2.3: Live Preview Spezifisch (mit spezifischen Campaign-Selektoren)
-      if (!targetImage) {
-        console.log('🔄 Strategie 2.3: Suche in Live Preview spezifischen Containern...');
-        const previewSelectors = [
-          // Campaign Detail Page Selektoren (basierend auf gefundener DOM-Struktur)
-          '.aspect-\\[16\\/9\\] img',
-          'img.w-full.h-full.object-cover',
-          'img[alt="Key Visual"]',
-          'img[alt*="Key Visual"]',
-          'img[alt*="KeyVisual"]',
-          'img[alt*="key visual"]',
-          '.rounded-lg img.object-cover',
-          // Allgemeine Preview-Selektoren
-          '.live-preview img',
-          '[data-key-visual] img', 
-          '.key-visual img',
-          '.keyvisual img',
-          '.preview-container img',
-          '.campaign-preview img',
-          '.press-release-preview img'
-        ];
-        
-        for (const selector of previewSelectors) {
-          const previewImages = document.querySelectorAll(selector);
-          console.log(`🔍 Selector "${selector}": ${previewImages.length} Bilder gefunden`);
-          
-          if (previewImages.length > 0) {
-            targetImage = previewImages[0] as HTMLImageElement;
-            console.log('✅ Strategie 2.3: Live Preview Bild gefunden!', {
-              selector,
-              src: targetImage.src,
-              complete: targetImage.complete
-            });
-            break;
-          }
-        }
-      }
-      
-      // Strategie 2.4: Firebase Storage URL Pattern
-      if (!targetImage) {
-        console.log('🔄 Strategie 2.4: Suche nach Firebase Storage Pattern...');
-        for (let i = 0; i < allImages.length; i++) {
-          const img = allImages[i] as HTMLImageElement;
-          if (img.src.includes('firebasestorage.googleapis.com') || 
-              img.src.includes('firebase') ||
-              img.src.includes('storage.googleapis.com')) {
-            console.log('✅ Strategie 2.4: Firebase Storage Bild gefunden!', img.src);
-            targetImage = img;
-            break;
-          }
-        }
-      }
-      
-      // Strategie 2.5: Letztes vollständig geladenes Bild
-      if (!targetImage) {
-        console.log('🔄 Strategie 2.5: Nehme letztes vollständig geladenes Bild...');
-        const completeImages = Array.from(allImages).filter(img => {
-          const htmlImg = img as HTMLImageElement;
-          return htmlImg.complete && htmlImg.naturalWidth > 0;
-        });
-        
-        if (completeImages.length > 0) {
-          targetImage = completeImages[completeImages.length - 1] as HTMLImageElement;
-          console.log('✅ Strategie 2.5: Letztes komplettes Bild gewählt!', {
-            src: targetImage.src,
-            dimensions: `${targetImage.naturalWidth}x${targetImage.naturalHeight}`
-          });
-        }
-      }
-      
-      // SCHRITT 3: BILD-VALIDIERUNG
-      if (!targetImage) {
-        console.error('❌ KRITISCHER FEHLER: Kein geeignetes Bild im DOM gefunden!');
-        console.log('🔍 DOM-Debug: Alle verfügbaren Selektoren:');
-        const debugSelectors = ['img', '.live-preview', '[data-key-visual]', '.key-visual'];
-        debugSelectors.forEach(sel => {
-          const elements = document.querySelectorAll(sel);
-          console.log(`   ${sel}: ${elements.length} Elemente`);
-        });
-        return null;
-      }
-      
-      console.log('✅ Schritt 3: Bild gefunden und wird validiert...', {
-        src: targetImage.src,
-        complete: targetImage.complete,
-        naturalWidth: targetImage.naturalWidth,
-        naturalHeight: targetImage.naturalHeight,
-        crossOrigin: targetImage.crossOrigin
-      });
-      
-      if (!targetImage.complete) {
-        console.warn('⚠️ Bild ist noch nicht vollständig geladen, warte 500ms...');
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        if (!targetImage.complete) {
-          console.error('❌ Bild ist nach Wartezeit immer noch nicht geladen');
-          return null;
-        }
-      }
-      
-      // SCHRITT 4: CANVAS-ERSTELLUNG UND MEHRFACH-FALLBACK
-      console.log('🎨 Schritt 4: Erstelle Canvas für Bild-Konvertierung...');
-      
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      
-      if (!ctx) {
-        console.error('❌ Canvas Context konnte nicht erstellt werden');
-        return null;
-      }
-      
-      // Canvas-Größe setzen
-      const imageWidth = targetImage.naturalWidth || targetImage.width || 800;
-      const imageHeight = targetImage.naturalHeight || targetImage.height || 600;
-      canvas.width = imageWidth;
-      canvas.height = imageHeight;
-      
-      console.log('📐 Canvas-Dimensionen:', {
-        width: canvas.width,
-        height: canvas.height,
-        naturalWidth: targetImage.naturalWidth,
-        naturalHeight: targetImage.naturalHeight
-      });
-      
-      // SCHRITT 5: MEHRFACH-STRATEGIE FÜR BILD-ZEICHNUNG
-      console.log('🖼️ Schritt 5: Versuche verschiedene Bild-Zeichnungs-Strategien...');
-      
-      let drawSuccess = false;
-      let errorDetails: any = null;
-      
-      // Strategie 5.1: Direktes Zeichnen (falls CORS bereits gesetzt oder same-origin)
-      try {
-        console.log('🔄 Strategie 5.1: Direktes Canvas-Zeichnen...');
-        ctx.drawImage(targetImage, 0, 0, canvas.width, canvas.height);
-        
-        // Test ob Canvas funktioniert (wirft Fehler bei CORS-Problem)
-        const testData = canvas.toDataURL('image/jpeg', 0.1);
-        if (testData && testData.length > 100) {
-          console.log('✅ Strategie 5.1: Direktes Zeichnen erfolgreich!');
-          drawSuccess = true;
-        }
-      } catch (directDrawError) {
-        console.warn('⚠️ Strategie 5.1 fehlgeschlagen:', directDrawError);
-        errorDetails = { strategy: '5.1', error: directDrawError };
-      }
-      
-      // Strategie 5.2: CORS-Image mit mehreren Fallbacks
-      if (!drawSuccess) {
-        console.log('🔄 Strategie 5.2: CORS-Image mit Fallbacks...');
-        
-        const corsStrategies = [
-          { crossOrigin: 'anonymous', desc: 'anonymous' },
-          { crossOrigin: 'use-credentials', desc: 'use-credentials' },
-          { crossOrigin: '', desc: 'empty string' }
-        ];
-        
-        for (const corsStrategy of corsStrategies) {
-          try {
-            console.log(`🔄 CORS-Substrategie: ${corsStrategy.desc}...`);
-            
-            const corsImage = new Image();
-            corsImage.crossOrigin = corsStrategy.crossOrigin;
-            
-            await new Promise<void>((resolve, reject) => {
-              corsImage.onload = () => {
-                console.log(`✅ CORS-Bild geladen mit ${corsStrategy.desc}`);
-                resolve();
-              };
-              corsImage.onerror = (err) => {
-                console.warn(`❌ CORS-Laden fehlgeschlagen mit ${corsStrategy.desc}:`, err);
-                reject(new Error(`CORS ${corsStrategy.desc} failed`));
-              };
-              
-              // Timeout für Bildladung
-              setTimeout(() => {
-                reject(new Error('CORS loading timeout'));
-              }, 3000);
-              
-              corsImage.src = targetImage.src;
-            });
-            
-            // Canvas löschen und neu zeichnen
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(corsImage, 0, 0, canvas.width, canvas.height);
-            
-            // Test Canvas-Funktionalität
-            const testData = canvas.toDataURL('image/jpeg', 0.1);
-            if (testData && testData.length > 100) {
-              console.log(`✅ Strategie 5.2 erfolgreich mit ${corsStrategy.desc}!`);
-              drawSuccess = true;
-              break;
-            }
-            
-          } catch (corsError) {
-            console.warn(`⚠️ CORS-Strategie ${corsStrategy.desc} fehlgeschlagen:`, corsError);
-            errorDetails = { strategy: `5.2-${corsStrategy.desc}`, error: corsError };
-          }
-        }
-      }
-      
-      // Strategie 5.3: Blob-basierter Ansatz
-      if (!drawSuccess) {
-        console.log('🔄 Strategie 5.3: Blob-basierter Ansatz...');
-        try {
-          const response = await fetch(targetImage.src, { mode: 'cors' });
-          if (!response.ok) {
-            throw new Error(`Fetch failed: ${response.status}`);
-          }
-          
-          const blob = await response.blob();
-          const blobUrl = URL.createObjectURL(blob);
-          
-          const blobImage = new Image();
-          await new Promise<void>((resolve, reject) => {
-            blobImage.onload = () => resolve();
-            blobImage.onerror = () => reject(new Error('Blob image loading failed'));
-            blobImage.src = blobUrl;
-          });
-          
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(blobImage, 0, 0, canvas.width, canvas.height);
-          
-          // Cleanup
-          URL.revokeObjectURL(blobUrl);
-          
-          const testData = canvas.toDataURL('image/jpeg', 0.1);
-          if (testData && testData.length > 100) {
-            console.log('✅ Strategie 5.3: Blob-Ansatz erfolgreich!');
-            drawSuccess = true;
-          }
-          
-        } catch (blobError) {
-          console.warn('⚠️ Strategie 5.3 (Blob) fehlgeschlagen:', blobError);
-          errorDetails = { strategy: '5.3', error: blobError };
-        }
-      }
-      
-      // Strategie 5.4: Proxy-basierter Ansatz (GAME CHANGER!)
-      if (!drawSuccess) {
-        console.log('🔄 Strategie 5.4: Proxy-basierter Ansatz (sollte CORS-Problem lösen)...');
-        try {
-          // Verwende bestehende Proxy-Route für CORS-freies Laden
-          const proxyUrl = `/api/proxy-firebase-image?url=${encodeURIComponent(targetImage.src)}`;
-          console.log('🌐 Proxy URL:', proxyUrl);
-          
-          const proxyResponse = await fetch(proxyUrl);
-          if (!proxyResponse.ok) {
-            throw new Error(`Proxy request failed: ${proxyResponse.status}`);
-          }
-          
-          const proxyBlob = await proxyResponse.blob();
-          const proxyBlobUrl = URL.createObjectURL(proxyBlob);
-          
-          const proxyImage = new Image();
-          await new Promise<void>((resolve, reject) => {
-            proxyImage.onload = () => {
-              console.log('✅ Proxy-Bild erfolgreich geladen!');
-              resolve();
-            };
-            proxyImage.onerror = (err) => {
-              console.warn('❌ Proxy-Bild laden fehlgeschlagen:', err);
-              reject(new Error('Proxy image loading failed'));
-            };
-            proxyImage.src = proxyBlobUrl;
-          });
-          
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(proxyImage, 0, 0, canvas.width, canvas.height);
-          
-          // Cleanup
-          URL.revokeObjectURL(proxyBlobUrl);
-          
-          const testData = canvas.toDataURL('image/jpeg', 0.1);
-          if (testData && testData.length > 100) {
-            console.log('🎉 Strategie 5.4: Proxy-Ansatz ERFOLGREICH! Das sollte das Problem lösen!');
-            drawSuccess = true;
-          }
-          
-        } catch (proxyError) {
-          console.warn('⚠️ Strategie 5.4 (Proxy) fehlgeschlagen:', proxyError);
-          errorDetails = { strategy: '5.4-proxy', error: proxyError };
-        }
-      }
-      
-      // Strategie 5.5: Alternative Canvas-2D Methoden
-      if (!drawSuccess) {
-        console.log('🔄 Strategie 5.5: Alternative Canvas-Methoden...');
-        try {
-          // Versuche verschiedene Canvas-2D Einstellungen
-          ctx.imageSmoothingEnabled = false;
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          
-          // Fülle Canvas mit weißem Hintergrund
-          ctx.fillStyle = 'white';
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-          
-          // Versuche erneut zu zeichnen
-          ctx.drawImage(targetImage, 0, 0, canvas.width, canvas.height);
-          
-          const testData = canvas.toDataURL('image/jpeg', 0.8);
-          if (testData && testData.length > 100) {
-            console.log('✅ Strategie 5.5: Alternative Canvas-Methode erfolgreich!');
-            drawSuccess = true;
-          }
-          
-        } catch (altError) {
-          console.warn('⚠️ Strategie 5.5 fehlgeschlagen:', altError);
-          errorDetails = { strategy: '5.5', error: altError };
-        }
-      }
-      
-      // SCHRITT 6: FINAL FALLBACK ODER BASE64-KONVERTIERUNG
-      if (!drawSuccess) {
-        console.error('❌ ALLE STRATEGIEN FEHLGESCHLAGEN!');
-        console.error('🔍 Fehler-Details:', errorDetails);
-        console.error('🔍 Bild-Details:', {
-          src: targetImage.src,
-          crossOrigin: targetImage.crossOrigin,
-          complete: targetImage.complete,
-          naturalDimensions: `${targetImage.naturalWidth}x${targetImage.naturalHeight}`,
-          displayDimensions: `${targetImage.width}x${targetImage.height}`
-        });
-        console.error('🔍 Canvas-Details:', {
-          width: canvas.width,
-          height: canvas.height,
-          context: !!ctx
-        });
-        return null;
-      }
-      
-      // SCHRITT 7: BASE64-KONVERTIERUNG
-      console.log('📄 Schritt 7: Konvertiere zu Base64...');
-      
-      let base64Data: string = '';
-      let format = 'JPEG';
-      
-      // Versuche verschiedene Qualitätseinstellungen
-      const qualityLevels = [0.85, 0.95, 0.75, 1.0];
-      
-      for (const quality of qualityLevels) {
-        try {
-          base64Data = canvas.toDataURL('image/jpeg', quality);
-          if (base64Data && base64Data.length > 100 && !base64Data.includes('data:,')) {
-            console.log(`✅ Base64-Konvertierung erfolgreich mit Qualität ${quality}!`, {
-              dataLength: base64Data.length,
-              format: 'JPEG'
-            });
-            break;
-          }
-        } catch (base64Error) {
-          console.warn(`⚠️ Base64-Konvertierung mit Qualität ${quality} fehlgeschlagen:`, base64Error);
-        }
-      }
-      
-      // Fallback: PNG versuchen
-      if (!base64Data || base64Data.length <= 100) {
-        try {
-          base64Data = canvas.toDataURL('image/png');
-          format = 'PNG';
-          console.log('✅ Fallback PNG-Konvertierung erfolgreich!', {
-            dataLength: base64Data.length,
-            format: 'PNG'
-          });
-        } catch (pngError) {
-          console.error('❌ Auch PNG-Konvertierung fehlgeschlagen:', pngError);
-          return null;
-        }
-      }
-      
-      // Format aus URL bestimmen falls möglich
-      if (imageUrl.toLowerCase().includes('.png') || base64Data.startsWith('data:image/png')) {
-        format = 'PNG';
-      } else if (imageUrl.toLowerCase().includes('.webp')) {
-        format = 'WEBP';
-      }
-      
       const result = {
-        base64: base64Data.split(',')[1], // Entferne data:image/... prefix
+        base64: base64.split(',')[1], // Entferne data:image/... prefix
         format,
-        width: canvas.width,
-        height: canvas.height
+        width,
+        height
       };
       
-      console.log('🎉 === KEYVISUAL EXTRACTION SUCCESS ===');
-      console.log('✅ Erfolgreiches Resultat:', {
+      console.log('🎉 === BREAKTHROUGH SUCCESS ===');
+      console.log('✅ KeyVisual loaded via Proxy + FileReader:', {
         format: result.format,
         dimensions: `${result.width}x${result.height}`,
         base64Length: result.base64.length,
-        base64Preview: result.base64.substring(0, 100) + '...'
+        base64Preview: result.base64.substring(0, 50) + '...'
       });
       
       return result;
       
     } catch (error) {
-      console.error('💥 === KEYVISUAL EXTRACTION FATAL ERROR ===');
-      console.error('❌ Unerwarteter Fehler:', error);
-      console.error('🔍 Error Stack:', error instanceof Error ? error.stack : 'No stack trace');
+      console.error('❌ Breakthrough solution failed:', error);
+      console.error('🔍 Error details:', error instanceof Error ? error.message : 'Unknown error');
+      
+      // Fallback to placeholder
+      console.log('⚪ Falling back to placeholder');
       return null;
     }
   }
   
-  /**
-   * Prüft ob zwei URLs das gleiche Bild referenzieren (verschiedene Parameter, gleiche Basis)
-   */
-  private urlsMatch(url1: string, url2: string): boolean {
-    try {
-      // Entferne Query-Parameter für Vergleich
-      const cleanUrl1 = url1.split('?')[0].split('#')[0];
-      const cleanUrl2 = url2.split('?')[0].split('#')[0];
-      
-      return cleanUrl1 === cleanUrl2 || 
-             cleanUrl1.includes(cleanUrl2) || 
-             cleanUrl2.includes(cleanUrl1);
-    } catch {
-      return false;
-    }
-  }
   
   /**
    * Lädt Sender-Informationen für professionellen Pressekontakt-Block
@@ -1649,15 +1260,17 @@ class PDFVersionsService {
   }
 
   /**
-   * Lädt ein Bild von einer URL und konvertiert es zu Base64 für PDF-Einbettung
+   * Lädt ein Bild von einer URL und konvertiert es zu Base64 (mit Proxy-Route)
    */
   private async loadImageAsBase64(imageUrl: string): Promise<{ base64: string; format: string } | null> {
     try {
-      // Konvertiere Firebase Storage URL zu öffentlicher URL
-      const publicUrl = this.convertToPublicUrl(imageUrl);
+      console.log('🖼️ Loading image as Base64 via proxy:', imageUrl);
       
-      // Fetch das Bild
-      const response = await fetch(publicUrl);
+      // Verwende Proxy-Route für CORS-freies Laden
+      const proxyUrl = `/api/proxy-firebase-image?url=${encodeURIComponent(imageUrl)}`;
+      
+      // Fetch das Bild über Proxy
+      const response = await fetch(proxyUrl);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -1666,27 +1279,27 @@ class PDFVersionsService {
       const blob = await response.blob();
       
       // Determine image format
-      const contentType = blob.type;
       let format = 'JPEG'; // Default
-      if (contentType.includes('png')) format = 'PNG';
-      else if (contentType.includes('jpg') || contentType.includes('jpeg')) format = 'JPEG';
-      else if (contentType.includes('gif')) format = 'GIF';
+      if (blob.type.includes('png')) format = 'PNG';
+      else if (blob.type.includes('webp')) format = 'WEBP';
+      else if (blob.type.includes('gif')) format = 'GIF';
       
-      // Convert to base64
+      // Convert to base64 with FileReader
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => {
           const base64 = reader.result as string;
+          console.log('✅ Image converted to Base64 successfully');
           resolve({
             base64: base64.split(',')[1], // Remove data:image/... prefix
             format
           });
         };
-        reader.onerror = () => reject(new Error('Fehler beim Lesen der Bilddatei'));
+        reader.onerror = () => reject(new Error('FileReader failed'));
         reader.readAsDataURL(blob);
       });
     } catch (error) {
-      console.error('Fehler beim Laden des Bildes für PDF:', error);
+      console.error('❌ Failed to load image for PDF:', error);
       return null;
     }
   }
