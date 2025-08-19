@@ -731,10 +731,8 @@ class PDFVersionsService {
       const dateWidth = pdf.getTextWidth(today);
       pdf.text(today, pageWidth - marginRight - dateWidth, 8);
       
-      yPosition = 25;
-
       // ========================================
-      // 2. KEYVISUAL MIT PROFESSIONELLER PLATZIERUNG
+      // 2. KEYVISUAL DIREKT NACH HEADER - OHNE ABSTAND!
       // ========================================
       
       if (content.keyVisual?.url) {
@@ -743,40 +741,23 @@ class PDFVersionsService {
           const imageData = await this.extractImageFromDOM(content.keyVisual.url);
           
           if (imageData) {
-            checkNewPage(90);
-            
-            // PROFESSIONELLES KeyVisual - GROß und OHNE Rahmen (Design Pattern compliant)
-            const maxImageWidth = contentWidth;
-            const maxImageHeight = 80; // Großzügige Höhe für Magazine-Look
-            
-            // KEIN Rahmen! Professionelle Magazine/Pressemitteilungen haben KEINE Rahmen um Bilder
-            // Das war das Problem: addRect() erzeugt den hässlichen schwarzen Rahmen
-            
-            // Berechne optimale Bildabmessungen mit Aspektverhältnis
-            const imageAspect = imageData.width / imageData.height;
-            let finalImageWidth = maxImageWidth;
-            let finalImageHeight = maxImageWidth / imageAspect;
-            
-            // Falls Höhe zu groß, von Höhe her limitieren
-            if (finalImageHeight > maxImageHeight) {
-              finalImageHeight = maxImageHeight;
-              finalImageWidth = finalImageHeight * imageAspect;
-            }
-            
-            // Zentriere das Bild horizontal
-            const imageX = marginLeft + (contentWidth - finalImageWidth) / 2;
-            const imageY = yPosition;
+            // PERFEKTE PLATZIERUNG: Direkt nach blauem Header (12mm), 100% Breite, 16:9 Format
+            const imageWidth = pageWidth; // 100% Breite der gesamten Seite
+            const imageHeight = imageWidth * (9/16); // Perfektes 16:9 Format
+            const imageX = 0; // Kein Margin - über gesamte Seitenbreite
+            const imageY = 12; // Direkt nach dem 12mm hohen blauen Header
             
             pdf.addImage(
               imageData.base64,
               imageData.format,
               imageX,
               imageY,
-              finalImageWidth,
-              finalImageHeight
+              imageWidth,
+              imageHeight
             );
             
-            yPosition += finalImageHeight + 10;
+            // yPosition nach dem Bild setzen - OHNE zusätzlichen Abstand
+            yPosition = imageY + imageHeight;
             
             // Professional caption styling
             if (content.keyVisual.caption) {
@@ -824,6 +805,9 @@ class PDFVersionsService {
           );
           yPosition += 20;
         }
+      } else {
+        // Falls kein KeyVisual vorhanden: yPosition direkt nach Header setzen
+        yPosition = 25;
       }
 
       // ========================================
