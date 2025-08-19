@@ -168,6 +168,15 @@ export default function NewPRCampaignPage() {
     return html;
   };
 
+  // Generiert finale Vorschau und wechselt zu Step 4
+  const handleGeneratePreview = () => {
+    console.log('🔄 Generiere finale Vorschau...');
+    const html = generateContentHtml();
+    console.log('✅ ContentHtml generiert:', html.length, 'Zeichen');
+    setFinalContentHtml(html);
+    setCurrentStep(4);
+  };
+
   // Debug Wrapper-Funktionen
   const handleKeyVisualChange = (newKeyVisual: KeyVisualData | undefined) => {
     console.log('🖼️ KeyVisual wird geändert zu:', newKeyVisual);
@@ -180,6 +189,9 @@ export default function NewPRCampaignPage() {
   };
 
   const [keywords, setKeywords] = useState<string[]>([]); // SEO Keywords
+  
+  // Finales Content HTML für Vorschau (wird bei Step-Wechsel generiert)
+  const [finalContentHtml, setFinalContentHtml] = useState<string>('');
   
   // UI State
   const [loading, setLoading] = useState(true);
@@ -511,7 +523,7 @@ export default function NewPRCampaignPage() {
       const campaignData = {
         organizationId: currentOrganization.id,
         title: campaignTitle.trim(),
-        contentHtml: generateContentHtml(), // Kombinierte HTML aus allen Komponenten
+        contentHtml: finalContentHtml || generateContentHtml(), // Verwende finale HTML oder generiere neu falls nicht vorhanden
         mainContent: editorContent || '',
         boilerplateSections: cleanedSections,
         status: 'draft' as const,
@@ -654,7 +666,13 @@ export default function NewPRCampaignPage() {
             return (
               <button
                 key={step.id}
-                onClick={() => setCurrentStep(step.id as 1 | 2 | 3 | 4)}
+                onClick={() => {
+                  if (step.id === 4) {
+                    handleGeneratePreview(); // Generiere ContentHtml bei Klick auf Vorschau
+                  } else {
+                    setCurrentStep(step.id as 1 | 2 | 3 | 4);
+                  }
+                }}
                 className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
                   isActive
                     ? 'border-[#005fab] text-[#005fab]'
@@ -937,28 +955,30 @@ export default function NewPRCampaignPage() {
                   {/* Titel */}
                   <h1 className="text-2xl font-bold mb-4">{campaignTitle || 'Titel der Pressemitteilung'}</h1>
                   
-                  {/* Hauptinhalt - Generated ContentHtml wie in Detail Page */}
+                  {/* Hauptinhalt - Fertiges ContentHtml wie in Detail Page */}
                   <div 
                     className="mb-6"
-                    dangerouslySetInnerHTML={{ __html: generateContentHtml() || '<p class="text-gray-400 italic">Noch kein Inhalt erstellt...</p>' }} 
+                    dangerouslySetInnerHTML={{ __html: finalContentHtml || '<p class="text-gray-400 italic text-center py-8">Klicken Sie auf "Weiter" oder "Vorschau" um die finale Vorschau zu generieren</p>' }} 
                   />
 
                   {/* Textbausteine sind bereits in generateContentHtml() enthalten */}
                   
                   {/* Debug Info */}
                   <div className="mt-8 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
-                    <strong>Debug Live-Vorschau (generateContentHtml):</strong><br/>
+                    <strong>Debug Live-Vorschau (finale ContentHtml):</strong><br/>
                     KeyVisual: {keyVisual ? `✅ (${keyVisual.type}, ${keyVisual.url ? 'URL✅' : 'URL❌'})` : '❌'}<br/>
                     Textbausteine: {boilerplateSections?.length || 0} ({boilerplateSections?.filter(s => s.content?.trim()).length || 0} mit Content)<br/>
                     Textbausteine Details: {boilerplateSections?.map(s => `${s.title}(isActive:${s.isActive}, hasContent:${!!s.content?.trim()})`).join(', ')}<br/>
                     EditorContent: {editorContent ? `${editorContent.length} Zeichen` : '❌'}<br/>
-                    Generated HTML: {generateContentHtml().length} Zeichen
-                    <details className="mt-2">
-                      <summary className="cursor-pointer text-blue-600">Generated HTML anzeigen</summary>
-                      <pre className="mt-2 p-2 bg-gray-100 rounded text-xs overflow-auto max-h-32">
-                        {generateContentHtml()}
-                      </pre>
-                    </details>
+                    Finale HTML: {finalContentHtml.length} Zeichen (generiert bei Step-Wechsel)
+                    {finalContentHtml && (
+                      <details className="mt-2">
+                        <summary className="cursor-pointer text-blue-600">Finale HTML anzeigen</summary>
+                        <pre className="mt-2 p-2 bg-gray-100 rounded text-xs overflow-auto max-h-32">
+                          {finalContentHtml}
+                        </pre>
+                      </details>
+                    )}
                   </div>
                   
                   {/* Datum */}
@@ -1107,7 +1127,13 @@ export default function NewPRCampaignPage() {
             {currentStep < 4 ? (
               <Button
                 type="button"
-                onClick={() => setCurrentStep((currentStep + 1) as 1 | 2 | 3 | 4)}
+                onClick={() => {
+                  if (currentStep === 3) {
+                    handleGeneratePreview(); // Generiere ContentHtml beim Wechsel von Step 3 zu 4
+                  } else {
+                    setCurrentStep((currentStep + 1) as 1 | 2 | 3 | 4);
+                  }
+                }}
                 className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
               >
                 Weiter
