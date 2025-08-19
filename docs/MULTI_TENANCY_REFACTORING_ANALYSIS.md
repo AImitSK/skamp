@@ -1,150 +1,148 @@
-# 📊 Multi-Tenancy Refactoring Analyse
+# CLAUDE.md - CeleroPress Projekt-Kontext
 
-**Status:** Analyse Phase  
-**Datum:** 15.08.2025  
-**Scope:** Legacy User ID vs. Organization ID Struktur
+## 🎯 PROJEKT-ÜBERSICHT
+CeleroPress ist eine Next.js TypeScript SaaS-Anwendung für PR/Marketing-Kampagnen mit Firebase-Backend.
 
-## 🔍 **Problem-Übersicht**
+## 🌍 SPRACHE & KOMMUNIKATION
+- **IMMER auf Deutsch antworten und kommunizieren**
+- Deutsche Commit-Messages verwenden
+- Deutsche Kommentare im Code
+- Deutsche Dokumentation
+- Englische Variablen-/Funktionsnamen (Branchenstandard)
 
-Das aktuelle System nutzt zwei verschiedene ID-Strukturen parallel:
+## 🚨 KRITISCHE EINSCHRÄNKUNGEN
+- **KEIN ADMIN SDK**: Nur Client-SDKs verwenden!
+- **KEINE externen Admin-APIs**: Alle Admin-Funktionen über bestehende Services
+- **NIEMALS funktionierende Features zerstören**: Erst prüfen, dann erweitern
 
-### **Legacy System (User ID basiert):**
-- **Storage Path:** `organizations/{userId}/media/`
-- **Firestore Path:** `companies/{userId}/`
-- **Verwendung:** Media Library, Key Visuals, Assets
-- **ID Format:** `XXHOADV6LoVQHRuebjq43u4D0ci2` (User UID)
+## 📋 ARBEITSWEISE
+1. **IMMER DEUTSCH** sprechen und dokumentieren
+2. **DOKUMENTATION FIRST**: Lies relevante Docs bevor du startest
+3. **Step-by-Step**: Ein Feature komplett fertig, dann erst das nächste
+4. **Tests**: 100% Coverage bei `src/__tests__/` - KEINE Ausnahmen
+5. **Dokumentation**: Nach jedem Feature alle Ebenen aktualisieren
 
-### **Neues System (Organization ID basiert):**
-- **Firestore Path:** `organizations/{organizationId}/companies/`
-- **Team-Struktur:** Echte Multi-Tenancy mit Team-Mitgliedschaften
-- **ID Format:** `wVa3cJ7YhYUCQcbwZLLVB6w5Xs23` (Organization UID)
+## 📚 DOKUMENTATIONS-HIERARCHIE
 
-## 📈 **Scope-Analyse**
+**4-Ebenen-System für vollständige Nachverfolgbarkeit:**
 
-**Betroffene Dateien:** 458+ Referenzen  
-**Kritische Services:** 23+ Core-Services
+1. **Implementation Plans** (`docs/implementation-plans/`)
+   - Detaillierte technische Pläne
+   - Task-Listen mit Fortschritt
+   - Technische Entscheidungen
 
-### **Hauptbetroffene Bereiche:**
+2. **Masterplans** (`docs/masterplans/`)
+   - Feature-übergreifende Strategien
+   - Meilensteine und Timelines
+   - Abhängigkeiten zwischen Features
 
-1. **Media Library System** 🎨
-   - AssetSelectorModal, MediaService, UploadService
-   - Key Visual Integration
-   - Storage Rules und Paths
+3. **Feature Docs** (`docs/features/`)
+   - Finale Ist-Dokumentation
+   - Nach FEATURE_DOCUMENTATION_TEMPLATE.md
+   - Wartbare Referenz-Dokumente
 
-2. **CRM System** 👥
-   - Companies, Contacts, Lists
-   - Campaign-Zuordnungen
+4. **README Index** (`docs/features/README.md`)
+   - Übersicht aller Features
+   - Status-Tracking
+   - Quick-Links
 
-3. **Campaign System** 📧
-   - PR-Campaigns, E-Mail-Campaigns
-   - Asset-Attachments, Key Visuals
+**Nach Feature-Änderungen:**
+1. Implementation Plan → Task abhaken
+2. Masterplan → Status updaten
+3. Feature Doc → NUR Änderungen eintragen
+4. README → Bei neuen Features ergänzen
 
-4. **Authentication & Authorization** 🔐
-   - User-Organization-Mappings
-   - Permission-Systeme
+**Dateinamen-Konvention:**
+- Masterplans: `[BEREICH]_MASTERPLAN.md`
+- Impl. Plans: `[FEATURE]_IMPLEMENTATION.md`
+- Feature Docs: `docu_[bereich]_[feature].md`
 
-## 🚨 **Risiko-Bewertung**
-
-### **Hoch-Risiko Änderungen:**
-- **Datenmigration:** Millionen von Assets und Dokumenten umziehen
-- **Storage Rules:** Firebase Security Rules komplett überarbeiten  
-- **API Breaking Changes:** Externe Integrationen betroffen
-
-### **Mittel-Risiko Änderungen:**
-- Service-Layer Refactoring
-- Frontend-Komponenten Anpassungen
-- Test-Suite Updates
-
-### **Niedrig-Risiko Änderungen:**
-- Neue Features bereits auf Organization ID
-- Dokumentation Updates
-- Legacy-Wrapper erstellen
-
-## 📋 **Refactoring-Strategie**
-
-### **Phase 1: Legacy-Wrapper (Sicher)**
-```typescript
-// Wrapper-Service für Organisation-ID Auflösung
-class OrganizationResolver {
-  static async resolveMediaOrganization(user: User): Promise<string> {
-    // Für bestehende Systeme: Legacy User ID
-    // Für neue Systeme: Organisation ID
-    return user.uid; // Bis Migration abgeschlossen
-  }
-}
+## 🎨 DESIGN SYSTEM v2.0 - STRIKT EINHALTEN
+```css
+--primary: #005fab;
+--primary-hover: #004a8c;
+--secondary: #f1f0e2;  /* Hellgelb für Status-Cards */
 ```
 
-### **Phase 2: Dual-Path Support**
-- Services unterstützen beide ID-Strukturen
-- Graduelle Migration ohne Breaking Changes
-- Feature-Flags für neue vs. alte Struktur
+**VERBOTEN:**
+- ❌ NIEMALS `shadow`, `shadow-md` verwenden
+- ❌ NIEMALS `border-b` zwischen Header/Content
+- ❌ NIEMALS `/20/solid` Icons
 
-### **Phase 3: Migration & Cleanup**
-- Daten-Migration mit Rollback-Plan
-- Legacy-Code entfernen
-- Performance-Optimierungen
+**PFLICHT:**
+- ✅ IMMER `@heroicons/react/24/outline`
+- ✅ Zurück-Buttons: `bg-gray-50 hover:bg-gray-100`
+- ✅ Status-Cards: Hellgelb `#f1f0e2`
 
-## 🎯 **Empfohlenes Vorgehen**
+## 🏗️ TECHNOLOGIE-STACK
+- **Frontend**: Next.js 14+ (App Router), TypeScript, Tailwind CSS
+- **Backend**: Firebase v9+ (Firestore, Auth, Functions)
+- **Editor**: TipTap v2 (NICHT ersetzen, nur stylen!)
+- **Email**: SendGrid v3 API
+- **AI**: Google Gemini 1.5 Flash (bereits integriert)
+- **Testing**: Jest + React Testing Library
 
-### **Kurzfristig (2025):**
-1. ✅ **Legacy-System beibehalten** für Stabilität
-2. ✅ **Wrapper-Services** für neue Features
-3. ✅ **Dokumentation** des aktuellen Zustands
+## 📁 PROJEKT-STRUKTUR
+```
+src/
+├── app/                    # Next.js App Router
+├── components/            # React Components
+│   └── ui/               # Basis-UI-Komponenten
+├── lib/                   # Business Logic & Services
+│   ├── firebase/         # Firebase Client Services
+│   └── services/         # Business Logic
+├── __tests__/            # Test-Suite (100% Coverage!)
+└── types/                # TypeScript Definitionen
 
-### **Mittelfristig (2026):**
-1. **Dual-Path Implementation** in kritischen Services
-2. **Graduelle Migration** weniger kritischer Bereiche
-3. **Extensive Testing** von Migration-Workflows
-
-### **Langfristig (2027):**
-1. **Vollständige Migration** zu Organization ID
-2. **Legacy-Code Cleanup**
-3. **Performance-Optimierungen**
-
-## 🔧 **Technische Umsetzung**
-
-### **Sofort verfügbar:**
-```typescript
-// Konfigurierbare Service-Abstraktion
-interface OrganizationConfig {
-  useNewStructure: boolean;
-  migrationMode: 'legacy' | 'dual' | 'new';
-}
-
-class MediaLibraryService {
-  async getAssets(orgConfig: OrganizationConfig) {
-    if (orgConfig.useNewStructure) {
-      return this.getAssetsFromNewStructure();
-    }
-    return this.getAssetsFromLegacyStructure();
-  }
-}
+docs/
+├── masterplans/          # Feature-übergreifende Pläne
+├── implementation-plans/ # Detaillierte Arbeitspläne
+├── features/            # Finale Feature-Dokumentationen
+├── DESIGN_PATTERNS.md   # UI/UX Standards
+└── FEATURE_DOCUMENTATION_TEMPLATE.md  # Doku-Vorlage
 ```
 
-## 📊 **Impact Assessment**
+## 🔥 FIREBASE PATTERNS
+```typescript
+// IMMER User Context für Multi-Tenancy
+const userId = user?.uid || user?.id;
+if (!userId) return;
 
-### **Key Visual Feature:**
-- ✅ **Funktioniert perfekt** mit Legacy-System
-- ✅ **Keine Änderungen nötig** für Production
-- ⚠️ **Zukünftige Migration** eingeplant
+// Firestore Pfade:
+// /users/{userId}/campaigns/{campaignId}
+// /users/{userId}/customers/{customerId}
+```
 
-### **Benutzer-Impact:**
-- ✅ **Keine Ausfallzeiten** bei Wrapper-Ansatz
-- ✅ **Transparente Migration** möglich
-- ✅ **Rollback-Fähigkeit** gegeben
+## 🧪 TEST-ANFORDERUNGEN
+- **Pfad**: `src/__tests__/`
+- **Commands**: 
+  - `npm test` - Tests ausführen
+  - `npm run test:coverage` - Coverage Report
+  - `npm run lint` - ESLint Check
+  - `npm run type-check` - TypeScript Check
+- **Coverage**: 100% oder Feature wird nicht gemerged
+- **Fokus**: Service-Tests > UI-Tests
 
-## 🏁 **Fazit**
+## ⚠️ BEKANNTE STOLPERFALLEN
+1. **Legacy User ID System**: Manche Komponenten nutzen `user.id` statt `user.uid`
+2. **CORS bei Edit-Funktionen**: Edit-Komponenten müssen spezielle Props haben
+3. **TipTap v2**: Viele Extensions brauchen custom implementations
+4. **SimpleSwitch**: Immer SimpleSwitch statt Switch verwenden
+5. **Dialog Padding**: IMMER px-6 py-4 hinzufügen
 
-**Aktueller Zustand:** ✅ **Produktionstauglich**
-- Legacy-System funktioniert zuverlässig
-- Key Visual Feature vollständig kompatibel
-- Keine dringenden Änderungen erforderlich
+## 🤔 KOMMUNIKATIONS-RICHTLINIEN
+- **Fragen sind Fragen**: Keine automatischen Aktionen bei Fragen
+- **Erst diskutieren**: Design und Ansatz besprechen vor Implementierung
+- **Explizite Aufforderung**: Code nur nach klarer Anweisung erstellen
+- **Step-by-Step**: Große Features in kleine Schritte aufteilen
 
-**Zukünftige Evolution:** 📈 **Strategisch geplant**
-- Migration-Pfad definiert
-- Risiken identifiziert und minimiert
-- Graduelle Umsetzung ohne Breaking Changes
+## 💡 BEI UNSICHERHEIT
+1. Lies relevante Dokumentation (Masterplan, Feature-Docs)
+2. Prüfe bestehende Implementierungen
+3. Frage nach, bevor du große Änderungen machst
+4. Kleine, testbare Schritte machen
+
 
 ---
-
-**Recommendation:** Legacy-System beibehalten für Stabilität. Migration als strategisches Projekt für 2026+ planen.
+**WICHTIG**: Dieser Context wird bei JEDEM Claude Code Start geladen.
+Halte ihn aktuell, aber kompakt! Detaillierte Infos gehören in die Dokumentations-Hierarchie.

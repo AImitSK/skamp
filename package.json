@@ -16,7 +16,8 @@
     "migrate:emails": "npx ts-node scripts/migrate-team-folders.ts emails",
     "migrate:all": "npx ts-node scripts/migrate-team-folders.ts all",
     "migrate:org": "npx ts-node scripts/migrate-team-folders.ts org",
-    "migrate:dry": "npx ts-node scripts/migrate-team-folders.ts all --dry-run"
+    "migrate:dry": "npx ts-node scripts/migrate-team-folders.ts all --dry-run",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.18",

@@ -43,7 +43,9 @@
       "Bash(node:*)",
       "Bash(npm install:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(npx eslint:*)",
+      "Bash(dos2unix:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
