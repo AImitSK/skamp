@@ -161,10 +161,8 @@ export default function NewPRCampaignPage() {
                          section.boilerplate?.text ||
                          '';
           
-          const title = section.customTitle ||
-                       section.boilerplate?.title ||
-                       section.boilerplate?.name ||
-                       '';
+          // Nur customTitle anzeigen, keine internen Namen
+          const title = section.customTitle || '';
           
           const hasContent = content && content.trim();
           console.log(`🔍 Section "${title}": hasContent=${hasContent}, content="${content?.substring(0, 50)}..."`);
@@ -173,7 +171,7 @@ export default function NewPRCampaignPage() {
         })
         .sort((a, b) => (a.order || 0) - (b.order || 0));
       
-      console.log('✅ Sichtbare Textbausteine:', visibleSections.length, visibleSections.map(s => s.title));
+      console.log('✅ Sichtbare Textbausteine:', visibleSections.length, visibleSections.map(s => s.customTitle || s.boilerplate?.title || s.boilerplate?.name || '(kein Titel)'));
       
       if (visibleSections.length > 0) {
         html += `<div class="boilerplate-sections mt-8">
@@ -188,10 +186,8 @@ export default function NewPRCampaignPage() {
                          section.boilerplate?.text ||
                          '';
           
-          const title = section.customTitle ||
-                       section.boilerplate?.title ||
-                       section.boilerplate?.name ||
-                       '';
+          // Nur customTitle anzeigen, keine internen Namen
+          const title = section.customTitle || '';
           
           html += `<div class="boilerplate-section mb-6 p-4 border-l-4 border-blue-500 bg-blue-50">
             ${title ? `<h3 class="text-lg font-semibold mb-2 text-blue-900">${title}</h3>` : ''}
