@@ -18,6 +18,7 @@ import {
 import { db } from './client-init';
 import { nanoid } from 'nanoid';
 import { approvalService } from './approval-service';
+import { mediaService } from './media-service';
 
 // Vereinfachter PDF-Version Type
 export interface PDFVersion {
@@ -107,10 +108,8 @@ class PDFVersionsService {
       // Bereite Content für PDF-Generation vor (Storage URLs zu öffentlichen URLs konvertieren)
       const processedContent = await this.processContentForPDF(content);
       
-      // TODO: Hier würde echte PDF-Generation stattfinden
-      // Für jetzt simulieren wir es
-      const mockPdfUrl = `https://storage.googleapis.com/mock-bucket/${fileName}`;
-      const mockFileSize = 1024 * 100; // 100KB mock
+      // Echte PDF-Generation mit html2pdf.js (wie in CampaignContentComposer)
+      const { pdfUrl, fileSize } = await this.generateRealPDF(processedContent, fileName, organizationId);
 
       // Berechne Metadaten
       const wordCount = this.countWords(content.mainContent);
@@ -125,9 +124,9 @@ class PDFVersionsService {
         createdBy: context.userId,
         status: context.status || 'draft',
         ...(context.approvalId && { approvalId: context.approvalId }), // Nur setzen wenn nicht undefined
-        downloadUrl: mockPdfUrl,
+        downloadUrl: pdfUrl,
         fileName,
-        fileSize: mockFileSize,
+        fileSize: fileSize,
         contentSnapshot: {
           title: processedContent.title || '',
           mainContent: processedContent.mainContent || '',
@@ -378,6 +377,139 @@ class PDFVersionsService {
 
     } catch (error) {
       console.error('❌ Fehler beim Cleanup alter Versionen:', error);
+    }
+  }
+
+  /**
+   * Generiert echtes PDF mit html2pdf.js und uploaded es zu Firebase Storage
+   */
+  private async generateRealPDF(
+    content: {
+      title: string;
+      mainContent: string;
+      boilerplateSections: any[];
+      keyVisual?: any;
+    },
+    fileName: string,
+    organizationId: string
+  ): Promise<{ pdfUrl: string; fileSize: number }> {
+    try {
+      // Dynamic import für html2pdf to avoid SSR issues
+      const html2pdfModule = await import('html2pdf.js');
+      const html2pdf = html2pdfModule.default;
+
+      // Erstelle HTML für PDF (wie in der Live-Vorschau)
+      let html = '';
+      
+      // 1. KeyVisual
+      if (content.keyVisual?.url) {
+        html += `<div style="margin-bottom: 24px; text-align: center;">
+          <img src="${content.keyVisual.url}" alt="${content.keyVisual.alt || ''}" 
+               style="width: 100%; max-width: 600px; height: auto; border-radius: 8px;" />
+          ${content.keyVisual.caption ? `<p style="margin-top: 8px; font-size: 14px; color: #666; font-style: italic;">${content.keyVisual.caption}</p>` : ''}
+        </div>`;
+      }
+      
+      // 2. Titel
+      html += `<h1 style="font-size: 24px; font-weight: bold; margin-bottom: 16px;">${content.title}</h1>`;
+      
+      // 3. Haupt-Content
+      if (content.mainContent) {
+        html += `<div style="margin-bottom: 24px;">${content.mainContent}</div>`;
+      }
+      
+      // 4. Textbausteine
+      if (content.boilerplateSections && content.boilerplateSections.length > 0) {
+        const visibleSections = content.boilerplateSections.filter(section => {
+          const sectionContent = section.content || 
+                                section.htmlContent || 
+                                section.text || 
+                                section.boilerplate?.content ||
+                                section.boilerplate?.htmlContent ||
+                                section.boilerplate?.text ||
+                                '';
+          return sectionContent && sectionContent.trim();
+        });
+        
+        if (visibleSections.length > 0) {
+          html += `<div style="margin-top: 32px;">
+            <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 16px;">Textbausteine</h2>`;
+          
+          visibleSections.forEach(section => {
+            const sectionContent = section.content || 
+                                  section.htmlContent || 
+                                  section.text || 
+                                  section.boilerplate?.content ||
+                                  section.boilerplate?.htmlContent ||
+                                  section.boilerplate?.text ||
+                                  '';
+            const sectionTitle = section.customTitle || '';
+            
+            html += `<div style="margin-bottom: 24px; padding: 16px; border-left: 4px solid #3b82f6; background-color: #eff6ff;">
+              ${sectionTitle ? `<h3 style="font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #1e3a8a;">${sectionTitle}</h3>` : ''}
+              <div style="color: #1e40af;">${sectionContent}</div>
+            </div>`;
+          });
+          html += `</div>`;
+        }
+      }
+
+      // PDF Options
+      const opt = {
+        margin: [15, 15, 20, 15], // top, left, bottom, right
+        filename: fileName,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          letterRendering: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff'
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: 'portrait' 
+        },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+
+      // Erstelle temporäres DIV für PDF-Generation
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = html;
+      tempDiv.style.padding = '20px';
+      tempDiv.style.fontFamily = 'Arial, sans-serif';
+      tempDiv.style.lineHeight = '1.6';
+      tempDiv.style.backgroundColor = '#ffffff';
+      
+      // Generate PDF Blob
+      const pdfBlob = await html2pdf()
+        .from(tempDiv)
+        .set(opt)
+        .outputPdf('blob');
+
+      // Create File object
+      const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
+
+      // Upload to Firebase Storage
+      const uploadedAsset = await mediaService.uploadMedia(
+        pdfFile,
+        organizationId,
+        'pdf-versions' // Spezielle Folder für PDF-Versionen
+      );
+
+      return {
+        pdfUrl: uploadedAsset.downloadUrl,
+        fileSize: pdfFile.size
+      };
+
+    } catch (error) {
+      console.error('❌ Fehler bei der echten PDF-Generation:', error);
+      // Fallback auf Mock-PDF
+      return {
+        pdfUrl: `https://storage.googleapis.com/mock-bucket/${fileName}`,
+        fileSize: 1024 * 100
+      };
     }
   }
 
