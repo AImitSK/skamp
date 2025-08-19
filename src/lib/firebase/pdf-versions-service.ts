@@ -88,6 +88,7 @@ class PDFVersionsService {
       mainContent: string;
       boilerplateSections: any[];
       keyVisual?: any;
+      clientName?: string;
     },
     context: {
       userId: string;
@@ -387,6 +388,7 @@ class PDFVersionsService {
       mainContent: string;
       boilerplateSections: any[];
       keyVisual?: any;
+      clientName?: string;
     },
     fileName: string,
     organizationId: string
@@ -997,7 +999,7 @@ class PDFVersionsService {
         pdf.text(timestamp, pageWidth - marginRight - timestampWidth, pageHeight - 12);
         
         // Corporate footer (center) - Echter Firmenname aus Campaign-Daten
-        const footerText = campaignData.clientName || 'Unternehmen'; // Echter Name aus Step 1
+        const footerText = content.clientName || 'Unternehmen'; // Echter Name aus Step 1
         const footerWidth = pdf.getTextWidth(footerText);
         pdf.text(footerText, (pageWidth - footerWidth) / 2, pageHeight - 12);
       }

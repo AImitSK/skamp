@@ -401,7 +401,8 @@ export default function EditPRCampaignPage() {
           title: campaignTitle,
           mainContent: editorContent,
           boilerplateSections,
-          keyVisual
+          keyVisual,
+          clientName: selectedCompanyName
         },
         {
           userId: user!.uid,
