@@ -381,7 +381,7 @@ class PDFVersionsService {
   }
 
   /**
-   * Generiert text-basiertes PDF mit jsPDF und uploaded es zu Firebase Storage
+   * Generiert professionelles Pressemitteilungs-PDF im Corporate Design
    */
   private async generateRealPDF(
     content: {
@@ -405,105 +405,274 @@ class PDFVersionsService {
         format: 'a4'
       });
 
-      // Setup fonts and margins
+      // Professional Layout Constants
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 20;
-      const maxWidth = pageWidth - (margin * 2);
-      let yPosition = margin;
+      const marginLeft = 25;
+      const marginRight = 25;
+      const marginTop = 20;
+      const marginBottom = 25;
+      const contentWidth = pageWidth - marginLeft - marginRight;
+      let yPosition = marginTop;
 
-      // Helper function to add text with word wrap
-      const addTextWithWrap = (text: string, x: number, y: number, maxWidth: number, fontSize: number = 11): number => {
-        pdf.setFontSize(fontSize);
-        const lines = pdf.splitTextToSize(text, maxWidth);
-        pdf.text(lines, x, y);
-        return y + (lines.length * (fontSize * 0.352778)); // Convert pt to mm
+      // Corporate Colors (Professional blue-grey palette)
+      const colors = {
+        primary: [20, 36, 72],      // Dunkelblau für Headlines
+        secondary: [51, 65, 85],    // Grau für Subheadlines
+        body: [30, 41, 59],         // Dunkelgrau für Body Text
+        accent: [59, 130, 246],     // Accent Blue
+        light: [148, 163, 184],     // Hellgrau für Separatoren
+        background: [248, 250, 252] // Sehr helles Grau für Boxen
       };
 
-      // Helper function to strip HTML tags
+      // Typography Scale (Professional hierarchy)
+      const typography = {
+        headline: 22,        // Hauptüberschrift
+        subheading: 16,      // Unterüberschrift
+        body: 11,            // Fließtext
+        caption: 9,          // Bildunterschriften
+        footer: 8,           // Fußzeilen
+        boilerplate: 10      // Textbausteine
+      };
+
+      // Helper Functions
+      const addLine = (x1: number, y1: number, x2: number, y2: number, color: number[] = colors.light): void => {
+        pdf.setDrawColor(...color);
+        pdf.setLineWidth(0.3);
+        pdf.line(x1, y1, x2, y2);
+      };
+
+      const addRect = (x: number, y: number, width: number, height: number, fillColor?: number[]): void => {
+        if (fillColor) {
+          pdf.setFillColor(...fillColor);
+          pdf.rect(x, y, width, height, 'F');
+        } else {
+          pdf.setDrawColor(...colors.light);
+          pdf.setLineWidth(0.2);
+          pdf.rect(x, y, width, height, 'S');
+        }
+      };
+
+      const addTextWithWrap = (
+        text: string, 
+        x: number, 
+        y: number, 
+        maxWidth: number, 
+        fontSize: number = typography.body,
+        color: number[] = colors.body,
+        style: string = 'normal',
+        align: string = 'left'
+      ): number => {
+        pdf.setFontSize(fontSize);
+        pdf.setTextColor(...color);
+        pdf.setFont('helvetica', style);
+        
+        const lines = pdf.splitTextToSize(text, maxWidth);
+        const lineHeight = fontSize * 0.4;
+        
+        lines.forEach((line: string, index: number) => {
+          const currentY = y + (index * lineHeight);
+          if (align === 'center') {
+            pdf.text(line, x + maxWidth / 2, currentY, { align: 'center' });
+          } else {
+            pdf.text(line, x, currentY);
+          }
+        });
+        
+        return y + (lines.length * lineHeight);
+      };
+
       const stripHtml = (html: string): string => {
         return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
       };
 
-      // Helper function to check if new page is needed
       const checkNewPage = (requiredHeight: number): void => {
-        if (yPosition + requiredHeight > pageHeight - margin) {
+        if (yPosition + requiredHeight > pageHeight - marginBottom) {
           pdf.addPage();
-          yPosition = margin;
+          yPosition = marginTop;
         }
       };
 
-      // 1. Add KeyVisual (if available)
+      // ========================================
+      // 1. CORPORATE HEADER
+      // ========================================
+      
+      // Header background strip
+      addRect(0, 0, pageWidth, 12, colors.primary);
+      
+      // Press Release Badge
+      pdf.setFontSize(10);
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('PRESSEMITTEILUNG', marginLeft, 8);
+      
+      // Date in top right
+      const today = new Date().toLocaleDateString('de-DE', {
+        day: '2-digit',
+        month: '2-digit', 
+        year: 'numeric'
+      });
+      const dateWidth = pdf.getTextWidth(today);
+      pdf.text(today, pageWidth - marginRight - dateWidth, 8);
+      
+      yPosition = 25;
+
+      // ========================================
+      // 2. KEYVISUAL MIT PROFESSIONELLER PLATZIERUNG
+      // ========================================
+      
       if (content.keyVisual?.url) {
         try {
-          const imageData = await this.loadImageAsBase64(content.keyVisual.url);
+          // Extrahiere KeyVisual aus DOM anstatt Firebase URL zu fetchen
+          const imageData = await this.extractImageFromDOM(content.keyVisual.url);
+          
           if (imageData) {
-            checkNewPage(80); // Reserve space for image
+            checkNewPage(90);
             
-            // Calculate image dimensions (max width 150mm, maintain aspect ratio)
-            const maxImageWidth = 150;
-            const maxImageHeight = 80;
+            // Professional image placement - full width with subtle border
+            const imageWidth = contentWidth;
+            const imageHeight = 70; // Fixed height für consistent layout
             
-            // Add image to PDF
+            // Subtle shadow effect (nur Rahmen, kein Shadow wie im Design Pattern)
+            addRect(marginLeft - 1, yPosition - 1, imageWidth + 2, imageHeight + 2, [0, 0, 0]);
+            addRect(marginLeft, yPosition, imageWidth, imageHeight, [255, 255, 255]);
+            
+            // Add image centered in the frame
+            const imageAspect = imageData.width / imageData.height;
+            let finalImageWidth = imageWidth - 4;
+            let finalImageHeight = imageHeight - 4;
+            
+            // Maintain aspect ratio
+            if (imageAspect > finalImageWidth / finalImageHeight) {
+              finalImageHeight = finalImageWidth / imageAspect;
+            } else {
+              finalImageWidth = finalImageHeight * imageAspect;
+            }
+            
+            const imageX = marginLeft + 2 + (imageWidth - 4 - finalImageWidth) / 2;
+            const imageY = yPosition + 2 + (imageHeight - 4 - finalImageHeight) / 2;
+            
             pdf.addImage(
               imageData.base64,
               imageData.format,
-              margin + (maxWidth - maxImageWidth) / 2, // Center horizontally
-              yPosition,
-              maxImageWidth,
-              maxImageHeight
+              imageX,
+              imageY,
+              finalImageWidth,
+              finalImageHeight
             );
-            yPosition += maxImageHeight + 5;
             
-            // Add caption if available
+            yPosition += imageHeight + 5;
+            
+            // Professional caption styling
             if (content.keyVisual.caption) {
-              pdf.setFontSize(9);
-              pdf.setTextColor(100, 100, 100);
-              yPosition = addTextWithWrap(content.keyVisual.caption, margin, yPosition, maxWidth, 9);
+              yPosition = addTextWithWrap(
+                content.keyVisual.caption, 
+                marginLeft, 
+                yPosition, 
+                contentWidth, 
+                typography.caption, 
+                colors.secondary, 
+                'italic'
+              );
             }
-            yPosition += 10;
+            yPosition += 15;
+            
           } else {
-            // Fallback: Add placeholder text
-            checkNewPage(20);
-            pdf.setFontSize(10);
-            pdf.setTextColor(100, 100, 100);
-            pdf.text('[KeyVisual: ' + (content.keyVisual.alt || 'Bild') + ']', margin, yPosition);
-            yPosition += 10;
-            
-            if (content.keyVisual.caption) {
-              pdf.setFontSize(9);
-              yPosition = addTextWithWrap(content.keyVisual.caption, margin, yPosition, maxWidth, 9);
-            }
-            yPosition += 10;
+            // Professional placeholder für KeyVisual
+            checkNewPage(25);
+            addRect(marginLeft, yPosition, contentWidth, 20, colors.background);
+            yPosition = addTextWithWrap(
+              `[KeyVisual: ${content.keyVisual.alt || 'Pressebild wird nachgereicht'}]`,
+              marginLeft + 5,
+              yPosition + 7,
+              contentWidth - 10,
+              typography.caption,
+              colors.secondary,
+              'italic',
+              'center'
+            );
+            yPosition += 25;
           }
         } catch (error) {
-          console.warn('KeyVisual konnte nicht hinzugefügt werden:', error);
-          // Fallback: Add placeholder text
+          console.warn('KeyVisual konnte nicht extrahiert werden:', error);
+          // Elegant fallback
           checkNewPage(20);
-          pdf.setFontSize(10);
-          pdf.setTextColor(100, 100, 100);
-          pdf.text('[KeyVisual: ' + (content.keyVisual.alt || 'Bild') + ']', margin, yPosition);
-          yPosition += 15;
+          yPosition = addTextWithWrap(
+            '[Pressebild wird separat bereitgestellt]',
+            marginLeft,
+            yPosition,
+            contentWidth,
+            typography.caption,
+            colors.secondary,
+            'italic',
+            'center'
+          );
+          yPosition += 20;
         }
       }
 
-      // 2. Add Title
-      checkNewPage(15);
-      pdf.setTextColor(0, 0, 0);
-      pdf.setFont('helvetica', 'bold');
-      yPosition = addTextWithWrap(content.title, margin, yPosition, maxWidth, 16);
-      yPosition += 10;
+      // ========================================
+      // 3. HEADLINE MIT CORPORATE TYPOGRAPHY
+      // ========================================
+      
+      checkNewPage(30);
+      
+      // Subtle separator line above headline
+      addLine(marginLeft, yPosition, marginLeft + contentWidth, yPosition, colors.accent);
+      yPosition += 8;
+      
+      // Main headline with professional spacing
+      yPosition = addTextWithWrap(
+        content.title,
+        marginLeft,
+        yPosition,
+        contentWidth,
+        typography.headline,
+        colors.primary,
+        'bold'
+      );
+      
+      yPosition += 15;
+      
+      // Subtle separator line below headline
+      addLine(marginLeft, yPosition, marginLeft + (contentWidth * 0.3), yPosition, colors.accent);
+      yPosition += 20;
 
-      // 3. Add Main Content
+      // ========================================
+      // 4. PROFESSIONAL BODY TEXT
+      // ========================================
+      
       if (content.mainContent && content.mainContent.trim()) {
-        checkNewPage(20);
-        pdf.setFont('helvetica', 'normal');
+        checkNewPage(30);
+        
         const cleanMainContent = stripHtml(content.mainContent);
-        yPosition = addTextWithWrap(cleanMainContent, margin, yPosition, maxWidth, 11);
-        yPosition += 10;
+        
+        // Professional paragraph spacing
+        const paragraphs = cleanMainContent.split('\n\n').filter(p => p.trim());
+        
+        for (const paragraph of paragraphs) {
+          if (paragraph.trim()) {
+            checkNewPage(20);
+            yPosition = addTextWithWrap(
+              paragraph.trim(),
+              marginLeft,
+              yPosition,
+              contentWidth,
+              typography.body,
+              colors.body,
+              'normal'
+            );
+            yPosition += 8; // Professional paragraph spacing
+          }
+        }
+        
+        yPosition += 15; // Extra space before next section
       }
 
-      // 4. Add Textbausteine
+      // ========================================
+      // 5. TEXTBAUSTEINE ALS PROFESSIONAL FOOTER BOXES
+      // ========================================
+      
       if (content.boilerplateSections && content.boilerplateSections.length > 0) {
         const visibleSections = content.boilerplateSections.filter(section => {
           const sectionContent = section.content || 
@@ -517,14 +686,25 @@ class PDFVersionsService {
         });
 
         if (visibleSections.length > 0) {
-          checkNewPage(25);
+          checkNewPage(40);
           
-          // Textbausteine Header
-          pdf.setFont('helvetica', 'bold');
-          yPosition = addTextWithWrap('Textbausteine', margin, yPosition, maxWidth, 14);
-          yPosition += 8;
+          // Section separator
+          addLine(marginLeft, yPosition, marginLeft + contentWidth, yPosition, colors.accent);
+          yPosition += 10;
+          
+          // Section header
+          yPosition = addTextWithWrap(
+            'Über das Unternehmen',
+            marginLeft,
+            yPosition,
+            contentWidth,
+            typography.subheading,
+            colors.primary,
+            'bold'
+          );
+          yPosition += 12;
 
-          // Add each section
+          // Professional boxes für each Textbaustein
           visibleSections.forEach((section, index) => {
             const sectionContent = section.content || 
                                   section.htmlContent || 
@@ -534,43 +714,156 @@ class PDFVersionsService {
                                   section.boilerplate?.text ||
                                   '';
             const sectionTitle = section.customTitle || '';
-
             const cleanContent = stripHtml(sectionContent);
-            const estimatedHeight = Math.max(20, (cleanContent.length / 80) * 5); // Rough estimate
-            
-            checkNewPage(estimatedHeight);
 
-            // Section Title
+            // Estimate box height
+            const estimatedLines = Math.max(3, Math.ceil(cleanContent.length / 80));
+            const boxHeight = estimatedLines * 4 + 15;
+            
+            checkNewPage(boxHeight + 10);
+
+            // Professional box with subtle background
+            const boxY = yPosition;
+            addRect(marginLeft, boxY, contentWidth, boxHeight, colors.background);
+            addRect(marginLeft, boxY, contentWidth, boxHeight); // Border
+            
+            let currentY = boxY + 8;
+
+            // Section title as bold header
             if (sectionTitle) {
-              pdf.setFont('helvetica', 'bold');
-              pdf.setTextColor(30, 58, 138); // Blue color
-              yPosition = addTextWithWrap(sectionTitle, margin, yPosition, maxWidth, 12);
-              yPosition += 3;
+              currentY = addTextWithWrap(
+                sectionTitle,
+                marginLeft + 8,
+                currentY,
+                contentWidth - 16,
+                typography.boilerplate + 1,
+                colors.primary,
+                'bold'
+              );
+              currentY += 5;
             }
 
-            // Section Content
-            pdf.setFont('helvetica', 'normal');
-            pdf.setTextColor(30, 64, 175); // Slightly darker blue
-            yPosition = addTextWithWrap(cleanContent, margin, yPosition, maxWidth, 10);
-            yPosition += 8;
+            // Section content with professional formatting
+            addTextWithWrap(
+              cleanContent,
+              marginLeft + 8,
+              currentY,
+              contentWidth - 16,
+              typography.boilerplate,
+              colors.body,
+              'normal'
+            );
 
-            // Reset colors
-            pdf.setTextColor(0, 0, 0);
+            yPosition += boxHeight + 8;
           });
         }
       }
 
-      // Add footer with generation info
+      // ========================================
+      // 6. SENDER BLOCK (PROFESSIONAL PRESS CONTACT)
+      // ========================================
+      
+      // Load customer/organization data for sender block
+      const senderInfo = await this.getSenderInformation(organizationId);
+      
+      checkNewPage(50);
+      
+      // Separator before press contact
+      yPosition += 10;
+      addLine(marginLeft, yPosition, marginLeft + contentWidth, yPosition, colors.primary);
+      yPosition += 12;
+      
+      // Press contact header
+      yPosition = addTextWithWrap(
+        'Pressekontakt',
+        marginLeft,
+        yPosition,
+        contentWidth,
+        typography.subheading,
+        colors.primary,
+        'bold'
+      );
+      yPosition += 10;
+      
+      // Create professional sender box
+      const senderBoxHeight = 35;
+      addRect(marginLeft, yPosition, contentWidth, senderBoxHeight, colors.background);
+      addRect(marginLeft, yPosition, contentWidth, senderBoxHeight);
+      
+      let senderY = yPosition + 8;
+      
+      // Company name
+      if (senderInfo.companyName) {
+        senderY = addTextWithWrap(
+          senderInfo.companyName,
+          marginLeft + 8,
+          senderY,
+          contentWidth - 16,
+          typography.body + 1,
+          colors.primary,
+          'bold'
+        );
+        senderY += 3;
+      }
+      
+      // Contact person
+      if (senderInfo.contactPerson) {
+        senderY = addTextWithWrap(
+          senderInfo.contactPerson,
+          marginLeft + 8,
+          senderY,
+          contentWidth - 16,
+          typography.body,
+          colors.body,
+          'normal'
+        );
+        senderY += 3;
+      }
+      
+      // Phone and Email on same line
+      if (senderInfo.phone || senderInfo.email) {
+        const contactLine = [senderInfo.phone, senderInfo.email].filter(Boolean).join(' | ');
+        addTextWithWrap(
+          contactLine,
+          marginLeft + 8,
+          senderY,
+          contentWidth - 16,
+          typography.body,
+          colors.secondary,
+          'normal'
+        );
+      }
+      
+      yPosition += senderBoxHeight + 15;
+
+      // ========================================
+      // 7. PROFESSIONAL FOOTER
+      // ========================================
+      
       const totalPages = pdf.getNumberOfPages();
       for (let i = 1; i <= totalPages; i++) {
         pdf.setPage(i);
-        pdf.setFontSize(8);
-        pdf.setTextColor(100, 100, 100);
-        pdf.text(
-          `Seite ${i} von ${totalPages} - Erstellt am ${new Date().toLocaleDateString('de-DE')}`,
-          margin,
-          pageHeight - 10
-        );
+        
+        // Footer line
+        addLine(marginLeft, pageHeight - 20, pageWidth - marginRight, pageHeight - 20, colors.light);
+        
+        // Page number (left)
+        pdf.setFontSize(typography.footer);
+        pdf.setTextColor(...colors.light);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(`Seite ${i} von ${totalPages}`, marginLeft, pageHeight - 12);
+        
+        // Generation timestamp (right)
+        const timestamp = `Erstellt am ${today}`;
+        const timestampWidth = pdf.getTextWidth(timestamp);
+        pdf.text(timestamp, pageWidth - marginRight - timestampWidth, pageHeight - 12);
+        
+        // Corporate footer (center)
+        if (senderInfo.companyName) {
+          const footerText = senderInfo.companyName;
+          const footerWidth = pdf.getTextWidth(footerText);
+          pdf.text(footerText, (pageWidth - footerWidth) / 2, pageHeight - 12);
+        }
       }
 
       // Generate PDF Blob
@@ -583,7 +876,7 @@ class PDFVersionsService {
       const uploadedAsset = await mediaService.uploadMedia(
         pdfFile,
         organizationId,
-        'pdf-versions' // Spezielle Folder für PDF-Versionen
+        'pdf-versions'
       );
 
       return {
@@ -592,11 +885,170 @@ class PDFVersionsService {
       };
 
     } catch (error) {
-      console.error('❌ Fehler bei der Text-basierten PDF-Generation:', error);
+      console.error('❌ Fehler bei der professionellen PDF-Generation:', error);
       // Fallback auf Mock-PDF
       return {
         pdfUrl: `https://storage.googleapis.com/mock-bucket/${fileName}`,
         fileSize: 1024 * 100
+      };
+    }
+  }
+
+  /**
+   * Extrahiert KeyVisual aus bereits geladenem DOM anstatt Firebase URL zu fetchen
+   */
+  private async extractImageFromDOM(imageUrl: string): Promise<{ base64: string; format: string; width: number; height: number } | null> {
+    try {
+      // Suche nach dem bereits geladenen Bild im DOM
+      const images = document.querySelectorAll('img');
+      let targetImage: HTMLImageElement | null = null;
+      
+      // Finde das Bild mit der passenden URL (auch verkürzte/transformierte URLs)
+      for (const img of images) {
+        if (img.src === imageUrl || 
+            img.src.includes(imageUrl) || 
+            imageUrl.includes(img.src) ||
+            this.urlsMatch(img.src, imageUrl)) {
+          targetImage = img;
+          break;
+        }
+      }
+      
+      // Fallback: Suche in Live Preview Elements
+      if (!targetImage) {
+        const previewImages = document.querySelectorAll('.live-preview img, [data-key-visual] img, .key-visual img');
+        if (previewImages.length > 0) {
+          targetImage = previewImages[0] as HTMLImageElement;
+        }
+      }
+      
+      if (!targetImage || !targetImage.complete) {
+        console.warn('KeyVisual nicht im DOM gefunden oder nicht vollständig geladen');
+        return null;
+      }
+      
+      // Erstelle Canvas für Bild-Konvertierung
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        console.error('Canvas Context konnte nicht erstellt werden');
+        return null;
+      }
+      
+      // Setze Canvas-Größe auf Bild-Größe
+      canvas.width = targetImage.naturalWidth || targetImage.width;
+      canvas.height = targetImage.naturalHeight || targetImage.height;
+      
+      // Zeichne Bild auf Canvas
+      ctx.drawImage(targetImage, 0, 0);
+      
+      // Konvertiere zu Base64
+      const base64Data = canvas.toDataURL('image/jpeg', 0.85); // 85% Qualität für gute Balance
+      
+      // Bestimme Format
+      let format = 'JPEG';
+      if (imageUrl.toLowerCase().includes('.png') || base64Data.startsWith('data:image/png')) {
+        format = 'PNG';
+      }
+      
+      return {
+        base64: base64Data.split(',')[1], // Entferne data:image/... prefix
+        format,
+        width: canvas.width,
+        height: canvas.height
+      };
+      
+    } catch (error) {
+      console.error('Fehler beim Extrahieren des KeyVisuals aus DOM:', error);
+      return null;
+    }
+  }
+  
+  /**
+   * Prüft ob zwei URLs das gleiche Bild referenzieren (verschiedene Parameter, gleiche Basis)
+   */
+  private urlsMatch(url1: string, url2: string): boolean {
+    try {
+      // Entferne Query-Parameter für Vergleich
+      const cleanUrl1 = url1.split('?')[0].split('#')[0];
+      const cleanUrl2 = url2.split('?')[0].split('#')[0];
+      
+      return cleanUrl1 === cleanUrl2 || 
+             cleanUrl1.includes(cleanUrl2) || 
+             cleanUrl2.includes(cleanUrl1);
+    } catch {
+      return false;
+    }
+  }
+  
+  /**
+   * Lädt Sender-Informationen für professionellen Pressekontakt-Block
+   */
+  private async getSenderInformation(organizationId: string): Promise<{
+    companyName: string;
+    contactPerson: string;
+    phone: string;
+    email: string;
+    address?: string;
+  }> {
+    try {
+      // Standard-Fallback für Demo
+      const defaultSender = {
+        companyName: 'Unternehmen',
+        contactPerson: 'Pressestelle',
+        phone: 'Tel: +49 (0) 123 456-789',
+        email: 'presse@unternehmen.de'
+      };
+      
+      // Versuche Organization-Daten aus Firestore zu laden
+      const orgDoc = await getDoc(doc(db, 'organizations', organizationId));
+      
+      if (orgDoc.exists()) {
+        const orgData = orgDoc.data();
+        
+        return {
+          companyName: orgData.name || orgData.companyName || defaultSender.companyName,
+          contactPerson: orgData.contactPerson || orgData.pressContact || defaultSender.contactPerson,
+          phone: orgData.phone || orgData.phoneNumber || defaultSender.phone,
+          email: orgData.email || orgData.contactEmail || orgData.pressEmail || defaultSender.email,
+          address: orgData.address || orgData.businessAddress
+        };
+      }
+      
+      // Versuche Customer-Daten als Fallback
+      const customerQuery = query(
+        collection(db, 'customers'),
+        where('organizationId', '==', organizationId),
+        limit(1)
+      );
+      
+      const customerSnapshot = await getDocs(customerQuery);
+      
+      if (!customerSnapshot.empty) {
+        const customerData = customerSnapshot.docs[0].data();
+        
+        return {
+          companyName: customerData.companyName || customerData.name || defaultSender.companyName,
+          contactPerson: customerData.contactName || customerData.firstName + ' ' + customerData.lastName || defaultSender.contactPerson,
+          phone: customerData.phone || defaultSender.phone,
+          email: customerData.email || defaultSender.email,
+          address: customerData.address
+        };
+      }
+      
+      // Fallback auf Default-Werte
+      return defaultSender;
+      
+    } catch (error) {
+      console.error('❌ Fehler beim Laden der Sender-Informationen:', error);
+      
+      // Emergency fallback
+      return {
+        companyName: 'Unternehmen',
+        contactPerson: 'Pressestelle', 
+        phone: 'Tel: +49 (0) 123 456-789',
+        email: 'presse@unternehmen.de'
       };
     }
   }
