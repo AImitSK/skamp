@@ -594,17 +594,11 @@ class PDFVersionsService {
                 segments.push({ text: '\n', style: 'normal' });
                 break;
               case 'span':
-                // Prüfe auf spezielle Span-Klassen
-                const spanClass = element.className?.toLowerCase() || '';
-                if (spanClass.includes('highlight') || spanClass.includes('important')) {
-                  segments.push({ text: element.textContent || '', style: 'bold' });
-                } else if (spanClass.includes('quote') || spanClass.includes('citation')) {
-                  segments.push({ text: element.textContent || '', style: 'italic' });
-                } else {
-                  // Normale Span-Verarbeitung
-                  for (let child = element.firstChild; child; child = child.nextSibling) {
-                    processNode(child);
-                  }
+              case 'a':
+                // Alle Spans und Links: Verarbeite Kinder rekursiv (ignoriere Styling)
+                // Das ist wichtig für <span style="color: rgb(0, 0, 0)">Text</span>
+                for (let child = element.firstChild; child; child = child.nextSibling) {
+                  processNode(child);
                 }
                 break;
               default:
