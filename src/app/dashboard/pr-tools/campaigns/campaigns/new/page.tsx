@@ -161,12 +161,10 @@ export default function NewPRCampaignPage() {
                          section.boilerplate?.text ||
                          '';
           
-          const title = section.title || 
-                       section.name || 
-                       section.customTitle ||
+          const title = section.customTitle ||
                        section.boilerplate?.title ||
                        section.boilerplate?.name ||
-                       'Textbaustein';
+                       '';
           
           const hasContent = content && content.trim();
           console.log(`🔍 Section "${title}": hasContent=${hasContent}, content="${content?.substring(0, 50)}..."`);
@@ -190,15 +188,13 @@ export default function NewPRCampaignPage() {
                          section.boilerplate?.text ||
                          '';
           
-          const title = section.title || 
-                       section.name || 
-                       section.customTitle ||
+          const title = section.customTitle ||
                        section.boilerplate?.title ||
                        section.boilerplate?.name ||
-                       'Textbaustein';
+                       '';
           
           html += `<div class="boilerplate-section mb-6 p-4 border-l-4 border-blue-500 bg-blue-50">
-            <h3 class="text-lg font-semibold mb-2 text-blue-900">${title}</h3>
+            ${title ? `<h3 class="text-lg font-semibold mb-2 text-blue-900">${title}</h3>` : ''}
             <div class="boilerplate-content text-blue-800">${content}</div>
           </div>`;
         });

@@ -498,10 +498,19 @@ class PDFVersionsService {
     pdfVersionId: string
   ): Promise<void> {
     try {
-      await updateDoc(doc(db, 'campaigns', campaignId), {
-        currentPdfVersion: pdfVersionId,
-        lastPdfGeneratedAt: serverTimestamp()
-      });
+      // Prüfe erst ob Campaign existiert
+      const campaignRef = doc(db, 'campaigns', campaignId);
+      const campaignSnap = await getDoc(campaignRef);
+      
+      if (campaignSnap.exists()) {
+        await updateDoc(campaignRef, {
+          currentPdfVersion: pdfVersionId,
+          lastPdfGeneratedAt: serverTimestamp()
+        });
+        console.log('✅ Campaign PDF-Referenz aktualisiert');
+      } else {
+        console.warn('⚠️ Campaign existiert nicht, überspringe PDF-Referenz Update');
+      }
     } catch (error) {
       console.error('❌ Fehler beim Update der Campaign PDF-Referenz:', error);
     }
