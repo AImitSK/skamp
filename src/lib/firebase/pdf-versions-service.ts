@@ -489,7 +489,26 @@ class PDFVersionsService {
         pdf.setTextColor(color[0], color[1], color[2]);
         pdf.setFont('helvetica', style);
         
-        const lines = pdf.splitTextToSize(text, maxWidth);
+        // Besserer Text-Wrapper der Wörter NICHT zerreißt
+        const words = text.split(' ');
+        const lines: string[] = [];
+        let currentLine = '';
+        
+        words.forEach(word => {
+          const testLine = currentLine ? `${currentLine} ${word}` : word;
+          const testWidth = pdf.getTextWidth(testLine);
+          
+          if (testWidth > maxWidth && currentLine) {
+            lines.push(currentLine);
+            currentLine = word;
+          } else {
+            currentLine = testLine;
+          }
+        });
+        
+        if (currentLine) {
+          lines.push(currentLine);
+        }
         const lineHeight = fontSize * 0.4;
         
         lines.forEach((line: string, index: number) => {
@@ -688,7 +707,27 @@ class PDFVersionsService {
           pdf.setFont('helvetica', style);
           
           const availableWidth = maxWidth - (currentX - x) - quoteIndent;
-          const lines = pdf.splitTextToSize(segment.text, availableWidth);
+          
+          // Besserer Text-Wrapper der Wörter NICHT zerreißt
+          const words = segment.text.split(' ');
+          const lines: string[] = [];
+          let currentLine = '';
+          
+          words.forEach(word => {
+            const testLine = currentLine ? `${currentLine} ${word}` : word;
+            const testWidth = pdf.getTextWidth(testLine);
+            
+            if (testWidth > availableWidth && currentLine) {
+              lines.push(currentLine);
+              currentLine = word;
+            } else {
+              currentLine = testLine;
+            }
+          });
+          
+          if (currentLine) {
+            lines.push(currentLine);
+          }
           const lineHeight = fontSize * 0.4;
           
           lines.forEach((line: string, index: number) => {
@@ -897,17 +936,8 @@ class PDFVersionsService {
           addLine(marginLeft, yPosition, marginLeft + contentWidth, yPosition, colors.accent);
           yPosition += 10;
           
-          // Section header
-          yPosition = addTextWithWrap(
-            'Über das Unternehmen',
-            marginLeft,
-            yPosition,
-            contentWidth,
-            typography.subheading,
-            colors.primary,
-            'bold'
-          );
-          yPosition += 12;
+          // KEIN hardcodierter Header - Textbausteine haben ihre eigenen Titel
+          yPosition += 10;
 
           // Professional boxes für each Textbaustein
           visibleSections.forEach((section, index) => {
