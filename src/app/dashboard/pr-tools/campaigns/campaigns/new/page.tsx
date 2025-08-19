@@ -152,9 +152,21 @@ export default function NewPRCampaignPage() {
         .filter(section => {
           console.log('🔍 Raw section object:', section);
           
-          // Prüfe verschiedene mögliche Content-Felder
-          const content = section.content || section.htmlContent || section.text || '';
-          const title = section.title || section.name || section.customTitle || 'Textbaustein';
+          // Prüfe verschiedene mögliche Content-Felder (auch verschachtelt)
+          const content = section.content || 
+                         section.htmlContent || 
+                         section.text || 
+                         section.boilerplate?.content ||
+                         section.boilerplate?.htmlContent ||
+                         section.boilerplate?.text ||
+                         '';
+          
+          const title = section.title || 
+                       section.name || 
+                       section.customTitle ||
+                       section.boilerplate?.title ||
+                       section.boilerplate?.name ||
+                       'Textbaustein';
           
           const hasContent = content && content.trim();
           console.log(`🔍 Section "${title}": hasContent=${hasContent}, content="${content?.substring(0, 50)}..."`);
@@ -170,8 +182,20 @@ export default function NewPRCampaignPage() {
           <h2 class="text-xl font-bold text-gray-900 mb-4">Textbausteine</h2>`;
         
         visibleSections.forEach(section => {
-          const content = section.content || section.htmlContent || section.text || '';
-          const title = section.title || section.name || section.customTitle || 'Textbaustein';
+          const content = section.content || 
+                         section.htmlContent || 
+                         section.text || 
+                         section.boilerplate?.content ||
+                         section.boilerplate?.htmlContent ||
+                         section.boilerplate?.text ||
+                         '';
+          
+          const title = section.title || 
+                       section.name || 
+                       section.customTitle ||
+                       section.boilerplate?.title ||
+                       section.boilerplate?.name ||
+                       'Textbaustein';
           
           html += `<div class="boilerplate-section mb-6 p-4 border-l-4 border-blue-500 bg-blue-50">
             <h3 class="text-lg font-semibold mb-2 text-blue-900">${title}</h3>
