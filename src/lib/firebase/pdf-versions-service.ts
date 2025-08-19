@@ -132,9 +132,7 @@ class PDFVersionsService {
           mainContent: processedContent.mainContent || '',
           boilerplateSections: processedContent.boilerplateSections || [],
           ...(processedContent.keyVisual && processedContent.keyVisual.url && { keyVisual: processedContent.keyVisual }), // Nur setzen wenn definiert und URL vorhanden
-          createdForApproval: context.status === 'pending_customer',
-          // PDF-Layout Struktur: 1. KeyVisual, 2. Headline, 3. Text, 4. Textbausteine
-          layoutOrder: ['keyVisual', 'title', 'mainContent', 'boilerplateSections']
+          createdForApproval: context.status === 'pending_customer'
         },
         metadata: {
           wordCount,
@@ -437,17 +435,17 @@ class PDFVersionsService {
 
       // Helper Functions
       const addLine = (x1: number, y1: number, x2: number, y2: number, color: number[] = colors.light): void => {
-        pdf.setDrawColor(...color);
+        pdf.setDrawColor(color[0], color[1], color[2]);
         pdf.setLineWidth(0.3);
         pdf.line(x1, y1, x2, y2);
       };
 
       const addRect = (x: number, y: number, width: number, height: number, fillColor?: number[]): void => {
         if (fillColor) {
-          pdf.setFillColor(...fillColor);
+          pdf.setFillColor(fillColor[0], fillColor[1], fillColor[2]);
           pdf.rect(x, y, width, height, 'F');
         } else {
-          pdf.setDrawColor(...colors.light);
+          pdf.setDrawColor(colors.light[0], colors.light[1], colors.light[2]);
           pdf.setLineWidth(0.2);
           pdf.rect(x, y, width, height, 'S');
         }
@@ -464,7 +462,7 @@ class PDFVersionsService {
         align: string = 'left'
       ): number => {
         pdf.setFontSize(fontSize);
-        pdf.setTextColor(...color);
+        pdf.setTextColor(color[0], color[1], color[2]);
         pdf.setFont('helvetica', style);
         
         const lines = pdf.splitTextToSize(text, maxWidth);
@@ -849,7 +847,7 @@ class PDFVersionsService {
         
         // Page number (left)
         pdf.setFontSize(typography.footer);
-        pdf.setTextColor(...colors.light);
+        pdf.setTextColor(colors.light[0], colors.light[1], colors.light[2]);
         pdf.setFont('helvetica', 'normal');
         pdf.text(`Seite ${i} von ${totalPages}`, marginLeft, pageHeight - 12);
         
@@ -904,7 +902,8 @@ class PDFVersionsService {
       let targetImage: HTMLImageElement | null = null;
       
       // Finde das Bild mit der passenden URL (auch verkürzte/transformierte URLs)
-      for (const img of images) {
+      for (let i = 0; i < images.length; i++) {
+        const img = images[i];
         if (img.src === imageUrl || 
             img.src.includes(imageUrl) || 
             imageUrl.includes(img.src) ||
