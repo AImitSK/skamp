@@ -129,10 +129,10 @@ class PDFVersionsService {
         fileName,
         fileSize: mockFileSize,
         contentSnapshot: {
-          title: processedContent.title,
-          mainContent: processedContent.mainContent,
-          boilerplateSections: processedContent.boilerplateSections,
-          keyVisual: processedContent.keyVisual,
+          title: processedContent.title || '',
+          mainContent: processedContent.mainContent || '',
+          boilerplateSections: processedContent.boilerplateSections || [],
+          ...(processedContent.keyVisual && { keyVisual: processedContent.keyVisual }), // Nur setzen wenn definiert
           createdForApproval: context.status === 'pending_customer',
           // PDF-Layout Struktur: 1. KeyVisual, 2. Headline, 3. Text, 4. Textbausteine
           layoutOrder: ['keyVisual', 'title', 'mainContent', 'boilerplateSections']

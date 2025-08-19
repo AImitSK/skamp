@@ -147,8 +147,11 @@ export default function NewPRCampaignPage() {
     // 3. Textbausteine (falls vorhanden)
     if (boilerplateSections && boilerplateSections.length > 0) {
       const visibleSections = boilerplateSections
-        .filter(section => section.isActive !== false && section.content && section.content.trim()) // Zeige alle außer explizit deaktivierten
-        .sort((a, b) => a.order - b.order);
+        .filter(section => {
+          // Temporär: Zeige alle Textbausteine mit Content (ignore isActive für jetzt)
+          return section.content && section.content.trim();
+        })
+        .sort((a, b) => (a.order || 0) - (b.order || 0));
       
       if (visibleSections.length > 0) {
         html += `<div class="boilerplate-sections mt-8">`;
@@ -946,7 +949,8 @@ export default function NewPRCampaignPage() {
                   <div className="mt-8 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
                     <strong>Debug Live-Vorschau (generateContentHtml):</strong><br/>
                     KeyVisual: {keyVisual ? `✅ (${keyVisual.type}, ${keyVisual.url ? 'URL✅' : 'URL❌'})` : '❌'}<br/>
-                    Textbausteine: {boilerplateSections?.length || 0} ({boilerplateSections?.filter(s => s.isActive !== false && s.content?.trim()).length || 0} sichtbar)<br/>
+                    Textbausteine: {boilerplateSections?.length || 0} ({boilerplateSections?.filter(s => s.content?.trim()).length || 0} mit Content)<br/>
+                    Textbausteine Details: {boilerplateSections?.map(s => `${s.title}(isActive:${s.isActive}, hasContent:${!!s.content?.trim()})`).join(', ')}<br/>
                     EditorContent: {editorContent ? `${editorContent.length} Zeichen` : '❌'}<br/>
                     Generated HTML: {generateContentHtml().length} Zeichen
                     <details className="mt-2">
