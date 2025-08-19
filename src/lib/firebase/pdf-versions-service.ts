@@ -381,7 +381,7 @@ class PDFVersionsService {
   }
 
   /**
-   * Generiert echtes PDF mit html2pdf.js und uploaded es zu Firebase Storage
+   * Generiert text-basiertes PDF mit jsPDF und uploaded es zu Firebase Storage
    */
   private async generateRealPDF(
     content: {
@@ -394,31 +394,116 @@ class PDFVersionsService {
     organizationId: string
   ): Promise<{ pdfUrl: string; fileSize: number }> {
     try {
-      // Dynamic import für html2pdf to avoid SSR issues
-      const html2pdfModule = await import('html2pdf.js');
-      const html2pdf = html2pdfModule.default;
+      // Dynamic import für jsPDF
+      const jsPDFModule = await import('jspdf');
+      const { jsPDF } = jsPDFModule;
+      
+      // Create new PDF document
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
 
-      // Erstelle HTML für PDF (wie in der Live-Vorschau)
-      let html = '';
-      
-      // 1. KeyVisual
+      // Setup fonts and margins
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 20;
+      const maxWidth = pageWidth - (margin * 2);
+      let yPosition = margin;
+
+      // Helper function to add text with word wrap
+      const addTextWithWrap = (text: string, x: number, y: number, maxWidth: number, fontSize: number = 11): number => {
+        pdf.setFontSize(fontSize);
+        const lines = pdf.splitTextToSize(text, maxWidth);
+        pdf.text(lines, x, y);
+        return y + (lines.length * (fontSize * 0.352778)); // Convert pt to mm
+      };
+
+      // Helper function to strip HTML tags
+      const stripHtml = (html: string): string => {
+        return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      };
+
+      // Helper function to check if new page is needed
+      const checkNewPage = (requiredHeight: number): void => {
+        if (yPosition + requiredHeight > pageHeight - margin) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+      };
+
+      // 1. Add KeyVisual (if available)
       if (content.keyVisual?.url) {
-        html += `<div style="margin-bottom: 24px; text-align: center;">
-          <img src="${content.keyVisual.url}" alt="${content.keyVisual.alt || ''}" 
-               style="width: 100%; max-width: 600px; height: auto; border-radius: 8px;" />
-          ${content.keyVisual.caption ? `<p style="margin-top: 8px; font-size: 14px; color: #666; font-style: italic;">${content.keyVisual.caption}</p>` : ''}
-        </div>`;
+        try {
+          const imageData = await this.loadImageAsBase64(content.keyVisual.url);
+          if (imageData) {
+            checkNewPage(80); // Reserve space for image
+            
+            // Calculate image dimensions (max width 150mm, maintain aspect ratio)
+            const maxImageWidth = 150;
+            const maxImageHeight = 80;
+            
+            // Add image to PDF
+            pdf.addImage(
+              imageData.base64,
+              imageData.format,
+              margin + (maxWidth - maxImageWidth) / 2, // Center horizontally
+              yPosition,
+              maxImageWidth,
+              maxImageHeight
+            );
+            yPosition += maxImageHeight + 5;
+            
+            // Add caption if available
+            if (content.keyVisual.caption) {
+              pdf.setFontSize(9);
+              pdf.setTextColor(100, 100, 100);
+              yPosition = addTextWithWrap(content.keyVisual.caption, margin, yPosition, maxWidth, 9);
+            }
+            yPosition += 10;
+          } else {
+            // Fallback: Add placeholder text
+            checkNewPage(20);
+            pdf.setFontSize(10);
+            pdf.setTextColor(100, 100, 100);
+            pdf.text('[KeyVisual: ' + (content.keyVisual.alt || 'Bild') + ']', margin, yPosition);
+            yPosition += 10;
+            
+            if (content.keyVisual.caption) {
+              pdf.setFontSize(9);
+              yPosition = addTextWithWrap(content.keyVisual.caption, margin, yPosition, maxWidth, 9);
+            }
+            yPosition += 10;
+          }
+        } catch (error) {
+          console.warn('KeyVisual konnte nicht hinzugefügt werden:', error);
+          // Fallback: Add placeholder text
+          checkNewPage(20);
+          pdf.setFontSize(10);
+          pdf.setTextColor(100, 100, 100);
+          pdf.text('[KeyVisual: ' + (content.keyVisual.alt || 'Bild') + ']', margin, yPosition);
+          yPosition += 15;
+        }
       }
-      
-      // 2. Titel
-      html += `<h1 style="font-size: 24px; font-weight: bold; margin-bottom: 16px;">${content.title}</h1>`;
-      
-      // 3. Haupt-Content
-      if (content.mainContent) {
-        html += `<div style="margin-bottom: 24px;">${content.mainContent}</div>`;
+
+      // 2. Add Title
+      checkNewPage(15);
+      pdf.setTextColor(0, 0, 0);
+      pdf.setFont('helvetica', 'bold');
+      yPosition = addTextWithWrap(content.title, margin, yPosition, maxWidth, 16);
+      yPosition += 10;
+
+      // 3. Add Main Content
+      if (content.mainContent && content.mainContent.trim()) {
+        checkNewPage(20);
+        pdf.setFont('helvetica', 'normal');
+        const cleanMainContent = stripHtml(content.mainContent);
+        yPosition = addTextWithWrap(cleanMainContent, margin, yPosition, maxWidth, 11);
+        yPosition += 10;
       }
-      
-      // 4. Textbausteine
+
+      // 4. Add Textbausteine
       if (content.boilerplateSections && content.boilerplateSections.length > 0) {
         const visibleSections = content.boilerplateSections.filter(section => {
           const sectionContent = section.content || 
@@ -430,12 +515,17 @@ class PDFVersionsService {
                                 '';
           return sectionContent && sectionContent.trim();
         });
-        
+
         if (visibleSections.length > 0) {
-          html += `<div style="margin-top: 32px;">
-            <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 16px;">Textbausteine</h2>`;
+          checkNewPage(25);
           
-          visibleSections.forEach(section => {
+          // Textbausteine Header
+          pdf.setFont('helvetica', 'bold');
+          yPosition = addTextWithWrap('Textbausteine', margin, yPosition, maxWidth, 14);
+          yPosition += 8;
+
+          // Add each section
+          visibleSections.forEach((section, index) => {
             const sectionContent = section.content || 
                                   section.htmlContent || 
                                   section.text || 
@@ -444,50 +534,48 @@ class PDFVersionsService {
                                   section.boilerplate?.text ||
                                   '';
             const sectionTitle = section.customTitle || '';
+
+            const cleanContent = stripHtml(sectionContent);
+            const estimatedHeight = Math.max(20, (cleanContent.length / 80) * 5); // Rough estimate
             
-            html += `<div style="margin-bottom: 24px; padding: 16px; border-left: 4px solid #3b82f6; background-color: #eff6ff;">
-              ${sectionTitle ? `<h3 style="font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #1e3a8a;">${sectionTitle}</h3>` : ''}
-              <div style="color: #1e40af;">${sectionContent}</div>
-            </div>`;
+            checkNewPage(estimatedHeight);
+
+            // Section Title
+            if (sectionTitle) {
+              pdf.setFont('helvetica', 'bold');
+              pdf.setTextColor(30, 58, 138); // Blue color
+              yPosition = addTextWithWrap(sectionTitle, margin, yPosition, maxWidth, 12);
+              yPosition += 3;
+            }
+
+            // Section Content
+            pdf.setFont('helvetica', 'normal');
+            pdf.setTextColor(30, 64, 175); // Slightly darker blue
+            yPosition = addTextWithWrap(cleanContent, margin, yPosition, maxWidth, 10);
+            yPosition += 8;
+
+            // Reset colors
+            pdf.setTextColor(0, 0, 0);
           });
-          html += `</div>`;
         }
       }
 
-      // PDF Options
-      const opt = {
-        margin: [15, 15, 20, 15], // top, left, bottom, right
-        filename: fileName,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-          scale: 2,
-          useCORS: true,
-          letterRendering: true,
-          allowTaint: true,
-          backgroundColor: '#ffffff'
-        },
-        jsPDF: { 
-          unit: 'mm', 
-          format: 'a4', 
-          orientation: 'portrait' 
-        },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-      };
+      // Add footer with generation info
+      const totalPages = pdf.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(8);
+        pdf.setTextColor(100, 100, 100);
+        pdf.text(
+          `Seite ${i} von ${totalPages} - Erstellt am ${new Date().toLocaleDateString('de-DE')}`,
+          margin,
+          pageHeight - 10
+        );
+      }
 
-      // Erstelle temporäres DIV für PDF-Generation
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = html;
-      tempDiv.style.padding = '20px';
-      tempDiv.style.fontFamily = 'Arial, sans-serif';
-      tempDiv.style.lineHeight = '1.6';
-      tempDiv.style.backgroundColor = '#ffffff';
-      
       // Generate PDF Blob
-      const pdfBlob = await html2pdf()
-        .from(tempDiv)
-        .set(opt)
-        .outputPdf('blob');
-
+      const pdfBlob = pdf.output('blob');
+      
       // Create File object
       const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
 
@@ -504,12 +592,55 @@ class PDFVersionsService {
       };
 
     } catch (error) {
-      console.error('❌ Fehler bei der echten PDF-Generation:', error);
+      console.error('❌ Fehler bei der Text-basierten PDF-Generation:', error);
       // Fallback auf Mock-PDF
       return {
         pdfUrl: `https://storage.googleapis.com/mock-bucket/${fileName}`,
         fileSize: 1024 * 100
       };
+    }
+  }
+
+  /**
+   * Lädt ein Bild von einer URL und konvertiert es zu Base64 für PDF-Einbettung
+   */
+  private async loadImageAsBase64(imageUrl: string): Promise<{ base64: string; format: string } | null> {
+    try {
+      // Konvertiere Firebase Storage URL zu öffentlicher URL
+      const publicUrl = this.convertToPublicUrl(imageUrl);
+      
+      // Fetch das Bild
+      const response = await fetch(publicUrl);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      // Convert to blob
+      const blob = await response.blob();
+      
+      // Determine image format
+      const contentType = blob.type;
+      let format = 'JPEG'; // Default
+      if (contentType.includes('png')) format = 'PNG';
+      else if (contentType.includes('jpg') || contentType.includes('jpeg')) format = 'JPEG';
+      else if (contentType.includes('gif')) format = 'GIF';
+      
+      // Convert to base64
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const base64 = reader.result as string;
+          resolve({
+            base64: base64.split(',')[1], // Remove data:image/... prefix
+            format
+          });
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (error) {
+      console.error('Fehler beim Laden des Bildes für PDF:', error);
+      return null;
     }
   }
 
