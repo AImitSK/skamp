@@ -28,8 +28,10 @@ import {
   ArrowLeftIcon,
   BuildingOfficeIcon,
   UsersIcon,
+  UserGroupIcon,
   DocumentTextIcon,
   PhotoIcon,
+  PaperClipIcon,
   XMarkIcon,
   XCircleIcon,
   SparklesIcon,
@@ -44,6 +46,7 @@ import { CampaignAssetAttachment } from "@/types/pr";
 import SimpleBoilerplateLoader, { BoilerplateSection } from "@/components/pr/campaign/SimpleBoilerplateLoader";
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { serverTimestamp } from 'firebase/firestore';
+import { pdfVersionsService, PDFVersion } from '@/lib/firebase/pdf-versions-service';
 // PRSEOHeaderBar now integrated in CampaignContentComposer
 
 // Dynamic import für AI Modal
@@ -123,8 +126,13 @@ export default function NewPRCampaignPage() {
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [successMessage, setSuccessMessage] = useState<string>('');
   
-  // 3-Step Navigation State
-  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
+  // 4-Step Navigation State
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
+  
+  // PDF State
+  const [currentPdfVersion, setCurrentPdfVersion] = useState<PDFVersion | null>(null);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [editLocked, setEditLocked] = useState(false);
 
 
   useEffect(() => {
@@ -149,9 +157,9 @@ export default function NewPRCampaignPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // KRITISCH: Nur in Step 3 speichern erlauben!
-    if (currentStep !== 3) {
-      console.log('🚫 Form-Submit verhindert - nicht in Step 3:', currentStep);
+    // KRITISCH: Nur in Step 4 speichern erlauben!
+    if (currentStep !== 4) {
+      console.log('🚫 Form-Submit verhindert - nicht in Step 4:', currentStep);
       return;
     }
     
@@ -406,6 +414,42 @@ export default function NewPRCampaignPage() {
     ));
   };
 
+  const handleGeneratePdf = async (forApproval: boolean = false) => {
+    if (!user || !currentOrganization || !campaignTitle.trim()) {
+      setValidationErrors(['Bitte füllen Sie alle erforderlichen Felder aus']);
+      return;
+    }
+
+    setGeneratingPdf(true);
+    try {
+      const pdfVersionId = await pdfVersionsService.createPDFVersion(
+        `temp_${Date.now()}`, // Temporäre ID für neue Kampagne
+        currentOrganization.id,
+        {
+          title: campaignTitle,
+          mainContent: editorContent,
+          boilerplateSections,
+          keyVisual
+        },
+        {
+          userId: user.uid,
+          status: forApproval ? 'pending_customer' : 'draft'
+        }
+      );
+
+      // Lade die erstellte PDF-Version
+      const newVersion = await pdfVersionsService.getCurrentVersion(`temp_${Date.now()}`);
+      setCurrentPdfVersion(newVersion);
+
+      setSuccessMessage('PDF erfolgreich generiert!');
+    } catch (error) {
+      console.error('Fehler bei PDF-Generation:', error);
+      setValidationErrors(['Fehler bei der PDF-Erstellung']);
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -421,8 +465,9 @@ export default function NewPRCampaignPage() {
   const StepNavigation = () => {
     const steps = [
       { id: 1, name: 'Pressemeldung', icon: DocumentTextIcon },
-      { id: 2, name: 'Einstellungen', icon: UsersIcon },
-      { id: 3, name: 'Vorschau', icon: InformationCircleIcon }
+      { id: 2, name: 'Anhänge', icon: PaperClipIcon },
+      { id: 3, name: 'Freigaben', icon: UserGroupIcon },
+      { id: 4, name: 'Vorschau', icon: InformationCircleIcon }
     ];
 
     return (
@@ -436,7 +481,7 @@ export default function NewPRCampaignPage() {
             return (
               <button
                 key={step.id}
-                onClick={() => setCurrentStep(step.id as 1 | 2 | 3)}
+                onClick={() => setCurrentStep(step.id as 1 | 2 | 3 | 4)}
                 className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
                   isActive
                     ? 'border-[#005fab] text-[#005fab]'
@@ -585,7 +630,7 @@ export default function NewPRCampaignPage() {
           </div>
         )}
 
-        {/* Step 2: Einstellungen */}
+        {/* Step 2: Anhänge */}
         {currentStep === 2 && (
           <div className="bg-white rounded-lg border p-6">
             <FieldGroup>
@@ -597,38 +642,6 @@ export default function NewPRCampaignPage() {
                   clientName={selectedCompanyName}
                   onSectionsChange={setBoilerplateSections}
                   initialSections={boilerplateSections}
-                />
-              </div>
-
-              {/* Verteiler mit Multi-List Support */}
-              <div className="mt-8">
-                <CampaignRecipientManager
-                  selectedListIds={selectedListIds}
-                  selectedListNames={selectedListNames}
-                  manualRecipients={manualRecipients}
-                  onListsChange={(listIds, listNames, totalFromLists) => {
-                    setSelectedListIds(listIds);
-                    setSelectedListNames(listNames);
-                    setListRecipientCount(totalFromLists);
-                    // Legacy fields aktualisieren
-                    setSelectedListId(listIds[0] || '');
-                    setSelectedListName(listNames[0] || '');
-                  }}
-                  onAddManualRecipient={(recipient) => {
-                    const newRecipient = {
-                      ...recipient,
-                      id: `manual_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-                    };
-                    setManualRecipients([...manualRecipients, newRecipient]);
-                  }}
-                  onRemoveManualRecipient={(id) => {
-                    setManualRecipients(manualRecipients.filter(r => r.id !== id));
-                  }}
-                  recipientCount={listRecipientCount + manualRecipients.length}
-                  // PM-Integration (falls Kampagne bereits Verteiler-Daten hat)
-                  campaignDistributionListIds={[]} // Neu erstellte Kampagne hat keine Vordaten
-                  campaignDistributionListNames={[]}
-                  campaignRecipientCount={0}
                 />
               </div>
 
@@ -712,78 +725,218 @@ export default function NewPRCampaignPage() {
                   </div>
                 )}
               </div>
+            </FieldGroup>
+          </div>
+        )}
+
+        {/* Step 3: Freigaben */}
+        {currentStep === 3 && (
+          <div className="bg-white rounded-lg border p-6">
+            <FieldGroup>
+              {/* Verteiler mit Multi-List Support (optional) */}
+              <div className="mb-8">
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Verteiler (optional)</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Sie können Verteiler jetzt festlegen oder später beim Versand auswählen.
+                  </p>
+                </div>
+                
+                <CampaignRecipientManager
+                  selectedListIds={selectedListIds}
+                  selectedListNames={selectedListNames}
+                  manualRecipients={manualRecipients}
+                  onListsChange={(listIds, listNames, totalFromLists) => {
+                    setSelectedListIds(listIds);
+                    setSelectedListNames(listNames);
+                    setListRecipientCount(totalFromLists);
+                    // Legacy fields aktualisieren
+                    setSelectedListId(listIds[0] || '');
+                    setSelectedListName(listNames[0] || '');
+                  }}
+                  onAddManualRecipient={(recipient) => {
+                    const newRecipient = {
+                      ...recipient,
+                      id: `manual_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                    };
+                    setManualRecipients([...manualRecipients, newRecipient]);
+                  }}
+                  onRemoveManualRecipient={(id) => {
+                    setManualRecipients(manualRecipients.filter(r => r.id !== id));
+                  }}
+                  recipientCount={listRecipientCount + manualRecipients.length}
+                  // PM-Integration (falls Kampagne bereits Verteiler-Daten hat)
+                  campaignDistributionListIds={[]} // Neu erstellte Kampagne hat keine Vordaten
+                  campaignDistributionListNames={[]}
+                  campaignRecipientCount={0}
+                />
+              </div>
 
               {/* Erweiterte Freigabe-Einstellungen */}
-              <div className="mt-8">
-                <div className="bg-white rounded-lg border p-6">
-                  <ApprovalSettings
-                    value={approvalData}
-                    onChange={setApprovalData}
-                    organizationId={currentOrganization!.id}
-                    clientId={selectedCompanyId}
-                    clientName={selectedCompanyName}
-                  />
+              <div className="mb-6">
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Freigabe-Einstellungen</h3>
                 </div>
+                <ApprovalSettings
+                  value={approvalData}
+                  onChange={setApprovalData}
+                  organizationId={currentOrganization!.id}
+                  clientId={selectedCompanyId}
+                  clientName={selectedCompanyName}
+                />
               </div>
             </FieldGroup>
           </div>
         )}
 
-        {/* Step 3: Vorschau */}
-        {currentStep === 3 && (
+        {/* Step 4: Vorschau */}
+        {currentStep === 4 && (
           <div className="bg-white rounded-lg border p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Vorschau</h3>
-            
-            {/* Einfache HTML-Vorschau ohne Textbausteine-Editor */}
-            <div className="border rounded-lg p-6 bg-gray-50">
-              <div className="prose max-w-none">
-                {/* Titel */}
-                <h1 className="text-2xl font-bold mb-4">{campaignTitle || 'Titel der Pressemitteilung'}</h1>
-                
-                {/* Hauptinhalt aus Editor */}
-                {editorContent && (
-                  <div 
-                    className="mb-6"
-                    dangerouslySetInnerHTML={{ __html: editorContent }} 
-                  />
-                )}
-                
-                {/* Boilerplate Sections */}
-                {boilerplateSections.map((section, index) => (
-                  <div key={section.id} className="mb-4">
-                    {section.content && (
-                      <div dangerouslySetInnerHTML={{ __html: section.content }} />
-                    )}
-                    {section.metadata && section.type === 'quote' && (
-                      <div className="italic text-gray-600 mt-2">
-                        — {section.metadata.person}, {section.metadata.role}
-                        {section.metadata.company && `, ${section.metadata.company}`}
-                      </div>
-                    )}
-                  </div>
-                ))}
-                
-                {/* Datum */}
-                <p className="text-sm text-gray-600 mt-8">
-                  {new Date().toLocaleDateString('de-DE', { 
-                    day: '2-digit', 
-                    month: 'long', 
-                    year: 'numeric' 
-                  })}
-                </p>
+            {/* Live Vorschau */}
+            <div className="mb-8">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Live-Vorschau</h3>
+              <div className="border rounded-lg p-6 bg-gray-50">
+                <div className="prose max-w-none">
+                  {/* Titel */}
+                  <h1 className="text-2xl font-bold mb-4">{campaignTitle || 'Titel der Pressemitteilung'}</h1>
+                  
+                  {/* Hauptinhalt aus Editor */}
+                  {editorContent && (
+                    <div 
+                      className="mb-6"
+                      dangerouslySetInnerHTML={{ __html: editorContent }} 
+                    />
+                  )}
+                  
+                  {/* Boilerplate Sections */}
+                  {boilerplateSections.map((section, index) => (
+                    <div key={section.id} className="mb-4">
+                      {section.content && (
+                        <div dangerouslySetInnerHTML={{ __html: section.content }} />
+                      )}
+                      {section.metadata && section.type === 'quote' && (
+                        <div className="italic text-gray-600 mt-2">
+                          — {section.metadata.person}, {section.metadata.role}
+                          {section.metadata.company && `, ${section.metadata.company}`}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  
+                  {/* Datum */}
+                  <p className="text-sm text-gray-600 mt-8">
+                    {new Date().toLocaleDateString('de-DE', { 
+                      day: '2-digit', 
+                      month: 'long', 
+                      year: 'numeric' 
+                    })}
+                  </p>
+                </div>
               </div>
             </div>
             
+            {/* PDF-Export */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">PDF-Export</h3>
+                
+                {!editLocked && (
+                  <Button
+                    type="button"
+                    onClick={() => handleGeneratePdf(false)}
+                    disabled={generatingPdf}
+                    className="bg-[#005fab] hover:bg-[#004a8c] text-white"
+                  >
+                    {generatingPdf ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        PDF wird erstellt...
+                      </>
+                    ) : (
+                      <>
+                        <DocumentTextIcon className="h-4 w-4 mr-2" />
+                        PDF generieren
+                      </>
+                    )}
+                  </Button>
+                )}
+                
+                {editLocked && (
+                  <div className="text-sm text-gray-500">
+                    PDF-Erstellung gesperrt während Freigabe-Prozess
+                  </div>
+                )}
+              </div>
+              
+              {/* Aktuelle PDF-Version */}
+              {currentPdfVersion && (
+                <div className="border rounded-lg p-4 bg-blue-50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <DocumentTextIcon className="h-5 w-5 text-blue-600" />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-blue-900">Version {currentPdfVersion.version}</span>
+                          <Badge color="blue" className="text-xs">Aktuell</Badge>
+                        </div>
+                        <div className="text-sm text-blue-700">
+                          {currentPdfVersion.metadata?.wordCount} Wörter • {currentPdfVersion.metadata?.pageCount} Seiten
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      <Badge 
+                        color={currentPdfVersion.status === 'draft' ? 'gray' : 
+                              currentPdfVersion.status === 'approved' ? 'green' : 'yellow'} 
+                        className="text-xs"
+                      >
+                        {currentPdfVersion.status === 'draft' ? 'Entwurf' :
+                         currentPdfVersion.status === 'approved' ? 'Freigegeben' : 'Freigabe angefordert'}
+                      </Badge>
+                      
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => window.open(currentPdfVersion.downloadUrl, '_blank')}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        PDF öffnen
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* PDF-Hinweis */}
+              {!currentPdfVersion && (
+                <div className="text-center py-6 text-gray-500">
+                  <DocumentTextIcon className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                  <p>Noch keine PDF-Version erstellt</p>
+                  <p className="text-sm">Klicken Sie auf "PDF generieren" um eine Vorschau zu erstellen</p>
+                </div>
+              )}
+            </div>
+            
             {/* Statistiken */}
-            <div className="mt-4 grid grid-cols-3 gap-4 text-sm text-gray-600">
-              <div>
-                <span className="font-medium">Zeichen:</span> {(editorContent || '').replace(/<[^>]*>/g, '').length}
+            <div className="grid grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-gray-900">
+                  {(editorContent || '').replace(/<[^>]*>/g, '').length}
+                </div>
+                <div className="text-sm text-gray-600">Zeichen</div>
               </div>
-              <div>
-                <span className="font-medium">Textbausteine:</span> {boilerplateSections.length}
+              <div className="text-center">
+                <div className="text-2xl font-bold text-gray-900">{boilerplateSections.length}</div>
+                <div className="text-sm text-gray-600">Textbausteine</div>
               </div>
-              <div>
-                <span className="font-medium">Keywords:</span> {keywords.length}
+              <div className="text-center">
+                <div className="text-2xl font-bold text-gray-900">{keywords.length}</div>
+                <div className="text-sm text-gray-600">Keywords</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-gray-900">{attachedAssets.length}</div>
+                <div className="text-sm text-gray-600">Medien</div>
               </div>
             </div>
           </div>
@@ -803,7 +956,7 @@ export default function NewPRCampaignPage() {
             {currentStep > 1 && (
               <Button
                 type="button"
-                onClick={() => setCurrentStep((currentStep - 1) as 1 | 2 | 3)}
+                onClick={() => setCurrentStep((currentStep - 1) as 1 | 2 | 3 | 4)}
                 className="bg-gray-50 hover:bg-gray-100 text-gray-900"
               >
                 <ArrowLeftIcon className="h-4 w-4 mr-2" />
@@ -813,10 +966,10 @@ export default function NewPRCampaignPage() {
           </div>
           
           <div className="flex gap-3">
-            {currentStep < 3 ? (
+            {currentStep < 4 ? (
               <Button
                 type="button"
-                onClick={() => setCurrentStep((currentStep + 1) as 1 | 2 | 3)}
+                onClick={() => setCurrentStep((currentStep + 1) as 1 | 2 | 3 | 4)}
                 className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
               >
                 Weiter
