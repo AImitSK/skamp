@@ -407,6 +407,91 @@ export default function NewPRCampaignPage() {
     setShowAiModal(false);
   };
 
+  // Hilfsfunktion zum Speichern als Entwurf (für PDF-Generation)
+  const saveAsDraft = async (): Promise<string | null> => {
+    if (!user || !currentOrganization) return null;
+
+    try {
+      // Bereite die boilerplateSections für Firebase vor (ohne position)
+      const cleanedSections = boilerplateSections.map((section, index) => {
+        const cleaned: any = {
+          id: section.id,
+          type: section.type,
+          order: section.order ?? index, // Fallback auf index wenn order fehlt
+          isLocked: section.isLocked || false,
+          isCollapsed: section.isCollapsed || false
+        };
+        
+        // Nur definierte Werte hinzufügen
+        if (section.boilerplateId !== undefined && section.boilerplateId !== null) {
+          cleaned.boilerplateId = section.boilerplateId;
+        }
+        if (section.content !== undefined && section.content !== null) {
+          cleaned.content = section.content;
+        }
+        if (section.metadata !== undefined && section.metadata !== null) {
+          cleaned.metadata = section.metadata;
+        }
+        if (section.customTitle !== undefined && section.customTitle !== null) {
+          cleaned.customTitle = section.customTitle;
+        }
+        
+        return cleaned;
+      });
+
+      // Bereite attachedAssets vor - stelle sicher, dass keine undefined timestamps drin sind
+      const cleanedAttachedAssets = attachedAssets.map(asset => ({
+        ...asset,
+        attachedAt: asset.attachedAt || serverTimestamp()
+      }));
+
+      const campaignData = {
+        organizationId: currentOrganization.id,
+        title: campaignTitle.trim(),
+        contentHtml: pressReleaseContent || '',
+        mainContent: editorContent || '',
+        boilerplateSections: cleanedSections,
+        status: 'draft' as const,
+        // Multi-List Support
+        distributionListIds: selectedListIds,
+        distributionListNames: selectedListNames,
+        // Legacy fields (für Abwärtskompatibilität)
+        distributionListId: selectedListIds[0] || '',
+        distributionListName: selectedListNames[0] || '',
+        recipientCount: listRecipientCount + manualRecipients.length,
+        // Manual Recipients
+        manualRecipients: manualRecipients,
+        // SEO Data
+        keywords: keywords,
+        seoMetrics: {
+          lastAnalyzed: serverTimestamp(),
+        },
+        clientId: selectedCompanyId || undefined,
+        clientName: selectedCompanyName || undefined,
+        keyVisual: keyVisual,
+        attachedAssets: cleanedAttachedAssets,
+        // Approval
+        approvalRequired: approvalData.teamApprovalRequired || approvalData.customerApprovalRequired || false,
+        approvalData: (approvalData.teamApprovalRequired || approvalData.customerApprovalRequired) ? approvalData : undefined,
+        userId: user.uid,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+
+      // Entferne null/undefined Werte
+      Object.keys(campaignData).forEach(key => {
+        if (campaignData[key as keyof typeof campaignData] === null) {
+          delete campaignData[key as keyof typeof campaignData];
+        }
+      });
+
+      return await prService.create(campaignData);
+    } catch (error) {
+      console.error('Fehler beim Speichern als Entwurf:', error);
+      throw error;
+    }
+  };
+
   const handleRemoveAsset = (assetId: string) => {
     setAttachedAssets(attachedAssets.filter(a =>
       !((a.type === 'asset' && a.assetId === assetId) ||
@@ -420,10 +505,35 @@ export default function NewPRCampaignPage() {
       return;
     }
 
+    // Validiere erforderliche Felder bevor PDF erstellt wird
+    const errors: string[] = [];
+    if (!selectedCompanyId) {
+      errors.push('Bitte wählen Sie einen Kunden aus');
+    }
+    if (!campaignTitle.trim()) {
+      errors.push('Titel ist erforderlich');
+    }
+    if (!editorContent.trim() || editorContent === '<p></p>') {
+      errors.push('Inhalt ist erforderlich');
+    }
+    
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      return;
+    }
+
     setGeneratingPdf(true);
     try {
+      // Speichere zuerst die Kampagne als Entwurf
+      const campaignId = await saveAsDraft();
+      
+      if (!campaignId) {
+        throw new Error('Kampagne konnte nicht gespeichert werden');
+      }
+
+      // Dann generiere PDF für die gespeicherte Kampagne
       const pdfVersionId = await pdfVersionsService.createPDFVersion(
-        `temp_${Date.now()}`, // Temporäre ID für neue Kampagne
+        campaignId,
         currentOrganization.id,
         {
           title: campaignTitle,
@@ -438,7 +548,7 @@ export default function NewPRCampaignPage() {
       );
 
       // Lade die erstellte PDF-Version
-      const newVersion = await pdfVersionsService.getCurrentVersion(`temp_${Date.now()}`);
+      const newVersion = await pdfVersionsService.getCurrentVersion(campaignId);
       setCurrentPdfVersion(newVersion);
 
       setSuccessMessage('PDF erfolgreich generiert!');
@@ -762,13 +872,17 @@ export default function NewPRCampaignPage() {
               <div className="border rounded-lg p-6 bg-gray-50">
                 <div className="prose max-w-none">
                   {/* 1. Key Visual (oben) */}
-                  {keyVisual && (
+                  {keyVisual && keyVisual.url ? (
                     <div className="mb-6">
                       {keyVisual.type === 'image' && keyVisual.url && (
                         <img 
                           src={keyVisual.url} 
                           alt={keyVisual.alt || 'Key Visual'}
                           className="w-full max-w-2xl mx-auto rounded-lg shadow-sm"
+                          onError={(e) => {
+                            console.log('❌ Key Visual Ladefehler:', keyVisual.url);
+                            e.currentTarget.style.display = 'none';
+                          }}
                         />
                       )}
                       {keyVisual.caption && (
@@ -777,36 +891,78 @@ export default function NewPRCampaignPage() {
                         </p>
                       )}
                     </div>
-                  )}
+                  ) : keyVisual ? (
+                    <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-sm text-blue-600">
+                        🖼️ Key Visual ausgewählt aber noch nicht geladen
+                      </p>
+                    </div>
+                  ) : null}
                   
                   {/* 2. Headline */}
                   <h1 className="text-2xl font-bold mb-4">{campaignTitle || 'Titel der Pressemitteilung'}</h1>
                   
                   {/* 3. Hauptinhalt/Text */}
-                  {editorContent && (
+                  {editorContent && editorContent.trim() && editorContent !== '<p></p>' ? (
                     <div 
                       className="mb-6"
                       dangerouslySetInnerHTML={{ __html: editorContent }} 
                     />
+                  ) : (
+                    <div className="mb-6 p-4 bg-gray-100 border border-gray-200 rounded text-gray-500 italic">
+                      Noch kein Hauptinhalt erstellt...
+                    </div>
                   )}
                   
                   {/* 4. Textbausteine */}
-                  {boilerplateSections.map((section, index) => (
-                    <div key={section.id} className="mb-4">
-                      {section.content && (
-                        <div dangerouslySetInnerHTML={{ __html: section.content }} />
-                      )}
-                      {section.metadata && section.type === 'quote' && (
-                        <div className="italic text-gray-600 mt-2">
-                          — {section.metadata.person}, {section.metadata.role}
-                          {section.metadata.company && `, ${section.metadata.company}`}
+                  {boilerplateSections && boilerplateSections.length > 0 ? (
+                    boilerplateSections
+                      .filter(section => section.content && section.content.trim()) // Nur Sections mit Content
+                      .sort((a, b) => (a.order || 0) - (b.order || 0)) // Sortiert nach Order
+                      .map((section, index) => (
+                        <div key={section.id} className="mb-4">
+                          {/* Optionale Überschrift für Section */}
+                          {section.customTitle && (
+                            <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                              {section.customTitle}
+                            </h3>
+                          )}
+                          
+                          {/* Section Content */}
+                          {section.content && (
+                            <div 
+                              className="mb-2"
+                              dangerouslySetInnerHTML={{ __html: section.content }} 
+                            />
+                          )}
+                          
+                          {/* Quote Metadata */}
+                          {section.metadata && section.type === 'quote' && (
+                            <div className="italic text-gray-600 mt-2 border-l-4 border-gray-300 pl-4">
+                              — {section.metadata.person}
+                              {section.metadata.role && `, ${section.metadata.role}`}
+                              {section.metadata.company && `, ${section.metadata.company}`}
+                            </div>
+                          )}
                         </div>
-                      )}
+                      ))
+                  ) : (
+                    <div className="mb-6 p-4 bg-gray-100 border border-gray-200 rounded text-gray-500 italic">
+                      📝 Noch keine Textbausteine hinzugefügt...
                     </div>
-                  ))}
+                  )}
+                  
+                  {/* Debug Info - nur in Development */}
+                  {process.env.NODE_ENV === 'development' && (
+                    <div className="mt-8 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                      <strong>Debug:</strong> KeyVisual: {keyVisual ? '✅' : '❌'}, 
+                      Textbausteine: {boilerplateSections?.length || 0}, 
+                      EditorContent: {editorContent ? editorContent.length : 0} Zeichen
+                    </div>
+                  )}
                   
                   {/* Datum */}
-                  <p className="text-sm text-gray-600 mt-8">
+                  <p className="text-sm text-gray-600 mt-8 pt-4 border-t border-gray-200">
                     {new Date().toLocaleDateString('de-DE', { 
                       day: '2-digit', 
                       month: 'long', 
