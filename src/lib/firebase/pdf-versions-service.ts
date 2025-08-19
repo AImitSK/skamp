@@ -161,7 +161,6 @@ class PDFVersionsService {
 
       // Debug: Entferne alle undefined-Werte
       const cleanedData = this.removeUndefinedValues(pdfVersionData);
-      console.log('📄 PDF-Daten für Firestore:', Object.keys(cleanedData));
 
       // Erstelle PDF-Version in Firestore
       const docRef = await addDoc(collection(db, this.collectionName), cleanedData);
@@ -171,7 +170,6 @@ class PDFVersionsService {
       try {
         await this.updateCampaignCurrentPDF(campaignId, pdfVersionId);
       } catch (error) {
-        console.warn('⚠️ Campaign PDF-Update fehlgeschlagen (Campaign existiert möglicherweise nicht):', error);
         // Fahre trotzdem fort, PDF wurde erstellt
       }
 
@@ -370,7 +368,6 @@ class PDFVersionsService {
       for (const draft of toDelete) {
         if (draft.id) {
           await deleteDoc(doc(db, this.collectionName, draft.id));
-          console.log('🗑️ Alte Draft-Version gelöscht:', draft.version);
         }
       }
 
@@ -394,6 +391,27 @@ class PDFVersionsService {
     organizationId: string
   ): Promise<{ pdfUrl: string; fileSize: number }> {
     try {
+      // ========================================
+      // DEBUG: CONTENT ANALYSE FÜR PDF
+      // ========================================
+      console.log('📋 === PDF CONTENT DEBUG ===');
+      console.log('🏷️ Title:', content.title);
+      console.log('📝 MainContent HTML:', content.mainContent?.substring(0, 200) + '...');
+      console.log('🔢 BoilerplateSections:', content.boilerplateSections?.length || 0);
+      
+      content.boilerplateSections?.forEach((section, index) => {
+        console.log(`📄 Section ${index + 1}:`, {
+          type: section.type,
+          hasContent: !!section.content,
+          hasBoilerplate: !!section.boilerplate,
+          contentPreview: (section.content || section.boilerplate?.content || '').substring(0, 100) + '...'
+        });
+      });
+      
+      console.log('🖼️ KeyVisual:', !!content.keyVisual);
+      console.log('🏢 ClientName:', content.clientName);
+      console.log('📋 === END PDF CONTENT DEBUG ===\n');
+
       // Dynamic import für jsPDF
       const jsPDFModule = await import('jspdf');
       const { jsPDF } = jsPDFModule;
@@ -1021,26 +1039,18 @@ class PDFVersionsService {
    * Löst das "Tainted canvas may not be exported" Problem endgültig
    */
   private async extractImageFromDOM(imageUrl: string): Promise<{ base64: string; format: string; width: number; height: number } | null> {
-    console.log('🚀 === BREAKTHROUGH KEYVISUAL SOLUTION ===');
-    console.log('🎯 Target URL:', imageUrl);
     
     try {
       // Verwende Proxy-Route die bekanntermaßen funktioniert
       const proxyUrl = `/api/proxy-firebase-image?url=${encodeURIComponent(imageUrl)}`;
-      console.log('🌐 Using working proxy route:', proxyUrl);
       
       // Lade Bild als Blob über Proxy (das funktioniert!)
       const response = await fetch(proxyUrl);
       if (!response.ok) {
-        console.error(`❌ Proxy request failed: ${response.status} ${response.statusText}`);
         return null;
       }
       
       const blob = await response.blob();
-      console.log('✅ Blob loaded successfully:', {
-        size: blob.size,
-        type: blob.type
-      });
       
       // Konvertiere Blob zu Base64 mit FileReader (NICHT Canvas!)
       const base64 = await new Promise<string>((resolve, reject) => {
@@ -1075,7 +1085,6 @@ class PDFVersionsService {
             imageUrl.includes(img.src)) {
           width = img.naturalWidth || img.width || width;
           height = img.naturalHeight || img.height || height;
-          console.log('✅ Found DOM dimensions:', { width, height });
           break;
         }
       }
@@ -1087,22 +1096,10 @@ class PDFVersionsService {
         height
       };
       
-      console.log('🎉 === BREAKTHROUGH SUCCESS ===');
-      console.log('✅ KeyVisual loaded via Proxy + FileReader:', {
-        format: result.format,
-        dimensions: `${result.width}x${result.height}`,
-        base64Length: result.base64.length,
-        base64Preview: result.base64.substring(0, 50) + '...'
-      });
       
       return result;
       
     } catch (error) {
-      console.error('❌ Breakthrough solution failed:', error);
-      console.error('🔍 Error details:', error instanceof Error ? error.message : 'Unknown error');
-      
-      // Fallback to placeholder
-      console.log('⚪ Falling back to placeholder');
       return null;
     }
   }
@@ -1184,7 +1181,6 @@ class PDFVersionsService {
    */
   private async loadImageAsBase64(imageUrl: string): Promise<{ base64: string; format: string } | null> {
     try {
-      console.log('🖼️ Loading image as Base64 via proxy:', imageUrl);
       
       // Verwende Proxy-Route für CORS-freies Laden
       const proxyUrl = `/api/proxy-firebase-image?url=${encodeURIComponent(imageUrl)}`;
@@ -1209,7 +1205,6 @@ class PDFVersionsService {
         const reader = new FileReader();
         reader.onload = () => {
           const base64 = reader.result as string;
-          console.log('✅ Image converted to Base64 successfully');
           resolve({
             base64: base64.split(',')[1], // Remove data:image/... prefix
             format
@@ -1350,9 +1345,6 @@ class PDFVersionsService {
           currentPdfVersion: pdfVersionId,
           lastPdfGeneratedAt: serverTimestamp()
         });
-        console.log('✅ Campaign PDF-Referenz aktualisiert');
-      } else {
-        console.warn('⚠️ Campaign existiert nicht, überspringe PDF-Referenz Update');
       }
     } catch (error) {
       console.error('❌ Fehler beim Update der Campaign PDF-Referenz:', error);
