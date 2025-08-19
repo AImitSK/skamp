@@ -146,23 +146,34 @@ export default function NewPRCampaignPage() {
     
     // 3. Textbausteine (falls vorhanden)
     if (boilerplateSections && boilerplateSections.length > 0) {
+      console.log('🔍 generateContentHtml - Textbausteine prüfen:', boilerplateSections.length, boilerplateSections);
+      
       const visibleSections = boilerplateSections
         .filter(section => {
-          // Zeige alle Textbausteine mit Content
-          return section.content && section.content.trim();
+          const hasContent = section.content && section.content.trim();
+          console.log(`🔍 Section "${section.title}": hasContent=${hasContent}, content="${section.content?.substring(0, 50)}..."`);
+          return hasContent;
         })
         .sort((a, b) => (a.order || 0) - (b.order || 0));
       
+      console.log('✅ Sichtbare Textbausteine:', visibleSections.length, visibleSections.map(s => s.title));
+      
       if (visibleSections.length > 0) {
-        html += `<div class="boilerplate-sections mt-8">`;
+        html += `<div class="boilerplate-sections mt-8">
+          <h2 class="text-xl font-bold text-gray-900 mb-4">Textbausteine</h2>`;
+        
         visibleSections.forEach(section => {
-          html += `<div class="boilerplate-section mb-4">
-            <h3 class="text-lg font-semibold mb-2">${section.title}</h3>
-            <div class="boilerplate-content">${section.content}</div>
+          html += `<div class="boilerplate-section mb-6 p-4 border-l-4 border-blue-500 bg-blue-50">
+            <h3 class="text-lg font-semibold mb-2 text-blue-900">${section.title || 'Textbaustein'}</h3>
+            <div class="boilerplate-content text-blue-800">${section.content}</div>
           </div>`;
         });
         html += `</div>`;
+      } else {
+        console.log('❌ Keine sichtbaren Textbausteine gefunden');
       }
+    } else {
+      console.log('❌ Keine Textbausteine vorhanden');
     }
     
     return html;
@@ -963,23 +974,25 @@ export default function NewPRCampaignPage() {
 
                   {/* Textbausteine sind bereits in generateContentHtml() enthalten */}
                   
-                  {/* Debug Info */}
-                  <div className="mt-8 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
-                    <strong>Debug Live-Vorschau (finale ContentHtml):</strong><br/>
-                    KeyVisual: {keyVisual ? `✅ (${keyVisual.type}, ${keyVisual.url ? 'URL✅' : 'URL❌'})` : '❌'}<br/>
-                    Textbausteine: {boilerplateSections?.length || 0} ({boilerplateSections?.filter(s => s.content?.trim()).length || 0} mit Content)<br/>
-                    Textbausteine Details: {boilerplateSections?.map(s => `${s.title}(isActive:${s.isActive}, hasContent:${!!s.content?.trim()})`).join(', ')}<br/>
-                    EditorContent: {editorContent ? `${editorContent.length} Zeichen` : '❌'}<br/>
-                    Finale HTML: {finalContentHtml.length} Zeichen (generiert bei Step-Wechsel)
-                    {finalContentHtml && (
-                      <details className="mt-2">
-                        <summary className="cursor-pointer text-blue-600">Finale HTML anzeigen</summary>
-                        <pre className="mt-2 p-2 bg-gray-100 rounded text-xs overflow-auto max-h-32">
-                          {finalContentHtml}
-                        </pre>
-                      </details>
-                    )}
-                  </div>
+                  {/* Debug Info nur in Development */}
+                  {process.env.NODE_ENV === 'development' && (
+                    <div className="mt-8 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                      <strong>Debug Live-Vorschau (finale ContentHtml):</strong><br/>
+                      KeyVisual: {keyVisual ? `✅ (${keyVisual.type}, ${keyVisual.url ? 'URL✅' : 'URL❌'})` : '❌'}<br/>
+                      Textbausteine: {boilerplateSections?.length || 0} ({boilerplateSections?.filter(s => s.content?.trim()).length || 0} mit Content)<br/>
+                      Textbausteine Details: {boilerplateSections?.map(s => `${s.title}(isActive:${s.isActive}, hasContent:${!!s.content?.trim()})`).join(', ')}<br/>
+                      EditorContent: {editorContent ? `${editorContent.length} Zeichen` : '❌'}<br/>
+                      Finale HTML: {finalContentHtml.length} Zeichen (generiert bei Step-Wechsel)
+                      {finalContentHtml && (
+                        <details className="mt-2">
+                          <summary className="cursor-pointer text-blue-600">Finale HTML anzeigen</summary>
+                          <pre className="mt-2 p-2 bg-gray-100 rounded text-xs overflow-auto max-h-32">
+                            {finalContentHtml}
+                          </pre>
+                        </details>
+                      )}
+                    </div>
+                  )}
                   
                   {/* Datum */}
                   <p className="text-sm text-gray-600 mt-8 pt-4 border-t border-gray-200">
