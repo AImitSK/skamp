@@ -404,7 +404,11 @@ class PDFVersionsService {
           type: section.type,
           hasContent: !!section.content,
           hasBoilerplate: !!section.boilerplate,
-          contentPreview: (section.content || section.boilerplate?.content || '').substring(0, 100) + '...'
+          contentPreview: (section.content || section.boilerplate?.content || '').substring(0, 100) + '...',
+          // DETAILLIERTE STRUKTUR-ANALYSE:
+          actualContent: section.content ? 'section.content' : null,
+          boilerplateContent: section.boilerplate?.content ? 'section.boilerplate.content' : null,
+          allKeys: Object.keys(section)
         });
       });
       
