@@ -147,7 +147,7 @@ export default function NewPRCampaignPage() {
     // 3. Textbausteine (falls vorhanden)
     if (boilerplateSections && boilerplateSections.length > 0) {
       const visibleSections = boilerplateSections
-        .filter(section => section.isActive)
+        .filter(section => section.isActive !== false && section.content && section.content.trim()) // Zeige alle außer explizit deaktivierten
         .sort((a, b) => a.order - b.order);
       
       if (visibleSections.length > 0) {
@@ -946,7 +946,7 @@ export default function NewPRCampaignPage() {
                   <div className="mt-8 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
                     <strong>Debug Live-Vorschau (generateContentHtml):</strong><br/>
                     KeyVisual: {keyVisual ? `✅ (${keyVisual.type}, ${keyVisual.url ? 'URL✅' : 'URL❌'})` : '❌'}<br/>
-                    Textbausteine: {boilerplateSections?.length || 0} ({boilerplateSections?.filter(s => s.isActive).length || 0} aktiv)<br/>
+                    Textbausteine: {boilerplateSections?.length || 0} ({boilerplateSections?.filter(s => s.isActive !== false && s.content?.trim()).length || 0} sichtbar)<br/>
                     EditorContent: {editorContent ? `${editorContent.length} Zeichen` : '❌'}<br/>
                     Generated HTML: {generateContentHtml().length} Zeichen
                     <details className="mt-2">

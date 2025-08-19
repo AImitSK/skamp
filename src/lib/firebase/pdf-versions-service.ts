@@ -104,7 +104,10 @@ class PDFVersionsService {
       const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
       const fileName = `${content.title.replace(/[^a-zA-Z0-9]/g, '_')}_v${newVersionNumber}_${dateStr}.pdf`;
 
-      // TODO: Hier würde PDF-Generation stattfinden
+      // Bereite Content für PDF-Generation vor (Storage URLs zu öffentlichen URLs konvertieren)
+      const processedContent = await this.processContentForPDF(content);
+      
+      // TODO: Hier würde echte PDF-Generation stattfinden
       // Für jetzt simulieren wir es
       const mockPdfUrl = `https://storage.googleapis.com/mock-bucket/${fileName}`;
       const mockFileSize = 1024 * 100; // 100KB mock
@@ -126,10 +129,10 @@ class PDFVersionsService {
         fileName,
         fileSize: mockFileSize,
         contentSnapshot: {
-          title: content.title,
-          mainContent: content.mainContent,
-          boilerplateSections: content.boilerplateSections,
-          keyVisual: content.keyVisual,
+          title: processedContent.title,
+          mainContent: processedContent.mainContent,
+          boilerplateSections: processedContent.boilerplateSections,
+          keyVisual: processedContent.keyVisual,
           createdForApproval: context.status === 'pending_customer',
           // PDF-Layout Struktur: 1. KeyVisual, 2. Headline, 3. Text, 4. Textbausteine
           layoutOrder: ['keyVisual', 'title', 'mainContent', 'boilerplateSections']
@@ -366,6 +369,92 @@ class PDFVersionsService {
 
     } catch (error) {
       console.error('❌ Fehler beim Cleanup alter Versionen:', error);
+    }
+  }
+
+  /**
+   * Verarbeitet Content für PDF-Generation (Storage URLs zu öffentlichen URLs)
+   */
+  private async processContentForPDF(content: {
+    title: string;
+    mainContent: string;
+    boilerplateSections: any[];
+    keyVisual?: any;
+  }): Promise<typeof content> {
+    try {
+      // Kopiere Content
+      const processedContent = { ...content };
+
+      // Konvertiere KeyVisual Storage URL zu öffentlicher URL
+      if (processedContent.keyVisual?.url) {
+        processedContent.keyVisual = {
+          ...processedContent.keyVisual,
+          url: this.convertToPublicUrl(processedContent.keyVisual.url)
+        };
+      }
+
+      // Konvertiere URLs in mainContent HTML
+      if (processedContent.mainContent) {
+        processedContent.mainContent = this.convertStorageUrlsInHtml(processedContent.mainContent);
+      }
+
+      // Konvertiere URLs in Textbausteinen
+      if (processedContent.boilerplateSections) {
+        processedContent.boilerplateSections = processedContent.boilerplateSections.map(section => ({
+          ...section,
+          content: section.content ? this.convertStorageUrlsInHtml(section.content) : section.content
+        }));
+      }
+
+      return processedContent;
+    } catch (error) {
+      console.error('❌ Fehler beim Verarbeiten des Contents für PDF:', error);
+      return content; // Fallback: Original-Content zurückgeben
+    }
+  }
+
+  /**
+   * Konvertiert Firebase Storage URL zu öffentlicher URL
+   */
+  private convertToPublicUrl(storageUrl: string): string {
+    try {
+      // Firebase Storage URLs haben folgendes Format:
+      // https://firebasestorage.googleapis.com/v0/b/PROJECT-ID.appspot.com/o/PATH?alt=media&token=TOKEN
+      
+      if (!storageUrl.includes('firebasestorage.googleapis.com')) {
+        return storageUrl; // Bereits öffentliche URL oder andere URL
+      }
+
+      // Für PDF-Generation verwenden wir die URL mit dem alt=media Parameter
+      // Das macht sie öffentlich zugänglich für PDF-Services
+      if (storageUrl.includes('alt=media')) {
+        return storageUrl; // Bereits korrekt formatiert
+      }
+
+      // Füge alt=media hinzu falls nicht vorhanden
+      const separator = storageUrl.includes('?') ? '&' : '?';
+      return `${storageUrl}${separator}alt=media`;
+    } catch (error) {
+      console.error('❌ Fehler beim Konvertieren der Storage URL:', error);
+      return storageUrl; // Fallback: Original URL zurückgeben
+    }
+  }
+
+  /**
+   * Konvertiert Storage URLs in HTML-Content
+   */
+  private convertStorageUrlsInHtml(html: string): string {
+    try {
+      // Finde alle Firebase Storage URLs in img tags
+      const imgRegex = /<img[^>]+src="([^"]*firebasestorage\.googleapis\.com[^"]*)"[^>]*>/gi;
+      
+      return html.replace(imgRegex, (match, url) => {
+        const publicUrl = this.convertToPublicUrl(url);
+        return match.replace(url, publicUrl);
+      });
+    } catch (error) {
+      console.error('❌ Fehler beim Konvertieren der URLs im HTML:', error);
+      return html;
     }
   }
 
