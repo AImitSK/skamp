@@ -480,8 +480,224 @@ class PDFVersionsService {
         return y + (lines.length * lineHeight);
       };
 
-      const stripHtml = (html: string): string => {
-        return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      /**
+       * Intelligenter HTML-zu-PDF Parser der Formatierungen beibehält
+       * Konvertiert HTML-Tags zu entsprechenden PDF-Formatierungen
+       */
+      const parseHtmlToPdfSegments = (html: string): Array<{text: string; style: string; fontSize?: number}> => {
+        const segments: Array<{text: string; style: string; fontSize?: number}> = [];
+        
+        // Bereinige HTML von überflüssigen Whitespaces
+        let cleanHtml = html.replace(/\s+/g, ' ').trim();
+        
+        // Parse HTML und extrahiere Formatierung
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(`<div>${cleanHtml}</div>`, 'text/html');
+        
+        const processNode = (node: Node): void => {
+          if (node.nodeType === Node.TEXT_NODE) {
+            const text = node.textContent?.trim();
+            if (text) {
+              segments.push({ text, style: 'normal' });
+            }
+          } else if (node.nodeType === Node.ELEMENT_NODE) {
+            const element = node as Element;
+            const tagName = element.tagName.toLowerCase();
+            
+            switch (tagName) {
+              case 'strong':
+              case 'b':
+                segments.push({ text: element.textContent || '', style: 'bold' });
+                break;
+              case 'em':
+              case 'i':
+                segments.push({ text: element.textContent || '', style: 'italic' });
+                break;
+              case 'h1':
+                segments.push({ text: element.textContent || '', style: 'bold', fontSize: typography.headline });
+                segments.push({ text: '\n\n', style: 'normal' });
+                break;
+              case 'h2':
+                segments.push({ text: element.textContent || '', style: 'bold', fontSize: typography.subheading });
+                segments.push({ text: '\n\n', style: 'normal' });
+                break;
+              case 'h3':
+                segments.push({ text: element.textContent || '', style: 'bold', fontSize: typography.body + 2 });
+                segments.push({ text: '\n', style: 'normal' });
+                break;
+              case 'p':
+                // Verarbeite Kinder-Elemente rekursiv
+                for (let child = element.firstChild; child; child = child.nextSibling) {
+                  processNode(child);
+                }
+                segments.push({ text: '\n\n', style: 'normal' });
+                return; // Verhindere doppelte Verarbeitung
+              case 'br':
+                segments.push({ text: '\n', style: 'normal' });
+                break;
+              case 'blockquote':
+                // Professionelle Zitat-Formatierung mit Einrückung
+                segments.push({ text: '\n', style: 'normal' });
+                segments.push({ text: '„', style: 'italic', fontSize: typography.body + 2 });
+                segments.push({ text: element.textContent || '', style: 'italic', fontSize: typography.body });
+                segments.push({ text: '“', style: 'italic', fontSize: typography.body + 2 });
+                segments.push({ text: '\n\n', style: 'normal' });
+                break;
+              case 'div':
+                // Prüfe auf CTA-Klassen oder spezielle Formatierungen
+                const className = element.className?.toLowerCase() || '';
+                if (className.includes('cta') || className.includes('call-to-action') || className.includes('highlight')) {
+                  // CTA-Formatierung: Fett und mit Rahmen-Effekt
+                  segments.push({ text: '\n━━━ ', style: 'bold' });
+                  segments.push({ text: element.textContent || '', style: 'bold', fontSize: typography.body + 1 });
+                  segments.push({ text: ' ━━━\n\n', style: 'bold' });
+                } else {
+                  // Normale Div: Verarbeite Kinder-Elemente
+                  for (let child = element.firstChild; child; child = child.nextSibling) {
+                    processNode(child);
+                  }
+                }
+                break;
+              case 'ul':
+              case 'ol':
+                segments.push({ text: '\n', style: 'normal' });
+                const listItems = element.querySelectorAll('li');
+                listItems.forEach((li, index) => {
+                  const bullet = tagName === 'ul' ? '• ' : `${index + 1}. `;
+                  segments.push({ text: bullet + (li.textContent || ''), style: 'normal' });
+                  segments.push({ text: '\n', style: 'normal' });
+                });
+                segments.push({ text: '\n', style: 'normal' });
+                break;
+              case 'span':
+                // Prüfe auf spezielle Span-Klassen
+                const spanClass = element.className?.toLowerCase() || '';
+                if (spanClass.includes('highlight') || spanClass.includes('important')) {
+                  segments.push({ text: element.textContent || '', style: 'bold' });
+                } else if (spanClass.includes('quote') || spanClass.includes('citation')) {
+                  segments.push({ text: element.textContent || '', style: 'italic' });
+                } else {
+                  // Normale Span-Verarbeitung
+                  for (let child = element.firstChild; child; child = child.nextSibling) {
+                    processNode(child);
+                  }
+                }
+                break;
+              default:
+                // Für andere Tags: Verarbeite Kinder-Elemente rekursiv
+                for (let child = element.firstChild; child; child = child.nextSibling) {
+                  processNode(child);
+                }
+                break;
+            }
+          }
+        };
+        
+        // Verarbeite alle Kinder der Root-Div
+        const rootDiv = doc.querySelector('div');
+        if (rootDiv) {
+          for (let child = rootDiv.firstChild; child; child = child.nextSibling) {
+            processNode(child);
+          }
+        }
+        
+        return segments.filter(seg => seg.text.trim() !== '');
+      };
+      
+      /**
+       * Rendert HTML-Segmente mit korrekter Formatierung in PDF
+       */
+      const addFormattedText = (
+        htmlContent: string,
+        x: number,
+        y: number,
+        maxWidth: number,
+        baseColor: number[] = colors.body
+      ): number => {
+        const segments = parseHtmlToPdfSegments(htmlContent);
+        let currentY = y;
+        let currentX = x;
+        
+        let isInQuote = false;
+        let quoteIndent = 0;
+        
+        segments.forEach((segment, segmentIndex) => {
+          if (segment.text === '\n' || segment.text === '\n\n') {
+            // Zeilenumbruch
+            currentY += (segment.text === '\n\n' ? typography.body * 0.8 : typography.body * 0.4);
+            currentX = x + quoteIndent; // Berücksichtige Einrückung
+            return;
+          }
+          
+          // Prüfe auf Zitat-Start/Ende
+          if (segment.text.includes('„')) {
+            isInQuote = true;
+            quoteIndent = 15; // Einrückung für Zitate
+            
+            // Füge vertikale Linie für Zitat hinzu
+            const quoteLineX = x + 5;
+            pdf.setDrawColor(colors.accent[0], colors.accent[1], colors.accent[2]);
+            pdf.setLineWidth(1);
+            
+            // Schätze Höhe des Zitats
+            const nextSegments = segments.slice(segmentIndex, segmentIndex + 3);
+            const estimatedHeight = nextSegments.reduce((height, seg) => {
+              return height + (seg.text.includes('\n') ? typography.body * 0.4 : 0);
+            }, typography.body * 1.5);
+            
+            pdf.line(quoteLineX, currentY - 2, quoteLineX, currentY + estimatedHeight);
+          }
+          
+          if (segment.text.includes('“')) {
+            isInQuote = false;
+            quoteIndent = 0;
+          }
+          
+          const fontSize = segment.fontSize || typography.body;
+          const style = segment.style || 'normal';
+          let color = baseColor;
+          
+          // Spezielle Farbgebung für verschiedene Stile
+          if (segment.style === 'italic' && isInQuote) {
+            color = colors.secondary;
+          } else if (segment.style === 'bold' && segment.text.includes('━')) {
+            // CTA-Styling
+            color = colors.accent;
+          }
+          
+          // Prüfe ob Text zu lang für aktuelle Zeile ist
+          pdf.setFontSize(fontSize);
+          pdf.setFont('helvetica', style);
+          
+          const availableWidth = maxWidth - (currentX - x) - quoteIndent;
+          const lines = pdf.splitTextToSize(segment.text, availableWidth);
+          const lineHeight = fontSize * 0.4;
+          
+          lines.forEach((line: string, index: number) => {
+            // Prüfe ob neue Seite benötigt wird
+            if (currentY + lineHeight > pageHeight - marginBottom) {
+              pdf.addPage();
+              currentY = marginTop;
+              currentX = x + quoteIndent;
+            }
+            
+            pdf.setFontSize(fontSize);
+            pdf.setTextColor(color[0], color[1], color[2]);
+            pdf.setFont('helvetica', style);
+            pdf.text(line, currentX, currentY);
+            
+            if (index < lines.length - 1) {
+              // Mehrzeiliger Text - nächste Zeile
+              currentY += lineHeight;
+              currentX = x + quoteIndent;
+            } else {
+              // Letzte Zeile - Position für nächstes Segment aktualisieren
+              currentX += pdf.getTextWidth(line) + 2; // Kleiner Abstand
+            }
+          });
+        });
+        
+        return currentY + typography.body * 0.4; // Abschluss-Spacing
       };
 
       const checkNewPage = (requiredHeight: number): void => {
@@ -643,26 +859,16 @@ class PDFVersionsService {
       if (content.mainContent && content.mainContent.trim()) {
         checkNewPage(30);
         
-        const cleanMainContent = stripHtml(content.mainContent);
-        
-        // Professional paragraph spacing
-        const paragraphs = cleanMainContent.split('\n\n').filter(p => p.trim());
-        
-        for (const paragraph of paragraphs) {
-          if (paragraph.trim()) {
-            checkNewPage(20);
-            yPosition = addTextWithWrap(
-              paragraph.trim(),
-              marginLeft,
-              yPosition,
-              contentWidth,
-              typography.body,
-              colors.body,
-              'normal'
-            );
-            yPosition += 8; // Professional paragraph spacing
-          }
-        }
+        // Verwende intelligenten HTML-Parser statt stripHtml
+        checkNewPage(20);
+        yPosition = addFormattedText(
+          content.mainContent,
+          marginLeft,
+          yPosition,
+          contentWidth,
+          colors.body
+        );
+        yPosition += 8; // Professional spacing nach Haupttext
         
         yPosition += 15; // Extra space before next section
       }
@@ -712,10 +918,10 @@ class PDFVersionsService {
                                   section.boilerplate?.text ||
                                   '';
             const sectionTitle = section.customTitle || '';
-            const cleanContent = stripHtml(sectionContent);
 
-            // Estimate box height
-            const estimatedLines = Math.max(3, Math.ceil(cleanContent.length / 80));
+            // Estimate box height basierend auf Textinhalt
+            const textLength = sectionContent.replace(/<[^>]*>/g, '').length;
+            const estimatedLines = Math.max(3, Math.ceil(textLength / 80));
             const boxHeight = estimatedLines * 4 + 15;
             
             checkNewPage(boxHeight + 10);
@@ -741,15 +947,13 @@ class PDFVersionsService {
               currentY += 5;
             }
 
-            // Section content with professional formatting
-            addTextWithWrap(
-              cleanContent,
+            // Section content with intelligent formatting preservation
+            addFormattedText(
+              sectionContent, // Verwende Original-HTML statt cleanContent
               marginLeft + 8,
               currentY,
               contentWidth - 16,
-              typography.boilerplate,
-              colors.body,
-              'normal'
+              colors.body
             );
 
             yPosition += boxHeight + 8;
@@ -939,8 +1143,32 @@ class PDFVersionsService {
       canvas.width = targetImage.naturalWidth || targetImage.width;
       canvas.height = targetImage.naturalHeight || targetImage.height;
       
-      // Zeichne Bild auf Canvas
-      ctx.drawImage(targetImage, 0, 0);
+      // CORS-Fix: Setze crossOrigin BEFORE loading
+      if (!targetImage.crossOrigin) {
+        // Versuche Canvas mit CORS-Unterstützung
+        try {
+          // Erstelle neues Image Element mit CORS-Unterstützung
+          const corsImage = new Image();
+          corsImage.crossOrigin = 'anonymous';
+          
+          // Lade Bild mit CORS-Unterstützung
+          await new Promise<void>((resolve, reject) => {
+            corsImage.onload = () => resolve();
+            corsImage.onerror = () => reject(new Error('CORS Image loading failed'));
+            corsImage.src = targetImage.src;
+          });
+          
+          // Verwende CORS-Image
+          ctx.drawImage(corsImage, 0, 0);
+        } catch (corsError) {
+          console.warn('CORS-Lösung fehlgeschlagen, versuche direktes Zeichnen:', corsError);
+          // Fallback: Versuche trotzdem direktes Zeichnen
+          ctx.drawImage(targetImage, 0, 0);
+        }
+      } else {
+        // Bild hat bereits CORS-Unterstützung
+        ctx.drawImage(targetImage, 0, 0);
+      }
       
       // Konvertiere zu Base64
       const base64Data = canvas.toDataURL('image/jpeg', 0.85); // 85% Qualität für gute Balance
