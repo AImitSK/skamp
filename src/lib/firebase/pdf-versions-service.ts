@@ -743,28 +743,27 @@ class PDFVersionsService {
           if (imageData) {
             checkNewPage(90);
             
-            // Professional image placement - full width with subtle border
-            const imageWidth = contentWidth;
-            const imageHeight = 70; // Fixed height für consistent layout
+            // PROFESSIONELLES KeyVisual - GROß und OHNE Rahmen (Design Pattern compliant)
+            const maxImageWidth = contentWidth;
+            const maxImageHeight = 80; // Großzügige Höhe für Magazine-Look
             
-            // Subtle shadow effect (nur Rahmen, kein Shadow wie im Design Pattern)
-            addRect(marginLeft - 1, yPosition - 1, imageWidth + 2, imageHeight + 2, [0, 0, 0]);
-            addRect(marginLeft, yPosition, imageWidth, imageHeight, [255, 255, 255]);
+            // KEIN Rahmen! Professionelle Magazine/Pressemitteilungen haben KEINE Rahmen um Bilder
+            // Das war das Problem: addRect() erzeugt den hässlichen schwarzen Rahmen
             
-            // Add image centered in the frame
+            // Berechne optimale Bildabmessungen mit Aspektverhältnis
             const imageAspect = imageData.width / imageData.height;
-            let finalImageWidth = imageWidth - 4;
-            let finalImageHeight = imageHeight - 4;
+            let finalImageWidth = maxImageWidth;
+            let finalImageHeight = maxImageWidth / imageAspect;
             
-            // Maintain aspect ratio
-            if (imageAspect > finalImageWidth / finalImageHeight) {
-              finalImageHeight = finalImageWidth / imageAspect;
-            } else {
+            // Falls Höhe zu groß, von Höhe her limitieren
+            if (finalImageHeight > maxImageHeight) {
+              finalImageHeight = maxImageHeight;
               finalImageWidth = finalImageHeight * imageAspect;
             }
             
-            const imageX = marginLeft + 2 + (imageWidth - 4 - finalImageWidth) / 2;
-            const imageY = yPosition + 2 + (imageHeight - 4 - finalImageHeight) / 2;
+            // Zentriere das Bild horizontal
+            const imageX = marginLeft + (contentWidth - finalImageWidth) / 2;
+            const imageY = yPosition;
             
             pdf.addImage(
               imageData.base64,
@@ -775,7 +774,7 @@ class PDFVersionsService {
               finalImageHeight
             );
             
-            yPosition += imageHeight + 5;
+            yPosition += finalImageHeight + 10;
             
             // Professional caption styling
             if (content.keyVisual.caption) {
@@ -965,78 +964,15 @@ class PDFVersionsService {
       // 6. SENDER BLOCK (PROFESSIONAL PRESS CONTACT)
       // ========================================
       
-      // Load customer/organization data for sender block
-      const senderInfo = await this.getSenderInformation(organizationId);
+      // KEINE Standard-Sender-Daten mehr laden
       
       checkNewPage(50);
       
       // Separator before press contact
       yPosition += 10;
-      addLine(marginLeft, yPosition, marginLeft + contentWidth, yPosition, colors.primary);
-      yPosition += 12;
-      
-      // Press contact header
-      yPosition = addTextWithWrap(
-        'Pressekontakt',
-        marginLeft,
-        yPosition,
-        contentWidth,
-        typography.subheading,
-        colors.primary,
-        'bold'
-      );
-      yPosition += 10;
-      
-      // Create professional sender box
-      const senderBoxHeight = 35;
-      addRect(marginLeft, yPosition, contentWidth, senderBoxHeight, colors.background);
-      addRect(marginLeft, yPosition, contentWidth, senderBoxHeight);
-      
-      let senderY = yPosition + 8;
-      
-      // Company name
-      if (senderInfo.companyName) {
-        senderY = addTextWithWrap(
-          senderInfo.companyName,
-          marginLeft + 8,
-          senderY,
-          contentWidth - 16,
-          typography.body + 1,
-          colors.primary,
-          'bold'
-        );
-        senderY += 3;
-      }
-      
-      // Contact person
-      if (senderInfo.contactPerson) {
-        senderY = addTextWithWrap(
-          senderInfo.contactPerson,
-          marginLeft + 8,
-          senderY,
-          contentWidth - 16,
-          typography.body,
-          colors.body,
-          'normal'
-        );
-        senderY += 3;
-      }
-      
-      // Phone and Email on same line
-      if (senderInfo.phone || senderInfo.email) {
-        const contactLine = [senderInfo.phone, senderInfo.email].filter(Boolean).join(' | ');
-        addTextWithWrap(
-          contactLine,
-          marginLeft + 8,
-          senderY,
-          contentWidth - 16,
-          typography.body,
-          colors.secondary,
-          'normal'
-        );
-      }
-      
-      yPosition += senderBoxHeight + 15;
+      // KEINE Standard-Pressekontakt-Box!
+      // Die echten Kontaktdaten stehen in den Textbausteinen vom Kunden
+      // Hier endet das PDF direkt nach den Textbausteinen
 
       // ========================================
       // 7. PROFESSIONAL FOOTER
@@ -1060,12 +996,10 @@ class PDFVersionsService {
         const timestampWidth = pdf.getTextWidth(timestamp);
         pdf.text(timestamp, pageWidth - marginRight - timestampWidth, pageHeight - 12);
         
-        // Corporate footer (center)
-        if (senderInfo.companyName) {
-          const footerText = senderInfo.companyName;
-          const footerWidth = pdf.getTextWidth(footerText);
-          pdf.text(footerText, (pageWidth - footerWidth) / 2, pageHeight - 12);
-        }
+        // Corporate footer (center) - Echter Firmenname aus Campaign-Daten
+        const footerText = campaignData.clientName || 'Unternehmen'; // Echter Name aus Step 1
+        const footerWidth = pdf.getTextWidth(footerText);
+        pdf.text(footerText, (pageWidth - footerWidth) / 2, pageHeight - 12);
       }
 
       // Generate PDF Blob
