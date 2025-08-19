@@ -146,18 +146,27 @@ class PDFVersionsService {
 
       // Füge Kunden-Approval hinzu falls erforderlich
       if (context.status === 'pending_customer' && context.approvalId) {
-        // Hole ShareId vom Approval-Service
-        const approval = await approvalService.getById(context.approvalId, organizationId);
-        if (approval) {
-          pdfVersionData.customerApproval = {
-            shareId: approval.shareId,
-            requestedAt: serverTimestamp() as Timestamp
-          };
+        try {
+          // Hole ShareId vom Approval-Service
+          const approval = await approvalService.getById(context.approvalId, organizationId);
+          if (approval && approval.shareId) {
+            pdfVersionData.customerApproval = {
+              shareId: approval.shareId,
+              requestedAt: serverTimestamp() as Timestamp
+            };
+          }
+        } catch (error) {
+          console.warn('⚠️ Approval-Service Fehler, überspringe customerApproval:', error);
+          // Fahre ohne customerApproval fort
         }
       }
 
+      // Debug: Entferne alle undefined-Werte
+      const cleanedData = this.removeUndefinedValues(pdfVersionData);
+      console.log('📄 PDF-Daten für Firestore:', Object.keys(cleanedData));
+
       // Erstelle PDF-Version in Firestore
-      const docRef = await addDoc(collection(db, this.collectionName), pdfVersionData);
+      const docRef = await addDoc(collection(db, this.collectionName), cleanedData);
       const pdfVersionId = docRef.id;
 
       // Update Campaign mit aktueller PDF-Version (nur wenn Campaign existiert)
@@ -503,6 +512,31 @@ class PDFVersionsService {
     const text = html.replace(/<[^>]*>/g, ' ');
     const words = text.trim().split(/\s+/).filter(word => word.length > 0);
     return words.length;
+  }
+
+  /**
+   * Entfernt rekursiv alle undefined-Werte aus einem Object
+   */
+  private removeUndefinedValues(obj: any): any {
+    if (obj === null || obj === undefined) {
+      return null;
+    }
+    
+    if (Array.isArray(obj)) {
+      return obj.map(item => this.removeUndefinedValues(item)).filter(item => item !== undefined);
+    }
+    
+    if (typeof obj === 'object') {
+      const cleaned: any = {};
+      for (const [key, value] of Object.entries(obj)) {
+        if (value !== undefined) {
+          cleaned[key] = this.removeUndefinedValues(value);
+        }
+      }
+      return cleaned;
+    }
+    
+    return obj;
   }
 }
 
