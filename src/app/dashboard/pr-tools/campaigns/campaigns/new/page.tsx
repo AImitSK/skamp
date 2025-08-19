@@ -148,7 +148,7 @@ export default function NewPRCampaignPage() {
     if (boilerplateSections && boilerplateSections.length > 0) {
       const visibleSections = boilerplateSections
         .filter(section => {
-          // Temporär: Zeige alle Textbausteine mit Content (ignore isActive für jetzt)
+          // Zeige alle Textbausteine mit Content
           return section.content && section.content.trim();
         })
         .sort((a, b) => (a.order || 0) - (b.order || 0));

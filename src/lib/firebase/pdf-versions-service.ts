@@ -132,7 +132,7 @@ class PDFVersionsService {
           title: processedContent.title || '',
           mainContent: processedContent.mainContent || '',
           boilerplateSections: processedContent.boilerplateSections || [],
-          ...(processedContent.keyVisual && { keyVisual: processedContent.keyVisual }), // Nur setzen wenn definiert
+          ...(processedContent.keyVisual && processedContent.keyVisual.url && { keyVisual: processedContent.keyVisual }), // Nur setzen wenn definiert und URL vorhanden
           createdForApproval: context.status === 'pending_customer',
           // PDF-Layout Struktur: 1. KeyVisual, 2. Headline, 3. Text, 4. Textbausteine
           layoutOrder: ['keyVisual', 'title', 'mainContent', 'boilerplateSections']
