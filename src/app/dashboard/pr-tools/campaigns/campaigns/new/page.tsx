@@ -116,6 +116,66 @@ export default function NewPRCampaignPage() {
   const [keyVisual, setKeyVisual] = useState<KeyVisualData | undefined>(undefined);
   const [approvalRequired, setApprovalRequired] = useState(false); // Legacy - wird durch approvalData ersetzt
   const [approvalData, setApprovalData] = useState<EnhancedApprovalData>(createDefaultEnhancedApprovalData());
+
+  // Debug Logging für State-Änderungen
+  useEffect(() => {
+    console.log('🖼️ KeyVisual State changed:', keyVisual);
+  }, [keyVisual]);
+
+  useEffect(() => {
+    console.log('📝 BoilerplateSections State changed:', boilerplateSections?.length, boilerplateSections);
+  }, [boilerplateSections]);
+
+  // Content HTML Generation - kombiniert alle Komponenten zu einem HTML-String
+  const generateContentHtml = (): string => {
+    let html = '';
+    
+    // 1. KeyVisual (falls vorhanden)
+    if (keyVisual && keyVisual.url) {
+      html += `<div class="key-visual-container mb-6">
+        <img src="${keyVisual.url}" alt="${keyVisual.alt || ''}" 
+             style="width: 100%; max-width: 600px; height: auto; border-radius: 8px;" />
+        ${keyVisual.caption ? `<p class="text-sm text-gray-600 mt-2 italic">${keyVisual.caption}</p>` : ''}
+      </div>`;
+    }
+    
+    // 2. Haupt-Content (Editor-Inhalt)
+    if (editorContent && editorContent.trim() && editorContent !== '<p></p>') {
+      html += `<div class="main-content">${editorContent}</div>`;
+    }
+    
+    // 3. Textbausteine (falls vorhanden)
+    if (boilerplateSections && boilerplateSections.length > 0) {
+      const visibleSections = boilerplateSections
+        .filter(section => section.isActive)
+        .sort((a, b) => a.order - b.order);
+      
+      if (visibleSections.length > 0) {
+        html += `<div class="boilerplate-sections mt-8">`;
+        visibleSections.forEach(section => {
+          html += `<div class="boilerplate-section mb-4">
+            <h3 class="text-lg font-semibold mb-2">${section.title}</h3>
+            <div class="boilerplate-content">${section.content}</div>
+          </div>`;
+        });
+        html += `</div>`;
+      }
+    }
+    
+    return html;
+  };
+
+  // Debug Wrapper-Funktionen
+  const handleKeyVisualChange = (newKeyVisual: KeyVisualData | undefined) => {
+    console.log('🖼️ KeyVisual wird geändert zu:', newKeyVisual);
+    setKeyVisual(newKeyVisual);
+  };
+
+  const handleBoilerplateSectionsChange = (newSections: BoilerplateSection[]) => {
+    console.log('📝 BoilerplateSections werden geändert zu:', newSections?.length, newSections);
+    setBoilerplateSections(newSections);
+  };
+
   const [keywords, setKeywords] = useState<string[]>([]); // SEO Keywords
   
   // UI State
@@ -448,7 +508,7 @@ export default function NewPRCampaignPage() {
       const campaignData = {
         organizationId: currentOrganization.id,
         title: campaignTitle.trim(),
-        contentHtml: pressReleaseContent || '',
+        contentHtml: generateContentHtml(), // Kombinierte HTML aus allen Komponenten
         mainContent: editorContent || '',
         boilerplateSections: cleanedSections,
         status: 'draft' as const,
@@ -729,7 +789,7 @@ export default function NewPRCampaignPage() {
               <div className="mt-8">
                 <KeyVisualSection
                   value={keyVisual}
-                  onChange={setKeyVisual}
+                  onChange={handleKeyVisualChange}
                   clientId={selectedCompanyId}
                   clientName={selectedCompanyName}
                   organizationId={user!.uid}
@@ -866,100 +926,36 @@ export default function NewPRCampaignPage() {
         {/* Step 4: Vorschau */}
         {currentStep === 4 && (
           <div className="bg-white rounded-lg border p-6">
-            {/* Live Vorschau */}
+            {/* Live Vorschau - EXAKT WIE IM DETAIL PAGE */}
             <div className="mb-8">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Live-Vorschau</h3>
               <div className="border rounded-lg p-6 bg-gray-50">
-                <div className="prose max-w-none">
-                  {/* 1. Key Visual (oben) */}
-                  {keyVisual && keyVisual.url ? (
-                    <div className="mb-6">
-                      {keyVisual.type === 'image' && keyVisual.url && (
-                        <img 
-                          src={keyVisual.url} 
-                          alt={keyVisual.alt || 'Key Visual'}
-                          className="w-full max-w-2xl mx-auto rounded-lg shadow-sm"
-                          onError={(e) => {
-                            console.log('❌ Key Visual Ladefehler:', keyVisual.url);
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                      )}
-                      {keyVisual.caption && (
-                        <p className="text-sm text-gray-600 text-center mt-2 italic">
-                          {keyVisual.caption}
-                        </p>
-                      )}
-                    </div>
-                  ) : keyVisual ? (
-                    <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                      <p className="text-sm text-blue-600">
-                        🖼️ Key Visual ausgewählt aber noch nicht geladen
-                      </p>
-                    </div>
-                  ) : null}
-                  
-                  {/* 2. Headline */}
+                <div className="prose prose-sm max-w-none">
+                  {/* Titel */}
                   <h1 className="text-2xl font-bold mb-4">{campaignTitle || 'Titel der Pressemitteilung'}</h1>
                   
-                  {/* 3. Hauptinhalt/Text */}
-                  {editorContent && editorContent.trim() && editorContent !== '<p></p>' ? (
-                    <div 
-                      className="mb-6"
-                      dangerouslySetInnerHTML={{ __html: editorContent }} 
-                    />
-                  ) : (
-                    <div className="mb-6 p-4 bg-gray-100 border border-gray-200 rounded text-gray-500 italic">
-                      Noch kein Hauptinhalt erstellt...
-                    </div>
-                  )}
+                  {/* Hauptinhalt - Generated ContentHtml wie in Detail Page */}
+                  <div 
+                    className="mb-6"
+                    dangerouslySetInnerHTML={{ __html: generateContentHtml() || '<p class="text-gray-400 italic">Noch kein Inhalt erstellt...</p>' }} 
+                  />
+
+                  {/* Textbausteine sind bereits in generateContentHtml() enthalten */}
                   
-                  {/* 4. Textbausteine */}
-                  {boilerplateSections && boilerplateSections.length > 0 ? (
-                    boilerplateSections
-                      .filter(section => section.content && section.content.trim()) // Nur Sections mit Content
-                      .sort((a, b) => (a.order || 0) - (b.order || 0)) // Sortiert nach Order
-                      .map((section, index) => (
-                        <div key={section.id} className="mb-4">
-                          {/* Optionale Überschrift für Section */}
-                          {section.customTitle && (
-                            <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                              {section.customTitle}
-                            </h3>
-                          )}
-                          
-                          {/* Section Content */}
-                          {section.content && (
-                            <div 
-                              className="mb-2"
-                              dangerouslySetInnerHTML={{ __html: section.content }} 
-                            />
-                          )}
-                          
-                          {/* Quote Metadata */}
-                          {section.metadata && section.type === 'quote' && (
-                            <div className="italic text-gray-600 mt-2 border-l-4 border-gray-300 pl-4">
-                              — {section.metadata.person}
-                              {section.metadata.role && `, ${section.metadata.role}`}
-                              {section.metadata.company && `, ${section.metadata.company}`}
-                            </div>
-                          )}
-                        </div>
-                      ))
-                  ) : (
-                    <div className="mb-6 p-4 bg-gray-100 border border-gray-200 rounded text-gray-500 italic">
-                      📝 Noch keine Textbausteine hinzugefügt...
-                    </div>
-                  )}
-                  
-                  {/* Debug Info - nur in Development */}
-                  {process.env.NODE_ENV === 'development' && (
-                    <div className="mt-8 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
-                      <strong>Debug:</strong> KeyVisual: {keyVisual ? '✅' : '❌'}, 
-                      Textbausteine: {boilerplateSections?.length || 0}, 
-                      EditorContent: {editorContent ? editorContent.length : 0} Zeichen
-                    </div>
-                  )}
+                  {/* Debug Info */}
+                  <div className="mt-8 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                    <strong>Debug Live-Vorschau (generateContentHtml):</strong><br/>
+                    KeyVisual: {keyVisual ? `✅ (${keyVisual.type}, ${keyVisual.url ? 'URL✅' : 'URL❌'})` : '❌'}<br/>
+                    Textbausteine: {boilerplateSections?.length || 0} ({boilerplateSections?.filter(s => s.isActive).length || 0} aktiv)<br/>
+                    EditorContent: {editorContent ? `${editorContent.length} Zeichen` : '❌'}<br/>
+                    Generated HTML: {generateContentHtml().length} Zeichen
+                    <details className="mt-2">
+                      <summary className="cursor-pointer text-blue-600">Generated HTML anzeigen</summary>
+                      <pre className="mt-2 p-2 bg-gray-100 rounded text-xs overflow-auto max-h-32">
+                        {generateContentHtml()}
+                      </pre>
+                    </details>
+                  </div>
                   
                   {/* Datum */}
                   <p className="text-sm text-gray-600 mt-8 pt-4 border-t border-gray-200">

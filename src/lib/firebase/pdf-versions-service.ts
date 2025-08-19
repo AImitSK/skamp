@@ -157,8 +157,13 @@ class PDFVersionsService {
       const docRef = await addDoc(collection(db, this.collectionName), pdfVersionData);
       const pdfVersionId = docRef.id;
 
-      // Update Campaign mit aktueller PDF-Version
-      await this.updateCampaignCurrentPDF(campaignId, pdfVersionId);
+      // Update Campaign mit aktueller PDF-Version (nur wenn Campaign existiert)
+      try {
+        await this.updateCampaignCurrentPDF(campaignId, pdfVersionId);
+      } catch (error) {
+        console.warn('⚠️ Campaign PDF-Update fehlgeschlagen (Campaign existiert möglicherweise nicht):', error);
+        // Fahre trotzdem fort, PDF wurde erstellt
+      }
 
       // Aktiviere Edit-Lock falls Kunden-Freigabe angefordert
       if (context.status === 'pending_customer') {
