@@ -293,8 +293,8 @@ export const teamApprovalService = {
       
       // Konvertiere Team-Approvals zu Approval-Format für UI-Kompatibilität
       const teamApprovals = await Promise.all(
-        approvalDocs.docs.map(async (doc) => {
-          const data = doc.data();
+        approvalDocs.docs.map(async (approvalDoc) => {
+          const data = approvalDoc.data();
           
           try {
             // Lade Campaign-Daten für zusätzliche Info
@@ -306,7 +306,7 @@ export const teamApprovalService = {
             const workflowData = workflowDoc.data();
             
             return {
-              id: doc.id,
+              id: approvalDoc.id,
               campaignId: data.campaignId,
               organizationId: data.organizationId,
               status: data.status,
@@ -320,9 +320,9 @@ export const teamApprovalService = {
               estimatedDuration: 15
             };
           } catch (error) {
-            console.warn(`Error loading additional data for approval ${doc.id}:`, error);
+            console.warn(`Error loading additional data for approval ${approvalDoc.id}:`, error);
             return {
-              id: doc.id,
+              id: approvalDoc.id,
               campaignId: data.campaignId,
               organizationId: data.organizationId,
               status: data.status,
