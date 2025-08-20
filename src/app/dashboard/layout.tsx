@@ -71,6 +71,21 @@ import React, { useState } from "react";
 import clsx from 'clsx';
 import * as Headless from '@headlessui/react';
 
+// Navigation Interface Definitions
+interface NavigationChild {
+  name: string;
+  href: string;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  description: string;
+  notificationCount?: number;
+}
+
+interface NavigationItem {
+  name: string;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  current: boolean;
+  children: NavigationChild[];
+}
 
 export default function DashboardLayout({
   children,
@@ -93,7 +108,7 @@ export default function DashboardLayout({
     }
   };
 
-  const navigationItems = [
+  const navigationItems: NavigationItem[] = [
   {
     name: "Kontakte",
     icon: UserGroupIcon,
