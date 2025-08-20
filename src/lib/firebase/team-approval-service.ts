@@ -312,12 +312,59 @@ export const teamApprovalService = {
               status: data.status,
               createdAt: data.createdAt,
               notifiedAt: data.notifiedAt,
-              // UI-Kompatibilität
+              
+              // UI-Kompatibilität - vollständige ApprovalEnhanced Felder
               title: campaignData?.title || 'Team-Freigabe',
-              type: 'team_approval', // Markiere als Team-Approval
+              description: `Interne Team-Freigabe für ${campaignData?.title || 'Kampagne'}`,
+              campaignTitle: campaignData?.title || 'Team-Freigabe',
+              clientName: 'Internes Team',
+              clientEmail: null,
+              
+              // Minimale Recipients für UI
+              recipients: [{
+                id: data.userId,
+                email: 'team@internal',
+                name: 'Team-Mitglied',
+                type: 'team_member',
+                status: data.status
+              }],
+              
+              // Minimaler Content für UI
+              content: {
+                html: campaignData?.mainContent || '',
+                plainText: '',
+                subject: campaignData?.title || 'Team-Freigabe'
+              },
+              
+              // Minimale Workflow-Info
+              workflow: {
+                currentStage: 'team_approval',
+                totalStages: 1,
+                autoAdvance: false
+              },
+              
+              // Standard-Optionen
+              options: {
+                requireAllApprovals: false,
+                allowPartialApproval: true,
+                autoSendAfterApproval: false,
+                reminderFrequency: 'daily',
+                expiresAt: null
+              },
+              
+              // Team-Approval spezifisch
+              type: 'team_approval',
               shareId: workflowData?.customerSettings?.shareId || 'unknown',
               priority: 'normal',
-              estimatedDuration: 15
+              estimatedDuration: 15,
+              
+              // Timestamps richtig formatieren
+              sentAt: data.notifiedAt,
+              updatedAt: data.createdAt,
+              
+              // Zusätzliche UI-Felder
+              isOverdue: false,
+              reminderCount: 0
             };
           } catch (error) {
             console.warn(`Error loading additional data for approval ${approvalDoc.id}:`, error);
@@ -328,11 +375,50 @@ export const teamApprovalService = {
               status: data.status,
               createdAt: data.createdAt,
               notifiedAt: data.notifiedAt,
+              
+              // UI-Kompatibilität - Fallback mit allen erforderlichen Feldern
               title: 'Team-Freigabe',
+              description: 'Interne Team-Freigabe',
+              campaignTitle: 'Team-Freigabe',
+              clientName: 'Internes Team',
+              clientEmail: null,
+              
+              recipients: [{
+                id: data.userId,
+                email: 'team@internal',
+                name: 'Team-Mitglied',
+                type: 'team_member',
+                status: data.status
+              }],
+              
+              content: {
+                html: '',
+                plainText: '',
+                subject: 'Team-Freigabe'
+              },
+              
+              workflow: {
+                currentStage: 'team_approval',
+                totalStages: 1,
+                autoAdvance: false
+              },
+              
+              options: {
+                requireAllApprovals: false,
+                allowPartialApproval: true,
+                autoSendAfterApproval: false,
+                reminderFrequency: 'daily',
+                expiresAt: null
+              },
+              
               type: 'team_approval',
               shareId: 'unknown',
               priority: 'normal',
-              estimatedDuration: 15
+              estimatedDuration: 15,
+              sentAt: data.notifiedAt,
+              updatedAt: data.createdAt,
+              isOverdue: false,
+              reminderCount: 0
             };
           }
         })
