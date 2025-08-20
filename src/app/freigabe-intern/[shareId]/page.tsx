@@ -255,6 +255,11 @@ export default function InternalApprovalPage() {
 
   // 🆕 HELPER FUNCTIONS
   const calculateEstimatedDuration = (stages: any[]): string => {
+    // 🔧 FIX: Null/undefined check für stages Array
+    if (!stages || !Array.isArray(stages)) {
+      return '~2 Stunden'; // Default fallback
+    }
+    
     const totalApprovers = stages.reduce((sum, stage) => sum + (stage.requiredApprovals || 0), 0);
     const estimatedHours = Math.ceil(totalApprovers * 2); // 2h pro Approver
     
