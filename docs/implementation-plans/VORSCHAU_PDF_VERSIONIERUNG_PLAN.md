@@ -637,7 +637,7 @@ describe('Campaign PDF Workflow Integration', () => {
 
 2. **PDFGeneratorService erweitern**
    - Versions-Integration
-   - Template-System für verschiedene PDF-Typen
+   - Template-System für verschiedene PDF-Typen (siehe docs\implementation-plans\PDF_TEMPLATE_SYSTEM_PLAN.md)
    - Performance-Optimierung
 
 ### Phase 2: UI-Komponenten (Woche 2)
@@ -774,3 +774,7 @@ const PDF_VERSIONING_FLAGS = {
 **Author:** CeleroPress Team  
 **Qualitätssicherung:** Enterprise-Grade Testing mit 100% Coverage  
 **Deployment:** Production-Ready, alle Feature-Flags aktiviert
+
+
+
+---
