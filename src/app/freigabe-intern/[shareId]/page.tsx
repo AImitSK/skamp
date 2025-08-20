@@ -5,6 +5,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
 import { prService } from '@/lib/firebase/pr-service';
 import { teamApprovalService } from '@/lib/firebase/team-approval-service';
 import { approvalWorkflowService } from '@/lib/firebase/approval-workflow-service';
@@ -77,7 +79,7 @@ export default function InternalApprovalPage() {
       setLoading(true);
       setError(null);
 
-      // Lade Campaign über ShareID
+      // Lade Campaign über ShareID (wie bei Customer-Approvals)
       const campaignData = await prService.getCampaignByShareId(shareId);
       if (!campaignData) {
         setError('Freigabe-Link nicht gefunden oder nicht mehr gültig.');
@@ -109,15 +111,26 @@ export default function InternalApprovalPage() {
           estimatedDuration: calculateEstimatedDuration(workflowData.stages || [])
         });
 
-        // Lade User-spezifische Approval
-        const userApprovals = await teamApprovalService.getApprovalsByUser(
-          user.uid, 
-          currentOrganization.id
+        // 🔧 FIX: Lade User-spezifische Team-Approval für diese Campaign
+        // Team-Approvals sind mit campaignId und workflowId verknüpft
+        const userApprovalsQuery = query(
+          collection(db, 'team_approvals'),
+          where('userId', '==', user.uid),
+          where('organizationId', '==', currentOrganization.id),
+          where('campaignId', '==', campaignData.id),
+          where('workflowId', '==', workflowData.id)
         );
-        const relevantApproval = userApprovals.find(approval => 
-          approval.workflowId === workflowData.id
-        );
-        setUserApproval(relevantApproval || null);
+        
+        const userApprovalDocs = await getDocs(userApprovalsQuery);
+        if (!userApprovalDocs.empty) {
+          const userApprovalData = userApprovalDocs.docs[0].data();
+          setUserApproval({
+            id: userApprovalDocs.docs[0].id,
+            ...userApprovalData
+          } as TeamApproval);
+        } else {
+          setUserApproval(null);
+        }
       }
 
       // 3. 🆕 PDF-VERSIONEN LADEN

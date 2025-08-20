@@ -194,6 +194,12 @@ export default function DashboardLayout({
           icon: DocumentTextIcon,
           description: "Wiederverwendbare Textbausteine"
         },
+        { 
+          name: "Templates", 
+          href: "/dashboard/pr-tools/templates", 
+          icon: DocumentCheckIcon,
+          description: "PDF-Layout-Vorlagen verwalten"
+        },
     ],
   },
   {
@@ -264,6 +270,12 @@ export default function DashboardLayout({
       href: "/dashboard/settings/branding", 
       icon: PaintBrushIcon,
       description: "Personalisiere CeleroPress mit eigenem Logo"
+    },
+    { 
+      name: "Templates", 
+      href: "/dashboard/settings/templates", 
+      icon: DocumentTextIcon,
+      description: "PDF-Layout-Vorlagen verwalten"
     },
     { 
       name: "Domains", 
