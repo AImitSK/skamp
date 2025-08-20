@@ -1469,15 +1469,25 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
         }
 
         // 2c. Erstelle PDF für Kundenfreigabe
-        const pdfVersion = await pdfVersionsService.createPDFVersion({
+        const pdfVersion = await pdfVersionsService.createPDFVersion(
           campaignId,
-          organizationId: context.organizationId,
-          contentHtml: campaignData.contentHtml || '',
-          status: 'pending_customer',
-          workflowId
-        });
+          context.organizationId,
+          {
+            title: campaignData.title || 'Pressemitteilung',
+            mainContent: campaignData.mainContent || campaignData.contentHtml || '',
+            boilerplateSections: campaignData.boilerplateSections || [],
+            keyVisual: campaignData.keyVisual,
+            clientName: campaignData.clientName
+          },
+          {
+            userId: context.userId,
+            status: 'pending_customer',
+            workflowId,
+            isApprovalPDF: true
+          }
+        );
 
-        if (!pdfVersion || !pdfVersion.id) {
+        if (!pdfVersion) {
           throw new Error('PDF-Version konnte nicht erstellt werden - Kundenfreigabe abgebrochen');
         }
 
@@ -1490,12 +1500,12 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
           updatedAt: serverTimestamp()
         });
 
-        console.log('✅ Customer-Only-Workflow erstellt:', { workflowId, pdfVersionId: pdfVersion.id });
+        console.log('✅ Customer-Only-Workflow erstellt:', { workflowId, pdfVersionId: pdfVersion });
 
         return {
           campaignId,
           workflowId,
-          pdfVersionId: pdfVersion.id,
+          pdfVersionId: pdfVersion,
           customerShareLink
         };
       }
