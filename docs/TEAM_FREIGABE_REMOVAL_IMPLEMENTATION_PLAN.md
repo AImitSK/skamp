@@ -10,6 +10,44 @@ Dieser Implementierungsplan beschreibt die vollständige Entfernung des 2-stufig
 
 **🚨 HAUPTPROBLEM**: Die `approvals/page.tsx` ist extrem komplex geworden durch die Vermischung von klassischen Customer-Approvals und Team-Approvals (Zeile 303-306). Diese Seite ist der Hauptgrund für den Rückbau!
 
+**🐛 ZUSÄTZLICHE AKTUELLE SYSTEM-FEHLER:**
+
+Während der Fehlersuche wurden **2 kritische Bugs** im derzeitigen 2-stufigen System entdeckt:
+
+1. **Doppelte Campaign-Erstellung** 🔄
+   - Neue Kampagnen werden **DOPPELT** angelegt
+   - Eine mit Status "In Prüfung", eine mit Status "Entwurf" 
+   - Vermutlich durch Race-Conditions im 2-stufigen Approval-System
+
+2. **Doppelte Einträge in Freigabe-Übersicht** 📊
+   - Kampagnen erscheinen mehrfach in der Approvals-Liste
+   - Wahrscheinlich durch die Kombination von `classicApprovals + teamApprovals` (Zeile 309)
+
+**🔍 WAHRSCHEINLICHE URSACHEN:**
+
+**Bug 1 - Doppelte Campaign-Erstellung:**
+```typescript
+// Vermutlich in saveCampaignWithApprovalIntegration():
+// Team-Workflow-Erstellung triggers zweiten Campaign-Save
+const teamWorkflow = await createTeamWorkflow(); // Trigger 1
+const customerWorkflow = await createCustomerWorkflow(); // Trigger 2
+// Beide erstellen Race-Condition bei Campaign-Updates
+```
+
+**Bug 2 - Doppelte Approvals-Einträge:**
+```typescript
+// In approvals/page.tsx Zeile 309:
+const allApprovals = [...classicApprovals, ...teamApprovals];
+// Gleiche Campaign kann in BEIDEN Arrays stehen!
+// = Doppelte Anzeige in der Tabelle
+```
+
+**💡 Diese Bugs sind STARKE ARGUMENTE für den Rückbau:**
+- Das 2-stufige System ist zu komplex und fehleranfällig
+- Vereinfachung zu 1-stufigem System wird diese Race-Conditions lösen  
+- Weniger Code = weniger Bugs
+- **Rückbau ist auch ein BUG-FIX!**
+
 ---
 
 ## 🤖 **EMPFOHLENE AGENTEN FÜR DIE MIGRATION**
@@ -651,6 +689,527 @@ rm src/pages/api/approvals/team/
 # Approval-API vereinfachen - nur Customer-Endpoints behalten
 ```
 
+---
+
+## 🔧 **PHASE 7: PDF-HISTORIE ENHANCEMENT (WOCHE 5)**
+**Nach erfolgreichem Team-Approval-Rückbau**
+
+### **🚨 Kritisches Problem identifiziert:**
+
+In der aktuellen Kundenfreigabe-Seite (`/freigabe/[shareId]/page.tsx`) ist die PDF-Anzeige **optional** (Zeile 754):
+```typescript
+{/* PDF Version Display */}
+{currentPdfVersion && (  // ❌ FALSCH! PDF muss IMMER da sein!
+  <CustomerPDFVersionCard />
+)}
+```
+
+**Das widerspricht dem Kern unseres Systems:** Unveränderliche PDFs sind IMMER vorhanden bei Kundenfreigaben!
+
+### **🎯 Ziele dieser Phase:**
+
+1. **PDF ist IMMER vorhanden** - System-Validierung
+2. **PDF-Historie sichtbar** für vollständige Nachvollziehbarkeit
+3. **Wiederverwendung bestehender Komponenten** aus Admin-Seite
+
+---
+
+## 🔍 **ANALYSE: Bestehende PDF-Historie-Komponenten**
+
+**✅ Gefunden in `src/app/dashboard/pr-tools/approvals/[shareId]/page.tsx`:**
+
+### **1. PDFVersionOverview Komponente** (Zeile ~300)
+```typescript
+function PDFVersionOverview({ 
+  version, 
+  campaignTitle,
+  onHistoryToggle 
+}: { 
+  version: PDFVersion;
+  campaignTitle: string;
+  onHistoryToggle: () => void;
+}) {
+  // Status-Badges, Datum-Formatierung, Download-Links
+  // "Weitere Versionen anzeigen" Button
+}
+```
+
+### **2. PDFHistoryModal Komponente** (Zeile ~350)
+```typescript
+function PDFHistoryModal({ 
+  versions, 
+  onClose 
+}: { 
+  versions: PDFVersion[]; 
+  onClose: () => void;
+}) {
+  // Vollständige Historie aller PDF-Versionen
+  // Status-Badges, Download-Links, Metadaten
+  // Chronologische Sortierung
+}
+```
+
+### **3. State-Management** (bereits vorhanden)
+```typescript
+const [pdfVersions, setPdfVersions] = useState<PDFVersion[]>([]);
+const [currentPdfVersion, setCurrentPdfVersion] = useState<PDFVersion | null>(null);
+const [showPdfHistory, setShowPdfHistory] = useState(false);
+```
+
+---
+
+## 🏗️ **IMPLEMENTIERUNGSPLAN - PHASE 7**
+
+### **7.1 Komponenten-Extraktion und Refactoring**
+**🤖 Agent-Empfehlung: `migration-helper`** für Component-Migration
+
+#### **Neue Datei erstellen:**
+```typescript
+// src/components/pdf/PDFHistoryComponents.tsx
+
+export function PDFVersionOverview({ 
+  version, 
+  campaignTitle,
+  onHistoryToggle,
+  showDownloadButton = true,
+  variant = 'admin' // 'admin' | 'customer'
+}: PDFVersionOverviewProps) {
+  // Extrahiert aus Admin-Seite
+  // Zusätzliche Props für Customer-Variante
+  
+  return (
+    <div className="bg-white rounded-lg border border-gray-200 mb-6">
+      <div className="border-b border-gray-200 px-6 py-4">
+        <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <DocumentTextIcon className="h-5 w-5 text-gray-400" />
+          PDF-Dokument zur Freigabe
+          {variant === 'customer' && (
+            <Badge color="blue" className="text-xs ml-2">
+              Unveränderlich
+            </Badge>
+          )}
+        </h2>
+      </div>
+      
+      <div className="p-6">
+        {/* PDF-Version Details */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <StatusIcon className="h-8 w-8 text-gray-500" />
+            <div>
+              <h3 className="font-medium text-gray-900">
+                {campaignTitle} - Version {version.version}
+              </h3>
+              <div className="text-sm text-gray-600 mt-1">
+                Erstellt am {formatDate(version.createdAt)} • {formatFileSize(version.fileSize)}
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <Badge color={config.color} className="text-sm">
+              {config.label}
+            </Badge>
+          </div>
+        </div>
+        
+        {/* PDF Metadata */}
+        {version.metadata && (
+          <div className="text-sm text-gray-600 mb-4">
+            {version.metadata.wordCount} Wörter • {version.metadata.pageCount} Seiten
+          </div>
+        )}
+        
+        {/* Actions */}
+        <div className="flex gap-3">
+          {showDownloadButton && (
+            <a
+              href={version.downloadUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1"
+            >
+              <Button className="w-full bg-[#005fab] hover:bg-[#004a8c] text-white">
+                <DocumentIcon className="h-5 w-5 mr-2" />
+                PDF öffnen und prüfen
+              </Button>
+            </a>
+          )}
+          
+          <Button
+            onClick={onHistoryToggle}
+            className="bg-gray-100 hover:bg-gray-200 text-gray-700"
+          >
+            Weitere Versionen ({totalVersions - 1})
+          </Button>
+        </div>
+        
+        {/* Enhanced Info Box für Customer */}
+        {variant === 'customer' && (
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex">
+              <InformationCircleIcon className="h-5 w-5 text-blue-400 mr-2 flex-shrink-0" />
+              <div className="text-sm text-blue-800">
+                <p className="font-medium mb-1">📄 Unveränderliche PDF-Version</p>
+                <p>
+                  Diese PDF-Version wurde automatisch beim Anfordern der Freigabe erstellt und 
+                  kann nicht mehr verändert werden. Sie bildet genau den Inhalt ab, der zur 
+                  Freigabe vorgelegt wird.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function PDFHistoryModal({ 
+  versions, 
+  onClose,
+  variant = 'admin' 
+}: PDFHistoryModalProps) {
+  // Extrahiert aus Admin-Seite
+  // Customer-spezifische Anpassungen
+  
+  return (
+    <Dialog open={true} onClose={onClose} size="2xl">
+      <div className="p-6">
+        <DialogTitle>PDF-Versions-Historie</DialogTitle>
+        
+        {variant === 'customer' && (
+          <div className="mt-2 mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
+            <p className="text-sm text-blue-800">
+              <InformationCircleIcon className="h-4 w-4 inline mr-1" />
+              Hier sehen Sie alle PDF-Versionen dieser Kampagne. Jede Version ist unveränderlich 
+              und zeigt den exakten Stand zum Zeitpunkt der Freigabe-Anforderung.
+            </p>
+          </div>
+        )}
+        
+        <DialogBody className="mt-4">
+          <div className="space-y-4">
+            {versions.map((version) => (
+              <div key={version.id} 
+                className={clsx(
+                  "p-4 rounded-lg border",
+                  version.status === 'approved' 
+                    ? "bg-green-50 border-green-200" 
+                    : version.status === 'pending_customer'
+                    ? "bg-yellow-50 border-yellow-200"
+                    : version.status === 'rejected'
+                    ? "bg-red-50 border-red-200"
+                    : "bg-gray-50 border-gray-200"
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <StatusIcon className="h-6 w-6" />
+                    <div>
+                      <div className="font-medium">Version {version.version}</div>
+                      <div className="text-sm text-gray-600">
+                        {formatDate(version.createdAt)}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <Badge color={getPDFStatusBadgeColor(version.status)} className="text-xs">
+                      {getPDFStatusLabel(version.status)}
+                    </Badge>
+                    <a
+                      href={version.downloadUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Button size="sm" plain>
+                        <DocumentIcon className="h-4 w-4 mr-1" />
+                        Öffnen
+                      </Button>
+                    </a>
+                  </div>
+                </div>
+                
+                <div className="mt-3 text-sm text-gray-600">
+                  <div className="font-medium mb-1">{version.contentSnapshot.title}</div>
+                  {version.metadata && (
+                    <div className="text-xs">
+                      {version.metadata.wordCount} Wörter • {version.metadata.pageCount} Seiten
+                    </div>
+                  )}
+                  
+                  {/* Customer-spezifische Version-Details */}
+                  {variant === 'customer' && version.approvalDecision && (
+                    <div className="mt-2 p-2 bg-white bg-opacity-60 rounded">
+                      <div className="text-xs text-gray-500">
+                        Freigabe-Entscheidung: {version.approvalDecision.decision} 
+                        am {formatDate(version.approvalDecision.decidedAt)}
+                      </div>
+                      {version.approvalDecision.comment && (
+                        <div className="text-xs italic mt-1">
+                          "{version.approvalDecision.comment}"
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </DialogBody>
+        
+        <DialogActions>
+          <Button plain onClick={onClose}>Schließen</Button>
+        </DialogActions>
+      </div>
+    </Dialog>
+  );
+}
+```
+
+### **7.2 Integration in Kundenfreigabe-Seite**
+**🤖 Agent-Empfehlung: `migration-helper`** für Customer-Page Updates
+
+#### **Kundenfreigabe-Seite erweitern:**
+```typescript
+// src/app/freigabe/[shareId]/page.tsx
+
+import { 
+  PDFVersionOverview, 
+  PDFHistoryModal 
+} from '@/components/pdf/PDFHistoryComponents';
+
+export default function CustomerApprovalPage() {
+  // ... bestehender Code
+  
+  // ERWEITERT: PDF-State
+  const [pdfVersions, setPdfVersions] = useState<PDFVersion[]>([]);
+  const [currentPdfVersion, setCurrentPdfVersion] = useState<PDFVersion | null>(null);
+  const [showPdfHistory, setShowPdfHistory] = useState(false);
+  
+  const loadCampaign = async () => {
+    // ... bestehender Code
+    
+    // ERWEITERT: PDF-Versionen laden (IMMER!)
+    if (campaignData.id) {
+      try {
+        const pdfVersions = await pdfVersionsService.getVersionHistory(campaignData.id);
+        const currentPdfVersion = await pdfVersionsService.getCurrentVersion(campaignData.id);
+        
+        setPdfVersions(pdfVersions);
+        setCurrentPdfVersion(currentPdfVersion);
+        
+        console.log('PDF-Versionen geladen:', { 
+          count: pdfVersions.length, 
+          current: currentPdfVersion?.version 
+        });
+        
+        // VALIDIERUNG: PDF MUSS vorhanden sein!
+        if (!currentPdfVersion) {
+          console.error('🚨 KRITISCHER FEHLER: Keine PDF-Version gefunden!');
+          setError('Systemfehler: PDF-Version nicht gefunden. Bitte Support kontaktieren.');
+          return;
+        }
+        
+      } catch (pdfError) {
+        console.error('Fehler beim Laden der PDF-Versionen:', pdfError);
+        setError('PDF-Versionen konnten nicht geladen werden.');
+        return;
+      }
+    }
+  };
+  
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* ... Header, Messages, etc. */}
+      
+      {/* PR Content */}
+      <div className="bg-white rounded-lg border border-gray-200 mb-6">
+        {/* Campaign HTML Content */}
+      </div>
+
+      {/* PDF Version Display - IMMER ANGEZEIGT */}
+      {currentPdfVersion ? (
+        <PDFVersionOverview 
+          version={currentPdfVersion}
+          campaignTitle={campaign.title}
+          variant="customer"
+          onHistoryToggle={() => setShowPdfHistory(true)}
+          totalVersions={pdfVersions.length}
+        />
+      ) : (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+          <div className="flex items-center gap-3">
+            <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
+            <div>
+              <h3 className="font-medium text-red-900">Systemfehler</h3>
+              <p className="text-sm text-red-700 mt-1">
+                Keine PDF-Version gefunden. Dies sollte nicht passieren - 
+                bei Kundenfreigaben wird automatisch eine PDF-Version erstellt.
+              </p>
+              <p className="text-xs text-red-600 mt-2">
+                Bitte kontaktieren Sie den Support mit folgender Information: 
+                Campaign ID: {campaign?.id}, ShareId: {shareId}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Media Gallery - bestehend */}
+      {campaign.attachedAssets && (
+        <MediaGallery />
+      )}
+
+      {/* Actions - bestehend */}
+      {/* ... */}
+
+      {/* PDF History Modal */}
+      {showPdfHistory && (
+        <PDFHistoryModal
+          versions={pdfVersions}
+          variant="customer"
+          onClose={() => setShowPdfHistory(false)}
+        />
+      )}
+    </div>
+  );
+}
+```
+
+### **7.3 System-Validierung: PDF ist IMMER vorhanden**
+**🤖 Agent-Empfehlung: `test-writer`** für PDF-Validation Tests
+
+#### **Validierungslogik in Services:**
+```typescript
+// src/lib/firebase/pr-service.ts - saveCampaignWithCustomerApproval erweitern
+
+async saveCampaignWithCustomerApproval(
+  // ... parameter
+): Promise<{
+  campaignId: string;
+  workflowId?: string;
+  pdfVersionId: string; // ✅ NICHT optional - PDF ist IMMER da!
+  customerShareLink?: string;
+}> {
+  
+  // ... campaign speichern
+  
+  if (customerApprovalData.customerApprovalRequired) {
+    
+    // GARANTIERT: PDF wird IMMER erstellt
+    const pdfVersion = await pdfVersionsService.createPDFVersion(
+      campaignId,
+      campaignData.contentHtml || '',
+      'pending_customer',
+      workflowId
+    );
+    
+    if (!pdfVersion || !pdfVersion.id) {
+      throw new Error('PDF-Version konnte nicht erstellt werden - Kundenfreigabe abgebrochen');
+    }
+    
+    console.log('✅ PDF-Version erfolgreich erstellt:', pdfVersion.id);
+    
+    return {
+      campaignId,
+      workflowId,
+      pdfVersionId: pdfVersion.id, // ✅ IMMER vorhanden
+      customerShareLink
+    };
+  }
+  
+  throw new Error('Kundenfreigabe ist erforderlich aber nicht aktiviert');
+}
+```
+
+### **7.4 Testing für PDF-Historie**
+**🤖 Agent-Empfehlung: `test-writer`** für umfassende PDF-Historie Tests
+
+```typescript
+// src/__tests__/pdf-history-customer-integration.test.ts
+
+describe('PDF-Historie für Kundenfreigabe', () => {
+  
+  it('should always display PDF version on customer approval page', async () => {
+    const mockCampaign = createTestCampaign();
+    const mockPdfVersions = [
+      createTestPdfVersion({ version: 1, status: 'rejected' }),
+      createTestPdfVersion({ version: 2, status: 'pending_customer' })
+    ];
+    
+    mockPdfVersionsService.getVersionHistory.mockResolvedValue(mockPdfVersions);
+    mockPdfVersionsService.getCurrentVersion.mockResolvedValue(mockPdfVersions[1]);
+    
+    render(<CustomerApprovalPage />);
+    
+    await waitFor(() => {
+      // PDF-Sektion MUSS immer vorhanden sein
+      expect(screen.getByText('PDF-Dokument zur Freigabe')).toBeInTheDocument();
+      expect(screen.getByText('Version 2')).toBeInTheDocument();
+      expect(screen.getByText('Unveränderlich')).toBeInTheDocument();
+    });
+  });
+  
+  it('should show error if no PDF version found', async () => {
+    mockPdfVersionsService.getCurrentVersion.mockResolvedValue(null);
+    
+    render(<CustomerApprovalPage />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('Systemfehler')).toBeInTheDocument();
+      expect(screen.getByText(/Keine PDF-Version gefunden/)).toBeInTheDocument();
+    });
+  });
+  
+  it('should display PDF history modal with customer-specific information', async () => {
+    const mockPdfVersions = [
+      createTestPdfVersion({ 
+        version: 1, 
+        status: 'rejected',
+        approvalDecision: { decision: 'rejected', comment: 'Datum korrigieren' }
+      }),
+      createTestPdfVersion({ version: 2, status: 'pending_customer' })
+    ];
+    
+    render(<CustomerApprovalPage />);
+    
+    // Klick auf "Weitere Versionen"
+    fireEvent.click(screen.getByText(/Weitere Versionen/));
+    
+    await waitFor(() => {
+      expect(screen.getByText('PDF-Versions-Historie')).toBeInTheDocument();
+      expect(screen.getByText('Version 1')).toBeInTheDocument();
+      expect(screen.getByText('Version 2')).toBeInTheDocument();
+      expect(screen.getByText('Datum korrigieren')).toBeInTheDocument();
+    });
+  });
+});
+```
+
+---
+
+## 🎯 **ERFOLGSMETRIKEN FÜR PHASE 7**
+
+### **Funktionale Ziele:**
+- ✅ **100% PDF-Verfügbarkeit**: Keine Kundenfreigabe ohne PDF-Version
+- ✅ **Vollständige Historie**: Alle PDF-Versionen mit Timestamps sichtbar
+- ✅ **Component-Wiederverwendung**: Admin-Komponenten erfolgreich für Customer-Seite adaptiert
+- ✅ **Unveränderlichkeits-Indikator**: Kunden verstehen PDF-Unveränderlichkeit
+
+### **UX-Verbesserungen:**
+- ✅ **Klarheit**: Kunde sieht genau welche PDF-Version freigegeben wird
+- ✅ **Nachvollziehbarkeit**: Komplette Historie aller Änderungen
+- ✅ **Vertrauen**: Unveränderliche PDFs schaffen Vertrauen
+
+### **Technische Ziele:**
+- ✅ **Component-Reuse**: 90% Code-Wiederverwendung aus Admin-Seite
+- ✅ **Error-Handling**: Robuste Fehlerbehandlung bei fehlenden PDFs
+- ✅ **Performance**: < 2s Ladezeit für PDF-Historie
+
+---
+
 ### **Phase 6: Tests aktualisieren (Woche 4)**
 
 #### **6.1 Test-Suite Analyse und Rückbau**
@@ -895,6 +1454,12 @@ Falls das einstufige System doch nicht gewünscht wird:
 - [ ] Performance-Tests
 - [ ] Production-Deployment mit Feature-Flag
 
+### **Woche 5: PDF-Historie-Integration (Nach erfolgreichem Rückbau)**
+- [ ] **PHASE 7**: PDF-Historie für Kundenfreigabe-Seite implementieren
+- [ ] Bestehende PDF-Komponenten aus Admin-Seite extrahieren und wiederverwenden
+- [ ] PDF-Status-Validierung: "PDF ist IMMER vorhanden" sicherstellen
+- [ ] PDF-Historie auf Kundenfreigabe-Seite einbauen
+
 ---
 
 ## ✅ **WORKFLOW-VALIDIERUNG NACH RÜCKBAU**
@@ -914,6 +1479,7 @@ Ein vollständiger Durchlauf mit Änderungswunsch und finaler Freigabe wurde get
 - **Versionierung funktioniert** perfekt ohne Team-Stage
 - **Edit-Lock-System** arbeitet korrekt im einstufigen Prozess
 - **Unveränderliche PDFs** bleiben vollständig funktional
+- **🐛 Bug-Fixes inklusive:** Doppelte Campaign-Erstellung und doppelte Freigabe-Einträge werden automatisch behoben
 
 **➡️ Siehe detaillierte Simulation:** [CUSTOMER_APPROVAL_CYCLE_SIMULATION_AFTER_REFACTOR.md](./CUSTOMER_APPROVAL_CYCLE_SIMULATION_AFTER_REFACTOR.md)
 
@@ -929,6 +1495,7 @@ Diese Migration vereinfacht das Freigabe-System erheblich und macht es für Nutz
 - 🔧 **Wartbarkeit**: 50% weniger Code zu maintainen
 - 📱 **Benutzerfreundlichkeit**: Klarerer, verständlicherer Workflow
 - ✅ **Validiert**: Kompletter Workflow erfolgreich getestet
+- 🐛 **Bug-freier**: Löst bestehende Race-Condition-Probleme mit doppelten Campaigns/Einträgen
 
 **Status:** ✅ **BEREIT FÜR IMPLEMENTIERUNG**
 **Aufwand:** 4 Wochen (1 Entwickler)
