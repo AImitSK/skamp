@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { teamApprovalService } from '@/lib/firebase/team-approval-service';
 import { approvalWorkflowService } from '@/lib/firebase/approval-workflow-service';
@@ -78,27 +78,53 @@ export default function InternalApprovalPage() {
       setLoading(true);
       setError(null);
 
-      // 🔧 FIX: Team-Approvals verwenden Campaign ShareID direkt
-      // Suche Campaign in pr_campaigns Collection mit shareId Feld
-      const campaignQuery = query(
-        collection(db, 'pr_campaigns'),
-        where('shareId', '==', shareId),
+      // 🔧 COMPLETE FIX: Team-Approvals haben eigene ShareID-Struktur!
+      // shareId ist NICHT Campaign ShareID, sondern Team-Approval ShareID
+      
+      console.log('🔍 Suche Team-Approval mit shareId:', shareId);
+      
+      // 1. Finde Team-Approval über shareId (aus team_approvals Collection)
+      const teamApprovalQuery = query(
+        collection(db, 'team_approvals'),
         where('organizationId', '==', currentOrganization.id)
       );
       
-      const campaignDocs = await getDocs(campaignQuery);
-      if (campaignDocs.empty) {
+      const teamApprovalDocs = await getDocs(teamApprovalQuery);
+      let relevantApproval = null;
+      let campaignData = null;
+      
+      // 2. Durchsuche alle Team-Approvals für diesen ShareID-Match
+      for (const approvalDoc of teamApprovalDocs.docs) {
+        const approvalData = { id: approvalDoc.id, ...approvalDoc.data() };
+        console.log('🔍 Prüfe Team-Approval:', approvalData.id, 'ShareID:', approvalData.shareId);
+        
+        if (approvalData.shareId === shareId) {
+          relevantApproval = approvalData as TeamApproval;
+          console.log('✅ Team-Approval gefunden:', relevantApproval.id);
+          
+          // 3. Lade zugehörige Campaign
+          const campaignDoc = await getDoc(doc(db, 'pr_campaigns', relevantApproval.campaignId));
+          if (campaignDoc.exists()) {
+            campaignData = {
+              id: campaignDoc.id,
+              ...campaignDoc.data()
+            } as PRCampaign;
+            console.log('✅ Campaign geladen:', campaignData.id, campaignData.title);
+            break;
+          }
+        }
+      }
+      
+      if (!campaignData || !relevantApproval) {
+        console.error('❌ Kein Team-Approval gefunden für shareId:', shareId);
+        console.log('📊 Debug Info - Vorhandene Approvals:');
+        teamApprovalDocs.docs.forEach(doc => {
+          const data = doc.data();
+          console.log(' - Approval ID:', doc.id, 'ShareID:', data.shareId, 'CampaignID:', data.campaignId);
+        });
         setError('Freigabe-Link nicht gefunden oder nicht mehr gültig.');
         return;
       }
-      
-      const campaignDoc = campaignDocs.docs[0];
-      const campaignData = {
-        id: campaignDoc.id,
-        ...campaignDoc.data()
-      } as PRCampaign;
-      
-      console.log('✅ Campaign gefunden für Team-Approval:', campaignData.id);
 
       // Prüfe Organizations-Zugehörigkeit
       if (campaignData.organizationId !== currentOrganization.id) {
@@ -125,26 +151,14 @@ export default function InternalApprovalPage() {
           estimatedDuration: calculateEstimatedDuration(workflowData.stages || [])
         });
 
-        // 🔧 FIX: Lade User-spezifische Team-Approval für diese Campaign
-        // Team-Approvals sind mit campaignId und workflowId verknüpft
-        const userApprovalsQuery = query(
-          collection(db, 'team_approvals'),
-          where('userId', '==', user.uid),
-          where('organizationId', '==', currentOrganization.id),
-          where('campaignId', '==', campaignData.id),
-          where('workflowId', '==', workflowData.id)
-        );
-        
-        const userApprovalDocs = await getDocs(userApprovalsQuery);
-        if (!userApprovalDocs.empty) {
-          const userApprovalData = userApprovalDocs.docs[0].data();
-          setUserApproval({
-            id: userApprovalDocs.docs[0].id,
-            ...userApprovalData
-          } as TeamApproval);
-        } else {
-          setUserApproval(null);
+        // 🔧 FIX: Prüfe ob der aktuelle User berechtigt ist für dieses Team-Approval
+        if (relevantApproval.userId !== user.uid) {
+          setError('Sie sind nicht berechtigt, diese Freigabe zu bearbeiten.');
+          return;
         }
+        
+        // Team-Approval wurde bereits oben geladen
+        setUserApproval(relevantApproval);
       }
 
       // 3. 🆕 PDF-VERSIONEN LADEN
