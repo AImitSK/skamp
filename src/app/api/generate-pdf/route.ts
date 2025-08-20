@@ -52,7 +52,9 @@ interface PDFGenerationRequest {
  */
 interface PDFGenerationResponse {
   success: boolean;
-  pdfUrl?: string;
+  pdfUrl?: string | null;
+  pdfBase64?: string; // Für Client-Side Upload
+  needsClientUpload?: boolean;
   fileName?: string;
   fileSize?: number;
   metadata?: {
@@ -331,51 +333,26 @@ export async function POST(request: NextRequest): Promise<NextResponse<PDFGenera
     // Dateiname generieren
     const fileName = requestData.fileName || generateFileName(requestData.title);
     
-    // Upload zu Firebase Storage (Server-Side ohne Auth)
-    debugLog('☁️ Lade PDF zu Firebase Storage hoch...', {
+    // PDF direkt zurückgeben (Client-Side Upload macht mehr Sinn wegen Auth)
+    debugLog('📤 PDF generiert, bereit für Client-Side Upload', {
       fileName,
       organizationId: requestData.organizationId,
       size: pdfBuffer.length
     });
     
-    let uploadResult: any;
+    // PDF als Base64 für sicheren Transport zurückgeben
+    const base64Pdf = pdfBuffer.toString('base64');
     
-    try {
-      uploadResult = await mediaService.uploadBuffer(
-        pdfBuffer,
-        fileName,
-        'application/pdf',
-        requestData.organizationId,
-        'public-pdf-generations', // Öffentlicher Upload-Pfad für Server-side API
-        { 
-          userId: requestData.userId,
-          serverSide: true,
-          apiGenerated: true
-        }
-      );
-      
-      debugLog('✅ PDF erfolgreich zu Firebase Storage hochgeladen', {
-        downloadUrl: uploadResult.downloadUrl,
-        fileSize: uploadResult.fileSize
-      });
-      
-    } catch (storageError: any) {
-      debugLog('❌ Firebase Storage Upload fehlgeschlagen', {
-        error: storageError.message,
-        code: storageError.code,
-        organizationId: requestData.organizationId
-      });
-      
-      // WICHTIG: Base64 Data URLs sind zu groß für Firestore (>1MB Limit)
-      // Stattdessen: Fehlermeldung zurückgeben
-      const error = new Error('PDF-Upload zu Firebase Storage fehlgeschlagen. Bitte versuchen Sie es erneut.');
-      error.name = 'StorageUploadError';
-      throw error;
-    }
+    const uploadResult = {
+      pdfBase64: base64Pdf,
+      fileName: fileName,
+      fileSize: pdfBuffer.length,
+      needsClientUpload: true
+    };
     
-    debugLog('✅ PDF-Upload abgeschlossen', { 
-      url: uploadResult.downloadUrl?.substring(0, 100) + '...', 
-      temporary: uploadResult.temporary || false 
+    debugLog('✅ PDF bereit für Client-Upload', { 
+      fileName: fileName,
+      sizeKB: Math.round(pdfBuffer.length / 1024)
     });
 
     // Erweiterte Metadaten berechnen
@@ -385,7 +362,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<PDFGenera
 
     const response: PDFGenerationResponse = {
       success: true,
-      pdfUrl: uploadResult.downloadUrl,
+      pdfUrl: uploadResult.needsClientUpload ? null : uploadResult.downloadUrl,
+      pdfBase64: uploadResult.pdfBase64, // Für Client-Side Upload
+      needsClientUpload: uploadResult.needsClientUpload,
       fileName: fileName,
       fileSize: uploadResult.fileSize,
       metadata: {

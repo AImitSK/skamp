@@ -582,14 +582,49 @@ class PDFVersionsService {
 
       console.log('✅ Puppeteer PDF erfolgreich generiert:', {
         fileSize: result.fileSize,
+        needsClientUpload: result.needsClientUpload,
         generationTime: result.metadata?.generationTimeMs,
         wordCount: result.metadata?.wordCount,
         pageCount: result.metadata?.pageCount
       });
+
+      // Wenn Client-Side Upload nötig ist, führe es durch
+      let finalPdfUrl = result.pdfUrl;
+      
+      if (result.needsClientUpload && result.pdfBase64) {
+        console.log('📤 Client-Side Upload wird durchgeführt...');
+        
+        // Konvertiere Base64 zu Blob
+        const byteCharacters = atob(result.pdfBase64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const pdfBlob = new Blob([byteArray], { type: 'application/pdf' });
+        
+        // Erstelle File object für Upload
+        const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
+        
+        // Upload via mediaService (Client-Side mit Auth)
+        console.log('☁️ Uploade PDF zu Firebase Storage (Client-Side)...');
+        const uploadedAsset = await mediaService.uploadMedia(
+          pdfFile,
+          organizationId,
+          undefined, // kein Ordner
+          undefined, // kein Progress-Callback
+          3, // Retry Count
+          { userId: 'pdf-system' } // Context
+        );
+        
+        finalPdfUrl = uploadedAsset.downloadUrl;
+        console.log('✅ Client-Side Upload erfolgreich!');
+      }
+      
       console.log('📄 === PUPPETEER PDF-GENERATION BEENDET ===\n');
 
       return {
-        pdfUrl: result.pdfUrl,
+        pdfUrl: finalPdfUrl,
         fileSize: result.fileSize
       };
 
