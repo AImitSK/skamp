@@ -366,20 +366,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<PDFGenera
         organizationId: requestData.organizationId
       });
       
-      // Fallback: Temporäre URL generieren (Base64 Data URL)
-      const base64Pdf = pdfBuffer.toString('base64');
-      const dataUrl = `data:application/pdf;base64,${base64Pdf}`;
-      
-      debugLog('🔄 Fallback: PDF als Data URL bereitgestellt', {
-        sizeKB: Math.round(base64Pdf.length / 1024)
-      });
-      
-      uploadResult = {
-        downloadUrl: dataUrl,
-        fileName: fileName,
-        fileSize: pdfBuffer.length,
-        temporary: true
-      };
+      // WICHTIG: Base64 Data URLs sind zu groß für Firestore (>1MB Limit)
+      // Stattdessen: Fehlermeldung zurückgeben
+      const error = new Error('PDF-Upload zu Firebase Storage fehlgeschlagen. Bitte versuchen Sie es erneut.');
+      error.name = 'StorageUploadError';
+      throw error;
     }
     
     debugLog('✅ PDF-Upload abgeschlossen', { 
