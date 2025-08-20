@@ -184,9 +184,9 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         recipients: customerContact ? [{
           id: nanoid(10),
           type: 'customer' as const,
-          contactId: customerContact.id || customerContact.contactId,
-          name: customerContact.name,
-          email: customerContact.email,
+          contactId: customerContact.id || customerContact.contactId || 'unknown',
+          name: customerContact.name || 'Unknown Customer',
+          email: customerContact.email || 'no-email@example.com',
           status: 'pending' as const,
           notificationsSent: 0,
           order: 0
@@ -204,8 +204,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         },
         notifications: {
           emailSent: false,
-          remindersSent: 0,
-          lastReminderSent: null
+          remindersSent: 0
         },
         version: 1,
         createdAt: serverTimestamp(),
@@ -213,7 +212,9 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         createdBy: 'system' // Simplified for customer-only
       };
 
-      const docRef = await addDoc(collection(db, 'approvals'), approvalData);
+      // Entferne undefined Werte bevor Firestore-Speicherung
+      const cleanApprovalData = this.removeUndefinedValues(approvalData);
+      const docRef = await addDoc(collection(db, 'approvals'), cleanApprovalData);
       return docRef.id;
     } catch (error) {
       console.error('Fehler beim Erstellen der Customer-Approval:', error);
