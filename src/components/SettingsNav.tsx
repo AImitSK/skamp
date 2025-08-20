@@ -14,6 +14,10 @@ const settingsItems = [
     href: "/dashboard/settings/branding",
   },
   {
+    name: "Templates",
+    href: "/dashboard/settings/templates",
+  },
+  {
     name: "Team",
     href: "/dashboard/settings/team",
   },

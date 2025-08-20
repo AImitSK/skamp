@@ -7,6 +7,7 @@ import { Heading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { SettingsNav } from '@/components/SettingsNav';
 import { 
   DocumentTextIcon,
   EyeIcon,
@@ -129,24 +130,42 @@ export default function TemplatesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <Heading>PDF Templates</Heading>
-          <Text>Verwalte deine PDF-Layout-Vorlagen für Pressemitteilungen</Text>
-        </div>
-        <Button color="indigo">
-          <PlusIcon className="h-4 w-4" />
-          Custom Template erstellen
-        </Button>
-      </div>
+    // Flex-Container für das zweispaltige Layout (Design Pattern)
+    <div className="flex flex-col gap-10 lg:flex-row">
+      
+      {/* Linke Spalte: Navigation */}
+      <aside className="w-full lg:w-64 lg:flex-shrink-0">
+        <SettingsNav />
+      </aside>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {templates.map((template) => (
-          <div
-            key={template.id}
-            className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-6 hover:shadow-lg transition-shadow"
-          >
+      {/* Rechte Spalte: Hauptinhalt */}
+      <div className="flex-1">
+        <div className="md:flex md:items-center md:justify-between mb-8">
+          <div className="min-w-0 flex-1">
+            <Heading level={1}>PDF Templates</Heading>
+            <Text className="mt-2 text-gray-600">
+              Verwalte deine PDF-Layout-Vorlagen für Pressemitteilungen
+            </Text>
+          </div>
+          <div className="mt-4 md:mt-0">
+            <Button className="bg-primary hover:bg-primary-hover px-6 py-2">
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Custom Template erstellen
+            </Button>
+          </div>
+        </div>
+
+        <div className="max-w-4xl">
+          <div className="bg-white ring-1 ring-gray-900/5 sm:rounded-xl">
+            <div className="px-4 py-6 sm:p-8">
+              
+              {/* Template Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {templates.map((template) => (
+                  <div
+                    key={template.id}
+                    className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-6"
+                  >
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
@@ -202,26 +221,33 @@ export default function TemplatesPage() {
               )}
             </div>
           </div>
-        ))}
-      </div>
+                ))}
+              </div>
 
-      {templates.length === 0 && (
-        <div className="text-center py-12">
-          <DocumentTextIcon className="mx-auto h-12 w-12 text-zinc-400" />
-          <h3 className="mt-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-            Keine Templates vorhanden
-          </h3>
-          <Text className="mt-1 text-sm">
-            Erstelle dein erstes PDF-Template um loszulegen.
-          </Text>
-          <div className="mt-6">
-            <Button color="indigo">
-              <PlusIcon className="h-4 w-4" />
-              Template erstellen
-            </Button>
+              {/* Empty State */}
+              {templates.length === 0 && (
+                <div className="text-center py-12">
+                  <DocumentTextIcon className="mx-auto h-12 w-12 text-zinc-400" />
+                  <h3 className="mt-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                    Keine Templates vorhanden
+                  </h3>
+                  <Text className="mt-1 text-sm">
+                    Erstelle dein erstes PDF-Template um loszulegen.
+                  </Text>
+                  <div className="mt-6">
+                    <Button className="bg-primary hover:bg-primary-hover px-6 py-2">
+                      <PlusIcon className="h-4 w-4 mr-2" />
+                      Template erstellen
+                    </Button>
+                  </div>
+                </div>
+              )}
+              
+            </div>
           </div>
         </div>
-      )}
+      </div>
+      
     </div>
   );
 }
