@@ -405,7 +405,7 @@ class PDFTemplateService {
       }
       
       // Update Campaign mit Template-Info
-      const campaignRef = doc(db, 'campaigns', campaignId);
+      const campaignRef = doc(db, 'pr_campaigns', campaignId);
       await updateDoc(campaignRef, {
         templateId: templateId,
         templateOverrides: overrides || {},

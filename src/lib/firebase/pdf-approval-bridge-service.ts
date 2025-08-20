@@ -4,6 +4,7 @@ import { pdfVersionsService, PDFVersion } from './pdf-versions-service';
 // Status-Typ lokal definieren bis der Service vollständig implementiert ist
 type PDFVersionStatus = 'draft' | 'pending_team' | 'pending_customer' | 'approved' | 'rejected';
 import { approvalWorkflowService } from './approval-workflow-service';
+import type { EditLockReason } from '@/types/pr';
 import { prService } from './pr-service';
 import { EnhancedApprovalData } from '@/types/approvals-enhanced';
 import { PRCampaign } from '@/types/pr';
@@ -188,7 +189,7 @@ export const pdfApprovalBridgeService = {
         await this.releaseEditLock(workflow.campaignId, pdfStatus);
       }
 
-      console.log(`✅ PDF-Status synchronisiert: ${approvalPDFs.length} PDFs → ${pdfStatus}`);
+      console.log(`✅ PDF-Status synchronisiert: Campaign ${workflow.campaignId} → ${pdfStatus}`);
     } catch (error) {
       console.error('❌ Fehler bei Approval→PDF Synchronisation:', error);
       throw error;

@@ -71,7 +71,7 @@ describe('Enhanced Edit-Lock System Tests', () => {
     jest.clearAllMocks();
     
     // Standard Mock Setup
-    const mockCollectionRef = { name: 'campaigns' };
+    const mockCollectionRef = { name: 'pr_campaigns' };
     const mockDocRef = { id: mockCampaignId };
     
     mockCollection.mockReturnValue(mockCollectionRef as any);

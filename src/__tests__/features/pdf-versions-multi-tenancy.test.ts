@@ -297,7 +297,7 @@ describe('PDF Versions Multi-Tenancy Security', () => {
       // Verify the correct campaign document is targeted
       expect(mockDoc).toHaveBeenCalledWith(
         expect.anything(), // db reference
-        'campaigns',
+        'pr_campaigns',
         campaignA
       );
     });
@@ -319,7 +319,7 @@ describe('PDF Versions Multi-Tenancy Security', () => {
       expect(result).toBe(true);
       expect(mockDoc).toHaveBeenCalledWith(
         expect.anything(),
-        'campaigns',
+        'pr_campaigns',
         campaignA
       );
     });
@@ -426,7 +426,7 @@ describe('PDF Versions Multi-Tenancy Security', () => {
       // Verify campaign update is for correct campaign
       expect(mockDoc).toHaveBeenCalledWith(
         expect.anything(),
-        'campaigns',
+        'pr_campaigns',
         campaignA
       );
     });
@@ -477,13 +477,13 @@ describe('PDF Versions Multi-Tenancy Security', () => {
       // Verify nur die korrekte Campaign wurde gesperrt
       expect(mockDoc).toHaveBeenCalledWith(
         expect.anything(),
-        'campaigns',
+        'pr_campaigns',
         campaignA
       );
 
       expect(mockDoc).not.toHaveBeenCalledWith(
         expect.anything(),
-        'campaigns',
+        'pr_campaigns',
         campaignB
       );
     });

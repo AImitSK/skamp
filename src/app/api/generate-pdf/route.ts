@@ -74,14 +74,30 @@ interface PDFGenerationResponse {
  */
 export async function POST(request: NextRequest): Promise<NextResponse<PDFGenerationResponse>> {
   const startTime = Date.now();
+  const requestId = Math.random().toString(36).substring(2, 15);
   let browser: Browser | null = null;
   let page: Page | null = null;
+  let requestData: PDFGenerationRequest | null = null;
+
+  // ENHANCED DEBUG LOGGING
+  const debugLog = (message: string, data?: any) => {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] [${requestId}] ${message}`, data ? JSON.stringify(data, null, 2) : '');
+  };
 
   try {
-    console.log('📄 === PDF-Generation API Route gestartet ===');
+    debugLog('📄 === PDF-GENERATION API ROUTE GESTARTET ===');
+    debugLog('🔧 Environment Check', {
+      NODE_ENV: process.env.NODE_ENV,
+      hasFirebaseConfig: !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+      hasFirebaseStorageBucket: !!process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+      userAgent: request.headers.get('user-agent'),
+      origin: request.headers.get('origin'),
+      contentType: request.headers.get('content-type')
+    });
 
     // Parse Request Body
-    const requestData: PDFGenerationRequest = await request.json();
+    requestData = await request.json();
     console.log('📋 Request-Daten:', {
       campaignId: requestData.campaignId,
       organizationId: requestData.organizationId,
@@ -362,7 +378,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<PDFGenera
           pageCount: 0,
           generationTimeMs: Date.now() - startTime,
           renderMethod: 'error',
-          templateId: requestData.templateId,
+          templateId: requestData?.templateId,
           cssInjectionTime: 0
         }
       },

@@ -21,6 +21,7 @@ import { approvalService } from './approval-service';
 import { mediaService } from './media-service';
 // NEW: Import für Enhanced Edit-Lock System
 import { approvalWorkflowService } from './approval-workflow-service';
+import type { EditLockReason, UnlockRequest } from '@/types/pr';
 
 // Vereinfachter PDF-Version Type
 export interface PDFVersion {
@@ -65,23 +66,6 @@ export interface PDFVersion {
   };
 }
 
-// 🆕 EDIT-LOCK TYPES (Enhanced System)
-export type EditLockReason = 
-  | 'pending_customer_approval'    // Kunde prüft
-  | 'pending_team_approval'        // Team prüft intern
-  | 'approved_final'              // Final freigegeben
-  | 'system_processing'           // System verarbeitet
-  | 'manual_lock';               // Manuell gesperrt
-
-export interface UnlockRequest {
-  id: string;
-  requestedBy: string;
-  requestedAt: Timestamp;
-  reason: string;
-  status: 'pending' | 'approved' | 'rejected';
-  approvedBy?: string;
-  approvedAt?: Timestamp;
-}
 
 // Campaign Collection Erweiterung
 export interface CampaignWithPDF {
@@ -376,7 +360,7 @@ class PDFVersionsService {
         }
       }
 
-      await updateDoc(doc(db, 'campaigns', campaignId), lockData);
+      await updateDoc(doc(db, 'pr_campaigns', campaignId), lockData);
 
       // 🆕 Audit-Log für Edit-Lock Events
       await this.logEditLockEvent(campaignId, 'locked', lockReason, context || {});
@@ -403,7 +387,7 @@ class PDFVersionsService {
     }
   ): Promise<void> {
     try {
-      await updateDoc(doc(db, 'campaigns', campaignId), {
+      await updateDoc(doc(db, 'pr_campaigns', campaignId), {
         editLocked: false,
         editLockedReason: null,
         unlockedAt: serverTimestamp(),
@@ -440,7 +424,7 @@ class PDFVersionsService {
     canRequestUnlock: boolean;
   }> {
     try {
-      const campaignDoc = await getDoc(doc(db, 'campaigns', campaignId));
+      const campaignDoc = await getDoc(doc(db, 'pr_campaigns', campaignId));
       if (!campaignDoc.exists()) {
         return { isLocked: false, canRequestUnlock: false };
       }
@@ -660,7 +644,7 @@ class PDFVersionsService {
   ): Promise<void> {
     try {
       // Prüfe erst ob Campaign existiert
-      const campaignRef = doc(db, 'campaigns', campaignId);
+      const campaignRef = doc(db, 'pr_campaigns', campaignId);
       const campaignSnap = await getDoc(campaignRef);
       
       if (campaignSnap.exists()) {
@@ -727,7 +711,7 @@ class PDFVersionsService {
       };
       
       // Füge Request zur Campaign hinzu
-      const campaignRef = doc(db, 'campaigns', campaignId);
+      const campaignRef = doc(db, 'pr_campaigns', campaignId);
       const campaignDoc = await getDoc(campaignRef);
       
       if (campaignDoc.exists()) {
@@ -762,7 +746,7 @@ class PDFVersionsService {
   ): Promise<void> {
     try {
       // 1. Campaign laden
-      const campaignDoc = await getDoc(doc(db, 'campaigns', campaignId));
+      const campaignDoc = await getDoc(doc(db, 'pr_campaigns', campaignId));
       if (!campaignDoc.exists()) {
         throw new Error('Campaign nicht gefunden');
       }
@@ -783,7 +767,7 @@ class PDFVersionsService {
       );
       
       // 3. Campaign entsperren und Request-Status updaten
-      await updateDoc(doc(db, 'campaigns', campaignId), {
+      await updateDoc(doc(db, 'pr_campaigns', campaignId), {
         editLocked: false,
         editLockedReason: null,
         unlockedAt: serverTimestamp(),
@@ -911,6 +895,3 @@ export const pdfVersionsService = new PDFVersionsService();
 
 // Export für Tests  
 export { PDFVersionsService };
-
-// Export Types für andere Services
-export type { EditLockReason, UnlockRequest };
