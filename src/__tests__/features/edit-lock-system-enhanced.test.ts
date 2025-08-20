@@ -36,12 +36,7 @@ jest.mock('nanoid', () => ({
   nanoid: jest.fn(() => 'mock-unlock-request-id')
 }));
 
-// Mock Approval Workflow Service (for integration tests)
-jest.mock('@/lib/firebase/approval-workflow-service', () => ({
-  approvalWorkflowService: {
-    handlePDFStatusUpdate: jest.fn()
-  }
-}));
+// Approval Workflow Service wurde entfernt - kein Mock nötig
 
 // Cast Mocks
 const mockAddDoc = addDoc as jest.MockedFunction<typeof addDoc>;

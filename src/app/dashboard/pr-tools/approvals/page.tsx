@@ -37,7 +37,7 @@ import {
   ChevronRightIcon
 } from "@heroicons/react/24/outline";
 import { approvalService } from "@/lib/firebase/approval-service";
-import { teamApprovalService } from "@/lib/firebase/team-approval-service";
+// ENTFERNT: import { teamApprovalService } from "@/lib/firebase/team-approval-service";
 import { companiesEnhancedService } from "@/lib/firebase/crm-service-enhanced";
 import { pdfVersionsService } from "@/lib/firebase/pdf-versions-service";
 import { 
@@ -299,14 +299,8 @@ export default function ApprovalsPage() {
       };
       
       
-      // Lade sowohl alte Approvals als auch neue Team-Approvals
-      const [classicApprovals, teamApprovals] = await Promise.all([
-        approvalService.searchEnhanced(currentOrganization.id, filters),
-        teamApprovalService.getOrganizationApprovals(currentOrganization.id)
-      ]);
-      
-      // Kombiniere beide Approval-Typen
-      const allApprovals = [...classicApprovals, ...teamApprovals];
+      // VEREINFACHT - NUR NOCH CUSTOMER APPROVALS (Team-Approvals entfernt)
+      const allApprovals = await approvalService.searchEnhanced(currentOrganization.id, filters);
       
       
       // Filtere Draft-Status heraus
@@ -385,9 +379,8 @@ export default function ApprovalsPage() {
 
 
   const handleCopyLink = async (shareId: string, approvalType?: string) => {
-    // Unterscheide zwischen Team- und Customer-Approvals
-    const linkPath = approvalType === 'team_approval' ? 'freigabe-intern' : 'freigabe';
-    const url = `${window.location.origin}/${linkPath}/${shareId}`;
+    // VEREINFACHT - Nur noch Customer-Approvals
+    const url = `${window.location.origin}/freigabe/${shareId}`;
     try {
       await navigator.clipboard.writeText(url);
       showAlert('success', 'Link kopiert', 'Der Freigabe-Link wurde in die Zwischenablage kopiert.');
@@ -1062,11 +1055,11 @@ export default function ApprovalsPage() {
                         </DropdownButton>
                         <DropdownMenu anchor="bottom end">
                           <DropdownItem 
-                            href={`/${approval.type === 'team_approval' ? 'freigabe-intern' : 'freigabe'}/${approval.shareId}`}
+                            href={`/freigabe/${approval.shareId}`}
                             target="_blank"
                           >
                             <EyeIcon className="h-4 w-4" />
-                            {approval.type === 'team_approval' ? 'Team-Freigabe öffnen' : 'Freigabe-Link öffnen'}
+                            Freigabe-Link öffnen
                           </DropdownItem>
                           <DropdownItem 
                             onClick={() => handleCopyLink(approval.shareId, approval.type)}

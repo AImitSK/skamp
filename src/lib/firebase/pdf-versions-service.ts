@@ -20,7 +20,7 @@ import { nanoid } from 'nanoid';
 import { approvalService } from './approval-service';
 import { mediaService } from './media-service';
 // NEW: Import für Enhanced Edit-Lock System
-import { approvalWorkflowService } from './approval-workflow-service';
+// ENTFERNT: import { approvalWorkflowService } from './approval-workflow-service';
 import type { EditLockReason, UnlockRequest } from '@/types/pr';
 
 // Vereinfachter PDF-Version Type
@@ -937,13 +937,9 @@ class PDFVersionsService {
         return;
       }
       
-      // Rufe Approval-Workflow Callback auf
-      await approvalWorkflowService.handlePDFStatusUpdate(
-        campaignId,
-        pdfVersionId,
-        newStatus,
-        metadata
-      );
+      // ENTFERNT: Approval-Workflow Callback (Team-Approval System entfernt)
+      // await approvalWorkflowService.handlePDFStatusUpdate(...)
+      console.log('ℹ️ PDF-Status-Update:', { campaignId, pdfVersionId, newStatus });
     } catch (error) {
       console.warn('⚠️ Approval-Workflow Callback Fehler (nicht kritisch):', error);
     }

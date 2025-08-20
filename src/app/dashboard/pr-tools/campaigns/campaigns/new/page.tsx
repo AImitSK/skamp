@@ -22,7 +22,12 @@ import CampaignContentComposer from '@/components/pr/campaign/CampaignContentCom
 import { ModernCustomerSelector } from "@/components/pr/ModernCustomerSelector";
 import CampaignRecipientManager from "@/components/pr/campaign/CampaignRecipientManager";
 import { ApprovalSettings } from "@/components/campaigns/ApprovalSettings";
-import { EnhancedApprovalData, createDefaultEnhancedApprovalData } from "@/types/approvals-enhanced";
+// VEREINFACHT: Nur noch SimplifiedApprovalData
+interface SimplifiedApprovalData {
+  customerApprovalRequired: boolean;
+  customerContact?: any; // CustomerContact type
+  customerApprovalMessage?: string;
+}
 import {
   PlusIcon,
   ArrowLeftIcon,
@@ -123,7 +128,11 @@ export default function NewPRCampaignPage() {
   const [attachedAssets, setAttachedAssets] = useState<CampaignAssetAttachment[]>([]);
   const [keyVisual, setKeyVisual] = useState<KeyVisualData | undefined>(undefined);
   const [approvalRequired, setApprovalRequired] = useState(false); // Legacy - wird durch approvalData ersetzt
-  const [approvalData, setApprovalData] = useState<EnhancedApprovalData>(createDefaultEnhancedApprovalData());
+  const [approvalData, setApprovalData] = useState<SimplifiedApprovalData>({
+    customerApprovalRequired: false,
+    customerContact: undefined,
+    customerApprovalMessage: ''
+  });
 
   // Debug Logging für State-Änderungen
   useEffect(() => {
@@ -226,9 +235,6 @@ export default function NewPRCampaignPage() {
   const handlePDFWorkflowToggle = (enabled: boolean) => {
     if (enabled) {
       const steps = [];
-      if (approvalData.teamApprovalRequired) {
-        steps.push(`Team-Freigabe (${approvalData.teamApprovers.length} Mitglieder)`);
-      }
       if (approvalData.customerApprovalRequired) {
         steps.push(`Kunden-Freigabe (${approvalData.customerContact?.name || 'TBD'})`);
       }
@@ -237,7 +243,6 @@ export default function NewPRCampaignPage() {
         enabled: true,
         estimatedSteps: steps,
         shareableLinks: {
-          team: approvalData.teamApprovalRequired ? '/freigabe-intern/[generated-id]' : undefined,
           customer: approvalData.customerApprovalRequired ? '/freigabe/[generated-id]' : undefined
         }
       });
@@ -257,7 +262,7 @@ export default function NewPRCampaignPage() {
       await handleGeneratePreview();
       
       // Prüfe ob PDF-Workflow aktiv werden wird
-      if (approvalData.teamApprovalRequired || approvalData.customerApprovalRequired) {
+      if (approvalData.customerApprovalRequired) {
         console.log('🔄 PDF-Workflow wird bei Speicherung aktiviert');
       }
     } else {
@@ -420,8 +425,8 @@ export default function NewPRCampaignPage() {
       console.log('🆔 Campaign ID:', existingCampaignId);
       console.log('🆕 Is New Campaign:', isNewCampaign);
 
-      // ENHANCED SAVE MIT PDF-APPROVAL INTEGRATION
-      const result = await prService.saveCampaignWithApprovalIntegration(
+      // VEREINFACHTER SAVE MIT CUSTOMER-APPROVAL INTEGRATION
+      const result = await prService.saveCampaignWithCustomerApproval(
         {
           id: existingCampaignId || undefined, // 🔧 FIX: Verwende existierende ID wenn vorhanden
           title: campaignTitle.trim(),
@@ -441,7 +446,11 @@ export default function NewPRCampaignPage() {
           keywords: keywords,
           status: 'draft' as const
         },
-        approvalData,
+        {
+          customerApprovalRequired: approvalData.customerApprovalRequired,
+          customerContact: approvalData.customerContact,
+          customerApprovalMessage: approvalData.customerApprovalMessage
+        },
         {
           userId: user!.uid,
           organizationId: currentOrganization!.id,
@@ -452,16 +461,10 @@ export default function NewPRCampaignPage() {
       // STORE WORKFLOW RESULT
       setApprovalWorkflowResult(result);
       
-      // SUCCESS MESSAGE MIT PDF-WORKFLOW INFO
+      // SUCCESS MESSAGE MIT CUSTOMER-WORKFLOW INFO
       if (result.workflowId && result.pdfVersionId) {
         setSuccessMessage(
-          `Kampagne gespeichert & Freigabe-Workflow gestartet! PDF-Version erstellt und Freigabe-Links generiert. ${
-            result.shareableLinks?.team ? 'Team' : ''
-          }${
-            result.shareableLinks?.team && result.shareableLinks?.customer ? ' und ' : ''
-          }${
-            result.shareableLinks?.customer ? 'Kunde' : ''
-          } wurden benachrichtigt.`
+          `Kampagne gespeichert & Kundenfreigabe angefordert! PDF-Version erstellt und Kunde wurde benachrichtigt.`
         );
       } else {
         setSuccessMessage('Kampagne erfolgreich gespeichert!');
@@ -618,8 +621,8 @@ export default function NewPRCampaignPage() {
         keyVisual: keyVisual,
         attachedAssets: cleanedAttachedAssets,
         // Approval
-        approvalRequired: approvalData.teamApprovalRequired || approvalData.customerApprovalRequired || false,
-        approvalData: (approvalData.teamApprovalRequired || approvalData.customerApprovalRequired) ? approvalData : undefined,
+        approvalRequired: approvalData.customerApprovalRequired || false,
+        approvalData: approvalData.customerApprovalRequired ? approvalData : undefined,
         userId: user.uid,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
@@ -1109,7 +1112,7 @@ export default function NewPRCampaignPage() {
                       <div className="mt-3 pt-3 border-t border-green-300">
                         <Text className="text-xs text-green-600">
                           💡 Tipp: Nach dem Speichern finden Sie alle Freigabe-Links und den aktuellen 
-                          Status in Step 4 "Vorschau".
+                          Status in Step 4 &ldquo;Vorschau&rdquo;.
                         </Text>
                       </div>
                     </div>
@@ -1333,7 +1336,7 @@ export default function NewPRCampaignPage() {
                 <div className="text-center py-6 text-gray-500">
                   <DocumentTextIcon className="h-8 w-8 mx-auto mb-2 text-gray-300" />
                   <p>Noch keine PDF-Version erstellt</p>
-                  <p className="text-sm">Klicken Sie auf "PDF generieren" um eine Vorschau zu erstellen</p>
+                  <p className="text-sm">Klicken Sie auf &ldquo;PDF generieren&rdquo; um eine Vorschau zu erstellen</p>
                 </div>
               )}
             </div>
@@ -1410,7 +1413,7 @@ export default function NewPRCampaignPage() {
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                     Speichert...
                   </>
-                ) : (approvalData.teamApprovalRequired || approvalData.customerApprovalRequired) ? (
+                ) : approvalData.customerApprovalRequired ? (
                   <>
                     <PaperAirplaneIcon className="h-4 w-4 mr-2" />
                     Freigabe anfordern

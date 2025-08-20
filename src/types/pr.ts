@@ -46,7 +46,6 @@ export interface CampaignBoilerplateSection {
 // 🆕 EDIT-LOCK SYSTEM TYPES
 export type EditLockReason = 
   | 'pending_customer_approval'    // Kunde prüft
-  | 'pending_team_approval'        // Team prüft intern
   | 'approved_final'              // Final freigegeben
   | 'system_processing'           // System verarbeitet
   | 'manual_lock';               // Manuell gesperrt
@@ -93,14 +92,6 @@ export const EDIT_LOCK_CONFIG: Record<EditLockReason, EditLockConfig> = {
     icon: 'ClockIcon',
     canRequestUnlock: true,
     severity: 'medium'
-  },
-  pending_team_approval: {
-    label: 'Team prüft',
-    description: 'Diese Kampagne wartet auf Team-Freigabe',
-    color: 'blue', 
-    icon: 'UserGroupIcon',
-    canRequestUnlock: true,
-    severity: 'low'
   },
   approved_final: {
     label: 'Freigegeben',

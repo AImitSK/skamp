@@ -1,40 +1,31 @@
-// src/components/campaigns/ApprovalSettings.tsx - Erweiterte Freigabe-Einstellungen
+// src/components/campaigns/ApprovalSettings.tsx - VEREINFACHTE Customer-Only Freigabe-Einstellungen
 "use client";
 
 import { useState, useEffect } from 'react';
-import { 
-  EnhancedApprovalData, 
-  ApprovalSettingsProps,
-  createDefaultEnhancedApprovalData 
-} from '@/types/approvals-enhanced';
-import { teamMemberService } from '@/lib/firebase/team-service-enhanced';
-import { TeamMember } from '@/types/international';
 import { SimpleSwitch } from '@/components/notifications/SimpleSwitch';
 import { Textarea } from '@/components/ui/textarea';
-import { Field, Label } from '@/components/ui/fieldset';
 import { Text } from '@/components/ui/text';
-import { Badge } from '@/components/ui/badge';
-import { TeamMemberSelector } from './TeamMemberSelector';
 import { CustomerContactSelector } from './CustomerContactSelector';
 import { 
-  UserGroupIcon,
-  BuildingOfficeIcon,
   ClockIcon,
   CheckCircleIcon,
-  ArrowRightIcon,
   InformationCircleIcon,
-  DocumentTextIcon,
-  LockClosedIcon,
-  LinkIcon,
-  ArrowPathIcon
+  DocumentTextIcon
 } from '@heroicons/react/24/outline';
-import clsx from 'clsx';
 
-interface ExtendedApprovalSettingsProps extends ApprovalSettingsProps {
-  // PDF-Workflow Integration Props
-  campaignId?: string;
-  showPDFIntegrationPreview?: boolean;
-  onPDFWorkflowToggle?: (enabled: boolean) => void;
+// VEREINFACHTE ApprovalData nur für Customer
+interface SimplifiedApprovalData {
+  customerApprovalRequired: boolean;
+  customerContact?: any; // CustomerContact type
+  customerApprovalMessage?: string;
+}
+
+interface SimplifiedApprovalSettingsProps {
+  value: SimplifiedApprovalData;
+  onChange: (data: SimplifiedApprovalData) => void;
+  organizationId: string;
+  clientId?: string;
+  clientName?: string;
 }
 
 export function ApprovalSettings({
@@ -42,445 +33,119 @@ export function ApprovalSettings({
   onChange,
   organizationId,
   clientId,
-  clientName,
-  // Neue PDF-Integration Props
-  campaignId,
-  showPDFIntegrationPreview = true,
-  onPDFWorkflowToggle
-}: ExtendedApprovalSettingsProps) {
-  // Ensure we have valid enhanced approval data
-  const [localData, setLocalData] = useState<EnhancedApprovalData>(() => {
-    if (!value.teamApprovalRequired && !value.customerApprovalRequired) {
-      return {
-        ...createDefaultEnhancedApprovalData(),
-        ...value
-      };
-    }
-    return value;
-  });
+  clientName
+}: SimplifiedApprovalSettingsProps) {
   
-  // TeamMembers für Name-Lookup
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  
-  // PDF-Workflow State
-  const [pdfWorkflowEnabled, setPdfWorkflowEnabled] = useState(false);
-
-  // Lade TeamMembers
-  useEffect(() => {
-    if (organizationId) {
-      loadTeamMembers();
-    }
-  }, [organizationId]);
-
-  const loadTeamMembers = async () => {
-    try {
-      const members = await teamMemberService.getByOrganization(organizationId);
-      setTeamMembers(members);
-    } catch (error) {
-      console.error('Fehler beim Laden der TeamMembers:', error);
-    }
-  };
+  const [localData, setLocalData] = useState<SimplifiedApprovalData>(value);
 
   // Sync local state with props
   useEffect(() => {
     setLocalData(value);
   }, [value]);
 
-  const handleDataChange = (updates: Partial<EnhancedApprovalData>) => {
+  const handleDataChange = (updates: Partial<SimplifiedApprovalData>) => {
     const newData = { ...localData, ...updates };
     setLocalData(newData);
     onChange(newData);
   };
 
-  const handleTeamApprovalToggle = (enabled: boolean) => {
-    handleDataChange({
-      teamApprovalRequired: enabled,
-      // Reset current stage if disabling team approval
-      currentStage: enabled ? 'team' : (localData.customerApprovalRequired ? 'customer' : 'team')
-    });
-    
-    // PDF-Workflow Notification
-    updatePDFWorkflowStatus(enabled || localData.customerApprovalRequired);
-  };
-
   const handleCustomerApprovalToggle = (enabled: boolean) => {
     handleDataChange({
       customerApprovalRequired: enabled,
-      // If only customer approval is enabled, start with customer stage
-      currentStage: (!localData.teamApprovalRequired && enabled) ? 'customer' : localData.currentStage
-    });
-    
-    // PDF-Workflow Notification
-    updatePDFWorkflowStatus(localData.teamApprovalRequired || enabled);
-  };
-
-  // PDF-Workflow Status Update Handler
-  const updatePDFWorkflowStatus = (hasPDFWorkflow: boolean) => {
-    if (hasPDFWorkflow !== pdfWorkflowEnabled) {
-      setPdfWorkflowEnabled(hasPDFWorkflow);
-      onPDFWorkflowToggle?.(hasPDFWorkflow);
-    }
-  };
-
-  const handleTeamMembersChange = (memberIds: string[]) => {
-    // Konvertiere TeamMember IDs zu TeamApprover-Objekten mit echten Daten
-    const teamApprovers = memberIds.map(id => {
-      const teamMember = teamMembers.find(member => member.id === id);
-      return {
-        userId: id,
-        displayName: teamMember?.displayName || 'Unbekannt',
-        email: teamMember?.email || 'unknown@company.com',
-        photoUrl: teamMember?.photoUrl,
-        status: 'pending' as const
-      };
-    });
-
-    handleDataChange({
-      teamApprovers
+      // Reset contact wenn deaktiviert
+      customerContact: enabled ? localData.customerContact : undefined,
+      customerApprovalMessage: enabled ? localData.customerApprovalMessage : ''
     });
   };
-
-  const handleCustomerContactChange = (contactId?: string) => {
-    if (!contactId) {
-      handleDataChange({
-        customerContact: undefined
-      });
-      return;
-    }
-
-    // Placeholder - would load contact details from CRM
-    const customerContact = {
-      contactId,
-      name: `Contact ${contactId}`,
-      email: `contact${contactId}@client.com`,
-      companyName: clientName || 'Client Company'
-    };
-
-    handleDataChange({
-      customerContact
-    });
-  };
-
-  const getWorkflowStages = () => {
-    const stages = [];
-    
-    if (localData.teamApprovalRequired) {
-      stages.push({
-        type: 'team',
-        label: 'Team-Freigabe',
-        count: localData.teamApprovers.length,
-        icon: UserGroupIcon
-      });
-    }
-    
-    if (localData.customerApprovalRequired) {
-      stages.push({
-        type: 'customer',
-        label: 'Kunden-Freigabe',
-        count: localData.customerContact ? 1 : 0,
-        icon: BuildingOfficeIcon
-      });
-    }
-    
-    return stages;
-  };
-
-  const workflowStages = getWorkflowStages();
-  const hasAnyApproval = localData.teamApprovalRequired || localData.customerApprovalRequired;
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900">Freigabe-Einstellungen</h3>
-        <Text className="mt-1 text-gray-600">
-          Konfigurieren Sie den mehrstufigen Freigabe-Workflow für diese Kampagne
-        </Text>
+      
+      {/* NUR NOCH: Kunden-Freigabe */}
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <h4 className="text-sm font-medium text-gray-900">
+            Kundenfreigabe erforderlich
+          </h4>
+          <Text className="text-sm text-gray-600 mt-1">
+            Kampagne muss vom Kunden freigegeben werden
+          </Text>
+        </div>
+        <SimpleSwitch
+          checked={value.customerApprovalRequired}
+          onChange={handleCustomerApprovalToggle}
+        />
       </div>
 
-      {/* PDF-WORKFLOW INTEGRATION PREVIEW */}
-      {showPDFIntegrationPreview && (pdfWorkflowEnabled || localData.teamApprovalRequired || localData.customerApprovalRequired) && (
-        <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
-          <div className="flex items-start">
-            <DocumentTextIcon className="h-5 w-5 text-blue-500 mr-3 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <h4 className="text-sm font-medium text-blue-900 mb-2">
-                📄 PDF-Workflow Integration aktiviert
-              </h4>
-              <div className="space-y-2 text-sm text-blue-800">
-                <div className="flex items-center gap-2">
-                  <CheckCircleIcon className="h-4 w-4 text-blue-600" />
-                  <span>PDF wird automatisch für Freigabe generiert</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <LockClosedIcon className="h-4 w-4 text-blue-600" />
-                  <span>Kampagne wird zur Bearbeitung gesperrt</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <LinkIcon className="h-4 w-4 text-blue-600" />
-                  <span>Freigabe-Links werden automatisch erstellt</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <ArrowPathIcon className="h-4 w-4 text-blue-600" />
-                  <span>Status-Synchronisation PDF ↔ Approval</span>
-                </div>
-              </div>
-              
-              {/* WORKFLOW-STEPS PREVIEW */}
-              <div className="mt-3 p-3 bg-white bg-opacity-60 rounded border border-blue-300">
-                <Text className="text-xs font-medium text-blue-900 mb-2">
-                  Automatischer Ablauf nach dem Speichern:
-                </Text>
-                <div className="space-y-1 text-xs text-blue-700">
-                  <div>1. 📄 PDF-Version wird erstellt</div>
-                  <div>2. 🔒 Kampagne wird gesperrt</div>
-                  <div>3. 🔗 Freigabe-Links werden generiert</div>
-                  <div>4. 📧 Benachrichtigungen werden versendet</div>
-                  <div>5. 👀 Freigabe-Prozess startet</div>
-                </div>
-              </div>
+      {/* Customer-Kontakt Auswahl */}
+      {value.customerApprovalRequired && (
+        <div className="ml-6 space-y-4">
+          {clientId ? (
+            <CustomerContactSelector
+              selectedContact={value.customerContact?.contactId}
+              onContactChange={(contact) => onChange({
+                ...value,
+                customerContact: contact
+              })}
+              clientId={clientId}
+            />
+          ) : (
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
+              <Text className="text-sm text-yellow-800">
+                Bitte wählen Sie zuerst einen Kunden aus, um Kontakte für die Freigabe festzulegen.
+              </Text>
             </div>
+          )}
+          
+          {/* Customer-Nachricht */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Nachricht an den Kunden (optional)
+            </label>
+            <Textarea
+              value={value.customerApprovalMessage || ''}
+              onChange={(e) => onChange({
+                ...value,
+                customerApprovalMessage: e.target.value
+              })}
+              rows={2}
+              placeholder="Persönliche Nachricht für den Kunden zur Freigabe..."
+            />
           </div>
         </div>
       )}
 
-      {/* Switch-Optionen */}
-      <div className="space-y-6">
-        {/* Team-Freigabe */}
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <h4 className="text-sm font-medium text-gray-900">
-              Team-Freigabe erforderlich
-            </h4>
-            <Text className="text-sm text-gray-600 mt-1">
-              Kampagne muss von ausgewählten Team-Mitgliedern freigegeben werden
-              {/* PDF-INTEGRATION HINT */}
-              {localData.teamApprovalRequired && (
-                <span className="block mt-1 text-xs text-blue-600">
-                  💡 PDF wird automatisch generiert und Team per Link benachrichtigt
-                </span>
-              )}
-            </Text>
-          </div>
-          <SimpleSwitch
-            checked={localData.teamApprovalRequired}
-            onChange={handleTeamApprovalToggle}
-          />
-        </div>
-
-        {/* Team-Mitglieder Auswahl */}
-        {localData.teamApprovalRequired && (
-          <div className="ml-6 space-y-4">
-            <TeamMemberSelector
-              selectedMembers={localData.teamApprovers.map(a => a.userId)}
-              onSelectionChange={handleTeamMembersChange}
-              organizationId={organizationId}
-            />
-            
-            {/* TEAM-LINK PREVIEW */}
-            {localData.teamApprovers.length > 0 && (
-              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <LinkIcon className="h-4 w-4 text-blue-600" />
-                  <Text className="text-sm font-medium text-blue-900">
-                    Team-Freigabe Link wird generiert
-                  </Text>
-                </div>
-                <Text className="text-xs text-blue-700">
-                  Nach dem Speichern erhalten alle {localData.teamApprovers.length} Team-Mitglieder 
-                  einen personalisierten Link zur internen Freigabe.
-                </Text>
-              </div>
-            )}
-            
-            {/* Team-Nachricht */}
-            <Field>
-              <Label className="text-sm font-medium text-gray-700">
-                Nachricht für Team-Mitglieder (optional)
-              </Label>
-              <Textarea
-                value={localData.teamApprovalMessage || ''}
-                onChange={(e) => handleDataChange({ teamApprovalMessage: e.target.value })}
-                rows={3}
-                placeholder="Besondere Hinweise für die Team-Freigabe..."
-                className="mt-1"
-              />
-            </Field>
-          </div>
-        )}
-
-        {/* Kunden-Freigabe */}
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <h4 className="text-sm font-medium text-gray-900">
-              Kunden-Freigabe erforderlich
-            </h4>
-            <Text className="text-sm text-gray-600 mt-1">
-              Kampagne muss vom Kunden freigegeben werden
-              {/* PDF-INTEGRATION HINT */}
-              {localData.customerApprovalRequired && (
-                <span className="block mt-1 text-xs text-blue-600">
-                  💡 PDF wird automatisch generiert und Kunde per Link benachrichtigt
-                </span>
-              )}
-            </Text>
-          </div>
-          <SimpleSwitch
-            checked={localData.customerApprovalRequired}
-            onChange={handleCustomerApprovalToggle}
-          />
-        </div>
-
-        {/* Kunden-Kontakt Auswahl */}
-        {localData.customerApprovalRequired && (
-          <div className="ml-6 space-y-4">
-            {clientId ? (
-              <>
-                <CustomerContactSelector
-                  selectedContact={localData.customerContact?.contactId}
-                  onContactChange={handleCustomerContactChange}
-                  clientId={clientId}
-                />
-                
-                {/* CUSTOMER-LINK PREVIEW */}
-                {localData.customerContact && (
-                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <LinkIcon className="h-4 w-4 text-green-600" />
-                      <Text className="text-sm font-medium text-green-900">
-                        Kunden-Freigabe Link wird generiert
-                      </Text>
-                    </div>
-                    <Text className="text-xs text-green-700">
-                      {localData.customerContact.name} ({localData.customerContact.email}) erhält 
-                      einen sicheren Link zur Freigabe der PDF-Version.
-                    </Text>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                <div className="flex">
-                  <InformationCircleIcon className="h-5 w-5 text-amber-400 mr-2" />
-                  <Text className="text-sm text-amber-800">
-                    Bitte wählen Sie zuerst einen Kunden aus, um Kontakte anzuzeigen.
-                  </Text>
-                </div>
-              </div>
-            )}
-            
-            {/* Kunden-Nachricht */}
-            <Field>
-              <Label className="text-sm font-medium text-gray-700">
-                Nachricht für Kunden (optional)
-              </Label>
-              <Textarea
-                value={localData.customerApprovalMessage || ''}
-                onChange={(e) => handleDataChange({ customerApprovalMessage: e.target.value })}
-                rows={3}
-                placeholder="Besondere Hinweise für die Kunden-Freigabe..."
-                className="mt-1"
-              />
-            </Field>
-          </div>
-        )}
-      </div>
-
-      {/* Workflow-Vorschau */}
-      {hasAnyApproval && (
+      {/* VEREINFACHTE Workflow-Vorschau - nur Customer */}
+      {value.customerApprovalRequired && (
         <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-start">
             <ClockIcon className="h-5 w-5 text-blue-400 mr-3 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <h4 className="text-sm font-medium text-blue-900 mb-2">
-                🔄 Vollständiger Freigabe-Workflow Vorschau
+                📝 Freigabe-Workflow (Einstufig)
               </h4>
-              
-              {workflowStages.length > 0 ? (
-                <div className="flex items-center space-x-3">
-                  {workflowStages.map((stage, index) => {
-                    const StageIcon = stage.icon;
-                    return (
-                      <div key={stage.type} className="flex items-center">
-                        <div className="flex items-center gap-2">
-                          <div className={clsx(
-                            "flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium",
-                            stage.type === 'team' ? "bg-blue-100 text-blue-800" : "bg-green-100 text-green-800"
-                          )}>
-                            <StageIcon className="h-3 w-3" />
-                            {stage.label}
-                            {stage.count > 0 && (
-                              <Badge color={stage.type === 'team' ? 'blue' : 'green'} className="ml-1">
-                                {stage.count}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                        
-                        {index < workflowStages.length - 1 && (
-                          <ArrowRightIcon className="h-4 w-4 text-blue-400 mx-2" />
-                        )}
-                      </div>
-                    );
-                  })}
-                  
-                  <div className="flex items-center">
-                    <ArrowRightIcon className="h-4 w-4 text-blue-400 mx-2" />
-                    <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      <CheckCircleIcon className="h-3 w-3" />
-                      Versand freigegeben
-                    </div>
-                  </div>
-                  
-                  {/* PDF-INTEGRATION STEPS */}
-                  <div className="mt-3 pt-3 border-t border-blue-300">
-                    <Text className="text-xs font-medium text-blue-900 mb-2">
-                      PDF-Integration Schritte:
-                    </Text>
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="flex items-center gap-1 text-blue-700">
-                        <DocumentTextIcon className="h-3 w-3" />
-                        PDF generieren
-                      </div>
-                      <div className="flex items-center gap-1 text-blue-700">
-                        <LockClosedIcon className="h-3 w-3" />
-                        Edit-Lock aktivieren
-                      </div>
-                      <div className="flex items-center gap-1 text-blue-700">
-                        <LinkIcon className="h-3 w-3" />
-                        Links erstellen
-                      </div>
-                      <div className="flex items-center gap-1 text-blue-700">
-                        <ArrowPathIcon className="h-3 w-3" />
-                        Status-Sync starten
-                      </div>
-                    </div>
-                  </div>
+              <div className="text-sm text-blue-700">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <span>Kampagne wird zur Kundenfreigabe eingereicht</span>
                 </div>
-              ) : (
-                <Text className="text-sm text-blue-700">
-                  Bitte konfigurieren Sie die Freigabe-Optionen oben
-                </Text>
-              )}
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-2 h-2 bg-blue-300 rounded-full"></div>
+                  <span>PDF wird automatisch generiert und an Kunde gesendet</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span>Nach Freigabe kann Kampagne versendet werden</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Info-Box bei keiner Freigabe */}
-      {!hasAnyApproval && (
-        <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-          <div className="flex">
-            <InformationCircleIcon className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0 mt-0.5" />
-            <div>
-              <Text className="text-sm text-gray-600">
-                <strong>Keine Freigabe erforderlich:</strong> Die Kampagne kann direkt versendet werden, 
-                ohne dass eine Freigabe von Team-Mitgliedern oder Kunden erforderlich ist.
-              </Text>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
+
+// LEGACY-SUPPORT: Export für bestehende Imports
+export default ApprovalSettings;

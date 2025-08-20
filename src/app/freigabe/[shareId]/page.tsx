@@ -12,6 +12,10 @@ import { MediaAsset, MediaFolder } from "@/types/media";
 import { BrandingSettings } from "@/types/branding";
 import { PDFVersion } from "@/lib/firebase/pdf-versions-service";
 import { 
+  PDFVersionOverview, 
+  PDFHistoryModal 
+} from '@/components/pdf/PDFHistoryComponents';
+import { 
   CheckCircleIcon,
   ExclamationCircleIcon,
   ClockIcon,
@@ -89,108 +93,7 @@ function CustomerMessageBanner({ message }: { message: string }) {
   );
 }
 
-// NEU: Customer PDF Version Card Component
-function CustomerPDFVersionCard({ 
-  version, 
-  campaignTitle 
-}: { 
-  version: PDFVersion; 
-  campaignTitle: string;
-}) {
-  const formatDate = (timestamp: any) => {
-    if (!timestamp) return '';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleString('de-DE', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-  };
-
-  const statusConfig = {
-    draft: { color: 'gray', label: 'Entwurf', icon: DocumentIcon },
-    pending_customer: { color: 'yellow', label: 'Zur Prüfung', icon: ClockIcon },
-    approved: { color: 'green', label: 'Freigegeben', icon: CheckCircleIcon },
-    rejected: { color: 'red', label: 'Abgelehnt', icon: ExclamationCircleIcon }
-  };
-  
-  const config = statusConfig[version.status] || statusConfig.draft;
-  const StatusIcon = config.icon;
-  
-  return (
-    <div className="bg-white rounded-lg border border-gray-200 mb-6">
-      <div className="border-b border-gray-200 px-6 py-4">
-        <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-          <DocumentTextIcon className="h-5 w-5 text-gray-400" />
-          PDF-Dokument zur Freigabe
-        </h2>
-      </div>
-      
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <StatusIcon className="h-8 w-8 text-gray-500" />
-            <div>
-              <h3 className="font-medium text-gray-900">
-                {campaignTitle} - Version {version.version}
-              </h3>
-              <div className="text-sm text-gray-600 mt-1">
-                Erstellt am {formatDate(version.createdAt)} • {formatFileSize(version.fileSize)}
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <Badge color={config.color} className="text-sm">
-              {config.label}
-            </Badge>
-          </div>
-        </div>
-        
-        {/* PDF Metadata */}
-        {version.metadata && (
-          <div className="text-sm text-gray-600 mb-4">
-            {version.metadata.wordCount} Wörter • {version.metadata.pageCount} Seiten
-          </div>
-        )}
-        
-        {/* Download Button */}
-        <div className="flex gap-3">
-          <a
-            href={version.downloadUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1"
-          >
-            <Button className="w-full bg-[#005fab] hover:bg-[#004a8c] text-white">
-              <DocumentIcon className="h-5 w-5 mr-2" />
-              PDF öffnen und prüfen
-            </Button>
-          </a>
-        </div>
-        
-        {/* Info Box */}
-        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="flex">
-            <InformationCircleIcon className="h-5 w-5 text-blue-400 mr-2 flex-shrink-0" />
-            <p className="text-sm text-blue-800">
-              Bitte prüfen Sie das PDF-Dokument sorgfältig. Ihre Freigabe bezieht sich auf diese 
-              spezifische Version der Pressemitteilung.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+// ENTFERNT: CustomerPDFVersionCard - ersetzt durch PDFVersionOverview
 
 // NEU: Media Gallery Component
 function MediaGallery({ 
@@ -388,6 +291,7 @@ export default function ApprovalPage() {
   // NEU: PDF-Integration State
   const [pdfVersions, setPdfVersions] = useState<PDFVersion[]>([]);
   const [currentPdfVersion, setCurrentPdfVersion] = useState<PDFVersion | null>(null);
+  const [showPdfHistory, setShowPdfHistory] = useState(false);
   const [customerMessage, setCustomerMessage] = useState<string>('');
 
   useEffect(() => {
@@ -421,9 +325,18 @@ export default function ApprovalPage() {
             count: pdfVersions.length, 
             current: currentPdfVersion?.version 
           });
+          
+          // VALIDIERUNG: PDF MUSS vorhanden sein!
+          if (!currentPdfVersion) {
+            console.error('🚨 KRITISCHER FEHLER: Keine PDF-Version gefunden!');
+            setError('Systemfehler: PDF-Version nicht gefunden. Bitte Support kontaktieren.');
+            return;
+          }
+          
         } catch (pdfError) {
           console.error('Fehler beim Laden der PDF-Versionen:', pdfError);
-          // Nicht kritisch - fahre ohne PDF-Daten fort
+          setError('PDF-Versionen konnten nicht geladen werden.');
+          return;
         }
       }
 
@@ -750,12 +663,32 @@ export default function ApprovalPage() {
             </div>
           </div>
 
-          {/* NEU: PDF Version Display */}
-          {currentPdfVersion && (
-            <CustomerPDFVersionCard 
+          {/* PDF Version Display - IMMER ANGEZEIGT */}
+          {currentPdfVersion ? (
+            <PDFVersionOverview 
               version={currentPdfVersion}
               campaignTitle={campaign.title}
+              variant="customer"
+              onHistoryToggle={() => setShowPdfHistory(true)}
+              totalVersions={pdfVersions.length}
             />
+          ) : (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+              <div className="flex items-center gap-3">
+                <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
+                <div>
+                  <h3 className="font-medium text-red-900">Systemfehler</h3>
+                  <p className="text-sm text-red-700 mt-1">
+                    Keine PDF-Version gefunden. Dies sollte nicht passieren - 
+                    bei Kundenfreigaben wird automatisch eine PDF-Version erstellt.
+                  </p>
+                  <p className="text-xs text-red-600 mt-2">
+                    Bitte kontaktieren Sie den Support mit folgender Information: 
+                    Campaign ID: {campaign?.id}, ShareId: {shareId}
+                  </p>
+                </div>
+              </div>
+            </div>
           )}
 
           {/* NEU: Media Gallery */}
@@ -929,6 +862,15 @@ export default function ApprovalPage() {
           )}
         </div>
       </div>
+
+      {/* PDF History Modal */}
+      {showPdfHistory && (
+        <PDFHistoryModal
+          versions={pdfVersions}
+          variant="customer"
+          onClose={() => setShowPdfHistory(false)}
+        />
+      )}
     </div>
   );
 }

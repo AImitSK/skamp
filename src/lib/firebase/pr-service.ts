@@ -1375,13 +1375,18 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
   },
 
   /**
-   * *** NEUE STEP 3 INTEGRATION ***
-   * Enhanced Campaign-Speicherung mit PDF-Approval Integration
-   * KERN-ENTRY-POINT für Step 3 → PDF-Workflow → Edit-Lock
+   * VEREINFACHTER CUSTOMER-ONLY APPROVAL WORKFLOW
+   * 
+   * Ersetzt das komplexe 2-stufige System (Team + Customer) 
+   * durch einfachen 1-stufigen Customer-Approval-Prozess
    */
-  async saveCampaignWithApprovalIntegration(
+  async saveCampaignWithCustomerApproval(
     campaignData: Partial<PRCampaign>,
-    approvalData: any, // EnhancedApprovalData import would cause circular dependency
+    customerApprovalData: {
+      customerApprovalRequired: boolean;
+      customerContact?: any; // CustomerContact type
+      customerApprovalMessage?: string;
+    },
     context: {
       userId: string;
       organizationId: string;
@@ -1390,13 +1395,13 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
   ): Promise<{
     campaignId: string;
     workflowId?: string;
-    pdfVersionId?: string;
-    shareableLinks?: { team?: string; customer?: string };
+    pdfVersionId?: string; // IMMER vorhanden wenn Customer-Approval aktiviert
+    customerShareLink?: string;
   }> {
     try {
-      console.log('🚀 Enhanced Campaign-Speicherung mit PDF-Workflow gestartet');
+      console.log('🚀 Vereinfachte Campaign-Speicherung mit Customer-Only-Workflow gestartet');
       
-      // 1. Speichere Campaign (bestehende Logik)
+      // 1. Speichere Campaign (vereinfacht)
       let campaignId: string;
       
       if (context.isNewCampaign) {
@@ -1405,41 +1410,95 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
           userId: context.userId,
           organizationId: context.organizationId,
           status: 'draft',
-          approvalRequired: approvalData.teamApprovalRequired || approvalData.customerApprovalRequired,
-          approvalData: (approvalData.teamApprovalRequired || approvalData.customerApprovalRequired) 
-            ? approvalData 
-            : undefined
+          approvalRequired: customerApprovalData.customerApprovalRequired,
+          approvalData: customerApprovalData.customerApprovalRequired ? {
+            customerApprovalRequired: true,
+            customerContact: customerApprovalData.customerContact,
+            customerApprovalMessage: customerApprovalData.customerApprovalMessage,
+            // Für Kompatibilität - wird bei nächster DB-Migration entfernt:
+            teamApprovalRequired: false,
+            teamApprovers: [],
+            workflowStartedAt: serverTimestamp(),
+            shareId: '',
+            workflowId: '',
+            currentStage: 'customer',
+          } : undefined,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
         } as PRCampaign);
       } else {
         await this.update(campaignData.id!, {
           ...campaignData,
-          approvalRequired: approvalData.teamApprovalRequired || approvalData.customerApprovalRequired,
-          approvalData: (approvalData.teamApprovalRequired || approvalData.customerApprovalRequired) 
-            ? approvalData 
-            : undefined,
-          updatedAt: Timestamp.now()
+          approvalRequired: customerApprovalData.customerApprovalRequired,
+          approvalData: customerApprovalData.customerApprovalRequired ? {
+            customerApprovalRequired: true,
+            customerContact: customerApprovalData.customerContact,
+            customerApprovalMessage: customerApprovalData.customerApprovalMessage,
+            // Für Kompatibilität:
+            teamApprovalRequired: false,
+            teamApprovers: [],
+            workflowStartedAt: serverTimestamp(),
+            shareId: '',
+            workflowId: '',
+            currentStage: 'customer',
+          } : undefined,
+          updatedAt: serverTimestamp()
         });
         campaignId = campaignData.id!;
       }
 
-      // 2. PDF-WORKFLOW Integration (nur wenn Approval erforderlich)
-      if (approvalData.teamApprovalRequired || approvalData.customerApprovalRequired) {
+      // 2. CUSTOMER-ONLY WORKFLOW:
+      if (customerApprovalData.customerApprovalRequired) {
         
         // Dynamic import um circular dependencies zu vermeiden
-        const { pdfApprovalBridgeService } = await import('./pdf-approval-bridge-service');
+        const { approvalService } = await import('./approval-service');
+        const { pdfVersionsService } = await import('./pdf-versions-service');
         
-        return await pdfApprovalBridgeService.saveCampaignWithApprovalIntegration(
-          { ...campaignData, id: campaignId },
-          approvalData,
-          context
+        // 2a. Erstelle vereinfachten Customer-Workflow
+        const workflowId = await approvalService.createCustomerApproval(
+          campaignId,
+          context.organizationId,
+          customerApprovalData.customerContact,
+          customerApprovalData.customerApprovalMessage || ''
         );
+
+        // 2b. Erstelle PDF für Kundenfreigabe
+        const pdfVersion = await pdfVersionsService.createPDFVersion({
+          campaignId,
+          organizationId: context.organizationId,
+          contentHtml: campaignData.contentHtml || '',
+          status: 'pending_customer',
+          workflowId
+        });
+
+        if (!pdfVersion || !pdfVersion.id) {
+          throw new Error('PDF-Version konnte nicht erstellt werden - Kundenfreigabe abgebrochen');
+        }
+
+        // 2c. Generiere Customer-Link
+        const customerShareLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/freigabe/${workflowId}`;
+
+        // 2d. Update Campaign Status
+        await this.update(campaignId, {
+          status: 'in_review', // Direkt in Review
+          updatedAt: serverTimestamp()
+        });
+
+        console.log('✅ Customer-Only-Workflow erstellt:', { workflowId, pdfVersionId: pdfVersion.id });
+
+        return {
+          campaignId,
+          workflowId,
+          pdfVersionId: pdfVersion.id,
+          customerShareLink
+        };
       }
 
-      console.log('✅ Standard Campaign-Speicherung abgeschlossen: Kein PDF-Workflow');
+      console.log('✅ Standard Campaign-Speicherung abgeschlossen: Kein Customer-Workflow');
       return { campaignId };
 
     } catch (error) {
-      console.error('❌ Fehler bei Enhanced Campaign-Speicherung:', error);
+      console.error('❌ Fehler bei Customer-Only Campaign-Speicherung:', error);
       throw error;
     }
   }
