@@ -20,7 +20,7 @@ import {
   getDownloadURL,
   deleteObject,
 } from 'firebase/storage';
-import { db, storage } from './client-init';
+import { db, storage } from './config';
 import { MediaAsset, MediaFolder, FolderBreadcrumb, ShareLink, ShareLinkType } from '@/types/media';
 import { notificationsService } from './notifications-service';
 import { BaseEntity } from '@/types/international';
