@@ -276,5 +276,74 @@ export const teamApprovalService = {
       console.error('❌ Fehler beim Versenden der Benachrichtigungen:', error);
       // Don't throw - notifications are not critical for the approval workflow
     }
+  },
+
+  /**
+   * Lädt alle Team-Approvals für eine Organisation (für Approval-Übersicht)
+   */
+  async getOrganizationApprovals(organizationId: string): Promise<any[]> {
+    try {
+      const approvalsQuery = query(
+        collection(db, 'team_approvals'),
+        where('organizationId', '==', organizationId),
+        orderBy('createdAt', 'desc')
+      );
+
+      const approvalDocs = await getDocs(approvalsQuery);
+      
+      // Konvertiere Team-Approvals zu Approval-Format für UI-Kompatibilität
+      const teamApprovals = await Promise.all(
+        approvalDocs.docs.map(async (doc) => {
+          const data = doc.data();
+          
+          try {
+            // Lade Campaign-Daten für zusätzliche Info
+            const campaignDoc = await getDoc(doc(db, 'pr_campaigns', data.campaignId));
+            const campaignData = campaignDoc.data();
+            
+            // Lade Workflow-Daten für ShareID
+            const workflowDoc = await getDoc(doc(db, 'approval_workflows', data.workflowId));
+            const workflowData = workflowDoc.data();
+            
+            return {
+              id: doc.id,
+              campaignId: data.campaignId,
+              organizationId: data.organizationId,
+              status: data.status,
+              createdAt: data.createdAt,
+              notifiedAt: data.notifiedAt,
+              // UI-Kompatibilität
+              title: campaignData?.title || 'Team-Freigabe',
+              type: 'team_approval', // Markiere als Team-Approval
+              shareId: workflowData?.customerSettings?.shareId || 'unknown',
+              priority: 'normal',
+              estimatedDuration: 15
+            };
+          } catch (error) {
+            console.warn(`Error loading additional data for approval ${doc.id}:`, error);
+            return {
+              id: doc.id,
+              campaignId: data.campaignId,
+              organizationId: data.organizationId,
+              status: data.status,
+              createdAt: data.createdAt,
+              notifiedAt: data.notifiedAt,
+              title: 'Team-Freigabe',
+              type: 'team_approval',
+              shareId: 'unknown',
+              priority: 'normal',
+              estimatedDuration: 15
+            };
+          }
+        })
+      );
+
+      console.log(`✅ Loaded ${teamApprovals.length} team approvals for organization`);
+      return teamApprovals;
+      
+    } catch (error) {
+      console.error('❌ Fehler beim Laden der Organization Team-Approvals:', error);
+      return []; // Return empty array to not break the UI
+    }
   }
 };

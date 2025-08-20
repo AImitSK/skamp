@@ -37,6 +37,7 @@ import {
   ChevronRightIcon
 } from "@heroicons/react/24/outline";
 import { approvalService } from "@/lib/firebase/approval-service";
+import { teamApprovalService } from "@/lib/firebase/team-approval-service";
 import { companiesEnhancedService } from "@/lib/firebase/crm-service-enhanced";
 import { pdfVersionsService } from "@/lib/firebase/pdf-versions-service";
 import { 
@@ -298,8 +299,14 @@ export default function ApprovalsPage() {
       };
       
       
-      // Lade Freigaben mit Filtern
-      const allApprovals = await approvalService.searchEnhanced(currentOrganization.id, filters);
+      // Lade sowohl alte Approvals als auch neue Team-Approvals
+      const [classicApprovals, teamApprovals] = await Promise.all([
+        approvalService.searchEnhanced(currentOrganization.id, filters),
+        teamApprovalService.getOrganizationApprovals(currentOrganization.id)
+      ]);
+      
+      // Kombiniere beide Approval-Typen
+      const allApprovals = [...classicApprovals, ...teamApprovals];
       
       
       // Filtere Draft-Status heraus
