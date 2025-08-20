@@ -127,10 +127,17 @@ export default function InternalApprovalPage() {
       }
 
       // Prüfe Organizations-Zugehörigkeit
+      console.log('🔐 Organization Check:');
+      console.log('  Campaign OrganizationId:', campaignData.organizationId);
+      console.log('  Current OrganizationId:', currentOrganization.id);
+      
       if (campaignData.organizationId !== currentOrganization.id) {
+        console.error('❌ Organization-Berechtigung fehlgeschlagen');
         setError('Sie sind nicht berechtigt, diese Freigabe zu sehen.');
         return;
       }
+      
+      console.log('✅ Organization-Check erfolgreich');
 
       setCampaign(campaignData);
 
@@ -152,10 +159,17 @@ export default function InternalApprovalPage() {
         });
 
         // 🔧 FIX: Prüfe ob der aktuelle User berechtigt ist für dieses Team-Approval
+        console.log('🔐 User Check:');
+        console.log('  Team-Approval UserId:', relevantApproval.userId);
+        console.log('  Current User UID:', user.uid);
+        
         if (relevantApproval.userId !== user.uid) {
+          console.error('❌ User-Berechtigung fehlgeschlagen');
           setError('Sie sind nicht berechtigt, diese Freigabe zu bearbeiten.');
           return;
         }
+        
+        console.log('✅ User-Check erfolgreich');
         
         // Team-Approval wurde bereits oben geladen
         setUserApproval(relevantApproval);
