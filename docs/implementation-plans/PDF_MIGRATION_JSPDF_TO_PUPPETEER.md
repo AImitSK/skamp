@@ -1005,3 +1005,94 @@ Diese Migration wird das PDF-System von einer clientseitigen, limitierten Lösun
 Die Migration ist risikoarm durchführbar, da das Frontend-Interface unverändert bleibt und ein Rollback-Plan existiert.
 
 **Empfehlung**: Migration in Development-Umgebung starten, umfassend testen, dann schrittweiser Production-Rollout mit Feature-Flag.
+
+---
+
+## 🤖 **AGENT-EMPFEHLUNGEN FÜR MIGRATION**
+
+### **📋 PHASEN-SPEZIFISCHE AGENT-VERWENDUNG:**
+
+#### **Phase 1: Vorbereitung & Setup (2-3h)**
+- **`migration-helper`** - Legacy jsPDF Code-Analyse und Ersetzungsstrategien
+- **`general-purpose`** - Dependencies-Research (Puppeteer vs. Alternativen) 
+- **`performance-optimizer`** - Template-System Performance-Analyse
+
+#### **Phase 2: API Route Implementation (3-4h)**
+- **`general-purpose`** - Next.js API Route Development und Puppeteer Integration
+- **`migration-helper`** - Legacy HTML-Parser-Code Migration zu Templates
+- **`test-writer`** - API-Endpoint Tests erstellen (nach Implementation)
+
+#### **Phase 3: Service Migration (4-5h)**
+- **`migration-helper`** - **KRITISCH**: pdf-versions-service.ts Legacy-Code-Ersetzung (406 Zeilen entfernen)
+- **`general-purpose`** - Komplexe Service-Integration und Error-Handling
+- **`performance-optimizer`** - Service-Performance nach Migration optimieren
+
+#### **Phase 4: Frontend Integration (2-3h)**
+- **`migration-helper`** - Loading-States und UI-Pattern Updates
+- **`test-writer`** - Component-Integration Tests nach UI-Updates
+
+#### **Phase 5: Testing & Cleanup (2-3h)**
+- **`test-writer`** - **UMFASSENDE** E2E Test-Suite für komplette Migration
+- **`performance-optimizer`** - Final Performance-Tuning und Memory-Leak-Checks
+- **`production-deploy`** - Feature-Flag-basiertes Production-Deployment
+
+### **🎯 AGENT-PRIORITÄTEN:**
+
+#### **🚨 HÖCHSTE PRIORITÄT:**
+- **`migration-helper`** - Für Legacy-Code-Ersetzung (1400+ Zeilen jsPDF → Puppeteer)
+- **`general-purpose`** - Für komplexe Puppeteer-API Implementation
+
+#### **⚡ MITTLERE PRIORITÄT:**
+- **`test-writer`** - Für Migration-Sicherheit durch umfassende Tests
+- **`performance-optimizer`** - Für Performance-kritische Optimierungen
+
+#### **✅ NIEDRIGERE PRIORITÄT:**
+- **`production-deploy`** - Für finales, sicheres Deployment
+
+### **⚠️ KRITISCHE AGENT-WARNUNGEN:**
+
+#### **Media Center Multi-Tenancy:**
+- **`migration-helper`** **MUSS** über Media Center Sonderfall informiert werden:
+  ```
+  WARNUNG: Media Center verwendet clientId + organizationId + Legacy userId
+  NICHT das Standard organizationId-Pattern verwenden!
+  ```
+
+#### **Content-Assembly Komplexität:**
+- **`general-purpose`** **MUSS** die 5+ Content-Quellen verstehen:
+  ```
+  1. HAUPTINHALT (TipTap Editor)
+  2. KEY VISUAL (Firebase Storage) 
+  3. TEXTBAUSTEINE (Multi-Source: Global + Client + Legacy)
+  4. MEDIEN-ANHÄNGE (Media Center Integration)
+  5. CLIENT-INFORMATIONEN (selectedCompany)
+  ```
+
+#### **Legacy-Code-Entfernung:**
+- **`migration-helper`** **DARF NUR** diese spezifischen Methoden entfernen:
+  ```
+  ❌ parseHtmlToPdfSegments (Zeilen 530-642)
+  ❌ addFormattedText (Zeilen 644-758)  
+  ❌ extractImageFromDOM (Zeilen 1069-1133)
+  ❌ loadImageAsBase64 (Zeilen 1210-1248)
+  ❌ convertToPublicUrl (Zeilen 1294-1316)
+  ❌ convertStorageUrlsInHtml (Zeilen 1321-1334)
+  ❌ processContentForPDF (Zeilen 1253-1289)
+  ```
+
+### **📊 AGENT-ERFOLGS-METRIKEN:**
+
+#### **Migration-Erfolg durch Agenten:**
+- **Code-Reduktion**: 406 Zeilen Legacy-Code entfernt
+- **Performance-Verbesserung**: <10s für große PDFs
+- **Test-Coverage**: 100% für neue API-Routes
+- **Error-Rate**: <0.5% bei Migration-Rollout
+
+#### **Agent-Coordination:**
+```
+migration-helper (Legacy-Cleanup) 
+    → general-purpose (API Implementation)
+    → test-writer (Safety-Tests)
+    → performance-optimizer (Final-Tuning)
+    → production-deploy (Safe-Rollout)
+```

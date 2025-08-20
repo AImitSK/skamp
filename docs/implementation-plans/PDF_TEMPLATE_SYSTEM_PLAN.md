@@ -9,6 +9,35 @@ Erweiterung des bestehenden PDF-Versionierungssystems um ein flexibles Template-
 ---
 
 ## 🏗️ **TEMPLATE-SYSTEM ARCHITEKTUR**
+**🤖 Empfohlene Agenten**: `general-purpose` (für komplexe Template-Engine Implementation), `performance-optimizer` (für PDF-Generation Performance)
+**⚠️ Media Center Warnung**: Template-System nutzt Media Assets. Media Center verwendet NICHT Standard organizationId-Pattern - berücksichtige clientId + userId Legacy-Mapping bei Media-Integration.
+
+### **📄 CONTENT ASSEMBLY HERAUSFORDERUNG**
+
+**🚨 KRITISCH:** Template-System muss die **extrem komplexe Content-Assembly** der alten PDF-Integration ersetzen:
+
+#### **5+ Content-Quellen koordinieren:**
+1. **Hauptinhalt** - title, mainContent (HTML), keywords
+2. **Key Visual** - URL, cropData, CORS-Proxy-Probleme  
+3. **Textbausteine** - boilerplateSections (Multi-Source: Global + Client + Legacy)
+4. **Medien-Anhänge** - attachedAssets (Media Center Komplexität)
+5. **Client-Info** - selectedCompanyId, selectedCompanyName
+
+#### **🎯 TEMPLATE-LÖSUNG:**
+```typescript
+// Statt 1400+ Zeilen Client-Side PDF-Code:
+// → Template-basierte Server-Side Lösung
+
+interface TemplateContentPayload {
+  title: string;
+  mainContent: string;
+  keyVisual: KeyVisualData;
+  boilerplateSections: BoilerplateSection[];
+  attachedAssets: CampaignAssetAttachment[];
+  clientInfo: CompanyInfo;
+  template: PDFTemplate; // ← Neue Template-Engine
+}
+```
 
 ### 📋 **Template-Struktur**
 
@@ -1224,6 +1253,7 @@ describe('TemplateCard', () => {
 ---
 
 ## 📦 **IMPLEMENTIERUNGS-REIHENFOLGE**
+**🤖 Empfohlene Agenten**: `feature-starter` (für Template-System Setup), `test-writer` (für Template-Tests), `production-deploy` (für finales Deployment)
 
 ### Phase 1: Service Foundation (Woche 1)
 1. **PDFTemplateService erstellen**

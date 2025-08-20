@@ -6,6 +6,133 @@ Dieses Dokument spezifiziert die Implementierung des revolutionären **Vorschau-
 
 **🚨 KERN-KONZEPT**: Unveränderliche PDF-Stände für jeden Freigabe-Prozess
 
+**🔄 DETAILLIERTE IMPLEMENTIERUNGSPLÄNE**:
+
+### **🎯 KERN-INTEGRATION (KRITISCHE PRIORITÄT)**
+- [STEP3_APPROVAL_WORKFLOW_INTEGRATION_PLAN](../implementation-plans/STEP3_APPROVAL_WORKFLOW_INTEGRATION_PLAN.md) - **KRITISCH**: Step 3 → PDF Workflow-Trigger
+- [APPROVAL_INTEGRATION_PDF_VERSIONING_PLAN](../implementation-plans/APPROVAL_INTEGRATION_PDF_VERSIONING_PLAN.md) - Service-Layer Integration  
+- [EDIT_LOCK_SYSTEM_ENHANCEMENT_PLAN](../implementation-plans/EDIT_LOCK_SYSTEM_ENHANCEMENT_PLAN.md) - Edit-Lock Vervollständigung
+
+### **📋 FREIGABE-SEITEN INTEGRATION (HOHE PRIORITÄT)**
+- [TEAM_APPROVAL_PAGE_INTEGRATION_PLAN](../implementation-plans/TEAM_APPROVAL_PAGE_INTEGRATION_PLAN.md) - Team-Freigabe PDF & Message Integration
+- [CUSTOMER_APPROVAL_PAGE_INTEGRATION_PLAN](../implementation-plans/CUSTOMER_APPROVAL_PAGE_INTEGRATION_PLAN.md) - Kunden-Freigabe PDF & Message Integration
+
+### **🗂️ ADMIN-ÜBERSICHT INTEGRATION (MITTLERE PRIORITÄT)**  
+- [APPROVALS_OVERVIEW_PDF_INTEGRATION_PLAN](../implementation-plans/APPROVALS_OVERVIEW_PDF_INTEGRATION_PLAN.md) - Admin-Dashboard PDF-Status & Direct-Access
+
+### **📄 ERWEITERTE PDF-FEATURES (HOHE PRIORITÄT)**
+- [PDF_TEMPLATE_SYSTEM_PLAN](../implementation-plans/PDF_TEMPLATE_SYSTEM_PLAN.md) - Erweiterte PDF-Templates & Customization
+- [PDF_MIGRATION_JSPDF_TO_PUPPETEER_PLAN](../implementation-plans/PDF_MIGRATION_JSPDF_TO_PUPPETEER.md) - **🚨 KRITISCH**: jsPDF → Puppeteer Migration
+
+---
+
+## 💻 **TECH-STACK ÜBERSICHT**
+
+### **🔧 BACKEND-TECHNOLOGIEN**
+```
+┌─ PDF-GENERATION (MIGRATION) ────────────────────────────────┐
+│ AKTUELL:    jsPDF 3.0.1 (Client-side, 1400+ Zeilen Code)   │
+│ ZIEL:       Puppeteer (Server-side API Routes)              │
+│ MIGRATION:  HTML/CSS Templates → PDF Generation             │
+└─────────────────────────────────────────────────────────────┘
+
+┌─ DATABASE & STORAGE ─────────────────────────────────────────┐
+│ Firebase Firestore  → PDF-Versionen & Campaign-Daten       │  
+│ Firebase Storage    → PDF-Files & Media-Assets              │
+│ Multi-Tenancy:      organizationId (außer Media Center)     │
+└─────────────────────────────────────────────────────────────┘
+
+┌─ API & SERVICES ─────────────────────────────────────────────┐
+│ Next.js 14 API Routes → /api/generate-pdf (NEU)            │
+│ Firebase Client SDK   → Firestore Operations               │
+│ PDFVersionsService   → PDF-Verwaltung & Edit-Lock          │
+│ ApprovalService      → Freigabe-Workflow Integration       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### **🎨 FRONTEND-TECHNOLOGIEN**
+```
+┌─ UI FRAMEWORK ───────────────────────────────────────────────┐
+│ React 18            → Component-basierte UI                 │
+│ Next.js 14          → App Router, Server/Client Components  │
+│ TypeScript          → Type-Safety & Entwickler-Experience   │
+└─────────────────────────────────────────────────────────────┘
+
+┌─ STYLING & DESIGN ───────────────────────────────────────────┐
+│ Tailwind CSS        → Utility-first Styling                │
+│ CeleroPress Design System v2.0 → UI-Komponenten           │
+│ Heroicons /24/outline → Icon-System                        │
+│ KEINE Shadow-Effekte → Design Pattern                      │
+└─────────────────────────────────────────────────────────────┘
+
+┌─ STATE & FORMS ──────────────────────────────────────────────┐
+│ React Hook Form     → Form-Validierung & State             │
+│ TipTap Editor       → Rich-Text Content-Editor             │
+│ React State Hooks   → Component-lokaler State              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### **📁 CONTENT-MANAGEMENT**
+```
+┌─ CONTENT-QUELLEN (5+ DATENSTRÖME) ───────────────────────────┐
+│ 1. HAUPTINHALT     → TipTap Editor (HTML)                   │
+│ 2. KEY VISUAL      → Firebase Storage (Bilder)             │  
+│ 3. TEXTBAUSTEINE   → Firestore (Global + Client + Legacy)  │
+│ 4. MEDIEN-ANHÄNGE  → Media Center (clientId + orgId)       │
+│ 5. CLIENT-INFO     → CustomerSelector (selectedCompany)    │
+└─────────────────────────────────────────────────────────────┘
+
+┌─ PDF-TEMPLATE SYSTEM (MIGRATION) ────────────────────────────┐
+│ AKTUELL: Manueller HTML-Parser (230+ Zeilen Code)          │
+│ ZIEL:    HTML/CSS Templates mit Mustache.js                │
+│ LAYOUT:  Corporate Design CSS + Responsive PDF             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### **🔒 SECURITY & ARCHITEKTUR**
+```
+┌─ AUTHENTICATION & AUTHORIZATION ─────────────────────────────┐
+│ Firebase Auth       → User-Authentication                  │
+│ Multi-Tenancy      → organizationId-basierte Isolation    │
+│ AUSNAHME:          → Media Center (clientId + userId)     │
+│ Edit-Lock System   → Campaign-Schutz während Freigabe     │
+└─────────────────────────────────────────────────────────────┘
+
+┌─ DEPLOYMENT & INFRASTRUCTURE ────────────────────────────────┐
+│ Vercel Platform     → Next.js Hosting & API Routes        │
+│ Node.js Runtime     → Server-side PDF-Generation          │
+│ Docker Support      → Puppeteer Container (Production)    │
+│ CDN Integration     → Firebase Storage + Vercel Edge      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### **🧪 TESTING & QUALITY**
+```
+┌─ TESTING FRAMEWORK ──────────────────────────────────────────┐
+│ Jest + RTL          → Unit & Integration Tests             │
+│ @testing-library    → Component-Testing                   │
+│ Firebase Emulator   → Service-Layer Testing               │
+│ Test Coverage:      → 100% für alle PDF-Services          │
+└─────────────────────────────────────────────────────────────┘
+
+┌─ CODE QUALITY ───────────────────────────────────────────────┐
+│ ESLint + Prettier   → Code-Formatting & Linting           │
+│ TypeScript Strict   → Type-Checking                       │
+│ Git Hooks          → Pre-commit Testing                   │
+│ Deutsche Kommentare → Team-Kommunikation                  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### **📊 PERFORMANCE & MONITORING**
+```
+┌─ PERFORMANCE-ZIELE ──────────────────────────────────────────┐
+│ PDF-Generation:     < 3 Sekunden (Standard-PR)            │
+│ Version-History:    < 500ms (50+ Versionen)               │
+│ Edit-Lock Response: < 100ms (Status-Check)                │
+│ Memory Usage:       < 2GB (Puppeteer Server)              │
+└─────────────────────────────────────────────────────────────┘
+```
+
 ---
 
 ## 🏗️ **PDF-WORKFLOW ARCHITEKTUR**
@@ -629,49 +756,143 @@ describe('Campaign PDF Workflow Integration', () => {
 
 ## 🚀 **IMPLEMENTIERUNGS-REIHENFOLGE**
 
-### Phase 1: Service-Layer (Woche 1)
-1. **PDFVersionsService erstellen**
-   - Database Schema implementieren
-   - CRUD Operations für PDF-Versionen
-   - Edit-Lock Management
+### **🎯 UPDATED IMPLEMENTATION ROADMAP (2025)**
 
-2. **PDFGeneratorService erweitern**
-   - Versions-Integration
-   - Template-System für verschiedene PDF-Typen (siehe docs\implementation-plans\PDF_TEMPLATE_SYSTEM_PLAN.md)
-   - Performance-Optimierung
+Basierend auf der erweiterten Planung mit allen Detailplänen:
 
-### Phase 2: UI-Komponenten (Woche 2)
-1. **PreviewStep Component**
-   - Live-Vorschau Integration
-   - PDF-Generation UI
-   - Edit-Lock Banner
+### **Phase 0: PDF-System Migration (KRITISCHSTE PRIORITÄT) - Woche 1**
+1. **[PDF_MIGRATION_JSPDF_TO_PUPPETEER_PLAN](../implementation-plans/PDF_MIGRATION_JSPDF_TO_PUPPETEER.md)** ⚠️ **MUST BE FIRST**
+   - **KRITISCH**: jsPDF → Puppeteer Migration (1400+ Zeilen Code ersetzen)
+   - API Route /api/generate-pdf implementieren
+   - Template-System mit HTML/CSS aufbauen
+   - Service-Layer auf neue API umstellen
+   - **🤖 Empfohlene Agenten**: `migration-helper` (für Legacy-Code Ersetzen), `general-purpose` (für API-Route Implementation), `test-writer` (für Migration-Tests)
+   - **⏱️ Zeitaufwand**: 13-18 Stunden (siehe Detailplan)
+   - **🚨 BLOCKIERT ALLE ANDEREN PLÄNE** - Muss zuerst abgeschlossen werden!
 
-2. **PDFVersionHistory Component**
-   - Version-Liste mit Status-Badges
-   - Download-Links
-   - Approval-Integration
+### **Phase 1: Kern-Integration (Kritisch) - Woche 2**
+1. **[STEP3_APPROVAL_WORKFLOW_INTEGRATION_PLAN](../implementation-plans/STEP3_APPROVAL_WORKFLOW_INTEGRATION_PLAN.md)**
+   - **KRITISCH**: PDF-Generation-Trigger aus Step 3 Freigabe-Konfiguration
+   - ApprovalSettings → PDF-Workflow Verbindung (mit neuer Puppeteer-API)
+   - Edit-Lock-Aktivierung bei Kunden-Freigabe-Anforderung
+   - **🤖 Empfohlene Agenten**: `migration-helper` (für bestehende Step 3 Integration), `test-writer` (nach Implementierung)
 
-### Phase 3: Workflow-Integration (Woche 3)
-1. **Approval-System Integration**
-   - Status-Synchronisation
-   - Edit-Lock Automation
-   - Notification-System
+2. **Service-Layer Integration**
+   - [APPROVAL_INTEGRATION_PDF_VERSIONING_PLAN](../implementation-plans/APPROVAL_INTEGRATION_PDF_VERSIONING_PLAN.md) - Service-Layer Integration  
+   - [EDIT_LOCK_SYSTEM_ENHANCEMENT_PLAN](../implementation-plans/EDIT_LOCK_SYSTEM_ENHANCEMENT_PLAN.md) - Edit-Lock Vervollständigung
+   - Database Schema für erweiterte Integration
+   - **🤖 Empfohlene Agenten**: `general-purpose` (für Service-Layer Integration), `performance-optimizer` (für Service-Optimierung)
 
-2. **Campaign Edit-Schutz**
-   - Form-Validation erweitern
-   - Edit-Sperren implementieren
-   - User-Feedback System
+### **Phase 2: Freigabe-Seiten Integration (Hoch) - Woche 3** 
+1. **[TEAM_APPROVAL_PAGE_INTEGRATION_PLAN](../implementation-plans/TEAM_APPROVAL_PAGE_INTEGRATION_PLAN.md)**
+   - PDF-Versionen in Team-Freigabe-Seiten (`/freigabe-intern/[shareId]`)
+   - TeamApprovalMessage aus Step 3 Konfiguration anzeigen
+   - Enhanced Data Loading mit PDF-Synchronisation
+   - **🤖 Empfohlene Agenten**: `migration-helper` (für UI-Pattern Updates), `test-writer` (für Component Tests)
 
-### Phase 4: Testing & Polish (Woche 4)
-1. **Comprehensive Testing**
-   - Unit Tests (100% Coverage)
-   - Integration Tests
-   - User-Workflow Tests
+2. **[CUSTOMER_APPROVAL_PAGE_INTEGRATION_PLAN](../implementation-plans/CUSTOMER_APPROVAL_PAGE_INTEGRATION_PLAN.md)**
+   - PDF-Versionen in Kunden-Freigabe-Seiten (`/freigabe/[shareId]`)
+   - CustomerApprovalMessage aus Step 3 Konfiguration anzeigen
+   - PDF-Status-Synchronisation bei Approval-Aktionen
+   - **🤖 Empfohlene Agenten**: `migration-helper` (für UI-Pattern Updates), `test-writer` (für Integration Tests)
 
-2. **Performance-Optimierung**
-   - PDF-Generation Speed
-   - File-Upload Optimization
-   - Memory-Leak Prevention
+### **Phase 3: Admin-Übersicht Integration (Mittel) - Woche 4**
+1. **[APPROVALS_OVERVIEW_PDF_INTEGRATION_PLAN](../implementation-plans/APPROVALS_OVERVIEW_PDF_INTEGRATION_PLAN.md)**
+   - PDF-Status in Admin-Übersichten (`/approvals/`)
+   - Enhanced Search & Filtering nach PDF-Status
+   - Direct-PDF-Access aus Admin-Interface
+   - PDF-History-Modal in Details-Seite
+   - **🤖 Empfohlene Agenten**: `migration-helper` (für Admin-UI Updates), `performance-optimizer` (für Search-Performance)
+
+### **Phase 4: Template-System & Final Polish - Woche 5**
+1. **Template-System Erweiterung**
+   - [PDF_TEMPLATE_SYSTEM_PLAN](../implementation-plans/PDF_TEMPLATE_SYSTEM_PLAN.md) - Erweiterte PDF-Templates & Customization
+   - Corporate Design Templates verfeinern
+   - Multi-Language Support (optional)
+   - Customer-spezifische Template-Varianten
+   - **🤖 Empfohlene Agenten**: `general-purpose` (für Template-Development), `migration-helper` (für Legacy-Pattern Cleanup)
+
+2. **Testing & Finalisierung**
+   - **Test-Suite Erweiterung**: 8-10 neue Test-Dateien für Puppeteer-Migration
+     - `src/__tests__/api/generate-pdf.test.ts` - API Route Tests
+     - `src/__tests__/pdf/template-renderer.test.ts` - Template-System Tests  
+     - `src/__tests__/migration/jspdf-to-puppeteer.test.ts` - Migration-Tests
+   - Cross-Browser Testing aller 7 neuen Integrations-Pläne
+   - Performance-Optimierung für PDF-Loading
+   - User-Acceptance Testing für vollständigen Workflow
+   - **🤖 Empfohlene Agenten**: `test-writer` (für umfassende E2E Tests), `performance-optimizer` (für Final-Optimization)
+
+---
+
+## 🤖 **AGENT-EMPFEHLUNGS-MATRIX**
+
+### **📋 AGENT-VERWENDUNG PRO IMPLEMENTIERUNGSPHASE:**
+
+```
+Phase 1 (Kern-Integration):
+├── migration-helper    → Step 3 Integration & Legacy-Pattern Updates
+├── general-purpose     → Service-Layer Recherche & Komplexe Implementierung
+├── test-writer        → Service-Tests nach Implementation
+└── performance-optimizer → Service-Performance Optimierung
+
+Phase 2 (UI-Integration):
+├── migration-helper    → UI-Pattern Updates (Design System v2.0)
+├── test-writer        → Component & Integration Tests
+└── performance-optimizer → UI-Performance nach UI-Updates
+
+Phase 3 (Admin-Integration):
+├── migration-helper    → Admin-UI Pattern Updates
+├── performance-optimizer → Search & Filtering Performance
+└── test-writer        → Admin-Workflow Tests
+
+Phase 4 (Finalisierung):
+├── general-purpose     → Komplexe Service-Integration Tasks
+├── migration-helper    → Final Legacy-Code Cleanup
+├── test-writer        → Umfassende E2E Test-Suites
+├── performance-optimizer → System-weite Performance-Optimierung
+└── production-deploy   → Final Production Deployment
+```
+
+### **🎯 DEPLOYMENT-AGENTEN:**
+- **quick-deploy** → Während Entwicklung für schnelle Vercel-Previews
+- **production-deploy** → Nach Abschluss jeder Phase für Production-Ready Deployment
+- **documentation-orchestrator** → **KRITISCH**: Nach **JEDEM** Implementierungs-Abschnitt für Dokumentations-Synchronisation
+
+### **📋 KRITISCHE DOKUMENTATIONS-UPDATES:**
+```
+Nach jeder Phase SOFORT:
+1. Implementation-Plan → Status auf "COMPLETED" setzen
+2. Masterplan → Fortschritt dokumentieren  
+3. Feature-Dokumentation → Neue Features beschreiben
+4. README-Index → Aktualisierte Links und Status
+
+🤖 AGENT: documentation-orchestrator
+🚨 ZWECK: Bei Systemabsturz exakten Entwicklungsstand wiederherstellen
+⏱️ TIMING: Nach JEDER fertigen Phase, nicht am Ende!
+```
+
+---
+
+## 🔗 **CROSS-DEPENDENCIES & INTEGRATION-MATRIX**
+
+### **Kritische Abhängigkeiten:**
+```
+STEP3_APPROVAL_WORKFLOW → TEAM_APPROVAL_PAGE → CUSTOMER_APPROVAL_PAGE → APPROVALS_OVERVIEW
+       ↓                           ↓                        ↓                    ↓
+PDF-Service            Message-Display           Message-Display         Status-Display
+Edit-Lock-Service      PDF-Integration          PDF-Integration         PDF-Filtering
+```
+
+### **Service-Dependencies:**
+- **PDFVersionsService**: Wird von allen UI-Plänen benötigt
+- **ApprovalWorkflowService**: Erweitert in STEP3_PLAN, verwendet in allen anderen
+- **Edit-Lock-System**: Kern-Integration in STEP3, UI in Team/Customer Pages
+- **Message-System**: Step 3 Konfiguration → Team/Customer Page Display
+
+### **Testing-Matrix:**
+- **Unit Tests**: Jeder Plan enthält spezifische Service-Tests
+- **Integration Tests**: Cross-Plan Testing nach Phase 2/3
+- **E2E Tests**: Vollständiger Workflow nach Phase 4
 
 ---
 
@@ -711,9 +932,28 @@ const PDF_VERSIONING_FLAGS = {
 
 ---
 
-## 🎉 **IMPLEMENTIERUNGS-STATUS: VOLLSTÄNDIG ABGESCHLOSSEN**
+## 🎉 **IMPLEMENTIERUNGS-STATUS: GEMISCHTER STAND**
 
-### ✅ **ALLE PHASEN ERFOLGREICH IMPLEMENTIERT (19.08.2025)**
+### ✅ **KERN-SYSTEM: VOLLSTÄNDIG IMPLEMENTIERT (19.08.2025)**
+
+**Basis PDF-Versionierung System ist vollständig implementiert und produktiv.**
+
+### 🚧 **ERWEITERTE INTEGRATION: IN PLANUNG (20.01.2025)**
+
+**7 neue Detailpläne für vollständige System-Integration erstellt - noch umzusetzen:**
+
+#### **🔄 NEUE INTEGRATIONS-PLÄNE (PENDING IMPLEMENTATION):**
+- [ ] **STEP3_APPROVAL_WORKFLOW_INTEGRATION_PLAN** - ⚠️ KRITISCH
+- [ ] **APPROVAL_INTEGRATION_PDF_VERSIONING_PLAN** - Service-Layer
+- [ ] **EDIT_LOCK_SYSTEM_ENHANCEMENT_PLAN** - Edit-Lock Vervollständigung
+- [ ] **TEAM_APPROVAL_PAGE_INTEGRATION_PLAN** - Team-Freigabe UI
+- [ ] **CUSTOMER_APPROVAL_PAGE_INTEGRATION_PLAN** - Kunden-Freigabe UI  
+- [ ] **APPROVALS_OVERVIEW_PDF_INTEGRATION_PLAN** - Admin-Übersicht UI
+- [ ] **PDF_TEMPLATE_SYSTEM_PLAN** - ⚠️ SEHR WICHTIG: Erweiterte PDF-Templates
+
+---
+
+### ✅ **BEREITS IMPLEMENTIERTE BASIS-FEATURES:**
 
 #### **Phase 1: Service-Layer** ✅ COMPLETED
 - [x] **PDFVersionsService erstellt** - Vollständige Database Schema Implementation
