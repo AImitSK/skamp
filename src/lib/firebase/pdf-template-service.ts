@@ -314,10 +314,11 @@ class PDFTemplateService {
           pageFormat: 'A4'
         },
         typography: {
-          fontFamily: 'Arial, sans-serif',
-          fontSize: { body: 12, heading: 18, subheading: 14 },
-          lineHeight: { body: 1.6, heading: 1.4, subheading: 1.5 },
-          fontWeight: { body: 'normal', heading: 'bold', subheading: 'semi-bold' }
+          primaryFont: 'Arial, sans-serif',
+          secondaryFont: 'Arial, sans-serif', 
+          baseFontSize: 12,
+          lineHeight: 1.6,
+          headingScale: [24, 20, 16, 14]
         },
         ...templateData,
         isSystem: false,
