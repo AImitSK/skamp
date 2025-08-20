@@ -7,7 +7,6 @@ import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
-import { prService } from '@/lib/firebase/pr-service';
 import { teamApprovalService } from '@/lib/firebase/team-approval-service';
 import { approvalWorkflowService } from '@/lib/firebase/approval-workflow-service';
 import { PRCampaign } from '@/types/pr';
@@ -79,12 +78,27 @@ export default function InternalApprovalPage() {
       setLoading(true);
       setError(null);
 
-      // Lade Campaign über ShareID (wie bei Customer-Approvals)
-      const campaignData = await prService.getCampaignByShareId(shareId);
-      if (!campaignData) {
+      // 🔧 FIX: Team-Approvals verwenden Campaign ShareID direkt
+      // Suche Campaign in pr_campaigns Collection mit shareId Feld
+      const campaignQuery = query(
+        collection(db, 'pr_campaigns'),
+        where('shareId', '==', shareId),
+        where('organizationId', '==', currentOrganization.id)
+      );
+      
+      const campaignDocs = await getDocs(campaignQuery);
+      if (campaignDocs.empty) {
         setError('Freigabe-Link nicht gefunden oder nicht mehr gültig.');
         return;
       }
+      
+      const campaignDoc = campaignDocs.docs[0];
+      const campaignData = {
+        id: campaignDoc.id,
+        ...campaignDoc.data()
+      } as PRCampaign;
+      
+      console.log('✅ Campaign gefunden für Team-Approval:', campaignData.id);
 
       // Prüfe Organizations-Zugehörigkeit
       if (campaignData.organizationId !== currentOrganization.id) {

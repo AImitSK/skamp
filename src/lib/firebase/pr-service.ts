@@ -814,7 +814,7 @@ export const prService = {
 async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
   try {
     
-    // Versuche zuerst Enhanced Approval zu finden
+    // 🔧 FIX: Versuche zuerst Enhanced Approval zu finden
     const approval = await approvalService.getByShareId(shareId);
     
     if (approval) {
