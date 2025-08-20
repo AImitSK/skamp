@@ -320,6 +320,14 @@ class PDFTemplateService {
           lineHeight: 1.6,
           headingScale: [24, 20, 16, 14]
         },
+        colorScheme: {
+          primary: '#005fab',
+          secondary: '#6b7280',
+          accent: '#10b981',
+          background: '#ffffff',
+          text: '#111827',
+          border: '#e5e7eb'
+        },
         ...templateData,
         isSystem: false,
         isActive: true,
