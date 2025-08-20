@@ -40,10 +40,10 @@ export function TeamMemberSelector({
       
       const members = await teamMemberService.getByOrganization(organizationId);
       
-      // Filter nur aktive Mitglieder (kein Owner, da Owner nicht freigeben sollte)
+      // Filter nur aktive Mitglieder und interne Rollen
       const eligibleMembers = members.filter(member => 
         member.status === 'active' && 
-        member.role !== 'owner' && // Owner sollte nicht als Approver ausgewählt werden
+        // ✅ ALLE INTERNEN ROLLEN: admin, owner, member sind berechtigt für Team-Approvals
         member.role !== 'client' && // Clients sind keine internen Approver
         member.role !== 'guest'   // Guests sind keine Approver
       );
@@ -81,6 +81,7 @@ export function TeamMemberSelector({
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
+      case 'owner': return 'purple';
       case 'admin': return 'blue';
       case 'member': return 'green';
       default: return 'gray';
@@ -89,6 +90,7 @@ export function TeamMemberSelector({
 
   const getRoleLabel = (role: string) => {
     switch (role) {
+      case 'owner': return 'Owner';
       case 'admin': return 'Admin';
       case 'member': return 'Mitglied';
       default: return role;
