@@ -307,20 +307,10 @@ export const teamApprovalService = {
             const campaignDoc = await getDoc(doc(db, 'pr_campaigns', data.campaignId));
             const campaignData = campaignDoc.data();
             
-            // Team-Approvals verwenden Campaign ShareID statt Customer ShareID
-            let teamShareId = 'unknown';
-            if (campaignData?.shareId) {
-              teamShareId = campaignData.shareId;
-            } else {
-              // Fallback: Lade Workflow für ShareID
-              try {
-                const workflowDoc = await getDoc(doc(db, 'approval_workflows', data.workflowId));
-                const workflowData = workflowDoc.data();
-                teamShareId = workflowData?.customerSettings?.shareId || 'unknown';
-              } catch (workflowError) {
-                console.warn('Could not load workflow data for shareId');
-              }
-            }
+            // 🔧 FIX: Team-Approvals verwenden ihre eigene ShareID aus der team_approvals Collection
+            let teamShareId = data.shareId || 'unknown';
+            
+            console.log(`📋 Team-Approval ${approvalDoc.id}: ShareID = ${teamShareId}`);
             
             return {
               id: approvalDoc.id,
@@ -371,7 +361,7 @@ export const teamApprovalService = {
               
               // Team-Approval spezifisch
               type: 'team_approval',
-              shareId: teamShareId,
+              shareId: teamShareId, // Echte Team-Approval ShareID
               priority: 'normal',
               estimatedDuration: 15,
               
@@ -429,7 +419,7 @@ export const teamApprovalService = {
               },
               
               type: 'team_approval',
-              shareId: data.campaignId, // Fallback: Use campaignId as shareId
+              shareId: data.shareId || 'unknown', // 🔧 FIX: Verwende echte Team-Approval ShareID
               priority: 'normal',
               estimatedDuration: 15,
               sentAt: data.notifiedAt,
