@@ -593,32 +593,48 @@ class PDFVersionsService {
       
       if (result.needsClientUpload && result.pdfBase64) {
         console.log('📤 Client-Side Upload wird durchgeführt...');
+        console.log('🔍 Base64 String Info:', {
+          hasBase64: !!result.pdfBase64,
+          length: result.pdfBase64.length,
+          prefix: result.pdfBase64.substring(0, 50),
+          isValidBase64: /^[A-Za-z0-9+/]*={0,2}$/.test(result.pdfBase64)
+        });
         
-        // Konvertiere Base64 zu Blob
-        const byteCharacters = atob(result.pdfBase64);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        try {
+          // Konvertiere Base64 zu Blob (mit Fehlerbehandlung)
+          const cleanBase64 = result.pdfBase64.replace(/[^A-Za-z0-9+/=]/g, '');
+          console.log('🧹 Cleaned Base64:', cleanBase64.length, 'chars');
+          
+          const byteCharacters = atob(cleanBase64);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const pdfBlob = new Blob([byteArray], { type: 'application/pdf' });
+          console.log('✅ Base64 zu Blob konvertiert:', pdfBlob.size, 'bytes');
+        
+          // Erstelle File object für Upload
+          const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
+          
+          // Upload via mediaService (Client-Side mit Auth)
+          console.log('☁️ Uploade PDF zu Firebase Storage (Client-Side)...');
+          const uploadedAsset = await mediaService.uploadMedia(
+            pdfFile,
+            organizationId,
+            undefined, // kein Ordner
+            undefined, // kein Progress-Callback
+            3, // Retry Count
+            { userId: 'pdf-system' } // Context
+          );
+          
+          finalPdfUrl = uploadedAsset.downloadUrl;
+          console.log('✅ Client-Side Upload erfolgreich!');
+          
+        } catch (base64Error) {
+          console.error('❌ Base64 Dekodierung fehlgeschlagen:', base64Error);
+          throw new Error(`Base64 Dekodierung fehlgeschlagen: ${base64Error.message}`);
         }
-        const byteArray = new Uint8Array(byteNumbers);
-        const pdfBlob = new Blob([byteArray], { type: 'application/pdf' });
-        
-        // Erstelle File object für Upload
-        const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
-        
-        // Upload via mediaService (Client-Side mit Auth)
-        console.log('☁️ Uploade PDF zu Firebase Storage (Client-Side)...');
-        const uploadedAsset = await mediaService.uploadMedia(
-          pdfFile,
-          organizationId,
-          undefined, // kein Ordner
-          undefined, // kein Progress-Callback
-          3, // Retry Count
-          { userId: 'pdf-system' } // Context
-        );
-        
-        finalPdfUrl = uploadedAsset.downloadUrl;
-        console.log('✅ Client-Side Upload erfolgreich!');
       }
       
       console.log('📄 === PUPPETEER PDF-GENERATION BEENDET ===\n');

@@ -352,7 +352,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<PDFGenera
     
     debugLog('✅ PDF bereit für Client-Upload', { 
       fileName: fileName,
-      sizeKB: Math.round(pdfBuffer.length / 1024)
+      sizeKB: Math.round(pdfBuffer.length / 1024),
+      base64Length: base64Pdf.length,
+      base64Prefix: base64Pdf.substring(0, 50),
+      isValidBase64: /^[A-Za-z0-9+/]*={0,2}$/.test(base64Pdf)
     });
 
     // Erweiterte Metadaten berechnen
