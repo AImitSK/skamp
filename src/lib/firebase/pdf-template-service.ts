@@ -29,7 +29,8 @@ import {
   SYSTEM_TEMPLATE_IDS,
   TemplatePerformanceMetrics
 } from '@/types/pdf-template';
-import { templateRenderer, TemplateData } from '@/lib/pdf/template-renderer';
+// Dynamic import für Server-seitige Module
+import type { TemplateData } from '@/lib/pdf/template-renderer';
 import { templateCache, TemplateCache } from '@/lib/pdf/template-cache';
 import Mustache from 'mustache';
 
@@ -304,6 +305,20 @@ class PDFTemplateService {
         name: metadata.name || 'Custom Template',
         description: metadata.description || 'Benutzerdefiniertes Template',
         version: '1.0.0',
+        layout: { 
+          type: 'custom',
+          headerHeight: 60,
+          footerHeight: 40,
+          margins: { top: 20, bottom: 20, left: 20, right: 20 },
+          columns: 1,
+          pageFormat: 'A4'
+        },
+        typography: {
+          fontFamily: 'Arial, sans-serif',
+          fontSize: { body: 12, heading: 18, subheading: 14 },
+          lineHeight: { body: 1.6, heading: 1.4, subheading: 1.5 },
+          fontWeight: { body: 'normal', heading: 'bold', subheading: 'semi-bold' }
+        },
         ...templateData,
         isSystem: false,
         isActive: true,
@@ -334,8 +349,8 @@ class PDFTemplateService {
         templateDocument
       );
       
-      // Cache Template
-      this.templateCache.set(templateId, customTemplate);
+      // Cache Template falls verfügbar
+      // TODO: Template Cache implementieren
       
       console.log(`✅ Custom Template ${templateId} erfolgreich hochgeladen`);
       return customTemplate;
@@ -569,10 +584,10 @@ class PDFTemplateService {
     // Suche und lösche alle Cache-Einträge die mit diesem Template zusammenhängen
     const cacheStats = this.cache.analyze();
     const templateEntries = cacheStats.templateCache.entries.filter(
-      entry => entry.key === templateId || entry.key.includes(templateId)
+      (entry: any) => entry.key === templateId || entry.key.includes(templateId)
     );
     
-    templateEntries.forEach(entry => {
+    templateEntries.forEach((entry: any) => {
       // Templates, HTML und CSS für dieses Template löschen
       this.cache.clearCache('template');
       this.cache.clearCache('html');
@@ -714,6 +729,8 @@ class PDFTemplateService {
     }
     
     // Basis-HTML vom Template-Renderer
+    // Dynamic import für Server-seitige Komponenten
+    const { templateRenderer } = await import('@/lib/pdf/template-renderer');
     const baseHtml = await templateRenderer.renderTemplate(templateData);
     
     // Injiziere Custom CSS in HTML

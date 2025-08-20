@@ -14,7 +14,7 @@ import {
   TrashIcon,
   PlusIcon
 } from '@heroicons/react/24/outline';
-import { pdfTemplateService } from '@/lib/firebase/pdf-template-service';
+// pdfTemplateService wird über API Routes verwendet
 import type { PDFTemplate } from '@/types/pdf-template';
 
 export default function TemplatesPage() {
@@ -32,13 +32,21 @@ export default function TemplatesPage() {
   const loadTemplates = async () => {
     try {
       setLoading(true);
-      // System Templates laden (falls verfügbar)
-      const systemTemplates = await pdfTemplateService.getSystemTemplates();
       
-      // Organization Templates laden (falls verfügbar) 
-      const orgTemplates = await pdfTemplateService.getOrganizationTemplates?.(currentOrganization!.id) || [];
-      
-      setTemplates([...systemTemplates, ...orgTemplates]);
+      // Verwende API Route für Server-seitige Template-Loading
+      const response = await fetch('/api/templates', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setTemplates(data.templates || []);
+      } else {
+        throw new Error('Failed to load templates');
+      }
     } catch (error) {
       console.error('Error loading templates:', error);
       // Fallback: Default Templates
@@ -85,8 +93,23 @@ export default function TemplatesPage() {
 
   const handleSetDefault = async (template: PDFTemplate) => {
     try {
-      await pdfTemplateService.setDefaultTemplate?.(currentOrganization!.id, template.id);
-      await loadTemplates();
+      // Verwende API Route für Server-seitige Operations
+      const response = await fetch('/api/templates/set-default', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          organizationId: currentOrganization!.id,
+          templateId: template.id
+        }),
+      });
+
+      if (response.ok) {
+        await loadTemplates();
+      } else {
+        throw new Error('Failed to set default template');
+      }
     } catch (error) {
       console.error('Error setting default template:', error);
     }
