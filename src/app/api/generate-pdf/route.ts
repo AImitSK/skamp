@@ -341,7 +341,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<PDFGenera
     });
     
     // PDF als Base64 für sicheren Transport zurückgeben
-    const base64Pdf = pdfBuffer.toString('base64');
+    // Stelle sicher, dass pdfBuffer ein Buffer ist
+    const bufferToConvert = Buffer.isBuffer(pdfBuffer) ? pdfBuffer : Buffer.from(pdfBuffer);
+    const base64Pdf = bufferToConvert.toString('base64');
     
     const uploadResult = {
       pdfBase64: base64Pdf,
@@ -355,6 +357,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<PDFGenera
       sizeKB: Math.round(pdfBuffer.length / 1024),
       base64Length: base64Pdf.length,
       base64Prefix: base64Pdf.substring(0, 50),
+      base64Type: typeof base64Pdf,
+      bufferIsBuffer: Buffer.isBuffer(bufferToConvert),
       isValidBase64: /^[A-Za-z0-9+/]*={0,2}$/.test(base64Pdf)
     });
 
@@ -407,6 +411,14 @@ export async function POST(request: NextRequest): Promise<NextResponse<PDFGenera
       cssInjectionTime
     });
     console.log('📄 === PDF-Generation API Route beendet ===\n');
+
+    // Final validation before sending response
+    debugLog('🔍 Final Response Validation', {
+      responseHasPdfBase64: !!response.pdfBase64,
+      pdfBase64Type: typeof response.pdfBase64,
+      pdfBase64IsString: typeof response.pdfBase64 === 'string',
+      pdfBase64Sample: typeof response.pdfBase64 === 'string' ? response.pdfBase64.substring(0, 30) : 'NOT_STRING'
+    });
 
     return NextResponse.json(response);
 
