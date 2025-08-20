@@ -12,6 +12,7 @@ import {
   Timestamp,
   writeBatch
 } from 'firebase/firestore';
+import { nanoid } from 'nanoid';
 import { db } from './config';
 import { 
   TeamApproval, 
@@ -42,16 +43,21 @@ export const teamApprovalService = {
         const approvalRef = doc(collection(db, 'team_approvals'));
         approvalIds.push(approvalRef.id);
 
+        // 🔧 FIX: Generiere ShareID für Team-Approval Link
+        const shareId = nanoid(20); // Unique ShareID für dieses Team-Approval
+
         const teamApproval: Omit<TeamApproval, 'id'> = {
           userId: approver.userId!,
           workflowId,
           campaignId,
           organizationId,
+          shareId: shareId, // 🆕 ShareID hinzufügen!
           status: 'pending',
           notifiedAt: now,
           createdAt: now
         };
 
+        console.log(`✅ Team-Approval erstellt für User ${approver.userId} mit ShareID: ${shareId}`);
         batch.set(approvalRef, teamApproval);
       }
 

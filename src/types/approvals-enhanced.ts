@@ -102,6 +102,7 @@ export interface TeamApproval {
   workflowId: string;
   campaignId: string;
   organizationId: string;
+  shareId: string; // 🆕 ShareID für Team-Approval Link
   status: 'pending' | 'approved' | 'rejected';
   decision?: {
     choice: 'approved' | 'rejected';
