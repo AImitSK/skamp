@@ -576,6 +576,15 @@ class PDFVersionsService {
 
       const result = await response.json();
       
+      console.log('🔍 Client received result:', {
+        success: result.success,
+        hasPdfBase64: !!result.pdfBase64,
+        pdfBase64Type: typeof result.pdfBase64,
+        pdfBase64Length: result.pdfBase64?.length,
+        pdfBase64Prefix: typeof result.pdfBase64 === 'string' ? result.pdfBase64.substring(0, 50) : 'NOT_STRING',
+        needsClientUpload: result.needsClientUpload
+      });
+      
       if (!result.success) {
         throw new Error(`PDF-Generation fehlgeschlagen: ${result.error}`);
       }

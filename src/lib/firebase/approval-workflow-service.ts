@@ -71,20 +71,23 @@ export const approvalWorkflowService = {
         teamSettings: {
           required: settings.teamApprovalRequired,
           approvers: settings.teamApprovers,
-          message: settings.teamApprovalMessage,
+          message: settings.teamApprovalMessage || null, // Firestore: undefined -> null
           allApproved: false
         },
         
         customerSettings: {
           required: settings.customerApprovalRequired,
-          contact: settings.customerContact,
-          message: settings.customerApprovalMessage,
+          contact: settings.customerContact || null, // Firestore: undefined -> null
+          message: settings.customerApprovalMessage || null, // Firestore: undefined -> null
           shareId,
           status: 'pending'
         }
       };
 
-      const workflowRef = await addDoc(collection(db, 'approval_workflows'), workflow);
+      // Bereinige alle undefined Werte vor Firestore Upload
+      const cleanWorkflow = this.removeUndefinedValues(workflow);
+      
+      const workflowRef = await addDoc(collection(db, 'approval_workflows'), cleanWorkflow);
       const workflowId = workflowRef.id;
 
       // Update Campaign mit Workflow-ID und Enhanced Approval Data
@@ -561,5 +564,26 @@ export const approvalWorkflowService = {
       console.error('❌ Fehler bei PDF→Workflow Callback:', error);
       // Nicht weiterwerfen - Callback-Fehler sollen PDF-Operations nicht blockieren
     }
+  },
+
+  /**
+   * Helper: Entfernt alle undefined Werte aus einem Objekt (Firestore-kompatibel)
+   */
+  removeUndefinedValues(obj: any): any {
+    if (obj === null || typeof obj !== 'object') {
+      return obj;
+    }
+
+    if (Array.isArray(obj)) {
+      return obj.map(item => this.removeUndefinedValues(item));
+    }
+
+    const result: any = {};
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key) && obj[key] !== undefined) {
+        result[key] = this.removeUndefinedValues(obj[key]);
+      }
+    }
+    return result;
   }
 };
