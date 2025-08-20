@@ -7,6 +7,7 @@ import { prService } from "@/lib/firebase/pr-service";
 import { approvalService } from "@/lib/firebase/approval-service";
 import { mediaService } from "@/lib/firebase/media-service";
 import { brandingService } from "@/lib/firebase/branding-service";
+import { pdfVersionsService, PDFVersion } from "@/lib/firebase/pdf-versions-service";
 import { PRCampaign, CampaignAssetAttachment } from "@/types/pr";
 import { ApprovalEnhanced, ApprovalStatus, APPROVAL_STATUS_CONFIG } from "@/types/approvals";
 import { MediaAsset, MediaFolder } from "@/types/media";
@@ -223,6 +224,222 @@ function MediaGallery({
   );
 }
 
+// PDF-Version-Overview Component
+function PDFVersionOverview({ 
+  version, 
+  campaignTitle,
+  onHistoryToggle 
+}: { 
+  version: PDFVersion;
+  campaignTitle: string;
+  onHistoryToggle: () => void;
+}) {
+  const statusConfig = {
+    draft: { color: 'zinc', label: 'Entwurf', icon: DocumentIcon },
+    pending_customer: { color: 'yellow', label: 'Zur Freigabe', icon: ClockIcon },
+    approved: { color: 'green', label: 'Freigegeben', icon: CheckCircleIcon },
+    rejected: { color: 'red', label: 'Abgelehnt', icon: XCircleIcon }
+  };
+  
+  const config = statusConfig[version.status] || statusConfig.draft;
+  
+  const formatDate = (timestamp: any) => {
+    if (!timestamp || !timestamp.toDate) return '';
+    const date = timestamp.toDate();
+    return date.toLocaleDateString('de-DE', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+  
+  return (
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+      <div className="border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <DocumentTextIcon className="h-5 w-5 text-gray-400" />
+            PDF-Version {version.version}
+          </h2>
+          <Button
+            plain
+            onClick={onHistoryToggle}
+            className="text-sm"
+          >
+            Versionshistorie anzeigen
+          </Button>
+        </div>
+      </div>
+      
+      <div className="p-6">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <config.icon className="h-8 w-8 text-gray-500" />
+            <div>
+              <h3 className="font-medium text-gray-900">{campaignTitle}</h3>
+              <div className="text-sm text-gray-600 mt-1">
+                Erstellt am {formatDate(version.createdAt)}
+              </div>
+              {version.metadata && (
+                <div className="text-xs text-gray-500 mt-1">
+                  {version.metadata.wordCount} Wörter • {version.metadata.pageCount} Seiten • {formatFileSize(version.fileSize)}
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <Badge color={config.color as any} className="text-sm">
+              {config.label}
+            </Badge>
+            <a
+              href={version.downloadUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex"
+            >
+              <Button className="bg-[#005fab] hover:bg-[#004a8c] text-white">
+                <DocumentIcon className="h-4 w-4 mr-2" />
+                PDF öffnen
+              </Button>
+            </a>
+          </div>
+        </div>
+        
+        {/* Content Preview */}
+        <div className="border-t pt-4">
+          <h4 className="font-medium text-gray-900 mb-2">Inhalt (Preview)</h4>
+          <div className="text-sm text-gray-600 line-clamp-3">
+            {version.contentSnapshot.title}
+          </div>
+        </div>
+        
+        {/* PDF-Approval Integration */}
+        {version.customerApproval && (
+          <div className="mt-4 pt-4 border-t">
+            <h4 className="font-medium text-gray-900 mb-2">Freigabe-Information</h4>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <ClockIcon className="h-4 w-4" />
+              {version.customerApproval.requestedAt && 
+                `Angefordert am ${formatDate(version.customerApproval.requestedAt)}`
+              }
+              {version.customerApproval.approvedAt && 
+                ` • Freigegeben am ${formatDate(version.customerApproval.approvedAt)}`
+              }
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// PDF-History Modal
+function PDFHistoryModal({ 
+  versions, 
+  onClose 
+}: { 
+  versions: PDFVersion[]; 
+  onClose: () => void;
+}) {
+  const getPDFStatusBadgeColor = (status: string): 'green' | 'yellow' | 'red' | 'blue' | 'zinc' => {
+    switch (status) {
+      case 'approved': return 'green';
+      case 'pending_customer': return 'yellow';
+      case 'rejected': return 'red';
+      case 'draft': return 'blue';
+      default: return 'zinc';
+    }
+  };
+
+  const getPDFStatusLabel = (status: string): string => {
+    switch (status) {
+      case 'approved': return 'Freigegeben';
+      case 'pending_customer': return 'Zur Freigabe';
+      case 'rejected': return 'Abgelehnt';
+      case 'draft': return 'Entwurf';
+      default: return status;
+    }
+  };
+
+  const formatDate = (timestamp: any) => {
+    if (!timestamp || !timestamp.toDate) return '';
+    const date = timestamp.toDate();
+    return date.toLocaleDateString('de-DE', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+  
+  return (
+    <Dialog open={true} onClose={onClose} size="4xl">
+      <div className="p-6">
+        <DialogTitle>PDF-Versionshistorie</DialogTitle>
+        <DialogBody className="mt-4">
+          <div className="space-y-4 max-h-96 overflow-y-auto">
+            {versions.map((version) => (
+              <div key={version.id} className="border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <DocumentIcon className="h-5 w-5 text-gray-500" />
+                    <div>
+                      <span className="font-medium">Version {version.version}</span>
+                      <div className="text-sm text-gray-600">
+                        {formatDate(version.createdAt)}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <Badge color={getPDFStatusBadgeColor(version.status)} className="text-xs">
+                      {getPDFStatusLabel(version.status)}
+                    </Badge>
+                    <a
+                      href={version.downloadUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Button size="sm" plain>
+                        <DocumentIcon className="h-4 w-4 mr-1" />
+                        Öffnen
+                      </Button>
+                    </a>
+                  </div>
+                </div>
+                
+                <div className="text-sm text-gray-600">
+                  <div className="font-medium mb-1">{version.contentSnapshot.title}</div>
+                  {version.metadata && (
+                    <div className="text-xs">
+                      {version.metadata.wordCount} Wörter • {version.metadata.pageCount} Seiten
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </DialogBody>
+        <DialogActions>
+          <Button plain onClick={onClose}>Schließen</Button>
+        </DialogActions>
+      </div>
+    </Dialog>
+  );
+}
+
 // Recipient Status Component
 function RecipientStatus({ 
   recipient,
@@ -317,6 +534,11 @@ export default function ApprovalPage() {
   const [submitting, setSubmitting] = useState(false);
   const [actionCompleted, setActionCompleted] = useState(false);
   const [currentUserEmail, setCurrentUserEmail] = useState<string>('');
+  
+  // NEU: PDF-State-Variablen
+  const [pdfVersions, setPdfVersions] = useState<PDFVersion[]>([]);
+  const [currentPdfVersion, setCurrentPdfVersion] = useState<PDFVersion | null>(null);
+  const [showPdfHistory, setShowPdfHistory] = useState(false);
 
   useEffect(() => {
     if (shareId) {
@@ -334,6 +556,17 @@ export default function ApprovalPage() {
       
       if (enhancedApproval) {
         setApproval(enhancedApproval);
+        
+        // NEU: PDF-Versionen laden
+        try {
+          const pdfVersions = await pdfVersionsService.getVersionHistory(enhancedApproval.campaignId);
+          const currentPdfVersion = await pdfVersionsService.getCurrentVersion(enhancedApproval.campaignId);
+          
+          setPdfVersions(pdfVersions);
+          setCurrentPdfVersion(currentPdfVersion);
+        } catch (pdfError) {
+          console.error('Fehler beim Laden der PDF-Versionen:', pdfError);
+        }
         
         // Markiere als angesehen
         await approvalService.markAsViewed(shareId, currentUserEmail);
@@ -616,6 +849,15 @@ export default function ApprovalPage() {
             </div>
           )}
 
+          {/* PDF Version Display */}
+          {currentPdfVersion && (
+            <PDFVersionOverview
+              version={currentPdfVersion}
+              campaignTitle={title}
+              onHistoryToggle={() => setShowPdfHistory(true)}
+            />
+          )}
+
           {/* Recipients Status (wenn Enhanced Approval) */}
           {approval && approval.recipients.length > 1 && (
             <div className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
@@ -794,6 +1036,14 @@ export default function ApprovalPage() {
             </div>
           )}
 
+          {/* PDF History Modal */}
+          {showPdfHistory && (
+            <PDFHistoryModal
+              versions={pdfVersions}
+              onClose={() => setShowPdfHistory(false)}
+            />
+          )}
+
           {/* Info Box */}
           <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex">
@@ -803,6 +1053,7 @@ export default function ApprovalPage() {
                 <p>
                   Nach Ihrer Freigabe kann die Pressemitteilung {attachedAssets && attachedAssets.length > 0 ? 'zusammen mit den Medien ' : ''}
                   von der Agentur versendet werden. Bei Änderungswünschen wird die Agentur benachrichtigt und die Mitteilung entsprechend angepasst.
+                  {currentPdfVersion && ' Das zugehörige PDF wird ebenfalls nach der Freigabe finalisiert.'}
                 </p>
               </div>
             </div>

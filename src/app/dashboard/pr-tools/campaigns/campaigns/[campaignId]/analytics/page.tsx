@@ -21,15 +21,9 @@ import {
   ArrowPathIcon,
   ArrowDownTrayIcon,
   ChartBarIcon,
-  UserIcon,
-  GlobeAltIcon,
-  ClockIcon,
-  DevicePhoneMobileIcon,
-  ComputerDesktopIcon,
   QuestionMarkCircleIcon,
-  MapPinIcon,
   BuildingOfficeIcon
-} from "@heroicons/react/20/solid";
+} from "@heroicons/react/24/outline";
 import { prService } from "@/lib/firebase/pr-service";
 import { companiesEnhancedService } from "@/lib/firebase/crm-service-enhanced";
 import { PRCampaign } from "@/types/pr";
@@ -42,7 +36,9 @@ import { LOADING_SPINNER_SIZE, LOADING_SPINNER_BORDER, ICON_SIZES } from "@/cons
 interface EmailActivity {
   email: string;
   type: 'sent' | 'delivered' | 'opened' | 'clicked' | 'bounced' | 'failed';
-  timestamp?: any;
+  timestamp?: {
+    toDate: () => Date;
+  };
   metadata?: {
     userAgent?: string;
     location?: string;
@@ -319,7 +315,7 @@ export default function CampaignAnalyticsPage() {
         try {
           const companyData = await companiesEnhancedService.getById(organizationId, campaignData.clientId);
           setCompany(companyData);
-        } catch (err) {
+        } catch {
           // Error loading company
         }
       }
@@ -331,7 +327,7 @@ export default function CampaignAnalyticsPage() {
         campaignId: campaignId,
         status: 'sent',
         sentAt: new Date() as any,
-        userId: user!.uid,
+        userId: user.uid,
         recipientEmail: 'example@email.com',
         recipientName: 'Example Recipient'
       }];
@@ -407,10 +403,14 @@ export default function CampaignAnalyticsPage() {
       ] : [];
       
       // Aktivitäten nach Zeitstempel sortieren (neueste zuerst)
-      mockActivities.sort((a, b) => (b.timestamp?.toDate() || 0) - (a.timestamp?.toDate() || 0));
+      mockActivities.sort((a, b) => {
+        const aTime = a.timestamp?.toDate()?.getTime() || 0;
+        const bTime = b.timestamp?.toDate()?.getTime() || 0;
+        return bTime - aTime;
+      });
 
       setActivities(mockActivities);
-    } catch (error) {
+    } catch {
       setError('Fehler beim Laden der Analytics');
     } finally {
       setLoading(false);

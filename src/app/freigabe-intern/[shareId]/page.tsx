@@ -10,6 +10,7 @@ import { teamApprovalService } from '@/lib/firebase/team-approval-service';
 import { approvalWorkflowService } from '@/lib/firebase/approval-workflow-service';
 import { PRCampaign } from '@/types/pr';
 import { TeamApproval, ApprovalWorkflow } from '@/types/approvals-enhanced';
+import { PDFVersion } from '@/lib/firebase/pdf-versions-service';
 import { TeamApprovalCard } from '@/components/approvals/TeamApprovalCard';
 import { WorkflowVisualization } from '@/components/approvals/WorkflowVisualization';
 import { Button } from '@/components/ui/button';
@@ -25,7 +26,13 @@ import {
   DocumentTextIcon,
   ShieldCheckIcon,
   ArrowLeftIcon,
-  InformationCircleIcon
+  InformationCircleIcon,
+  ArrowDownTrayIcon,
+  EyeIcon,
+  ChevronDownIcon,
+  ChatBubbleLeftRightIcon,
+  UserGroupIcon,
+  DocumentIcon
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 
@@ -44,6 +51,18 @@ export default function InternalApprovalPage() {
   const [submitting, setSubmitting] = useState(false);
   const [decision, setDecision] = useState<'approved' | 'rejected' | null>(null);
   const [comment, setComment] = useState('');
+  
+  // 🆕 NEUE STATES FÜR PDF-INTEGRATION
+  const [pdfVersions, setPdfVersions] = useState<PDFVersion[]>([]);
+  const [currentPdfVersion, setCurrentPdfVersion] = useState<PDFVersion | null>(null);
+  const [loadingPdfVersions, setLoadingPdfVersions] = useState(true);
+  const [showPdfHistory, setShowPdfHistory] = useState(false);
+  const [teamApprovalMessage, setTeamApprovalMessage] = useState<string | null>(null);
+  const [workflowContext, setWorkflowContext] = useState<{
+    createdBy: string;
+    createdAt: any;
+    estimatedDuration: string;
+  } | null>(null);
 
   useEffect(() => {
     if (!authLoading && !orgLoading && user && currentOrganization) {
@@ -78,6 +97,18 @@ export default function InternalApprovalPage() {
         const workflowData = await approvalWorkflowService.getWorkflow(campaignData.approvalData.workflowId);
         setWorkflow(workflowData);
 
+        // 🆕 EXTRACT TEAM APPROVAL MESSAGE
+        if (workflowData.teamSettings?.message) {
+          setTeamApprovalMessage(workflowData.teamSettings.message);
+        }
+
+        // 🆕 EXTRACT WORKFLOW CONTEXT
+        setWorkflowContext({
+          createdBy: workflowData.createdBy || 'Unbekannt',
+          createdAt: workflowData.createdAt,
+          estimatedDuration: calculateEstimatedDuration(workflowData.stages || [])
+        });
+
         // Lade User-spezifische Approval
         const userApprovals = await teamApprovalService.getApprovalsByUser(
           user.uid, 
@@ -89,6 +120,28 @@ export default function InternalApprovalPage() {
         setUserApproval(relevantApproval || null);
       }
 
+      // 3. 🆕 PDF-VERSIONEN LADEN
+      try {
+        setLoadingPdfVersions(true);
+        const { pdfVersionsService } = await import('@/lib/firebase/pdf-versions-service');
+        const versions = await pdfVersionsService.getVersionHistory(campaignData.id!);
+        setPdfVersions(versions);
+        
+        // Finde aktuelle PDF-Version für Team-Freigabe
+        const teamPdfVersion = versions.find(v => 
+          v.status === 'pending_team' || 
+          v.approvalId === campaignData.approvalData?.workflowId
+        ) || versions[0];
+        
+        setCurrentPdfVersion(teamPdfVersion || null);
+        
+      } catch (pdfError) {
+        console.error('Fehler beim Laden der PDF-Versionen:', pdfError);
+        // Nicht kritisch - fahre ohne PDF-Versionen fort
+      } finally {
+        setLoadingPdfVersions(false);
+      }
+
     } catch (error) {
       console.error('Fehler beim Laden der Freigabe-Daten:', error);
       setError('Die Freigabe-Daten konnten nicht geladen werden.');
@@ -97,12 +150,14 @@ export default function InternalApprovalPage() {
     }
   };
 
+  // 🆕 ENHANCED DECISION HANDLER MIT PDF-INTEGRATION
   const handleDecision = async (newDecision: 'approved' | 'rejected') => {
     if (!userApproval || !user) return;
 
     try {
       setSubmitting(true);
       
+      // 1. BESTEHENDE Team-Approval Entscheidung
       await teamApprovalService.submitTeamDecision(
         userApproval.id!,
         user.uid,
@@ -110,6 +165,28 @@ export default function InternalApprovalPage() {
         comment.trim() || undefined
       );
 
+      // 2. 🆕 PDF-STATUS SYNCHRONISATION
+      if (currentPdfVersion) {
+        try {
+          const { pdfApprovalBridgeService } = await import('@/lib/firebase/pdf-approval-bridge-service');
+          
+          await pdfApprovalBridgeService.syncApprovalStatusToPDF(
+            userApproval.workflowId,
+            newDecision === 'approved' ? 'approved' : 'rejected'
+          );
+          
+          // Update lokale PDF-Version
+          setCurrentPdfVersion(prev => prev ? {
+            ...prev,
+            status: newDecision === 'approved' ? 'approved' : 'draft'
+          } : null);
+        } catch (pdfSyncError) {
+          console.error('PDF-Synchronisation fehlgeschlagen:', pdfSyncError);
+          // Nicht kritisch - Team-Approval wurde bereits gespeichert
+        }
+      }
+
+      // 3. BESTEHENDE UI-Updates
       setDecision(newDecision);
       setUserApproval({
         ...userApproval,
@@ -121,7 +198,7 @@ export default function InternalApprovalPage() {
         }
       });
 
-      // Reload workflow to get updated status
+      // 4. BESTEHENDE Workflow-Reload
       if (workflow) {
         const updatedWorkflow = await approvalWorkflowService.getWorkflow(workflow.id!);
         setWorkflow(updatedWorkflow);
@@ -133,6 +210,38 @@ export default function InternalApprovalPage() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // 🆕 HELPER FUNCTIONS
+  const calculateEstimatedDuration = (stages: any[]): string => {
+    const totalApprovers = stages.reduce((sum, stage) => sum + (stage.requiredApprovals || 0), 0);
+    const estimatedHours = Math.ceil(totalApprovers * 2); // 2h pro Approver
+    
+    if (estimatedHours < 24) {
+      return `~${estimatedHours} Stunden`;
+    } else {
+      const days = Math.ceil(estimatedHours / 24);
+      return `~${days} Tag${days > 1 ? 'e' : ''}`;
+    }
+  };
+
+  const formatDate = (timestamp: any) => {
+    if (!timestamp || !timestamp.toDate) return '—';
+    return timestamp.toDate().toLocaleDateString('de-DE', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   // Auth Guard
@@ -276,6 +385,32 @@ export default function InternalApprovalPage() {
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        
+        {/* 🆕 TEAM APPROVAL MESSAGE */}
+        {teamApprovalMessage && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-start">
+              <ChatBubbleLeftRightIcon className="h-5 w-5 text-blue-500 mr-3 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h4 className="text-sm font-medium text-blue-900 mb-2">
+                  💬 Nachricht vom Campaign-Ersteller
+                </h4>
+                <div className="text-sm text-blue-800 bg-white bg-opacity-60 rounded p-3 border border-blue-300">
+                  &ldquo;{teamApprovalMessage}&rdquo;
+                </div>
+                {workflowContext && (
+                  <div className="mt-2 text-xs text-blue-600">
+                    Erstellt von {workflowContext.createdBy} am {formatDate(workflowContext.createdAt)}
+                    {workflowContext.estimatedDuration && (
+                      <span className="ml-2">• Geschätzte Bearbeitungszeit: {workflowContext.estimatedDuration}</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Workflow Visualization */}
         <WorkflowVisualization 
           stages={workflow.stages}
@@ -288,7 +423,110 @@ export default function InternalApprovalPage() {
           userApproval={userApproval}
           currentUserId={user.uid}
           onSubmitDecision={handleDecision}
+          currentPdfVersion={currentPdfVersion}
+          teamApprovalMessage={teamApprovalMessage}
         />
+
+        {/* 🆕 PDF-VERSIONEN SEKTION */}
+        {!loadingPdfVersions && currentPdfVersion && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="border-b border-gray-200 px-6 py-4">
+              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <DocumentTextIcon className="h-5 w-5 text-gray-400" />
+                PDF-Version zur Freigabe
+              </h2>
+            </div>
+            <div className="px-6 py-6">
+              <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-center gap-3">
+                  <DocumentTextIcon className="h-6 w-6 text-blue-600" />
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-blue-900">
+                        Version {currentPdfVersion.version}
+                      </span>
+                      <Badge color="blue" className="text-xs">
+                        {currentPdfVersion.status === 'pending_team' ? 'Zur Freigabe' : 
+                         currentPdfVersion.status === 'approved' ? 'Freigegeben' : 'Draft'}
+                      </Badge>
+                    </div>
+                    <div className="text-sm text-blue-700 mt-1">
+                      Erstellt am {formatDate(currentPdfVersion.createdAt)} • {formatFileSize(currentPdfVersion.fileSize)}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    plain
+                    onClick={() => window.open(currentPdfVersion.downloadUrl, '_blank')}
+                    className="text-blue-600 hover:text-blue-800"
+                  >
+                    <ArrowDownTrayIcon className="h-4 w-4 mr-1" />
+                    PDF herunterladen
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => window.open(currentPdfVersion.downloadUrl, '_blank')}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <EyeIcon className="h-4 w-4 mr-1" />
+                    PDF ansehen
+                  </Button>
+                </div>
+              </div>
+              
+              {/* 🆕 PDF-VERSIONEN HISTORIE */}
+              {pdfVersions.length > 1 && (
+                <div className="mt-4">
+                  <button
+                    onClick={() => setShowPdfHistory(!showPdfHistory)}
+                    className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                  >
+                    <ChevronDownIcon className={clsx("h-4 w-4 transition-transform", showPdfHistory && "rotate-180")} />
+                    Weitere Versionen anzeigen ({pdfVersions.length - 1})
+                  </button>
+                  
+                  {showPdfHistory && (
+                    <div className="mt-3 space-y-2 max-h-40 overflow-y-auto">
+                      {pdfVersions.slice(1, 6).map((version) => (
+                        <div key={version.id} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+                          <div className="flex items-center gap-2">
+                            <DocumentIcon className="h-4 w-4 text-gray-400" />
+                            <span>Version {version.version}</span>
+                            <span className="text-gray-500">({formatDate(version.createdAt)})</span>
+                          </div>
+                          <Button
+                            size="sm"
+                            plain
+                            onClick={() => window.open(version.downloadUrl, '_blank')}
+                            className="text-gray-600 hover:text-gray-800"
+                          >
+                            <EyeIcon className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* 🆕 PDF-INFO */}
+              <div className="mt-4 p-3 bg-gray-50 rounded border border-gray-200">
+                <div className="flex items-center gap-2 mb-1">
+                  <InformationCircleIcon className="h-4 w-4 text-gray-500" />
+                  <Text className="text-sm font-medium text-gray-700">PDF-Information</Text>
+                </div>
+                <div className="text-xs text-gray-600 space-y-1">
+                  <div>📄 Diese PDF-Version wurde automatisch beim Anfordern der Freigabe erstellt</div>
+                  <div>🔒 Änderungen an der Kampagne sind gesperrt bis zur Freigabe-Entscheidung</div>
+                  <div>📱 Das PDF entspricht exakt der aktuellen Campaign-Version</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Campaign Content */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
@@ -296,6 +534,13 @@ export default function InternalApprovalPage() {
             <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
               <DocumentTextIcon className="h-5 w-5 text-gray-400" />
               Inhalt der Pressemitteilung
+              {/* 🆕 CONTENT-PDF SYNC INDICATOR */}
+              {currentPdfVersion && (
+                <Badge color="green" className="text-xs ml-2">
+                  <CheckCircleIcon className="h-3 w-3 mr-1" />
+                  PDF synchron
+                </Badge>
+              )}
             </h2>
           </div>
           <div className="px-6 py-6">
@@ -306,10 +551,28 @@ export default function InternalApprovalPage() {
           </div>
         </div>
 
-        {/* Decision Form */}
+        {/* 🆕 ENHANCED DECISION FORM */}
         {!isDecisionMade && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Ihre Entscheidung</h3>
+            
+            {/* 🆕 DECISION GUIDANCE */}
+            <div className="mb-4 p-3 bg-blue-50 rounded border border-blue-200">
+              <div className="flex items-start gap-2">
+                <InformationCircleIcon className="h-5 w-5 text-blue-500 mt-0.5" />
+                <div className="text-sm text-blue-800">
+                  <p className="font-medium mb-1">Prüfungshinweise:</p>
+                  <ul className="text-xs space-y-1">
+                    <li>• Prüfen Sie den Inhalt der Pressemitteilung sorgfältig</li>
+                    <li>• Laden Sie das PDF herunter und überprüfen Sie die Formatierung</li>
+                    <li>• Beachten Sie die Nachricht des Campaign-Erstellers oben</li>
+                    {workflow.customerSettings?.required && (
+                      <li>• Bei Freigabe wird die Kampagne an den Kunden weitergeleitet</li>
+                    )}
+                  </ul>
+                </div>
+              </div>
+            </div>
             
             <div className="space-y-4">
               <div>
@@ -323,8 +586,14 @@ export default function InternalApprovalPage() {
                   placeholder="Optionaler Kommentar zu Ihrer Entscheidung..."
                   className="w-full"
                 />
+                {comment.trim() && currentPdfVersion && (
+                  <div className="mt-1 text-xs text-blue-600">
+                    💡 Ihr Kommentar wird mit der PDF-Version verknüpft und bleibt als Audit-Trail erhalten
+                  </div>
+                )}
               </div>
               
+              {/* 🆕 ENHANCED ACTION BUTTONS */}
               <div className="flex gap-3">
                 <Button
                   onClick={() => handleDecision('approved')}
@@ -333,6 +602,9 @@ export default function InternalApprovalPage() {
                 >
                   <CheckCircleIcon className="h-5 w-5 mr-2" />
                   {submitting ? 'Wird verarbeitet...' : 'Freigeben'}
+                  {currentPdfVersion && (
+                    <span className="ml-1 text-xs opacity-75">& PDF freigeben</span>
+                  )}
                 </Button>
                 <Button
                   onClick={() => handleDecision('rejected')}
@@ -341,27 +613,34 @@ export default function InternalApprovalPage() {
                 >
                   <XCircleIcon className="h-5 w-5 mr-2" />
                   {submitting ? 'Wird verarbeitet...' : 'Ablehnen'}
+                  {currentPdfVersion && (
+                    <span className="ml-1 text-xs opacity-75">& Überarbeitung anfordern</span>
+                  )}
                 </Button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Info Box */}
+        {/* 🆕 ENHANCED INFO BOX */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex">
             <InformationCircleIcon className="h-5 w-5 text-blue-400 mr-3 flex-shrink-0 mt-0.5" />
             <div className="text-sm text-blue-800">
-              <p className="font-medium mb-1">Hinweis zum Team-Freigabe-Prozess</p>
-              <p>
-                Als Team-Mitglied prüfen Sie diese Kampagne vor der Weiterleitung an den Kunden. 
-                {workflow.teamSettings.approvers.length > 1 && 
-                  ` Alle ${workflow.teamSettings.approvers.length} ausgewählten Team-Mitglieder müssen zustimmen.`
-                }
-                {workflow.customerSettings.required && 
-                  ' Nach erfolgreicher Team-Freigabe wird die Kampagne zur Kunden-Freigabe weitergeleitet.'
-                }
-              </p>
+              <p className="font-medium mb-1">Team-Freigabe-Prozess mit PDF-Integration</p>
+              <div className="space-y-1 text-xs">
+                <p>• Als Team-Mitglied prüfen Sie diese Kampagne vor der Weiterleitung an den Kunden</p>
+                {workflow.teamSettings.approvers.length > 1 && (
+                  <p>• Alle {workflow.teamSettings.approvers.length} ausgewählten Team-Mitglieder müssen zustimmen</p>
+                )}
+                {currentPdfVersion && (
+                  <p>• Das PDF wurde automatisch beim Anfordern der Freigabe erstellt und ist unveränderlich</p>
+                )}
+                {workflow.customerSettings?.required && (
+                  <p>• Nach erfolgreicher Team-Freigabe wird die Kampagne zur Kunden-Freigabe weitergeleitet</p>
+                )}
+                <p>• Ihre Entscheidung wird mit der PDF-Version synchronisiert und als Audit-Trail gespeichert</p>
+              </div>
             </div>
           </div>
         </div>

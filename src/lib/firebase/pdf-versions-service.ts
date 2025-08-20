@@ -19,6 +19,8 @@ import { db } from './client-init';
 import { nanoid } from 'nanoid';
 import { approvalService } from './approval-service';
 import { mediaService } from './media-service';
+// NEW: Import für Enhanced Edit-Lock System
+import { approvalWorkflowService } from './approval-workflow-service';
 
 // Vereinfachter PDF-Version Type
 export interface PDFVersion {
@@ -63,6 +65,24 @@ export interface PDFVersion {
   };
 }
 
+// 🆕 EDIT-LOCK TYPES (Enhanced System)
+export type EditLockReason = 
+  | 'pending_customer_approval'    // Kunde prüft
+  | 'pending_team_approval'        // Team prüft intern
+  | 'approved_final'              // Final freigegeben
+  | 'system_processing'           // System verarbeitet
+  | 'manual_lock';               // Manuell gesperrt
+
+export interface UnlockRequest {
+  id: string;
+  requestedBy: string;
+  requestedAt: Timestamp;
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected';
+  approvedBy?: string;
+  approvedAt?: Timestamp;
+}
+
 // Campaign Collection Erweiterung
 export interface CampaignWithPDF {
   // ... bestehende Felder
@@ -70,8 +90,18 @@ export interface CampaignWithPDF {
   // NEUE PDF-VERSIONIERUNG
   pdfVersions?: PDFVersion[];
   currentPdfVersion?: string; // ID der aktiven Version
-  editLocked?: boolean; // Edit-Status
-  editLockedReason?: string; // "pending_approval" | "approved"
+  
+  // 🆕 ENHANCED EDIT-LOCK SYSTEM
+  editLocked?: boolean;
+  editLockedReason?: EditLockReason;
+  lockedAt?: Timestamp;
+  unlockedAt?: Timestamp;
+  lockedBy?: {
+    userId: string;
+    displayName: string;
+    action: string; // z.B. "Freigabe angefordert"
+  };
+  unlockRequests?: UnlockRequest[];
 }
 
 class PDFVersionsService {
@@ -94,6 +124,10 @@ class PDFVersionsService {
       userId: string;
       status?: 'draft' | 'pending_customer';
       approvalId?: string;
+      displayName?: string;
+      workflowId?: string;
+      isApprovalPDF?: boolean;
+      approvalContext?: any;
     }
   ): Promise<string> {
     try {
@@ -106,11 +140,8 @@ class PDFVersionsService {
       const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
       const fileName = `${content.title.replace(/[^a-zA-Z0-9]/g, '_')}_v${newVersionNumber}_${dateStr}.pdf`;
 
-      // Bereite Content für PDF-Generation vor (Storage URLs zu öffentlichen URLs konvertieren)
-      const processedContent = await this.processContentForPDF(content);
-      
-      // Echte PDF-Generation mit html2pdf.js (wie in CampaignContentComposer)
-      const { pdfUrl, fileSize } = await this.generateRealPDF(processedContent, fileName, organizationId);
+      // Echte PDF-Generation über neue Puppeteer-API Route
+      const { pdfUrl, fileSize } = await this.generateRealPDF(content, fileName, organizationId);
 
       // Berechne Metadaten
       const wordCount = this.countWords(content.mainContent);
@@ -129,10 +160,10 @@ class PDFVersionsService {
         fileName,
         fileSize: fileSize,
         contentSnapshot: {
-          title: processedContent.title || '',
-          mainContent: processedContent.mainContent || '',
-          boilerplateSections: processedContent.boilerplateSections || [],
-          ...(processedContent.keyVisual && processedContent.keyVisual.url && { keyVisual: processedContent.keyVisual }), // Nur setzen wenn definiert und URL vorhanden
+          title: content.title || '',
+          mainContent: content.mainContent || '',
+          boilerplateSections: content.boilerplateSections || [],
+          ...(content.keyVisual && content.keyVisual.url && { keyVisual: content.keyVisual }), // Nur setzen wenn definiert und URL vorhanden
           createdForApproval: context.status === 'pending_customer'
         },
         metadata: {
@@ -173,9 +204,17 @@ class PDFVersionsService {
         // Fahre trotzdem fort, PDF wurde erstellt
       }
 
-      // Aktiviere Edit-Lock falls Kunden-Freigabe angefordert
+      // 🆕 ENHANCED: Aktiviere Edit-Lock falls Kunden-Freigabe angefordert
       if (context.status === 'pending_customer') {
-        await this.lockCampaignEditing(campaignId, 'pending_approval');
+        await this.lockCampaignEditing(
+          campaignId, 
+          'pending_customer_approval',
+          {
+            userId: context.userId,
+            displayName: context.displayName || 'System',
+            action: `PDF-Version ${newVersionNumber} für Freigabe erstellt`
+          }
+        );
       }
 
       return pdfVersionId;
@@ -249,14 +288,37 @@ class PDFVersionsService {
 
       await updateDoc(doc(db, this.collectionName, versionId), updateData);
       
-      // Update Campaign Edit-Lock Status
+      // 🆕 ENHANCED: Update Campaign Edit-Lock Status mit Context
       const version = await this.getVersionById(versionId);
       if (version) {
         if (status === 'approved') {
-          await this.lockCampaignEditing(version.campaignId, 'approved');
+          await this.lockCampaignEditing(
+            version.campaignId, 
+            'approved_final',
+            {
+              userId: 'system',
+              displayName: 'PDF-System',
+              action: `PDF-Version ${version.version} freigegeben`
+            }
+          );
         } else if (status === 'rejected' || status === 'draft') {
-          await this.unlockCampaignEditing(version.campaignId);
+          await this.unlockCampaignEditing(
+            version.campaignId,
+            {
+              userId: 'system',
+              displayName: 'PDF-System',
+              reason: status === 'rejected' ? 'PDF-Freigabe abgelehnt' : 'PDF-Status auf Draft zurückgesetzt'
+            }
+          );
         }
+
+        // 🆕 Benachrichtige Approval-Workflow über PDF-Status-Update
+        await this.notifyApprovalWorkflowOfPDFUpdate(
+          version.campaignId,
+          versionId,
+          status,
+          { organizationId: version.organizationId }
+        );
       }
 
     } catch (error) {
@@ -266,59 +328,152 @@ class PDFVersionsService {
   }
 
   /**
-   * Sperre Campaign-Bearbeitung
+   * 🆕 ENHANCED: Sperre Campaign-Bearbeitung mit erweiterten Metadaten
    */
   async lockCampaignEditing(
     campaignId: string,
-    reason: 'pending_approval' | 'approved'
+    reason: EditLockReason | string, // Backward compatibility
+    context?: {
+      userId?: string;
+      displayName?: string;
+      action?: string;
+      metadata?: Record<string, any>;
+    }
   ): Promise<void> {
     try {
-      await updateDoc(doc(db, 'campaigns', campaignId), {
-        editLocked: true,
-        editLockedReason: reason,
-        lockedAt: serverTimestamp()
-      });
+      // Konvertiere legacy reasons
+      let lockReason: EditLockReason;
+      if (typeof reason === 'string') {
+        switch (reason) {
+          case 'pending_approval':
+            lockReason = 'pending_customer_approval';
+            break;
+          case 'approved':
+            lockReason = 'approved_final';
+            break;
+          default:
+            lockReason = reason as EditLockReason;
+        }
+      } else {
+        lockReason = reason;
+      }
 
-      // console.log('🔒 Campaign-Bearbeitung gesperrt:', campaignId, reason);
+      const lockData: any = {
+        editLocked: true,
+        editLockedReason: lockReason,
+        lockedAt: serverTimestamp()
+      };
+
+      // Füge Kontext-Daten hinzu falls verfügbar
+      if (context) {
+        lockData.lockedBy = {
+          userId: context.userId || 'system',
+          displayName: context.displayName || 'System',
+          action: context.action || 'Automatische Sperrung'
+        };
+        if (context.metadata) {
+          lockData.lockMetadata = context.metadata;
+        }
+      }
+
+      await updateDoc(doc(db, 'campaigns', campaignId), lockData);
+
+      // 🆕 Audit-Log für Edit-Lock Events
+      await this.logEditLockEvent(campaignId, 'locked', lockReason, context || {});
+      
+      // 🆕 Optional: Benachrichtigungen
+      await this.notifyEditLockChange(campaignId, 'locked', lockReason);
+
+      console.log(`🔒 Enhanced Campaign-Bearbeitung gesperrt: ${campaignId} (${lockReason})`);
     } catch (error) {
-      console.error('❌ Fehler beim Sperren der Campaign:', error);
+      console.error('❌ Fehler beim Enhanced Sperren der Campaign:', error);
       throw error;
     }
   }
 
   /**
-   * Entsperre Campaign-Bearbeitung
+   * 🆕 ENHANCED: Entsperre Campaign-Bearbeitung mit Audit-Trail
    */
-  async unlockCampaignEditing(campaignId: string): Promise<void> {
+  async unlockCampaignEditing(
+    campaignId: string,
+    context?: {
+      userId?: string;
+      displayName?: string;
+      reason?: string;
+    }
+  ): Promise<void> {
     try {
       await updateDoc(doc(db, 'campaigns', campaignId), {
         editLocked: false,
         editLockedReason: null,
-        unlockedAt: serverTimestamp()
+        unlockedAt: serverTimestamp(),
+        // Behalte lockedBy für Audit-Trail, aber markiere als unlocked
+        lastUnlockedBy: context ? {
+          userId: context.userId || 'system',
+          displayName: context.displayName || 'System',
+          reason: context.reason || 'Automatische Entsperrung'
+        } : undefined
       });
 
-      // console.log('🔓 Campaign-Bearbeitung entsperrt:', campaignId);
+      // 🆕 Audit-Log für Unlock Events
+      await this.logEditLockEvent(campaignId, 'unlocked', null, context || {});
+      
+      // 🆕 Optional: Benachrichtigungen
+      await this.notifyEditLockChange(campaignId, 'unlocked', null);
+
+      console.log(`🔓 Enhanced Campaign-Bearbeitung entsperrt: ${campaignId}`);
     } catch (error) {
-      console.error('❌ Fehler beim Entsperren der Campaign:', error);
+      console.error('❌ Fehler beim Enhanced Entsperren der Campaign:', error);
       throw error;
     }
   }
 
   /**
-   * Prüfe ob Campaign-Bearbeitung gesperrt ist
+   * 🆕 ENHANCED: Detaillierte Edit-Lock Status-Abfrage
    */
-  async isEditingLocked(campaignId: string): Promise<boolean> {
+  async getEditLockStatus(campaignId: string): Promise<{
+    isLocked: boolean;
+    reason?: EditLockReason;
+    lockedBy?: any;
+    lockedAt?: Timestamp;
+    unlockRequests?: UnlockRequest[];
+    canRequestUnlock: boolean;
+  }> {
     try {
       const campaignDoc = await getDoc(doc(db, 'campaigns', campaignId));
-      if (campaignDoc.exists()) {
-        const data = campaignDoc.data();
-        return data.editLocked === true;
+      if (!campaignDoc.exists()) {
+        return { isLocked: false, canRequestUnlock: false };
       }
-      return false;
+      
+      const campaign = campaignDoc.data() as CampaignWithPDF;
+      const isLocked = campaign.editLocked === true;
+      const reason = campaign.editLockedReason;
+      
+      // Bestimme ob Unlock-Request möglich ist
+      const canRequestUnlock = isLocked && reason !== 'system_processing' && 
+        !(campaign.unlockRequests?.some(req => req.status === 'pending'));
+      
+      return {
+        isLocked,
+        reason,
+        lockedBy: campaign.lockedBy,
+        lockedAt: campaign.lockedAt,
+        unlockRequests: campaign.unlockRequests || [],
+        canRequestUnlock
+      };
+      
     } catch (error) {
-      console.error('❌ Fehler beim Prüfen des Edit-Lock Status:', error);
-      return false;
+      console.error('❌ Fehler beim Edit-Lock Status Check:', error);
+      return { isLocked: false, canRequestUnlock: false };
     }
+  }
+
+  /**
+   * 🆕 BACKWARD COMPATIBILITY: Einfache isLocked-Abfrage
+   */
+  async isEditingLocked(campaignId: string): Promise<boolean> {
+    const status = await this.getEditLockStatus(campaignId);
+    return status.isLocked;
   }
 
   /**
@@ -377,7 +532,7 @@ class PDFVersionsService {
   }
 
   /**
-   * Generiert professionelles Pressemitteilungs-PDF im Corporate Design
+   * Generiert PDF über neue Puppeteer-API Route (Migration von jsPDF)
    */
   private async generateRealPDF(
     content: {
@@ -392,944 +547,84 @@ class PDFVersionsService {
   ): Promise<{ pdfUrl: string; fileSize: number }> {
     try {
       // ========================================
-      // DEBUG: CONTENT ANALYSE FÜR PDF
+      // NEUE PUPPETEER-BASIERTE PDF-GENERATION
       // ========================================
-      console.log('📋 === PDF CONTENT DEBUG ===');
+      console.log('📄 === PUPPETEER PDF-GENERATION GESTARTET ===');
       console.log('🏷️ Title:', content.title);
-      console.log('📝 MainContent HTML:', content.mainContent?.substring(0, 200) + '...');
+      console.log('📝 MainContent:', content.mainContent?.substring(0, 100) + '...');
       console.log('🔢 BoilerplateSections:', content.boilerplateSections?.length || 0);
-      
-      content.boilerplateSections?.forEach((section, index) => {
-        console.log(`📄 Section ${index + 1}:`, {
-          type: section.type,
-          hasContent: !!section.content,
-          hasBoilerplate: !!section.boilerplate,
-          contentPreview: (section.content || section.boilerplate?.content || '').substring(0, 100) + '...',
-          // DETAILLIERTE STRUKTUR-ANALYSE:
-          actualContent: section.content ? 'section.content' : null,
-          boilerplateContent: section.boilerplate?.content ? 'section.boilerplate.content' : null,
-          allKeys: Object.keys(section)
-        });
-      });
-      
-      console.log('🖼️ KeyVisual:', !!content.keyVisual);
+      console.log('🖼️ KeyVisual:', !!content.keyVisual?.url);
       console.log('🏢 ClientName:', content.clientName);
-      console.log('📋 === END PDF CONTENT DEBUG ===\n');
 
-      // Dynamic import für jsPDF
-      const jsPDFModule = await import('jspdf');
-      const { jsPDF } = jsPDFModule;
-      
-      // Create new PDF document
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-
-      // Professional Layout Constants
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const marginLeft = 25;
-      const marginRight = 25;
-      const marginTop = 20;
-      const marginBottom = 25;
-      const contentWidth = pageWidth - marginLeft - marginRight;
-      let yPosition = marginTop;
-
-      // Corporate Colors (Professional blue-grey palette)
-      const colors = {
-        primary: [20, 36, 72],      // Dunkelblau für Headlines
-        secondary: [51, 65, 85],    // Grau für Subheadlines
-        body: [30, 41, 59],         // Dunkelgrau für Body Text
-        accent: [59, 130, 246],     // Accent Blue
-        light: [148, 163, 184],     // Hellgrau für Separatoren
-        background: [248, 250, 252] // Sehr helles Grau für Boxen
-      };
-
-      // Typography Scale (Professional hierarchy)
-      const typography = {
-        headline: 22,        // Hauptüberschrift
-        subheading: 16,      // Unterüberschrift
-        body: 11,            // Fließtext
-        caption: 9,          // Bildunterschriften
-        footer: 8,           // Fußzeilen
-        boilerplate: 10      // Textbausteine
-      };
-
-      // Helper Functions
-      const addLine = (x1: number, y1: number, x2: number, y2: number, color: number[] = colors.light): void => {
-        pdf.setDrawColor(color[0], color[1], color[2]);
-        pdf.setLineWidth(0.3);
-        pdf.line(x1, y1, x2, y2);
-      };
-
-      const addRect = (x: number, y: number, width: number, height: number, fillColor?: number[]): void => {
-        if (fillColor) {
-          pdf.setFillColor(fillColor[0], fillColor[1], fillColor[2]);
-          pdf.rect(x, y, width, height, 'F');
-        } else {
-          pdf.setDrawColor(colors.light[0], colors.light[1], colors.light[2]);
-          pdf.setLineWidth(0.2);
-          pdf.rect(x, y, width, height, 'S');
-        }
-      };
-
-      const addTextWithWrap = (
-        text: string, 
-        x: number, 
-        y: number, 
-        maxWidth: number, 
-        fontSize: number = typography.body,
-        color: number[] = colors.body,
-        style: string = 'normal',
-        align: string = 'left'
-      ): number => {
-        pdf.setFontSize(fontSize);
-        pdf.setTextColor(color[0], color[1], color[2]);
-        pdf.setFont('helvetica', style);
-        
-        // Besserer Text-Wrapper der Wörter NICHT zerreißt
-        const words = text.split(' ');
-        const lines: string[] = [];
-        let currentLine = '';
-        
-        words.forEach(word => {
-          const testLine = currentLine ? `${currentLine} ${word}` : word;
-          const testWidth = pdf.getTextWidth(testLine);
-          
-          if (testWidth > maxWidth && currentLine) {
-            lines.push(currentLine);
-            currentLine = word;
-          } else {
-            currentLine = testLine;
-          }
-        });
-        
-        if (currentLine) {
-          lines.push(currentLine);
-        }
-        const lineHeight = fontSize * 0.4;
-        
-        lines.forEach((line: string, index: number) => {
-          const currentY = y + (index * lineHeight);
-          if (align === 'center') {
-            pdf.text(line, x + maxWidth / 2, currentY, { align: 'center' });
-          } else {
-            pdf.text(line, x, currentY);
-          }
-        });
-        
-        return y + (lines.length * lineHeight);
-      };
-
-      /**
-       * Intelligenter HTML-zu-PDF Parser der Formatierungen beibehält
-       * Konvertiert HTML-Tags zu entsprechenden PDF-Formatierungen
-       */
-      const parseHtmlToPdfSegments = (html: string): Array<{text: string; style: string; fontSize?: number}> => {
-        const segments: Array<{text: string; style: string; fontSize?: number}> = [];
-        
-        // Bereinige HTML von überflüssigen Whitespaces
-        let cleanHtml = html.replace(/\s+/g, ' ').trim();
-        
-        // Parse HTML und extrahiere Formatierung
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(`<div>${cleanHtml}</div>`, 'text/html');
-        
-        const processNode = (node: Node): void => {
-          if (node.nodeType === Node.TEXT_NODE) {
-            const text = node.textContent?.trim();
-            if (text) {
-              segments.push({ text, style: 'normal' });
-            }
-          } else if (node.nodeType === Node.ELEMENT_NODE) {
-            const element = node as Element;
-            const tagName = element.tagName.toLowerCase();
-            
-            switch (tagName) {
-              case 'strong':
-              case 'b':
-                segments.push({ text: element.textContent || '', style: 'bold' });
-                break;
-              case 'em':
-              case 'i':
-                segments.push({ text: element.textContent || '', style: 'italic' });
-                break;
-              case 'h1':
-                segments.push({ text: element.textContent || '', style: 'bold', fontSize: typography.headline });
-                segments.push({ text: '\n\n', style: 'normal' });
-                break;
-              case 'h2':
-                segments.push({ text: element.textContent || '', style: 'bold', fontSize: typography.subheading });
-                segments.push({ text: '\n\n', style: 'normal' });
-                break;
-              case 'h3':
-                segments.push({ text: element.textContent || '', style: 'bold', fontSize: typography.body + 2 });
-                segments.push({ text: '\n', style: 'normal' });
-                break;
-              case 'p':
-                // Verarbeite Kinder-Elemente rekursiv
-                for (let child = element.firstChild; child; child = child.nextSibling) {
-                  processNode(child);
-                }
-                segments.push({ text: '\n\n', style: 'normal' });
-                return; // Verhindere doppelte Verarbeitung
-              case 'br':
-                segments.push({ text: '\n', style: 'normal' });
-                break;
-              case 'blockquote':
-                // Professionelle Zitat-Formatierung mit Einrückung
-                segments.push({ text: '\n', style: 'normal' });
-                segments.push({ text: '„', style: 'italic', fontSize: typography.body + 2 });
-                segments.push({ text: element.textContent || '', style: 'italic', fontSize: typography.body });
-                segments.push({ text: '“', style: 'italic', fontSize: typography.body + 2 });
-                segments.push({ text: '\n\n', style: 'normal' });
-                break;
-              case 'div':
-                // Prüfe auf CTA-Klassen oder spezielle Formatierungen
-                const className = element.className?.toLowerCase() || '';
-                if (className.includes('cta') || className.includes('call-to-action') || className.includes('highlight')) {
-                  // CTA-Formatierung: Fett und mit Rahmen-Effekt
-                  segments.push({ text: '\n━━━ ', style: 'bold' });
-                  segments.push({ text: element.textContent || '', style: 'bold', fontSize: typography.body + 1 });
-                  segments.push({ text: ' ━━━\n\n', style: 'bold' });
-                } else {
-                  // Normale Div: Verarbeite Kinder-Elemente
-                  for (let child = element.firstChild; child; child = child.nextSibling) {
-                    processNode(child);
-                  }
-                }
-                break;
-              case 'ul':
-              case 'ol':
-                segments.push({ text: '\n', style: 'normal' });
-                const listItems = element.querySelectorAll('li');
-                listItems.forEach((li, index) => {
-                  const bullet = tagName === 'ul' ? '• ' : `${index + 1}. `;
-                  segments.push({ text: bullet + (li.textContent || ''), style: 'normal' });
-                  segments.push({ text: '\n', style: 'normal' });
-                });
-                segments.push({ text: '\n', style: 'normal' });
-                break;
-              case 'span':
-              case 'a':
-                // Alle Spans und Links: Verarbeite Kinder rekursiv (ignoriere Styling)
-                // Das ist wichtig für <span style="color: rgb(0, 0, 0)">Text</span>
-                for (let child = element.firstChild; child; child = child.nextSibling) {
-                  processNode(child);
-                }
-                break;
-              default:
-                // Für andere Tags: Verarbeite Kinder-Elemente rekursiv
-                for (let child = element.firstChild; child; child = child.nextSibling) {
-                  processNode(child);
-                }
-                break;
-            }
-          }
-        };
-        
-        // Verarbeite alle Kinder der Root-Div
-        const rootDiv = doc.querySelector('div');
-        if (rootDiv) {
-          for (let child = rootDiv.firstChild; child; child = child.nextSibling) {
-            processNode(child);
-          }
-        }
-        
-        return segments.filter(seg => seg.text.trim() !== '');
-      };
-      
-      /**
-       * Rendert HTML-Segmente mit korrekter Formatierung in PDF
-       */
-      const addFormattedText = (
-        htmlContent: string,
-        x: number,
-        y: number,
-        maxWidth: number,
-        baseColor: number[] = colors.body
-      ): number => {
-        const segments = parseHtmlToPdfSegments(htmlContent);
-        let currentY = y;
-        let currentX = x;
-        
-        let isInQuote = false;
-        let quoteIndent = 0;
-        
-        segments.forEach((segment, segmentIndex) => {
-          if (segment.text === '\n' || segment.text === '\n\n') {
-            // Zeilenumbruch
-            currentY += (segment.text === '\n\n' ? typography.body * 0.8 : typography.body * 0.4);
-            currentX = x + quoteIndent; // Berücksichtige Einrückung
-            return;
-          }
-          
-          // Prüfe auf Zitat-Start/Ende
-          if (segment.text.includes('„')) {
-            isInQuote = true;
-            quoteIndent = 15; // Einrückung für Zitate
-            
-            // Füge vertikale Linie für Zitat hinzu
-            const quoteLineX = x + 5;
-            pdf.setDrawColor(colors.accent[0], colors.accent[1], colors.accent[2]);
-            pdf.setLineWidth(1);
-            
-            // Schätze Höhe des Zitats
-            const nextSegments = segments.slice(segmentIndex, segmentIndex + 3);
-            const estimatedHeight = nextSegments.reduce((height, seg) => {
-              return height + (seg.text.includes('\n') ? typography.body * 0.4 : 0);
-            }, typography.body * 1.5);
-            
-            pdf.line(quoteLineX, currentY - 2, quoteLineX, currentY + estimatedHeight);
-          }
-          
-          if (segment.text.includes('“')) {
-            isInQuote = false;
-            quoteIndent = 0;
-          }
-          
-          const fontSize = segment.fontSize || typography.body;
-          const style = segment.style || 'normal';
-          let color = baseColor;
-          
-          // Spezielle Farbgebung für verschiedene Stile
-          if (segment.style === 'italic' && isInQuote) {
-            color = colors.secondary;
-          } else if (segment.style === 'bold' && segment.text.includes('━')) {
-            // CTA-Styling
-            color = colors.accent;
-          }
-          
-          // Prüfe ob Text zu lang für aktuelle Zeile ist
-          pdf.setFontSize(fontSize);
-          pdf.setFont('helvetica', style);
-          
-          const availableWidth = maxWidth - (currentX - x) - quoteIndent;
-          
-          // Besserer Text-Wrapper der Wörter NICHT zerreißt
-          const words = segment.text.split(' ');
-          const lines: string[] = [];
-          let currentLine = '';
-          
-          words.forEach(word => {
-            const testLine = currentLine ? `${currentLine} ${word}` : word;
-            const testWidth = pdf.getTextWidth(testLine);
-            
-            if (testWidth > availableWidth && currentLine) {
-              lines.push(currentLine);
-              currentLine = word;
-            } else {
-              currentLine = testLine;
-            }
-          });
-          
-          if (currentLine) {
-            lines.push(currentLine);
-          }
-          const lineHeight = fontSize * 0.4;
-          
-          lines.forEach((line: string, index: number) => {
-            // Prüfe ob neue Seite benötigt wird
-            if (currentY + lineHeight > pageHeight - marginBottom) {
-              pdf.addPage();
-              currentY = marginTop;
-              currentX = x + quoteIndent;
-            }
-            
-            pdf.setFontSize(fontSize);
-            pdf.setTextColor(color[0], color[1], color[2]);
-            pdf.setFont('helvetica', style);
-            pdf.text(line, currentX, currentY);
-            
-            if (index < lines.length - 1) {
-              // Mehrzeiliger Text - nächste Zeile
-              currentY += lineHeight;
-              currentX = x + quoteIndent;
-            } else {
-              // Letzte Zeile - Position für nächstes Segment aktualisieren
-              currentX += pdf.getTextWidth(line) + 2; // Kleiner Abstand
-            }
-          });
-        });
-        
-        return currentY + typography.body * 0.4; // Abschluss-Spacing
-      };
-
-      const checkNewPage = (requiredHeight: number): void => {
-        if (yPosition + requiredHeight > pageHeight - marginBottom) {
-          pdf.addPage();
-          yPosition = marginTop;
-        }
-      };
-
-      // ========================================
-      // 1. CORPORATE HEADER
-      // ========================================
-      
-      // Header background strip
-      addRect(0, 0, pageWidth, 12, colors.primary);
-      
-      // Press Release Badge
-      pdf.setFontSize(10);
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('PRESSEMITTEILUNG', marginLeft, 8);
-      
-      // Date in top right
-      const today = new Date().toLocaleDateString('de-DE', {
-        day: '2-digit',
-        month: '2-digit', 
-        year: 'numeric'
-      });
-      const dateWidth = pdf.getTextWidth(today);
-      pdf.text(today, pageWidth - marginRight - dateWidth, 8);
-      
-      // ========================================
-      // 2. KEYVISUAL DIREKT NACH HEADER - OHNE ABSTAND!
-      // ========================================
-      
-      if (content.keyVisual?.url) {
-        try {
-          // BREAKTHROUGH SOLUTION: Verwende Proxy + FileReader Base64 (umgeht Canvas CORS-Problem)
-          const imageData = await this.extractImageFromDOM(content.keyVisual.url);
-          
-          if (imageData) {
-            // PERFEKTE PLATZIERUNG: Direkt nach blauem Header (12mm), 100% Breite, 16:9 Format
-            const imageWidth = pageWidth; // 100% Breite der gesamten Seite
-            const imageHeight = imageWidth * (9/16); // Perfektes 16:9 Format
-            const imageX = 0; // Kein Margin - über gesamte Seitenbreite
-            const imageY = 12; // Direkt nach dem 12mm hohen blauen Header
-            
-            pdf.addImage(
-              imageData.base64,
-              imageData.format,
-              imageX,
-              imageY,
-              imageWidth,
-              imageHeight
-            );
-            
-            // yPosition nach dem Bild setzen - OHNE zusätzlichen Abstand
-            yPosition = imageY + imageHeight;
-            
-            // Professional caption styling
-            if (content.keyVisual.caption) {
-              yPosition = addTextWithWrap(
-                content.keyVisual.caption, 
-                marginLeft, 
-                yPosition, 
-                contentWidth, 
-                typography.caption, 
-                colors.secondary, 
-                'italic'
-              );
-            }
-            yPosition += 15;
-            
-          } else {
-            // Professional placeholder für KeyVisual
-            checkNewPage(25);
-            addRect(marginLeft, yPosition, contentWidth, 20, colors.background);
-            yPosition = addTextWithWrap(
-              `[KeyVisual: ${content.keyVisual.alt || 'Pressebild wird nachgereicht'}]`,
-              marginLeft + 5,
-              yPosition + 7,
-              contentWidth - 10,
-              typography.caption,
-              colors.secondary,
-              'italic',
-              'center'
-            );
-            yPosition += 25;
-          }
-        } catch (error) {
-          console.warn('KeyVisual konnte nicht extrahiert werden:', error);
-          // Elegant fallback
-          checkNewPage(20);
-          yPosition = addTextWithWrap(
-            '[Pressebild wird separat bereitgestellt]',
-            marginLeft,
-            yPosition,
-            contentWidth,
-            typography.caption,
-            colors.secondary,
-            'italic',
-            'center'
-          );
-          yPosition += 20;
-        }
-      } else {
-        // Falls kein KeyVisual vorhanden: yPosition direkt nach Header setzen
-        yPosition = 25;
-      }
-
-      // ========================================
-      // 3. HEADLINE MIT CORPORATE TYPOGRAPHY
-      // ========================================
-      
-      checkNewPage(30);
-      
-      // Subtle separator line above headline
-      addLine(marginLeft, yPosition, marginLeft + contentWidth, yPosition, colors.accent);
-      yPosition += 8;
-      
-      // Main headline with professional spacing
-      yPosition = addTextWithWrap(
-        content.title,
-        marginLeft,
-        yPosition,
-        contentWidth,
-        typography.headline,
-        colors.primary,
-        'bold'
-      );
-      
-      yPosition += 15;
-      
-      // Subtle separator line below headline
-      addLine(marginLeft, yPosition, marginLeft + (contentWidth * 0.3), yPosition, colors.accent);
-      yPosition += 20;
-
-      // ========================================
-      // 4. PROFESSIONAL BODY TEXT
-      // ========================================
-      
-      if (content.mainContent && content.mainContent.trim()) {
-        checkNewPage(30);
-        
-        // Verwende intelligenten HTML-Parser statt stripHtml
-        checkNewPage(20);
-        yPosition = addFormattedText(
-          content.mainContent,
-          marginLeft,
-          yPosition,
-          contentWidth,
-          colors.body
-        );
-        yPosition += 8; // Professional spacing nach Haupttext
-        
-        yPosition += 15; // Extra space before next section
-      }
-
-      // ========================================
-      // 5. TEXTBAUSTEINE ALS PROFESSIONAL FOOTER BOXES
-      // ========================================
-      
-      if (content.boilerplateSections && content.boilerplateSections.length > 0) {
-        const visibleSections = content.boilerplateSections.filter(section => {
-          const sectionContent = section.content || 
-                                section.htmlContent || 
-                                section.text || 
-                                section.boilerplate?.content ||
-                                section.boilerplate?.htmlContent ||
-                                section.boilerplate?.text ||
-                                '';
-          return sectionContent && sectionContent.trim();
-        });
-
-        if (visibleSections.length > 0) {
-          checkNewPage(40);
-          
-          // Section separator
-          addLine(marginLeft, yPosition, marginLeft + contentWidth, yPosition, colors.accent);
-          yPosition += 10;
-          
-          // KEIN hardcodierter Header - Textbausteine haben ihre eigenen Titel
-          yPosition += 10;
-
-          // Professional boxes für each Textbaustein
-          visibleSections.forEach((section, index) => {
-            const sectionContent = section.content || 
-                                  section.htmlContent || 
-                                  section.text || 
-                                  section.boilerplate?.content ||
-                                  section.boilerplate?.htmlContent ||
-                                  section.boilerplate?.text ||
-                                  '';
-            const sectionTitle = section.customTitle || '';
-
-            // Estimate box height basierend auf Textinhalt
-            const textLength = sectionContent.replace(/<[^>]*>/g, '').length;
-            const estimatedLines = Math.max(3, Math.ceil(textLength / 80));
-            const boxHeight = estimatedLines * 4 + 15;
-            
-            checkNewPage(boxHeight + 10);
-
-            // Professional box with subtle background
-            const boxY = yPosition;
-            addRect(marginLeft, boxY, contentWidth, boxHeight, colors.background);
-            addRect(marginLeft, boxY, contentWidth, boxHeight); // Border
-            
-            let currentY = boxY + 8;
-
-            // Section title as bold header
-            if (sectionTitle) {
-              currentY = addTextWithWrap(
-                sectionTitle,
-                marginLeft + 8,
-                currentY,
-                contentWidth - 16,
-                typography.boilerplate + 1,
-                colors.primary,
-                'bold'
-              );
-              currentY += 5;
-            }
-
-            // Section content with intelligent formatting preservation
-            addFormattedText(
-              sectionContent, // Verwende Original-HTML statt cleanContent
-              marginLeft + 8,
-              currentY,
-              contentWidth - 16,
-              colors.body
-            );
-
-            yPosition += boxHeight + 8;
-          });
-        }
-      }
-
-      // ========================================
-      // 6. SENDER BLOCK (PROFESSIONAL PRESS CONTACT)
-      // ========================================
-      
-      // KEINE Standard-Sender-Daten mehr laden
-      
-      checkNewPage(50);
-      
-      // Separator before press contact
-      yPosition += 10;
-      // KEINE Standard-Pressekontakt-Box!
-      // Die echten Kontaktdaten stehen in den Textbausteinen vom Kunden
-      // Hier endet das PDF direkt nach den Textbausteinen
-
-      // ========================================
-      // 7. PROFESSIONAL FOOTER
-      // ========================================
-      
-      const totalPages = pdf.getNumberOfPages();
-      for (let i = 1; i <= totalPages; i++) {
-        pdf.setPage(i);
-        
-        // Footer line
-        addLine(marginLeft, pageHeight - 20, pageWidth - marginRight, pageHeight - 20, colors.light);
-        
-        // Page number (left)
-        pdf.setFontSize(typography.footer);
-        pdf.setTextColor(colors.light[0], colors.light[1], colors.light[2]);
-        pdf.setFont('helvetica', 'normal');
-        pdf.text(`Seite ${i} von ${totalPages}`, marginLeft, pageHeight - 12);
-        
-        // Generation timestamp (right)
-        const timestamp = `Erstellt am ${today}`;
-        const timestampWidth = pdf.getTextWidth(timestamp);
-        pdf.text(timestamp, pageWidth - marginRight - timestampWidth, pageHeight - 12);
-        
-        // Corporate footer (center) - Echter Firmenname aus Campaign-Daten
-        const footerText = content.clientName || 'Unternehmen'; // Echter Name aus Step 1
-        const footerWidth = pdf.getTextWidth(footerText);
-        pdf.text(footerText, (pageWidth - footerWidth) / 2, pageHeight - 12);
-      }
-
-      // Generate PDF Blob
-      const pdfBlob = pdf.output('blob');
-      
-      // Create File object
-      const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
-
-      // Upload to Firebase Storage
-      const uploadedAsset = await mediaService.uploadMedia(
-        pdfFile,
+      // Bereite Request für API auf
+      const apiRequest = {
+        campaignId: 'temp-campaign', // Wird später aus Context geholt
         organizationId,
-        'pdf-versions'
-      );
+        title: content.title,
+        mainContent: content.mainContent,
+        boilerplateSections: content.boilerplateSections || [],
+        keyVisual: content.keyVisual,
+        clientName: content.clientName || 'Unternehmen',
+        userId: 'temp-user', // Wird später aus Context geholt
+        fileName: fileName,
+        options: {
+          format: 'A4' as const,
+          orientation: 'portrait' as const,
+          printBackground: true,
+          waitUntil: 'networkidle0' as const
+        }
+      };
+
+      // API-Aufruf an neue Puppeteer-Route
+      console.log('🚀 Rufe Puppeteer PDF-API auf...');
+      const response = await fetch('/api/generate-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(apiRequest)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`PDF-API Fehler ${response.status}: ${errorText}`);
+      }
+
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(`PDF-Generation fehlgeschlagen: ${result.error}`);
+      }
+
+      console.log('✅ Puppeteer PDF erfolgreich generiert:', {
+        fileSize: result.fileSize,
+        generationTime: result.metadata?.generationTimeMs,
+        wordCount: result.metadata?.wordCount,
+        pageCount: result.metadata?.pageCount
+      });
+      console.log('📄 === PUPPETEER PDF-GENERATION BEENDET ===\n');
 
       return {
-        pdfUrl: uploadedAsset.downloadUrl,
-        fileSize: pdfFile.size
+        pdfUrl: result.pdfUrl,
+        fileSize: result.fileSize
       };
 
     } catch (error) {
-      console.error('❌ Fehler bei der professionellen PDF-Generation:', error);
-      // Fallback auf Mock-PDF
-      return {
-        pdfUrl: `https://storage.googleapis.com/mock-bucket/${fileName}`,
-        fileSize: 1024 * 100
-      };
-    }
-  }
-
-  /**
-   * BREAKTHROUGH SOLUTION: Proxy + FileReader Base64 (umgeht Canvas komplett!)
-   * Löst das "Tainted canvas may not be exported" Problem endgültig
-   */
-  private async extractImageFromDOM(imageUrl: string): Promise<{ base64: string; format: string; width: number; height: number } | null> {
-    
-    try {
-      // Verwende Proxy-Route die bekanntermaßen funktioniert
-      const proxyUrl = `/api/proxy-firebase-image?url=${encodeURIComponent(imageUrl)}`;
+      console.error('❌ Fehler bei der Puppeteer PDF-Generation:', error);
       
-      // Lade Bild als Blob über Proxy (das funktioniert!)
-      const response = await fetch(proxyUrl);
-      if (!response.ok) {
-        return null;
-      }
-      
-      const blob = await response.blob();
-      
-      // Konvertiere Blob zu Base64 mit FileReader (NICHT Canvas!)
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          if (typeof reader.result === 'string') {
-            resolve(reader.result);
-          } else {
-            reject(new Error('FileReader result is not a string'));
-          }
-        };
-        reader.onerror = () => reject(new Error('FileReader failed'));
-        reader.readAsDataURL(blob);
-      });
-      
-      // Bestimme Bildformat
-      let format = 'JPEG';
-      if (blob.type.includes('png')) format = 'PNG';
-      else if (blob.type.includes('webp')) format = 'WEBP';
-      else if (blob.type.includes('gif')) format = 'GIF';
-      
-      // Ermittle Bilddimensionen (falls im DOM verfügbar)
-      let width = 800; // Default
-      let height = 600; // Default
-      
-      // Versuche Dimensionen aus DOM zu extrahieren
-      const domImages = document.querySelectorAll('img');
-      for (let i = 0; i < domImages.length; i++) {
-        const img = domImages[i] as HTMLImageElement;
-        if (img.src === imageUrl || 
-            img.src.includes(imageUrl) || 
-            imageUrl.includes(img.src)) {
-          width = img.naturalWidth || img.width || width;
-          height = img.naturalHeight || img.height || height;
-          break;
+      // Detailliertere Fehlerbehandlung
+      if (error instanceof Error) {
+        if (error.message.includes('timeout')) {
+          console.error('⏱️ PDF-Generation Timeout');
+        } else if (error.message.includes('network')) {
+          console.error('🌐 Netzwerk-Fehler bei PDF-Generation');
+        } else if (error.message.includes('storage')) {
+          console.error('☁️ Storage-Fehler bei PDF-Generation');
         }
       }
       
-      const result = {
-        base64: base64.split(',')[1], // Entferne data:image/... prefix
-        format,
-        width,
-        height
-      };
-      
-      
-      return result;
-      
-    } catch (error) {
-      return null;
-    }
-  }
-  
-  
-  /**
-   * Lädt Sender-Informationen für professionellen Pressekontakt-Block
-   */
-  private async getSenderInformation(organizationId: string): Promise<{
-    companyName: string;
-    contactPerson: string;
-    phone: string;
-    email: string;
-    address?: string;
-  }> {
-    try {
-      // Standard-Fallback für Demo
-      const defaultSender = {
-        companyName: 'Unternehmen',
-        contactPerson: 'Pressestelle',
-        phone: 'Tel: +49 (0) 123 456-789',
-        email: 'presse@unternehmen.de'
-      };
-      
-      // Versuche Organization-Daten aus Firestore zu laden
-      const orgDoc = await getDoc(doc(db, 'organizations', organizationId));
-      
-      if (orgDoc.exists()) {
-        const orgData = orgDoc.data();
-        
-        return {
-          companyName: orgData.name || orgData.companyName || defaultSender.companyName,
-          contactPerson: orgData.contactPerson || orgData.pressContact || defaultSender.contactPerson,
-          phone: orgData.phone || orgData.phoneNumber || defaultSender.phone,
-          email: orgData.email || orgData.contactEmail || orgData.pressEmail || defaultSender.email,
-          address: orgData.address || orgData.businessAddress
-        };
-      }
-      
-      // Versuche Customer-Daten als Fallback
-      const customerQuery = query(
-        collection(db, 'customers'),
-        where('organizationId', '==', organizationId),
-        limit(1)
-      );
-      
-      const customerSnapshot = await getDocs(customerQuery);
-      
-      if (!customerSnapshot.empty) {
-        const customerData = customerSnapshot.docs[0].data();
-        
-        return {
-          companyName: customerData.companyName || customerData.name || defaultSender.companyName,
-          contactPerson: customerData.contactName || customerData.firstName + ' ' + customerData.lastName || defaultSender.contactPerson,
-          phone: customerData.phone || defaultSender.phone,
-          email: customerData.email || defaultSender.email,
-          address: customerData.address
-        };
-      }
-      
-      // Fallback auf Default-Werte
-      return defaultSender;
-      
-    } catch (error) {
-      console.error('❌ Fehler beim Laden der Sender-Informationen:', error);
-      
-      // Emergency fallback
-      return {
-        companyName: 'Unternehmen',
-        contactPerson: 'Pressestelle', 
-        phone: 'Tel: +49 (0) 123 456-789',
-        email: 'presse@unternehmen.de'
-      };
-    }
-  }
-
-  /**
-   * Lädt ein Bild von einer URL und konvertiert es zu Base64 (mit Proxy-Route)
-   */
-  private async loadImageAsBase64(imageUrl: string): Promise<{ base64: string; format: string } | null> {
-    try {
-      
-      // Verwende Proxy-Route für CORS-freies Laden
-      const proxyUrl = `/api/proxy-firebase-image?url=${encodeURIComponent(imageUrl)}`;
-      
-      // Fetch das Bild über Proxy
-      const response = await fetch(proxyUrl);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      // Convert to blob
-      const blob = await response.blob();
-      
-      // Determine image format
-      let format = 'JPEG'; // Default
-      if (blob.type.includes('png')) format = 'PNG';
-      else if (blob.type.includes('webp')) format = 'WEBP';
-      else if (blob.type.includes('gif')) format = 'GIF';
-      
-      // Convert to base64 with FileReader
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const base64 = reader.result as string;
-          resolve({
-            base64: base64.split(',')[1], // Remove data:image/... prefix
-            format
-          });
-        };
-        reader.onerror = () => reject(new Error('FileReader failed'));
-        reader.readAsDataURL(blob);
-      });
-    } catch (error) {
-      console.error('❌ Failed to load image for PDF:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Verarbeitet Content für PDF-Generation (Storage URLs zu öffentlichen URLs)
-   */
-  private async processContentForPDF(content: {
-    title: string;
-    mainContent: string;
-    boilerplateSections: any[];
-    keyVisual?: any;
-  }): Promise<typeof content> {
-    try {
-      // Kopiere Content
-      const processedContent = { ...content };
-
-      // Konvertiere KeyVisual Storage URL zu öffentlicher URL
-      if (processedContent.keyVisual?.url) {
-        processedContent.keyVisual = {
-          ...processedContent.keyVisual,
-          url: this.convertToPublicUrl(processedContent.keyVisual.url)
-        };
-      }
-
-      // Konvertiere URLs in mainContent HTML
-      if (processedContent.mainContent) {
-        processedContent.mainContent = this.convertStorageUrlsInHtml(processedContent.mainContent);
-      }
-
-      // Konvertiere URLs in Textbausteinen
-      if (processedContent.boilerplateSections) {
-        processedContent.boilerplateSections = processedContent.boilerplateSections.map(section => ({
-          ...section,
-          content: section.content ? this.convertStorageUrlsInHtml(section.content) : section.content
-        }));
-      }
-
-      return processedContent;
-    } catch (error) {
-      console.error('❌ Fehler beim Verarbeiten des Contents für PDF:', error);
-      return content; // Fallback: Original-Content zurückgeben
-    }
-  }
-
-  /**
-   * Konvertiert Firebase Storage URL zu öffentlicher URL
-   */
-  private convertToPublicUrl(storageUrl: string): string {
-    try {
-      // Firebase Storage URLs haben folgendes Format:
-      // https://firebasestorage.googleapis.com/v0/b/PROJECT-ID.appspot.com/o/PATH?alt=media&token=TOKEN
-      
-      if (!storageUrl.includes('firebasestorage.googleapis.com')) {
-        return storageUrl; // Bereits öffentliche URL oder andere URL
-      }
-
-      // Für PDF-Generation verwenden wir die URL mit dem alt=media Parameter
-      // Das macht sie öffentlich zugänglich für PDF-Services
-      if (storageUrl.includes('alt=media')) {
-        return storageUrl; // Bereits korrekt formatiert
-      }
-
-      // Füge alt=media hinzu falls nicht vorhanden
-      const separator = storageUrl.includes('?') ? '&' : '?';
-      return `${storageUrl}${separator}alt=media`;
-    } catch (error) {
-      console.error('❌ Fehler beim Konvertieren der Storage URL:', error);
-      return storageUrl; // Fallback: Original URL zurückgeben
-    }
-  }
-
-  /**
-   * Konvertiert Storage URLs in HTML-Content
-   */
-  private convertStorageUrlsInHtml(html: string): string {
-    try {
-      // Finde alle Firebase Storage URLs in img tags
-      const imgRegex = /<img[^>]+src="([^"]*firebasestorage\.googleapis\.com[^"]*)"[^>]*>/gi;
-      
-      return html.replace(imgRegex, (match, url) => {
-        const publicUrl = this.convertToPublicUrl(url);
-        return match.replace(url, publicUrl);
-      });
-    } catch (error) {
-      console.error('❌ Fehler beim Konvertieren der URLs im HTML:', error);
-      return html;
+      // Fallback: Werfe Fehler weiter, damit der aufrufende Code reagieren kann
+      throw new Error(`PDF-Generation fehlgeschlagen: ${error}`);
     }
   }
 
@@ -1410,6 +705,205 @@ class PDFVersionsService {
     
     return obj;
   }
+
+  /**
+   * 🆕 UNLOCK-REQUEST SYSTEM
+   */
+  async requestUnlock(
+    campaignId: string,
+    requestContext: {
+      userId: string;
+      displayName: string;
+      reason: string;
+    }
+  ): Promise<string> {
+    try {
+      const unlockRequest: UnlockRequest = {
+        id: nanoid(),
+        requestedBy: requestContext.userId,
+        requestedAt: serverTimestamp() as Timestamp,
+        reason: requestContext.reason,
+        status: 'pending'
+      };
+      
+      // Füge Request zur Campaign hinzu
+      const campaignRef = doc(db, 'campaigns', campaignId);
+      const campaignDoc = await getDoc(campaignRef);
+      
+      if (campaignDoc.exists()) {
+        const currentRequests = campaignDoc.data().unlockRequests || [];
+        await updateDoc(campaignRef, {
+          unlockRequests: [...currentRequests, unlockRequest]
+        });
+      }
+      
+      // Benachrichtige Administratoren
+      await this.notifyUnlockRequest(campaignId, unlockRequest);
+      
+      console.log(`📝 Unlock-Request erstellt: ${unlockRequest.id} für Campaign ${campaignId}`);
+      return unlockRequest.id;
+      
+    } catch (error) {
+      console.error('❌ Fehler beim Unlock-Request:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 🆕 UNLOCK-REQUEST APPROVAL
+   */
+  async approveUnlockRequest(
+    campaignId: string,
+    requestId: string,
+    approverContext: {
+      userId: string;
+      displayName: string;
+    }
+  ): Promise<void> {
+    try {
+      // 1. Campaign laden
+      const campaignDoc = await getDoc(doc(db, 'campaigns', campaignId));
+      if (!campaignDoc.exists()) {
+        throw new Error('Campaign nicht gefunden');
+      }
+      
+      const campaign = campaignDoc.data() as CampaignWithPDF;
+      const unlockRequests = campaign.unlockRequests || [];
+      
+      // 2. Request finden und updaten
+      const updatedRequests = unlockRequests.map(req => 
+        req.id === requestId 
+          ? {
+              ...req,
+              status: 'approved' as const,
+              approvedBy: approverContext.userId,
+              approvedAt: serverTimestamp() as Timestamp
+            }
+          : req
+      );
+      
+      // 3. Campaign entsperren und Request-Status updaten
+      await updateDoc(doc(db, 'campaigns', campaignId), {
+        editLocked: false,
+        editLockedReason: null,
+        unlockedAt: serverTimestamp(),
+        unlockRequests: updatedRequests,
+        lastUnlockedBy: approverContext
+      });
+      
+      // 4. Audit-Log und Notifications
+      await this.logEditLockEvent(campaignId, 'unlocked', null, approverContext);
+      await this.notifyUnlockApproval(campaignId, requestId, approverContext);
+      
+      console.log(`✅ Unlock-Request approved: ${requestId} für Campaign ${campaignId}`);
+      
+    } catch (error) {
+      console.error('❌ Fehler beim Unlock-Request Approval:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 🆕 PRIVATE HELPER: Audit-Log für Edit-Lock Events
+   */
+  private async logEditLockEvent(
+    campaignId: string,
+    action: 'locked' | 'unlocked',
+    reason: EditLockReason | null,
+    context: any
+  ): Promise<void> {
+    try {
+      const logEntry = {
+        campaignId,
+        action,
+        reason,
+        timestamp: serverTimestamp(),
+        actor: context,
+        metadata: {
+          userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'server'
+        }
+      };
+      
+      await addDoc(collection(db, 'audit_logs'), logEntry);
+    } catch (error) {
+      console.error('⚠️ Audit-Log Fehler (nicht kritisch):', error);
+    }
+  }
+
+  /**
+   * 🆕 PRIVATE HELPER: Benachrichtigungen für Edit-Lock Änderungen
+   */
+  private async notifyEditLockChange(
+    campaignId: string,
+    action: 'locked' | 'unlocked',
+    reason: EditLockReason | null
+  ): Promise<void> {
+    try {
+      // Integration mit bestehendem Notification-System
+      // TODO: Implementation basierend auf vorhandenem Service
+      console.log(`📧 Edit-Lock Notification: ${campaignId} ${action} (${reason})`);
+    } catch (error) {
+      console.warn('⚠️ Edit-Lock Notification Fehler (nicht kritisch):', error);
+    }
+  }
+
+  /**
+   * 🆕 PRIVATE HELPER: Benachrichtigungen für Unlock-Requests
+   */
+  private async notifyUnlockRequest(
+    campaignId: string,
+    request: UnlockRequest
+  ): Promise<void> {
+    try {
+      // Benachrichtige Administratoren über Unlock-Request
+      console.log(`📧 Unlock-Request Notification: ${request.id} für Campaign ${campaignId}`);
+    } catch (error) {
+      console.warn('⚠️ Unlock-Request Notification Fehler (nicht kritisch):', error);
+    }
+  }
+
+  /**
+   * 🆕 PRIVATE HELPER: Benachrichtigungen für Unlock-Approval
+   */
+  private async notifyUnlockApproval(
+    campaignId: string,
+    requestId: string,
+    approver: any
+  ): Promise<void> {
+    try {
+      // Benachrichtige Requester über Approval
+      console.log(`📧 Unlock-Approval Notification: ${requestId} approved by ${approver.displayName}`);
+    } catch (error) {
+      console.warn('⚠️ Unlock-Approval Notification Fehler (nicht kritisch):', error);
+    }
+  }
+
+  /**
+   * 🆕 CALLBACK-INTEGRATION: Benachrichtige Approval-Workflow über PDF-Status-Updates
+   */
+  private async notifyApprovalWorkflowOfPDFUpdate(
+    campaignId: string,
+    pdfVersionId: string,
+    newStatus: string,
+    metadata?: any
+  ): Promise<void> {
+    try {
+      // Vermeide zirkuläre Aufrufe durch Flag
+      if (metadata?.skipApprovalCallback) {
+        return;
+      }
+      
+      // Rufe Approval-Workflow Callback auf
+      await approvalWorkflowService.handlePDFStatusUpdate(
+        campaignId,
+        pdfVersionId,
+        newStatus,
+        metadata
+      );
+    } catch (error) {
+      console.warn('⚠️ Approval-Workflow Callback Fehler (nicht kritisch):', error);
+    }
+  }
 }
 
 // Export Singleton Instance
@@ -1417,3 +911,6 @@ export const pdfVersionsService = new PDFVersionsService();
 
 // Export für Tests  
 export { PDFVersionsService };
+
+// Export Types für andere Services
+export type { EditLockReason, UnlockRequest };

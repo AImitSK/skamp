@@ -38,6 +38,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { approvalService } from "@/lib/firebase/approval-service";
 import { companiesEnhancedService } from "@/lib/firebase/crm-service-enhanced";
+import { pdfVersionsService } from "@/lib/firebase/pdf-versions-service";
 import { 
   ApprovalEnhanced, 
   ApprovalListView, 
@@ -46,6 +47,7 @@ import {
   APPROVAL_STATUS_CONFIG,
   PRIORITY_OPTIONS
 } from "@/types/approvals";
+import { PDFVersion } from "@/lib/firebase/pdf-versions-service";
 import clsx from "clsx";
 
 // Alert Component
@@ -243,15 +245,24 @@ function FeedbackHistoryModal({
   );
 }
 
+// Enhanced ApprovalListView Interface mit PDF-Daten
+interface EnhancedApprovalListView extends ApprovalListView {
+  pdfVersions: PDFVersion[];
+  currentPdfVersion: PDFVersion | null;
+  hasPDF: boolean;
+  pdfStatus: 'none' | 'draft' | 'pending_customer' | 'approved' | 'rejected';
+}
+
 export default function ApprovalsPage() {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
-  const [approvals, setApprovals] = useState<ApprovalListView[]>([]);
+  const [approvals, setApprovals] = useState<EnhancedApprovalListView[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const [selectedPriorities, setSelectedPriorities] = useState<string[]>([]);
+  const [selectedPdfStatus, setSelectedPdfStatus] = useState<string[]>([]);
   const [showOverdueOnly, setShowOverdueOnly] = useState(false);
   const [alert, setAlert] = useState<{ type: 'info' | 'success' | 'warning' | 'error'; title: string; message?: string } | null>(null);
   const [selectedApproval, setSelectedApproval] = useState<ApprovalEnhanced | null>(null);
@@ -294,8 +305,42 @@ export default function ApprovalsPage() {
       // Filtere Draft-Status heraus
       const filteredApprovals = allApprovals.filter(a => a.status !== 'draft');
       
+      // NEU: PDF-Versionen für alle Approvals laden
+      const approvalsWithPDF = await Promise.all(
+        filteredApprovals.map(async (approval) => {
+          try {
+            const pdfVersions = await pdfVersionsService.getVersionHistory(approval.campaignId);
+            const currentPdfVersion = await pdfVersionsService.getCurrentVersion(approval.campaignId);
+            
+            return {
+              ...approval,
+              pdfVersions,
+              currentPdfVersion,
+              hasPDF: !!currentPdfVersion,
+              pdfStatus: currentPdfVersion?.status || 'none'
+            } as EnhancedApprovalListView;
+          } catch (error) {
+            console.error(`Error loading PDF data for campaign ${approval.campaignId}:`, error);
+            return {
+              ...approval,
+              pdfVersions: [],
+              currentPdfVersion: null,
+              hasPDF: false,
+              pdfStatus: 'none'
+            } as EnhancedApprovalListView;
+          }
+        })
+      );
       
-      setApprovals(filteredApprovals);
+      // Filter nach PDF-Status anwenden
+      let finalApprovals = approvalsWithPDF;
+      if (selectedPdfStatus.length > 0) {
+        finalApprovals = approvalsWithPDF.filter(approval => 
+          selectedPdfStatus.includes(approval.pdfStatus)
+        );
+      }
+      
+      setApprovals(finalApprovals);
       
       // Lade Kunden für Filter
       const companies = await companiesEnhancedService.getAll(currentOrganization.id);
@@ -329,7 +374,7 @@ export default function ApprovalsPage() {
     if (currentOrganization) {
       loadApprovals();
     }
-  }, [currentOrganization, selectedStatus, selectedClients, selectedPriorities, showOverdueOnly, searchTerm]);
+  }, [currentOrganization, selectedStatus, selectedClients, selectedPriorities, selectedPdfStatus, showOverdueOnly, searchTerm]);
 
 
   const handleCopyLink = async (shareId: string) => {
@@ -339,6 +384,15 @@ export default function ApprovalsPage() {
       showAlert('success', 'Link kopiert', 'Der Freigabe-Link wurde in die Zwischenablage kopiert.');
     } catch (error) {
       showAlert('error', 'Fehler', 'Der Link konnte nicht kopiert werden.');
+    }
+  };
+
+  const handleCopyPDFLink = async (pdfUrl: string) => {
+    try {
+      await navigator.clipboard.writeText(pdfUrl);
+      showAlert('success', 'PDF-Link kopiert', 'Der PDF-Link wurde in die Zwischenablage kopiert.');
+    } catch (error) {
+      showAlert('error', 'Fehler', 'Der PDF-Link konnte nicht kopiert werden.');
     }
   };
 
@@ -400,6 +454,38 @@ export default function ApprovalsPage() {
     return <Badge color={priorityColorMap[option.color] || 'zinc'}>{option.label}</Badge>;
   };
 
+  const getPDFStatusColor = (status: string): 'green' | 'yellow' | 'red' | 'blue' | 'zinc' => {
+    switch (status) {
+      case 'approved':
+        return 'green';
+      case 'pending_customer':
+        return 'yellow';
+      case 'rejected':
+        return 'red';
+      case 'draft':
+        return 'blue';
+      default:
+        return 'zinc';
+    }
+  };
+
+  const getPDFStatusLabel = (status: string): string => {
+    switch (status) {
+      case 'approved':
+        return 'Freigegeben';
+      case 'pending_customer':
+        return 'Zur Freigabe';
+      case 'rejected':
+        return 'Abgelehnt';
+      case 'draft':
+        return 'Entwurf';
+      case 'none':
+        return 'Kein PDF';
+      default:
+        return status;
+    }
+  };
+
   const formatDate = (timestamp: any) => {
     if (!timestamp || !timestamp.toDate) return '—';
     const date = timestamp.toDate();
@@ -444,7 +530,20 @@ export default function ApprovalsPage() {
     const approved = approvals.filter(a => a.status === 'approved' || a.status === 'completed').length;
     const overdue = approvals.filter(a => a.isOverdue).length;
     
-    return { pending, changesRequested, approved, overdue };
+    // NEU: PDF-Stats
+    const withPDF = approvals.filter(a => a.hasPDF).length;
+    const pdfPending = approvals.filter(a => a.pdfStatus === 'pending_customer').length;
+    const pdfApproved = approvals.filter(a => a.pdfStatus === 'approved').length;
+    
+    return { 
+      pending, 
+      changesRequested, 
+      approved, 
+      overdue,
+      withPDF,
+      pdfPending,
+      pdfApproved
+    };
   }, [approvals]);
 
   const statusOptions = Object.entries(APPROVAL_STATUS_CONFIG).map(([value, config]) => ({
@@ -452,7 +551,7 @@ export default function ApprovalsPage() {
     label: config.label
   }));
 
-  const activeFiltersCount = selectedStatus.length + selectedClients.length + selectedPriorities.length + (showOverdueOnly ? 1 : 0);
+  const activeFiltersCount = selectedStatus.length + selectedClients.length + selectedPriorities.length + selectedPdfStatus.length + (showOverdueOnly ? 1 : 0);
 
   if (loading) {
     return (
@@ -497,7 +596,7 @@ export default function ApprovalsPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4 mb-6">
         <div className="rounded-lg p-4" style={{backgroundColor: '#f1f0e2'}}>
           <div className="flex items-center gap-3">
             <div className="flex-shrink-0">
@@ -553,6 +652,49 @@ export default function ApprovalsPage() {
             </div>
           </div>
         </div>
+        
+        {/* Neue PDF-Stats */}
+        <div className="rounded-lg p-4" style={{backgroundColor: '#f1f0e2'}}>
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0">
+              <DocumentTextIcon className="h-5 w-5 text-gray-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
+                {stats.withPDF}
+              </div>
+              <Badge color="blue">Mit PDF</Badge>
+            </div>
+          </div>
+        </div>
+        
+        <div className="rounded-lg p-4" style={{backgroundColor: '#f1f0e2'}}>
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0">
+              <ClockIcon className="h-5 w-5 text-gray-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
+                {stats.pdfPending}
+              </div>
+              <Badge color="yellow">PDF ausstehend</Badge>
+            </div>
+          </div>
+        </div>
+        
+        <div className="rounded-lg p-4" style={{backgroundColor: '#f1f0e2'}}>
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0">
+              <CheckCircleIcon className="h-5 w-5 text-gray-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
+                {stats.pdfApproved}
+              </div>
+              <Badge color="green">PDF freigegeben</Badge>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Toolbar */}
@@ -604,6 +746,7 @@ export default function ApprovalsPage() {
                           setSelectedStatus([]);
                           setSelectedClients([]);
                           setSelectedPriorities([]);
+                          setSelectedPdfStatus([]);
                           setShowOverdueOnly(false);
                         }}
                         className="text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
@@ -700,6 +843,45 @@ export default function ApprovalsPage() {
                                   ? [...selectedPriorities, option.value]
                                   : selectedPriorities.filter(v => v !== option.value);
                                 setSelectedPriorities(newValues);
+                              }}
+                              className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
+                            />
+                            <span className="text-sm text-zinc-700 dark:text-zinc-300">
+                              {option.label}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* PDF Status Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                      PDF-Status
+                    </label>
+                    <div className="space-y-2">
+                      {[
+                        { value: 'none', label: 'Kein PDF' },
+                        { value: 'draft', label: 'PDF Entwurf' },
+                        { value: 'pending_customer', label: 'PDF zur Freigabe' },
+                        { value: 'approved', label: 'PDF freigegeben' },
+                        { value: 'rejected', label: 'PDF abgelehnt' }
+                      ].map((option) => {
+                        const isChecked = selectedPdfStatus.includes(option.value);
+                        return (
+                          <label
+                            key={option.value}
+                            className="flex items-center gap-2 cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={(e) => {
+                                const newValues = e.target.checked
+                                  ? [...selectedPdfStatus, option.value]
+                                  : selectedPdfStatus.filter(v => v !== option.value);
+                                setSelectedPdfStatus(newValues);
                               }}
                               className="h-4 w-4 rounded border-zinc-300 text-primary focus:ring-primary"
                             />
@@ -809,6 +991,17 @@ export default function ApprovalsPage() {
                         {approval.isOverdue && (
                           <Badge color="red" className="text-xs">Überfällig</Badge>
                         )}
+                        
+                        {/* NEU: PDF-Status-Badge */}
+                        {approval.hasPDF && (
+                          <Badge 
+                            color={getPDFStatusColor(approval.pdfStatus)} 
+                            className="text-xs flex items-center gap-1"
+                          >
+                            <DocumentIcon className="h-3 w-3" />
+                            PDF {approval.currentPdfVersion?.version}
+                          </Badge>
+                        )}
                       </div>
                     </div>
 
@@ -872,6 +1065,26 @@ export default function ApprovalsPage() {
                             <LinkIcon className="h-4 w-4" />
                             Link kopieren
                           </DropdownItem>
+                          
+                          {/* NEU: PDF-Actions wenn vorhanden */}
+                          {approval.hasPDF && approval.currentPdfVersion && (
+                            <>
+                              <DropdownDivider />
+                              <DropdownItem 
+                                onClick={() => window.open(approval.currentPdfVersion!.downloadUrl, '_blank')}
+                              >
+                                <DocumentTextIcon className="h-4 w-4" />
+                                PDF öffnen (V{approval.currentPdfVersion.version})
+                              </DropdownItem>
+                              <DropdownItem 
+                                onClick={() => handleCopyPDFLink(approval.currentPdfVersion!.downloadUrl)}
+                              >
+                                <LinkIcon className="h-4 w-4" />
+                                PDF-Link kopieren
+                              </DropdownItem>
+                            </>
+                          )}
+                          
                           <DropdownDivider />
                           <DropdownItem 
                             href={`/dashboard/pr-tools/campaigns/campaigns/${approval.campaignId}`}

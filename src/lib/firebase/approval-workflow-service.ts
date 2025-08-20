@@ -11,7 +11,7 @@ import {
   Timestamp,
   writeBatch
 } from 'firebase/firestore';
-import { db } from './config';
+import { db } from './client-init';
 import { 
   EnhancedApprovalData,
   ApprovalWorkflow,
@@ -22,6 +22,8 @@ import {
 } from '@/types/approvals-enhanced';
 import { teamApprovalService } from './team-approval-service';
 import { nanoid } from 'nanoid';
+// Import für PDF-Integration
+import { pdfVersionsService } from './pdf-versions-service';
 
 export const approvalWorkflowService = {
   /**
@@ -123,11 +125,11 @@ export const approvalWorkflowService = {
               }
             }
           } catch (error) {
-            lastError = error as Error;
+            // Error handling
             console.error(`❌ Fehler bei Campaign Update (Versuch ${retryCount + 1}):`, error);
             
             if (retryCount >= maxRetries - 1) {
-              throw lastError;
+              throw error;
             }
             
             // Warte bei Fehlern ebenfalls mit Backoff
@@ -202,6 +204,16 @@ export const approvalWorkflowService = {
 
       console.log('✅ Team-Approval gestartet mit', approvalIds.length, 'Approvern');
 
+      // PDF-Integration: Erstelle PDF für Team-Freigabe
+      if (workflow.campaignId) {
+        try {
+          await this.syncWorkflowWithPDFStatus(workflowId, 'pending_team', 'Team-Freigabe gestartet');
+        } catch (pdfError) {
+          console.warn('⚠️ PDF-Sync Fehler bei Team-Approval Start:', pdfError);
+          // Fahre ohne PDF-Integration fort
+        }
+      }
+
       // Sende Benachrichtigungen
       await teamApprovalService.notifyTeamMembers(
         approvalIds,
@@ -247,6 +259,15 @@ export const approvalWorkflowService = {
 
       console.log('✅ Customer-Approval gestartet für:', workflow.customerSettings.contact.email);
 
+      // PDF-Integration: Update PDF-Status für Customer-Freigabe
+      if (workflow.campaignId) {
+        try {
+          await this.syncWorkflowWithPDFStatus(workflowId, 'pending_customer', 'Kunden-Freigabe gestartet');
+        } catch (pdfError) {
+          console.warn('⚠️ PDF-Sync Fehler bei Customer-Approval Start:', pdfError);
+        }
+      }
+
       // TODO: Send customer notification email
       // await this.sendCustomerNotification(workflow);
     } catch (error) {
@@ -268,6 +289,9 @@ export const approvalWorkflowService = {
       const workflow = workflowDoc.data() as ApprovalWorkflow;
 
       if (stage === 'team') {
+        // PDF-Integration: Team-Stufe approved
+        await this.syncWorkflowWithPDFStatus(workflowId, 'team_approved', 'Team-Freigabe abgeschlossen');
+        
         // Team-Stufe abgeschlossen - prüfe ob Customer-Approval folgt
         if (workflow.customerSettings.required) {
           await this.startCustomerApproval(workflowId);
@@ -276,6 +300,9 @@ export const approvalWorkflowService = {
           await this.completeWorkflow(workflowId, 'approved');
         }
       } else if (stage === 'customer') {
+        // PDF-Integration: Customer-Stufe approved
+        await this.syncWorkflowWithPDFStatus(workflowId, 'customer_approved', 'Kunden-Freigabe abgeschlossen');
+        
         // Customer-Stufe abgeschlossen - Workflow ist komplett
         await this.completeWorkflow(workflowId, 'approved');
       }
@@ -307,6 +334,12 @@ export const approvalWorkflowService = {
         await updateDoc(campaignRef, {
           status: finalStatus === 'approved' ? 'approved' : 'changes_requested'
         });
+      }
+
+      // PDF-Integration: Workflow final abgeschlossen
+      const workflowDoc = await getDoc(doc(db, 'approval_workflows', workflowId));
+      if (workflowDoc.exists()) {
+        await this.syncWorkflowWithPDFStatus(workflowId, finalStatus === 'approved' ? 'workflow_approved' : 'workflow_rejected', `Workflow ${finalStatus}`);
       }
 
       console.log(`✅ Workflow abgeschlossen: ${finalStatus}`);
@@ -397,6 +430,139 @@ export const approvalWorkflowService = {
     } catch (error) {
       console.error('❌ Fehler beim Versenden der Workflow-Benachrichtigungen:', error);
       // Don't throw - notifications are not critical
+    }
+  },
+
+  /**
+   * Synchronisiert Workflow-Status mit PDF-Versionierung
+   * KERN-INTEGRATION zwischen Approval-System und PDF-Versionen
+   */
+  async syncWorkflowWithPDFStatus(
+    workflowId: string,
+    approvalStatus: string,
+    context: string = ''
+  ): Promise<void> {
+    try {
+      console.log(`🔄 PDF-Sync: Workflow ${workflowId} → ${approvalStatus}`);
+      
+      // 1. Lade Workflow-Daten
+      const workflow = await this.getWorkflow(workflowId);
+      if (!workflow || !workflow.campaignId) {
+        console.warn('⚠️ PDF-Sync: Workflow oder Campaign nicht gefunden');
+        return;
+      }
+
+      // 2. Bestimme PDF-Status basierend auf Approval-Status
+      let pdfStatus: 'draft' | 'pending_customer' | 'approved' | 'rejected';
+      let editLockReason: string | null = null;
+
+      switch (approvalStatus) {
+        case 'pending_team':
+          pdfStatus = 'pending_customer'; // Team-Approval wird intern behandelt
+          editLockReason = 'pending_team_approval';
+          break;
+        case 'team_approved':
+          // Wenn Customer-Approval folgt, bleibt PDF pending_customer
+          pdfStatus = workflow.customerSettings.required ? 'pending_customer' : 'approved';
+          editLockReason = workflow.customerSettings.required ? 'pending_customer_approval' : null;
+          break;
+        case 'pending_customer':
+          pdfStatus = 'pending_customer';
+          editLockReason = 'pending_customer_approval';
+          break;
+        case 'customer_approved':
+          pdfStatus = 'approved';
+          editLockReason = null; // Edit-Lock aufheben
+          break;
+        case 'workflow_approved':
+          pdfStatus = 'approved';
+          editLockReason = null;
+          break;
+        case 'workflow_rejected':
+          pdfStatus = 'rejected';
+          editLockReason = null; // Edit-Lock aufheben für Überarbeitung
+          break;
+        default:
+          console.warn(`⚠️ Unbekannter Approval-Status: ${approvalStatus}`);
+          return;
+      }
+
+      // 3. Update PDF-Version Status
+      const currentPDFVersion = await pdfVersionsService.getCurrentVersion(workflow.campaignId);
+      if (currentPDFVersion?.id) {
+        await pdfVersionsService.updateVersionStatus(
+          currentPDFVersion.id,
+          pdfStatus
+        );
+        console.log(`✅ PDF-Status aktualisiert: ${currentPDFVersion.id} → ${pdfStatus}`);
+      } else {
+        console.warn('⚠️ Keine aktuelle PDF-Version für Campaign gefunden');
+      }
+
+      // 4. Edit-Lock Management
+      if (editLockReason) {
+        // Aktiviere/Update Edit-Lock
+        await pdfVersionsService.lockCampaignEditing(workflow.campaignId, editLockReason);
+        console.log(`🔒 Edit-Lock aktiviert: ${workflow.campaignId} (${editLockReason})`);
+      } else {
+        // Entferne Edit-Lock
+        await pdfVersionsService.unlockCampaignEditing(workflow.campaignId);
+        console.log(`🔓 Edit-Lock entfernt: ${workflow.campaignId}`);
+      }
+
+      console.log(`✅ PDF-Sync abgeschlossen: ${workflowId} (${context})`);
+
+    } catch (error) {
+      console.error('❌ Fehler bei Workflow→PDF Synchronisation:', error);
+      // Nicht weiterwerfen - PDF-Sync ist nicht kritisch für Workflow-Funktionalität
+    }
+  },
+
+  /**
+   * CALLBACK-METHODE: Wird von PDF-Service aufgerufen bei Status-Updates
+   */
+  async handlePDFStatusUpdate(
+    campaignId: string,
+    pdfVersionId: string,
+    newStatus: string,
+    metadata?: any
+  ): Promise<void> {
+    try {
+      console.log(`🔄 PDF→Workflow Callback: ${campaignId} → ${newStatus}`);
+      
+      // Finde aktive Workflows für diese Campaign
+      const workflows = await this.getWorkflowsByOrganization(metadata?.organizationId || 'unknown');
+      const activeWorkflow = workflows.find(w => 
+        w.campaignId === campaignId && 
+        w.currentStage !== 'completed'
+      );
+
+      if (!activeWorkflow) {
+        console.warn('⚠️ Kein aktiver Workflow für PDF-Update gefunden');
+        return;
+      }
+
+      // Bestimme Workflow-Aktion basierend auf PDF-Status
+      switch (newStatus) {
+        case 'approved':
+          // PDF wurde approved - komplette Workflow wenn möglich
+          if (activeWorkflow.currentStage === 'customer') {
+            await this.processStageCompletion(activeWorkflow.id!, 'customer');
+          }
+          break;
+        case 'rejected':
+          // PDF wurde rejected - markiere Workflow als requiring changes
+          await this.completeWorkflow(activeWorkflow.id!, 'rejected');
+          break;
+        default:
+          console.log(`ℹ️ PDF-Status "${newStatus}" erfordert keine Workflow-Aktion`);
+      }
+
+      console.log(`✅ PDF→Workflow Callback abgeschlossen`);
+
+    } catch (error) {
+      console.error('❌ Fehler bei PDF→Workflow Callback:', error);
+      // Nicht weiterwerfen - Callback-Fehler sollen PDF-Operations nicht blockieren
     }
   }
 };

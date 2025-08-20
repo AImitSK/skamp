@@ -25,8 +25,8 @@ import { InfoTooltip } from '@/components/InfoTooltip';
 import { PRSEOHeaderBar } from '@/components/campaigns/PRSEOHeaderBar';
 import { HeadlineGenerator } from '@/components/pr/ai/HeadlineGenerator';
 
-// Dynamic import für html2pdf to avoid SSR issues
-const loadHtml2Pdf = () => import('html2pdf.js');
+// PDF-Generation jetzt über Puppeteer API Route (html2pdf entfernt)
+// const loadHtml2Pdf = () => import('html2pdf.js');
 
 // Success/Error Alert Component
 function AlertMessage({ 
@@ -352,76 +352,12 @@ export default function CampaignContentComposer({
     composeFullContent();
   }, [boilerplateSections, title, clientName, onFullContentChange]);
 
-  // Generate PDF
+  // PDF-Generation jetzt über Puppeteer API Route in pdf-versions-service
+  // Diese lokale PDF-Generation wird nicht mehr verwendet
   const generatePdf = async (targetFolderId?: string) => {
-    if (!previewRef.current || !title) return;
-    
-    setGeneratingPdf(true);
-    try {
-      // Dynamically import html2pdf
-      const html2pdfModule = await loadHtml2Pdf();
-      const html2pdf = html2pdfModule.default;
-
-      // PDF Options mit besseren Margins
-      const opt = {
-        margin: [15, 15, 20, 15], // top, left, bottom, right
-        filename: `Pressemitteilung_${title.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-          scale: 2,
-          useCORS: true,
-          letterRendering: true,
-          scrollY: 0,
-          windowHeight: previewRef.current.scrollHeight + 50
-        },
-        jsPDF: { 
-          unit: 'mm', 
-          format: 'a4', 
-          orientation: 'portrait' 
-        },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-      };
-
-      // Generate PDF Blob
-      const pdfBlob = await html2pdf()
-        .from(previewRef.current)
-        .set(opt)
-        .outputPdf('blob');
-
-      // Create File object
-      const pdfFile = new File([pdfBlob], opt.filename, { type: 'application/pdf' });
-
-      // Upload to Media Center
-      const uploadedAsset = await mediaService.uploadMedia(
-        pdfFile,
-        organizationId,
-        targetFolderId,
-        undefined // No progress callback needed
-      );
-
-      // Set clientId if available
-      if (clientId && uploadedAsset.id) {
-        await mediaService.updateAsset(uploadedAsset.id, { clientId });
-      }
-
-      setPdfDownloadUrl(uploadedAsset.downloadUrl);
-      
-      // Success message
-      setAlertMessage({
-        type: 'success',
-        message: 'PDF wurde erfolgreich erstellt und im Mediacenter gespeichert!'
-      });
-      
-    } catch (error) {
-      console.error('Fehler beim PDF-Export:', error);
-      setAlertMessage({
-        type: 'error',
-        message: 'Fehler beim Erstellen des PDFs. Bitte versuchen Sie es erneut.'
-      });
-    } finally {
-      setGeneratingPdf(false);
-      setShowFolderSelector(false);
-    }
+    console.warn('⚠️ Direkte PDF-Generation nicht mehr unterstützt. Verwende pdf-versions-service.');
+    setGeneratingPdf(false);
+    return;
   };
 
   const handlePdfExport = () => {

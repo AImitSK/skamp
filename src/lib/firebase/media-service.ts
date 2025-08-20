@@ -16,6 +16,7 @@ import {
 import {
   ref,
   uploadBytesResumable,
+  uploadBytes,
   getDownloadURL,
   deleteObject,
 } from 'firebase/storage';
@@ -763,6 +764,60 @@ export const mediaService = {
     } catch (error) {
       console.error("❌ Fehler beim Initialisieren des Uploads:", error);
       throw error;
+    }
+  },
+
+  /**
+   * Neue Methode: Upload Buffer für PDF-Generation
+   * Lädt einen Buffer (z.B. PDF-Daten) direkt zu Firebase Storage hoch
+   */
+  async uploadBuffer(
+    buffer: Buffer,
+    fileName: string,
+    contentType: string,
+    organizationId: string,
+    folder: string = 'uploads',
+    context?: { userId?: string; clientId?: string }
+  ): Promise<{ downloadUrl: string; filePath: string; fileSize: number }> {
+    try {
+      console.log('📤 Starting buffer upload:', fileName, 'Size:', buffer.length);
+      
+      // Cleaner Dateiname für Firebase Storage
+      const cleanFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const timestamp = Date.now();
+      const filePath = `organizations/${organizationId}/${folder}/${timestamp}_${cleanFileName}`;
+      
+      console.log('🗂️ Buffer upload path:', filePath);
+      
+      const storageRef = ref(storage, filePath);
+
+      // Upload Buffer mit Metadaten
+      const metadata = {
+        contentType,
+        customMetadata: {
+          'Access-Control-Allow-Origin': '*',
+          uploadedAt: new Date().toISOString(),
+          organizationId,
+          ...(context?.userId && { createdBy: context.userId }),
+          ...(context?.clientId && { clientId: context.clientId })
+        }
+      };
+
+      // Upload bytes direkt (nicht resumable für Buffer)
+      const snapshot = await uploadBytes(storageRef, buffer, metadata);
+      const downloadUrl = await getDownloadURL(snapshot.ref);
+
+      console.log('✅ Buffer upload completed, URL obtained');
+
+      return {
+        downloadUrl,
+        filePath,
+        fileSize: buffer.length
+      };
+
+    } catch (error) {
+      console.error('❌ Fehler beim Buffer-Upload:', error);
+      throw new Error(`Buffer-Upload fehlgeschlagen: ${error}`);
     }
   },
 

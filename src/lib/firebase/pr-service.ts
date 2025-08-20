@@ -1372,5 +1372,75 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
       default:
         return 'pending';
     }
+  },
+
+  /**
+   * *** NEUE STEP 3 INTEGRATION ***
+   * Enhanced Campaign-Speicherung mit PDF-Approval Integration
+   * KERN-ENTRY-POINT für Step 3 → PDF-Workflow → Edit-Lock
+   */
+  async saveCampaignWithApprovalIntegration(
+    campaignData: Partial<PRCampaign>,
+    approvalData: any, // EnhancedApprovalData import would cause circular dependency
+    context: {
+      userId: string;
+      organizationId: string;
+      isNewCampaign: boolean;
+    }
+  ): Promise<{
+    campaignId: string;
+    workflowId?: string;
+    pdfVersionId?: string;
+    shareableLinks?: { team?: string; customer?: string };
+  }> {
+    try {
+      console.log('🚀 Enhanced Campaign-Speicherung mit PDF-Workflow gestartet');
+      
+      // 1. Speichere Campaign (bestehende Logik)
+      let campaignId: string;
+      
+      if (context.isNewCampaign) {
+        campaignId = await this.create({
+          ...campaignData,
+          userId: context.userId,
+          organizationId: context.organizationId,
+          status: 'draft',
+          approvalRequired: approvalData.teamApprovalRequired || approvalData.customerApprovalRequired,
+          approvalData: (approvalData.teamApprovalRequired || approvalData.customerApprovalRequired) 
+            ? approvalData 
+            : undefined
+        } as PRCampaign);
+      } else {
+        await this.update(campaignData.id!, {
+          ...campaignData,
+          approvalRequired: approvalData.teamApprovalRequired || approvalData.customerApprovalRequired,
+          approvalData: (approvalData.teamApprovalRequired || approvalData.customerApprovalRequired) 
+            ? approvalData 
+            : undefined,
+          updatedAt: Timestamp.now()
+        });
+        campaignId = campaignData.id!;
+      }
+
+      // 2. PDF-WORKFLOW Integration (nur wenn Approval erforderlich)
+      if (approvalData.teamApprovalRequired || approvalData.customerApprovalRequired) {
+        
+        // Dynamic import um circular dependencies zu vermeiden
+        const { pdfApprovalBridgeService } = await import('./pdf-approval-bridge-service');
+        
+        return await pdfApprovalBridgeService.saveCampaignWithApprovalIntegration(
+          { ...campaignData, id: campaignId },
+          approvalData,
+          context
+        );
+      }
+
+      console.log('✅ Standard Campaign-Speicherung abgeschlossen: Kein PDF-Workflow');
+      return { campaignId };
+
+    } catch (error) {
+      console.error('❌ Fehler bei Enhanced Campaign-Speicherung:', error);
+      throw error;
+    }
   }
 };

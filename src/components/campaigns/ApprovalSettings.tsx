@@ -22,17 +22,32 @@ import {
   ClockIcon,
   CheckCircleIcon,
   ArrowRightIcon,
-  InformationCircleIcon
+  InformationCircleIcon,
+  DocumentTextIcon,
+  LockClosedIcon,
+  LinkIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
+
+interface ExtendedApprovalSettingsProps extends ApprovalSettingsProps {
+  // PDF-Workflow Integration Props
+  campaignId?: string;
+  showPDFIntegrationPreview?: boolean;
+  onPDFWorkflowToggle?: (enabled: boolean) => void;
+}
 
 export function ApprovalSettings({
   value,
   onChange,
   organizationId,
   clientId,
-  clientName
-}: ApprovalSettingsProps) {
+  clientName,
+  // Neue PDF-Integration Props
+  campaignId,
+  showPDFIntegrationPreview = true,
+  onPDFWorkflowToggle
+}: ExtendedApprovalSettingsProps) {
   // Ensure we have valid enhanced approval data
   const [localData, setLocalData] = useState<EnhancedApprovalData>(() => {
     if (!value.teamApprovalRequired && !value.customerApprovalRequired) {
@@ -46,6 +61,9 @@ export function ApprovalSettings({
   
   // TeamMembers für Name-Lookup
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  
+  // PDF-Workflow State
+  const [pdfWorkflowEnabled, setPdfWorkflowEnabled] = useState(false);
 
   // Lade TeamMembers
   useEffect(() => {
@@ -80,6 +98,9 @@ export function ApprovalSettings({
       // Reset current stage if disabling team approval
       currentStage: enabled ? 'team' : (localData.customerApprovalRequired ? 'customer' : 'team')
     });
+    
+    // PDF-Workflow Notification
+    updatePDFWorkflowStatus(enabled || localData.customerApprovalRequired);
   };
 
   const handleCustomerApprovalToggle = (enabled: boolean) => {
@@ -88,6 +109,17 @@ export function ApprovalSettings({
       // If only customer approval is enabled, start with customer stage
       currentStage: (!localData.teamApprovalRequired && enabled) ? 'customer' : localData.currentStage
     });
+    
+    // PDF-Workflow Notification
+    updatePDFWorkflowStatus(localData.teamApprovalRequired || enabled);
+  };
+
+  // PDF-Workflow Status Update Handler
+  const updatePDFWorkflowStatus = (hasPDFWorkflow: boolean) => {
+    if (hasPDFWorkflow !== pdfWorkflowEnabled) {
+      setPdfWorkflowEnabled(hasPDFWorkflow);
+      onPDFWorkflowToggle?.(hasPDFWorkflow);
+    }
   };
 
   const handleTeamMembersChange = (memberIds: string[]) => {
@@ -166,6 +198,52 @@ export function ApprovalSettings({
         </Text>
       </div>
 
+      {/* PDF-WORKFLOW INTEGRATION PREVIEW */}
+      {showPDFIntegrationPreview && (pdfWorkflowEnabled || localData.teamApprovalRequired || localData.customerApprovalRequired) && (
+        <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
+          <div className="flex items-start">
+            <DocumentTextIcon className="h-5 w-5 text-blue-500 mr-3 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h4 className="text-sm font-medium text-blue-900 mb-2">
+                📄 PDF-Workflow Integration aktiviert
+              </h4>
+              <div className="space-y-2 text-sm text-blue-800">
+                <div className="flex items-center gap-2">
+                  <CheckCircleIcon className="h-4 w-4 text-blue-600" />
+                  <span>PDF wird automatisch für Freigabe generiert</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <LockClosedIcon className="h-4 w-4 text-blue-600" />
+                  <span>Kampagne wird zur Bearbeitung gesperrt</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <LinkIcon className="h-4 w-4 text-blue-600" />
+                  <span>Freigabe-Links werden automatisch erstellt</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <ArrowPathIcon className="h-4 w-4 text-blue-600" />
+                  <span>Status-Synchronisation PDF ↔ Approval</span>
+                </div>
+              </div>
+              
+              {/* WORKFLOW-STEPS PREVIEW */}
+              <div className="mt-3 p-3 bg-white bg-opacity-60 rounded border border-blue-300">
+                <Text className="text-xs font-medium text-blue-900 mb-2">
+                  Automatischer Ablauf nach dem Speichern:
+                </Text>
+                <div className="space-y-1 text-xs text-blue-700">
+                  <div>1. 📄 PDF-Version wird erstellt</div>
+                  <div>2. 🔒 Kampagne wird gesperrt</div>
+                  <div>3. 🔗 Freigabe-Links werden generiert</div>
+                  <div>4. 📧 Benachrichtigungen werden versendet</div>
+                  <div>5. 👀 Freigabe-Prozess startet</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Switch-Optionen */}
       <div className="space-y-6">
         {/* Team-Freigabe */}
@@ -176,6 +254,12 @@ export function ApprovalSettings({
             </h4>
             <Text className="text-sm text-gray-600 mt-1">
               Kampagne muss von ausgewählten Team-Mitgliedern freigegeben werden
+              {/* PDF-INTEGRATION HINT */}
+              {localData.teamApprovalRequired && (
+                <span className="block mt-1 text-xs text-blue-600">
+                  💡 PDF wird automatisch generiert und Team per Link benachrichtigt
+                </span>
+              )}
             </Text>
           </div>
           <SimpleSwitch
@@ -192,6 +276,22 @@ export function ApprovalSettings({
               onSelectionChange={handleTeamMembersChange}
               organizationId={organizationId}
             />
+            
+            {/* TEAM-LINK PREVIEW */}
+            {localData.teamApprovers.length > 0 && (
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <LinkIcon className="h-4 w-4 text-blue-600" />
+                  <Text className="text-sm font-medium text-blue-900">
+                    Team-Freigabe Link wird generiert
+                  </Text>
+                </div>
+                <Text className="text-xs text-blue-700">
+                  Nach dem Speichern erhalten alle {localData.teamApprovers.length} Team-Mitglieder 
+                  einen personalisierten Link zur internen Freigabe.
+                </Text>
+              </div>
+            )}
             
             {/* Team-Nachricht */}
             <Field>
@@ -217,6 +317,12 @@ export function ApprovalSettings({
             </h4>
             <Text className="text-sm text-gray-600 mt-1">
               Kampagne muss vom Kunden freigegeben werden
+              {/* PDF-INTEGRATION HINT */}
+              {localData.customerApprovalRequired && (
+                <span className="block mt-1 text-xs text-blue-600">
+                  💡 PDF wird automatisch generiert und Kunde per Link benachrichtigt
+                </span>
+              )}
             </Text>
           </div>
           <SimpleSwitch
@@ -229,11 +335,29 @@ export function ApprovalSettings({
         {localData.customerApprovalRequired && (
           <div className="ml-6 space-y-4">
             {clientId ? (
-              <CustomerContactSelector
-                selectedContact={localData.customerContact?.contactId}
-                onContactChange={handleCustomerContactChange}
-                clientId={clientId}
-              />
+              <>
+                <CustomerContactSelector
+                  selectedContact={localData.customerContact?.contactId}
+                  onContactChange={handleCustomerContactChange}
+                  clientId={clientId}
+                />
+                
+                {/* CUSTOMER-LINK PREVIEW */}
+                {localData.customerContact && (
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <LinkIcon className="h-4 w-4 text-green-600" />
+                      <Text className="text-sm font-medium text-green-900">
+                        Kunden-Freigabe Link wird generiert
+                      </Text>
+                    </div>
+                    <Text className="text-xs text-green-700">
+                      {localData.customerContact.name} ({localData.customerContact.email}) erhält 
+                      einen sicheren Link zur Freigabe der PDF-Version.
+                    </Text>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
                 <div className="flex">
@@ -269,7 +393,7 @@ export function ApprovalSettings({
             <ClockIcon className="h-5 w-5 text-blue-400 mr-3 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <h4 className="text-sm font-medium text-blue-900 mb-2">
-                Freigabe-Workflow Vorschau
+                🔄 Vollständiger Freigabe-Workflow Vorschau
               </h4>
               
               {workflowStages.length > 0 ? (
@@ -305,6 +429,31 @@ export function ApprovalSettings({
                     <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                       <CheckCircleIcon className="h-3 w-3" />
                       Versand freigegeben
+                    </div>
+                  </div>
+                  
+                  {/* PDF-INTEGRATION STEPS */}
+                  <div className="mt-3 pt-3 border-t border-blue-300">
+                    <Text className="text-xs font-medium text-blue-900 mb-2">
+                      PDF-Integration Schritte:
+                    </Text>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="flex items-center gap-1 text-blue-700">
+                        <DocumentTextIcon className="h-3 w-3" />
+                        PDF generieren
+                      </div>
+                      <div className="flex items-center gap-1 text-blue-700">
+                        <LockClosedIcon className="h-3 w-3" />
+                        Edit-Lock aktivieren
+                      </div>
+                      <div className="flex items-center gap-1 text-blue-700">
+                        <LinkIcon className="h-3 w-3" />
+                        Links erstellen
+                      </div>
+                      <div className="flex items-center gap-1 text-blue-700">
+                        <ArrowPathIcon className="h-3 w-3" />
+                        Status-Sync starten
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>{{title}}</title>
+  <style>
+    :root {
+      --primary-color: #005fab;
+      --secondary-color: #004a8c;  
+      --text-color: #1f2937;
+      --light-gray: #f8fafc;
+      --accent-color: #3b82f6;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      color: var(--text-color);
+      margin: 0;
+      padding: 20mm;
+      background: white;
+      font-size: 11pt;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .header {
+      background: var(--primary-color);
+      color: white;
+      padding: 12px 20px;
+      margin: -20mm -20mm 20px -20mm;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 12pt;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+    }
+
+    .header .date {
+      font-size: 10pt;
+      font-weight: normal;
+    }
+
+    .key-visual-container {
+      margin: 15mm 0;
+      text-align: center;
+      page-break-inside: avoid;
+    }
+
+    .key-visual {
+      max-width: 100%;
+      height: auto;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .key-visual-caption {
+      margin-top: 8px;
+      font-size: 9pt;
+      color: var(--secondary-color);
+      font-style: italic;
+    }
+
+    .title {
+      font-size: 24pt;
+      font-weight: bold;
+      color: var(--primary-color);
+      margin: 20mm 0 15mm 0;
+      line-height: 1.3;
+      page-break-after: avoid;
+    }
+
+    .main-content {
+      margin-bottom: 15mm;
+      font-size: 11pt;
+      line-height: 1.7;
+      text-align: justify;
+    }
+
+    .main-content p {
+      margin: 0 0 12pt 0;
+    }
+
+    .main-content h1 {
+      font-size: 18pt;
+      color: var(--primary-color);
+      margin: 20pt 0 10pt 0;
+      font-weight: bold;
+    }
+
+    .main-content h2 {
+      font-size: 14pt;
+      color: var(--primary-color);
+      margin: 16pt 0 8pt 0;
+      font-weight: bold;
+    }
+
+    .main-content h3 {
+      font-size: 12pt;
+      color: var(--secondary-color);
+      margin: 12pt 0 6pt 0;
+      font-weight: bold;
+    }
+
+    .main-content strong, .main-content b {
+      font-weight: bold;
+    }
+
+    .main-content em, .main-content i {
+      font-style: italic;
+    }
+
+    .main-content blockquote {
+      border-left: 4px solid var(--accent-color);
+      padding-left: 15px;
+      margin: 12pt 0;
+      font-style: italic;
+      color: var(--secondary-color);
+    }
+
+    .main-content ul, .main-content ol {
+      margin: 12pt 0;
+      padding-left: 20pt;
+    }
+
+    .main-content li {
+      margin: 6pt 0;
+    }
+
+    .boilerplate-sections {
+      margin-top: 20mm;
+    }
+
+    .boilerplate-section {
+      border-left: 4px solid var(--primary-color);
+      background: var(--light-gray);
+      padding: 12px 16px;
+      margin: 12px 0;
+      border-radius: 0 6px 6px 0;
+      page-break-inside: avoid;
+    }
+
+    .boilerplate-section h3 {
+      color: var(--primary-color);
+      font-size: 12pt;
+      font-weight: bold;
+      margin: 0 0 8px 0;
+    }
+
+    .boilerplate-section .content {
+      font-size: 10pt;
+      line-height: 1.6;
+    }
+
+    .boilerplate-section .content p {
+      margin: 0 0 8pt 0;
+    }
+
+    .boilerplate-section .content strong, 
+    .boilerplate-section .content b {
+      font-weight: bold;
+    }
+
+    .boilerplate-section .content em, 
+    .boilerplate-section .content i {
+      font-style: italic;
+    }
+
+    .separator {
+      border-top: 1px solid var(--accent-color);
+      width: 30%;
+      margin: 15mm 0;
+    }
+
+    .footer {
+      position: fixed;
+      bottom: 15mm;
+      left: 20mm;
+      right: 20mm;
+      text-align: center;
+      font-size: 9pt;
+      color: #6b7280;
+      border-top: 1px solid #e5e7eb;
+      padding-top: 5mm;
+    }
+
+    .footer .page-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer .company-name {
+      font-weight: 500;
+    }
+
+    /* Print-specific optimizations */
+    @media print {
+      .boilerplate-section {
+        break-inside: avoid;
+      }
+      
+      .key-visual-container {
+        break-inside: avoid;
+      }
+
+      .title {
+        break-after: avoid;
+      }
+
+      body {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+
+    @page {
+      margin: 20mm;
+      size: A4;
+      
+      @bottom-center {
+        content: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Corporate Header -->
+  <div class="header">
+    <h1>PRESSEMITTEILUNG</h1>
+    <span class="date">{{date}}</span>
+  </div>
+
+  <!-- Key Visual (falls vorhanden) -->
+  {{#keyVisual}}
+  <div class="key-visual-container">
+    <img src="{{url}}" alt="{{alt}}" class="key-visual" />
+    {{#caption}}<div class="key-visual-caption">{{caption}}</div>{{/caption}}
+  </div>
+  {{/keyVisual}}
+
+  <!-- Separator Line -->
+  <div class="separator"></div>
+
+  <!-- Haupttitel -->
+  <h1 class="title">{{title}}</h1>
+
+  <!-- Hauptinhalt -->
+  <div class="main-content">
+    {{{mainContent}}}
+  </div>
+
+  <!-- Textbausteine -->
+  {{#boilerplateSections}}
+  {{#boilerplateSections.length}}
+  <div class="boilerplate-sections">
+    {{#boilerplateSections}}
+    <div class="boilerplate-section">
+      {{#customTitle}}<h3>{{customTitle}}</h3>{{/customTitle}}
+      <div class="content">{{{content}}}</div>
+    </div>
+    {{/boilerplateSections}}
+  </div>
+  {{/boilerplateSections.length}}
+  {{/boilerplateSections}}
+
+  <!-- Footer wird durch CSS fixed positioniert -->
+  <div class="footer">
+    <div class="page-info">
+      <span class="page-number">Seite 1</span>
+      <span class="company-name">{{clientName}}</span>
+      <span class="timestamp">Erstellt am {{date}}</span>
+    </div>
+  </div>
+</body>
+</html>

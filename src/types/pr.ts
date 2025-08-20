@@ -43,6 +43,91 @@ export interface CampaignBoilerplateSection {
   };
 }
 
+// 🆕 EDIT-LOCK SYSTEM TYPES
+export type EditLockReason = 
+  | 'pending_customer_approval'    // Kunde prüft
+  | 'pending_team_approval'        // Team prüft intern
+  | 'approved_final'              // Final freigegeben
+  | 'system_processing'           // System verarbeitet
+  | 'manual_lock';               // Manuell gesperrt
+
+export interface UnlockRequest {
+  id: string;
+  requestedBy: string;
+  requestedAt: Timestamp;
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected';
+  approvedBy?: string;
+  approvedAt?: Timestamp;
+}
+
+export interface EditLockData {
+  isLocked: boolean;
+  reason?: EditLockReason;
+  lockedAt?: Timestamp;
+  unlockedAt?: Timestamp;
+  lockedBy?: {
+    userId: string;
+    displayName: string;
+    action: string; // z.B. "Freigabe angefordert"
+  };
+  unlockRequests?: UnlockRequest[];
+  canRequestUnlock?: boolean;
+}
+
+// 🆕 EDIT-LOCK CONFIG für UI-Komponenten
+export interface EditLockConfig {
+  label: string;
+  description: string;
+  color: 'yellow' | 'blue' | 'green' | 'red' | 'gray';
+  icon: string; // Icon-Name für Heroicons
+  canRequestUnlock: boolean;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+}
+
+export const EDIT_LOCK_CONFIG: Record<EditLockReason, EditLockConfig> = {
+  pending_customer_approval: {
+    label: 'Kunde prüft',
+    description: 'Diese Kampagne wartet auf Kunden-Freigabe',
+    color: 'yellow',
+    icon: 'ClockIcon',
+    canRequestUnlock: true,
+    severity: 'medium'
+  },
+  pending_team_approval: {
+    label: 'Team prüft',
+    description: 'Diese Kampagne wartet auf Team-Freigabe',
+    color: 'blue', 
+    icon: 'UserGroupIcon',
+    canRequestUnlock: true,
+    severity: 'low'
+  },
+  approved_final: {
+    label: 'Freigegeben',
+    description: 'Diese Kampagne ist final freigegeben',
+    color: 'green',
+    icon: 'CheckCircleIcon',
+    canRequestUnlock: true,
+    severity: 'high'
+  },
+  system_processing: {
+    label: 'System verarbeitet',
+    description: 'Das System verarbeitet diese Kampagne',
+    color: 'gray',
+    icon: 'CogIcon',
+    canRequestUnlock: false,
+    severity: 'medium'
+  },
+  manual_lock: {
+    label: 'Manuell gesperrt',
+    description: 'Diese Kampagne wurde manuell gesperrt',
+    color: 'red',
+    icon: 'LockClosedIcon',
+    canRequestUnlock: true,
+    severity: 'high'
+  }
+};
+
 // Key Visual Daten für Hero-Bilder
 export interface KeyVisualData {
   assetId?: string;  // Optional: Referenz zur Media Library
@@ -138,6 +223,28 @@ export interface PRCampaign {
   approvalData?: ApprovalData | EnhancedApprovalData; // Legacy + Enhanced Support
   // --- ENDE DER FREIGABE-FELDER ---
 
+  // 🆕 ENHANCED EDIT-LOCK SYSTEM
+  editLocked?: boolean;
+  editLockedReason?: EditLockReason;
+  lockedAt?: Timestamp;
+  unlockedAt?: Timestamp;
+  lockedBy?: {
+    userId: string;
+    displayName: string;
+    action: string;
+  };
+  unlockRequests?: UnlockRequest[];
+  lastUnlockedBy?: {
+    userId: string;
+    displayName: string;
+    reason: string;
+  };
+  lockMetadata?: Record<string, any>; // Für zusätzliche Lock-Informationen
+  
+  // 🆕 PDF-VERSIONIERUNG INTEGRATION
+  currentPdfVersion?: string; // ID der aktiven PDF-Version
+  lastPdfGeneratedAt?: Timestamp;
+
   // Timestamps
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
@@ -152,6 +259,189 @@ export interface PRCampaign {
     context?: any;
   };
 }
+
+// 🆕 PDF-VERSIONIERUNG TYPES
+export interface PDFVersion {
+  id?: string;
+  campaignId: string;
+  organizationId: string;
+  version: number;
+  createdAt: Timestamp;
+  createdBy: string;
+  
+  // Status-Management
+  status: 'draft' | 'pending_customer' | 'approved' | 'rejected';
+  approvalId?: string;
+  workflowId?: string;
+  
+  // Kunden-Freigabe Integration
+  customerApproval?: {
+    shareId: string;
+    customerContact?: string;
+    requestedAt?: Timestamp;
+    approvedAt?: Timestamp;
+  };
+  
+  // File-Information
+  downloadUrl: string;
+  fileName: string;
+  fileSize: number;
+  
+  // Content-Snapshot für Audit-Trail
+  contentSnapshot: {
+    title: string;
+    mainContent: string;
+    boilerplateSections: any[];
+    keyVisual?: any;
+    createdForApproval?: boolean;
+  };
+  
+  // Metadaten
+  metadata?: {
+    wordCount: number;
+    pageCount: number;
+    generationTimeMs: number;
+  };
+}
+
+// 🆕 CAMPAIGN-EDITOR ENHANCEMENT TYPES
+export interface CampaignEditContext {
+  isNewCampaign: boolean;
+  currentStep: number;
+  allowEditing: boolean;
+  editLockStatus: EditLockData;
+  hasUnsavedChanges: boolean;
+  lastSavedAt?: Timestamp;
+}
+
+export interface CampaignFormValidation {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+  canProceed: boolean;
+  canSave: boolean;
+}
+
+// 🆕 SERVICE-INTEGRATION TYPES
+export interface ServiceCallMetrics {
+  operationName: string;
+  startTime: number;
+  endTime?: number;
+  duration?: number;
+  success: boolean;
+  error?: string;
+}
+
+export interface CampaignServiceResult {
+  success: boolean;
+  campaignId?: string;
+  workflowId?: string;
+  pdfVersionId?: string;
+  shareableLinks?: {
+    team?: string;
+    customer?: string;
+  };
+  metrics?: ServiceCallMetrics[];
+  warnings?: string[];
+}
+
+// 🆕 UTILITY-FUNKTIONEN für Edit-Lock System
+export const EditLockUtils = {
+  /**
+   * Prüft ob Edit-Lock aktiv und User berechtigt ist
+   */
+  canUserEdit(campaign: PRCampaign, userId: string): boolean {
+    if (!campaign.editLocked) return true;
+    
+    // System-User kann immer bearbeiten
+    if (userId === 'system') return true;
+    
+    // Der User der den Lock gesetzt hat kann unter Umständen bearbeiten
+    if (campaign.lockedBy?.userId === userId && 
+        campaign.editLockedReason === 'manual_lock') {
+      return true;
+    }
+    
+    return false;
+  },
+
+  /**
+   * Bestimmt ob Unlock-Request möglich ist
+   */
+  canRequestUnlock(campaign: PRCampaign, userId: string): boolean {
+    if (!campaign.editLocked || !campaign.editLockedReason) return false;
+    
+    const config = EDIT_LOCK_CONFIG[campaign.editLockedReason];
+    if (!config?.canRequestUnlock) return false;
+    
+    // Prüfe ob bereits pending Request vorhanden
+    const hasPendingRequest = campaign.unlockRequests?.some(
+      req => req.requestedBy === userId && req.status === 'pending'
+    );
+    
+    return !hasPendingRequest;
+  },
+
+  /**
+   * Formatiert Edit-Lock Status für UI-Anzeige
+   */
+  formatLockStatus(campaign: PRCampaign): {
+    isLocked: boolean;
+    displayText: string;
+    color: string;
+    canEdit: boolean;
+  } {
+    if (!campaign.editLocked || !campaign.editLockedReason) {
+      return {
+        isLocked: false,
+        displayText: 'Bearbeitbar',
+        color: 'green',
+        canEdit: true
+      };
+    }
+    
+    const config = EDIT_LOCK_CONFIG[campaign.editLockedReason];
+    return {
+      isLocked: true,
+      displayText: config.label,
+      color: config.color,
+      canEdit: false
+    };
+  },
+
+  /**
+   * Extrahiert Performance-relevante Metriken
+   */
+  getPerformanceMetrics(operations: ServiceCallMetrics[]): {
+    totalTime: number;
+    slowestOperation: string;
+    averageTime: number;
+    operationCount: number;
+  } {
+    const completedOps = operations.filter(op => op.duration !== undefined);
+    
+    if (completedOps.length === 0) {
+      return {
+        totalTime: 0,
+        slowestOperation: 'none',
+        averageTime: 0,
+        operationCount: 0
+      };
+    }
+    
+    const totalTime = completedOps.reduce((sum, op) => sum + (op.duration || 0), 0);
+    const slowest = completedOps.reduce((prev, curr) => 
+      (curr.duration || 0) > (prev.duration || 0) ? curr : prev
+    );
+    
+    return {
+      totalTime,
+      slowestOperation: slowest.operationName,
+      averageTime: totalTime / completedOps.length,
+      operationCount: completedOps.length
+    };
+  }
+};
 
 export interface CampaignAssetAttachment {
   id: string;

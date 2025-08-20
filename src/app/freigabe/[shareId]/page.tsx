@@ -6,9 +6,11 @@ import { useParams } from "next/navigation";
 import { prService } from "@/lib/firebase/pr-service";
 import { mediaService } from "@/lib/firebase/media-service";
 import { brandingService } from "@/lib/firebase/branding-service";
+import { pdfVersionsService } from "@/lib/firebase/pdf-versions-service";
 import { PRCampaign, CampaignAssetAttachment } from "@/types/pr";
 import { MediaAsset, MediaFolder } from "@/types/media";
 import { BrandingSettings } from "@/types/branding";
+import { PDFVersion } from "@/lib/firebase/pdf-versions-service";
 import { 
   CheckCircleIcon,
   ExclamationCircleIcon,
@@ -66,6 +68,129 @@ const approvalStatusConfig = {
     description: 'Diese Pressemitteilung wurde von Ihnen freigegeben.'
   }
 };
+
+// NEU: Customer Message Banner Component
+function CustomerMessageBanner({ message }: { message: string }) {
+  if (!message) return null;
+  
+  return (
+    <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-6">
+      <div className="flex">
+        <InformationCircleIcon className="h-5 w-5 text-blue-400 mr-3 flex-shrink-0 mt-0.5" />
+        <div>
+          <h3 className="font-medium text-blue-900 mb-2">Nachricht zur Freigabe</h3>
+          <div 
+            className="text-blue-800 whitespace-pre-wrap"
+            dangerouslySetInnerHTML={{ __html: message }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// NEU: Customer PDF Version Card Component
+function CustomerPDFVersionCard({ 
+  version, 
+  campaignTitle 
+}: { 
+  version: PDFVersion; 
+  campaignTitle: string;
+}) {
+  const formatDate = (timestamp: any) => {
+    if (!timestamp) return '';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return date.toLocaleString('de-DE', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
+  const statusConfig = {
+    draft: { color: 'gray', label: 'Entwurf', icon: DocumentIcon },
+    pending_customer: { color: 'yellow', label: 'Zur Prüfung', icon: ClockIcon },
+    approved: { color: 'green', label: 'Freigegeben', icon: CheckCircleIcon },
+    rejected: { color: 'red', label: 'Abgelehnt', icon: ExclamationCircleIcon }
+  };
+  
+  const config = statusConfig[version.status] || statusConfig.draft;
+  const StatusIcon = config.icon;
+  
+  return (
+    <div className="bg-white rounded-lg border border-gray-200 mb-6">
+      <div className="border-b border-gray-200 px-6 py-4">
+        <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <DocumentTextIcon className="h-5 w-5 text-gray-400" />
+          PDF-Dokument zur Freigabe
+        </h2>
+      </div>
+      
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <StatusIcon className="h-8 w-8 text-gray-500" />
+            <div>
+              <h3 className="font-medium text-gray-900">
+                {campaignTitle} - Version {version.version}
+              </h3>
+              <div className="text-sm text-gray-600 mt-1">
+                Erstellt am {formatDate(version.createdAt)} • {formatFileSize(version.fileSize)}
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <Badge color={config.color} className="text-sm">
+              {config.label}
+            </Badge>
+          </div>
+        </div>
+        
+        {/* PDF Metadata */}
+        {version.metadata && (
+          <div className="text-sm text-gray-600 mb-4">
+            {version.metadata.wordCount} Wörter • {version.metadata.pageCount} Seiten
+          </div>
+        )}
+        
+        {/* Download Button */}
+        <div className="flex gap-3">
+          <a
+            href={version.downloadUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1"
+          >
+            <Button className="w-full bg-[#005fab] hover:bg-[#004a8c] text-white">
+              <DocumentIcon className="h-5 w-5 mr-2" />
+              PDF öffnen und prüfen
+            </Button>
+          </a>
+        </div>
+        
+        {/* Info Box */}
+        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex">
+            <InformationCircleIcon className="h-5 w-5 text-blue-400 mr-2 flex-shrink-0" />
+            <p className="text-sm text-blue-800">
+              Bitte prüfen Sie das PDF-Dokument sorgfältig. Ihre Freigabe bezieht sich auf diese 
+              spezifische Version der Pressemitteilung.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // NEU: Media Gallery Component
 function MediaGallery({ 
@@ -141,7 +266,7 @@ function MediaGallery({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+    <div className="bg-white rounded-lg border border-gray-200 mb-6">
       <div className="border-b border-gray-200 px-6 py-4">
         <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
           <PhotoIcon className="h-5 w-5 text-gray-400" />
@@ -186,7 +311,7 @@ function MediaGallery({
                 return (
                   <div 
                     key={asset.id}
-                    className="group relative bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+                    className="group relative bg-white rounded-lg border border-gray-200 overflow-hidden hover:bg-gray-50 transition-colors"
                   >
                     {/* Preview */}
                     <div className="aspect-square bg-gray-50 flex items-center justify-center">
@@ -259,6 +384,11 @@ export default function ApprovalPage() {
   const [feedbackText, setFeedbackText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [actionCompleted, setActionCompleted] = useState(false);
+  
+  // NEU: PDF-Integration State
+  const [pdfVersions, setPdfVersions] = useState<PDFVersion[]>([]);
+  const [currentPdfVersion, setCurrentPdfVersion] = useState<PDFVersion | null>(null);
+  const [customerMessage, setCustomerMessage] = useState<string>('');
 
   useEffect(() => {
     if (shareId) {
@@ -276,6 +406,34 @@ export default function ApprovalPage() {
       if (!campaignData) {
         setError('Freigabe-Link nicht gefunden oder nicht mehr gültig.');
         return;
+      }
+
+      // NEU: PDF-Versionen laden
+      if (campaignData.id) {
+        try {
+          const pdfVersions = await pdfVersionsService.getVersionHistory(campaignData.id);
+          const currentPdfVersion = await pdfVersionsService.getCurrentVersion(campaignData.id);
+          
+          setPdfVersions(pdfVersions);
+          setCurrentPdfVersion(currentPdfVersion);
+          
+          console.log('PDF-Versionen geladen:', { 
+            count: pdfVersions.length, 
+            current: currentPdfVersion?.version 
+          });
+        } catch (pdfError) {
+          console.error('Fehler beim Laden der PDF-Versionen:', pdfError);
+          // Nicht kritisch - fahre ohne PDF-Daten fort
+        }
+      }
+
+      // NEU: Customer Approval Settings laden falls vorhanden
+      if (campaignData.approvalData?.settingsSnapshot?.customerSettings) {
+        const customerSettings = campaignData.approvalData.settingsSnapshot.customerSettings;
+        if (customerSettings.message) {
+          setCustomerMessage(customerSettings.message);
+          console.log('Customer Approval Message geladen');
+        }
       }
 
       // Markiere als "viewed" wenn noch pending
@@ -312,6 +470,20 @@ export default function ApprovalPage() {
       setSubmitting(true);
       await prService.approveCampaign(shareId);
       
+      // NEU: PDF-Version Status aktualisieren
+      if (currentPdfVersion) {
+        try {
+          await pdfVersionsService.updateVersionStatus(
+            currentPdfVersion.id!, 
+            'approved'
+          );
+          console.log('PDF-Status auf approved aktualisiert');
+        } catch (pdfError) {
+          console.error('Fehler beim PDF-Status Update:', pdfError);
+          // Nicht kritisch - fahre fort
+        }
+      }
+      
       // Aktualisiere lokalen State
       setCampaign({
         ...campaign,
@@ -322,6 +494,14 @@ export default function ApprovalPage() {
           approvedAt: new Date() as any
         }
       });
+      
+      // Update PDF State lokal
+      if (currentPdfVersion) {
+        setCurrentPdfVersion({
+          ...currentPdfVersion,
+          status: 'approved'
+        });
+      }
       
       setActionCompleted(true);
       setShowFeedbackForm(false);
@@ -340,6 +520,20 @@ export default function ApprovalPage() {
       setSubmitting(true);
       await prService.submitFeedback(shareId, feedbackText.trim());
       
+      // NEU: PDF-Version Status aktualisieren
+      if (currentPdfVersion) {
+        try {
+          await pdfVersionsService.updateVersionStatus(
+            currentPdfVersion.id!, 
+            'rejected'
+          );
+          console.log('PDF-Status auf rejected aktualisiert');
+        } catch (pdfError) {
+          console.error('Fehler beim PDF-Status Update:', pdfError);
+          // Nicht kritisch - fahre fort
+        }
+      }
+      
       // Aktualisiere lokalen State
       const newFeedback = {
         comment: feedbackText.trim(),
@@ -356,6 +550,14 @@ export default function ApprovalPage() {
           feedbackHistory: [...(campaign.approvalData?.feedbackHistory || []), newFeedback]
         }
       });
+      
+      // Update PDF State lokal
+      if (currentPdfVersion) {
+        setCurrentPdfVersion({
+          ...currentPdfVersion,
+          status: 'rejected'
+        });
+      }
       
       setFeedbackText('');
       setShowFeedbackForm(false);
@@ -396,7 +598,7 @@ export default function ApprovalPage() {
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+        <div className="max-w-md w-full bg-white rounded-lg border border-red-200 p-8 text-center">
           <ExclamationTriangleIcon className="h-16 w-16 text-red-500 mx-auto mb-4" />
           <Heading level={2} className="text-red-900 mb-2">Fehler</Heading>
           <Text className="text-gray-600">{error}</Text>
@@ -415,7 +617,7 @@ export default function ApprovalPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-white border-b">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-start justify-between">
             <div className="flex-1">
@@ -527,8 +729,13 @@ export default function ApprovalPage() {
             </div>
           )}
 
+          {/* NEU: Customer Approval Message */}
+          {customerMessage && (
+            <CustomerMessageBanner message={customerMessage} />
+          )}
+
           {/* PR Content */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+          <div className="bg-white rounded-lg border border-gray-200 mb-6">
             <div className="border-b border-gray-200 px-6 py-4">
               <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                 <DocumentTextIcon className="h-5 w-5 text-gray-400" />
@@ -543,6 +750,14 @@ export default function ApprovalPage() {
             </div>
           </div>
 
+          {/* NEU: PDF Version Display */}
+          {currentPdfVersion && (
+            <CustomerPDFVersionCard 
+              version={currentPdfVersion}
+              campaignTitle={campaign.title}
+            />
+          )}
+
           {/* NEU: Media Gallery */}
           {campaign.attachedAssets && (
             <MediaGallery 
@@ -553,7 +768,7 @@ export default function ApprovalPage() {
 
           {/* Actions */}
           {!isApproved && !actionCompleted && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Ihre Aktion</h3>
               
               {showFeedbackForm ? (
@@ -596,7 +811,7 @@ export default function ApprovalPage() {
               ) : (
                 <div className="space-y-4">
                   <p className="text-gray-600">
-                    Bitte prüfen Sie die Pressemitteilung {campaign.attachedAssets && campaign.attachedAssets.length > 0 ? 'und die angehängten Medien ' : ''}sorgfältig. 
+                    Bitte prüfen Sie die Pressemitteilung{currentPdfVersion ? ', das PDF-Dokument' : ''}{campaign.attachedAssets && campaign.attachedAssets.length > 0 ? ' und die angehängten Medien' : ''} sorgfältig. 
                     Sie können entweder die Freigabe erteilen oder Änderungen anfordern.
                   </p>
                   
@@ -630,8 +845,7 @@ export default function ApprovalPage() {
               <div className="text-sm text-blue-800">
                 <p className="font-medium mb-1">Hinweis zum Freigabeprozess</p>
                 <p>
-                  Nach Ihrer Freigabe kann die Pressemitteilung {campaign.attachedAssets && campaign.attachedAssets.length > 0 ? 'zusammen mit den Medien ' : ''}
-                  von der Agentur versendet werden. Bei Änderungswünschen wird die Agentur benachrichtigt und die Mitteilung entsprechend angepasst.
+                  Nach Ihrer Freigabe kann die Pressemitteilung{currentPdfVersion ? ' mit der finalen PDF-Version' : ''}{campaign.attachedAssets && campaign.attachedAssets.length > 0 ? ' zusammen mit den Medien' : ''} von der Agentur versendet werden. Bei Änderungswünschen wird die Agentur benachrichtigt und die Mitteilung entsprechend angepasst.
                 </p>
               </div>
             </div>

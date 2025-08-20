@@ -37,16 +37,24 @@ import {
   SparklesIcon,
   InformationCircleIcon,
   PaperAirplaneIcon,
-  FolderIcon
-} from "@heroicons/react/20/solid";
+  FolderIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  ArrowRightIcon,
+  LockClosedIcon,
+  LinkIcon
+} from "@heroicons/react/24/outline";
 import { listsService } from "@/lib/firebase/lists-service";
 import { prService } from "@/lib/firebase/pr-service";
 import { DistributionList } from "@/types/lists";
-import { CampaignAssetAttachment } from "@/types/pr";
+import { CampaignAssetAttachment, EditLockData, EditLockUtils, PRCampaign, EDIT_LOCK_CONFIG } from "@/types/pr";
 import SimpleBoilerplateLoader, { BoilerplateSection } from "@/components/pr/campaign/SimpleBoilerplateLoader";
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { serverTimestamp } from 'firebase/firestore';
 import { pdfVersionsService, PDFVersion } from '@/lib/firebase/pdf-versions-service';
+// 🆕 NEW: Enhanced Edit-Lock Integration
+import EditLockBanner from '@/components/campaigns/EditLockBanner';
+import EditLockStatusIndicator from '@/components/campaigns/EditLockStatusIndicator';
 // PRSEOHeaderBar now integrated in CampaignContentComposer
 
 // Dynamic import für AI Modal
@@ -214,6 +222,49 @@ export default function NewPRCampaignPage() {
     setCurrentStep(4);
   };
 
+  // PDF-WORKFLOW PREVIEW HANDLER
+  const handlePDFWorkflowToggle = (enabled: boolean) => {
+    if (enabled) {
+      const steps = [];
+      if (approvalData.teamApprovalRequired) {
+        steps.push(`Team-Freigabe (${approvalData.teamApprovers.length} Mitglieder)`);
+      }
+      if (approvalData.customerApprovalRequired) {
+        steps.push(`Kunden-Freigabe (${approvalData.customerContact?.name || 'TBD'})`);
+      }
+      
+      setPdfWorkflowPreview({
+        enabled: true,
+        estimatedSteps: steps,
+        shareableLinks: {
+          team: approvalData.teamApprovalRequired ? '/freigabe-intern/[generated-id]' : undefined,
+          customer: approvalData.customerApprovalRequired ? '/freigabe/[generated-id]' : undefined
+        }
+      });
+    } else {
+      setPdfWorkflowPreview({
+        enabled: false,
+        estimatedSteps: [],
+        shareableLinks: {}
+      });
+    }
+  };
+
+  // ENHANCED STEP 3 → STEP 4 ÜBERGANG
+  const handleStepTransition = async (targetStep: 1 | 2 | 3 | 4) => {
+    if (currentStep === 3 && targetStep === 4) {
+      // GENERATE PREVIEW MIT PDF-WORKFLOW PREPARATION
+      await handleGeneratePreview();
+      
+      // Prüfe ob PDF-Workflow aktiv werden wird
+      if (approvalData.teamApprovalRequired || approvalData.customerApprovalRequired) {
+        console.log('🔄 PDF-Workflow wird bei Speicherung aktiviert');
+      }
+    } else {
+      setCurrentStep(targetStep);
+    }
+  };
+
   // Debug Wrapper-Funktionen
   const handleKeyVisualChange = (newKeyVisual: KeyVisualData | undefined) => {
     console.log('🖼️ KeyVisual wird geändert zu:', newKeyVisual);
@@ -241,10 +292,32 @@ export default function NewPRCampaignPage() {
   // 4-Step Navigation State
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
   
-  // PDF State
+  // 🆕 ENHANCED PDF & EDIT-LOCK STATE
   const [currentPdfVersion, setCurrentPdfVersion] = useState<PDFVersion | null>(null);
   const [generatingPdf, setGeneratingPdf] = useState(false);
-  const [editLocked, setEditLocked] = useState(false);
+  const [editLocked, setEditLocked] = useState(false); // Legacy compatibility
+  const [editLockStatus, setEditLockStatus] = useState<EditLockData>({
+    isLocked: false,
+    canRequestUnlock: false
+  });
+  const [loadingEditLock, setLoadingEditLock] = useState(true);
+  
+  // PDF-Workflow Preview State
+  const [pdfWorkflowPreview, setPdfWorkflowPreview] = useState<{
+    enabled: boolean;
+    estimatedSteps: string[];
+    shareableLinks: { team?: string; customer?: string };
+  }>({
+    enabled: false,
+    estimatedSteps: [],
+    shareableLinks: {}
+  });
+  
+  const [approvalWorkflowResult, setApprovalWorkflowResult] = useState<{
+    workflowId?: string;
+    pdfVersionId?: string;
+    shareableLinks?: { team?: string; customer?: string };
+  } | null>(null);
 
 
   useEffect(() => {
@@ -253,25 +326,61 @@ export default function NewPRCampaignPage() {
     }
   }, [user, currentOrganization]);
 
+  // 🆕 ENHANCED: Lade Edit-Lock Status
+  const loadEditLockStatus = async (campaignId: string) => {
+    if (!campaignId) {
+      setLoadingEditLock(false);
+      return;
+    }
+    
+    try {
+      setLoadingEditLock(true);
+      const status = await pdfVersionsService.getEditLockStatus(campaignId);
+      setEditLockStatus(status);
+      setEditLocked(status.isLocked); // Legacy compatibility
+    } catch (error) {
+      console.error('Fehler beim Laden des Edit-Lock Status:', error);
+    } finally {
+      setLoadingEditLock(false);
+    }
+  };
+
   const loadData = async () => {
     if (!user || !currentOrganization) return;
     setLoading(true);
     try {
       const listsData = await listsService.getAll(currentOrganization.id, user.uid);
       setAvailableLists(listsData);
+      
+      // 🆕 NEUE: Lade Edit-Lock Status wenn Campaign-ID vorhanden
+      const urlParams = new URLSearchParams(window.location.search);
+      const campaignId = urlParams.get('id');
+      if (campaignId) {
+        await loadEditLockStatus(campaignId);
+      } else {
+        setLoadingEditLock(false);
+      }
     } catch (error) {
-      // Fehler beim Laden
+      console.error('Fehler beim Laden der Daten:', error);
     } finally {
       setLoading(false);
     }
   };
 
+  // 🆕 ENHANCED SUBMIT HANDLER mit vollständiger Edit-Lock Integration
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // KRITISCH: Nur in Step 4 speichern erlauben!
     if (currentStep !== 4) {
       console.log('🚫 Form-Submit verhindert - nicht in Step 4:', currentStep);
+      return;
+    }
+    
+    // 🆕 CRITICAL: Edit-Lock Prüfung vor Speicherung
+    if (editLockStatus.isLocked) {
+      const lockReason = editLockStatus.reason || 'unbekannt';
+      alert(`Diese Kampagne kann nicht gespeichert werden. Grund: ${lockReason}`); 
       return;
     }
     
@@ -297,145 +406,62 @@ export default function NewPRCampaignPage() {
     setSaving(true);
     
     try {
-      // Bereite die boilerplateSections für Firebase vor (ohne position)
-      const cleanedSections = boilerplateSections.map((section, index) => {
-        const cleaned: any = {
-          id: section.id,
-          type: section.type,
-          order: section.order ?? index, // Fallback auf index wenn order fehlt
-          isLocked: section.isLocked || false,
-          isCollapsed: section.isCollapsed || false
-        };
-        
-        // Nur definierte Werte hinzufügen
-        if (section.boilerplateId !== undefined && section.boilerplateId !== null) {
-          cleaned.boilerplateId = section.boilerplateId;
-        }
-        if (section.content !== undefined && section.content !== null) {
-          cleaned.content = section.content;
-        }
-        if (section.metadata !== undefined && section.metadata !== null) {
-          cleaned.metadata = section.metadata;
-        }
-        if (section.customTitle !== undefined && section.customTitle !== null) {
-          cleaned.customTitle = section.customTitle;
-        }
-        
-        return cleaned;
-      });
-
-      // Bereite attachedAssets vor - stelle sicher, dass keine undefined timestamps drin sind
-      const cleanedAttachedAssets = attachedAssets.map(asset => ({
-        ...asset,
-        attachedAt: asset.attachedAt || serverTimestamp()
-      }));
-
       // 🔍 DEBUG: Aktuelle Werte vor dem Speichern
-      console.log('🔍 NEW CAMPAIGN DEBUG - Vor dem Speichern:');
-      console.log('🏷️ Keywords:', keywords, 'length:', keywords.length);
-      console.log('📝 EditorContent length:', editorContent.length);
-      console.log('📰 PressReleaseContent length:', pressReleaseContent?.length || 0);
+      console.log('🔍 ENHANCED CAMPAIGN SAVE - Vor dem Speichern:');
       console.log('👤 User:', user?.uid);
       console.log('🏢 Organization:', currentOrganization?.id);
+      console.log('📝 ApprovalData:', approvalData);
 
-      const campaignData: any = {
-        userId: user!.uid,
-        organizationId: currentOrganization!.id,
-        title: campaignTitle.trim(),
-        contentHtml: pressReleaseContent || '',
-        boilerplateSections: cleanedSections,
-        status: 'draft' as const,
-        // Multi-List Support
-        distributionListIds: selectedListIds,
-        distributionListNames: selectedListNames,
-        // Legacy fields (für Abwärtskompatibilität)
-        distributionListId: selectedListIds[0] || '',
-        distributionListName: selectedListNames[0] || '',
-        recipientCount: listRecipientCount + manualRecipients.length,
-        
-        // Manual Recipients
-        manualRecipients: manualRecipients,
-        
-        // SEO Data
-        keywords: keywords,
-        mainContent: editorContent, // Editor-Inhalt für SEO
-        seoMetrics: {
-          lastAnalyzed: serverTimestamp(),
-          // TODO: SEO-Metriken aus PRSEOHeaderBar übernehmen
+      // ENHANCED SAVE MIT PDF-APPROVAL INTEGRATION
+      const result = await prService.saveCampaignWithApprovalIntegration(
+        {
+          title: campaignTitle.trim(),
+          contentHtml: pressReleaseContent || '',
+          mainContent: editorContent,
+          boilerplateSections: boilerplateSections,
+          clientId: selectedCompanyId,
+          clientName: selectedCompanyName,
+          keyVisual: keyVisual,
+          attachedAssets: attachedAssets,
+          distributionListId: selectedListIds[0] || '',
+          distributionListName: selectedListNames[0] || '',
+          distributionListIds: selectedListIds,
+          distributionListNames: selectedListNames,
+          recipientCount: listRecipientCount + manualRecipients.length,
+          manualRecipients: manualRecipients,
+          keywords: keywords,
+          status: 'draft' as const
         },
-        clientId: selectedCompanyId || null,
-        clientName: selectedCompanyName || null,
-        keyVisual: keyVisual || null,
-        attachedAssets: cleanedAttachedAssets,
-        approvalRequired: approvalData.teamApprovalRequired || approvalData.customerApprovalRequired || false,
-        approvalData: (approvalData.teamApprovalRequired || approvalData.customerApprovalRequired) ? approvalData : undefined
-      };
-
-      // 🔍 DEBUG: Campaign-Data vor Bereinigung
-      console.log('🔍 NEW CAMPAIGN DEBUG - campaignData vor Bereinigung:');
-      console.log('🏷️ campaignData.keywords:', campaignData.keywords);
-      console.log('📝 campaignData.mainContent:', campaignData.mainContent?.substring(0, 100) + '...');
-      console.log('📰 campaignData.contentHtml:', campaignData.contentHtml?.substring(0, 100) + '...');
-
-      // Entferne alle null Werte (Firebase mag keine null-Werte)
-      Object.keys(campaignData).forEach(key => {
-        if (campaignData[key] === null) {
-          delete campaignData[key];
+        approvalData,
+        {
+          userId: user!.uid,
+          organizationId: currentOrganization!.id,
+          isNewCampaign: true
         }
-      });
-
-      // 🔍 DEBUG: Campaign-Data nach Bereinigung
-      console.log('🔍 NEW CAMPAIGN DEBUG - campaignData nach Bereinigung:');
-      console.log('🏷️ campaignData.keywords FINAL:', campaignData.keywords);
-      console.log('📝 campaignData.mainContent FINAL:', campaignData.mainContent?.substring(0, 100) + '...');
-      console.log('🗄️ Alle Felder:', Object.keys(campaignData));
-
-      console.log('💾 Starte prService.create mit campaignData...');
-      const newCampaignId = await prService.create(campaignData);
-      console.log('✅ Kampagne erstellt mit ID:', newCampaignId);
-
-      // Erstelle erweiterten Approval-Workflow falls erforderlich (NACH Campaign-Erstellung)
-      if (approvalData.teamApprovalRequired || approvalData.customerApprovalRequired) {
-        try {
-          // Import approval workflow service dynamically to avoid circular imports
-          const { approvalWorkflowService } = await import('@/lib/firebase/approval-workflow-service');
-          
-          await approvalWorkflowService.createWorkflow(
-            newCampaignId,
-            currentOrganization!.id,
-            approvalData
-          );
-          console.log('✅ Approval-Workflow erfolgreich erstellt');
-        } catch (error) {
-          console.error('❌ Fehler beim Erstellen des Approval-Workflows:', error);
-          // Workflow-Fehler sollten nicht die Campaign-Erstellung blockieren
-          setValidationErrors(['Die Kampagne wurde gespeichert, aber der Freigabe-Workflow konnte nicht erstellt werden.']);
-        }
-      } else if (approvalRequired) {
-        // Legacy approval fallback
-        try {
-          const shareId = await prService.requestApproval(newCampaignId);
-          if (!shareId) {
-            // Freigabe konnte nicht erstellt werden, Kampagne wurde trotzdem gespeichert
-          }
-        } catch (approvalError) {
-          // Zeige Warnung, aber navigiere trotzdem
-          setValidationErrors(['Die Kampagne wurde gespeichert, aber die Freigabe konnte nicht erstellt werden.']);
-          setTimeout(() => {
-            router.push('/dashboard/pr-tools/campaigns?refresh=true');
-          }, 2000);
-          return;
-        }
-      }
-
-      // Zeige Erfolgs-Bestätigung vor Navigation
-      setValidationErrors([]); // Lösche vorherige Fehler
-      setSuccessMessage('Kampagne erfolgreich gespeichert! Weiterleitung...');
+      );
       
-      // Kurze Verzögerung für UX - zeige "Gespeichert!" bevor navigiert wird
+      // STORE WORKFLOW RESULT
+      setApprovalWorkflowResult(result);
+      
+      // SUCCESS MESSAGE MIT PDF-WORKFLOW INFO
+      if (result.workflowId && result.pdfVersionId) {
+        setSuccessMessage(
+          `Kampagne gespeichert & Freigabe-Workflow gestartet! PDF-Version erstellt und Freigabe-Links generiert. ${
+            result.shareableLinks?.team ? 'Team' : ''
+          }${
+            result.shareableLinks?.team && result.shareableLinks?.customer ? ' und ' : ''
+          }${
+            result.shareableLinks?.customer ? 'Kunde' : ''
+          } wurden benachrichtigt.`
+        );
+      } else {
+        setSuccessMessage('Kampagne erfolgreich gespeichert!');
+      }
+      
+      // Navigation
       setTimeout(() => {
-        router.push('/dashboard/pr-tools/campaigns?refresh=true');
-      }, 1500);
+        router.push(`/dashboard/pr-tools/campaigns/campaigns/${result.campaignId}`);
+      }, 2000);
 
     } catch (error) {
 
@@ -673,6 +699,47 @@ export default function NewPRCampaignPage() {
     }
   };
 
+  // 🆕 ENHANCED: Unlock-Request Handler
+  const handleUnlockRequest = async (reason: string): Promise<void> => {
+    if (!user) {
+      throw new Error('User nicht verfügbar');
+    }
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const campaignId = urlParams.get('id');
+    
+    if (!campaignId) {
+      throw new Error('Campaign-ID nicht gefunden');
+    }
+    
+    try {
+      await pdfVersionsService.requestUnlock(campaignId, {
+        userId: user.uid,
+        displayName: user.displayName || user.email || 'Unbekannt',
+        reason
+      });
+      
+      alert('Ihre Entsperr-Anfrage wurde an die Administratoren gesendet.');
+      
+      // Status neu laden
+      await loadEditLockStatus(campaignId);
+      
+    } catch (error) {
+      console.error('Fehler beim Unlock-Request:', error);
+      throw new Error('Die Entsperr-Anfrage konnte nicht gesendet werden.');
+    }
+  };
+
+  // 🆕 ENHANCED: Retry Edit-Lock Status
+  const handleRetryEditLock = async (): Promise<void> => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const campaignId = urlParams.get('id');
+    
+    if (campaignId) {
+      await loadEditLockStatus(campaignId);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -741,6 +808,33 @@ export default function NewPRCampaignPage() {
 
       {/* Step Navigation */}
       <StepNavigation />
+
+      {/* 🆕 ENHANCED: Edit-Lock Banner */}
+      {!loading && !loadingEditLock && editLockStatus.isLocked && (
+        <EditLockBanner
+          campaign={{ 
+            editLocked: editLockStatus.isLocked,
+            editLockedReason: editLockStatus.reason,
+            lockedBy: editLockStatus.lockedBy,
+            lockedAt: editLockStatus.lockedAt,
+            unlockRequests: editLockStatus.unlockRequests
+          } as PRCampaign}
+          onRequestUnlock={handleUnlockRequest}
+          onRetry={handleRetryEditLock}
+          className="mb-6"
+          showDetails={true}
+        />
+      )}
+      
+      {/* Loading Edit-Lock Status */}
+      {loadingEditLock && (
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
+            Prüfe Edit-Status...
+          </div>
+        </div>
+      )}
 
       {/* Fehlermeldungen und Erfolgs-Nachrichten oben auf der Seite */}
       {validationErrors.length > 0 && (
@@ -976,8 +1070,43 @@ export default function NewPRCampaignPage() {
                   organizationId={currentOrganization!.id}
                   clientId={selectedCompanyId}
                   clientName={selectedCompanyName}
+                  showPDFIntegrationPreview={true}
+                  onPDFWorkflowToggle={handlePDFWorkflowToggle}
                 />
               </div>
+              
+              {/* PDF-WORKFLOW STATUS PREVIEW */}
+              {pdfWorkflowPreview.enabled && (
+                <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg">
+                  <div className="flex items-start">
+                    <CheckCircleIcon className="h-5 w-5 text-green-500 mr-3 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="text-sm font-medium text-green-900 mb-2">
+                        ✅ PDF-Workflow bereit
+                      </h4>
+                      <Text className="text-sm text-green-700 mb-3">
+                        Beim Speichern wird automatisch ein vollständiger Freigabe-Workflow aktiviert:
+                      </Text>
+                      
+                      <div className="space-y-2">
+                        {pdfWorkflowPreview.estimatedSteps.map((step, index) => (
+                          <div key={index} className="flex items-center gap-2 text-sm text-green-700">
+                            <ArrowRightIcon className="h-4 w-4" />
+                            <span>{step}</span>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <div className="mt-3 pt-3 border-t border-green-300">
+                        <Text className="text-xs text-green-600">
+                          💡 Tipp: Nach dem Speichern finden Sie alle Freigabe-Links und den aktuellen 
+                          Status in Step 4 "Vorschau".
+                        </Text>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </FieldGroup>
           </div>
         )}
@@ -985,13 +1114,87 @@ export default function NewPRCampaignPage() {
         {/* Step 4: Vorschau */}
         {currentStep === 4 && (
           <div className="bg-white rounded-lg border p-6">
+            
+            {/* PDF-WORKFLOW STATUS BANNER */}
+            {approvalWorkflowResult && approvalWorkflowResult.workflowId && (
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-start">
+                  <ClockIcon className="h-5 w-5 text-blue-500 mr-3 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h4 className="text-sm font-medium text-blue-900 mb-2">
+                      🔄 Freigabe-Workflow aktiv
+                    </h4>
+                    <Text className="text-sm text-blue-700 mb-3">
+                      Die Kampagne befindet sich im Freigabe-Prozess. Alle Änderungen sind gesperrt.
+                    </Text>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {approvalWorkflowResult.shareableLinks?.team && (
+                        <div className="p-3 bg-white rounded border border-blue-300">
+                          <div className="flex items-center gap-2 mb-2">
+                            <UserGroupIcon className="h-4 w-4 text-blue-600" />
+                            <Text className="text-sm font-medium text-blue-900">Team-Freigabe</Text>
+                          </div>
+                          <Button
+                            size="sm"
+                            plain
+                            onClick={() => window.open(approvalWorkflowResult.shareableLinks!.team!, '_blank')}
+                            className="text-xs"
+                          >
+                            <LinkIcon className="h-3 w-3 mr-1" />
+                            Link öffnen
+                          </Button>
+                        </div>
+                      )}
+                      
+                      {approvalWorkflowResult.shareableLinks?.customer && (
+                        <div className="p-3 bg-white rounded border border-blue-300">
+                          <div className="flex items-center gap-2 mb-2">
+                            <BuildingOfficeIcon className="h-4 w-4 text-blue-600" />
+                            <Text className="text-sm font-medium text-blue-900">Kunden-Freigabe</Text>
+                          </div>
+                          <Button
+                            size="sm"
+                            plain
+                            onClick={() => window.open(approvalWorkflowResult.shareableLinks!.customer!, '_blank')}
+                            className="text-xs"
+                          >
+                            <LinkIcon className="h-3 w-3 mr-1" />
+                            Link öffnen
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             {/* Live Vorschau - EXAKT WIE IM DETAIL PAGE */}
             <div className="mb-8">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Live-Vorschau</h3>
               <div className="border rounded-lg p-6 bg-gray-50">
                 <div className="prose prose-sm max-w-none">
                   {/* Titel */}
-                  <h1 className="text-2xl font-bold mb-4">{campaignTitle || 'Titel der Pressemitteilung'}</h1>
+                  <div className="flex items-center justify-between mb-4">
+                    <h1 className="text-2xl font-bold flex-1">{campaignTitle || 'Titel der Pressemitteilung'}</h1>
+                    
+                    {/* 🆕 ENHANCED: Edit-Lock Status Indicator in Vorschau */}
+                    <div className="ml-4 flex-shrink-0">
+                      <EditLockStatusIndicator
+                        campaign={{
+                          editLocked: editLockStatus.isLocked,
+                          editLockedReason: editLockStatus.reason,
+                          lockedBy: editLockStatus.lockedBy,
+                          lockedAt: editLockStatus.lockedAt
+                        } as PRCampaign}
+                        size="md"
+                        variant="badge"
+                        showLabel={true}
+                        showIcon={true}
+                      />
+                    </div>
+                  </div>
                   
                   {/* Hauptinhalt - Fertiges ContentHtml wie in Detail Page */}
                   <div 
@@ -1038,7 +1241,13 @@ export default function NewPRCampaignPage() {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">PDF-Export</h3>
                 
-                {!editLocked && (
+                {/* WORKFLOW-STATUS INDICATOR */}
+                {approvalWorkflowResult?.pdfVersionId ? (
+                  <div className="flex items-center gap-2 text-sm text-green-700">
+                    <CheckCircleIcon className="h-4 w-4" />
+                    <span>PDF für Freigabe erstellt</span>
+                  </div>
+                ) : !editLockStatus.isLocked ? (
                   <Button
                     type="button"
                     onClick={() => handleGeneratePdf(false)}
@@ -1057,11 +1266,10 @@ export default function NewPRCampaignPage() {
                       </>
                     )}
                   </Button>
-                )}
-                
-                {editLocked && (
-                  <div className="text-sm text-gray-500">
-                    PDF-Erstellung gesperrt während Freigabe-Prozess
+                ) : (
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <LockClosedIcon className="h-4 w-4" />
+                    PDF-Erstellung gesperrt - {editLockStatus.reason ? EDIT_LOCK_CONFIG[editLockStatus.reason]?.label : 'Bearbeitung nicht möglich'}
                   </div>
                 )}
               </div>
@@ -1075,10 +1283,15 @@ export default function NewPRCampaignPage() {
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-medium text-blue-900">Version {currentPdfVersion.version}</span>
-                          <Badge color="blue" className="text-xs">Aktuell</Badge>
+                          <Badge color="blue" className="text-xs">
+                            {approvalWorkflowResult?.pdfVersionId ? 'Freigabe-PDF' : 'Aktuell'}
+                          </Badge>
                         </div>
                         <div className="text-sm text-blue-700">
                           {currentPdfVersion.metadata?.wordCount} Wörter • {currentPdfVersion.metadata?.pageCount} Seiten
+                          {approvalWorkflowResult?.workflowId && (
+                            <span className="ml-2">• Workflow aktiv</span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1167,13 +1380,7 @@ export default function NewPRCampaignPage() {
             {currentStep < 4 ? (
               <Button
                 type="button"
-                onClick={() => {
-                  if (currentStep === 3) {
-                    handleGeneratePreview(); // Generiere ContentHtml beim Wechsel von Step 3 zu 4
-                  } else {
-                    setCurrentStep((currentStep + 1) as 1 | 2 | 3 | 4);
-                  }
-                }}
+                onClick={() => handleStepTransition((currentStep + 1) as 1 | 2 | 3 | 4)}
                 className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
               >
                 Weiter
@@ -1186,15 +1393,15 @@ export default function NewPRCampaignPage() {
                   console.log('🖱️ MANUELLER Speichern-Click!');
                   handleSubmit(e as any);
                 }}
-                disabled={saving}
-                className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap"
+                disabled={saving || editLockStatus.isLocked}
+                className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {saving ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                     Speichert...
                   </>
-                ) : (approvalData.teamApprovalRequired || approvalData.customerApprovalRequired || approvalRequired) ? (
+                ) : (approvalData.teamApprovalRequired || approvalData.customerApprovalRequired) ? (
                   <>
                     <PaperAirplaneIcon className="h-4 w-4 mr-2" />
                     Freigabe anfordern

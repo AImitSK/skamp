@@ -2,6 +2,7 @@
 "use client";
 
 import { ApprovalWorkflow, TeamApproval } from '@/types/approvals-enhanced';
+import { PDFVersion } from '@/lib/firebase/pdf-versions-service';
 import { Badge } from '@/components/ui/badge';
 import { Text } from '@/components/ui/text';
 import { 
@@ -9,7 +10,8 @@ import {
   XCircleIcon,
   ClockIcon,
   UserGroupIcon,
-  ChatBubbleLeftRightIcon
+  ChatBubbleLeftRightIcon,
+  DocumentTextIcon
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 
@@ -18,12 +20,19 @@ interface TeamApprovalCardProps {
   userApproval: TeamApproval;
   currentUserId: string;
   onSubmitDecision: (decision: 'approved' | 'rejected') => void;
+  // 🆕 PDF-INTEGRATION:
+  currentPdfVersion?: PDFVersion | null;
+  teamApprovalMessage?: string | null;
 }
 
 export function TeamApprovalCard({
   workflow,
   userApproval,
-  currentUserId
+  currentUserId,
+  onSubmitDecision,
+  // 🆕 NEU:
+  currentPdfVersion,
+  teamApprovalMessage
 }: TeamApprovalCardProps) {
   const teamApprovers = workflow.teamSettings.approvers;
   const approvedCount = teamApprovers.filter(a => a.status === 'approved').length;
@@ -77,6 +86,13 @@ export function TeamApprovalCard({
           <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
             <UserGroupIcon className="h-5 w-5 text-gray-400" />
             Team-Freigabe Status
+            {/* 🆕 PDF-STATUS INDICATOR */}
+            {currentPdfVersion && (
+              <Badge color="blue" className="text-xs">
+                <DocumentTextIcon className="h-3 w-3 mr-1" />
+                PDF v{currentPdfVersion.version}
+              </Badge>
+            )}
           </h2>
           <div className="flex items-center gap-2">
             <Badge color="blue">
@@ -92,14 +108,18 @@ export function TeamApprovalCard({
       </div>
 
       <div className="p-6">
-        {/* Team Message */}
-        {workflow.teamSettings.message && (
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex">
-              <ChatBubbleLeftRightIcon className="h-5 w-5 text-blue-400 mr-3 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-blue-900 mb-1">Nachricht vom Ersteller</p>
-                <p className="text-sm text-blue-800">{workflow.teamSettings.message}</p>
+        {/* 🆕 ENHANCED TEAM MESSAGE DISPLAY */}
+        {teamApprovalMessage && (
+          <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+            <div className="flex items-start gap-3">
+              <ChatBubbleLeftRightIcon className="h-5 w-5 text-blue-500 mt-0.5" />
+              <div className="flex-1">
+                <h4 className="text-sm font-medium text-blue-900 mb-2">
+                  Nachricht für das Team
+                </h4>
+                <div className="text-sm text-blue-800 italic">
+                  &ldquo;{teamApprovalMessage}&rdquo;
+                </div>
               </div>
             </div>
           </div>
@@ -241,6 +261,22 @@ export function TeamApprovalCard({
             </div>
           )}
         </div>
+
+        {/* 🆕 PDF-INTEGRATION STATUS */}
+        {currentPdfVersion && (
+          <div className="mt-6 pt-4 border-t border-gray-200">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <DocumentTextIcon className="h-4 w-4" />
+              <span>PDF-Version {currentPdfVersion.version} ist mit dieser Freigabe verknüpft</span>
+              {currentPdfVersion.status === 'approved' && (
+                <Badge color="green" className="text-xs">
+                  <CheckCircleIcon className="h-3 w-3 mr-1" />
+                  PDF freigegeben
+                </Badge>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
