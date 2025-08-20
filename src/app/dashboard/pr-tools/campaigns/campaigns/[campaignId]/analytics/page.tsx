@@ -279,9 +279,9 @@ export default function CampaignAnalyticsPage() {
       if (!user) return;
 
       try {
-        const orgs = await teamMemberService.getUserOrganizations(user.uid);
+        const orgs = await teamMemberService.getByOrganization(user.uid);
         if (orgs.length > 0) {
-          setOrganizationId(orgs[0].organization.id!);
+          setOrganizationId(orgs[0].id);
         } else {
           setOrganizationId(user.uid);
         }

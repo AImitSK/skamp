@@ -324,7 +324,7 @@ export const approvalWorkflowService = {
         completedAt: now
       });
 
-      // Update Campaign Status
+      // Update Campaign Status und PDF-Integration
       const workflowDoc = await getDoc(doc(db, 'approval_workflows', workflowId));
       if (workflowDoc.exists()) {
         const workflow = workflowDoc.data() as ApprovalWorkflow;
@@ -334,11 +334,8 @@ export const approvalWorkflowService = {
         await updateDoc(campaignRef, {
           status: finalStatus === 'approved' ? 'approved' : 'changes_requested'
         });
-      }
 
-      // PDF-Integration: Workflow final abgeschlossen
-      const workflowDoc = await getDoc(doc(db, 'approval_workflows', workflowId));
-      if (workflowDoc.exists()) {
+        // PDF-Integration: Workflow final abgeschlossen
         await this.syncWorkflowWithPDFStatus(workflowId, finalStatus === 'approved' ? 'workflow_approved' : 'workflow_rejected', `Workflow ${finalStatus}`);
       }
 
