@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import puppeteer, { Browser, Page } from 'puppeteer-core';
 import chromium from '@sparticuz/chromium';
 import { mediaService } from '@/lib/firebase/media-service';
+import { auth } from 'firebase/auth';
 import { templateRenderer, TemplateData } from '@/lib/pdf/template-renderer';
 import { pdfTemplateService } from '@/lib/firebase/pdf-template-service';
 import { PDFTemplate } from '@/types/pdf-template';
@@ -330,17 +331,61 @@ export async function POST(request: NextRequest): Promise<NextResponse<PDFGenera
     // Dateiname generieren
     const fileName = requestData.fileName || generateFileName(requestData.title);
     
-    // Upload zu Firebase Storage
-    console.log('☁️ Lade PDF zu Firebase Storage hoch...');
-    const uploadResult = await mediaService.uploadBuffer(
-      pdfBuffer,
+    // Upload zu Firebase Storage (Server-Side ohne Auth)
+    debugLog('☁️ Lade PDF zu Firebase Storage hoch...', {
       fileName,
-      'application/pdf',
-      requestData.organizationId,
-      'pdf-versions',
-      { userId: requestData.userId }
-    );
-    console.log('✅ PDF erfolgreich hochgeladen:', uploadResult.downloadUrl);
+      organizationId: requestData.organizationId,
+      size: pdfBuffer.length
+    });
+    
+    let uploadResult: any;
+    
+    try {
+      uploadResult = await mediaService.uploadBuffer(
+        pdfBuffer,
+        fileName,
+        'application/pdf',
+        requestData.organizationId,
+        'public-pdf-generations', // Öffentlicher Upload-Pfad für Server-side API
+        { 
+          userId: requestData.userId,
+          serverSide: true,
+          apiGenerated: true
+        }
+      );
+      
+      debugLog('✅ PDF erfolgreich zu Firebase Storage hochgeladen', {
+        downloadUrl: uploadResult.downloadUrl,
+        fileSize: uploadResult.fileSize
+      });
+      
+    } catch (storageError: any) {
+      debugLog('❌ Firebase Storage Upload fehlgeschlagen', {
+        error: storageError.message,
+        code: storageError.code,
+        organizationId: requestData.organizationId
+      });
+      
+      // Fallback: Temporäre URL generieren (Base64 Data URL)
+      const base64Pdf = pdfBuffer.toString('base64');
+      const dataUrl = `data:application/pdf;base64,${base64Pdf}`;
+      
+      debugLog('🔄 Fallback: PDF als Data URL bereitgestellt', {
+        sizeKB: Math.round(base64Pdf.length / 1024)
+      });
+      
+      uploadResult = {
+        downloadUrl: dataUrl,
+        fileName: fileName,
+        fileSize: pdfBuffer.length,
+        temporary: true
+      };
+    }
+    
+    debugLog('✅ PDF-Upload abgeschlossen', { 
+      url: uploadResult.downloadUrl?.substring(0, 100) + '...', 
+      temporary: uploadResult.temporary || false 
+    });
 
     // Erweiterte Metadaten berechnen
     const generationTime = Date.now() - startTime;
