@@ -162,6 +162,66 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
   }
 
   /**
+   * Vereinfachte Customer-Only Approval Erstellung
+   * Ersetzt das komplexe Team-Approval System
+   */
+  async createCustomerApproval(
+    campaignId: string,
+    organizationId: string,
+    customerContact?: any,
+    customerMessage?: string
+  ): Promise<string> {
+    try {
+      const shareId = this.generateShareId();
+      
+      // Vereinfachte Customer-Only Datenstruktur
+      const approvalData = {
+        campaignId,
+        organizationId,
+        type: 'customer_only' as const,
+        status: 'pending' as const,
+        shareId,
+        recipients: customerContact ? [{
+          id: nanoid(10),
+          type: 'customer' as const,
+          contactId: customerContact.id || customerContact.contactId,
+          name: customerContact.name,
+          email: customerContact.email,
+          status: 'pending' as const,
+          notificationsSent: 0,
+          order: 0
+        }] : [],
+        requestMessage: customerMessage || '',
+        workflow: {
+          currentStage: 'customer',
+          stages: ['customer'],
+          isMultiStage: false
+        },
+        history: [],
+        analytics: {
+          totalViews: 0,
+          uniqueViews: 0
+        },
+        notifications: {
+          emailSent: false,
+          remindersSent: 0,
+          lastReminderSent: null
+        },
+        version: 1,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        createdBy: 'system' // Simplified for customer-only
+      };
+
+      const docRef = await addDoc(collection(db, 'approvals'), approvalData);
+      return docRef.id;
+    } catch (error) {
+      console.error('Fehler beim Erstellen der Customer-Approval:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Lädt alle Entitäten einer Organisation (überschrieben für Array-Sicherheit)
    */
   async getAll(

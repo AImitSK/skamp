@@ -1462,7 +1462,13 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
           customerApprovalData.customerApprovalMessage || ''
         );
 
-        // 2b. Erstelle PDF für Kundenfreigabe
+        // 2b. Hole die shareId für den Customer-Link
+        const approval = await approvalService.getById(workflowId, context.organizationId);
+        if (!approval) {
+          throw new Error('Approval konnte nicht gefunden werden');
+        }
+
+        // 2c. Erstelle PDF für Kundenfreigabe
         const pdfVersion = await pdfVersionsService.createPDFVersion({
           campaignId,
           organizationId: context.organizationId,
@@ -1475,10 +1481,10 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
           throw new Error('PDF-Version konnte nicht erstellt werden - Kundenfreigabe abgebrochen');
         }
 
-        // 2c. Generiere Customer-Link
-        const customerShareLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/freigabe/${workflowId}`;
+        // 2d. Generiere Customer-Link mit shareId
+        const customerShareLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/freigabe/${approval.shareId}`;
 
-        // 2d. Update Campaign Status
+        // 2e. Update Campaign Status
         await this.update(campaignId, {
           status: 'in_review', // Direkt in Review
           updatedAt: serverTimestamp()
