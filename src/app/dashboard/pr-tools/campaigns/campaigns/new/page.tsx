@@ -412,9 +412,18 @@ export default function NewPRCampaignPage() {
       console.log('🏢 Organization:', currentOrganization?.id);
       console.log('📝 ApprovalData:', approvalData);
 
+      // 🔧 FIX: Prüfe ob es eine neue oder bestehende Kampagne ist
+      const urlParams = new URLSearchParams(window.location.search);
+      const existingCampaignId = urlParams.get('id');
+      const isNewCampaign = !existingCampaignId;
+      
+      console.log('🆔 Campaign ID:', existingCampaignId);
+      console.log('🆕 Is New Campaign:', isNewCampaign);
+
       // ENHANCED SAVE MIT PDF-APPROVAL INTEGRATION
       const result = await prService.saveCampaignWithApprovalIntegration(
         {
+          id: existingCampaignId || undefined, // 🔧 FIX: Verwende existierende ID wenn vorhanden
           title: campaignTitle.trim(),
           contentHtml: pressReleaseContent || '',
           mainContent: editorContent,
@@ -436,7 +445,7 @@ export default function NewPRCampaignPage() {
         {
           userId: user!.uid,
           organizationId: currentOrganization!.id,
-          isNewCampaign: true
+          isNewCampaign: isNewCampaign // 🔧 FIX: Korrekte Logik für neue vs. bestehende Kampagnen
         }
       );
       
