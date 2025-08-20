@@ -267,7 +267,86 @@ if (DEBUG_PDF) {
 
 ---
 
-**Status:** DEBUGGING-PLAN ERSTELLT  
+## 🎯 **UPDATE: PUPPETEER SERVERLESS-PROBLEM GELÖST** (20.08.2025 - 12:00)
+
+### **ROOT-CAUSE IDENTIFIZIERT:**
+```
+❌ Could not find Chrome (ver. 139.0.7258.68). This can occur if either
+ 1. you did not perform an installation before running the script (e.g. `npx puppeteer browsers install chrome`) or
+ 2. your cache path is incorrectly configured (which is: /home/sbx_user1051/.cache/puppeteer).
+```
+
+**Problem:** Puppeteer benötigt Chrome-Installation auf Vercel Serverless, was nicht verfügbar ist.
+
+### **LÖSUNG IMPLEMENTIERT: @sparticuz/chromium**
+
+#### **1. Dependencies hinzugefügt:**
+```bash
+npm install @sparticuz/chromium puppeteer-core
+```
+
+#### **2. API-Route Serverless-Optimierung:**
+```typescript
+// Production: Serverless Chromium
+import chromium from '@sparticuz/chromium';
+import puppeteer from 'puppeteer-core';
+
+if (isProduction) {
+  browser = await puppeteer.launch({
+    args: [...chromium.args, '--no-sandbox', '--single-process'],
+    executablePath: await chromium.executablePath(),
+    headless: chromium.headless,
+    defaultViewport: chromium.defaultViewport
+  });
+} else {
+  // Development: Standard Puppeteer mit lokalem Chrome
+  const puppeteerLocal = await import('puppeteer');
+  browser = await puppeteerLocal.default.launch({...});
+}
+```
+
+#### **3. Vercel-Konfiguration optimiert:**
+```json
+// vercel.json
+{
+  "functions": {
+    "src/app/api/generate-pdf/route.ts": {
+      "maxDuration": 30
+    }
+  },
+  "build": {
+    "env": {
+      "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD": "true"
+    }
+  }
+}
+```
+
+#### **4. Puppeteer-Konfiguration:**
+```javascript
+// .puppeteerrc.js
+module.exports = {
+  skipDownload: process.env.NODE_ENV === 'production',
+  cacheDirectory: join(__dirname, '.cache', 'puppeteer')
+};
+```
+
+#### **5. Enhanced Debug-Logging:**
+- Browser-Launch-Zeit tracking
+- Executable-Path-Logging
+- Production/Development-Modus-Detection
+- Detaillierte Chromium-Args-Logging
+
+### **ERWARTETES ERGEBNIS:**
+- ✅ Serverless Chrome erfolgreich gestartet
+- ✅ PDF-Generation in Vercel-Umgebung funktional
+- ✅ Optimierte Performance durch Single-Process-Mode
+- ✅ Fallback auf lokales Chrome für Development
+
+---
+
+**Status:** 🔧 PUPPETEER-SERVERLESS-FIX IMPLEMENTIERT  
 **Erstellt:** 20.08.2025  
+**Updated:** 20.08.2025 12:00  
 **Author:** CeleroPress Team  
-**Nächste Schritte:** Detaillierte Logs implementieren → Lokales Testing → Schrittweise Fixes
+**Nächste Schritte:** Produktions-Deployment → Serverless Chrome Testing → PDF-Generation Validierung

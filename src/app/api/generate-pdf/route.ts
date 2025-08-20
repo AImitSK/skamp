@@ -1,6 +1,7 @@
 // src/app/api/generate-pdf/route.ts - Puppeteer-basierte PDF-Generation API
 import { NextRequest, NextResponse } from 'next/server';
-import puppeteer, { Browser, Page } from 'puppeteer';
+import puppeteer, { Browser, Page } from 'puppeteer-core';
+import chromium from '@sparticuz/chromium';
 import { mediaService } from '@/lib/firebase/media-service';
 import { templateRenderer, TemplateData } from '@/lib/pdf/template-renderer';
 import { pdfTemplateService } from '@/lib/firebase/pdf-template-service';
@@ -209,20 +210,69 @@ export async function POST(request: NextRequest): Promise<NextResponse<PDFGenera
     const renderTime = Date.now() - renderStart;
     console.log(`✅ HTML-Template erfolgreich gerendert (${renderTime}ms, Methode: ${renderMethod})`);
 
-    // Puppeteer Browser starten
-    console.log('🚀 Starte Puppeteer Browser...');
-    browser = await puppeteer.launch({
-      headless: 'new',
-      args: [
-        '--no-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-        '--disable-web-security',
-        '--allow-running-insecure-content',
-        '--disable-features=VizDisplayCompositor'
-      ],
-      timeout: 30000
-    });
+    // Puppeteer Browser starten mit Serverless-Chromium
+    debugLog('🚀 Starte Puppeteer Browser mit Serverless-Chromium...');
+    
+    // Chromium-Konfiguration für Serverless/Local
+    const isProduction = process.env.NODE_ENV === 'production';
+    const browserStartTime = Date.now();
+    
+    if (isProduction) {
+      // Vercel Serverless Umgebung mit @sparticuz/chromium
+      debugLog('🏭 Production-Modus: Verwende serverless Chromium');
+      
+      const executablePath = await chromium.executablePath();
+      debugLog('📁 Chromium executable path', { executablePath });
+      
+      browser = await puppeteer.launch({
+        args: [
+          ...chromium.args,
+          '--no-sandbox',
+          '--disable-setuid-sandbox', 
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+          '--no-zygote',
+          '--single-process',
+          '--disable-web-security',
+          '--allow-running-insecure-content',
+          '--disable-background-timer-throttling',
+          '--disable-backgrounding-occluded-windows',
+          '--disable-renderer-backgrounding'
+        ],
+        defaultViewport: chromium.defaultViewport,
+        executablePath,
+        headless: chromium.headless,
+        ignoreHTTPSErrors: true,
+        timeout: 30000
+      });
+      
+      debugLog('✅ Serverless Chromium Browser gestartet', {
+        launchTime: Date.now() - browserStartTime + 'ms'
+      });
+    } else {
+      // Lokale Entwicklungsumgebung - Standard Puppeteer
+      debugLog('🏠 Development-Modus: Verwende lokalen Chrome');
+      
+      // Importiere das normale puppeteer für lokale Entwicklung
+      const puppeteerLocal = await import('puppeteer');
+      
+      browser = await puppeteerLocal.default.launch({
+        headless: 'new',
+        args: [
+          '--no-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+          '--disable-web-security',
+          '--allow-running-insecure-content',
+          '--disable-features=VizDisplayCompositor'
+        ],
+        timeout: 30000
+      });
+      
+      debugLog('✅ Lokaler Chrome Browser gestartet', {
+        launchTime: Date.now() - browserStartTime + 'ms'
+      });
+    }
 
     page = await browser.newPage();
     
