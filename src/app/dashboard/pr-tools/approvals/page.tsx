@@ -384,8 +384,10 @@ export default function ApprovalsPage() {
   }, [currentOrganization, selectedStatus, selectedClients, selectedPriorities, selectedPdfStatus, showOverdueOnly, searchTerm]);
 
 
-  const handleCopyLink = async (shareId: string) => {
-    const url = `${window.location.origin}/freigabe/${shareId}`;
+  const handleCopyLink = async (shareId: string, approvalType?: string) => {
+    // Unterscheide zwischen Team- und Customer-Approvals
+    const linkPath = approvalType === 'team_approval' ? 'freigabe-intern' : 'freigabe';
+    const url = `${window.location.origin}/${linkPath}/${shareId}`;
     try {
       await navigator.clipboard.writeText(url);
       showAlert('success', 'Link kopiert', 'Der Freigabe-Link wurde in die Zwischenablage kopiert.');
@@ -1060,14 +1062,14 @@ export default function ApprovalsPage() {
                         </DropdownButton>
                         <DropdownMenu anchor="bottom end">
                           <DropdownItem 
-                            href={`/freigabe/${approval.shareId}`}
+                            href={`/${approval.type === 'team_approval' ? 'freigabe-intern' : 'freigabe'}/${approval.shareId}`}
                             target="_blank"
                           >
                             <EyeIcon className="h-4 w-4" />
-                            Freigabe-Link öffnen
+                            {approval.type === 'team_approval' ? 'Team-Freigabe öffnen' : 'Freigabe-Link öffnen'}
                           </DropdownItem>
                           <DropdownItem 
-                            onClick={() => handleCopyLink(approval.shareId)}
+                            onClick={() => handleCopyLink(approval.shareId, approval.type)}
                           >
                             <LinkIcon className="h-4 w-4" />
                             Link kopieren
