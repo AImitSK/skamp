@@ -303,9 +303,12 @@ export default function ApprovalsPage() {
       const allApprovals = await approvalService.searchEnhanced(currentOrganization.id, filters);
       
       
-      // Filtere Draft-Status und versendete Kampagnen heraus
+      // Filtere Draft-Status und abgeschlossene Workflows heraus
       const filteredApprovals = allApprovals.filter(a => 
-        a.status !== 'draft' && a.status !== 'sent'
+        a.status !== 'draft' && 
+        a.status !== 'cancelled' && 
+        a.status !== 'expired' &&
+        !a.completedAt // Komplett abgeschlossene Workflows ausblenden
       );
       
       // NEU: PDF-Versionen für alle Approvals laden
@@ -462,7 +465,7 @@ export default function ApprovalsPage() {
     switch (status) {
       case 'pending':
         return 'Ausstehend';
-      case 'under_review':
+      case 'in_review':
         return 'Erstmal angesehen';
       case 'changes_requested':
         return 'Änderung erbeten';
@@ -472,6 +475,23 @@ export default function ApprovalsPage() {
         return 'Abgelehnt';
       default:
         return 'Unbekannt';
+    }
+  };
+
+  const getStatusProgress = (status: ApprovalStatus): number => {
+    switch (status) {
+      case 'pending':
+        return 20;
+      case 'in_review':
+        return 40;
+      case 'changes_requested':
+        return 60;
+      case 'approved':
+        return 80;
+      case 'rejected':
+        return 10;
+      default:
+        return 0;
     }
   };
 
@@ -921,8 +941,19 @@ export default function ApprovalsPage() {
                             </Badge>
                           )}
                         </div>
-                        <div className="text-xs text-gray-500">
-                          {approval.progressPercentage || 0}% {getStatusText(approval.status)}
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <div className="w-16 bg-gray-200 rounded-full h-1.5">
+                              <div 
+                                className="bg-blue-600 h-1.5 rounded-full transition-all"
+                                style={{ width: `${getStatusProgress(approval.status)}%` }}
+                              />
+                            </div>
+                            <span className="text-xs text-gray-500">{getStatusProgress(approval.status)}%</span>
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {getStatusText(approval.status)}
+                          </div>
                         </div>
                       </div>
                     </div>
