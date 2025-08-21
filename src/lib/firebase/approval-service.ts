@@ -153,7 +153,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         'history.0.timestamp': serverTimestamp()
       });
       
-      console.log('Created approval with ID:', approvalId);
       return approvalId;
     } catch (error) {
       console.error('Error creating approval:', error);
@@ -172,23 +171,11 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
     customerMessage?: string
   ): Promise<string> {
     try {
-      console.log('🔍 APPROVAL DEBUG: createCustomerApproval called with:', {
-        campaignId,
-        organizationId,
-        customerContact,
-        customerMessage
-      });
 
       // Lade Campaign-Daten für Title und Client-Info
       const { prService } = await import('./pr-service');
       const campaign = await prService.getById(campaignId);
       
-      console.log('📋 APPROVAL DEBUG: Campaign loaded:', {
-        title: campaign?.title,
-        clientName: campaign?.clientName,
-        clientId: campaign?.clientId,
-        clientEmail: campaign?.clientEmail
-      });
       
       // Wenn customerContact nur eine ID ist, lade die Kontakt-Daten
       let contactData = customerContact;
@@ -215,7 +202,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
               role: contact.position || undefined
             };
             
-            console.log('📧 APPROVAL DEBUG: Contact loaded:', contactData);
           }
         } catch (error) {
           console.error('Fehler beim Laden des Kontakts:', error);
@@ -276,19 +262,11 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         createdBy: 'system' // Simplified for customer-only
       };
 
-      console.log('💾 APPROVAL DEBUG: Final approval data before save:', {
-        title: approvalData.title,
-        campaignTitle: approvalData.campaignTitle,
-        clientName: approvalData.clientName,
-        clientEmail: approvalData.clientEmail,
-        recipients: approvalData.recipients
-      });
 
       // Entferne undefined Werte bevor Firestore-Speicherung
       const cleanApprovalData = this.removeUndefinedValues(approvalData);
       const docRef = await addDoc(collection(db, 'approvals'), cleanApprovalData);
       
-      console.log('✅ APPROVAL DEBUG: Approval created with ID:', docRef.id);
       return docRef.id;
     } catch (error) {
       console.error('Fehler beim Erstellen der Customer-Approval:', error);
@@ -392,7 +370,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
    */
   async getByShareId(shareId: string): Promise<ApprovalEnhanced | null> {
     try {
-      console.log('🔍 Searching for approval with shareId:', shareId);
       
       const q = query(
         collection(db, this.collectionName),
@@ -401,10 +378,8 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       );
 
       const snapshot = await getDocs(q);
-      console.log('📊 Query result - empty:', snapshot.empty, 'size:', snapshot.size);
       
       if (snapshot.empty) {
-        console.warn('❌ No approval found with shareId:', shareId);
         return null;
       }
 
@@ -620,14 +595,12 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
     inlineComments?: any[]
   ): Promise<void> {
     try {
-      console.log('📝 submitDecisionPublic called with:', { shareId, decision });
       
       const approval = await this.getByShareId(shareId);
       if (!approval || !approval.id) {
         throw new Error('Freigabe nicht gefunden');
       }
       
-      console.log('📝 Current approval status:', approval.status);
 
       // Für öffentlichen Zugriff: Update ohne Empfänger-Validierung
       const updates: any = {
@@ -638,7 +611,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       const newStatus = decision === 'approved' ? 'approved' : 'rejected';
       updates.status = newStatus;
       
-      console.log('📝 Setting new status:', newStatus);
       
       if (newStatus === 'approved') {
         updates.approvedAt = serverTimestamp();
@@ -666,11 +638,9 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
 
       updates.history = arrayUnion(cleanHistoryEntry);
       
-      console.log('📝 Updating document with:', updates);
 
       await updateDoc(doc(db, this.collectionName, approval.id), updates);
       
-      console.log('📝 Update completed');
 
       // Benachrichtigungen senden
       if (newStatus !== approval.status) {
@@ -801,11 +771,9 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
     options: QueryOptions = {}
   ): Promise<ApprovalListView[]> {
     try {
-      console.log('searchEnhanced called with:', { organizationId, filters });
       
       let approvals = await this.getAll(organizationId, options);
       
-      console.log('Raw approvals loaded:', approvals.length);
 
       // Client-seitige Filterung
       if (filters.search) {
@@ -880,7 +848,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         return enhancedApprovals.filter(a => a.isOverdue === filters.isOverdue);
       }
 
-      console.log('Enhanced approvals returned:', enhancedApprovals.length);
       return enhancedApprovals;
     } catch (error) {
       console.error('Error in enhanced approval search:', error);
@@ -945,7 +912,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       };
 
       const approvalId = await this.create(approvalData, context);
-      console.log('Created approval with ID:', approvalId);
       return approvalId;
     } catch (error) {
       console.error('Error creating approval from campaign:', error);
@@ -1227,12 +1193,10 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
     type: 'request' | 'reminder' | 'status_change'
   ): Promise<void> {
     // TODO: Integration mit E-Mail-Service
-    console.log(`Sending ${type} notifications for approval ${approval.id}`);
     
     // Simuliere E-Mail-Versand
     for (const recipient of approval.recipients) {
       if (recipient.status === 'pending') {
-        console.log(`Would send ${type} email to ${recipient.email}`);
       }
     }
   }
@@ -1245,7 +1209,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
     newStatus: ApprovalStatus
   ): Promise<void> {
     // TODO: Integration mit E-Mail-Service
-    console.log(`Status changed to ${newStatus} for approval ${approval.id}`);
     await this.sendNotifications(approval, 'status_change');
   }
 
@@ -1270,7 +1233,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         
         if (reminderTime > now && (!schedule.lastSentAt || reminderTime > schedule.lastSentAt.toDate())) {
           // TODO: Integration mit Cloud Functions für geplante Aufgaben
-          console.log(`Schedule reminder for ${reminderTime.toISOString()}`);
           break;
         }
       }

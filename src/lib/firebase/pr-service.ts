@@ -703,7 +703,6 @@ export const prService = {
    * Startet den Freigabeprozess mit dem Enhanced Approval Service
    */
   async requestApproval(campaignId: string): Promise<string> {
-    console.log('🔵 requestApproval called for campaign:', campaignId);
     
     const campaign = await this.getById(campaignId);
     if (!campaign) {
@@ -714,7 +713,6 @@ export const prService = {
     const organizationId = campaign.organizationId || campaign.userId;
     const context = { organizationId, userId: campaign.userId };
 
-    console.log('🔵 Context:', context);
 
     // Erstelle Empfänger aus Campaign-Daten
     // TODO: Später könnten hier echte Kundencontacts geladen werden
@@ -733,7 +731,6 @@ export const prService = {
         context
       );
 
-      console.log('🔵 Created Enhanced Approval with ID:', approvalId);
 
       // Hole die erstellte Approval für die shareId
       const approval = await approvalService.getById(approvalId, organizationId);
@@ -741,7 +738,6 @@ export const prService = {
         throw new Error('Fehler beim Erstellen der Freigabe');
       }
 
-      console.log('🔵 Approval shareId:', approval.shareId);
 
       // Sende zur Freigabe - setze Status auf pending
       await approvalService.update(approvalId, {
@@ -749,7 +745,6 @@ export const prService = {
         requestedAt: serverTimestamp() as Timestamp
       }, context);
       
-      console.log('⚠️ Freigabe erstellt, E-Mail-Versand folgt später');
 
       // Update Kampagne mit Approval-Daten
       const approvalData: ApprovalData = {
@@ -764,12 +759,10 @@ export const prService = {
         approvalData
       });
 
-      console.log('🔵 Updated campaign with approval data');
 
       // Erstelle auch Legacy Share für Rückwärtskompatibilität
       await this.createLegacyApprovalShare(campaign, approval.shareId);
 
-      console.log('🔵 Created legacy approval share');
 
       return approval.shareId;
     } catch (error) {
@@ -853,14 +846,12 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
     
     const snapshot = await getDocs(q);
     if (snapshot.empty) {
-      console.log('No approval share found for shareId:', shareId);
       return null;
     }
     
     const shareDoc = snapshot.docs[0];
     const shareData = shareDoc.data();
     
-    console.log('Found legacy approval share:', shareData);
     
     // Konstruiere Kampagnen-Objekt aus Share-Daten
     return {
@@ -899,7 +890,6 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
    * Sendet eine überarbeitete Kampagne erneut zur Freigabe
    */
   async resubmitForApproval(campaignId: string): Promise<void> {
-    console.log('Resubmitting campaign for approval:', campaignId);
     
     const campaign = await this.getById(campaignId);
     if (!campaign || !campaign.approvalData?.shareId) {
@@ -988,7 +978,6 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
       approvalData: updatedApprovalData
     });
     
-    console.log('Campaign resubmitted for approval');
   },
 
   /**
@@ -1013,7 +1002,6 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
       try {
         await approvalService.requestChangesPublic(shareId, recipientEmail, feedback, author);
       } catch (error) {
-        console.error('🔍 Error with requestChangesPublic, trying direct update:', error);
         
         // Fallback: Direkte Aktualisierung ohne Empfänger-Validierung
         if (approval.id && approval.organizationId) {
@@ -1071,7 +1059,6 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
       updatedAt: serverTimestamp()
     });
     
-    console.log('✅ Updated pr_approval_shares with status: commented');
     
     // Update auch die Kampagne mit den gleichen Daten
     if (currentData.campaignId) {
@@ -1088,11 +1075,6 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
         approvalData: updatedApprovalData // Komplettes Objekt überschreiben
       });
       
-      console.log('✅ Updated campaign with:', {
-        campaignId: currentData.campaignId,
-        status: 'changes_requested',
-        approvalDataStatus: 'commented'
-      });
       
       // ========== NOTIFICATION INTEGRATION ==========
       try {
@@ -1101,10 +1083,8 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
           await notificationsService.notifyChangesRequested(
             campaign,
             author || 'Kunde',
-            campaign.userId,
-            campaign.organizationId || undefined  // Explizit undefined wenn nicht vorhanden
+            campaign.userId
           );
-          console.log('📬 Benachrichtigung gesendet: Änderungen erbeten');
         }
       } catch (notificationError) {
         console.error('Fehler beim Senden der Benachrichtigung:', notificationError);
@@ -1117,7 +1097,6 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
    * Genehmigt eine Kampagne
    */
   async approveCampaign(shareId: string): Promise<void> {
-    console.log('approveCampaign called with shareId:', shareId);
     
     // Versuche Enhanced Approval zu verwenden
     const approval = await approvalService.getByShareId(shareId);
@@ -1127,7 +1106,6 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
       try {
         await approvalService.submitDecisionPublic(shareId, 'approved', undefined, 'Kunde');
       } catch (error) {
-        console.error('🔍 Error with public approval:', error);
         
         // Fallback: Versuche mit dem ersten Empfänger
         if (approval.recipients && approval.recipients.length > 0) {
@@ -1159,7 +1137,6 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
       updatedAt: serverTimestamp()
     });
     
-    console.log('Updated pr_approval_shares with status: approved');
     
     // Update auch die Kampagne mit den gleichen Daten
     if (currentData.campaignId) {
@@ -1176,11 +1153,6 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
         approvalData: updatedApprovalData // Komplettes Objekt überschreiben
       });
       
-      console.log('Updated campaign with:', {
-        campaignId: currentData.campaignId,
-        status: 'approved',
-        approvalDataStatus: 'approved'
-      });
       
       // ========== NOTIFICATION INTEGRATION ==========
       try {
@@ -1197,7 +1169,6 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
             approverName,
             campaign.userId
           );
-          console.log('📬 Benachrichtigung gesendet: Freigabe erteilt');
         }
       } catch (notificationError) {
         console.error('Fehler beim Senden der Benachrichtigung:', notificationError);
@@ -1210,7 +1181,6 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
    * Markiert eine Freigabe-Seite als angesehen
    */
   async markApprovalAsViewed(shareId: string): Promise<void> {
-    console.log('markApprovalAsViewed called with shareId:', shareId);
     
     // Versuche Enhanced Approval zu verwenden
     const approval = await approvalService.getByShareId(shareId);
@@ -1242,7 +1212,6 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
         updatedAt: serverTimestamp()
       });
       
-      console.log('Updated pr_approval_shares with status: viewed');
       
       // Update auch die Kampagne
       if (currentData.campaignId) {
@@ -1257,7 +1226,6 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
           approvalData: updatedApprovalData // Komplettes Objekt überschreiben
         });
         
-        console.log('Updated campaign with approvalDataStatus: viewed');
         
         // ========== NOTIFICATION INTEGRATION ==========
         try {
@@ -1265,10 +1233,8 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
           if (campaign) {
             await notificationsService.notifyMediaAccessed(
               { id: shareId, assetName: campaign.title || 'Pressemitteilung' },
-              campaign.userId,
-              campaign.organizationId || undefined
+              campaign.userId
             );
-            console.log('📬 Benachrichtigung gesendet: Link aufgerufen');
           }
         } catch (notificationError) {
           console.error('Fehler beim Senden der Link-Zugriff Benachrichtigung:', notificationError);
@@ -1399,7 +1365,6 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
     customerShareLink?: string;
   }> {
     try {
-      console.log('🚀 Vereinfachte Campaign-Speicherung mit Customer-Only-Workflow gestartet');
       
       // 1. Speichere Campaign (vereinfacht)
       let campaignId: string;
@@ -1500,7 +1465,6 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
           updatedAt: serverTimestamp()
         });
 
-        console.log('✅ Customer-Only-Workflow erstellt:', { workflowId, pdfVersionId: pdfVersion });
 
         return {
           campaignId,
@@ -1510,7 +1474,6 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
         };
       }
 
-      console.log('✅ Standard Campaign-Speicherung abgeschlossen: Kein Customer-Workflow');
       return { campaignId };
 
     } catch (error) {

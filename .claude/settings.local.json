@@ -46,7 +46,8 @@
       "Bash(git commit:*)",
       "Bash(npx eslint:*)",
       "Bash(dos2unix:*)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",
