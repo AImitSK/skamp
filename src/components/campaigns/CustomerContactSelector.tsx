@@ -58,10 +58,14 @@ export function CustomerContactSelector({
         const lastName = contact.name?.lastName || '';
         const fullName = `${firstName} ${lastName}`.trim();
         
+        // E-Mail aus dem emails Array holen (primaryEmail oder erste E-Mail)
+        const primaryEmail = contact.emails?.find(e => e.isPrimary)?.email || 
+                            contact.emails?.[0]?.email || '';
+        
         return {
           contactId: contact.id!,
-          name: fullName || contact.email || 'Unbekannter Kontakt',
-          email: contact.email || '',
+          name: fullName || primaryEmail || 'Unbekannter Kontakt',
+          email: primaryEmail,
           companyName: contact.companyDetails?.name || '',
           role: contact.position || undefined
         };
@@ -135,7 +139,9 @@ export function CustomerContactSelector({
             <option value="">Bitte wählen Sie einen Kontakt aus...</option>
             {contacts.map((contact) => (
               <option key={contact.contactId} value={contact.contactId}>
-                {contact.name} ({contact.role || 'Kontakt'}) - {contact.email}
+                {contact.name} 
+                {contact.role && ` (${contact.role})`}
+                {contact.email && ` - ${contact.email}`}
               </option>
             ))}
           </Select>

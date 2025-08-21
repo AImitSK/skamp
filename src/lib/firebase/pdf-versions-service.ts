@@ -92,6 +92,35 @@ class PDFVersionsService {
   private collectionName = 'pdf_versions';
 
   /**
+   * Erstellt eine temporäre PDF-Vorschau ohne DB-Speicherung
+   */
+  async createPreviewPDF(
+    content: {
+      title: string;
+      mainContent: string;
+      boilerplateSections: any[];
+      keyVisual?: any;
+      clientName?: string;
+    },
+    organizationId: string
+  ): Promise<{ pdfUrl: string; fileSize: number }> {
+    try {
+      // Generiere temporären Dateinamen
+      const now = new Date();
+      const timestamp = now.getTime();
+      const fileName = `preview_${content.title.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}.pdf`;
+
+      // Echte PDF-Generation über Puppeteer-API Route
+      const { pdfUrl, fileSize } = await this.generateRealPDF(content, fileName, organizationId);
+
+      return { pdfUrl, fileSize };
+    } catch (error) {
+      console.error('❌ Fehler beim Erstellen der PDF-Vorschau:', error);
+      throw new Error('Fehler beim Erstellen der PDF-Vorschau');
+    }
+  }
+
+  /**
    * Erstellt eine neue PDF-Version
    */
   async createPDFVersion(

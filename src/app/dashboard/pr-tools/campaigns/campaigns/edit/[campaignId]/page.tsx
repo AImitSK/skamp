@@ -383,7 +383,7 @@ export default function EditPRCampaignPage() {
     setShowAiModal(false);
   };
 
-  // PDF-Generation - NEW FEATURE
+  // PDF-Vorschau - OHNE DB-SPEICHERUNG
   const handleGeneratePdf = async () => {
     if (!currentOrganization?.id) {
       setPdfError('Organisation nicht gefunden');
@@ -394,9 +394,7 @@ export default function EditPRCampaignPage() {
     setPdfError('');
 
     try {
-      const pdfVersionId = await pdfVersionsService.createPDFVersion(
-        campaignId,
-        currentOrganization.id,
+      const { pdfUrl, fileSize } = await pdfVersionsService.createPreviewPDF(
         {
           title: campaignTitle,
           mainContent: editorContent,
@@ -404,17 +402,15 @@ export default function EditPRCampaignPage() {
           keyVisual,
           clientName: selectedCompanyName
         },
-        {
-          userId: user!.uid,
-          status: 'draft'
-        }
+        currentOrganization.id
       );
 
-      console.log('✅ PDF erfolgreich generiert:', pdfVersionId);
-      // TODO: Hier könnte ein Success-Toast gezeigt werden
+      console.log('✅ PDF-Vorschau erfolgreich generiert:', { pdfUrl, fileSize });
+      // TODO: PDF in neuem Tab öffnen oder Download-Link anzeigen
+      window.open(pdfUrl, '_blank');
     } catch (error) {
-      console.error('❌ PDF-Generation Fehler:', error);
-      setPdfError('Fehler bei der PDF-Erstellung');
+      console.error('❌ PDF-Vorschau Fehler:', error);
+      setPdfError('Fehler bei der PDF-Vorschau');
     } finally {
       setIsGeneratingPdf(false);
     }
@@ -771,22 +767,22 @@ export default function EditPRCampaignPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <Text className="text-sm text-gray-600">
-                      Exportiere die Kampagne als PDF-Dokument für Freigaben oder zum Download.
+                      Erstelle eine Vorschau der Kampagne als PDF-Dokument.
                     </Text>
                   </div>
                   <Button
                     type="button"
                     onClick={handleGeneratePdf}
                     disabled={isGeneratingPdf}
-                    className="bg-red-600 hover:bg-red-700 text-white whitespace-nowrap"
+                    className="bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap"
                   >
                     {isGeneratingPdf ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Generiere PDF...
+                        Erstelle Vorschau...
                       </>
                     ) : (
-                      'PDF generieren'
+                      'PDF-Vorschau erstellen'
                     )}
                   </Button>
                 </div>
