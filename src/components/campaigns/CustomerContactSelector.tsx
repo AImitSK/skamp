@@ -80,13 +80,25 @@ export function CustomerContactSelector({
     }
   };
 
-  const selectedContactData = contacts.find(c => c.contactId === selectedContact);
+  // selectedContact kann entweder ein String (ID) oder ein Objekt sein
+  const selectedContactId = typeof selectedContact === 'string' 
+    ? selectedContact 
+    : selectedContact?.contactId;
+    
+  const selectedContactData = contacts.find(c => c.contactId === selectedContactId);
 
   const handleContactSelect = (contactId: string) => {
     if (contactId === '') {
       onContactChange(undefined);
     } else {
-      onContactChange(contactId);
+      // Finde das komplette Kontakt-Objekt und übergebe es
+      const selectedContactObj = contacts.find(c => c.contactId === contactId);
+      if (selectedContactObj) {
+        onContactChange(selectedContactObj);
+      } else {
+        // Fallback: nur die ID übergeben
+        onContactChange(contactId);
+      }
     }
   };
 
@@ -132,7 +144,7 @@ export function CustomerContactSelector({
         <>
           {/* Contact Selection */}
           <Select
-            value={selectedContact || ''}
+            value={selectedContactId || ''}
             onChange={(e) => handleContactSelect(e.target.value)}
             className="w-full"
           >
