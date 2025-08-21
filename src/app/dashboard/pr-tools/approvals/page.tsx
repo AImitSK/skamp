@@ -185,7 +185,7 @@ function FeedbackHistoryModal({
                         </div>
                         <Text className="text-sm font-medium text-gray-900">
                           {entry.actorName}
-                          {entry.actorEmail && (
+                          {entry.actorEmail && !entry.actorEmail.includes('no-email@example.com') && (
                             <span className="font-normal text-gray-500"> ({entry.actorEmail})</span>
                           )}
                         </Text>
@@ -303,8 +303,10 @@ export default function ApprovalsPage() {
       const allApprovals = await approvalService.searchEnhanced(currentOrganization.id, filters);
       
       
-      // Filtere Draft-Status heraus
-      const filteredApprovals = allApprovals.filter(a => a.status !== 'draft');
+      // Filtere Draft-Status und versendete Kampagnen heraus
+      const filteredApprovals = allApprovals.filter(a => 
+        a.status !== 'draft' && a.status !== 'sent'
+      );
       
       // NEU: PDF-Versionen für alle Approvals laden
       const approvalsWithPDF = await Promise.all(
@@ -456,6 +458,23 @@ export default function ApprovalsPage() {
     return <Badge color={priorityColorMap[option.color] || 'zinc'}>{option.label}</Badge>;
   };
 
+  const getStatusText = (status: ApprovalStatus): string => {
+    switch (status) {
+      case 'pending':
+        return 'Ausstehend';
+      case 'under_review':
+        return 'Erstmal angesehen';
+      case 'changes_requested':
+        return 'Änderung erbeten';
+      case 'approved':
+        return 'Freigegeben';
+      case 'rejected':
+        return 'Abgelehnt';
+      default:
+        return 'Unbekannt';
+    }
+  };
+
   const getPDFStatusColor = (status: string): 'green' | 'yellow' | 'red' | 'blue' | 'zinc' => {
     switch (status) {
       case 'approved':
@@ -597,107 +616,6 @@ export default function ApprovalsPage() {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4 mb-6">
-        <div className="rounded-lg p-4" style={{backgroundColor: '#f1f0e2'}}>
-          <div className="flex items-center gap-3">
-            <div className="flex-shrink-0">
-              <ClockIcon className="h-5 w-5 text-gray-500" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
-                {stats.pending}
-              </div>
-              <Badge color="yellow">Ausstehend</Badge>
-            </div>
-          </div>
-        </div>
-        
-        <div className="rounded-lg p-4" style={{backgroundColor: '#f1f0e2'}}>
-          <div className="flex items-center gap-3">
-            <div className="flex-shrink-0">
-              <ChatBubbleLeftRightIcon className="h-5 w-5 text-gray-500" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
-                {stats.changesRequested}
-              </div>
-              <Badge color="orange">Änderungen erbeten</Badge>
-            </div>
-          </div>
-        </div>
-        
-        <div className="rounded-lg p-4" style={{backgroundColor: '#f1f0e2'}}>
-          <div className="flex items-center gap-3">
-            <div className="flex-shrink-0">
-              <CheckBadgeIcon className="h-5 w-5 text-gray-500" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
-                {stats.approved}
-              </div>
-              <Badge color="green">Freigegeben</Badge>
-            </div>
-          </div>
-        </div>
-        
-        <div className="rounded-lg p-4" style={{backgroundColor: '#f1f0e2'}}>
-          <div className="flex items-center gap-3">
-            <div className="flex-shrink-0">
-              <ExclamationTriangleIcon className="h-5 w-5 text-gray-500" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
-                {stats.overdue}
-              </div>
-              <Badge color="red">Überfällig</Badge>
-            </div>
-          </div>
-        </div>
-        
-        {/* Neue PDF-Stats */}
-        <div className="rounded-lg p-4" style={{backgroundColor: '#f1f0e2'}}>
-          <div className="flex items-center gap-3">
-            <div className="flex-shrink-0">
-              <DocumentTextIcon className="h-5 w-5 text-gray-500" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
-                {stats.withPDF}
-              </div>
-              <Badge color="blue">Mit PDF</Badge>
-            </div>
-          </div>
-        </div>
-        
-        <div className="rounded-lg p-4" style={{backgroundColor: '#f1f0e2'}}>
-          <div className="flex items-center gap-3">
-            <div className="flex-shrink-0">
-              <ClockIcon className="h-5 w-5 text-gray-500" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
-                {stats.pdfPending}
-              </div>
-              <Badge color="yellow">PDF ausstehend</Badge>
-            </div>
-          </div>
-        </div>
-        
-        <div className="rounded-lg p-4" style={{backgroundColor: '#f1f0e2'}}>
-          <div className="flex items-center gap-3">
-            <div className="flex-shrink-0">
-              <CheckCircleIcon className="h-5 w-5 text-gray-500" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-lg font-semibold text-gray-900 flex items-baseline gap-2">
-                {stats.pdfApproved}
-              </div>
-              <Badge color="green">PDF freigegeben</Badge>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Toolbar */}
       <div className="mb-6">
@@ -948,7 +866,7 @@ export default function ApprovalsPage() {
                   Status
                 </div>
                 <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                  Fortschritt
+                  Kunde & Kontakt
                 </div>
                 <div className="flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right pr-14">
                   Letzte Aktivität
@@ -967,15 +885,12 @@ export default function ApprovalsPage() {
                         href={`/dashboard/pr-tools/campaigns/campaigns/${approval.campaignId}`} 
                         className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-primary truncate block"
                       >
-                        {approval.title}
+                        {approval.campaignTitle || approval.title}
                       </Link>
+                      <div className="mt-1 text-xs text-gray-500">
+                        {formatDate(approval.createdAt)}
+                      </div>
                       <div className="mt-1 flex items-center gap-4 text-sm text-gray-500">
-                        {approval.clientName && (
-                          <div className="flex items-center gap-1">
-                            <BuildingOfficeIcon className="h-3 w-3" />
-                            {approval.clientName}
-                          </div>
-                        )}
                         {approval.attachedAssets && approval.attachedAssets.length > 0 && (
                           <div className="flex items-center gap-1">
                             <PhotoIcon className="h-3 w-3" />
@@ -987,50 +902,42 @@ export default function ApprovalsPage() {
 
                     {/* Status */}
                     <div className="w-[15%]">
-                      <div className="flex flex-wrap items-center gap-1">
-                        {getStatusBadge(approval.status)}
-                        {approval.priority && getPriorityBadge(approval.priority)}
-                        {approval.isOverdue && (
-                          <Badge color="red" className="text-xs">Überfällig</Badge>
-                        )}
-                        
-                        {/* NEU: PDF-Status-Badge */}
-                        {approval.hasPDF && (
-                          <Badge 
-                            color={getPDFStatusColor(approval.pdfStatus)} 
-                            className="text-xs flex items-center gap-1"
-                          >
-                            <DocumentIcon className="h-3 w-3" />
-                            PDF {approval.currentPdfVersion?.version}
-                          </Badge>
-                        )}
+                      <div className="space-y-1">
+                        <div className="flex flex-wrap items-center gap-1">
+                          {getStatusBadge(approval.status)}
+                          {approval.priority && getPriorityBadge(approval.priority)}
+                          {approval.isOverdue && (
+                            <Badge color="red" className="text-xs">Überfällig</Badge>
+                          )}
+                          
+                          {/* NEU: PDF-Status-Badge */}
+                          {approval.hasPDF && (
+                            <Badge 
+                              color={getPDFStatusColor(approval.pdfStatus)} 
+                              className="text-xs flex items-center gap-1"
+                            >
+                              <DocumentIcon className="h-3 w-3" />
+                              PDF {approval.currentPdfVersion?.version}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {approval.progressPercentage || 0}% {getStatusText(approval.status)}
+                        </div>
                       </div>
                     </div>
 
-                    {/* Fortschritt */}
+                    {/* Kunde & Kontakt */}
                     <div className="w-[20%]">
                       <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <div className="w-24 bg-gray-200 rounded-full h-2">
-                            <div 
-                              className={clsx(
-                                "h-2 rounded-full transition-all",
-                                approval.status === 'approved' ? 'bg-green-600' :
-                                approval.status === 'rejected' ? 'bg-red-600' :
-                                approval.progressPercentage > 50 ? 'bg-blue-600' :
-                                approval.progressPercentage > 0 ? 'bg-yellow-600' :
-                                'bg-gray-400'
-                              )}
-                              style={{ width: `${approval.progressPercentage}%` }}
-                            />
-                          </div>
-                          <Text className="text-sm text-gray-600">
-                            {approval.progressPercentage}%
-                          </Text>
+                        <div className="text-sm text-gray-900">
+                          {approval.clientName}
                         </div>
-                        <Text className="text-xs text-gray-500">
-                          {approval.approvedCount} von {approval.recipients.length} Empfängern
-                        </Text>
+                        <div className="text-xs text-gray-500">
+                          {approval.recipients && approval.recipients.length > 0 
+                            ? approval.recipients[0].email 
+                            : 'Kein Kontakt'}
+                        </div>
                       </div>
                     </div>
 

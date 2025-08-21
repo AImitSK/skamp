@@ -623,7 +623,7 @@ export default function PRCampaignsPage() {
                         <StatusBadge 
                           status={campaign.status} 
                           campaign={campaign}
-                          showApprovalTooltip={true}
+                          showApprovalTooltip={false}
                           teamMembers={teamMembers}
                         />
                         <div className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
