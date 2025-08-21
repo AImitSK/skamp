@@ -394,23 +394,29 @@ export default function EditPRCampaignPage() {
     setPdfError('');
 
     try {
-      const { pdfUrl, fileSize } = await pdfVersionsService.createPreviewPDF(
-        {
-          title: campaignTitle,
-          mainContent: editorContent,
-          boilerplateSections,
-          keyVisual,
-          clientName: selectedCompanyName
-        },
-        currentOrganization.id
-      );
+      // Prüfe ob createPreviewPDF verfügbar ist, sonst fallback
+      if (typeof pdfVersionsService.createPreviewPDF === 'function') {
+        const { pdfUrl, fileSize } = await pdfVersionsService.createPreviewPDF(
+          {
+            title: campaignTitle,
+            mainContent: editorContent,
+            boilerplateSections,
+            keyVisual,
+            clientName: selectedCompanyName
+          },
+          currentOrganization.id
+        );
 
-      console.log('✅ PDF-Vorschau erfolgreich generiert:', { pdfUrl, fileSize });
-      // TODO: PDF in neuem Tab öffnen oder Download-Link anzeigen
-      window.open(pdfUrl, '_blank');
+        console.log('✅ PDF-Vorschau erfolgreich generiert:', { pdfUrl, fileSize });
+        window.open(pdfUrl, '_blank');
+      } else {
+        // Fallback: alte Methode ohne DB-Speicherung
+        console.warn('⚠️ createPreviewPDF nicht verfügbar, verwende temporäre Lösung');
+        setPdfError('PDF-Vorschau temporär nicht verfügbar');
+      }
     } catch (error) {
       console.error('❌ PDF-Vorschau Fehler:', error);
-      setPdfError('Fehler bei der PDF-Vorschau');
+      setPdfError('Fehler bei der PDF-Vorschau: ' + (error as Error).message);
     } finally {
       setIsGeneratingPdf(false);
     }
