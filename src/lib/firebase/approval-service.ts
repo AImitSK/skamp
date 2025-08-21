@@ -263,7 +263,13 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
     options: QueryOptions = {}
   ): Promise<ApprovalEnhanced[]> {
     try {
-      const approvals = await super.getAll(organizationId, options);
+      // Füge Sortierung nach createdAt hinzu (neueste zuerst)
+      const sortedOptions = {
+        ...options,
+        orderBy: { field: 'createdAt', direction: 'desc' as const }
+      };
+      
+      const approvals = await super.getAll(organizationId, sortedOptions);
       
       // Stelle sicher, dass alle Arrays wirklich Arrays sind
       return approvals.map(approval => {

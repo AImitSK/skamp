@@ -49,6 +49,7 @@ import {
   PRIORITY_OPTIONS
 } from "@/types/approvals";
 import { PDFVersion } from "@/lib/firebase/pdf-versions-service";
+import { formatDateShort, formatDate as formatDateLong } from "@/utils/dateHelpers";
 import clsx from "clsx";
 
 // Alert Component
@@ -115,17 +116,6 @@ function FeedbackHistoryModal({
   approval: ApprovalEnhanced; 
   onClose: () => void;
 }) {
-  const formatDate = (timestamp: any) => {
-    if (!timestamp || !timestamp.toDate) return '—';
-    return timestamp.toDate().toLocaleDateString('de-DE', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   const getActionLabel = (action: string) => {
     const labels: Record<string, string> = {
       created: 'Erstellt',
@@ -181,7 +171,7 @@ function FeedbackHistoryModal({
                           <Badge color={entry.action === 'approved' ? 'green' : entry.action === 'rejected' ? 'red' : entry.action === 'changes_requested' || entry.action === 'commented' ? 'orange' : 'blue'}>
                             {getActionLabel(entry.action)}
                           </Badge>
-                          <Text className="text-sm text-gray-500">{formatDate(entry.timestamp)}</Text>
+                          <Text className="text-sm text-gray-500">{formatDateLong(entry.timestamp)}</Text>
                         </div>
                         <Text className="text-sm font-medium text-gray-900">
                           {entry.actorName}
@@ -346,7 +336,25 @@ export default function ApprovalsPage() {
         );
       }
       
-      setApprovals(finalApprovals);
+      // Sortiere nach createdAt (neueste zuerst)
+      const sortedApprovals = finalApprovals.sort((a, b) => {
+        // Robuste Timestamp-Behandlung
+        const getTimestamp = (approval: any) => {
+          if (approval.createdAt?.toDate) {
+            return approval.createdAt.toDate().getTime();
+          }
+          if (approval.createdAt instanceof Date) {
+            return approval.createdAt.getTime();
+          }
+          return 0; // Fallback für fehlende Timestamps
+        };
+        
+        const timeA = getTimestamp(a);
+        const timeB = getTimestamp(b);
+        return timeB - timeA; // Neueste zuerst
+      });
+      
+      setApprovals(sortedApprovals);
       
       // Lade Kunden für Filter
       const companies = await companiesEnhancedService.getAll(currentOrganization.id);
@@ -527,26 +535,6 @@ export default function ApprovalsPage() {
     }
   };
 
-  const formatDate = (timestamp: any) => {
-    if (!timestamp || !timestamp.toDate) return '—';
-    const date = timestamp.toDate();
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-    
-    if (minutes < 1) return 'Gerade eben';
-    if (minutes < 60) return `vor ${minutes} Minute${minutes !== 1 ? 'n' : ''}`;
-    if (hours < 24) return `vor ${hours} Stunde${hours !== 1 ? 'n' : ''}`;
-    if (days < 7) return `vor ${days} Tag${days !== 1 ? 'en' : ''}`;
-    
-    return date.toLocaleDateString('de-DE', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    });
-  };
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -908,7 +896,7 @@ export default function ApprovalsPage() {
                         {approval.campaignTitle || approval.title || 'Unbekannte Kampagne'}
                       </Link>
                       <div className="mt-1 text-xs text-gray-500">
-                        {formatDate(approval.createdAt)}
+                        {formatDateShort(approval.createdAt)}
                       </div>
                       <div className="mt-1 flex items-center gap-4 text-sm text-gray-500">
                         {approval.attachedAssets && approval.attachedAssets.length > 0 && (
@@ -972,7 +960,7 @@ export default function ApprovalsPage() {
                     {/* Letzte Aktivität */}
                     <div className="w-[20%] text-right pr-14">
                       <div className="text-sm">
-                        <div className="text-gray-900">{formatDate(approval.updatedAt)}</div>
+                        <div className="text-gray-900">{formatDateShort(approval.updatedAt || approval.createdAt)}</div>
                         {approval.history && approval.history.length > 0 && (
                           <div className="text-gray-500 flex items-center gap-1 mt-1 justify-end">
                             <ChatBubbleLeftRightIcon className="h-3 w-3" />
