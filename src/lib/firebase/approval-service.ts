@@ -207,9 +207,9 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         recipients: customerContact ? [{
           id: nanoid(10),
           type: 'customer' as const,
-          contactId: customerContact.contactId || 'unknown',
-          name: customerContact.name || 'Unknown Customer',
-          email: customerContact.email || 'no-email@example.com',
+          contactId: customerContact.contactId || customerContact.id || 'unknown',
+          name: customerContact.name || `${customerContact.firstName || ''} ${customerContact.lastName || ''}`.trim() || 'Unknown Customer',
+          email: customerContact.email || customerContact.primaryEmail || 'no-email@example.com',
           status: 'pending' as const,
           notificationsSent: 0,
           order: 0

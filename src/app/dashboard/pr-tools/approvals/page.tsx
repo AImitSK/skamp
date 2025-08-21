@@ -336,8 +336,17 @@ export default function ApprovalsPage() {
         );
       }
       
-      // Sortiere nach createdAt (neueste zuerst)
-      const sortedApprovals = finalApprovals.sort((a, b) => {
+      // Sortiere nach createdAt (neueste zuerst) und fixe Placeholder-Timestamps
+      const sortedApprovals = finalApprovals.map(approval => {
+        // Fixe serverTimestamp Placeholders
+        if (approval.createdAt?._methodName === 'serverTimestamp') {
+          approval.createdAt = new Date(); // Verwende aktuelles Datum als Fallback
+        }
+        if (approval.updatedAt?._methodName === 'serverTimestamp') {
+          approval.updatedAt = new Date();
+        }
+        return approval;
+      }).sort((a, b) => {
         // Robuste Timestamp-Behandlung
         const getTimestamp = (approval: any) => {
           if (approval.createdAt?.toDate) {
@@ -346,7 +355,7 @@ export default function ApprovalsPage() {
           if (approval.createdAt instanceof Date) {
             return approval.createdAt.getTime();
           }
-          return 0; // Fallback für fehlende Timestamps
+          return Date.now(); // Fallback zu aktuellem Zeitpunkt
         };
         
         const timeA = getTimestamp(a);
