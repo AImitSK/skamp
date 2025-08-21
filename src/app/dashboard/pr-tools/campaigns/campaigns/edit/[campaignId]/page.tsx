@@ -383,40 +383,73 @@ export default function EditPRCampaignPage() {
     setShowAiModal(false);
   };
 
-  // PDF-Vorschau - OHNE DB-SPEICHERUNG
+  // PDF-Vorschau mit temporärer Kampagne
   const handleGeneratePdf = async () => {
-    if (!currentOrganization?.id) {
-      setPdfError('Organisation nicht gefunden');
+    if (!currentOrganization?.id || !user) {
+      setPdfError('Organisation oder User nicht gefunden');
       return;
     }
 
     setIsGeneratingPdf(true);
     setPdfError('');
 
-    try {
-      // Prüfe ob createPreviewPDF verfügbar ist, sonst fallback
-      if (typeof pdfVersionsService.createPreviewPDF === 'function') {
-        const { pdfUrl, fileSize } = await pdfVersionsService.createPreviewPDF(
-          {
-            title: campaignTitle,
-            mainContent: editorContent,
-            boilerplateSections,
-            keyVisual,
-            clientName: selectedCompanyName
-          },
-          currentOrganization.id
-        );
+    let tempCampaignId: string | null = null;
 
-        console.log('✅ PDF-Vorschau erfolgreich generiert:', { pdfUrl, fileSize });
-        window.open(pdfUrl, '_blank');
-      } else {
-        // Fallback: alte Methode ohne DB-Speicherung
-        console.warn('⚠️ createPreviewPDF nicht verfügbar, verwende temporäre Lösung');
-        setPdfError('PDF-Vorschau temporär nicht verfügbar');
-      }
+    try {
+      // 1. Temporäre Kampagne mit generating_preview Status erstellen
+      const tempCampaignData = {
+        title: campaignTitle,
+        mainContent: editorContent,
+        boilerplateSections,
+        keyVisual,
+        clientId: selectedCompanyId,
+        clientName: selectedCompanyName,
+        status: 'generating_preview' as const,
+        userId: user.uid,
+        organizationId: currentOrganization.id
+      };
+
+      tempCampaignId = await prService.create(tempCampaignData as any);
+      console.log('🔄 Temporäre Kampagne erstellt:', tempCampaignId);
+
+      // 2. PDF mit der temporären Kampagne generieren
+      const pdfVersionId = await pdfVersionsService.createPDFVersion(
+        tempCampaignId,
+        currentOrganization.id,
+        {
+          title: campaignTitle,
+          mainContent: editorContent,
+          boilerplateSections,
+          keyVisual,
+          clientName: selectedCompanyName
+        },
+        {
+          userId: user.uid,
+          status: 'draft'
+        }
+      );
+
+      console.log('✅ PDF-Vorschau generiert:', pdfVersionId);
+
+      // 3. Temporäre Kampagne wieder löschen
+      await prService.delete(tempCampaignId);
+      console.log('🗑️ Temporäre Kampagne gelöscht:', tempCampaignId);
+
+      // TODO: PDF öffnen oder Download anbieten
+      
     } catch (error) {
       console.error('❌ PDF-Vorschau Fehler:', error);
       setPdfError('Fehler bei der PDF-Vorschau: ' + (error as Error).message);
+      
+      // Aufräumen: Temporäre Kampagne löschen falls noch vorhanden
+      if (tempCampaignId) {
+        try {
+          await prService.delete(tempCampaignId);
+          console.log('🧹 Cleanup: Temporäre Kampagne gelöscht');
+        } catch (cleanupError) {
+          console.warn('⚠️ Cleanup-Fehler:', cleanupError);
+        }
+      }
     } finally {
       setIsGeneratingPdf(false);
     }

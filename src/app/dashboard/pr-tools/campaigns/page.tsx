@@ -148,6 +148,11 @@ export default function PRCampaignsPage() {
   // Filtered campaigns
   const filteredCampaigns = useMemo(() => {
     return campaigns.filter(campaign => {
+      // Verstecke temporäre Kampagnen während PDF-Generierung
+      if (campaign.status === 'generating_preview') {
+        return false;
+      }
+      
       const searchMatch = campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          campaign.distributionListName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          campaign.clientName?.toLowerCase().includes(searchTerm.toLowerCase());

@@ -5,6 +5,7 @@ import type { EnhancedApprovalData } from './approvals-enhanced';
 // ERWEITERT: Neue Status für den Freigabe-Workflow hinzugefügt
 export type PRCampaignStatus =
   | 'draft'
+  | 'generating_preview' // NEU: Temporärer Status während PDF-Vorschau-Generierung
   | 'in_review'         // NEU: Warten auf Kunden-Feedback
   | 'changes_requested' // NEU: Kunde wünscht Änderungen
   | 'approved'          // NEU: Vom Kunden freigegeben
