@@ -1202,7 +1202,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
   }
 
   /**
-   * Sendet Status-Änderungs-Benachrichtigung
+   * Sendet Status-Änderungs-Benachrichtigung und verwaltet Campaign-Lock
    */
   private async sendStatusChangeNotification(
     approval: ApprovalEnhanced,
@@ -1210,6 +1210,45 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
   ): Promise<void> {
     // TODO: Integration mit E-Mail-Service
     await this.sendNotifications(approval, 'status_change');
+    
+    // 🔓 KAMPAGNEN-LOCK MANAGEMENT
+    if (approval.campaignId) {
+      await this.updateCampaignLockStatus(approval.campaignId, newStatus);
+    }
+  }
+
+  /**
+   * Aktualisiert den Lock-Status der verknüpften Kampagne basierend auf Approval-Status
+   */
+  private async updateCampaignLockStatus(
+    campaignId: string,
+    approvalStatus: ApprovalStatus
+  ): Promise<void> {
+    try {
+      const { prService } = await import('./pr-service');
+      
+      // Bei changes_requested: Lock lösen (Kampagne wird bearbeitbar)
+      if (approvalStatus === 'changes_requested') {
+        await prService.update(campaignId, {
+          editLocked: false,
+          editLockedReason: undefined,
+          lockedBy: undefined,
+          unlockedAt: serverTimestamp() as Timestamp,
+          lastUnlockedBy: {
+            userId: 'system',
+            displayName: 'Freigabe-System',
+            action: 'Änderung angefordert'
+          }
+        });
+      }
+      
+      // Bei anderen Status-Änderungen könnten weitere Lock-Regeln hinzugefügt werden
+      // z.B. bei approved: Lock setzen wenn Kampagne nicht mehr bearbeitet werden soll
+      
+    } catch (error) {
+      console.error('Error updating campaign lock status:', error);
+      // Fehler beim Lock-Update sollte den Hauptprozess nicht stoppen
+    }
   }
 
   /**
