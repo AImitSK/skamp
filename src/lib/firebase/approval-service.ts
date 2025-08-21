@@ -190,6 +190,38 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         clientEmail: campaign?.clientEmail
       });
       
+      // Wenn customerContact nur eine ID ist, lade die Kontakt-Daten
+      let contactData = customerContact;
+      if (typeof customerContact === 'string' && campaign?.clientId) {
+        try {
+          const { contactsEnhancedService } = await import('./crm-service-enhanced');
+          const contacts = await contactsEnhancedService.searchEnhanced(organizationId, {
+            companyIds: [campaign.clientId]
+          });
+          
+          // Finde den Kontakt mit der passenden ID
+          const contact = contacts.find(c => c.id === customerContact);
+          if (contact) {
+            const firstName = contact.name?.firstName || '';
+            const lastName = contact.name?.lastName || '';
+            const fullName = `${firstName} ${lastName}`.trim();
+            const primaryEmail = contact.emails?.find(e => e.isPrimary)?.email || 
+                                contact.emails?.[0]?.email || '';
+            
+            contactData = {
+              contactId: contact.id,
+              name: fullName || primaryEmail || 'Unbekannter Kontakt',
+              email: primaryEmail,
+              role: contact.position || undefined
+            };
+            
+            console.log('📧 APPROVAL DEBUG: Contact loaded:', contactData);
+          }
+        } catch (error) {
+          console.error('Fehler beim Laden des Kontakts:', error);
+        }
+      }
+      
       const shareId = this.generateShareId();
       
       // Vereinfachte Customer-Only Datenstruktur
@@ -200,16 +232,16 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         campaignTitle: campaign?.title || 'Unbekannte Kampagne',
         clientId: campaign?.clientId,
         clientName: campaign?.clientName || 'Unbekannter Kunde',
-        clientEmail: campaign?.clientEmail || customerContact?.email,
+        clientEmail: campaign?.clientEmail || contactData?.email,
         type: 'customer_only' as const,
         status: 'pending' as const,
         shareId,
-        recipients: customerContact ? [{
+        recipients: contactData ? [{
           id: nanoid(10),
           type: 'customer' as const,
-          contactId: customerContact.contactId || customerContact.id || 'unknown',
-          name: customerContact.name || `${customerContact.firstName || ''} ${customerContact.lastName || ''}`.trim() || 'Unknown Customer',
-          email: customerContact.email || customerContact.primaryEmail || 'no-email@example.com',
+          contactId: contactData.contactId || contactData.id || 'unknown',
+          name: contactData.name || `${contactData.firstName || ''} ${contactData.lastName || ''}`.trim() || 'Unknown Customer',
+          email: contactData.email || contactData.primaryEmail || 'no-email@example.com',
           status: 'pending' as const,
           notificationsSent: 0,
           order: 0
