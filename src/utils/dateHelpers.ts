@@ -17,9 +17,9 @@ export function formatDate(timestamp: any): string {
   else if (timestamp instanceof Date) {
     date = timestamp;
   }
-  // Firebase serverTimestamp() Placeholder
+  // Firebase serverTimestamp() Placeholder - diese sollten normalerweise nicht vorkommen
   else if (timestamp._methodName === 'serverTimestamp') {
-    date = new Date(); // Fallback zu aktuellem Datum
+    return '—'; // Zeige Platzhalter an - Daten noch nicht aus DB geladen
   }
   // Timestamp als Zahl (Unix Timestamp in Millisekunden)
   else if (typeof timestamp === 'number') {
@@ -64,9 +64,9 @@ export function formatDateShort(timestamp: any): string {
   else if (timestamp instanceof Date) {
     date = timestamp;
   }
-  // Firebase serverTimestamp() Placeholder
+  // Firebase serverTimestamp() Placeholder - diese sollten normalerweise nicht vorkommen
   else if (timestamp._methodName === 'serverTimestamp') {
-    date = new Date(); // Fallback zu aktuellem Datum
+    return '—'; // Zeige Platzhalter an - Daten noch nicht aus DB geladen
   }
   // Timestamp als Zahl (Unix Timestamp in Millisekunden)
   else if (typeof timestamp === 'number') {
@@ -114,9 +114,9 @@ export function formatDateRelative(timestamp: any): string {
   else if (timestamp instanceof Date) {
     date = timestamp;
   }
-  // Firebase serverTimestamp() Placeholder
+  // Firebase serverTimestamp() Placeholder - diese sollten normalerweise nicht vorkommen
   else if (timestamp._methodName === 'serverTimestamp') {
-    date = new Date(); // Fallback zu aktuellem Datum
+    return '—'; // Zeige Platzhalter an - Daten noch nicht aus DB geladen
   }
   // Timestamp als Zahl (Unix Timestamp in Millisekunden)
   else if (typeof timestamp === 'number') {
