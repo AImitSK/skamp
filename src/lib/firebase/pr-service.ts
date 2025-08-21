@@ -1027,6 +1027,22 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
         });
       }
     }
+    
+    // 🔄 WICHTIG: Campaign-Status auch auf changes_requested setzen und Lock lösen
+    if (approval.campaignId) {
+      await this.update(approval.campaignId, {
+        status: 'changes_requested',
+        editLocked: false,
+        editLockedReason: undefined,
+        lockedBy: undefined,
+        unlockedAt: serverTimestamp() as Timestamp,
+        lastUnlockedBy: {
+          userId: 'system',
+          displayName: 'Freigabe-System',
+          reason: 'Änderung angefordert durch ' + author
+        }
+      });
+    }
   },
 
   /**
@@ -1052,6 +1068,12 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
       }
     }
     
+    // 🔄 WICHTIG: Campaign-Status auch auf approved setzen
+    if (approval.campaignId) {
+      await this.update(approval.campaignId, {
+        status: 'approved'
+      });
+    }
   },
 
   /**
