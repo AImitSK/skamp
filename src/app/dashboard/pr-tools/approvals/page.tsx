@@ -879,16 +879,16 @@ export default function ApprovalsPage() {
             {/* Table Header */}
             <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
               <div className="flex items-center">
-                <div className="w-[35%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                <div className="w-[40%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Kampagne
                 </div>
-                <div className="w-[15%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Status
                 </div>
                 <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Kunde & Kontakt
                 </div>
-                <div className="flex-1 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right pr-14">
+                <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right pr-14">
                   Letzte Aktivität
                 </div>
               </div>
@@ -900,7 +900,7 @@ export default function ApprovalsPage() {
                 <div key={approval.id} className="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                   <div className="flex items-center">
                     {/* Kampagne */}
-                    <div className="w-[35%] min-w-0">
+                    <div className="w-[40%] min-w-0">
                       <Link 
                         href={`/dashboard/pr-tools/campaigns/campaigns/${approval.campaignId}`} 
                         className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-primary truncate block"
@@ -921,7 +921,7 @@ export default function ApprovalsPage() {
                     </div>
 
                     {/* Status */}
-                    <div className="w-[15%]">
+                    <div className="w-[20%]">
                       <div className="space-y-1">
                         <div className="flex flex-wrap items-center gap-1">
                           {getStatusBadge(approval.status)}
@@ -951,9 +951,6 @@ export default function ApprovalsPage() {
                             </div>
                             <span className="text-xs text-gray-500">{getStatusProgress(approval.status)}%</span>
                           </div>
-                          <div className="text-xs text-gray-500">
-                            {getStatusText(approval.status)}
-                          </div>
                         </div>
                       </div>
                     </div>
@@ -973,7 +970,7 @@ export default function ApprovalsPage() {
                     </div>
 
                     {/* Letzte Aktivität */}
-                    <div className="flex-1 text-right pr-14">
+                    <div className="w-[20%] text-right pr-14">
                       <div className="text-sm">
                         <div className="text-gray-900">{formatDate(approval.updatedAt)}</div>
                         {approval.history && approval.history.length > 0 && (

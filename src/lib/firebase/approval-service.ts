@@ -172,9 +172,23 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
     customerMessage?: string
   ): Promise<string> {
     try {
+      console.log('🔍 APPROVAL DEBUG: createCustomerApproval called with:', {
+        campaignId,
+        organizationId,
+        customerContact,
+        customerMessage
+      });
+
       // Lade Campaign-Daten für Title und Client-Info
       const { prService } = await import('./pr-service');
       const campaign = await prService.getById(campaignId);
+      
+      console.log('📋 APPROVAL DEBUG: Campaign loaded:', {
+        title: campaign?.title,
+        clientName: campaign?.clientName,
+        clientId: campaign?.clientId,
+        clientEmail: campaign?.clientEmail
+      });
       
       const shareId = this.generateShareId();
       
@@ -193,7 +207,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         recipients: customerContact ? [{
           id: nanoid(10),
           type: 'customer' as const,
-          contactId: customerContact.id || customerContact.contactId || 'unknown',
+          contactId: customerContact.contactId || 'unknown',
           name: customerContact.name || 'Unknown Customer',
           email: customerContact.email || 'no-email@example.com',
           status: 'pending' as const,
@@ -221,9 +235,19 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         createdBy: 'system' // Simplified for customer-only
       };
 
+      console.log('💾 APPROVAL DEBUG: Final approval data before save:', {
+        title: approvalData.title,
+        campaignTitle: approvalData.campaignTitle,
+        clientName: approvalData.clientName,
+        clientEmail: approvalData.clientEmail,
+        recipients: approvalData.recipients
+      });
+
       // Entferne undefined Werte bevor Firestore-Speicherung
       const cleanApprovalData = this.removeUndefinedValues(approvalData);
       const docRef = await addDoc(collection(db, 'approvals'), cleanApprovalData);
+      
+      console.log('✅ APPROVAL DEBUG: Approval created with ID:', docRef.id);
       return docRef.id;
     } catch (error) {
       console.error('Fehler beim Erstellen der Customer-Approval:', error);
