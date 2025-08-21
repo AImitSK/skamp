@@ -172,12 +172,21 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
     customerMessage?: string
   ): Promise<string> {
     try {
+      // Lade Campaign-Daten für Title und Client-Info
+      const { prService } = await import('./pr-service');
+      const campaign = await prService.getById(campaignId);
+      
       const shareId = this.generateShareId();
       
       // Vereinfachte Customer-Only Datenstruktur
       const approvalData = {
         campaignId,
         organizationId,
+        title: campaign?.title || 'Unbekannte Kampagne',
+        campaignTitle: campaign?.title || 'Unbekannte Kampagne',
+        clientId: campaign?.clientId,
+        clientName: campaign?.clientName || 'Unbekannter Kunde',
+        clientEmail: campaign?.clientEmail || customerContact?.email,
         type: 'customer_only' as const,
         status: 'pending' as const,
         shareId,
