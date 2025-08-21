@@ -985,110 +985,46 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
    */
   async submitFeedback(shareId: string, feedback: string, author: string = 'Kunde'): Promise<void> {
     
-    // Versuche Enhanced Approval zu verwenden
+    // Nur noch Enhanced Approval System verwenden
     const approval = await approvalService.getByShareId(shareId);
-    if (approval) {
-      
-      // Für Legacy/Public Access: Verwende den ersten Empfänger oder erstelle einen temporären
-      let recipientEmail = approval.recipients[0]?.email;
-      
-      // Wenn keine E-Mail gefunden wird oder es eine generierte E-Mail ist,
-      // verwende eine Public-Access E-Mail
-      if (!recipientEmail || recipientEmail.includes('kunde-')) {
-        recipientEmail = 'public-access@freigabe.system';
-      }
-      
-      // Verwende requestChanges mit öffentlichem Zugriff
-      try {
-        await approvalService.requestChangesPublic(shareId, recipientEmail, feedback, author);
-      } catch (error) {
-        
-        // Fallback: Direkte Aktualisierung ohne Empfänger-Validierung
-        if (approval.id && approval.organizationId) {
-          const historyEntry = {
-            id: nanoid(),
-            timestamp: Timestamp.now(),
-            action: 'changes_requested' as const,
-            actorName: author,
-            actorEmail: 'public-access@freigabe.system',
-            details: {
-              comment: feedback,
-              previousStatus: approval.status,
-              newStatus: 'changes_requested' as const
-            }
-          };
-          
-          await updateDoc(doc(db, 'approvals', approval.id), {
-            status: 'changes_requested',
-            updatedAt: serverTimestamp(),
-            history: arrayUnion(historyEntry)
-          });
-          
-        }
-      }
+    if (!approval) {
+      throw new Error('Freigabe nicht gefunden');
     }
     
-    // Update auch Legacy Share
-    const q = query(
-      collection(db, 'pr_approval_shares'),
-      where('shareId', '==', shareId),
-      where('isActive', '==', true),
-      limit(1)
-    );
+    // Für Public Access: Verwende den ersten Empfänger oder eine Public-Access E-Mail
+    let recipientEmail = approval.recipients[0]?.email;
     
-    const snapshot = await getDocs(q);
-    if (snapshot.empty) throw new Error('Freigabe nicht gefunden');
+    // Wenn keine E-Mail gefunden wird oder es eine generierte E-Mail ist,
+    // verwende eine Public-Access E-Mail
+    if (!recipientEmail || recipientEmail.includes('kunde-')) {
+      recipientEmail = 'public-access@freigabe.system';
+    }
     
-    const docRef = snapshot.docs[0].ref;
-    const currentData = snapshot.docs[0].data();
-    
-    
-    // Füge neues Feedback zur Historie hinzu
-    const newFeedback = {
-      comment: feedback,
-      requestedAt: Timestamp.now(),
-      author
-    };
-
-    const updatedFeedbackHistory = [...(currentData.feedbackHistory || []), newFeedback];
-
-    // Update pr_approval_shares
-    await updateDoc(docRef, {
-      status: 'commented',
-      feedbackHistory: updatedFeedbackHistory,
-      updatedAt: serverTimestamp()
-    });
-    
-    
-    // Update auch die Kampagne mit den gleichen Daten
-    if (currentData.campaignId) {
-      // WICHTIG: Erstelle ein komplett neues approvalData Objekt
-      const updatedApprovalData: ApprovalData = {
-        shareId: shareId,
-        status: 'commented', // WICHTIG: Dieser Status muss gesetzt werden!
-        feedbackHistory: updatedFeedbackHistory
-      };
-
-      // Update mit dem kompletten neuen Objekt
-      await this.update(currentData.campaignId, {
-        status: 'changes_requested',
-        approvalData: updatedApprovalData // Komplettes Objekt überschreiben
-      });
+    // Verwende requestChanges mit öffentlichem Zugriff
+    try {
+      await approvalService.requestChangesPublic(shareId, recipientEmail, feedback, author);
+    } catch (error) {
       
-      
-      // ========== NOTIFICATION INTEGRATION ==========
-      try {
-        const campaign = await this.getById(currentData.campaignId);
-        if (campaign) {
-          await notificationsService.notifyChangesRequested(
-            campaign,
-            author || 'Kunde',
-            campaign.userId
-          );
-        }
-      } catch (notificationError) {
-        console.error('Fehler beim Senden der Benachrichtigung:', notificationError);
-        // Fehler bei Benachrichtigung sollte den Hauptprozess nicht stoppen
+      // Fallback: Direkte Aktualisierung ohne Empfänger-Validierung
+      if (approval.id && approval.organizationId) {
+        const historyEntry = {
+          id: nanoid(),
+          timestamp: Timestamp.now(),
+          action: 'changes_requested' as const,
+          actorName: author,
+          actorEmail: 'public-access@freigabe.system',
+          details: {
+            comment: feedback,
+            previousStatus: approval.status,
+            newStatus: 'changes_requested' as const
+          }
+        };
+        
+        await updateDoc(doc(db, 'approvals', approval.id), {
+          status: 'changes_requested',
+          updatedAt: serverTimestamp(),
+          history: arrayUnion(historyEntry)
+        });
       }
     }
   },
@@ -1098,83 +1034,24 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
    */
   async approveCampaign(shareId: string): Promise<void> {
     
-    // Versuche Enhanced Approval zu verwenden
+    // Nur noch Enhanced Approval System verwenden
     const approval = await approvalService.getByShareId(shareId);
-    if (approval) {
+    if (!approval) {
+      throw new Error('Freigabe nicht gefunden');
+    }
+    
+    // Für öffentlichen Zugriff: Verwende submitDecisionPublic
+    try {
+      await approvalService.submitDecisionPublic(shareId, 'approved', undefined, 'Kunde');
+    } catch (error) {
       
-      // Für öffentlichen Zugriff: Verwende submitDecisionPublic
-      try {
-        await approvalService.submitDecisionPublic(shareId, 'approved', undefined, 'Kunde');
-      } catch (error) {
-        
-        // Fallback: Versuche mit dem ersten Empfänger
-        if (approval.recipients && approval.recipients.length > 0) {
-          const recipientEmail = approval.recipients[0].email;
-          await approvalService.submitDecision(shareId, recipientEmail, 'approved');
-        }
+      // Fallback: Versuche mit dem ersten Empfänger
+      if (approval.recipients && approval.recipients.length > 0) {
+        const recipientEmail = approval.recipients[0].email;
+        await approvalService.submitDecision(shareId, recipientEmail, 'approved');
       }
     }
     
-    // Update auch Legacy Share
-    const q = query(
-      collection(db, 'pr_approval_shares'),
-      where('shareId', '==', shareId),
-      where('isActive', '==', true),
-      limit(1)
-    );
-    
-    const snapshot = await getDocs(q);
-    if (snapshot.empty) throw new Error('Freigabe nicht gefunden');
-    
-    const docRef = snapshot.docs[0].ref;
-    const currentData = snapshot.docs[0].data();
-    const approvedAt = Timestamp.now();
-    
-    // Update pr_approval_shares
-    await updateDoc(docRef, {
-      status: 'approved',
-      approvedAt: approvedAt,
-      updatedAt: serverTimestamp()
-    });
-    
-    
-    // Update auch die Kampagne mit den gleichen Daten
-    if (currentData.campaignId) {
-      // WICHTIG: Erstelle ein komplett neues approvalData Objekt
-      const updatedApprovalData: ApprovalData = {
-        shareId: shareId,
-        status: 'approved', // WICHTIG: Dieser Status muss gesetzt werden!
-        feedbackHistory: currentData.feedbackHistory || [],
-        approvedAt: approvedAt
-      };
-
-      await this.update(currentData.campaignId, {
-        status: 'approved',
-        approvalData: updatedApprovalData // Komplettes Objekt überschreiben
-      });
-      
-      
-      // ========== NOTIFICATION INTEGRATION ==========
-      try {
-        const campaign = await this.getById(currentData.campaignId);
-        if (campaign) {
-          // Hole den Namen des Genehmigers aus der letzten Feedback-Historie
-          // oder verwende 'Kunde' als Standard
-          const approverName = currentData.feedbackHistory?.length > 0 
-            ? currentData.feedbackHistory[currentData.feedbackHistory.length - 1].author || 'Kunde'
-            : 'Kunde';
-            
-          await notificationsService.notifyApprovalGranted(
-            campaign,
-            approverName,
-            campaign.userId
-          );
-        }
-      } catch (notificationError) {
-        console.error('Fehler beim Senden der Benachrichtigung:', notificationError);
-        // Fehler bei Benachrichtigung sollte den Hauptprozess nicht stoppen
-      }
-    }
   },
 
   /**
@@ -1182,65 +1059,11 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
    */
   async markApprovalAsViewed(shareId: string): Promise<void> {
     
-    // Versuche Enhanced Approval zu verwenden
+    // Nur noch Enhanced Approval System verwenden
     const approval = await approvalService.getByShareId(shareId);
     if (approval) {
       const recipientEmail = approval.recipients[0]?.email;
       await approvalService.markAsViewed(shareId, recipientEmail);
-    }
-    
-    // Update auch Legacy Share
-    const q = query(
-      collection(db, 'pr_approval_shares'),
-      where('shareId', '==', shareId),
-      where('isActive', '==', true),
-      limit(1)
-    );
-    
-    const snapshot = await getDocs(q);
-    if (snapshot.empty) return;
-    
-    const docRef = snapshot.docs[0].ref;
-    const currentData = snapshot.docs[0].data();
-    
-    // Nur aktualisieren, wenn noch im 'pending' Status
-    if (currentData.status === 'pending') {
-      // Update pr_approval_shares
-      await updateDoc(docRef, {
-        status: 'viewed',
-        viewedAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      });
-      
-      
-      // Update auch die Kampagne
-      if (currentData.campaignId) {
-        // WICHTIG: Erstelle ein komplett neues approvalData Objekt
-        const updatedApprovalData: ApprovalData = {
-          shareId: shareId,
-          status: 'viewed', // WICHTIG: Dieser Status muss gesetzt werden!
-          feedbackHistory: currentData.feedbackHistory || []
-        };
-
-        await this.update(currentData.campaignId, {
-          approvalData: updatedApprovalData // Komplettes Objekt überschreiben
-        });
-        
-        
-        // ========== NOTIFICATION INTEGRATION ==========
-        try {
-          const campaign = await this.getById(currentData.campaignId);
-          if (campaign) {
-            await notificationsService.notifyMediaAccessed(
-              { id: shareId, assetName: campaign.title || 'Pressemitteilung' },
-              campaign.userId
-            );
-          }
-        } catch (notificationError) {
-          console.error('Fehler beim Senden der Link-Zugriff Benachrichtigung:', notificationError);
-          // Fehler bei Benachrichtigung sollte den Hauptprozess nicht stoppen
-        }
-      }
     }
   },
 
