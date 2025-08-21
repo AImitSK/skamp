@@ -4,8 +4,41 @@
  * Formatiert einen Firebase Timestamp zu einem deutschen Datumsformat
  */
 export function formatDate(timestamp: any): string {
-  if (!timestamp || !timestamp.toDate) return '—';
-  return timestamp.toDate().toLocaleDateString('de-DE', {
+  if (!timestamp) return '—';
+  
+  // Behandle verschiedene Timestamp-Formate
+  let date: Date;
+  
+  // Firebase Timestamp mit toDate() Methode
+  if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+    date = timestamp.toDate();
+  }
+  // JavaScript Date Objekt
+  else if (timestamp instanceof Date) {
+    date = timestamp;
+  }
+  // Firebase serverTimestamp() Placeholder
+  else if (timestamp._methodName === 'serverTimestamp') {
+    date = new Date(); // Fallback zu aktuellem Datum
+  }
+  // Timestamp als Zahl (Unix Timestamp in Millisekunden)
+  else if (typeof timestamp === 'number') {
+    date = new Date(timestamp);
+  }
+  // Timestamp als String
+  else if (typeof timestamp === 'string') {
+    date = new Date(timestamp);
+  }
+  else {
+    return '—';
+  }
+  
+  // Prüfe ob das Datum gültig ist
+  if (isNaN(date.getTime())) {
+    return '—';
+  }
+  
+  return date.toLocaleDateString('de-DE', {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
@@ -18,8 +51,40 @@ export function formatDate(timestamp: any): string {
  * Formatiert einen Firebase Timestamp zu einem kurzen deutschen Datumsformat
  */
 export function formatDateShort(timestamp: any): string {
-  if (!timestamp || !timestamp.toDate) return '—';
-  const date = timestamp.toDate();
+  if (!timestamp) return '—';
+  
+  // Behandle verschiedene Timestamp-Formate
+  let date: Date;
+  
+  // Firebase Timestamp mit toDate() Methode
+  if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+    date = timestamp.toDate();
+  }
+  // JavaScript Date Objekt
+  else if (timestamp instanceof Date) {
+    date = timestamp;
+  }
+  // Firebase serverTimestamp() Placeholder
+  else if (timestamp._methodName === 'serverTimestamp') {
+    date = new Date(); // Fallback zu aktuellem Datum
+  }
+  // Timestamp als Zahl (Unix Timestamp in Millisekunden)
+  else if (typeof timestamp === 'number') {
+    date = new Date(timestamp);
+  }
+  // Timestamp als String
+  else if (typeof timestamp === 'string') {
+    date = new Date(timestamp);
+  }
+  else {
+    return '—';
+  }
+  
+  // Prüfe ob das Datum gültig ist
+  if (isNaN(date.getTime())) {
+    return '—';
+  }
+  
   const now = new Date();
   const isThisYear = date.getFullYear() === now.getFullYear();
   
@@ -36,9 +101,40 @@ export function formatDateShort(timestamp: any): string {
  * Formatiert einen Firebase Timestamp zu einem relativen Zeitformat
  */
 export function formatDateRelative(timestamp: any): string {
-  if (!timestamp || !timestamp.toDate) return '—';
+  if (!timestamp) return '—';
   
-  const date = timestamp.toDate();
+  // Behandle verschiedene Timestamp-Formate
+  let date: Date;
+  
+  // Firebase Timestamp mit toDate() Methode
+  if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+    date = timestamp.toDate();
+  }
+  // JavaScript Date Objekt
+  else if (timestamp instanceof Date) {
+    date = timestamp;
+  }
+  // Firebase serverTimestamp() Placeholder
+  else if (timestamp._methodName === 'serverTimestamp') {
+    date = new Date(); // Fallback zu aktuellem Datum
+  }
+  // Timestamp als Zahl (Unix Timestamp in Millisekunden)
+  else if (typeof timestamp === 'number') {
+    date = new Date(timestamp);
+  }
+  // Timestamp als String
+  else if (typeof timestamp === 'string') {
+    date = new Date(timestamp);
+  }
+  else {
+    return '—';
+  }
+  
+  // Prüfe ob das Datum gültig ist
+  if (isNaN(date.getTime())) {
+    return '—';
+  }
+  
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));

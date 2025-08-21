@@ -262,8 +262,10 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
           remindersSent: 0
         },
         version: 1,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        // Verwende Timestamp.now() für sofortige Anzeige (wird von serverTimestamp überschrieben)
+        createdAt: serverTimestamp() as any,
+        updatedAt: serverTimestamp() as any,
+        _createdAtBackup: Timestamp.now(), // Backup für sofortige Anzeige
         createdBy: 'system' // Simplified for customer-only
       };
 

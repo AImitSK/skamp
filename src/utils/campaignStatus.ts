@@ -22,6 +22,12 @@ export const statusConfig: Record<PRCampaignStatus, {
     icon: PencilSquareIcon,
     description: 'Die Kampagne ist noch in Bearbeitung'
   },
+  generating_preview: {
+    label: 'Generiere Vorschau',
+    color: 'orange',
+    icon: ClockIcon,
+    description: 'PDF-Vorschau wird generiert (temporär)'
+  },
   in_review: {
     label: 'In Prüfung',
     color: 'yellow',
