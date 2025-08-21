@@ -17,6 +17,10 @@ export function formatDate(timestamp: any): string {
   else if (timestamp instanceof Date) {
     date = timestamp;
   }
+  // Firebase Firestore Timestamp Objekt (aus Server) mit seconds/nanoseconds
+  else if (timestamp && typeof timestamp.seconds === 'number' && typeof timestamp.nanoseconds === 'number') {
+    date = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
+  }
   // Firebase serverTimestamp() Placeholder - diese sollten normalerweise nicht vorkommen
   else if (timestamp._methodName === 'serverTimestamp') {
     return '—'; // Zeige Platzhalter an - Daten noch nicht aus DB geladen
@@ -63,6 +67,10 @@ export function formatDateShort(timestamp: any): string {
   // JavaScript Date Objekt
   else if (timestamp instanceof Date) {
     date = timestamp;
+  }
+  // Firebase Firestore Timestamp Objekt (aus Server) mit seconds/nanoseconds
+  else if (timestamp && typeof timestamp.seconds === 'number' && typeof timestamp.nanoseconds === 'number') {
+    date = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
   }
   // Firebase serverTimestamp() Placeholder - diese sollten normalerweise nicht vorkommen
   else if (timestamp._methodName === 'serverTimestamp') {
@@ -113,6 +121,10 @@ export function formatDateRelative(timestamp: any): string {
   // JavaScript Date Objekt
   else if (timestamp instanceof Date) {
     date = timestamp;
+  }
+  // Firebase Firestore Timestamp Objekt (aus Server) mit seconds/nanoseconds
+  else if (timestamp && typeof timestamp.seconds === 'number' && typeof timestamp.nanoseconds === 'number') {
+    date = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
   }
   // Firebase serverTimestamp() Placeholder - diese sollten normalerweise nicht vorkommen
   else if (timestamp._methodName === 'serverTimestamp') {
