@@ -885,7 +885,7 @@ export default function ApprovalsPage() {
                         href={`/dashboard/pr-tools/campaigns/campaigns/${approval.campaignId}`} 
                         className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-primary truncate block"
                       >
-                        {approval.campaignTitle || approval.title}
+                        {approval.campaignTitle || approval.title || 'Unbekannte Kampagne'}
                       </Link>
                       <div className="mt-1 text-xs text-gray-500">
                         {formatDate(approval.createdAt)}
@@ -931,12 +931,12 @@ export default function ApprovalsPage() {
                     <div className="w-[20%]">
                       <div className="space-y-1">
                         <div className="text-sm text-gray-900">
-                          {approval.clientName}
+                          {approval.clientName || 'Unbekannter Kunde'}
                         </div>
                         <div className="text-xs text-gray-500">
                           {approval.recipients && approval.recipients.length > 0 
                             ? approval.recipients[0].email 
-                            : 'Kein Kontakt'}
+                            : approval.clientEmail || 'Kein Kontakt'}
                         </div>
                       </div>
                     </div>
