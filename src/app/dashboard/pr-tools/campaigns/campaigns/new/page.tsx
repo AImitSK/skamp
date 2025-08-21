@@ -673,36 +673,67 @@ export default function NewPRCampaignPage() {
     }
 
     setGeneratingPdf(true);
+    console.log('🔍 TEMP CAMPAIGN DEBUG: Creating temporary campaign...');
+    
     try {
-      // Speichere zuerst die Kampagne als Entwurf
-      const campaignId = await saveAsDraft();
+      // 1. Temporäre Kampagne mit generating_preview Status erstellen
+      const tempCampaignData = {
+        title: campaignTitle,
+        contentHtml: '',
+        mainContent: editorContent,
+        boilerplateSections,
+        keyVisual,
+        clientId: selectedCompanyId,
+        clientName: selectedCompanyName,
+        status: 'generating_preview' as const,
+        userId: user.uid,
+        organizationId: currentOrganization.id,
+        distributionListId: '',
+        distributionListName: '',
+        recipientCount: 0,
+        approvalRequired: false
+      };
+
+      console.log('⏳ Temporary campaign created with status:', tempCampaignData.status);
       
-      if (!campaignId) {
-        throw new Error('Kampagne konnte nicht gespeichert werden');
-      }
+      // 2. Temporäre Kampagne speichern
+      const tempCampaignId = await prService.create(tempCampaignData);
+      
+      try {
+        // 3. PDF für temporäre Kampagne generieren
+        console.log('📄 PDF generated, cleaning up temporary campaign...');
+        const pdfVersionId = await pdfVersionsService.createPDFVersion(
+          tempCampaignId,
+          currentOrganization.id,
+          {
+            title: campaignTitle,
+            mainContent: editorContent,
+            boilerplateSections,
+            keyVisual,
+            clientName: selectedCompanyName
+          },
+          {
+            userId: user.uid,
+            status: forApproval ? 'pending_customer' : 'draft'
+          }
+        );
 
-      // Dann generiere PDF für die gespeicherte Kampagne
-      const pdfVersionId = await pdfVersionsService.createPDFVersion(
-        campaignId,
-        currentOrganization.id,
-        {
-          title: campaignTitle,
-          mainContent: editorContent,
-          boilerplateSections,
-          keyVisual,
-          clientName: selectedCompanyName
-        },
-        {
-          userId: user.uid,
-          status: forApproval ? 'pending_customer' : 'draft'
+        // 4. PDF-Version für Vorschau laden
+        const newVersion = await pdfVersionsService.getCurrentVersion(tempCampaignId);
+        setCurrentPdfVersion(newVersion);
+
+        setSuccessMessage('PDF erfolgreich generiert!');
+        
+      } finally {
+        // 5. Temporäre Kampagne IMMER löschen (auch bei Fehlern)
+        try {
+          await prService.delete(tempCampaignId);
+          console.log('✅ Temporary campaign deleted successfully');
+        } catch (deleteError) {
+          console.error('⚠️ Failed to delete temporary campaign:', deleteError);
         }
-      );
-
-      // Lade die erstellte PDF-Version
-      const newVersion = await pdfVersionsService.getCurrentVersion(campaignId);
-      setCurrentPdfVersion(newVersion);
-
-      setSuccessMessage('PDF erfolgreich generiert!');
+      }
+      
     } catch (error) {
       console.error('Fehler bei PDF-Generation:', error);
       setValidationErrors(['Fehler bei der PDF-Erstellung']);
