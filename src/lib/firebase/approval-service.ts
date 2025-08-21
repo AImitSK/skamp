@@ -859,13 +859,47 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         } as ApprovalListView;
       });
 
+      // Repariere kaputte Timestamps automatisch
+      const repairedApprovals = await Promise.all(enhancedApprovals.map(async (approval) => {
+        let needsUpdate = false;
+        const updates: any = {};
+        
+        // Prüfe und repariere createdAt
+        if (approval.createdAt === 'toimestamp' || typeof approval.createdAt === 'string') {
+          updates.createdAt = Timestamp.now();
+          approval.createdAt = Timestamp.now();
+          needsUpdate = true;
+          console.log(`🔧 Repariere createdAt für Approval ${approval.id}`);
+        }
+        
+        // Prüfe und repariere updatedAt  
+        if (approval.updatedAt === 'toimestamp' || typeof approval.updatedAt === 'string') {
+          updates.updatedAt = Timestamp.now();
+          approval.updatedAt = Timestamp.now();
+          needsUpdate = true;
+          console.log(`🔧 Repariere updatedAt für Approval ${approval.id}`);
+        }
+        
+        // Update in Datenbank wenn nötig
+        if (needsUpdate && approval.id) {
+          try {
+            await updateDoc(doc(db, 'approvals', approval.id), updates);
+            console.log(`✅ Approval ${approval.id} Timestamps repariert`);
+          } catch (error) {
+            console.error(`❌ Fehler beim Reparieren von ${approval.id}:`, error);
+          }
+        }
+        
+        return approval;
+      }));
+
       // Filter überfällige
       if (filters.isOverdue !== undefined) {
-        return enhancedApprovals.filter(a => a.isOverdue === filters.isOverdue);
+        return repairedApprovals.filter(a => a.isOverdue === filters.isOverdue);
       }
 
-      console.log('Enhanced approvals returned:', enhancedApprovals.length);
-      return enhancedApprovals;
+      console.log('Enhanced approvals returned:', repairedApprovals.length);
+      return repairedApprovals;
     } catch (error) {
       console.error('Error in enhanced approval search:', error);
       return [];
