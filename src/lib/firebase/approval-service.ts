@@ -252,7 +252,16 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
           stages: ['customer'],
           isMultiStage: false
         },
-        history: [],
+        history: customerMessage ? [{
+          id: nanoid(),
+          timestamp: Timestamp.now(),
+          action: 'created',
+          actorName: 'System',
+          actorEmail: 'system@celeropress.com',
+          details: {
+            comment: customerMessage
+          }
+        }] : [],
         analytics: {
           totalViews: 0,
           uniqueViews: 0
@@ -383,6 +392,8 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
    */
   async getByShareId(shareId: string): Promise<ApprovalEnhanced | null> {
     try {
+      console.log('🔍 Searching for approval with shareId:', shareId);
+      
       const q = query(
         collection(db, this.collectionName),
         where('shareId', '==', shareId),
@@ -390,7 +401,12 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       );
 
       const snapshot = await getDocs(q);
-      if (snapshot.empty) return null;
+      console.log('📊 Query result - empty:', snapshot.empty, 'size:', snapshot.size);
+      
+      if (snapshot.empty) {
+        console.warn('❌ No approval found with shareId:', shareId);
+        return null;
+      }
 
       const doc = snapshot.docs[0];
       const data = doc.data();
