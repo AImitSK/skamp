@@ -865,7 +865,9 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         const updates: any = {};
         
         // Prüfe und repariere createdAt
-        if (approval.createdAt === 'toimestamp' || typeof approval.createdAt === 'string') {
+        if (approval.createdAt === 'toimestamp' || 
+            typeof approval.createdAt === 'string' ||
+            approval.createdAt?._methodName === 'serverTimestamp') {
           updates.createdAt = Timestamp.now();
           approval.createdAt = Timestamp.now();
           needsUpdate = true;
@@ -873,11 +875,23 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         }
         
         // Prüfe und repariere updatedAt  
-        if (approval.updatedAt === 'toimestamp' || typeof approval.updatedAt === 'string') {
+        if (approval.updatedAt === 'toimestamp' || 
+            typeof approval.updatedAt === 'string' ||
+            approval.updatedAt?._methodName === 'serverTimestamp') {
           updates.updatedAt = Timestamp.now();
           approval.updatedAt = Timestamp.now();
           needsUpdate = true;
           console.log(`🔧 Repariere updatedAt für Approval ${approval.id}`);
+        }
+        
+        // Prüfe und repariere fehlende campaignTitle
+        if (!approval.campaignTitle || approval.campaignTitle === 'Unbekannte Kampagne') {
+          if (approval.title && approval.title !== 'Unbekannte Kampagne') {
+            updates.campaignTitle = approval.title;
+            approval.campaignTitle = approval.title;
+            needsUpdate = true;
+            console.log(`🔧 Repariere campaignTitle für Approval ${approval.id}: ${approval.title}`);
+          }
         }
         
         // Update in Datenbank wenn nötig
