@@ -399,6 +399,7 @@ export default function EditPRCampaignPage() {
       // 1. Temporäre Kampagne mit generating_preview Status erstellen
       const tempCampaignData = {
         title: campaignTitle,
+        contentHtml: '',
         mainContent: editorContent,
         boilerplateSections,
         keyVisual,
@@ -406,9 +407,14 @@ export default function EditPRCampaignPage() {
         clientName: selectedCompanyName,
         status: 'generating_preview' as const,
         userId: user.uid,
-        organizationId: currentOrganization.id
+        organizationId: currentOrganization.id,
+        distributionListId: '',
+        distributionListName: '',
+        recipientCount: 0,
+        approvalRequired: false
       };
 
+      console.log('🔄 Erstelle temporäre Kampagne mit Status:', tempCampaignData.status);
       tempCampaignId = await prService.create(tempCampaignData as any);
       console.log('🔄 Temporäre Kampagne erstellt:', tempCampaignId);
 
