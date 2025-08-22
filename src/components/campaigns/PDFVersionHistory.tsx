@@ -193,7 +193,7 @@ export function PDFVersionHistory({
                         });
                       }
                       
-                      // Robuste Timestamp-Behandlung - NICHT manipulieren, nur lesen
+                      // Robuste Timestamp-Behandlung
                       const getTimestamp = (createdAt: any) => {
                         // Standard Firebase Timestamp
                         if (createdAt?.toDate) {
@@ -203,14 +203,20 @@ export function PDFVersionHistory({
                         if (createdAt instanceof Date) {
                           return createdAt;
                         }
-                        // Fehlerhafte Timestamp-Objekte: Lese die Werte direkt
+                        // Unaufgelöste serverTimestamp() FieldValue-Objekte
+                        if (createdAt && typeof createdAt === 'object' && createdAt._methodName === 'serverTimestamp') {
+                          // Fallback: Verwende aktuelle Zeit minus Version-Offset für relative Timestamps
+                          console.warn('⚠️ Unaufgelöste serverTimestamp() FieldValue gefunden, verwende Fallback');
+                          const now = new Date();
+                          const versionOffset = (version.version - 1) * 60000; // 1 Minute pro Version zurück
+                          return new Date(now.getTime() - versionOffset);
+                        }
+                        // Fehlerhafte Timestamp-Objekte mit seconds/nanoseconds
                         if (createdAt && typeof createdAt === 'object') {
-                          // Prüfe verschiedene mögliche Strukturen
                           const seconds = createdAt.seconds || createdAt._seconds;
                           const nanoseconds = createdAt.nanoseconds || createdAt._nanoseconds || 0;
                           
                           if (typeof seconds === 'number') {
-                            // Konvertiere seconds zu milliseconds, nanoseconds zu milliseconds
                             return new Date(seconds * 1000 + nanoseconds / 1000000);
                           }
                         }

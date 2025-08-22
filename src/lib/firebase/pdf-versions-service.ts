@@ -13,6 +13,7 @@ import {
   limit,
   serverTimestamp,
   Timestamp,
+  FieldValue,
   increment
 } from 'firebase/firestore';
 import { db } from './client-init';
@@ -29,7 +30,7 @@ export interface PDFVersion {
   campaignId: string;
   organizationId: string;
   version: number;
-  createdAt: Timestamp;
+  createdAt: Timestamp | FieldValue;
   createdBy: string;
   
   // STATUS-MANAGEMENT (VEREINFACHT - NUR KUNDEN-FREIGABEN)
@@ -165,7 +166,7 @@ class PDFVersionsService {
         campaignId,
         organizationId,
         version: newVersionNumber,
-        createdAt: serverTimestamp() as Timestamp,
+        createdAt: serverTimestamp(),
         createdBy: context.userId,
         status: context.status || 'draft',
         ...(context.approvalId && { approvalId: context.approvalId }), // Nur setzen wenn nicht undefined
