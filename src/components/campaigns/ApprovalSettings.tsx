@@ -26,6 +26,7 @@ interface SimplifiedApprovalSettingsProps {
   organizationId: string;
   clientId?: string;
   clientName?: string;
+  previousFeedback?: any[]; // Bisheriger Feedback-Verlauf
 }
 
 export function ApprovalSettings({
@@ -33,7 +34,8 @@ export function ApprovalSettings({
   onChange,
   organizationId,
   clientId,
-  clientName
+  clientName,
+  previousFeedback = []
 }: SimplifiedApprovalSettingsProps) {
   
   const [localData, setLocalData] = useState<SimplifiedApprovalData>(value);
@@ -98,9 +100,35 @@ export function ApprovalSettings({
           )}
           
           {/* Customer-Nachricht */}
+          {/* Bisheriger Feedback-Verlauf */}
+          {previousFeedback && previousFeedback.length > 0 && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Bisheriger Chatverlauf
+              </label>
+              <div className="bg-gray-50 rounded-lg p-3 space-y-2 max-h-48 overflow-y-auto">
+                {previousFeedback.map((feedback, index) => (
+                  <div key={index} className="border-l-2 border-gray-300 pl-3">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-medium text-gray-700">{feedback.author}</span>
+                      <span className="text-gray-500">
+                        {feedback.requestedAt?.toDate ? 
+                          new Date(feedback.requestedAt.toDate()).toLocaleDateString('de-DE') : 
+                          feedback.requestedAt ? 
+                          new Date(feedback.requestedAt).toLocaleDateString('de-DE') : 
+                          ''}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">{feedback.comment}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Nachricht an den Kunden (optional)
+              Neue Nachricht an den Kunden (optional)
             </label>
             <Textarea
               value={value.customerApprovalMessage || ''}
@@ -109,8 +137,11 @@ export function ApprovalSettings({
                 customerApprovalMessage: e.target.value
               })}
               rows={2}
-              placeholder="Persönliche Nachricht für den Kunden zur Freigabe..."
+              placeholder="Neue Nachricht für die erneute Freigabe-Anfrage..."
             />
+            <p className="text-xs text-gray-500 mt-1">
+              Diese Nachricht wird als erste im Feedback-Chat angezeigt.
+            </p>
           </div>
         </div>
       )}

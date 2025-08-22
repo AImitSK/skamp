@@ -138,6 +138,9 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
     customerApprovalMessage: ''
   });
 
+  // State für bisherigen Feedback-Verlauf
+  const [previousFeedback, setPreviousFeedback] = useState<any[]>([]);
+
   // Debug Logging für State-Änderungen
   useEffect(() => {
     console.log('🖼️ KeyVisual State changed:', keyVisual);
@@ -388,8 +391,14 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
           setApprovalData({
             customerApprovalRequired: campaign.approvalData.customerApprovalRequired || false,
             customerContact: campaign.approvalData.customerContact,
-            customerApprovalMessage: campaign.approvalData.customerApprovalMessage || ''
+            // Nachrichtenfeld beim Editieren leer lassen für neue Nachricht
+            customerApprovalMessage: ''
           });
+          
+          // Lade bisherigen Feedback-Verlauf falls vorhanden
+          if (campaign.approvalData.feedbackHistory) {
+            setPreviousFeedback(campaign.approvalData.feedbackHistory);
+          }
         }
         
         // Legacy Kompatibilität
@@ -1157,8 +1166,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                   organizationId={currentOrganization!.id}
                   clientId={selectedCompanyId}
                   clientName={selectedCompanyName}
-                  showPDFIntegrationPreview={true}
-                  onPDFWorkflowToggle={handlePDFWorkflowToggle}
+                  previousFeedback={previousFeedback}
                 />
               </div>
               
