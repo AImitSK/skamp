@@ -30,7 +30,7 @@ export interface PDFVersion {
   campaignId: string;
   organizationId: string;
   version: number;
-  createdAt: Timestamp | FieldValue;
+  createdAt: Timestamp;
   createdBy: string;
   
   // STATUS-MANAGEMENT (VEREINFACHT - NUR KUNDEN-FREIGABEN)
@@ -166,7 +166,7 @@ class PDFVersionsService {
         campaignId,
         organizationId,
         version: newVersionNumber,
-        createdAt: serverTimestamp(),
+        createdAt: Timestamp.now(),
         createdBy: context.userId,
         status: context.status || 'draft',
         ...(context.approvalId && { approvalId: context.approvalId }), // Nur setzen wenn nicht undefined
