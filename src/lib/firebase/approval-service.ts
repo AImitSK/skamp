@@ -241,18 +241,12 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         history: customerMessage ? [{
           id: nanoid(),
           timestamp: Timestamp.now(),
-          action: 'created',
-          actorName: 'System',
-          actorEmail: 'system@celeropress.com',
+          action: 'commented',  // Ändere zu 'commented' damit es als Feedback erkannt wird
+          actorName: 'Ihre Nachricht',
+          actorEmail: 'agentur@celeropress.com',
           details: {
             comment: customerMessage
           }
-        }] : [],
-        // Füge customerMessage auch zur feedbackHistory hinzu für Anzeige im Chat
-        feedbackHistory: customerMessage ? [{
-          comment: customerMessage,
-          author: 'Ihre Nachricht',
-          requestedAt: Timestamp.now()
         }] : [],
         analytics: {
           totalViews: 0,
