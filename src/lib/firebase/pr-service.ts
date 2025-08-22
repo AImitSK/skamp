@@ -823,7 +823,8 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
           hasApprovalFeedbackHistory: !!approval.feedbackHistory,
           approvalFeedbackHistoryLength: approval.feedbackHistory?.length || 0,
           historyLength: history.length,
-          mappedFeedbackLength: history.filter(h => h.action === 'commented' || h.action === 'changes_requested').length
+          mappedFeedbackLength: history.filter(h => h.action === 'commented' || h.action === 'changes_requested').length,
+          historyActionsAndAuthors: history.map(h => ({ action: h.action, actorName: h.actorName, hasComment: !!h.details?.comment }))
         });
         
         // Aktualisiere Approval-Daten aus Enhanced Approval
@@ -833,7 +834,7 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
           .map(h => ({
             comment: h.details?.comment || '',
             requestedAt: h.timestamp,
-            author: h.actorName || 'Kunde'
+            author: h.actorName || 'Kunde' // Behalte den originalen actorName bei
           }));
         
         // Wenn approval.feedbackHistory existiert, verwende diese zuerst
