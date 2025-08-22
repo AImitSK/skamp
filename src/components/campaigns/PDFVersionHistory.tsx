@@ -49,8 +49,6 @@ export function PDFVersionHistory({
       const versionHistory = await pdfVersionsService.getVersionHistory(campaignId);
       const current = await pdfVersionsService.getCurrentVersion(campaignId);
       
-      console.log('📄 PDF Versions loaded:', versionHistory);
-      console.log('📄 First version createdAt:', versionHistory[0]?.createdAt);
       
       // Sortiere nach Version absteigend (neueste zuerst)
       const sortedVersions = versionHistory.sort((a, b) => b.version - a.version);
