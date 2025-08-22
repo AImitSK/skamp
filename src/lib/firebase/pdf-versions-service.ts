@@ -165,7 +165,7 @@ class PDFVersionsService {
         campaignId,
         organizationId,
         version: newVersionNumber,
-        createdAt: Timestamp.now(),
+        createdAt: serverTimestamp() as Timestamp,
         createdBy: context.userId,
         status: context.status || 'draft',
         ...(context.approvalId && { approvalId: context.approvalId }), // Nur setzen wenn nicht undefined
@@ -671,7 +671,8 @@ class PDFVersionsService {
           
         } catch (base64Error) {
           console.error('❌ Base64 Dekodierung fehlgeschlagen:', base64Error);
-          throw new Error(`Base64 Dekodierung fehlgeschlagen: ${base64Error.message}`);
+          const errorMessage = base64Error instanceof Error ? base64Error.message : String(base64Error);
+          throw new Error(`Base64 Dekodierung fehlgeschlagen: ${errorMessage}`);
         }
       }
       
