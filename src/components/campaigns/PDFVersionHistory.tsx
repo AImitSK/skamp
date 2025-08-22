@@ -178,7 +178,19 @@ export function PDFVersionHistory({
                   {/* Datum */}
                   <Text className="text-sm text-gray-600">
                     {(() => {
-                      // Robuste Timestamp-Behandlung wie in approvals/page.tsx
+                      // Debug-Log für fehlerhafte Timestamps
+                      if (version.createdAt) {
+                        console.log(`📅 Version ${version.version} Debug:`, {
+                          createdAt: version.createdAt,
+                          type: typeof version.createdAt,
+                          keys: Object.keys(version.createdAt),
+                          hasToDate: !!version.createdAt.toDate,
+                          seconds: version.createdAt.seconds,
+                          nanoseconds: version.createdAt.nanoseconds
+                        });
+                      }
+                      
+                      // Robuste Timestamp-Behandlung
                       const getTimestamp = (createdAt: any) => {
                         if (createdAt?.toDate) {
                           return createdAt.toDate();
@@ -186,14 +198,15 @@ export function PDFVersionHistory({
                         if (createdAt instanceof Date) {
                           return createdAt;
                         }
-                        // Fallback für fehlerhafte Timestamp-Objekte
-                        if (createdAt && typeof createdAt === 'object' && createdAt.seconds) {
-                          return new Date(createdAt.seconds * 1000 + (createdAt.nanoseconds || 0) / 1000000);
+                        // Fallback für fehlerhafte Timestamp-Objekte mit seconds/nanoseconds
+                        if (createdAt && typeof createdAt === 'object' && typeof createdAt.seconds === 'number') {
+                          return new Date(createdAt.seconds * 1000 + Math.floor((createdAt.nanoseconds || 0) / 1000000));
                         }
-                        return new Date(); // Fallback zu aktuellem Zeitpunkt
+                        return null;
                       };
                       
-                      return version.createdAt ? formatDateShort(getTimestamp(version.createdAt)) : '—';
+                      const timestamp = getTimestamp(version.createdAt);
+                      return timestamp ? formatDateShort(timestamp) : '—';
                     })()}
                   </Text>
                   
