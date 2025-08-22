@@ -22,6 +22,7 @@ import CampaignContentComposer from '@/components/pr/campaign/CampaignContentCom
 import { ModernCustomerSelector } from "@/components/pr/ModernCustomerSelector";
 import CampaignRecipientManager from "@/components/pr/campaign/CampaignRecipientManager";
 import { ApprovalSettings } from "@/components/campaigns/ApprovalSettings";
+import { PDFVersionHistory } from "@/components/campaigns/PDFVersionHistory";
 // VEREINFACHT: Nur noch SimplifiedApprovalData
 interface SimplifiedApprovalData {
   customerApprovalRequired: boolean;
@@ -1200,6 +1201,21 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         {/* Step 4: Vorschau */}
         {currentStep === 4 && (
           <div className="bg-white rounded-lg border p-6">
+            
+            {/* PDF-Versionen Historie */}
+            {campaignId && currentOrganization && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <DocumentTextIcon className="h-5 w-5 text-gray-600" />
+                  PDF-Versionen Historie
+                </h3>
+                <PDFVersionHistory
+                  campaignId={campaignId}
+                  organizationId={currentOrganization.id}
+                  showActions={true}
+                />
+              </div>
+            )}
             
             {/* PDF-WORKFLOW STATUS BANNER */}
             {approvalWorkflowResult && approvalWorkflowResult.workflowId && (

@@ -48,6 +48,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { prService } from "@/lib/firebase/pr-service";
 import { listsService } from "@/lib/firebase/lists-service";
+import { PDFVersionHistory } from "@/components/campaigns/PDFVersionHistory";
 import { companiesEnhancedService } from "@/lib/firebase/crm-service-enhanced";
 import { mediaService } from "@/lib/firebase/media-service";
 import { boilerplatesService } from "@/lib/firebase/boilerplate-service";
@@ -534,6 +535,21 @@ export default function CampaignDetailPage() {
             </div>
           )}
         </div>
+
+        {/* PDF-Versionen Historie */}
+        {campaign.id && currentOrganization && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <DocumentTextIcon className="h-5 w-5 text-gray-600" />
+              PDF-Versionen Historie
+            </h3>
+            <PDFVersionHistory
+              campaignId={campaign.id}
+              organizationId={currentOrganization.id}
+              showActions={true}
+            />
+          </div>
+        )}
 
         {/* Second Box: Attached Assets */}
           {(assets.length > 0 || folders.length > 0) && (
