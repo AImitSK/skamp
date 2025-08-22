@@ -177,7 +177,24 @@ export function PDFVersionHistory({
                   
                   {/* Datum */}
                   <Text className="text-sm text-gray-600">
-                    {version.createdAt ? formatDateShort(version.createdAt) : '—'}
+                    {(() => {
+                      // Robuste Timestamp-Behandlung wie in approvals/page.tsx
+                      const getTimestamp = (createdAt: any) => {
+                        if (createdAt?.toDate) {
+                          return createdAt.toDate();
+                        }
+                        if (createdAt instanceof Date) {
+                          return createdAt;
+                        }
+                        // Fallback für fehlerhafte Timestamp-Objekte
+                        if (createdAt && typeof createdAt === 'object' && createdAt.seconds) {
+                          return new Date(createdAt.seconds * 1000 + (createdAt.nanoseconds || 0) / 1000000);
+                        }
+                        return new Date(); // Fallback zu aktuellem Zeitpunkt
+                      };
+                      
+                      return version.createdAt ? formatDateShort(getTimestamp(version.createdAt)) : '—';
+                    })()}
                   </Text>
                   
                   {/* Kommentar falls vorhanden */}
