@@ -190,17 +190,26 @@ export function PDFVersionHistory({
                         });
                       }
                       
-                      // Robuste Timestamp-Behandlung
+                      // Robuste Timestamp-Behandlung - NICHT manipulieren, nur lesen
                       const getTimestamp = (createdAt: any) => {
+                        // Standard Firebase Timestamp
                         if (createdAt?.toDate) {
                           return createdAt.toDate();
                         }
+                        // Native Date Object
                         if (createdAt instanceof Date) {
                           return createdAt;
                         }
-                        // Fallback für fehlerhafte Timestamp-Objekte mit seconds/nanoseconds
-                        if (createdAt && typeof createdAt === 'object' && typeof createdAt.seconds === 'number') {
-                          return new Date(createdAt.seconds * 1000 + Math.floor((createdAt.nanoseconds || 0) / 1000000));
+                        // Fehlerhafte Timestamp-Objekte: Lese die Werte direkt
+                        if (createdAt && typeof createdAt === 'object') {
+                          // Prüfe verschiedene mögliche Strukturen
+                          const seconds = createdAt.seconds || createdAt._seconds;
+                          const nanoseconds = createdAt.nanoseconds || createdAt._nanoseconds || 0;
+                          
+                          if (typeof seconds === 'number') {
+                            // Konvertiere seconds zu milliseconds, nanoseconds zu milliseconds
+                            return new Date(seconds * 1000 + nanoseconds / 1000000);
+                          }
                         }
                         return null;
                       };
