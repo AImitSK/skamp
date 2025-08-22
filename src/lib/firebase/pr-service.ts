@@ -1186,6 +1186,101 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
   },
 
   /**
+   * UPDATE CAMPAIGN MIT NEUEM APPROVAL WORKFLOW
+   * 
+   * Aktualisiert eine bestehende Kampagne und startet bei Bedarf
+   * einen neuen Freigabe-Workflow mit PDF-Generierung
+   */
+  async updateCampaignWithNewApproval(
+    campaignId: string,
+    campaignData: Partial<PRCampaign>,
+    customerApprovalData: {
+      customerApprovalRequired: boolean;
+      customerContact?: any; 
+      customerApprovalMessage?: string;
+    },
+    context: {
+      userId: string;
+      organizationId: string;
+    }
+  ): Promise<{
+    campaignId: string;
+    workflowId?: string;
+    pdfVersionId?: string;
+    customerShareLink?: string;
+  }> {
+    try {
+      console.log('🔄 Updating campaign with new approval workflow');
+      
+      // 1. Update Campaign
+      await this.update(campaignId, {
+        ...campaignData,
+        approvalRequired: customerApprovalData.customerApprovalRequired,
+        approvalData: customerApprovalData.customerApprovalRequired ? customerApprovalData : undefined,
+        status: customerApprovalData.customerApprovalRequired ? 'in_review' : 'draft',
+        updatedAt: Timestamp.now()
+      });
+      
+      // 2. Wenn Customer-Approval aktiviert, starte neuen Workflow
+      if (customerApprovalData.customerApprovalRequired) {
+        // Generiere neue PDF-Version
+        const { pdfVersionsService } = await import('./pdf-versions-service');
+        const pdfVersionId = await pdfVersionsService.createPDFVersion(
+          campaignId,
+          context.organizationId,
+          {
+            title: campaignData.title || '',
+            mainContent: campaignData.mainContent || '',
+            boilerplateSections: campaignData.boilerplateSections || [],
+            keyVisual: campaignData.keyVisual,
+            clientName: campaignData.clientName
+          },
+          {
+            userId: context.userId,
+            status: 'pending_customer'
+          }
+        );
+        
+        // Erstelle neue Customer-Approval
+        const { approvalService } = await import('./approval-service');
+        const workflowId = await approvalService.createCustomerApproval(
+          campaignId,
+          context.organizationId,
+          customerApprovalData.customerContact,
+          customerApprovalData.customerApprovalMessage
+        );
+        
+        // Setze Edit-Lock
+        await this.update(campaignId, {
+          editLocked: true,
+          editLockedReason: 'pending_customer_approval',
+          lockedBy: 'system',
+          lockedAt: Timestamp.now()
+        });
+        
+        console.log('✅ Campaign updated with new approval workflow:', {
+          workflowId,
+          pdfVersionId
+        });
+        
+        return {
+          campaignId,
+          workflowId,
+          pdfVersionId,
+          customerShareLink: `/freigabe/${workflowId}`
+        };
+      }
+      
+      // 3. Ohne Approval - nur Update
+      return { campaignId };
+      
+    } catch (error) {
+      console.error('Fehler beim Update mit Approval:', error);
+      throw error;
+    }
+  },
+
+  /**
    * VEREINFACHTER CUSTOMER-ONLY APPROVAL WORKFLOW
    * 
    * Ersetzt das komplexe 2-stufige System (Team + Customer) 
