@@ -371,8 +371,8 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         // Setze alle Formular-Felder mit Kampagnen-Daten
         setCampaignTitle(campaign.title || '');
         setPressReleaseContent(campaign.contentHtml || '');
-        setEditorContent(campaign.editorContent || '');
-        setKeywords(campaign.seoKeywords || []);
+        setEditorContent(campaign.mainContent || campaign.editorContent || '');
+        setKeywords(campaign.keywords || campaign.seoKeywords || []);
         setSelectedCompanyId(campaign.clientId || '');
         setSelectedCompanyName(campaign.clientName || '');
         setSelectedListIds(campaign.distributionListIds || []);
