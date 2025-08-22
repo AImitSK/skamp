@@ -49,15 +49,6 @@ export function PDFVersionHistory({
       const versionHistory = await pdfVersionsService.getVersionHistory(campaignId);
       const current = await pdfVersionsService.getCurrentVersion(campaignId);
       
-      // Debug: Zeige erste Version um Timestamp-Format zu prüfen
-      if (versionHistory.length > 0) {
-        console.log('📄 PDF Version Debug:', {
-          version: versionHistory[0].version,
-          createdAt: versionHistory[0].createdAt,
-          createdAtType: typeof versionHistory[0].createdAt,
-          createdAtKeys: versionHistory[0].createdAt ? Object.keys(versionHistory[0].createdAt) : 'null'
-        });
-      }
       
       // Sortiere nach Version absteigend (neueste zuerst)
       const sortedVersions = versionHistory.sort((a, b) => b.version - a.version);
@@ -178,21 +169,6 @@ export function PDFVersionHistory({
                   {/* Datum */}
                   <Text className="text-sm text-gray-600">
                     {(() => {
-                      // Debug-Log für fehlerhafte Timestamps
-                      if (version.createdAt) {
-                        console.log(`📅 Version ${version.version} Debug:`, {
-                          createdAt: version.createdAt,
-                          type: typeof version.createdAt,
-                          keys: Object.keys(version.createdAt),
-                          firstKey: Object.keys(version.createdAt)[0],
-                          firstValue: version.createdAt[Object.keys(version.createdAt)[0]],
-                          hasToDate: !!version.createdAt.toDate,
-                          seconds: version.createdAt.seconds,
-                          nanoseconds: version.createdAt.nanoseconds,
-                          fullObject: JSON.stringify(version.createdAt)
-                        });
-                      }
-                      
                       // Robuste Timestamp-Behandlung
                       const getTimestamp = (createdAt: any) => {
                         // Standard Firebase Timestamp
@@ -203,10 +179,9 @@ export function PDFVersionHistory({
                         if (createdAt instanceof Date) {
                           return createdAt;
                         }
-                        // Unaufgelöste serverTimestamp() FieldValue-Objekte
+                        // Unaufgelöste serverTimestamp() FieldValue-Objekte (Legacy-Daten)
                         if (createdAt && typeof createdAt === 'object' && createdAt._methodName === 'serverTimestamp') {
-                          // Fallback: Verwende aktuelle Zeit minus Version-Offset für relative Timestamps
-                          console.warn('⚠️ Unaufgelöste serverTimestamp() FieldValue gefunden, verwende Fallback');
+                          // Fallback: Relative Timestamps für bestehende kaputte Daten
                           const now = new Date();
                           const versionOffset = (version.version - 1) * 60000; // 1 Minute pro Version zurück
                           return new Date(now.getTime() - versionOffset);
