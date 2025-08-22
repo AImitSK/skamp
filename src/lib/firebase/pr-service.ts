@@ -1221,7 +1221,7 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
         updatedAt: Timestamp.now()
       });
       
-      // 2. Wenn Customer-Approval aktiviert, starte neuen Workflow
+      // 2. Wenn Customer-Approval aktiviert, update oder erstelle Workflow
       if (customerApprovalData.customerApprovalRequired) {
         // Generiere neue PDF-Version
         const { pdfVersionsService } = await import('./pdf-versions-service');
@@ -1241,14 +1241,50 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
           }
         );
         
-        // Erstelle neue Customer-Approval
         const { approvalService } = await import('./approval-service');
-        const workflowId = await approvalService.createCustomerApproval(
+        
+        // Prüfe ob bereits eine Freigabe für diese Kampagne existiert
+        const existingApproval = await approvalService.getApprovalByCampaignId(
           campaignId,
-          context.organizationId,
-          customerApprovalData.customerContact,
-          customerApprovalData.customerApprovalMessage
+          context.organizationId
         );
+        
+        let workflowId: string;
+        let shareId: string;
+        
+        if (existingApproval) {
+          // UPDATE bestehende Freigabe mit neuer PDF-Version
+          console.log('📝 Updating existing approval with new PDF version');
+          
+          await approvalService.updateApprovalForNewVersion(
+            existingApproval.id!,
+            {
+              status: 'pending',
+              pdfVersionId,
+              updatedAt: Timestamp.now()
+            },
+            context
+          );
+          
+          workflowId = existingApproval.id!;
+          shareId = existingApproval.shareId;
+          
+          console.log('✅ Existing approval updated with PDF version', pdfVersionId);
+        } else {
+          // ERSTELLE neue Customer-Approval (nur beim ersten Mal)
+          console.log('🆕 Creating new approval workflow');
+          
+          workflowId = await approvalService.createCustomerApproval(
+            campaignId,
+            context.organizationId,
+            customerApprovalData.customerContact,
+            customerApprovalData.customerApprovalMessage
+          );
+          
+          // Hole ShareId der neu erstellten Freigabe
+          const newApproval = await approvalService.getById(workflowId, context.organizationId);
+          shareId = newApproval?.shareId || workflowId;
+        }
         
         // Setze Edit-Lock
         await this.update(campaignId, {
@@ -1258,16 +1294,18 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
           lockedAt: Timestamp.now()
         });
         
-        console.log('✅ Campaign updated with new approval workflow:', {
+        console.log('✅ Campaign updated with approval workflow:', {
           workflowId,
-          pdfVersionId
+          pdfVersionId,
+          shareId,
+          isUpdate: !!existingApproval
         });
         
         return {
           campaignId,
           workflowId,
           pdfVersionId,
-          customerShareLink: `/freigabe/${workflowId}`
+          customerShareLink: `/freigabe/${shareId}`
         };
       }
       

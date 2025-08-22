@@ -366,6 +366,94 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
   }
 
   /**
+   * Lädt Freigabe by Campaign ID
+   */
+  async getApprovalByCampaignId(
+    campaignId: string,
+    organizationId: string
+  ): Promise<ApprovalEnhanced | null> {
+    try {
+      const q = query(
+        collection(db, this.collectionName),
+        where('campaignId', '==', campaignId),
+        where('organizationId', '==', organizationId),
+        limit(1)
+      );
+
+      const snapshot = await getDocs(q);
+      if (snapshot.empty) return null;
+
+      const doc = snapshot.docs[0];
+      const data = doc.data();
+      
+      // Stelle sicher, dass history ein Array ist
+      if (data.history && !Array.isArray(data.history)) {
+        data.history = [];
+      }
+      
+      return {
+        ...data,
+        id: doc.id
+      } as ApprovalEnhanced;
+    } catch (error) {
+      console.error('Error getting approval by campaign ID:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Aktualisiert bestehende Freigabe mit neuer PDF-Version
+   */
+  async updateApprovalForNewVersion(
+    approvalId: string,
+    updates: {
+      status: ApprovalStatus;
+      pdfVersionId: string;
+      updatedAt: any;
+    },
+    context: { organizationId: string; userId: string }
+  ): Promise<void> {
+    try {
+      // Historie-Eintrag für neue Version
+      const historyEntry: ApprovalHistoryEntry = {
+        id: nanoid(),
+        timestamp: Timestamp.now(),
+        action: 'resubmitted',
+        actorName: 'System',
+        actorEmail: 'system@celeropress.com',
+        details: {
+          comment: 'Neue Version nach Änderungsanforderung erstellt',
+          pdfVersionId: updates.pdfVersionId
+        }
+      };
+
+      // Hole aktuelle Freigabe um Empfänger zu resetten
+      const approval = await this.getById(approvalId, context.organizationId);
+      if (!approval) throw new Error('Freigabe nicht gefunden');
+      
+      // Reset Empfänger-Status für neue Runde
+      const resetRecipients = approval.recipients.map(r => ({
+        ...r,
+        status: 'pending' as const,
+        decidedAt: undefined,
+        comment: undefined
+      }));
+
+      // Update Freigabe
+      await updateDoc(doc(db, this.collectionName, approvalId), {
+        ...updates,
+        history: arrayUnion(historyEntry),
+        recipients: resetRecipients
+      });
+
+      console.log(`✅ Approval ${approvalId} updated with new PDF version`);
+    } catch (error) {
+      console.error('Error updating approval for new version:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Lädt Freigabe by Share ID (für öffentlichen Zugriff)
    */
   async getByShareId(shareId: string): Promise<ApprovalEnhanced | null> {
