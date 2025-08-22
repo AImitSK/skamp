@@ -271,6 +271,14 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
 
       // Entferne undefined Werte bevor Firestore-Speicherung
       const cleanApprovalData = this.removeUndefinedValues(approvalData);
+      
+      console.log('📝 Creating Customer Approval with data:', {
+        shareId: cleanApprovalData.shareId,
+        customerMessage,
+        feedbackHistoryLength: cleanApprovalData.feedbackHistory?.length || 0,
+        feedbackHistory: cleanApprovalData.feedbackHistory
+      });
+      
       const docRef = await addDoc(collection(db, 'approvals'), cleanApprovalData);
       
       return docRef.id;
@@ -479,6 +487,15 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
 
       const doc = snapshot.docs[0];
       const data = doc.data();
+      
+      console.log('🔍 getByShareId - Raw approval data:', {
+        shareId,
+        hasFeedbackHistory: !!data.feedbackHistory,
+        feedbackHistoryLength: data.feedbackHistory?.length || 0,
+        feedbackHistory: data.feedbackHistory,
+        hasHistory: !!data.history,
+        historyLength: data.history?.length || 0
+      });
       
       // Stelle sicher, dass history ein Array ist
       if (data.history && !Array.isArray(data.history)) {

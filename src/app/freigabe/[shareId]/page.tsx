@@ -341,6 +341,9 @@ export default function ApprovalPage() {
       }
 
       // NEU: Customer Approval Settings laden falls vorhanden
+      console.log('🔍 Freigabe-Page: Campaign Data:', campaignData);
+      console.log('📊 Freigabe-Page: Approval Data:', campaignData.approvalData);
+      console.log('💬 Freigabe-Page: Feedback History:', campaignData.approvalData?.feedbackHistory);
       if (campaignData.approvalData?.settingsSnapshot?.customerSettings) {
         const customerSettings = campaignData.approvalData.settingsSnapshot.customerSettings;
         if (customerSettings.message) {

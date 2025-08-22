@@ -396,6 +396,8 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
           });
           
           // Lade bisherigen Feedback-Verlauf falls vorhanden
+          console.log('📝 Edit-Page: Approval Data:', campaign.approvalData);
+          console.log('💬 Edit-Page: Feedback History:', campaign.approvalData.feedbackHistory);
           if (campaign.approvalData.feedbackHistory) {
             setPreviousFeedback(campaign.approvalData.feedbackHistory);
           }

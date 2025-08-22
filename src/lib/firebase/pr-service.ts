@@ -818,17 +818,34 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
         // Stelle sicher, dass history ein Array ist
         const history = Array.isArray(approval.history) ? approval.history : [];
         
+        console.log('📊 pr-service.getByShareId - Mapping approval data:', {
+          shareId: approval.shareId,
+          hasApprovalFeedbackHistory: !!approval.feedbackHistory,
+          approvalFeedbackHistoryLength: approval.feedbackHistory?.length || 0,
+          historyLength: history.length,
+          mappedFeedbackLength: history.filter(h => h.action === 'commented' || h.action === 'changes_requested').length
+        });
+        
         // Aktualisiere Approval-Daten aus Enhanced Approval
+        // Kombiniere feedbackHistory (falls vorhanden) mit history-basierten Feedbacks
+        const historyFeedback = history
+          .filter(h => h.action === 'commented' || h.action === 'changes_requested')
+          .map(h => ({
+            comment: h.details?.comment || '',
+            requestedAt: h.timestamp,
+            author: h.actorName || 'Kunde'
+          }));
+        
+        // Wenn approval.feedbackHistory existiert, verwende diese zuerst
+        const combinedFeedback = [
+          ...(approval.feedbackHistory || []),
+          ...historyFeedback
+        ];
+        
         campaign.approvalData = {
           shareId: approval.shareId,
           status: this.mapEnhancedToLegacyStatus(approval.status),
-          feedbackHistory: history
-            .filter(h => h.action === 'commented' || h.action === 'changes_requested')
-            .map(h => ({
-              comment: h.details?.comment || '',
-              requestedAt: h.timestamp,
-              author: h.actorName
-            })),
+          feedbackHistory: combinedFeedback,
           approvedAt: approval.approvedAt
         };
         return campaign;
