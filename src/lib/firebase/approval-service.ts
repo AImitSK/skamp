@@ -248,6 +248,12 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
             comment: customerMessage
           }
         }] : [],
+        // Füge customerMessage auch zur feedbackHistory hinzu für Anzeige im Chat
+        feedbackHistory: customerMessage ? [{
+          comment: customerMessage,
+          author: 'Ihre Nachricht',
+          requestedAt: Timestamp.now()
+        }] : [],
         analytics: {
           totalViews: 0,
           uniqueViews: 0
