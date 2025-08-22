@@ -344,9 +344,10 @@ export default function ApprovalPage() {
       console.log('🔍 Freigabe-Page: Campaign Data:', campaignData);
       console.log('📊 Freigabe-Page: Approval Data:', campaignData.approvalData);
       console.log('💬 Freigabe-Page: Feedback History:', campaignData.approvalData?.feedbackHistory);
-      console.log('🔍 Freigabe-Page: Feedback Details:', campaignData.approvalData?.feedbackHistory?.map(f => ({
+      console.log('🔍 Freigabe-Page: Feedback Details:', campaignData.approvalData?.feedbackHistory?.map((f, i) => ({
+        index: i,
         author: f.author,
-        comment: f.comment,
+        comment: f.comment?.substring(0, 50) + (f.comment?.length > 50 ? '...' : ''),
         timestamp: f.requestedAt
       })));
       if (campaignData.approvalData?.settingsSnapshot?.customerSettings) {
