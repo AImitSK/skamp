@@ -184,9 +184,12 @@ export function PDFVersionHistory({
                           createdAt: version.createdAt,
                           type: typeof version.createdAt,
                           keys: Object.keys(version.createdAt),
+                          firstKey: Object.keys(version.createdAt)[0],
+                          firstValue: version.createdAt[Object.keys(version.createdAt)[0]],
                           hasToDate: !!version.createdAt.toDate,
                           seconds: version.createdAt.seconds,
-                          nanoseconds: version.createdAt.nanoseconds
+                          nanoseconds: version.createdAt.nanoseconds,
+                          fullObject: JSON.stringify(version.createdAt)
                         });
                       }
                       
