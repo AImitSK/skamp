@@ -49,6 +49,15 @@ export function PDFVersionHistory({
       const versionHistory = await pdfVersionsService.getVersionHistory(campaignId);
       const current = await pdfVersionsService.getCurrentVersion(campaignId);
       
+      // Debug: Zeige erste Version um Timestamp-Format zu prüfen
+      if (versionHistory.length > 0) {
+        console.log('📄 PDF Version Debug:', {
+          version: versionHistory[0].version,
+          createdAt: versionHistory[0].createdAt,
+          createdAtType: typeof versionHistory[0].createdAt,
+          createdAtKeys: versionHistory[0].createdAt ? Object.keys(versionHistory[0].createdAt) : 'null'
+        });
+      }
       
       // Sortiere nach Version absteigend (neueste zuerst)
       const sortedVersions = versionHistory.sort((a, b) => b.version - a.version);
