@@ -624,23 +624,52 @@ export default function ApprovalPage() {
             </div>
           )}
 
-          {/* Feedback History */}
+          {/* Feedback History im WhatsApp-Stil */}
           {campaign.approvalData?.feedbackHistory && campaign.approvalData.feedbackHistory.length > 0 && (
             <div className="mb-6">
               <h3 className="text-sm font-medium text-gray-900 mb-3 flex items-center gap-2">
                 <ChatBubbleLeftRightIcon className="h-4 w-4" />
                 Bisheriges Feedback
               </h3>
-              <div className="space-y-3">
-                {campaign.approvalData.feedbackHistory.map((feedback, index) => (
-                  <div key={index} className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-orange-900">{feedback.author}</span>
-                      <span className="text-xs text-orange-600">{formatDate(feedback.requestedAt)}</span>
+              <div className="bg-gray-100 rounded-lg p-4 space-y-3 max-h-96 overflow-y-auto">
+                {campaign.approvalData.feedbackHistory.map((feedback, index) => {
+                  const isAgency = feedback.author === 'Ihre Nachricht' || feedback.author === 'Agentur' || feedback.author === 'System';
+                  
+                  return (
+                    <div key={index} className={`flex ${isAgency ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`relative max-w-[75%] ${isAgency ? 'mr-2' : 'ml-2'}`}>
+                        {/* Sprechblase */}
+                        <div className={`
+                          rounded-lg px-4 py-3 relative shadow-sm
+                          ${isAgency 
+                            ? 'bg-[#005fab] text-white' 
+                            : 'bg-white text-gray-800 border border-gray-200'}
+                        `}>
+                          {/* Sprechblasen-Spitze */}
+                          <div className={`
+                            absolute top-4 w-0 h-0
+                            ${isAgency 
+                              ? 'right-[-8px] border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent border-l-[8px] border-l-[#005fab]' 
+                              : 'left-[-8px] border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent border-r-[8px] border-r-white'}
+                          `}></div>
+                          
+                          {/* Author */}
+                          <div className={`text-xs font-semibold mb-1 ${isAgency ? 'text-blue-100' : 'text-gray-600'}`}>
+                            {feedback.author}
+                          </div>
+                          
+                          {/* Nachricht */}
+                          <p className="text-sm break-words leading-relaxed">{feedback.comment}</p>
+                          
+                          {/* Zeitstempel */}
+                          <div className={`text-xs mt-2 ${isAgency ? 'text-blue-100 opacity-80' : 'text-gray-400'}`}>
+                            {formatDate(feedback.requestedAt)}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-sm text-orange-800">{feedback.comment}</p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

@@ -100,28 +100,65 @@ export function ApprovalSettings({
           )}
           
           {/* Customer-Nachricht */}
-          {/* Bisheriger Feedback-Verlauf */}
+          {/* Bisheriger Feedback-Verlauf im WhatsApp-Stil */}
           {previousFeedback && previousFeedback.length > 0 && (
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Bisheriger Chatverlauf
               </label>
-              <div className="bg-gray-50 rounded-lg p-3 space-y-2 max-h-48 overflow-y-auto">
-                {previousFeedback.map((feedback, index) => (
-                  <div key={index} className="border-l-2 border-gray-300 pl-3">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-medium text-gray-700">{feedback.author}</span>
-                      <span className="text-gray-500">
-                        {feedback.requestedAt?.toDate ? 
-                          new Date(feedback.requestedAt.toDate()).toLocaleDateString('de-DE') : 
-                          feedback.requestedAt ? 
-                          new Date(feedback.requestedAt).toLocaleDateString('de-DE') : 
-                          ''}
-                      </span>
+              <div className="bg-gray-100 rounded-lg p-4 space-y-3 max-h-64 overflow-y-auto">
+                {previousFeedback.map((feedback, index) => {
+                  const isAgency = feedback.author === 'Ihre Nachricht' || feedback.author === 'Agentur';
+                  
+                  return (
+                    <div key={index} className={`flex ${isAgency ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`relative max-w-[75%] ${isAgency ? 'mr-2' : 'ml-2'}`}>
+                        {/* Sprechblase */}
+                        <div className={`
+                          rounded-lg px-3 py-2 relative
+                          ${isAgency 
+                            ? 'bg-blue-500 text-white' 
+                            : 'bg-white text-gray-800 border border-gray-200'}
+                        `}>
+                          {/* Sprechblasen-Spitze */}
+                          <div className={`
+                            absolute top-3 w-0 h-0
+                            ${isAgency 
+                              ? 'right-[-6px] border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-l-[6px] border-l-blue-500' 
+                              : 'left-[-6px] border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[6px] border-r-white'}
+                          `}></div>
+                          
+                          {/* Author */}
+                          <div className={`text-xs font-medium mb-1 ${isAgency ? 'text-blue-100' : 'text-gray-500'}`}>
+                            {feedback.author}
+                          </div>
+                          
+                          {/* Nachricht */}
+                          <p className="text-sm break-words">{feedback.comment}</p>
+                          
+                          {/* Zeitstempel */}
+                          <div className={`text-xs mt-1 ${isAgency ? 'text-blue-100' : 'text-gray-400'}`}>
+                            {feedback.requestedAt?.toDate ? 
+                              new Date(feedback.requestedAt.toDate()).toLocaleString('de-DE', { 
+                                day: '2-digit', 
+                                month: '2-digit', 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                              }) : 
+                              feedback.requestedAt ? 
+                              new Date(feedback.requestedAt).toLocaleString('de-DE', { 
+                                day: '2-digit', 
+                                month: '2-digit', 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                              }) : 
+                              ''}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-600 mt-1">{feedback.comment}</p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
