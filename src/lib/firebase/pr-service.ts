@@ -818,19 +818,20 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
         // Stelle sicher, dass history ein Array ist
         const history = Array.isArray(approval.history) ? approval.history : [];
         
-        console.log('📊 pr-service.getByShareId - Mapping approval data:', {
-          shareId: approval.shareId,
-          hasApprovalFeedbackHistory: !!approval.feedbackHistory,
-          approvalFeedbackHistoryLength: approval.feedbackHistory?.length || 0,
-          historyLength: history.length,
-          mappedFeedbackLength: history.filter(h => h.action === 'commented' || h.action === 'changes_requested').length,
-          historyActionsAndAuthors: history.map(h => ({ action: h.action, actorName: h.actorName, hasComment: !!h.details?.comment }))
-        });
+        // Debug: Zeige erste 5 History-Einträge im Detail
+        console.log('📊 pr-service.getByShareId - History Details:', 
+          history.slice(0, 5).map(h => ({
+            action: h.action,
+            actorName: h.actorName,
+            comment: h.details?.comment?.substring(0, 30),
+            hasComment: !!h.details?.comment
+          }))
+        );
         
         // Aktualisiere Approval-Daten aus Enhanced Approval
-        // Kombiniere feedbackHistory (falls vorhanden) mit history-basierten Feedbacks
+        // WICHTIG: Inkludiere ALLE Nachrichten mit Kommentaren, nicht nur bestimmte Actions
         const historyFeedback = history
-          .filter(h => h.action === 'commented' || h.action === 'changes_requested')
+          .filter(h => h.details?.comment) // Alle Einträge mit Kommentaren
           .map(h => ({
             comment: h.details?.comment || '',
             requestedAt: h.timestamp,

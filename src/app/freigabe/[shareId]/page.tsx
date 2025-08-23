@@ -311,6 +311,12 @@ export default function ApprovalPage() {
         setError('Freigabe-Link nicht gefunden oder nicht mehr gültig.');
         return;
       }
+      
+      // Prüfe ob Kampagne bereits versendet wurde
+      if (campaignData.status === 'sent') {
+        setError('Diese Kampagne wurde bereits versendet. Die Freigabe-Seite ist nicht mehr verfügbar.');
+        return;
+      }
 
       // NEU: PDF-Versionen laden
       if (campaignData.id) {
@@ -638,7 +644,7 @@ export default function ApprovalPage() {
                 Bisheriges Feedback
               </h3>
               <div className="bg-gray-100 rounded-lg p-4 space-y-3 max-h-96 overflow-y-auto">
-                {campaign.approvalData.feedbackHistory.map((feedback, index) => {
+                {[...campaign.approvalData.feedbackHistory].reverse().map((feedback, index) => {
                   const isAgency = feedback.author === 'Ihre Nachricht' || feedback.author === 'Agentur' || feedback.author === 'System';
                   
                   return (

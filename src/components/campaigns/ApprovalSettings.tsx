@@ -107,7 +107,7 @@ export function ApprovalSettings({
                 Bisheriger Chatverlauf
               </label>
               <div className="bg-gray-100 rounded-lg p-4 space-y-3 max-h-64 overflow-y-auto">
-                {previousFeedback.map((feedback, index) => {
+                {[...previousFeedback].reverse().map((feedback, index) => {
                   const isAgency = feedback.author === 'Ihre Nachricht' || feedback.author === 'Agentur';
                   
                   return (

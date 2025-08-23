@@ -48,6 +48,7 @@ import {
   ClockIcon,
   ArrowRightIcon,
   LockClosedIcon,
+  ExclamationTriangleIcon,
   LinkIcon
 } from "@heroicons/react/24/outline";
 import { listsService } from "@/lib/firebase/lists-service";
@@ -971,6 +972,44 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         {/* Step Content */}
         {currentStep === 1 && (
           <div className="bg-white rounded-lg border p-6">
+            {/* Letzte Änderungsanforderung anzeigen */}
+            {previousFeedback && previousFeedback.length > 0 && (() => {
+              const lastCustomerFeedback = [...previousFeedback]
+                .reverse()
+                .find(f => f.author === 'Kunde');
+              
+              if (lastCustomerFeedback) {
+                return (
+                  <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex items-start">
+                      <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 mr-3 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium text-yellow-900 mb-2">
+                          Letzte Änderungsanforderung vom Kunden
+                        </h4>
+                        <p className="text-sm text-yellow-800">
+                          {lastCustomerFeedback.comment}
+                        </p>
+                        <p className="text-xs text-yellow-600 mt-1">
+                          {lastCustomerFeedback.requestedAt?.toDate ? 
+                            new Date(lastCustomerFeedback.requestedAt.toDate()).toLocaleString('de-DE', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            }) :
+                            ''
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
+            
             <FieldGroup>
               {/* Absender */}
               <div className="mb-8">
