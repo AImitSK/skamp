@@ -133,6 +133,14 @@ export default function CampaignDetailPage() {
         } catch (error) {
           console.error('Fehler beim Laden der Feedback-History:', error);
         }
+      } else if (campaignData.approvalData?.customerApprovalMessage) {
+        // Legacy-Support: Erstelle feedbackHistory aus alten Daten
+        campaignData.approvalData.feedbackHistory = [{
+          comment: campaignData.approvalData.customerApprovalMessage,
+          requestedAt: campaignData.updatedAt || campaignData.createdAt,
+          author: 'Ihre Nachricht (Legacy)'
+        }];
+        console.log('📝 Detail page: Created legacy feedback history');
       }
       
       setCampaign(campaignData);

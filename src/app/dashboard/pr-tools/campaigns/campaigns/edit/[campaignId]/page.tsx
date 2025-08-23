@@ -389,7 +389,16 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
             console.error('❌ Fehler beim Laden der Feedback-History:', error);
           }
         } else {
-          console.log('⚠️ No shareId found in approvalData');
+          console.log('⚠️ No shareId found in approvalData - this is a legacy campaign');
+          // Für alte Kampagnen: Erstelle eine minimale feedbackHistory aus vorhandenen Daten
+          if (campaign.approvalData?.customerApprovalMessage) {
+            campaign.approvalData.feedbackHistory = [{
+              comment: campaign.approvalData.customerApprovalMessage,
+              requestedAt: campaign.updatedAt || campaign.createdAt,
+              author: 'Ihre Nachricht (Legacy)'
+            }];
+            console.log('📝 Created legacy feedback history from customerApprovalMessage');
+          }
         }
         
         // Setze alle Formular-Felder mit Kampagnen-Daten
