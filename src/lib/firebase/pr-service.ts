@@ -1327,12 +1327,18 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
           shareId = newApproval?.shareId || workflowId;
         }
         
-        // Setze Edit-Lock
+        // Setze Edit-Lock und speichere shareId
         await this.update(campaignId, {
           editLocked: true,
           editLockedReason: 'pending_customer_approval',
           lockedBy: 'system',
-          lockedAt: Timestamp.now()
+          lockedAt: Timestamp.now(),
+          // WICHTIG: ShareId in approvalData speichern!
+          approvalData: {
+            ...customerApprovalData,
+            shareId: shareId,
+            workflowId: workflowId
+          }
         });
         
         console.log('✅ Campaign updated with approval workflow:', {
