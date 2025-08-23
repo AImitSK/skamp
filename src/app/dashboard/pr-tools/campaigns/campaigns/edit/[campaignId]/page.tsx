@@ -372,6 +372,19 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
       if (campaign) {
         setExistingCampaign(campaign);
         
+        // Lade erweiterte Approval-Daten mit feedbackHistory wenn ShareId vorhanden
+        if (campaign.approvalData?.shareId) {
+          try {
+            const campaignWithFeedback = await prService.getCampaignByShareId(campaign.approvalData.shareId);
+            if (campaignWithFeedback?.approvalData?.feedbackHistory) {
+              campaign.approvalData.feedbackHistory = campaignWithFeedback.approvalData.feedbackHistory;
+              console.log('📊 Loaded feedback history from approval:', campaignWithFeedback.approvalData.feedbackHistory);
+            }
+          } catch (error) {
+            console.error('Fehler beim Laden der Feedback-History:', error);
+          }
+        }
+        
         // Setze alle Formular-Felder mit Kampagnen-Daten
         setCampaignTitle(campaign.title || '');
         setPressReleaseContent(campaign.contentHtml || '');
