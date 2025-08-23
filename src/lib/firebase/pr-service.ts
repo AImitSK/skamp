@@ -818,15 +818,22 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
         // Stelle sicher, dass history ein Array ist
         const history = Array.isArray(approval.history) ? approval.history : [];
         
-        // Debug: Zeige erste 5 History-Einträge im Detail
+        // Debug: Zeige alle History-Einträge im Detail
         console.log('📊 pr-service.getByShareId - History Details:', 
-          history.slice(0, 5).map(h => ({
+          history.map(h => ({
             action: h.action,
             actorName: h.actorName,
             comment: h.details?.comment?.substring(0, 30),
             hasComment: !!h.details?.comment
           }))
         );
+        
+        console.log('🔍 Feedback filtering:', {
+          totalHistory: history.length,
+          withComments: history.filter(h => h.details?.comment).length,
+          commentedAction: history.filter(h => h.action === 'commented').length,
+          changesRequestedAction: history.filter(h => h.action === 'changes_requested').length
+        });
         
         // Aktualisiere Approval-Daten aus Enhanced Approval
         // WICHTIG: Inkludiere ALLE Nachrichten mit Kommentaren, nicht nur bestimmte Actions
@@ -1484,10 +1491,17 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
         // 2d. Generiere Customer-Link mit shareId
         const customerShareLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/freigabe/${approval.shareId}`;
 
-        // 2e. Update Campaign Status
+        // 2e. Update Campaign Status UND ShareId
         await this.update(campaignId, {
           status: 'in_review', // Direkt in Review
-          updatedAt: serverTimestamp()
+          updatedAt: serverTimestamp(),
+          // WICHTIG: ShareId und WorkflowId in approvalData speichern!
+          approvalData: {
+            ...customerApprovalData,
+            shareId: approval.shareId,
+            workflowId: workflowId,
+            currentStage: 'customer'
+          }
         });
 
 
