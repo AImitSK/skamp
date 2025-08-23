@@ -171,9 +171,12 @@ export function ApprovalSettings({
       )}
 
       {/* Chat-Historie Modal */}
-      {showHistoryModal && currentApproval && (
+      {showHistoryModal && (
         <ApprovalHistoryModal
           approval={currentApproval}
+          legacyFeedback={previousFeedback}
+          campaignTitle="Kampagne"
+          clientName={clientName}
           isOpen={showHistoryModal}
           onClose={() => setShowHistoryModal(false)}
         />

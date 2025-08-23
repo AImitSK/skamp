@@ -50,6 +50,7 @@ import {
 } from "@/types/approvals";
 import { PDFVersion } from "@/lib/firebase/pdf-versions-service";
 import { formatDateShort, formatDate as formatDateLong } from "@/utils/dateHelpers";
+import { ApprovalHistoryModal } from "@/components/campaigns/ApprovalHistoryModal";
 import clsx from "clsx";
 
 // Alert Component
@@ -108,133 +109,6 @@ function Alert({
   );
 }
 
-// Feedback History Modal
-function FeedbackHistoryModal({ 
-  approval, 
-  onClose 
-}: { 
-  approval: ApprovalEnhanced; 
-  onClose: () => void;
-}) {
-  const getActionLabel = (action: string) => {
-    const labels: Record<string, string> = {
-      created: 'Erstellt',
-      sent_for_approval: 'Zur Freigabe gesendet',
-      viewed: 'Angesehen',
-      approved: 'Freigegeben',
-      rejected: 'Abgelehnt',
-      commented: 'Kommentiert',
-      changes_requested: 'Änderungen angefordert',
-      reminder_sent: 'Erinnerung gesendet',
-      resubmitted: 'Erneut eingereicht'
-    };
-    return labels[action] || action;
-  };
-
-  const getActionIcon = (action: string) => {
-    switch (action) {
-      case 'approved':
-        return <CheckCircleIcon className="h-5 w-5 text-green-600" />;
-      case 'rejected':
-        return <XCircleIcon className="h-5 w-5 text-red-600" />;
-      case 'changes_requested':
-      case 'commented':
-        return <ChatBubbleLeftRightIcon className="h-5 w-5 text-orange-600" />;
-      case 'viewed':
-        return <EyeIcon className="h-5 w-5 text-blue-600" />;
-      default:
-        return <InformationCircleIcon className="h-5 w-5 text-gray-400" />;
-    }
-  };
-
-  return (
-    <Dialog open={true} onClose={onClose} size="2xl">
-      <div className="p-6">
-        <DialogTitle>Freigabe-Historie</DialogTitle>
-        <DialogBody className="mt-4">
-          <div className="mb-4">
-            <Text className="font-medium">{approval.title}</Text>
-            <Text className="text-sm text-gray-500">{approval.clientName}</Text>
-          </div>
-
-          {approval.history && approval.history.length > 0 ? (
-            <div className="space-y-4">
-              {approval.history.map((entry, index) => (
-                <div key={entry.id} className="flex gap-4">
-                  <div className="flex-shrink-0 mt-1">
-                    {getActionIcon(entry.action)}
-                  </div>
-                  <div className="flex-1 border rounded-lg p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge color={entry.action === 'approved' ? 'green' : entry.action === 'rejected' ? 'red' : entry.action === 'changes_requested' || entry.action === 'commented' ? 'orange' : 'blue'}>
-                            {getActionLabel(entry.action)}
-                          </Badge>
-                          <Text className="text-sm text-gray-500">{formatDateLong(entry.timestamp)}</Text>
-                        </div>
-                        <Text className="text-sm font-medium text-gray-900">
-                          {entry.actorName}
-                          {entry.actorEmail && !entry.actorEmail.includes('no-email@example.com') && (
-                            <span className="font-normal text-gray-500"> ({entry.actorEmail})</span>
-                          )}
-                        </Text>
-                        {entry.details.comment && (
-                          <Text className="text-sm italic text-gray-700 mt-2">&ldquo;{entry.details.comment}&rdquo;</Text>
-                        )}
-                        {entry.inlineComments && entry.inlineComments.length > 0 && (
-                          <div className="mt-2 space-y-1">
-                            <Text className="text-xs font-medium text-gray-500">Inline-Kommentare:</Text>
-                            {entry.inlineComments.map((comment, idx) => (
-                              <div key={comment.id} className="text-sm bg-gray-50 p-2 rounded">
-                                <Text className="text-gray-600 italic">&ldquo;{comment.quote}&rdquo;</Text>
-                                <Text className="text-gray-800 mt-1">→ {comment.text}</Text>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <ChatBubbleLeftRightIcon className="h-12 w-12 mx-auto text-gray-300" />
-              <Text className="mt-2 text-gray-500">Noch keine Historie vorhanden</Text>
-            </div>
-          )}
-
-          {approval.attachedAssets && approval.attachedAssets.length > 0 && (
-            <div className="mt-6 pt-6 border-t">
-              <Text className="font-medium mb-3">Angehängte Medien ({approval.attachedAssets.length})</Text>
-              <div className="space-y-2">
-                {approval.attachedAssets.map((asset, idx) => (
-                  <div key={idx} className="flex items-center gap-3 p-2 bg-gray-50 rounded overflow-hidden">
-                    <div className="flex-shrink-0">
-                      {asset.type === 'folder' ? (
-                        <FolderIcon className="h-5 w-5 text-gray-400" />
-                      ) : (
-                        <DocumentIcon className="h-5 w-5 text-gray-400" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-sm text-gray-900 truncate block">{asset.name}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </DialogBody>
-        <DialogActions>
-          <Button plain onClick={onClose}>Schließen</Button>
-        </DialogActions>
-      </div>
-    </Dialog>
-  );
-}
 
 // Enhanced ApprovalListView Interface mit PDF-Daten
 interface EnhancedApprovalListView extends ApprovalListView {
@@ -1113,8 +987,9 @@ export default function ApprovalsPage() {
 
       {/* Feedback History Modal */}
       {showFeedbackModal && selectedApproval && (
-        <FeedbackHistoryModal 
+        <ApprovalHistoryModal 
           approval={selectedApproval}
+          isOpen={showFeedbackModal}
           onClose={() => {
             setShowFeedbackModal(false);
             setSelectedApproval(null);

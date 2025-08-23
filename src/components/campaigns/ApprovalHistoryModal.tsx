@@ -14,16 +14,45 @@ import { ApprovalEnhanced, APPROVAL_STATUS_CONFIG } from "@/types/approvals";
 import { formatDate as formatDateLong } from "@/utils/dateHelpers";
 
 interface ApprovalHistoryModalProps {
-  approval: ApprovalEnhanced;
+  approval?: ApprovalEnhanced;
   isOpen: boolean;
   onClose: () => void;
+  // Fallback für Legacy-Daten
+  legacyFeedback?: any[];
+  campaignTitle?: string;
+  clientName?: string;
 }
 
 export function ApprovalHistoryModal({ 
   approval, 
   isOpen,
-  onClose 
+  onClose,
+  legacyFeedback,
+  campaignTitle,
+  clientName
 }: ApprovalHistoryModalProps) {
+  
+  // Konvertiere Legacy-Feedback in das neue Format
+  const convertLegacyFeedback = (legacyItems: any[]) => {
+    return legacyItems.map((item, index) => ({
+      id: `legacy-${index}`,
+      timestamp: item.requestedAt,
+      action: item.author === 'Ihre Nachricht' || item.author === 'Agentur' ? 'commented' : 'changes_requested',
+      actorName: item.author || 'Unbekannt',
+      actorEmail: item.author === 'Ihre Nachricht' || item.author === 'Agentur' 
+        ? 'agentur@celeropress.com' 
+        : 'public-access@freigabe.system',
+      details: {
+        comment: item.comment
+      }
+    }));
+  };
+
+  // Bestimme welche Daten verwendet werden sollen
+  const historyData = approval?.history || (legacyFeedback ? convertLegacyFeedback(legacyFeedback) : []);
+  const displayTitle = approval?.title || campaignTitle || 'Kampagne';
+  const displayClientName = approval?.clientName || clientName || 'Unbekannter Kunde';
+
   const getActionLabel = (action: string) => {
     const labels: Record<string, string> = {
       created: 'Erstellt',
@@ -79,13 +108,13 @@ export function ApprovalHistoryModal({
         <DialogTitle>Freigabe-Historie</DialogTitle>
         <DialogBody className="mt-4">
           <div className="mb-4">
-            <Text className="font-medium">{approval.title}</Text>
-            <Text className="text-sm text-gray-500">{approval.clientName}</Text>
+            <Text className="font-medium">{displayTitle}</Text>
+            <Text className="text-sm text-gray-500">{displayClientName}</Text>
           </div>
 
-          {approval.history && approval.history.length > 0 ? (
+          {historyData && historyData.length > 0 ? (
             <div className="space-y-3">
-              {approval.history.map((entry, index) => {
+              {historyData.map((entry, index) => {
                 const isSystem = isSystemMessage(entry.actorEmail);
                 const isAgency = isAgencyMessage(entry.actorEmail);
                 const badgeColor = getActionBadgeColor(entry.action, entry.actorEmail);
