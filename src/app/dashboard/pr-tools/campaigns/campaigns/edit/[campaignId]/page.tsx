@@ -40,7 +40,6 @@ import {
   PaperClipIcon,
   XMarkIcon,
   XCircleIcon,
-  SparklesIcon,
   InformationCircleIcon,
   PaperAirplaneIcon,
   FolderIcon,
@@ -64,11 +63,6 @@ import EditLockBanner from '@/components/campaigns/EditLockBanner';
 import EditLockStatusIndicator from '@/components/campaigns/EditLockStatusIndicator';
 // PRSEOHeaderBar now integrated in CampaignContentComposer
 
-// Dynamic import für AI Modal
-import dynamic from 'next/dynamic';
-const StructuredGenerationModal = dynamic(() => import('@/components/pr/ai/StructuredGenerationModal'), {
-  ssr: false
-});
 
 // Einfache Alert-Komponente für diese Seite
 function SimpleAlert({ type = 'info', message }: { type?: 'info' | 'error'; message: string }) {
@@ -298,7 +292,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showAssetSelector, setShowAssetSelector] = useState(false);
-  const [showAiModal, setShowAiModal] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [successMessage, setSuccessMessage] = useState<string>('');
   
@@ -568,74 +561,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
     }
   };
 
-  const handleAiGenerate = (result: any) => {
-    if (result.structured?.headline) {
-      setCampaignTitle(result.structured.headline);
-    }
-    
-    // Erstelle AI-Sections aus strukturierten Daten (ohne position)
-    if (result.structured) {
-      const aiSections: BoilerplateSection[] = [];
-      let order = boilerplateSections.length;
-      
-      // Lead-Absatz
-      if (result.structured.leadParagraph && result.structured.leadParagraph !== 'Lead-Absatz fehlt') {
-        aiSections.push({
-          id: `ai-lead-${Date.now()}`,
-          type: 'lead',
-          order: order++,
-          isLocked: false,
-          isCollapsed: false,
-          customTitle: 'Lead-Absatz (KI-generiert)',
-          content: `<p><strong>${result.structured.leadParagraph}</strong></p>`
-        });
-      }
-      
-      // Hauptabsätze
-      if (result.structured.bodyParagraphs && result.structured.bodyParagraphs.length > 0) {
-        const mainContent = result.structured.bodyParagraphs
-          .filter((paragraph: string) => paragraph && paragraph !== 'Haupttext der Pressemitteilung')
-          .map((paragraph: string) => `<p>${paragraph}</p>`)
-          .join('\n\n');
-          
-        if (mainContent) {
-          aiSections.push({
-            id: `ai-main-${Date.now()}`,
-            type: 'main',
-            order: order++,
-            isLocked: false,
-            isCollapsed: false,
-            customTitle: 'Haupttext (KI-generiert)',
-            content: mainContent
-          });
-        }
-      }
-      
-      // Zitat
-      if (result.structured.quote && result.structured.quote.text) {
-        aiSections.push({
-          id: `ai-quote-${Date.now()}`,
-          type: 'quote',
-          order: order++,
-          isLocked: false,
-          isCollapsed: false,
-          customTitle: 'Zitat (KI-generiert)',
-          content: result.structured.quote.text,
-          metadata: {
-            person: result.structured.quote.person,
-            role: result.structured.quote.role,
-            company: result.structured.quote.company
-          }
-        });
-      }
-      
-      // Füge die AI-Sections zu den bestehenden hinzu und sortiere nach order
-      const newSections = [...boilerplateSections, ...aiSections].sort((a, b) => (a.order || 0) - (b.order || 0));
-      setBoilerplateSections(newSections);
-    }
-    
-    setShowAiModal(false);
-  };
 
   // Hilfsfunktion zum Speichern als Entwurf (für PDF-Generation)
   const saveAsDraft = async (): Promise<string | null> => {
@@ -1060,27 +985,8 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
 
               {/* Pressemeldung */}
               <div className="mb-8 mt-8">
-                <div className="flex items-center justify-between mb-4">
+                <div className="mb-4">
                   <h3 className="text-lg font-semibold text-gray-900">Pressemeldung</h3>
-                  <Button
-                    type="button"
-                    onClick={() => setShowAiModal(true)}
-                    className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white whitespace-nowrap"
-                  >
-                    <SparklesIcon className="h-4 w-4" />
-                    KI-Assistent
-                  </Button>
-                </div>
-                
-                {/* Info-Box für KI-Nutzung */}
-                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-start gap-2">
-                    <InformationCircleIcon className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                    <div className="text-sm text-blue-700">
-                      <p className="font-semibold">Tipp: Nutze den KI-Assistenten!</p>
-                      <p className="mt-1">Der KI-Assistent liefert dir einen kompletten Rohentwurf deiner Pressemitteilung mit Titel, Lead-Absatz, Haupttext und Zitat. Diesen kannst du dann im Editor verfeinern und mit Textbausteinen erweitern.</p>
-                    </div>
-                  </div>
                 </div>
 
                 {/* Content Composer mit SEO-Features */}
