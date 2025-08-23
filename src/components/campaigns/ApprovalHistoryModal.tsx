@@ -68,61 +68,64 @@ export function ApprovalHistoryModal({
     return labels[action] || action;
   };
 
-  const getActionBadgeColor = (action: string, actorEmail?: string): 'blue' | 'green' | 'red' | 'orange' | 'zinc' => {
-    // System-Meldungen immer blau
-    if (actorEmail?.includes('system@') || actorEmail?.includes('noreply@') || !actorEmail) {
+  const getActionBadgeColor = (action: string, actorEmail?: string): 'blue' | 'green' | 'red' | 'orange' | 'yellow' | 'zinc' => {
+    // Agentur-Kommentare: Gelb (wie Status "Ausstehend")
+    if ((actorEmail?.includes('agentur@') || actorEmail?.includes('@celeropress.com')) && action === 'commented') {
+      return 'yellow';
+    }
+    
+    // System-Meldungen (Angesehen): Blau
+    if ((actorEmail?.includes('system@') || actorEmail?.includes('noreply@') || actorEmail?.includes('public-access@') || !actorEmail) && action === 'viewed') {
       return 'blue';
     }
     
-    // Status-basierte Farben für Kunden-Aktionen
+    // Status-basierte Farben
     switch (action) {
       case 'approved':
         return 'green';
       case 'rejected':
         return 'red';
       case 'changes_requested':
-      case 'commented':
         return 'orange';
+      case 'commented':
+        return 'orange'; // Kunden-Kommentare orange
       case 'viewed':
-        return 'zinc';
+        return 'blue';
       default:
         return 'zinc';
     }
   };
 
-  const isSystemMessage = (actorEmail?: string) => {
-    return actorEmail?.includes('system@') || 
-           actorEmail?.includes('noreply@') || 
-           actorEmail?.includes('public-access@') ||
-           !actorEmail;
-  };
-
-  const isAgencyMessage = (actorEmail?: string) => {
-    return actorEmail?.includes('agentur@') || 
-           actorEmail?.includes('@celeropress.com');
+  const isCustomerMessage = (actorEmail?: string) => {
+    // Kunden-Nachrichten: Nur die mit public-access@ oder unbekannte ohne System-/Agentur-Kennzeichnung
+    return actorEmail?.includes('public-access@') || 
+           (!actorEmail?.includes('system@') && 
+            !actorEmail?.includes('noreply@') && 
+            !actorEmail?.includes('agentur@') && 
+            !actorEmail?.includes('@celeropress.com') && 
+            actorEmail);
   };
 
   return (
     <Dialog open={isOpen} onClose={onClose} size="2xl">
       <div className="p-6">
-        <DialogTitle>Freigabe-Historie</DialogTitle>
+        <DialogTitle className="text-lg font-semibold">Freigabe-Historie</DialogTitle>
         <DialogBody className="mt-4">
           <div className="mb-4">
-            <Text className="font-medium">{displayTitle}</Text>
-            <Text className="text-sm text-gray-500">{displayClientName}</Text>
+            <Text className="font-medium text-base">{displayTitle}</Text>
+            <Text className="text-sm text-gray-500 font-semibold">{displayClientName}</Text>
           </div>
 
           {historyData && historyData.length > 0 ? (
             <div className="space-y-3">
               {historyData.map((entry, index) => {
-                const isSystem = isSystemMessage(entry.actorEmail);
-                const isAgency = isAgencyMessage(entry.actorEmail);
+                const isCustomer = isCustomerMessage(entry.actorEmail);
                 const badgeColor = getActionBadgeColor(entry.action, entry.actorEmail);
                 
                 return (
                   <div key={entry.id} className={`
                     rounded-lg p-3 transition-colors
-                    ${isSystem || isAgency ? 'bg-white border border-gray-200' : 'bg-gray-50 border border-gray-100'}
+                    ${isCustomer ? 'bg-gray-50 border border-gray-100' : 'bg-white border border-gray-200'}
                   `}>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -130,7 +133,7 @@ export function ApprovalHistoryModal({
                           <Badge color={badgeColor}>
                             {getActionLabel(entry.action)}
                           </Badge>
-                          <Text className="text-xs text-gray-500">
+                          <Text className="text-xs text-gray-400">
                             {formatDateLong(entry.timestamp)}
                           </Text>
                         </div>
