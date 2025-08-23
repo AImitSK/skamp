@@ -120,6 +120,21 @@ export default function CampaignDetailPage() {
         setError('Kampagne nicht gefunden');
         return;
       }
+      
+      // Lade erweiterte Approval-Daten mit feedbackHistory wenn ShareId vorhanden
+      if (campaignData.approvalData?.shareId) {
+        try {
+          console.log('📥 Loading feedback history for detail page, shareId:', campaignData.approvalData.shareId);
+          const campaignWithFeedback = await prService.getCampaignByShareId(campaignData.approvalData.shareId);
+          if (campaignWithFeedback?.approvalData?.feedbackHistory) {
+            campaignData.approvalData.feedbackHistory = campaignWithFeedback.approvalData.feedbackHistory;
+            console.log('📊 Detail page: Loaded feedback history:', campaignData.approvalData.feedbackHistory);
+          }
+        } catch (error) {
+          console.error('Fehler beim Laden der Feedback-History:', error);
+        }
+      }
+      
       setCampaign(campaignData);
 
       // Load related data in parallel
