@@ -16,7 +16,6 @@ import {
   limit,
   arrayUnion
 } from 'firebase/firestore';
-import { nanoid } from 'nanoid';
 import { db } from './client-init';
 import { PRCampaign, CampaignAssetAttachment, ApprovalData } from '@/types/pr';
 import { mediaService } from './media-service';
