@@ -138,21 +138,30 @@ export function ApprovalSettings({
                           
                           {/* Zeitstempel */}
                           <div className={`text-xs mt-1 ${isAgency ? 'text-blue-100' : 'text-gray-400'}`}>
-                            {feedback.requestedAt?.toDate ? 
-                              new Date(feedback.requestedAt.toDate()).toLocaleString('de-DE', { 
-                                day: '2-digit', 
-                                month: '2-digit', 
-                                hour: '2-digit', 
-                                minute: '2-digit' 
-                              }) : 
-                              feedback.requestedAt ? 
-                              new Date(feedback.requestedAt).toLocaleString('de-DE', { 
-                                day: '2-digit', 
-                                month: '2-digit', 
-                                hour: '2-digit', 
-                                minute: '2-digit' 
-                              }) : 
-                              ''}
+                            {(() => {
+                              try {
+                                if (feedback.requestedAt?.toDate) {
+                                  return new Date(feedback.requestedAt.toDate()).toLocaleString('de-DE', { 
+                                    day: '2-digit', 
+                                    month: '2-digit',
+                                    year: 'numeric',
+                                    hour: '2-digit', 
+                                    minute: '2-digit' 
+                                  });
+                                } else if (feedback.requestedAt) {
+                                  return new Date(feedback.requestedAt).toLocaleString('de-DE', { 
+                                    day: '2-digit', 
+                                    month: '2-digit',
+                                    year: 'numeric', 
+                                    hour: '2-digit', 
+                                    minute: '2-digit' 
+                                  });
+                                }
+                              } catch (e) {
+                                console.error('Fehler beim Formatieren des Datums:', e, feedback.requestedAt);
+                              }
+                              return '';
+                            })()}
                           </div>
                         </div>
                       </div>

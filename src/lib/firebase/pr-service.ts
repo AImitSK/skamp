@@ -16,6 +16,7 @@ import {
   limit,
   arrayUnion
 } from 'firebase/firestore';
+import { nanoid } from 'nanoid';
 import { db } from './client-init';
 import { PRCampaign, CampaignAssetAttachment, ApprovalData } from '@/types/pr';
 import { mediaService } from './media-service';
@@ -1275,12 +1276,34 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
           // UPDATE bestehende Freigabe mit neuer PDF-Version
           console.log('📝 Updating existing approval with new PDF version');
           
+          // Füge neue Nachricht zur History hinzu, wenn vorhanden
+          const historyEntry = customerApprovalData.customerApprovalMessage ? {
+            id: nanoid(),
+            timestamp: Timestamp.now(),
+            action: 'commented' as const,
+            actorName: 'Ihre Nachricht',
+            actorEmail: 'agentur@celeropress.com',
+            details: {
+              comment: customerApprovalData.customerApprovalMessage
+            }
+          } : {
+            id: nanoid(),
+            timestamp: Timestamp.now(),
+            action: 'resubmitted' as const,
+            actorName: 'System',
+            actorEmail: 'system@celeropress.com',
+            details: {
+              comment: 'Neue Version nach Änderungsanforderung erstellt'
+            }
+          };
+          
           await approvalService.updateApprovalForNewVersion(
             existingApproval.id!,
             {
               status: 'pending',
               pdfVersionId,
-              updatedAt: Timestamp.now()
+              updatedAt: Timestamp.now(),
+              history: arrayUnion(historyEntry)
             },
             context
           );
