@@ -193,3 +193,5 @@ npm run dev
 ```
 
 [![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
+
+<!-- Deploy Trigger: 2025-08-23 -->
