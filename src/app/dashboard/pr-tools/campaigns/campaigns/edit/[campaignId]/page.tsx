@@ -374,7 +374,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         
         // Lade erweiterte Approval-Daten mit feedbackHistory wenn ShareId vorhanden
         console.log('🔍 Checking for shareId:', campaign.approvalData?.shareId);
-        if (campaign.approvalData?.shareId) {
+        if (campaign.approvalData?.shareId && campaign.approvalData.shareId !== '') {
           try {
             console.log('📥 Loading feedback history for shareId:', campaign.approvalData.shareId);
             const campaignWithFeedback = await prService.getCampaignByShareId(campaign.approvalData.shareId);

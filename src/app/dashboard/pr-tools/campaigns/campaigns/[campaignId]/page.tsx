@@ -122,7 +122,7 @@ export default function CampaignDetailPage() {
       }
       
       // Lade erweiterte Approval-Daten mit feedbackHistory wenn ShareId vorhanden
-      if (campaignData.approvalData?.shareId) {
+      if (campaignData.approvalData?.shareId && campaignData.approvalData.shareId !== '') {
         try {
           console.log('📥 Loading feedback history for detail page, shareId:', campaignData.approvalData.shareId);
           const campaignWithFeedback = await prService.getCampaignByShareId(campaignData.approvalData.shareId);
