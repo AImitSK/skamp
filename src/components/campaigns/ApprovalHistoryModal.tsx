@@ -169,7 +169,7 @@ export function ApprovalHistoryModal({
             </div>
           )}
 
-          {approval.attachedAssets && approval.attachedAssets.length > 0 && (
+          {approval?.attachedAssets && approval.attachedAssets.length > 0 && (
             <div className="mt-6 pt-6 border-t">
               <Text className="font-medium mb-3">Angehängte Medien ({approval.attachedAssets.length})</Text>
               <div className="space-y-2">
