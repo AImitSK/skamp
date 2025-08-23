@@ -1303,16 +1303,14 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
             }
           };
           
-          await approvalService.updateApprovalForNewVersion(
-            existingApproval.id!,
-            {
-              status: 'pending',
-              pdfVersionId,
-              updatedAt: Timestamp.now(),
-              history: arrayUnion(historyEntry)
-            },
-            context
-          );
+          // DIREKTES UPDATE statt updateApprovalForNewVersion verwenden
+          // weil wir eigene History-Einträge hinzufügen wollen
+          await updateDoc(doc(db, 'approvals', existingApproval.id!), {
+            status: 'pending',
+            pdfVersionId,
+            updatedAt: Timestamp.now(),
+            history: arrayUnion(historyEntry)
+          });
           
           workflowId = existingApproval.id!;
           shareId = existingApproval.shareId;
