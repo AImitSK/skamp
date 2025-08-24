@@ -28,6 +28,7 @@ export interface BoilerplateSection {
   boilerplate?: Boilerplate;
   content?: string; // Für nicht-boilerplate Sections
   metadata?: any; // Für quote metadata
+  position?: 'header' | 'footer' | 'custom'; // Optional für Kompatibilität
   order: number;
   isLocked: boolean;
   isCollapsed: boolean;

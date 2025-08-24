@@ -1,7 +1,7 @@
 // src/app/dashboard/pr-tools/campaigns/campaigns/edit/[campaignId]/page.tsx
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from "@/context/AuthContext";
@@ -56,7 +56,7 @@ import { DistributionList } from "@/types/lists";
 import { CampaignAssetAttachment, EditLockData, EditLockUtils, PRCampaign, EDIT_LOCK_CONFIG } from "@/types/pr";
 import SimpleBoilerplateLoader, { BoilerplateSection } from "@/components/pr/campaign/SimpleBoilerplateLoader";
 import { InfoTooltip } from "@/components/InfoTooltip";
-import { serverTimestamp } from 'firebase/firestore';
+import { serverTimestamp, Timestamp } from 'firebase/firestore';
 import { pdfVersionsService, PDFVersion } from '@/lib/firebase/pdf-versions-service';
 // 🆕 NEW: Enhanced Edit-Lock Integration
 import EditLockBanner from '@/components/campaigns/EditLockBanner';
@@ -162,47 +162,36 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         .filter(section => {
           console.log('🔍 Raw section object:', section);
           
-          // Erweiterte Content-Prüfung mit allen möglichen Feldern
+          // Content-Prüfung mit korrekten Properties
           const content = section.content || 
-                         section.htmlContent || 
-                         section.text || 
                          section.boilerplate?.content ||
-                         section.boilerplate?.htmlContent ||
-                         section.boilerplate?.text ||
                          section.boilerplate?.description ||
                          '';
           
-          // Title-Prüfung erweitert
+          // Title-Prüfung
           const title = section.customTitle || 
-                       section.title ||
-                       section.boilerplate?.title || 
                        section.boilerplate?.name ||
                        '';
           
-          const hasContent = content && content.trim() && content !== '<p></p>' && content !== '<p><br></p>';
-          console.log(`🔍 Section "${title}": hasContent=${!!hasContent}, content="${content?.substring(0, 50)}..."`);
+          // Vereinfachte Content-Prüfung - wenn boilerplateId vorhanden ist, dann hat es Content
+          const hasContent = (section.boilerplateId && section.boilerplateId.trim() !== '') || 
+                            (content && content.trim() && content !== '<p></p>' && content !== '<p><br></p>');
+          console.log(`🔍 Section "${title}": hasContent=${!!hasContent}, boilerplateId="${section.boilerplateId}", content="${content?.substring(0, 50)}..."`);
           
           return hasContent;
         })
         .sort((a, b) => (a.order || 0) - (b.order || 0));
       
-      console.log('✅ Sichtbare Textbausteine:', visibleSections.length, visibleSections.map(s => s.customTitle || s.title || s.boilerplate?.title || s.boilerplate?.name || '(kein Titel)'));
+      console.log('✅ Sichtbare Textbausteine:', visibleSections.length, visibleSections.map(s => s.customTitle || s.boilerplate?.name || '(kein Titel)'));
       
       if (visibleSections.length > 0) {
         visibleSections.forEach(section => {
           const content = section.content || 
-                         section.htmlContent || 
-                         section.text || 
                          section.boilerplate?.content ||
-                         section.boilerplate?.htmlContent ||
-                         section.boilerplate?.text ||
                          section.boilerplate?.description ||
                          '';
           
-          // Erweiterte Title-Logik
           const title = section.customTitle || 
-                       section.title ||
-                       section.boilerplate?.title || 
                        section.boilerplate?.name ||
                        '';
           
@@ -325,11 +314,27 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
   } | null>(null);
 
 
+  // Entferne die problematische useEffect dependency
   useEffect(() => {
     if (user && currentOrganization) {
-      loadData();
+      loadDataNow();
     }
-  }, [user, currentOrganization]);
+  }, [user, currentOrganization, campaignId]);
+
+  const loadDataNow = async () => {
+    if (!user || !currentOrganization || !campaignId) return;
+    setLoading(true);
+    setIsLoadingCampaign(true);
+    try {
+      await loadData();
+    } catch (error) {
+      console.error('Fehler beim Laden der Daten:', error);
+      setValidationErrors(['Daten konnten nicht geladen werden']);
+    } finally {
+      setLoading(false);
+      setIsLoadingCampaign(false);
+    }
+  };
 
   // 🆕 ENHANCED: Lade Edit-Lock Status
   const loadEditLockStatus = async (campaignId: string) => {
@@ -350,7 +355,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
     }
   };
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!user || !currentOrganization || !campaignId) return;
     setLoading(true);
     setIsLoadingCampaign(true);
@@ -383,12 +388,13 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         } else {
           console.log('⚠️ No shareId found in approvalData - this is a legacy campaign');
           // Für alte Kampagnen: Erstelle eine minimale feedbackHistory aus vorhandenen Daten
-          if (campaign.approvalData?.customerApprovalMessage) {
-            campaign.approvalData.feedbackHistory = [{
+          if (campaign.approvalData && 'customerApprovalMessage' in campaign.approvalData && campaign.approvalData.customerApprovalMessage) {
+            const legacyFeedback = [{
               comment: campaign.approvalData.customerApprovalMessage,
-              requestedAt: campaign.updatedAt || campaign.createdAt,
+              requestedAt: (campaign.updatedAt || campaign.createdAt) as any,
               author: 'Ihre Nachricht (Legacy)'
             }];
+            setPreviousFeedback(legacyFeedback);
             console.log('📝 Created legacy feedback history from customerApprovalMessage');
           }
         }
@@ -396,8 +402,8 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         // Setze alle Formular-Felder mit Kampagnen-Daten
         setCampaignTitle(campaign.title || '');
         setPressReleaseContent(campaign.contentHtml || '');
-        setEditorContent(campaign.mainContent || campaign.editorContent || '');
-        setKeywords(campaign.keywords || campaign.seoKeywords || []);
+        setEditorContent(campaign.mainContent || '');
+        setKeywords(campaign.keywords || []);
         setSelectedCompanyId(campaign.clientId || '');
         setSelectedCompanyName(campaign.clientName || '');
         setSelectedListIds(campaign.distributionListIds || []);
@@ -406,13 +412,25 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         setManualRecipients(campaign.manualRecipients || []);
         setAttachedAssets(campaign.attachedAssets || []);
         setKeyVisual(campaign.keyVisual);
-        setBoilerplateSections(campaign.boilerplateSections || []);
+        // Konvertiere CampaignBoilerplateSection zu BoilerplateSection
+        const convertedSections: BoilerplateSection[] = (campaign.boilerplateSections || []).map(section => ({
+          id: section.id,
+          type: section.type || 'boilerplate',
+          boilerplateId: section.boilerplateId,
+          content: section.content,
+          metadata: section.metadata,
+          order: section.order,
+          isLocked: section.isLocked,
+          isCollapsed: section.isCollapsed || false,
+          customTitle: section.customTitle
+        }));
+        setBoilerplateSections(convertedSections);
         
         // Setze Approval-Daten falls vorhanden
         if (campaign.approvalData) {
           setApprovalData({
-            customerApprovalRequired: campaign.approvalData.customerApprovalRequired || false,
-            customerContact: campaign.approvalData.customerContact,
+            customerApprovalRequired: 'customerApprovalRequired' in campaign.approvalData ? campaign.approvalData.customerApprovalRequired : false,
+            customerContact: 'customerContact' in campaign.approvalData ? campaign.approvalData.customerContact : undefined,
             // Nachrichtenfeld beim Editieren leer lassen für neue Nachricht
             customerApprovalMessage: ''
           });
@@ -441,7 +459,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
       setLoading(false);
       setIsLoadingCampaign(false);
     }
-  };
+  }, [user, currentOrganization, campaignId]);
 
   // 🆕 ENHANCED SUBMIT HANDLER mit vollständiger Edit-Lock Integration
   const handleSubmit = async (e: React.FormEvent) => {
@@ -504,7 +522,10 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
           title: campaignTitle.trim(),
           contentHtml: pressReleaseContent || '',
           mainContent: editorContent,
-          boilerplateSections: boilerplateSections,
+          boilerplateSections: boilerplateSections.map((section, index) => ({
+            ...section,
+            position: section.position || 'custom' as const,
+          })),
           clientId: selectedCompanyId,
           clientName: selectedCompanyName,
           keyVisual: keyVisual,
@@ -525,8 +546,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         },
         {
           userId: user!.uid,
-          organizationId: currentOrganization!.id,
-          isNewCampaign: isNewCampaign // 🔧 FIX: Korrekte Logik für neue vs. bestehende Kampagnen
+          organizationId: currentOrganization!.id
         }
       );
       
@@ -604,7 +624,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         title: campaignTitle.trim(),
         contentHtml: finalContentHtml || generateContentHtml(), // Verwende finale HTML oder generiere neu falls nicht vorhanden
         mainContent: editorContent || '',
-        boilerplateSections: cleanedSections,
+        boilerplateSections: cleanedSections as any, // Type conversion for compatibility
         status: 'draft' as const,
         // Multi-List Support
         distributionListIds: selectedListIds,
@@ -618,7 +638,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         // SEO Data
         keywords: keywords,
         seoMetrics: {
-          lastAnalyzed: serverTimestamp(),
+          lastAnalyzed: serverTimestamp() as Timestamp,
         },
         clientId: selectedCompanyId || undefined,
         clientName: selectedCompanyName || undefined,
@@ -626,7 +646,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         attachedAssets: cleanedAttachedAssets,
         // Approval
         approvalRequired: approvalData.customerApprovalRequired || false,
-        approvalData: approvalData.customerApprovalRequired ? approvalData : undefined,
+        approvalData: approvalData.customerApprovalRequired ? approvalData as any : undefined,
         userId: user.uid,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
@@ -685,7 +705,11 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         title: campaignTitle,
         contentHtml: '',
         mainContent: editorContent,
-        boilerplateSections,
+        boilerplateSections: boilerplateSections.map((section, index) => ({
+          ...section,
+          position: 'custom' as const,
+          order: section.order ?? index
+        })) as any,
         keyVisual,
         clientId: selectedCompanyId,
         clientName: selectedCompanyName,
@@ -915,8 +939,8 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
       <form ref={formRef} onSubmit={(e) => {
         e.preventDefault();
         console.log('🎯 AUTOMATISCHES Form-Submit Event! CurrentStep:', currentStep);
-        console.log('🔍 Event Details:', e.type, 'Target:', e.target, 'Submitter:', e.submitter);
-        console.log('🔍 Form Elements:', Array.from(e.target.elements).filter(el => el.type === 'submit').map(el => ({ type: el.type, value: el.value, className: el.className })));
+        console.log('🔍 Event Details:', e.type, 'Target:', e.target, 'Submitter:', (e as any).submitter);
+        console.log('🔍 Form Elements:', Array.from((e.target as HTMLFormElement).elements).filter(el => (el as HTMLElement).getAttribute('type') === 'submit').map(el => ({ type: (el as HTMLElement).getAttribute('type'), value: (el as any).value, className: (el as HTMLElement).className })));
         
         // BLOCKIERE ALLE AUTOMATISCHEN SUBMITS - NUR MANUELLER KLICK ERLAUBT
         console.log('🚫 ALLE Form-Submits werden blockiert - nur manuelle Speichern-Clicks erlaubt');
@@ -1006,7 +1030,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                   hideBoilerplates={true}
                   keywords={keywords}
                   onKeywordsChange={setKeywords}
-                  onSeoScoreChange={(score) => setPrScore(score)}
+                  onSeoScoreChange={(score: any) => setPrScore(score)}
                 />
               </div>
 
@@ -1208,7 +1232,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                             <Text className="text-sm font-medium text-blue-900">Team-Freigabe</Text>
                           </div>
                           <Button
-                            size="sm"
                             plain
                             onClick={() => window.open(approvalWorkflowResult.shareableLinks!.team!, '_blank')}
                             className="text-xs"
@@ -1226,7 +1249,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                             <Text className="text-sm font-medium text-blue-900">Kunden-Freigabe</Text>
                           </div>
                           <Button
-                            size="sm"
                             plain
                             onClick={() => window.open(approvalWorkflowResult.shareableLinks!.customer!, '_blank')}
                             className="text-xs"
@@ -1257,7 +1279,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                           <div className="w-full" style={{ aspectRatio: '16/9' }}>
                             <img 
                               src={keyVisual.url} 
-                              alt={keyVisual.alt || 'Key Visual'} 
+                              alt="Key Visual" 
                               className="w-full h-full object-cover rounded-t-lg"
                             />
                           </div>
@@ -1307,7 +1329,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                         }`}>
                           {prScore.score}%
                         </div>
-                        <Badge color={prScore.score >= 80 ? 'green' : prScore.score >= 60 ? 'yellow' : 'red'}>
+                        <Badge color={prScore.score >= 80 ? 'green' : prScore.score >= 60 ? 'amber' : 'red'}>
                           {prScore.score >= 80 ? 'Sehr gut' : prScore.score >= 60 ? 'Gut' : 'Verbesserungswürdig'}
                         </Badge>
                       </div>
@@ -1321,9 +1343,34 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                     </div>
                   )}
                   
+                  {/* PR-SEO Analyse Card */}
+                  <div className="bg-white rounded-lg shadow-md p-4">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3">PR-SEO Analyse 2.0</h4>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">PR-Score:</span>
+                        <div className="flex items-center gap-2">
+                          <div className={`text-xl font-bold ${
+                            (prScore?.score || 0) >= 80 ? 'text-green-600' : 
+                            (prScore?.score || 0) >= 60 ? 'text-yellow-600' : 'text-red-600'
+                          }`}>
+                            {prScore?.score || 28}/100
+                          </div>
+                        </div>
+                      </div>
+                      {prScore?.hints && prScore.hints.length > 0 && (
+                        <div className="text-xs text-gray-500 bg-gray-50 rounded p-2">
+                          {prScore.hints.slice(0, 2).map((hint, i) => (
+                            <div key={i} className="mb-1">• {hint}</div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Kampagnen-Info Card */}
                   <div className="bg-white rounded-lg shadow-md p-4">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-3">📋 Kampagnen-Info</h4>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3">Kampagnen-Info</h4>
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span className="text-sm text-gray-600">Kunde:</span>
@@ -1350,7 +1397,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                   
                   {/* Statistiken Card */}
                   <div className="bg-white rounded-lg shadow-md p-4">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-3">📊 Statistiken</h4>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3">Statistiken</h4>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <div className="text-2xl font-bold text-gray-900">
@@ -1379,7 +1426,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                   {attachedAssets && attachedAssets.length > 0 && (
                     <div className="bg-white rounded-lg shadow-md p-4">
                       <h4 className="text-sm font-semibold text-gray-700 mb-3">
-                        📎 Anhänge ({attachedAssets.length})
+                        Anhänge ({attachedAssets.length})
                       </h4>
                       <div className="space-y-2">
                         {attachedAssets.slice(0, 3).map((attachment, index) => (
@@ -1389,12 +1436,13 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                             ) : attachment.metadata?.fileType?.startsWith('image/') ? (
                               <div className="w-4 h-4 flex-shrink-0">
                                 <img 
-                                  src={attachment.metadata.thumbnailUrl || attachment.metadata.downloadUrl} 
+                                  src={attachment.metadata.thumbnailUrl} 
                                   alt="" 
                                   className="w-4 h-4 object-cover rounded"
                                   onError={(e) => {
                                     e.currentTarget.style.display = 'none';
-                                    e.currentTarget.nextElementSibling.style.display = 'block';
+                                    const nextEl = e.currentTarget.nextElementSibling as HTMLElement;
+                                    if (nextEl) nextEl.style.display = 'block';
                                   }}
                                 />
                                 <PhotoIcon className="h-4 w-4 text-green-500 hidden" />
@@ -1405,11 +1453,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                             <span className="text-xs text-gray-700 truncate">
                               {attachment.metadata?.fileName || attachment.metadata?.folderName || 'Unbekannter Anhang'}
                             </span>
-                            {attachment.metadata?.fileSize && (
-                              <span className="text-xs text-gray-500 ml-auto">
-                                {(attachment.metadata.fileSize / 1024).toFixed(0)}KB
-                              </span>
-                            )}
+                            {/* File size display removed due to type constraints */}
                           </div>
                         ))}
                         {attachedAssets.length > 3 && (
@@ -1485,8 +1529,8 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                     
                     <div className="flex items-center gap-3">
                       <Badge 
-                        color={currentPdfVersion.status === 'draft' ? 'gray' : 
-                              currentPdfVersion.status === 'approved' ? 'green' : 'yellow'} 
+                        color={currentPdfVersion.status === 'draft' ? 'zinc' : 
+                              currentPdfVersion.status === 'approved' ? 'green' : 'amber'} 
                         className="text-xs"
                       >
                         {currentPdfVersion.status === 'draft' ? 'Entwurf' :
@@ -1495,7 +1539,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                       
                       <Button
                         type="button"
-                        size="sm"
                         onClick={() => window.open(currentPdfVersion.downloadUrl, '_blank')}
                         className="bg-blue-600 hover:bg-blue-700 text-white"
                       >
@@ -1519,8 +1562,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
             {/* PDF-Versionen Historie */}
             {campaignId && currentOrganization && (
               <div className="mb-8">
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <DocumentTextIcon className="h-5 w-5 text-gray-600" />
+                <h3 className="text-lg font-semibold mb-4">
                   PDF-Versionen Historie
                 </h3>
                 <PDFVersionHistory
@@ -1570,7 +1612,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
             ) : (
               <Button
                 type="button"
-                onClick={(e) => {
+                onClick={(e: React.MouseEvent) => {
                   console.log('🖱️ MANUELLER Speichern-Click!');
                   handleSubmit(e as any);
                 }}

@@ -90,6 +90,7 @@ interface CampaignContentComposerProps {
   // PR-SEO props
   keywords?: string[];
   onKeywordsChange?: (keywords: string[]) => void;
+  onSeoScoreChange?: (score: any) => void;
 }
 
 // Folder Selector Dialog Component
@@ -259,7 +260,8 @@ export default function CampaignContentComposer({
   hideBoilerplates = false,
   readOnlyTitle = false,
   keywords = [],
-  onKeywordsChange
+  onKeywordsChange,
+  onSeoScoreChange
 }: CampaignContentComposerProps) {
   const [boilerplateSections, setBoilerplateSections] = useState<BoilerplateSection[]>(initialBoilerplateSections);
   const [processedContent, setProcessedContent] = useState('');
@@ -444,6 +446,7 @@ export default function CampaignContentComposer({
                   keywords={keywords}
                   onKeywordsChange={onKeywordsChange}
                   documentTitle={title}
+                  onSeoScoreChange={onSeoScoreChange}
                 />
               </div>
             )}
