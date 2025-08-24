@@ -66,6 +66,12 @@ interface PRSEOHeaderBarProps {
   onKeywordsChange: (keywords: string[]) => void;
   documentTitle?: string;
   className?: string;
+  onSeoScoreChange?: (scoreData: {
+    totalScore: number;
+    breakdown: PRScoreBreakdown;
+    hints: string[];
+    keywordMetrics: KeywordMetrics[];
+  }) => void;
 }
 
 // KI-Analysis-Box Komponente
@@ -113,7 +119,8 @@ export function PRSEOHeaderBar({
   keywords,
   onKeywordsChange,
   documentTitle = '',
-  className
+  className,
+  onSeoScoreChange
 }: PRSEOHeaderBarProps) {
   const [newKeyword, setNewKeyword] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -598,7 +605,17 @@ Beispiel-Format (nutze deine eigenen Werte):
     setPrScore(totalScore);
     setScoreBreakdown(breakdown);
     setRecommendations(newRecommendations);
-  }, [content, documentTitle, keywordMetrics, calculatePRMetrics, calculatePRScore]);
+    
+    // Score-Daten an Parent-Komponente weiterleiten
+    if (onSeoScoreChange) {
+      onSeoScoreChange({
+        totalScore,
+        breakdown,
+        hints: newRecommendations,
+        keywordMetrics
+      });
+    }
+  }, [content, documentTitle, keywordMetrics, calculatePRMetrics, calculatePRScore, onSeoScoreChange]);
 
   // Score-Farbe bestimmen
   const getScoreColor = (score: number) => {

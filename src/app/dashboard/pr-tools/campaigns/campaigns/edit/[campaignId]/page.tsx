@@ -62,6 +62,7 @@ import { pdfVersionsService, PDFVersion } from '@/lib/firebase/pdf-versions-serv
 // 🆕 NEW: Enhanced Edit-Lock Integration
 import EditLockBanner from '@/components/campaigns/EditLockBanner';
 import EditLockStatusIndicator from '@/components/campaigns/EditLockStatusIndicator';
+import { CampaignPreviewStep } from '@/components/campaigns/CampaignPreviewStep';
 // PRSEOHeaderBar now integrated in CampaignContentComposer
 
 
@@ -282,7 +283,12 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
   const [showAssetSelector, setShowAssetSelector] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [successMessage, setSuccessMessage] = useState<string>('');
-  const [prScore, setPrScore] = useState<{ score: number; hints: string[] } | null>(null);
+  const [realPrScore, setRealPrScore] = useState<{
+    totalScore: number;
+    breakdown: { headline: number; keywords: number; structure: number; relevance: number; concreteness: number; engagement: number };
+    hints: string[];
+    keywordMetrics: any[];
+  } | null>(null);
   
   // PR-Score automatisch aktualisieren wenn Inhalt sich ändert
   useEffect(() => {
@@ -606,8 +612,8 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
           keywords: keywords,
           seoMetrics: {
             lastAnalyzed: serverTimestamp() as Timestamp,
-            prScore: prScore?.score || 0,
-            prHints: prScore?.hints || [],
+            prScore: realPrScore?.totalScore || 0,
+            prHints: realPrScore?.hints || [],
             prScoreCalculatedAt: serverTimestamp() as Timestamp,
           },
           status: 'draft' as const
@@ -712,8 +718,8 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         keywords: keywords,
         seoMetrics: {
           lastAnalyzed: serverTimestamp() as Timestamp,
-          prScore: prScore?.score || 0,
-          prHints: prScore?.hints || [],
+          prScore: realPrScore?.totalScore || 0,
+          prHints: realPrScore?.hints || [],
           prScoreCalculatedAt: serverTimestamp() as Timestamp,
         },
         clientId: selectedCompanyId || undefined,
@@ -1106,7 +1112,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                   hideBoilerplates={true}
                   keywords={keywords}
                   onKeywordsChange={setKeywords}
-                  onSeoScoreChange={(score: any) => setPrScore(score)}
+                  onSeoScoreChange={(scoreData: any) => setRealPrScore(scoreData)}
                 />
               </div>
 
@@ -1488,10 +1494,10 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                         <h4 className="text-sm font-semibold text-gray-700">PR-SEO Analyse</h4>
                       </div>
                       <Badge 
-                        color={(prScore?.score || 0) >= 76 ? 'green' : (prScore?.score || 0) >= 51 ? 'amber' : 'red'}
+                        color={(realPrScore?.totalScore || 0) >= 76 ? 'green' : (realPrScore?.totalScore || 0) >= 51 ? 'amber' : 'red'}
                         className="text-sm font-semibold px-3 py-1"
                       >
-                        PR-Score: {prScore?.score || 0}/100
+                        PR-Score: {realPrScore?.totalScore || 0}/100
                       </Badge>
                     </div>
                     
@@ -1499,30 +1505,30 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Bewertung:</span>
-                        <span className={`font-medium ${
-                          (prScore?.score || 0) >= 76 ? 'text-green-600' : 
-                          (prScore?.score || 0) >= 51 ? 'text-amber-600' : 'text-red-600'
-                        }`}>
-                          {(prScore?.score || 0) >= 76 ? 'Sehr gut' : 
-                           (prScore?.score || 0) >= 51 ? 'Gut' : 'Verbesserungsbedürftig'}
-                        </span>
+                        <span className="text-sm text-gray-600">Headline: {realPrScore?.breakdown?.headline || 0}/100</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Keywords: {realPrScore?.breakdown?.keywords || 0}/100</span>
+                        <span className="text-gray-600">Struktur: {realPrScore?.breakdown?.structure || 0}/100</span>
                       </div>
                       
-                      {keywords.length > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Keywords:</span>
-                          <span className="text-gray-800 font-medium">{keywords.length}</span>
+                      {keywords.length > 0 && realPrScore?.keywordMetrics && realPrScore.keywordMetrics.length > 0 && (
+                        <div className="mt-2 pt-2 border-t border-gray-300">
+                          <div className="text-xs text-gray-600 mb-1">Keywords:</div>
+                          {realPrScore.keywordMetrics.slice(0, 2).map((kw: any, i: number) => (
+                            <div key={i} className="text-xs text-gray-700">{kw.keyword}</div>
+                          ))}
                         </div>
                       )}
                     </div>
                     
                     {/* Recommendations */}
-                    {prScore?.hints && prScore.hints.length > 0 && (
+                    {realPrScore?.hints && realPrScore.hints.length > 0 && (
                       <div className="mt-3 pt-3 border-t border-gray-200">
                         <div className="text-xs text-gray-600">
-                          <div className="font-medium mb-2">Verbesserungsvorschläge:</div>
+                          <div className="font-medium mb-2">Verbesserungsvorschläge: ({realPrScore.hints.length})</div>
                           <div className="space-y-1">
-                            {prScore.hints.slice(0, 2).map((hint, i) => (
+                            {realPrScore.hints.slice(0, 2).map((hint, i) => (
                               <div key={i} className="flex items-start gap-1">
                                 <span className="text-blue-500 mt-0.5">•</span>
                                 <span>{hint}</span>
