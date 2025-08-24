@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
 import { TeamMember } from "@/types/international";
-import { teamMembersService } from "@/lib/firebase/team-members-service";
+import { teamMemberEnhancedService } from "@/lib/firebase/team-service-enhanced";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
@@ -498,7 +498,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         
         // Load team members and find campaign admin
         console.log('👥 Loading team members for organization:', currentOrganization.id);
-        const members = await teamMembersService.getAll(currentOrganization.id);
+        const members = await teamMemberEnhancedService.getAll(currentOrganization.id);
         setTeamMembers(members);
         
         // Find current admin (campaign creator)
