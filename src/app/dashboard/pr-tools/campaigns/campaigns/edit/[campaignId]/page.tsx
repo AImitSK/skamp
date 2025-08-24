@@ -1521,17 +1521,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         />
       )}
 
-      {/* AI Modal */}
-      {showAiModal && (
-        <StructuredGenerationModal
-          onClose={() => setShowAiModal(false)}
-          onGenerate={handleAiGenerate}
-          existingContent={{
-            title: campaignTitle,
-            content: ''
-          }}
-        />
-      )}
 
       {/* CSS für Animationen */}
       <style jsx global>{`
