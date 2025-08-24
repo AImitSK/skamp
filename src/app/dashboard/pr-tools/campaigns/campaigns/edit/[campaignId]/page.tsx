@@ -295,7 +295,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
     const calculatePrScore = () => {
       const content = `${campaignTitle || ''}\n\n${editorContent || ''}`.trim();
       if (!content || content.length < 50) {
-        setPrScore({ score: 28, hints: ['Fügen Sie mehr Inhalt hinzu', 'Verwenden Sie aussagekräftige Keywords'] });
+        setRealPrScore({ totalScore: 28, breakdown: { headline: 0, keywords: 0, structure: 0, relevance: 0, concreteness: 0, engagement: 0 }, hints: ['Fügen Sie mehr Inhalt hinzu', 'Verwenden Sie aussagekräftige Keywords'], keywordMetrics: [] });
         return;
       }
       
@@ -341,7 +341,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
       }
       
       score = Math.min(100, score);
-      setPrScore({ score, hints });
+      setRealPrScore({ totalScore: score, breakdown: { headline: 0, keywords: 0, structure: 0, relevance: 0, concreteness: 0, engagement: 0 }, hints, keywordMetrics: [] });
     };
     
     const timeoutId = setTimeout(calculatePrScore, 500); // Debounce
@@ -493,9 +493,11 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         
         // Setze gespeicherten PR-Score falls vorhanden
         if (campaign.seoMetrics?.prScore) {
-          setPrScore({
-            score: campaign.seoMetrics.prScore,
-            hints: campaign.seoMetrics.prHints || []
+          setRealPrScore({
+            totalScore: campaign.seoMetrics.prScore,
+            breakdown: { headline: 0, keywords: 0, structure: 0, relevance: 0, concreteness: 0, engagement: 0 },
+            hints: campaign.seoMetrics.prHints || [],
+            keywordMetrics: []
           });
         }
         

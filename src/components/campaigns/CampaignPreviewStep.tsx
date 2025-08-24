@@ -164,13 +164,14 @@ export function CampaignPreviewStep({
           
           {/* Score Details */}
           <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Bewertung:</span>
-              <span className="text-sm text-gray-600">Headline: {realPrScore?.breakdown?.headline || 0}/100</span>
+            <div className="text-sm text-gray-600">
+              Headline: {realPrScore?.breakdown?.headline || 0}/100
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Keywords: {realPrScore?.breakdown?.keywords || 0}/100</span>
-              <span className="text-gray-600">Struktur: {realPrScore?.breakdown?.structure || 0}/100</span>
+            <div className="text-sm text-gray-600">
+              Keywords: {realPrScore?.breakdown?.keywords || 0}/100
+            </div>
+            <div className="text-sm text-gray-600">
+              Struktur: {realPrScore?.breakdown?.structure || 0}/100
             </div>
             
             {keywords.length > 0 && realPrScore?.keywordMetrics && realPrScore.keywordMetrics.length > 0 && (
@@ -183,22 +184,6 @@ export function CampaignPreviewStep({
             )}
           </div>
           
-          {/* Recommendations */}
-          {realPrScore?.hints && realPrScore.hints.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-gray-200">
-              <div className="text-xs text-gray-600">
-                <div className="font-medium mb-2">Verbesserungsvorschläge: ({realPrScore.hints.length})</div>
-                <div className="space-y-1">
-                  {realPrScore.hints.slice(0, 2).map((hint, i) => (
-                    <div key={i} className="flex items-start gap-1">
-                      <span className="text-blue-500 mt-0.5">•</span>
-                      <span>{hint}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
         
         {/* Anhänge */}
