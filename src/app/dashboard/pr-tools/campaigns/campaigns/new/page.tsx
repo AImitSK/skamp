@@ -47,7 +47,8 @@ import {
   ClockIcon,
   ArrowRightIcon,
   LockClosedIcon,
-  LinkIcon
+  LinkIcon,
+  MagnifyingGlassIcon
 } from "@heroicons/react/24/outline";
 import { listsService } from "@/lib/firebase/lists-service";
 import { prService } from "@/lib/firebase/pr-service";
@@ -206,9 +207,9 @@ export default function NewPRCampaignPage() {
           // Nur customTitle anzeigen, keine internen Namen
           const title = section.customTitle || '';
           
-          html += `<div class="boilerplate-section mb-6 p-4 border-l-4 border-blue-500 bg-blue-50">
-            ${title ? `<h3 class="text-lg font-semibold mb-2 text-blue-900">${title}</h3>` : ''}
-            <div class="boilerplate-content text-blue-800">${content}</div>
+          html += `<div class="boilerplate-section mb-8">
+            ${title ? `<h3 class="text-lg font-semibold mb-2 text-gray-900">${title}</h3>` : ''}
+            <div class="boilerplate-content text-gray-800">${content}</div>
           </div>`;
         });
         html += `</div>`;
@@ -293,6 +294,7 @@ export default function NewPRCampaignPage() {
   const [showAiModal, setShowAiModal] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [successMessage, setSuccessMessage] = useState<string>('');
+  const [prScore, setPrScore] = useState<{ score: number; hints: string[] } | null>(null);
   
   // 4-Step Navigation State
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
@@ -615,6 +617,9 @@ export default function NewPRCampaignPage() {
         keywords: keywords,
         seoMetrics: {
           lastAnalyzed: serverTimestamp(),
+          prScore: prScore?.score || 0,
+          prHints: prScore?.hints || [],
+          prScoreCalculatedAt: serverTimestamp(),
         },
         clientId: selectedCompanyId || undefined,
         clientName: selectedCompanyName || undefined,
@@ -978,6 +983,7 @@ export default function NewPRCampaignPage() {
                   hideBoilerplates={true}
                   keywords={keywords}
                   onKeywordsChange={setKeywords}
+                  onSeoScoreChange={(score: any) => setPrScore(score)}
                 />
               </div>
 
@@ -1157,240 +1163,170 @@ export default function NewPRCampaignPage() {
         {/* Step 4: Vorschau */}
         {currentStep === 4 && (
           <div className="bg-white rounded-lg border p-6">
-            
-            {/* PDF-WORKFLOW STATUS BANNER */}
-            {approvalWorkflowResult && approvalWorkflowResult.workflowId && (
-              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex items-start">
-                  <ClockIcon className="h-5 w-5 text-blue-500 mr-3 flex-shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <h4 className="text-sm font-medium text-blue-900 mb-2">
-                      🔄 Freigabe-Workflow aktiv
-                    </h4>
-                    <Text className="text-sm text-blue-700 mb-3">
-                      Die Kampagne befindet sich im Freigabe-Prozess. Alle Änderungen sind gesperrt.
-                    </Text>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {approvalWorkflowResult.shareableLinks?.team && (
-                        <div className="p-3 bg-white rounded border border-blue-300">
-                          <div className="flex items-center gap-2 mb-2">
-                            <UserGroupIcon className="h-4 w-4 text-blue-600" />
-                            <Text className="text-sm font-medium text-blue-900">Team-Freigabe</Text>
-                          </div>
-                          <Button
-                            size="sm"
-                            plain
-                            onClick={() => window.open(approvalWorkflowResult.shareableLinks!.team!, '_blank')}
-                            className="text-xs"
-                          >
-                            <LinkIcon className="h-3 w-3 mr-1" />
-                            Link öffnen
-                          </Button>
+            {/* Live Vorschau - Zweispaltiges Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Linke Spalte: Pressemitteilung im Papier-Look (2/3 Breite) */}
+              <div className="lg:col-span-2">
+                <div className="bg-gray-100 p-6 rounded-lg">
+                  <div className="bg-white shadow-xl rounded-lg p-12 max-w-4xl mx-auto">
+                    {/* Key Visual im 16:9 Format */}
+                    {keyVisual?.url && (
+                      <div className="mb-8 -mx-12 -mt-12">
+                        <div className="w-full" style={{ aspectRatio: '16/9' }}>
+                          <img 
+                            src={keyVisual.url} 
+                            alt="Key Visual" 
+                            className="w-full h-full object-cover rounded-t-lg"
+                          />
                         </div>
-                      )}
-                      
-                      {approvalWorkflowResult.shareableLinks?.customer && (
-                        <div className="p-3 bg-white rounded border border-blue-300">
-                          <div className="flex items-center gap-2 mb-2">
-                            <BuildingOfficeIcon className="h-4 w-4 text-blue-600" />
-                            <Text className="text-sm font-medium text-blue-900">Kunden-Freigabe</Text>
-                          </div>
-                          <Button
-                            size="sm"
-                            plain
-                            onClick={() => window.open(approvalWorkflowResult.shareableLinks!.customer!, '_blank')}
-                            className="text-xs"
-                          >
-                            <LinkIcon className="h-3 w-3 mr-1" />
-                            Link öffnen
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            {/* Live Vorschau - EXAKT WIE IM DETAIL PAGE */}
-            <div className="mb-8">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Live-Vorschau</h3>
-              <div className="border rounded-lg p-6 bg-gray-50">
-                <div className="prose prose-sm max-w-none">
-                  {/* Titel */}
-                  <div className="flex items-center justify-between mb-4">
-                    <h1 className="text-2xl font-bold flex-1">{campaignTitle || 'Titel der Pressemitteilung'}</h1>
-                    
-                    {/* 🆕 ENHANCED: Edit-Lock Status Indicator in Vorschau */}
-                    <div className="ml-4 flex-shrink-0">
-                      <EditLockStatusIndicator
-                        campaign={{
-                          editLocked: editLockStatus.isLocked,
-                          editLockedReason: editLockStatus.reason,
-                          lockedBy: editLockStatus.lockedBy,
-                          lockedAt: editLockStatus.lockedAt
-                        } as PRCampaign}
-                        size="md"
-                        variant="badge"
-                        showLabel={true}
-                        showIcon={true}
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* Hauptinhalt - Fertiges ContentHtml wie in Detail Page */}
-                  <div 
-                    className="mb-6"
-                    dangerouslySetInnerHTML={{ __html: finalContentHtml || '<p class="text-gray-400 italic text-center py-8">Klicken Sie auf "Weiter" oder "Vorschau" um die finale Vorschau zu generieren</p>' }} 
-                  />
-
-                  {/* Textbausteine sind bereits in generateContentHtml() enthalten */}
-                  
-                  {/* Debug Info nur in Development */}
-                  {process.env.NODE_ENV === 'development' && (
-                    <div className="mt-8 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
-                      <strong>Debug Live-Vorschau (finale ContentHtml):</strong><br/>
-                      KeyVisual: {keyVisual ? `✅ (${keyVisual.type}, ${keyVisual.url ? 'URL✅' : 'URL❌'})` : '❌'}<br/>
-                      Textbausteine: {boilerplateSections?.length || 0} ({boilerplateSections?.filter(s => s.content?.trim()).length || 0} mit Content)<br/>
-                      Textbausteine Details: {boilerplateSections?.map(s => `${s.title}(isActive:${s.isActive}, hasContent:${!!s.content?.trim()})`).join(', ')}<br/>
-                      EditorContent: {editorContent ? `${editorContent.length} Zeichen` : '❌'}<br/>
-                      Finale HTML: {finalContentHtml.length} Zeichen (generiert bei Step-Wechsel)
-                      {finalContentHtml && (
-                        <details className="mt-2">
-                          <summary className="cursor-pointer text-blue-600">Finale HTML anzeigen</summary>
-                          <pre className="mt-2 p-2 bg-gray-100 rounded text-xs overflow-auto max-h-32">
-                            {finalContentHtml}
-                          </pre>
-                        </details>
-                      )}
-                    </div>
-                  )}
-                  
-                  {/* Datum */}
-                  <p className="text-sm text-gray-600 mt-8 pt-4 border-t border-gray-200">
-                    {new Date().toLocaleDateString('de-DE', { 
-                      day: '2-digit', 
-                      month: 'long', 
-                      year: 'numeric' 
-                    })}
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            {/* PDF-Export */}
-            <div className="mb-8">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">PDF-Export</h3>
-                
-                {/* WORKFLOW-STATUS INDICATOR */}
-                {approvalWorkflowResult?.pdfVersionId ? (
-                  <div className="flex items-center gap-2 text-sm text-green-700">
-                    <CheckCircleIcon className="h-4 w-4" />
-                    <span>PDF für Freigabe erstellt</span>
-                  </div>
-                ) : !editLockStatus.isLocked ? (
-                  <Button
-                    type="button"
-                    onClick={() => handleGeneratePdf(false)}
-                    disabled={generatingPdf}
-                    className="bg-[#005fab] hover:bg-[#004a8c] text-white"
-                  >
-                    {generatingPdf ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        PDF wird erstellt...
-                      </>
-                    ) : (
-                      <>
-                        <DocumentTextIcon className="h-4 w-4 mr-2" />
-                        PDF generieren
-                      </>
+                      </div>
                     )}
-                  </Button>
-                ) : (
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <LockClosedIcon className="h-4 w-4" />
-                    PDF-Erstellung gesperrt - {editLockStatus.reason ? EDIT_LOCK_CONFIG[editLockStatus.reason]?.label : 'Bearbeitung nicht möglich'}
+                    
+                    {/* Pressemitteilung Header */}
+                    <div className="mb-8">
+                      <p className="text-sm text-gray-500 uppercase tracking-wide mb-2">Pressemitteilung</p>
+                      <h1 className="text-3xl font-bold text-gray-900 leading-tight">{campaignTitle || 'Titel der Pressemitteilung'}</h1>
+                    </div>
+                    
+                    {/* Hauptinhalt - Fertiges ContentHtml */}
+                    <div 
+                      className="prose max-w-none text-gray-800 text-base leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: finalContentHtml || '<p class="text-gray-400 italic text-center py-8">Klicken Sie auf "Weiter" oder "Vorschau" um die finale Vorschau zu generieren</p>' }} 
+                    />
+                    
+                    {/* Datum */}
+                    <p className="text-sm text-gray-600 mt-8 pt-4 border-t border-gray-200">
+                      {new Date().toLocaleDateString('de-DE', { 
+                        day: '2-digit', 
+                        month: 'long', 
+                        year: 'numeric' 
+                      })}
+                    </p>
                   </div>
-                )}
+                </div>
               </div>
               
-              {/* Aktuelle PDF-Version */}
-              {currentPdfVersion && (
-                <div className="border rounded-lg p-4 bg-blue-50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <DocumentTextIcon className="h-5 w-5 text-blue-600" />
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-blue-900">Version {currentPdfVersion.version}</span>
-                          <Badge color="blue" className="text-xs">
-                            {approvalWorkflowResult?.pdfVersionId ? 'Freigabe-PDF' : 'Aktuell'}
-                          </Badge>
-                        </div>
-                        <div className="text-sm text-blue-700">
-                          {currentPdfVersion.metadata?.wordCount} Wörter • {currentPdfVersion.metadata?.pageCount} Seiten
-                          {approvalWorkflowResult?.workflowId && (
-                            <span className="ml-2">• Workflow aktiv</span>
-                          )}
-                        </div>
+              {/* Rechte Spalte: Info-Karten (1/3 Breite) */}
+              <div className="lg:col-span-1 space-y-6">
+                {/* Kampagnen-Info */}
+                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <InformationCircleIcon className="h-5 w-5 text-gray-400" />
+                    <h4 className="font-semibold text-gray-900">Kampagnen-Info</h4>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Status:</span>
+                      <Badge color="gray">Entwurf</Badge>
+                    </div>
+                    {selectedCompanyName && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Kunde:</span>
+                        <span className="font-medium text-right">{selectedCompanyName}</span>
+                      </div>
+                    )}
+                    {approvalData.customerApprovalRequired && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Freigabe:</span>
+                        <Badge color="yellow">Erforderlich</Badge>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Statistiken */}
+                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <DocumentTextIcon className="h-5 w-5 text-gray-400" />
+                    <h4 className="font-semibold text-gray-900">Statistiken</h4>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Zeichen</span>
+                      <span className="font-mono text-sm">
+                        {(editorContent || '').replace(/<[^>]*>/g, '').length}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Textbausteine</span>
+                      <span className="font-mono text-sm">{boilerplateSections.length}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Keywords</span>
+                      <span className="font-mono text-sm">{keywords.length}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Medien</span>
+                      <span className="font-mono text-sm">{attachedAssets.length}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* PR-Score Box */}
+                {prScore && (
+                  <div className="bg-white border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+                      <h4 className="font-semibold text-gray-900">PR-Score</h4>
+                    </div>
+                    
+                    <div className="text-center mb-4">
+                      <div className="text-3xl font-bold text-blue-600 mb-1">
+                        {prScore.score}/100
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {prScore.score >= 80 ? 'Ausgezeichnet' :
+                         prScore.score >= 60 ? 'Gut' :
+                         prScore.score >= 40 ? 'Ausbaufähig' : 'Verbesserung nötig'}
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-3">
-                      <Badge 
-                        color={currentPdfVersion.status === 'draft' ? 'gray' : 
-                              currentPdfVersion.status === 'approved' ? 'green' : 'yellow'} 
-                        className="text-xs"
-                      >
-                        {currentPdfVersion.status === 'draft' ? 'Entwurf' :
-                         currentPdfVersion.status === 'approved' ? 'Freigegeben' : 'Freigabe angefordert'}
-                      </Badge>
-                      
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={() => window.open(currentPdfVersion.downloadUrl, '_blank')}
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
-                      >
-                        PDF öffnen
-                      </Button>
+                    {prScore.hints && prScore.hints.length > 0 && (
+                      <div>
+                        <div className="text-sm font-medium text-gray-700 mb-2">
+                          Verbesserungsvorschläge:
+                        </div>
+                        <ul className="text-sm text-gray-600 space-y-1">
+                          {prScore.hints.slice(0, 3).map((hint, index) => (
+                            <li key={index} className="flex items-start gap-2">
+                              <span className="text-blue-500 font-bold text-xs mt-0.5">•</span>
+                              <span className="leading-tight">{hint}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Anhänge */}
+                {attachedAssets.length > 0 && (
+                  <div className="bg-white border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <PaperClipIcon className="h-5 w-5 text-gray-400" />
+                      <h4 className="font-semibold text-gray-900">Anhänge</h4>
+                    </div>
+                    <div className="space-y-2">
+                      {attachedAssets.slice(0, 3).map((asset) => (
+                        <div key={asset.id} className="flex items-center gap-2 text-sm">
+                          {asset.type === 'folder' ? (
+                            <FolderIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                          ) : (
+                            <DocumentTextIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                          )}
+                          <span className="truncate text-gray-700">
+                            {asset.metadata.fileName || asset.metadata.folderName}
+                          </span>
+                        </div>
+                      ))}
+                      {attachedAssets.length > 3 && (
+                        <div className="text-xs text-gray-500 pt-1">
+                          +{attachedAssets.length - 3} weitere
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
-              )}
-              
-              {/* PDF-Hinweis */}
-              {!currentPdfVersion && (
-                <div className="text-center py-6 text-gray-500">
-                  <DocumentTextIcon className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                  <p>Noch keine PDF-Version erstellt</p>
-                  <p className="text-sm">Klicken Sie auf &ldquo;PDF generieren&rdquo; um eine Vorschau zu erstellen</p>
-                </div>
-              )}
-            </div>
-            
-            {/* Statistiken */}
-            <div className="grid grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">
-                  {(editorContent || '').replace(/<[^>]*>/g, '').length}
-                </div>
-                <div className="text-sm text-gray-600">Zeichen</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{boilerplateSections.length}</div>
-                <div className="text-sm text-gray-600">Textbausteine</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{keywords.length}</div>
-                <div className="text-sm text-gray-600">Keywords</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{attachedAssets.length}</div>
-                <div className="text-sm text-gray-600">Medien</div>
+                )}
               </div>
             </div>
           </div>

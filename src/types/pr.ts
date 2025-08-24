@@ -168,6 +168,9 @@ export interface PRCampaign {
   keywords?: string[];
   seoMetrics?: {
     score?: number;
+    prScore?: number;
+    prHints?: string[];
+    prScoreCalculatedAt?: Timestamp;
     lastAnalyzed?: Timestamp;
     keywordMetrics?: Array<{
       keyword: string;

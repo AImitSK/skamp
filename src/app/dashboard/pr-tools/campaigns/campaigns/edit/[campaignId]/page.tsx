@@ -47,6 +47,7 @@ import {
   ClockIcon,
   ArrowRightIcon,
   LockClosedIcon,
+  MagnifyingGlassIcon,
   ExclamationTriangleIcon,
   LinkIcon
 } from "@heroicons/react/24/outline";
@@ -195,9 +196,9 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                        section.boilerplate?.name ||
                        '';
           
-          html += `<div class="boilerplate-section mb-6 p-4 border-l-4 border-blue-500 bg-blue-50 rounded-r">
-            ${title ? `<h3 class="text-lg font-semibold mb-3 text-blue-900">${title}</h3>` : ''}
-            <div class="boilerplate-content text-blue-800 prose prose-blue max-w-none">${content}</div>
+          html += `<div class="boilerplate-section mb-8">
+            ${title ? `<h3 class="text-xl font-bold mb-4 text-gray-900">${title}</h3>` : ''}
+            <div class="boilerplate-content text-gray-800 prose prose-lg max-w-none">${content}</div>
           </div>`;
         });
       } else {
@@ -484,6 +485,14 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         }));
         setBoilerplateSections(convertedSections);
         
+        // Setze gespeicherten PR-Score falls vorhanden
+        if (campaign.seoMetrics?.prScore) {
+          setPrScore({
+            score: campaign.seoMetrics.prScore,
+            hints: campaign.seoMetrics.prHints || []
+          });
+        }
+        
         // Setze Approval-Daten falls vorhanden
         if (campaign.approvalData) {
           setApprovalData({
@@ -595,6 +604,12 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
           recipientCount: listRecipientCount + manualRecipients.length,
           manualRecipients: manualRecipients,
           keywords: keywords,
+          seoMetrics: {
+            lastAnalyzed: serverTimestamp() as Timestamp,
+            prScore: prScore?.score || 0,
+            prHints: prScore?.hints || [],
+            prScoreCalculatedAt: serverTimestamp() as Timestamp,
+          },
           status: 'draft' as const
         },
         {
@@ -697,6 +712,9 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         keywords: keywords,
         seoMetrics: {
           lastAnalyzed: serverTimestamp() as Timestamp,
+          prScore: prScore?.score || 0,
+          prHints: prScore?.hints || [],
+          prScoreCalculatedAt: serverTimestamp() as Timestamp,
         },
         clientId: selectedCompanyId || undefined,
         clientName: selectedCompanyName || undefined,
@@ -1462,31 +1480,55 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                     </div>
                   )}
                   
-                  {/* PR-Score Card - Als letzte Box */}
-                  <div className="bg-white rounded-lg shadow-md p-4">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-3">PR-SEO Score</h4>
-                    <div className="text-center">
-                      <div className={`text-4xl font-bold mb-2 ${
-                        (prScore?.score || 0) >= 80 ? 'text-green-600' : 
-                        (prScore?.score || 0) >= 60 ? 'text-amber-600' : 'text-red-600'
-                      }`}>
-                        {prScore?.score || 28}
+                  {/* PR-Score Box */}
+                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <MagnifyingGlassIcon className="h-4 w-4 text-gray-600" />
+                        <h4 className="text-sm font-semibold text-gray-700">PR-SEO Analyse</h4>
                       </div>
-                      <div className="text-sm text-gray-600 mb-2">von 100 Punkten</div>
                       <Badge 
-                        color={(prScore?.score || 0) >= 80 ? 'green' : (prScore?.score || 0) >= 60 ? 'amber' : 'red'}
-                        className="text-xs"
+                        color={(prScore?.score || 0) >= 76 ? 'green' : (prScore?.score || 0) >= 51 ? 'amber' : 'red'}
+                        className="text-sm font-semibold px-3 py-1"
                       >
-                        {(prScore?.score || 0) >= 80 ? 'Sehr gut' : (prScore?.score || 0) >= 60 ? 'Gut' : 'Verbesserungswürdig'}
+                        PR-Score: {prScore?.score || 0}/100
                       </Badge>
                     </div>
+                    
+                    {/* Score Details */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Bewertung:</span>
+                        <span className={`font-medium ${
+                          (prScore?.score || 0) >= 76 ? 'text-green-600' : 
+                          (prScore?.score || 0) >= 51 ? 'text-amber-600' : 'text-red-600'
+                        }`}>
+                          {(prScore?.score || 0) >= 76 ? 'Sehr gut' : 
+                           (prScore?.score || 0) >= 51 ? 'Gut' : 'Verbesserungsbedürftig'}
+                        </span>
+                      </div>
+                      
+                      {keywords.length > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Keywords:</span>
+                          <span className="text-gray-800 font-medium">{keywords.length}</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Recommendations */}
                     {prScore?.hints && prScore.hints.length > 0 && (
-                      <div className="mt-4 pt-3 border-t">
-                        <div className="text-xs text-gray-500 space-y-1">
-                          <div className="font-medium mb-1">Verbesserungsvorschläge:</div>
-                          {prScore.hints.slice(0, 3).map((hint, i) => (
-                            <div key={i}>• {hint}</div>
-                          ))}
+                      <div className="mt-3 pt-3 border-t border-gray-200">
+                        <div className="text-xs text-gray-600">
+                          <div className="font-medium mb-2">Verbesserungsvorschläge:</div>
+                          <div className="space-y-1">
+                            {prScore.hints.slice(0, 2).map((hint, i) => (
+                              <div key={i} className="flex items-start gap-1">
+                                <span className="text-blue-500 mt-0.5">•</span>
+                                <span>{hint}</span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     )}
