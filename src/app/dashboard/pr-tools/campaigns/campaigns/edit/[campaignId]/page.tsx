@@ -1336,198 +1336,22 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
               </div>
             )}
             
-            {/* Live Vorschau - Zweispaltiges Layout */}
+            {/* Live Vorschau - Mit CampaignPreviewStep Komponente */}
             <div className="mb-8">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Live-Vorschau</h3>
               
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Linke Spalte: Pressemitteilung im Papier-Look (2/3 Breite) */}
-                <div className="lg:col-span-2">
-                  <div className="bg-gray-100 p-6 rounded-lg">
-                    <div className="bg-white shadow-xl rounded-lg p-12 max-w-4xl mx-auto">
-                      {/* Key Visual im 16:9 Format */}
-                      {keyVisual?.url && (
-                        <div className="mb-8 -mx-12 -mt-12">
-                          <div className="w-full" style={{ aspectRatio: '16/9' }}>
-                            <img 
-                              src={keyVisual.url} 
-                              alt="Key Visual" 
-                              className="w-full h-full object-cover rounded-t-lg"
-                            />
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* Pressemitteilung Header */}
-                      <div className="mb-8">
-                        <p className="text-sm text-gray-500 uppercase tracking-wide mb-2">Pressemitteilung</p>
-                        <h1 className="text-3xl font-bold text-gray-900 leading-tight">
-                          {campaignTitle || 'Titel der Pressemitteilung'}
-                        </h1>
-                      </div>
-                      
-                      {/* Hauptinhalt */}
-                      <div 
-                        className="prose prose-lg max-w-none text-gray-800"
-                        dangerouslySetInnerHTML={{ 
-                          __html: finalContentHtml || '<p class="text-gray-400 italic text-center py-8">Klicken Sie auf "Weiter" oder "Vorschau" um die finale Vorschau zu generieren</p>' 
-                        }} 
-                      />
-                      
-                      {/* Datum am Ende */}
-                      <div className="mt-12 pt-6 border-t border-gray-200">
-                        <p className="text-sm text-gray-600">
-                          {new Date().toLocaleDateString('de-DE', { 
-                            day: '2-digit', 
-                            month: 'long', 
-                            year: 'numeric' 
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Rechte Spalte: Info-Cards (1/3 Breite) */}
-                <div className="lg:col-span-1 space-y-4">
-
-                  {/* Kampagnen-Info Card */}
-                  <div className="bg-white rounded-lg shadow-md p-4">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-3">Kampagnen-Info</h4>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Kunde:</span>
-                        <span className="text-sm font-medium">{selectedCompanyName || 'Nicht ausgewählt'}</span>
-                      </div>
-                      {editLockStatus.isLocked && (
-                        <div className="mt-2">
-                          <EditLockStatusIndicator
-                            campaign={{
-                              editLocked: editLockStatus.isLocked,
-                              editLockedReason: editLockStatus.reason,
-                              lockedBy: editLockStatus.lockedBy,
-                              lockedAt: editLockStatus.lockedAt
-                            } as PRCampaign}
-                            size="sm"
-                            variant="badge"
-                            showLabel={true}
-                            showIcon={false}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Statistiken Card */}
-                  <div className="bg-white rounded-lg shadow-md p-4">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-3">Statistiken</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <div className="text-2xl font-bold text-gray-900">
-                          {(finalContentHtml || '').replace(/<[^>]*>/g, '').length}
-                        </div>
-                        <div className="text-xs text-gray-600">Zeichen</div>
-                      </div>
-                      <div>
-                        <div className="text-2xl font-bold text-gray-900">
-                          {(finalContentHtml || '').replace(/<[^>]*>/g, '').split(/\s+/).filter(word => word.length > 0).length}
-                        </div>
-                        <div className="text-xs text-gray-600">Wörter</div>
-                      </div>
-                    </div>
-                    <div className="mt-3 pt-3 border-t">
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Geschätzte Lesezeit:</span>
-                        <span className="text-sm font-medium">
-                          {Math.ceil((finalContentHtml || '').replace(/<[^>]*>/g, '').split(/\s+/).filter(word => word.length > 0).length / 200)} Min.
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Anhänge Card - Echte Daten aus Step 2 */}
-                  {attachedAssets && attachedAssets.length > 0 && (
-                    <div className="bg-white rounded-lg shadow-md p-4">
-                      <h4 className="text-sm font-semibold text-gray-700 mb-3">
-                        Anhänge ({attachedAssets.length})
-                      </h4>
-                      <div className="space-y-2">
-                        {attachedAssets.slice(0, 3).map((attachment, index) => (
-                          <div key={attachment.id || index} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-                            {attachment.type === 'folder' ? (
-                              <FolderIcon className="h-4 w-4 text-blue-500 flex-shrink-0" />
-                            ) : attachment.metadata?.fileType?.startsWith('image/') ? (
-                              <div className="w-4 h-4 flex-shrink-0">
-                                <img 
-                                  src={attachment.metadata.thumbnailUrl} 
-                                  alt="" 
-                                  className="w-4 h-4 object-cover rounded"
-                                  onError={(e) => {
-                                    e.currentTarget.style.display = 'none';
-                                    const nextEl = e.currentTarget.nextElementSibling as HTMLElement;
-                                    if (nextEl) nextEl.style.display = 'block';
-                                  }}
-                                />
-                                <PhotoIcon className="h-4 w-4 text-green-500 hidden" />
-                              </div>
-                            ) : (
-                              <DocumentTextIcon className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                            )}
-                            <span className="text-xs text-gray-700 truncate">
-                              {attachment.metadata?.fileName || attachment.metadata?.folderName || 'Unbekannter Anhang'}
-                            </span>
-                            {/* File size display removed due to type constraints */}
-                          </div>
-                        ))}
-                        {attachedAssets.length > 3 && (
-                          <p className="text-xs text-gray-500 text-center">
-                            +{attachedAssets.length - 3} weitere Anhänge
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* PR-Score Box */}
-                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <MagnifyingGlassIcon className="h-4 w-4 text-gray-600" />
-                        <h4 className="text-sm font-semibold text-gray-700">PR-SEO Analyse</h4>
-                      </div>
-                      <Badge 
-                        color={(realPrScore?.totalScore || 0) >= 76 ? 'green' : (realPrScore?.totalScore || 0) >= 51 ? 'amber' : 'red'}
-                        className="text-sm font-semibold px-3 py-1"
-                      >
-                        PR-Score: {realPrScore?.totalScore || 0}/100
-                      </Badge>
-                    </div>
-                    
-                    {/* Score Details */}
-                    <div className="space-y-2">
-                      <div className="text-sm text-gray-600">
-                        Headline: {realPrScore?.breakdown?.headline || 0}/100
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        Keywords: {realPrScore?.breakdown?.keywords || 0}/100
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        Struktur: {realPrScore?.breakdown?.structure || 0}/100
-                      </div>
-                      
-                      {keywords.length > 0 && realPrScore?.keywordMetrics && realPrScore.keywordMetrics.length > 0 && (
-                        <div className="mt-2 pt-2 border-t border-gray-300">
-                          <div className="text-xs text-gray-600 mb-1">Keywords:</div>
-                          {realPrScore.keywordMetrics.slice(0, 2).map((kw: any, i: number) => (
-                            <div key={i} className="text-xs text-gray-700">{kw.keyword}</div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    
-                  </div>
-                </div>
-              </div>
+              <CampaignPreviewStep
+                campaignTitle={campaignTitle}
+                finalContentHtml={finalContentHtml}
+                keyVisual={keyVisual}
+                selectedCompanyName={selectedCompanyName}
+                realPrScore={realPrScore}
+                keywords={keywords}
+                boilerplateSections={boilerplateSections}
+                attachedAssets={attachedAssets}
+                editorContent={editorContent}
+                approvalData={approvalData}
+              />
             </div>
             
             {/* PDF-Vorschau */}
