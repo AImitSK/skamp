@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
+import { TeamMember } from "@/types/international";
+import { teamMembersService } from "@/lib/firebase/team-members-service";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
@@ -276,6 +278,8 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
   
   // Finales Content HTML für Vorschau (wird bei Step-Wechsel generiert)
   const [finalContentHtml, setFinalContentHtml] = useState<string>('');
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [campaignAdmin, setCampaignAdmin] = useState<TeamMember | null>(null);
   
   // UI State
   const [loading, setLoading] = useState(true);
@@ -430,6 +434,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
       setAvailableLists(listsData);
       
       // Lade bestehende Kampagne
+      console.log('🔄 Loading campaign and team members...');
       const campaign = await prService.getById(campaignId);
       if (campaign) {
         setExistingCampaign(campaign);
@@ -490,6 +495,16 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
           customTitle: section.customTitle
         }));
         setBoilerplateSections(convertedSections);
+        
+        // Load team members and find campaign admin
+        console.log('👥 Loading team members for organization:', currentOrganization.id);
+        const members = await teamMembersService.getAll(currentOrganization.id);
+        setTeamMembers(members);
+        
+        // Find current admin (campaign creator)
+        const admin = members.find(member => member.userId === campaign.userId);
+        console.log('👤 Found campaign admin:', admin?.displayName || 'Not found', 'for userId:', campaign.userId);
+        setCampaignAdmin(admin || null);
         
         // Setze gespeicherten PR-Score falls vorhanden
         if (campaign.seoMetrics?.prScore) {
@@ -927,9 +942,12 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
               <button
                 key={step.id}
                 onClick={() => {
+                  console.log('🔄 Step Navigation clicked:', step.id, 'Current:', currentStep);
                   if (step.id === 4) {
+                    console.log('📝 Generating preview for step 4');
                     handleGeneratePreview(); // Generiere ContentHtml bei Klick auf Vorschau
                   } else {
+                    console.log('➡️ Changing to step:', step.id);
                     setCurrentStep(step.id as 1 | 2 | 3 | 4);
                   }
                 }}
@@ -1345,7 +1363,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                 finalContentHtml={finalContentHtml}
                 keyVisual={keyVisual}
                 selectedCompanyName={selectedCompanyName}
-                campaignAdminName={user?.displayName || user?.email || 'Unbekannt'}
+                campaignAdminName={campaignAdmin?.displayName || campaignAdmin?.email || 'Unbekannt'}
                 realPrScore={realPrScore}
                 keywords={keywords}
                 boilerplateSections={boilerplateSections}
