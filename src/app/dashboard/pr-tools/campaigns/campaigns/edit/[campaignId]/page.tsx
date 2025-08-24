@@ -995,7 +995,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         )}
       </div>
 
-      {/* Step Navigation */}
+      {/* Step Navigation - AUSSERHALB DES FORMS */}
       <StepNavigation />
 
       {/* 🆕 ENHANCED: Edit-Lock Banner */}
