@@ -22,6 +22,7 @@ import CampaignContentComposer from '@/components/pr/campaign/CampaignContentCom
 import { ModernCustomerSelector } from "@/components/pr/ModernCustomerSelector";
 import CampaignRecipientManager from "@/components/pr/campaign/CampaignRecipientManager";
 import { ApprovalSettings } from "@/components/campaigns/ApprovalSettings";
+import { CampaignPreviewStep } from "@/components/campaigns/CampaignPreviewStep";
 // VEREINFACHT: Nur noch SimplifiedApprovalData
 interface SimplifiedApprovalData {
   customerApprovalRequired: boolean;
