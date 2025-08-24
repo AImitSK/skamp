@@ -283,6 +283,64 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
   const [successMessage, setSuccessMessage] = useState<string>('');
   const [prScore, setPrScore] = useState<{ score: number; hints: string[] } | null>(null);
   
+  // PR-Score automatisch aktualisieren wenn Inhalt sich ändert
+  useEffect(() => {
+    const calculatePrScore = () => {
+      const content = `${campaignTitle || ''}\n\n${editorContent || ''}`.trim();
+      if (!content || content.length < 50) {
+        setPrScore({ score: 28, hints: ['Fügen Sie mehr Inhalt hinzu', 'Verwenden Sie aussagekräftige Keywords'] });
+        return;
+      }
+      
+      let score = 30; // Basis-Score
+      const hints: string[] = [];
+      
+      // Title-Bewertung
+      if (campaignTitle && campaignTitle.length > 30) {
+        score += 15;
+      } else {
+        hints.push('Titel sollte mindestens 30 Zeichen haben');
+      }
+      
+      // Content-Länge Bewertung
+      const wordCount = content.split(/\s+/).length;
+      if (wordCount > 200) {
+        score += 20;
+      } else {
+        hints.push('Pressemitteilung sollte mindestens 200 Wörter haben');
+      }
+      
+      // Keywords Bewertung
+      if (keywords.length > 0) {
+        score += 15;
+        const keywordFound = keywords.some(keyword => 
+          content.toLowerCase().includes(keyword.toLowerCase())
+        );
+        if (keywordFound) {
+          score += 15;
+        } else {
+          hints.push('Keywords sollten im Text verwendet werden');
+        }
+      } else {
+        hints.push('Definieren Sie SEO-Keywords für bessere Auffindbarkeit');
+      }
+      
+      // Struktur-Bewertung (einfache Heuristik)
+      const hasStructure = content.includes('\n') || content.length > 500;
+      if (hasStructure) {
+        score += 5;
+      } else {
+        hints.push('Gliedern Sie den Text in Absätze');
+      }
+      
+      score = Math.min(100, score);
+      setPrScore({ score, hints });
+    };
+    
+    const timeoutId = setTimeout(calculatePrScore, 500); // Debounce
+    return () => clearTimeout(timeoutId);
+  }, [campaignTitle, editorContent, keywords]);
+  
   // 4-Step Navigation State
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
   
@@ -1213,50 +1271,38 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
             
             {/* PDF-WORKFLOW STATUS BANNER */}
             {approvalWorkflowResult && approvalWorkflowResult.workflowId && (
-              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="mb-8 p-4 bg-green-50 border border-green-200 rounded-lg">
                 <div className="flex items-start">
-                  <ClockIcon className="h-5 w-5 text-blue-500 mr-3 flex-shrink-0 mt-0.5" />
+                  <ClockIcon className="h-5 w-5 text-green-600 mr-3 flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <h4 className="text-sm font-medium text-blue-900 mb-2">
-                      🔄 Freigabe-Workflow aktiv
+                    <h4 className="text-sm font-medium text-green-800 mb-2">
+                      Freigabe-Workflow aktiv
                     </h4>
-                    <Text className="text-sm text-blue-700 mb-3">
-                      Die Kampagne befindet sich im Freigabe-Prozess. Alle Änderungen sind gesperrt.
+                    <Text className="text-sm text-green-700 mb-3">
+                      Die Kampagne befindet sich im Freigabe-Prozess. Links wurden versendet.
                     </Text>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="flex flex-wrap gap-2">
                       {approvalWorkflowResult.shareableLinks?.team && (
-                        <div className="p-3 bg-white rounded border border-blue-300">
-                          <div className="flex items-center gap-2 mb-2">
-                            <UserGroupIcon className="h-4 w-4 text-blue-600" />
-                            <Text className="text-sm font-medium text-blue-900">Team-Freigabe</Text>
-                          </div>
-                          <Button
-                            plain
-                            onClick={() => window.open(approvalWorkflowResult.shareableLinks!.team!, '_blank')}
-                            className="text-xs"
-                          >
-                            <LinkIcon className="h-3 w-3 mr-1" />
-                            Link öffnen
-                          </Button>
-                        </div>
+                        <Button
+                          plain
+                          onClick={() => window.open(approvalWorkflowResult.shareableLinks!.team!, '_blank')}
+                          className="text-xs text-green-700 hover:text-green-800"
+                        >
+                          <UserGroupIcon className="h-3 w-3 mr-1" />
+                          Team-Link öffnen
+                        </Button>
                       )}
                       
                       {approvalWorkflowResult.shareableLinks?.customer && (
-                        <div className="p-3 bg-white rounded border border-blue-300">
-                          <div className="flex items-center gap-2 mb-2">
-                            <BuildingOfficeIcon className="h-4 w-4 text-blue-600" />
-                            <Text className="text-sm font-medium text-blue-900">Kunden-Freigabe</Text>
-                          </div>
-                          <Button
-                            plain
-                            onClick={() => window.open(approvalWorkflowResult.shareableLinks!.customer!, '_blank')}
-                            className="text-xs"
-                          >
-                            <LinkIcon className="h-3 w-3 mr-1" />
-                            Link öffnen
-                          </Button>
-                        </div>
+                        <Button
+                          plain
+                          onClick={() => window.open(approvalWorkflowResult.shareableLinks!.customer!, '_blank')}
+                          className="text-xs text-green-700 hover:text-green-800"
+                        >
+                          <BuildingOfficeIcon className="h-3 w-3 mr-1" />
+                          Kunden-Link öffnen
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -1318,55 +1364,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                 
                 {/* Rechte Spalte: Info-Cards (1/3 Breite) */}
                 <div className="lg:col-span-1 space-y-4">
-                  {/* PR-Score Card */}
-                  {prScore && (
-                    <div className="bg-white rounded-lg shadow p-4">
-                      <h4 className="text-sm font-semibold text-gray-700 mb-3">PR-Score</h4>
-                      <div className="flex items-center justify-between">
-                        <div className={`text-3xl font-bold ${
-                          prScore.score >= 80 ? 'text-green-600' : 
-                          prScore.score >= 60 ? 'text-yellow-600' : 'text-red-600'
-                        }`}>
-                          {prScore.score}%
-                        </div>
-                        <Badge color={prScore.score >= 80 ? 'green' : prScore.score >= 60 ? 'amber' : 'red'}>
-                          {prScore.score >= 80 ? 'Sehr gut' : prScore.score >= 60 ? 'Gut' : 'Verbesserungswürdig'}
-                        </Badge>
-                      </div>
-                      {prScore.hints && prScore.hints.length > 0 && (
-                        <div className="mt-3 text-xs text-gray-600">
-                          {prScore.hints.slice(0, 2).map((hint, i) => (
-                            <div key={i} className="mb-1">• {hint}</div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  
-                  {/* PR-SEO Analyse Card */}
-                  <div className="bg-white rounded-lg shadow-md p-4">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-3">PR-SEO Analyse 2.0</h4>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">PR-Score:</span>
-                        <div className="flex items-center gap-2">
-                          <div className={`text-xl font-bold ${
-                            (prScore?.score || 0) >= 80 ? 'text-green-600' : 
-                            (prScore?.score || 0) >= 60 ? 'text-yellow-600' : 'text-red-600'
-                          }`}>
-                            {prScore?.score || 28}/100
-                          </div>
-                        </div>
-                      </div>
-                      {prScore?.hints && prScore.hints.length > 0 && (
-                        <div className="text-xs text-gray-500 bg-gray-50 rounded p-2">
-                          {prScore.hints.slice(0, 2).map((hint, i) => (
-                            <div key={i} className="mb-1">• {hint}</div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
 
                   {/* Kampagnen-Info Card */}
                   <div className="bg-white rounded-lg shadow-md p-4">
@@ -1464,6 +1461,36 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                       </div>
                     </div>
                   )}
+                  
+                  {/* PR-Score Card - Als letzte Box */}
+                  <div className="bg-white rounded-lg shadow-md p-4">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3">PR-SEO Score</h4>
+                    <div className="text-center">
+                      <div className={`text-4xl font-bold mb-2 ${
+                        (prScore?.score || 0) >= 80 ? 'text-green-600' : 
+                        (prScore?.score || 0) >= 60 ? 'text-amber-600' : 'text-red-600'
+                      }`}>
+                        {prScore?.score || 28}
+                      </div>
+                      <div className="text-sm text-gray-600 mb-2">von 100 Punkten</div>
+                      <Badge 
+                        color={(prScore?.score || 0) >= 80 ? 'green' : (prScore?.score || 0) >= 60 ? 'amber' : 'red'}
+                        className="text-xs"
+                      >
+                        {(prScore?.score || 0) >= 80 ? 'Sehr gut' : (prScore?.score || 0) >= 60 ? 'Gut' : 'Verbesserungswürdig'}
+                      </Badge>
+                    </div>
+                    {prScore?.hints && prScore.hints.length > 0 && (
+                      <div className="mt-4 pt-3 border-t">
+                        <div className="text-xs text-gray-500 space-y-1">
+                          <div className="font-medium mb-1">Verbesserungsvorschläge:</div>
+                          {prScore.hints.slice(0, 3).map((hint, i) => (
+                            <div key={i}>• {hint}</div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
