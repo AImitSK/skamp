@@ -927,53 +927,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
     );
   }
 
-  // Step Navigation Component
-  const StepNavigation = () => {
-    const steps = [
-      { id: 1, name: 'Pressemeldung', icon: DocumentTextIcon },
-      { id: 2, name: 'Anhänge', icon: PaperClipIcon },
-      { id: 3, name: 'Freigaben', icon: UserGroupIcon },
-      { id: 4, name: 'Vorschau', icon: InformationCircleIcon }
-    ];
-
-    return (
-      <div className="border-b border-gray-200 mb-8" style={{ position: 'relative', zIndex: 9999 }}>
-        <nav className="-mb-px flex space-x-8" style={{ position: 'relative', zIndex: 9999 }}>
-          {steps.map((step) => {
-            const isActive = currentStep === step.id;
-            const isCompleted = currentStep > step.id;
-            const Icon = step.icon;
-            
-            return (
-              <button
-                key={step.id}
-                type="button"
-                onClick={() => {
-                  console.log('🔄 SIMPLE CLICK:', step.id);
-                  if (step.id !== 4) {
-                    setCurrentStep(step.id as 1 | 2 | 3 | 4);
-                  }
-                }}
-                className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm cursor-pointer ${
-                  isActive
-                    ? 'border-[#005fab] text-[#005fab]'
-                    : isCompleted
-                    ? 'border-[#004a8c] text-[#004a8c] hover:text-[#003d7a]'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <Icon className="h-4 w-4 mr-2" />
-                {step.name}
-                {isCompleted && (
-                  <span className="ml-2 text-[#004a8c]">✓</span>
-                )}
-              </button>
-            );
-          })}
-        </nav>
-      </div>
-    );
-  };
 
   return (
     <div>
@@ -987,37 +940,82 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         )}
       </div>
 
-      {/* Step Navigation - KOMPLETT NEU UND EINFACH */}
+      {/* Step Navigation - FUNKTIONIEREND ABER SCHÖNER */}
       <div className="border-b border-gray-200 mb-8">
-        <div className="flex space-x-8">
-          <button 
+        <nav className="-mb-px flex space-x-8">
+          <button
+            type="button"
             onClick={() => {
-              alert('Step 1 clicked!');
+              console.log('🎯 Step 1 clicked');
               setCurrentStep(1);
             }}
-            className="py-4 px-1 text-blue-600 font-medium"
+            className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
+              currentStep === 1
+                ? 'border-[#005fab] text-[#005fab]'
+                : currentStep > 1
+                ? 'border-[#004a8c] text-[#004a8c] hover:text-[#003d7a]'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
           >
-            1. Pressemeldung
+            <DocumentTextIcon className="h-4 w-4 mr-2" />
+            Pressemeldung
+            {currentStep > 1 && <CheckCircleIcon className="ml-2 h-4 w-4 text-[#004a8c]" />}
           </button>
-          <button 
+          
+          <button
+            type="button"
             onClick={() => {
-              alert('Step 2 clicked!');
+              console.log('🎯 Step 2 clicked');
               setCurrentStep(2);
             }}
-            className="py-4 px-1 text-blue-600 font-medium"
+            className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
+              currentStep === 2
+                ? 'border-[#005fab] text-[#005fab]'
+                : currentStep > 2
+                ? 'border-[#004a8c] text-[#004a8c] hover:text-[#003d7a]'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
           >
-            2. Anhänge
+            <PaperClipIcon className="h-4 w-4 mr-2" />
+            Anhänge
+            {currentStep > 2 && <CheckCircleIcon className="ml-2 h-4 w-4 text-[#004a8c]" />}
           </button>
-          <button 
+          
+          <button
+            type="button"
             onClick={() => {
-              alert('Step 3 clicked!');
+              console.log('🎯 Step 3 clicked');
               setCurrentStep(3);
             }}
-            className="py-4 px-1 text-blue-600 font-medium"
+            className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
+              currentStep === 3
+                ? 'border-[#005fab] text-[#005fab]'
+                : currentStep > 3
+                ? 'border-[#004a8c] text-[#004a8c] hover:text-[#003d7a]'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
           >
-            3. Freigaben
+            <UserGroupIcon className="h-4 w-4 mr-2" />
+            Freigaben
+            {currentStep > 3 && <CheckCircleIcon className="ml-2 h-4 w-4 text-[#004a8c]" />}
           </button>
-        </div>
+          
+          <button
+            type="button"
+            onClick={() => {
+              console.log('🎯 Step 4 clicked - generating preview');
+              handleGeneratePreview();
+            }}
+            className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
+              currentStep === 4
+                ? 'border-[#005fab] text-[#005fab]'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <InformationCircleIcon className="h-4 w-4 mr-2" />
+            Vorschau
+          </button>
+        </nav>
       </div>
 
       {/* 🆕 ENHANCED: Edit-Lock Banner */}
