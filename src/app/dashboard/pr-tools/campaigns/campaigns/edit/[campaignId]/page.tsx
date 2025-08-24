@@ -294,6 +294,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
   const [showAssetSelector, setShowAssetSelector] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [successMessage, setSuccessMessage] = useState<string>('');
+  const [prScore, setPrScore] = useState<{ score: number; hints: string[] } | null>(null);
   
   // 4-Step Navigation State
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
@@ -1007,6 +1008,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                   hideBoilerplates={true}
                   keywords={keywords}
                   onKeywordsChange={setKeywords}
+                  onSeoScoreChange={(score) => setPrScore(score)}
                 />
               </div>
 
@@ -1294,8 +1296,8 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                 
                 {/* Rechte Spalte: Info-Cards (1/3 Breite) */}
                 <div className="lg:col-span-1 space-y-4">
-                  {/* PR-Score Card - Temporär deaktiviert bis PR-Score implementiert ist */}
-                  {/* {prScore && (
+                  {/* PR-Score Card */}
+                  {prScore && (
                     <div className="bg-white rounded-lg shadow p-4">
                       <h4 className="text-sm font-semibold text-gray-700 mb-3">PR-Score</h4>
                       <div className="flex items-center justify-between">
@@ -1317,7 +1319,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                         </div>
                       )}
                     </div>
-                  )} */}
+                  )}
                   
                   {/* Kampagnen-Info Card */}
                   <div className="bg-white rounded-lg shadow p-4">
@@ -1326,10 +1328,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                       <div className="flex justify-between">
                         <span className="text-sm text-gray-600">Kunde:</span>
                         <span className="text-sm font-medium">{selectedCompanyName || 'Nicht ausgewählt'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Verteiler:</span>
-                        <span className="text-sm font-medium">0 Empfänger</span>
                       </div>
                       {editLockStatus.isLocked && (
                         <div className="mt-2">
@@ -1378,13 +1376,13 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                   </div>
                   
                   {/* Anhänge Card */}
-                  {attachments && attachments.length > 0 && (
+                  {attachedAssets && attachedAssets.length > 0 && (
                     <div className="bg-white rounded-lg shadow p-4">
                       <h4 className="text-sm font-semibold text-gray-700 mb-3">
-                        Anhänge ({attachments.length})
+                        Anhänge ({attachedAssets.length})
                       </h4>
                       <div className="space-y-2">
-                        {attachments.slice(0, 3).map((attachment, index) => (
+                        {attachedAssets.slice(0, 3).map((attachment, index) => (
                           <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
                             {attachment.type === 'folder' ? (
                               <FolderIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
@@ -1394,9 +1392,9 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                             <span className="text-xs text-gray-700 truncate">{attachment.name}</span>
                           </div>
                         ))}
-                        {attachments.length > 3 && (
+                        {attachedAssets.length > 3 && (
                           <p className="text-xs text-gray-500 text-center">
-                            +{attachments.length - 3} weitere
+                            +{attachedAssets.length - 3} weitere
                           </p>
                         )}
                       </div>
