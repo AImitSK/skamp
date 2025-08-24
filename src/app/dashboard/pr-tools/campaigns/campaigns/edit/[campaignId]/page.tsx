@@ -149,21 +149,12 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
   const generateContentHtml = (): string => {
     let html = '';
     
-    // 1. KeyVisual (falls vorhanden)
-    if (keyVisual && keyVisual.url) {
-      html += `<div class="key-visual-container mb-6">
-        <img src="${keyVisual.url}" alt="${keyVisual.alt || ''}" 
-             style="width: 100%; max-width: 600px; height: auto; border-radius: 8px;" />
-        ${keyVisual.caption ? `<p class="text-sm text-gray-600 mt-2 italic">${keyVisual.caption}</p>` : ''}
-      </div>`;
-    }
-    
-    // 2. Haupt-Content (Editor-Inhalt)
+    // 1. Haupt-Content (Editor-Inhalt) - KeyVisual wird bereits oben separat angezeigt
     if (editorContent && editorContent.trim() && editorContent !== '<p></p>') {
       html += `<div class="main-content">${editorContent}</div>`;
     }
     
-    // 3. Textbausteine (falls vorhanden)
+    // 2. Textbausteine (falls vorhanden)
     if (boilerplateSections && boilerplateSections.length > 0) {
       console.log('🔍 generateContentHtml - Textbausteine prüfen:', boilerplateSections.length, boilerplateSections);
       
@@ -171,31 +162,33 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         .filter(section => {
           console.log('🔍 Raw section object:', section);
           
-          // Prüfe verschiedene mögliche Content-Felder (auch verschachtelt)
+          // Erweiterte Content-Prüfung mit allen möglichen Feldern
           const content = section.content || 
                          section.htmlContent || 
                          section.text || 
                          section.boilerplate?.content ||
                          section.boilerplate?.htmlContent ||
                          section.boilerplate?.text ||
+                         section.boilerplate?.description ||
                          '';
           
-          // Nur customTitle anzeigen, keine internen Namen
-          const title = section.customTitle || '';
+          // Title-Prüfung erweitert
+          const title = section.customTitle || 
+                       section.title ||
+                       section.boilerplate?.title || 
+                       section.boilerplate?.name ||
+                       '';
           
-          const hasContent = content && content.trim();
-          console.log(`🔍 Section "${title}": hasContent=${hasContent}, content="${content?.substring(0, 50)}..."`);
+          const hasContent = content && content.trim() && content !== '<p></p>' && content !== '<p><br></p>';
+          console.log(`🔍 Section "${title}": hasContent=${!!hasContent}, content="${content?.substring(0, 50)}..."`);
           
           return hasContent;
         })
         .sort((a, b) => (a.order || 0) - (b.order || 0));
       
-      console.log('✅ Sichtbare Textbausteine:', visibleSections.length, visibleSections.map(s => s.customTitle || s.boilerplate?.title || s.boilerplate?.name || '(kein Titel)'));
+      console.log('✅ Sichtbare Textbausteine:', visibleSections.length, visibleSections.map(s => s.customTitle || s.title || s.boilerplate?.title || s.boilerplate?.name || '(kein Titel)'));
       
       if (visibleSections.length > 0) {
-        html += `<div class="boilerplate-sections mt-8">
-          <h2 class="text-xl font-bold text-gray-900 mb-4">Textbausteine</h2>`;
-        
         visibleSections.forEach(section => {
           const content = section.content || 
                          section.htmlContent || 
@@ -203,17 +196,21 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                          section.boilerplate?.content ||
                          section.boilerplate?.htmlContent ||
                          section.boilerplate?.text ||
+                         section.boilerplate?.description ||
                          '';
           
-          // Nur customTitle anzeigen, keine internen Namen
-          const title = section.customTitle || '';
+          // Erweiterte Title-Logik
+          const title = section.customTitle || 
+                       section.title ||
+                       section.boilerplate?.title || 
+                       section.boilerplate?.name ||
+                       '';
           
-          html += `<div class="boilerplate-section mb-6 p-4 border-l-4 border-blue-500 bg-blue-50">
-            ${title ? `<h3 class="text-lg font-semibold mb-2 text-blue-900">${title}</h3>` : ''}
-            <div class="boilerplate-content text-blue-800">${content}</div>
+          html += `<div class="boilerplate-section mb-6 p-4 border-l-4 border-blue-500 bg-blue-50 rounded-r">
+            ${title ? `<h3 class="text-lg font-semibold mb-3 text-blue-900">${title}</h3>` : ''}
+            <div class="boilerplate-content text-blue-800 prose prose-blue max-w-none">${content}</div>
           </div>`;
         });
-        html += `</div>`;
       } else {
         console.log('❌ Keine sichtbaren Textbausteine gefunden');
       }
@@ -221,6 +218,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
       console.log('❌ Keine Textbausteine vorhanden');
     }
     
+    console.log('📄 Finales HTML generiert:', html.length, 'Zeichen');
     return html;
   };
 
@@ -1253,14 +1251,16 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                 <div className="lg:col-span-2">
                   <div className="bg-gray-100 p-6 rounded-lg">
                     <div className="bg-white shadow-xl rounded-lg p-12 max-w-4xl mx-auto">
-                      {/* Key Visual wenn vorhanden */}
+                      {/* Key Visual im 16:9 Format */}
                       {keyVisual?.url && (
                         <div className="mb-8 -mx-12 -mt-12">
-                          <img 
-                            src={keyVisual.url} 
-                            alt={keyVisual.alt || 'Key Visual'} 
-                            className="w-full h-48 object-cover rounded-t-lg"
-                          />
+                          <div className="w-full" style={{ aspectRatio: '16/9' }}>
+                            <img 
+                              src={keyVisual.url} 
+                              alt={keyVisual.alt || 'Key Visual'} 
+                              className="w-full h-full object-cover rounded-t-lg"
+                            />
+                          </div>
                         </div>
                       )}
                       
@@ -1322,8 +1322,8 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                   )}
                   
                   {/* Kampagnen-Info Card */}
-                  <div className="bg-white rounded-lg shadow p-4">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-3">Kampagnen-Info</h4>
+                  <div className="bg-white rounded-lg shadow-md p-4">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3">📋 Kampagnen-Info</h4>
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span className="text-sm text-gray-600">Kunde:</span>
@@ -1349,8 +1349,8 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                   </div>
                   
                   {/* Statistiken Card */}
-                  <div className="bg-white rounded-lg shadow p-4">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-3">Statistiken</h4>
+                  <div className="bg-white rounded-lg shadow-md p-4">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3">📊 Statistiken</h4>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <div className="text-2xl font-bold text-gray-900">
@@ -1375,26 +1375,46 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                     </div>
                   </div>
                   
-                  {/* Anhänge Card */}
+                  {/* Anhänge Card - Echte Daten aus Step 2 */}
                   {attachedAssets && attachedAssets.length > 0 && (
-                    <div className="bg-white rounded-lg shadow p-4">
+                    <div className="bg-white rounded-lg shadow-md p-4">
                       <h4 className="text-sm font-semibold text-gray-700 mb-3">
-                        Anhänge ({attachedAssets.length})
+                        📎 Anhänge ({attachedAssets.length})
                       </h4>
                       <div className="space-y-2">
                         {attachedAssets.slice(0, 3).map((attachment, index) => (
-                          <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                          <div key={attachment.id || index} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
                             {attachment.type === 'folder' ? (
-                              <FolderIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                              <FolderIcon className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                            ) : attachment.metadata?.fileType?.startsWith('image/') ? (
+                              <div className="w-4 h-4 flex-shrink-0">
+                                <img 
+                                  src={attachment.metadata.thumbnailUrl || attachment.metadata.downloadUrl} 
+                                  alt="" 
+                                  className="w-4 h-4 object-cover rounded"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    e.currentTarget.nextElementSibling.style.display = 'block';
+                                  }}
+                                />
+                                <PhotoIcon className="h-4 w-4 text-green-500 hidden" />
+                              </div>
                             ) : (
-                              <PhotoIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                              <DocumentTextIcon className="h-4 w-4 text-gray-500 flex-shrink-0" />
                             )}
-                            <span className="text-xs text-gray-700 truncate">{attachment.name}</span>
+                            <span className="text-xs text-gray-700 truncate">
+                              {attachment.metadata?.fileName || attachment.metadata?.folderName || 'Unbekannter Anhang'}
+                            </span>
+                            {attachment.metadata?.fileSize && (
+                              <span className="text-xs text-gray-500 ml-auto">
+                                {(attachment.metadata.fileSize / 1024).toFixed(0)}KB
+                              </span>
+                            )}
                           </div>
                         ))}
                         {attachedAssets.length > 3 && (
                           <p className="text-xs text-gray-500 text-center">
-                            +{attachedAssets.length - 3} weitere
+                            +{attachedAssets.length - 3} weitere Anhänge
                           </p>
                         )}
                       </div>
