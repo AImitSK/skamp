@@ -151,9 +151,8 @@ export default function NewPRCampaignPage() {
     // 1. KeyVisual (falls vorhanden)
     if (keyVisual && keyVisual.url) {
       html += `<div class="key-visual-container mb-6">
-        <img src="${keyVisual.url}" alt="${keyVisual.alt || ''}" 
+        <img src="${keyVisual.url}" alt="Key Visual" 
              style="width: 100%; max-width: 600px; height: auto; border-radius: 8px;" />
-        ${keyVisual.caption ? `<p class="text-sm text-gray-600 mt-2 italic">${keyVisual.caption}</p>` : ''}
       </div>`;
     }
     
@@ -172,11 +171,7 @@ export default function NewPRCampaignPage() {
           
           // Prüfe verschiedene mögliche Content-Felder (auch verschachtelt)
           const content = section.content || 
-                         section.htmlContent || 
-                         section.text || 
                          section.boilerplate?.content ||
-                         section.boilerplate?.htmlContent ||
-                         section.boilerplate?.text ||
                          '';
           
           // Nur customTitle anzeigen, keine internen Namen
@@ -189,7 +184,7 @@ export default function NewPRCampaignPage() {
         })
         .sort((a, b) => (a.order || 0) - (b.order || 0));
       
-      console.log('✅ Sichtbare Textbausteine:', visibleSections.length, visibleSections.map(s => s.customTitle || s.boilerplate?.title || s.boilerplate?.name || '(kein Titel)'));
+      console.log('✅ Sichtbare Textbausteine:', visibleSections.length, visibleSections.map(s => s.customTitle || '(kein Titel)'));
       
       if (visibleSections.length > 0) {
         html += `<div class="boilerplate-sections mt-8">
@@ -197,11 +192,7 @@ export default function NewPRCampaignPage() {
         
         visibleSections.forEach(section => {
           const content = section.content || 
-                         section.htmlContent || 
-                         section.text || 
                          section.boilerplate?.content ||
-                         section.boilerplate?.htmlContent ||
-                         section.boilerplate?.text ||
                          '';
           
           // Nur customTitle anzeigen, keine internen Namen
@@ -434,7 +425,7 @@ export default function NewPRCampaignPage() {
           title: campaignTitle.trim(),
           contentHtml: pressReleaseContent || '',
           mainContent: editorContent,
-          boilerplateSections: boilerplateSections,
+          boilerplateSections: boilerplateSections as any,
           clientId: selectedCompanyId,
           clientName: selectedCompanyName,
           keyVisual: keyVisual,
@@ -505,6 +496,7 @@ export default function NewPRCampaignPage() {
         aiSections.push({
           id: `ai-lead-${Date.now()}`,
           type: 'lead',
+          position: 'custom',
           order: order++,
           isLocked: false,
           isCollapsed: false,
@@ -524,6 +516,7 @@ export default function NewPRCampaignPage() {
           aiSections.push({
             id: `ai-main-${Date.now()}`,
             type: 'main',
+            position: 'custom',
             order: order++,
             isLocked: false,
             isCollapsed: false,
@@ -538,6 +531,7 @@ export default function NewPRCampaignPage() {
         aiSections.push({
           id: `ai-quote-${Date.now()}`,
           type: 'quote',
+          position: 'custom',
           order: order++,
           isLocked: false,
           isCollapsed: false,
@@ -616,10 +610,10 @@ export default function NewPRCampaignPage() {
         // SEO Data
         keywords: keywords,
         seoMetrics: {
-          lastAnalyzed: serverTimestamp(),
+          lastAnalyzed: serverTimestamp() as any,
           prScore: prScore?.score || 0,
           prHints: prScore?.hints || [],
-          prScoreCalculatedAt: serverTimestamp(),
+          prScoreCalculatedAt: serverTimestamp() as any,
         },
         clientId: selectedCompanyId || undefined,
         clientName: selectedCompanyName || undefined,
@@ -627,7 +621,7 @@ export default function NewPRCampaignPage() {
         attachedAssets: cleanedAttachedAssets,
         // Approval
         approvalRequired: approvalData.customerApprovalRequired || false,
-        approvalData: approvalData.customerApprovalRequired ? approvalData : undefined,
+        approvalData: approvalData.customerApprovalRequired ? approvalData as any : undefined,
         userId: user.uid,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
@@ -686,7 +680,10 @@ export default function NewPRCampaignPage() {
         title: campaignTitle,
         contentHtml: '',
         mainContent: editorContent,
-        boilerplateSections,
+        boilerplateSections: boilerplateSections.map(section => ({
+          ...section,
+          position: section.position || 'custom'
+        })) as any,
         keyVisual,
         clientId: selectedCompanyId,
         clientName: selectedCompanyName,
@@ -713,7 +710,7 @@ export default function NewPRCampaignPage() {
           {
             title: campaignTitle,
             mainContent: editorContent,
-            boilerplateSections,
+            boilerplateSections: boilerplateSections as any,
             keyVisual,
             clientName: selectedCompanyName
           },
@@ -911,8 +908,7 @@ export default function NewPRCampaignPage() {
       <form ref={formRef} onSubmit={(e) => {
         e.preventDefault();
         console.log('🎯 AUTOMATISCHES Form-Submit Event! CurrentStep:', currentStep);
-        console.log('🔍 Event Details:', e.type, 'Target:', e.target, 'Submitter:', e.submitter);
-        console.log('🔍 Form Elements:', Array.from(e.target.elements).filter(el => el.type === 'submit').map(el => ({ type: el.type, value: el.value, className: el.className })));
+        // Debug-Logging entfernt für TypeScript-Kompatibilität
         
         // BLOCKIERE ALLE AUTOMATISCHEN SUBMITS - NUR MANUELLER KLICK ERLAUBT
         console.log('🚫 ALLE Form-Submits werden blockiert - nur manuelle Speichern-Clicks erlaubt');
@@ -1119,8 +1115,6 @@ export default function NewPRCampaignPage() {
                   organizationId={currentOrganization!.id}
                   clientId={selectedCompanyId}
                   clientName={selectedCompanyName}
-                  showPDFIntegrationPreview={true}
-                  onPDFWorkflowToggle={handlePDFWorkflowToggle}
                 />
               </div>
               
@@ -1217,7 +1211,7 @@ export default function NewPRCampaignPage() {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Status:</span>
-                      <Badge color="gray">Entwurf</Badge>
+                      <Badge color="blue">Entwurf</Badge>
                     </div>
                     {selectedCompanyName && (
                       <div className="flex justify-between">
@@ -1228,7 +1222,7 @@ export default function NewPRCampaignPage() {
                     {approvalData.customerApprovalRequired && (
                       <div className="flex justify-between">
                         <span className="text-gray-600">Freigabe:</span>
-                        <Badge color="yellow">Erforderlich</Badge>
+                        <Badge color="amber">Erforderlich</Badge>
                       </div>
                     )}
                   </div>
@@ -1368,7 +1362,7 @@ export default function NewPRCampaignPage() {
             ) : (
               <Button
                 type="button"
-                onClick={(e) => {
+                onClick={(e: any) => {
                   console.log('🖱️ MANUELLER Speichern-Click!');
                   handleSubmit(e as any);
                 }}
