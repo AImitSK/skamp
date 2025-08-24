@@ -1345,6 +1345,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                 finalContentHtml={finalContentHtml}
                 keyVisual={keyVisual}
                 selectedCompanyName={selectedCompanyName}
+                campaignAdminName={user?.displayName || user?.email || 'Unbekannt'}
                 realPrScore={realPrScore}
                 keywords={keywords}
                 boilerplateSections={boilerplateSections}

@@ -1167,6 +1167,7 @@ export default function NewPRCampaignPage() {
               finalContentHtml={finalContentHtml}
               keyVisual={keyVisual}
               selectedCompanyName={selectedCompanyName}
+              campaignAdminName={user?.displayName || user?.email || 'Unbekannt'}
               realPrScore={realPrScore}
               keywords={keywords}
               boilerplateSections={boilerplateSections}

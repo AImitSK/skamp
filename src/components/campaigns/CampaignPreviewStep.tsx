@@ -16,6 +16,7 @@ interface CampaignPreviewStepProps {
   finalContentHtml: string;
   keyVisual?: KeyVisualData;
   selectedCompanyName?: string;
+  campaignAdminName?: string;
   realPrScore: {
     totalScore: number;
     breakdown: { 
@@ -41,6 +42,7 @@ export function CampaignPreviewStep({
   finalContentHtml,
   keyVisual,
   selectedCompanyName,
+  campaignAdminName,
   realPrScore,
   keywords,
   boilerplateSections,
@@ -100,10 +102,6 @@ export function CampaignPreviewStep({
             <h4 className="font-semibold text-gray-900">Kampagnen-Info</h4>
           </div>
           <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Status:</span>
-              <Badge color="blue">Entwurf</Badge>
-            </div>
             {selectedCompanyName && (
               <div className="flex justify-between">
                 <span className="text-gray-600">Kunde:</span>
@@ -114,6 +112,12 @@ export function CampaignPreviewStep({
               <div className="flex justify-between">
                 <span className="text-gray-600">Freigabe:</span>
                 <Badge color="amber">Erforderlich</Badge>
+              </div>
+            )}
+            {campaignAdminName && (
+              <div className="flex justify-between">
+                <span className="text-gray-600">Kampagnen-Admin:</span>
+                <span className="font-medium text-right">{campaignAdminName}</span>
               </div>
             )}
           </div>
