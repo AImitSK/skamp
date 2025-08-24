@@ -1329,7 +1329,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                       </div>
                       <div className="flex justify-between">
                         <span className="text-sm text-gray-600">Verteiler:</span>
-                        <span className="text-sm font-medium">{recipients.length} Empfänger</span>
+                        <span className="text-sm font-medium">0 Empfänger</span>
                       </div>
                       {editLockStatus.isLocked && (
                         <div className="mt-2">
