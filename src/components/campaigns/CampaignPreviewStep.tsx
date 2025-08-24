@@ -152,7 +152,7 @@ export function CampaignPreviewStep({
         </div>
         
         {/* PR-Score Box */}
-        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+        <div className="bg-white rounded-lg p-4 border border-gray-200">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <MagnifyingGlassIcon className="h-4 w-4 text-gray-600" />
