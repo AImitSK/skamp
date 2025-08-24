@@ -108,16 +108,14 @@ export function CampaignPreviewStep({
                 <span className="font-medium text-right">{selectedCompanyName}</span>
               </div>
             )}
+            <div className="flex justify-between">
+              <span className="text-gray-600">Kampagnen-Admin:</span>
+              <span className="font-medium text-right">{campaignAdminName || 'Allgemein'}</span>
+            </div>
             {approvalData.customerApprovalRequired && (
               <div className="flex justify-between">
                 <span className="text-gray-600">Freigabe:</span>
                 <Badge color="amber">Erforderlich</Badge>
-              </div>
-            )}
-            {campaignAdminName && (
-              <div className="flex justify-between">
-                <span className="text-gray-600">Kampagnen-Admin:</span>
-                <span className="font-medium text-right">{campaignAdminName}</span>
               </div>
             )}
           </div>
