@@ -936,8 +936,17 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
     ];
 
     return (
-      <div className="border-b border-gray-200 mb-8">
-        <nav className="-mb-px flex space-x-8">
+      <div className="border-b border-gray-200 mb-8" style={{ position: 'relative', zIndex: 9999 }}>
+        {/* DEBUG: Test Button */}
+        <div style={{ position: 'absolute', top: '-40px', left: '0', zIndex: 10001 }}>
+          <button 
+            onClick={() => console.log('🚨 DEBUG BUTTON CLICKED!')}
+            style={{ background: 'red', color: 'white', padding: '5px 10px', border: 'none', borderRadius: '3px' }}
+          >
+            DEBUG CLICK TEST
+          </button>
+        </div>
+        <nav className="-mb-px flex space-x-8" style={{ position: 'relative', zIndex: 9999 }}>
           {steps.map((step) => {
             const isActive = currentStep === step.id;
             const isCompleted = currentStep > step.id;
@@ -962,7 +971,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                     console.log('✅ setCurrentStep called');
                   }
                 }}
-                style={{ zIndex: 1000, position: 'relative' }}
+                style={{ zIndex: 10000, position: 'relative', pointerEvents: 'auto' }}
                 className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm cursor-pointer ${
                   isActive
                     ? 'border-[#005fab] text-[#005fab]'
