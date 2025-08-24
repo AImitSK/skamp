@@ -956,22 +956,12 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
               <button
                 key={step.id}
                 type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log('🔄 Step Navigation clicked:', step.id, 'Current:', currentStep, 'Event:', e);
-                  if (step.id === 4) {
-                    console.log('📝 Generating preview for step 4');
-                    handleGeneratePreview(); // Generiere ContentHtml bei Klick auf Vorschau
-                  } else {
-                    console.log('➡️ Changing to step:', step.id, 'from current step:', currentStep);
-                    const newStep = step.id as 1 | 2 | 3 | 4;
-                    console.log('🔄 About to call setCurrentStep with:', newStep);
-                    setCurrentStep(newStep);
-                    console.log('✅ setCurrentStep called');
+                onClick={() => {
+                  console.log('🔄 SIMPLE CLICK:', step.id);
+                  if (step.id !== 4) {
+                    setCurrentStep(step.id as 1 | 2 | 3 | 4);
                   }
                 }}
-                style={{ zIndex: 10000, position: 'relative', pointerEvents: 'auto' }}
                 className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm cursor-pointer ${
                   isActive
                     ? 'border-[#005fab] text-[#005fab]'
@@ -979,8 +969,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                     ? 'border-[#004a8c] text-[#004a8c] hover:text-[#003d7a]'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
-                onMouseEnter={() => console.log('👆 Step button hover:', step.id)}
-                onMouseDown={() => console.log('👇 Step button mousedown:', step.id)}
               >
                 <Icon className="h-4 w-4 mr-2" />
                 {step.name}
