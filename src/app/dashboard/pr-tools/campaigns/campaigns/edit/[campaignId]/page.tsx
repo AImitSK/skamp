@@ -941,8 +941,11 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
             return (
               <button
                 key={step.id}
-                onClick={() => {
-                  console.log('🔄 Step Navigation clicked:', step.id, 'Current:', currentStep);
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('🔄 Step Navigation clicked:', step.id, 'Current:', currentStep, 'Event:', e);
                   if (step.id === 4) {
                     console.log('📝 Generating preview for step 4');
                     handleGeneratePreview(); // Generiere ContentHtml bei Klick auf Vorschau
