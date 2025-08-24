@@ -358,6 +358,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
   // Debug: Track currentStep changes
   useEffect(() => {
     console.log('📊 CurrentStep changed to:', currentStep);
+    console.log('🎯 UI should now show step:', currentStep, 'content');
   }, [currentStep]);
   
   // 🆕 ENHANCED PDF & EDIT-LOCK STATE
@@ -937,15 +938,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
 
     return (
       <div className="border-b border-gray-200 mb-8" style={{ position: 'relative', zIndex: 9999 }}>
-        {/* DEBUG: Test Button */}
-        <div style={{ position: 'absolute', top: '-40px', left: '0', zIndex: 10001 }}>
-          <button 
-            onClick={() => console.log('🚨 DEBUG BUTTON CLICKED!')}
-            style={{ background: 'red', color: 'white', padding: '5px 10px', border: 'none', borderRadius: '3px' }}
-          >
-            DEBUG CLICK TEST
-          </button>
-        </div>
         <nav className="-mb-px flex space-x-8" style={{ position: 'relative', zIndex: 9999 }}>
           {steps.map((step) => {
             const isActive = currentStep === step.id;
@@ -995,8 +987,38 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         )}
       </div>
 
-      {/* Step Navigation - AUSSERHALB DES FORMS */}
-      <StepNavigation />
+      {/* Step Navigation - KOMPLETT NEU UND EINFACH */}
+      <div className="border-b border-gray-200 mb-8">
+        <div className="flex space-x-8">
+          <button 
+            onClick={() => {
+              alert('Step 1 clicked!');
+              setCurrentStep(1);
+            }}
+            className="py-4 px-1 text-blue-600 font-medium"
+          >
+            1. Pressemeldung
+          </button>
+          <button 
+            onClick={() => {
+              alert('Step 2 clicked!');
+              setCurrentStep(2);
+            }}
+            className="py-4 px-1 text-blue-600 font-medium"
+          >
+            2. Anhänge
+          </button>
+          <button 
+            onClick={() => {
+              alert('Step 3 clicked!');
+              setCurrentStep(3);
+            }}
+            className="py-4 px-1 text-blue-600 font-medium"
+          >
+            3. Freigaben
+          </button>
+        </div>
+      </div>
 
       {/* 🆕 ENHANCED: Edit-Lock Banner */}
       {!loading && !loadingEditLock && editLockStatus.isLocked && (
