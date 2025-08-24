@@ -355,6 +355,11 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
   // 4-Step Navigation State
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
   
+  // Debug: Track currentStep changes
+  useEffect(() => {
+    console.log('📊 CurrentStep changed to:', currentStep);
+  }, [currentStep]);
+  
   // 🆕 ENHANCED PDF & EDIT-LOCK STATE
   const [currentPdfVersion, setCurrentPdfVersion] = useState<PDFVersion | null>(null);
   const [generatingPdf, setGeneratingPdf] = useState(false);
@@ -950,8 +955,11 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                     console.log('📝 Generating preview for step 4');
                     handleGeneratePreview(); // Generiere ContentHtml bei Klick auf Vorschau
                   } else {
-                    console.log('➡️ Changing to step:', step.id);
-                    setCurrentStep(step.id as 1 | 2 | 3 | 4);
+                    console.log('➡️ Changing to step:', step.id, 'from current step:', currentStep);
+                    const newStep = step.id as 1 | 2 | 3 | 4;
+                    console.log('🔄 About to call setCurrentStep with:', newStep);
+                    setCurrentStep(newStep);
+                    console.log('✅ setCurrentStep called');
                   }
                 }}
                 className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
