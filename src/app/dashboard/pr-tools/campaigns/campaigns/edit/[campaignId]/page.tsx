@@ -1294,8 +1294,8 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                 
                 {/* Rechte Spalte: Info-Cards (1/3 Breite) */}
                 <div className="lg:col-span-1 space-y-4">
-                  {/* PR-Score Card */}
-                  {prScore && (
+                  {/* PR-Score Card - Temporär deaktiviert bis PR-Score implementiert ist */}
+                  {/* {prScore && (
                     <div className="bg-white rounded-lg shadow p-4">
                       <h4 className="text-sm font-semibold text-gray-700 mb-3">PR-Score</h4>
                       <div className="flex items-center justify-between">
@@ -1317,7 +1317,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                         </div>
                       )}
                     </div>
-                  )}
+                  )} */}
                   
                   {/* Kampagnen-Info Card */}
                   <div className="bg-white rounded-lg shadow p-4">
