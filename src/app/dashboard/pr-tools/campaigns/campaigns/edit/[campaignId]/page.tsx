@@ -1186,20 +1186,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         {currentStep === 4 && (
           <div className="bg-white rounded-lg border p-6">
             
-            {/* PDF-Versionen Historie */}
-            {campaignId && currentOrganization && (
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <DocumentTextIcon className="h-5 w-5 text-gray-600" />
-                  PDF-Versionen Historie
-                </h3>
-                <PDFVersionHistory
-                  campaignId={campaignId}
-                  organizationId={currentOrganization.id}
-                  showActions={true}
-                />
-              </div>
-            )}
             
             {/* PDF-WORKFLOW STATUS BANNER */}
             {approvalWorkflowResult && approvalWorkflowResult.workflowId && (
@@ -1322,10 +1308,10 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
               </div>
             </div>
             
-            {/* PDF-Export */}
+            {/* PDF-Vorschau */}
             <div className="mb-8">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">PDF-Export</h3>
+                <h3 className="text-lg font-semibold text-gray-900">PDF-Vorschau</h3>
                 
                 {/* WORKFLOW-STATUS INDICATOR */}
                 {approvalWorkflowResult?.pdfVersionId ? (
@@ -1373,12 +1359,11 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                             {approvalWorkflowResult?.pdfVersionId ? 'Freigabe-PDF' : 'Aktuell'}
                           </Badge>
                         </div>
-                        <div className="text-sm text-blue-700">
-                          {currentPdfVersion.metadata?.wordCount} Wörter • {currentPdfVersion.metadata?.pageCount} Seiten
-                          {approvalWorkflowResult?.workflowId && (
-                            <span className="ml-2">• Workflow aktiv</span>
-                          )}
-                        </div>
+                        {approvalWorkflowResult?.workflowId && (
+                          <div className="text-sm text-blue-700">
+                            Workflow aktiv
+                          </div>
+                        )}
                       </div>
                     </div>
                     
@@ -1414,6 +1399,21 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                 </div>
               )}
             </div>
+            
+            {/* PDF-Versionen Historie */}
+            {campaignId && currentOrganization && (
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <DocumentTextIcon className="h-5 w-5 text-gray-600" />
+                  PDF-Versionen Historie
+                </h3>
+                <PDFVersionHistory
+                  campaignId={campaignId}
+                  organizationId={currentOrganization.id}
+                  showActions={true}
+                />
+              </div>
+            )}
             
             {/* Statistiken */}
             <div className="grid grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">

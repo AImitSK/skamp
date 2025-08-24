@@ -142,94 +142,59 @@ export function PDFVersionHistory({
           <div
             key={version.id}
             className={`
-              border rounded-lg p-4 transition-all
+              border rounded-lg p-3 transition-all
               ${isCurrent ? 'border-blue-300 bg-blue-50' : 'border-gray-200 bg-white hover:bg-gray-50'}
               ${onVersionSelect ? 'cursor-pointer' : ''}
             `}
             onClick={() => onVersionSelect?.(version)}
           >
-            <div className="flex items-start justify-between">
-              <div className="flex items-start gap-3">
-                {getStatusIcon(version.status)}
-                
-                <div className="flex-1">
-                  {/* Header */}
-                  <div className="flex items-center gap-2 mb-1">
-                    <Text className="font-semibold">
-                      PDF v{version.version}
-                    </Text>
-                    {isCurrent && (
-                      <Badge color="blue" className="text-xs">Aktuell</Badge>
-                    )}
-                    <Badge color={getStatusColor(version.status)} className="text-xs">
-                      {getStatusLabel(version.status)}
-                    </Badge>
-                  </div>
-                  
-                  {/* Datum */}
-                  <Text className="text-sm text-gray-600">
-                    {(() => {
-                      // Robuste Timestamp-Behandlung
-                      const getTimestamp = (createdAt: any) => {
-                        // Standard Firebase Timestamp
-                        if (createdAt?.toDate) {
-                          return createdAt.toDate();
+            <div className="flex items-center justify-between">
+              {/* Linke Seite: Kompakte Info in einer Zeile */}
+              <div className="flex items-center gap-3">
+                <Text className="font-medium">
+                  PDF v{version.version}
+                </Text>
+                {isCurrent && (
+                  <Badge color="blue" className="text-xs">Aktuell</Badge>
+                )}
+                <Badge color={getStatusColor(version.status)} className="text-xs">
+                  {getStatusLabel(version.status)}
+                </Badge>
+                <Text className="text-sm text-gray-500">
+                  {(() => {
+                    // Robuste Timestamp-Behandlung
+                    const getTimestamp = (createdAt: any) => {
+                      // Standard Firebase Timestamp
+                      if (createdAt?.toDate) {
+                        return createdAt.toDate();
+                      }
+                      // Native Date Object
+                      if (createdAt instanceof Date) {
+                        return createdAt;
+                      }
+                      // Unaufgelöste serverTimestamp() FieldValue-Objekte (Legacy-Daten)
+                      if (createdAt && typeof createdAt === 'object' && createdAt._methodName === 'serverTimestamp') {
+                        // Fallback: Relative Timestamps für bestehende kaputte Daten
+                        const now = new Date();
+                        const versionOffset = (version.version - 1) * 60000; // 1 Minute pro Version zurück
+                        return new Date(now.getTime() - versionOffset);
+                      }
+                      // Fehlerhafte Timestamp-Objekte mit seconds/nanoseconds
+                      if (createdAt && typeof createdAt === 'object') {
+                        const seconds = createdAt.seconds || createdAt._seconds;
+                        const nanoseconds = createdAt.nanoseconds || createdAt._nanoseconds || 0;
+                        
+                        if (typeof seconds === 'number') {
+                          return new Date(seconds * 1000 + nanoseconds / 1000000);
                         }
-                        // Native Date Object
-                        if (createdAt instanceof Date) {
-                          return createdAt;
-                        }
-                        // Unaufgelöste serverTimestamp() FieldValue-Objekte (Legacy-Daten)
-                        if (createdAt && typeof createdAt === 'object' && createdAt._methodName === 'serverTimestamp') {
-                          // Fallback: Relative Timestamps für bestehende kaputte Daten
-                          const now = new Date();
-                          const versionOffset = (version.version - 1) * 60000; // 1 Minute pro Version zurück
-                          return new Date(now.getTime() - versionOffset);
-                        }
-                        // Fehlerhafte Timestamp-Objekte mit seconds/nanoseconds
-                        if (createdAt && typeof createdAt === 'object') {
-                          const seconds = createdAt.seconds || createdAt._seconds;
-                          const nanoseconds = createdAt.nanoseconds || createdAt._nanoseconds || 0;
-                          
-                          if (typeof seconds === 'number') {
-                            return new Date(seconds * 1000 + nanoseconds / 1000000);
-                          }
-                        }
-                        return null;
-                      };
-                      
-                      const timestamp = getTimestamp(version.createdAt);
-                      return timestamp ? formatDateShort(timestamp) : '—';
-                    })()}
-                  </Text>
-                  
-                  {/* Kommentar falls vorhanden */}
-                  {version.rejectionReason && (
-                    <div className="mt-2 p-2 bg-orange-50 rounded border border-orange-200">
-                      <div className="flex items-start gap-2">
-                        <ChatBubbleLeftRightIcon className="h-4 w-4 text-orange-600 flex-shrink-0 mt-0.5" />
-                        <Text className="text-sm text-orange-800">
-                          {version.rejectionReason}
-                        </Text>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Metadata */}
-                  {!compact && version.metadata && (
-                    <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
-                      {version.metadata.pageCount && (
-                        <span>{version.metadata.pageCount} Seiten</span>
-                      )}
-                      {version.metadata.wordCount && (
-                        <span>{version.metadata.wordCount} Wörter</span>
-                      )}
-                      {version.metadata.fileSize && (
-                        <span>{(version.metadata.fileSize / 1024).toFixed(1)} KB</span>
-                      )}
-                    </div>
-                  )}
-                </div>
+                      }
+                      return null;
+                    };
+                    
+                    const timestamp = getTimestamp(version.createdAt);
+                    return timestamp ? formatDateShort(timestamp) : '—';
+                  })()}
+                </Text>
               </div>
               
               {/* Actions */}
@@ -246,18 +211,6 @@ export function PDFVersionHistory({
                   >
                     <DocumentArrowDownIcon className="h-4 w-4" />
                     Download
-                  </Button>
-                  <Button
-                    size="sm"
-                    plain
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      window.open(version.downloadUrl, '_blank');
-                    }}
-                    className="!text-gray-600 hover:!text-gray-900"
-                  >
-                    <EyeIcon className="h-4 w-4" />
-                    Vorschau
                   </Button>
                 </div>
               )}
