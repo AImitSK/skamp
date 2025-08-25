@@ -26,7 +26,9 @@ export const QuoteExtension = Node.create<QuoteOptions>({
 
   group: 'block',
 
-  content: 'inline*',
+  content: 'block*',
+
+  defining: true,
 
   parseHTML() {
     return [

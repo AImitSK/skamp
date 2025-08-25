@@ -237,6 +237,7 @@ export const GmailStyleEditor = ({
         bulletList: false, // Deaktivieren um eigene zu verwenden
         orderedList: false, // Deaktivieren um eigene zu verwenden
         listItem: false, // Deaktivieren um eigene zu verwenden
+        blockquote: false, // Deaktivieren um eigene QuoteExtension zu verwenden
       }),
       Heading.configure({
         levels: [1, 2, 3],
