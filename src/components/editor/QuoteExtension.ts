@@ -7,16 +7,16 @@ export interface QuoteOptions {
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
-    quote: {
-      setQuote: () => ReturnType
-      toggleQuote: () => ReturnType
-      unsetQuote: () => ReturnType
+    blockquote: {
+      setBlockquote: () => ReturnType
+      toggleBlockquote: () => ReturnType
+      unsetBlockquote: () => ReturnType
     }
   }
 }
 
 export const QuoteExtension = Node.create<QuoteOptions>({
-  name: 'quote',
+  name: 'blockquote',
 
   addOptions() {
     return {
@@ -54,13 +54,13 @@ export const QuoteExtension = Node.create<QuoteOptions>({
 
   addCommands() {
     return {
-      setQuote: () => ({ commands }) => {
+      setBlockquote: () => ({ commands }) => {
         return commands.setNode(this.name)
       },
-      toggleQuote: () => ({ commands }) => {
+      toggleBlockquote: () => ({ commands }) => {
         return commands.toggleNode(this.name, 'paragraph')
       },
-      unsetQuote: () => ({ commands }) => {
+      unsetBlockquote: () => ({ commands }) => {
         return commands.setNode('paragraph')
       },
     }
@@ -68,7 +68,7 @@ export const QuoteExtension = Node.create<QuoteOptions>({
 
   addKeyboardShortcuts() {
     return {
-      'Mod-Shift-q': () => this.editor.commands.toggleQuote(),
+      'Mod-Shift-q': () => this.editor.commands.toggleBlockquote(),
     }
   },
 })

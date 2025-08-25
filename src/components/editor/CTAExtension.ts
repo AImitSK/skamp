@@ -35,7 +35,7 @@ export const CTAExtension = Mark.create<CTAOptions>({
   renderHTML({ HTMLAttributes }) {
     return ['span', mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, {
       'data-type': 'cta-text',
-      class: 'cta-text font-bold text-[#005fab] bg-blue-50 px-1 rounded'
+      class: 'cta-text font-bold text-[#005fab]'
     }), 0]
   },
 
