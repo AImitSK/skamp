@@ -350,8 +350,8 @@ export const GmailStyleEditor = ({
         </div>
       )}
 
-      {/* Floating AI Toolbar - immer da */}
-      <FloatingAIToolbar editor={editor} />
+      {/* Floating AI Toolbar - temporär deaktiviert für Debug */}
+      {/* <FloatingAIToolbar editor={editor} /> */}
       
       {/* Titel-Bereich */}
       {onTitleChange && (
