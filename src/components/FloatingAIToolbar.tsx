@@ -271,6 +271,7 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
   const toolbarRef = useRef<HTMLDivElement>(null);
   const hideTimeoutRef = useRef<NodeJS.Timeout>();
   const lastSelectionRef = useRef<{ from: number; to: number } | null>(null);
+  const inputProtectionRef = useRef(false); // Schutz vor Input-Event Race-Conditions
 
   // Default KI-Action Handler falls keiner übergeben wurde
   const handleAIAction = useCallback(async (action: AIAction, text: string): Promise<string> => {
@@ -828,7 +829,7 @@ Antworte NUR mit dem Text im neuen Ton.`;
         setSelectedText('');
         lastSelectionRef.current = null;
         hideTimeoutRef.current = setTimeout(() => {
-          if (!isInteracting) {
+          if (!isInteracting && !inputProtectionRef.current) {
             setIsVisible(false);
             setShowToneDropdown(false);
           }
@@ -843,7 +844,7 @@ Antworte NUR mit dem Text im neuen Ton.`;
       
       // Verzögertes Ausblenden beim Verlassen des Editors
       hideTimeoutRef.current = setTimeout(() => {
-        if (!isInteracting) {
+        if (!isInteracting && !inputProtectionRef.current) {
           setIsVisible(false);
           setShowToneDropdown(false);
         }
@@ -857,10 +858,15 @@ Antworte NUR mit dem Text im neuen Ton.`;
     };
   }, [editor, isInteracting]);
 
-  // Vereinfachter Click-Outside Handler
+  // Click-Outside Handler mit Input-Protection
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
+      
+      // SCHUTZ: Ignoriere Clicks während Input-Protection (Race-Condition-Schutz)
+      if (inputProtectionRef.current) {
+        return;
+      }
       
       // Nur reagieren wenn wirklich außerhalb von Toolbar UND Editor geklickt wurde
       const isOutsideToolbar = toolbarRef.current && !toolbarRef.current.contains(target);
@@ -1158,6 +1164,13 @@ WICHTIG: Mache wirklich NUR die eine genannte Änderung!`;
             type="text"
             value={customInstruction}
             onChange={(e) => setCustomInstruction(e.target.value)}
+            onMouseDown={() => {
+              // Aktiviere Input-Protection für kurze Zeit um Race-Conditions zu verhindern
+              inputProtectionRef.current = true;
+              setTimeout(() => {
+                inputProtectionRef.current = false;
+              }, 300); // Kurzer Schutz reicht aus
+            }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey && customInstruction.trim()) {
                 e.preventDefault();
