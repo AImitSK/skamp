@@ -82,14 +82,24 @@ export const GmailStyleToolbar = ({ editor }: GmailStyleToolbarProps) => {
     },
     { 
       command: () => {
-        console.log('Quote button clicked, trying toggleBlockquote');
-        return editor.chain().focus().toggleBlockquote().run();
+        console.log('🎯 Quote button clicked');
+        console.log('🔍 Available commands:', Object.keys(editor.commands));
+        console.log('🔍 Can toggleBlockquote:', editor.can().toggleBlockquote?.());
+        console.log('🔍 Current isActive blockquote:', editor.isActive('blockquote'));
+        
+        const result = editor.chain().focus().toggleBlockquote().run();
+        console.log('🔄 toggleBlockquote result:', result);
+        return result;
       }, 
       icon: ChatBubbleLeftRightIcon, 
       label: 'Zitat', 
       activeName: 'blockquote',
       shortcut: 'Strg+Shift+Q',
-      isActive: () => editor.isActive('blockquote')
+      isActive: () => {
+        const active = editor.isActive('blockquote');
+        console.log('🔍 Checking if blockquote is active:', active);
+        return active;
+      }
     },
     { 
       command: () => editor.chain().focus().toggleCTA().run(), 
