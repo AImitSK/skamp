@@ -313,11 +313,6 @@ export const GmailStyleEditor = ({
           // Force re-render um sicherzustellen, dass das Styling angewendet wird
           editor.commands.focus();
           editor.commands.blur();
-          
-          // Debug: Prüfe verfügbare Commands
-          console.log('🔍 Available editor commands:', Object.keys(editor.commands));
-          console.log('🔍 Can toggleBlockquote:', editor.can().toggleBlockquote?.());
-          console.log('🔍 Is blockquote active:', editor.isActive('blockquote'));
         }
       }, 100);
     }
