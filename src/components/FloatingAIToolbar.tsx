@@ -1164,18 +1164,55 @@ WICHTIG: Mache wirklich NUR die eine genannte Änderung!`;
             type="text"
             value={customInstruction}
             onChange={(e) => setCustomInstruction(e.target.value)}
-            onMouseDown={() => {
-              // Aktiviere Input-Protection für kurze Zeit um Race-Conditions zu verhindern
-              inputProtectionRef.current = true;
+            onMouseDown={(e) => {
+              e.stopPropagation(); // KRITISCH: Verhindere Event-Bubbling zu Click-Outside Handler
+              inputProtectionRef.current = true; // Input-Protection sofort aktivieren
+              
+              // WICHTIG: Selektion vor Input-Focus sichern (Race-Condition Protection)
+              if (selectedText && lastSelectionRef.current) {
+                const savedSelection = {
+                  text: selectedText,
+                  from: lastSelectionRef.current.from,
+                  to: lastSelectionRef.current.to
+                };
+                
+                // Nach kurzer Zeit prüfen ob Selektion verloren ging und wiederherstellen
+                setTimeout(() => {
+                  if (!selectedText && savedSelection.text) {
+                    setSelectedText(savedSelection.text);
+                    lastSelectionRef.current = {
+                      from: savedSelection.from,
+                      to: savedSelection.to
+                    };
+                    console.log('🔄 Selection nach Input-Focus wiederhergestellt');
+                  }
+                }, 100);
+              }
+              
+              // ORIGINAL TIMING: 1000ms Input-Protection (nicht 300ms!)
               setTimeout(() => {
                 inputProtectionRef.current = false;
-              }, 300); // Kurzer Schutz reicht aus
+                console.log('🔓 Input-Protection deaktiviert nach 1000ms');
+              }, 1000);
+            }}
+            onClick={(e) => {
+              e.stopPropagation(); // KRITISCH: Verhindere Click-Event-Bubbling zu Click-Outside Handler
             }}
             onKeyDown={(e) => {
+              e.stopPropagation(); // Verhindere Event-Bubbling auch bei Tastatur-Events
               if (e.key === 'Enter' && !e.shiftKey && customInstruction.trim()) {
                 e.preventDefault();
                 handleCustomInstruction();
               }
+            }}
+            onFocus={(e) => {
+              e.stopPropagation(); // Verhindere Event-Bubbling auch bei Focus-Events
+              inputProtectionRef.current = true;
+              console.log('🔒 Input-Protection bei Focus aktiviert');
+            }}
+            onBlur={(e) => {
+              e.stopPropagation(); // Verhindere Event-Bubbling auch bei Blur-Events
+              // Schutz bleibt aktiv - wird nur durch Timeout deaktiviert
             }}
             placeholder="z.B. Das ist mir zu langweilig. Schreib das werblicher."
             className="
