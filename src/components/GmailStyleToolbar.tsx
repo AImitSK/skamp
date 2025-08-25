@@ -81,12 +81,11 @@ export const GmailStyleToolbar = ({ editor }: GmailStyleToolbarProps) => {
       isActive: () => editor.isActive('orderedList')
     },
     { 
-      command: () => editor.chain().focus().toggleQuote().run(), 
+      command: 'toggleQuote', 
       icon: ChatBubbleLeftRightIcon, 
       label: 'Zitat', 
       activeName: 'quote',
-      shortcut: 'Strg+Shift+Q',
-      isActive: () => editor.isActive('quote')
+      shortcut: 'Strg+Shift+Q'
     },
     { 
       command: () => editor.chain().focus().toggleCTA().run(), 
