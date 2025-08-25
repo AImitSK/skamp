@@ -1096,7 +1096,8 @@ WICHTIG: Mache wirklich NUR die eine genannte Änderung!`;
       <div className="relative">
         <button
           type="button"
-          onClick={() => {
+          onClick={(e) => {
+            e.stopPropagation(); // Verhindere Click-Event-Bubbling
             setShowToneDropdown(!showToneDropdown);
           }}
           disabled={isProcessing}
@@ -1120,7 +1121,8 @@ WICHTIG: Mache wirklich NUR die eine genannte Änderung!`;
             {toneOptions.map((tone) => (
               <button
                 key={tone.value}
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation(); // Verhindere Click-Event-Bubbling wie beim Input
                   handleToneChange(tone.value);
                 }}
                 className="
