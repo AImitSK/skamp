@@ -641,12 +641,26 @@ Antworte NUR mit dem Text im neuen Ton.`;
           .replaceSelectionWith(editor.state.schema.text(newText), false)
       );
       
-      // Toolbar schließen nach erfolgreicher Ton-Änderung - User muss neu markieren
+      // Kurz warten, dann neue Selection setzen auf den geänderten Text
       setTimeout(() => {
-        setIsVisible(false);
-        setSelectedText('');
-        lastSelectionRef.current = null;
-        setIsInteracting(false); // WICHTIG: Interacting-State zurücksetzen
+        const newTo = from + result.replace(/<[^>]*>/g, '').length;
+        
+        try {
+          editor.chain()
+            .setTextSelection({ from, to: newTo })
+            .run();
+          
+          // Selection-State für Toolbar aktualisieren
+          const plainText = editor.state.doc.textBetween(from, newTo);
+          setSelectedText(plainText);
+          lastSelectionRef.current = { from, to: newTo };
+          
+          // Toolbar bleibt sichtbar mit neuem Text
+          setIsVisible(true);
+        } catch (error) {
+          console.log('Selection update failed:', error);
+          setIsVisible(false);
+        }
       }, 100);
     } catch (error) {
       console.error('Ton-Änderung fehlgeschlagen:', error);
@@ -721,12 +735,28 @@ Antworte NUR mit dem Text im neuen Ton.`;
         }
       }
       
-      // Toolbar schließen nach erfolgreicher Aktion - User muss neu markieren
+      // Kurz warten, dann neue Selection setzen auf den geänderten Text
       setTimeout(() => {
-        setIsVisible(false);
-        setSelectedText('');
-        lastSelectionRef.current = null;
-        setIsInteracting(false); // WICHTIG: Interacting-State zurücksetzen
+        const newText = action === 'elaborate' ? htmlContent : plainText;
+        const textLength = newText.replace(/<[^>]*>/g, '').length;
+        const newTo = from + textLength;
+        
+        try {
+          editor.chain()
+            .setTextSelection({ from, to: newTo })
+            .run();
+          
+          // Selection-State für Toolbar aktualisieren
+          const plainTextForState = editor.state.doc.textBetween(from, newTo);
+          setSelectedText(plainTextForState);
+          lastSelectionRef.current = { from, to: newTo };
+          
+          // Toolbar bleibt sichtbar mit neuem Text
+          setIsVisible(true);
+        } catch (error) {
+          console.log('Selection update failed:', error);
+          setIsVisible(false);
+        }
       }, 100);
     } catch (error) {
       console.error('Aktion fehlgeschlagen:', error);
@@ -827,22 +857,25 @@ Antworte NUR mit dem Text im neuen Ton.`;
     };
   }, [editor, isInteracting]);
 
-  // Standard Click-Outside Handler
+  // Vereinfachter Click-Outside Handler
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
       
-      // Prüfe ob Klick außerhalb der Toolbar
-      if (toolbarRef.current && !toolbarRef.current.contains(target)) {
-        // Schließe Dropdown
+      // Nur reagieren wenn wirklich außerhalb von Toolbar UND Editor geklickt wurde
+      const isOutsideToolbar = toolbarRef.current && !toolbarRef.current.contains(target);
+      const editorElement = editor?.view.dom;
+      const isOutsideEditor = editorElement && !editorElement.contains(target);
+      
+      // Dropdown schließen bei Klick außerhalb der Toolbar
+      if (isOutsideToolbar) {
         setShowToneDropdown(false);
-        
-        // Klick außerhalb des Editors versteckt Toolbar (Standard-Verhalten)
-        const editorElement = editor?.view.dom;
-        if (editorElement && !editorElement.contains(target)) {
-          setIsVisible(false);
-          setSelectedText(''); // Reset selection
-        }
+      }
+      
+      // Toolbar nur verstecken wenn außerhalb von BEIDEN (Toolbar UND Editor)
+      if (isOutsideToolbar && isOutsideEditor) {
+        setIsVisible(false);
+        setSelectedText(''); // Reset selection
       }
     };
 
@@ -1085,6 +1118,7 @@ WICHTIG: Mache wirklich NUR die eine genannte Änderung!`;
                   handleToneChange(tone.value);
                 }}
                 className="
+                  tone-dropdown-item
                   w-full text-left px-3 py-1.5 text-sm text-gray-700
                   hover:bg-gray-50 transition-colors
                 "
