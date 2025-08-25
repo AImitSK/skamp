@@ -157,6 +157,7 @@ export default function NewPRCampaignPage() {
     }
     
     // 2. Textbausteine (falls vorhanden)
+    // Füge Abstand zwischen Haupttext und erstem Textbaustein hinzu
     if (boilerplateSections && boilerplateSections.length > 0) {
       console.log('🔍 generateContentHtml - Textbausteine prüfen:', boilerplateSections.length, boilerplateSections);
       
@@ -182,7 +183,11 @@ export default function NewPRCampaignPage() {
       console.log('✅ Sichtbare Textbausteine:', visibleSections.length, visibleSections.map(s => s.customTitle || '(kein Titel)'));
       
       if (visibleSections.length > 0) {
-        html += `<div class="boilerplate-sections mt-8">
+        // Füge zusätzlichen Abstand hinzu, wenn bereits Haupt-Content vorhanden ist
+        const hasMainContent = editorContent && editorContent.trim() && editorContent !== '<p></p>';
+        const marginClass = hasMainContent ? 'mt-12' : 'mt-8';
+        
+        html += `<div class="boilerplate-sections ${marginClass}">
           <h2 class="text-xl font-bold text-gray-900 mb-4">Textbausteine</h2>`;
         
         visibleSections.forEach(section => {

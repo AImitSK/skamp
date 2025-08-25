@@ -189,6 +189,12 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
       console.log('✅ Sichtbare Textbausteine:', visibleSections.length, visibleSections.map(s => s.customTitle || s.boilerplate?.name || '(kein Titel)'));
       
       if (visibleSections.length > 0) {
+        // Füge Abstand zwischen Haupttext und erstem Textbaustein hinzu
+        const hasMainContent = editorContent && editorContent.trim() && editorContent !== '<p></p>';
+        if (hasMainContent) {
+          html += `<div class="mt-12"></div>`;
+        }
+        
         visibleSections.forEach(section => {
           const content = section.content || 
                          section.boilerplate?.content ||

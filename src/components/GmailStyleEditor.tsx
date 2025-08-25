@@ -305,7 +305,15 @@ export const GmailStyleEditor = ({
   // Content synchronisieren wenn sich der content prop ändert
   useEffect(() => {
     if (editor && content !== editor.getHTML()) {
-      editor.commands.setContent(content);
+      // Kleine Verzögerung um sicherzustellen, dass der Editor bereit ist
+      setTimeout(() => {
+        if (editor && !editor.isDestroyed) {
+          editor.commands.setContent(content, false);
+          // Force re-render um sicherzustellen, dass das Styling angewendet wird
+          editor.commands.focus();
+          editor.commands.blur();
+        }
+      }, 100);
     }
   }, [content, editor]);
 
@@ -543,7 +551,8 @@ export const GmailStyleEditor = ({
           }
           
           /* Clean blockquote styling */
-          .gmail-editor-content blockquote {
+          .gmail-editor-content blockquote,
+          .gmail-editor-content blockquote[data-type="pr-quote"] {
             border-left: 3px solid var(--primary);
             padding-left: 1rem;
             margin: 1.5rem 0;

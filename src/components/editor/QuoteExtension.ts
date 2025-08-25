@@ -33,6 +33,13 @@ export const QuoteExtension = Node.create<QuoteOptions>({
       {
         tag: 'blockquote[data-type="pr-quote"]',
       },
+      {
+        tag: 'blockquote',
+        getAttrs: (node) => {
+          // Akzeptiere auch normale blockquotes ohne data-type
+          return {}
+        }
+      },
     ]
   },
 
