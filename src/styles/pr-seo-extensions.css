@@ -9,20 +9,13 @@
   @apply border-blue-400 bg-blue-50;
 }
 
-/* CTA Extension */
+/* CTA Extension - Cleanes Design ohne Icon und Hintergrund */
 .cta-text {
-  @apply font-bold text-[#005fab] bg-blue-50 px-1 rounded;
-  position: relative;
+  @apply font-bold text-[#005fab];
 }
 
 .cta-text:hover {
-  @apply bg-blue-100;
-}
-
-.cta-text::before {
-  content: "📢";
-  margin-right: 2px;
-  font-size: 0.8em;
+  @apply text-[#004a8c];
 }
 
 /* Editor Focus States */
