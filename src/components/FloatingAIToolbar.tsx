@@ -268,11 +268,9 @@ export const FloatingAIToolbar = ({ editor, onAIAction }: FloatingAIToolbarProps
   const [showToneDropdown, setShowToneDropdown] = useState(false);
   const [isInteracting, setIsInteracting] = useState(false);
   const [customInstruction, setCustomInstruction] = useState(''); // Neues Eingabefeld
-  const inputProtectionRef = useRef(false); // Schutz vor Input-Klick-Chaos - SOFORT verfügbar!
   const toolbarRef = useRef<HTMLDivElement>(null);
   const hideTimeoutRef = useRef<NodeJS.Timeout>();
   const lastSelectionRef = useRef<{ from: number; to: number } | null>(null);
-  const showTimeoutRef = useRef<NodeJS.Timeout>(); // Race Condition Protection
 
   // Default KI-Action Handler falls keiner übergeben wurde
   const handleAIAction = useCallback(async (action: AIAction, text: string): Promise<string> => {
@@ -759,65 +757,48 @@ Antworte NUR mit dem Text im neuen Ton.`;
         setSelectedText(text);
         lastSelectionRef.current = { from, to };
         
-        // Längere Verzögerung für bessere Maus-Positionierung
-        selectionTimeout = setTimeout(() => {
-        showTimeoutRef.current = selectionTimeout; // Track show timeout
-          // Position ERST nach Verzögerung berechnen (Maus ist näher)
-          const selection = window.getSelection();
-          if (selection && selection.rangeCount > 0) {
-            const range = selection.getRangeAt(0);
-            const rect = range.getBoundingClientRect();
-            
-            // Aktuelle Mausposition holen
-            const mousePos = { x: 0, y: 0 };
-            
-            // Event-Listener für einmalige Mausposition
-            const getMousePos = (e: MouseEvent) => {
-              mousePos.x = e.clientX;
-              mousePos.y = e.clientY;
-              document.removeEventListener('mousemove', getMousePos);
-            };
-            document.addEventListener('mousemove', getMousePos);
-            
-            // Kleine Verzögerung um Mausposition zu erfassen
-            setTimeout(() => {
-              document.removeEventListener('mousemove', getMousePos);
-              
-              // Intelligente Positionierung: Näher zur Maus, aber über dem Text
-              let toolbarX = rect.left + (rect.width / 2); // Standard: Mitte des Textes
-              let toolbarY = rect.top - 60; // 60px über dem Text
-              
-              // Wenn Maus weit links/rechts ist, Toolbar näher zur Maus positionieren
-              if (mousePos.x > 0) {
-                const mouseDistance = Math.abs(mousePos.x - toolbarX);
-                if (mouseDistance > 100) {
-                  // Toolbar zwischen Text-Mitte und Maus positionieren
-                  toolbarX = (toolbarX + mousePos.x) / 2;
-                }
-              }
-              
-              // Toolbar nicht zu weit rechts/links positionieren
-              const minX = rect.left - 50;
-              const maxX = rect.right + 50;
-              toolbarX = Math.max(minX, Math.min(maxX, toolbarX));
-              
-              setPosition({
-                top: toolbarY,
-                left: toolbarX
-              });
-              
-              setIsVisible(true);
-              showTimeoutRef.current = undefined; // Clear show timeout - Toolbar ist jetzt da
-            }, 50); // 50ms um Mausposition zu erfassen
-          }
-        }, 600); // 600ms Gesamtverzögerung
+        // TipTap-native Position-Berechnung - direkt ohne Delay
+        const startPos = editor.view.coordsAtPos(from);
+        const endPos = editor.view.coordsAtPos(to);
+        
+        // Position unter der Selektion berechnen
+        const toolbarX = (startPos.left + endPos.right) / 2; // Mitte der Selektion
+        const toolbarY = Math.max(startPos.bottom, endPos.bottom) + 10; // 10px unter der Selektion
+        
+        // Viewport-Collision-Detection
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const toolbarWidth = 650; // minWidth aus CSS
+        const toolbarHeight = 80; // Geschätzte Höhe
+        
+        // X-Position anpassen wenn Toolbar über Viewport-Rand hinausragt
+        let adjustedX = toolbarX;
+        if (toolbarX - toolbarWidth/2 < 10) {
+          adjustedX = toolbarWidth/2 + 10;
+        } else if (toolbarX + toolbarWidth/2 > viewportWidth - 10) {
+          adjustedX = viewportWidth - toolbarWidth/2 - 10;
+        }
+        
+        // Y-Position anpassen wenn Toolbar unter Viewport-Rand ist
+        let adjustedY = toolbarY;
+        if (toolbarY + toolbarHeight > viewportHeight - 20) {
+          // Zeige Toolbar über der Selektion
+          adjustedY = Math.min(startPos.top, endPos.top) - toolbarHeight - 10;
+        }
+        
+        setPosition({
+          top: adjustedY,
+          left: adjustedX
+        });
+        
+        setIsVisible(true);
         
       } else {
         // Toolbar ausblenden wenn keine Selektion
         setSelectedText('');
         lastSelectionRef.current = null;
         hideTimeoutRef.current = setTimeout(() => {
-          if (!isInteracting && !inputProtectionRef.current) {
+          if (!isInteracting) {
             setIsVisible(false);
             setShowToneDropdown(false);
           }
@@ -832,7 +813,7 @@ Antworte NUR mit dem Text im neuen Ton.`;
       
       // Verzögertes Ausblenden beim Verlassen des Editors
       hideTimeoutRef.current = setTimeout(() => {
-        if (!isInteracting && !inputProtectionRef.current) {
+        if (!isInteracting) {
           setIsVisible(false);
           setShowToneDropdown(false);
         }
@@ -843,110 +824,35 @@ Antworte NUR mit dem Text im neuen Ton.`;
       editor.off('selectionUpdate', handleSelectionUpdate);
       clearTimeout(selectionTimeout);
       clearTimeout(hideTimeoutRef.current);
-      clearTimeout(showTimeoutRef.current);
     };
   }, [editor, isInteracting]);
 
-  // Click-Outside und Mouse-Distance Handler
+  // Standard Click-Outside Handler
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
       
-      // SCHUTZ: Ignoriere alle Klicks während Input-Protection
-      if (inputProtectionRef.current) {
-        return;
-      }
-      
       // Prüfe ob Klick außerhalb der Toolbar
       if (toolbarRef.current && !toolbarRef.current.contains(target)) {
-        // Schließe nur das Dropdown, nicht die ganze Toolbar
+        // Schließe Dropdown
         setShowToneDropdown(false);
         
-        // WICHTIG: Ignoriere Klicks auf Input-Felder in der Toolbar
-        const targetElement = target as HTMLElement;
-        const isInputClick = targetElement.tagName === 'INPUT' || 
-                           targetElement.tagName === 'TEXTAREA' ||
-                           targetElement.closest('.input-area');
-                           
-        if (isInputClick) {
-          return; // Toolbar NICHT verstecken bei Input-Klicks
-        }
-        
-        // NUR bei Klick außerhalb des Editors UND nicht auf Inputs die Toolbar verstecken
+        // Klick außerhalb des Editors versteckt Toolbar (Standard-Verhalten)
         const editorElement = editor?.view.dom;
         if (editorElement && !editorElement.contains(target)) {
-          // Toolbar verstecken aber selectedText NICHT löschen
           setIsVisible(false);
-          // selectedText bleibt erhalten für Re-Aktivierung
+          setSelectedText(''); // Reset selection
         }
-      } else {
-        // Klick innerhalb der Toolbar - nichts verstecken
-        return;
       }
     };
 
-    // Mouse-Distance Check - nur wenn Toolbar sichtbar UND vollständig geladen ist
-    const handleMouseMove = (event: MouseEvent) => {
-      // WICHTIG: Prüfe auch ob Toolbar wirklich DA ist (nicht nur isVisible=true)
-      if (!isVisible || !toolbarRef.current || isInteracting || inputProtectionRef.current) {
-        return;
-      }
-      
-      // RACE CONDITION PROTECTION: Ignoriere Mouse-Distance wenn gerade Show-Animation läuft
-      if (showTimeoutRef.current) {
-        return; // Toolbar ist gerade am Erscheinen - keine Mouse-Distance-Checks
-      }
-      
-      // ZUSÄTZLICH: Ignore Mouse-Distance wenn Toolbar noch nicht gerendert
-      const toolbarRect = toolbarRef.current.getBoundingClientRect();
-      if (toolbarRect.height === 0 || toolbarRect.width === 0) return; // Toolbar noch nicht gerendert
-      
-      const mouseX = event.clientX;
-      const mouseY = event.clientY;
-      
-      // Berechne Distanz zur Toolbar (größere Toleranz)
-      const tolerance = 200; // 200px Toleranz-Bereich
-      const isNearToolbar = 
-        mouseX >= toolbarRect.left - tolerance &&
-        mouseX <= toolbarRect.right + tolerance &&
-        mouseY >= toolbarRect.top - tolerance &&
-        mouseY <= toolbarRect.bottom + tolerance;
-      
-      // Prüfe auch ob Maus über dem Editor ist
-      const editorElement = editor?.view.dom;
-      let isOverEditor = false;
-      if (editorElement) {
-        const editorRect = editorElement.getBoundingClientRect();
-        isOverEditor = 
-          mouseX >= editorRect.left &&
-          mouseX <= editorRect.right &&
-          mouseY >= editorRect.top &&
-          mouseY <= editorRect.bottom;
-      }
-      
-      // Toolbar ausblenden wenn Maus zu weit weg UND nicht über Editor
-      if (!isNearToolbar && !isOverEditor) {
-        hideTimeoutRef.current = setTimeout(() => {
-          if (!isInteracting && !inputProtectionRef.current) {
-            setIsVisible(false);
-            setShowToneDropdown(false);
-          }
-        }, 800); // Längere Verzögerung
-      } else {
-        // Maus ist nah genug oder über Editor - Cancel Hide
-        clearTimeout(hideTimeoutRef.current);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('mousemove', handleMouseMove);
-    
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('mousemove', handleMouseMove);
-      clearTimeout(hideTimeoutRef.current);
-    };
-  }, [editor, isVisible, isInteracting]);
+    if (isVisible) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [editor, isVisible]);
 
   // Custom Instruction Handler
   const handleCustomInstruction = useCallback(async () => {
@@ -1078,17 +984,6 @@ WICHTIG: Mache wirklich NUR die eine genannte Änderung!`;
       onMouseLeave={() => {
         setIsInteracting(false);
       }}
-      onMouseDown={(e) => {
-        // NUR Buttons sollen preventDefault haben, Input-Bereich NICHT
-        const target = e.target as HTMLElement;
-        if (!target.closest('.input-area')) {
-          e.preventDefault();
-        }
-        // WICHTIG: Verhindere Event-Bubbling vom Input-Bereich nach außen
-        if (target.closest('.input-area')) {
-          e.stopPropagation();
-        }
-      }}
     >
       {/* Button-Leiste oben */}
       <div className="flex items-center gap-1 p-1">
@@ -1162,12 +1057,9 @@ WICHTIG: Mache wirklich NUR die eine genannte Änderung!`;
       <div className="relative">
         <button
           type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
+          onClick={() => {
             setShowToneDropdown(!showToneDropdown);
           }}
-          onMouseDown={(e) => e.preventDefault()}
           disabled={isProcessing}
           className="
             flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-md
@@ -1189,12 +1081,9 @@ WICHTIG: Mache wirklich NUR die eine genannte Änderung!`;
             {toneOptions.map((tone) => (
               <button
                 key={tone.value}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
+                onClick={() => {
                   handleToneChange(tone.value);
                 }}
-                onMouseDown={(e) => e.preventDefault()}
                 className="
                   w-full text-left px-3 py-1.5 text-sm text-gray-700
                   hover:bg-gray-50 transition-colors
@@ -1235,39 +1124,6 @@ WICHTIG: Mache wirklich NUR die eine genannte Änderung!`;
             type="text"
             value={customInstruction}
             onChange={(e) => setCustomInstruction(e.target.value)}
-            onMouseDown={(e) => {
-              e.stopPropagation(); // Verhindere MouseDown-Event-Bubbling
-              inputProtectionRef.current = true; // SOFORT aktivieren vor Focus/Blur
-              
-              // WICHTIG: Selektion vor Input-Focus sichern
-              if (selectedText && lastSelectionRef.current) {
-                // Selektion temporär sichern falls sie durch Input-Focus verloren geht
-                const savedSelection = {
-                  text: selectedText,
-                  from: lastSelectionRef.current.from,
-                  to: lastSelectionRef.current.to
-                };
-                
-                // Nach kurzer Zeit prüfen ob Selektion verloren ging
-                setTimeout(() => {
-                  if (!selectedText && savedSelection.text) {
-                    // Selektion wiederherstellen
-                    setSelectedText(savedSelection.text);
-                    lastSelectionRef.current = {
-                      from: savedSelection.from,
-                      to: savedSelection.to
-                    };
-                  }
-                }, 100);
-              }
-              
-              setTimeout(() => {
-                inputProtectionRef.current = false;
-              }, 1000); // Längerer Schutz
-            }}
-            onClick={(e) => {
-              e.stopPropagation(); // Verhindere Click-Event-Bubbling
-            }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey && customInstruction.trim()) {
                 e.preventDefault();

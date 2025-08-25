@@ -15,6 +15,7 @@ import ListItem from '@tiptap/extension-list-item';
 import { Extension } from '@tiptap/core';
 import { QuoteExtension } from './editor/QuoteExtension';
 import { CTAExtension } from './editor/CTAExtension';
+import { FloatingAIToolbar } from './FloatingAIToolbar';
 import { 
   ArrowsPointingOutIcon, 
   ArrowsPointingInIcon 
@@ -150,7 +151,6 @@ const CustomTextAlign = Extension.create({
 });
 
 import { GmailStyleToolbar } from './GmailStyleToolbar';
-import { FloatingAIToolbar } from './FloatingAIToolbar';
 import { SEOHeaderBar } from './campaigns/SEOHeaderBar';
 
 // Debounce utility function
@@ -415,6 +415,9 @@ export const GmailStyleEditor = ({
               lineHeight: isFullscreen ? '2.0' : '1.8'
             }}
           />
+          
+          {/* Originale FloatingAIToolbar - mit mechanischen Fixes */}
+          {editor && <FloatingAIToolbar editor={editor} />}
         </div>
       </div>
         
