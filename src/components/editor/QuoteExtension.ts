@@ -55,13 +55,13 @@ export const QuoteExtension = Node.create<QuoteOptions>({
   addCommands() {
     return {
       setBlockquote: () => ({ commands }) => {
-        return commands.setNode(this.name)
+        return commands.wrapIn(this.name)
       },
       toggleBlockquote: () => ({ commands }) => {
-        return commands.toggleNode(this.name, 'paragraph')
+        return commands.toggleWrap(this.name)
       },
       unsetBlockquote: () => ({ commands }) => {
-        return commands.setNode('paragraph')
+        return commands.lift(this.name)
       },
     }
   },
