@@ -93,6 +93,73 @@ export default function CampaignDetailPage() {
   // Alert Management
   const { alert, showAlert } = useAlert();
   
+  // Download Chat Transcript Function
+  const downloadTranscript = () => {
+    if (!campaign?.approvalData?.feedbackHistory || campaign.approvalData.feedbackHistory.length === 0) {
+      return;
+    }
+    
+    // Format der Transcript-Datei
+    let transcript = `FREIGABE-GESPRÄCHSVERLAUF\n`;
+    transcript += `==========================\n\n`;
+    transcript += `Kampagne: ${campaign.title}\n`;
+    transcript += `Kunde: ${company?.companyName || campaign.clientName || 'Unbekannt'}\n`;
+    transcript += `Erstellt am: ${new Date().toLocaleString('de-DE')}\n`;
+    transcript += `\n----------------------------\n\n`;
+    
+    // Sortiere Nachrichten chronologisch
+    const sortedHistory = [...campaign.approvalData.feedbackHistory].sort((a, b) => {
+      const dateA = a.requestedAt?.toDate ? a.requestedAt.toDate() : new Date(a.requestedAt);
+      const dateB = b.requestedAt?.toDate ? b.requestedAt.toDate() : new Date(b.requestedAt);
+      return dateA - dateB;
+    });
+    
+    // Füge jede Nachricht hinzu
+    sortedHistory.forEach((feedback, index) => {
+      const timestamp = feedback.requestedAt?.toDate 
+        ? new Date(feedback.requestedAt.toDate()).toLocaleString('de-DE', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        : feedback.requestedAt 
+        ? new Date(feedback.requestedAt).toLocaleString('de-DE', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        : 'Unbekannt';
+      
+      transcript += `[${timestamp}] ${feedback.author}:\n`;
+      transcript += `${feedback.comment}\n\n`;
+    });
+    
+    transcript += `\n----------------------------\n`;
+    transcript += `Ende des Gesprächsverlaufs\n`;
+    transcript += `Dieses Dokument wurde automatisch generiert.\n`;
+    
+    // Erstelle Blob und Download-Link
+    const blob = new Blob([transcript], { type: 'text/plain;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    
+    // Dateiname mit Datum
+    const fileName = `Freigabe-Transcript_${campaign.title.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.txt`;
+    link.download = fileName;
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    
+    showAlert('success', 'Transcript wurde heruntergeladen');
+  };
+  
   // Multi-Tenancy Avatar Helper
   const getTeamMemberAvatar = (member: TeamMember, size: number = 40): string => {
     if (member.photoUrl) {
@@ -583,13 +650,22 @@ export default function CampaignDetailPage() {
                   <ChatBubbleLeftRightIcon className="h-5 w-5 text-gray-600" />
                   Chat-Historie
                 </h3>
-                <Button
-                  onClick={() => setShowHistoryModal(true)}
-                  className="bg-[#005fab] hover:bg-[#004a8c] text-white"
-                >
-                  <ChatBubbleLeftRightIcon className="h-4 w-4 mr-2" />
-                  Chat-Verlauf anzeigen
-                </Button>
+                <div className="flex gap-3">
+                  <Button
+                    onClick={() => setShowHistoryModal(true)}
+                    className="bg-[#005fab] hover:bg-[#004a8c] text-white"
+                  >
+                    <ChatBubbleLeftRightIcon className="h-4 w-4 mr-2" />
+                    Chat-Verlauf anzeigen
+                  </Button>
+                  <Button
+                    onClick={downloadTranscript}
+                    className="bg-gray-600 hover:bg-gray-700 text-white"
+                  >
+                    <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
+                    Transcript
+                  </Button>
+                </div>
               </div>
             )}
           </div>
