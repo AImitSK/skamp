@@ -149,20 +149,14 @@ export default function NewPRCampaignPage() {
   const generateContentHtml = (): string => {
     let html = '';
     
-    // 1. KeyVisual (falls vorhanden)
-    if (keyVisual && keyVisual.url) {
-      html += `<div class="key-visual-container mb-6">
-        <img src="${keyVisual.url}" alt="Key Visual" 
-             style="width: 100%; max-width: 600px; height: auto; border-radius: 8px;" />
-      </div>`;
-    }
+    // KeyVisual wird NICHT hier eingefügt - die CampaignPreviewStep Komponente zeigt es bereits an
     
-    // 2. Haupt-Content (Editor-Inhalt)
+    // 1. Haupt-Content (Editor-Inhalt)
     if (editorContent && editorContent.trim() && editorContent !== '<p></p>') {
       html += `<div class="main-content">${editorContent}</div>`;
     }
     
-    // 3. Textbausteine (falls vorhanden)
+    // 2. Textbausteine (falls vorhanden)
     if (boilerplateSections && boilerplateSections.length > 0) {
       console.log('🔍 generateContentHtml - Textbausteine prüfen:', boilerplateSections.length, boilerplateSections);
       

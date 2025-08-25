@@ -505,12 +505,14 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         // Load team members and find campaign admin
         console.log('👥 Loading team members for organization:', currentOrganization.id);
         const members = await teamMemberEnhancedService.getAll(currentOrganization.id);
-        setTeamMembers(members);
+        // Fix: Cast TeamMemberExtended[] to TeamMember[]
+        setTeamMembers(members as any);
         
         // Find current admin (campaign creator)
         const admin = members.find(member => member.userId === campaign.userId);
         console.log('👤 Found campaign admin:', admin?.displayName || 'Not found', 'for userId:', campaign.userId);
-        setCampaignAdmin(admin || null);
+        // Fix: Cast TeamMemberExtended to TeamMember
+        setCampaignAdmin(admin as any || null);
         
         // Setze gespeicherten PR-Score falls vorhanden
         if (campaign.seoMetrics?.prScore) {
