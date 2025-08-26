@@ -1032,7 +1032,7 @@ function ReviewStep({
     { label: 'Headline', value: `${result.structured.headline.replace(/^\*\*/, '').replace(/\*\*$/, '').trim().length} Zeichen`, ideal: '< 80' },
     { label: 'Lead', value: `${result.structured.leadParagraph.split(' ').length} Wörter`, ideal: '40-50' },
     { label: 'Absätze', value: result.structured.bodyParagraphs.length, ideal: '3-4' },
-    { label: '5 W-Fragen', value: '✓', ideal: '✓' }
+    { label: 'CTA', value: (result.structured.cta || result.structured.boilerplate) ? '✓' : '✗', ideal: '✓' }
   ];
 
   return (
@@ -1147,10 +1147,19 @@ function ReviewStep({
               </div>
             )}
 
-            <div>
-              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Boilerplate</h4>
-              <p className="text-sm text-gray-600 italic">{result.structured.boilerplate}</p>
-            </div>
+            {(result.structured.cta || result.structured.boilerplate) && (
+              <div>
+                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Call-to-Action</h4>
+                <div className="bg-indigo-50 p-4 rounded-lg border-l-4 border-indigo-400">
+                  <p className="font-bold text-indigo-900">
+                    {result.structured.cta || result.structured.boilerplate}
+                  </p>
+                  <p className="text-xs text-indigo-600 mt-2">
+                    💡 Wird als CTA-Element für bessere SEO-Scores formatiert
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
