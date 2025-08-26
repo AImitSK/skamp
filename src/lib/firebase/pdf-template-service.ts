@@ -31,8 +31,23 @@ import {
 } from '@/types/pdf-template';
 // Dynamic import für Server-seitige Module
 import type { TemplateData } from '@/lib/pdf/template-renderer';
-import { templateCache, TemplateCache } from '@/lib/pdf/template-cache';
 import Mustache from 'mustache';
+
+// Conditional imports für Server-seitige Module
+let templateCache: any = null;
+let TemplateCache: any = null;
+
+// Lazy loading für Template-Cache (nur Server-side)
+const getTemplateCache = async () => {
+  if (typeof window !== 'undefined') return null; // Client-side: nicht verfügbar
+  
+  if (!templateCache) {
+    const cacheModule = await import('@/lib/pdf/template-cache');
+    templateCache = cacheModule.templateCache;
+    TemplateCache = cacheModule.TemplateCache;
+  }
+  return templateCache;
+};
 
 /**
  * Service für PDF-Template-Management
@@ -42,7 +57,7 @@ class PDFTemplateService {
   private readonly COLLECTION_NAME = 'pdf_templates';
   private readonly ORG_SETTINGS_COLLECTION = 'organization_template_settings';
   private readonly METRICS_COLLECTION = 'template_metrics';
-  private cache: TemplateCache;
+  private cache: any = null;
   
   // Performance-Metriken
   private performanceMetrics = {
@@ -54,8 +69,13 @@ class PDFTemplateService {
   };
   
   constructor() {
-    this.cache = templateCache;
-    console.log('🎯 PDFTemplateService mit Cache initialisiert');
+    // Cache wird lazy geladen
+    this.initCache();
+    console.log('🎯 PDFTemplateService initialisiert');
+  }
+
+  private async initCache() {
+    this.cache = await getTemplateCache();
   }
 
   /**
@@ -65,12 +85,14 @@ class PDFTemplateService {
     try {
       const cacheKey = 'system_templates_all';
       
-      // Prüfe Cache zuerst
-      const cachedTemplates = this.cache.getTemplate(cacheKey);
-      if (cachedTemplates && Array.isArray(cachedTemplates)) {
-        this.performanceMetrics.cacheHits++;
-        console.log('✅ System-Templates aus Cache geladen');
-        return cachedTemplates as unknown as PDFTemplate[];
+      // Prüfe Cache zuerst (falls verfügbar)
+      if (this.cache) {
+        const cachedTemplates = this.cache?.getTemplate(cacheKey);
+        if (cachedTemplates && Array.isArray(cachedTemplates)) {
+          this.performanceMetrics.cacheHits++;
+          console.log('✅ System-Templates aus Cache geladen');
+          return cachedTemplates as unknown as PDFTemplate[];
+        }
       }
 
       this.performanceMetrics.cacheMisses++;
@@ -82,13 +104,15 @@ class PDFTemplateService {
         this.createCreativeBoldTemplate()
       ];
       
-      // Cache System-Templates (einzeln und als Array)
-      systemTemplates.forEach(template => {
-        this.cache.setTemplate(template.id, template);
-      });
-      
-      // Cache auch das komplette Array
-      this.cache.setTemplate(cacheKey, systemTemplates as unknown as PDFTemplate);
+      // Cache System-Templates (einzeln und als Array) - falls verfügbar
+      if (this.cache) {
+        systemTemplates.forEach(template => {
+          this.cache?.setTemplate(template.id, template);
+        });
+        
+        // Cache auch das komplette Array
+        this.cache?.setTemplate(cacheKey, systemTemplates as unknown as PDFTemplate);
+      }
       
       this.performanceMetrics.templateLoads++;
       return systemTemplates;
@@ -106,7 +130,7 @@ class PDFTemplateService {
       const cacheKey = `org_templates_${organizationId}`;
       
       // Prüfe Cache zuerst
-      const cachedTemplates = this.cache.getTemplate(cacheKey);
+      const cachedTemplates = this.cache?.getTemplate(cacheKey);
       if (cachedTemplates && Array.isArray(cachedTemplates)) {
         this.performanceMetrics.cacheHits++;
         console.log(`✅ Organization-Templates aus Cache geladen: ${organizationId}`);
@@ -131,12 +155,12 @@ class PDFTemplateService {
         templates.push(templateDoc.template);
         
         // Cache einzelne Templates
-        this.cache.setTemplate(templateDoc.template.id, templateDoc.template);
+        this.cache?.setTemplate(templateDoc.template.id, templateDoc.template);
       });
       
       // Cache Template-Array
       if (templates.length > 0) {
-        this.cache.setTemplate(cacheKey, templates as unknown as PDFTemplate);
+        this.cache?.setTemplate(cacheKey, templates as unknown as PDFTemplate);
       }
       
       this.performanceMetrics.templateLoads++;
@@ -201,7 +225,7 @@ class PDFTemplateService {
       const startTime = Date.now();
       
       // Prüfe Cache zuerst
-      const cachedTemplate = this.cache.getTemplate(templateId);
+      const cachedTemplate = this.cache?.getTemplate(templateId);
       if (cachedTemplate) {
         this.performanceMetrics.cacheHits++;
         console.log(`✅ Template aus Cache geladen: ${templateId} (${Date.now() - startTime}ms)`);
@@ -234,7 +258,7 @@ class PDFTemplateService {
       const template = templateData.template;
       
       // Cache Template
-      this.cache.setTemplate(template.id, template);
+      this.cache?.setTemplate(template.id, template);
       
       const loadTime = Date.now() - startTime;
       console.log(`✅ Template geladen: ${templateId} (${loadTime}ms)`);
@@ -461,10 +485,10 @@ class PDFTemplateService {
       // Generiere Cache-Keys mit Hashes
       const mockDataHash = TemplateCache.generateHash(mockData);
       const customizationsHash = customizations ? TemplateCache.generateHash(customizations) : undefined;
-      const htmlCacheKey = this.cache.generateHtmlCacheKey(templateId, mockDataHash, customizationsHash);
+      const htmlCacheKey = this.cache?.generateHtmlCacheKey(templateId, mockDataHash, customizationsHash);
       
       // Prüfe HTML-Cache
-      const cachedHtml = this.cache.getHtml(htmlCacheKey);
+      const cachedHtml = this.cache?.getHtml(htmlCacheKey);
       if (cachedHtml) {
         this.performanceMetrics.cacheHits++;
         console.log(`✅ Template-Preview aus Cache: ${templateId} (${Date.now() - startTime}ms)`);
@@ -499,7 +523,7 @@ class PDFTemplateService {
       const html = await this.renderTemplateWithStyle(template, templateData);
       
       // Cache HTML-Preview
-      this.cache.setHtml(htmlCacheKey, html);
+      this.cache?.setHtml(htmlCacheKey, html);
       
       const renderTime = Date.now() - startTime;
       this.updateAverageRenderTime(renderTime);
@@ -582,7 +606,7 @@ class PDFTemplateService {
    * Cache bereinigen
    */
   clearCache(): void {
-    this.cache.clear();
+    this.cache?.clear();
     console.log('🧹 Template-Cache bereinigt');
   }
 
@@ -591,16 +615,16 @@ class PDFTemplateService {
    */
   invalidateTemplateCache(templateId: string): void {
     // Suche und lösche alle Cache-Einträge die mit diesem Template zusammenhängen
-    const cacheStats = this.cache.analyze();
+    const cacheStats = this.cache?.analyze() || {};
     const templateEntries = cacheStats.templateCache.entries.filter(
       (entry: any) => entry.key === templateId || entry.key.includes(templateId)
     );
     
     templateEntries.forEach((entry: any) => {
       // Templates, HTML und CSS für dieses Template löschen
-      this.cache.clearCache('template');
-      this.cache.clearCache('html');
-      this.cache.clearCache('css');
+      this.cache?.clearCache('template');
+      this.cache?.clearCache('html');
+      this.cache?.clearCache('css');
     });
     
     console.log(`🗑️ Cache für Template ${templateId} invalidiert`);
@@ -610,7 +634,7 @@ class PDFTemplateService {
    * Performance-Metriken abrufen
    */
   getPerformanceMetrics(): any {
-    const cacheStats = this.cache.getStats();
+    const cacheStats = this.cache?.getStats() || {};
     
     return {
       ...this.performanceMetrics,
@@ -725,15 +749,15 @@ class PDFTemplateService {
     const startTime = Date.now();
     
     // CSS-Cache-Key generieren
-    const cssCacheKey = this.cache.generateCssCacheKey(template.id, template.version);
+    const cssCacheKey = this.cache?.generateCssCacheKey(template.id, template.version);
     
     // Prüfe CSS-Cache
-    let customCss = this.cache.getCss(cssCacheKey);
+    let customCss = this.cache?.getCss(cssCacheKey);
     
     if (!customCss) {
       // Generiere CSS und cache es
       customCss = this.generateTemplateCSS(template);
-      this.cache.setCss(cssCacheKey, customCss);
+      this.cache?.setCss(cssCacheKey, customCss);
       console.log(`🎨 CSS für Template ${template.id} generiert und gecacht`);
     }
     

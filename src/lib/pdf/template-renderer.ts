@@ -1,8 +1,10 @@
 // src/lib/pdf/template-renderer.ts - Erweiterte Template-Engine für Multi-Template PDF-Generation
 import Mustache from 'mustache';
-import fs from 'fs';
-import path from 'path';
 import { PDFTemplate } from '@/types/pdf-template';
+
+// Conditional imports for Node.js environment only
+const fs = typeof window === 'undefined' ? require('fs') : null;
+const path = typeof window === 'undefined' ? require('path') : null;
 
 /**
  * Template-Datenstruktur für Pressemitteilungs-PDFs
@@ -120,6 +122,11 @@ class TemplateRenderer {
     // Prüfe Cache zuerst
     if (this.templateCache.has(templateName)) {
       return this.templateCache.get(templateName)!;
+    }
+
+    // Nur in Server-Umgebung verfügbar
+    if (!fs || !path) {
+      throw new Error('Template-Loading nur in Server-Umgebung verfügbar');
     }
 
     try {
@@ -478,6 +485,12 @@ class TemplateRenderer {
    * @returns Liste der verfügbaren Template-Dateien
    */
   async getAvailableTemplateFiles(): Promise<string[]> {
+    // Nur in Server-Umgebung verfügbar
+    if (!fs || !path) {
+      console.warn('⚠️ Template-File-Listing nur in Server-Umgebung verfügbar');
+      return [this.DEFAULT_TEMPLATE];
+    }
+
     try {
       const templatesDir = path.join(process.cwd(), 'src/lib/pdf/templates');
       
@@ -502,6 +515,11 @@ class TemplateRenderer {
    * @returns Ob Template existiert
    */
   async templateExists(templateFile: string): Promise<boolean> {
+    // Nur in Server-Umgebung verfügbar
+    if (!fs || !path) {
+      return false;
+    }
+
     try {
       const templatePath = path.join(process.cwd(), 'src/lib/pdf/templates', templateFile);
       return fs.existsSync(templatePath);
