@@ -1,6 +1,7 @@
 // src/types/notification-settings-enhanced.ts
 
 import { NotificationSettings } from './notifications';
+import { CheckCircleIcon, EnvelopeIcon, CalendarIcon, PhotoIcon } from '@heroicons/react/24/outline';
 
 // Enhanced Notification Settings für Settings-Page Component Props
 export interface NotificationSettingsEnhanced extends NotificationSettings {
@@ -188,6 +189,7 @@ export const getSettingDisplayValue = (
 export const NOTIFICATION_SETTINGS_GROUPS: SettingGroup[] = [
   {
     title: 'Freigaben',
+    icon: CheckCircleIcon,
     settings: [
       {
         key: 'approvalGranted',
@@ -221,6 +223,7 @@ export const NOTIFICATION_SETTINGS_GROUPS: SettingGroup[] = [
   },
   {
     title: 'Schedule Mails',
+    icon: EnvelopeIcon,
     settings: [
       {
         key: 'emailSentSuccess',
@@ -238,6 +241,7 @@ export const NOTIFICATION_SETTINGS_GROUPS: SettingGroup[] = [
   },
   {
     title: 'Tasks',
+    icon: CalendarIcon,
     settings: [
       {
         key: 'taskOverdue',
@@ -249,6 +253,7 @@ export const NOTIFICATION_SETTINGS_GROUPS: SettingGroup[] = [
   },
   {
     title: 'Mediencenter',
+    icon: PhotoIcon,
     settings: [
       {
         key: 'mediaFirstAccess',

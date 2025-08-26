@@ -30,6 +30,7 @@ export interface NotificationMetadata {
 export interface Notification {
   id: string;
   userId: string;
+  organizationId?: string;
   type: NotificationType;
   title: string;
   message: string;

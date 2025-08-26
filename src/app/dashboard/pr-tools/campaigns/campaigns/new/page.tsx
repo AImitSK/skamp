@@ -527,6 +527,20 @@ export default function NewPRCampaignPage() {
         htmlParts.push(`<p><span data-type="cta-text" class="cta-text font-bold text-[#005fab]">${result.structured.cta}</span></p>`);
       }
       
+      // Hashtags mit korrekter Formatierung für das HashtagExtension
+      if (result.structured.hashtags && result.structured.hashtags.length > 0) {
+        const formattedHashtags = result.structured.hashtags
+          .map((hashtag: string) => {
+            // Stelle sicher, dass Hashtag mit # beginnt
+            const cleanHashtag = hashtag.startsWith('#') ? hashtag : `#${hashtag}`;
+            return `<span data-type="hashtag" class="hashtag text-blue-600 font-semibold">${cleanHashtag}</span>`;
+          })
+          .join(' ');
+        
+        // Hashtags in einem eigenen Absatz am Ende hinzufügen
+        htmlParts.push(`<p class="hashtags-section mt-4">${formattedHashtags}</p>`);
+      }
+      
       // ALLES als ein zusammenhängender HTML-Content in den Editor
       const fullHtmlContent = htmlParts.join('\n\n');
       setEditorContent(fullHtmlContent);

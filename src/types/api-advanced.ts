@@ -115,8 +115,26 @@ export interface APIBulkJobResponse {
     downloadUrl?: string;
     fileSize?: number;
     recordCount?: number;
-    imported?: BulkJob['result']['imported'];
-    errors?: BulkJob['result']['errors'];
+    files?: {
+      entity: ExportableEntity;
+      url: string;
+      recordCount: number;
+      fileSize: number;
+    }[];
+    imported?: {
+      created: number;
+      updated: number;
+      skipped: number;
+      errors: number;
+    };
+    errors?: {
+      row: number;
+      field?: string;
+      message: string;
+      data?: any;
+    }[];
+    duration?: number;
+    completedAt?: string;
   };
   createdAt: string;
   updatedAt: string;

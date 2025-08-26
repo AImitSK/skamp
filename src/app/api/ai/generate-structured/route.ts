@@ -218,6 +218,100 @@ ZIELGRUPPE: MEDIEN/JOURNALISTEN
 - Hintergrundinformationen
 - Kontaktdaten prominent
 - Hashtags: #Pressemitteilung #News #Medien #Aktuell #Newsroom`
+  },
+
+  // Industrie-spezifische Score-optimierte Prompts
+  industries: {
+    technology: `
+INDUSTRIE: TECHNOLOGIE - SCORE-OPTIMIERT
+✓ Tech-Keywords verwenden (erhöht Relevanz-Score)
+✓ Versionsnummern/Specs (erhöht Konkretheit-Score)
+✓ Developer-optimierte Hashtags (erhöht Social-Score)
+✓ CTO/Engineer-Zitate (erhöht Engagement-Score)
+- Fokus auf Innovation, Effizienz, Skalierung
+- Technische Spezifikationen und Features
+- Performance-Metriken und Benchmarks
+- API/Integration/Cloud-Aspekte erwähnen
+- Zahlen: Ladezeiten, Kapazität, Nutzer
+- Hashtags: #TechNews #Innovation #Software #KI #Cloud #Digitalisierung`,
+
+    healthcare: `
+INDUSTRIE: GESUNDHEITSWESEN - SCORE-OPTIMIERT
+✓ Patientensicherheit betonen (erhöht Relevanz-Score)
+✓ Studien/Erfolgsraten (erhöht Konkretheit-Score)
+✓ Medical-Hashtags (erhöht Social-Score)
+✓ Arzt/Experten-Zitate (erhöht Engagement-Score)
+- Fokus auf Patientenwohl und Sicherheit
+- Klinische Studien und Evidenz
+- Compliance und Zertifizierungen
+- Medizinische Fachbegriffe moderat einsetzen
+- Zahlen: Erfolgsraten, Patientenzahlen
+- Hashtags: #Gesundheit #Medizin #Innovation #Therapie #Forschung #Patientenwohl`,
+
+    finance: `
+INDUSTRIE: FINANZWESEN - SCORE-OPTIMIERT
+✓ Compliance/Sicherheit (erhöht Relevanz-Score)
+✓ ROI/Performance-Zahlen (erhöht Konkretheit-Score)
+✓ FinTech-Hashtags (erhöht Social-Score)
+✓ CFO/Analyst-Zitate (erhöht Engagement-Score)
+- Fokus auf Sicherheit, Compliance, Performance
+- Regulatorische Aspekte und Zertifizierungen
+- ROI, Kosteneinsparungen, Effizienzgewinne
+- Risikomanagement und Transparenz
+- Zahlen: AUM, Transaktionsvolumen, Einsparungen
+- Hashtags: #FinTech #Banking #Investment #Compliance #Digitalisierung #Sicherheit`,
+
+    manufacturing: `
+INDUSTRIE: PRODUKTION/FERTIGUNG - SCORE-OPTIMIERT
+✓ Effizienz/Nachhaltigkeit (erhöht Relevanz-Score)
+✓ Produktionszahlen/KPIs (erhöht Konkretheit-Score)
+✓ Industry4.0-Hashtags (erhöht Social-Score)
+✓ Operations-Manager-Zitate (erhöht Engagement-Score)
+- Fokus auf Effizienz, Nachhaltigkeit, Qualität
+- Produktionskapazitäten und Durchsätze
+- Umweltaspekte und CO2-Reduktion
+- Automatisierung und Industrie 4.0
+- Zahlen: Stückzahlen, Einsparungen, CO2-Reduktion
+- Hashtags: #Produktion #Industrie40 #Nachhaltigkeit #Effizienz #Innovation #Fertigung`,
+
+    retail: `
+INDUSTRIE: EINZELHANDEL - SCORE-OPTIMIERT
+✓ Kundenerlebnis-Focus (erhöht Relevanz-Score)
+✓ Umsatz/Conversion-Zahlen (erhöht Konkretheit-Score)
+✓ Commerce-Hashtags (erhöht Social-Score)
+✓ Kunden-/CEO-Zitate (erhöht Engagement-Score)
+- Fokus auf Kundenerlebnis und Convenience
+- Omnichannel-Ansätze und Digitalisierung
+- Verfügbarkeit, Preise und Aktionen
+- Customer Journey und Personalisierung
+- Zahlen: Filialen, Online-Traffic, Conversion
+- Hashtags: #Retail #Ecommerce #Shopping #Kundenerlebnis #Omnichannel #Digital`,
+
+    automotive: `
+INDUSTRIE: AUTOMOTIVE - SCORE-OPTIMIERT
+✓ Nachhaltigkeit/E-Mobilität (erhöht Relevanz-Score)
+✓ Verbrauch/Performance-Werte (erhöht Konkretheit-Score)
+✓ Auto-Tech-Hashtags (erhöht Social-Score)
+✓ Ingenieur/CEO-Zitate (erhöht Engagement-Score)
+- Fokus auf Nachhaltigkeit und E-Mobilität
+- Technische Spezifikationen und Performance
+- Sicherheitsfeatures und Innovationen
+- Autonomes Fahren und Connectivity
+- Zahlen: Reichweite, PS, Verbrauch, CO2-Werte
+- Hashtags: #Automotive #EMobilität #Innovation #Nachhaltigkeit #AutoTech #Zukunft`,
+
+    education: `
+INDUSTRIE: BILDUNG - SCORE-OPTIMIERT
+✓ Lernfortschritt-Kennzahlen (erhöht Konkretheit-Score)
+✓ Pädagogik-Relevanz (erhöht Relevanz-Score)
+✓ EdTech-Hashtags (erhöht Social-Score)
+✓ Lehrer/Direktor-Zitate (erhöht Engagement-Score)
+- Fokus auf Lernerfolg und Zugänglichkeit
+- Pädagogische Konzepte und Methoden
+- Digitale Transformation im Bildungsbereich
+- Inklusion und Chancengleichheit
+- Zahlen: Schülerzahlen, Erfolgsquoten, Reichweite
+- Hashtags: #Bildung #EdTech #Lernen #Innovation #Digital #Zukunft`
   }
 };
 
@@ -468,6 +562,11 @@ function buildSystemPrompt(context?: StructuredGenerateRequest['context']): stri
   // Zielgruppe mit Score-Optimierung
   if (context?.audience && SYSTEM_PROMPTS.audiences[context.audience as keyof typeof SYSTEM_PROMPTS.audiences]) {
     systemPrompt += '\n' + SYSTEM_PROMPTS.audiences[context.audience as keyof typeof SYSTEM_PROMPTS.audiences];
+  }
+  
+  // NEU: Industrie-spezifische Optimierung
+  if (context?.industry && SYSTEM_PROMPTS.industries[context.industry as keyof typeof SYSTEM_PROMPTS.industries]) {
+    systemPrompt += '\n' + SYSTEM_PROMPTS.industries[context.industry as keyof typeof SYSTEM_PROMPTS.industries];
   }
   
   // NEU: Finaler Score-Check
