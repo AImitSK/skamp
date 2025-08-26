@@ -11,6 +11,7 @@ import {
   FolderIcon
 } from "@heroicons/react/24/outline";
 import { KeyVisualData, CampaignAssetAttachment } from "@/types/pr";
+import { TemplateSelector } from "@/components/templates/TemplateSelector";
 
 interface CampaignPreviewStepProps {
   campaignTitle: string;
@@ -37,6 +38,12 @@ interface CampaignPreviewStepProps {
   attachedAssets: CampaignAssetAttachment[];
   editorContent: string;
   approvalData: { customerApprovalRequired: boolean };
+  
+  // 🆕 Template-Integration
+  organizationId?: string;
+  selectedTemplateId?: string;
+  onTemplateSelect?: (templateId: string, templateName: string) => void;
+  showTemplateSelector?: boolean;
 }
 
 export function CampaignPreviewStep({
@@ -50,12 +57,47 @@ export function CampaignPreviewStep({
   boilerplateSections,
   attachedAssets,
   editorContent,
-  approvalData
+  approvalData,
+  // Template-Integration
+  organizationId,
+  selectedTemplateId,
+  onTemplateSelect,
+  showTemplateSelector = true
 }: CampaignPreviewStepProps) {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Linke Spalte: Pressemitteilung im Papier-Look (2/3 Breite) */}
-      <div className="lg:col-span-2">
+    <div className="space-y-6">
+      {/* Template-Auswahl (konditionell anzeigen) */}
+      {showTemplateSelector && organizationId && onTemplateSelect && (
+        <div className="bg-white border border-gray-200 rounded-lg p-6">
+          <TemplateSelector
+            organizationId={organizationId}
+            selectedTemplateId={selectedTemplateId}
+            onTemplateSelect={onTemplateSelect}
+            showPreview={true}
+            onPreviewError={(error) => {
+              console.error('Template-Vorschau-Fehler:', error);
+              // TODO: Toast-Benachrichtigung hinzufügen
+            }}
+          />
+        </div>
+      )}
+      
+      {/* Template-Auswahl-Hinweis */}
+      {selectedTemplateId && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <InformationCircleIcon className="h-5 w-5 text-blue-500 mr-2" />
+            <p className="text-sm text-blue-800">
+              Template ausgewählt. Die finale PDF wird in diesem Design generiert.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Pressemitteilung-Vorschau */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Linke Spalte: Pressemitteilung im Papier-Look (2/3 Breite) */}
+        <div className="lg:col-span-2">
         <div className="bg-gray-100 p-6 rounded-lg">
           <div className="bg-white shadow-xl rounded-lg p-12 max-w-4xl mx-auto">
             {/* Key Visual im 16:9 Format */}
@@ -236,6 +278,7 @@ export function CampaignPreviewStep({
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

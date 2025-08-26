@@ -143,6 +143,11 @@ export interface PRCampaign {
   contentHtml: string; // Der finale, zusammengesetzte HTML-Content
   status: PRCampaignStatus;
   
+  // 🆕 PDF-TEMPLATE INTEGRATION
+  templateId?: string; // ID des gewählten PDF-Templates
+  templateName?: string; // Name des Templates für UI-Anzeige
+  templateAppliedAt?: Timestamp; // Wann wurde Template angewendet
+  
   // NEU: Structured Content Fields für intelligente Boilerplate-Integration
   mainContent?: string; // Der reine Hauptinhalt ohne Boilerplates (nur der individuelle Teil)
   boilerplateSections?: CampaignBoilerplateSection[]; // Die strukturierten Boilerplate-Sections
