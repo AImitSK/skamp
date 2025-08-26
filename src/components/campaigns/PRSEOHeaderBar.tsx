@@ -1042,8 +1042,8 @@ Beispiel-Format (nutze deine eigenen Werte):
             </div>
           </div>
           
-          {/* Keyword-Score-Status Anzeige */}
-          {keywordScoreData && (
+          {/* Keyword-Score-Status Anzeige - AUSGEBLENDET (zu technisch für User) */}
+          {false && keywordScoreData && (
             <div className="bg-blue-50 rounded-md p-3 mb-3">
               <div className="flex items-center gap-2 text-xs text-blue-700">
                 <CpuChipIcon className="h-4 w-4" />
@@ -1065,8 +1065,8 @@ Beispiel-Format (nutze deine eigenen Werte):
             </div>
           )}
           
-          {/* Social-Score Details */}
-          {(() => {
+          {/* Social-Score Details - AUSGEBLENDET (zu kompliziert für User) */}
+          {false && (() => {
             const detectedHashtags = HashtagDetector.detectHashtags(content);
             const hashtagQuality = detectedHashtags.length > 0 ? HashtagDetector.assessHashtagQuality(detectedHashtags, keywords) : null;
             

@@ -152,41 +152,47 @@ export function CampaignPreviewStep({
         
         {/* PR-Score Box */}
         <div className="bg-white rounded-lg p-4 border border-gray-200">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <MagnifyingGlassIcon className="h-4 w-4 text-gray-600" />
-              <h4 className="text-sm font-semibold text-gray-700">PR-SEO Analyse</h4>
-            </div>
-            <Badge 
-              color={(realPrScore?.totalScore || 0) >= 76 ? 'green' : (realPrScore?.totalScore || 0) >= 51 ? 'amber' : 'red'}
-              className="text-sm font-semibold px-3 py-1"
-            >
-              PR-Score: {realPrScore?.totalScore || 0}/100
-            </Badge>
+          <div className="flex items-center gap-2 mb-3">
+            <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+            <h4 className="font-semibold text-gray-900">PR-SEO Analyse</h4>
           </div>
-          
-          {/* Score Details */}
-          <div className="space-y-2">
-            <div className="text-sm text-gray-600">
-              Headline: {Math.round(realPrScore?.breakdown?.headline || 0)}/100
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Gesamt-Score</span>
+              <Badge 
+                color={(realPrScore?.totalScore || 0) >= 76 ? 'green' : (realPrScore?.totalScore || 0) >= 51 ? 'amber' : 'red'}
+                className="text-sm font-semibold"
+              >
+                {realPrScore?.totalScore || 0}/100
+              </Badge>
             </div>
-            <div className="text-sm text-gray-600">
-              Keywords: {Math.round(realPrScore?.breakdown?.keywords || 0)}/100
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Headline</span>
+              <span className="font-mono text-sm">{Math.round(realPrScore?.breakdown?.headline || 0)}/100</span>
             </div>
-            <div className="text-sm text-gray-600">
-              Struktur: {Math.round(realPrScore?.breakdown?.structure || 0)}/100
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Keywords</span>
+              <span className="font-mono text-sm">{Math.round(realPrScore?.breakdown?.keywords || 0)}/100</span>
             </div>
-            <div className="text-sm text-gray-600">
-              Relevanz: {Math.round(realPrScore?.breakdown?.relevance || 0)}/100
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Struktur</span>
+              <span className="font-mono text-sm">{Math.round(realPrScore?.breakdown?.structure || 0)}/100</span>
             </div>
-            <div className="text-sm text-gray-600">
-              Konkretheit: {Math.round(realPrScore?.breakdown?.concreteness || 0)}/100
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Relevanz</span>
+              <span className="font-mono text-sm">{Math.round(realPrScore?.breakdown?.relevance || 0)}/100</span>
             </div>
-            <div className="text-sm text-gray-600">
-              Engagement: {Math.round(realPrScore?.breakdown?.engagement || 0)}/100
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Konkretheit</span>
+              <span className="font-mono text-sm">{Math.round(realPrScore?.breakdown?.concreteness || 0)}/100</span>
             </div>
-            <div className="text-sm text-gray-600">
-              Social: {Math.round(realPrScore?.breakdown?.social || 0)}/100
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Engagement</span>
+              <span className="font-mono text-sm">{Math.round(realPrScore?.breakdown?.engagement || 0)}/100</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">Social</span>
+              <span className="font-mono text-sm">{Math.round(realPrScore?.breakdown?.social || 0)}/100</span>
             </div>
             
             {keywords.length > 0 && realPrScore?.keywordMetrics && realPrScore.keywordMetrics.length > 0 && (
