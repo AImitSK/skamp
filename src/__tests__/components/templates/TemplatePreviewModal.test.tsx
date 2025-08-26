@@ -81,7 +81,9 @@ describe('TemplatePreviewModal Component', () => {
     expect(screen.getByText('Template-Vorschau: Test Template')).toBeInTheDocument();
     
     await waitFor(() => {
-      expect(screen.getByText('Mock Preview HTML')).toBeInTheDocument();
+      const iframe = screen.getByTitle('Template-Vorschau: Test Template');
+      expect(iframe).toBeInTheDocument();
+      expect(iframe).toHaveAttribute('srcDoc');
     });
   });
 
@@ -96,7 +98,7 @@ describe('TemplatePreviewModal Component', () => {
       />
     );
 
-    const closeButton = screen.getByRole('button', { name: /schließen/i });
+    const closeButton = screen.getByRole('button', { name: /modal schließen/i });
     fireEvent.click(closeButton);
 
     expect(mockOnClose).toHaveBeenCalled();
@@ -114,7 +116,8 @@ describe('TemplatePreviewModal Component', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Mock Preview HTML')).toBeInTheDocument();
+      const iframe = screen.getByTitle('Template-Vorschau: Test Template');
+      expect(iframe).toBeInTheDocument();
     });
 
     const selectButton = screen.getByRole('button', { name: /template verwenden/i });
@@ -172,6 +175,17 @@ describe('TemplatePreviewModal Component', () => {
         organizationId="test-org"
       />
     );
+
+    // Warte auf initial Preview-Load
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/v1/pdf-templates/preview',
+        expect.objectContaining({
+          method: 'POST',
+          body: expect.stringContaining('"mockDataType":"default"')
+        })
+      );
+    });
 
     const mockDataSelector = screen.getByRole('combobox', { name: /mock-daten/i });
     fireEvent.change(mockDataSelector, { target: { value: 'tech' } });

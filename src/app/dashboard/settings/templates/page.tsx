@@ -13,16 +13,23 @@ import {
   EyeIcon,
   PencilIcon,
   TrashIcon,
-  PlusIcon
+  PlusIcon,
+  ScaleIcon,
+  CheckIcon
 } from '@heroicons/react/24/outline';
 // pdfTemplateService wird über API Routes verwendet
 import type { PDFTemplate } from '@/types/pdf-template';
+import { TemplatePreviewModal } from '@/components/templates/TemplatePreviewModal';
+import { TemplateComparison } from '@/components/templates/TemplateComparison';
 
 export default function TemplatesPage() {
   const { currentOrganization } = useOrganization();
   const [templates, setTemplates] = useState<PDFTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTemplate, setSelectedTemplate] = useState<PDFTemplate | null>(null);
+  const [previewTemplate, setPreviewTemplate] = useState<PDFTemplate | null>(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [showComparisonModal, setShowComparisonModal] = useState(false);
 
   useEffect(() => {
     if (currentOrganization) {
@@ -82,14 +89,34 @@ export default function TemplatesPage() {
     }
   };
 
-  const handlePreviewTemplate = async (template: PDFTemplate) => {
-    try {
-      // Template Vorschau öffnen
-      const previewUrl = `/api/v1/pdf-templates/preview?templateId=${template.id}`;
-      window.open(previewUrl, '_blank');
-    } catch (error) {
-      console.error('Error previewing template:', error);
-    }
+  const handlePreviewTemplate = (template: PDFTemplate) => {
+    console.log('📖 Template-Vorschau öffnen:', template.id);
+    setPreviewTemplate(template);
+    setShowPreviewModal(true);
+  };
+
+  const handleClosePreviewModal = () => {
+    setShowPreviewModal(false);
+    setPreviewTemplate(null);
+  };
+
+  const handleSelectFromPreview = (template: PDFTemplate) => {
+    console.log('✅ Template aus Vorschau ausgewählt:', template.id);
+    handleSetDefault(template);
+  };
+
+  const handleShowComparison = () => {
+    console.log('🔍 Template-Vergleich öffnen');
+    setShowComparisonModal(true);
+  };
+
+  const handleCloseComparison = () => {
+    setShowComparisonModal(false);
+  };
+
+  const handleSelectFromComparison = (template: PDFTemplate) => {
+    console.log('✅ Template aus Vergleich ausgewählt:', template.id);
+    handleSetDefault(template);
   };
 
   const handleSetDefault = async (template: PDFTemplate) => {
@@ -147,7 +174,16 @@ export default function TemplatesPage() {
               Verwalte deine PDF-Layout-Vorlagen für Pressemitteilungen
             </Text>
           </div>
-          <div className="mt-4 md:mt-0">
+          <div className="mt-4 md:mt-0 flex gap-2">
+            <Button 
+              onClick={handleShowComparison}
+              color="secondary"
+              disabled={templates.length < 2}
+              className="px-6 py-2"
+            >
+              <ScaleIcon className="h-4 w-4 mr-2" />
+              Templates vergleichen
+            </Button>
             <Button className="bg-primary hover:bg-primary-hover px-6 py-2">
               <PlusIcon className="h-4 w-4 mr-2" />
               Custom Template erstellen
@@ -190,7 +226,7 @@ export default function TemplatesPage() {
               <div className="flex gap-2">
                 <Button 
                   size="sm" 
-                  variant="ghost"
+                  color="secondary"
                   onClick={() => handlePreviewTemplate(template)}
                 >
                   <EyeIcon className="h-4 w-4" />
@@ -200,10 +236,10 @@ export default function TemplatesPage() {
                 {!template.isDefault && (
                   <Button 
                     size="sm" 
-                    variant="ghost"
+                    color="secondary"
                     onClick={() => handleSetDefault(template)}
                   >
-                    <PencilIcon className="h-4 w-4" />
+                    <CheckIcon className="h-4 w-4" />
                     Als Standard
                   </Button>
                 )}
@@ -212,8 +248,7 @@ export default function TemplatesPage() {
               {!template.isDefault && (
                 <Button 
                   size="sm" 
-                  color="red" 
-                  variant="ghost"
+                  color="red"
                   onClick={() => {/* Handle Delete */}}
                 >
                   <TrashIcon className="h-4 w-4" />
@@ -248,6 +283,23 @@ export default function TemplatesPage() {
         </div>
       </div>
       
+      {/* Template Preview Modal */}
+      <TemplatePreviewModal
+        template={previewTemplate}
+        isOpen={showPreviewModal}
+        onClose={handleClosePreviewModal}
+        onSelect={handleSelectFromPreview}
+        organizationId={currentOrganization?.id || ''}
+      />
+
+      {/* Template Comparison Modal */}
+      <TemplateComparison
+        templates={templates}
+        isOpen={showComparisonModal}
+        onClose={handleCloseComparison}
+        onSelect={handleSelectFromComparison}
+        organizationId={currentOrganization?.id || ''}
+      />
     </div>
   );
 }

@@ -17,17 +17,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       templateId, 
       customizations, 
       mockData, 
+      mockDataType = 'default',
       organizationId,
       format = 'html',
-      includeMetadata = false 
+      includeMetadata = false,
+      renderOptions = {}
     } = body;
 
     console.log('📋 Preview-Request:', {
       templateId,
       hasCustomizations: !!customizations,
       hasMockData: !!mockData,
+      mockDataType,
       organizationId,
-      format
+      format,
+      renderOptions
     });
 
     // Validierung
@@ -61,8 +65,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
     }
 
-    // Mock-Daten verwenden oder Default-Mock-Daten
-    const previewMockData: MockPRData = mockData || getDefaultMockData();
+    // Mock-Daten basierend auf Typ laden oder Custom Mock-Daten verwenden
+    const previewMockData: MockPRData = mockData || getMockDataByType(mockDataType as 'default' | 'tech' | 'healthcare' | 'finance');
     
     console.log('📝 Verwende Mock-Daten:', {
       title: previewMockData.title,
@@ -192,6 +196,23 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 }
 
 // === HELPER FUNCTIONS ===
+
+/**
+ * Mock-Daten basierend auf Industrie-Typ laden
+ */
+function getMockDataByType(type: 'default' | 'tech' | 'healthcare' | 'finance'): MockPRData {
+  switch (type) {
+    case 'tech':
+      return getTechMockData();
+    case 'healthcare':
+      return getHealthcareMockData();
+    case 'finance':
+      return getFinanceMockData();
+    case 'default':
+    default:
+      return getDefaultMockData();
+  }
+}
 
 /**
  * Standard Mock-Daten für Preview
