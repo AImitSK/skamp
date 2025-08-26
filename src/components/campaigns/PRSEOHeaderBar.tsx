@@ -379,7 +379,7 @@ export function PRSEOHeaderBar({
   }, [keywords]);
 
   // PR-Score berechnen
-  const calculatePRScore = useCallback((prMetrics: PRMetrics, keywordMetrics: KeywordMetrics[], text: string): { totalScore: number, breakdown: PRScoreBreakdown, recommendations: string[] } => {
+  const calculatePRScore = useCallback((prMetrics: PRMetrics, keywordMetrics: KeywordMetrics[], text: string, currentKeywordScoreData?: KeywordScoreData | null): { totalScore: number, breakdown: PRScoreBreakdown, recommendations: string[] } => {
     const recommendations: string[] = [];
     
     // Ermittle dominante Zielgruppe aus Keywords
@@ -454,29 +454,34 @@ export function PRSEOHeaderBar({
 
     // 20% Keyword-Performance - NEUE BONUS-SYSTEM LOGIK
     let keywordScore = 0;
+    let keywordScoreResult: any = null;
     
-    // Verwende neues Bonus-System für Keyword-Bewertung
-    const keywordScoreResult = seoKeywordService.calculateKeywordScore(keywords, text, keywordMetrics);
-    
-    // Keyword-Score aus Bonus-System (0-100) direkt übernehmen
-    keywordScore = keywordScoreResult.totalScore;
+    // Keyword-Score aus übergebenem Score-Daten übernehmen wenn verfügbar
+    if (currentKeywordScoreData) {
+      keywordScore = currentKeywordScoreData.totalScore;
+      keywordScoreResult = currentKeywordScoreData;
+    } else {
+      // Fallback: Verwende neues Bonus-System für Keyword-Bewertung
+      keywordScoreResult = seoKeywordService.calculateKeywordScore(keywords, text, keywordMetrics);
+      keywordScore = keywordScoreResult.totalScore;
+    }
     
     // Generiere spezifische Empfehlungen basierend auf Bonus-System
-    if (keywordScoreResult.baseScore < 30) {
+    if (keywordScoreResult && keywordScoreResult.baseScore < 30) {
       recommendations.push('🎯 Keywords besser positionieren: In Headline und ersten Absatz einbauen');
     }
     
-    if (keywordScoreResult.breakdown.keywordDistribution < 10) {
+    if (keywordScoreResult && keywordScoreResult.breakdown.keywordDistribution < 10) {
       recommendations.push('📊 Keywords gleichmäßiger im Text verteilen');
     }
     
-    if (keywordScoreResult.breakdown.naturalFlow < 5) {
+    if (keywordScoreResult && keywordScoreResult.breakdown.naturalFlow < 5) {
       recommendations.push('⚠️ Keyword-Stuffing vermeiden - natürlichere Einbindung');
     }
     
-    if (keywordScoreResult.hasAIAnalysis && keywordScoreResult.aiBonus < 20) {
+    if (keywordScoreResult && keywordScoreResult.hasAIAnalysis && keywordScoreResult.aiBonus < 20) {
       recommendations.push('[KI] Thematische Relevanz der Keywords zum Content verbesser');
-    } else if (!keywordScoreResult.hasAIAnalysis && keywordScoreResult.breakdown.fallbackBonus < 20) {
+    } else if (keywordScoreResult && !keywordScoreResult.hasAIAnalysis && keywordScoreResult.breakdown.fallbackBonus < 20) {
       recommendations.push('🤖 KI-Analyse aktualisieren für erweiterte Keyword-Bewertung');
     }
     
@@ -826,14 +831,49 @@ Beispiel-Format (nutze deine eigenen Werte):
     setKeywordMetrics(prev => prev.filter(km => km.keyword !== keywordToRemove));
   }, [keywords, onKeywordsChange]);
 
-  // Metriken aktualisieren bei Content-Änderung
+  // Metriken aktualisieren bei Content-Änderung - ohne circular dependencies
   useEffect(() => {
     if (keywords.length === 0) return;
 
-    // Basis-Metriken für alle Keywords neu berechnen
+    // Basis-Metriken für alle Keywords neu berechnen (inline um Dependencies zu vermeiden)
     const updatedMetrics = keywords.map(keyword => {
       const existing = keywordMetrics.find(km => km.keyword === keyword);
-      const basicMetrics = calculateBasicMetrics(keyword, content);
+      
+      // Inline basic metrics calculation
+      const cleanText = content.replace(/<[^>]*>/g, '').toLowerCase();
+      const totalWords = cleanText.split(/\s+/).filter(word => word.length > 0).length;
+      
+      const regex = new RegExp(`\\b${keyword.toLowerCase()}\\b`, 'gi');
+      const matches = cleanText.match(regex) || [];
+      const occurrences = matches.length;
+      const density = totalWords > 0 ? (occurrences / totalWords) * 100 : 0;
+      
+      const firstParagraphText = cleanText.split('\n')[0] || '';
+      const inFirstParagraph = regex.test(firstParagraphText);
+      const inHeadline = regex.test(documentTitle.toLowerCase());
+      
+      // Verteilung analysieren
+      const textParts = cleanText.split(/\s+/);
+      const keywordPositions = textParts.map((word, index) => 
+        regex.test(word) ? index / textParts.length : -1
+      ).filter(pos => pos >= 0);
+      
+      let distribution: 'gut' | 'mittel' | 'schlecht' = 'schlecht';
+      if (keywordPositions.length >= 3) {
+        const spread = Math.max(...keywordPositions) - Math.min(...keywordPositions);
+        distribution = spread > 0.4 ? 'gut' : spread > 0.2 ? 'mittel' : 'schlecht';
+      } else if (keywordPositions.length >= 2) {
+        distribution = 'mittel';
+      }
+
+      const basicMetrics = {
+        keyword,
+        density,
+        occurrences,
+        inHeadline,
+        inFirstParagraph,
+        distribution
+      };
       
       // Behalte KI-Daten falls vorhanden
       return {
@@ -847,16 +887,19 @@ Beispiel-Format (nutze deine eigenen Werte):
     });
 
     setKeywordMetrics(updatedMetrics);
-  }, [content, keywords, calculateBasicMetrics]);
+  }, [content, keywords, documentTitle]); // Nur Basis-Dependencies ohne Functions
 
-  // PR-Score und Keyword-Score berechnen
+  // PR-Score und Keyword-Score berechnen - ohne circular dependencies
   useEffect(() => {
+    // Direkte Berechnung ohne useCallback dependencies um Endlosschleife zu vermeiden
     const prMetrics = calculatePRMetrics(content, documentTitle);
-    const { totalScore, breakdown, recommendations: newRecommendations } = calculatePRScore(prMetrics, keywordMetrics, content);
     
-    // Keyword-Score-Daten separat berechnen für UI-Anzeige
+    // Keyword-Score-Daten erst berechnen
     const keywordScoreResult = seoKeywordService.calculateKeywordScore(keywords, content, keywordMetrics);
     setKeywordScoreData(keywordScoreResult);
+    
+    // Dann PR-Score mit Keyword-Score-Daten berechnen (inline um Dependencies zu vermeiden)
+    const { totalScore, breakdown, recommendations: newRecommendations } = calculatePRScore(prMetrics, keywordMetrics, content, keywordScoreResult);
     
     setPrScore(totalScore);
     setScoreBreakdown(breakdown);
@@ -871,7 +914,7 @@ Beispiel-Format (nutze deine eigenen Werte):
         keywordMetrics
       });
     }
-  }, [content, documentTitle, keywordMetrics, keywords, calculatePRMetrics, calculatePRScore, onSeoScoreChange]);
+  }, [content, documentTitle, keywordMetrics, keywords]); // Nur die Basis-Dependencies ohne Functions
 
   // Score-Farbe bestimmen
   const getScoreColor = (score: number) => {

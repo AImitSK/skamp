@@ -191,7 +191,8 @@ export default function SimpleBoilerplateLoader({
           <Button
             type="button"
             onClick={() => setShowSelector(!showSelector)}
-            className="bg-[#005fab] hover:bg-[#004a8c] text-white text-sm px-3 py-1.5"
+            color="secondary"
+            className="text-sm px-3 py-1.5"
           >
             <PlusIcon className="h-4 w-4 mr-1" />
             Textbaustein
