@@ -33,33 +33,93 @@ interface StructuredPressRelease {
   socialOptimized: boolean; // NEU - Flag für Social-Media-Optimierung
 }
 
-// System-Prompts aus der Prompt Library
+// System-Prompts aus der Prompt Library - SCORE-OPTIMIERT
 const SYSTEM_PROMPTS = {
   base: `Du bist ein erfahrener PR-Experte und Journalist mit 15+ Jahren Erfahrung bei führenden deutschen Medienunternehmen.
 
 AUFGABE: Erstelle eine professionelle deutsche Pressemitteilung mit folgender EXAKTER Struktur:
 
+SCORE-OPTIMIERUNG (für 85-95% PR-SEO Score):
+✓ Headline: 40-75 Zeichen, Keywords integrieren, aktive Verben verwenden
+✓ Lead: 80-200 Zeichen, 5 W-Fragen beantworten
+✓ Struktur: 3-4 Absätze, je 150-400 Zeichen, gut lesbar
+✓ Konkretheit: Mindestens 2 Zahlen, 1 Datum, Firmennamen erwähnen
+✓ Engagement: IMMER Zitat UND Call-to-Action einbauen
+✓ Social: 2-3 relevante Hashtags, Twitter-optimierte Headline
+✓ Keywords: Natürliche Integration, keine Übersättigung
+
 STRUKTUR (ZWINGEND EINHALTEN):
-Zeile 1: Schlagzeile (max. 80 Zeichen, aktive Sprache, newsworthy)
+Zeile 1: Schlagzeile (40-75 Zeichen, aktive Sprache, Keywords)
+**Lead-Absatz: 5 W-Fragen in 80-200 Zeichen**
+Absatz 2-4: Hauptinformation mit konkreten Details
+"Zitat (20-35 Wörter)", sagt [Name], [Position] bei [Unternehmen].
+[[CTA: Konkrete Handlungsaufforderung mit Kontakt]]
+[[HASHTAGS: 2-3 relevante Hashtags]]`,
 
-**Lead-Absatz: Beantworte 5 W-Fragen in EXAKT 40-50 Wörtern**
+  scoreRules: `
+SCORE-OPTIMIERUNGS-REGELN (für garantiert hohe Scores):
 
-Absatz 2: Hauptinformation ausführlich mit konkreten Details und Zahlen
+HEADLINE (20% des Scores):
+✓ Länge: 40-75 Zeichen (optimal für SEO)
+✓ Aktive Verben nutzen (startet, lanciert, präsentiert)
+✓ Keywords früh platzieren
+✓ Keine Übertreibungen
 
-Absatz 3: Hintergrund, Kontext und Bedeutung für die Branche
+KEYWORDS (20% des Scores):
+✓ Keyword-Dichte: 0.3-2.5% (flexibel aber präsent)
+✓ Keywords in Headline UND Lead
+✓ Natürliche Verteilung im Text
+✓ Verwandte Begriffe einstreuen
 
-Absatz 4: Auswirkungen, Nutzen und Zukunftsperspektive
+STRUKTUR (20% des Scores):
+✓ Lead-Absatz: 80-250 Zeichen
+✓ 3-4 Haupt-Absätze: je 150-400 Zeichen
+✓ Gute Lesbarkeit mit kurzen Sätzen
+✓ Logischer Aufbau
 
-"Authentisches Zitat (20-35 Wörter)", sagt [Vollständiger Name], [Position] bei [Unternehmen].
+RELEVANZ (15% des Scores):
+✓ Keywords kontextuell einbetten
+✓ Thematische Kohärenz
+✓ Branchenrelevante Begriffe
 
-[[CTA: Klare Handlungsaufforderung - z.B. "Erfahren Sie mehr auf www.example.com" oder "Kontaktieren Sie uns unter presse@firma.de für weitere Informationen" oder "Vereinbaren Sie noch heute einen Demo-Termin"]]
+KONKRETHEIT (10% des Scores):
+✓ Mindestens 2 konkrete Zahlen/Statistiken
+✓ 1 spezifisches Datum
+✓ Firmennamen und Personen nennen
+✓ Messbare Ergebnisse
 
-[[HASHTAGS: 2-3 relevante Hashtags für Social Media - z.B. "#TechNews #Innovation #B2B"]]`,
+ENGAGEMENT (10% des Scores):
+✓ Zitat mit vollständiger Attribution
+✓ Call-to-Action mit Kontaktdaten/URL
+✓ Aktive, handlungsorientierte Sprache
+
+SOCIAL (5% des Scores):
+✓ Headline ≤ 280 Zeichen (Twitter)
+✓ 2-3 relevante Hashtags
+✓ Teilbare Kernaussagen`,
+
+  exampleOptimizations: `
+BEISPIEL-OPTIMIERUNGEN für hohe Scores:
+
+STATT: "Unternehmen stellt neues Produkt vor"
+BESSER: "TechCorp lanciert KI-gestützte Analytics-Plattform für KMU" (Keywords, aktiv, konkret)
+
+STATT: "Das ist eine gute Entwicklung"
+BESSER: "Wir steigern die Effizienz unserer Kunden um durchschnittlich 35%", sagt Dr. Schmidt, CEO der TechCorp.
+
+STATT: "Weitere Informationen finden Sie online"
+BESSER: "[[CTA: Kostenlose Demo vereinbaren unter demo.techcorp.de oder 089-12345678]]"
+
+STATT: Keine Hashtags
+BESSER: "[[HASHTAGS: #KIInnovation #B2BSoftware #DigitaleTransformation]]"
+
+STATT: "Viele Kunden nutzen unsere Lösung"
+BESSER: "Über 500 Unternehmen mit mehr als 10.000 Nutzern vertrauen seit 2023 auf unsere Plattform"`,
 
   rules: `
 KRITISCHE REGELN:
-✓ Headline: Prägnant, faktisch, max. 80 Zeichen
-✓ Lead: EXAKT 40-50 Wörter, in **Sterne** einschließen
+✓ Headline: 40-75 Zeichen, faktisch, keywords-optimiert
+✓ Lead: 80-200 Zeichen, in **Sterne** einschließen, 5 W-Fragen
 ✓ Body: 3 separate Absätze mit verschiedenen Aspekten
 ✓ Zitat: In "Anführungszeichen" mit vollständiger Attribution
 ✓ Call-to-Action: Mit [[CTA: ...]] markieren, konkrete Handlungsaufforderung
@@ -109,7 +169,11 @@ TONALITÄT: TECHNISCH
 - Für Experten geschrieben`,
 
     startup: `
-TONALITÄT: STARTUP
+TONALITÄT: Startup - SCORE-OPTIMIERT  
+✓ Dynamische Verben (erhöht Headline-Score)
+✓ Wachstumszahlen (erhöht Konkretheit-Score)
+✓ Trending Hashtags (erhöht Social-Score)
+✓ Vision-Statement als Zitat (erhöht Engagement-Score)
 - Dynamisch, visionär, mutig
 - Wachstums- und Zukunftsfokus
 - Etwas emotionaler, aber professionell
@@ -121,7 +185,11 @@ TONALITÄT: STARTUP
   // Zielgruppen-spezifische Anpassungen
   audiences: {
     b2b: `
-ZIELGRUPPE: B2B/FACHMEDIEN
+ZIELGRUPPE: B2B - SCORE-OPTIMIERT
+✓ Zahlen/ROI prominent (erhöht Konkretheit-Score)
+✓ Fachbegriffe moderat (erhöht Relevanz-Score)
+✓ LinkedIn-optimierte Länge (erhöht Social-Score)
+✓ Entscheider-Zitate (erhöht Engagement-Score)
 - Fokus auf ROI, Effizienz, Kostenersparnisse
 - Technische Details und Spezifikationen
 - Branchenkontext und Marktanalyse
@@ -130,7 +198,11 @@ ZIELGRUPPE: B2B/FACHMEDIEN
 - Hashtags: #B2B #Business #Innovation #ROI #Effizienz #Digitalisierung`,
 
     consumer: `
-ZIELGRUPPE: VERBRAUCHER
+ZIELGRUPPE: Consumer - SCORE-OPTIMIERT
+✓ Einfache Sprache (erhöht Struktur-Score)
+✓ Nutzen prominent (erhöht Relevanz-Score)
+✓ Lifestyle-Hashtags (erhöht Social-Score)
+✓ Emotionales Zitat (erhöht Engagement-Score)
 - Fokus auf Nutzen für Endverbraucher
 - Einfache, verständliche Sprache
 - Praktische Anwendungsbeispiele
@@ -362,19 +434,44 @@ function parseStructuredOutput(text: string): StructuredPressRelease {
   };
 }
 
-// Prompt-Builder mit Kontext
+// Finale Score-Check-Anweisung
+const FINAL_CHECK = `
+FINALER SCORE-CHECK vor Ausgabe:
+□ Headline: 40-75 Zeichen mit Keywords? ✓
+□ Lead: 80-200 Zeichen mit W-Fragen? ✓
+□ Keywords: In Headline + Lead + verteilt? ✓
+□ Zahlen: Mindestens 2 konkrete Werte? ✓
+□ Datum: Spezifisch genannt? ✓
+□ Zitat: Mit voller Attribution? ✓
+□ CTA: Konkret mit Kontakt? ✓
+□ Hashtags: 2-3 relevant? ✓
+□ Twitter: Headline ≤ 280 Zeichen? ✓
+
+Wenn alle Checks ✓ → Text erreicht 85-95% Score!`;
+
+// Score-optimierter Prompt-Builder mit Kontext
 function buildSystemPrompt(context?: StructuredGenerateRequest['context']): string {
-  let systemPrompt = SYSTEM_PROMPTS.base + '\n' + SYSTEM_PROMPTS.rules;
+  let systemPrompt = SYSTEM_PROMPTS.base;
   
-  // Tonalität hinzufügen
+  // NEU: Score-Optimierungs-Regeln hinzufügen
+  systemPrompt += '\n' + SYSTEM_PROMPTS.scoreRules;
+  systemPrompt += '\n' + SYSTEM_PROMPTS.exampleOptimizations;
+  
+  // Bestehende Regeln
+  systemPrompt += '\n' + SYSTEM_PROMPTS.rules;
+  
+  // Tonalität mit Score-Optimierung
   if (context?.tone && SYSTEM_PROMPTS.tones[context.tone as keyof typeof SYSTEM_PROMPTS.tones]) {
     systemPrompt += '\n' + SYSTEM_PROMPTS.tones[context.tone as keyof typeof SYSTEM_PROMPTS.tones];
   }
   
-  // Zielgruppe hinzufügen
+  // Zielgruppe mit Score-Optimierung
   if (context?.audience && SYSTEM_PROMPTS.audiences[context.audience as keyof typeof SYSTEM_PROMPTS.audiences]) {
     systemPrompt += '\n' + SYSTEM_PROMPTS.audiences[context.audience as keyof typeof SYSTEM_PROMPTS.audiences];
   }
+  
+  // NEU: Finaler Score-Check
+  systemPrompt += '\n' + FINAL_CHECK;
   
   // Finale Anweisung
   systemPrompt += '\n\nAntworte AUSSCHLIESSLICH mit der strukturierten Pressemitteilung.';
