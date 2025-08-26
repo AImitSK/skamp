@@ -2,6 +2,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   InformationCircleIcon,
   DocumentTextIcon,
@@ -36,6 +37,9 @@ interface CampaignPreviewStepProps {
   attachedAssets: CampaignAssetAttachment[];
   editorContent: string;
   approvalData: { customerApprovalRequired: boolean };
+  // PDF-Funktionalität
+  handleGeneratePdf?: (forApproval: boolean) => Promise<void>;
+  generatingPdf?: boolean;
 }
 
 export function CampaignPreviewStep({
@@ -49,7 +53,9 @@ export function CampaignPreviewStep({
   boilerplateSections,
   attachedAssets,
   editorContent,
-  approvalData
+  approvalData,
+  handleGeneratePdf,
+  generatingPdf
 }: CampaignPreviewStepProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -232,6 +238,44 @@ export function CampaignPreviewStep({
                   +{attachedAssets.length - 3} weitere
                 </div>
               )}
+            </div>
+          </div>
+        )}
+        
+        {/* PDF-Vorschau */}
+        {handleGeneratePdf && (
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <DocumentTextIcon className="h-5 w-5 text-gray-400" />
+                <h4 className="font-semibold text-gray-900">PDF-Vorschau</h4>
+              </div>
+              
+              <Button
+                type="button"
+                onClick={() => handleGeneratePdf(false)}
+                disabled={generatingPdf}
+                color="secondary"
+              >
+                {generatingPdf ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
+                    PDF wird erstellt...
+                  </>
+                ) : (
+                  <>
+                    <DocumentTextIcon className="h-4 w-4 mr-2" />
+                    PDF generieren
+                  </>
+                )}
+              </Button>
+            </div>
+            
+            {/* PDF-Hinweis */}
+            <div className="text-center py-6 text-gray-500">
+              <DocumentTextIcon className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+              <p>Noch keine PDF-Version erstellt</p>
+              <p className="text-sm">Klicken Sie auf &ldquo;PDF generieren&rdquo; um eine Vorschau zu erstellen</p>
             </div>
           </div>
         )}

@@ -938,7 +938,8 @@ Beispiel-Format (nutze deine eigenen Werte):
                   handleAddKeyword();
                 }
               }}
-              className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap px-3 py-1.5 text-sm"
+              color="secondary"
+              className="whitespace-nowrap px-3 py-1.5 text-sm"
             >
               Hinzufügen
             </Button>

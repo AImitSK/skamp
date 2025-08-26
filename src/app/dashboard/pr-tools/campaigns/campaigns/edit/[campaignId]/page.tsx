@@ -295,7 +295,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
   const [successMessage, setSuccessMessage] = useState<string>('');
   const [realPrScore, setRealPrScore] = useState<{
     totalScore: number;
-    breakdown: { headline: number; keywords: number; structure: number; relevance: number; concreteness: number; engagement: number };
+    breakdown: { headline: number; keywords: number; structure: number; relevance: number; concreteness: number; engagement: number; social: number };
     hints: string[];
     keywordMetrics: any[];
   } | null>(null);
@@ -305,7 +305,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
     const calculatePrScore = () => {
       const content = `${campaignTitle || ''}\n\n${editorContent || ''}`.trim();
       if (!content || content.length < 50) {
-        setRealPrScore({ totalScore: 28, breakdown: { headline: 0, keywords: 0, structure: 0, relevance: 0, concreteness: 0, engagement: 0 }, hints: ['Fügen Sie mehr Inhalt hinzu', 'Verwenden Sie aussagekräftige Keywords'], keywordMetrics: [] });
+        setRealPrScore({ totalScore: 28, breakdown: { headline: 0, keywords: 0, structure: 0, relevance: 0, concreteness: 0, engagement: 0, social: 0 }, hints: ['Fügen Sie mehr Inhalt hinzu', 'Verwenden Sie aussagekräftige Keywords'], keywordMetrics: [] });
         return;
       }
       
@@ -351,7 +351,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
       }
       
       score = Math.min(100, score);
-      setRealPrScore({ totalScore: score, breakdown: { headline: 0, keywords: 0, structure: 0, relevance: 0, concreteness: 0, engagement: 0 }, hints, keywordMetrics: [] });
+      setRealPrScore({ totalScore: score, breakdown: { headline: 0, keywords: 0, structure: 0, relevance: 0, concreteness: 0, engagement: 0, social: 0 }, hints, keywordMetrics: [] });
     };
     
     const timeoutId = setTimeout(calculatePrScore, 500); // Debounce
@@ -524,7 +524,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         if (campaign.seoMetrics?.prScore) {
           setRealPrScore({
             totalScore: campaign.seoMetrics.prScore,
-            breakdown: { headline: 0, keywords: 0, structure: 0, relevance: 0, concreteness: 0, engagement: 0 },
+            breakdown: { headline: 0, keywords: 0, structure: 0, relevance: 0, concreteness: 0, engagement: 0, social: 0 },
             hints: campaign.seoMetrics.prHints || [],
             keywordMetrics: []
           });
@@ -1409,6 +1409,8 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                 attachedAssets={attachedAssets}
                 editorContent={editorContent}
                 approvalData={approvalData}
+                handleGeneratePdf={handleGeneratePdf}
+                generatingPdf={generatingPdf}
               />
             </div>
             

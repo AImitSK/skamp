@@ -129,10 +129,9 @@ export function ApprovalSettings({
           {(previousFeedback?.length > 0 || currentApproval?.history?.length > 0) && (
             <div className="mt-3">
               <Button
-                variant="outline"
-                size="sm"
+                color="secondary"
                 onClick={() => setShowHistoryModal(true)}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 text-sm px-3 py-1.5"
               >
                 <ChatBubbleLeftRightIcon className="h-4 w-4" />
                 Chat-Verlauf anzeigen

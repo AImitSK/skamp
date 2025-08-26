@@ -656,6 +656,7 @@ export default function IntelligentBoilerplateSection({
             <Button
               type="button"
               onClick={() => setShowSelector(true)}
+              color="secondary"
               className="whitespace-nowrap"
             >
               Baustein hinzufügen

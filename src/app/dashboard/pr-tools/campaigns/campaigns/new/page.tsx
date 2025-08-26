@@ -187,16 +187,17 @@ export default function NewPRCampaignPage() {
         const hasMainContent = editorContent && editorContent.trim() && editorContent !== '<p></p>';
         const marginClass = hasMainContent ? 'mt-12' : 'mt-8';
         
-        html += `<div class="boilerplate-sections ${marginClass}">
-          <h2 class="text-xl font-bold text-gray-900 mb-4">Textbausteine</h2>`;
+        html += `<div class="boilerplate-sections ${marginClass}">`;
         
         visibleSections.forEach(section => {
           const content = section.content || 
                          section.boilerplate?.content ||
                          '';
           
-          // Nur customTitle anzeigen, keine internen Namen
-          const title = section.customTitle || '';
+          // Titel-Prüfung: customTitle oder boilerplate name als Fallback
+          const title = section.customTitle || 
+                       section.boilerplate?.name ||
+                       '';
           
           html += `<div class="boilerplate-section mb-8">
             ${title ? `<h3 class="text-lg font-semibold mb-2 text-gray-900">${title}</h3>` : ''}
@@ -1089,7 +1090,8 @@ export default function NewPRCampaignPage() {
                       <Button
                         type="button"
                         onClick={() => setShowAssetSelector(true)}
-                        className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm px-3 py-1.5 flex items-center gap-2 mt-3"
+                        color="secondary"
+                        className="text-sm px-3 py-1.5 flex items-center gap-2 mt-3"
                       >
                         <PlusIcon className="h-4 w-4" />
                         Weitere Medien hinzufügen
@@ -1196,6 +1198,8 @@ export default function NewPRCampaignPage() {
               attachedAssets={attachedAssets}
               editorContent={editorContent}
               approvalData={approvalData}
+              handleGeneratePdf={handleGeneratePdf}
+              generatingPdf={generatingPdf}
             />
           </div>
         )}

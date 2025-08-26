@@ -19,6 +19,8 @@ const styles = {
   colors: {
     // Primary-Button für Hauptaktionen (Standard)
     primary: 'border-transparent bg-primary text-white hover:bg-primary-hover focus:ring-primary',
+    // Secondary-Button für Aktionen in Boxen (defensiver)
+    secondary: 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900 focus:ring-gray-400',
     // Zinc-Button für sekundäre Aktionen
     zinc: 'border-transparent bg-zinc-800 text-white hover:bg-zinc-700 dark:bg-zinc-600 dark:hover:bg-zinc-500',
     // Indigo-Button für spezielle Aktionen
@@ -30,7 +32,7 @@ const styles = {
 
 // Typ-Definitionen für die Button-Props, jetzt vereinfacht
 type ButtonProps = {
-  color?: 'primary' | 'zinc' | 'indigo';
+  color?: 'primary' | 'secondary' | 'zinc' | 'indigo';
   plain?: boolean;
   className?: string;
   children: React.ReactNode;
