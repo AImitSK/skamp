@@ -15,6 +15,7 @@ import ListItem from '@tiptap/extension-list-item';
 import { Extension } from '@tiptap/core';
 import { QuoteExtension } from './editor/QuoteExtension';
 import { CTAExtension } from './editor/CTAExtension';
+import { HashtagExtension } from './editor/HashtagExtension';
 import { FloatingAIToolbar } from './FloatingAIToolbar';
 import { 
   ArrowsPointingOutIcon, 
@@ -282,6 +283,7 @@ export const GmailStyleEditor = ({
       CustomTextAlign,
       QuoteExtension,
       CTAExtension,
+      HashtagExtension,
     ],
     content: content,
     immediatelyRender: false, 
@@ -565,6 +567,31 @@ export const GmailStyleEditor = ({
             background: #f1f0e2; /* CeleroPress hellgelb */
             padding: 1rem;
             border-radius: 0.375rem;
+          }
+          
+          /* Hashtag styling - Social Media optimiert */
+          .gmail-editor-content .hashtag,
+          .gmail-editor-content span[data-type="hashtag"] {
+            color: #2563eb; /* text-blue-600 */
+            font-weight: 600; /* font-semibold */
+            cursor: pointer;
+            transition: color 0.2s ease;
+            text-decoration: none;
+          }
+          
+          .gmail-editor-content .hashtag:hover,
+          .gmail-editor-content span[data-type="hashtag"]:hover {
+            color: #1d4ed8; /* text-blue-800 */
+          }
+          
+          /* Hashtag-Kandidaten während des Tippens */
+          .gmail-editor-content .hashtag-candidate {
+            color: #3b82f6; /* text-blue-500 */
+            font-weight: 500; /* font-medium */
+            background: rgba(59, 130, 246, 0.1); /* Leichter blauer Hintergrund */
+            padding: 0.125rem 0.25rem;
+            border-radius: 0.25rem;
+            transition: all 0.2s ease;
           }
           
           /* Focus states */
