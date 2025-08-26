@@ -487,72 +487,51 @@ export default function NewPRCampaignPage() {
   };
 
   const handleAiGenerate = (result: any) => {
+    // Überschrift separat setzen
     if (result.structured?.headline) {
       setCampaignTitle(result.structured.headline);
     }
     
-    // Erstelle AI-Sections aus strukturierten Daten (ohne position)
+    // ALLES andere kommt direkt in den Editor als zusammenhängender HTML-Content
     if (result.structured) {
-      const aiSections: BoilerplateSection[] = [];
-      let order = boilerplateSections.length;
+      const htmlParts: string[] = [];
       
-      // Lead-Absatz
+      // Lead-Absatz als fettgedruckten ersten Absatz
       if (result.structured.leadParagraph && result.structured.leadParagraph !== 'Lead-Absatz fehlt') {
-        aiSections.push({
-          id: `ai-lead-${Date.now()}`,
-          type: 'lead',
-          position: 'custom',
-          order: order++,
-          isLocked: false,
-          isCollapsed: false,
-          customTitle: 'Lead-Absatz (KI-generiert)',
-          content: `<p><strong>${result.structured.leadParagraph}</strong></p>`
-        });
+        htmlParts.push(`<p><strong>${result.structured.leadParagraph}</strong></p>`);
       }
       
-      // Hauptabsätze
+      // Hauptabsätze als normale Paragraphen
       if (result.structured.bodyParagraphs && result.structured.bodyParagraphs.length > 0) {
-        const mainContent = result.structured.bodyParagraphs
+        const mainParagraphs = result.structured.bodyParagraphs
           .filter((paragraph: string) => paragraph && paragraph !== 'Haupttext der Pressemitteilung')
-          .map((paragraph: string) => `<p>${paragraph}</p>`)
-          .join('\n\n');
-          
-        if (mainContent) {
-          aiSections.push({
-            id: `ai-main-${Date.now()}`,
-            type: 'main',
-            position: 'custom',
-            order: order++,
-            isLocked: false,
-            isCollapsed: false,
-            customTitle: 'Haupttext (KI-generiert)',
-            content: mainContent
-          });
-        }
+          .map((paragraph: string) => `<p>${paragraph}</p>`);
+        
+        htmlParts.push(...mainParagraphs);
       }
       
-      // Zitat
+      // Zitat korrekt als blockquote mit data-type="pr-quote" formatieren
+      // Wichtig: Die Toolbar kann mit diesem Format arbeiten
       if (result.structured.quote && result.structured.quote.text) {
-        aiSections.push({
-          id: `ai-quote-${Date.now()}`,
-          type: 'quote',
-          position: 'custom',
-          order: order++,
-          isLocked: false,
-          isCollapsed: false,
-          customTitle: 'Zitat (KI-generiert)',
-          content: result.structured.quote.text,
-          metadata: {
-            person: result.structured.quote.person,
-            role: result.structured.quote.role,
-            company: result.structured.quote.company
-          }
-        });
+        const quoteHtml = `<blockquote data-type="pr-quote" class="pr-quote border-l-4 border-gray-300 pl-4 italic text-gray-700 my-4">
+        <p>"${result.structured.quote.text}"</p>
+        <footer class="text-sm text-gray-500 mt-2">— <strong>${result.structured.quote.person}</strong>, ${result.structured.quote.role}${result.structured.quote.company ? `, ${result.structured.quote.company}` : ''}</footer>
+      </blockquote>`;
+        
+        htmlParts.push(quoteHtml);
       }
       
-      // Füge die AI-Sections zu den bestehenden hinzu und sortiere nach order
-      const newSections = [...boilerplateSections, ...aiSections].sort((a, b) => (a.order || 0) - (b.order || 0));
-      setBoilerplateSections(newSections);
+      // Boilerplate/Über das Unternehmen am Ende
+      if (result.structured.boilerplate && result.structured.boilerplate !== 'Standard-Boilerplate') {
+        htmlParts.push(`<p class="text-sm text-gray-600 mt-8"><em>${result.structured.boilerplate}</em></p>`);
+      }
+      
+      // ALLES als ein zusammenhängender HTML-Content in den Editor
+      const fullHtmlContent = htmlParts.join('\n\n');
+      setEditorContent(fullHtmlContent);
+      
+      // Auch als pressReleaseContent für die Vorschau
+      setPressReleaseContent(fullHtmlContent);
     }
     
     setShowAiModal(false);
