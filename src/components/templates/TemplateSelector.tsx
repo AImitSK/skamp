@@ -215,32 +215,32 @@ export function TemplateSelector({
       setLoading(true);
       setError(null);
       
-      console.log('🎯 Lade Templates für Organization:', organizationId);
+      // Lade Templates für Organization
       
       // Verwende den Service um alle verfügbaren Templates zu laden
       const allTemplates = await pdfTemplateService.getAllTemplatesForOrganization(organizationId);
       
       if (allTemplates.length === 0) {
-        console.warn('⚠️ Keine Templates gefunden, lade System-Templates als Fallback');
+        // Keine Templates gefunden, lade System-Templates als Fallback
         const systemTemplates = await pdfTemplateService.getSystemTemplates();
         setTemplates(systemTemplates);
       } else {
         setTemplates(allTemplates);
       }
       
-      console.log(`✅ ${allTemplates.length} Templates geladen`);
+      // Templates erfolgreich geladen
       
     } catch (err) {
-      console.error('❌ Fehler beim Laden der Templates:', err);
+      // Fehler beim Laden der Templates
       setError(err instanceof Error ? err.message : 'Unbekannter Fehler beim Laden der Templates');
       
       // Fallback: System-Templates laden
       try {
         const systemTemplates = await pdfTemplateService.getSystemTemplates();
         setTemplates(systemTemplates);
-        console.log('✅ System-Templates als Fallback geladen');
+        // System-Templates als Fallback geladen
       } catch (fallbackErr) {
-        console.error('❌ Auch System-Templates konnten nicht geladen werden:', fallbackErr);
+        // Auch System-Templates konnten nicht geladen werden
       }
       
     } finally {
@@ -261,7 +261,7 @@ export function TemplateSelector({
   const handleTemplateSelect = useCallback((template: PDFTemplate) => {
     if (disabled) return;
     
-    console.log('🎯 Template ausgewählt:', template.id, template.name);
+    // Template ausgewählt
     onTemplateSelect(template.id, template.name);
   }, [disabled, onTemplateSelect]);
 
@@ -272,7 +272,7 @@ export function TemplateSelector({
     if (!user || disabled) return;
     
     try {
-      console.log('👁️ Generiere Template-Vorschau für:', template.id);
+      // Generiere Template-Vorschau
       
       // Mock-Daten für Vorschau erstellen
       const mockData = {
@@ -294,14 +294,14 @@ export function TemplateSelector({
         previewWindow.document.write(previewHtml);
         previewWindow.document.close();
       } else {
-        console.warn('⚠️ Popup-Blocker verhindert Vorschau-Fenster');
+        // Popup-Blocker verhindert Vorschau-Fenster
         if (onPreviewError) {
           onPreviewError('Vorschau konnte nicht geöffnet werden. Bitte erlauben Sie Popups für diese Seite.');
         }
       }
       
     } catch (err) {
-      console.error('❌ Fehler bei Template-Vorschau:', err);
+      // Fehler bei Template-Vorschau
       const errorMessage = err instanceof Error ? err.message : 'Vorschau konnte nicht generiert werden';
       if (onPreviewError) {
         onPreviewError(errorMessage);

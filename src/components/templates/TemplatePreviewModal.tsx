@@ -71,11 +71,7 @@ export function TemplatePreviewModal({
       setIsGeneratingPreview(true);
       setError(null);
 
-      console.log('🎯 Generiere Template-Vorschau:', {
-        templateId: template.id,
-        mockDataType: selectedMockData,
-        organizationId
-      });
+      // Generiere Template-Vorschau mit Mock-Daten
 
       const response = await fetch('/api/v1/pdf-templates/preview', {
         method: 'POST',
@@ -105,10 +101,10 @@ export function TemplatePreviewModal({
       }
 
       setPreviewHtml(data.html);
-      console.log('✅ Template-Vorschau erfolgreich generiert');
+      // Template-Vorschau erfolgreich generiert
 
     } catch (err) {
-      console.error('❌ Fehler bei Template-Vorschau:', err);
+      // Fehler bei Template-Vorschau
       const errorMessage = err instanceof Error ? err.message : 'Unbekannter Fehler bei Preview-Generation';
       setError(errorMessage);
     } finally {
@@ -131,7 +127,7 @@ export function TemplatePreviewModal({
    */
   const handleSelectTemplate = useCallback(() => {
     if (template) {
-      console.log('✅ Template aus Preview ausgewählt:', template.id);
+      // Template aus Preview ausgewählt
       onSelect(template);
       onClose();
     }
@@ -149,7 +145,7 @@ export function TemplatePreviewModal({
    */
   const handleMockDataChange = useCallback((value: MockDataType | React.ChangeEvent<HTMLSelectElement>) => {
     const newType = typeof value === 'string' ? value : value.target.value as MockDataType;
-    console.log('🔄 Mock-Daten-Typ gewechselt von', selectedMockData, 'zu', newType);
+    // Mock-Daten-Typ gewechselt
     setSelectedMockData(newType);
   }, [selectedMockData]);
 
@@ -349,7 +345,7 @@ export function TemplatePreviewModal({
               <Button
                 onClick={handleSelectTemplate}
                 disabled={loading || !previewHtml}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="text-white"
               >
                 <CheckIcon className="h-4 w-4 mr-2" />
                 Template verwenden

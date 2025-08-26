@@ -56,7 +56,7 @@ export default function TemplatesPage() {
         throw new Error('Failed to load templates');
       }
     } catch (error) {
-      console.error('Error loading templates:', error);
+      // Template-Loading fehlgeschlagen - fallback auf Default Templates
       // Fallback: Default Templates
       setTemplates([
         {
@@ -90,7 +90,7 @@ export default function TemplatesPage() {
   };
 
   const handlePreviewTemplate = (template: PDFTemplate) => {
-    console.log('📖 Template-Vorschau öffnen:', template.id);
+    // Template-Vorschau öffnen
     setPreviewTemplate(template);
     setShowPreviewModal(true);
   };
@@ -101,12 +101,12 @@ export default function TemplatesPage() {
   };
 
   const handleSelectFromPreview = (template: PDFTemplate) => {
-    console.log('✅ Template aus Vorschau ausgewählt:', template.id);
+    // Template aus Vorschau ausgewählt
     handleSetDefault(template);
   };
 
   const handleShowComparison = () => {
-    console.log('🔍 Template-Vergleich öffnen');
+    // Template-Vergleich öffnen
     setShowComparisonModal(true);
   };
 
@@ -115,7 +115,7 @@ export default function TemplatesPage() {
   };
 
   const handleSelectFromComparison = (template: PDFTemplate) => {
-    console.log('✅ Template aus Vergleich ausgewählt:', template.id);
+    // Template aus Vergleich ausgewählt
     handleSetDefault(template);
   };
 
@@ -139,7 +139,7 @@ export default function TemplatesPage() {
         throw new Error('Failed to set default template');
       }
     } catch (error) {
-      console.error('Error setting default template:', error);
+      // Fehler beim Setzen des Default-Templates
     }
   };
 
@@ -184,7 +184,7 @@ export default function TemplatesPage() {
               <ScaleIcon className="h-4 w-4 mr-2" />
               Templates vergleichen
             </Button>
-            <Button className="bg-primary hover:bg-primary-hover px-6 py-2">
+            <Button className=" px-6 py-2">
               <PlusIcon className="h-4 w-4 mr-2" />
               Custom Template erstellen
             </Button>
@@ -270,7 +270,7 @@ export default function TemplatesPage() {
                     Erstelle dein erstes PDF-Template um loszulegen.
                   </Text>
                   <div className="mt-6">
-                    <Button className="bg-primary hover:bg-primary-hover px-6 py-2">
+                    <Button className=" px-6 py-2">
                       <PlusIcon className="h-4 w-4 mr-2" />
                       Template erstellen
                     </Button>

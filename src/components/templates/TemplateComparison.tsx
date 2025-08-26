@@ -104,7 +104,7 @@ export function TemplateComparison({
    */
   const generateTemplatePreview = useCallback(async (template: PDFTemplate) => {
     try {
-      console.log('🎯 Generiere Vergleichs-Vorschau:', template.id);
+      // Generiere Vergleichs-Vorschau
 
       setPreviewStates(prev => new Map(prev.set(template.id, {
         ...prev.get(template.id),
@@ -146,10 +146,10 @@ export function TemplateComparison({
         error: null
       })));
 
-      console.log('✅ Vergleichs-Vorschau generiert für:', template.id);
+      // Vergleichs-Vorschau generiert
 
     } catch (err) {
-      console.error('❌ Fehler bei Vergleichs-Vorschau:', err);
+      // Fehler bei Vergleichs-Vorschau
       const errorMessage = err instanceof Error ? err.message : 'Unbekannter Fehler';
       
       setPreviewStates(prev => new Map(prev.set(template.id, {
@@ -185,7 +185,7 @@ export function TemplateComparison({
    */
   const handleMockDataChange = useCallback(async (value: MockDataType | React.ChangeEvent<HTMLSelectElement>) => {
     const newType = typeof value === 'string' ? value : value.target.value as MockDataType;
-    console.log('🔄 Mock-Daten-Typ gewechselt von', selectedMockData, 'zu', newType);
+    // Mock-Daten-Typ gewechselt
     setSelectedMockData(newType);
     // Nach kurzer Verzögerung alle Previews neu laden
     setTimeout(() => {
@@ -197,7 +197,7 @@ export function TemplateComparison({
    * Template auswählen und Modal schließen
    */
   const handleSelectTemplate = useCallback((template: PDFTemplate) => {
-    console.log('✅ Template aus Vergleich ausgewählt:', template.id);
+    // Template aus Vergleich ausgewählt
     onSelect(template);
     onClose();
   }, [onSelect, onClose]);
