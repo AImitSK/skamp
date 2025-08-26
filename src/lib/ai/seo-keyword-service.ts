@@ -369,9 +369,10 @@ class SEOKeywordService {
       if (validAnalytics.length > 0) {
         const avgDensity = validAnalytics.reduce((sum, a) => sum + a.density, 0) / validAnalytics.length;
         
-        if (avgDensity < 0.5) {
-          recommendations.push(`📊 Erhöhe Keyword-Dichte von ${avgDensity.toFixed(1)}% auf 1-2%`);
-        } else if (avgDensity > 4) {
+        // Modernisierte Empfehlungen für flexible Keyword-Bewertung
+        if (avgDensity < 0.3) {
+          recommendations.push(`📊 Erhöhe Keyword-Dichte von ${avgDensity.toFixed(1)}% auf 0.3-2.5%`);
+        } else if (avgDensity > 3.0) {
           recommendations.push(`⚠️ Reduziere Keyword-Dichte von ${avgDensity.toFixed(1)}% auf unter 3%`);
         }
       }
@@ -660,10 +661,18 @@ Text (erste 1000 Zeichen): ${text.substring(0, 1000)}`;
     if (prMetrics.headlineHasActiveVerb) breakdown.headline += 10;
     if (prMetrics.leadHasNumbers) breakdown.headline += 5;
     
-    // 20% Keyword-Performance (Durchschnitt beider)
+    // 20% Keyword-Performance - Modernisierte flexible Bewertung
     if (perKeywordMetrics.length > 0) {
       const avgDensity = perKeywordMetrics.reduce((sum, m) => sum + m.density, 0) / perKeywordMetrics.length;
-      if (avgDensity >= 0.5 && avgDensity <= 2) breakdown.keywords += 10;
+      
+      // Flexible Keyword-Dichte Bewertung für realistischere Scores
+      if (avgDensity >= 0.3 && avgDensity <= 2.5) {
+        breakdown.keywords += 10; // Optimaler Bereich erweitert
+      } else if (avgDensity >= 0.2 && avgDensity <= 3.0) {
+        breakdown.keywords += 7;  // Akzeptabler Bereich
+      } else if (avgDensity > 0) {
+        breakdown.keywords += 4;  // Grundpunkte für vorhandene Keywords
+      }
       
       const allInHeadline = perKeywordMetrics.every(m => m.inHeadline);
       if (allInHeadline) breakdown.keywords += 5;
@@ -715,6 +724,306 @@ Text (erste 1000 Zeichen): ${text.substring(0, 1000)}`;
   }
 
   /**
+   * NEUE Keyword-Score Berechnung als Bonus-System
+   * Solide algorithmische Basis ohne KI (0-60 Punkte) + KI-Bonus (bis zu 40 Punkte)
+   */
+  calculateKeywordScore(keywords: string[], content: string, keywordMetrics: PerKeywordMetrics[] = []): {
+    baseScore: number;
+    aiBonus: number;
+    totalScore: number;
+    hasAIAnalysis: boolean;
+    breakdown: {
+      keywordPosition: number;
+      keywordDistribution: number;
+      keywordVariations: number;
+      naturalFlow: number;
+      contextRelevance: number;
+      aiRelevanceBonus: number;
+      fallbackBonus: number;
+    };
+  } {
+    // Initialisierung
+    let breakdown = {
+      keywordPosition: 0,
+      keywordDistribution: 0,
+      keywordVariations: 0,
+      naturalFlow: 0,
+      contextRelevance: 0,
+      aiRelevanceBonus: 0,
+      fallbackBonus: 0
+    };
+
+    if (keywords.length === 0) {
+      return {
+        baseScore: 0,
+        aiBonus: 0,
+        totalScore: 0,
+        hasAIAnalysis: false,
+        breakdown
+      };
+    }
+
+    // Text für Analyse vorbereiten
+    const cleanText = content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+    const lines = content.split('\n').filter(l => l.trim());
+    const headline = lines[0] || '';
+    const firstParagraph = cleanText.substring(0, 200);
+    const wordCount = cleanText.split(/\s+/).filter(w => w.length > 0).length;
+
+    console.log('🎯 Keyword-Score Berechnung:', {
+      keywordCount: keywords.length,
+      wordCount,
+      hasAIMetrics: keywordMetrics.length > 0
+    });
+
+    // 1. ALGORITHMISCHER BASIS-SCORE (0-60 Punkte)
+    
+    // 1.1 Keyword-Position (0-15 Punkte)
+    keywords.forEach(keyword => {
+      const keywordLower = keyword.toLowerCase();
+      
+      // Keywords in Headline = +8 Punkte
+      if (headline.toLowerCase().includes(keywordLower)) {
+        breakdown.keywordPosition += Math.min(8, 15 - breakdown.keywordPosition);
+      }
+      
+      // Keywords in ersten 200 Zeichen = +7 Punkte
+      if (firstParagraph.includes(keywordLower)) {
+        breakdown.keywordPosition += Math.min(7, 15 - breakdown.keywordPosition);
+      }
+    });
+
+    // 1.2 Keyword-Verteilung (0-15 Punkte)
+    keywords.forEach(keyword => {
+      const keywordLower = keyword.toLowerCase();
+      const regex = new RegExp(`\\b${keywordLower}\\b`, 'gi');
+      const matches = [...cleanText.matchAll(regex)];
+      
+      if (matches.length >= 2) {
+        const positions = matches.map(m => (m.index || 0) / cleanText.length);
+        const textParts = 3; // Teile Text in Drittel
+        const distribution = [];
+        
+        for (let i = 0; i < textParts; i++) {
+          const partStart = i / textParts;
+          const partEnd = (i + 1) / textParts;
+          const hasKeywordInPart = positions.some(pos => pos >= partStart && pos < partEnd);
+          if (hasKeywordInPart) distribution.push(1);
+        }
+        
+        // Gleichmäßige Verteilung über alle Textteile = volle Punkte
+        const distributionScore = (distribution.length / textParts) * 15;
+        breakdown.keywordDistribution = Math.max(breakdown.keywordDistribution, distributionScore);
+      }
+    });
+
+    // 1.3 Keyword-Variationen (0-10 Punkte)
+    const variations = this.detectKeywordVariations(keywords, cleanText);
+    breakdown.keywordVariations = Math.min(10, variations.length * 2);
+
+    // 1.4 Natürlicher Fluss (0-10 Punkte)
+    const stuffingPenalty = this.detectKeywordStuffing(keywords, cleanText, wordCount);
+    breakdown.naturalFlow = Math.max(0, 10 - stuffingPenalty);
+
+    // 1.5 Kontext-Relevanz algorithmisch (0-10 Punkte)
+    const contextScore = this.calculateContextRelevance(keywords, cleanText);
+    breakdown.contextRelevance = Math.min(10, contextScore);
+
+    const baseScore = breakdown.keywordPosition + breakdown.keywordDistribution + 
+                     breakdown.keywordVariations + breakdown.naturalFlow + breakdown.contextRelevance;
+
+    // 2. KI-BONUS-SYSTEM (0-40 Punkte)
+    let aiBonus = 0;
+    let hasAIAnalysis = false;
+    
+    // Prüfe ob KI-Daten verfügbar sind
+    if (keywordMetrics.length > 0) {
+      const aiMetrics = keywordMetrics.filter(m => m.semanticRelevance !== undefined && m.semanticRelevance !== null);
+      
+      if (aiMetrics.length > 0) {
+        hasAIAnalysis = true;
+        const avgRelevance = aiMetrics.reduce((sum, m) => sum + (m.semanticRelevance || 0), 0) / aiMetrics.length;
+        
+        console.log('🤖 KI-Analyse gefunden:', { avgRelevance, aiMetricsCount: aiMetrics.length });
+        
+        // KI-Bonus nur wenn Relevanz über 50% (sonst kein Bonus)
+        if (avgRelevance > 50) {
+          const bonus = Math.min(40, (avgRelevance - 50) / 50 * 40);
+          breakdown.aiRelevanceBonus = bonus;
+          aiBonus = bonus;
+        }
+      }
+    }
+
+    // 3. FALLBACK-BONUS ohne KI (20 Punkte)
+    if (!hasAIAnalysis && baseScore > 20) {
+      breakdown.fallbackBonus = 20;
+      aiBonus = 20;
+      console.log('📊 Fallback-Bonus aktiviert (kein KI verfügbar)');
+    } else if (!hasAIAnalysis) {
+      // Reduzierter Fallback für sehr schwache Basis-Scores
+      breakdown.fallbackBonus = 10;
+      aiBonus = 10;
+    }
+
+    const totalScore = Math.min(100, Math.round(baseScore + aiBonus));
+    
+    console.log('🎯 Keyword-Score Ergebnis:', {
+      baseScore,
+      aiBonus,
+      totalScore,
+      hasAIAnalysis,
+      breakdown
+    });
+
+    return {
+      baseScore: Math.round(baseScore),
+      aiBonus: Math.round(aiBonus),
+      totalScore,
+      hasAIAnalysis,
+      breakdown
+    };
+  }
+
+  /**
+   * Erkennt Keyword-Variationen und Synonyme im Text
+   */
+  private detectKeywordVariations(keywords: string[], text: string): string[] {
+    const variations = new Set<string>();
+    
+    keywords.forEach(keyword => {
+      const keywordBase = keyword.toLowerCase().replace(/[^a-zäöüß]/g, '');
+      
+      // Suche nach Wortteilen und Zusammensetzungen
+      const words = text.split(/\s+/);
+      words.forEach(word => {
+        const cleanWord = word.toLowerCase().replace(/[^a-zäöüß]/g, '');
+        
+        // Enthält das Wort das Keyword als Teilstring?
+        if (cleanWord.length > keywordBase.length + 2 && cleanWord.includes(keywordBase)) {
+          variations.add(word);
+        }
+        
+        // Oder das Keyword das Wort?
+        if (keywordBase.length > cleanWord.length + 2 && keywordBase.includes(cleanWord)) {
+          variations.add(word);
+        }
+      });
+    });
+    
+    return Array.from(variations);
+  }
+
+  /**
+   * Erkennt Keyword-Stuffing Patterns
+   */
+  private detectKeywordStuffing(keywords: string[], text: string, wordCount: number): number {
+    let penalty = 0;
+    
+    keywords.forEach(keyword => {
+      const keywordLower = keyword.toLowerCase();
+      const regex = new RegExp(`\\b${this.escapeRegex(keywordLower)}\\b`, 'gi');
+      const matches = text.match(regex) || [];
+      const density = (matches.length / wordCount) * 100;
+      
+      // Bestrafung für zu hohe Dichte (über 3%)
+      if (density > 3) {
+        penalty += Math.min(5, (density - 3) * 1); // 1 Punkt pro % über 3%
+      }
+      
+      // Noch stärkere Bestrafung bei extremer Dichte (über 10%)
+      if (density > 10) {
+        penalty += Math.min(5, (density - 10) * 0.5); // Zusätzliche Bestrafung
+      }
+      
+      // Bestrafung für wiederholte Keywords in kurzer Folge
+      const sentences = text.split(/[.!?]+/);
+      sentences.forEach(sentence => {
+        const sentenceMatches = sentence.match(regex) || [];
+        if (sentenceMatches.length > 2) {
+          penalty += 2; // 2 Punkte Abzug für >2 Keywords pro Satz
+        }
+        // Zusätzliche Bestrafung für extreme Wiederholung in einem Satz
+        if (sentenceMatches.length > 4) {
+          penalty += 3; // Zusätzliche Bestrafung
+        }
+      });
+      
+      // Keyword-Stuffing erkannt: ${density.toFixed(1)}% Dichte → ${penalty.toFixed(1)} Penalty
+    });
+    
+    return Math.min(10, penalty); // Maximal 10 Punkte Abzug
+  }
+
+  /**
+   * Berechnet algorithmische Kontext-Relevanz
+   */
+  private calculateContextRelevance(keywords: string[], text: string): number {
+    let relevanceScore = 0;
+    
+    keywords.forEach(keyword => {
+      const keywordLower = keyword.toLowerCase();
+      
+      // Prüfe Kontext um Keywords herum (±10 Wörter)
+      const regex = new RegExp(`\\b${keywordLower}\\b`, 'gi');
+      const matches = [...text.matchAll(regex)];
+      
+      matches.forEach(match => {
+        const position = match.index || 0;
+        const contextStart = Math.max(0, position - 100); // ~10 Wörter vorher
+        const contextEnd = Math.min(text.length, position + 100); // ~10 Wörter nachher
+        const context = text.substring(contextStart, contextEnd);
+        
+        // Suche nach thematisch verwandten Begriffen
+        const relatedTerms = this.getRelatedTerms(keyword);
+        const foundRelated = relatedTerms.filter(term => 
+          context.toLowerCase().includes(term.toLowerCase())
+        );
+        
+        // Pro verwandten Begriff in der Nähe: +0.5 Punkte
+        relevanceScore += foundRelated.length * 0.5;
+      });
+    });
+    
+    return relevanceScore;
+  }
+
+  /**
+   * Liefert algorithmisch verwandte Begriffe für ein Keyword
+   */
+  private getRelatedTerms(keyword: string): string[] {
+    const keyword_lower = keyword.toLowerCase();
+    
+    // Einfache Regelbasierte Zuordnung für häufige Business-Keywords
+    const relatedTermsMap: { [key: string]: string[] } = {
+      'innovation': ['technologie', 'entwicklung', 'fortschritt', 'digital', 'zukunft', 'modern'],
+      'automatisierung': ['effizienz', 'prozess', 'digital', 'technologie', 'optimierung'],
+      'digitalisierung': ['digital', 'technologie', 'innovation', 'transformation', 'modern'],
+      'ki': ['artificial', 'intelligence', 'machine', 'learning', 'algorithmus', 'smart'],
+      'unternehmen': ['firma', 'organisation', 'business', 'wirtschaft', 'management'],
+      'software': ['anwendung', 'programm', 'technologie', 'digital', 'entwicklung'],
+      'marketing': ['werbung', 'kunden', 'markt', 'brand', 'verkauf', 'promotion'],
+      'nachhaltigkeit': ['umwelt', 'green', 'ökologie', 'ressourcen', 'klimaschutz'],
+      'sicherheit': ['schutz', 'risiko', 'safety', 'security', 'datenschutz'],
+      'qualität': ['excellence', 'standard', 'zertifizierung', 'verbesserung']
+    };
+    
+    // Direkte Zuordnung
+    if (relatedTermsMap[keyword_lower]) {
+      return relatedTermsMap[keyword_lower];
+    }
+    
+    // Teilstring-Suche für zusammengesetzte Wörter
+    for (const [key, terms] of Object.entries(relatedTermsMap)) {
+      if (keyword_lower.includes(key) || key.includes(keyword_lower)) {
+        return terms;
+      }
+    }
+    
+    return [];
+  }
+
+  /**
    * Alter Score (für Rückwärtskompatibilität)
    */
   calculateSEOScore(text: string, keywords: string[]): number {
@@ -725,12 +1034,14 @@ Text (erste 1000 Zeichen): ${text.substring(0, 1000)}`;
     
     let score = 0;
     
-    // Faktor 1: Keyword-Dichte (optimal 1-3%)
+    // Faktor 1: Keyword-Dichte - Modernisierte flexible Bewertung (optimal 0.3-2.5%)
     const avgDensity = analytics.reduce((sum, a) => sum + a.density, 0) / analytics.length;
-    if (avgDensity >= 1 && avgDensity <= 3) {
-      score += 40; // 40% für optimale Dichte
-    } else if (avgDensity > 0 && avgDensity < 5) {
-      score += 20; // 20% für akzeptable Dichte
+    if (avgDensity >= 0.3 && avgDensity <= 2.5) {
+      score += 40; // 40% für optimale Dichte (erweitert)
+    } else if (avgDensity >= 0.2 && avgDensity <= 3.0) {
+      score += 30; // 30% für akzeptable Dichte (höher bewertet)
+    } else if (avgDensity > 0) {
+      score += 15; // Grundpunkte für vorhandene Keywords
     }
     
     // Faktor 2: Text-Länge (optimal 300-800 Wörter)

@@ -95,6 +95,13 @@ export const GmailStyleToolbar = ({ editor }: GmailStyleToolbarProps) => {
       shortcut: 'Strg+Shift+C',
       isActive: () => editor.isActive('ctaText')
     },
+    { 
+      command: 'toggleHashtag', 
+      icon: () => <span className="font-bold text-blue-600">#</span>, 
+      label: 'Hashtag', 
+      activeName: 'hashtag',
+      shortcut: 'Strg+Shift+H'
+    },
   ];
 
   const alignmentActions = [

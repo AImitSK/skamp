@@ -1032,7 +1032,8 @@ function ReviewStep({
     { label: 'Headline', value: `${result.structured.headline.replace(/^\*\*/, '').replace(/\*\*$/, '').trim().length} Zeichen`, ideal: '< 80' },
     { label: 'Lead', value: `${result.structured.leadParagraph.split(' ').length} Wörter`, ideal: '40-50' },
     { label: 'Absätze', value: result.structured.bodyParagraphs.length, ideal: '3-4' },
-    { label: 'CTA', value: (result.structured.cta || result.structured.boilerplate) ? '✓' : '✗', ideal: '✓' }
+    { label: 'CTA', value: (result.structured.cta || result.structured.boilerplate) ? '✓' : '✗', ideal: '✓' },
+    { label: 'Social', value: result.structured.socialOptimized ? '✓' : '○', ideal: '✓' }
   ];
 
   return (
@@ -1053,7 +1054,7 @@ function ReviewStep({
       </div>
 
       {/* Quality Metrics */}
-      <div className="grid grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-5 gap-3 mb-6">
         {metrics.map((metric, index) => (
           <div key={index} className="bg-gray-50 rounded-lg p-3 text-center">
             <div className="text-lg font-bold text-indigo-600">{metric.value}</div>
@@ -1156,6 +1157,29 @@ function ReviewStep({
                   </p>
                   <p className="text-xs text-indigo-600 mt-2">
                     💡 Wird als CTA-Element für bessere SEO-Scores formatiert
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {result.structured.hashtags && result.structured.hashtags.length > 0 && (
+              <div>
+                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                  Social Media Hashtags
+                </h4>
+                <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-400">
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {result.structured.hashtags.map((tag, index) => (
+                      <span 
+                        key={index}
+                        className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="text-xs text-blue-600">
+                    🎯 {result.structured.socialOptimized ? 'Optimiert für Twitter/LinkedIn Sharing' : 'Geeignet für Social Media'}
                   </p>
                 </div>
               </div>

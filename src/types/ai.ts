@@ -11,6 +11,8 @@ export interface StructuredPressRelease {
   };
   cta?: string; // Call-to-Action statt Boilerplate
   boilerplate?: string; // Optional für Backwards Compatibility
+  hashtags: string[]; // NEU - Array von Hashtags
+  socialOptimized: boolean; // NEU - Flag für Social-Media-Optimierung
 }
 
 export interface GenerationRequest {

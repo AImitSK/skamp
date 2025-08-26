@@ -29,6 +29,8 @@ interface StructuredPressRelease {
     company: string;
   };
   cta: string; // Call-to-Action statt Boilerplate
+  hashtags: string[]; // NEU - Array von Hashtags
+  socialOptimized: boolean; // NEU - Flag für Social-Media-Optimierung
 }
 
 // System-Prompts aus der Prompt Library
@@ -50,7 +52,9 @@ Absatz 4: Auswirkungen, Nutzen und Zukunftsperspektive
 
 "Authentisches Zitat (20-35 Wörter)", sagt [Vollständiger Name], [Position] bei [Unternehmen].
 
-[[CTA: Klare Handlungsaufforderung - z.B. "Erfahren Sie mehr auf www.example.com" oder "Kontaktieren Sie uns unter presse@firma.de für weitere Informationen" oder "Vereinbaren Sie noch heute einen Demo-Termin"]]`,
+[[CTA: Klare Handlungsaufforderung - z.B. "Erfahren Sie mehr auf www.example.com" oder "Kontaktieren Sie uns unter presse@firma.de für weitere Informationen" oder "Vereinbaren Sie noch heute einen Demo-Termin"]]
+
+[[HASHTAGS: 2-3 relevante Hashtags für Social Media - z.B. "#TechNews #Innovation #B2B"]]`,
 
   rules: `
 KRITISCHE REGELN:
@@ -62,6 +66,10 @@ KRITISCHE REGELN:
   - Beispiele: "Weitere Informationen unter www.firma.de/produkt"
   - "Kontaktieren Sie unser Presseteam unter presse@firma.de"
   - "Vereinbaren Sie einen Demo-Termin unter www.firma.de/demo"
+✓ Hashtags: 2-3 relevante für die Branche, mit [[HASHTAGS: ...]] markieren
+✓ Twitter-optimiert: Headline max. 280 Zeichen für Social Sharing
+✓ Hashtag-Format: #Relevant #Branchen #Keywords (deutsch/englisch gemischt OK)
+✓ Deutsche Hashtags bevorzugen wo sinnvoll (#Digitalisierung, #Nachhaltigkeit)
 ✓ KEINE Boilerplate/Unternehmensbeschreibung am Ende
 ✓ Sachlich und objektiv, keine Werbesprache
 ✓ Perfekte deutsche Rechtschreibung
@@ -106,7 +114,8 @@ TONALITÄT: STARTUP
 - Wachstums- und Zukunftsfokus
 - Etwas emotionaler, aber professionell
 - Marktveränderung betonen
-- Disruptive Sprache erlaubt`
+- Disruptive Sprache erlaubt
+- Hashtags: #Startup #Innovation #TechNews #Disruption #Funding #Skalierung`
   },
 
   // Zielgruppen-spezifische Anpassungen
@@ -117,7 +126,8 @@ ZIELGRUPPE: B2B/FACHMEDIEN
 - Technische Details und Spezifikationen
 - Branchenkontext und Marktanalyse
 - Zitate von Entscheidern (C-Level)
-- Zahlen, Daten, Benchmarks`,
+- Zahlen, Daten, Benchmarks
+- Hashtags: #B2B #Business #Innovation #ROI #Effizienz #Digitalisierung`,
 
     consumer: `
 ZIELGRUPPE: VERBRAUCHER
@@ -125,7 +135,8 @@ ZIELGRUPPE: VERBRAUCHER
 - Einfache, verständliche Sprache
 - Praktische Anwendungsbeispiele
 - Emotionaler Bezug und Lifestyle
-- Verfügbarkeit und Preise prominent`,
+- Verfügbarkeit und Preise prominent
+- Hashtags: #Neu #Lifestyle #Innovation #Einfach #Praktisch #Nachhaltigkeit`,
 
     media: `
 ZIELGRUPPE: MEDIEN/JOURNALISTEN
@@ -133,7 +144,8 @@ ZIELGRUPPE: MEDIEN/JOURNALISTEN
 - Klare Story mit Spannungsbogen
 - Zitierfähige Aussagen
 - Hintergrundinformationen
-- Kontaktdaten prominent`
+- Kontaktdaten prominent
+- Hashtags: #Pressemitteilung #News #Medien #Aktuell #Newsroom`
   }
 };
 
@@ -152,6 +164,7 @@ function parseStructuredOutput(text: string): StructuredPressRelease {
   
   let currentSection = 'searching'; // searching, lead, body, quote, boilerplate
   let bodyCount = 0;
+  let hashtags: string[] = [];
   
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
@@ -232,7 +245,21 @@ function parseStructuredOutput(text: string): StructuredPressRelease {
       continue;
     }
     
-    // 4. CTA erkennen
+    // 4. Hashtags erkennen
+    if (line.includes('[[HASHTAGS:') || line.includes('HASHTAGS:')) {
+      const hashtagMatch = line.match(/\[\[HASHTAGS?:?\s*([^\]]+)\]\]/i);
+      if (hashtagMatch) {
+        const hashtagString = hashtagMatch[1];
+        const foundTags = hashtagString.match(/#[a-zA-ZäöüÄÖÜß0-9_]+/g);
+        if (foundTags && foundTags.length > 0) {
+          hashtags = foundTags.slice(0, 3); // Max 3 Hashtags
+          console.log('Found hashtags:', hashtags);
+        }
+      }
+      continue;
+    }
+    
+    // 5. CTA erkennen
     if (line.includes('[[CTA:') || line.includes('CTA:') || 
         line.includes('Kontakt:') || line.includes('Weitere Informationen:') ||
         currentSection === 'cta') {
@@ -251,7 +278,7 @@ function parseStructuredOutput(text: string): StructuredPressRelease {
       continue;
     }
     
-    // 5. Body-Absätze sammeln
+    // 6. Body-Absätze sammeln
     if (currentSection === 'body' && bodyCount < 3) {
       // Skip wenn es wie ein Zitat oder Boilerplate aussieht
       if (line.startsWith('"') || line.startsWith('*')) {
@@ -265,6 +292,30 @@ function parseStructuredOutput(text: string): StructuredPressRelease {
   }
   
   // Nachbearbeitung und Validierung
+  
+  // Fallback: Hashtags aus Zeilen mit mehreren #hashtags extrahieren
+  if (hashtags.length === 0) {
+    for (const line of lines) {
+      if (line.includes('#')) {
+        const foundTags = line.match(/#[a-zA-ZäöüÄÖÜß0-9_]+/g);
+        if (foundTags && foundTags.length >= 2) {
+          hashtags = foundTags.slice(0, 3); // Max 3 Hashtags
+          console.log('Found hashtags (fallback):', hashtags);
+          break;
+        }
+      }
+    }
+  }
+  
+  // Standardisiere Hashtags (mit #-Zeichen)
+  hashtags = hashtags.map(tag => 
+    tag.startsWith('#') ? tag : '#' + tag
+  ).slice(0, 3);
+  
+  // Defaults für Hashtags wenn keine gefunden
+  if (hashtags.length === 0) {
+    hashtags = ['#Pressemitteilung', '#News'];
+  }
   
   // Wenn kein Lead gefunden wurde, nimm ersten Body-Absatz
   if (!leadParagraph && bodyParagraphs.length > 0) {
@@ -294,14 +345,20 @@ function parseStructuredOutput(text: string): StructuredPressRelease {
   console.log('Lead length:', leadParagraph.length);
   console.log('Body paragraphs:', bodyParagraphs.length);
   console.log('Has quote:', !!quote.text);
+  console.log('Hashtags:', hashtags);
   console.log('=== PARSING END ===');
+  
+  // Social Media Optimization Check
+  const socialOptimized = headline.length <= 280 && hashtags.length >= 2;
   
   return {
     headline,
     leadParagraph,
     bodyParagraphs,
     quote,
-    cta
+    cta,
+    hashtags,
+    socialOptimized
   };
 }
 

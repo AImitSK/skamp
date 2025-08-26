@@ -48,7 +48,11 @@
       "Bash(dos2unix:*)",
       "Bash(npx eslint:*)",
       "Bash(git checkout:*)",
-      "Read(/c:\\Users\\StefanKühne\\Desktop\\Projekte\\skamp\\src\\app\\dashboard\\pr-tools\\campaigns\\campaigns\\edit\\[campaignId]/**)"
+      "Read(/c:\\Users\\StefanKühne\\Desktop\\Projekte\\skamp\\src\\app\\dashboard\\pr-tools\\campaigns\\campaigns\\edit\\[campaignId]/**)",
+      "Read(/C:\\c\\Users\\skuehne\\Desktop\\Projekt/**)",
+      "Read(/C:\\c\\Users\\skuehne\\Desktop\\Projekt/**)",
+      "Read(/C:\\c\\Users\\skuehne\\Desktop\\Projekt/**)",
+      "Read(/C:\\c\\Users\\skuehne\\Desktop\\Projekt/**)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",

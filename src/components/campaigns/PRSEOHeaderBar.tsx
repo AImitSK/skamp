@@ -12,8 +12,13 @@ import {
   InformationCircleIcon,
   ChevronDownIcon,
   ChevronUpIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  ComputerDesktopIcon,
+  CpuChipIcon,
+  HashtagIcon
 } from '@heroicons/react/24/outline';
+import { seoKeywordService } from '@/lib/ai/seo-keyword-service';
+import { HashtagDetector } from '@/lib/hashtag-detector';
 import clsx from 'clsx';
 
 interface KeywordMetrics {
@@ -57,6 +62,24 @@ interface PRScoreBreakdown {
   relevance: number;
   concreteness: number;
   engagement: number;
+  social: number;
+}
+
+// Neue Interfaces für Keyword-Bonus-System
+interface KeywordScoreData {
+  baseScore: number;
+  aiBonus: number;
+  totalScore: number;
+  hasAIAnalysis: boolean;
+  breakdown: {
+    keywordPosition: number;
+    keywordDistribution: number;
+    keywordVariations: number;
+    naturalFlow: number;
+    contextRelevance: number;
+    aiRelevanceBonus: number;
+    fallbackBonus: number;
+  };
 }
 
 interface PRSEOHeaderBarProps {
@@ -72,6 +95,7 @@ interface PRSEOHeaderBarProps {
     hints: string[];
     keywordMetrics: KeywordMetrics[];
   }) => void;
+  hashtags?: string[];
 }
 
 // KI-Analysis-Box Komponente
@@ -132,8 +156,10 @@ export function PRSEOHeaderBar({
     structure: 0,
     relevance: 0,
     concreteness: 0,
-    engagement: 0
+    engagement: 0,
+    social: 0
   });
+  const [keywordScoreData, setKeywordScoreData] = useState<KeywordScoreData | null>(null);
   const [recommendations, setRecommendations] = useState<string[]>([]);
   const [showAllRecommendations, setShowAllRecommendations] = useState(false);
 
@@ -175,6 +201,31 @@ export function PRSEOHeaderBar({
     };
   }, [documentTitle]);
 
+  // Erweiterte deutsche aktive Verben für verschiedene PR-Typen
+  const getActiveVerbs = useCallback(() => {
+    return [
+      // Business/Corporate
+      'startet', 'lanciert', 'präsentiert', 'entwickelt', 'investiert',
+      'expandiert', 'gründet', 'übernimmt', 'kooperiert', 'digitalisiert',
+      
+      // Innovation/Tech
+      'innoviert', 'automatisiert', 'revolutioniert', 'optimiert', 'transformiert',
+      'implementiert', 'integriert', 'skaliert', 'modernisiert',
+      
+      // Marketing/Sales
+      'führt ein', 'bringt heraus', 'veröffentlicht', 'kündigt an', 'erweitert',
+      'verbessert', 'aktualisiert', 'steigert', 'erhöht',
+      
+      // Achievements
+      'erreicht', 'gewinnt', 'erhält', 'wird ausgezeichnet', 'feiert',
+      'verzeichnet', 'erzielt', 'übertrifft',
+      
+      // Weitere deutsche Business-Verben
+      'realisiert', 'etabliert', 'verstärkt', 'ausbaut', 'schafft',
+      'eröffnet', 'bietet', 'liefert', 'produziert', 'erschließt'
+    ];
+  }, []);
+
   // PR-spezifische Metriken berechnen
   const calculatePRMetrics = useCallback((text: string, title: string): PRMetrics => {
     const cleanText = text.replace(/<[^>]*>/g, '');
@@ -193,11 +244,16 @@ export function PRSEOHeaderBar({
     const ctaMatches = text.match(/<span[^>]*data-type="cta-text"[^>]*>/g) || [];
     const ctaCount = ctaMatches.length;
     
+    // Erweiterte aktive Verben-Erkennung
+    const activeVerbs = getActiveVerbs();
+    const hasActiveVerb = activeVerbs.some(verb => 
+      new RegExp(`\\b${verb.replace(/\s+/g, '\\s+')}\\b`, 'i').test(title)
+    );
     
     return {
       headlineLength: title.length,
       headlineHasKeywords: keywords.some(kw => title.toLowerCase().includes(kw.toLowerCase())),
-      headlineHasActiveVerb: /\b(startet|lanciert|präsentiert|entwickelt|erreicht|steigert|verbessert)\b/i.test(title),
+      headlineHasActiveVerb: hasActiveVerb,
       leadLength: paragraphs[0]?.length || 0,
       leadHasNumbers: /\d+/.test(paragraphs[0] || ''),
       leadKeywordMentions: keywords.reduce((count, kw) => 
@@ -214,7 +270,7 @@ export function PRSEOHeaderBar({
       hasSpecificDates: /\b\d{1,2}\.\d{1,2}\.\d{4}\b|\b\d{4}\b/.test(cleanText),
       hasCompanyNames: /\b[A-Z][a-z]+ (GmbH|AG|Inc|Corp|Ltd)\b/.test(cleanText) || /\b[A-Z]{2,}(\s+[A-Z][a-z]+){1,3}\b/.test(cleanText)
     };
-  }, [keywords]);
+  }, [keywords, getActiveVerbs]);
 
   // Zielgruppen-basierte Schwellenwerte
   const getThresholds = useCallback((targetAudience: string) => {
@@ -246,6 +302,82 @@ export function PRSEOHeaderBar({
     }
   }, []);
 
+  // PR-Typ-spezifische Bewertungsmodifikatoren
+  const getPRTypeModifiers = useCallback((content: string, title: string) => {
+    const cleanContent = content.replace(/<[^>]*>/g, '').toLowerCase();
+    const cleanTitle = title.toLowerCase();
+    
+    // Erkenne PR-Typ basierend auf Inhalt
+    const prType = {
+      isProduct: /\b(produkt|service|lösung|software|app|plattform|tool)\b/i.test(cleanContent),
+      isFinancial: /\b(umsatz|gewinn|quartal|geschäftsjahr|bilanz|finanzen|ergebnis)\b/i.test(cleanContent),
+      isPersonal: /\b(ernennung|beförderung|new hire|verstorben|nachruf|award)\b/i.test(cleanContent),
+      isResearch: /\b(studie|umfrage|forschung|analyse|bericht|whitepaper)\b/i.test(cleanContent),
+      isCrisis: /\b(entschuldigung|bedauern|korrektur|richtigstellung|stellungnahme)\b/i.test(cleanContent),
+      isEvent: /\b(veranstaltung|konferenz|messe|webinar|event|termin)\b/i.test(cleanContent)
+    };
+    
+    // Typ-spezifische Modifier für Headline-Bewertung
+    let headlineModifier = 0;
+    let verbImportance = 15; // Standard
+    let recommendationSuffix = '';
+    
+    if (prType.isFinancial || prType.isResearch) {
+      // Finanz/Research PR: Verben weniger wichtig, Zahlen wichtiger
+      verbImportance = 5;
+      headlineModifier = cleanTitle.match(/\d+/g) ? 10 : 0; // Zahlen-Bonus
+      recommendationSuffix = ' (Zahlen und Fakten wichtiger als aktive Sprache)';
+    } else if (prType.isPersonal) {
+      // Personal PR: Verben optional, Titel/Namen wichtig
+      verbImportance = 8;
+      headlineModifier = /\b(dr\.|prof\.|ceo|cto|direktor)\b/i.test(cleanTitle) ? 8 : 0;
+      recommendationSuffix = ' (bei Personal-PR sind Titel und Position wichtiger)';
+    } else if (prType.isCrisis) {
+      // Crisis PR: Sachlichkeit wichtiger als Dynamik
+      verbImportance = 3;
+      headlineModifier = /\b(erklärt|stellt klar|informiert)\b/i.test(cleanTitle) ? 12 : 0;
+      recommendationSuffix = ' (bei Crisis-PR ist sachliche Kommunikation wichtiger)';
+    } else if (prType.isProduct || prType.isEvent) {
+      // Product/Event PR: Verben sehr wichtig für Action
+      verbImportance = 25;
+      recommendationSuffix = ' (bei Produkt/Event-PR verstärken aktive Verben die Wirkung)';
+    }
+    
+    return { headlineModifier, verbImportance, recommendationSuffix, prType };
+  }, []);
+
+  // Social-Score berechnen (neue 5% Kategorie)
+  const calculateSocialScore = useCallback((content: string, headline: string, hashtags?: string[]): number => {
+    let score = 0;
+    
+    // 1. Headline Twitter-optimiert (< 280 Zeichen) = 40%
+    if (headline.length <= 280) {
+      score += 40;
+    } else if (headline.length <= 320) {
+      score += 25;
+    } else {
+      score += 10; // Zu lang für Social Media
+    }
+    
+    // 2. Hashtags vorhanden = 35%
+    const detectedHashtags = hashtags || HashtagDetector.detectHashtags(content);
+    if (detectedHashtags.length >= 3) {
+      score += 35;
+    } else if (detectedHashtags.length >= 2) {
+      score += 25;
+    } else if (detectedHashtags.length >= 1) {
+      score += 15;
+    }
+    
+    // 3. Hashtag-Qualität = 25%
+    if (detectedHashtags.length > 0) {
+      const quality = HashtagDetector.assessHashtagQuality(detectedHashtags, keywords);
+      score += Math.min(25, (quality.averageScore / 100) * 25);
+    }
+    
+    return Math.min(100, score);
+  }, [keywords]);
+
   // PR-Score berechnen
   const calculatePRScore = useCallback((prMetrics: PRMetrics, keywordMetrics: KeywordMetrics[], text: string): { totalScore: number, breakdown: PRScoreBreakdown, recommendations: string[] } => {
     const recommendations: string[] = [];
@@ -259,78 +391,162 @@ export function PRSEOHeaderBar({
     // Nutze zielgruppenspezifische Schwellenwerte
     const thresholds = getThresholds(dominantAudience);
     
-    // 25% Headline & Lead-Qualität
-    let headlineScore = 0;
-    if (prMetrics.headlineLength >= 30 && prMetrics.headlineLength <= 80) headlineScore += 40;
-    else recommendations.push(`Headline sollte 30-80 Zeichen haben (aktuell: ${prMetrics.headlineLength})`);
+    // PR-Typ-spezifische Modifikatoren ermitteln
+    const prTypeModifiers = getPRTypeModifiers(text, documentTitle);
     
-    if (prMetrics.headlineHasKeywords) headlineScore += 30;
-    else recommendations.push('Keywords in Headline verwenden');
+    // 25% Headline & Lead-Qualität - MODERNISIERTE FLEXIBLE BEWERTUNG
+    let headlineScore = 60; // Solider Basis-Score für jede Headline
     
-    if (prMetrics.headlineHasActiveVerb) headlineScore += 30;
-    else recommendations.push('Aktive Verben in Headline nutzen');
-
-    // 20% Keyword-Performance
-    let keywordScore = 0;
-    if (keywordMetrics.length > 0 && keywords.length > 0) {
-      const avgDensity = keywordMetrics.reduce((sum, km) => sum + km.density, 0) / keywordMetrics.length;
-      const avgRelevance = keywordMetrics.reduce((sum, km) => sum + (km.semanticRelevance || 0), 0) / keywordMetrics.length;
-      
-      // Density-basierte Bewertung (50% des Keyword-Scores)
-      if (avgDensity >= 0.5 && avgDensity <= 2.0) {
-        keywordScore += 50;
-      } else if (avgDensity >= 0.3 && avgDensity <= 3.0) {
-        keywordScore += 30;
-      } else if (avgDensity < 0.5) {
-        keywordScore += 10;
-        recommendations.push(`Keywords öfter verwenden (Dichte: ${avgDensity.toFixed(1)}% - optimal: 0.5-2.0%)`);
+    // Längen-Bewertung (wichtiger als Verben):
+    if (prMetrics.headlineLength >= 30 && prMetrics.headlineLength <= 80) {
+      headlineScore += 20; // Optimal
+    } else if (prMetrics.headlineLength >= 25 && prMetrics.headlineLength <= 90) {
+      headlineScore += 15; // Gut
+    } else if (prMetrics.headlineLength >= 20 && prMetrics.headlineLength <= 100) {
+      headlineScore += 10; // Okay
+    } else {
+      headlineScore -= 10; // Negative Bewertung für schlechte Längen
+      if (prMetrics.headlineLength < 20) {
+        recommendations.push(`Headline zu kurz: ${prMetrics.headlineLength} Zeichen (optimal: 30-80)`);
       } else {
-        keywordScore += 10;
-        recommendations.push(`Keyword-Häufigkeit reduzieren (Dichte: ${avgDensity.toFixed(1)}% - optimal: 0.5-2.0%)`);
+        recommendations.push(`Headline zu lang: ${prMetrics.headlineLength} Zeichen (optimal: 30-80)`);
       }
-      
-      // Relevanz-basierte Bewertung (50% des Keyword-Scores) - nur wenn KI-Analyse vorhanden
-      if (avgRelevance > 0) {
-        keywordScore += Math.min(50, (avgRelevance / 100) * 50);
+    }
+    
+    // Keywords-Bonus (wichtiger als Verben):
+    if (prMetrics.headlineHasKeywords) {
+      headlineScore += 15;
+    } else {
+      recommendations.push('Keywords in Headline verwenden für bessere SEO-Performance');
+    }
+    
+    // Aktive Verben als Bonus (nicht Pflicht!) - PR-Typ und Tonalitäts-bewusst:
+    if (prMetrics.headlineHasActiveVerb) {
+      // Nutze PR-Typ-spezifische Verb-Wichtigkeit
+      headlineScore += prTypeModifiers.verbImportance;
+    } else {
+      // Kontext-sensitive Empfehlungen basierend auf PR-Typ
+      if (prTypeModifiers.verbImportance >= 20) {
+        recommendations.push(`Aktive Verben empfohlen${prTypeModifiers.recommendationSuffix}`);
+      } else if (prTypeModifiers.verbImportance >= 10) {
+        recommendations.push(`Aktive Verben können Headlines verstärken${prTypeModifiers.recommendationSuffix}`);
+      } else if (prTypeModifiers.verbImportance <= 5) {
+        // Keine Empfehlung für niedrige Verb-Wichtigkeit (Finanz/Research/Crisis PR)
+      } else {
+        recommendations.push(`Aktive Verben optional${prTypeModifiers.recommendationSuffix}`);
       }
-      
-      // Spezifische Empfehlungen pro Keyword
+    }
+    
+    // PR-Typ-spezifische Headline-Modifikatoren anwenden
+    headlineScore += prTypeModifiers.headlineModifier;
+    
+    // Keyword-Stuffing-Prüfung (negative Bewertung)
+    const keywordMentions = keywords.reduce((count, kw) => 
+      count + (prMetrics.headlineLength > 0 ? (documentTitle.toLowerCase().split(kw.toLowerCase()).length - 1) : 0), 0
+    );
+    if (keywordMentions > 2) {
+      headlineScore -= 15;
+      recommendations.push('Keyword-Stuffing in Headline vermeiden - natürlicher formulieren');
+    }
+    
+    // Finale Headline-Score Normalisierung (40-100 Range)
+    headlineScore = Math.max(40, Math.min(100, headlineScore));
+
+    // 20% Keyword-Performance - NEUE BONUS-SYSTEM LOGIK
+    let keywordScore = 0;
+    
+    // Verwende neues Bonus-System für Keyword-Bewertung
+    const keywordScoreResult = seoKeywordService.calculateKeywordScore(keywords, text, keywordMetrics);
+    
+    // Keyword-Score aus Bonus-System (0-100) direkt übernehmen
+    keywordScore = keywordScoreResult.totalScore;
+    
+    // Generiere spezifische Empfehlungen basierend auf Bonus-System
+    if (keywordScoreResult.baseScore < 30) {
+      recommendations.push('🎯 Keywords besser positionieren: In Headline und ersten Absatz einbauen');
+    }
+    
+    if (keywordScoreResult.breakdown.keywordDistribution < 10) {
+      recommendations.push('📊 Keywords gleichmäßiger im Text verteilen');
+    }
+    
+    if (keywordScoreResult.breakdown.naturalFlow < 5) {
+      recommendations.push('⚠️ Keyword-Stuffing vermeiden - natürlichere Einbindung');
+    }
+    
+    if (keywordScoreResult.hasAIAnalysis && keywordScoreResult.aiBonus < 20) {
+      recommendations.push('[KI] Thematische Relevanz der Keywords zum Content verbesser');
+    } else if (!keywordScoreResult.hasAIAnalysis && keywordScoreResult.breakdown.fallbackBonus < 20) {
+      recommendations.push('🤖 KI-Analyse aktualisieren für erweiterte Keyword-Bewertung');
+    }
+    
+    // Spezifische Empfehlungen pro Keyword (wenn Keywords vorhanden)
+    if (keywords.length > 0) {
       keywordMetrics.forEach(km => {
-        if (km.density < 0.5) {
-          recommendations.push(`"${km.keyword}" öfter verwenden (nur ${km.occurrences}x erwähnt)`);
-        } else if (km.density > 2.5) {
-          recommendations.push(`"${km.keyword}" weniger verwenden (${km.occurrences}x = ${km.density.toFixed(1)}%)`);
+        // Erweiterte Keyword-spezifische Empfehlungen
+        if (km.density < 0.3 && km.occurrences === 0) {
+          recommendations.push(`🔍 "${km.keyword}" im Text verwenden (nicht gefunden)`);
+        } else if (km.density < 0.3) {
+          recommendations.push(`📈 "${km.keyword}" öfter verwenden (nur ${km.occurrences}x - optimal: 2-5x)`);
+        } else if (km.density > 3.0) {
+          recommendations.push(`📉 "${km.keyword}" weniger verwenden (${km.occurrences}x = ${km.density.toFixed(1)}% - zu häufig)`);
         }
         
         if (!km.inHeadline && !km.inFirstParagraph) {
-          recommendations.push(`"${km.keyword}" in Headline oder ersten Absatz einbauen`);
+          recommendations.push(`🎯 "${km.keyword}" in Headline oder ersten Absatz einbauen`);
         }
         
-        if (km.distribution === 'schlecht' && km.occurrences < 3) {
-          recommendations.push(`"${km.keyword}" mindestens 3x verwenden für bessere Verteilung`);
-        } else if (km.distribution === 'schlecht' && km.occurrences >= 3) {
-          recommendations.push(`"${km.keyword}" gleichmäßiger im Text verteilen`);
+        if (km.distribution === 'schlecht' && km.occurrences >= 2) {
+          recommendations.push(`📊 "${km.keyword}" gleichmäßiger im Text verteilen`);
         }
         
-        // KI-basierte Empfehlungen aus Keywords generieren
-        if (km.semanticRelevance && km.semanticRelevance < 70) {
-          recommendations.push(`[KI] "${km.keyword}" Relevanz erhöhen durch mehr thematische Verbindungen`);
+        // KI-basierte Empfehlungen (erweitert)
+        if (km.semanticRelevance && km.semanticRelevance < 60) {
+          recommendations.push(`[KI] "${km.keyword}" thematische Relevanz stärken (${km.semanticRelevance}%)`);
         }
         
+        if (km.contextQuality && km.contextQuality < 60) {
+          recommendations.push(`[KI] "${km.keyword}" natürlicher in Kontext einbinden (${km.contextQuality}%)`);
+        }
+        
+        // Zielgruppen-spezifische Empfehlungen
         if (km.tonality && km.targetAudience) {
           if (km.targetAudience === 'B2B' && km.tonality === 'Emotional') {
-            recommendations.push(`[KI] "${km.keyword}" Tonalität für B2B-Zielgruppe zu emotional - sachlicher formulieren`);
+            recommendations.push(`[KI] "${km.keyword}" sachlicher formulieren für B2B-Zielgruppe`);
           }
           if (km.targetAudience === 'B2C' && km.tonality === 'Sachlich') {
-            recommendations.push(`[KI] "${km.keyword}" Tonalität für B2C-Zielgruppe zu sachlich - emotionaler gestalten`);
+            recommendations.push(`[KI] "${km.keyword}" emotionaler gestalten für B2C-Zielgruppe`);
           }
           if (km.targetAudience === 'Verbraucher' && (km.tonality === 'Professionell' || km.tonality === 'Fachlich')) {
-            recommendations.push(`[KI] "${km.keyword}" Tonalität für Verbraucher-Zielgruppe zu komplex - verständlicher formulieren`);
+            recommendations.push(`[KI] "${km.keyword}" verständlicher formulieren für Verbraucher`);
           }
         }
       });
     } else {
-      recommendations.push('Keywords hinzufügen für bessere SEO-Bewertung');
+      recommendations.push('🔑 Keywords hinzufügen für SEO-Bewertung (maximal 2)');
+    }
+
+    // Social-Media-Empfehlungen (neue Kategorie)
+    const detectedHashtags = HashtagDetector.detectHashtags(text);
+    
+    if (documentTitle.length > 280) {
+      recommendations.push('📱 Headline für Twitter kürzen: Unter 280 Zeichen für optimale Social-Media-Reichweite');
+    } else if (documentTitle.length > 320) {
+      recommendations.push('📱 Headline etwas kürzen für bessere Social-Media-Tauglichkeit');
+    }
+    
+    if (detectedHashtags.length === 0) {
+      recommendations.push('#️⃣ 2-3 relevante Hashtags hinzufügen für Social-Media-Optimierung');
+    } else if (detectedHashtags.length < 2) {
+      recommendations.push('#️⃣ Weitere Hashtags ergänzen (optimal: 2-3 pro Post)');
+    }
+    
+    // Hashtag-Qualität bewerten
+    if (detectedHashtags.length > 0) {
+      const hashtagQuality = HashtagDetector.assessHashtagQuality(detectedHashtags, keywords);
+      if (hashtagQuality.averageScore < 60) {
+        recommendations.push('#️⃣ Verwende branchenrelevante und keyword-bezogene Hashtags');
+      }
     }
 
     // 20% Struktur & Lesbarkeit (zielgruppenspezifisch)
@@ -383,29 +599,63 @@ export function PRSEOHeaderBar({
       recommendations.push('Konkrete Zahlen, Daten und Firmennamen verwenden');
     }
 
-    // 10% Zitate & CTA
-    let engagementScore = 0;
+    // 10% Zitate & CTA - NEUE FLEXIBLE "ODER"-LOGIK
+    let engagementScore = 40; // Solider Basis-Score für jeden Text
     
     // CTA zählen aus Markup (markup-basiert)
     const ctaMatches = text.match(/<span[^>]*data-type="cta-text"[^>]*>/g) || [];
     const ctaCount = ctaMatches.length;
     
-    if (prMetrics.quoteCount >= 1) {
-      engagementScore += 40;
+    // Erweiterte CTA-Erkennung
+    const hasStandardCTA = ctaCount >= 1;
+    const hasContactInfo = /\b(kontakt|telefon|email|@|\.de|\.com)\b/i.test(text.replace(/<[^>]*>/g, ''));
+    const hasUrls = /\b(http|www\.|\.de|\.com)\b/i.test(text.replace(/<[^>]*>/g, ''));
+    const hasActionWords = /\b(jetzt|heute|sofort|direkt|besuchen|kontaktieren|erfahren|downloaden|buchen|anmelden|registrieren)\b/i.test(text.replace(/<[^>]*>/g, ''));
+    
+    // Erweiterte Zitat-Erkennung
+    const hasBlockquotes = prMetrics.quoteCount >= 1;
+    const hasQuotationMarks = text.replace(/<[^>]*>/g, '').includes('"') || text.replace(/<[^>]*>/g, '').includes('„') || text.replace(/<[^>]*>/g, '').includes('"');
+    const hasAttributions = /\b(sagt|erklärt|betont|kommentiert|so|laut)\b/i.test(text.replace(/<[^>]*>/g, ''));
+    
+    // Kombiniere alle CTA-Varianten
+    const hasAnyCTA = hasStandardCTA || hasContactInfo || hasUrls || hasActionWords;
+    const hasAnyQuote = hasBlockquotes || (hasQuotationMarks && hasAttributions);
+    
+    // Einzelne Features belohnen (ODER-Logik):
+    if (hasAnyQuote) {
+      engagementScore += 30; // Zitat = +30
     } else {
-      recommendations.push('Mindestens ein Zitat hinzufügen (Strg+Shift+Q)');
+      recommendations.push('Zitat oder Aussage hinzufügen (Strg+Shift+Q oder "..." mit Attribution)');
     }
     
-    if (ctaCount >= 1) {
-      engagementScore += 35;
+    if (hasAnyCTA) {
+      engagementScore += 30; // CTA = +30  
     } else {
-      recommendations.push('Call-to-Action Texte hinzufügen (Strg+Shift+C)');
+      recommendations.push('Call-to-Action hinzufügen (Strg+Shift+C, Kontaktdaten oder Handlungsaufforderung)');
     }
     
+    // Aktive Sprache belohnen
     if (prMetrics.hasActionVerbs) {
-      engagementScore += 25;
+      engagementScore += 20; // Aktive Sprache = +20
     }
     
+    // Bonus für perfekte Kombination (UND-Bonus):
+    if (hasAnyQuote && hasAnyCTA) {
+      engagementScore += 10; // Bonus für beide = +10
+    }
+    
+    // Emotionale Elemente erkennen (moderat)
+    const hasEmotionalElements = /[!]{1,2}\s/g.test(text.replace(/<[^>]*>/g, ''));
+    if (hasEmotionalElements) {
+      engagementScore += 5; // Leichter Bonus für emotionale Sprache
+    }
+    
+    // Cap bei 100 Punkten
+    engagementScore = Math.min(100, engagementScore);
+    
+
+    // Social-Score berechnen (neue 5% Kategorie)
+    const socialScore = calculateSocialScore(text, documentTitle);
 
     const breakdown: PRScoreBreakdown = {
       headline: headlineScore,
@@ -413,21 +663,23 @@ export function PRSEOHeaderBar({
       structure: structureScore,
       relevance: relevanceScore,
       concreteness: concretenessScore,
-      engagement: engagementScore
+      engagement: engagementScore,
+      social: socialScore
     };
 
     // Ohne Keywords kein Score
     const totalScore = keywords.length === 0 ? 0 : Math.round(
-      (breakdown.headline * 0.25) +
-      (breakdown.keywords * 0.20) +
-      (breakdown.structure * 0.20) +
-      (breakdown.relevance * 0.15) +
-      (breakdown.concreteness * 0.10) +
-      (breakdown.engagement * 0.10)
+      (breakdown.headline * 0.20) +      // 20% (reduziert von 25%)
+      (breakdown.keywords * 0.20) +      // 20%
+      (breakdown.structure * 0.20) +     // 20%
+      (breakdown.relevance * 0.15) +     // 15%
+      (breakdown.concreteness * 0.10) +  // 10%
+      (breakdown.engagement * 0.10) +    // 10%
+      (breakdown.social * 0.05)          // 5% (neu)
     );
 
     return { totalScore, breakdown, recommendations };
-  }, [keywords, getThresholds]);
+  }, [keywords, getThresholds, getPRTypeModifiers, calculateSocialScore]);
 
   // KI-Analyse für einzelnes Keyword
   const analyzeKeywordWithAI = useCallback(async (keyword: string, text: string): Promise<Partial<KeywordMetrics>> => {
@@ -597,10 +849,14 @@ Beispiel-Format (nutze deine eigenen Werte):
     setKeywordMetrics(updatedMetrics);
   }, [content, keywords, calculateBasicMetrics]);
 
-  // PR-Score berechnen
+  // PR-Score und Keyword-Score berechnen
   useEffect(() => {
     const prMetrics = calculatePRMetrics(content, documentTitle);
     const { totalScore, breakdown, recommendations: newRecommendations } = calculatePRScore(prMetrics, keywordMetrics, content);
+    
+    // Keyword-Score-Daten separat berechnen für UI-Anzeige
+    const keywordScoreResult = seoKeywordService.calculateKeywordScore(keywords, content, keywordMetrics);
+    setKeywordScoreData(keywordScoreResult);
     
     setPrScore(totalScore);
     setScoreBreakdown(breakdown);
@@ -615,7 +871,7 @@ Beispiel-Format (nutze deine eigenen Werte):
         keywordMetrics
       });
     }
-  }, [content, documentTitle, keywordMetrics, calculatePRMetrics, calculatePRScore, onSeoScoreChange]);
+  }, [content, documentTitle, keywordMetrics, keywords, calculatePRMetrics, calculatePRScore, onSeoScoreChange]);
 
   // Score-Farbe bestimmen
   const getScoreColor = (score: number) => {
@@ -736,10 +992,10 @@ Beispiel-Format (nutze deine eigenen Werte):
         </div>
       )}
 
-      {/* Score-Aufschlüsselung in 3 Boxen */}
+      {/* Score-Aufschlüsselung in 4 Boxen + Keyword-Score-Status */}
       {keywords.length > 0 && (
         <>
-          <div className="grid grid-cols-3 gap-2 mb-3">
+          <div className="grid grid-cols-4 gap-2 mb-3">
             <div className="bg-gray-100 rounded-md p-3 flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
                 scoreBreakdown.headline >= 70 ? 'bg-green-500' :
@@ -773,8 +1029,90 @@ Beispiel-Format (nutze deine eigenen Werte):
                 </div>
               </div>
             </div>
+            <div className="bg-gray-100 rounded-md p-3 flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                scoreBreakdown.social >= 70 ? 'bg-green-500' :
+                scoreBreakdown.social >= 40 ? 'bg-orange-500' : 'bg-red-500'
+              }`}></div>
+              <div className="flex-1">
+                <HashtagIcon className="h-4 w-4 text-blue-600 inline mr-1" />
+                <div className="text-sm font-semibold text-gray-900 inline">
+                  Social: {scoreBreakdown.social}/100
+                </div>
+              </div>
+            </div>
           </div>
           
+          {/* Keyword-Score-Status Anzeige */}
+          {keywordScoreData && (
+            <div className="bg-blue-50 rounded-md p-3 mb-3">
+              <div className="flex items-center gap-2 text-xs text-blue-700">
+                <CpuChipIcon className="h-4 w-4" />
+                <div className="flex items-center gap-4">
+                  <span>
+                    <strong>Keyword-Score:</strong> {keywordScoreData.totalScore}/100
+                  </span>
+                  {keywordScoreData.hasAIAnalysis ? (
+                    <span>
+                      <strong>KI-Bonus:</strong> {keywordScoreData.aiBonus}/40
+                    </span>
+                  ) : (
+                    <span>
+                      <strong>Fallback-Bonus:</strong> {keywordScoreData.aiBonus}/40
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Social-Score Details */}
+          {(() => {
+            const detectedHashtags = HashtagDetector.detectHashtags(content);
+            const hashtagQuality = detectedHashtags.length > 0 ? HashtagDetector.assessHashtagQuality(detectedHashtags, keywords) : null;
+            
+            if (detectedHashtags.length > 0 || documentTitle.length > 0) {
+              return (
+                <div className="bg-blue-50 rounded-md p-3 mb-3">
+                  <div className="flex items-center gap-2 text-xs text-blue-700">
+                    <HashtagIcon className="h-4 w-4" />
+                    <div className="flex items-center gap-4">
+                      <span>
+                        <strong>Headline-Länge:</strong> {documentTitle.length} Zeichen
+                        {documentTitle.length <= 280 ? ' ✓' : ' (zu lang für Twitter)'}
+                      </span>
+                      {detectedHashtags.length > 0 && (
+                        <>
+                          <span>
+                            <strong>Hashtags:</strong> {detectedHashtags.length} gefunden
+                          </span>
+                          {hashtagQuality && (
+                            <span>
+                              <strong>Qualität:</strong> {hashtagQuality.averageScore.toFixed(1)}/100
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  {detectedHashtags.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {detectedHashtags.slice(0, 5).map((tag, index) => (
+                        <span key={index} className="inline-block bg-blue-200 text-blue-800 text-xs px-2 py-1 rounded">
+                          #{tag}
+                        </span>
+                      ))}
+                      {detectedHashtags.length > 5 && (
+                        <span className="text-xs text-blue-600">+{detectedHashtags.length - 5} weitere</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+            return null;
+          })()}
+
           {/* Globale KI-Analyse für gesamten Text */}
           {keywordMetrics.length > 0 && keywordMetrics.some(km => km.targetAudience || km.tonality) && (
             <div className="bg-purple-50 rounded-md p-3 mb-3">
@@ -789,6 +1127,11 @@ Beispiel-Format (nutze deine eigenen Werte):
                   {keywordMetrics[0]?.tonality && (
                     <span>
                       <strong>Tonalität:</strong> {keywordMetrics[0].tonality}
+                    </span>
+                  )}
+                  {keywordScoreData?.hasAIAnalysis && (
+                    <span>
+                      <strong>KI-Score:</strong> {keywordScoreData.aiBonus}/40
                     </span>
                   )}
                 </div>
