@@ -50,7 +50,7 @@ Absatz 4: Auswirkungen, Nutzen und Zukunftsperspektive
 
 "Authentisches Zitat (20-35 Wörter)", sagt [Vollständiger Name], [Position] bei [Unternehmen].
 
-[[CTA: Klare Handlungsaufforderung mit Kontaktmöglichkeit oder weiterführendem Link]]`,
+[[CTA: Klare Handlungsaufforderung - z.B. "Erfahren Sie mehr auf www.example.com" oder "Kontaktieren Sie uns unter presse@firma.de für weitere Informationen" oder "Vereinbaren Sie noch heute einen Demo-Termin"]]`,
 
   rules: `
 KRITISCHE REGELN:
@@ -58,7 +58,11 @@ KRITISCHE REGELN:
 ✓ Lead: EXAKT 40-50 Wörter, in **Sterne** einschließen
 ✓ Body: 3 separate Absätze mit verschiedenen Aspekten
 ✓ Zitat: In "Anführungszeichen" mit vollständiger Attribution
-✓ Call-to-Action: Mit [[CTA: ...]] markieren, klar und handlungsorientiert
+✓ Call-to-Action: Mit [[CTA: ...]] markieren, konkrete Handlungsaufforderung
+  - Beispiele: "Weitere Informationen unter www.firma.de/produkt"
+  - "Kontaktieren Sie unser Presseteam unter presse@firma.de"
+  - "Vereinbaren Sie einen Demo-Termin unter www.firma.de/demo"
+✓ KEINE Boilerplate/Unternehmensbeschreibung am Ende
 ✓ Sachlich und objektiv, keine Werbesprache
 ✓ Perfekte deutsche Rechtschreibung
 ✓ Konkrete Zahlen und Fakten
@@ -67,7 +71,8 @@ VERMEIDE:
 - Werbesprache ("revolutionär", "bahnbrechend", "einzigartig")
 - Passive Konstruktionen
 - Übertreibungen ohne Belege
-- Zu lange Sätze (max. 15 Wörter)`,
+- Zu lange Sätze (max. 15 Wörter)
+- "Über das Unternehmen" Abschnitte`,
 
   // Tonalitäts-spezifische Anpassungen
   tones: {
