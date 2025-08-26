@@ -1185,8 +1185,9 @@ export default function NewPRCampaignPage() {
 
         {/* Step 4: Vorschau */}
         {currentStep === 4 && (
-          <div className="bg-white rounded-lg border p-6">
-            <CampaignPreviewStep
+          <>
+            <div className="bg-white rounded-lg border p-6">
+              <CampaignPreviewStep
               campaignTitle={campaignTitle}
               finalContentHtml={finalContentHtml}
               keyVisual={keyVisual}
@@ -1198,11 +1199,11 @@ export default function NewPRCampaignPage() {
               attachedAssets={attachedAssets}
               editorContent={editorContent}
               approvalData={approvalData}
-            />
-          </div>
+              />
+            </div>
           
-          {/* PDF-Vorschau */}
-          <div className="bg-white rounded-lg border p-6 mt-6">
+            {/* PDF-Vorschau */}
+            <div className="bg-white rounded-lg border p-6 mt-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">PDF-Vorschau</h3>
               
@@ -1270,7 +1271,8 @@ export default function NewPRCampaignPage() {
                 <p className="text-sm">Klicken Sie auf &ldquo;PDF generieren&rdquo; um eine Vorschau zu erstellen</p>
               </div>
             )}
-          </div>
+            </div>
+          </>
         )}
 
         {/* Navigation Buttons */}
