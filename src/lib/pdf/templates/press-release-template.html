@@ -22,6 +22,7 @@
       color: var(--text-color);
       margin: 0;
       padding: 20mm;
+      padding-bottom: 40mm; /* Mehr Platz für Footer */
       background: white;
       font-size: 11pt;
       -webkit-print-color-adjust: exact;
@@ -181,6 +182,11 @@
       margin: 15mm 0;
     }
 
+    .content-container {
+      min-height: calc(100vh - 80mm); /* Verhindert Überlappung mit Footer */
+      padding-bottom: 20mm; /* Zusätzlicher Abstand zum Footer */
+    }
+
     .footer {
       position: fixed;
       bottom: 15mm;
@@ -191,6 +197,8 @@
       color: #6b7280;
       border-top: 1px solid #e5e7eb;
       padding-top: 5mm;
+      background: white; /* Sorgt für saubere Überlagerung */
+      z-index: 10; /* Stellt sicher, dass Footer über Content liegt */
     }
 
     .footer .page-info {
@@ -240,38 +248,41 @@
     <span class="date">{{date}}</span>
   </div>
 
-  <!-- Key Visual (falls vorhanden) -->
-  {{#keyVisual}}
-  <div class="key-visual-container">
-    <img src="{{url}}" alt="{{alt}}" class="key-visual" />
-    {{#caption}}<div class="key-visual-caption">{{caption}}</div>{{/caption}}
-  </div>
-  {{/keyVisual}}
-
-  <!-- Separator Line -->
-  <div class="separator"></div>
-
-  <!-- Haupttitel -->
-  <h1 class="title">{{title}}</h1>
-
-  <!-- Hauptinhalt -->
-  <div class="main-content">
-    {{{mainContent}}}
-  </div>
-
-  <!-- Textbausteine -->
-  {{#boilerplateSections}}
-  {{#boilerplateSections.length}}
-  <div class="boilerplate-sections">
-    {{#boilerplateSections}}
-    <div class="boilerplate-section">
-      {{#customTitle}}<h3>{{customTitle}}</h3>{{/customTitle}}
-      <div class="content">{{{content}}}</div>
+  <!-- Content Container - verhindert Überlappung mit Footer -->
+  <div class="content-container">
+    <!-- Key Visual (falls vorhanden) -->
+    {{#keyVisual}}
+    <div class="key-visual-container">
+      <img src="{{url}}" alt="{{alt}}" class="key-visual" />
+      {{#caption}}<div class="key-visual-caption">{{caption}}</div>{{/caption}}
     </div>
+    {{/keyVisual}}
+
+    <!-- Separator Line -->
+    <div class="separator"></div>
+
+    <!-- Haupttitel -->
+    <h1 class="title">{{title}}</h1>
+
+    <!-- Hauptinhalt -->
+    <div class="main-content">
+      {{{mainContent}}}
+    </div>
+
+    <!-- Textbausteine -->
+    {{#boilerplateSections}}
+    {{#boilerplateSections.length}}
+    <div class="boilerplate-sections">
+      {{#boilerplateSections}}
+      <div class="boilerplate-section">
+        {{#customTitle}}<h3>{{customTitle}}</h3>{{/customTitle}}
+        <div class="content">{{{content}}}</div>
+      </div>
+      {{/boilerplateSections}}
+    </div>
+    {{/boilerplateSections.length}}
     {{/boilerplateSections}}
   </div>
-  {{/boilerplateSections.length}}
-  {{/boilerplateSections}}
 
   <!-- Footer wird durch CSS fixed positioniert -->
   <div class="footer">
