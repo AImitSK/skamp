@@ -1254,7 +1254,8 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                       <Button
                         type="button"
                         onClick={() => setShowAssetSelector(true)}
-                        className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm px-3 py-1.5 flex items-center gap-2 mt-3"
+                        color="secondary"
+                        className="text-sm px-3 py-1.5 flex items-center gap-2 mt-3"
                       >
                         <PlusIcon className="h-4 w-4" />
                         Weitere Medien hinzufügen
@@ -1409,8 +1410,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                 attachedAssets={attachedAssets}
                 editorContent={editorContent}
                 approvalData={approvalData}
-                handleGeneratePdf={handleGeneratePdf}
-                generatingPdf={generatingPdf}
               />
             </div>
             
@@ -1430,11 +1429,11 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                     type="button"
                     onClick={() => handleGeneratePdf(false)}
                     disabled={generatingPdf}
-                    className="bg-[#005fab] hover:bg-[#004a8c] text-white"
+                    color="secondary"
                   >
                     {generatingPdf ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
                         PDF wird erstellt...
                       </>
                     ) : (
@@ -1486,7 +1485,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                       <Button
                         type="button"
                         onClick={() => window.open(currentPdfVersion.downloadUrl, '_blank')}
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                        color="secondary"
                       >
                         PDF öffnen
                       </Button>

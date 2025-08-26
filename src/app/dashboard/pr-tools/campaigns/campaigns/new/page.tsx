@@ -1198,9 +1198,78 @@ export default function NewPRCampaignPage() {
               attachedAssets={attachedAssets}
               editorContent={editorContent}
               approvalData={approvalData}
-              handleGeneratePdf={handleGeneratePdf}
-              generatingPdf={generatingPdf}
             />
+          </div>
+          
+          {/* PDF-Vorschau */}
+          <div className="bg-white rounded-lg border p-6 mt-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">PDF-Vorschau</h3>
+              
+              <Button
+                type="button"
+                onClick={() => handleGeneratePdf(false)}
+                disabled={generatingPdf}
+                color="secondary"
+              >
+                {generatingPdf ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
+                    PDF wird erstellt...
+                  </>
+                ) : (
+                  <>
+                    <DocumentTextIcon className="h-4 w-4 mr-2" />
+                    PDF generieren
+                  </>
+                )}
+              </Button>
+            </div>
+            
+            {/* Aktuelle PDF-Version */}
+            {currentPdfVersion && (
+              <div className="border rounded-lg p-4 bg-blue-50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <DocumentTextIcon className="h-5 w-5 text-blue-600" />
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-blue-900">Version {currentPdfVersion.version}</span>
+                        <Badge color="blue" className="text-xs">Aktuell</Badge>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <Badge 
+                      color={currentPdfVersion.status === 'draft' ? 'zinc' : 
+                            currentPdfVersion.status === 'approved' ? 'green' : 'amber'} 
+                      className="text-xs"
+                    >
+                      {currentPdfVersion.status === 'draft' ? 'Entwurf' :
+                       currentPdfVersion.status === 'approved' ? 'Freigegeben' : 'Freigabe angefordert'}
+                    </Badge>
+                    
+                    <Button
+                      type="button"
+                      onClick={() => window.open(currentPdfVersion.downloadUrl, '_blank')}
+                      color="secondary"
+                    >
+                      PDF öffnen
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* PDF-Hinweis */}
+            {!currentPdfVersion && (
+              <div className="text-center py-6 text-gray-500">
+                <DocumentTextIcon className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                <p>Noch keine PDF-Version erstellt</p>
+                <p className="text-sm">Klicken Sie auf &ldquo;PDF generieren&rdquo; um eine Vorschau zu erstellen</p>
+              </div>
+            )}
           </div>
         )}
 
