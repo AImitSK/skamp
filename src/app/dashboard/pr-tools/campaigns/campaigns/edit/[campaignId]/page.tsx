@@ -137,6 +137,10 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
     customerApprovalMessage: ''
   });
 
+  // 🆕 Template-State-Management
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>(undefined);
+  const [selectedTemplateName, setSelectedTemplateName] = useState<string>('');
+
   // State für bisherigen Feedback-Verlauf
   const [previousFeedback, setPreviousFeedback] = useState<any[]>([]);
 
@@ -228,6 +232,13 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
     console.log('✅ ContentHtml generiert:', html.length, 'Zeichen');
     setFinalContentHtml(html);
     setCurrentStep(4);
+  };
+
+  // 🆕 Template-Select Handler
+  const handleTemplateSelect = (templateId: string, templateName: string) => {
+    console.log('✅ Template ausgewählt:', templateId, templateName);
+    setSelectedTemplateId(templateId);
+    setSelectedTemplateName(templateName);
   };
 
   // PDF-WORKFLOW PREVIEW HANDLER
@@ -1410,6 +1421,10 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                 attachedAssets={attachedAssets}
                 editorContent={editorContent}
                 approvalData={approvalData}
+                organizationId={currentOrganization?.id}
+                selectedTemplateId={selectedTemplateId}
+                onTemplateSelect={handleTemplateSelect}
+                showTemplateSelector={true}
               />
             </div>
             

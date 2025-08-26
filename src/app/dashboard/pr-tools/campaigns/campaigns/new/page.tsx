@@ -136,6 +136,10 @@ export default function NewPRCampaignPage() {
     customerApprovalMessage: ''
   });
 
+  // 🆕 Template-State-Management
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>(undefined);
+  const [selectedTemplateName, setSelectedTemplateName] = useState<string>('');
+
   // Debug Logging für State-Änderungen
   useEffect(() => {
     console.log('🖼️ KeyVisual State changed:', keyVisual);
@@ -222,6 +226,13 @@ export default function NewPRCampaignPage() {
     console.log('✅ ContentHtml generiert:', html.length, 'Zeichen');
     setFinalContentHtml(html);
     setCurrentStep(4);
+  };
+
+  // 🆕 Template-Select Handler
+  const handleTemplateSelect = (templateId: string, templateName: string) => {
+    console.log('✅ Template ausgewählt:', templateId, templateName);
+    setSelectedTemplateId(templateId);
+    setSelectedTemplateName(templateName);
   };
 
   // PDF-WORKFLOW PREVIEW HANDLER
@@ -1199,6 +1210,10 @@ export default function NewPRCampaignPage() {
               attachedAssets={attachedAssets}
               editorContent={editorContent}
               approvalData={approvalData}
+              organizationId={currentOrganization?.id}
+              selectedTemplateId={selectedTemplateId}
+              onTemplateSelect={handleTemplateSelect}
+              showTemplateSelector={true}
               />
             </div>
           
