@@ -521,9 +521,10 @@ export default function NewPRCampaignPage() {
         htmlParts.push(quoteHtml);
       }
       
-      // Boilerplate/Über das Unternehmen am Ende
-      if (result.structured.boilerplate && result.structured.boilerplate !== 'Standard-Boilerplate') {
-        htmlParts.push(`<p class="text-sm text-gray-600 mt-8"><em>${result.structured.boilerplate}</em></p>`);
+      // CTA (Call-to-Action) mit korrekter Formatierung für die Toolbar
+      if (result.structured.cta) {
+        // CTA wird mit data-type="cta-text" formatiert, wie von CTAExtension erwartet
+        htmlParts.push(`<p><span data-type="cta-text" class="cta-text font-bold text-[#005fab]">${result.structured.cta}</span></p>`);
       }
       
       // ALLES als ein zusammenhängender HTML-Content in den Editor

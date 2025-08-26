@@ -9,7 +9,8 @@ export interface StructuredPressRelease {
     role: string;
     company: string;
   };
-  boilerplate: string;
+  cta?: string; // Call-to-Action statt Boilerplate
+  boilerplate?: string; // Optional für Backwards Compatibility
 }
 
 export interface GenerationRequest {

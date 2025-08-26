@@ -28,7 +28,7 @@ interface StructuredPressRelease {
     role: string;
     company: string;
   };
-  boilerplate: string;
+  cta: string; // Call-to-Action statt Boilerplate
 }
 
 // System-Prompts aus der Prompt Library
@@ -50,7 +50,7 @@ Absatz 4: Auswirkungen, Nutzen und Zukunftsperspektive
 
 "Authentisches Zitat (20-35 Wörter)", sagt [Vollständiger Name], [Position] bei [Unternehmen].
 
-*Über [Unternehmen]: [Kurze Unternehmensbeschreibung in 2-3 Sätzen]*`,
+[[CTA: Klare Handlungsaufforderung mit Kontaktmöglichkeit oder weiterführendem Link]]`,
 
   rules: `
 KRITISCHE REGELN:
@@ -58,7 +58,7 @@ KRITISCHE REGELN:
 ✓ Lead: EXAKT 40-50 Wörter, in **Sterne** einschließen
 ✓ Body: 3 separate Absätze mit verschiedenen Aspekten
 ✓ Zitat: In "Anführungszeichen" mit vollständiger Attribution
-✓ Boilerplate: Mit *Sterne* markieren
+✓ Call-to-Action: Mit [[CTA: ...]] markieren, klar und handlungsorientiert
 ✓ Sachlich und objektiv, keine Werbesprache
 ✓ Perfekte deutsche Rechtschreibung
 ✓ Konkrete Zahlen und Fakten
@@ -143,7 +143,7 @@ function parseStructuredOutput(text: string): StructuredPressRelease {
   let leadParagraph = '';
   let bodyParagraphs: string[] = [];
   let quote = { text: '', person: '', role: '', company: '' };
-  let boilerplate = '';
+  let cta = '';
   
   let currentSection = 'searching'; // searching, lead, body, quote, boilerplate
   let bodyCount = 0;
@@ -223,15 +223,26 @@ function parseStructuredOutput(text: string): StructuredPressRelease {
           }
         }
       }
-      currentSection = 'boilerplate';
+      currentSection = 'cta';
       continue;
     }
     
-    // 4. Boilerplate erkennen
-    if (line.startsWith('*Über ') || line.startsWith('*About ') || 
-        line.startsWith('Über ') && currentSection === 'boilerplate') {
-      boilerplate = line.replace(/^\*/, '').replace(/\*$/, '');
-      console.log('Found boilerplate:', boilerplate);
+    // 4. CTA erkennen
+    if (line.includes('[[CTA:') || line.includes('CTA:') || 
+        line.includes('Kontakt:') || line.includes('Weitere Informationen:') ||
+        currentSection === 'cta') {
+      // Extrahiere CTA Text
+      const ctaMatch = line.match(/\[\[CTA:\s*(.+?)\]\]/) || 
+                       line.match(/CTA:\s*(.+)/) ||
+                       line.match(/Kontakt:\s*(.+)/) ||
+                       line.match(/Weitere Informationen:\s*(.+)/);
+      if (ctaMatch) {
+        cta = ctaMatch[1].trim();
+        console.log('Found CTA:', cta);
+      } else if (currentSection === 'cta') {
+        cta = line;
+        console.log('Found CTA (full line):', cta);
+      }
       continue;
     }
     
@@ -269,8 +280,8 @@ function parseStructuredOutput(text: string): StructuredPressRelease {
       company: 'Unternehmen' 
     };
   }
-  if (!boilerplate) {
-    boilerplate = 'Über das Unternehmen: [Platzhalter für Unternehmensbeschreibung]';
+  if (!cta) {
+    cta = 'Für weitere Informationen kontaktieren Sie uns unter info@example.com';
   }
   
   console.log('=== PARSING RESULT ===');
@@ -285,7 +296,7 @@ function parseStructuredOutput(text: string): StructuredPressRelease {
     leadParagraph,
     bodyParagraphs,
     quote,
-    boilerplate
+    cta
   };
 }
 
@@ -380,9 +391,7 @@ ${structured.bodyParagraphs.map(p => `<p>${p}</p>`).join('\n\n')}
   <footer>— ${structured.quote.person}, ${structured.quote.role}${structured.quote.company ? ` bei ${structured.quote.company}` : ''}</footer>
 </blockquote>
 
-<hr>
-
-<p><em>${structured.boilerplate}</em></p>
+<p><span data-type="cta-text" class="cta-text font-bold text-[#005fab]">${structured.cta}</span></p>
 `;
 
     console.log('Structured press release generated successfully', { 
