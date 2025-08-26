@@ -25,7 +25,8 @@ interface CampaignPreviewStepProps {
       structure: number; 
       relevance: number; 
       concreteness: number; 
-      engagement: number 
+      engagement: number;
+      social: number 
     };
     hints: string[];
     keywordMetrics: any[];
@@ -167,13 +168,25 @@ export function CampaignPreviewStep({
           {/* Score Details */}
           <div className="space-y-2">
             <div className="text-sm text-gray-600">
-              Headline: {realPrScore?.breakdown?.headline || 0}/100
+              Headline: {Math.round(realPrScore?.breakdown?.headline || 0)}/100
             </div>
             <div className="text-sm text-gray-600">
-              Keywords: {realPrScore?.breakdown?.keywords || 0}/100
+              Keywords: {Math.round(realPrScore?.breakdown?.keywords || 0)}/100
             </div>
             <div className="text-sm text-gray-600">
-              Struktur: {realPrScore?.breakdown?.structure || 0}/100
+              Struktur: {Math.round(realPrScore?.breakdown?.structure || 0)}/100
+            </div>
+            <div className="text-sm text-gray-600">
+              Relevanz: {Math.round(realPrScore?.breakdown?.relevance || 0)}/100
+            </div>
+            <div className="text-sm text-gray-600">
+              Konkretheit: {Math.round(realPrScore?.breakdown?.concreteness || 0)}/100
+            </div>
+            <div className="text-sm text-gray-600">
+              Engagement: {Math.round(realPrScore?.breakdown?.engagement || 0)}/100
+            </div>
+            <div className="text-sm text-gray-600">
+              Social: {Math.round(realPrScore?.breakdown?.social || 0)}/100
             </div>
             
             {keywords.length > 0 && realPrScore?.keywordMetrics && realPrScore.keywordMetrics.length > 0 && (

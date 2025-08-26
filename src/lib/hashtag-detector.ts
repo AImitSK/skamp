@@ -97,7 +97,14 @@ export class HashtagDetector {
       return [];
     }
 
-    const matches = text.match(this.HASHTAG_REGEX);
+    // HTML-Tags und CSS-Werte entfernen, um nur reinen Text zu verarbeiten
+    const cleanText = text
+      .replace(/<[^>]*>/g, ' ') // HTML-Tags entfernen
+      .replace(/style\s*=\s*"[^"]*"/g, ' ') // style-Attribute entfernen
+      .replace(/class\s*=\s*"[^"]*"/g, ' ') // class-Attribute entfernen
+      .replace(/#[0-9a-fA-F]{3,6}\b/g, ' '); // Hex-Farbcodes entfernen (#005fab, #fff, etc.)
+
+    const matches = cleanText.match(this.HASHTAG_REGEX);
     if (!matches) {
       return [];
     }

@@ -70,11 +70,7 @@ export const GmailStyleToolbar = ({ editor }: GmailStyleToolbarProps) => {
     },
     { 
       command: () => editor.chain().focus().toggleOrderedList().run(), 
-      icon: () => (
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
-        </svg>
-      ), 
+      icon: () => <span className="font-bold text-sm">1.</span>, 
       label: 'Nummerierte Liste', 
       activeName: 'orderedList',
       shortcut: 'Strg+Shift+7',
@@ -97,7 +93,7 @@ export const GmailStyleToolbar = ({ editor }: GmailStyleToolbarProps) => {
     },
     { 
       command: 'toggleHashtag', 
-      icon: () => <span className="font-bold text-blue-600">#</span>, 
+      icon: () => <span className="font-bold">#</span>, 
       label: 'Hashtag', 
       activeName: 'hashtag',
       shortcut: 'Strg+Shift+H'

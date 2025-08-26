@@ -537,7 +537,8 @@ export default function NewPRCampaignPage() {
           })
           .join(' ');
         
-        // Hashtags in einem eigenen Absatz am Ende hinzufügen
+        // Hashtags in einem eigenen Absatz am Ende hinzufügen mit zusätzlicher Leerzeile
+        htmlParts.push(`<p></p>`); // Leerzeile für bessere optische Trennung
         htmlParts.push(`<p class="hashtags-section mt-4">${formattedHashtags}</p>`);
       }
       

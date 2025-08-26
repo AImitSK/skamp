@@ -1025,7 +1025,7 @@ Beispiel-Format (nutze deine eigenen Werte):
               }`}></div>
               <div className="flex-1">
                 <div className="text-sm font-semibold text-gray-900">
-                  Struktur: {scoreBreakdown.structure}/100
+                  Struktur: {Math.round(scoreBreakdown.structure)}/100
                 </div>
               </div>
             </div>
@@ -1035,9 +1035,8 @@ Beispiel-Format (nutze deine eigenen Werte):
                 scoreBreakdown.social >= 40 ? 'bg-orange-500' : 'bg-red-500'
               }`}></div>
               <div className="flex-1">
-                <HashtagIcon className="h-4 w-4 text-blue-600 inline mr-1" />
                 <div className="text-sm font-semibold text-gray-900 inline">
-                  Social: {scoreBreakdown.social}/100
+                  Social: {Math.round(scoreBreakdown.social)}/100
                 </div>
               </div>
             </div>
