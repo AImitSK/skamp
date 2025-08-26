@@ -168,9 +168,56 @@ Zentrale Dokumentation für einheitliche UI/UX-Standards in der gesamten CeleroP
 - **Content-Bereich:** `p-6`
 - **Actions:** `px-6 py-4`
 
-### Tabellen
-- **Zell-Padding:** `px-6 py-4`
-- **Header-Padding:** `px-6 py-3`
+### Tabellen (Team/Templates-Style)
+**Standard-Layout für Settings-Seiten:**
+```tsx
+<div className="bg-white rounded-lg overflow-hidden">
+  {/* Table Header */}
+  <div className="px-6 py-3 border-b border-zinc-200 bg-zinc-50">
+    <div className="flex items-center">
+      <div className="w-[40%] text-xs font-medium text-zinc-500 uppercase tracking-wider">
+        Haupt-Spalte
+      </div>
+      <div className="flex-1 text-xs font-medium text-zinc-500 uppercase tracking-wider text-right">
+        Aktionen
+      </div>
+    </div>
+  </div>
+  
+  {/* Table Body */}
+  <div className="divide-y divide-zinc-200">
+    <div className="px-6 py-4 hover:bg-zinc-50 transition-colors">
+      {/* Row Content */}
+    </div>
+  </div>
+</div>
+```
+
+**Spalten-Breiten:**
+- **Haupt-Content:** `w-[40%]` (Name/Beschreibung)
+- **Status/Typ:** `w-[20%]` (Badges)  
+- **Version/Datum:** `w-[15%]` (Zusatzinfo)
+- **Aktionen:** `flex-1` (Dropdown-Menü rechts)
+
+**Aktionen-Dropdown:**
+```tsx
+<Dropdown>
+  <DropdownButton outline>
+    <EllipsisVerticalIcon className="h-4 w-4" />
+  </DropdownButton>
+  <DropdownMenu>
+    <DropdownItem>
+      <EyeIcon className="h-4 w-4 mr-2" />
+      Aktion
+    </DropdownItem>
+  </DropdownMenu>
+</Dropdown>
+```
+
+**Padding-Standards:**
+- **Header:** `px-6 py-3`
+- **Zeilen:** `px-6 py-4`
+- **Loading/Empty:** `px-6 py-8`
 
 ### Status-Cards Spacing
 - **Padding:** `p-4` (kompakt, NICHT `px-4 py-5 sm:p-6`)
