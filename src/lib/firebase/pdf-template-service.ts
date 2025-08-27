@@ -495,7 +495,7 @@ class PDFTemplateService {
   /**
    * Template-Thumbnail generieren und speichern
    */
-  async generateTemplateThumbnail(template: PDFTemplate): Promise<string> {
+  async generateTemplateThumbnail(template: PDFTemplate): Promise<string | undefined> {
     try {
       const mockData: MockPRData = {
         title: 'Beispiel-Pressemitteilung',
@@ -538,25 +538,18 @@ class PDFTemplateService {
       
     } catch (error) {
       console.error(`❌ Fehler bei Thumbnail-Generierung für ${template.id}:`, error);
-      return this.getDefaultThumbnail(template);
+      // Kein Fallback mehr - undefined zurückgeben
+      return undefined;
     }
   }
   
   /**
    * Standard-Thumbnail basierend auf Template-Typ
+   * DEAKTIVIERT: Keine kaputten Links mehr, Thumbnail-Generierung über API
    */
-  private getDefaultThumbnail(template: PDFTemplate): string {
-    const baseUrl = '/images/template-thumbnails';
-    
-    switch (template.layout.type) {
-      case 'modern':
-        return `${baseUrl}/modern-template.png`;
-      case 'classic':
-        return `${baseUrl}/classic-template.png`;
-      case 'standard':
-      default:
-        return `${baseUrl}/standard-template.png`;
-    }
+  private getDefaultThumbnail(template: PDFTemplate): string | undefined {
+    // Keine Standard-Thumbnails mehr - müssen über API generiert werden
+    return undefined;
   }
 
   /**
