@@ -48,17 +48,6 @@ export const CampaignPreviewRenderer = memo(function CampaignPreviewRenderer({
   className = ""
 }: CampaignPreviewRendererProps) {
 
-  // 🐛 DEBUG: Log die Props die in CampaignPreviewRenderer ankommen
-  console.log('🔍 DEBUG CampaignPreviewRenderer Props:', {
-    campaignTitle,
-    contentHtmlLength: contentHtml?.length || 0,
-    contentHtmlPreview: contentHtml?.substring(0, 100) + '...',
-    textbausteine: textbausteine?.length || 0,
-    keywords: keywords?.length || 0,
-    clientName,
-    isCustomerView,
-    showSimplified
-  });
 
   const formattedDate = useMemo(() => {
     if (!createdAt) return '';

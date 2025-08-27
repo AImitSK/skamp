@@ -359,15 +359,6 @@ export default function ApprovalPage() {
       // Merge Campaign mit vereinfachten Approval-Daten
       campaignData.approvalData = approvalData as any;
 
-      // 🐛 DEBUG: Log die Campaign-Daten um die echte Struktur zu verstehen
-      console.log('🔍 DEBUG Campaign-Daten:', {
-        title: campaignData.title,
-        contentHtml: campaignData.contentHtml?.substring(0, 200) + '...',
-        mainContent: campaignData.mainContent?.substring(0, 200) + '...',
-        boilerplateSections: campaignData.boilerplateSections,
-        boilerplateSectionsCount: campaignData.boilerplateSections?.length || 0,
-        allKeys: Object.keys(campaignData)
-      });
 
       // PDF-Versionen laden (vereinfachter 1-stufiger Workflow)
       if (approval.campaignId) {

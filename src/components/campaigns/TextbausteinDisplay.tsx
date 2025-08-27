@@ -34,25 +34,7 @@ export function TextbausteinDisplay({
   const [isExpanded, setIsExpanded] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
   
-  // 🐛 DEBUG: Log die Textbaustein-Daten
-  console.log('🔍 DEBUG Textbausteine DETAILLIERT:', {
-    count: textbausteine?.length || 0,
-    firstItem: textbausteine?.[0],
-    firstItemKeys: textbausteine?.[0] ? Object.keys(textbausteine[0]) : [],
-    firstItemProps: textbausteine?.[0] ? {
-      id: textbausteine[0].id,
-      type: textbausteine[0].type,
-      content: textbausteine[0].content,
-      text: textbausteine[0].text,
-      title: textbausteine[0].title,
-      name: textbausteine[0].name,
-      customTitle: textbausteine[0].customTitle,
-      position: textbausteine[0].position
-    } : null
-  });
-
   if (!textbausteine || textbausteine.length === 0) {
-    console.log('❌ Keine Textbausteine gefunden');
     return null;
   }
 
@@ -112,22 +94,48 @@ export function TextbausteinDisplay({
       </div>
 
       <div className="p-4 sm:p-6">
-        {/* Customer-View Hinweis */}
+        {/* Customer-View Hinweis - vereinfacht */}
         {isCustomerView && (
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-start gap-2">
-              <InformationCircleIcon className="h-4 w-4 text-blue-500 flex-shrink-0 mt-0.5" />
-              <p className="text-xs sm:text-sm text-blue-800">
-                Diese Textbausteine wurden zur konsistenten und professionellen Gestaltung 
-                Ihrer Pressemitteilung verwendet.
-              </p>
+          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-start gap-3">
+              <div className="bg-green-100 rounded-full p-2 flex-shrink-0">
+                <DocumentTextIcon className="h-4 w-4 text-green-600" />
+              </div>
+              <div>
+                <h4 className="font-medium text-green-900 text-sm mb-1">
+                  Professionelle Textbausteine verwendet
+                </h4>
+                <p className="text-sm text-green-800 mb-3">
+                  {textbausteine.length} bewährte PR-Textbausteine sorgen für eine 
+                  konsistente und professionelle Darstellung Ihrer Pressemitteilung.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {textbausteine.map((baustein, index) => (
+                    <div key={index} className="bg-white px-3 py-1 rounded-full border border-green-200">
+                      <span className="text-xs text-green-700 font-medium">
+                        {baustein.type === 'boilerplate' ? 'Standard-Textbaustein' :
+                         baustein.type === 'header' ? 'Header' :
+                         baustein.type === 'footer' ? 'Footer' :
+                         baustein.position === 'header' ? 'Kopfbereich' :
+                         baustein.position === 'footer' ? 'Fußbereich' :
+                         `Element ${index + 1}`}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-green-600 mt-3">
+                  Diese Elemente sind bereits in Ihrer Pressemitteilung integriert und 
+                  sorgen für optimale Lesbarkeit und professionelle Wirkung.
+                </p>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Textbausteine Liste */}
-        <div className="space-y-4">
-          {displayedTextbausteine.map((baustein, index) => {
+        {/* Textbausteine Liste - nur für Agency-View wenn Content verfügbar */}
+        {!isCustomerView && (
+          <div className="space-y-4">
+            {displayedTextbausteine.map((baustein, index) => {
             const isItemExpanded = expandedItems.has(index);
             const shouldTruncate = !isCustomerView && baustein.content && baustein.content.length > 150;
             
@@ -149,7 +157,13 @@ export function TextbausteinDisplay({
                         isCustomerView ? "text-gray-900 text-sm" : "text-gray-900"
                       )}>
                         {baustein.title || baustein.name || baustein.customTitle || 
-                         (baustein.type ? `${baustein.type}-Element` : `Textbaustein ${index + 1}`)}
+                         (isCustomerView ? (
+                           baustein.type === 'boilerplate' ? 'Standard-Textbaustein' :
+                           baustein.type === 'header' ? 'Header-Element' :
+                           baustein.type === 'footer' ? 'Footer-Element' :
+                           baustein.type === 'quote' ? 'Zitat' :
+                           `Textbaustein ${index + 1}`
+                         ) : `${baustein.type}-Element`)}
                       </h4>
                       
                       {/* Kategorie/Typ */}
@@ -188,12 +202,41 @@ export function TextbausteinDisplay({
                             ) : (
                               <div dangerouslySetInnerHTML={{ __html: content }} />
                             );
-                          } else {
-                            // Fallback wenn kein Content verfügbar
+                          } else if (isCustomerView) {
+                            // Customer-View: Freundliche Beschreibung statt technische IDs
+                            const typeLabels = {
+                              'boilerplate': 'Standard-Textbaustein',
+                              'header': 'Header-Element', 
+                              'footer': 'Footer-Element',
+                              'quote': 'Zitat',
+                              'main': 'Haupttext-Element'
+                            };
+                            const typeLabel = typeLabels[baustein.type as keyof typeof typeLabels] || 'Textbaustein';
+                            
                             return (
-                              <p className="text-gray-500 italic">
-                                Textbaustein-ID: {baustein.id} ({baustein.type || 'unbekannt'})
-                                {baustein.position && ` - Position: ${baustein.position}`}
+                              <div className="text-gray-700">
+                                <p className="mb-2">
+                                  <span className="font-medium">{typeLabel}</span>
+                                  {baustein.position && (
+                                    <span className="text-gray-500 text-sm ml-2">
+                                      ({baustein.position === 'header' ? 'Kopfbereich' : 
+                                        baustein.position === 'footer' ? 'Fußbereich' : 
+                                        baustein.position})
+                                    </span>
+                                  )}
+                                </p>
+                                <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
+                                  Dieser Textbaustein sorgt für eine professionelle und konsistente 
+                                  Darstellung Ihrer Pressemitteilung gemäß bewährten PR-Standards.
+                                </p>
+                              </div>
+                            );
+                          } else {
+                            // Agency-View: Technische Details
+                            return (
+                              <p className="text-gray-500 italic text-sm">
+                                ID: {baustein.id} ({baustein.type || 'unbekannt'})
+                                {baustein.position && ` - ${baustein.position}`}
                               </p>
                             );
                           }
@@ -238,9 +281,10 @@ export function TextbausteinDisplay({
               </div>
             );
           })}
-        </div>
+          </div>
+        )}
 
-        {/* "Mehr anzeigen" für Customer-View */}
+        {/* "Mehr anzeigen" für Customer-View - entfernt da nicht mehr benötigt */}
         {hasMore && isCustomerView && !isExpanded && (
           <div className="mt-4 text-center">
             <Button
