@@ -408,7 +408,7 @@ export function TemplateComparison({
                     const previewState = previewStates.get(template.id) || { html: '', loading: false, error: null };
                     
                     return (
-                      <div key={template.id} className="border border-zinc-200 rounded-lg overflow-hidden">
+                      <div key={template.id} className="border border-zinc-200 rounded-lg overflow-hidden flex flex-col h-full">
                         {/* Template-Header */}
                         <div className="p-3 border-b border-zinc-200 bg-zinc-50">
                           <div className="flex items-center justify-between">
@@ -436,7 +436,7 @@ export function TemplateComparison({
                         </div>
 
                         {/* Template-Preview */}
-                        <div className="h-96 relative overflow-hidden rounded-md border border-gray-200">
+                        <div className="flex-1 relative overflow-hidden rounded-md border border-gray-200">
                           {previewState.loading && (
                             <div className="absolute inset-0 flex items-center justify-center bg-white z-10">
                               <div className="text-center">
