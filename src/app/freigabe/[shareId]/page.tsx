@@ -756,18 +756,10 @@ export default function ApprovalPage() {
           {/* MODERNISIERTE CAMPAIGN-PREVIEW - Phase 3 */}
           <CampaignPreviewRenderer
             campaignTitle={campaign.title}
-            contentHtml={campaign.contentHtml || campaign.mainContent || (
-              // Fallback: Konstruiere Content aus verfügbaren Daten
-              `<div>
-                ${campaign.mainContent || ''}
-                ${campaign.boilerplateSections?.map(section => 
-                  `<div class="boilerplate-section">
-                    <h3>${section.title || ''}</h3>
-                    <p>${section.content || section.text || ''}</p>
-                  </div>`
-                ).join('') || ''}
-              </div>` || '<p>Kein Inhalt verfügbar</p>'
-            )}
+            contentHtml={
+              // FIXEN: mainContent ist der richtige Content, nicht contentHtml
+              campaign.mainContent || campaign.contentHtml || '<p>Kein Inhalt verfügbar</p>'
+            }
             keyVisual={campaign.keyVisual}
             clientName={campaign.clientName}
             createdAt={campaign.createdAt}

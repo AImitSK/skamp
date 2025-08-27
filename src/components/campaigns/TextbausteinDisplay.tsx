@@ -35,10 +35,20 @@ export function TextbausteinDisplay({
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
   
   // 🐛 DEBUG: Log die Textbaustein-Daten
-  console.log('🔍 DEBUG Textbausteine:', {
+  console.log('🔍 DEBUG Textbausteine DETAILLIERT:', {
     count: textbausteine?.length || 0,
     firstItem: textbausteine?.[0],
-    allItems: textbausteine
+    firstItemKeys: textbausteine?.[0] ? Object.keys(textbausteine[0]) : [],
+    firstItemProps: textbausteine?.[0] ? {
+      id: textbausteine[0].id,
+      type: textbausteine[0].type,
+      content: textbausteine[0].content,
+      text: textbausteine[0].text,
+      title: textbausteine[0].title,
+      name: textbausteine[0].name,
+      customTitle: textbausteine[0].customTitle,
+      position: textbausteine[0].position
+    } : null
   });
 
   if (!textbausteine || textbausteine.length === 0) {
