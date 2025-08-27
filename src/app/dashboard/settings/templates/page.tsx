@@ -25,8 +25,8 @@ import {
 import type { PDFTemplate } from '@/types/pdf-template';
 import { TemplatePreviewModal } from '@/components/templates/TemplatePreviewModal';
 import { TemplateComparison } from '@/components/templates/TemplateComparison';
-import { TemplateUploadWizard } from '@/components/templates/TemplateUploadWizard';
-import { TemplateEditor } from '@/components/templates/TemplateEditor';
+import TemplateUploadWizard from '@/components/templates/TemplateUploadWizard';
+import TemplateEditor from '@/components/templates/TemplateEditor';
 
 export default function TemplatesPage() {
   const { currentOrganization } = useOrganization();

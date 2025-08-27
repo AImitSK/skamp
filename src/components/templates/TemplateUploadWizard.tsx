@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { useAuth } from '@/lib/firebase/auth-context';
+import { useAuth } from '@/context/AuthContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import { pdfTemplateService } from '@/lib/firebase/pdf-template-service';
 import { DocumentPlusIcon, CloudArrowUpIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
@@ -37,6 +38,7 @@ const steps: UploadStep[] = [
 
 export default function TemplateUploadWizard({ isOpen, onClose, onTemplateUploaded }: TemplateUploadWizardProps) {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const [currentStep, setCurrentStep] = useState(1);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -156,7 +158,7 @@ export default function TemplateUploadWizard({ isOpen, onClose, onTemplateUpload
   }, [selectedFile]);
 
   const handleUpload = useCallback(async () => {
-    if (!selectedFile || !user?.organizationId) return;
+    if (!selectedFile || !currentOrganization?.id) return;
 
     setIsUploading(true);
     setError(null);
@@ -170,8 +172,8 @@ export default function TemplateUploadWizard({ isOpen, onClose, onTemplateUpload
         category: templateCategory,
         htmlContent: fileContent,
         isCustom: true,
-        organizationId: user.organizationId,
-        createdBy: user.uid,
+        organizationId: currentOrganization.id,
+        createdBy: user?.uid || '',
         thumbnailUrl: '', // Wird später durch Preview-Generation erstellt
         variables: [] // Könnte durch Template-Analyse befüllt werden
       };
@@ -196,7 +198,7 @@ export default function TemplateUploadWizard({ isOpen, onClose, onTemplateUpload
     } finally {
       setIsUploading(false);
     }
-  }, [selectedFile, user, templateName, templateDescription, templateCategory, onTemplateUploaded, onClose]);
+  }, [selectedFile, user, currentOrganization, templateName, templateDescription, templateCategory, onTemplateUploaded, onClose]);
 
   const handleNext = useCallback(async () => {
     if (currentStep === 1 && selectedFile) {

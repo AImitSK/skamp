@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { useAuth } from '@/lib/firebase/auth-context';
+import { useAuth } from '@/context/AuthContext';
+import { useOrganization } from '@/context/OrganizationContext';
 import { pdfTemplateService } from '@/lib/firebase/pdf-template-service';
 import { 
   CodeBracketIcon, 
@@ -43,6 +44,7 @@ interface TemplateVariable {
 
 export default function TemplateEditor({ templateId, isOpen, onClose, onSave }: TemplateEditorProps) {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const [activeTab, setActiveTab] = useState<'html' | 'css' | 'preview' | 'variables'>('html');
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -294,8 +296,8 @@ export default function TemplateEditor({ templateId, isOpen, onClose, onSave }: 
 
   const extractVariablesFromHtml = (html: string): string[] => {
     const variableRegex = /\{\{([^}]+)\}\}/g;
-    const matches = [];
-    let match;
+    const matches: string[] = [];
+    let match: RegExpExecArray | null;
     
     while ((match = variableRegex.exec(html)) !== null) {
       if (!matches.includes(match[1])) {
@@ -356,7 +358,7 @@ export default function TemplateEditor({ templateId, isOpen, onClose, onSave }: 
         cssContent,
         variables,
         isCustom: true,
-        organizationId: user?.organizationId,
+        organizationId: currentOrganization?.id || '',
         updatedAt: new Date().toISOString(),
       };
 
@@ -365,7 +367,7 @@ export default function TemplateEditor({ templateId, isOpen, onClose, onSave }: 
       } else {
         await pdfTemplateService.createCustomTemplate({
           ...templateData,
-          createdBy: user?.uid,
+          createdBy: user?.uid || '',
           thumbnailUrl: '',
         });
       }

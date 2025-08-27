@@ -332,8 +332,8 @@ export class TemplateValidationService {
 
   private static extractVariablesFromHTML(html: string): string[] {
     const variableRegex = /\{\{([^}]+)\}\}/g;
-    const matches = [];
-    let match;
+    const matches: string[] = [];
+    let match: RegExpExecArray | null;
     
     while ((match = variableRegex.exec(html)) !== null) {
       const variableName = match[1].trim();

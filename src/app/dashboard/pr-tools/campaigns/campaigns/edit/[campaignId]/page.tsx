@@ -515,7 +515,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
             // Wenn kein Content vorhanden, aber boilerplateId da ist, lade den Inhalt
             if (!content && section.boilerplateId) {
               try {
-                boilerplate = await boilerplatesService.getById(section.boilerplateId, currentOrganization.id);
+                boilerplate = await boilerplatesService.getById(section.boilerplateId);
                 content = boilerplate?.content || boilerplate?.description || '';
                 console.log(`📄 Textbaustein-Inhalt geladen für ${section.boilerplateId}: ${content?.substring(0, 50)}...`);
               } catch (error) {
@@ -534,7 +534,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
               isCollapsed: section.isCollapsed || false,
               customTitle: section.customTitle,
               // Speichere auch das geladene Boilerplate-Objekt für die Anzeige
-              boilerplate
+              boilerplate: boilerplate || undefined
             };
           })
         );
