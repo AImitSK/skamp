@@ -471,6 +471,73 @@ class PDFTemplateService {
   }
   
   /**
+   * Template-Thumbnail generieren und speichern
+   */
+  async generateTemplateThumbnail(template: PDFTemplate): Promise<string> {
+    try {
+      const mockData: MockPRData = {
+        title: 'Beispiel-Pressemitteilung',
+        content: '<p>Dies ist eine Vorschau des Template-Designs mit Beispieltext.</p>',
+        companyName: template.name,
+        date: new Date().toISOString()
+      };
+      
+      // Generiere HTML für Screenshot
+      const html = await this.renderTemplateWithStyle(template, {
+        title: mockData.title,
+        mainContent: mockData.content,
+        boilerplateSections: [],
+        clientName: mockData.companyName,
+        date: mockData.date
+      });
+      
+      // API-Aufruf für Thumbnail-Generierung
+      const response = await fetch('/api/templates/generate-thumbnail', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          templateId: template.id,
+          html: html,
+          width: 400,
+          height: 300
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Thumbnail-Generierung fehlgeschlagen');
+      }
+      
+      const { thumbnailUrl } = await response.json();
+      
+      console.log(`🖼️ Thumbnail für Template ${template.id} erstellt: ${thumbnailUrl}`);
+      return thumbnailUrl;
+      
+    } catch (error) {
+      console.error(`❌ Fehler bei Thumbnail-Generierung für ${template.id}:`, error);
+      return this.getDefaultThumbnail(template);
+    }
+  }
+  
+  /**
+   * Standard-Thumbnail basierend auf Template-Typ
+   */
+  private getDefaultThumbnail(template: PDFTemplate): string {
+    const baseUrl = '/images/template-thumbnails';
+    
+    switch (template.layout.type) {
+      case 'modern':
+        return `${baseUrl}/modern-template.png`;
+      case 'classic':
+        return `${baseUrl}/classic-template.png`;
+      case 'standard':
+      default:
+        return `${baseUrl}/standard-template.png`;
+    }
+  }
+
+  /**
    * Template-Vorschau mit Mock-Daten generieren (mit optimiertem Caching)
    */
   async getTemplatePreview(
@@ -1193,7 +1260,8 @@ class PDFTemplateService {
       isSystem: true,
       isActive: true,
       createdAt: new Date(),
-      usageCount: 0
+      usageCount: 0,
+      thumbnailUrl: '/images/template-thumbnails/modern-professional.png'
     };
   }
   
@@ -1288,7 +1356,8 @@ class PDFTemplateService {
       isSystem: true,
       isActive: true,
       createdAt: new Date(),
-      usageCount: 0
+      usageCount: 0,
+      thumbnailUrl: '/images/template-thumbnails/classic-elegant.png'
     };
   }
   
@@ -1381,7 +1450,8 @@ class PDFTemplateService {
       isSystem: true,
       isActive: true,
       createdAt: new Date(),
-      usageCount: 0
+      usageCount: 0,
+      thumbnailUrl: '/images/template-thumbnails/creative-bold.png'
     };
   }
 }

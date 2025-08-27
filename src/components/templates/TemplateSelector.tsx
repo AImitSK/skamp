@@ -209,7 +209,17 @@ function TemplateCard({
         ) : (
           <div className="text-center">
             <PhotoIcon className="h-10 w-10 text-gray-400 mx-auto mb-1" />
-            <p className="text-xs text-gray-500">Vorschau</p>
+            <p className="text-xs text-gray-500">{template.name}</p>
+            <Button 
+              onClick={(e) => {
+                e.stopPropagation();
+                generateThumbnail(template);
+              }}
+              className="text-xs mt-2 py-1 px-2"
+              color="secondary"
+            >
+              Vorschau generieren
+            </Button>
           </div>
         )}
       </div>
@@ -349,6 +359,27 @@ export function TemplateSelector({
     onTemplateSelect(template.id, template.name);
   }, [disabled, onTemplateSelect]);
 
+  /**
+   * Template-Thumbnail generieren
+   */
+  const generateThumbnail = useCallback(async (template: PDFTemplate) => {
+    if (!user) return;
+    
+    try {
+      // Verwende pdfTemplateService um Thumbnail zu generieren
+      const thumbnailUrl = await pdfTemplateService.generateTemplateThumbnail(template);
+      
+      // Update Template mit neuer Thumbnail-URL (nur lokal für Vorschau)
+      console.log(`🖼️ Thumbnail generiert für ${template.name}: ${thumbnailUrl}`);
+      
+      // Hier könnte man das Template in der Liste aktualisieren
+      // Das wäre eine Erweiterung für später
+      
+    } catch (error) {
+      console.error('Fehler bei Thumbnail-Generierung:', error);
+    }
+  }, [user]);
+  
   /**
    * Template-Vorschau generieren
    */
