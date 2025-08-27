@@ -755,8 +755,8 @@ export default function ApprovalPage() {
           <CampaignPreviewRenderer
             campaignTitle={campaign.title}
             contentHtml={
-              // Verwende dieselbe Logik wie CampaignPreviewStep: finalContentHtml oder contentHtml
-              (campaign as any).finalContentHtml || campaign.contentHtml || campaign.mainContent || '<p>Kein Inhalt verfügbar</p>'
+              // mainContent ist der vollständige Content (2018 Zeichen)
+              campaign.mainContent || (campaign as any).finalContentHtml || campaign.contentHtml || '<p>Kein Inhalt verfügbar</p>'
             }
             keyVisual={campaign.keyVisual}
             clientName={campaign.clientName}
