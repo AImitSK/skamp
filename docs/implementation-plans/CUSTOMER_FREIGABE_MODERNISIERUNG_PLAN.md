@@ -203,6 +203,12 @@ src/components/freigabe/CustomerCommentSystem.tsx (neu)
 - [ ] **Status-Updates per E-Mail**: Benachrichtigung an Ersteller bei Approve/Reject
 - [ ] **Communication-Dashboard-Integration**: Freigabe-Aktivitäten in /dashboard/communication/
 
+**📚 Referenz-Dokumentation für E-Mail & Communication-Integration:**
+- [Communication Inbox Dokumentation](../features/docu_dashboard_communication_inbox.md) - Vollständige Inbox-Systemdokumentation
+- [Notifications System Dokumentation](../features/docu_dashboard_communication_notifications.md) - notifications-service.ts Integration
+- [E-Mail Settings Dokumentation](../features/docu_dashboard_settings_email.md) - E-Mail-Template-System und Signaturen
+- [Domain Authentication Dokumentation](../features/docu_dashboard_settings_domain.md) - E-Mail-Versand-Konfiguration
+
 ### **🤖 DOCUMENTATION UPDATE nach Phase 4:**
 **Agent-Empfehlung: documentation-orchestrator**
 - [ ] Implementation-Plan Status aktualisieren (Phase 4 abgehakt)
@@ -400,6 +406,10 @@ async function CustomerApprovalPage({ params }: CustomerApprovalPageProps) {
 - emailService.sendApprovalUpdate() // E-Mail an Ersteller bei Status-Updates
 - inboxService.createThread() // Integration mit Communication/Inbox für Feedback
 
+// REFERENZ-DOKUMENTATION:
+// Siehe: docs/features/docu_dashboard_communication_*.md für Details
+// Siehe: docs/features/docu_dashboard_settings_email.md für E-Mail-Templates
+
 // ENTFERNTE Service-Dependencies:
 - teamApprovalService.* // Komplettes Team-Approval-System entfernt
 - approvalWorkflowService.transitionToCustomer() // Keine Team→Customer-Übergänge
@@ -452,6 +462,7 @@ CustomerApprovalPage
 - **Vorteil**: Multi-Service Integration (Approval + Communication + Notifications)
 - **Setup**: History, Comments, Messaging-System, E-Mail-Benachrichtigungen
 - **Integration**: Bestehende notifications-service.ts und Inbox-System
+- **Dokumentation**: Integration mit [Communication System](../features/docu_dashboard_communication_inbox.md) und [Notifications](../features/docu_dashboard_communication_notifications.md)
 - **Tests**: CustomerFeedbackForm.test.tsx und Integration-Tests + E-Mail-Template-Tests
 
 ### **Phase 5 (UI-Modernisierung): performance-optimizer + general-purpose**
