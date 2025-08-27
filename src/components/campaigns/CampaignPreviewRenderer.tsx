@@ -113,20 +113,22 @@ export const CampaignPreviewRenderer = memo(function CampaignPreviewRenderer({
               />
             )}
             
-            {/* Pressemitteilung Header */}
-            <div className="mb-6 sm:mb-8">
-              {isCustomerView && (
-                <p className="text-xs sm:text-sm text-gray-500 uppercase tracking-wide mb-2">
-                  Pressemitteilung
-                </p>
-              )}
-              <h1 className={clsx(
-                "font-bold text-gray-900 leading-tight",
-                isCustomerView ? "text-xl sm:text-2xl lg:text-3xl" : "text-lg sm:text-2xl"
-              )}>
-                {campaignTitle || 'Titel der Pressemitteilung'}
-              </h1>
-            </div>
+            {/* Pressemitteilung Header - nur wenn contentHtml keinen Titel enthält */}
+            {!contentHtml?.includes('<h1') && !contentHtml?.includes('<title') && (
+              <div className="mb-6 sm:mb-8">
+                {isCustomerView && (
+                  <p className="text-xs sm:text-sm text-gray-500 uppercase tracking-wide mb-2">
+                    Pressemitteilung
+                  </p>
+                )}
+                <h1 className={clsx(
+                  "font-bold text-gray-900 leading-tight",
+                  isCustomerView ? "text-xl sm:text-2xl lg:text-3xl" : "text-lg sm:text-2xl"
+                )}>
+                  {campaignTitle || 'Titel der Pressemitteilung'}
+                </h1>
+              </div>
+            )}
             
             {/* Hauptinhalt */}
             <div 
@@ -173,8 +175,8 @@ export const CampaignPreviewRenderer = memo(function CampaignPreviewRenderer({
               }
             `}</style>
             
-            {/* Datum */}
-            {isCustomerView && (
+            {/* Datum - nur wenn contentHtml kein Datum enthält */}
+            {isCustomerView && !contentHtml?.includes(formattedDate) && formattedDate && (
               <p className="text-sm text-gray-600 mt-8 pt-4 border-t border-gray-200">
                 {formattedDate}
               </p>

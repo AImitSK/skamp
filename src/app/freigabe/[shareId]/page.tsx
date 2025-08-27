@@ -746,15 +746,15 @@ export default function ApprovalPage() {
           {/* MODERNISIERTE CAMPAIGN-PREVIEW - Phase 3 */}
           <CampaignPreviewRenderer
             campaignTitle={campaign.title}
-            contentHtml={campaign.contentHtml}
+            contentHtml={campaign.contentHtml || campaign.mainContent || '<p>Kein Inhalt verfügbar</p>'}
             keyVisual={campaign.keyVisual}
             clientName={campaign.clientName}
             createdAt={campaign.createdAt}
             attachedAssets={campaign.attachedAssets}
-            textbausteine={campaign.boilerplateSections}
-            keywords={campaign.keywords}
+            textbausteine={campaign.boilerplateSections || []}
+            keywords={campaign.keywords || []}
             isCustomerView={true}
-            showSimplified={true}
+            showSimplified={false}
             className="mb-6"
           />
 
