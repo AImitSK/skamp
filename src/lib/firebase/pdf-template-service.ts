@@ -1015,6 +1015,29 @@ class PDFTemplateService {
             margin-bottom: 3mm;
           }
           
+          /* Zitat-Styling - Zitatgeber näher zum Zitat */
+          .boilerplate-content blockquote {
+            font-style: italic;
+            margin: 5mm 0 2mm 0;
+            font-size: 12pt;
+            color: #333;
+          }
+          
+          .boilerplate-content .quote-attribution, 
+          .boilerplate-content p:contains("—") {
+            font-size: 10pt;
+            color: #666;
+            margin-top: 1mm;
+            margin-bottom: 8mm;
+            font-weight: normal;
+          }
+          
+          /* Spezielle Styling für Namen in Zitatangaben */
+          .boilerplate-content p strong:first-child {
+            color: ${template.colorScheme.primary};
+            font-size: 10pt;
+          }
+          
           .footer {
             margin-top: 20mm;
             padding-top: 8mm;
@@ -1076,12 +1099,23 @@ class PDFTemplateService {
         
         ${boilerplateSections && boilerplateSections.length > 0 ? `
           <div class="boilerplate-sections">
-            ${boilerplateSections.map(section => `
-              <div class="boilerplate-section ${section.type || ''}">
-                ${section.customTitle ? `<h3>${section.customTitle}</h3>` : ''}
-                <div class="boilerplate-content">${section.content}</div>
-              </div>
-            `).join('')}
+            ${boilerplateSections.map(section => {
+              // Verschiedene Titel-Quellen prüfen
+              const sectionTitle = section.customTitle || 
+                                 section.boilerplate?.name || 
+                                 section.title || 
+                                 section.boilerplate?.title || 
+                                 '';
+              
+              console.log(`🔍 Textbaustein-Titel Debug: ${sectionTitle}`, section);
+              
+              return `
+                <div class="boilerplate-section ${section.type || ''}">
+                  ${sectionTitle ? `<h3>${sectionTitle}</h3>` : ''}
+                  <div class="boilerplate-content">${section.content || ''}</div>
+                </div>
+              `;
+            }).join('')}
           </div>
         ` : ''}
         
