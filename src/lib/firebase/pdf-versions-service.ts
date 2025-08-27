@@ -20,6 +20,7 @@ import { db } from './client-init';
 import { nanoid } from 'nanoid';
 import { approvalService } from './approval-service';
 import { mediaService } from './media-service';
+import { pdfTemplateService } from './pdf-template-service';
 // NEW: Import für Enhanced Edit-Lock System
 // ENTFERNT: import { approvalWorkflowService } from './approval-workflow-service';
 import type { EditLockReason, UnlockRequest } from '@/types/pr';
@@ -578,10 +579,10 @@ class PDFVersionsService {
       
       if (content.templateId) {
         // Hole Template-Definition
-        const template = await this.getTemplateById(content.templateId);
+        const template = await pdfTemplateService.getTemplateById(content.templateId);
         if (template) {
           // Generiere fertiges HTML mit Template-Styling
-          templateHtml = await this.renderTemplateWithStyle(template, {
+          templateHtml = await pdfTemplateService.renderTemplateWithStyle(template, {
             title: content.title,
             mainContent: content.mainContent,
             boilerplateSections: content.boilerplateSections || [],

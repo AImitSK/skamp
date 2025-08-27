@@ -845,7 +845,7 @@ class PDFTemplateService {
   /**
    * HTML mit Template-Styling rendern (Client-seitige Lösung)
    */
-  private async renderTemplateWithStyle(
+  async renderTemplateWithStyle(
     template: PDFTemplate, 
     templateData: TemplateData
   ): Promise<string> {
@@ -1282,8 +1282,7 @@ class PDFTemplateService {
       isSystem: true,
       isActive: true,
       createdAt: new Date(),
-      usageCount: 0,
-      thumbnailUrl: '/images/template-thumbnails/modern-professional.png'
+      usageCount: 0
     };
   }
   
@@ -1378,8 +1377,7 @@ class PDFTemplateService {
       isSystem: true,
       isActive: true,
       createdAt: new Date(),
-      usageCount: 0,
-      thumbnailUrl: '/images/template-thumbnails/classic-elegant.png'
+      usageCount: 0
     };
   }
   
@@ -1472,8 +1470,7 @@ class PDFTemplateService {
       isSystem: true,
       isActive: true,
       createdAt: new Date(),
-      usageCount: 0,
-      thumbnailUrl: '/images/template-thumbnails/creative-bold.png'
+      usageCount: 0
     };
   }
 }

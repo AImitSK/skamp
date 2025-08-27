@@ -210,16 +210,9 @@ function TemplateCard({
           <div className="text-center">
             <PhotoIcon className="h-10 w-10 text-gray-400 mx-auto mb-1" />
             <p className="text-xs text-gray-500">{template.name}</p>
-            <Button 
-              onClick={(e) => {
-                e.stopPropagation();
-                generateThumbnail(template);
-              }}
-              className="text-xs mt-2 py-1 px-2"
-              color="secondary"
-            >
-              Vorschau generieren
-            </Button>
+            <div className="text-xs text-gray-400 mt-2">
+              Thumbnail wird generiert...
+            </div>
           </div>
         )}
       </div>
