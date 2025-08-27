@@ -34,7 +34,15 @@ export function TextbausteinDisplay({
   const [isExpanded, setIsExpanded] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
   
+  // 🐛 DEBUG: Log die Textbaustein-Daten
+  console.log('🔍 DEBUG Textbausteine:', {
+    count: textbausteine?.length || 0,
+    firstItem: textbausteine?.[0],
+    allItems: textbausteine
+  });
+
   if (!textbausteine || textbausteine.length === 0) {
+    console.log('❌ Keine Textbausteine gefunden');
     return null;
   }
 
@@ -130,7 +138,8 @@ export function TextbausteinDisplay({
                         "font-medium",
                         isCustomerView ? "text-gray-900 text-sm" : "text-gray-900"
                       )}>
-                        {baustein.title || baustein.name || `Textbaustein ${index + 1}`}
+                        {baustein.title || baustein.name || baustein.customTitle || 
+                         (baustein.type ? `${baustein.type}-Element` : `Textbaustein ${index + 1}`)}
                       </h4>
                       
                       {/* Kategorie/Typ */}
@@ -145,7 +154,7 @@ export function TextbausteinDisplay({
                     {/* Typ-Badge */}
                     {baustein.type && !showSimplified && (
                       <Badge 
-                        color={baustein.type === 'boilerplate' ? 'blue' : 'gray'} 
+                        color={baustein.type === 'boilerplate' ? 'primary' : 'zinc'} 
                         className="text-xs"
                       >
                         {baustein.type === 'boilerplate' ? 'Standard' : 'Custom'}
@@ -154,18 +163,31 @@ export function TextbausteinDisplay({
                   </div>
 
                   {/* Textbaustein Inhalt */}
-                  {baustein.content && (
+                  {(baustein.content || baustein.text || baustein.id) && (
                     <div className="mt-2">
                       <div className={clsx(
                         "text-gray-700 leading-relaxed",
                         isCustomerView ? "text-sm" : "text-sm",
                         shouldTruncate && !isItemExpanded && "line-clamp-3"
                       )}>
-                        {typeof baustein.content === 'string' ? (
-                          <p>{baustein.content}</p>
-                        ) : (
-                          <div dangerouslySetInnerHTML={{ __html: baustein.content }} />
-                        )}
+                        {(() => {
+                          const content = baustein.content || baustein.text;
+                          if (content) {
+                            return typeof content === 'string' ? (
+                              <p>{content}</p>
+                            ) : (
+                              <div dangerouslySetInnerHTML={{ __html: content }} />
+                            );
+                          } else {
+                            // Fallback wenn kein Content verfügbar
+                            return (
+                              <p className="text-gray-500 italic">
+                                Textbaustein-ID: {baustein.id} ({baustein.type || 'unbekannt'})
+                                {baustein.position && ` - Position: ${baustein.position}`}
+                              </p>
+                            );
+                          }
+                        })()}
                       </div>
                       
                       {/* Erweitern/Einklappen Button */}

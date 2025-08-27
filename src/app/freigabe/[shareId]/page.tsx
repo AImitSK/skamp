@@ -359,6 +359,16 @@ export default function ApprovalPage() {
       // Merge Campaign mit vereinfachten Approval-Daten
       campaignData.approvalData = approvalData as any;
 
+      // 🐛 DEBUG: Log die Campaign-Daten um die echte Struktur zu verstehen
+      console.log('🔍 DEBUG Campaign-Daten:', {
+        title: campaignData.title,
+        contentHtml: campaignData.contentHtml?.substring(0, 200) + '...',
+        mainContent: campaignData.mainContent?.substring(0, 200) + '...',
+        boilerplateSections: campaignData.boilerplateSections,
+        boilerplateSectionsCount: campaignData.boilerplateSections?.length || 0,
+        allKeys: Object.keys(campaignData)
+      });
+
       // PDF-Versionen laden (vereinfachter 1-stufiger Workflow)
       if (approval.campaignId) {
         try {
@@ -746,7 +756,18 @@ export default function ApprovalPage() {
           {/* MODERNISIERTE CAMPAIGN-PREVIEW - Phase 3 */}
           <CampaignPreviewRenderer
             campaignTitle={campaign.title}
-            contentHtml={campaign.contentHtml || campaign.mainContent || '<p>Kein Inhalt verfügbar</p>'}
+            contentHtml={campaign.contentHtml || campaign.mainContent || (
+              // Fallback: Konstruiere Content aus verfügbaren Daten
+              `<div>
+                ${campaign.mainContent || ''}
+                ${campaign.boilerplateSections?.map(section => 
+                  `<div class="boilerplate-section">
+                    <h3>${section.title || ''}</h3>
+                    <p>${section.content || section.text || ''}</p>
+                  </div>`
+                ).join('') || ''}
+              </div>` || '<p>Kein Inhalt verfügbar</p>'
+            )}
             keyVisual={campaign.keyVisual}
             clientName={campaign.clientName}
             createdAt={campaign.createdAt}
