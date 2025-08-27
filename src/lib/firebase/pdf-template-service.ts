@@ -360,6 +360,16 @@ class PDFTemplateService {
           text: '#111827',
           border: '#e5e7eb'
         },
+        components: templateData.components || {
+          header: { backgroundColor: '#ffffff', textColor: '#000000' },
+          title: { fontSize: 24, fontWeight: 'bold' },
+          content: { backgroundColor: '#ffffff', textColor: '#000000' },
+          sidebar: { backgroundColor: '#f9f9f9' },
+          footer: { backgroundColor: '#ffffff', textColor: '#666666' },
+          logo: { backgroundColor: 'transparent' },
+          keyVisual: { backgroundColor: 'transparent' },
+          boilerplate: { backgroundColor: '#f9f9f9', textColor: '#666666' }
+        },
         ...templateData,
         isSystem: false,
         isActive: true,
@@ -1583,7 +1593,12 @@ class PDFTemplateService {
       
       // Speichere in Firestore
       const templateDoc: PDFTemplateDocument = {
+        id: customTemplate.id,
         template: customTemplate,
+        isDefault: false,
+        usageCount: 0,
+        lastUsed: Timestamp.now(),
+        isCustomization: false,
         metadata: {
           createdAt: Timestamp.now(),
           updatedAt: Timestamp.now(),

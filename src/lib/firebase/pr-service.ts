@@ -824,7 +824,11 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
         // Wenn approval.feedbackHistory existiert, verwende diese zuerst
         const combinedFeedback = [
           ...(approval.feedbackHistory || []),
-          ...historyFeedback
+          ...historyFeedback.map(f => ({
+            comment: f.comment || '',
+            requestedAt: f.requestedAt,
+            author: f.author || 'Unbekannt'
+          }))
         ];
         
         campaign.approvalData = {
@@ -1023,7 +1027,7 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
         
         await updateDoc(doc(db, 'approvals', approval.id), {
           status: 'changes_requested',
-          updatedAt: serverTimestamp(),
+          updatedAt: Timestamp.now(),
           history: arrayUnion(historyEntry)
         });
       }
@@ -1215,7 +1219,17 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
       await this.update(campaignId, {
         ...campaignData,
         approvalRequired: customerApprovalData.customerApprovalRequired,
-        approvalData: customerApprovalData.customerApprovalRequired ? customerApprovalData : undefined,
+        approvalData: customerApprovalData.customerApprovalRequired ? {
+          ...customerApprovalData,
+          teamApprovalRequired: false,
+          teamApprovers: [],
+          currentStage: 'customer',
+          workflowStartedAt: Timestamp.now(),
+          status: 'pending',
+          feedbackHistory: [],
+          shareId: '',
+          workflowId: ''
+        } : undefined,
         status: customerApprovalData.customerApprovalRequired ? 'in_review' : 'draft',
         updatedAt: Timestamp.now()
       });
@@ -1299,18 +1313,28 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
           
           // Hole ShareId der neu erstellten Freigabe
           const newApproval = await approvalService.getById(workflowId, context.organizationId);
-          shareId = newApproval?.shareId || workflowId;
+          shareId = typeof newApproval === 'object' && newApproval?.shareId ? newApproval.shareId : workflowId;
         }
         
         // Setze Edit-Lock und speichere shareId
         await this.update(campaignId, {
           editLocked: true,
           editLockedReason: 'pending_customer_approval',
-          lockedBy: 'system',
+          lockedBy: {
+            userId: 'system',
+            displayName: 'System',
+            action: 'customer_approval_lock'
+          },
           lockedAt: Timestamp.now(),
           // WICHTIG: ShareId in approvalData speichern!
           approvalData: {
             ...customerApprovalData,
+            teamApprovalRequired: false,
+            teamApprovers: [],
+            currentStage: 'customer' as const,
+            workflowStartedAt: Timestamp.now(),
+            status: 'pending' as const,
+            feedbackHistory: [],
             shareId: shareId,
             workflowId: workflowId
           }
@@ -1375,13 +1399,15 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
             // Für Kompatibilität - wird bei nächster DB-Migration entfernt:
             teamApprovalRequired: false,
             teamApprovers: [],
-            workflowStartedAt: serverTimestamp(),
+            workflowStartedAt: Timestamp.now(),
+            status: 'pending' as const,
+            feedbackHistory: [],
             shareId: '',
             workflowId: '',
             currentStage: 'customer',
           } : undefined,
           createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
+          updatedAt: Timestamp.now()
         } as PRCampaign);
       } else {
         await this.update(campaignData.id!, {
@@ -1394,12 +1420,14 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
             // Für Kompatibilität:
             teamApprovalRequired: false,
             teamApprovers: [],
-            workflowStartedAt: serverTimestamp(),
+            workflowStartedAt: Timestamp.now(),
+            status: 'pending' as const,
+            feedbackHistory: [],
             shareId: '',
             workflowId: '',
             currentStage: 'customer',
           } : undefined,
-          updatedAt: serverTimestamp()
+          updatedAt: Timestamp.now()
         });
         campaignId = campaignData.id!;
       }
@@ -1454,13 +1482,18 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
         // 2e. Update Campaign Status UND ShareId
         await this.update(campaignId, {
           status: 'in_review', // Direkt in Review
-          updatedAt: serverTimestamp(),
+          updatedAt: Timestamp.now(),
           // WICHTIG: ShareId und WorkflowId in approvalData speichern!
           approvalData: {
             ...customerApprovalData,
+            teamApprovalRequired: false,
+            teamApprovers: [],
+            currentStage: 'customer' as const,
+            workflowStartedAt: Timestamp.now(),
+            status: 'pending' as const,
+            feedbackHistory: [],
             shareId: approval.shareId,
-            workflowId: workflowId,
-            currentStage: 'customer'
+            workflowId: workflowId
           }
         });
 

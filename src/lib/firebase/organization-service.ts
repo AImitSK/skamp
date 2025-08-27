@@ -130,7 +130,7 @@ export const organizationService = {
         console.log('✅ Owner entry created successfully');
       } else {
         // Update lastActiveAt und Avatar-Sync
-        const existingData = ownerDoc.data();
+        const existingData = existing.data();
         const updateData: any = {
           lastActiveAt: serverTimestamp(),
           displayName: userData.displayName || userData.email

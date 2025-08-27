@@ -1257,18 +1257,131 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
   }
 
   /**
-   * Sendet Benachrichtigungen (Stub)
+   * Sendet Benachrichtigungen mit E-Mail & Notification Integration
    */
   private async sendNotifications(
     approval: ApprovalEnhanced,
     type: 'request' | 'reminder' | 'status_change'
   ): Promise<void> {
-    // TODO: Integration mit E-Mail-Service
-    
-    // Simuliere E-Mail-Versand
-    for (const recipient of approval.recipients) {
-      if (recipient.status === 'pending') {
+    try {
+      // ========== E-MAIL-SERVICE INTEGRATION ==========
+      const { default: apiClient } = await import('@/lib/api/api-client');
+      const { 
+        getApprovalRequestEmailTemplate,
+        getApprovalReminderEmailTemplate,
+        ApprovalEmailData 
+      } = await import('@/lib/email/approval-email-templates');
+
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://app.celeropress.com';
+      const approvalUrl = `${baseUrl}/freigabe/${approval.shareId}`;
+
+      // Sende E-Mails an ausstehende Empfänger
+      for (const recipient of approval.recipients) {
+        if (recipient.status === 'pending') {
+          const emailData: ApprovalEmailData = {
+            recipientName: recipient.name,
+            recipientEmail: recipient.email,
+            campaignTitle: approval.campaignTitle || approval.title,
+            clientName: approval.clientName,
+            approvalUrl,
+            message: approval.requestMessage,
+            agencyName: 'CeleroPress',
+            agencyLogoUrl: `${baseUrl}/logo-email.png`
+          };
+
+          let emailTemplate;
+          if (type === 'request') {
+            emailTemplate = getApprovalRequestEmailTemplate(emailData);
+          } else if (type === 'reminder') {
+            emailTemplate = getApprovalReminderEmailTemplate(emailData);
+          } else {
+            continue; // Status-Change wird separat behandelt
+          }
+
+          // E-Mail über API Route versenden
+          try {
+            await apiClient.post('/api/sendgrid/send-approval-email', {
+              to: recipient.email,
+              subject: emailTemplate.subject,
+              html: emailTemplate.html,
+              text: emailTemplate.text
+            });
+
+            // Update Benachrichtigung-Counter
+            recipient.notificationsSent = (recipient.notificationsSent || 0) + 1;
+          } catch (emailError) {
+            console.error('E-Mail-Versand fehlgeschlagen:', emailError);
+          }
+        }
       }
+
+      // ========== INBOX-SERVICE INTEGRATION ==========
+      if (type === 'request' && approval.id) {
+        try {
+          const { inboxService } = await import('./inbox-service');
+          
+          // Erstelle Inbox-Thread für diese Freigabe falls noch nicht vorhanden
+          const existingThread = await inboxService.getApprovalThread(approval.id, approval.organizationId);
+          
+          if (!existingThread) {
+            await inboxService.createApprovalThread({
+              organizationId: approval.organizationId,
+              approvalId: approval.id,
+              campaignTitle: approval.campaignTitle || approval.title,
+              clientName: approval.clientName,
+              customerEmail: approval.recipients[0]?.email,
+              customerName: approval.recipients[0]?.name,
+              createdBy: {
+                userId: approval.createdBy || 'system',
+                name: 'System',
+                email: 'system@celeropress.com'
+              },
+              initialMessage: approval.requestMessage
+            });
+          }
+        } catch (inboxError) {
+          console.error('Inbox-Thread-Erstellung fehlgeschlagen:', inboxError);
+        }
+      }
+
+      // ========== NOTIFICATIONS-SERVICE INTEGRATION ==========
+      // Interne Benachrichtigungen an Team-Mitglieder
+      if (type === 'request' || type === 'status_change') {
+        try {
+          const { notificationsService } = await import('./notifications-service');
+          
+          // Benachrichtige Ersteller und andere Team-Mitglieder
+          const notificationRecipients = [approval.createdBy];
+          // TODO: Weitere Team-Mitglieder basierend auf Organization laden
+          
+          for (const userId of notificationRecipients.filter(Boolean)) {
+            if (type === 'request') {
+              await notificationsService.create({
+                userId,
+                organizationId: approval.organizationId,
+                type: 'APPROVAL_GRANTED', // Verwende bestehende Typen
+                title: 'Freigabe-Anfrage gesendet',
+                message: `Die Freigabe für "${approval.campaignTitle || approval.title}" wurde an den Kunden gesendet.`,
+                linkUrl: `/dashboard/pr-tools/approvals/${approval.shareId}`,
+                linkType: 'approval',
+                linkId: approval.id,
+                metadata: {
+                  campaignId: approval.campaignId,
+                  campaignTitle: approval.campaignTitle || approval.title,
+                  clientName: approval.clientName,
+                  approvalId: approval.id
+                }
+              });
+            }
+          }
+        } catch (notificationError) {
+          console.error('Notification-Erstellung fehlgeschlagen:', notificationError);
+        }
+      }
+
+    } catch (error) {
+      console.error('Fehler beim Senden von Benachrichtigungen:', error);
+      // Fehler sollten den Hauptprozess nicht stoppen
     }
   }
 
@@ -1279,7 +1392,204 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
     approval: ApprovalEnhanced,
     newStatus: ApprovalStatus
   ): Promise<void> {
-    // TODO: Integration mit E-Mail-Service
+    try {
+      // ========== E-MAIL NOTIFICATIONS FÜR STATUS-ÄNDERUNGEN ==========
+      const { 
+        getApprovalGrantedEmailTemplate,
+        getChangesRequestedEmailTemplate,
+        getApprovalStatusUpdateTemplate,
+        ApprovalEmailData 
+      } = await import('@/lib/email/approval-email-templates');
+      const { default: apiClient } = await import('@/lib/api/api-client');
+
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://app.celeropress.com';
+      const approvalUrl = `${baseUrl}/freigabe/${approval.shareId}`;
+      const dashboardUrl = `${baseUrl}/dashboard/pr-tools/approvals/${approval.shareId}`;
+
+      // E-Mails an interne Team-Mitglieder (Status-Update)
+      const internalRecipients = [approval.createdBy]; // TODO: Erweitern mit Team-Mitgliedern
+      for (const userId of internalRecipients.filter(Boolean)) {
+        if (newStatus === 'approved' || newStatus === 'rejected' || newStatus === 'changes_requested') {
+          const lastHistoryEntry = approval.history?.[approval.history.length - 1];
+          const changedBy = lastHistoryEntry?.actorName || 'Kunde';
+
+          const statusUpdateData: ApprovalEmailData & { 
+            previousStatus: string; 
+            newStatus: string; 
+            changedBy: string;
+            dashboardUrl: string;
+          } = {
+            recipientName: 'Team', // TODO: User-Name laden
+            recipientEmail: 'team@celeropress.com', // TODO: User-E-Mail laden
+            campaignTitle: approval.campaignTitle || approval.title,
+            clientName: approval.clientName,
+            approvalUrl,
+            previousStatus: approval.status,
+            newStatus,
+            changedBy,
+            dashboardUrl
+          };
+
+          try {
+            const statusTemplate = getApprovalStatusUpdateTemplate(statusUpdateData);
+            await apiClient.post('/api/sendgrid/send-approval-email', {
+              to: statusUpdateData.recipientEmail,
+              subject: statusTemplate.subject,
+              html: statusTemplate.html,
+              text: statusTemplate.text
+            });
+          } catch (emailError) {
+            console.error('Status-Update E-Mail fehlgeschlagen:', emailError);
+          }
+        }
+      }
+
+      // Spezielle E-Mails für verschiedene Status-Änderungen
+      if (newStatus === 'approved') {
+        // E-Mail an Ersteller: Freigabe erhalten
+        const lastEntry = approval.history?.[approval.history.length - 1];
+        const approverName = lastEntry?.actorName || 'Kunde';
+
+        try {
+          const approvalGrantedData: ApprovalEmailData & { approverName: string } = {
+            recipientName: 'Team', // TODO: User-Name laden
+            recipientEmail: 'team@celeropress.com', // TODO: User-E-Mail laden
+            campaignTitle: approval.campaignTitle || approval.title,
+            clientName: approval.clientName,
+            approvalUrl: dashboardUrl,
+            approverName
+          };
+
+          const approvedTemplate = getApprovalGrantedEmailTemplate(approvalGrantedData);
+          await apiClient.post('/api/sendgrid/send-approval-email', {
+            to: approvalGrantedData.recipientEmail,
+            subject: approvedTemplate.subject,
+            html: approvedTemplate.html,
+            text: approvedTemplate.text
+          });
+        } catch (emailError) {
+          console.error('Approval-Granted E-Mail fehlgeschlagen:', emailError);
+        }
+
+      } else if (newStatus === 'changes_requested') {
+        // E-Mail an Ersteller: Änderungen angefordert
+        const lastEntry = approval.history?.[approval.history.length - 1];
+        const reviewerName = lastEntry?.actorName || 'Kunde';
+        const feedback = lastEntry?.details?.comment || 'Keine spezifischen Kommentare';
+        const inlineComments = lastEntry?.inlineComments || [];
+
+        try {
+          const changesRequestedData: ApprovalEmailData & { 
+            feedback: string; 
+            reviewerName: string;
+            inlineComments?: any[];
+          } = {
+            recipientName: 'Team', // TODO: User-Name laden
+            recipientEmail: 'team@celeropress.com', // TODO: User-E-Mail laden
+            campaignTitle: approval.campaignTitle || approval.title,
+            clientName: approval.clientName,
+            approvalUrl: dashboardUrl,
+            feedback,
+            reviewerName,
+            inlineComments
+          };
+
+          const changesTemplate = getChangesRequestedEmailTemplate(changesRequestedData);
+          await apiClient.post('/api/sendgrid/send-approval-email', {
+            to: changesRequestedData.recipientEmail,
+            subject: changesTemplate.subject,
+            html: changesTemplate.html,
+            text: changesTemplate.text
+          });
+        } catch (emailError) {
+          console.error('Changes-Requested E-Mail fehlgeschlagen:', emailError);
+        }
+      }
+
+      // ========== INBOX-SERVICE INTEGRATION ==========
+      if (approval.id) {
+        try {
+          const { inboxService } = await import('./inbox-service');
+          const lastEntry = approval.history?.[approval.history.length - 1];
+          
+          if (lastEntry && (newStatus === 'approved' || newStatus === 'rejected' || newStatus === 'changes_requested')) {
+            // Finde existierenden Thread
+            const thread = await inboxService.getApprovalThread(approval.id, approval.organizationId);
+            
+            if (thread) {
+              // Füge Approval-Decision-Message hinzu
+              await inboxService.addApprovalDecisionMessage({
+                threadId: thread.id,
+                organizationId: approval.organizationId,
+                approvalId: approval.id,
+                decision: newStatus === 'approved' ? 'approved' : 
+                         newStatus === 'rejected' ? 'rejected' : 'changes_requested',
+                comment: lastEntry.details?.comment,
+                inlineComments: lastEntry.inlineComments,
+                decidedBy: {
+                  userId: lastEntry.actorEmail?.includes('public-access@') ? 'customer' : 'internal',
+                  name: lastEntry.actorName || 'Unbekannt',
+                  email: lastEntry.actorEmail || '',
+                  type: lastEntry.actorEmail?.includes('public-access@') ? 'customer' : 'internal'
+                }
+              });
+            }
+          }
+        } catch (inboxError) {
+          console.error('Inbox-Message-Hinzufügung fehlgeschlagen:', inboxError);
+        }
+      }
+
+      // ========== NOTIFICATIONS-SERVICE INTEGRATION ==========
+      try {
+        const { notificationsService } = await import('./notifications-service');
+        
+        // Interne Benachrichtigungen für Status-Änderungen
+        const lastEntry = approval.history?.[approval.history.length - 1];
+        const changedBy = lastEntry?.actorName || 'Kunde';
+        
+        if (newStatus === 'approved') {
+          await notificationsService.create({
+            userId: approval.createdBy || 'system',
+            organizationId: approval.organizationId,
+            type: 'APPROVAL_GRANTED',
+            title: '✅ Freigabe erhalten',
+            message: `${changedBy} hat "${approval.campaignTitle || approval.title}" freigegeben.`,
+            linkUrl: `/dashboard/pr-tools/approvals/${approval.shareId}`,
+            linkType: 'approval',
+            linkId: approval.id,
+            metadata: {
+              campaignId: approval.campaignId,
+              approvalId: approval.id,
+              senderName: changedBy
+            }
+          });
+        } else if (newStatus === 'changes_requested') {
+          await notificationsService.create({
+            userId: approval.createdBy || 'system',
+            organizationId: approval.organizationId,
+            type: 'CHANGES_REQUESTED',
+            title: '🔄 Änderungen angefordert',
+            message: `${changedBy} hat Änderungen zu "${approval.campaignTitle || approval.title}" angefordert.`,
+            linkUrl: `/dashboard/pr-tools/approvals/${approval.shareId}`,
+            linkType: 'approval',
+            linkId: approval.id,
+            metadata: {
+              campaignId: approval.campaignId,
+              approvalId: approval.id,
+              senderName: changedBy
+            }
+          });
+        }
+      } catch (notificationError) {
+        console.error('Status-Change Notification fehlgeschlagen:', notificationError);
+      }
+
+    } catch (error) {
+      console.error('Fehler bei Status-Change-Notification:', error);
+    }
+
+    // Allgemeine Notifications senden (für Backward-Compatibility)
     await this.sendNotifications(approval, 'status_change');
     
     // 🔓 KAMPAGNEN-LOCK MANAGEMENT

@@ -1,9 +1,11 @@
 // src/app/freigabe/[shareId]/page.tsx - Mit Branding-Integration
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import React from "react";
 import { useParams } from "next/navigation";
 import { prService } from "@/lib/firebase/pr-service";
+import { approvalService } from "@/lib/firebase/approval-service";
 import { mediaService } from "@/lib/firebase/media-service";
 import { brandingService } from "@/lib/firebase/branding-service";
 import { pdfVersionsService } from "@/lib/firebase/pdf-versions-service";
@@ -15,6 +17,11 @@ import {
   PDFVersionOverview, 
   PDFHistoryModal 
 } from '@/components/pdf/PDFHistoryComponents';
+import CustomerPDFViewer from '@/components/freigabe/CustomerPDFViewer';
+import PDFApprovalActions from '@/components/freigabe/PDFApprovalActions';
+import CustomerFeedbackForm from '@/components/freigabe/CustomerFeedbackForm';
+import { PDFStatusBadge } from '@/components/freigabe/PDFStatusIndicator';
+import { CustomerCommentSystem } from '@/components/freigabe/CustomerCommentSystem';
 import { 
   CheckCircleIcon,
   ExclamationCircleIcon,
@@ -38,6 +45,7 @@ import {
   GlobeAltIcon,
   MapPinIcon
 } from "@heroicons/react/24/outline";
+import { CampaignPreviewRenderer } from "@/components/campaigns/CampaignPreviewRenderer";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Heading } from "@/components/ui/heading";
@@ -138,7 +146,7 @@ function MediaGallery({
       setFolders(loadedFolders.filter(Boolean) as MediaFolder[]);
       
     } catch (error) {
-      console.error('Fehler beim Laden der Medien:', error);
+      // Fehler beim Laden der Medien
     } finally {
       setLoadingAssets(false);
     }
@@ -305,10 +313,19 @@ export default function ApprovalPage() {
       setLoading(true);
       setError(null);
 
-      const campaignData = await prService.getCampaignByShareId(shareId);
+      // NEU: Direkte Approval-Service Nutzung (vereinfachter 1-stufiger Workflow)
+      const approval = await approvalService.getByShareId(shareId);
+      
+      if (!approval) {
+        setError('Freigabe-Link nicht gefunden oder nicht mehr gültig.');
+        return;
+      }
+      
+      // Lade zugehörige Campaign über approvalService
+      const campaignData = await prService.getById(approval.campaignId);
       
       if (!campaignData) {
-        setError('Freigabe-Link nicht gefunden oder nicht mehr gültig.');
+        setError('Zugehörige Kampagne nicht gefunden.');
         return;
       }
       
@@ -317,19 +334,52 @@ export default function ApprovalPage() {
         setError('Diese Kampagne wurde bereits versendet. Die Freigabe-Seite ist nicht mehr verfügbar.');
         return;
       }
+      
+      // Vereinfachte Approval-Daten (1-stufiger Workflow)
+      const approvalData = {
+        shareId: approval.shareId,
+        status: approval.status === 'approved' ? 'approved' : 
+                approval.status === 'rejected' ? 'commented' :
+                approval.status === 'changes_requested' ? 'commented' :
+                approval.status === 'pending' ? 'pending' : 'viewed',
+        feedbackHistory: approval.history?.filter(h => h.details?.comment).map(h => ({
+          comment: h.details?.comment || '',
+          requestedAt: h.timestamp,
+          author: h.actorName || 'Kunde'
+        })) || [],
+        approvedAt: approval.approvedAt,
+        customerApprovalRequired: true,
+        teamApprovalRequired: false,
+        teamApprovers: [],
+        currentStage: 'customer' as const,
+        workflowStartedAt: approval.requestedAt,
+        workflowId: approval.id
+      };
+      
+      // Merge Campaign mit vereinfachten Approval-Daten
+      campaignData.approvalData = approvalData as any;
 
-      // NEU: PDF-Versionen laden
-      if (campaignData.id) {
+      // PDF-Versionen laden (vereinfachter 1-stufiger Workflow)
+      if (approval.campaignId) {
         try {
-          const pdfVersions = await pdfVersionsService.getVersionHistory(campaignData.id);
-          const currentPdfVersion = await pdfVersionsService.getCurrentVersion(campaignData.id);
+          const pdfVersions = await pdfVersionsService.getVersionHistory(approval.campaignId);
           
           setPdfVersions(pdfVersions);
+          
+          // Vereinfachte PDF-Status-Logik (kein Team-Approval):
+          // Suche nach der aktuellen Customer-PDF (nur pending_customer, approved, rejected)
+          const currentPdfVersion = pdfVersions.find(v => 
+            v.status === 'pending_customer' || 
+            v.status === 'approved' || 
+            v.status === 'rejected'
+          ) || pdfVersions[0]; // Fallback zur neuesten Version
+          
           setCurrentPdfVersion(currentPdfVersion);
           
-          console.log('PDF-Versionen geladen:', { 
+          console.log('PDF-Versionen geladen (1-stufiger Workflow):', { 
             count: pdfVersions.length, 
-            current: currentPdfVersion?.version 
+            current: currentPdfVersion?.version,
+            status: currentPdfVersion?.status
           });
           
           // VALIDIERUNG: PDF MUSS vorhanden sein!
@@ -346,28 +396,16 @@ export default function ApprovalPage() {
         }
       }
 
-      // NEU: Customer Approval Settings laden falls vorhanden
-      console.log('🔍 Freigabe-Page: Campaign Data:', campaignData);
-      console.log('📊 Freigabe-Page: Approval Data:', campaignData.approvalData);
-      console.log('💬 Freigabe-Page: Feedback History:', campaignData.approvalData?.feedbackHistory);
-      console.log('🔍 Freigabe-Page: Feedback Details:', campaignData.approvalData?.feedbackHistory?.map((f, i) => ({
-        index: i,
-        author: f.author,
-        comment: f.comment?.substring(0, 50) + (f.comment?.length > 50 ? '...' : ''),
-        timestamp: f.requestedAt
-      })));
-      if (campaignData.approvalData?.settingsSnapshot?.customerSettings) {
-        const customerSettings = campaignData.approvalData.settingsSnapshot.customerSettings;
-        if (customerSettings.message) {
-          setCustomerMessage(customerSettings.message);
-          console.log('Customer Approval Message geladen');
-        }
+      // Customer Approval Message aus Approval-Service (vereinfacht)
+      if (approval.customerContact) {
+        setCustomerMessage(approval.customerContact);
+        console.log('Customer Approval Message geladen (vereinfacht)');
       }
 
-      // Markiere als "viewed" wenn noch pending
-      if (campaignData.approvalData?.status === 'pending') {
-        await prService.markApprovalAsViewed(shareId);
-        campaignData.approvalData.status = 'viewed';
+      // Markiere als "viewed" wenn noch pending (vereinfachter Service-Call)
+      if (approval.status === 'pending') {
+        await approvalService.markAsViewed(shareId);
+        // Status bleibt pending bis zur endgültigen Entscheidung
       }
 
       setCampaign(campaignData);
@@ -378,13 +416,13 @@ export default function ApprovalPage() {
           const branding = await brandingService.getBrandingSettings(campaignData.organizationId);
           setBrandingSettings(branding);
         } catch (brandingError) {
-          console.error('Fehler beim Laden der Branding-Einstellungen:', brandingError);
+          // Fehler beim Laden der Branding-Einstellungen
           // Kein kritischer Fehler - fahre ohne Branding fort
         }
       }
 
     } catch (error) {
-      console.error('Fehler beim Laden der Kampagne:', error);
+      // Fehler beim Laden der Kampagne
       setError('Die Pressemitteilung konnte nicht geladen werden.');
     } finally {
       setLoading(false);
@@ -396,18 +434,25 @@ export default function ApprovalPage() {
 
     try {
       setSubmitting(true);
-      await prService.approveCampaign(shareId);
       
-      // NEU: PDF-Version Status aktualisieren
+      // NEU: Direkte Approval-Service Nutzung (vereinfachter Workflow)
+      await approvalService.submitDecisionPublic(
+        shareId,
+        'approved',
+        undefined, // Kein Kommentar bei Freigabe
+        'Kunde'
+      );
+      
+      // PDF-Version Status aktualisieren (vereinfachter Workflow)
       if (currentPdfVersion) {
         try {
           await pdfVersionsService.updateVersionStatus(
             currentPdfVersion.id!, 
             'approved'
           );
-          console.log('PDF-Status auf approved aktualisiert');
+          console.log('PDF-Status auf approved aktualisiert (1-stufiger Workflow)');
         } catch (pdfError) {
-          console.error('Fehler beim PDF-Status Update:', pdfError);
+          // Fehler beim PDF-Status Update
           // Nicht kritisch - fahre fort
         }
       }
@@ -434,7 +479,7 @@ export default function ApprovalPage() {
       setActionCompleted(true);
       setShowFeedbackForm(false);
     } catch (error) {
-      console.error('Fehler bei der Freigabe:', error);
+      // Fehler bei der Freigabe
       alert('Die Freigabe konnte nicht erteilt werden. Bitte versuchen Sie es erneut.');
     } finally {
       setSubmitting(false);
@@ -446,18 +491,25 @@ export default function ApprovalPage() {
 
     try {
       setSubmitting(true);
-      await prService.submitFeedback(shareId, feedbackText.trim());
       
-      // NEU: PDF-Version Status aktualisieren
+      // NEU: Direkte Approval-Service Nutzung (vereinfachter Workflow)
+      await approvalService.requestChangesPublic(
+        shareId,
+        'customer@freigabe.system', // Placeholder E-Mail
+        feedbackText.trim(),
+        'Kunde'
+      );
+      
+      // PDF-Version Status aktualisieren (vereinfachter Workflow)
       if (currentPdfVersion) {
         try {
           await pdfVersionsService.updateVersionStatus(
             currentPdfVersion.id!, 
             'rejected'
           );
-          console.log('PDF-Status auf rejected aktualisiert');
+          console.log('PDF-Status auf rejected aktualisiert (1-stufiger Workflow)');
         } catch (pdfError) {
-          console.error('Fehler beim PDF-Status Update:', pdfError);
+          // Fehler beim PDF-Status Update
           // Nicht kritisch - fahre fort
         }
       }
@@ -491,7 +543,7 @@ export default function ApprovalPage() {
       setShowFeedbackForm(false);
       setActionCompleted(true);
     } catch (error) {
-      console.error('Fehler beim Senden des Feedbacks:', error);
+      // Fehler beim Senden des Feedbacks
       alert('Das Feedback konnte nicht gesendet werden. Bitte versuchen Sie es erneut.');
     } finally {
       setSubmitting(false);
@@ -546,54 +598,54 @@ export default function ApprovalPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
       <div className="bg-white border-b">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-3">
-                <Badge color={statusInfo.color} className="inline-flex items-center gap-1">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
+                <Badge color={statusInfo.color} className="inline-flex items-center gap-1 w-fit">
                   <StatusIcon className="h-3 w-3" />
                   {statusInfo.label}
                 </Badge>
                 {campaign.clientName && (
-                  <div className="flex items-center gap-1 text-sm text-gray-500">
-                    <BuildingOfficeIcon className="h-4 w-4" />
-                    {campaign.clientName}
+                  <div className="flex items-center gap-1 text-xs sm:text-sm text-gray-500">
+                    <BuildingOfficeIcon className="h-4 w-4 flex-shrink-0" />
+                    <span className="truncate">{campaign.clientName}</span>
                   </div>
                 )}
               </div>
               
-              <Heading level={1} className="text-2xl font-bold text-gray-900 mb-2">
+              <Heading level={1} className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-2 leading-tight">
                 {campaign.title}
               </Heading>
               
-              <Text className="text-gray-600">{statusInfo.description}</Text>
+              <Text className="text-sm sm:text-base text-gray-600">{statusInfo.description}</Text>
               
-              <div className="mt-3 flex items-center gap-4 text-sm text-gray-500">
+              <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500">
                 <div className="flex items-center gap-1">
-                  <CalendarIcon className="h-4 w-4" />
-                  Erstellt am {formatDate(campaign.createdAt)}
+                  <CalendarIcon className="h-4 w-4 flex-shrink-0" />
+                  <span>Erstellt am {formatDate(campaign.createdAt)}</span>
                 </div>
                 {campaign.approvalData?.approvedAt && (
                   <div className="flex items-center gap-1 text-green-600">
-                    <CheckCircleIcon className="h-4 w-4" />
-                    Freigegeben am {formatDate(campaign.approvalData.approvedAt)}
+                    <CheckCircleIcon className="h-4 w-4 flex-shrink-0" />
+                    <span>Freigegeben am {formatDate(campaign.approvalData.approvedAt)}</span>
                   </div>
                 )}
               </div>
             </div>
             
             {/* Logo oder Fallback */}
-            <div className="text-right">
+            <div className="text-right flex-shrink-0">
               {brandingSettings?.logoUrl ? (
                 <img 
                   src={brandingSettings.logoUrl} 
                   alt={brandingSettings.companyName || 'Logo'} 
-                  className="h-12 w-auto object-contain"
+                  className="h-8 sm:h-12 w-auto object-contain"
                 />
               ) : (
                 <>
                   <div className="text-xs text-gray-400 mb-1">Freigabe-System</div>
-                  <div className="text-sm font-medium text-[#005fab]">CeleroPress</div>
+                  <div className="text-xs sm:text-sm font-medium text-[#005fab]">CeleroPress</div>
                 </>
               )}
             </div>
@@ -691,31 +743,31 @@ export default function ApprovalPage() {
             <CustomerMessageBanner message={customerMessage} />
           )}
 
-          {/* PR Content */}
-          <div className="bg-white rounded-lg border border-gray-200 mb-6">
-            <div className="border-b border-gray-200 px-6 py-4">
-              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <DocumentTextIcon className="h-5 w-5 text-gray-400" />
-                Inhalt der Pressemitteilung
-              </h2>
-            </div>
-            <div className="px-6 py-6">
-              <div 
-                className="prose prose-gray max-w-none"
-                dangerouslySetInnerHTML={{ __html: campaign.contentHtml }}
+          {/* MODERNISIERTE CAMPAIGN-PREVIEW - Phase 3 */}
+          <CampaignPreviewRenderer
+            campaignTitle={campaign.title}
+            contentHtml={campaign.contentHtml}
+            keyVisual={campaign.keyVisual}
+            clientName={campaign.clientName}
+            createdAt={campaign.createdAt}
+            attachedAssets={campaign.attachedAssets}
+            textbausteine={campaign.boilerplateSections}
+            keywords={campaign.keywords}
+            isCustomerView={true}
+            showSimplified={true}
+            className="mb-6"
+          />
+
+          {/* MODERNISIERTE PDF-INTEGRATION - Phase 2 */}
+          {currentPdfVersion ? (
+            <div className="mb-6">
+              <CustomerPDFViewer 
+                version={currentPdfVersion}
+                campaignTitle={campaign.title}
+                onHistoryToggle={() => setShowPdfHistory(true)}
+                totalVersions={pdfVersions.length}
               />
             </div>
-          </div>
-
-          {/* PDF Version Display - IMMER ANGEZEIGT */}
-          {currentPdfVersion ? (
-            <PDFVersionOverview 
-              version={currentPdfVersion}
-              campaignTitle={campaign.title}
-              variant="customer"
-              onHistoryToggle={() => setShowPdfHistory(true)}
-              totalVersions={pdfVersions.length}
-            />
           ) : (
             <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
               <div className="flex items-center gap-3">
@@ -743,52 +795,42 @@ export default function ApprovalPage() {
             />
           )}
 
-          {/* Actions */}
-          {!isApproved && !actionCompleted && (
+          {/* MODERNISIERTE PDF-APPROVAL-ACTIONS - Phase 2 */}
+          {!isApproved && !actionCompleted && currentPdfVersion && (
+            <PDFApprovalActions
+              version={currentPdfVersion}
+              currentStatus={currentStatus}
+              onApprove={handleApprove}
+              onRequestChanges={async (feedback) => {
+                setFeedbackText(feedback);
+                await handleRequestChanges();
+              }}
+              disabled={submitting}
+              className="mb-6"
+            />
+          )}
+
+          {/* FALLBACK: Legacy Actions für Fälle ohne PDF */}
+          {!isApproved && !actionCompleted && !currentPdfVersion && (
             <div className="bg-white rounded-lg border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Ihre Aktion</h3>
               
               {showFeedbackForm ? (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Welche Änderungen wünschen Sie?
-                    </label>
-                    <Textarea
-                      value={feedbackText}
-                      onChange={(e) => setFeedbackText(e.target.value)}
-                      rows={4}
-                      placeholder="Bitte beschreiben Sie die gewünschten Änderungen..."
-                      className="w-full"
-                      autoFocus
-                    />
-                  </div>
-                  
-                  <div className="flex gap-3">
-                    <Button
-                      onClick={handleRequestChanges}
-                      disabled={!feedbackText.trim() || submitting}
-                      color="indigo"
-                      className="flex-1"
-                    >
-                      {submitting ? 'Wird gesendet...' : 'Änderungen senden'}
-                    </Button>
-                    <Button
-                      plain
-                      onClick={() => {
-                        setShowFeedbackForm(false);
-                        setFeedbackText('');
-                      }}
-                      disabled={submitting}
-                    >
-                      Abbrechen
-                    </Button>
-                  </div>
-                </div>
+                <CustomerFeedbackForm
+                  onSubmit={async (feedback) => {
+                    setFeedbackText(feedback);
+                    await handleRequestChanges();
+                  }}
+                  onCancel={() => {
+                    setShowFeedbackForm(false);
+                    setFeedbackText('');
+                  }}
+                  disabled={submitting}
+                />
               ) : (
                 <div className="space-y-4">
                   <p className="text-gray-600">
-                    Bitte prüfen Sie die Pressemitteilung{currentPdfVersion ? ', das PDF-Dokument' : ''}{campaign.attachedAssets && campaign.attachedAssets.length > 0 ? ' und die angehängten Medien' : ''} sorgfältig. 
+                    Bitte prüfen Sie die Pressemitteilung{campaign.attachedAssets && campaign.attachedAssets.length > 0 ? ' und die angehängten Medien' : ''} sorgfältig. 
                     Sie können entweder die Freigabe erteilen oder Änderungen anfordern.
                   </p>
                   

@@ -107,6 +107,13 @@ export interface ApprovalEnhanced extends BaseEntity {
   tags?: string[];
   category?: string;
   priority?: 'low' | 'medium' | 'high' | 'urgent';
+  
+  // Feedback History für Legacy-Kompatibilität
+  feedbackHistory?: Array<{
+    comment?: string;
+    requestedAt: any;
+    author?: string;
+  }>;
 }
 
 // ========================================

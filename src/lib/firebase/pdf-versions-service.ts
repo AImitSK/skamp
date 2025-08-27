@@ -568,7 +568,7 @@ class PDFVersionsService {
             mainContent: content.mainContent,
             boilerplateSections: content.boilerplateSections || [],
             keyVisual: content.keyVisual,
-            clientName: content.clientName,
+            clientName: content.clientName || 'Unbekannter Kunde',
             date: new Date().toISOString()
           });
         } else {
@@ -579,7 +579,7 @@ class PDFVersionsService {
             mainContent: content.mainContent,
             boilerplateSections: content.boilerplateSections || [],
             keyVisual: content.keyVisual,
-            clientName: content.clientName,
+            clientName: content.clientName || 'Unbekannter Kunde',
             date: new Date().toISOString()
           });
         }
@@ -591,7 +591,7 @@ class PDFVersionsService {
           mainContent: content.mainContent,
           boilerplateSections: content.boilerplateSections || [],
           keyVisual: content.keyVisual,
-          clientName: content.clientName,
+          clientName: content.clientName || 'Unbekannter Kunde',
           date: new Date().toISOString()
         });
       }

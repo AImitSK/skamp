@@ -268,16 +268,67 @@ interface EmailActivity {
   - UI-Komponenten aus @/components/ui/
   - Auth/Organization Contexts
 
+## 🔄 **NEUE WIEDERVERWENDBARE CAMPAIGN-KOMPONENTEN** ✅ **VOLLSTÄNDIG ABGESCHLOSSEN (27.08.2025)**
+
+### 📦 **Campaign-Komponenten für Customer-Freigabe-Wiederverwendung:**
+
+**✅ Neue Komponenten erstellt:**
+```
+src/components/campaigns/
+├── CampaignPreviewRenderer.tsx  # Customer-optimierte Campaign Preview mit Paper-Look
+├── KeyVisualDisplay.tsx         # Wiederverwendbare Key Visual-Darstellung (16:9, 4:3, 1:1)
+├── TextbausteinDisplay.tsx      # Wiederverwendbare Textbaustein-Darstellung (Customer-Mode)
+└── index.ts                     # Export-Index für Campaign-Komponenten
+```
+
+### 🎯 **CampaignPreviewRenderer - Customer-optimierte Campaign-Anzeige:**
+- ✅ **Paper-Look Design** - Hochwertige visuelle Darstellung für Customer-Experience
+- ✅ **Read-Only-Modus** - Alle interaktiven Elemente für Customer-Viewing deaktiviert
+- ✅ **Customer-freundliche Texte** - Keine Agentur-Fachsprache oder technische Begriffe
+- ✅ **Mobile-First Design** - Vollständig responsive für alle Endgeräte optimiert
+- ✅ **Integration mit Customer-Freigabe-System** - Nahtlose Zusammenarbeit mit PDF-Viewer und Approval-Actions
+
+### 🖼️ **KeyVisualDisplay - Wiederverwendbare Key Visual-Darstellung:**
+- ✅ **Multi-Format-Support** - 16:9, 4:3, 1:1 Aspect-Ratios je nach Content-Typ
+- ✅ **Responsive Sizing** - Automatische Größenanpassung für verschiedene Container
+- ✅ **Fallback-Handling** - Elegante Behandlung fehlender oder ungültiger Bilder
+- ✅ **Performance-optimiert** - Lazy Loading und optimierte Bildgrößen
+
+### 📝 **TextbausteinDisplay - Customer-Mode Textbaustein-Darstellung:**
+- ✅ **Customer-Mode Aktiviert** - Spezielle Darstellung für Kundenfreigabe ohne Edit-Funktionen
+- ✅ **Rich-Text-Preservation** - Formatierungen und Struktur bleiben erhalten
+- ✅ **Kategorisierte Anzeige** - Textbausteine nach Kategorien (Unternehmen, Kontakt, etc.) organisiert
+- ✅ **Variables-System-Support** - Platzhalter werden korrekt für Customer-View aufgelöst
+
+### 🔗 **Cross-Component Integration in Customer-Freigabe:**
+```typescript
+// Erfolgreich implementierte Integration in Customer-Freigabe-Seite:
+CustomerApprovalPage (/freigabe/[shareId])
+├── CustomerPDFViewer (PDF-Integration)
+├── CampaignPreviewRenderer (Campaign-Preview mit Read-Only-Modus) ✅ NEU
+│   ├── KeyVisualDisplay (Wiederverwendbare Key Visual-Darstellung) ✅ NEU
+│   └── TextbausteinDisplay (Customer-Mode Textbaustein-Darstellung) ✅ NEU
+├── PDFApprovalActions (Approval-Actions)
+└── CustomerFeedbackForm (Feedback-System)
+```
+
+### 🎨 **CeleroPress Design System v2.0 Compliance:**
+- ✅ **Keine Shadow-Effekte** - Design Pattern durchgängig befolgt
+- ✅ **Heroicons /24/outline** - Konsistente Icon-Verwendung
+- ✅ **Primary-Colors (#005fab)** - Brand-konforme Farbverwendung
+- ✅ **Paper-Look Ästhetik** - Hochwertige visuelle Darstellung für Kundenfreigaben
+
 ## ⚠️ Bekannte Probleme & TODOs
 - [x] Console.logs entfernt
-- [ ] Massive Code-Duplikation (statusConfig, Alert, formatDate etc.)
-- [ ] Magic Numbers nicht extrahiert (5000ms, 25 items, Icon-Größen)
+- [x] Massive Code-Duplikation (statusConfig, Alert, formatDate etc.) ✅ **BEHOBEN**
+- [x] Magic Numbers nicht extrahiert (5000ms, 25 items, Icon-Größen) ✅ **BEHOBEN**
+- [x] Inkonsistente Icon-Größen ✅ **BEHOBEN**
+- [x] Campaign-Komponenten für Wiederverwendung optimiert ✅ **NEU IMPLEMENTIERT**
 - [ ] Analytics zeigt nur Mock-Daten
-- [ ] Fehlende Tests
+- [ ] Fehlende Tests für neue Campaign-Komponenten
 - [ ] TypeScript-Typen teilweise zu permissiv (any-Types)
 - [ ] Keine Fehlerbehandlung bei Netzwerkfehlern
 - [ ] Performance bei großen Kampagnenlisten
-- [ ] Inkonsistente Icon-Größen
 
 ## 🎨 UI/UX Hinweise
 - **Design-Patterns:** 
