@@ -113,7 +113,7 @@ class PDFVersionsService {
       const fileName = `preview_${content.title.replace(/[^a-zA-Z0-9]/g, '_')}_${timestamp}.pdf`;
 
       // Echte PDF-Generation über Puppeteer-API Route
-      const { pdfUrl, fileSize } = await this.generateRealPDF(content, fileName, organizationId);
+      const { pdfUrl, fileSize } = await this.generateRealPDF(content, fileName, organizationId, 'preview-user');
 
       return { pdfUrl, fileSize };
     } catch (error) {
@@ -157,7 +157,7 @@ class PDFVersionsService {
       const fileName = `${content.title.replace(/[^a-zA-Z0-9]/g, '_')}_v${newVersionNumber}_${dateStr}.pdf`;
 
       // Echte PDF-Generation über neue Puppeteer-API Route
-      const { pdfUrl, fileSize } = await this.generateRealPDF(content, fileName, organizationId);
+      const { pdfUrl, fileSize } = await this.generateRealPDF(content, fileName, organizationId, context.userId);
 
       // Berechne Metadaten
       const wordCount = this.countWords(content.mainContent);
@@ -560,7 +560,8 @@ class PDFVersionsService {
       templateId?: string;
     },
     fileName: string,
-    organizationId: string
+    organizationId: string,
+    userId: string
   ): Promise<{ pdfUrl: string; fileSize: number }> {
     try {
       // ========================================
@@ -592,36 +593,45 @@ class PDFVersionsService {
           });
           console.log('✅ Template-HTML generiert mit', template.name);
         } else {
-          // Fallback: Standard-HTML
-          templateHtml = this.generateClientSideHTML({
+          // Fallback: Standard-HTML mit erstem System-Template
+          const fallbackTemplate = await pdfTemplateService.getSystemTemplates().then(t => t[0]);
+          templateHtml = await pdfTemplateService.renderTemplateWithStyle(fallbackTemplate, {
             title: content.title,
             mainContent: content.mainContent,
             boilerplateSections: content.boilerplateSections || [],
             keyVisual: content.keyVisual,
             clientName: content.clientName,
             date: new Date().toISOString()
-          }, await this.getSystemTemplates().then(t => t[0])); // Standard-Template
+          });
           console.log('⚠️ Fallback HTML generiert');
         }
       } else {
-        // Kein Template-ID: Standard-HTML
-        templateHtml = this.generateClientSideHTML({
+        // Kein Template-ID: Standard-HTML mit Default-Template
+        const defaultTemplate = await pdfTemplateService.getSystemTemplates().then(t => t[0]);
+        templateHtml = await pdfTemplateService.renderTemplateWithStyle(defaultTemplate, {
           title: content.title,
           mainContent: content.mainContent,
           boilerplateSections: content.boilerplateSections || [],
           keyVisual: content.keyVisual,
           clientName: content.clientName,
           date: new Date().toISOString()
-        }, await this.getSystemTemplates().then(t => t[0]));
+        });
         console.log('📝 Standard HTML generiert');
       }
 
-      // Bereite Request für API auf - MIT FERTIGEM HTML
+      // Bereite Request für API auf - MIT FERTIGEM HTML UND ERFORDERLICHEN PARAMETERN
       const apiRequest = {
-        // Sende fertiges HTML statt Rohdaten
+        // 🔥 WICHTIG: API erwartet weiterhin diese Parameter für Validierung
+        campaignId: 'temp_campaign', // Temporär für PDF-Generierung
+        organizationId: organizationId,
+        mainContent: content.mainContent,
+        clientName: content.clientName || 'Unbekannt',
+        userId: userId,
+        
+        // Zusätzlich: Fertiges HTML für Template-Rendering
         html: templateHtml,
         
-        // Zusätzliche Metadaten für die PDF-Generation
+        // PDF-Optionen
         fileName: fileName,
         title: content.title,
         options: {
