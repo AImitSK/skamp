@@ -1045,14 +1045,19 @@ class PDFTemplateService {
               // Verschiedene Titel-Quellen prüfen
               const sectionTitle = section.customTitle || 
                                  section.boilerplate?.name || 
-                                 section.title || 
                                  section.boilerplate?.title || 
                                  '';
+              
+              // Verschiedene Content-Quellen prüfen
+              const content = section.content || 
+                             section.boilerplate?.content ||
+                             section.contentHtml ||
+                             '';
               
               return `
                 <div class="boilerplate-section ${section.type || ''}">
                   ${sectionTitle ? `<h3>${sectionTitle}</h3>` : ''}
-                  <div class="boilerplate-content">${section.content || ''}</div>
+                  <div class="boilerplate-content">${content}</div>
                 </div>
               `;
             }).join('')}

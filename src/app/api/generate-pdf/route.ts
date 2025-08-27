@@ -21,6 +21,12 @@ interface PDFGenerationRequest {
     customTitle?: string;
     content: string;
     type?: 'lead' | 'main' | 'quote' | 'contact';
+    // Fallback-Eigenschaften für verschiedene Content-Quellen
+    boilerplate?: {
+      content?: string;
+      [key: string]: any;
+    };
+    contentHtml?: string;
   }>;
   keyVisual?: {
     url: string;

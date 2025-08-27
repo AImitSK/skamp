@@ -20,6 +20,12 @@ export interface TemplateData {
     customTitle?: string;
     content: string;
     type?: 'lead' | 'main' | 'quote' | 'contact';
+    // Fallback-Eigenschaften für verschiedene Content-Quellen
+    boilerplate?: {
+      content?: string;
+      [key: string]: any;
+    };
+    contentHtml?: string;
   }>;
   keyVisual?: {
     url: string;
@@ -172,18 +178,26 @@ class TemplateRenderer {
       };
     }
 
-    // Textbausteine verarbeiten
+    // Textbausteine verarbeiten mit Fallback-Logik
     if (data.boilerplateSections && data.boilerplateSections.length > 0) {
-      // Filtere nur sichtbare Sections mit Inhalt
+      // Filtere nur sichtbare Sections mit Inhalt und verwende Fallback-Logik
       const visibleSections = data.boilerplateSections
         .filter(section => {
-          const content = section.content || '';
+          // 🔥 WICHTIG: Fallback-Logik für verschiedene Content-Quellen
+          const content = section.content || 
+                         section.boilerplate?.content ||
+                         section.contentHtml || 
+                         '';
           return content.trim().length > 0;
         })
         .map(section => ({
           id: section.id || '',
           customTitle: section.customTitle || '',
-          content: section.content || '',
+          // 🔥 WICHTIG: Fallback-Logik für Content-Rendering
+          content: section.content || 
+                   section.boilerplate?.content ||
+                   section.contentHtml || 
+                   '',
           type: section.type || 'main'
         }));
 
@@ -499,7 +513,7 @@ class TemplateRenderer {
       }
       
       const files = fs.readdirSync(templatesDir)
-        .filter(file => file.endsWith('.html'))
+        .filter((file: string) => file.endsWith('.html'))
         .sort();
       
       return files.length > 0 ? files : [this.DEFAULT_TEMPLATE];
