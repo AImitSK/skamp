@@ -495,16 +495,6 @@ export default function ApprovalsPage() {
               Verwalten Sie alle Kampagnen-Freigaben an einem Ort
             </Text>
           </div>
-          <div className="flex items-center gap-3">
-            <Button
-              onClick={() => loadApprovals()}
-              disabled={isRefreshing}
-              className="bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200"
-            >
-              <ArrowPathIcon className={isRefreshing ? 'animate-spin' : ''} />
-              Aktualisieren
-            </Button>
-          </div>
         </div>
       </div>
 
@@ -524,7 +514,7 @@ export default function ApprovalsPage() {
           <Popover className="relative">
             <Popover.Button
               className={clsx(
-                'inline-flex items-center justify-center rounded-lg border p-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005fab] h-10 w-10',
+                'inline-flex items-center justify-center rounded-lg border p-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2 h-10 w-10',
                 activeFiltersCount > 0
                   ? 'border-[#005fab] bg-[#005fab]/5 text-[#005fab] hover:bg-[#005fab]/10'
                   : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
@@ -724,6 +714,17 @@ export default function ApprovalsPage() {
               </Popover.Panel>
             </Transition>
           </Popover>
+
+
+          {/* Aktualisieren Button */}
+          <Button
+            onClick={() => loadApprovals()}
+            disabled={isRefreshing}
+            className="bg-[#005fab] hover:bg-[#004a8c] text-white whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005fab] h-10 px-6"
+          >
+            <ArrowPathIcon className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Aktualisieren
+          </Button>
         </div>
       </div>
 
@@ -751,10 +752,10 @@ export default function ApprovalsPage() {
             {/* Header */}
             <div className="px-8 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
               <div className="flex items-center">
-                <div className="flex-1 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                <div className="flex-1 px-8 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Kampagne
                 </div>
-                <div className="w-48 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                <div className="w-48 px-8 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Status
                 </div>
                 <div className="w-64 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
@@ -773,7 +774,7 @@ export default function ApprovalsPage() {
                 <div key={approval.id} className="px-8 py-5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                   <div className="flex items-center">
                     {/* Kampagne */}
-                    <div className="flex-1 px-4 min-w-0">
+                    <div className="flex-1 px-8 min-w-0">
                       <Link 
                         href={`/dashboard/pr-tools/campaigns/campaigns/${approval.campaignId}`} 
                         className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-primary truncate block"
@@ -794,24 +795,13 @@ export default function ApprovalsPage() {
                     </div>
 
                     {/* Status */}
-                    <div className="w-48 px-4">
+                    <div className="w-48 px-8">
                       <div className="space-y-1">
                         <div className="flex flex-wrap items-center gap-1">
                           {getStatusBadge(approval.status)}
                           {approval.priority && getPriorityBadge(approval.priority)}
                           {approval.isOverdue && (
                             <Badge color="red" className="text-xs">Überfällig</Badge>
-                          )}
-                          
-                          {/* NEU: PDF-Status-Badge */}
-                          {approval.hasPDF && (
-                            <Badge 
-                              color={getPDFStatusColor(approval.pdfStatus)} 
-                              className="text-xs flex items-center gap-1"
-                            >
-                              <DocumentIcon className="h-3 w-3" />
-                              PDF {approval.currentPdfVersion?.version}
-                            </Badge>
                           )}
                         </div>
                         <div className="space-y-1">
