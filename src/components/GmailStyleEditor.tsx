@@ -569,6 +569,13 @@ export const GmailStyleEditor = ({
             border-radius: 0.375rem;
           }
           
+          /* CTA Text styling */
+          .gmail-editor-content .cta-text,
+          .gmail-editor-content span[data-type="cta-text"] {
+            color: #000000 !important; /* text-black mit !important */
+            font-weight: bold;
+          }
+          
           /* Hashtag styling - Social Media optimiert */
           .gmail-editor-content .hashtag,
           .gmail-editor-content span[data-type="hashtag"] {

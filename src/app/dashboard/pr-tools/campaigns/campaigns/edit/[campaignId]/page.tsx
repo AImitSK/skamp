@@ -1516,7 +1516,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
               
               {/* Aktuelle PDF-Version */}
               {currentPdfVersion && (
-                <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
+                <div className="border border-blue-300 rounded-lg p-3 bg-blue-50">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div>
