@@ -201,6 +201,13 @@ export default function TemplateEditor({ templateId, isOpen, onClose, onSave }: 
 
   const getDefaultVariables = (): TemplateVariable[] => [
     {
+      name: 'templateTitle',
+      description: 'Titel der HTML-Seite (erscheint im Browser-Tab)',
+      defaultValue: 'Template Dokument',
+      required: false,
+      type: 'text'
+    },
+    {
       name: 'companyName',
       description: 'Name des Unternehmens',
       defaultValue: 'Ihr Unternehmen',
@@ -658,7 +665,7 @@ export default function TemplateEditor({ templateId, isOpen, onClose, onSave }: 
                       srcDoc={previewHtml}
                       className="w-full h-full"
                       title="Template Vorschau"
-                      sandbox="allow-same-origin"
+                      sandbox="allow-same-origin allow-scripts"
                     />
                   ) : (
                     <div className="flex items-center justify-center h-full text-gray-500">

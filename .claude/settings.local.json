@@ -52,7 +52,8 @@
       "Read(/C:\\c\\Users\\skuehne\\Desktop\\Projekt/**)",
       "Read(/C:\\c\\Users\\skuehne\\Desktop\\Projekt/**)",
       "Read(/C:\\c\\Users\\skuehne\\Desktop\\Projekt/**)",
-      "Read(/C:\\c\\Users\\skuehne\\Desktop\\Projekt/**)"
+      "Read(/C:\\c\\Users\\skuehne\\Desktop\\Projekt/**)",
+      "Bash(git log:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",
