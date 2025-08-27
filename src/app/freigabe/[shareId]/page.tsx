@@ -359,6 +359,13 @@ export default function ApprovalPage() {
       // Merge Campaign mit vereinfachten Approval-Daten
       campaignData.approvalData = approvalData as any;
 
+      // 🐛 TEMP DEBUG: Prüfe Content-Properties
+      console.log('📝 Content verfügbar:', {
+        finalContentHtml: (campaignData as any).finalContentHtml?.length || 0,
+        contentHtml: campaignData.contentHtml?.length || 0,  
+        mainContent: campaignData.mainContent?.length || 0
+      });
+
 
       // PDF-Versionen laden (vereinfachter 1-stufiger Workflow)
       if (approval.campaignId) {
@@ -748,14 +755,14 @@ export default function ApprovalPage() {
           <CampaignPreviewRenderer
             campaignTitle={campaign.title}
             contentHtml={
-              // FIXEN: mainContent ist der richtige Content, nicht contentHtml
-              campaign.mainContent || campaign.contentHtml || '<p>Kein Inhalt verfügbar</p>'
+              // Verwende dieselbe Logik wie CampaignPreviewStep: finalContentHtml oder contentHtml
+              (campaign as any).finalContentHtml || campaign.contentHtml || campaign.mainContent || '<p>Kein Inhalt verfügbar</p>'
             }
             keyVisual={campaign.keyVisual}
             clientName={campaign.clientName}
             createdAt={campaign.createdAt}
             attachedAssets={campaign.attachedAssets}
-            textbausteine={campaign.boilerplateSections || []}
+            textbausteine={[]}
             keywords={campaign.keywords || []}
             isCustomerView={true}
             showSimplified={false}
