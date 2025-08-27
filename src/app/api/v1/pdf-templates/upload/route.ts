@@ -1,165 +1,154 @@
-// src/app/api/v1/pdf-templates/upload/route.ts - Custom Template Upload API
+// src/app/api/v1/pdf-templates/upload/route.ts - API-Route für Template-Upload
 
 import { NextRequest, NextResponse } from 'next/server';
 import { pdfTemplateService } from '@/lib/firebase/pdf-template-service';
+import { TemplateValidationService } from '@/components/templates/TemplateValidator';
+
+interface UploadRequest {
+  templateName: string;
+  templateDescription?: string;
+  templateCategory: 'standard' | 'premium' | 'custom';
+  htmlContent: string;
+  cssContent?: string;
+  variables: Array<{
+    name: string;
+    description: string;
+    defaultValue: string;
+    required: boolean;
+    type: 'text' | 'html' | 'image' | 'date';
+  }>;
+  organizationId: string;
+  userId: string;
+}
+
+interface UploadResponse {
+  success: boolean;
+  templateId?: string;
+  message: string;
+  validationErrors?: Array<{
+    type: string;
+    code: string;
+    message: string;
+  }>;
+}
 
 /**
  * POST /api/v1/pdf-templates/upload
  * Custom Template hochladen und validieren
  */
-export async function POST(request: NextRequest): Promise<NextResponse> {
+export async function POST(request: NextRequest): Promise<NextResponse<UploadResponse>> {
   try {
-    console.log('📤 Custom Template Upload gestartet');
+    console.log('🚀 Template-Upload API aufgerufen');
+    
+    // Request-Body validieren
+    let requestData: UploadRequest;
+    try {
+      requestData = await request.json();
+    } catch (parseError) {
+      console.error('❌ JSON-Parsing fehlgeschlagen:', parseError);
+      return NextResponse.json({
+        success: false,
+        message: 'Ungültiges JSON-Format'
+      }, { status: 400 });
+    }
 
-    // Parse FormData
-    const formData = await request.formData();
-    const file = formData.get('template') as File;
-    const metadataStr = formData.get('metadata') as string;
-    const organizationId = formData.get('organizationId') as string;
-    const userId = formData.get('userId') as string;
-
-    console.log('📋 Upload-Daten:', {
-      fileName: file?.name,
-      fileSize: file?.size,
+    const { 
+      templateName, 
+      templateDescription, 
+      templateCategory, 
+      htmlContent, 
+      cssContent, 
+      variables,
       organizationId,
-      userId,
-      hasMetadata: !!metadataStr
-    });
+      userId
+    } = requestData;
 
-    // Basis-Validierung
-    if (!file) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Keine Template-Datei bereitgestellt',
-          details: 'Das "template" Feld in der FormData ist erforderlich'
-        },
-        { status: 400 }
-      );
+    // Grundlegende Validierung
+    if (!templateName?.trim()) {
+      return NextResponse.json({
+        success: false,
+        message: 'Template-Name ist erforderlich'
+      }, { status: 400 });
+    }
+
+    if (!htmlContent?.trim()) {
+      return NextResponse.json({
+        success: false,
+        message: 'HTML-Inhalt ist erforderlich'
+      }, { status: 400 });
     }
 
     if (!organizationId) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'organizationId ist erforderlich' 
-        },
-        { status: 400 }
-      );
+      return NextResponse.json({
+        success: false,
+        message: 'Organization-ID erforderlich'
+      }, { status: 400 });
     }
 
     if (!userId) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'userId ist erforderlich' 
-        },
-        { status: 400 }
-      );
+      return NextResponse.json({
+        success: false,
+        message: 'User-ID erforderlich'
+      }, { status: 400 });
     }
 
-    // Metadata parsen
-    let metadata: any = {};
-    if (metadataStr) {
-      try {
-        metadata = JSON.parse(metadataStr);
-      } catch (parseError) {
-        return NextResponse.json(
-          { 
-            success: false, 
-            error: 'Ungültiges Metadata-Format',
-            details: 'Metadata muss gültiges JSON sein'
-          },
-          { status: 400 }
-        );
-      }
-    }
-
-    // File-Validierung
-    console.log('🔍 Validiere Template-Datei...');
-    const validation = await pdfTemplateService.validateTemplateFile(file);
-    
-    if (!validation.isValid) {
-      console.log('❌ Template-Validierung fehlgeschlagen:', validation.errors);
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Template-Datei ist ungültig', 
-          details: validation.errors,
-          validationErrors: validation.errors
-        },
-        { status: 400 }
-      );
-    }
-
-    console.log('✅ Template-Datei erfolgreich validiert');
-
-    // Template hochladen
-    console.log('⬆️ Lade Template hoch...');
-    const uploadStart = Date.now();
-    
-    const uploadedTemplate = await pdfTemplateService.uploadCustomTemplate(
-      organizationId,
-      file,
-      {
-        ...metadata,
-        createdBy: userId
-      }
+    // Template-Validierung
+    console.log('🔍 Template wird validiert...');
+    const validationErrors = TemplateValidationService.validateTemplate(
+      htmlContent,
+      cssContent || '',
+      variables || []
     );
-    
-    const uploadTime = Date.now() - uploadStart;
-    console.log(`✅ Template erfolgreich hochgeladen: ${uploadedTemplate.id} (${uploadTime}ms)`);
 
-    // Erfolgs-Response
+    const hasErrors = validationErrors.some(error => error.type === 'error');
+    if (hasErrors) {
+      console.error('❌ Template-Validierung fehlgeschlagen:', validationErrors);
+      return NextResponse.json({
+        success: false,
+        message: 'Template hat Validierungsfehler',
+        validationErrors: validationErrors.filter(error => error.type === 'error')
+      }, { status: 400 });
+    }
+
+    // Template erstellen
+    console.log('💾 Template wird erstellt...');
+    try {
+      const templateId = await pdfTemplateService.createCustomTemplate({
+        name: templateName.trim(),
+        description: templateDescription?.trim() || '',
+        category: templateCategory || 'custom',
+        htmlContent: htmlContent.trim(),
+        cssContent: cssContent?.trim() || '',
+        variables: variables || [],
+        isCustom: true,
+        organizationId,
+        createdBy: userId,
+        thumbnailUrl: '' // Wird später durch Preview-Generation befüllt
+      });
+
+      console.log(`✅ Template erfolgreich erstellt: ${templateId}`);
+      
+      return NextResponse.json({
+        success: true,
+        templateId,
+        message: 'Template erfolgreich hochgeladen',
+        validationErrors: validationErrors.filter(error => error.type !== 'error') // Nur Warnungen und Infos
+      }, { status: 201 });
+
+    } catch (createError) {
+      console.error('❌ Fehler beim Erstellen des Templates:', createError);
+      return NextResponse.json({
+        success: false,
+        message: 'Template konnte nicht erstellt werden'
+      }, { status: 500 });
+    }
+
+  } catch (error) {
+    console.error('❌ Unerwarteter Fehler in Template-Upload API:', error);
     return NextResponse.json({
-      success: true,
-      message: 'Template erfolgreich hochgeladen',
-      template: {
-        id: uploadedTemplate.id,
-        name: uploadedTemplate.name,
-        description: uploadedTemplate.description,
-        version: uploadedTemplate.version,
-        createdAt: uploadedTemplate.createdAt,
-        organizationId: uploadedTemplate.organizationId
-      },
-      uploadMetadata: {
-        fileName: file.name,
-        fileSize: file.size,
-        uploadTimeMs: uploadTime,
-        validationPassed: true
-      }
-    });
-
-  } catch (error: any) {
-    console.error('❌ Custom Template Upload fehlgeschlagen:', error);
-
-    // Error-Response basierend auf Fehlertyp
-    let statusCode = 500;
-    let errorMessage = 'Template-Upload fehlgeschlagen';
-    
-    if (error.message?.includes('validation')) {
-      statusCode = 400;
-      errorMessage = 'Template-Validierung fehlgeschlagen';
-    } else if (error.message?.includes('permission') || error.message?.includes('storage')) {
-      statusCode = 403;
-      errorMessage = 'Keine Berechtigung für Template-Upload';
-    } else if (error.message?.includes('quota') || error.message?.includes('limit')) {
-      statusCode = 413;
-      errorMessage = 'Template-Limit erreicht oder Datei zu groß';
-    } else if (error.message?.includes('timeout')) {
-      statusCode = 408;
-      errorMessage = 'Upload-Timeout';
-    }
-
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: errorMessage,
-        details: error.message,
-        timestamp: new Date().toISOString()
-      },
-      { status: statusCode }
-    );
+      success: false,
+      message: 'Interner Server-Fehler'
+    }, { status: 500 });
   }
 }
 

@@ -90,8 +90,11 @@ class PDFTemplateService {
         return systemTemplate;
       }
       
-      // Prüfe Custom-Templates (falls implementiert)
-      // TODO: Custom template loading from Firestore
+      // Prüfe Custom-Templates
+      const customTemplate = await this.getCustomTemplateById(templateId);
+      if (customTemplate) {
+        return customTemplate;
+      }
       
       return null;
     } catch (error) {
@@ -658,45 +661,6 @@ class PDFTemplateService {
     }
   }
   
-  /**
-   * Custom Template löschen (mit Cache-Bereinigung)
-   */
-  async deleteCustomTemplate(templateId: string): Promise<void> {
-    try {
-      // Prüfe ob es System-Template ist
-      if (Object.values(SYSTEM_TEMPLATE_IDS).includes(templateId as SystemTemplateId)) {
-        throw new Error('System-Templates können nicht gelöscht werden');
-      }
-      
-      const templateDoc = await getDoc(doc(db, this.COLLECTION_NAME, templateId));
-      if (!templateDoc.exists()) {
-        throw new Error('Template nicht gefunden');
-      }
-      
-      const templateData = templateDoc.data() as PDFTemplateDocument;
-      
-      // Lösche Storage-File falls vorhanden
-      if (templateData.uploadedFile?.storageUrl) {
-        try {
-          const storageRef = ref(storage, templateData.uploadedFile.storageUrl);
-          await deleteObject(storageRef);
-        } catch (storageError) {
-          console.warn('⚠️ Storage-File konnte nicht gelöscht werden:', storageError);
-        }
-      }
-      
-      // Lösche Template-Document
-      await deleteDoc(doc(db, this.COLLECTION_NAME, templateId));
-      
-      // Bereinige alle Caches für dieses Template
-      this.invalidateTemplateCache(templateId);
-      
-      console.log(`✅ Template ${templateId} erfolgreich gelöscht`);
-    } catch (error) {
-      console.error('❌ Fehler beim Löschen des Templates:', error);
-      throw new Error('Template konnte nicht gelöscht werden');
-    }
-  }
   
   /**
    * Cache bereinigen
@@ -1512,6 +1476,361 @@ class PDFTemplateService {
       createdAt: new Date(),
       usageCount: 0
     };
+  }
+  
+  // === CUSTOM TEMPLATE METHODEN ===
+  
+  /**
+   * Custom Template erstellen
+   */
+  async createCustomTemplate(templateData: {
+    name: string;
+    description: string;
+    category: 'standard' | 'premium' | 'custom';
+    htmlContent: string;
+    cssContent?: string;
+    variables: Array<{
+      name: string;
+      description: string;
+      defaultValue: string;
+      required: boolean;
+      type: 'text' | 'html' | 'image' | 'date';
+    }>;
+    isCustom: boolean;
+    organizationId: string;
+    createdBy: string;
+    thumbnailUrl: string;
+  }): Promise<string> {
+    try {
+      const templateId = `custom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Erstelle Custom Template Document
+      const customTemplate: PDFTemplate = {
+        id: templateId,
+        name: templateData.name,
+        description: templateData.description,
+        version: '1.0.0',
+        
+        // Standard Layout für Custom Templates
+        layout: {
+          type: 'custom',
+          headerHeight: 80,
+          footerHeight: 60,
+          margins: { top: 20, right: 15, bottom: 20, left: 15 },
+          columns: 1,
+          pageFormat: 'A4'
+        },
+        
+        // Standard Typography
+        typography: {
+          primaryFont: 'Arial',
+          secondaryFont: 'Arial',
+          baseFontSize: 12,
+          lineHeight: 1.6,
+          headingScale: [24, 20, 16, 14]
+        },
+        
+        // Standard Color Scheme
+        colorScheme: {
+          primary: '#2563eb',
+          secondary: '#f8fafc',
+          accent: '#0ea5e9',
+          text: '#1e293b',
+          background: '#ffffff',
+          border: '#e2e8f0'
+        },
+        
+        // Default Components
+        components: {
+          header: {
+            backgroundColor: '#2563eb',
+            textColor: '#ffffff',
+            padding: 20,
+            borderRadius: 0
+          },
+          title: {
+            fontSize: 24,
+            fontWeight: 'bold',
+            textColor: '#1e293b',
+            textAlign: 'left',
+            margin: 20
+          },
+          content: {
+            fontSize: 12,
+            textColor: '#475569',
+            padding: 20
+          },
+          sidebar: {
+            backgroundColor: '#f8fafc',
+            borderColor: '#e2e8f0',
+            borderWidth: 1,
+            padding: 15,
+            borderRadius: 8
+          },
+          footer: {
+            backgroundColor: '#f8fafc',
+            textColor: '#64748b',
+            fontSize: 9,
+            padding: 15,
+            textAlign: 'center'
+          },
+          logo: {
+            margin: 10
+          },
+          keyVisual: {
+            borderRadius: 6,
+            margin: 15
+          },
+          boilerplate: {
+            backgroundColor: '#f8fafc',
+            borderColor: '#2563eb',
+            borderWidth: 4,
+            padding: 15,
+            borderRadius: 6
+          }
+        },
+        
+        isSystem: false,
+        isActive: true,
+        createdAt: new Date(),
+        usageCount: 0,
+        
+        // Custom Template spezifische Daten
+        organizationId: templateData.organizationId,
+        createdBy: templateData.createdBy,
+        category: templateData.category,
+        thumbnailUrl: templateData.thumbnailUrl,
+        variables: templateData.variables,
+        
+        // Custom HTML/CSS Content
+        customContent: {
+          htmlContent: templateData.htmlContent,
+          cssContent: templateData.cssContent || '',
+          variables: templateData.variables
+        }
+      };
+      
+      // Speichere in Firestore
+      const templateDoc: PDFTemplateDocument = {
+        template: customTemplate,
+        metadata: {
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now(),
+          version: '1.0.0',
+          isActive: true,
+          organizationId: templateData.organizationId,
+          createdBy: templateData.createdBy
+        }
+      };
+      
+      await setDoc(doc(db, this.COLLECTION_NAME, templateId), templateDoc);
+      
+      // Cache das neue Template
+      if (this.cache) {
+        this.cache.setTemplate(templateId, customTemplate);
+        
+        // Invalidiere Organization-Templates-Cache
+        const orgCacheKey = `org_templates_${templateData.organizationId}`;
+        this.cache.invalidateTemplate(orgCacheKey);
+      }
+      
+      console.log(`✅ Custom Template erstellt: ${templateId}`);
+      return templateId;
+      
+    } catch (error) {
+      console.error('❌ Fehler beim Erstellen des Custom Templates:', error);
+      throw new Error('Custom Template konnte nicht erstellt werden');
+    }
+  }
+  
+  /**
+   * Custom Template aktualisieren
+   */
+  async updateCustomTemplate(templateId: string, updateData: {
+    name?: string;
+    description?: string;
+    htmlContent?: string;
+    cssContent?: string;
+    variables?: Array<{
+      name: string;
+      description: string;
+      defaultValue: string;
+      required: boolean;
+      type: 'text' | 'html' | 'image' | 'date';
+    }>;
+    organizationId?: string;
+  }): Promise<void> {
+    try {
+      const templateRef = doc(db, this.COLLECTION_NAME, templateId);
+      const templateDoc = await getDoc(templateRef);
+      
+      if (!templateDoc.exists()) {
+        throw new Error('Template nicht gefunden');
+      }
+      
+      const existingData = templateDoc.data() as PDFTemplateDocument;
+      
+      // Update Template Data
+      const updatedTemplate = {
+        ...existingData.template,
+        ...updateData,
+        customContent: {
+          ...existingData.template.customContent,
+          htmlContent: updateData.htmlContent || existingData.template.customContent?.htmlContent,
+          cssContent: updateData.cssContent || existingData.template.customContent?.cssContent,
+          variables: updateData.variables || existingData.template.customContent?.variables
+        }
+      };
+      
+      // Update Document
+      await updateDoc(templateRef, {
+        template: updatedTemplate,
+        'metadata.updatedAt': Timestamp.now(),
+        'metadata.version': increment(1)
+      });
+      
+      // Cache invalidieren
+      if (this.cache && updateData.organizationId) {
+        this.cache.invalidateTemplate(templateId);
+        this.cache.invalidateTemplate(`org_templates_${updateData.organizationId}`);
+      }
+      
+      console.log(`✅ Custom Template aktualisiert: ${templateId}`);
+      
+    } catch (error) {
+      console.error('❌ Fehler beim Aktualisieren des Custom Templates:', error);
+      throw new Error('Custom Template konnte nicht aktualisiert werden');
+    }
+  }
+  
+  /**
+   * Custom Template nach ID laden
+   */
+  async getCustomTemplateById(templateId: string): Promise<PDFTemplate | null> {
+    try {
+      // Prüfe Cache zuerst
+      if (this.cache) {
+        const cachedTemplate = this.cache.getTemplate(templateId);
+        if (cachedTemplate) {
+          this.performanceMetrics.cacheHits++;
+          return cachedTemplate;
+        }
+      }
+      
+      this.performanceMetrics.cacheMisses++;
+      
+      const templateDoc = await getDoc(doc(db, this.COLLECTION_NAME, templateId));
+      
+      if (!templateDoc.exists()) {
+        return null;
+      }
+      
+      const templateData = templateDoc.data() as PDFTemplateDocument;
+      
+      // Cache das Template
+      if (this.cache) {
+        this.cache.setTemplate(templateId, templateData.template);
+      }
+      
+      return templateData.template;
+      
+    } catch (error) {
+      console.error(`❌ Fehler beim Laden des Custom Templates ${templateId}:`, error);
+      return null;
+    }
+  }
+  
+  /**
+   * Custom Template löschen
+   */
+  async deleteCustomTemplate(templateId: string, organizationId: string): Promise<void> {
+    try {
+      await deleteDoc(doc(db, this.COLLECTION_NAME, templateId));
+      
+      // Cache invalidieren
+      if (this.cache) {
+        this.cache.invalidateTemplate(templateId);
+        this.cache.invalidateTemplate(`org_templates_${organizationId}`);
+      }
+      
+      console.log(`✅ Custom Template gelöscht: ${templateId}`);
+      
+    } catch (error) {
+      console.error('❌ Fehler beim Löschen des Custom Templates:', error);
+      throw new Error('Custom Template konnte nicht gelöscht werden');
+    }
+  }
+  
+  /**
+   * Custom Template mit HTML/CSS rendern
+   */
+  async renderCustomTemplate(
+    template: PDFTemplate,
+    templateData: TemplateData
+  ): Promise<string> {
+    if (!template.customContent?.htmlContent) {
+      throw new Error('Custom Template hat keinen HTML-Inhalt');
+    }
+    
+    const startTime = Date.now();
+    
+    try {
+      let htmlContent = template.customContent.htmlContent;
+      
+      // Template-Variablen ersetzen
+      if (template.customContent.variables) {
+        template.customContent.variables.forEach(variable => {
+          const placeholder = `{{${variable.name}}}`;
+          const value = this.getTemplateVariableValue(variable, templateData);
+          htmlContent = htmlContent.replace(new RegExp(placeholder, 'g'), value);
+        });
+      }
+      
+      // CSS einbetten
+      if (template.customContent.cssContent) {
+        htmlContent = htmlContent.replace(
+          '</head>',
+          `<style>${template.customContent.cssContent}</style></head>`
+        );
+      }
+      
+      const renderTime = Date.now() - startTime;
+      console.log(`✅ Custom Template gerendert: ${template.id} (${renderTime}ms)`);
+      
+      return htmlContent;
+      
+    } catch (error) {
+      console.error('❌ Fehler beim Rendern des Custom Templates:', error);
+      throw new Error('Custom Template konnte nicht gerendert werden');
+    }
+  }
+  
+  /**
+   * Wert für Template-Variable extrahieren
+   */
+  private getTemplateVariableValue(
+    variable: { name: string; type: string; defaultValue: string },
+    templateData: TemplateData
+  ): string {
+    // Mapping von Standard-Variablen
+    switch (variable.name) {
+      case 'companyName':
+      case 'clientName':
+        return templateData.clientName || variable.defaultValue;
+      case 'title':
+        return templateData.title || variable.defaultValue;
+      case 'content':
+      case 'mainContent':
+        return templateData.mainContent || variable.defaultValue;
+      case 'date':
+        return templateData.date ? 
+          new Date(templateData.date).toLocaleDateString('de-DE') : 
+          new Date().toLocaleDateString('de-DE');
+      case 'footerText':
+        return `© ${new Date().getFullYear()} ${templateData.clientName || 'Unternehmen'}`;
+      default:
+        return variable.defaultValue;
+    }
   }
 }
 

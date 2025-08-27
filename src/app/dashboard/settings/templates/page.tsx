@@ -17,12 +17,16 @@ import {
   PlusIcon,
   ScaleIcon,
   CheckIcon,
-  EllipsisVerticalIcon
+  EllipsisVerticalIcon,
+  CloudArrowUpIcon,
+  CodeBracketIcon
 } from '@heroicons/react/24/outline';
 // pdfTemplateService wird über API Routes verwendet
 import type { PDFTemplate } from '@/types/pdf-template';
 import { TemplatePreviewModal } from '@/components/templates/TemplatePreviewModal';
 import { TemplateComparison } from '@/components/templates/TemplateComparison';
+import { TemplateUploadWizard } from '@/components/templates/TemplateUploadWizard';
+import { TemplateEditor } from '@/components/templates/TemplateEditor';
 
 export default function TemplatesPage() {
   const { currentOrganization } = useOrganization();
@@ -32,6 +36,9 @@ export default function TemplatesPage() {
   const [previewTemplate, setPreviewTemplate] = useState<PDFTemplate | null>(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [showComparisonModal, setShowComparisonModal] = useState(false);
+  const [showUploadWizard, setShowUploadWizard] = useState(false);
+  const [showTemplateEditor, setShowTemplateEditor] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<PDFTemplate | null>(null);
 
   useEffect(() => {
     if (currentOrganization) {
@@ -248,6 +255,45 @@ export default function TemplatesPage() {
     }
   };
 
+  const handleTemplateUploaded = (templateId: string) => {
+    // Template wurde hochgeladen - Liste neu laden
+    loadTemplates();
+    setShowUploadWizard(false);
+  };
+
+  const handleTemplateCreated = (templateData: any) => {
+    // Template wurde erstellt - Liste neu laden
+    loadTemplates();
+    setShowTemplateEditor(false);
+    setEditingTemplate(null);
+  };
+
+  const handleEditTemplate = (template: PDFTemplate) => {
+    setEditingTemplate(template);
+    setShowTemplateEditor(true);
+  };
+
+  const handleDeleteTemplate = async (template: PDFTemplate) => {
+    if (!currentOrganization?.id) return;
+    
+    try {
+      const response = await fetch(`/api/v1/pdf-templates/upload?templateId=${template.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        await loadTemplates();
+      } else {
+        throw new Error('Failed to delete template');
+      }
+    } catch (error) {
+      console.error('Fehler beim Löschen des Templates:', error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="animate-pulse">
@@ -289,9 +335,20 @@ export default function TemplatesPage() {
               <ScaleIcon className="h-4 w-4 mr-2" />
               Vergleichen
             </Button>
-            <Button className=" px-6 py-2">
-              <PlusIcon className="h-4 w-4 mr-2" />
+            <Button 
+              onClick={() => setShowTemplateEditor(true)}
+              color="secondary"
+              className="px-6 py-2"
+            >
+              <CodeBracketIcon className="h-4 w-4 mr-2" />
               Template erstellen
+            </Button>
+            <Button 
+              onClick={() => setShowUploadWizard(true)}
+              className="px-6 py-2"
+            >
+              <CloudArrowUpIcon className="h-4 w-4 mr-2" />
+              Template hochladen
             </Button>
           </div>
         </div>
@@ -393,15 +450,14 @@ export default function TemplatesPage() {
                             <EyeIcon className="h-4 w-4 mr-2" />
                             Vorschau
                           </DropdownItem>
-                          {/* Als Standard setzen Option entfernt, da isDefault nicht mehr verwendet wird */}
                           {!template.isSystem && (
-                            <DropdownItem>
+                            <DropdownItem onClick={() => handleEditTemplate(template)}>
                               <PencilIcon className="h-4 w-4 mr-2" />
                               Bearbeiten
                             </DropdownItem>
                           )}
                           {!template.isSystem && (
-                            <DropdownItem color="red" onClick={() => {/* Handle Delete */}}>
+                            <DropdownItem color="red" onClick={() => handleDeleteTemplate(template)}>
                               <TrashIcon className="h-4 w-4 mr-2" />
                               Löschen
                             </DropdownItem>
@@ -433,6 +489,24 @@ export default function TemplatesPage() {
         onClose={handleCloseComparison}
         onSelect={handleSelectFromComparison}
         organizationId={currentOrganization?.id || ''}
+      />
+
+      {/* Template Upload Wizard */}
+      <TemplateUploadWizard
+        isOpen={showUploadWizard}
+        onClose={() => setShowUploadWizard(false)}
+        onTemplateUploaded={handleTemplateUploaded}
+      />
+
+      {/* Template Editor */}
+      <TemplateEditor
+        templateId={editingTemplate?.id}
+        isOpen={showTemplateEditor}
+        onClose={() => {
+          setShowTemplateEditor(false);
+          setEditingTemplate(null);
+        }}
+        onSave={handleTemplateCreated}
       />
     </div>
   );

@@ -37,6 +37,15 @@ export interface PDFTemplate {
   
   // PREVIEW:
   thumbnailUrl?: string; // URL für Template-Vorschau-Bild
+  
+  // CUSTOM TEMPLATE SPECIFIC:
+  category?: 'standard' | 'premium' | 'custom';
+  variables?: TemplateVariable[];
+  customContent?: {
+    htmlContent: string;
+    cssContent?: string;
+    variables: TemplateVariable[];
+  };
 }
 
 /**
@@ -142,6 +151,16 @@ export interface PDFTemplateDocument {
   // VERSIONING:
   parentTemplateId?: string; // Bei Custom-Templates von System-Template abgeleitet
   isCustomization: boolean; // True wenn Template eine Anpassung eines System-Templates ist
+  
+  // METADATA:
+  metadata?: {
+    createdAt: Timestamp;
+    updatedAt: Timestamp;
+    version: string;
+    isActive: boolean;
+    organizationId: string;
+    createdBy: string;
+  };
 }
 
 /**
@@ -198,6 +217,24 @@ export interface TemplateValidationResult {
   isValid: boolean;
   errors: string[];
   warnings?: string[];
+}
+
+/**
+ * Template-Variable für Custom Templates
+ */
+export interface TemplateVariable {
+  name: string;
+  description: string;
+  defaultValue: string;
+  required: boolean;
+  type: 'text' | 'html' | 'image' | 'date';
+  placeholder?: string;
+  validation?: {
+    minLength?: number;
+    maxLength?: number;
+    pattern?: string; // RegEx pattern
+    allowedValues?: string[]; // Für Select-Felder
+  };
 }
 
 /**
