@@ -573,23 +573,67 @@ class PDFVersionsService {
       console.log('🏢 ClientName:', content.clientName);
       console.log('📄 TemplateId:', content.templateId || 'default');
 
-      // Bereite Request für API auf
+      // 🔥 WICHTIG: Template-HTML generieren statt Rohdaten senden
+      let templateHtml: string;
+      
+      if (content.templateId) {
+        // Hole Template-Definition
+        const template = await this.getTemplateById(content.templateId);
+        if (template) {
+          // Generiere fertiges HTML mit Template-Styling
+          templateHtml = await this.renderTemplateWithStyle(template, {
+            title: content.title,
+            mainContent: content.mainContent,
+            boilerplateSections: content.boilerplateSections || [],
+            keyVisual: content.keyVisual,
+            clientName: content.clientName,
+            date: new Date().toISOString()
+          });
+          console.log('✅ Template-HTML generiert mit', template.name);
+        } else {
+          // Fallback: Standard-HTML
+          templateHtml = this.generateClientSideHTML({
+            title: content.title,
+            mainContent: content.mainContent,
+            boilerplateSections: content.boilerplateSections || [],
+            keyVisual: content.keyVisual,
+            clientName: content.clientName,
+            date: new Date().toISOString()
+          }, await this.getSystemTemplates().then(t => t[0])); // Standard-Template
+          console.log('⚠️ Fallback HTML generiert');
+        }
+      } else {
+        // Kein Template-ID: Standard-HTML
+        templateHtml = this.generateClientSideHTML({
+          title: content.title,
+          mainContent: content.mainContent,
+          boilerplateSections: content.boilerplateSections || [],
+          keyVisual: content.keyVisual,
+          clientName: content.clientName,
+          date: new Date().toISOString()
+        }, await this.getSystemTemplates().then(t => t[0]));
+        console.log('📝 Standard HTML generiert');
+      }
+
+      // Bereite Request für API auf - MIT FERTIGEM HTML
       const apiRequest = {
-        campaignId: 'temp-campaign', // Wird später aus Context geholt
-        organizationId,
-        title: content.title,
-        mainContent: content.mainContent,
-        boilerplateSections: content.boilerplateSections || [],
-        keyVisual: content.keyVisual,
-        clientName: content.clientName || 'Unternehmen',
-        templateId: content.templateId,
-        userId: 'temp-user', // Wird später aus Context geholt
+        // Sende fertiges HTML statt Rohdaten
+        html: templateHtml,
+        
+        // Zusätzliche Metadaten für die PDF-Generation
         fileName: fileName,
+        title: content.title,
         options: {
           format: 'A4' as const,
           orientation: 'portrait' as const,
           printBackground: true,
-          waitUntil: 'networkidle0' as const
+          waitUntil: 'networkidle0' as const,
+          margin: {
+            top: '10mm',
+            right: '10mm', 
+            bottom: '10mm',
+            left: '10mm'
+          }
         }
       };
 

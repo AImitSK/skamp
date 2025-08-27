@@ -79,6 +79,28 @@ class PDFTemplateService {
   }
 
   /**
+   * Template nach ID laden
+   */
+  async getTemplateById(templateId: string): Promise<PDFTemplate | null> {
+    try {
+      // Prüfe System-Templates
+      const systemTemplates = await this.getSystemTemplates();
+      const systemTemplate = systemTemplates.find(t => t.id === templateId);
+      if (systemTemplate) {
+        return systemTemplate;
+      }
+      
+      // Prüfe Custom-Templates (falls implementiert)
+      // TODO: Custom template loading from Firestore
+      
+      return null;
+    } catch (error) {
+      console.error(`❌ Fehler beim Laden des Templates ${templateId}:`, error);
+      return null;
+    }
+  }
+  
+  /**
    * System-Templates laden (mit optimiertem Caching)
    */
   async getSystemTemplates(): Promise<PDFTemplate[]> {
