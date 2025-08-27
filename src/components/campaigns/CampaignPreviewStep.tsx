@@ -93,9 +93,48 @@ export function CampaignPreviewStep({
             
             {/* Hauptinhalt - Fertiges ContentHtml */}
             <div 
-              className="prose max-w-none text-gray-800 text-base leading-relaxed"
+              className="prose max-w-none text-gray-800 text-base leading-relaxed campaign-preview-content"
               dangerouslySetInnerHTML={{ __html: finalContentHtml || '<p class="text-gray-400 italic text-center py-8">Klicken Sie auf "Weiter" oder "Vorschau" um die finale Vorschau zu generieren</p>' }} 
             />
+            
+            <style jsx>{`
+              .campaign-preview-content :global(*) {
+                color: #374151 !important; /* text-gray-700 */
+              }
+              
+              .campaign-preview-content :global(span[data-type="cta-text"]),
+              .campaign-preview-content :global(.cta-text) {
+                color: #000000 !important;
+                font-weight: bold !important;
+                text-decoration: none !important;
+              }
+              
+              .campaign-preview-content :global(span[data-type="hashtag"]),
+              .campaign-preview-content :global(.hashtag) {
+                color: #000000 !important;
+                font-weight: normal !important;
+                text-decoration: none !important;
+              }
+              
+              .campaign-preview-content :global(blockquote) {
+                color: #374151 !important;
+                border-left: 4px solid #d1d5db;
+                padding-left: 1rem;
+                margin: 1.5rem 0;
+                font-style: italic;
+              }
+              
+              .campaign-preview-content :global(a) {
+                color: #374151 !important;
+                text-decoration: none !important;
+              }
+              
+              /* Keine Hover-Effekte */
+              .campaign-preview-content :global(*:hover) {
+                color: inherit !important;
+                text-decoration: none !important;
+              }
+            `}</style>
             
             {/* Datum */}
             <p className="text-sm text-gray-600 mt-8 pt-4 border-t border-gray-200">
