@@ -335,7 +335,7 @@ export default function ApprovalsPage() {
       'orange': 'orange',
       'purple': 'purple'
     };
-    return <Badge color={colorMap[config.color] || 'zinc'}>{config.label}</Badge>;
+    return <Badge color={colorMap[config.color] || 'zinc'} className="whitespace-nowrap">{config.label}</Badge>;
   };
 
   const getPriorityBadge = (priority?: string) => {
@@ -350,7 +350,7 @@ export default function ApprovalsPage() {
       'red': 'red'
     };
     
-    return <Badge color={priorityColorMap[option.color] || 'zinc'}>{option.label}</Badge>;
+    return <Badge color={priorityColorMap[option.color] || 'zinc'} className="whitespace-nowrap">{option.label}</Badge>;
   };
 
   const getStatusText = (status: ApprovalStatus): string => {
@@ -795,13 +795,13 @@ export default function ApprovalsPage() {
                     </div>
 
                     {/* Status */}
-                    <div className="w-48 px-8">
+                    <div className="w-48 px-4">
                       <div className="space-y-1">
-                        <div className="flex flex-wrap items-center gap-1">
+                        <div className="flex items-center gap-1 flex-wrap">
                           {getStatusBadge(approval.status)}
                           {approval.priority && getPriorityBadge(approval.priority)}
                           {approval.isOverdue && (
-                            <Badge color="red" className="text-xs">Überfällig</Badge>
+                            <Badge color="red" className="text-xs whitespace-nowrap">Überfällig</Badge>
                           )}
                         </div>
                         <div className="space-y-1">
