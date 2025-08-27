@@ -1188,7 +1188,6 @@ Beispiel-Format (nutze deine eigenen Werte):
       {recommendations.length > 0 && keywords.length > 0 && (
         <div className="mt-4 p-3 bg-gray-100 rounded-md">
           <div>
-            <div>
               <p className="text-sm font-medium text-gray-900 mb-1">
                 Empfehlungen: ({recommendations.length})
               </p>
@@ -1225,7 +1224,7 @@ Beispiel-Format (nutze deine eigenen Werte):
                   )}
                 </button>
               )}
-            </div>
+          </div>
         </div>
       )}
     </div>
