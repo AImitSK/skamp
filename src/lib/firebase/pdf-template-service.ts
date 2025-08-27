@@ -1107,8 +1107,6 @@ class PDFTemplateService {
                                  section.boilerplate?.title || 
                                  '';
               
-              console.log(`🔍 Textbaustein-Titel Debug: ${sectionTitle}`, section);
-              
               return `
                 <div class="boilerplate-section ${section.type || ''}">
                   ${sectionTitle ? `<h3>${sectionTitle}</h3>` : ''}
