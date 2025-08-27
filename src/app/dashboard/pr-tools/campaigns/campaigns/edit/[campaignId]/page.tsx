@@ -1267,8 +1267,19 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
               {/* Medien */}
               <div className="mt-8">
                 <div className="bg-white rounded-lg border border-gray-200 p-6">
-                  <div className="mb-4">
+                  <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-gray-900">Medien</h3>
+                    {selectedCompanyId && (
+                      <Button
+                        type="button"
+                        onClick={() => setShowAssetSelector(true)}
+                        color="secondary"
+                        className="text-sm px-3 py-1.5"
+                      >
+                        <PlusIcon className="h-4 w-4 mr-1" />
+                        Medien hinzufügen
+                      </Button>
+                    )}
                   </div>
                 
                 {attachedAssets.length > 0 ? (
@@ -1308,21 +1319,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                         </button>
                       </div>
                     ))}
-                    
-                    {/* Button für weitere Medien wenn bereits welche vorhanden */}
-                    {selectedCompanyId && (
-                      <div className="flex justify-end mt-3">
-                        <Button
-                          type="button"
-                          onClick={() => setShowAssetSelector(true)}
-                          color="secondary"
-                          className="text-sm px-3 py-1.5 flex items-center gap-2"
-                        >
-                          <PlusIcon className="h-4 w-4" />
-                          Weitere Medien hinzufügen
-                        </Button>
-                      </div>
-                    )}
                   </div>
                 ) : (
                   <div 
@@ -1520,12 +1516,12 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
               
               {/* Aktuelle PDF-Version */}
               {currentPdfVersion && (
-                <div className="border rounded-lg p-4 bg-blue-50">
+                <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">PDF v{currentPdfVersion.version}</span>
+                          <span className="font-medium text-base/6 text-zinc-500 sm:text-sm/6 dark:text-zinc-400">Vorschau PDF</span>
                           <Badge color="blue" className="text-xs">
                             {approvalWorkflowResult?.pdfVersionId ? 'Freigabe-PDF' : 'Aktuell'}
                           </Badge>
