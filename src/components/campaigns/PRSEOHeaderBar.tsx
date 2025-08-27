@@ -27,7 +27,7 @@ interface KeywordMetrics {
   occurrences: number;
   inHeadline: boolean;
   inFirstParagraph: boolean;
-  distribution: 'gut' | 'mittel' | 'schlecht';
+  distribution: 'gut' | 'mittel' | 'schwach';
   semanticRelevance?: number;
   contextQuality?: number;
   relatedTerms?: string[];
@@ -183,10 +183,10 @@ export function PRSEOHeaderBar({
       regex.test(word) ? index / textParts.length : -1
     ).filter(pos => pos >= 0);
     
-    let distribution: 'gut' | 'mittel' | 'schlecht' = 'schlecht';
+    let distribution: 'gut' | 'mittel' | 'schwach' = 'schwach';
     if (keywordPositions.length >= 3) {
       const spread = Math.max(...keywordPositions) - Math.min(...keywordPositions);
-      distribution = spread > 0.4 ? 'gut' : spread > 0.2 ? 'mittel' : 'schlecht';
+      distribution = spread > 0.4 ? 'gut' : spread > 0.2 ? 'mittel' : 'schwach';
     } else if (keywordPositions.length >= 2) {
       distribution = 'mittel'; // Bei 2 Vorkommen = mittel
     }
@@ -501,7 +501,7 @@ export function PRSEOHeaderBar({
           recommendations.push(`🎯 "${km.keyword}" in Headline oder ersten Absatz einbauen`);
         }
         
-        if (km.distribution === 'schlecht' && km.occurrences >= 2) {
+        if (km.distribution === 'schwach' && km.occurrences >= 2) {
           recommendations.push(`📊 "${km.keyword}" gleichmäßiger im Text verteilen`);
         }
         
@@ -858,10 +858,10 @@ Beispiel-Format (nutze deine eigenen Werte):
         regex.test(word) ? index / textParts.length : -1
       ).filter(pos => pos >= 0);
       
-      let distribution: 'gut' | 'mittel' | 'schlecht' = 'schlecht';
+      let distribution: 'gut' | 'mittel' | 'schwach' = 'schwach';
       if (keywordPositions.length >= 3) {
         const spread = Math.max(...keywordPositions) - Math.min(...keywordPositions);
-        distribution = spread > 0.4 ? 'gut' : spread > 0.2 ? 'mittel' : 'schlecht';
+        distribution = spread > 0.4 ? 'gut' : spread > 0.2 ? 'mittel' : 'schwach';
       } else if (keywordPositions.length >= 2) {
         distribution = 'mittel';
       }
@@ -1016,7 +1016,7 @@ Beispiel-Format (nutze deine eigenen Werte):
                     'bg-red-50 text-red-700 border border-red-300'
                   )}>
                     <span className="font-semibold">Verteilung:</span>
-                    <span>{metrics.distribution}</span>
+                    <span>{metrics.distribution === 'schwach' ? 'schwach' : metrics.distribution}</span>
                   </div>
                 </div>
               </div>
@@ -1187,8 +1187,7 @@ Beispiel-Format (nutze deine eigenen Werte):
       {/* Empfehlungen */}
       {recommendations.length > 0 && keywords.length > 0 && (
         <div className="mt-4 p-3 bg-gray-100 rounded-md">
-          <div className="flex items-start gap-2">
-            <InformationCircleIcon className="h-4 w-4 text-gray-600 mt-0.5 flex-shrink-0" />
+          <div>
             <div>
               <p className="text-sm font-medium text-gray-900 mb-1">
                 Empfehlungen: ({recommendations.length})
@@ -1227,7 +1226,6 @@ Beispiel-Format (nutze deine eigenen Werte):
                 </button>
               )}
             </div>
-          </div>
         </div>
       )}
     </div>

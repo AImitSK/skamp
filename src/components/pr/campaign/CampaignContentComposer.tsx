@@ -422,7 +422,7 @@ export default function CampaignContentComposer({
             <Label className="flex items-center">
               Hauptinhalt der Pressemitteilung
               <InfoTooltip 
-                content="Gmail-Style Editor: Verfassen Sie hier den individuellen Inhalt Ihrer Pressemitteilung. Nutzen Sie die minimale Toolbar für professionelle Formatierung."
+                content="Verfassen Sie hier den individuellen Inhalt Ihrer Pressemitteilung. Nutzen Sie die minimale Toolbar für professionelle Formatierung."
                 className="ml-1"
               />
             </Label>
@@ -441,7 +441,7 @@ export default function CampaignContentComposer({
             {onKeywordsChange && (
               <div className="mt-8">
                 <PRSEOHeaderBar
-                  title="PR-SEO Analyse 2.0"
+                  title="PR-SEO Analyse"
                   content={`${title ? `${title}\n\n` : ''}${mainContent}`}
                   keywords={keywords}
                   onKeywordsChange={onKeywordsChange}

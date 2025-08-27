@@ -572,7 +572,7 @@ export const GmailStyleEditor = ({
           /* Hashtag styling - Social Media optimiert */
           .gmail-editor-content .hashtag,
           .gmail-editor-content span[data-type="hashtag"] {
-            color: #2563eb; /* text-blue-600 */
+            color: #000000; /* text-black */
             font-weight: 600; /* font-semibold */
             cursor: pointer;
             transition: color 0.2s ease;
@@ -581,14 +581,14 @@ export const GmailStyleEditor = ({
           
           .gmail-editor-content .hashtag:hover,
           .gmail-editor-content span[data-type="hashtag"]:hover {
-            color: #1d4ed8; /* text-blue-800 */
+            color: #374151; /* text-gray-700 */
           }
           
           /* Hashtag-Kandidaten während des Tippens */
           .gmail-editor-content .hashtag-candidate {
-            color: #3b82f6; /* text-blue-500 */
+            color: #000000; /* text-black */
             font-weight: 500; /* font-medium */
-            background: rgba(59, 130, 246, 0.1); /* Leichter blauer Hintergrund */
+            background: rgba(0, 0, 0, 0.05); /* Leichter grauer Hintergrund */
             padding: 0.125rem 0.25rem;
             border-radius: 0.25rem;
             transition: all 0.2s ease;

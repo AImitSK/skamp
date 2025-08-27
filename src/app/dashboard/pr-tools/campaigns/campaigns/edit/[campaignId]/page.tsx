@@ -414,6 +414,13 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
     }
   }, [user, currentOrganization, campaignId]);
 
+  // Auto-Scroll zu Fehlermeldungen
+  useEffect(() => {
+    if (validationErrors.length > 0) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [validationErrors]);
+
   const loadDataNow = async () => {
     if (!user || !currentOrganization || !campaignId) return;
     setLoading(true);
@@ -1079,8 +1086,8 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
       
       {/* Loading Edit-Lock Status */}
       {loadingEditLock && (
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
+        <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="flex items-center gap-2 text-sm text-blue-600">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
             Prüfe Edit-Status...
           </div>
@@ -1183,9 +1190,10 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
 
               {/* Pressemeldung */}
               <div className="mb-8 mt-8">
-                <div className="mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Pressemeldung</h3>
-                </div>
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Pressemeldung</h3>
+                  </div>
 
                 {/* Content Composer mit SEO-Features */}
                 <CampaignContentComposer
@@ -1220,18 +1228,21 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                     }
                   }}
                 />
+                </div>
               </div>
 
               {/* Key Visual */}
               <div className="mt-8">
-                <KeyVisualSection
-                  value={keyVisual}
-                  onChange={handleKeyVisualChange}
-                  clientId={selectedCompanyId}
-                  clientName={selectedCompanyName}
-                  organizationId={user!.uid}
-                  userId={user!.uid}
-                />
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <KeyVisualSection
+                    value={keyVisual}
+                    onChange={handleKeyVisualChange}
+                    clientId={selectedCompanyId}
+                    clientName={selectedCompanyName}
+                    organizationId={user!.uid}
+                    userId={user!.uid}
+                  />
+                </div>
               </div>
             </FieldGroup>
           </div>
@@ -1255,7 +1266,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
               {/* Medien */}
               <div className="mt-8">
                 <div className="mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Medien (optional)</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">Medien</h3>
                 </div>
                 
                 {attachedAssets.length > 0 ? (
@@ -1332,6 +1343,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                     </div>
                   </div>
                 )}
+                </div>
               </div>
             </FieldGroup>
           </div>

@@ -349,6 +349,13 @@ export default function NewPRCampaignPage() {
     }
   }, [user, currentOrganization]);
 
+  // Auto-Scroll zu Fehlermeldungen
+  useEffect(() => {
+    if (validationErrors.length > 0) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [validationErrors]);
+
   // 🆕 ENHANCED: Lade Edit-Lock Status
   const loadEditLockStatus = async (campaignId: string) => {
     if (!campaignId) {
@@ -921,8 +928,8 @@ export default function NewPRCampaignPage() {
       
       {/* Loading Edit-Lock Status */}
       {loadingEditLock && (
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
+        <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="flex items-center gap-2 text-sm text-blue-600">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
             Prüfe Edit-Status...
           </div>
@@ -986,17 +993,18 @@ export default function NewPRCampaignPage() {
 
               {/* Pressemeldung */}
               <div className="mb-8 mt-8">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Pressemeldung</h3>
-                  <Button
-                    type="button"
-                    onClick={() => setShowAiModal(true)}
-                    className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white whitespace-nowrap"
-                  >
-                    <SparklesIcon className="h-4 w-4" />
-                    KI-Assistent
-                  </Button>
-                </div>
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Pressemeldung</h3>
+                    <Button
+                      type="button"
+                      onClick={() => setShowAiModal(true)}
+                      className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white whitespace-nowrap"
+                    >
+                      <SparklesIcon className="h-4 w-4" />
+                      KI-Assistent
+                    </Button>
+                  </div>
                 
                 {/* Info-Box für KI-Nutzung */}
                 <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -1042,18 +1050,21 @@ export default function NewPRCampaignPage() {
                     }
                   }}
                 />
+                </div>
               </div>
 
               {/* Key Visual */}
               <div className="mt-8">
-                <KeyVisualSection
-                  value={keyVisual}
-                  onChange={handleKeyVisualChange}
-                  clientId={selectedCompanyId}
-                  clientName={selectedCompanyName}
-                  organizationId={user!.uid}
-                  userId={user!.uid}
-                />
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <KeyVisualSection
+                    value={keyVisual}
+                    onChange={handleKeyVisualChange}
+                    clientId={selectedCompanyId}
+                    clientName={selectedCompanyName}
+                    organizationId={user!.uid}
+                    userId={user!.uid}
+                  />
+                </div>
               </div>
             </FieldGroup>
           </div>
@@ -1076,9 +1087,10 @@ export default function NewPRCampaignPage() {
 
               {/* Medien */}
               <div className="mt-8">
-                <div className="mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Medien (optional)</h3>
-                </div>
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Medien</h3>
+                  </div>
                 
                 {attachedAssets.length > 0 ? (
                   <div className="space-y-2">
@@ -1154,6 +1166,7 @@ export default function NewPRCampaignPage() {
                     </div>
                   </div>
                 )}
+                </div>
               </div>
             </FieldGroup>
           </div>

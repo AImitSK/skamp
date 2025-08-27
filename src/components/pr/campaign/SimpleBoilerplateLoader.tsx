@@ -175,19 +175,11 @@ export default function SimpleBoilerplateLoader({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
       {/* Header mit Add Button und Link */}
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-900">Textbausteine</h3>
         <div className="flex items-center gap-2">
-          <Link 
-            href="/dashboard/pr-tools/boilerplates"
-            target="_blank"
-            className="text-sm text-[#005fab] hover:text-[#004a8c] flex items-center gap-1"
-          >
-            <ArrowTopRightOnSquareIcon className="h-4 w-4" />
-            Verwalten
-          </Link>
           <Button
             type="button"
             onClick={() => setShowSelector(!showSelector)}
