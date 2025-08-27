@@ -12,7 +12,8 @@ import {
   ArrowPathIcon,
   ChevronDownIcon,
   ChevronRightIcon,
-  SparklesIcon
+  SparklesIcon,
+  CheckIcon
 } from "@heroicons/react/24/outline";
 import { PDFTemplate } from "@/types/pdf-template";
 import { pdfTemplateService } from "@/lib/firebase/pdf-template-service";
