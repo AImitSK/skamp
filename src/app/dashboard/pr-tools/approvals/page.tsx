@@ -210,22 +210,32 @@ export default function ApprovalsPage() {
         );
       }
       
-      // Sortiere nach createdAt (neueste zuerst)
+      // Sortiere nach updatedAt oder createdAt (neueste Aktivität zuerst)
       const sortedApprovals = finalApprovals.sort((a, b) => {
-        // Robuste Timestamp-Behandlung
+        // Robuste Timestamp-Behandlung - priorisiere updatedAt für neueste Aktivität
         const getTimestamp = (approval: any) => {
+          // Zuerst updatedAt prüfen (neueste Aktivität)
+          if (approval.updatedAt?.toDate) {
+            return approval.updatedAt.toDate().getTime();
+          }
+          if (approval.updatedAt instanceof Date) {
+            return approval.updatedAt.getTime();
+          }
+          
+          // Fallback auf createdAt
           if (approval.createdAt?.toDate) {
             return approval.createdAt.toDate().getTime();
           }
           if (approval.createdAt instanceof Date) {
             return approval.createdAt.getTime();
           }
+          
           return Date.now(); // Fallback zu aktuellem Zeitpunkt
         };
         
         const timeA = getTimestamp(a);
         const timeB = getTimestamp(b);
-        return timeB - timeA; // Neueste zuerst
+        return timeB - timeA; // Neueste Aktivität zuerst
       });
       
       setApprovals(sortedApprovals);
