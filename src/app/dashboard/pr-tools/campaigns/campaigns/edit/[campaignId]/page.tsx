@@ -55,7 +55,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { listsService } from "@/lib/firebase/lists-service";
 import { prService } from "@/lib/firebase/pr-service";
-import { boilerplateService } from "@/lib/firebase/boilerplate-service";
+import { boilerplatesService } from "@/lib/firebase/boilerplate-service";
 import { DistributionList } from "@/types/lists";
 import { CampaignAssetAttachment, EditLockData, EditLockUtils, PRCampaign, EDIT_LOCK_CONFIG } from "@/types/pr";
 import SimpleBoilerplateLoader, { BoilerplateSection } from "@/components/pr/campaign/SimpleBoilerplateLoader";
@@ -515,7 +515,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
             // Wenn kein Content vorhanden, aber boilerplateId da ist, lade den Inhalt
             if (!content && section.boilerplateId) {
               try {
-                boilerplate = await boilerplateService.getById(section.boilerplateId, currentOrganization.id);
+                boilerplate = await boilerplatesService.getById(section.boilerplateId, currentOrganization.id);
                 content = boilerplate?.content || boilerplate?.description || '';
                 console.log(`📄 Textbaustein-Inhalt geladen für ${section.boilerplateId}: ${content?.substring(0, 50)}...`);
               } catch (error) {
