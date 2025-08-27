@@ -824,6 +824,15 @@ Beispiel-Format (nutze deine eigenen Werte):
     setIsAnalyzing(false);
   }, [keywords, content, calculateBasicMetrics, analyzeKeywordWithAI]);
 
+  // Initiale KI-Analyse beim Laden von Keywords aus der Datenbank
+  useEffect(() => {
+    // Nur ausführen wenn Keywords vorhanden sind und noch keine Metriken existieren
+    if (keywords.length > 0 && keywordMetrics.length === 0 && content) {
+      console.log('🔄 Triggering initial KI analysis for loaded keywords:', keywords);
+      handleRefreshAnalysis();
+    }
+  }, [keywords.length, content]); // Nicht handleRefreshAnalysis als dependency, um Endlosschleife zu vermeiden
+
   // Keyword entfernen
   const handleRemoveKeyword = useCallback((keywordToRemove: string) => {
     const updatedKeywords = keywords.filter(k => k !== keywordToRemove);
