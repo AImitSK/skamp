@@ -1464,10 +1464,10 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
               />
             </div>
             
-            {/* PDF-Vorschau */}
-            <div className="mb-8">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">PDF-Vorschau</h3>
+            {/* PDF-Vorschau und Versionen-Historie */}
+            <div className="mb-8 bg-white border border-gray-200 rounded-lg p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900">PDF-Vorschau und Versionen</h3>
                 
                 {/* WORKFLOW-STATUS INDICATOR */}
                 {approvalWorkflowResult?.pdfVersionId ? (
@@ -1553,21 +1553,21 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                   <p className="text-sm">Klicken Sie auf &ldquo;PDF generieren&rdquo; um eine Vorschau zu erstellen</p>
                 </div>
               )}
+              
+              {/* PDF-Versionen Historie - innerhalb derselben Box */}
+              {campaignId && currentOrganization && (
+                <div className="mt-8 pt-6 border-t border-gray-200">
+                  <h4 className="text-base font-semibold mb-4 text-gray-900">
+                    PDF-Versionen Historie
+                  </h4>
+                  <PDFVersionHistory
+                    campaignId={campaignId}
+                    organizationId={currentOrganization.id}
+                    showActions={true}
+                  />
+                </div>
+              )}
             </div>
-            
-            {/* PDF-Versionen Historie */}
-            {campaignId && currentOrganization && (
-              <div className="mb-8">
-                <h3 className="text-lg font-semibold mb-4">
-                  PDF-Versionen Historie
-                </h3>
-                <PDFVersionHistory
-                  campaignId={campaignId}
-                  organizationId={currentOrganization.id}
-                  showActions={true}
-                />
-              </div>
-            )}
             
           </div>
         )}

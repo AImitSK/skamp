@@ -91,12 +91,24 @@ function TemplateCategory({
         <div className="flex items-center space-x-2">
           <h3 className="font-semibold text-gray-900">{title}</h3>
           <Badge color="zinc">{templates.length}</Badge>
+          {/* Badge für ausgewähltes Template bei geschlossenem Toggle */}
+          {!isExpanded && selectedTemplateId && templates.some(t => t.id === selectedTemplateId) && (
+            <Badge color="blue" className="ml-1">
+              {templates.find(t => t.id === selectedTemplateId)?.name}
+            </Badge>
+          )}
         </div>
-        {isExpanded ? (
-          <ChevronDownIcon className="h-5 w-5 text-gray-500" />
-        ) : (
-          <ChevronRightIcon className="h-5 w-5 text-gray-500" />
-        )}
+        <div className="flex items-center space-x-2">
+          {/* Zusätzlicher Hinweis bei geschlossenem Toggle mit Auswahl */}
+          {!isExpanded && selectedTemplateId && templates.some(t => t.id === selectedTemplateId) && (
+            <CheckIcon className="h-4 w-4 text-blue-500" />
+          )}
+          {isExpanded ? (
+            <ChevronDownIcon className="h-5 w-5 text-gray-500" />
+          ) : (
+            <ChevronRightIcon className="h-5 w-5 text-gray-500" />
+          )}
+        </div>
       </button>
 
       {/* Template-Grid */}
@@ -343,6 +355,17 @@ export function TemplateSelector({
   useEffect(() => {
     loadTemplates();
   }, [loadTemplates]);
+
+  /**
+   * Erstes Template automatisch als Default auswählen
+   */
+  useEffect(() => {
+    if (templates.length > 0 && !selectedTemplateId) {
+      const firstTemplate = templates[0];
+      console.log(`🎯 Auto-Auswahl des ersten Templates: ${firstTemplate.name}`);
+      onTemplateSelect(firstTemplate.id, firstTemplate.name);
+    }
+  }, [templates, selectedTemplateId, onTemplateSelect]);
 
   /**
    * Template-Auswahl handhaben

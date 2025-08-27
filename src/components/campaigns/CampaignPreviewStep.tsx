@@ -66,34 +66,6 @@ export function CampaignPreviewStep({
 }: CampaignPreviewStepProps) {
   return (
     <div className="space-y-6">
-      {/* Template-Auswahl (konditionell anzeigen) */}
-      {showTemplateSelector && organizationId && onTemplateSelect && (
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <TemplateSelector
-            organizationId={organizationId}
-            selectedTemplateId={selectedTemplateId}
-            onTemplateSelect={onTemplateSelect}
-            showPreview={true}
-            onPreviewError={(error) => {
-              console.error('Template-Vorschau-Fehler:', error);
-              // TODO: Toast-Benachrichtigung hinzufügen
-            }}
-          />
-        </div>
-      )}
-      
-      {/* Template-Auswahl-Hinweis */}
-      {selectedTemplateId && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-center">
-            <InformationCircleIcon className="h-5 w-5 text-blue-500 mr-2" />
-            <p className="text-sm text-blue-800">
-              Template ausgewählt. Die finale PDF wird in diesem Design generiert.
-            </p>
-          </div>
-        </div>
-      )}
-
       {/* Pressemitteilung-Vorschau */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Linke Spalte: Pressemitteilung im Papier-Look (2/3 Breite) */}
@@ -280,6 +252,34 @@ export function CampaignPreviewStep({
         )}
         </div>
       </div>
+      
+      {/* Template-Auswahl (konditionell anzeigen) - NACH der Vorschau */}
+      {showTemplateSelector && organizationId && onTemplateSelect && (
+        <div className="bg-white border border-gray-200 rounded-lg p-6">
+          <TemplateSelector
+            organizationId={organizationId}
+            selectedTemplateId={selectedTemplateId}
+            onTemplateSelect={onTemplateSelect}
+            showPreview={true}
+            onPreviewError={(error) => {
+              console.error('Template-Vorschau-Fehler:', error);
+              // TODO: Toast-Benachrichtigung hinzufügen
+            }}
+          />
+        </div>
+      )}
+      
+      {/* Template-Auswahl-Hinweis */}
+      {selectedTemplateId && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <InformationCircleIcon className="h-5 w-5 text-blue-500 mr-2" />
+            <p className="text-sm text-blue-800">
+              Template ausgewählt. Die finale PDF wird in diesem Design generiert.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
