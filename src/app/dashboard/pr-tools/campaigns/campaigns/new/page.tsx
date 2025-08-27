@@ -732,7 +732,8 @@ export default function NewPRCampaignPage() {
             mainContent: editorContent,
             boilerplateSections: boilerplateSections as any,
             keyVisual,
-            clientName: selectedCompanyName
+            clientName: selectedCompanyName,
+            templateId: selectedTemplateId
           },
           {
             userId: user.uid,

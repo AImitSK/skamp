@@ -862,7 +862,8 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
             mainContent: editorContent,
             boilerplateSections,
             keyVisual,
-            clientName: selectedCompanyName
+            clientName: selectedCompanyName,
+            templateId: selectedTemplateId
           },
           {
             userId: user.uid,

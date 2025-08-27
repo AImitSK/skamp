@@ -133,6 +133,7 @@ class PDFVersionsService {
       boilerplateSections: any[];
       keyVisual?: any;
       clientName?: string;
+      templateId?: string; // Template-ID für PDF-Generierung
     },
     context: {
       userId: string;
@@ -555,6 +556,7 @@ class PDFVersionsService {
       boilerplateSections: any[];
       keyVisual?: any;
       clientName?: string;
+      templateId?: string;
     },
     fileName: string,
     organizationId: string
@@ -569,6 +571,7 @@ class PDFVersionsService {
       console.log('🔢 BoilerplateSections:', content.boilerplateSections?.length || 0);
       console.log('🖼️ KeyVisual:', !!content.keyVisual?.url);
       console.log('🏢 ClientName:', content.clientName);
+      console.log('📄 TemplateId:', content.templateId || 'default');
 
       // Bereite Request für API auf
       const apiRequest = {
@@ -579,6 +582,7 @@ class PDFVersionsService {
         boilerplateSections: content.boilerplateSections || [],
         keyVisual: content.keyVisual,
         clientName: content.clientName || 'Unternehmen',
+        templateId: content.templateId,
         userId: 'temp-user', // Wird später aus Context geholt
         fileName: fileName,
         options: {
