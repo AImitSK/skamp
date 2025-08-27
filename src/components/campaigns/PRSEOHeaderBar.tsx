@@ -468,21 +468,21 @@ export function PRSEOHeaderBar({
     
     // Generiere spezifische Empfehlungen basierend auf Bonus-System
     if (keywordScoreResult && keywordScoreResult.baseScore < 30) {
-      recommendations.push('🎯 Keywords besser positionieren: In Headline und ersten Absatz einbauen');
+      recommendations.push('Keywords besser positionieren: In Headline und ersten Absatz einbauen');
     }
     
     if (keywordScoreResult && keywordScoreResult.breakdown.keywordDistribution < 10) {
-      recommendations.push('📊 Keywords gleichmäßiger im Text verteilen');
+      recommendations.push('Keywords gleichmäßiger im Text verteilen');
     }
     
     if (keywordScoreResult && keywordScoreResult.breakdown.naturalFlow < 5) {
-      recommendations.push('⚠️ Keyword-Stuffing vermeiden - natürlichere Einbindung');
+      recommendations.push('Keyword-Stuffing vermeiden - natürlichere Einbindung');
     }
     
     if (keywordScoreResult && keywordScoreResult.hasAIAnalysis && keywordScoreResult.aiBonus < 20) {
       recommendations.push('[KI] Thematische Relevanz der Keywords zum Content verbesser');
     } else if (keywordScoreResult && !keywordScoreResult.hasAIAnalysis && keywordScoreResult.breakdown.fallbackBonus < 20) {
-      recommendations.push('🤖 KI-Analyse aktualisieren für erweiterte Keyword-Bewertung');
+      recommendations.push('KI-Analyse aktualisieren für erweiterte Keyword-Bewertung');
     }
     
     // Spezifische Empfehlungen pro Keyword (wenn Keywords vorhanden)
@@ -490,19 +490,19 @@ export function PRSEOHeaderBar({
       keywordMetrics.forEach(km => {
         // Erweiterte Keyword-spezifische Empfehlungen
         if (km.density < 0.3 && km.occurrences === 0) {
-          recommendations.push(`🔍 "${km.keyword}" im Text verwenden (nicht gefunden)`);
+          recommendations.push(`"${km.keyword}" im Text verwenden (nicht gefunden)`);
         } else if (km.density < 0.3) {
-          recommendations.push(`📈 "${km.keyword}" öfter verwenden (nur ${km.occurrences}x - optimal: 2-5x)`);
+          recommendations.push(`"${km.keyword}" öfter verwenden (nur ${km.occurrences}x - optimal: 2-5x)`);
         } else if (km.density > 3.0) {
-          recommendations.push(`📉 "${km.keyword}" weniger verwenden (${km.occurrences}x = ${km.density.toFixed(1)}% - zu häufig)`);
+          recommendations.push(`"${km.keyword}" weniger verwenden (${km.occurrences}x = ${km.density.toFixed(1)}% - zu häufig)`);
         }
         
         if (!km.inHeadline && !km.inFirstParagraph) {
-          recommendations.push(`🎯 "${km.keyword}" in Headline oder ersten Absatz einbauen`);
+          recommendations.push(`"${km.keyword}" in Headline oder ersten Absatz einbauen`);
         }
         
         if (km.distribution === 'schwach' && km.occurrences >= 2) {
-          recommendations.push(`📊 "${km.keyword}" gleichmäßiger im Text verteilen`);
+          recommendations.push(`"${km.keyword}" gleichmäßiger im Text verteilen`);
         }
         
         // KI-basierte Empfehlungen (erweitert)
@@ -528,29 +528,29 @@ export function PRSEOHeaderBar({
         }
       });
     } else {
-      recommendations.push('🔑 Keywords hinzufügen für SEO-Bewertung (maximal 2)');
+      recommendations.push('Keywords hinzufügen für SEO-Bewertung (maximal 2)');
     }
 
     // Social-Media-Empfehlungen (neue Kategorie)
     const detectedHashtags = HashtagDetector.detectHashtags(text);
     
     if (documentTitle.length > 280) {
-      recommendations.push('📱 Headline für Twitter kürzen: Unter 280 Zeichen für optimale Social-Media-Reichweite');
+      recommendations.push('Headline für Twitter kürzen: Unter 280 Zeichen für optimale Social-Media-Reichweite');
     } else if (documentTitle.length > 320) {
-      recommendations.push('📱 Headline etwas kürzen für bessere Social-Media-Tauglichkeit');
+      recommendations.push('Headline etwas kürzen für bessere Social-Media-Tauglichkeit');
     }
     
     if (detectedHashtags.length === 0) {
-      recommendations.push('#️⃣ 2-3 relevante Hashtags hinzufügen für Social-Media-Optimierung');
+      recommendations.push('2-3 relevante Hashtags hinzufügen für Social-Media-Optimierung');
     } else if (detectedHashtags.length < 2) {
-      recommendations.push('#️⃣ Weitere Hashtags ergänzen (optimal: 2-3 pro Post)');
+      recommendations.push('Weitere Hashtags ergänzen (optimal: 2-3 pro Post)');
     }
     
     // Hashtag-Qualität bewerten
     if (detectedHashtags.length > 0) {
       const hashtagQuality = HashtagDetector.assessHashtagQuality(detectedHashtags, keywords);
       if (hashtagQuality.averageScore < 60) {
-        recommendations.push('#️⃣ Verwende branchenrelevante und keyword-bezogene Hashtags');
+        recommendations.push('Verwende branchenrelevante und keyword-bezogene Hashtags');
       }
     }
 

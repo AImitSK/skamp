@@ -341,7 +341,7 @@ export default function SimpleBoilerplateLoader({
                               <button
                                 type="button"
                                 onClick={() => handleRemoveSection(section.id)}
-                                className="p-1 text-red-400 hover:text-red-600"
+                                className="p-1 text-red-600 hover:text-red-500"
                                 title="Entfernen"
                               >
                                 <XMarkIcon className="h-4 w-4" />

@@ -38,6 +38,7 @@ import {
   UsersIcon,
   UserGroupIcon,
   DocumentTextIcon,
+  DocumentArrowDownIcon,
   PhotoIcon,
   PaperClipIcon,
   XMarkIcon,
@@ -1265,9 +1266,10 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
 
               {/* Medien */}
               <div className="mt-8">
-                <div className="mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Medien</h3>
-                </div>
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Medien</h3>
+                  </div>
                 
                 {attachedAssets.length > 0 ? (
                   <div className="space-y-2">
@@ -1309,15 +1311,17 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                     
                     {/* Button für weitere Medien wenn bereits welche vorhanden */}
                     {selectedCompanyId && (
-                      <Button
-                        type="button"
-                        onClick={() => setShowAssetSelector(true)}
-                        color="secondary"
-                        className="text-sm px-3 py-1.5 flex items-center gap-2 mt-3"
-                      >
-                        <PlusIcon className="h-4 w-4" />
-                        Weitere Medien hinzufügen
-                      </Button>
+                      <div className="flex justify-end mt-3">
+                        <Button
+                          type="button"
+                          onClick={() => setShowAssetSelector(true)}
+                          color="secondary"
+                          className="text-sm px-3 py-1.5 flex items-center gap-2"
+                        >
+                          <PlusIcon className="h-4 w-4" />
+                          Weitere Medien hinzufügen
+                        </Button>
+                      </div>
                     )}
                   </div>
                 ) : (
@@ -1343,6 +1347,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                     </div>
                   </div>
                 )}
+                </div>
               </div>
             </FieldGroup>
           </div>
@@ -1518,10 +1523,9 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                 <div className="border rounded-lg p-4 bg-blue-50">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <DocumentTextIcon className="h-5 w-5 text-blue-600" />
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-medium text-blue-900">Version {currentPdfVersion.version}</span>
+                          <span className="font-medium">PDF v{currentPdfVersion.version}</span>
                           <Badge color="blue" className="text-xs">
                             {approvalWorkflowResult?.pdfVersionId ? 'Freigabe-PDF' : 'Aktuell'}
                           </Badge>
@@ -1546,10 +1550,13 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                       
                       <Button
                         type="button"
+                        size="sm"
+                        plain
                         onClick={() => window.open(currentPdfVersion.downloadUrl, '_blank')}
-                        color="secondary"
+                        className="!text-gray-600 hover:!text-gray-900"
                       >
-                        PDF öffnen
+                        <DocumentArrowDownIcon className="h-4 w-4" />
+                        Download
                       </Button>
                     </div>
                   </div>

@@ -36,6 +36,7 @@ import {
   UsersIcon,
   UserGroupIcon,
   DocumentTextIcon,
+  DocumentArrowDownIcon,
   PhotoIcon,
   PaperClipIcon,
   XMarkIcon,
@@ -1132,15 +1133,17 @@ export default function NewPRCampaignPage() {
                     
                     {/* Button für weitere Medien wenn bereits welche vorhanden */}
                     {selectedCompanyId && (
-                      <Button
-                        type="button"
-                        onClick={() => setShowAssetSelector(true)}
-                        color="secondary"
-                        className="text-sm px-3 py-1.5 flex items-center gap-2 mt-3"
-                      >
-                        <PlusIcon className="h-4 w-4" />
-                        Weitere Medien hinzufügen
-                      </Button>
+                      <div className="flex justify-end mt-3">
+                        <Button
+                          type="button"
+                          onClick={() => setShowAssetSelector(true)}
+                          color="secondary"
+                          className="text-sm px-3 py-1.5 flex items-center gap-2"
+                        >
+                          <PlusIcon className="h-4 w-4" />
+                          Weitere Medien hinzufügen
+                        </Button>
+                      </div>
                     )}
                   </div>
                 ) : (
@@ -1282,10 +1285,9 @@ export default function NewPRCampaignPage() {
               <div className="border rounded-lg p-4 bg-blue-50">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <DocumentTextIcon className="h-5 w-5 text-blue-600" />
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-blue-900">Version {currentPdfVersion.version}</span>
+                        <span className="font-medium">PDF v{currentPdfVersion.version}</span>
                         <Badge color="blue" className="text-xs">Aktuell</Badge>
                       </div>
                     </div>
@@ -1303,10 +1305,13 @@ export default function NewPRCampaignPage() {
                     
                     <Button
                       type="button"
+                      size="sm"
+                      plain
                       onClick={() => window.open(currentPdfVersion.downloadUrl, '_blank')}
-                      color="secondary"
+                      className="!text-gray-600 hover:!text-gray-900"
                     >
-                      PDF öffnen
+                      <DocumentArrowDownIcon className="h-4 w-4" />
+                      Download
                     </Button>
                   </div>
                 </div>
