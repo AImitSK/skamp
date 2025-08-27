@@ -436,9 +436,9 @@ export function TemplateComparison({
                         </div>
 
                         {/* Template-Preview */}
-                        <div className="h-96 relative">
+                        <div className="h-96 relative overflow-hidden rounded-md border border-gray-200">
                           {previewState.loading && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-white">
+                            <div className="absolute inset-0 flex items-center justify-center bg-white z-10">
                               <div className="text-center">
                                 <div className="animate-spin h-6 w-6 border-2 border-zinc-200 border-t-blue-500 rounded-full mx-auto mb-2" />
                                 <p className="text-xs text-zinc-600">Lädt...</p>
@@ -447,7 +447,7 @@ export function TemplateComparison({
                           )}
 
                           {previewState.error && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-white">
+                            <div className="absolute inset-0 flex items-center justify-center bg-white z-10">
                               <div className="text-center p-4">
                                 <ExclamationTriangleIcon className="h-8 w-8 text-red-500 mx-auto mb-2" />
                                 <p className="text-xs text-red-600 mb-2">
@@ -468,9 +468,15 @@ export function TemplateComparison({
                           {previewState.html && !previewState.loading && (
                             <iframe
                               srcDoc={previewState.html}
-                              className="w-full h-full border-0 bg-white"
+                              className="absolute inset-0 w-full h-full border-0 bg-white"
                               title={`Vorschau: ${template.name}`}
                               sandbox="allow-same-origin allow-scripts"
+                              style={{
+                                transform: 'scale(0.5)',
+                                transformOrigin: 'top left',
+                                width: '200%',
+                                height: '200%'
+                              }}
                             />
                           )}
                         </div>
