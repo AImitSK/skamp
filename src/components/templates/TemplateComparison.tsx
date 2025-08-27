@@ -303,7 +303,6 @@ export function TemplateComparison({
               <Button
                 onClick={toggleFullscreen}
                 color="secondary"
-                size="sm"
                 aria-label={isFullscreen ? 'Vollbild verlassen' : 'Vollbild'}
               >
                 {isFullscreen ? (
@@ -320,7 +319,6 @@ export function TemplateComparison({
                     onClick={previousPage}
                     disabled={currentPage === 0}
                     color="secondary"
-                    size="sm"
                   >
                     <ArrowLeftIcon className="h-4 w-4" />
                   </Button>
@@ -328,7 +326,6 @@ export function TemplateComparison({
                     onClick={nextPage}
                     disabled={currentPage === totalPages - 1}
                     color="secondary"
-                    size="sm"
                   >
                     <ArrowRightIcon className="h-4 w-4" />
                   </Button>
@@ -339,7 +336,6 @@ export function TemplateComparison({
               <Button
                 onClick={onClose}
                 color="secondary"
-                size="sm"
               >
                 <XMarkIcon className="h-4 w-4" />
               </Button>
@@ -426,11 +422,10 @@ export function TemplateComparison({
                             </div>
                             <div className="flex gap-1">
                               {template.isSystem && (
-                                <Badge color="blue" size="sm">System</Badge>
+                                <Badge color="blue">System</Badge>
                               )}
                               <Button
                                 onClick={() => handleSelectTemplate(template)}
-                                size="sm"
                                 color="secondary"
                                 className="text-xs px-2 py-1"
                               >
@@ -460,7 +455,6 @@ export function TemplateComparison({
                                 </p>
                                 <Button
                                   onClick={() => generateTemplatePreview(template)}
-                                  size="sm"
                                   color="secondary"
                                   className="text-xs"
                                 >
@@ -499,7 +493,6 @@ export function TemplateComparison({
               <Button
                 onClick={regenerateAllPreviews}
                 color="secondary"
-                size="sm"
                 disabled={selectedTemplates.length === 0}
               >
                 <ArrowPathIcon className="h-4 w-4 mr-2" />

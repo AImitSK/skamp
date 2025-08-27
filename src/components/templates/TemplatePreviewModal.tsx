@@ -209,9 +209,9 @@ export function TemplatePreviewModal({
               </div>
               <div className="flex gap-2">
                 {template.isSystem && (
-                  <Badge color="blue" size="sm">System</Badge>
+                  <Badge color="blue">System</Badge>
                 )}
-                <Badge color="gray" size="sm">{template.layout.type}</Badge>
+                <Badge color="zinc">{template.layout.type}</Badge>
               </div>
             </div>
             
@@ -234,7 +234,6 @@ export function TemplatePreviewModal({
               <Button
                 onClick={toggleFullscreen}
                 color="secondary"
-                size="sm"
                 aria-label={isFullscreen ? 'Vollbild verlassen' : 'Vollbild'}
               >
                 {isFullscreen ? (
@@ -249,7 +248,6 @@ export function TemplatePreviewModal({
                 onClick={generatePreview}
                 disabled={loading}
                 color="secondary"
-                size="sm"
                 aria-label="Vorschau aktualisieren"
               >
                 <ArrowPathIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
@@ -259,7 +257,6 @@ export function TemplatePreviewModal({
               <Button
                 onClick={onClose}
                 color="secondary"
-                size="sm"
                 aria-label="Modal schließen"
               >
                 <XMarkIcon className="h-4 w-4" />
@@ -299,7 +296,6 @@ export function TemplatePreviewModal({
                   <Button
                     onClick={generatePreview}
                     color="secondary"
-                    size="sm"
                   >
                     <ArrowPathIcon className="h-4 w-4 mr-2" />
                     Erneut versuchen

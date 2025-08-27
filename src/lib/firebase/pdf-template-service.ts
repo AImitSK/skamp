@@ -482,17 +482,25 @@ class PDFTemplateService {
       const startTime = Date.now();
       this.performanceMetrics.previewGenerations++;
       
-      // Generiere Cache-Keys mit Hashes
-      const mockDataHash = TemplateCache.generateHash(mockData);
-      const customizationsHash = customizations ? TemplateCache.generateHash(customizations) : undefined;
-      const htmlCacheKey = this.cache?.generateHtmlCacheKey(templateId, mockDataHash, customizationsHash);
-      
-      // Prüfe HTML-Cache
-      const cachedHtml = this.cache?.getHtml(htmlCacheKey);
-      if (cachedHtml) {
-        this.performanceMetrics.cacheHits++;
-        console.log(`✅ Template-Preview aus Cache: ${templateId} (${Date.now() - startTime}ms)`);
-        return cachedHtml;
+      // Generiere Cache-Keys mit Hashes (nur wenn Cache und TemplateCache verfügbar)
+      let htmlCacheKey: string | undefined;
+      if (this.cache && TemplateCache) {
+        try {
+          const mockDataHash = TemplateCache.generateHash(mockData);
+          const customizationsHash = customizations ? TemplateCache.generateHash(customizations) : undefined;
+          htmlCacheKey = this.cache.generateHtmlCacheKey(templateId, mockDataHash, customizationsHash);
+          
+          // Prüfe HTML-Cache
+          const cachedHtml = this.cache.getHtml(htmlCacheKey);
+          if (cachedHtml) {
+            this.performanceMetrics.cacheHits++;
+            console.log(`✅ Template-Preview aus Cache: ${templateId} (${Date.now() - startTime}ms)`);
+            return cachedHtml;
+          }
+        } catch (e) {
+          // Cache nicht verfügbar, weiter ohne Caching
+          console.log('⚠️ Template-Cache nicht verfügbar, fahre ohne Caching fort');
+        }
       }
       
       this.performanceMetrics.cacheMisses++;
@@ -522,8 +530,14 @@ class PDFTemplateService {
       // Erweitere Template-Renderer für dieses Template
       const html = await this.renderTemplateWithStyle(template, templateData);
       
-      // Cache HTML-Preview
-      this.cache?.setHtml(htmlCacheKey, html);
+      // Cache HTML-Preview (wenn Cache-Key vorhanden)
+      if (htmlCacheKey && this.cache) {
+        try {
+          this.cache.setHtml(htmlCacheKey, html);
+        } catch (e) {
+          // Fehler beim Caching ignorieren
+        }
+      }
       
       const renderTime = Date.now() - startTime;
       this.updateAverageRenderTime(renderTime);

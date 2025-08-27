@@ -9,11 +9,16 @@ import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
   EyeIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  SparklesIcon
 } from "@heroicons/react/24/outline";
 import { PDFTemplate } from "@/types/pdf-template";
 import { pdfTemplateService } from "@/lib/firebase/pdf-template-service";
 import { useAuth } from "@/context/AuthContext";
+import { Timestamp } from "firebase/firestore";
+
 // Einfacher Spinner als Ersatz für LoadingSpinner
 const LoadingSpinner = ({ size = "md" }: { size?: "sm" | "md" | "lg" }) => {
   const sizeClasses = {
@@ -49,6 +54,77 @@ interface TemplateCardProps {
   showPreview?: boolean;
 }
 
+interface TemplateCategoryProps {
+  title: string;
+  templates: PDFTemplate[];
+  selectedTemplateId?: string;
+  onTemplateSelect: (template: PDFTemplate) => void;
+  onTemplatePreview: (template: PDFTemplate) => Promise<void>;
+  disabled?: boolean;
+  showPreview?: boolean;
+  defaultOpen?: boolean;
+}
+
+/**
+ * Template-Kategorie mit Toggle-Funktionalität
+ */
+function TemplateCategory({
+  title,
+  templates,
+  selectedTemplateId,
+  onTemplateSelect,
+  onTemplatePreview,
+  disabled = false,
+  showPreview = true,
+  defaultOpen = true
+}: TemplateCategoryProps) {
+  const [isExpanded, setIsExpanded] = useState(defaultOpen);
+
+  return (
+    <div className="border border-gray-200 rounded-lg overflow-hidden">
+      {/* Kategorie-Header */}
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 flex items-center justify-between text-left transition-colors"
+        aria-expanded={isExpanded}
+      >
+        <div className="flex items-center space-x-2">
+          <h3 className="font-semibold text-gray-900">{title}</h3>
+          <Badge color="zinc">{templates.length}</Badge>
+        </div>
+        {isExpanded ? (
+          <ChevronDownIcon className="h-5 w-5 text-gray-500" />
+        ) : (
+          <ChevronRightIcon className="h-5 w-5 text-gray-500" />
+        )}
+      </button>
+
+      {/* Template-Grid */}
+      {isExpanded && (
+        <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {templates.map((template) => (
+            <TemplateCard
+              key={template.id}
+              template={template}
+              isSelected={selectedTemplateId === template.id}
+              onSelect={() => onTemplateSelect(template)}
+              onPreview={showPreview ? () => onTemplatePreview(template) : undefined}
+              disabled={disabled}
+              showPreview={showPreview}
+            />
+          ))}
+          {templates.length === 0 && (
+            <div className="col-span-full text-center py-6 text-gray-500">
+              <PhotoIcon className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+              <p className="text-sm">Keine Templates in dieser Kategorie</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /**
  * Template-Karte für einzelnes Template
  */
@@ -62,7 +138,8 @@ function TemplateCard({
 }: TemplateCardProps) {
   const [previewLoading, setPreviewLoading] = useState(false);
 
-  const handlePreview = useCallback(async () => {
+  const handlePreview = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!onPreview || disabled) return;
     
     setPreviewLoading(true);
@@ -72,6 +149,24 @@ function TemplateCard({
       setPreviewLoading(false);
     }
   }, [onPreview, disabled]);
+
+  // Konvertiere Timestamp zu Date für die Anzeige
+  const getLastUsedDate = () => {
+    if (!template.lastUsed) return null;
+    
+    if (template.lastUsed instanceof Date) {
+      return template.lastUsed.toLocaleDateString('de-DE');
+    }
+    
+    // Firestore Timestamp
+    if (template.lastUsed && typeof template.lastUsed === 'object' && 'toDate' in template.lastUsed) {
+      return (template.lastUsed as Timestamp).toDate().toLocaleDateString('de-DE');
+    }
+    
+    return null;
+  };
+
+  const lastUsedDate = getLastUsedDate();
 
   return (
     <div
@@ -103,7 +198,7 @@ function TemplateCard({
       )}
 
       {/* Template-Vorschau-Thumbnail */}
-      <div className="mb-4 aspect-[4/3] bg-gray-100 rounded-md flex items-center justify-center overflow-hidden">
+      <div className="mb-3 aspect-[4/3] bg-gray-100 rounded-md flex items-center justify-center overflow-hidden">
         {template.thumbnailUrl ? (
           <img 
             src={template.thumbnailUrl} 
@@ -113,24 +208,23 @@ function TemplateCard({
           />
         ) : (
           <div className="text-center">
-            <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-            <p className="text-xs text-gray-500">Vorschau nicht verfügbar</p>
+            <PhotoIcon className="h-10 w-10 text-gray-400 mx-auto mb-1" />
+            <p className="text-xs text-gray-500">Vorschau</p>
           </div>
         )}
       </div>
 
       {/* Template-Info */}
-      <div className="space-y-2">
-        <div className="flex items-start justify-between">
+      <div className="space-y-1.5">
+        <div className="flex items-start justify-between gap-1">
           <h3 className="font-semibold text-gray-900 text-sm leading-tight">
             {template.name}
           </h3>
-          <div className="flex gap-1 ml-2">
+          <div className="flex gap-1 flex-shrink-0">
             {template.isSystem && (
-              <Badge color="blue" size="sm">System</Badge>
-            )}
-            {template.usageCount > 0 && (
-              <Badge color="gray" size="sm">{template.usageCount}</Badge>
+              <Badge color="blue">
+                <SparklesIcon className="h-3 w-3" />
+              </Badge>
             )}
           </div>
         </div>
@@ -142,40 +236,36 @@ function TemplateCard({
         {/* Template-Eigenschaften */}
         <div className="flex items-center justify-between text-xs text-gray-500">
           <span className="flex items-center gap-1">
-            Version {template.version}
+            v{template.version}
           </span>
-          {template.lastUsed && (
-            <span>
-              Zuletzt: {template.lastUsed instanceof Date 
-                ? template.lastUsed.toLocaleDateString('de-DE')
-                : new Date(template.lastUsed).toLocaleDateString('de-DE')
-              }
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {template.usageCount !== undefined && template.usageCount > 0 && (
+              <Badge color="zinc">{template.usageCount}x</Badge>
+            )}
+            {lastUsedDate && (
+              <span className="hidden sm:inline">{lastUsedDate}</span>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Vorschau-Button */}
       {showPreview && onPreview && (
-        <div className="mt-3 pt-3 border-t border-gray-200">
+        <div className="mt-2 pt-2 border-t border-gray-200">
           <Button
-            onClick={(e) => {
-              e.stopPropagation();
-              handlePreview();
-            }}
+            onClick={handlePreview}
             disabled={disabled || previewLoading}
             color="secondary"
-            size="sm"
-            className="w-full"
+            className="w-full text-xs py-1.5"
           >
             {previewLoading ? (
               <>
-                <ArrowPathIcon className="h-4 w-4 mr-1 animate-spin" />
+                <ArrowPathIcon className="h-3 w-3 mr-1 animate-spin" />
                 Lädt...
               </>
             ) : (
               <>
-                <EyeIcon className="h-4 w-4 mr-1" />
+                <EyeIcon className="h-3 w-3 mr-1" />
                 Vorschau
               </>
             )}
@@ -216,8 +306,6 @@ export function TemplateSelector({
       setError(null);
       
       // Lade Templates für Organization
-      
-      // Verwende den Service um alle verfügbaren Templates zu laden
       const allTemplates = await pdfTemplateService.getAllTemplatesForOrganization(organizationId);
       
       if (allTemplates.length === 0) {
@@ -228,8 +316,6 @@ export function TemplateSelector({
         setTemplates(allTemplates);
       }
       
-      // Templates erfolgreich geladen
-      
     } catch (err) {
       // Fehler beim Laden der Templates
       setError(err instanceof Error ? err.message : 'Unbekannter Fehler beim Laden der Templates');
@@ -238,9 +324,9 @@ export function TemplateSelector({
       try {
         const systemTemplates = await pdfTemplateService.getSystemTemplates();
         setTemplates(systemTemplates);
-        // System-Templates als Fallback geladen
       } catch (fallbackErr) {
         // Auch System-Templates konnten nicht geladen werden
+        console.error('Kritischer Fehler:', fallbackErr);
       }
       
     } finally {
@@ -260,8 +346,6 @@ export function TemplateSelector({
    */
   const handleTemplateSelect = useCallback((template: PDFTemplate) => {
     if (disabled) return;
-    
-    // Template ausgewählt
     onTemplateSelect(template.id, template.name);
   }, [disabled, onTemplateSelect]);
 
@@ -272,14 +356,13 @@ export function TemplateSelector({
     if (!user || disabled) return;
     
     try {
-      // Generiere Template-Vorschau
-      
       // Mock-Daten für Vorschau erstellen
       const mockData = {
         title: 'Beispiel Pressemitteilung',
         content: '<p>Dies ist eine Beispiel-Pressemitteilung um das Template-Design zu demonstrieren.</p>',
         companyName: 'Beispiel-Unternehmen GmbH',
-        date: new Date().toISOString()
+        date: new Date().toISOString(),
+        contactInfo: 'Max Mustermann\nTel: +49 123 456789\nE-Mail: info@beispiel.de'
       };
       
       // Template-Vorschau generieren
@@ -317,6 +400,10 @@ export function TemplateSelector({
     loadTemplates();
   }, [loadTemplates]);
 
+  // Kategorisiere Templates
+  const systemTemplates = templates.filter(t => t.isSystem);
+  const customTemplates = templates.filter(t => !t.isSystem);
+
   // Loading-Status
   if (loading) {
     return (
@@ -344,7 +431,6 @@ export function TemplateSelector({
               <Button
                 onClick={handleRetry}
                 color="secondary"
-                size="sm"
               >
                 <ArrowPathIcon className="h-4 w-4 mr-1" />
                 Erneut versuchen
@@ -374,35 +460,50 @@ export function TemplateSelector({
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {templates.map((template) => (
-          <TemplateCard
-            key={template.id}
-            template={template}
-            isSelected={selectedTemplateId === template.id}
-            onSelect={() => handleTemplateSelect(template)}
-            onPreview={showPreview ? () => handleTemplatePreview(template) : undefined}
+      <div className="space-y-3">
+        {/* System-Templates */}
+        {systemTemplates.length > 0 && (
+          <TemplateCategory
+            title="System-Templates"
+            templates={systemTemplates}
+            selectedTemplateId={selectedTemplateId}
+            onTemplateSelect={handleTemplateSelect}
+            onTemplatePreview={handleTemplatePreview}
             disabled={disabled}
             showPreview={showPreview}
+            defaultOpen={true}
           />
-        ))}
-      </div>
+        )}
 
-      {templates.length === 0 && !loading && (
-        <div className="text-center py-8 text-gray-500">
-          <PhotoIcon className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-          <p className="text-sm">Keine Templates verfügbar</p>
-          <Button
-            onClick={handleRetry}
-            color="secondary"
-            size="sm"
-            className="mt-2"
-          >
-            <ArrowPathIcon className="h-4 w-4 mr-1" />
-            Aktualisieren
-          </Button>
-        </div>
-      )}
+        {/* Custom-Templates */}
+        {customTemplates.length > 0 && (
+          <TemplateCategory
+            title="Eigene Templates"
+            templates={customTemplates}
+            selectedTemplateId={selectedTemplateId}
+            onTemplateSelect={handleTemplateSelect}
+            onTemplatePreview={handleTemplatePreview}
+            disabled={disabled}
+            showPreview={showPreview}
+            defaultOpen={false}
+          />
+        )}
+
+        {/* Keine Templates verfügbar */}
+        {templates.length === 0 && !loading && (
+          <div className="text-center py-8 text-gray-500 border border-gray-200 rounded-lg">
+            <PhotoIcon className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+            <p className="text-sm mb-3">Keine Templates verfügbar</p>
+            <Button
+              onClick={handleRetry}
+              color="secondary"
+            >
+              <ArrowPathIcon className="h-4 w-4 mr-1" />
+              Aktualisieren
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

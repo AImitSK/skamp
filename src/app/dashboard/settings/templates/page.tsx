@@ -60,32 +60,135 @@ export default function TemplatesPage() {
     } catch (error) {
       // Template-Loading fehlgeschlagen - fallback auf Default Templates
       // Fallback: Default Templates
-      setTemplates([
+      const defaultTemplates: PDFTemplate[] = [
         {
           id: 'standard',
           name: 'Standard Template',
           description: 'Klassisches CeleroPress PDF-Layout',
           version: '1.0.0',
-          isDefault: true,
-          layout: { type: 'standard' }
+          layout: {
+            type: 'standard',
+            headerHeight: 60,
+            footerHeight: 40,
+            margins: { top: 20, right: 20, bottom: 20, left: 20 },
+            columns: 1,
+            pageFormat: 'A4'
+          },
+          typography: {
+            primaryFont: 'Inter',
+            secondaryFont: 'Inter',
+            baseFontSize: 11,
+            lineHeight: 1.6,
+            headingScale: [24, 20, 16, 14]
+          },
+          colorScheme: {
+            primary: '#005fab',
+            secondary: '#f8fafc',
+            accent: '#0ea5e9',
+            text: '#1e293b',
+            background: '#ffffff',
+            border: '#e2e8f0'
+          },
+          components: {
+            header: { backgroundColor: '#005fab', textColor: '#ffffff', padding: 20 },
+            title: { fontSize: 24, fontWeight: 'bold', textColor: '#1e293b' },
+            content: { fontSize: 11, textColor: '#475569' },
+            sidebar: { backgroundColor: '#f8fafc' },
+            footer: { backgroundColor: '#f8fafc' },
+            logo: {},
+            keyVisual: {},
+            boilerplate: {}
+          },
+          isSystem: true,
+          isActive: true,
+          createdAt: new Date()
         },
         {
           id: 'modern',
           name: 'Modern Template',
           description: 'Modernes, sauberes Design',
           version: '1.0.0',
-          isDefault: true,
-          layout: { type: 'modern' }
+          layout: {
+            type: 'modern',
+            headerHeight: 80,
+            footerHeight: 50,
+            margins: { top: 25, right: 25, bottom: 25, left: 25 },
+            columns: 1,
+            pageFormat: 'A4'
+          },
+          typography: {
+            primaryFont: 'Open Sans',
+            secondaryFont: 'Roboto',
+            baseFontSize: 10,
+            lineHeight: 1.5,
+            headingScale: [22, 18, 14, 12]
+          },
+          colorScheme: {
+            primary: '#3b82f6',
+            secondary: '#fbbf24',
+            accent: '#10b981',
+            text: '#111827',
+            background: '#ffffff',
+            border: '#d1d5db'
+          },
+          components: {
+            header: { backgroundColor: '#3b82f6', textColor: '#ffffff', padding: 20 },
+            title: { fontSize: 22, fontWeight: 'bold', textColor: '#111827' },
+            content: { fontSize: 10, textColor: '#4b5563' },
+            sidebar: { backgroundColor: '#f9fafb' },
+            footer: { backgroundColor: '#f9fafb' },
+            logo: {},
+            keyVisual: {},
+            boilerplate: {}
+          },
+          isSystem: true,
+          isActive: true,
+          createdAt: new Date()
         },
         {
           id: 'classic',
           name: 'Classic Template', 
           description: 'Traditionelles Business-Layout',
           version: '1.0.0',
-          isDefault: true,
-          layout: { type: 'classic' }
+          layout: {
+            type: 'classic',
+            headerHeight: 100,
+            footerHeight: 80,
+            margins: { top: 30, right: 30, bottom: 30, left: 30 },
+            columns: 1,
+            pageFormat: 'A4'
+          },
+          typography: {
+            primaryFont: 'Times New Roman',
+            secondaryFont: 'Georgia',
+            baseFontSize: 12,
+            lineHeight: 1.8,
+            headingScale: [28, 22, 18, 16]
+          },
+          colorScheme: {
+            primary: '#1f2937',
+            secondary: '#f9fafb',
+            accent: '#6b7280',
+            text: '#111827',
+            background: '#ffffff',
+            border: '#e5e7eb'
+          },
+          components: {
+            header: { backgroundColor: '#1f2937', textColor: '#ffffff', padding: 25 },
+            title: { fontSize: 28, fontWeight: 'bold', textColor: '#111827' },
+            content: { fontSize: 12, textColor: '#374151' },
+            sidebar: { backgroundColor: '#f9fafb' },
+            footer: { backgroundColor: '#f9fafb' },
+            logo: {},
+            keyVisual: {},
+            boilerplate: {}
+          },
+          isSystem: true,
+          isActive: true,
+          createdAt: new Date()
         }
-      ] as PDFTemplate[]);
+      ];
+      setTemplates(defaultTemplates);
     } finally {
       setLoading(false);
     }
@@ -260,22 +363,17 @@ export default function TemplatesPage() {
                       </div>
                     </div>
                     <div className="w-[20%]">
-                      <Badge color="gray" className="whitespace-nowrap">
+                      <Badge color="zinc" className="whitespace-nowrap">
                         {template.layout.type}
                       </Badge>
                     </div>
                     <div className="w-[20%]">
-                      {template.isDefault ? (
-                        <Badge color="green" className="whitespace-nowrap">
-                          <CheckIcon className="h-3 w-3 mr-1" />
-                          Standard
-                        </Badge>
-                      ) : template.isSystem ? (
+                      {template.isSystem ? (
                         <Badge color="blue" className="whitespace-nowrap">
                           System
                         </Badge>
                       ) : (
-                        <Badge color="gray" className="whitespace-nowrap">
+                        <Badge color="zinc" className="whitespace-nowrap">
                           Custom
                         </Badge>
                       )}
@@ -287,7 +385,7 @@ export default function TemplatesPage() {
                     </div>
                     <div className="flex-1 flex justify-end">
                       <Dropdown>
-                        <DropdownButton outline>
+                        <DropdownButton>
                           <EllipsisVerticalIcon className="h-4 w-4" />
                         </DropdownButton>
                         <DropdownMenu>
@@ -295,19 +393,14 @@ export default function TemplatesPage() {
                             <EyeIcon className="h-4 w-4 mr-2" />
                             Vorschau
                           </DropdownItem>
-                          {!template.isDefault && (
-                            <DropdownItem onClick={() => handleSetDefault(template)}>
-                              <CheckIcon className="h-4 w-4 mr-2" />
-                              Als Standard setzen
-                            </DropdownItem>
-                          )}
+                          {/* Als Standard setzen Option entfernt, da isDefault nicht mehr verwendet wird */}
                           {!template.isSystem && (
                             <DropdownItem>
                               <PencilIcon className="h-4 w-4 mr-2" />
                               Bearbeiten
                             </DropdownItem>
                           )}
-                          {!template.isDefault && !template.isSystem && (
+                          {!template.isSystem && (
                             <DropdownItem color="red" onClick={() => {/* Handle Delete */}}>
                               <TrashIcon className="h-4 w-4 mr-2" />
                               Löschen

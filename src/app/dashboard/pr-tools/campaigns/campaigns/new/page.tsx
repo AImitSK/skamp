@@ -299,7 +299,15 @@ export default function NewPRCampaignPage() {
   const [successMessage, setSuccessMessage] = useState<string>('');
   const [realPrScore, setRealPrScore] = useState<{
     totalScore: number;
-    breakdown: { headline: number; keywords: number; structure: number; relevance: number; concreteness: number; engagement: number };
+    breakdown: { 
+      headline: number; 
+      keywords: number; 
+      structure: number; 
+      relevance: number; 
+      concreteness: number; 
+      engagement: number;
+      social: number;
+    };
     hints: string[];
     keywordMetrics: any[];
   } | null>(null);
@@ -1018,7 +1026,20 @@ export default function NewPRCampaignPage() {
                   hideBoilerplates={true}
                   keywords={keywords}
                   onKeywordsChange={setKeywords}
-                  onSeoScoreChange={(scoreData: any) => setRealPrScore(scoreData)}
+                  onSeoScoreChange={(scoreData: any) => {
+                    // Stelle sicher, dass social Property vorhanden ist
+                    if (scoreData && scoreData.breakdown) {
+                      setRealPrScore({
+                        ...scoreData,
+                        breakdown: {
+                          ...scoreData.breakdown,
+                          social: scoreData.breakdown.social || 0
+                        }
+                      });
+                    } else {
+                      setRealPrScore(scoreData);
+                    }
+                  }}
                 />
               </div>
 

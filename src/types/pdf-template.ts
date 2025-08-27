@@ -34,6 +34,9 @@ export interface PDFTemplate {
   // USAGE-TRACKING:
   usageCount?: number;
   lastUsed?: Timestamp | Date;
+  
+  // PREVIEW:
+  thumbnailUrl?: string; // URL für Template-Vorschau-Bild
 }
 
 /**
@@ -160,7 +163,7 @@ export interface MockPRData {
   subtitle?: string;
   content: string;
   companyName: string;
-  contactInfo: string;
+  contactInfo?: string; // Optional gemacht für einfachere Mock-Daten
   date: string;
   logo?: string;
   keyVisual?: {

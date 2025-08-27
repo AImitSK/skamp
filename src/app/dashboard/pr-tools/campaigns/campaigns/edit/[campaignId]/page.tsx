@@ -1182,7 +1182,20 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                   hideBoilerplates={true}
                   keywords={keywords}
                   onKeywordsChange={setKeywords}
-                  onSeoScoreChange={(scoreData: any) => setRealPrScore(scoreData)}
+                  onSeoScoreChange={(scoreData: any) => {
+                    // Stelle sicher, dass social Property vorhanden ist
+                    if (scoreData && scoreData.breakdown) {
+                      setRealPrScore({
+                        ...scoreData,
+                        breakdown: {
+                          ...scoreData.breakdown,
+                          social: scoreData.breakdown.social || 0
+                        }
+                      });
+                    } else {
+                      setRealPrScore(scoreData);
+                    }
+                  }}
                 />
               </div>
 
