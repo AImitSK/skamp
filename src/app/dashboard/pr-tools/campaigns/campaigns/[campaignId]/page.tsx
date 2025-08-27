@@ -193,14 +193,11 @@ export default function CampaignDetailPage() {
       // Lade erweiterte Approval-Daten mit feedbackHistory wenn ShareId vorhanden
       if (campaignData.approvalData?.shareId && campaignData.approvalData.shareId !== '') {
         try {
-          console.log('📥 Loading feedback history for detail page, shareId:', campaignData.approvalData.shareId);
           const campaignWithFeedback = await prService.getCampaignByShareId(campaignData.approvalData.shareId);
           if (campaignWithFeedback?.approvalData?.feedbackHistory) {
             campaignData.approvalData.feedbackHistory = campaignWithFeedback.approvalData.feedbackHistory;
-            console.log('📊 Detail page: Loaded feedback history:', campaignData.approvalData.feedbackHistory);
           }
         } catch (error) {
-          console.error('Fehler beim Laden der Feedback-History:', error);
         }
       } else if (campaignData.approvalData?.customerApprovalMessage) {
         // Legacy-Support: Erstelle feedbackHistory aus alten Daten
@@ -209,7 +206,6 @@ export default function CampaignDetailPage() {
           requestedAt: campaignData.updatedAt || campaignData.createdAt,
           author: 'Ihre Nachricht (Legacy)'
         }];
-        console.log('📝 Detail page: Created legacy feedback history');
       }
       
       setCampaign(campaignData);
@@ -292,7 +288,6 @@ export default function CampaignDetailPage() {
               );
               setLoadedBoilerplates(matchingBoilerplates);
             })
-            .catch(err => console.error('Error loading boilerplates:', err))
           );
         }
       }

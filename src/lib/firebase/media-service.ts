@@ -44,13 +44,11 @@ interface ShareLinkEnhanced extends BaseEntity, Omit<ShareLink, 'userId'> {
 // CORS-FIX: Optimierte Asset-Validation mit verbesserter CORS-Behandlung
 async function validateAssetUrl(url: string, timeout = 3000): Promise<boolean> {
   try {
-    console.log(`🔍 Validating asset URL: ${url}`);
     
     // Für Firebase Storage URLs: Grundvalidierung ohne fetch()
     if (url.includes('firebasestorage.googleapis.com')) {
       const hasValidStructure = url.includes('/o/') && url.includes('alt=media') && url.includes('token=');
       if (hasValidStructure) {
-        console.log(`✅ Firebase Storage URL structure valid - skipping fetch validation`);
         return true;
       }
     }
@@ -70,22 +68,17 @@ async function validateAssetUrl(url: string, timeout = 3000): Promise<boolean> {
       clearTimeout(timeoutId);
       
       const isValid = response.type === 'opaque' || response.ok;
-      console.log(`✅ Asset validation result: ${isValid} (Type: ${response.type}, Status: ${response.status})`);
       
       return isValid;
       
     } catch (fetchError: any) {
       clearTimeout(timeoutId);
-      console.warn(`⚠️ Fetch validation failed: ${fetchError.message}`);
       return true;
     }
     
   } catch (error: any) {
-    console.warn(`⚠️ Asset validation failed for ${url}:`, error.message);
     if (error.name === 'AbortError') {
-      console.warn('⏱️ Validation timeout - assuming asset is valid');
     } else if (error.message?.includes('CORS') || error.message?.includes('Failed to fetch')) {
-      console.warn('🌐 Network/CORS error - assuming asset is valid');
     }
     return true;
   }
@@ -143,7 +136,6 @@ export const mediaService = {
         shareLink.folderIds = data.folderIds;
       }
       
-      console.log('Creating share link:', shareLink);
       
       const docRef = await addDoc(collection(db, 'media_shares'), shareLink);
       
@@ -156,12 +148,10 @@ export const mediaService = {
         userId: shareLink.createdBy
       } as ShareLink;
 
-      console.log('Share link created successfully:', createdShareLink);
       
       return createdShareLink;
 
     } catch (error) {
-      console.error("Fehler beim Erstellen des Share-Links:", error);
       throw error;
     }
   },
@@ -169,29 +159,23 @@ export const mediaService = {
   // Methode zum Laden von Campaign-Medien basierend auf einem ShareLink
   async getCampaignMediaAssets(shareLink: ShareLink): Promise<MediaAsset[]> {
     try {
-      console.log('Loading campaign media assets for shareLink:', shareLink);
       const allAssets: MediaAsset[] = [];
       
       // Lade direkte Assets
       if (shareLink.assetIds && shareLink.assetIds.length > 0) {
-        console.log('Loading direct assets:', shareLink.assetIds.length);
         const assetPromises = shareLink.assetIds.map(id => this.getMediaAssetById(id));
         const assets = await Promise.all(assetPromises);
         const validAssets = assets.filter(a => a !== null) as MediaAsset[];
-        console.log('Loaded direct assets:', validAssets.length);
         allAssets.push(...validAssets);
       }
       
       // Lade Assets aus Folders
       if (shareLink.folderIds && shareLink.folderIds.length > 0) {
-        console.log('Loading folder assets from folders:', shareLink.folderIds.length);
         for (const folderId of shareLink.folderIds) {
           try {
             const folderAssets = await this.getMediaAssetsInFolder(folderId);
-            console.log(`Loaded ${folderAssets.length} assets from folder ${folderId}`);
             allAssets.push(...folderAssets);
           } catch (error) {
-            console.error(`Error loading assets from folder ${folderId}:`, error);
           }
         }
       }
@@ -205,11 +189,9 @@ export const mediaService = {
       });
       
       const finalAssets = Array.from(uniqueAssets.values());
-      console.log('Total unique campaign assets:', finalAssets.length);
       
       return finalAssets;
     } catch (error) {
-      console.error('Error loading campaign media assets:', error);
       throw error;
     }
   },
@@ -232,7 +214,6 @@ export const mediaService = {
         } as ShareLink;
       });
     } catch (error) {
-      console.error("Fehler beim Laden der Share-Links:", error);
       throw error;
     }
   },
@@ -275,7 +256,6 @@ export const mediaService = {
               }
             } catch (err) {
               // Falls targetId kein Asset ist, verwende den Titel
-              console.log('Target is not an asset, using title');
             }
           }
           
@@ -283,9 +263,7 @@ export const mediaService = {
             { ...shareLink, assetName },
             data.createdBy // Use createdBy for notifications
           );
-          console.log('📬 Benachrichtigung gesendet: Erster Zugriff auf geteilten Link');
         } catch (notificationError) {
-          console.error('Fehler beim Senden der Zugriffs-Benachrichtigung:', notificationError);
         }
       }
       
@@ -293,7 +271,6 @@ export const mediaService = {
       
       return shareLink;
     } catch (error) {
-      console.error("Fehler beim Laden des Share-Links:", error);
       return null;
     }
   },
@@ -309,7 +286,6 @@ export const mediaService = {
         lastAccessedAt: serverTimestamp(),
       });
     } catch (error) {
-      console.error("Fehler beim Aktualisieren des Zugriffszählers:", error);
     }
   },
 
@@ -321,7 +297,6 @@ export const mediaService = {
         updatedAt: serverTimestamp()
       });
     } catch (error) {
-      console.error("Fehler beim Deaktivieren des Share-Links:", error);
       throw error;
     }
   },
@@ -331,7 +306,6 @@ export const mediaService = {
       const docRef = doc(db, 'media_shares', shareLinkId);
       await deleteDoc(docRef);
     } catch (error) {
-      console.error("Fehler beim Löschen des Share-Links:", error);
       throw error;
     }
   },
@@ -353,10 +327,8 @@ export const mediaService = {
           createdBy,
           organizationId
         );
-        console.log('📬 Benachrichtigung gesendet: Datei heruntergeladen');
       }
     } catch (notificationError) {
-      console.error('Fehler beim Senden der Download-Benachrichtigung:', notificationError);
     }
   },
 
@@ -376,19 +348,16 @@ export const mediaService = {
         updatedAt: serverTimestamp(),
       };
       
-      console.log('Creating folder with data:', folderData);
       
       const docRef = await addDoc(collection(db, 'media_folders'), folderData);
       return docRef.id;
     } catch (error) {
-      console.error("Fehler beim Erstellen des Ordners:", error);
       throw error;
     }
   },
 
   async getFolders(organizationId: string, parentFolderId?: string): Promise<MediaFolder[]> {
     try {
-      console.log('Loading folders for organizationId:', organizationId, 'parentFolderId:', parentFolderId);
       let q;
 
       if (parentFolderId === undefined) {
@@ -405,7 +374,6 @@ export const mediaService = {
       }
 
       const snapshot = await getDocs(q);
-      console.log('Raw folders from Firestore:', snapshot.docs.length);
       const folders = snapshot.docs.map(doc => {
         const data = doc.data();
         return {
@@ -420,10 +388,8 @@ export const mediaService = {
         .filter(folder => parentFolderId === undefined ? !folder.parentFolderId : folder.parentFolderId === parentFolderId)
         .sort((a, b) => a.name.localeCompare(b.name));
       
-      console.log('Filtered folders:', filteredFolders.length);
       return filteredFolders;
     } catch (error) {
-      console.error("Fehler beim Laden der Ordner:", error);
       throw error;
     }
   },
@@ -444,14 +410,12 @@ export const mediaService = {
       }
       return null;
     } catch (error) {
-      console.error("Fehler beim Laden des Ordners:", error);
       throw error;
     }
   },
 
   async updateFolderClientInheritance(folderId: string, organizationId: string): Promise<void> {
     try {
-      console.log(`🔄 Updating client inheritance for folder ${folderId}`);
       
       // 1. Lade alle Ordner für Vererbungs-Berechnung
       const allFolders = await this.getAllFoldersForOrganization(organizationId);
@@ -459,7 +423,6 @@ export const mediaService = {
       // 2. Finde den Ordner und berechne seine neue vererbte clientId
       const folder = await this.getFolder(folderId);
       if (!folder) {
-        console.warn('⚠️ Folder not found for inheritance update');
         return;
       }
       
@@ -467,12 +430,10 @@ export const mediaService = {
       const { getRootFolderClientId } = await import('@/lib/utils/folder-utils');
       const inheritedClientId = await getRootFolderClientId(folder, allFolders);
       
-      console.log(`📝 Inherited clientId for folder: ${inheritedClientId}`);
       
       // 4. Update den Ordner selbst
       if (inheritedClientId !== folder.clientId) {
         await this.updateFolder(folderId, { clientId: inheritedClientId });
-        console.log(`✅ Updated folder ${folder.name} clientId to: ${inheritedClientId}`);
       }
       
       // 5. Update alle direkten Assets in diesem Ordner
@@ -481,13 +442,11 @@ export const mediaService = {
         await Promise.all(
           assets.map(asset => {
             if (asset.clientId !== inheritedClientId) {
-              console.log(`📎 Updating asset ${asset.fileName} clientId to: ${inheritedClientId}`);
               return this.updateAsset(asset.id!, { clientId: inheritedClientId });
             }
             return Promise.resolve();
           })
         );
-        console.log(`✅ Updated ${assets.length} assets in folder ${folder.name}`);
       }
       
       // 6. Finde alle direkten Unterordner
@@ -500,13 +459,10 @@ export const mediaService = {
             this.updateFolderClientInheritance(subfolder.id!, organizationId)
           )
         );
-        console.log(`✅ Recursively updated ${subfolders.length} subfolders`);
       }
       
-      console.log(`🎉 Completed inheritance update for folder ${folder.name}`);
       
     } catch (error) {
-      console.error('❌ Error updating folder client inheritance:', error);
       throw error;
     }
   },
@@ -528,7 +484,6 @@ export const mediaService = {
         } as MediaFolder;
       });
     } catch (error) {
-      console.error("Fehler beim Laden aller Ordner:", error);
       throw error;
     }
   },
@@ -537,7 +492,6 @@ export const mediaService = {
   async getAllFoldersForUser(userId: string): Promise<MediaFolder[]> {
     // This should ideally get the organizationId from the user
     // For now, using userId as fallback
-    console.warn('⚠️ getAllFoldersForUser is deprecated, use getAllFoldersForOrganization');
     return this.getAllFoldersForOrganization(userId);
   },
 
@@ -555,11 +509,9 @@ export const mediaService = {
       if (updates.clientId !== undefined) updateData.clientId = updates.clientId;
       if (updates.parentFolderId !== undefined) updateData.parentFolderId = updates.parentFolderId;
       
-      console.log('Updating folder with data:', updateData);
       
       await updateDoc(docRef, updateData);
     } catch (error) {
-      console.error("Fehler beim Aktualisieren des Ordners:", error);
       throw error;
     }
   },
@@ -576,7 +528,6 @@ export const mediaService = {
       const docRef = doc(db, 'media_folders', folderId);
       await deleteDoc(docRef);
     } catch (error) {
-      console.error("Fehler beim Löschen des Ordners:", error);
       throw error;
     }
   },
@@ -590,7 +541,6 @@ export const mediaService = {
       const snapshot = await getDocs(q);
       return !snapshot.empty;
     } catch (error) {
-      console.error("Fehler beim Prüfen der Ordner-Dateien:", error);
       return false;
     }
   },
@@ -604,7 +554,6 @@ export const mediaService = {
       const snapshot = await getDocs(q);
       return !snapshot.empty;
     } catch (error) {
-      console.error("Fehler beim Prüfen der Unterordner:", error);
       return false;
     }
   },
@@ -630,7 +579,6 @@ export const mediaService = {
 
       return breadcrumbs;
     } catch (error) {
-      console.error("Fehler beim Erstellen der Breadcrumbs:", error);
       return [];
     }
   },
@@ -661,14 +609,12 @@ export const mediaService = {
     context?: { userId: string; clientId?: string } // NEW: optional context for createdBy and clientId
   ): Promise<MediaAsset> {
     try {
-      console.log('📤 Starting upload for:', file.name, 'Size:', file.size);
       
       // Cleaner Dateiname für Firebase Storage
       const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
       const timestamp = Date.now();
       const storagePath = `organizations/${organizationId}/media/${timestamp}_${cleanFileName}`; // CHANGED path
       
-      console.log('🗂️ Upload path:', storagePath);
       
       const storageRef = ref(storage, storagePath);
 
@@ -687,11 +633,9 @@ export const mediaService = {
           'state_changed',
           (snapshot) => {
             const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            console.log('📊 Upload progress:', Math.round(progress) + '%');
             onProgress?.(progress);
           },
           (error) => {
-            console.error("❌ Upload error:", error);
             
             // Retry bei bestimmten Fehlern
             if (retryCount > 0 && (
@@ -699,7 +643,6 @@ export const mediaService = {
               error.code === 'storage/unknown' ||
               error.message?.includes('network')
             )) {
-              console.log(`🔄 Retrying upload... (${retryCount} attempts left)`);
               setTimeout(() => {
                 this.uploadMedia(file, organizationId, folderId, onProgress, retryCount - 1, context)
                   .then(resolve)
@@ -712,9 +655,7 @@ export const mediaService = {
           },
           async () => {
             try {
-              console.log('✅ Upload completed, getting download URL...');
               const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
-              console.log('🔗 Download URL obtained');
 
               // Asset-Metadaten mit erweiterten Informationen
               const assetData: any = {
@@ -730,9 +671,7 @@ export const mediaService = {
                 updatedAt: serverTimestamp(),
               };
 
-              console.log('💾 Saving metadata to Firestore...');
               const docRef = await addDoc(collection(db, 'media_assets'), assetData);
-              console.log('✅ Metadata saved with ID:', docRef.id);
               
               const finalAsset = { 
                 id: docRef.id, 
@@ -745,24 +684,20 @@ export const mediaService = {
               try {
                 const isValid = await validateAssetUrl(downloadUrl);
                 if (!isValid) {
-                  console.warn('⚠️ Newly uploaded asset failed validation, but continuing...');
                 }
               } catch (validationError) {
-                console.warn('⚠️ Post-upload validation failed:', validationError);
                 // Nicht kritisch - Asset wurde erfolgreich hochgeladen
               }
               
               resolve(finalAsset);
 
             } catch (metadataError) {
-              console.error("❌ Fehler beim Speichern der Metadaten:", metadataError);
               reject(metadataError);
             }
           }
         );
       });
     } catch (error) {
-      console.error("❌ Fehler beim Initialisieren des Uploads:", error);
       throw error;
     }
   },
@@ -780,14 +715,12 @@ export const mediaService = {
     context?: { userId?: string; clientId?: string }
   ): Promise<{ downloadUrl: string; filePath: string; fileSize: number }> {
     try {
-      console.log('📤 Starting buffer upload:', fileName, 'Size:', buffer.length);
       
       // Cleaner Dateiname für Firebase Storage
       const cleanFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
       const timestamp = Date.now();
       const filePath = `organizations/${organizationId}/${folder}/${timestamp}_${cleanFileName}`;
       
-      console.log('🗂️ Buffer upload path:', filePath);
       
       const storageRef = ref(storage, filePath);
 
@@ -807,7 +740,6 @@ export const mediaService = {
       const snapshot = await uploadBytes(storageRef, buffer, metadata);
       const downloadUrl = await getDownloadURL(snapshot.ref);
 
-      console.log('✅ Buffer upload completed, URL obtained');
 
       return {
         downloadUrl,
@@ -816,14 +748,12 @@ export const mediaService = {
       };
 
     } catch (error) {
-      console.error('❌ Fehler beim Buffer-Upload:', error);
       throw new Error(`Buffer-Upload fehlgeschlagen: ${error}`);
     }
   },
 
   async getMediaAssets(organizationId: string, folderId?: string): Promise<MediaAsset[]> {
     try {
-      console.log('Loading media assets for organizationId:', organizationId, 'folderId:', folderId);
       let q;
       
       if (folderId === undefined) {
@@ -840,7 +770,6 @@ export const mediaService = {
       }
 
       const snapshot = await getDocs(q);
-      console.log('Raw media assets from Firestore:', snapshot.docs.length);
       const assets = snapshot.docs.map(doc => {
         const data = doc.data();
         return {
@@ -865,17 +794,14 @@ export const mediaService = {
           return bTime - aTime;
         });
       
-      console.log('Filtered assets:', filteredAssets.length);
       return filteredAssets;
     } catch (error) {
-      console.error("Fehler beim Laden der Media Assets:", error);
       throw error;
     }
   },
 
   async moveAssetToFolder(assetId: string, newFolderId?: string, organizationId?: string): Promise<void> {
     try {
-      console.log(`🔄 Moving asset ${assetId} to folder ${newFolderId || 'ROOT'}`);
       
       const docRef = doc(db, 'media_assets', assetId);
       const updateData: any = {
@@ -893,7 +819,6 @@ export const mediaService = {
       // 2. AUTOMATISCHE FIRMA-VERERBUNG
       if (newFolderId && organizationId) {
         try {
-          console.log('🏢 Calculating client inheritance...');
           
           // Lade Ziel-Ordner
           const targetFolder = await this.getFolder(newFolderId);
@@ -905,31 +830,23 @@ export const mediaService = {
             const inheritedClientId = await getRootFolderClientId(targetFolder, allFolders);
             
             if (inheritedClientId) {
-              console.log(`✅ Inheriting clientId: ${inheritedClientId}`);
               updateData.clientId = inheritedClientId;
             } else {
-              console.log('ℹ️ No client inheritance - keeping current clientId');
               // Wenn Ordner keine Firma hat, clientId unverändert lassen
             }
           } else {
-            console.warn('⚠️ Target folder not found');
           }
         } catch (inheritanceError) {
-          console.error('❌ Error during client inheritance:', inheritanceError);
           // Bei Fehler: Normal verschieben ohne Firma-Änderung
         }
       } else if (!newFolderId) {
         // 3. Bei Root-Move: clientId unverändert lassen (Root-Assets haben editierbare Firma)
-        console.log('📁 Moving to root - keeping current clientId for manual editing');
       }
       
-      console.log('💾 Updating asset with data:', updateData);
       await updateDoc(docRef, updateData);
       
-      console.log('✅ Asset moved successfully with automatic client inheritance!');
       
     } catch (error) {
-      console.error("❌ Fehler beim Verschieben der Datei:", error);
       throw error;
     }
   },
@@ -948,11 +865,9 @@ export const mediaService = {
       if (updates.folderId !== undefined) updateData.folderId = updates.folderId;
       if (updates.clientId !== undefined) updateData.clientId = updates.clientId;
       
-      console.log('Updating asset with data:', updateData);
       
       await updateDoc(docRef, updateData);
     } catch (error) {
-      console.error("Fehler beim Aktualisieren des Assets:", error);
       throw error;
     }
   },
@@ -973,7 +888,6 @@ export const mediaService = {
       }
       return null;
     } catch (error) {
-      console.error("Fehler beim Laden des Media Assets:", error);
       throw error;
     }
   },
@@ -1002,7 +916,6 @@ export const mediaService = {
         return bTime - aTime;
       });
     } catch (error) {
-      console.error("Fehler beim Laden der Ordner-Assets:", error);
       throw error;
     }
   },
@@ -1011,51 +924,42 @@ export const mediaService = {
 
   async removeInvalidAsset(assetId: string, reason = 'Invalid asset detected'): Promise<void> {
     try {
-      console.log(`🗑️ Removing invalid asset: ${assetId} (${reason})`);
       
       // Lade Asset-Details für Logging
       const assetDoc = await getDoc(doc(db, 'media_assets', assetId));
       if (assetDoc.exists()) {
         const assetData = assetDoc.data();
-        console.log(`📄 Removing asset: ${assetData.fileName} from storage path: ${assetData.storagePath}`);
         
         // Versuche Storage-Datei zu löschen (optional, falls sie existiert)
         if (assetData.storagePath) {
           try {
             const storageRef = ref(storage, assetData.storagePath);
             await deleteObject(storageRef);
-            console.log(`✅ Deleted storage file: ${assetData.storagePath}`);
           } catch (storageError: any) {
             // Storage-Datei existiert möglicherweise nicht mehr
-            console.warn(`⚠️ Could not delete storage file (may not exist): ${storageError.message}`);
           }
         }
       }
       
       // Entferne aus Firestore
       await deleteDoc(doc(db, 'media_assets', assetId));
-      console.log(`✅ Successfully removed invalid asset ${assetId} from Firestore`);
       
     } catch (error) {
-      console.error(`❌ Failed to remove invalid asset ${assetId}:`, error);
       throw error;
     }
   },
 
   async cleanupInvalidClientAssets(organizationId: string, clientId: string): Promise<{removed: number, errors: string[]}> {
     try {
-      console.log(`🧹 Starting cleanup of invalid assets for client: ${clientId}`);
       
       // Lade alle Assets für diesen Client
       const result = await this.getMediaByClientId(organizationId, clientId, false);
       const assets = result.assets;
       
       if (assets.length === 0) {
-        console.log('ℹ️ No assets found to clean up');
         return { removed: 0, errors: [] };
       }
       
-      console.log(`🔍 Testing ${assets.length} assets for validity...`);
       
       const invalidAssets: string[] = [];
       const errors: string[] = [];
@@ -1066,7 +970,6 @@ export const mediaService = {
           const img = new Image();
           const isValid = await new Promise<boolean>((resolve) => {
             const timeout = setTimeout(() => {
-              console.warn(`⏱️ Timeout testing asset: ${asset.fileName}`);
               resolve(false);
             }, 5000);
             
@@ -1077,7 +980,6 @@ export const mediaService = {
             
             img.onerror = () => {
               clearTimeout(timeout);
-              console.warn(`❌ Invalid asset detected: ${asset.fileName}`);
               resolve(false);
             };
             
@@ -1086,12 +988,10 @@ export const mediaService = {
           
           if (!isValid && asset.id) {
             invalidAssets.push(asset.id);
-            console.log(`🗑️ Marked for removal: ${asset.fileName} (${asset.id})`);
           }
           
         } catch (error: any) {
           errors.push(`Error testing ${asset.fileName}: ${error.message}`);
-          console.error(`❌ Error testing asset ${asset.fileName}:`, error);
         }
       }
       
@@ -1106,19 +1006,16 @@ export const mediaService = {
         }
       }
       
-      console.log(`🎉 Cleanup completed: ${removedCount} assets removed, ${errors.length} errors`);
       
       return { removed: removedCount, errors };
       
     } catch (error: any) {
-      console.error('❌ Error during client asset cleanup:', error);
       return { removed: 0, errors: [error.message] };
     }
   },
 
   async cleanupInvalidAssets(organizationId: string, assets: MediaAsset[]): Promise<MediaAsset[]> {
     try {
-      console.log(`🧹 Starting cleanup of ${assets.length} assets...`);
       
       const cleanupPromises = assets.map(async (asset) => {
         try {
@@ -1126,7 +1023,6 @@ export const mediaService = {
           const img = new Image();
           const imageLoadPromise = new Promise<boolean>((resolve) => {
             const timeout = setTimeout(() => {
-              console.warn(`⏱️ Image load timeout for ${asset.fileName}`);
               resolve(false);
             }, 3000);
             
@@ -1137,7 +1033,6 @@ export const mediaService = {
             
             img.onerror = () => {
               clearTimeout(timeout);
-              console.warn(`❌ Image load failed for ${asset.fileName}`);
               resolve(false);
             };
             
@@ -1147,15 +1042,12 @@ export const mediaService = {
           const isValid = await imageLoadPromise;
           
           if (!isValid) {
-            console.log(`🗑️ Removing invalid asset: ${asset.fileName} (${asset.id})`);
             
             // Entferne Asset aus Firestore
             if (asset.id) {
               try {
                 await deleteDoc(doc(db, 'media_assets', asset.id));
-                console.log(`✅ Deleted invalid asset from Firestore: ${asset.id}`);
               } catch (deleteError) {
-                console.error(`❌ Failed to delete asset ${asset.id}:`, deleteError);
               }
             }
             
@@ -1165,7 +1057,6 @@ export const mediaService = {
           return asset;
           
         } catch (error) {
-          console.error(`❌ Error validating asset ${asset.fileName}:`, error);
           return asset; // Bei Fehlern: Asset beibehalten (konservativ)
         }
       });
@@ -1186,12 +1077,10 @@ export const mediaService = {
         }
       });
       
-      console.log(`🧹 Cleanup completed: ${validAssets.length} valid, ${removedCount} removed`);
       
       return validAssets;
       
     } catch (error) {
-      console.error('❌ Error during asset cleanup:', error);
       return assets; // Bei Fehlern: Alle Assets beibehalten
     }
   },
@@ -1341,7 +1230,6 @@ export const mediaService = {
       const snapshot = await getDocs(q);
       return snapshot.size;
     } catch (error) {
-      console.error("Fehler beim Zählen der Ordner-Dateien:", error);
       return 0;
     }
   },
@@ -1354,7 +1242,6 @@ export const mediaService = {
       const docRef = doc(db, 'media_assets', asset.id!);
       await deleteDoc(docRef);
     } catch (error) {
-      console.error("Fehler beim Löschen des Media Assets:", error);
       throw error;
     }
   },
@@ -1364,7 +1251,6 @@ export const mediaService = {
       await this.removeInvalidAsset(assetId, 'Manual cleanup requested');
       return true;
     } catch (error) {
-      console.error(`Failed to cleanup asset ${assetId}:`, error);
       return false;
     }
   },

@@ -5,7 +5,6 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 if (!GEMINI_API_KEY) {
-  console.error('GEMINI_API_KEY ist nicht in den Umgebungsvariablen gesetzt!');
 }
 
 interface StructuredGenerateRequest {
@@ -317,8 +316,6 @@ INDUSTRIE: BILDUNG - SCORE-OPTIMIERT
 
 // Verbesserte Parsing-Funktion für strukturierte Ausgabe
 function parseStructuredOutput(text: string): StructuredPressRelease {
-  console.log('=== PARSING START ===');
-  console.log('Raw text:', text.substring(0, 500) + '...');
   
   const lines = text.split('\n');
   
@@ -337,13 +334,11 @@ function parseStructuredOutput(text: string): StructuredPressRelease {
     
     if (!line) continue;
     
-    console.log(`Line ${i}: [${currentSection}] "${line.substring(0, 50)}..."`);
     
     // 1. Headline - erste nicht-leere Zeile
     if (!headline && currentSection === 'searching') {
       headline = line.replace(/^\*\*/, '').replace(/\*\*$/, '');
       currentSection = 'lead';
-      console.log('Found headline:', headline);
       continue;
     }
     
@@ -353,7 +348,6 @@ function parseStructuredOutput(text: string): StructuredPressRelease {
       if (line.startsWith('**') && line.endsWith('**')) {
         leadParagraph = line.substring(2, line.length - 2);
         currentSection = 'body';
-        console.log('Found lead (format 1):', leadParagraph);
         continue;
       }
       
@@ -366,7 +360,6 @@ function parseStructuredOutput(text: string): StructuredPressRelease {
       if (hasWQuestions) {
         leadParagraph = line;
         currentSection = 'body';
-        console.log('Found lead (format 2):', leadParagraph);
         continue;
       }
       
@@ -387,7 +380,6 @@ function parseStructuredOutput(text: string): StructuredPressRelease {
           role: quoteMatch[3] ? quoteMatch[3].trim() : 'Sprecher',
           company: quoteMatch[4] ? quoteMatch[4].trim() : ''
         };
-        console.log('Found quote:', quote);
       } else {
         // Einfacheres Format nur mit Zitat
         const simpleMatch = line.match(/"([^"]+)"/);
@@ -419,7 +411,6 @@ function parseStructuredOutput(text: string): StructuredPressRelease {
         const foundTags = hashtagString.match(/#[a-zA-ZäöüÄÖÜß0-9_]+/g);
         if (foundTags && foundTags.length > 0) {
           hashtags = foundTags.slice(0, 3); // Max 3 Hashtags
-          console.log('Found hashtags:', hashtags);
         }
       }
       continue;
@@ -436,10 +427,8 @@ function parseStructuredOutput(text: string): StructuredPressRelease {
                        line.match(/Weitere Informationen:\s*(.+)/);
       if (ctaMatch) {
         cta = ctaMatch[1].trim();
-        console.log('Found CTA:', cta);
       } else if (currentSection === 'cta') {
         cta = line;
-        console.log('Found CTA (full line):', cta);
       }
       continue;
     }
@@ -453,7 +442,6 @@ function parseStructuredOutput(text: string): StructuredPressRelease {
       
       bodyParagraphs.push(line);
       bodyCount++;
-      console.log(`Added body paragraph ${bodyCount}:`, line.substring(0, 50) + '...');
     }
   }
   
@@ -466,7 +454,6 @@ function parseStructuredOutput(text: string): StructuredPressRelease {
         const foundTags = line.match(/#[a-zA-ZäöüÄÖÜß0-9_]+/g);
         if (foundTags && foundTags.length >= 2) {
           hashtags = foundTags.slice(0, 3); // Max 3 Hashtags
-          console.log('Found hashtags (fallback):', hashtags);
           break;
         }
       }
@@ -487,7 +474,6 @@ function parseStructuredOutput(text: string): StructuredPressRelease {
   if (!leadParagraph && bodyParagraphs.length > 0) {
     leadParagraph = bodyParagraphs[0];
     bodyParagraphs = bodyParagraphs.slice(1);
-    console.log('Using first body as lead:', leadParagraph);
   }
   
   // Defaults für fehlende Elemente
@@ -506,13 +492,6 @@ function parseStructuredOutput(text: string): StructuredPressRelease {
     cta = 'Für weitere Informationen kontaktieren Sie uns unter info@example.com';
   }
   
-  console.log('=== PARSING RESULT ===');
-  console.log('Headline:', headline);
-  console.log('Lead length:', leadParagraph.length);
-  console.log('Body paragraphs:', bodyParagraphs.length);
-  console.log('Has quote:', !!quote.text);
-  console.log('Hashtags:', hashtags);
-  console.log('=== PARSING END ===');
   
   // Social Media Optimization Check
   const socialOptimized = headline.length <= 280 && hashtags.length >= 2;
@@ -597,11 +576,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('Generating structured press release with context', { 
-      promptLength: prompt.length,
-      context: context 
-    });
-
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
@@ -652,15 +626,6 @@ ${structured.bodyParagraphs.map(p => `<p>${p}</p>`).join('\n\n')}
 <p><span data-type="cta-text" class="cta-text font-bold text-black">${structured.cta}</span></p>
 `;
 
-    console.log('Structured press release generated successfully', { 
-      headline: structured.headline,
-      leadLength: structured.leadParagraph?.length,
-      bodyParagraphs: structured.bodyParagraphs?.length,
-      hasQuote: !!structured.quote.text,
-      context: context,
-      promptUsed: systemPrompt.substring(0, 200) + '...'
-    });
-
     return NextResponse.json({
       success: true,
       structured: structured,
@@ -672,7 +637,6 @@ ${structured.bodyParagraphs.map(p => `<p>${p}</p>`).join('\n\n')}
     });
 
   } catch (error: any) {
-    console.error('Error generating structured press release:', error);
 
     // Spezifische Fehlerbehandlung
     if (error.message?.includes('API_KEY_INVALID')) {

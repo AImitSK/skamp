@@ -56,7 +56,6 @@ export function PDFVersionHistory({
       setVersions(sortedVersions);
       setCurrentVersion(current);
     } catch (error) {
-      console.error('Fehler beim Laden der PDF-Versionen:', error);
     } finally {
       setLoading(false);
     }

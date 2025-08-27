@@ -155,7 +155,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       
       return approvalId;
     } catch (error) {
-      console.error('Error creating approval:', error);
       throw new Error('Fehler beim Erstellen der Freigabe');
     }
   }
@@ -204,7 +203,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
             
           }
         } catch (error) {
-          console.error('Fehler beim Laden des Kontakts:', error);
         }
       }
       
@@ -266,18 +264,11 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       // Entferne undefined Werte bevor Firestore-Speicherung
       const cleanApprovalData = this.removeUndefinedValues(approvalData);
       
-      console.log('📝 Creating Customer Approval with data:', {
-        shareId: cleanApprovalData.shareId,
-        customerMessage,
-        feedbackHistoryLength: cleanApprovalData.feedbackHistory?.length || 0,
-        feedbackHistory: cleanApprovalData.feedbackHistory
-      });
       
       const docRef = await addDoc(collection(db, 'approvals'), cleanApprovalData);
       
       return docRef.id;
     } catch (error) {
-      console.error('Fehler beim Erstellen der Customer-Approval:', error);
       throw error;
     }
   }
@@ -312,7 +303,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         return approval;
       });
     } catch (error) {
-      console.error('Error loading approvals:', error);
       return [];
     }
   }
@@ -368,7 +358,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       // TODO: E-Mail-Benachrichtigungen senden
       await this.sendNotifications(approval, 'request');
     } catch (error) {
-      console.error('Error sending for approval:', error);
       throw error;
     }
   }
@@ -404,7 +393,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         id: doc.id
       } as ApprovalEnhanced;
     } catch (error) {
-      console.error('Error getting approval by campaign ID:', error);
       return null;
     }
   }
@@ -454,9 +442,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         recipients: resetRecipients
       });
 
-      console.log(`✅ Approval ${approvalId} updated with new PDF version`);
     } catch (error) {
-      console.error('Error updating approval for new version:', error);
       throw error;
     }
   }
@@ -482,14 +468,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       const doc = snapshot.docs[0];
       const data = doc.data();
       
-      console.log('🔍 getByShareId - Raw approval data:', {
-        shareId,
-        hasFeedbackHistory: !!data.feedbackHistory,
-        feedbackHistoryLength: data.feedbackHistory?.length || 0,
-        feedbackHistory: data.feedbackHistory,
-        hasHistory: !!data.history,
-        historyLength: data.history?.length || 0
-      });
       
       // Stelle sicher, dass history ein Array ist
       if (data.history && !Array.isArray(data.history)) {
@@ -508,7 +486,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       
       return { id: doc.id, ...data } as ApprovalEnhanced;
     } catch (error) {
-      console.error('Error fetching by share ID:', error);
       return null;
     }
   }
@@ -536,7 +513,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       
       return doc;
     } catch (error) {
-      console.error('Error getting approval by ID:', error);
       return null;
     }
   }
@@ -607,7 +583,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
 
       await updateDoc(doc(db, this.collectionName, approval.id), updates);
     } catch (error) {
-      console.error('Error marking as viewed:', error);
     }
   }
 
@@ -684,7 +659,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         await this.sendStatusChangeNotification(approval, newStatus);
       }
     } catch (error) {
-      console.error('Error submitting decision:', error);
       throw error;
     }
   }
@@ -752,7 +726,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         await this.sendStatusChangeNotification(approval, newStatus);
       }
     } catch (error) {
-      console.error('Error submitting decision (public):', error);
       throw error;
     }
   }
@@ -811,7 +784,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       // Benachrichtigung senden
       await this.sendStatusChangeNotification(approval, 'changes_requested');
     } catch (error) {
-      console.error('Error requesting changes:', error);
       throw error;
     }
   }
@@ -862,7 +834,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       // Benachrichtigung senden
       await this.sendStatusChangeNotification(approval, 'changes_requested');
     } catch (error) {
-      console.error('Error requesting changes (public):', error);
       throw error;
     }
   }
@@ -955,7 +926,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
 
       return enhancedApprovals;
     } catch (error) {
-      console.error('Error in enhanced approval search:', error);
       return [];
     }
   }
@@ -1019,7 +989,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       const approvalId = await this.create(approvalData, context);
       return approvalId;
     } catch (error) {
-      console.error('Error creating approval from campaign:', error);
       throw error;
     }
   }
@@ -1101,7 +1070,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         byMonth: [] // TODO: Implementieren
       };
     } catch (error) {
-      console.error('Error getting statistics:', error);
       throw error;
     }
   }
@@ -1138,7 +1106,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         history: arrayUnion(historyEntry) as any
       }, context);
     } catch (error) {
-      console.error('Error sending reminder:', error);
       throw error;
     }
   }
@@ -1218,7 +1185,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
 
       return approvalId;
     } catch (error) {
-      console.error('Error migrating legacy approval:', error);
       throw error;
     }
   }
@@ -1351,7 +1317,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       // z.B. bei approved: Lock setzen wenn Kampagne nicht mehr bearbeitet werden soll
       
     } catch (error) {
-      console.error('Error updating campaign lock status:', error);
       // Fehler beim Lock-Update sollte den Hauptprozess nicht stoppen
     }
   }
@@ -1381,7 +1346,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         }
       }
     } catch (error) {
-      console.error('Error scheduling reminders:', error);
     }
   }
 }

@@ -93,7 +93,6 @@ export class HashtagDetector {
    */
   static detectHashtags(text: string): string[] {
     if (!text || typeof text !== 'string') {
-      console.warn('HashtagDetector: Ungültiger Text-Input');
       return [];
     }
 
@@ -115,7 +114,6 @@ export class HashtagDetector {
       .filter((hashtag, index, array) => array.indexOf(hashtag) === index) // Duplikate entfernen
       .filter(hashtag => this.isValidHashtag(hashtag)); // Validierung
 
-    console.log(`HashtagDetector: ${hashtags.length} gültige Hashtags gefunden`);
     return hashtags;
   }
 
@@ -177,7 +175,6 @@ export class HashtagDetector {
       );
     });
 
-    console.log(`HashtagDetector: ${relevantHashtags.length} keyword-relevante Hashtags gefunden`);
     return relevantHashtags;
   }
 

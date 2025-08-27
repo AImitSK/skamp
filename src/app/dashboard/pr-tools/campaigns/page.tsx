@@ -132,12 +132,10 @@ export default function PRCampaignsPage() {
         
         
       } catch (teamError) {
-        console.error('TeamMembers konnten nicht geladen werden:', teamError);
         setTeamMembers([]); // Fallback zu leerem Array
       }
       
     } catch (error) {
-      console.error('❌ Kampagnen-Laden fehlgeschlagen:', error);
       showAlert('error', 'Fehler beim Laden', 'Die Kampagnen konnten nicht geladen werden.');
     } finally {
       setLoading(false);

@@ -135,11 +135,6 @@ class SEOKeywordService {
       const data = await response.json();
       const rawKeywords = data.generatedText || data.content || data.text || '';
       
-      console.log('🎯 SEO Service: Raw API response:', { 
-        fullResponse: data, 
-        rawKeywords,
-        success: data.success 
-      });
       
       // Parse und validiere Keywords
       const keywords = this.parseAndValidateKeywords(rawKeywords, opts);
@@ -161,7 +156,6 @@ class SEOKeywordService {
       return result;
 
     } catch (error) {
-      console.error('Keyword-Detection Fehler:', error);
       
       // Fallback: Einfache Keyword-Extraktion ohne KI
       const fallbackKeywords = this.extractKeywordsFallback(text, opts);
@@ -198,7 +192,6 @@ class SEOKeywordService {
         const result = await this.detectKeywords(text, opts);
         callback(result);
       } catch (error) {
-        console.error('Debounced keyword detection error:', error);
         callback({
           keywords: [],
           confidence: 0,
@@ -234,7 +227,6 @@ class SEOKeywordService {
       
       // Filter unrealistic keyword density values
       if (density > 15) {
-        console.log(`⚙️ PR-SEO: Filtering unrealistic density for "${keyword}": ${density.toFixed(1)}%`);
         return null; // This will be filtered out
       }
       
@@ -516,7 +508,6 @@ Text (erste 1000 Zeichen): ${text.substring(0, 1000)}`;
         };
       }
     } catch (error) {
-      console.error('KI-Analyse fehlgeschlagen:', error);
     }
     
     // Fallback: Nur Basis-Metriken
@@ -770,11 +761,6 @@ Text (erste 1000 Zeichen): ${text.substring(0, 1000)}`;
     const firstParagraph = cleanText.substring(0, 200);
     const wordCount = cleanText.split(/\s+/).filter(w => w.length > 0).length;
 
-    console.log('🎯 Keyword-Score Berechnung:', {
-      keywordCount: keywords.length,
-      wordCount,
-      hasAIMetrics: keywordMetrics.length > 0
-    });
 
     // 1. ALGORITHMISCHER BASIS-SCORE (0-60 Punkte)
     
@@ -844,7 +830,6 @@ Text (erste 1000 Zeichen): ${text.substring(0, 1000)}`;
         hasAIAnalysis = true;
         const avgRelevance = aiMetrics.reduce((sum, m) => sum + (m.semanticRelevance || 0), 0) / aiMetrics.length;
         
-        console.log('🤖 KI-Analyse gefunden:', { avgRelevance, aiMetricsCount: aiMetrics.length });
         
         // KI-Bonus nur wenn Relevanz über 50% (sonst kein Bonus)
         if (avgRelevance > 50) {
@@ -859,7 +844,6 @@ Text (erste 1000 Zeichen): ${text.substring(0, 1000)}`;
     if (!hasAIAnalysis && baseScore > 20) {
       breakdown.fallbackBonus = 20;
       aiBonus = 20;
-      console.log('📊 Fallback-Bonus aktiviert (kein KI verfügbar)');
     } else if (!hasAIAnalysis) {
       // Reduzierter Fallback für sehr schwache Basis-Scores
       breakdown.fallbackBonus = 10;
@@ -867,14 +851,6 @@ Text (erste 1000 Zeichen): ${text.substring(0, 1000)}`;
     }
 
     const totalScore = Math.min(100, Math.round(baseScore + aiBonus));
-    
-    console.log('🎯 Keyword-Score Ergebnis:', {
-      baseScore,
-      aiBonus,
-      totalScore,
-      hasAIAnalysis,
-      breakdown
-    });
 
     return {
       baseScore: Math.round(baseScore),
@@ -1103,7 +1079,6 @@ DEINE ANTWORT (nur Keywords mit Komma):`;
   private parseAndValidateKeywords(rawKeywords: string, options: Required<KeywordDetectionOptions>): string[] {
     if (!rawKeywords) return [];
 
-    console.log('🔧 Parsing raw keywords:', rawKeywords.substring(0, 200) + '...');
 
     // Bereinige den Text komplett
     let cleanText = rawKeywords
@@ -1126,7 +1101,6 @@ DEINE ANTWORT (nur Keywords mit Komma):`;
     
     // 2. Falls langer Text oder keine Kommas: Suche nach Keyword-Pattern
     else if (cleanText.length > 100 || keywords.length === 0) {
-      console.log('⚠️ Long response or no commas, extracting patterns...');
       
       // Suche nach typischen Keyword-Mustern
       const patterns = [
@@ -1151,7 +1125,6 @@ DEINE ANTWORT (nur Keywords mit Komma):`;
       
       // 3. Fallback: Häufigste Wörter extrahieren
       if (keywords.length === 0) {
-        console.log('⚠️ No keyword patterns found, using fallback...');
         return this.extractKeywordsFallback(cleanText, options);
       }
     }
@@ -1167,7 +1140,6 @@ DEINE ANTWORT (nur Keywords mit Komma):`;
       .filter(k => options.excludeCommonWords ? !this.isCommonWord(k, true) : true)
       .slice(0, options.maxKeywords);
 
-    console.log('🎯 PR-SEO Keywords parsed:', validKeywords.length > 0 ? validKeywords.join(', ') : 'none');
     return [...new Set(validKeywords)]; // Remove duplicates
   }
   

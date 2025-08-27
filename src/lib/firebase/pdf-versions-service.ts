@@ -117,7 +117,6 @@ class PDFVersionsService {
 
       return { pdfUrl, fileSize };
     } catch (error) {
-      console.error('❌ Fehler beim Erstellen der PDF-Vorschau:', error);
       throw new Error('Fehler beim Erstellen der PDF-Vorschau');
     }
   }
@@ -201,7 +200,6 @@ class PDFVersionsService {
             };
           }
         } catch (error) {
-          console.warn('⚠️ Approval-Service Fehler, überspringe customerApproval:', error);
           // Fahre ohne customerApproval fort
         }
       }
@@ -236,7 +234,6 @@ class PDFVersionsService {
       return pdfVersionId;
 
     } catch (error) {
-      console.error('❌ Fehler beim Erstellen der PDF-Version:', error);
       throw new Error('Fehler beim Erstellen der PDF-Version');
     }
   }
@@ -262,7 +259,6 @@ class PDFVersionsService {
 
       return versions;
     } catch (error) {
-      console.error('❌ Fehler beim Laden der Version-Historie:', error);
       return [];
     }
   }
@@ -275,7 +271,6 @@ class PDFVersionsService {
       const versions = await this.getVersionHistory(campaignId);
       return versions.length > 0 ? versions[0] : null;
     } catch (error) {
-      console.error('❌ Fehler beim Laden der aktuellen Version:', error);
       return null;
     }
   }
@@ -338,7 +333,6 @@ class PDFVersionsService {
       }
 
     } catch (error) {
-      console.error('❌ Fehler beim Update des PDF-Status:', error);
       throw error;
     }
   }
@@ -400,9 +394,7 @@ class PDFVersionsService {
       // 🆕 Optional: Benachrichtigungen
       await this.notifyEditLockChange(campaignId, 'locked', lockReason);
 
-      console.log(`🔒 Enhanced Campaign-Bearbeitung gesperrt: ${campaignId} (${lockReason})`);
     } catch (error) {
-      console.error('❌ Fehler beim Enhanced Sperren der Campaign:', error);
       throw error;
     }
   }
@@ -437,9 +429,7 @@ class PDFVersionsService {
       // 🆕 Optional: Benachrichtigungen
       await this.notifyEditLockChange(campaignId, 'unlocked', null);
 
-      console.log(`🔓 Enhanced Campaign-Bearbeitung entsperrt: ${campaignId}`);
     } catch (error) {
-      console.error('❌ Fehler beim Enhanced Entsperren der Campaign:', error);
       throw error;
     }
   }
@@ -479,7 +469,6 @@ class PDFVersionsService {
       };
       
     } catch (error) {
-      console.error('❌ Fehler beim Edit-Lock Status Check:', error);
       return { isLocked: false, canRequestUnlock: false };
     }
   }
@@ -506,7 +495,6 @@ class PDFVersionsService {
         linkedAt: serverTimestamp()
       });
     } catch (error) {
-      console.error('❌ Fehler beim Verknüpfen mit Approval:', error);
       throw error;
     }
   }
@@ -543,7 +531,6 @@ class PDFVersionsService {
       }
 
     } catch (error) {
-      console.error('❌ Fehler beim Cleanup alter Versionen:', error);
     }
   }
 
@@ -567,13 +554,6 @@ class PDFVersionsService {
       // ========================================
       // NEUE PUPPETEER-BASIERTE PDF-GENERATION
       // ========================================
-      console.log('📄 === PUPPETEER PDF-GENERATION GESTARTET ===');
-      console.log('🏷️ Title:', content.title);
-      console.log('📝 MainContent:', content.mainContent?.substring(0, 100) + '...');
-      console.log('🔢 BoilerplateSections:', content.boilerplateSections?.length || 0);
-      console.log('🖼️ KeyVisual:', !!content.keyVisual?.url);
-      console.log('🏢 ClientName:', content.clientName);
-      console.log('📄 TemplateId:', content.templateId || 'default');
 
       // 🔥 WICHTIG: Template-HTML generieren statt Rohdaten senden
       let templateHtml: string;
@@ -591,7 +571,6 @@ class PDFVersionsService {
             clientName: content.clientName,
             date: new Date().toISOString()
           });
-          console.log('✅ Template-HTML generiert mit', template.name);
         } else {
           // Fallback: Standard-HTML mit erstem System-Template
           const fallbackTemplate = await pdfTemplateService.getSystemTemplates().then(t => t[0]);
@@ -603,7 +582,6 @@ class PDFVersionsService {
             clientName: content.clientName,
             date: new Date().toISOString()
           });
-          console.log('⚠️ Fallback HTML generiert');
         }
       } else {
         // Kein Template-ID: Standard-HTML mit Default-Template
@@ -616,7 +594,6 @@ class PDFVersionsService {
           clientName: content.clientName,
           date: new Date().toISOString()
         });
-        console.log('📝 Standard HTML generiert');
       }
 
       // Bereite Request für API auf - MIT FERTIGEM HTML UND ERFORDERLICHEN PARAMETERN
@@ -649,7 +626,6 @@ class PDFVersionsService {
       };
 
       // API-Aufruf an neue Puppeteer-Route
-      console.log('🚀 Rufe Puppeteer PDF-API auf...');
       const response = await fetch('/api/generate-pdf', {
         method: 'POST',
         headers: {
@@ -665,43 +641,20 @@ class PDFVersionsService {
 
       const result = await response.json();
       
-      console.log('🔍 Client received result:', {
-        success: result.success,
-        hasPdfBase64: !!result.pdfBase64,
-        pdfBase64Type: typeof result.pdfBase64,
-        pdfBase64Length: result.pdfBase64?.length,
-        pdfBase64Prefix: typeof result.pdfBase64 === 'string' ? result.pdfBase64.substring(0, 50) : 'NOT_STRING',
-        needsClientUpload: result.needsClientUpload
-      });
       
       if (!result.success) {
         throw new Error(`PDF-Generation fehlgeschlagen: ${result.error}`);
       }
 
-      console.log('✅ Puppeteer PDF erfolgreich generiert:', {
-        fileSize: result.fileSize,
-        needsClientUpload: result.needsClientUpload,
-        generationTime: result.metadata?.generationTimeMs,
-        wordCount: result.metadata?.wordCount,
-        pageCount: result.metadata?.pageCount
-      });
 
       // Wenn Client-Side Upload nötig ist, führe es durch
       let finalPdfUrl = result.pdfUrl;
       
       if (result.needsClientUpload && result.pdfBase64) {
-        console.log('📤 Client-Side Upload wird durchgeführt...');
-        console.log('🔍 Base64 String Info:', {
-          hasBase64: !!result.pdfBase64,
-          length: result.pdfBase64.length,
-          prefix: result.pdfBase64.substring(0, 50),
-          isValidBase64: /^[A-Za-z0-9+/]*={0,2}$/.test(result.pdfBase64)
-        });
         
         try {
           // Konvertiere Base64 zu Blob (mit Fehlerbehandlung)
           const cleanBase64 = result.pdfBase64.replace(/[^A-Za-z0-9+/=]/g, '');
-          console.log('🧹 Cleaned Base64:', cleanBase64.length, 'chars');
           
           const byteCharacters = atob(cleanBase64);
           const byteNumbers = new Array(byteCharacters.length);
@@ -710,13 +663,11 @@ class PDFVersionsService {
           }
           const byteArray = new Uint8Array(byteNumbers);
           const pdfBlob = new Blob([byteArray], { type: 'application/pdf' });
-          console.log('✅ Base64 zu Blob konvertiert:', pdfBlob.size, 'bytes');
         
           // Erstelle File object für Upload
           const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
           
           // Upload via mediaService (Client-Side mit Auth)
-          console.log('☁️ Uploade PDF zu Firebase Storage (Client-Side)...');
           const uploadedAsset = await mediaService.uploadMedia(
             pdfFile,
             organizationId,
@@ -727,16 +678,13 @@ class PDFVersionsService {
           );
           
           finalPdfUrl = uploadedAsset.downloadUrl;
-          console.log('✅ Client-Side Upload erfolgreich!');
           
         } catch (base64Error) {
-          console.error('❌ Base64 Dekodierung fehlgeschlagen:', base64Error);
           const errorMessage = base64Error instanceof Error ? base64Error.message : String(base64Error);
           throw new Error(`Base64 Dekodierung fehlgeschlagen: ${errorMessage}`);
         }
       }
       
-      console.log('📄 === PUPPETEER PDF-GENERATION BEENDET ===\n');
 
       return {
         pdfUrl: finalPdfUrl,
@@ -744,16 +692,12 @@ class PDFVersionsService {
       };
 
     } catch (error) {
-      console.error('❌ Fehler bei der Puppeteer PDF-Generation:', error);
       
       // Detailliertere Fehlerbehandlung
       if (error instanceof Error) {
         if (error.message.includes('timeout')) {
-          console.error('⏱️ PDF-Generation Timeout');
         } else if (error.message.includes('network')) {
-          console.error('🌐 Netzwerk-Fehler bei PDF-Generation');
         } else if (error.message.includes('storage')) {
-          console.error('☁️ Storage-Fehler bei PDF-Generation');
         }
       }
       
@@ -783,7 +727,6 @@ class PDFVersionsService {
       }
       return null;
     } catch (error) {
-      console.error('❌ Fehler beim Laden der PDF-Version:', error);
       return null;
     }
   }
@@ -804,7 +747,6 @@ class PDFVersionsService {
         });
       }
     } catch (error) {
-      console.error('❌ Fehler beim Update der Campaign PDF-Referenz:', error);
     }
   }
 
@@ -874,11 +816,9 @@ class PDFVersionsService {
       // Benachrichtige Administratoren
       await this.notifyUnlockRequest(campaignId, unlockRequest);
       
-      console.log(`📝 Unlock-Request erstellt: ${unlockRequest.id} für Campaign ${campaignId}`);
       return unlockRequest.id;
       
     } catch (error) {
-      console.error('❌ Fehler beim Unlock-Request:', error);
       throw error;
     }
   }
@@ -929,10 +869,8 @@ class PDFVersionsService {
       await this.logEditLockEvent(campaignId, 'unlocked', null, approverContext);
       await this.notifyUnlockApproval(campaignId, requestId, approverContext);
       
-      console.log(`✅ Unlock-Request approved: ${requestId} für Campaign ${campaignId}`);
       
     } catch (error) {
-      console.error('❌ Fehler beim Unlock-Request Approval:', error);
       throw error;
     }
   }
@@ -960,7 +898,6 @@ class PDFVersionsService {
       
       await addDoc(collection(db, 'audit_logs'), logEntry);
     } catch (error) {
-      console.error('⚠️ Audit-Log Fehler (nicht kritisch):', error);
     }
   }
 
@@ -975,9 +912,7 @@ class PDFVersionsService {
     try {
       // Integration mit bestehendem Notification-System
       // TODO: Implementation basierend auf vorhandenem Service
-      console.log(`📧 Edit-Lock Notification: ${campaignId} ${action} (${reason})`);
     } catch (error) {
-      console.warn('⚠️ Edit-Lock Notification Fehler (nicht kritisch):', error);
     }
   }
 
@@ -990,9 +925,7 @@ class PDFVersionsService {
   ): Promise<void> {
     try {
       // Benachrichtige Administratoren über Unlock-Request
-      console.log(`📧 Unlock-Request Notification: ${request.id} für Campaign ${campaignId}`);
     } catch (error) {
-      console.warn('⚠️ Unlock-Request Notification Fehler (nicht kritisch):', error);
     }
   }
 
@@ -1006,9 +939,7 @@ class PDFVersionsService {
   ): Promise<void> {
     try {
       // Benachrichtige Requester über Approval
-      console.log(`📧 Unlock-Approval Notification: ${requestId} approved by ${approver.displayName}`);
     } catch (error) {
-      console.warn('⚠️ Unlock-Approval Notification Fehler (nicht kritisch):', error);
     }
   }
 
@@ -1029,9 +960,7 @@ class PDFVersionsService {
       
       // ENTFERNT: Approval-Workflow Callback (Team-Approval System entfernt)
       // await approvalWorkflowService.handlePDFStatusUpdate(...)
-      console.log('ℹ️ PDF-Status-Update:', { campaignId, pdfVersionId, newStatus });
     } catch (error) {
-      console.warn('⚠️ Approval-Workflow Callback Fehler (nicht kritisch):', error);
     }
   }
 }

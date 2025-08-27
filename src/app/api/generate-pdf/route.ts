@@ -87,7 +87,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<PDFGenera
   // ENHANCED DEBUG LOGGING
   const debugLog = (message: string, data?: any) => {
     const timestamp = new Date().toISOString();
-    console.log(`[${timestamp}] [${requestId}] ${message}`, data ? JSON.stringify(data, null, 2) : '');
   };
 
   try {
@@ -103,19 +102,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<PDFGenera
 
     // Parse Request Body
     requestData = await request.json();
-    console.log('📋 Request-Daten:', {
-      campaignId: requestData.campaignId,
-      organizationId: requestData.organizationId,
-      title: requestData.title?.substring(0, 50) + '...',
-      hasMainContent: !!requestData.mainContent,
-      boilerplateSectionsCount: requestData.boilerplateSections?.length || 0,
-      hasKeyVisual: !!requestData.keyVisual?.url,
-      clientName: requestData.clientName,
-      // Template-Info
-      templateId: requestData.templateId || 'default',
-      hasTemplateCustomizations: !!requestData.templateCustomizations,
-      useSystemTemplate: requestData.useSystemTemplate ?? true
-    });
 
     // Validierung der Request-Daten
     const validationErrors = validateRequest(requestData);
@@ -153,12 +139,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<PDFGenera
     let templateMetadata: any = {};
     let cssInjectionTime = 0;
 
-    console.log('🎨 Prüfe HTML-Generation-Methode...');
     const renderStart = Date.now();
 
     // 🔥 PRIORITÄT 1: Fertiges HTML vom Client verwenden
     if (requestData.html && requestData.html.trim().length > 0) {
-      console.log('✅ Verwende fertiges Template-HTML vom Client');
       htmlContent = requestData.html;
       renderMethod = 'custom';
       templateMetadata = {
@@ -167,23 +151,19 @@ export async function POST(request: NextRequest): Promise<NextResponse<PDFGenera
         templateVersion: '2.0.0',
         cssInjectionTime: 0
       };
-      console.log('📄 Client-HTML verwendet, Größe:', htmlContent.length, 'Zeichen');
     } else if (requestData.templateId && requestData.templateId !== 'default') {
       // Template-basierte Generierung
-      console.log(`🎭 Lade Template: ${requestData.templateId}`);
       
       try {
         // Template laden
         let pdfTemplate = await pdfTemplateService.getTemplate(requestData.templateId);
         
         if (!pdfTemplate) {
-          console.warn(`⚠️ Template ${requestData.templateId} nicht gefunden, verwende Default-Template`);
           pdfTemplate = await pdfTemplateService.getDefaultTemplate(requestData.organizationId);
         }
         
         // Template-Customizations anwenden
         if (requestData.templateCustomizations) {
-          console.log('🎨 Wende Template-Customizations an...');
           pdfTemplate = {
             ...pdfTemplate,
             colorScheme: { ...pdfTemplate.colorScheme, ...requestData.templateCustomizations.colorScheme },
@@ -206,11 +186,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<PDFGenera
           cssInjectionTime
         };
         
-        console.log(`✅ Template ${pdfTemplate.name} erfolgreich angewendet (${cssInjectionTime}ms)`);
         
       } catch (templateError) {
-        console.error('❌ Fehler bei Template-Anwendung:', templateError);
-        console.log('🔄 Fallback auf Legacy-Template...');
         
         // Fallback auf Legacy-Template
         htmlContent = await templateRenderer.renderTemplate(templateData);
@@ -218,13 +195,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<PDFGenera
       }
     } else {
       // Legacy-Template-Generierung
-      console.log('🎨 Verwende Legacy-Template...');
       htmlContent = await templateRenderer.renderTemplate(templateData);
       renderMethod = 'legacy';
     }
     
     const renderTime = Date.now() - renderStart;
-    console.log(`✅ HTML-Template erfolgreich gerendert (${renderTime}ms, Methode: ${renderMethod})`);
 
     // Puppeteer Browser starten mit Serverless-Chromium
     debugLog('🚀 Starte Puppeteer Browser mit Serverless-Chromium...');
@@ -304,20 +279,16 @@ export async function POST(request: NextRequest): Promise<NextResponse<PDFGenera
     
     // Error-Handler für Page
     page.on('error', (error) => {
-      console.error('❌ Page Error:', error);
     });
     
     page.on('pageerror', (error) => {
-      console.error('❌ Page Script Error:', error);  
     });
 
     // HTML-Content laden
-    console.log('📄 Lade HTML-Content in Browser...');
     await page.setContent(htmlContent, { 
       waitUntil: requestData.options?.waitUntil || 'networkidle0',
       timeout: 30000 
     });
-    console.log('✅ HTML-Content erfolgreich geladen');
 
     // PDF-Optionen
     const pdfOptions = {
@@ -335,9 +306,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<PDFGenera
     };
 
     // PDF generieren
-    console.log('🔄 Generiere PDF mit Puppeteer...');
     const pdfBuffer = await page.pdf(pdfOptions);
-    console.log('✅ PDF erfolgreich generiert, Größe:', pdfBuffer.length);
 
     await browser.close();
     browser = null;
@@ -410,20 +379,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<PDFGenera
           requestData.templateCustomizations
         );
       } catch (trackingError) {
-        console.warn('⚠️ Template-Usage konnte nicht getrackt werden:', trackingError);
       }
     }
-
-    console.log('🎉 PDF-Generation erfolgreich abgeschlossen:', {
-      generationTimeMs: generationTime,
-      fileSize: uploadResult.fileSize,
-      wordCount,
-      pageCount,
-      renderMethod,
-      templateUsed: templateMetadata.templateName || 'Legacy',
-      cssInjectionTime
-    });
-    console.log('📄 === PDF-Generation API Route beendet ===\n');
 
     // Final validation before sending response
     debugLog('🔍 Final Response Validation', {
@@ -436,7 +393,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<PDFGenera
     return NextResponse.json(response);
 
   } catch (error: any) {
-    console.error('❌ PDF-Generation fehlgeschlagen:', error);
 
     // Cleanup bei Fehler
     if (page) {

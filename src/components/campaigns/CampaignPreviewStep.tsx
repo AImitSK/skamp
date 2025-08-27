@@ -301,7 +301,6 @@ export function CampaignPreviewStep({
             onTemplateSelect={onTemplateSelect}
             showPreview={true}
             onPreviewError={(error) => {
-              console.error('Template-Vorschau-Fehler:', error);
               // TODO: Toast-Benachrichtigung hinzufügen
             }}
           />

@@ -269,7 +269,6 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
 
   // DEBUG
   useEffect(() => {
-    console.log('StructuredGenerationModal mounted with props:', { onClose, onGenerate, existingContent });
   }, []);
 
   // Keyboard shortcuts
@@ -297,7 +296,6 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
           setTemplates(apiTemplates);
         }
       } catch (error) {
-        console.error('Failed to load templates:', error);
       } finally {
         setLoadingTemplates(false);
       }
@@ -366,7 +364,6 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
       setCurrentStep('review');
 
     } catch (error: any) {
-      console.error('Generation failed:', error);
       setError(error.message || 'Generierung fehlgeschlagen');
       setCurrentStep('content');
     } finally {
@@ -375,11 +372,8 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
   }
 
   const handleUseResult = () => {
-    console.log('handleUseResult called');
-    console.log('generatedResult:', generatedResult);
     
     if (!generatedResult) {
-      console.error('No generatedResult available');
       return;
     }
 
@@ -394,14 +388,11 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
       }
     };
 
-    console.log('Calling onGenerate with result:', result);
     
     try {
       onGenerate(result);
-      console.log('onGenerate called successfully');
       // Modal wird automatisch durch parent component geschlossen
     } catch (error) {
-      console.error('Error calling onGenerate:', error);
     }
   };
 
@@ -622,7 +613,6 @@ export default function StructuredGenerationModal({ onClose, onGenerate, existin
                   </Button>
                   <Button 
                     onClick={() => {
-                      console.log('Text übernehmen button clicked');
                       handleUseResult();
                     }}
                     className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
