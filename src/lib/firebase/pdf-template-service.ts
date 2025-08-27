@@ -71,7 +71,6 @@ class PDFTemplateService {
   constructor() {
     // Cache wird lazy geladen
     this.initCache();
-    console.log('🎯 PDFTemplateService initialisiert');
   }
 
   private async initCache() {
@@ -98,7 +97,6 @@ class PDFTemplateService {
       
       return null;
     } catch (error) {
-      console.error(`❌ Fehler beim Laden des Templates ${templateId}:`, error);
       return null;
     }
   }
@@ -115,13 +113,11 @@ class PDFTemplateService {
         const cachedTemplates = this.cache?.getTemplate(cacheKey);
         if (cachedTemplates && Array.isArray(cachedTemplates)) {
           this.performanceMetrics.cacheHits++;
-          console.log('✅ System-Templates aus Cache geladen');
           return cachedTemplates as unknown as PDFTemplate[];
         }
       }
 
       this.performanceMetrics.cacheMisses++;
-      console.log('🔄 System-Templates werden generiert...');
       
       const systemTemplates = [
         this.createModernProfessionalTemplate(),
@@ -142,7 +138,6 @@ class PDFTemplateService {
       this.performanceMetrics.templateLoads++;
       return systemTemplates;
     } catch (error) {
-      console.error('❌ Fehler beim Laden der System-Templates:', error);
       throw new Error('System-Templates konnten nicht geladen werden');
     }
   }
@@ -158,12 +153,10 @@ class PDFTemplateService {
       const cachedTemplates = this.cache?.getTemplate(cacheKey);
       if (cachedTemplates && Array.isArray(cachedTemplates)) {
         this.performanceMetrics.cacheHits++;
-        console.log(`✅ Organization-Templates aus Cache geladen: ${organizationId}`);
         return cachedTemplates as unknown as PDFTemplate[];
       }
 
       this.performanceMetrics.cacheMisses++;
-      console.log(`🔄 Lade Organization-Templates: ${organizationId}`);
       
       const q = query(
         collection(db, this.COLLECTION_NAME),
@@ -191,7 +184,6 @@ class PDFTemplateService {
       this.performanceMetrics.templateLoads++;
       return templates;
     } catch (error) {
-      console.error('❌ Fehler beim Laden der Organization-Templates:', error);
       throw new Error('Organization-Templates konnten nicht geladen werden');
     }
   }
@@ -208,7 +200,6 @@ class PDFTemplateService {
       
       return [...systemTemplates, ...orgTemplates];
     } catch (error) {
-      console.error('❌ Fehler beim Laden aller Templates:', error);
       throw new Error('Templates konnten nicht geladen werden');
     }
   }
@@ -236,7 +227,6 @@ class PDFTemplateService {
       return systemTemplates[0]; // Modern Professional
       
     } catch (error) {
-      console.error('❌ Fehler beim Laden des Default-Templates:', error);
       // Ultimate Fallback
       return this.createModernProfessionalTemplate();
     }
@@ -253,7 +243,6 @@ class PDFTemplateService {
       const cachedTemplate = this.cache?.getTemplate(templateId);
       if (cachedTemplate) {
         this.performanceMetrics.cacheHits++;
-        console.log(`✅ Template aus Cache geladen: ${templateId} (${Date.now() - startTime}ms)`);
         return cachedTemplate;
       }
       
@@ -269,13 +258,11 @@ class PDFTemplateService {
       }
       
       // Lade aus Firestore
-      console.log(`🔄 Lade Template aus Firestore: ${templateId}`);
       const templateDoc = await getDoc(
         doc(db, this.COLLECTION_NAME, templateId)
       );
       
       if (!templateDoc.exists()) {
-        console.log(`⚠️ Template nicht gefunden: ${templateId}`);
         return null;
       }
       
@@ -286,12 +273,10 @@ class PDFTemplateService {
       this.cache?.setTemplate(template.id, template);
       
       const loadTime = Date.now() - startTime;
-      console.log(`✅ Template geladen: ${templateId} (${loadTime}ms)`);
       this.performanceMetrics.templateLoads++;
       
       return template;
     } catch (error) {
-      console.error(`❌ Fehler beim Laden des Templates ${templateId}:`, error);
       return null;
     }
   }
@@ -315,9 +300,7 @@ class PDFTemplateService {
         updatedAt: serverTimestamp()
       }, { merge: true });
       
-      console.log(`✅ Default-Template für ${organizationId} auf ${templateId} gesetzt`);
     } catch (error) {
-      console.error('❌ Fehler beim Setzen des Default-Templates:', error);
       throw new Error('Default-Template konnte nicht gesetzt werden');
     }
   }
@@ -410,11 +393,9 @@ class PDFTemplateService {
       // Cache Template falls verfügbar
       // TODO: Template Cache implementieren
       
-      console.log(`✅ Custom Template ${templateId} erfolgreich hochgeladen`);
       return customTemplate;
       
     } catch (error) {
-      console.error('❌ Fehler beim Hochladen des Custom Templates:', error);
       throw new Error('Custom Template konnte nicht hochgeladen werden');
     }
   }
@@ -488,9 +469,7 @@ class PDFTemplateService {
       // Update Template Usage
       await this.incrementTemplateUsage(templateId);
       
-      console.log(`✅ Template ${templateId} auf Campaign ${campaignId} angewendet`);
     } catch (error) {
-      console.error('❌ Fehler beim Anwenden des Templates:', error);
       throw new Error('Template konnte nicht angewendet werden');
     }
   }
@@ -536,11 +515,9 @@ class PDFTemplateService {
       
       const { thumbnailUrl } = await response.json();
       
-      console.log(`🖼️ Thumbnail für Template ${template.id} erstellt: ${thumbnailUrl}`);
       return thumbnailUrl;
       
     } catch (error) {
-      console.error(`❌ Fehler bei Thumbnail-Generierung für ${template.id}:`, error);
       // Kein Fallback mehr - undefined zurückgeben
       return undefined;
     }
@@ -579,17 +556,14 @@ class PDFTemplateService {
           const cachedHtml = this.cache.getHtml(htmlCacheKey);
           if (cachedHtml) {
             this.performanceMetrics.cacheHits++;
-            console.log(`✅ Template-Preview aus Cache: ${templateId} (${Date.now() - startTime}ms)`);
             return cachedHtml;
           }
         } catch (e) {
           // Cache nicht verfügbar, weiter ohne Caching
-          console.log('⚠️ Template-Cache nicht verfügbar, fahre ohne Caching fort');
         }
       }
       
       this.performanceMetrics.cacheMisses++;
-      console.log(`🎨 Generiere Template-Preview: ${templateId}`);
       
       // Lade Template
       let template = await this.getTemplate(templateId);
@@ -626,11 +600,9 @@ class PDFTemplateService {
       
       const renderTime = Date.now() - startTime;
       this.updateAverageRenderTime(renderTime);
-      console.log(`✅ Template-Preview generiert: ${templateId} (${renderTime}ms)`);
       
       return html;
     } catch (error) {
-      console.error('❌ Fehler bei Template-Vorschau:', error);
       throw new Error('Template-Vorschau konnte nicht generiert werden');
     }
   }
@@ -656,7 +628,6 @@ class PDFTemplateService {
       
       return stats.sort((a, b) => b.usageCount - a.usageCount);
     } catch (error) {
-      console.error('❌ Fehler beim Laden der Usage-Stats:', error);
       return [];
     }
   }
@@ -667,7 +638,6 @@ class PDFTemplateService {
    */
   clearCache(): void {
     this.cache?.clear();
-    console.log('🧹 Template-Cache bereinigt');
   }
 
   /**
@@ -687,7 +657,6 @@ class PDFTemplateService {
       this.cache?.clearCache('css');
     });
     
-    console.log(`🗑️ Cache für Template ${templateId} invalidiert`);
   }
 
   /**
@@ -712,7 +681,6 @@ class PDFTemplateService {
    */
   async warmUpCache(organizationId: string): Promise<void> {
     try {
-      console.log(`🔥 Cache Warm-Up für Organization: ${organizationId}`);
       
       // System-Templates vorladen
       await this.getSystemTemplates();
@@ -723,9 +691,7 @@ class PDFTemplateService {
       // Default-Template vorladen
       await this.getDefaultTemplate(organizationId);
       
-      console.log('✅ Cache Warm-Up abgeschlossen');
     } catch (error) {
-      console.warn('⚠️ Cache Warm-Up teilweise fehlgeschlagen:', error);
     }
   }
   
@@ -795,7 +761,6 @@ class PDFTemplateService {
         });
       }
     } catch (error) {
-      console.warn('⚠️ Template Usage konnte nicht aktualisiert werden:', error);
     }
   }
   
@@ -810,7 +775,6 @@ class PDFTemplateService {
     
     // CSS generieren
     const customCss = this.generateTemplateCSS(template);
-    console.log(`🎨 CSS für Template ${template.id} generiert`);
     
     // Client-seitiges HTML-Template generieren
     const baseHtml = this.generateClientSideHTML(templateData, template);
@@ -822,7 +786,6 @@ class PDFTemplateService {
     );
     
     const renderTime = Date.now() - startTime;
-    console.log(`✅ Template-Styling angewendet: ${template.id} (${renderTime}ms)`);
     
     return styledHtml;
   }
@@ -1637,11 +1600,9 @@ class PDFTemplateService {
         this.cache.invalidateTemplate(orgCacheKey);
       }
       
-      console.log(`✅ Custom Template erstellt: ${templateId}`);
       return templateId;
       
     } catch (error) {
-      console.error('❌ Fehler beim Erstellen des Custom Templates:', error);
       throw new Error('Custom Template konnte nicht erstellt werden');
     }
   }
@@ -1698,10 +1659,8 @@ class PDFTemplateService {
         this.cache.invalidateTemplate(`org_templates_${updateData.organizationId}`);
       }
       
-      console.log(`✅ Custom Template aktualisiert: ${templateId}`);
       
     } catch (error) {
-      console.error('❌ Fehler beim Aktualisieren des Custom Templates:', error);
       throw new Error('Custom Template konnte nicht aktualisiert werden');
     }
   }
@@ -1738,7 +1697,6 @@ class PDFTemplateService {
       return templateData.template;
       
     } catch (error) {
-      console.error(`❌ Fehler beim Laden des Custom Templates ${templateId}:`, error);
       return null;
     }
   }
@@ -1756,10 +1714,8 @@ class PDFTemplateService {
         this.cache.invalidateTemplate(`org_templates_${organizationId}`);
       }
       
-      console.log(`✅ Custom Template gelöscht: ${templateId}`);
       
     } catch (error) {
-      console.error('❌ Fehler beim Löschen des Custom Templates:', error);
       throw new Error('Custom Template konnte nicht gelöscht werden');
     }
   }
@@ -1798,12 +1754,10 @@ class PDFTemplateService {
       }
       
       const renderTime = Date.now() - startTime;
-      console.log(`✅ Custom Template gerendert: ${template.id} (${renderTime}ms)`);
       
       return htmlContent;
       
     } catch (error) {
-      console.error('❌ Fehler beim Rendern des Custom Templates:', error);
       throw new Error('Custom Template konnte nicht gerendert werden');
     }
   }

@@ -97,7 +97,6 @@ export function KeyVisualSection({
       setShowCropper(false);
       setSelectedImageSrc('');
     } catch (error) {
-      console.error('Fehler beim Upload:', error);
       alert('Fehler beim Hochladen des Bildes');
     } finally {
       setIsProcessing(false);
@@ -132,7 +131,6 @@ export function KeyVisualSection({
         reader.readAsDataURL(blob);
         
       } catch (error) {
-        console.error('Fehler beim Laden des Bildes:', error);
         alert('CORS-Fehler: Das Bild kann nicht verarbeitet werden. Bitte lade das Bild erneut hoch.');
       }
     }
@@ -166,7 +164,6 @@ export function KeyVisualSection({
         reader.readAsDataURL(blob);
         
       } catch (error) {
-        console.error('Fehler beim Laden des Bildes:', error);
         alert('CORS-Fehler: Das Bild kann nicht verarbeitet werden. Bitte lade das Bild erneut hoch.');
       }
     }

@@ -342,7 +342,6 @@ export function TemplateSelector({
         setTemplates(systemTemplates);
       } catch (fallbackErr) {
         // Auch System-Templates konnten nicht geladen werden
-        console.error('Kritischer Fehler:', fallbackErr);
       }
       
     } finally {
@@ -363,7 +362,6 @@ export function TemplateSelector({
   useEffect(() => {
     if (templates.length > 0 && !selectedTemplateId) {
       const firstTemplate = templates[0];
-      console.log(`🎯 Auto-Auswahl des ersten Templates: ${firstTemplate.name}`);
       onTemplateSelect(firstTemplate.id, firstTemplate.name);
     }
   }, [templates, selectedTemplateId, onTemplateSelect]);
@@ -387,13 +385,11 @@ export function TemplateSelector({
       const thumbnailUrl = await pdfTemplateService.generateTemplateThumbnail(template);
       
       // Update Template mit neuer Thumbnail-URL (nur lokal für Vorschau)
-      console.log(`🖼️ Thumbnail generiert für ${template.name}: ${thumbnailUrl}`);
       
       // Hier könnte man das Template in der Liste aktualisieren
       // Das wäre eine Erweiterung für später
       
     } catch (error) {
-      console.error('Fehler bei Thumbnail-Generierung:', error);
     }
   }, [user]);
   

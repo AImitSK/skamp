@@ -148,11 +148,9 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
 
   // Debug Logging für State-Änderungen
   useEffect(() => {
-    console.log('🖼️ KeyVisual State changed:', keyVisual);
   }, [keyVisual]);
 
   useEffect(() => {
-    console.log('📝 BoilerplateSections State changed:', boilerplateSections?.length, boilerplateSections);
   }, [boilerplateSections]);
 
   // Content HTML Generation - kombiniert alle Komponenten zu einem HTML-String
@@ -166,11 +164,9 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
     
     // 2. Textbausteine (falls vorhanden)
     if (boilerplateSections && boilerplateSections.length > 0) {
-      console.log('🔍 generateContentHtml - Textbausteine prüfen:', boilerplateSections.length, boilerplateSections);
       
       const visibleSections = boilerplateSections
         .filter(section => {
-          console.log('🔍 Raw section object:', section);
           
           // Content-Prüfung mit korrekten Properties
           const content = section.content || 
@@ -186,13 +182,11 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
           // Vereinfachte Content-Prüfung - wenn boilerplateId vorhanden ist, dann hat es Content
           const hasContent = (section.boilerplateId && section.boilerplateId.trim() !== '') || 
                             (content && content.trim() && content !== '<p></p>' && content !== '<p><br></p>');
-          console.log(`🔍 Section "${title}": hasContent=${!!hasContent}, boilerplateId="${section.boilerplateId}", content="${content?.substring(0, 50)}..."`);
           
           return hasContent;
         })
         .sort((a, b) => (a.order || 0) - (b.order || 0));
       
-      console.log('✅ Sichtbare Textbausteine:', visibleSections.length, visibleSections.map(s => s.customTitle || s.boilerplate?.name || '(kein Titel)'));
       
       if (visibleSections.length > 0) {
         // Füge Abstand zwischen Haupttext und erstem Textbaustein hinzu
@@ -217,28 +211,22 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
           </div>`;
         });
       } else {
-        console.log('❌ Keine sichtbaren Textbausteine gefunden');
       }
     } else {
-      console.log('❌ Keine Textbausteine vorhanden');
     }
     
-    console.log('📄 Finales HTML generiert:', html.length, 'Zeichen');
     return html;
   };
 
   // Generiert finale Vorschau und wechselt zu Step 4
   const handleGeneratePreview = () => {
-    console.log('🔄 Generiere finale Vorschau...');
     const html = generateContentHtml();
-    console.log('✅ ContentHtml generiert:', html.length, 'Zeichen');
     setFinalContentHtml(html);
     setCurrentStep(4);
   };
 
   // 🆕 Template-Select Handler
   const handleTemplateSelect = (templateId: string, templateName: string) => {
-    console.log('✅ Template ausgewählt:', templateId, templateName);
     setSelectedTemplateId(templateId);
     setSelectedTemplateName(templateName);
   };
@@ -275,7 +263,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
       
       // Prüfe ob PDF-Workflow aktiv werden wird
       if (approvalData.customerApprovalRequired) {
-        console.log('🔄 PDF-Workflow wird bei Speicherung aktiviert');
       }
     } else {
       setCurrentStep(targetStep);
@@ -284,12 +271,10 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
 
   // Debug Wrapper-Funktionen
   const handleKeyVisualChange = (newKeyVisual: KeyVisualData | undefined) => {
-    console.log('🖼️ KeyVisual wird geändert zu:', newKeyVisual);
     setKeyVisual(newKeyVisual);
   };
 
   const handleBoilerplateSectionsChange = (newSections: BoilerplateSection[]) => {
-    console.log('📝 BoilerplateSections werden geändert zu:', newSections?.length, newSections);
     setBoilerplateSections(newSections);
   };
 
@@ -376,8 +361,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
   
   // Debug: Track currentStep changes
   useEffect(() => {
-    console.log('📊 CurrentStep changed to:', currentStep);
-    console.log('🎯 UI should now show step:', currentStep, 'content');
   }, [currentStep]);
   
   // 🆕 ENHANCED PDF & EDIT-LOCK STATE
@@ -429,7 +412,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
     try {
       await loadData();
     } catch (error) {
-      console.error('Fehler beim Laden der Daten:', error);
       setValidationErrors(['Daten konnten nicht geladen werden']);
     } finally {
       setLoading(false);
@@ -450,7 +432,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
       setEditLockStatus(status);
       setEditLocked(status.isLocked); // Legacy compatibility
     } catch (error) {
-      console.error('Fehler beim Laden des Edit-Lock Status:', error);
     } finally {
       setLoadingEditLock(false);
     }
@@ -466,29 +447,21 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
       setAvailableLists(listsData);
       
       // Lade bestehende Kampagne
-      console.log('🔄 Loading campaign and team members...');
       const campaign = await prService.getById(campaignId);
       if (campaign) {
         setExistingCampaign(campaign);
         
         // Lade erweiterte Approval-Daten mit feedbackHistory wenn ShareId vorhanden
-        console.log('🔍 Checking for shareId:', campaign.approvalData?.shareId);
         if (campaign.approvalData?.shareId && campaign.approvalData.shareId !== '') {
           try {
-            console.log('📥 Loading feedback history for shareId:', campaign.approvalData.shareId);
             const campaignWithFeedback = await prService.getCampaignByShareId(campaign.approvalData.shareId);
-            console.log('📦 Campaign with feedback loaded:', campaignWithFeedback);
             if (campaignWithFeedback?.approvalData?.feedbackHistory) {
               campaign.approvalData.feedbackHistory = campaignWithFeedback.approvalData.feedbackHistory;
-              console.log('📊 Loaded feedback history from approval:', campaignWithFeedback.approvalData.feedbackHistory);
             } else {
-              console.log('⚠️ No feedbackHistory found in campaignWithFeedback');
             }
           } catch (error) {
-            console.error('❌ Fehler beim Laden der Feedback-History:', error);
           }
         } else {
-          console.log('⚠️ No shareId found in approvalData - this is a legacy campaign');
           // Für alte Kampagnen: Erstelle eine minimale feedbackHistory aus vorhandenen Daten
           if (campaign.approvalData && 'customerApprovalMessage' in campaign.approvalData && campaign.approvalData.customerApprovalMessage) {
             const legacyFeedback = [{
@@ -497,7 +470,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
               author: 'Ihre Nachricht (Legacy)'
             }];
             setPreviousFeedback(legacyFeedback);
-            console.log('📝 Created legacy feedback history from customerApprovalMessage');
           }
         }
         
@@ -525,9 +497,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
               try {
                 boilerplate = await boilerplatesService.getById(section.boilerplateId);
                 content = boilerplate?.content || boilerplate?.description || '';
-                console.log(`📄 Textbaustein-Inhalt geladen für ${section.boilerplateId}: ${content?.substring(0, 50)}...`);
               } catch (error) {
-                console.warn(`⚠️ Fehler beim Laden des Textbausteins ${section.boilerplateId}:`, error);
               }
             }
             
@@ -546,18 +516,15 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
             };
           })
         );
-        console.log(`✅ ${convertedSections.length} Textbausteine mit Inhalten geladen`);
         setBoilerplateSections(convertedSections);
         
         // Load team members and find campaign admin
-        console.log('👥 Loading team members for organization:', currentOrganization.id);
         const members = await teamMemberEnhancedService.getAll(currentOrganization.id);
         // Fix: Cast TeamMemberExtended[] to TeamMember[]
         setTeamMembers(members as any);
         
         // Find current admin (campaign creator)
         const admin = members.find(member => member.userId === campaign.userId);
-        console.log('👤 Found campaign admin:', admin?.displayName || 'Not found', 'for userId:', campaign.userId);
         // Fix: Cast TeamMemberExtended to TeamMember
         setCampaignAdmin(admin as any || null);
         
@@ -581,8 +548,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
           });
           
           // Lade bisherigen Feedback-Verlauf falls vorhanden
-          console.log('📝 Edit-Page: Approval Data:', campaign.approvalData);
-          console.log('💬 Edit-Page: Feedback History:', campaign.approvalData.feedbackHistory);
           if (campaign.approvalData.feedbackHistory) {
             setPreviousFeedback(campaign.approvalData.feedbackHistory);
           }
@@ -598,7 +563,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
       await loadEditLockStatus(campaignId);
       
     } catch (error) {
-      console.error('Fehler beim Laden der Kampagne:', error);
       setValidationErrors(['Kampagne konnte nicht geladen werden']);
     } finally {
       setLoading(false);
@@ -612,7 +576,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
     
     // KRITISCH: Nur in Step 4 speichern erlauben!
     if (currentStep !== 4) {
-      console.log('🚫 Form-Submit verhindert - nicht in Step 4:', currentStep);
       return;
     }
     
@@ -646,18 +609,12 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
     
     try {
       // 🔍 DEBUG: Aktuelle Werte vor dem Speichern
-      console.log('🔍 ENHANCED CAMPAIGN SAVE - Vor dem Speichern:');
-      console.log('👤 User:', user?.uid);
-      console.log('🏢 Organization:', currentOrganization?.id);
-      console.log('📝 ApprovalData:', approvalData);
 
       // 🔧 FIX: Prüfe ob es eine neue oder bestehende Kampagne ist
       const urlParams = new URLSearchParams(window.location.search);
       const existingCampaignId = urlParams.get('id');
       const isNewCampaign = !existingCampaignId;
       
-      console.log('🆔 Campaign ID:', campaignId);
-      console.log('✏️ Updating existing campaign');
 
       // UPDATE CAMPAIGN MIT NEUER CUSTOMER-APPROVAL
       const result = await prService.updateCampaignWithNewApproval(
@@ -815,7 +772,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
 
       return await prService.create(campaignData);
     } catch (error) {
-      console.error('Fehler beim Speichern als Entwurf:', error);
       throw error;
     }
   };
@@ -851,7 +807,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
     }
 
     setGeneratingPdf(true);
-    console.log('🔍 TEMP CAMPAIGN DEBUG: Creating temporary campaign...');
     
     try {
       // 1. Temporäre Kampagne mit generating_preview Status erstellen
@@ -876,14 +831,12 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         approvalRequired: false
       };
 
-      console.log('⏳ Temporary campaign created with status:', tempCampaignData.status);
       
       // 2. Temporäre Kampagne speichern
       const tempCampaignId = await prService.create(tempCampaignData);
       
       try {
         // 3. PDF für temporäre Kampagne generieren
-        console.log('📄 PDF generated, cleaning up temporary campaign...');
         const pdfVersionId = await pdfVersionsService.createPDFVersion(
           tempCampaignId,
           currentOrganization.id,
@@ -911,14 +864,11 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         // 5. Temporäre Kampagne IMMER löschen (auch bei Fehlern)
         try {
           await prService.delete(tempCampaignId);
-          console.log('✅ Temporary campaign deleted successfully');
         } catch (deleteError) {
-          console.error('⚠️ Failed to delete temporary campaign:', deleteError);
         }
       }
       
     } catch (error) {
-      console.error('Fehler bei PDF-Generation:', error);
       setValidationErrors(['Fehler bei der PDF-Erstellung']);
     } finally {
       setGeneratingPdf(false);
@@ -951,7 +901,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
       await loadEditLockStatus(campaignId);
       
     } catch (error) {
-      console.error('Fehler beim Unlock-Request:', error);
       throw new Error('Die Entsperr-Anfrage konnte nicht gesendet werden.');
     }
   };
@@ -996,7 +945,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
           <button
             type="button"
             onClick={() => {
-              console.log('🎯 Step 1 clicked');
               setCurrentStep(1);
             }}
             className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
@@ -1015,7 +963,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
           <button
             type="button"
             onClick={() => {
-              console.log('🎯 Step 2 clicked');
               setCurrentStep(2);
             }}
             className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
@@ -1034,7 +981,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
           <button
             type="button"
             onClick={() => {
-              console.log('🎯 Step 3 clicked');
               setCurrentStep(3);
             }}
             className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
@@ -1053,7 +999,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
           <button
             type="button"
             onClick={() => {
-              console.log('🎯 Step 4 clicked - generating preview');
               handleGeneratePreview();
             }}
             className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
@@ -1121,12 +1066,8 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
 
       <form ref={formRef} onSubmit={(e) => {
         e.preventDefault();
-        console.log('🎯 AUTOMATISCHES Form-Submit Event! CurrentStep:', currentStep);
-        console.log('🔍 Event Details:', e.type, 'Target:', e.target, 'Submitter:', (e as any).submitter);
-        console.log('🔍 Form Elements:', Array.from((e.target as HTMLFormElement).elements).filter(el => (el as HTMLElement).getAttribute('type') === 'submit').map(el => ({ type: (el as HTMLElement).getAttribute('type'), value: (el as any).value, className: (el as HTMLElement).className })));
         
         // BLOCKIERE ALLE AUTOMATISCHEN SUBMITS - NUR MANUELLER KLICK ERLAUBT
-        console.log('🚫 ALLE Form-Submits werden blockiert - nur manuelle Speichern-Clicks erlaubt');
         return false;
       }}>
         {/* Step Content */}
@@ -1623,7 +1564,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
               <Button
                 type="button"
                 onClick={(e: React.MouseEvent) => {
-                  console.log('🖱️ MANUELLER Speichern-Click!');
                   handleSubmit(e as any);
                 }}
                 disabled={saving || editLockStatus.isLocked}

@@ -143,11 +143,9 @@ export default function NewPRCampaignPage() {
 
   // Debug Logging für State-Änderungen
   useEffect(() => {
-    console.log('🖼️ KeyVisual State changed:', keyVisual);
   }, [keyVisual]);
 
   useEffect(() => {
-    console.log('📝 BoilerplateSections State changed:', boilerplateSections?.length, boilerplateSections);
   }, [boilerplateSections]);
 
   // Content HTML Generation - kombiniert alle Komponenten zu einem HTML-String
@@ -164,11 +162,9 @@ export default function NewPRCampaignPage() {
     // 2. Textbausteine (falls vorhanden)
     // Füge Abstand zwischen Haupttext und erstem Textbaustein hinzu
     if (boilerplateSections && boilerplateSections.length > 0) {
-      console.log('🔍 generateContentHtml - Textbausteine prüfen:', boilerplateSections.length, boilerplateSections);
       
       const visibleSections = boilerplateSections
         .filter(section => {
-          console.log('🔍 Raw section object:', section);
           
           // Prüfe verschiedene mögliche Content-Felder (auch verschachtelt)
           const content = section.content || 
@@ -179,13 +175,11 @@ export default function NewPRCampaignPage() {
           const title = section.customTitle || '';
           
           const hasContent = content && content.trim();
-          console.log(`🔍 Section "${title}": hasContent=${hasContent}, content="${content?.substring(0, 50)}..."`);
           
           return hasContent;
         })
         .sort((a, b) => (a.order || 0) - (b.order || 0));
       
-      console.log('✅ Sichtbare Textbausteine:', visibleSections.length, visibleSections.map(s => s.customTitle || '(kein Titel)'));
       
       if (visibleSections.length > 0) {
         // Füge zusätzlichen Abstand hinzu, wenn bereits Haupt-Content vorhanden ist
@@ -211,10 +205,8 @@ export default function NewPRCampaignPage() {
         });
         html += `</div>`;
       } else {
-        console.log('❌ Keine sichtbaren Textbausteine gefunden');
       }
     } else {
-      console.log('❌ Keine Textbausteine vorhanden');
     }
     
     return html;
@@ -222,16 +214,13 @@ export default function NewPRCampaignPage() {
 
   // Generiert finale Vorschau und wechselt zu Step 4
   const handleGeneratePreview = () => {
-    console.log('🔄 Generiere finale Vorschau...');
     const html = generateContentHtml();
-    console.log('✅ ContentHtml generiert:', html.length, 'Zeichen');
     setFinalContentHtml(html);
     setCurrentStep(4);
   };
 
   // 🆕 Template-Select Handler
   const handleTemplateSelect = (templateId: string, templateName: string) => {
-    console.log('✅ Template ausgewählt:', templateId, templateName);
     setSelectedTemplateId(templateId);
     setSelectedTemplateName(templateName);
   };
@@ -268,7 +257,6 @@ export default function NewPRCampaignPage() {
       
       // Prüfe ob PDF-Workflow aktiv werden wird
       if (approvalData.customerApprovalRequired) {
-        console.log('🔄 PDF-Workflow wird bei Speicherung aktiviert');
       }
     } else {
       setCurrentStep(targetStep);
@@ -277,12 +265,10 @@ export default function NewPRCampaignPage() {
 
   // Debug Wrapper-Funktionen
   const handleKeyVisualChange = (newKeyVisual: KeyVisualData | undefined) => {
-    console.log('🖼️ KeyVisual wird geändert zu:', newKeyVisual);
     setKeyVisual(newKeyVisual);
   };
 
   const handleBoilerplateSectionsChange = (newSections: BoilerplateSection[]) => {
-    console.log('📝 BoilerplateSections werden geändert zu:', newSections?.length, newSections);
     setBoilerplateSections(newSections);
   };
 
@@ -370,7 +356,6 @@ export default function NewPRCampaignPage() {
       setEditLockStatus(status);
       setEditLocked(status.isLocked); // Legacy compatibility
     } catch (error) {
-      console.error('Fehler beim Laden des Edit-Lock Status:', error);
     } finally {
       setLoadingEditLock(false);
     }
@@ -392,7 +377,6 @@ export default function NewPRCampaignPage() {
         setLoadingEditLock(false);
       }
     } catch (error) {
-      console.error('Fehler beim Laden der Daten:', error);
     } finally {
       setLoading(false);
     }
@@ -404,7 +388,6 @@ export default function NewPRCampaignPage() {
     
     // KRITISCH: Nur in Step 4 speichern erlauben!
     if (currentStep !== 4) {
-      console.log('🚫 Form-Submit verhindert - nicht in Step 4:', currentStep);
       return;
     }
     
@@ -438,18 +421,12 @@ export default function NewPRCampaignPage() {
     
     try {
       // 🔍 DEBUG: Aktuelle Werte vor dem Speichern
-      console.log('🔍 ENHANCED CAMPAIGN SAVE - Vor dem Speichern:');
-      console.log('👤 User:', user?.uid);
-      console.log('🏢 Organization:', currentOrganization?.id);
-      console.log('📝 ApprovalData:', approvalData);
 
       // 🔧 FIX: Prüfe ob es eine neue oder bestehende Kampagne ist
       const urlParams = new URLSearchParams(window.location.search);
       const existingCampaignId = urlParams.get('id');
       const isNewCampaign = !existingCampaignId;
       
-      console.log('🆔 Campaign ID:', existingCampaignId);
-      console.log('🆕 Is New Campaign:', isNewCampaign);
 
       // VEREINFACHTER SAVE MIT CUSTOMER-APPROVAL INTEGRATION
       const result = await prService.saveCampaignWithCustomerApproval(
@@ -664,7 +641,6 @@ export default function NewPRCampaignPage() {
 
       return await prService.create(campaignData);
     } catch (error) {
-      console.error('Fehler beim Speichern als Entwurf:', error);
       throw error;
     }
   };
@@ -700,7 +676,6 @@ export default function NewPRCampaignPage() {
     }
 
     setGeneratingPdf(true);
-    console.log('🔍 TEMP CAMPAIGN DEBUG: Creating temporary campaign...');
     
     try {
       // 1. Temporäre Kampagne mit generating_preview Status erstellen
@@ -724,14 +699,12 @@ export default function NewPRCampaignPage() {
         approvalRequired: false
       };
 
-      console.log('⏳ Temporary campaign created with status:', tempCampaignData.status);
       
       // 2. Temporäre Kampagne speichern
       const tempCampaignId = await prService.create(tempCampaignData);
       
       try {
         // 3. PDF für temporäre Kampagne generieren
-        console.log('📄 PDF generated, cleaning up temporary campaign...');
         const pdfVersionId = await pdfVersionsService.createPDFVersion(
           tempCampaignId,
           currentOrganization.id,
@@ -759,14 +732,11 @@ export default function NewPRCampaignPage() {
         // 5. Temporäre Kampagne IMMER löschen (auch bei Fehlern)
         try {
           await prService.delete(tempCampaignId);
-          console.log('✅ Temporary campaign deleted successfully');
         } catch (deleteError) {
-          console.error('⚠️ Failed to delete temporary campaign:', deleteError);
         }
       }
       
     } catch (error) {
-      console.error('Fehler bei PDF-Generation:', error);
       setValidationErrors(['Fehler bei der PDF-Erstellung']);
     } finally {
       setGeneratingPdf(false);
@@ -799,7 +769,6 @@ export default function NewPRCampaignPage() {
       await loadEditLockStatus(campaignId);
       
     } catch (error) {
-      console.error('Fehler beim Unlock-Request:', error);
       throw new Error('Die Entsperr-Anfrage konnte nicht gesendet werden.');
     }
   };
@@ -838,7 +807,6 @@ export default function NewPRCampaignPage() {
           <button
             type="button"
             onClick={() => {
-              console.log('🎯 Step 1 clicked');
               setCurrentStep(1);
             }}
             className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
@@ -857,7 +825,6 @@ export default function NewPRCampaignPage() {
           <button
             type="button"
             onClick={() => {
-              console.log('🎯 Step 2 clicked');
               setCurrentStep(2);
             }}
             className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
@@ -876,7 +843,6 @@ export default function NewPRCampaignPage() {
           <button
             type="button"
             onClick={() => {
-              console.log('🎯 Step 3 clicked');
               setCurrentStep(3);
             }}
             className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
@@ -895,7 +861,6 @@ export default function NewPRCampaignPage() {
           <button
             type="button"
             onClick={() => {
-              console.log('🎯 Step 4 clicked - generating preview');
               handleGeneratePreview();
             }}
             className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
@@ -963,11 +928,9 @@ export default function NewPRCampaignPage() {
 
       <form ref={formRef} onSubmit={(e) => {
         e.preventDefault();
-        console.log('🎯 AUTOMATISCHES Form-Submit Event! CurrentStep:', currentStep);
         // Debug-Logging entfernt für TypeScript-Kompatibilität
         
         // BLOCKIERE ALLE AUTOMATISCHEN SUBMITS - NUR MANUELLER KLICK ERLAUBT
-        console.log('🚫 ALLE Form-Submits werden blockiert - nur manuelle Speichern-Clicks erlaubt');
         return false;
       }}>
         {/* Step Content */}
@@ -1363,7 +1326,6 @@ export default function NewPRCampaignPage() {
               <Button
                 type="button"
                 onClick={(e: any) => {
-                  console.log('🖱️ MANUELLER Speichern-Click!');
                   handleSubmit(e as any);
                 }}
                 disabled={saving || editLockStatus.isLocked}

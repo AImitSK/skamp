@@ -718,13 +718,11 @@ Beispiel-Format (nutze deine eigenen Werte):
 
       if (response.ok) {
         const data = await response.json();
-        console.log('📡 Raw KI-Response:', data);
         
         // Check both possible response formats
         const responseText = data.generatedText || data.content;
         
         if (!data || !responseText) {
-          console.warn('⚠️ KI-Response ist leer oder fehlerhaft:', data);
           return {
             semanticRelevance: 50,
             contextQuality: 50,
@@ -735,7 +733,6 @@ Beispiel-Format (nutze deine eigenen Werte):
         try {
           // Versuche direktes JSON-Parse
           const result = JSON.parse(responseText);
-          console.log(`✅ KI-Analyse für "${keyword}":`, result);
           return {
             semanticRelevance: Math.min(100, Math.max(0, result.semanticRelevance || 50)),
             contextQuality: Math.min(100, Math.max(0, result.contextQuality || 50)),
@@ -749,7 +746,6 @@ Beispiel-Format (nutze deine eigenen Werte):
             const jsonMatch = responseText.match(/\{[\s\S]*?\}/);
             if (jsonMatch) {
               const result = JSON.parse(jsonMatch[0]);
-              console.log(`✅ KI-Analyse für "${keyword}" (extracted):`, result);
               return {
                 semanticRelevance: Math.min(100, Math.max(0, result.semanticRelevance || 50)),
                 contextQuality: Math.min(100, Math.max(0, result.contextQuality || 50)),
@@ -758,17 +754,13 @@ Beispiel-Format (nutze deine eigenen Werte):
                 relatedTerms: Array.isArray(result.relatedTerms) ? result.relatedTerms.slice(0, 3) : []
               };
             } else {
-              console.warn('⚠️ Kein JSON in KI-Response gefunden:', responseText.substring(0, 200) + '...');
             }
           } catch (secondParseError) {
-            console.warn('⚠️ KI-Response JSON-Parse Fehler:', secondParseError, 'Content:', responseText.substring(0, 200) + '...');
           }
         }
       } else {
-        console.error('❌ KI-API HTTP Error:', response.status, response.statusText);
       }
     } catch (error) {
-      console.error('❌ KI-Analyse Fehler:', error);
     } finally {
       setIsAnalyzing(false);
     }
@@ -828,7 +820,6 @@ Beispiel-Format (nutze deine eigenen Werte):
   useEffect(() => {
     // Nur ausführen wenn Keywords vorhanden sind und noch keine Metriken existieren
     if (keywords.length > 0 && keywordMetrics.length === 0 && content) {
-      console.log('🔄 Triggering initial KI analysis for loaded keywords:', keywords);
       handleRefreshAnalysis();
     }
   }, [keywords.length, content]); // Nicht handleRefreshAnalysis als dependency, um Endlosschleife zu vermeiden

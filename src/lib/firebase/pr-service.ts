@@ -187,7 +187,6 @@ export const prService = {
       const docRef = await addDoc(collection(db, 'pr_campaigns'), finalData);
       return docRef.id;
     } catch (error) {
-      console.error('Error in prService.create:', error);
       throw error;
     }
   },
@@ -267,7 +266,6 @@ export const prService = {
       
       return sortedCampaigns;
     } catch (error) {
-      console.error('❌ Fehler beim Laden der Kampagnen:', error);
       throw error;
     }
   },
@@ -313,7 +311,6 @@ export const prService = {
       try {
         await mediaService.deleteShareLink(campaign.assetShareLinkId);
       } catch (error) {
-        console.warn('Fehler beim Löschen des Share-Links:', error);
       }
     }
     
@@ -326,7 +323,6 @@ export const prService = {
           await approvalService.hardDelete(approval.id, campaign.organizationId);
         }
       } catch (error) {
-        console.warn('Fehler beim Löschen der Enhanced Approval:', error);
       }
     }
     
@@ -343,7 +339,6 @@ export const prService = {
           await deleteDoc(snapshot.docs[0].ref);
         }
       } catch (error) {
-        console.warn('Fehler beim Löschen des Legacy Approval Shares:', error);
       }
     }
     
@@ -389,7 +384,6 @@ export const prService = {
       try {
         await mediaService.deleteShareLink(shareLinkId);
       } catch (error) {
-        console.warn('Fehler beim Löschen des Share-Links:', error);
       }
     }
     
@@ -398,7 +392,6 @@ export const prService = {
       try {
         await approvalService.hardDelete(approval.id, approval.organizationId);
       } catch (error) {
-        console.warn('Fehler beim Löschen der Enhanced Approval:', error);
       }
     }
     
@@ -415,7 +408,6 @@ export const prService = {
           await deleteDoc(snapshot.docs[0].ref);
         }
       } catch (error) {
-        console.warn('Fehler beim Löschen des Legacy Approval Shares:', error);
       }
     }
   },
@@ -766,7 +758,6 @@ export const prService = {
 
       return approval.shareId;
     } catch (error) {
-      console.error('❌ Fehler beim Erstellen der Freigabe:', error);
       // Werfe den Fehler nicht weiter, damit die Kampagne trotzdem gespeichert wird
       // Die Kampagne bleibt im Draft-Status
       return '';
@@ -818,22 +809,7 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
         // Stelle sicher, dass history ein Array ist
         const history = Array.isArray(approval.history) ? approval.history : [];
         
-        // Debug: Zeige alle History-Einträge im Detail
-        console.log('📊 pr-service.getByShareId - History Details:', 
-          history.map(h => ({
-            action: h.action,
-            actorName: h.actorName,
-            comment: h.details?.comment?.substring(0, 30),
-            hasComment: !!h.details?.comment
-          }))
-        );
-        
-        console.log('🔍 Feedback filtering:', {
-          totalHistory: history.length,
-          withComments: history.filter(h => h.details?.comment).length,
-          commentedAction: history.filter(h => h.action === 'commented').length,
-          changesRequestedAction: history.filter(h => h.action === 'changes_requested').length
-        });
+        // Debug: Zeige alle History-Einträge im Detail (Code entfernt für Production)
         
         // Aktualisiere Approval-Daten aus Enhanced Approval
         // WICHTIG: Inkludiere ALLE Nachrichten mit Kommentaren, nicht nur bestimmte Actions
@@ -907,7 +883,6 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
       updatedAt: shareData.updatedAt
     } as PRCampaign;
   } catch (error) {
-    console.error('Fehler beim Laden der Freigabe:', error);
     return null;
   }
 },
@@ -1155,7 +1130,6 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
         return b.updatedAt.toMillis() - a.updatedAt.toMillis();
       });
     } catch (error) {
-      console.error('Fehler beim Laden der Freigabe-Kampagnen:', error);
       return [];
     }
   },
@@ -1236,7 +1210,6 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
     customerShareLink?: string;
   }> {
     try {
-      console.log('🔄 Updating campaign with new approval workflow');
       
       // 1. Update Campaign
       await this.update(campaignId, {
@@ -1280,7 +1253,6 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
         
         if (existingApproval) {
           // UPDATE bestehende Freigabe mit neuer PDF-Version
-          console.log('📝 Updating existing approval with new PDF version');
           
           // Füge neue Nachricht zur History hinzu, wenn vorhanden
           const historyEntry = customerApprovalData.customerApprovalMessage ? {
@@ -1315,10 +1287,8 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
           workflowId = existingApproval.id!;
           shareId = existingApproval.shareId;
           
-          console.log('✅ Existing approval updated with PDF version', pdfVersionId);
         } else {
           // ERSTELLE neue Customer-Approval (nur beim ersten Mal)
-          console.log('🆕 Creating new approval workflow');
           
           workflowId = await approvalService.createCustomerApproval(
             campaignId,
@@ -1346,13 +1316,6 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
           }
         });
         
-        console.log('✅ Campaign updated with approval workflow:', {
-          workflowId,
-          pdfVersionId,
-          shareId,
-          isUpdate: !!existingApproval
-        });
-        
         return {
           campaignId,
           workflowId,
@@ -1365,7 +1328,6 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
       return { campaignId };
       
     } catch (error) {
-      console.error('Fehler beim Update mit Approval:', error);
       throw error;
     }
   },
@@ -1514,7 +1476,6 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
       return { campaignId };
 
     } catch (error) {
-      console.error('❌ Fehler bei Customer-Only Campaign-Speicherung:', error);
       throw error;
     }
   }

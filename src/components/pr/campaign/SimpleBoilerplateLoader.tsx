@@ -101,7 +101,6 @@ export default function SimpleBoilerplateLoader({
       setSections(sectionsWithData);
       onSectionsChange(sectionsWithData);
     } catch (error) {
-      console.error('Fehler beim Laden der Textbausteine:', error);
     } finally {
       setLoading(false);
     }

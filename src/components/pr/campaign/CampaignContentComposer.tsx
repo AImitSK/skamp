@@ -141,7 +141,6 @@ function FolderSelectorDialog({
         setBreadcrumbs([{ name: 'Mediathek' }]);
       }
     } catch (error) {
-      console.error('Fehler beim Laden der Ordner:', error);
     } finally {
       setLoading(false);
     }
@@ -357,7 +356,6 @@ export default function CampaignContentComposer({
   // PDF-Generation jetzt über Puppeteer API Route in pdf-versions-service
   // Diese lokale PDF-Generation wird nicht mehr verwendet
   const generatePdf = async (targetFolderId?: string) => {
-    console.warn('⚠️ Direkte PDF-Generation nicht mehr unterstützt. Verwende pdf-versions-service.');
     setGeneratingPdf(false);
     return;
   };
