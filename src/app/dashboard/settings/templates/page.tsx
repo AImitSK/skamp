@@ -385,7 +385,7 @@ export default function TemplatesPage() {
                     </div>
                     <div className="flex-1 flex justify-end">
                       <Dropdown>
-                        <DropdownButton>
+                        <DropdownButton plain>
                           <EllipsisVerticalIcon className="h-4 w-4" />
                         </DropdownButton>
                         <DropdownMenu>
