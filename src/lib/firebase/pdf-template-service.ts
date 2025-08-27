@@ -782,7 +782,7 @@ class PDFTemplateService {
   }
   
   /**
-   * Client-seitiges HTML generieren (ohne Server-Abhängigkeiten)
+   * Client-seitiges HTML generieren (professionelles PDF-Layout)
    */
   private generateClientSideHTML(
     templateData: TemplateData,
@@ -797,45 +797,214 @@ class PDFTemplateService {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>${title || 'Pressemitteilung'}</title>
+        <style>
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          
+          body {
+            font-family: 'Arial', 'Helvetica', sans-serif;
+            font-size: 12pt;
+            line-height: 1.6;
+            color: #333;
+            background: white;
+            padding: 20mm 15mm;
+            max-width: 21cm;
+            margin: 0 auto;
+          }
+          
+          .document-header {
+            border-bottom: 2px solid ${template.colorScheme.primary};
+            padding-bottom: 10mm;
+            margin-bottom: 15mm;
+          }
+          
+          .company-info {
+            font-size: 10pt;
+            color: #666;
+            margin-bottom: 5mm;
+          }
+          
+          .document-title {
+            font-size: 14pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #666;
+            margin-bottom: 3mm;
+          }
+          
+          .press-title {
+            font-size: 20pt;
+            font-weight: bold;
+            color: ${template.colorScheme.primary};
+            line-height: 1.3;
+            margin-bottom: 8mm;
+          }
+          
+          .press-date {
+            font-size: 11pt;
+            color: #666;
+            margin-bottom: 10mm;
+            font-weight: bold;
+          }
+          
+          .key-visual {
+            margin: 10mm 0;
+            text-align: center;
+          }
+          
+          .key-visual img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          }
+          
+          .key-visual .caption {
+            font-size: 10pt;
+            color: #666;
+            font-style: italic;
+            margin-top: 3mm;
+          }
+          
+          .main-content {
+            font-size: 12pt;
+            line-height: 1.7;
+            margin-bottom: 15mm;
+          }
+          
+          .main-content p {
+            margin-bottom: 5mm;
+            text-align: justify;
+          }
+          
+          .main-content h2 {
+            font-size: 16pt;
+            color: ${template.colorScheme.primary};
+            margin: 10mm 0 5mm 0;
+          }
+          
+          .main-content h3 {
+            font-size: 14pt;
+            color: #333;
+            margin: 8mm 0 4mm 0;
+          }
+          
+          .main-content ul {
+            margin: 5mm 0 5mm 8mm;
+          }
+          
+          .main-content li {
+            margin-bottom: 2mm;
+          }
+          
+          .main-content strong {
+            color: ${template.colorScheme.primary};
+          }
+          
+          .boilerplate-sections {
+            margin-top: 15mm;
+            padding-top: 10mm;
+            border-top: 1px solid #ddd;
+          }
+          
+          .boilerplate-section {
+            margin-bottom: 8mm;
+            padding: 8mm;
+            background: #f9f9f9;
+            border-left: 4px solid ${template.colorScheme.primary};
+          }
+          
+          .boilerplate-section h3 {
+            font-size: 13pt;
+            color: ${template.colorScheme.primary};
+            margin-bottom: 3mm;
+          }
+          
+          .boilerplate-content {
+            font-size: 11pt;
+            line-height: 1.5;
+          }
+          
+          .boilerplate-content p {
+            margin-bottom: 3mm;
+          }
+          
+          .footer {
+            margin-top: 20mm;
+            padding-top: 8mm;
+            border-top: 1px solid #ddd;
+            font-size: 10pt;
+            color: #666;
+            text-align: center;
+          }
+          
+          /* Print-spezifische Styles */
+          @media print {
+            body {
+              padding: 15mm;
+            }
+            
+            .boilerplate-section {
+              break-inside: avoid;
+            }
+          }
+        </style>
       </head>
       <body>
-        <div class="container">
-          <!-- Header -->
-          <div class="header">
-            <h1 class="title">${title || 'Pressemitteilung'}</h1>
-            ${clientName ? `<div class="client-name">${clientName}</div>` : ''}
-            ${date ? `<div class="date">${new Date(date).toLocaleDateString('de-DE')}</div>` : ''}
+        <div class="document-header">
+          ${clientName ? `<div class="company-info">${clientName}</div>` : ''}
+          <div class="document-title">Pressemitteilung</div>
+          <h1 class="press-title">${title || 'Titel der Pressemitteilung'}</h1>
+          <div class="press-date">${date ? new Date(date).toLocaleDateString('de-DE', { 
+            day: '2-digit', 
+            month: 'long', 
+            year: 'numeric' 
+          }) : new Date().toLocaleDateString('de-DE', { 
+            day: '2-digit', 
+            month: 'long', 
+            year: 'numeric' 
+          })}</div>
+        </div>
+        
+        ${keyVisual ? `
+          <div class="key-visual">
+            <img src="${keyVisual.url}" alt="${keyVisual.alt || 'Key Visual'}" />
+            ${keyVisual.caption ? `<div class="caption">${keyVisual.caption}</div>` : ''}
           </div>
-          
-          <!-- Key Visual -->
-          ${keyVisual ? `
-            <div class="key-visual">
-              <img src="${keyVisual.url}" alt="${keyVisual.alt || 'Key Visual'}" />
-              ${keyVisual.caption ? `<div class="caption">${keyVisual.caption}</div>` : ''}
-            </div>
-          ` : ''}
-          
-          <!-- Main Content -->
-          <div class="main-content">
-            ${mainContent || '<p>Beispielinhalt für die Vorschau</p>'}
+        ` : ''}
+        
+        <div class="main-content">
+          ${mainContent || `
+            <p><strong>Musterstadt, ${new Date().toLocaleDateString('de-DE')}</strong> – Dies ist eine Beispiel-Pressemitteilung für die Template-Vorschau. Hier würde der eigentliche Inhalt der Pressemitteilung stehen.</p>
+            
+            <h3>Wichtige Punkte</h3>
+            <ul>
+              <li>Erster wichtiger Punkt der Pressemitteilung</li>
+              <li>Zweiter relevanter Aspekt</li>
+              <li>Dritte wichtige Information</li>
+            </ul>
+            
+            <p>Weitere Details und Hintergrundinformationen würden hier folgen. Die Pressemitteilung sollte alle relevanten Informationen in einer klaren und strukturierten Form präsentieren.</p>
+          `}
+        </div>
+        
+        ${boilerplateSections && boilerplateSections.length > 0 ? `
+          <div class="boilerplate-sections">
+            ${boilerplateSections.map(section => `
+              <div class="boilerplate-section ${section.type || ''}">
+                ${section.customTitle ? `<h3>${section.customTitle}</h3>` : ''}
+                <div class="boilerplate-content">${section.content}</div>
+              </div>
+            `).join('')}
           </div>
-          
-          <!-- Boilerplate Sections -->
-          ${boilerplateSections && boilerplateSections.length > 0 ? `
-            <div class="boilerplate-sections">
-              ${boilerplateSections.map(section => `
-                <div class="boilerplate-section ${section.type || ''}">
-                  ${section.customTitle ? `<h3>${section.customTitle}</h3>` : ''}
-                  <div class="boilerplate-content">${section.content}</div>
-                </div>
-              `).join('')}
-            </div>
-          ` : ''}
-          
-          <!-- Footer -->
-          <div class="footer">
-            <p>© ${new Date().getFullYear()} ${clientName || 'Unternehmen'}</p>
-          </div>
+        ` : ''}
+        
+        <div class="footer">
+          <p>© ${new Date().getFullYear()} ${clientName || 'Unternehmen'} – Alle Rechte vorbehalten</p>
         </div>
       </body>
       </html>
