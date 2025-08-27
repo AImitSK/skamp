@@ -499,7 +499,7 @@ export default function ApprovalsPage() {
       </div>
 
 
-      {/* Toolbar */}
+      {/* Compact Toolbar */}
       <div className="mb-6">
         <div className="flex items-center gap-2">
           {/* Search Input */}
@@ -514,16 +514,16 @@ export default function ApprovalsPage() {
           <Popover className="relative">
             <Popover.Button
               className={clsx(
-                'inline-flex items-center justify-center rounded-lg border p-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 h-10 w-10',
+                'inline-flex items-center justify-center rounded-lg border p-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#005fab] h-10 w-10',
                 activeFiltersCount > 0
-                  ? 'border-primary bg-primary/5 text-primary hover:bg-primary/10'
+                  ? 'border-[#005fab] bg-[#005fab]/5 text-[#005fab] hover:bg-[#005fab]/10'
                   : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
               )}
               aria-label="Filter"
             >
               <FunnelIcon className="h-5 w-5" />
               {activeFiltersCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-white">
+                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#005fab] text-xs font-medium text-white">
                   {activeFiltersCount}
                 </span>
               )}
@@ -738,31 +738,32 @@ export default function ApprovalsPage() {
           </div>
         ) : (
           <>
-            {/* Table Header */}
-            <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
+            {/* Header */}
+            <div className="px-8 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
               <div className="flex items-center">
-                <div className="w-[40%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                <div className="flex-1 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Kampagne
                 </div>
-                <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                <div className="w-48 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Status
                 </div>
-                <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                <div className="w-64 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Kunde & Kontakt
                 </div>
-                <div className="w-[20%] text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right pr-14">
+                <div className="w-48 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Letzte Aktivität
                 </div>
+                <div className="w-12"></div>
               </div>
             </div>
 
-            {/* Table Body */}
+            {/* Body */}
             <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
               {paginatedApprovals.map((approval) => (
-                <div key={approval.id} className="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                <div key={approval.id} className="px-8 py-5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                   <div className="flex items-center">
                     {/* Kampagne */}
-                    <div className="w-[40%] min-w-0">
+                    <div className="flex-1 px-4 min-w-0">
                       <Link 
                         href={`/dashboard/pr-tools/campaigns/campaigns/${approval.campaignId}`} 
                         className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-primary truncate block"
@@ -783,7 +784,7 @@ export default function ApprovalsPage() {
                     </div>
 
                     {/* Status */}
-                    <div className="w-[20%]">
+                    <div className="w-48 px-4">
                       <div className="space-y-1">
                         <div className="flex flex-wrap items-center gap-1">
                           {getStatusBadge(approval.status)}
@@ -818,7 +819,7 @@ export default function ApprovalsPage() {
                     </div>
 
                     {/* Kunde & Kontakt */}
-                    <div className="w-[20%]">
+                    <div className="w-64 px-4">
                       <div className="space-y-1">
                         <div className="text-sm text-gray-900">
                           {approval.clientName || 'Unbekannter Kunde'}
@@ -832,11 +833,11 @@ export default function ApprovalsPage() {
                     </div>
 
                     {/* Letzte Aktivität */}
-                    <div className="w-[20%] text-right pr-14">
+                    <div className="w-48 px-4">
                       <div className="text-sm">
                         <div className="text-gray-900">{formatDateShort(approval.updatedAt || approval.createdAt)}</div>
                         {approval.history && approval.history.length > 0 && (
-                          <div className="text-gray-500 flex items-center gap-1 mt-1 justify-end">
+                          <div className="text-gray-500 flex items-center gap-1 mt-1">
                             <ChatBubbleLeftRightIcon className="h-3 w-3" />
                             {approval.history.length} Aktion{approval.history.length !== 1 ? 'en' : ''}
                           </div>
@@ -845,7 +846,7 @@ export default function ApprovalsPage() {
                     </div>
 
                     {/* Actions */}
-                    <div className="ml-4">
+                    <div className="w-12 flex justify-end">
                       <Dropdown>
                         <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700">
                           <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
