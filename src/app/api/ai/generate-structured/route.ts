@@ -649,7 +649,7 @@ ${structured.bodyParagraphs.map(p => `<p>${p}</p>`).join('\n\n')}
   <footer>— ${structured.quote.person}, ${structured.quote.role}${structured.quote.company ? ` bei ${structured.quote.company}` : ''}</footer>
 </blockquote>
 
-<p><span data-type="cta-text" class="cta-text font-bold text-[#005fab]">${structured.cta}</span></p>
+<p><span data-type="cta-text" class="cta-text font-bold text-black">${structured.cta}</span></p>
 `;
 
     console.log('Structured press release generated successfully', { 

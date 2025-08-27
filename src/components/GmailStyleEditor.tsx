@@ -304,14 +304,24 @@ export const GmailStyleEditor = ({
       }
     },
   });
+
+  // Cleanup-Funktion um alte blaue CTA-Klassen zu entfernen
+  const cleanupOldCTAClasses = (htmlContent: string) => {
+    return htmlContent
+      .replace(/text-\[#005fab\]/g, 'text-black')
+      .replace(/class="([^"]*?)text-\[#005fab\]([^"]*?)"/g, 'class="$1text-black$2"');
+  };
   
   // Content synchronisieren wenn sich der content prop ändert
   useEffect(() => {
     if (editor && content !== editor.getHTML()) {
+      // Bereinige alte CTA-Klassen bevor Content gesetzt wird
+      const cleanedContent = cleanupOldCTAClasses(content);
+      
       // Kleine Verzögerung um sicherzustellen, dass der Editor bereit ist
       setTimeout(() => {
         if (editor && !editor.isDestroyed) {
-          editor.commands.setContent(content, false);
+          editor.commands.setContent(cleanedContent, false);
           // Force re-render um sicherzustellen, dass das Styling angewendet wird
           editor.commands.focus();
           editor.commands.blur();
