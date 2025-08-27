@@ -55,6 +55,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { listsService } from "@/lib/firebase/lists-service";
 import { prService } from "@/lib/firebase/pr-service";
+import { boilerplateService } from "@/lib/firebase/boilerplate-service";
 import { DistributionList } from "@/types/lists";
 import { CampaignAssetAttachment, EditLockData, EditLockUtils, PRCampaign, EDIT_LOCK_CONFIG } from "@/types/pr";
 import SimpleBoilerplateLoader, { BoilerplateSection } from "@/components/pr/campaign/SimpleBoilerplateLoader";
@@ -505,18 +506,39 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         setManualRecipients(campaign.manualRecipients || []);
         setAttachedAssets(campaign.attachedAssets || []);
         setKeyVisual(campaign.keyVisual);
-        // Konvertiere CampaignBoilerplateSection zu BoilerplateSection
-        const convertedSections: BoilerplateSection[] = (campaign.boilerplateSections || []).map(section => ({
-          id: section.id,
-          type: section.type || 'boilerplate',
-          boilerplateId: section.boilerplateId,
-          content: section.content,
-          metadata: section.metadata,
-          order: section.order,
-          isLocked: section.isLocked,
-          isCollapsed: section.isCollapsed || false,
-          customTitle: section.customTitle
-        }));
+        // Konvertiere CampaignBoilerplateSection zu BoilerplateSection und lade Inhalte
+        const convertedSections: BoilerplateSection[] = await Promise.all(
+          (campaign.boilerplateSections || []).map(async section => {
+            let content = section.content;
+            let boilerplate = null;
+            
+            // Wenn kein Content vorhanden, aber boilerplateId da ist, lade den Inhalt
+            if (!content && section.boilerplateId) {
+              try {
+                boilerplate = await boilerplateService.getById(section.boilerplateId, currentOrganization.id);
+                content = boilerplate?.content || boilerplate?.description || '';
+                console.log(`📄 Textbaustein-Inhalt geladen für ${section.boilerplateId}: ${content?.substring(0, 50)}...`);
+              } catch (error) {
+                console.warn(`⚠️ Fehler beim Laden des Textbausteins ${section.boilerplateId}:`, error);
+              }
+            }
+            
+            return {
+              id: section.id,
+              type: section.type || 'boilerplate',
+              boilerplateId: section.boilerplateId,
+              content,
+              metadata: section.metadata,
+              order: section.order,
+              isLocked: section.isLocked,
+              isCollapsed: section.isCollapsed || false,
+              customTitle: section.customTitle,
+              // Speichere auch das geladene Boilerplate-Objekt für die Anzeige
+              boilerplate
+            };
+          })
+        );
+        console.log(`✅ ${convertedSections.length} Textbausteine mit Inhalten geladen`);
         setBoilerplateSections(convertedSections);
         
         // Load team members and find campaign admin
