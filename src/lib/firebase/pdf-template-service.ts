@@ -754,7 +754,7 @@ class PDFTemplateService {
   }
   
   /**
-   * HTML mit Template-Styling rendern (mit CSS-Caching)
+   * HTML mit Template-Styling rendern (Client-seitige Lösung)
    */
   private async renderTemplateWithStyle(
     template: PDFTemplate, 
@@ -762,23 +762,12 @@ class PDFTemplateService {
   ): Promise<string> {
     const startTime = Date.now();
     
-    // CSS-Cache-Key generieren
-    const cssCacheKey = this.cache?.generateCssCacheKey(template.id, template.version);
+    // CSS generieren
+    const customCss = this.generateTemplateCSS(template);
+    console.log(`🎨 CSS für Template ${template.id} generiert`);
     
-    // Prüfe CSS-Cache
-    let customCss = this.cache?.getCss(cssCacheKey);
-    
-    if (!customCss) {
-      // Generiere CSS und cache es
-      customCss = this.generateTemplateCSS(template);
-      this.cache?.setCss(cssCacheKey, customCss);
-      console.log(`🎨 CSS für Template ${template.id} generiert und gecacht`);
-    }
-    
-    // Basis-HTML vom Template-Renderer
-    // Dynamic import für Server-seitige Komponenten
-    const { templateRenderer } = await import('@/lib/pdf/template-renderer');
-    const baseHtml = await templateRenderer.renderTemplate(templateData);
+    // Client-seitiges HTML-Template generieren
+    const baseHtml = this.generateClientSideHTML(templateData, template);
     
     // Injiziere Custom CSS in HTML
     const styledHtml = baseHtml.replace(
@@ -790,6 +779,67 @@ class PDFTemplateService {
     console.log(`✅ Template-Styling angewendet: ${template.id} (${renderTime}ms)`);
     
     return styledHtml;
+  }
+  
+  /**
+   * Client-seitiges HTML generieren (ohne Server-Abhängigkeiten)
+   */
+  private generateClientSideHTML(
+    templateData: TemplateData,
+    template: PDFTemplate
+  ): string {
+    const { title, mainContent, boilerplateSections, keyVisual, clientName, date } = templateData;
+    
+    return `
+      <!DOCTYPE html>
+      <html lang="de">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${title || 'Pressemitteilung'}</title>
+      </head>
+      <body>
+        <div class="container">
+          <!-- Header -->
+          <div class="header">
+            <h1 class="title">${title || 'Pressemitteilung'}</h1>
+            ${clientName ? `<div class="client-name">${clientName}</div>` : ''}
+            ${date ? `<div class="date">${new Date(date).toLocaleDateString('de-DE')}</div>` : ''}
+          </div>
+          
+          <!-- Key Visual -->
+          ${keyVisual ? `
+            <div class="key-visual">
+              <img src="${keyVisual.url}" alt="${keyVisual.alt || 'Key Visual'}" />
+              ${keyVisual.caption ? `<div class="caption">${keyVisual.caption}</div>` : ''}
+            </div>
+          ` : ''}
+          
+          <!-- Main Content -->
+          <div class="main-content">
+            ${mainContent || '<p>Beispielinhalt für die Vorschau</p>'}
+          </div>
+          
+          <!-- Boilerplate Sections -->
+          ${boilerplateSections && boilerplateSections.length > 0 ? `
+            <div class="boilerplate-sections">
+              ${boilerplateSections.map(section => `
+                <div class="boilerplate-section ${section.type || ''}">
+                  ${section.customTitle ? `<h3>${section.customTitle}</h3>` : ''}
+                  <div class="boilerplate-content">${section.content}</div>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+          
+          <!-- Footer -->
+          <div class="footer">
+            <p>© ${new Date().getFullYear()} ${clientName || 'Unternehmen'}</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
   }
 
   /**

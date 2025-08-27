@@ -471,7 +471,7 @@ export function TemplateSelector({
             onTemplatePreview={handleTemplatePreview}
             disabled={disabled}
             showPreview={showPreview}
-            defaultOpen={true}
+            defaultOpen={false}
           />
         )}
 
