@@ -35,6 +35,7 @@ interface PDFGenerationRequest {
   templateId?: string; // ID des zu verwendenden Templates
   templateCustomizations?: Partial<PDFTemplate>; // Template-Überschreibungen
   useSystemTemplate?: boolean; // Ob System-Template verwendet werden soll
+  html?: string; // 🔥 WICHTIG: Fertiges Template-HTML vom Client
   
   options?: {
     format?: 'A4' | 'Letter';
@@ -152,10 +153,22 @@ export async function POST(request: NextRequest): Promise<NextResponse<PDFGenera
     let templateMetadata: any = {};
     let cssInjectionTime = 0;
 
-    console.log('🎨 Starte Template-basierte HTML-Generierung...');
+    console.log('🎨 Prüfe HTML-Generation-Methode...');
     const renderStart = Date.now();
 
-    if (requestData.templateId && requestData.templateId !== 'default') {
+    // 🔥 PRIORITÄT 1: Fertiges HTML vom Client verwenden
+    if (requestData.html && requestData.html.trim().length > 0) {
+      console.log('✅ Verwende fertiges Template-HTML vom Client');
+      htmlContent = requestData.html;
+      renderMethod = 'custom';
+      templateMetadata = {
+        templateId: requestData.templateId || 'client-rendered',
+        templateName: `Client Template (${requestData.templateId || 'unknown'})`,
+        templateVersion: '2.0.0',
+        cssInjectionTime: 0
+      };
+      console.log('📄 Client-HTML verwendet, Größe:', htmlContent.length, 'Zeichen');
+    } else if (requestData.templateId && requestData.templateId !== 'default') {
       // Template-basierte Generierung
       console.log(`🎭 Lade Template: ${requestData.templateId}`);
       
