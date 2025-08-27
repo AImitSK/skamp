@@ -1053,7 +1053,7 @@ class PDFTemplateService {
         line-height: var(--template-line-height);
         color: var(--template-text);
         background: var(--template-background);
-        margin: ${layout.margins.top}mm ${layout.margins.right}mm ${layout.margins.bottom}mm ${layout.margins.left}mm;
+        /* Margins werden im HTML-Body gesetzt, nicht hier */
       }
       
       /* Header-Styling */
@@ -1119,7 +1119,7 @@ class PDFTemplateService {
         type: 'modern',
         headerHeight: 80,
         footerHeight: 60,
-        margins: { top: 60, right: 50, bottom: 60, left: 50 },
+        margins: { top: 20, right: 15, bottom: 20, left: 15 },
         columns: 1,
         pageFormat: 'A4'
       },
@@ -1211,7 +1211,7 @@ class PDFTemplateService {
         type: 'classic',
         headerHeight: 100,
         footerHeight: 80,
-        margins: { top: 80, right: 60, bottom: 80, left: 60 },
+        margins: { top: 20, right: 15, bottom: 20, left: 15 },
         columns: 1,
         pageFormat: 'A4'
       },
@@ -1306,7 +1306,7 @@ class PDFTemplateService {
         type: 'modern',
         headerHeight: 120,
         footerHeight: 50,
-        margins: { top: 50, right: 40, bottom: 50, left: 40 },
+        margins: { top: 20, right: 15, bottom: 20, left: 15 },
         columns: 1,
         pageFormat: 'A4'
       },

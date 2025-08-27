@@ -70,7 +70,7 @@ export default function TemplatesPage() {
             type: 'standard',
             headerHeight: 60,
             footerHeight: 40,
-            margins: { top: 20, right: 20, bottom: 20, left: 20 },
+            margins: { top: 15, right: 15, bottom: 15, left: 15 },
             columns: 1,
             pageFormat: 'A4'
           },
@@ -112,7 +112,7 @@ export default function TemplatesPage() {
             type: 'modern',
             headerHeight: 80,
             footerHeight: 50,
-            margins: { top: 25, right: 25, bottom: 25, left: 25 },
+            margins: { top: 15, right: 15, bottom: 15, left: 15 },
             columns: 1,
             pageFormat: 'A4'
           },
@@ -154,7 +154,7 @@ export default function TemplatesPage() {
             type: 'classic',
             headerHeight: 100,
             footerHeight: 80,
-            margins: { top: 30, right: 30, bottom: 30, left: 30 },
+            margins: { top: 15, right: 15, bottom: 15, left: 15 },
             columns: 1,
             pageFormat: 'A4'
           },
