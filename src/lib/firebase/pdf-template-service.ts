@@ -1011,31 +1011,46 @@ class PDFTemplateService {
             line-height: 1.5;
           }
           
-          .boilerplate-content p {
-            margin-bottom: 3mm;
-          }
-          
-          /* Zitat-Styling - Zitatgeber näher zum Zitat */
+          /* Zitat-Styling - saubere Formatierung */
           .boilerplate-content blockquote {
             font-style: italic;
-            margin: 5mm 0 2mm 0;
+            margin: 5mm 0 0mm 0;
             font-size: 12pt;
             color: #333;
+            padding: 3mm 0 0mm 8mm;
+            border-left: 3px solid ${template.colorScheme.primary};
           }
           
-          .boilerplate-content .quote-attribution, 
-          .boilerplate-content p:contains("—") {
-            font-size: 10pt;
-            color: #666;
-            margin-top: 1mm;
-            margin-bottom: 8mm;
-            font-weight: normal;
+          /* Optimierte Paragraphen-Abstände */
+          .boilerplate-content p {
+            margin-top: 2mm;
+            margin-bottom: 2mm;
           }
           
-          /* Spezielle Styling für Namen in Zitatangaben */
+          /* Erste Paragraphen (oft Zitatgeber) */
+          .boilerplate-content p:first-child {
+            margin-top: 0mm;
+          }
+          
+          /* Zitatgeber-Styling für Paragraphen mit starken Elementen am Anfang */
           .boilerplate-content p strong:first-child {
             color: ${template.colorScheme.primary};
             font-size: 10pt;
+          }
+          
+          /* Paragraphen direkt nach einem starken Element */
+          .boilerplate-content p:first-child + p {
+            margin-top: 1mm;
+            font-size: 10pt;
+            color: #666;
+            padding-left: 8mm;
+          }
+          
+          /* Trennlinien für neue Abschnitte */
+          .boilerplate-content p:nth-child(3) {
+            margin-top: 8mm;
+            padding-top: 4mm;
+            border-top: 1px solid #eee;
           }
           
           .footer {
