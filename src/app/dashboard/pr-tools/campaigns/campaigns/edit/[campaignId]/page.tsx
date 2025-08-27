@@ -1343,7 +1343,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                     </div>
                   </div>
                 )}
-                </div>
               </div>
             </FieldGroup>
           </div>
