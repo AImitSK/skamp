@@ -10,7 +10,7 @@ import {
   FolderIcon,
   DocumentIcon
 } from "@heroicons/react/24/outline";
-import { ApprovalEnhanced, APPROVAL_STATUS_CONFIG } from "@/types/approvals";
+import { ApprovalEnhanced, APPROVAL_STATUS_CONFIG, ApprovalHistoryEntry } from "@/types/approvals";
 import { formatDate as formatDateLong } from "@/utils/dateHelpers";
 
 interface ApprovalHistoryModalProps {
@@ -33,18 +33,19 @@ export function ApprovalHistoryModal({
 }: ApprovalHistoryModalProps) {
   
   // Konvertiere Legacy-Feedback in das neue Format
-  const convertLegacyFeedback = (legacyItems: any[]) => {
+  const convertLegacyFeedback = (legacyItems: any[]): ApprovalHistoryEntry[] => {
     return legacyItems.map((item, index) => ({
       id: `legacy-${index}`,
       timestamp: item.requestedAt,
-      action: item.author === 'Ihre Nachricht' || item.author === 'Agentur' ? 'commented' : 'changes_requested',
+      action: (item.author === 'Ihre Nachricht' || item.author === 'Agentur' ? 'commented' : 'changes_requested') as any,
       actorName: item.author || 'Unbekannt',
       actorEmail: item.author === 'Ihre Nachricht' || item.author === 'Agentur' 
         ? 'agentur@celeropress.com' 
         : 'public-access@freigabe.system',
       details: {
         comment: item.comment
-      }
+      },
+      inlineComments: [] // Leeres Array für Legacy-Daten
     }));
   };
 
@@ -145,10 +146,10 @@ export function ApprovalHistoryModal({
                           </Text>
                         )}
                         
-                        {entry.inlineComments && entry.inlineComments.length > 0 && (
+                        {'inlineComments' in entry && entry.inlineComments && entry.inlineComments.length > 0 && (
                           <div className="mt-2 space-y-1">
                             <Text className="text-xs font-medium text-gray-500">Inline-Kommentare:</Text>
-                            {entry.inlineComments.map((comment, idx) => (
+                            {entry.inlineComments.map((comment: any, idx: number) => (
                               <div key={comment.id} className="text-sm bg-gray-50 p-2 rounded">
                                 <Text className="text-gray-600 italic">&ldquo;{comment.quote}&rdquo;</Text>
                                 <Text className="text-gray-800 mt-1">→ {comment.text}</Text>

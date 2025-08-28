@@ -183,7 +183,7 @@ export default function FixTimestampsPage() {
 
         {results && (
           <div className="space-y-4">
-            <Alert type={results.fixed > 0 ? "success" : "info"}>
+            <div className={`rounded-lg p-4 ${results.fixed > 0 ? 'bg-green-50 border border-green-200' : 'bg-blue-50 border border-blue-200'}`}>
               <div className="space-y-2">
                 <p className="font-semibold">Migration abgeschlossen!</p>
                 <ul className="text-sm space-y-1">
@@ -195,19 +195,19 @@ export default function FixTimestampsPage() {
                   )}
                 </ul>
               </div>
-            </Alert>
+            </div>
 
             {results.errors.length > 0 && (
-              <Alert type="error">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                 <div className="space-y-2">
-                  <p className="font-semibold">Fehler aufgetreten:</p>
-                  <ul className="text-sm space-y-1">
+                  <p className="font-semibold text-red-900">Fehler aufgetreten:</p>
+                  <ul className="text-sm space-y-1 text-red-800">
                     {results.errors.map((error, i) => (
                       <li key={i}>{error}</li>
                     ))}
                   </ul>
                 </div>
-              </Alert>
+              </div>
             )}
 
             <div className="flex gap-4">
@@ -222,7 +222,7 @@ export default function FixTimestampsPage() {
                   setResults(null);
                   setProgress("");
                 }}
-                variant="outline"
+color="zinc"
                 className="flex-1"
               >
                 Erneut prüfen

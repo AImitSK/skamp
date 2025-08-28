@@ -13,16 +13,16 @@ jest.mock('@/lib/firebase/build-safe-init', () => ({
 }));
 
 // Mock Firestore functions
-const mockAddDoc = jest.fn();
-const mockGetDoc = jest.fn();
-const mockGetDocs = jest.fn();
-const mockUpdateDoc = jest.fn();
-const mockQuery = jest.fn();
-const mockWhere = jest.fn();
-const mockOrderBy = jest.fn();
-const mockCollection = jest.fn();
-const mockDoc = jest.fn();
-const mockServerTimestamp = jest.fn();
+const mockAddDoc = jest.fn() as any;
+const mockGetDoc = jest.fn() as any;
+const mockGetDocs = jest.fn() as any;
+const mockUpdateDoc = jest.fn() as any;
+const mockQuery = jest.fn() as any;
+const mockWhere = jest.fn() as any;
+const mockOrderBy = jest.fn() as any;
+const mockCollection = jest.fn() as any;
+const mockDoc = jest.fn() as any;
+const mockServerTimestamp = jest.fn() as any;
 
 jest.mock('firebase/firestore', () => ({
   addDoc: mockAddDoc,
@@ -45,48 +45,28 @@ jest.mock('firebase/firestore', () => ({
 // Mock Services
 jest.mock('@/lib/firebase/contact-service', () => ({
   contactService: {
-    createContact: jest.fn().mockResolvedValue({
-      id: 'contact-1',
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'john@example.com'
-    }),
-    updateContact: jest.fn().mockResolvedValue({
-      id: 'contact-1',
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'john@example.com'
-    }),
-    getContacts: jest.fn().mockResolvedValue({
-      contacts: []
-    })
+    createContact: jest.fn(),
+    updateContact: jest.fn(),
+    getContacts: jest.fn()
   }
 }));
 
 jest.mock('@/lib/firebase/company-service-enhanced', () => ({
   companyService: {
-    createCompany: jest.fn().mockResolvedValue({
-      id: 'company-1',
-      name: 'Test Company'
-    }),
-    updateCompany: jest.fn().mockResolvedValue({
-      id: 'company-1',
-      name: 'Test Company'
-    }),
-    getCompanies: jest.fn().mockResolvedValue({
-      companies: []
-    })
+    createCompany: jest.fn(),
+    updateCompany: jest.fn(),
+    getCompanies: jest.fn()
   }
 }));
 
 jest.mock('@/lib/api/event-manager', () => ({
   eventManager: {
-    triggerEvent: jest.fn().mockResolvedValue({})
+    triggerEvent: jest.fn()
   }
 }));
 
 // Mock fetch for file loading
-global.fetch = jest.fn();
+global.fetch = jest.fn() as any;
 
 describe('BulkImportService', () => {
   let bulkImportService: BulkImportService;
@@ -217,7 +197,11 @@ describe('BulkImportService', () => {
         format: 'csv',
         entity: 'contacts',
         fileContent: csvContent,
-        options: { validateOnly: true }
+        options: { 
+          mode: 'create' as const, 
+          duplicateHandling: 'skip' as const, 
+          validateOnly: true 
+        }
       };
 
       const mockJobRef = { id: 'job-123' };
@@ -238,7 +222,7 @@ describe('BulkImportService', () => {
         })
       };
       mockGetDoc.mockResolvedValue(mockJobDoc);
-      mockUpdateDoc.mockResolvedValue({});
+      mockUpdateDoc.mockResolvedValue({} as any);
 
       const result = await bulkImportService.startImport(
         importRequest,
@@ -263,7 +247,11 @@ describe('BulkImportService', () => {
         format: 'csv',
         entity: 'contacts',
         fileContent: invalidCsv,
-        options: { validateOnly: true }
+        options: { 
+          mode: 'create' as const, 
+          duplicateHandling: 'skip' as const, 
+          validateOnly: true 
+        }
       };
 
       // Da das Processing async ist, können wir nur verifizieren dass der Job gestartet wurde
@@ -304,7 +292,11 @@ describe('BulkImportService', () => {
         format: 'json',
         entity: 'contacts',
         fileContent: jsonContent,
-        options: { validateOnly: true }
+        options: { 
+          mode: 'create' as const, 
+          duplicateHandling: 'skip' as const, 
+          validateOnly: true 
+        }
       };
 
       const mockJobRef = { id: 'job-123' };
@@ -345,7 +337,11 @@ describe('BulkImportService', () => {
         format: 'json',
         entity: 'contacts',
         fileContent: jsonContent,
-        options: { validateOnly: true }
+        options: { 
+          mode: 'create' as const, 
+          duplicateHandling: 'skip' as const, 
+          validateOnly: true 
+        }
       };
 
       const mockJobRef = { id: 'job-123' };
@@ -378,7 +374,7 @@ describe('BulkImportService', () => {
     it('sollte Datei von URL laden', async () => {
       const csvContent = 'firstName,lastName,email\nJohn,Doe,john@example.com';
       
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as any).mockResolvedValue({
         ok: true,
         text: () => Promise.resolve(csvContent)
       });
@@ -387,7 +383,11 @@ describe('BulkImportService', () => {
         format: 'csv',
         entity: 'contacts',
         fileUrl: 'https://example.com/test.csv',
-        options: { validateOnly: true }
+        options: { 
+          mode: 'create' as const, 
+          duplicateHandling: 'skip' as const, 
+          validateOnly: true 
+        }
       };
 
       const mockJobRef = { id: 'job-123' };
@@ -416,7 +416,7 @@ describe('BulkImportService', () => {
     });
 
     it('sollte Fehler bei fehlgeschlagener URL behandeln', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as any).mockResolvedValue({
         ok: false,
         statusText: 'Not Found'
       });
@@ -425,7 +425,11 @@ describe('BulkImportService', () => {
         format: 'csv',
         entity: 'contacts',
         fileUrl: 'https://example.com/nonexistent.csv',
-        options: { validateOnly: true }
+        options: { 
+          mode: 'create' as const, 
+          duplicateHandling: 'skip' as const, 
+          validateOnly: true 
+        }
       };
 
       const mockJobRef = { id: 'job-123' };
@@ -463,7 +467,11 @@ describe('BulkImportService', () => {
         format: 'csv',
         entity: 'contacts',
         fileContent: validContactCsv,
-        options: { validateOnly: true }
+        options: { 
+          mode: 'create' as const, 
+          duplicateHandling: 'skip' as const, 
+          validateOnly: true 
+        }
       };
 
       const mockJobRef = { id: 'job-123' };
@@ -498,7 +506,11 @@ describe('BulkImportService', () => {
         format: 'csv',
         entity: 'companies',
         fileContent: validCompanyCsv,
-        options: { validateOnly: true }
+        options: { 
+          mode: 'create' as const, 
+          duplicateHandling: 'skip' as const, 
+          validateOnly: true 
+        }
       };
 
       const mockJobRef = { id: 'job-123' };
@@ -541,7 +553,7 @@ describe('BulkImportService', () => {
           updatedAt: new Date().toISOString()
         } as any);
 
-      mockUpdateDoc.mockResolvedValue({});
+      mockUpdateDoc.mockResolvedValue({} as any);
 
       await bulkImportService.cancelJob(jobId, testOrganizationId);
 

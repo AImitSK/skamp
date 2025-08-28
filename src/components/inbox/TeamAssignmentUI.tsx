@@ -176,8 +176,8 @@ export function TeamAssignmentUI({
           <div className="flex items-center gap-2">
             <Avatar
               className="w-6 h-6"
-              src={getAvatarUrl({ uid: assignedMember.userId } as any)}
-              initials={getInitials({ displayName: assignedMember.displayName, email: assignedMember.email } as any)}
+              src={assignedMember.photoUrl || getAvatarUrl()}
+              initials={assignedMember.displayName ? assignedMember.displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'TM'}
               title={assignedMember.displayName}
             />
             <span className="text-sm text-gray-700 font-medium">
@@ -242,8 +242,8 @@ export function TeamAssignmentUI({
                       <div className="flex items-center gap-3">
                         <Avatar
                           className="w-8 h-8 flex-shrink-0"
-                          src={getAvatarUrl({ uid: member.userId } as any)}
-                          initials={getInitials({ displayName: member.displayName, email: member.email } as any)}
+                          src={member.photoUrl || getAvatarUrl()}
+                          initials={member.displayName ? member.displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'TM'}
                           title={member.displayName}
                         />
                         <div className="flex-1 min-w-0">
@@ -302,8 +302,8 @@ export function TeamAssignmentUI({
             <div className="flex items-center gap-3">
               <Avatar
                 className="w-8 h-8"
-                src={getAvatarUrl({ uid: assignedMember.userId } as any)}
-                initials={getInitials({ displayName: assignedMember.displayName, email: assignedMember.email } as any)}
+                src={assignedMember.photoUrl || getAvatarUrl()}
+                initials={assignedMember.displayName ? assignedMember.displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'TM'}
                 title={assignedMember.displayName}
               />
               <div>
@@ -352,8 +352,8 @@ export function TeamAssignmentUI({
               <div className="flex items-center gap-2">
                 <Avatar
                   className="w-6 h-6"
-                  src={getAvatarUrl({ uid: member.userId } as any)}
-                  initials={getInitials({ displayName: member.displayName, email: member.email } as any)}
+                  src={member.photoUrl || getAvatarUrl()}
+                  initials={member.displayName ? member.displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'TM'}
                   title={member.displayName}
                 />
                 <div>

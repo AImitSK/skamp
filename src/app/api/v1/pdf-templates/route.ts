@@ -140,7 +140,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           );
         }
         
-        await pdfTemplateService.deleteCustomTemplate(templateId);
+        await pdfTemplateService.deleteCustomTemplate(templateId, organizationId);
         result = { 
           message: `Template ${templateId} erfolgreich gelöscht`,
           deletedTemplateId: templateId

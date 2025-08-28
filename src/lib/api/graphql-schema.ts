@@ -411,7 +411,7 @@ export const CELEROPRESS_GRAPHQL_SCHEMA: GraphQLSchema = {
       description: 'Global search across all entities',
       args: [
         { name: 'query', type: 'String!', description: 'Search query' },
-        { name: 'entities', type: '[String!]', description: 'Entity types to search', list: true },
+        { name: 'entities', type: '[String!]', description: 'Entity types to search' },
         { name: 'limit', type: 'Int', description: 'Max results per entity type' }
       ],
       resolver: 'globalSearch'
@@ -524,7 +524,7 @@ export const CELEROPRESS_GRAPHQL_SCHEMA: GraphQLSchema = {
       type: 'BulkJob!',
       description: 'Start a bulk export job',
       args: [
-        { name: 'entities', type: '[String!]!', description: 'Entities to export', list: true },
+        { name: 'entities', type: '[String!]!', description: 'Entities to export' },
         { name: 'format', type: 'String!', description: 'Export format' },
         { name: 'options', type: 'JSON', description: 'Export options' }
       ],

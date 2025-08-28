@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
             results.push({
               id: document.id,
               action: 'error',
-              error: error.message
+              error: (error as any)?.message || 'Unknown error'
             });
           }
         } else {
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({
       success: false,
-      error: error.message
+      error: (error as any)?.message || 'Internal server error'
     }, { status: 500 });
   }
 }

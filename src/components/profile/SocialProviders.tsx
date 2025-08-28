@@ -41,7 +41,7 @@ export function SocialProviders() {
       {
         id: 'google.com',
         name: 'Google',
-        email: currentUser.providerData.find(p => p.providerId === 'google.com')?.email,
+        email: currentUser.providerData.find(p => p.providerId === 'google.com')?.email || undefined,
         isLinked: linkedProviders.includes('google.com')
       }
     ]);

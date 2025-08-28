@@ -4,49 +4,49 @@ import { GraphQLResolvers, GraphQLContext } from '@/lib/api/graphql-resolvers';
 
 // Mock Services
 const mockContactService = {
-  getContactById: jest.fn(),
-  getContacts: jest.fn(),
-  createContact: jest.fn(),
-  updateContact: jest.fn(),
-  deleteContact: jest.fn()
-};
+  getContactById: jest.fn() as any,
+  getContacts: jest.fn() as any,
+  createContact: jest.fn() as any,
+  updateContact: jest.fn() as any,
+  deleteContact: jest.fn() as any
+} as any;
 
 const mockCompanyService = {
-  getCompanyById: jest.fn(),
-  getCompanies: jest.fn(),
-  createCompany: jest.fn(),
-  updateCompany: jest.fn(),
-  deleteCompany: jest.fn()
-};
+  getCompanyById: jest.fn() as any,
+  getCompanies: jest.fn() as any,
+  createCompany: jest.fn() as any,
+  updateCompany: jest.fn() as any,
+  deleteCompany: jest.fn() as any
+} as any;
 
 const mockPublicationsService = {
-  getPublicationById: jest.fn(),
-  getPublications: jest.fn(),
-  createPublication: jest.fn(),
-  updatePublication: jest.fn(),
-  deletePublication: jest.fn()
-};
+  getPublicationById: jest.fn() as any,
+  getPublications: jest.fn() as any,
+  createPublication: jest.fn() as any,
+  updatePublication: jest.fn() as any,
+  deletePublication: jest.fn() as any
+} as any;
 
 const mockBulkExportService = {
-  getJobById: jest.fn(),
-  getJobs: jest.fn(),
-  startExport: jest.fn(),
-  cancelJob: jest.fn()
-};
+  getJobById: jest.fn() as any,
+  getJobs: jest.fn() as any,
+  startExport: jest.fn() as any,
+  cancelJob: jest.fn() as any
+} as any;
 
 const mockBulkImportService = {
-  getJobById: jest.fn(),
-  getJobs: jest.fn(),
-  startImport: jest.fn(),
-  cancelJob: jest.fn()
-};
+  getJobById: jest.fn() as any,
+  getJobs: jest.fn() as any,
+  startImport: jest.fn() as any,
+  cancelJob: jest.fn() as any
+} as any;
 
 const mockEventManager = {
-  triggerEvent: jest.fn(),
-  triggerContactEvent: jest.fn(),
-  triggerCompanyEvent: jest.fn(),
-  triggerPublicationEvent: jest.fn()
-};
+  triggerEvent: jest.fn() as any,
+  triggerContactEvent: jest.fn() as any,
+  triggerCompanyEvent: jest.fn() as any,
+  triggerPublicationEvent: jest.fn() as any
+} as any;
 
 jest.mock('@/lib/firebase/contact-service', () => ({
   contactService: mockContactService

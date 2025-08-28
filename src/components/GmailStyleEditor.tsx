@@ -13,6 +13,7 @@ import BulletList from '@tiptap/extension-bullet-list';
 import OrderedList from '@tiptap/extension-ordered-list';
 import ListItem from '@tiptap/extension-list-item';
 import { Extension } from '@tiptap/core';
+import type { ChainedCommands, Editor as TiptapEditor, CommandProps } from '@tiptap/core';
 import { QuoteExtension } from './editor/QuoteExtension';
 import { CTAExtension } from './editor/CTAExtension';
 import { HashtagExtension } from './editor/HashtagExtension';
@@ -56,12 +57,12 @@ const FontSize = Extension.create({
 
   addCommands() {
     return {
-      setFontSize: (fontSize: string) => ({ chain }) => {
+      setFontSize: (fontSize: string) => ({ chain }: CommandProps) => {
         return chain()
           .setMark('textStyle', { fontSize })
           .run()
       },
-    }
+    } as any
   },
 });
 
@@ -99,14 +100,14 @@ const CustomUnderline = Extension.create({
 
   addCommands() {
     return {
-      toggleUnderline: () => ({ chain, editor }) => {
+      toggleUnderline: () => ({ chain, editor }: CommandProps) => {
         const isActive = editor.isActive('textStyle', { underline: 'underline' });
         if (isActive) {
           return chain().setMark('textStyle', { underline: null }).run();
         }
         return chain().setMark('textStyle', { underline: 'underline' }).run();
       },
-    }
+    } as any
   },
 });
 
@@ -144,15 +145,15 @@ const CustomTextAlign = Extension.create({
 
   addCommands() {
     return {
-      setTextAlign: (alignment: string) => ({ chain }) => {
+      setTextAlign: (alignment: string) => ({ chain }: CommandProps) => {
         return chain().updateAttributes('paragraph', { textAlign: alignment }).run();
       },
-    }
+    } as any
   },
 });
 
 import { GmailStyleToolbar } from './GmailStyleToolbar';
-import { SEOHeaderBar } from './campaigns/SEOHeaderBar';
+import { PRSEOHeaderBar as SEOHeaderBar } from './campaigns/PRSEOHeaderBar';
 
 // Debounce utility function
 function debounce<T extends (...args: any[]) => any>(

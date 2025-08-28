@@ -644,7 +644,7 @@ Antworte NUR mit dem Text im neuen Ton.`;
       
       // Kurz warten, dann neue Selection setzen auf den geänderten Text
       setTimeout(() => {
-        const newTo = from + result.replace(/<[^>]*>/g, '').length;
+        const newTo = from + newText.replace(/<[^>]*>/g, '').length;
         
         try {
           editor.chain()
@@ -738,7 +738,7 @@ Antworte NUR mit dem Text im neuen Ton.`;
       
       // Kurz warten, dann neue Selection setzen auf den geänderten Text
       setTimeout(() => {
-        const newText = action === 'elaborate' ? htmlContent : plainText;
+        // newText wurde bereits oben definiert
         const textLength = newText.replace(/<[^>]*>/g, '').length;
         const newTo = from + textLength;
         
@@ -770,7 +770,7 @@ Antworte NUR mit dem Text im neuen Ton.`;
   useEffect(() => {
     if (!editor) return;
 
-    let selectionTimeout: NodeJS.Timeout;
+    let selectionTimeout: NodeJS.Timeout | undefined;
 
     const handleSelectionUpdate = () => {
       // Clear existing timeout

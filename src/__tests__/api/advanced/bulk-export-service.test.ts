@@ -13,16 +13,16 @@ jest.mock('@/lib/firebase/build-safe-init', () => ({
 }));
 
 // Mock Firestore functions
-const mockAddDoc = jest.fn();
-const mockGetDoc = jest.fn();
-const mockGetDocs = jest.fn();
-const mockUpdateDoc = jest.fn();
-const mockQuery = jest.fn();
-const mockWhere = jest.fn();
-const mockOrderBy = jest.fn();
-const mockCollection = jest.fn();
-const mockDoc = jest.fn();
-const mockServerTimestamp = jest.fn();
+const mockAddDoc = jest.fn() as any;
+const mockGetDoc = jest.fn() as any;
+const mockGetDocs = jest.fn() as any;
+const mockUpdateDoc = jest.fn() as any;
+const mockQuery = jest.fn() as any;
+const mockWhere = jest.fn() as any;
+const mockOrderBy = jest.fn() as any;
+const mockCollection = jest.fn() as any;
+const mockDoc = jest.fn() as any;
+const mockServerTimestamp = jest.fn() as any;
 
 jest.mock('firebase/firestore', () => ({
   addDoc: mockAddDoc,
@@ -44,44 +44,19 @@ jest.mock('firebase/firestore', () => ({
 // Mock Services
 jest.mock('@/lib/firebase/contact-service', () => ({
   contactService: {
-    getContacts: jest.fn().mockResolvedValue({
-      contacts: [
-        {
-          id: 'contact-1',
-          firstName: 'John',
-          lastName: 'Doe',
-          email: 'john@example.com'
-        }
-      ]
-    })
+    getContacts: jest.fn()
   }
 }));
 
 jest.mock('@/lib/firebase/company-service-enhanced', () => ({
   companyService: {
-    getCompanies: jest.fn().mockResolvedValue({
-      companies: [
-        {
-          id: 'company-1',
-          name: 'Test Company',
-          website: 'https://test.com'
-        }
-      ]
-    })
+    getCompanies: jest.fn()
   }
 }));
 
 jest.mock('@/lib/api/publications-api-service', () => ({
   publicationsService: {
-    getPublications: jest.fn().mockResolvedValue({
-      publications: [
-        {
-          id: 'pub-1',
-          title: 'Test Publication',
-          type: 'magazine'
-        }
-      ]
-    })
+    getPublications: jest.fn()
   }
 }));
 
@@ -97,12 +72,12 @@ describe('BulkExportService', () => {
     jest.clearAllMocks();
     
     // Setup default mock implementations
-    mockServerTimestamp.mockReturnValue({});
-    mockCollection.mockReturnValue({});
-    mockDoc.mockReturnValue({ id: 'test-job-id' });
-    mockQuery.mockReturnValue({});
-    mockWhere.mockReturnValue({});
-    mockOrderBy.mockReturnValue({});
+    mockServerTimestamp.mockReturnValue({} as any);
+    mockCollection.mockReturnValue({} as any);
+    mockDoc.mockReturnValue({ id: 'test-job-id' } as any);
+    mockQuery.mockReturnValue({} as any);
+    mockWhere.mockReturnValue({} as any);
+    mockOrderBy.mockReturnValue({} as any);
   });
 
   afterEach(() => {
@@ -121,7 +96,7 @@ describe('BulkExportService', () => {
     it('sollte einen Export-Job erfolgreich starten', async () => {
       // Mock successful job creation
       const mockJobRef = { id: 'job-123' };
-      mockAddDoc.mockResolvedValue(mockJobRef);
+      mockAddDoc.mockResolvedValue(mockJobRef as any);
       
       const mockJobDoc = {
         exists: () => true,
@@ -140,7 +115,7 @@ describe('BulkExportService', () => {
           updatedAt: { toDate: () => new Date() }
         })
       };
-      mockGetDoc.mockResolvedValue(mockJobDoc);
+      mockGetDoc.mockResolvedValue(mockJobDoc as any);
 
       const result = await bulkExportService.startExport(
         validExportRequest,
@@ -220,7 +195,7 @@ describe('BulkExportService', () => {
           updatedAt: { toDate: () => new Date() }
         })
       };
-      mockGetDoc.mockResolvedValue(mockJobDoc);
+      mockGetDoc.mockResolvedValue(mockJobDoc as any);
 
       const result = await bulkExportService.getJobById(jobId, testOrganizationId);
 
@@ -281,7 +256,7 @@ describe('BulkExportService', () => {
           id: job.id,
           data: () => job
         }))
-      });
+      } as any);
 
       const result = await bulkExportService.getJobs(testOrganizationId, {
         page: 1,
@@ -336,7 +311,7 @@ describe('BulkExportService', () => {
           id: job.id,
           data: () => job
         }))
-      });
+      } as any);
 
       const result = await bulkExportService.getJobs(testOrganizationId, {
         page: 2,
@@ -375,7 +350,7 @@ describe('BulkExportService', () => {
           updatedAt: new Date().toISOString()
         } as any);
 
-      mockUpdateDoc.mockResolvedValue({});
+      mockUpdateDoc.mockResolvedValue({} as any);
 
       await bulkExportService.cancelJob(jobId, testOrganizationId);
 

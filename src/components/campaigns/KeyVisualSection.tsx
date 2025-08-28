@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { AssetSelectorModal } from '@/components/campaigns/AssetSelectorModal';
 import { KeyVisualCropper } from '@/components/ui/key-visual-cropper';
-import { uploadService } from '@/lib/firebase/upload-service';
 import { storage } from '@/lib/firebase/client-init';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 

@@ -130,8 +130,8 @@ class NotificationsService {
           // Combine and sort by creation date
           notifications = [...notifications, ...filteredLegacy]
             .sort((a, b) => {
-              const aTime = a.createdAt ? (a.createdAt as any).toDate?.() || new Date(a.createdAt) : new Date(0);
-              const bTime = b.createdAt ? (b.createdAt as any).toDate?.() || new Date(b.createdAt) : new Date(0);
+              const aTime = a.createdAt ? (a.createdAt as any).toDate?.() || new Date((a.createdAt as any)) : new Date(0);
+              const bTime = b.createdAt ? (b.createdAt as any).toDate?.() || new Date((b.createdAt as any)) : new Date(0);
               return bTime.getTime() - aTime.getTime();
             })
             .slice(0, limitCount);
@@ -667,8 +667,8 @@ class NotificationsService {
             // Combine and sort by creation date
             notifications = [...notifications, ...filteredLegacy]
               .sort((a, b) => {
-                const aTime = a.createdAt ? (a.createdAt as any).toDate?.() || new Date(a.createdAt) : new Date(0);
-                const bTime = b.createdAt ? (b.createdAt as any).toDate?.() || new Date(b.createdAt) : new Date(0);
+                const aTime = a.createdAt ? (a.createdAt as any).toDate?.() || new Date((a.createdAt as any)) : new Date(0);
+                const bTime = b.createdAt ? (b.createdAt as any).toDate?.() || new Date((b.createdAt as any)) : new Date(0);
                 return bTime.getTime() - aTime.getTime();
               })
               .slice(0, 50);

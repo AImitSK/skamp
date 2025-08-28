@@ -24,7 +24,7 @@ export function EmailStatusBadge({ status, showDescription = false, size = 'md' 
     );
   }
 
-  const { label, color, icon: Icon, description } = config;
+  const { label, color, icon: Icon, description } = config as any;
   
   const iconSize = size === 'sm' ? ICON_SIZES.xs : size === 'lg' ? ICON_SIZES.md : ICON_SIZES.sm;
 

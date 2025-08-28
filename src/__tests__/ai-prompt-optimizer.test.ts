@@ -62,7 +62,7 @@ interface TestResult {
 // MOCK AI-API für Tests (simuliert verschiedene Qualitätsstufen)
 const mockAICall = async (prompt: string): Promise<string> => {
   // Extrahiere den ursprünglichen Text aus dem Prompt
-  const textMatch = prompt.match(/Text: (.+?)$/s) || prompt.match(/:\s*([^:]+)$/s);
+  const textMatch = prompt.match(/Text: (.+?)$/u) || prompt.match(/:\s*([^:]+)$/u);
   if (!textMatch) {
     return "SK Online Marketing bietet B2B-Marketing-Lösungen.";
   }
@@ -238,7 +238,7 @@ function evaluateResult(original: typeof TEST_TEXTS.short, result: string): Test
   
   // 5. LISTEN-CHECK (nur bei Texten mit Listen)
   let preservesLists = true;
-  if (original.hasLists) {
+  if ((original as any).hasLists) {
     const hasLists = /[•\-]|\d+\./.test(parsed);
     if (!hasLists) {
       errors.push('Listen/Aufzählungen entfernt');

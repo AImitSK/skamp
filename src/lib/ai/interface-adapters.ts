@@ -55,7 +55,7 @@ export class AIServiceAdapter {
         leadParagraph: enhanced.structured.leadParagraph,
         bodyParagraphs: enhanced.structured.bodyParagraphs,
         quote: enhanced.structured.quote,
-        boilerplate: enhanced.structured.boilerplate
+        boilerplate: enhanced.structured.boilerplate || ''
       },
       metadata: enhanced.metadata ? {
         generatedBy: enhanced.metadata.generatedBy,
@@ -85,7 +85,9 @@ export class AIServiceAdapter {
         leadParagraph: legacy.structured.leadParagraph,
         bodyParagraphs: legacy.structured.bodyParagraphs,
         quote: legacy.structured.quote,
-        boilerplate: legacy.structured.boilerplate
+        boilerplate: legacy.structured.boilerplate,
+        hashtags: [],
+        socialOptimized: false
       },
       metadata: legacy.metadata ? {
         generatedBy: legacy.metadata.generatedBy || 'legacy-service',

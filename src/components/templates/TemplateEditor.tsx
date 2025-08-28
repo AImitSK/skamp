@@ -361,6 +361,7 @@ export default function TemplateEditor({ templateId, isOpen, onClose, onSave }: 
       const templateData = {
         name: templateName,
         description: templateDescription,
+        category: 'custom' as const,
         htmlContent,
         cssContent,
         variables,

@@ -82,7 +82,7 @@ export const emailComposerService = {
       throw emailError;
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Speichern fehlgeschlagen'
+        error: (error as any).message || 'Speichern fehlgeschlagen'
       };
     }
   },
@@ -390,7 +390,7 @@ export const emailComposerService = {
       }));
 
     } catch (error) {
-      emailLogger.error('Error loading draft history', { campaignId, error: error.message });
+      emailLogger.error('Error loading draft history', { campaignId, error: (error as any).message });
       return [];
     }
   },
@@ -408,7 +408,7 @@ export const emailComposerService = {
 
       return true;
     } catch (error) {
-      emailLogger.error('Error deleting draft', { draftId, error: error.message });
+      emailLogger.error('Error deleting draft', { draftId, error: (error as any).message });
       return false;
     }
   }

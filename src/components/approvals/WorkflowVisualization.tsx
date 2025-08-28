@@ -130,7 +130,7 @@ export function WorkflowVisualization({
                       color={
                         stage.status === 'completed' ? 'green' :
                         stage.status === 'rejected' ? 'red' :
-                        stage.status === 'in_progress' ? 'blue' : 'gray'
+                        stage.status === 'in_progress' ? 'blue' : 'zinc'
                       }
                       className="mt-1"
                     >
@@ -180,7 +180,7 @@ export function WorkflowVisualization({
                   Versand freigegeben
                 </p>
                 <Badge 
-                  color={currentStage === 'completed' ? 'green' : 'gray'}
+                  color={currentStage === 'completed' ? 'green' : 'zinc'}
                   className="mt-1"
                 >
                   {currentStage === 'completed' ? 'Bereit' : 'Wartend'}

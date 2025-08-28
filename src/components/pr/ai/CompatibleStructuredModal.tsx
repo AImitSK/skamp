@@ -32,7 +32,9 @@ const StructuredGenerationModalPlaceholder = ({ onClose, onGenerate }: any) => {
                     role: "CEO",
                     company: "Test Company"
                   },
-                  boilerplate: "Test boilerplate"
+                  boilerplate: "Test boilerplate",
+                  hashtags: [],
+                  socialOptimized: false
                 },
                 metadata: {
                   generatedBy: "test",
@@ -102,7 +104,7 @@ export default function CompatibleStructuredModal({
           leadParagraph: enhancedResult.structured.leadParagraph,
           bodyParagraphs: enhancedResult.structured.bodyParagraphs,
           quote: enhancedResult.structured.quote, // KORRIGIERT: quote statt quotes
-          boilerplate: enhancedResult.structured.boilerplate
+          boilerplate: enhancedResult.structured.boilerplate || ''
         },
         metadata: {
           generatedBy: enhancedResult.metadata?.generatedBy || 'enhanced-service',

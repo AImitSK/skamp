@@ -128,6 +128,11 @@ const statusConfig: Record<PRCampaignStatus, { label: string; color: "zinc" | "y
     color: 'indigo',
     icon: PaperAirplaneIcon,
   },
+  generating_preview: {
+    label: 'Vorschau wird generiert',
+    color: 'yellow',
+    icon: ClockIcon,
+  },
   sent: {
     label: 'Gesendet',
     color: 'green',

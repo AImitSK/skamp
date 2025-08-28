@@ -834,7 +834,7 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
         campaign.approvalData = {
           shareId: approval.shareId,
           status: this.mapEnhancedToLegacyStatus(approval.status),
-          feedbackHistory: combinedFeedback,
+          feedbackHistory: combinedFeedback as any,
           approvedAt: approval.approvedAt
         };
         return campaign;

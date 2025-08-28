@@ -174,7 +174,6 @@ export function ApprovalWorkflowTest({ organizationId, userId }: ApprovalWorkflo
           </div>
           
           <Button
-            color="blue"
             onClick={runApprovalWorkflowTest}
             disabled={isRunning}
           >
@@ -279,7 +278,6 @@ export function ApprovalWorkflowTest({ organizationId, userId }: ApprovalWorkflo
               
               <div className="mt-4 pt-4 border-t border-blue-200">
                 <Button
-                  size="sm"
                   onClick={() => window.open(`/freigabe/${currentApproval.shareId}`, '_blank')}
                 >
                   <ChatBubbleLeftRightIcon className="h-4 w-4 mr-2" />

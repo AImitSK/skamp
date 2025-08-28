@@ -225,7 +225,7 @@ export default function SimpleBoilerplateLoader({
                   className="text-left p-3 rounded-lg border border-gray-200 hover:border-[#005fab] hover:bg-[#005fab]/5 transition-colors"
                 >
                   <div className="flex-1">
-                    <div className="font-medium text-sm text-gray-900 mb-2">{bp.title}</div>
+                    <div className="font-medium text-sm text-gray-900 mb-2">{bp.name}</div>
                     <div className="flex items-center gap-2">
                       {bp.clientId ? (
                         <Badge color="blue" className="text-xs">Kunde</Badge>
@@ -233,7 +233,7 @@ export default function SimpleBoilerplateLoader({
                         <Badge color="zinc" className="text-xs">Global</Badge>
                       )}
                       {bp.category && (
-                        <Badge color="gray" className="text-xs capitalize">{bp.category}</Badge>
+                        <Badge color="zinc" className="text-xs capitalize">{bp.category}</Badge>
                       )}
                     </div>
                   </div>
@@ -305,7 +305,7 @@ export default function SimpleBoilerplateLoader({
                                 )}
                               </button>
                               <span className="font-medium text-sm text-gray-900">
-                                {section.boilerplate?.title || 'Textbaustein'}
+                                {section.boilerplate?.name || 'Textbaustein'}
                               </span>
                               {section.boilerplate?.clientId ? (
                                 <Badge color="blue" className="text-xs">Kunde</Badge>

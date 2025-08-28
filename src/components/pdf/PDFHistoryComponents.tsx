@@ -203,9 +203,9 @@ export function PDFVersionOverview({
                 ` • Freigegeben am ${formatDate(version.customerApproval.approvedAt)}`
               }
             </div>
-            {version.customerApproval.comment && (
+            {(version.customerApproval as any)?.comment && (
               <div className="mt-2 p-2 bg-gray-50 rounded text-sm text-gray-700">
-                <strong>Kommentar:</strong> &ldquo;{version.customerApproval.comment}&rdquo;
+                <strong>Kommentar:</strong> &ldquo;{(version.customerApproval as any).comment}&rdquo;
               </div>
             )}
           </div>
@@ -278,7 +278,7 @@ export function PDFHistoryModal({
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          <Button size="sm" plain>
+                          <Button plain className="text-sm">
                             <DocumentIcon className="h-4 w-4 mr-1" />
                             Öffnen
                           </Button>
@@ -310,9 +310,9 @@ export function PDFHistoryModal({
                             <>Freigabe angefordert am {formatDate(version.customerApproval.requestedAt)}</>
                           )}
                         </div>
-                        {version.customerApproval.comment && (
+                        {(version.customerApproval as any)?.comment && (
                           <div className="text-xs italic mt-1">
-                            &ldquo;{version.customerApproval.comment}&rdquo;
+                            &ldquo;{(version.customerApproval as any).comment}&rdquo;
                           </div>
                         )}
                       </div>

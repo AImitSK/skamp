@@ -184,10 +184,10 @@ export default function AnalyticsPage() {
     quotaLimit: 100000
   });
   const [chartData, setChartData] = useState({
-    hourlyData: [],
-    dailyData: [],
-    endpointData: [],
-    statusCodeData: []
+    hourlyData: [] as any[],
+    dailyData: [] as any[],
+    endpointData: [] as any[],
+    statusCodeData: [] as any[]
   });
   const [apiKeyStats, setApiKeyStats] = useState<Map<string, any>>(new Map());
 
@@ -357,7 +357,7 @@ export default function AnalyticsPage() {
       );
       
       const keysSnapshot = await getDocs(keysQuery);
-      const apiKeysData = [];
+      const apiKeysData: any[] = [];
       
       keysSnapshot.forEach(doc => {
         const data = doc.data();

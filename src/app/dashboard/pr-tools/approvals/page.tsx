@@ -860,7 +860,7 @@ export default function ApprovalsPage() {
                             Freigabe-Link öffnen
                           </DropdownItem>
                           <DropdownItem 
-                            onClick={() => handleCopyLink(approval.shareId, approval.type)}
+                            onClick={() => handleCopyLink(approval.shareId, (approval as any).type)}
                           >
                             <LinkIcon className="h-4 w-4" />
                             Link kopieren

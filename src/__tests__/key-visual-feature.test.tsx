@@ -20,20 +20,22 @@ jest.mock('firebase/storage', () => ({
 // Mock Proxy API
 global.fetch = jest.fn();
 
+// Default Props für alle Tests
+const defaultProps = {
+  value: undefined,
+  onChange: jest.fn(),
+  clientId: 'test-client',
+  clientName: 'Test Client',
+  organizationId: 'test-org',
+  userId: 'test-user'
+};
+
 describe('Key Visual Feature', () => {
   beforeEach(() => {
     (fetch as jest.Mock).mockClear();
   });
 
   describe('KeyVisualSection', () => {
-    const defaultProps = {
-      value: undefined,
-      onChange: jest.fn(),
-      clientId: 'test-client',
-      clientName: 'Test Client',
-      organizationId: 'test-org',
-      userId: 'test-user'
-    };
 
     test('zeigt Platzhalter wenn kein Key Visual gesetzt', () => {
       render(<KeyVisualSection {...defaultProps} />);

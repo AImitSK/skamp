@@ -231,7 +231,8 @@ export function StatusBadge({
   
   // Prüfe ob erweiterte Freigabe-Info verfügbar ist
   const hasApprovalInfo = campaign?.approvalData && 
-    (campaign.status === 'pending_approval' || campaign.status === 'approved' || 
+    (campaign.status === 'in_review' || campaign.status === 'approved' || 
+     campaign.status === 'changes_requested' ||
      (campaign.approvalData as any)?.teamApprovalRequired || 
      (campaign.approvalData as any)?.customerApprovalRequired);
 

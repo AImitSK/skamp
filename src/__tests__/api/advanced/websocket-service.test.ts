@@ -13,18 +13,18 @@ jest.mock('@/lib/firebase/build-safe-init', () => ({
 }));
 
 // Mock Firestore functions
-const mockAddDoc = jest.fn();
-const mockGetDoc = jest.fn();
-const mockGetDocs = jest.fn();
-const mockUpdateDoc = jest.fn();
-const mockDeleteDoc = jest.fn();
-const mockQuery = jest.fn();
-const mockWhere = jest.fn();
-const mockOrderBy = jest.fn();
-const mockLimit = jest.fn();
-const mockCollection = jest.fn();
-const mockDoc = jest.fn();
-const mockServerTimestamp = jest.fn();
+const mockAddDoc = jest.fn() as any;
+const mockGetDoc = jest.fn() as any;
+const mockGetDocs = jest.fn() as any;
+const mockUpdateDoc = jest.fn() as any;
+const mockDeleteDoc = jest.fn() as any;
+const mockQuery = jest.fn() as any;
+const mockWhere = jest.fn() as any;
+const mockOrderBy = jest.fn() as any;
+const mockLimit = jest.fn() as any;
+const mockCollection = jest.fn() as any;
+const mockDoc = jest.fn() as any;
+const mockServerTimestamp = jest.fn() as any;
 
 jest.mock('firebase/firestore', () => ({
   addDoc: mockAddDoc,
@@ -618,7 +618,7 @@ describe('WebSocketService', () => {
       mockGetDocs.mockResolvedValue({
         docs: oldConnections.map(conn => ({
           id: conn.id,
-          ref: { delete: jest.fn().mockResolvedValue({}) }
+          ref: { delete: jest.fn() as any }
         }))
       });
 
@@ -637,7 +637,7 @@ describe('WebSocketService', () => {
       mockGetDocs.mockResolvedValue({
         docs: oldMessages.map(msg => ({
           id: msg.id,
-          ref: { delete: jest.fn().mockResolvedValue({}) }
+          ref: { delete: jest.fn() as any }
         }))
       });
 

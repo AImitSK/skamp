@@ -209,7 +209,7 @@ export function TwoFactorSettings() {
                 {isEnabled ? (
                   <Badge color="green">Aktiv</Badge>
                 ) : (
-                  <Badge color="gray">Inaktiv</Badge>
+                  <Badge color="zinc">Inaktiv</Badge>
                 )}
               </div>
               <Text className="text-sm text-gray-600 mt-1">

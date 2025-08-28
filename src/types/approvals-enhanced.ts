@@ -150,8 +150,8 @@ export interface TeamMemberSelectorProps {
 }
 
 export interface CustomerContactSelectorProps {
-  selectedContact?: string;
-  onContactChange: (contactId?: string) => void;
+  selectedContact?: string | CustomerContact;
+  onContactChange: (contact?: string | CustomerContact) => void;
   clientId: string;
 }
 

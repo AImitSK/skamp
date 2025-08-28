@@ -373,11 +373,11 @@ export default function EmailComposer({ campaign, onClose, onSent }: EmailCompos
       );
       
       if (result.success) {
-        emailLogger.draftSaved(campaign.id);
+        emailLogger.draftSaved(campaign.id || 'unknown');
         dispatch({ type: 'SET_LAST_SAVED', timestamp: new Date() });
       }
     } catch (error) {
-      emailLogger.error('Auto-save failed', { campaignId: campaign.id, error: error.message });
+      emailLogger.error('Auto-save failed', { campaignId: campaign.id || 'unknown', error: (error as Error).message });
       dispatch({ type: 'SET_ERROR', field: 'autoSave', error: 'Automatisches Speichern fehlgeschlagen' });
     } finally {
       dispatch({ type: 'SET_SAVING', isSaving: false });
@@ -419,7 +419,7 @@ export default function EmailComposer({ campaign, onClose, onSent }: EmailCompos
           emailLogger.debug('No existing draft found', { campaignId: campaign.id });
         }
       } catch (error) {
-        emailLogger.error('Failed to load draft', { campaignId: campaign.id, error: error.message });
+        emailLogger.error('Failed to load draft', { campaignId: campaign.id || 'unknown', error: (error as Error).message });
       } finally {
         dispatch({ type: 'SET_LOADING', isLoading: false });
       }

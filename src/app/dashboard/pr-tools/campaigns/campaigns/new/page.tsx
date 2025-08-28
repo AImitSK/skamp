@@ -1264,10 +1264,9 @@ export default function NewPRCampaignPage() {
                     
                     <Button
                       type="button"
-                      size="sm"
                       plain
                       onClick={() => window.open(currentPdfVersion.downloadUrl, '_blank')}
-                      className="!text-gray-600 hover:!text-gray-900"
+                      className="!text-gray-600 hover:!text-gray-900 text-sm"
                     >
                       <DocumentArrowDownIcon className="h-4 w-4" />
                       Download

@@ -276,7 +276,11 @@ describe('PDFTemplateService', () => {
       const customizations = {
         colorScheme: {
           primary: '#ff0000',
-          secondary: '#00ff00'
+          secondary: '#00ff00',
+          accent: '#0066cc',
+          text: '#333333',
+          background: '#ffffff',
+          border: '#cccccc'
         }
       };
       
@@ -320,7 +324,14 @@ describe('PDFTemplateService', () => {
       const campaignId = 'test-campaign-123';
       const templateId = SYSTEM_TEMPLATE_IDS.MODERN_PROFESSIONAL;
       const overrides = {
-        colorScheme: { primary: '#custom-color' }
+        colorScheme: {
+          primary: '#custom-color',
+          secondary: '#666666',
+          accent: '#0066cc',
+          text: '#333333',
+          background: '#ffffff',
+          border: '#cccccc'
+        }
       };
       
       // Mock Firestore updateDoc

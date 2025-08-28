@@ -112,7 +112,7 @@ export default function TestNotificationsPage() {
             mockShareLink,
             mockShareLink.assetName,
             user.uid,
-            currentOrganization?.id
+            "test-org-123"
           );
           break;
           

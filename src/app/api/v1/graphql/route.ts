@@ -4,6 +4,7 @@ import { APIMiddleware, RequestParser } from '@/lib/api/api-middleware';
 import { graphqlResolvers, GraphQLContext } from '@/lib/api/graphql-resolvers';
 import { CELEROPRESS_GRAPHQL_SCHEMA } from '@/lib/api/graphql-schema';
 import { GraphQLQueryRequest, GraphQLResponse } from '@/types/api-advanced';
+import { APIError } from '@/lib/api/api-errors';
 
 /**
  * POST /api/v1/graphql
@@ -28,7 +29,7 @@ export const POST = APIMiddleware.withAuth(
     const graphqlContext: GraphQLContext = {
       organizationId: context.organizationId,
       userId: context.userId,
-      apiKeyId: context.keyId
+      apiKeyId: (context as any).keyId
     };
 
     // Query verarbeiten
@@ -124,7 +125,7 @@ async function processGraphQLRequest(
         locations: [],
         path: [],
         extensions: {
-          code: error instanceof APIError ? error.code : 'INTERNAL_ERROR'
+          code: error instanceof APIError ? (error as any).errorCode : 'INTERNAL_ERROR'
         }
       }]
     };
@@ -152,7 +153,7 @@ function parseGraphQLOperation(query: string): {
     }
 
     // Extrahiere Operation-Name und Felder (sehr vereinfacht)
-    const operationMatch = cleanQuery.match(/^(?:query|mutation|subscription)\s*(\w+)?\s*(?:\([^)]*\))?\s*\{(.*)\}$/s);
+    const operationMatch = cleanQuery.match(/^(?:query|mutation|subscription)\s*(\w+)?\s*(?:\([^)]*\))?\s*\{(.*)\}$/);
     if (!operationMatch) {
       return null;
     }
@@ -396,7 +397,7 @@ function generateGraphQLSDL(schema: any): string {
   sdl += 'type Query {\n';
   for (const query of schema.queries) {
     const args = query.args ? 
-      '(' + query.args.map(arg => `${arg.name}: ${arg.type}`).join(', ') + ')' : '';
+      '(' + query.args.map((arg: any) => `${arg.name}: ${arg.type}`).join(', ') + ')' : '';
     sdl += `  ${query.name}${args}: ${query.type}\n`;
   }
   sdl += '}\n\n';
@@ -406,7 +407,7 @@ function generateGraphQLSDL(schema: any): string {
     sdl += 'type Mutation {\n';
     for (const mutation of schema.mutations) {
       const args = mutation.args ? 
-        '(' + mutation.args.map(arg => `${arg.name}: ${arg.type}`).join(', ') + ')' : '';
+        '(' + mutation.args.map((arg: any) => `${arg.name}: ${arg.type}`).join(', ') + ')' : '';
       sdl += `  ${mutation.name}${args}: ${mutation.type}\n`;
     }
     sdl += '}\n\n';
@@ -417,7 +418,7 @@ function generateGraphQLSDL(schema: any): string {
     sdl += 'type Subscription {\n';
     for (const subscription of schema.subscriptions) {
       const args = subscription.args ? 
-        '(' + subscription.args.map(arg => `${arg.name}: ${arg.type}`).join(', ') + ')' : '';
+        '(' + subscription.args.map((arg: any) => `${arg.name}: ${arg.type}`).join(', ') + ')' : '';
       sdl += `  ${subscription.name}${args}: ${subscription.type}\n`;
     }
     sdl += '}\n\n';

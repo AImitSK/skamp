@@ -90,7 +90,7 @@ export class GraphQLResolvers {
       const contact = await contactsService.getContact(args.id, context.organizationId, context.userId);
       return this.transformContact(contact);
     } catch (error) {
-      if (error instanceof APIError && error.code === 'CONTACT_NOT_FOUND') {
+      if (error instanceof APIError && (error as any).errorCode === 'CONTACT_NOT_FOUND') {
         return null;
       }
       throw error;
@@ -128,7 +128,7 @@ export class GraphQLResolvers {
     const response = await contactsService.getContacts(context.organizationId, context.userId, params);
     
     return this.transformConnectionResponse(
-      response.contacts?.map(c => this.transformContact(c)) || [],
+      response.contacts?.map((c: any) => this.transformContact(c)) || [],
       response.total || 0,
       page,
       limit
@@ -146,7 +146,7 @@ export class GraphQLResolvers {
       const company = await companyService.get(args.id, context.organizationId);
       return this.transformCompany(company);
     } catch (error) {
-      if (error instanceof APIError && error.code === 'COMPANY_NOT_FOUND') {
+      if (error instanceof APIError && (error as any).errorCode === 'COMPANY_NOT_FOUND') {
         return null;
       }
       throw error;
@@ -177,7 +177,7 @@ export class GraphQLResolvers {
     const response = await companyService.getCompanies(context.organizationId, params);
     
     return this.transformConnectionResponse(
-      response.companies?.map(c => this.transformCompany(c)) || [],
+      response.companies?.map((c: any) => this.transformCompany(c)) || [],
       response.total || 0,
       page,
       limit
@@ -195,7 +195,7 @@ export class GraphQLResolvers {
       const publication = await publicationsService.getPublication(args.id, context.organizationId, context.userId);
       return this.transformPublication(publication);
     } catch (error) {
-      if (error instanceof APIError && error.code === 'PUBLICATION_NOT_FOUND') {
+      if (error instanceof APIError && (error as any).errorCode === 'PUBLICATION_NOT_FOUND') {
         return null;
       }
       throw error;
@@ -226,7 +226,7 @@ export class GraphQLResolvers {
     const response = await publicationsService.getPublications(context.organizationId, params);
     
     return this.transformConnectionResponse(
-      response.publications?.map(p => this.transformPublication(p)) || [],
+      response.publications?.map((p: any) => this.transformPublication(p)) || [],
       response.total || 0,
       page,
       limit
@@ -281,7 +281,7 @@ export class GraphQLResolvers {
         ...params,
         type: 'export'
       });
-      jobs.push(...exportResponse.jobs.map(j => this.transformBulkJob(j)));
+      jobs.push(...exportResponse.jobs.map((j: any) => this.transformBulkJob(j)));
     }
     
     if (!args.type || args.type === 'import') {
@@ -289,7 +289,7 @@ export class GraphQLResolvers {
         ...params,
         type: 'import'
       });
-      jobs.push(...importResponse.jobs.map(j => this.transformBulkJob(j)));
+      jobs.push(...importResponse.jobs.map((j: any) => this.transformBulkJob(j)));
     }
 
     // Sortiere nach Erstellungsdatum
@@ -326,7 +326,7 @@ export class GraphQLResolvers {
               filters: { search: args.query },
               limit: searchLimit
             });
-            results.contacts = contactResponse.contacts?.map(c => this.transformContact(c)) || [];
+            results.contacts = contactResponse.contacts?.map((c: any) => this.transformContact(c)) || [];
             break;
 
           case 'companies':
@@ -334,7 +334,7 @@ export class GraphQLResolvers {
               filters: { search: args.query },
               limit: searchLimit
             });
-            results.companies = companyResponse.companies?.map(c => this.transformCompany(c)) || [];
+            results.companies = companyResponse.companies?.map((c: any) => this.transformCompany(c)) || [];
             break;
 
           case 'publications':
@@ -342,7 +342,7 @@ export class GraphQLResolvers {
               filters: { search: args.query },
               limit: searchLimit
             });
-            results.publications = pubResponse.publications?.map(p => this.transformPublication(p)) || [];
+            results.publications = pubResponse.publications?.map((p: any) => this.transformPublication(p)) || [];
             break;
         }
       } catch (error) {
@@ -500,7 +500,7 @@ export class GraphQLResolvers {
     args: { id: string; input: any },
     context: GraphQLContext
   ): Promise<any> {
-    const updateData = {
+    const updateData: any = {
       title: args.input.title,
       type: args.input.type,
       description: args.input.description,
@@ -510,10 +510,10 @@ export class GraphQLResolvers {
     };
 
     if (args.input.publisherName) {
-      updateData['publisher.name'] = args.input.publisherName;
+      (updateData as any)['publisher.name'] = args.input.publisherName;
     }
     if (args.input.publisherLogoUrl) {
-      updateData['publisher.logoUrl'] = args.input.publisherLogoUrl;
+      (updateData as any)['publisher.logoUrl'] = args.input.publisherLogoUrl;
     }
 
     const publication = await publicationsService.updatePublication(

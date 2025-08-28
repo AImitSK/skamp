@@ -30,6 +30,9 @@ interface MigrationResult {
 export async function migrateAllOrganizations(): Promise<MigrationResult> {
   const result: MigrationResult = {
     success: true,
+    processed: 0,
+    created: 0,
+    skipped: 0,
     errors: []
   };
 
@@ -90,6 +93,9 @@ export async function migrateAllOrganizations(): Promise<MigrationResult> {
 export async function migrateOrganization(organizationId: string): Promise<MigrationResult> {
   const result: MigrationResult = {
     success: true,
+    processed: 0,
+    created: 0,
+    skipped: 0,
     errors: []
   };
 
@@ -136,6 +142,9 @@ export async function migrateOrganization(organizationId: string): Promise<Migra
 export async function migrateExistingEmails(organizationId?: string): Promise<MigrationResult> {
   const result: MigrationResult = {
     success: true,
+    processed: 0,
+    created: 0,
+    skipped: 0,
     errors: []
   };
 
@@ -153,7 +162,7 @@ export async function migrateExistingEmails(organizationId?: string): Promise<Mi
     const threads = threadsSnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    }));
+    })) as any[];
 
 
     for (const thread of threads) {
@@ -161,7 +170,7 @@ export async function migrateExistingEmails(organizationId?: string): Promise<Mi
         result.processed++;
 
         // Prüfen ob bereits Folder-Assignments existieren
-        const existingAssignments = await teamFolderService.search(thread.organizationId, {
+        const existingAssignments = await teamFolderService.search((thread as any).organizationId, {
           threadId: thread.id
         });
 
@@ -171,38 +180,38 @@ export async function migrateExistingEmails(organizationId?: string): Promise<Mi
         }
 
         // System-Ordner "Allgemeine Anfragen" finden
-        const generalInboxFolder = await teamFolderService.search(thread.organizationId, {
+        const generalInboxFolder = await teamFolderService.search((thread as any).organizationId, {
           isSystem: true,
           name: "📥 Allgemeine Anfragen"
         });
 
         if (generalInboxFolder.length === 0) {
-          result.errors.push(`Allgemeine Anfragen Ordner nicht gefunden für Organisation ${thread.organizationId}`);
+          result.errors.push(`Allgemeine Anfragen Ordner nicht gefunden für Organisation ${(thread as any).organizationId}`);
           continue;
         }
 
         // E-Mail zu "Allgemeine Anfragen" zuweisen
-        await teamFolderService.moveEmailToFolder(
+        await (teamFolderService as any).moveEmailToFolder(
           thread.id,
           generalInboxFolder[0].id!,
           'migration',
-          thread.organizationId,
+          (thread as any).organizationId,
           true // isPrimary
         );
 
         // Falls bereits einem Team-Mitglied zugewiesen, auch in dessen persönlichen Ordner
-        if (thread.assignedToUserId) {
-          const personalFolders = await teamFolderService.search(thread.organizationId, {
+        if ((thread as any).assignedToUserId) {
+          const personalFolders = await teamFolderService.search((thread as any).organizationId, {
             isSystem: true,
-            ownerId: thread.assignedToUserId
+            ownerId: (thread as any).assignedToUserId
           });
 
           if (personalFolders.length > 0) {
-            await teamFolderService.moveEmailToFolder(
+            await (teamFolderService as any).moveEmailToFolder(
               thread.id,
               personalFolders[0].id!,
               'migration',
-              thread.organizationId,
+              (thread as any).organizationId,
               false // nicht primary
             );
           }
@@ -285,8 +294,13 @@ async function createGeneralInboxFolder(organizationId: string, creator: any) {
     path: ["Allgemeine Anfragen"],
     isShared: true,
     isSystem: true,
-    autoAssignRules: []
-  };
+    autoAssignRules: [],
+    organizationId,
+    userId: creator.userId,
+    unreadCount: 0,
+    level: 0,
+    emailCount: 0
+  } as any;
 
   return await teamFolderService.create(folderData, {
     organizationId,
@@ -308,8 +322,13 @@ async function createPersonalFolder(organizationId: string, member: any) {
     path: [member.displayName],
     isShared: false,
     isSystem: true,
-    autoAssignRules: []
-  };
+    autoAssignRules: [],
+    organizationId,
+    userId: member.userId,
+    unreadCount: 0,
+    level: 0,
+    emailCount: 0
+  } as any;
 
   return await teamFolderService.create(folderData, {
     organizationId,

@@ -46,7 +46,7 @@ export default function DeveloperPortal() {
       );
       
       const keysSnapshot = await getDocs(keysQuery);
-      const apiKeysData = [];
+      const apiKeysData: any[] = [];
       
       keysSnapshot.forEach(doc => {
         const data = doc.data();

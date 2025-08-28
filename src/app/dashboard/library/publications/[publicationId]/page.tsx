@@ -1240,7 +1240,7 @@ className="inline-flex items-center bg-gray-50 hover:bg-gray-100 text-gray-900 b
               Abbrechen
             </Button>
             <Button 
-              color={publication.verified ? "zinc" : "green"} 
+              color={publication.verified ? "zinc" : "primary"} 
               onClick={handleVerify} 
               disabled={verifying}
             >

@@ -103,7 +103,7 @@ export function CustomerContactSelector({
   };
 
   const getContactRoleBadgeColor = (role?: string) => {
-    if (!role) return 'gray';
+    if (!role) return 'zinc';
     
     if (role.toLowerCase().includes('geschäftsführer') || role.toLowerCase().includes('ceo')) {
       return 'purple';

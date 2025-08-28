@@ -53,7 +53,8 @@
       "Read(/C:\\c\\Users\\skuehne\\Desktop\\Projekt/**)",
       "Read(/C:\\c\\Users\\skuehne\\Desktop\\Projekt/**)",
       "Read(/C:\\c\\Users\\skuehne\\Desktop\\Projekt/**)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "mcp__ide__getDiagnostics"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",

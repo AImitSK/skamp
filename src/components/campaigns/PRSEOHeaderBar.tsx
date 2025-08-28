@@ -27,7 +27,7 @@ interface KeywordMetrics {
   occurrences: number;
   inHeadline: boolean;
   inFirstParagraph: boolean;
-  distribution: 'gut' | 'mittel' | 'schwach';
+  distribution: 'gut' | 'mittel' | 'schlecht';
   semanticRelevance?: number;
   contextQuality?: number;
   relatedTerms?: string[];
@@ -183,10 +183,10 @@ export function PRSEOHeaderBar({
       regex.test(word) ? index / textParts.length : -1
     ).filter(pos => pos >= 0);
     
-    let distribution: 'gut' | 'mittel' | 'schwach' = 'schwach';
+    let distribution: 'gut' | 'mittel' | 'schlecht' = 'schlecht';
     if (keywordPositions.length >= 3) {
       const spread = Math.max(...keywordPositions) - Math.min(...keywordPositions);
-      distribution = spread > 0.4 ? 'gut' : spread > 0.2 ? 'mittel' : 'schwach';
+      distribution = spread > 0.4 ? 'gut' : spread > 0.2 ? 'mittel' : 'schlecht';
     } else if (keywordPositions.length >= 2) {
       distribution = 'mittel'; // Bei 2 Vorkommen = mittel
     }
@@ -501,7 +501,7 @@ export function PRSEOHeaderBar({
           recommendations.push(`"${km.keyword}" in Headline oder ersten Absatz einbauen`);
         }
         
-        if (km.distribution === 'schwach' && km.occurrences >= 2) {
+        if (km.distribution === 'schlecht' && km.occurrences >= 2) {
           recommendations.push(`"${km.keyword}" gleichmäßiger im Text verteilen`);
         }
         
@@ -858,10 +858,10 @@ Beispiel-Format (nutze deine eigenen Werte):
         regex.test(word) ? index / textParts.length : -1
       ).filter(pos => pos >= 0);
       
-      let distribution: 'gut' | 'mittel' | 'schwach' = 'schwach';
+      let distribution: 'gut' | 'mittel' | 'schlecht' = 'schlecht';
       if (keywordPositions.length >= 3) {
         const spread = Math.max(...keywordPositions) - Math.min(...keywordPositions);
-        distribution = spread > 0.4 ? 'gut' : spread > 0.2 ? 'mittel' : 'schwach';
+        distribution = spread > 0.4 ? 'gut' : spread > 0.2 ? 'mittel' : 'schlecht';
       } else if (keywordPositions.length >= 2) {
         distribution = 'mittel';
       }
@@ -1016,7 +1016,7 @@ Beispiel-Format (nutze deine eigenen Werte):
                     'bg-red-50 text-red-700 border border-red-300'
                   )}>
                     <span className="font-semibold">Verteilung:</span>
-                    <span>{metrics.distribution === 'schwach' ? 'schwach' : metrics.distribution}</span>
+                    <span>{metrics.distribution === 'schlecht' ? 'schlecht' : metrics.distribution}</span>
                   </div>
                 </div>
               </div>
@@ -1093,15 +1093,15 @@ Beispiel-Format (nutze deine eigenen Werte):
                 <CpuChipIcon className="h-4 w-4" />
                 <div className="flex items-center gap-4">
                   <span>
-                    <strong>Keyword-Score:</strong> {keywordScoreData.totalScore}/100
+                    <strong>Keyword-Score:</strong> {keywordScoreData?.totalScore}/100
                   </span>
-                  {keywordScoreData.hasAIAnalysis ? (
+                  {keywordScoreData?.hasAIAnalysis ? (
                     <span>
-                      <strong>KI-Bonus:</strong> {keywordScoreData.aiBonus}/40
+                      <strong>KI-Bonus:</strong> {keywordScoreData?.aiBonus}/40
                     </span>
                   ) : (
                     <span>
-                      <strong>Fallback-Bonus:</strong> {keywordScoreData.aiBonus}/40
+                      <strong>Fallback-Bonus:</strong> {keywordScoreData?.aiBonus}/40
                     </span>
                   )}
                 </div>
@@ -1131,7 +1131,7 @@ Beispiel-Format (nutze deine eigenen Werte):
                           </span>
                           {hashtagQuality && (
                             <span>
-                              <strong>Qualität:</strong> {hashtagQuality.averageScore.toFixed(1)}/100
+                              <strong>Qualität:</strong> {hashtagQuality?.averageScore.toFixed(1)}/100
                             </span>
                           )}
                         </>

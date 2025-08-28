@@ -405,8 +405,8 @@ export default function ApprovalPage() {
       }
 
       // Customer Approval Message aus Approval-Service (vereinfacht)
-      if (approval.customerContact) {
-        setCustomerMessage(approval.customerContact);
+      if ((approval as any).customerContact) {
+        setCustomerMessage((approval as any).customerContact);
         console.log('Customer Approval Message geladen (vereinfacht)');
       }
 

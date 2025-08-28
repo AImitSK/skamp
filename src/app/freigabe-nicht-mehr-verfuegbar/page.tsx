@@ -60,7 +60,7 @@ export default function FreigabeNichtMehrVerfuegbar() {
             </Link>
             
             <Link href="/dashboard/pr-tools/approvals">
-              <Button variant="outline" className="w-full">
+              <Button plain className="w-full border border-gray-300">
                 Freigaben verwalten
               </Button>
             </Link>

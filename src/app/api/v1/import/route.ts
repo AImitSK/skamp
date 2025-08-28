@@ -13,7 +13,7 @@ export const POST = APIMiddleware.withAuth(
 
     // Request Body parsen
     const body = await RequestParser.parseJSON<any>(request);
-    const importRequest: BulkImportRequest = {
+    const importRequest: BulkImportRequest & { data?: any } = {
       format: body.format,
       entity: body.entity,
       fileUrl: body.fileUrl,
@@ -24,7 +24,7 @@ export const POST = APIMiddleware.withAuth(
     };
 
     // Validiere Request - akzeptiere fileUrl, fileContent ODER data
-    if (!importRequest.fileUrl && !importRequest.fileContent && !importRequest.data) {
+    if (!importRequest.fileUrl && !importRequest.fileContent && !(importRequest as any).data) {
       return APIMiddleware.handleError({
         name: 'APIError',
         statusCode: 400,

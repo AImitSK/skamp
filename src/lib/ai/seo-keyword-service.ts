@@ -491,7 +491,7 @@ Text (erste 1000 Zeichen): ${text.substring(0, 1000)}`;
         const semanticRelevance = relevanceMatch ? parseInt(relevanceMatch[1]) : undefined;
         const contextQuality = qualityMatch ? parseInt(qualityMatch[1]) : undefined;
         const relatedTerms = termsMatch ? 
-          termsMatch[1].split(',').map(t => t.trim()).slice(0, 3) : 
+          termsMatch[1].split(',').map((t: string) => t.trim()).slice(0, 3) : 
           undefined;
         
         // Keyword-Stärke basierend auf Scores
@@ -1239,7 +1239,5 @@ export const seoKeywordService = new SEOKeywordService();
 export type { 
   KeywordDetectionOptions, 
   KeywordResult, 
-  KeywordAnalytics,
-  PerKeywordMetrics,
-  PRMetrics
+  KeywordAnalytics
 };

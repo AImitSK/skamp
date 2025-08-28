@@ -479,23 +479,23 @@ export class WebSocketService {
     // Prüfe Filters
     if (subscription.filters) {
       // Entity-Filter
-      if (subscription.filters.entities?.length > 0) {
-        if (!subscription.filters.entities.includes(eventPayload.event.entityId)) {
+      if (subscription.filters.entities?.length && subscription.filters.entities.length > 0) {
+        if (!subscription.filters.entities?.includes(eventPayload.event.entityId)) {
           return false;
         }
       }
 
       // Event-Type Filter
-      if (subscription.filters.events?.length > 0) {
-        if (!subscription.filters.events.includes(eventPayload.event.type)) {
+      if (subscription.filters.events?.length && subscription.filters.events.length > 0) {
+        if (!subscription.filters.events?.includes(eventPayload.event.type)) {
           return false;
         }
       }
 
       // Tag-Filter
-      if (subscription.filters.tags?.length > 0) {
+      if (subscription.filters.tags?.length && subscription.filters.tags.length > 0) {
         const eventTags = (eventPayload.event.data as any)?.tags || [];
-        const hasMatchingTag = subscription.filters.tags.some(tag =>
+        const hasMatchingTag = subscription.filters.tags?.some(tag =>
           eventTags.includes(tag)
         );
         if (!hasMatchingTag) {

@@ -267,7 +267,6 @@ export default function PublicationsTestPage() {
                 {getStatusBadge(test.status)}
                 <Button 
                   plain 
-                  size="sm"
                   onClick={() => runSingleTest(test.id)}
                   disabled={test.status === 'running' || allTestsStatus === 'running'}
                 >

@@ -103,15 +103,15 @@ export default function CampaignDetailPage() {
     let transcript = `FREIGABE-GESPRÄCHSVERLAUF\n`;
     transcript += `==========================\n\n`;
     transcript += `Kampagne: ${campaign.title}\n`;
-    transcript += `Kunde: ${company?.companyName || campaign.clientName || 'Unbekannt'}\n`;
+    transcript += `Kunde: ${(company as any)?.companyName || campaign.clientName || 'Unbekannt'}\n`;
     transcript += `Erstellt am: ${new Date().toLocaleString('de-DE')}\n`;
     transcript += `\n----------------------------\n\n`;
     
     // Sortiere Nachrichten chronologisch
     const sortedHistory = [...campaign.approvalData.feedbackHistory].sort((a, b) => {
-      const dateA = a.requestedAt?.toDate ? a.requestedAt.toDate() : new Date(a.requestedAt);
-      const dateB = b.requestedAt?.toDate ? b.requestedAt.toDate() : new Date(b.requestedAt);
-      return dateA - dateB;
+      const dateA = (a.requestedAt as any)?.toDate ? (a.requestedAt as any).toDate() : new Date((a.requestedAt as any));
+      const dateB = (b.requestedAt as any)?.toDate ? (b.requestedAt as any).toDate() : new Date((b.requestedAt as any));
+      return (dateA as any) - (dateB as any);
     });
     
     // Füge jede Nachricht hinzu
@@ -125,7 +125,7 @@ export default function CampaignDetailPage() {
             minute: '2-digit'
           })
         : feedback.requestedAt 
-        ? new Date(feedback.requestedAt).toLocaleString('de-DE', {
+        ? new Date((feedback.requestedAt as any)).toLocaleString('de-DE', {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric',
@@ -199,11 +199,11 @@ export default function CampaignDetailPage() {
           }
         } catch (error) {
         }
-      } else if (campaignData.approvalData?.customerApprovalMessage) {
+      } else if ((campaignData.approvalData as any)?.customerApprovalMessage) {
         // Legacy-Support: Erstelle feedbackHistory aus alten Daten
-        campaignData.approvalData.feedbackHistory = [{
-          comment: campaignData.approvalData.customerApprovalMessage,
-          requestedAt: campaignData.updatedAt || campaignData.createdAt,
+        campaignData.approvalData!.feedbackHistory = [{
+          comment: (campaignData.approvalData as any).customerApprovalMessage,
+          requestedAt: (campaignData.updatedAt || campaignData.createdAt) as any,
           author: 'Ihre Nachricht (Legacy)'
         }];
       }
@@ -317,7 +317,7 @@ export default function CampaignDetailPage() {
 
     try {
       // Update campaign with new admin
-      await prService.update(campaignId, { userId: newAdminId });
+      await prService.update(campaignId, { userId: newAdminId } as any);
       
       // Update local state
       const newAdmin = teamMembers.find(member => member.userId === newAdminId);
@@ -455,7 +455,7 @@ export default function CampaignDetailPage() {
               <Dropdown>
                 <DropdownButton className="inline-flex items-center gap-2 px-3 py-1.5 !bg-gray-100 hover:!bg-gray-200 !text-gray-700 !border-gray-300 rounded-full text-sm">
                   <img
-                    src={getTeamMemberAvatar(currentAdmin, 16)}
+                    src={getTeamMemberAvatar(currentAdmin!, 16)}
                     alt={currentAdmin?.displayName}
                     className="w-4 h-4 rounded-full"
                   />
@@ -576,7 +576,7 @@ export default function CampaignDetailPage() {
                 
                 // Use boilerplate content if available, otherwise use section content
                 const content = boilerplate?.content || section.content;
-                const headline = boilerplate?.name || section.headline;
+                const headline = boilerplate?.name || (section as any).headline;
                 
                 if (!content) return null;
                 
@@ -794,10 +794,10 @@ export default function CampaignDetailPage() {
       {/* Chat-Historie Modal */}
       {showHistoryModal && campaign && (
         <ApprovalHistoryModal
-          approval={campaign.approvalData}
+          approval={campaign.approvalData as any}
           legacyFeedback={campaign.approvalData?.feedbackHistory || []}
           campaignTitle={campaign.title}
-          clientName={company?.companyName || campaign.clientName || ''}
+          clientName={(company as any)?.companyName || campaign.clientName || ''}
           isOpen={showHistoryModal}
           onClose={() => setShowHistoryModal(false)}
         />

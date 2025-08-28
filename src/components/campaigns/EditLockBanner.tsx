@@ -108,7 +108,7 @@ export function EditLockBanner({
           config.color === 'yellow' && "bg-yellow-50 border-yellow-200", 
           config.color === 'blue' && "bg-blue-50 border-blue-200",
           config.color === 'green' && "bg-green-50 border-green-200",
-          config.color === 'gray' && "bg-gray-50 border-gray-200",
+          config.color === 'zinc' && "bg-gray-50 border-gray-200",
           className
         )}
         data-testid="edit-lock-banner"
@@ -123,7 +123,7 @@ export function EditLockBanner({
               config.color === 'yellow' && "text-yellow-600",
               config.color === 'blue' && "text-blue-600", 
               config.color === 'green' && "text-green-600",
-              config.color === 'gray' && "text-gray-600"
+              config.color === 'zinc' && "text-gray-600"
             )} />
             
             <div className="flex-1 min-w-0">
@@ -134,7 +134,7 @@ export function EditLockBanner({
                   config.color === 'yellow' && "text-yellow-900",
                   config.color === 'blue' && "text-blue-900",
                   config.color === 'green' && "text-green-900", 
-                  config.color === 'gray' && "text-gray-900"
+                  config.color === 'zinc' && "text-gray-900"
                 )}>
                   Bearbeitung gesperrt - {config.label}
                 </h4>
@@ -153,7 +153,7 @@ export function EditLockBanner({
                 config.color === 'yellow' && "text-yellow-700",
                 config.color === 'blue' && "text-blue-700",
                 config.color === 'green' && "text-green-700",
-                config.color === 'gray' && "text-gray-700"
+                config.color === 'zinc' && "text-gray-700"
               )}>
                 {config.description}
               </p>
@@ -208,10 +208,9 @@ export function EditLockBanner({
           <div className="flex items-center gap-2 ml-4 flex-shrink-0">
             {onRetry && config.severity === 'low' && (
               <Button
-                size="sm"
                 plain
                 onClick={onRetry}
-                className="whitespace-nowrap"
+                className="whitespace-nowrap text-sm"
                 aria-label="Status erneut prüfen"
               >
                 <ArrowPathIcon className="h-4 w-4 mr-1" />
@@ -221,15 +220,14 @@ export function EditLockBanner({
             
             {config.canRequestUnlock && !pendingRequest && onRequestUnlock && (
               <Button
-                size="sm"
                 onClick={() => setShowUnlockModal(true)}
                 className={clsx(
-                  "whitespace-nowrap transition-colors",
+                  "whitespace-nowrap transition-colors text-sm",
                   config.color === 'red' && "bg-red-600 hover:bg-red-700 text-white",
                   config.color === 'yellow' && "bg-yellow-600 hover:bg-yellow-700 text-white",
                   config.color === 'blue' && "bg-blue-600 hover:bg-blue-700 text-white",
                   config.color === 'green' && "bg-green-600 hover:bg-green-700 text-white",
-                  config.color === 'gray' && "bg-gray-600 hover:bg-gray-700 text-white"
+                  config.color === 'zinc' && "bg-gray-600 hover:bg-gray-700 text-white"
                 )}
                 data-testid="request-unlock-button"
                 aria-label="Entsperrung anfragen"

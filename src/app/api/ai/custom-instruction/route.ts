@@ -42,6 +42,12 @@ export async function POST(request: NextRequest) {
 
 
     // Gemini initialisieren
+    if (!GEMINI_API_KEY) {
+      return NextResponse.json(
+        { error: 'API Key nicht verfügbar' },
+        { status: 500 }
+      );
+    }
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 

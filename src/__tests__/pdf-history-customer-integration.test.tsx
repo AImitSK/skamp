@@ -1,5 +1,5 @@
 // src/__tests__/pdf-history-customer-integration.test.tsx - Tests für PDF-Historie auf Kundenfreigabe-Seite
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { PDFVersionOverview, PDFHistoryModal } from '@/components/pdf/PDFHistoryComponents';
 import { PDFVersion } from '@/lib/firebase/pdf-versions-service';
 
@@ -8,24 +8,23 @@ const createTestPdfVersion = (overrides: Partial<PDFVersion> = {}): PDFVersion =
   id: 'test-pdf-id',
   campaignId: 'test-campaign-id',
   organizationId: 'test-org-id',
+  createdBy: 'test-user-id',
   version: 1,
   status: 'pending_customer',
   downloadUrl: 'https://example.com/test.pdf',
+  fileName: 'test-campaign.pdf',
   fileSize: 1024000,
   contentSnapshot: {
     title: 'Test Campaign',
-    htmlContent: '<p>Test content</p>',
-    plainContent: 'Test content'
+    mainContent: 'Test content',
+    boilerplateSections: []
   },
   metadata: {
     wordCount: 150,
     pageCount: 2,
-    generatedAt: new Date()
+    generationTimeMs: 1500
   },
   createdAt: {
-    toDate: () => new Date('2024-01-15T10:00:00Z')
-  } as any,
-  updatedAt: {
     toDate: () => new Date('2024-01-15T10:00:00Z')
   } as any,
   ...overrides
@@ -119,7 +118,7 @@ describe('PDF-Historie für Kundenfreigabe', () => {
         metadata: {
           wordCount: 250,
           pageCount: 3,
-          generatedAt: new Date()
+          generationTimeMs: 1800
         },
         fileSize: 2048000
       });
@@ -146,15 +145,16 @@ describe('PDF-Historie für Kundenfreigabe', () => {
           version: 1, 
           status: 'rejected',
           customerApproval: { 
+            shareId: 'test-share-id-1',
             requestedAt: { toDate: () => new Date('2024-01-10T10:00:00Z') } as any,
-            approvedAt: { toDate: () => new Date('2024-01-10T12:00:00Z') } as any,
-            comment: 'Datum korrigieren'
+            approvedAt: { toDate: () => new Date('2024-01-10T12:00:00Z') } as any
           }
         }),
         createTestPdfVersion({ 
           version: 2, 
           status: 'pending_customer',
           customerApproval: {
+            shareId: 'test-share-id-2',
             requestedAt: { toDate: () => new Date('2024-01-15T10:00:00Z') } as any
           }
         })

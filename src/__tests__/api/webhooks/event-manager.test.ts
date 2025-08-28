@@ -55,12 +55,12 @@ describe('EventManager', () => {
 
     it('sollte Fehler beim Webhook-Service abfangen', async () => {
       // Mock error
-      mockTriggerEvent.mockRejectedValue(
+      (mockTriggerEvent as any).mockRejectedValue(
         new Error('Webhook service error')
       );
 
       // Console.error mocken um Output zu verhindern
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
       const testData = { id: 'test-123' };
 
@@ -373,7 +373,7 @@ describe('EventManager', () => {
         throw new Error('Webhook error');
       });
 
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
       const testData = { id: 'test-123' };
 

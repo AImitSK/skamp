@@ -1,9 +1,11 @@
 // src/app/api/generate-pdf/route.ts - Puppeteer-basierte PDF-Generation API
 import { NextRequest, NextResponse } from 'next/server';
 import puppeteer, { Browser, Page } from 'puppeteer-core';
+// @ts-ignore
+import type { Browser as PuppeteerBrowser } from 'puppeteer';
 import chromium from '@sparticuz/chromium';
-import { mediaService } from '@/lib/firebase/media-service';
-import { auth } from 'firebase/auth';
+// import { mediaService } from '@/lib/firebase/media-service';
+// import { Auth } from 'firebase/auth';
 import { templateRenderer, TemplateData } from '@/lib/pdf/template-renderer';
 import { pdfTemplateService } from '@/lib/firebase/pdf-template-service';
 import { PDFTemplate } from '@/types/pdf-template';
@@ -86,7 +88,7 @@ interface PDFGenerationResponse {
 export async function POST(request: NextRequest): Promise<NextResponse<PDFGenerationResponse>> {
   const startTime = Date.now();
   const requestId = Math.random().toString(36).substring(2, 15);
-  let browser: Browser | null = null;
+  let browser: any = null;
   let page: Page | null = null;
   let requestData: PDFGenerationRequest | null = null;
 
@@ -108,6 +110,14 @@ export async function POST(request: NextRequest): Promise<NextResponse<PDFGenera
 
     // Parse Request Body
     requestData = await request.json();
+
+    // Null-Check für requestData
+    if (!requestData) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid request data' },
+        { status: 400 }
+      );
+    }
 
     // Validierung der Request-Daten
     const validationErrors = validateRequest(requestData);
@@ -236,10 +246,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<PDFGenera
           '--disable-backgrounding-occluded-windows',
           '--disable-renderer-backgrounding'
         ],
-        defaultViewport: chromium.defaultViewport,
+        defaultViewport: null,
         executablePath,
-        headless: chromium.headless,
-        ignoreHTTPSErrors: true,
+        headless: true,
+        // ignoreHTTPSErrors: true,
         timeout: 30000
       });
       
@@ -254,7 +264,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<PDFGenera
       const puppeteerLocal = await import('puppeteer');
       
       browser = await puppeteerLocal.default.launch({
-        headless: 'new',
+        headless: true,
         args: [
           '--no-sandbox',
           '--disable-dev-shm-usage',
@@ -271,7 +281,14 @@ export async function POST(request: NextRequest): Promise<NextResponse<PDFGenera
       });
     }
 
+    if (!browser) {
+      throw new Error('Browser failed to launch');
+    }
     page = await browser.newPage();
+    
+    if (!page) {
+      throw new Error('Failed to create new page');
+    }
     
     // Setze Viewport für konsistentes Rendering
     await page.setViewport({ 
@@ -285,9 +302,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<PDFGenera
     
     // Error-Handler für Page
     page.on('error', (error) => {
+      console.error('Page error:', error);
     });
     
     page.on('pageerror', (error) => {
+      console.error('Page script error:', error);
     });
 
     // HTML-Content laden
@@ -357,7 +376,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<PDFGenera
 
     const response: PDFGenerationResponse = {
       success: true,
-      pdfUrl: uploadResult.needsClientUpload ? null : uploadResult.downloadUrl,
+      pdfUrl: uploadResult.needsClientUpload ? null : (uploadResult as any).downloadUrl,
       pdfBase64: uploadResult.pdfBase64, // Für Client-Side Upload
       needsClientUpload: uploadResult.needsClientUpload,
       fileName: fileName,
@@ -432,7 +451,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<PDFGenera
           wordCount: 0,
           pageCount: 0,
           generationTimeMs: Date.now() - startTime,
-          renderMethod: 'error',
+          renderMethod: 'legacy' as const,
           templateId: requestData?.templateId,
           cssInjectionTime: 0
         }

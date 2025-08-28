@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
       // Zu Mock-Daten hinzufügen
       const orgKeys = getMockAPIKeys(context.organizationId);
       const keyWithoutFullKey = { ...newKey };
-      delete keyWithoutFullKey.key; // Entferne full key für storage
+      delete (keyWithoutFullKey as any).key; // Entferne full key für storage
       orgKeys.push(keyWithoutFullKey);
       mockApiKeys.set(context.organizationId, orgKeys);
       

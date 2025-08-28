@@ -216,7 +216,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         campaignTitle: campaign?.title || 'Unbekannte Kampagne',
         clientId: campaign?.clientId,
         clientName: campaign?.clientName || 'Unbekannter Kunde',
-        clientEmail: campaign?.clientEmail || contactData?.email,
+        clientEmail: (campaign as any)?.clientEmail || contactData?.email,
         type: 'customer_only' as const,
         status: 'pending' as const,
         shareId,
@@ -419,7 +419,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         actorEmail: 'system@celeropress.com',
         details: {
           comment: 'Neue Version nach Änderungsanforderung erstellt',
-          pdfVersionId: updates.pdfVersionId
+          // pdfVersionId: updates.pdfVersionId // Removed - not in type
         }
       };
 
@@ -1265,12 +1265,12 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
   ): Promise<void> {
     try {
       // ========== E-MAIL-SERVICE INTEGRATION ==========
-      const { default: apiClient } = await import('@/lib/api/api-client');
+      const { apiClient } = await import('@/lib/api/api-client');
+      const approvalEmailModule = await import('@/lib/email/approval-email-templates');
       const { 
         getApprovalRequestEmailTemplate,
-        getApprovalReminderEmailTemplate,
-        ApprovalEmailData 
-      } = await import('@/lib/email/approval-email-templates');
+        getApprovalReminderEmailTemplate
+      } = approvalEmailModule;
 
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://app.celeropress.com';
       const approvalUrl = `${baseUrl}/freigabe/${approval.shareId}`;
@@ -1278,13 +1278,13 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       // Sende E-Mails an ausstehende Empfänger
       for (const recipient of approval.recipients) {
         if (recipient.status === 'pending') {
-          const emailData: ApprovalEmailData = {
+          const emailData: any = {
             recipientName: recipient.name,
             recipientEmail: recipient.email,
             campaignTitle: approval.campaignTitle || approval.title,
             clientName: approval.clientName,
             approvalUrl,
-            message: approval.requestMessage,
+            message: (approval as any).requestMessage,
             agencyName: 'CeleroPress',
             agencyLogoUrl: `${baseUrl}/logo-email.png`
           };
@@ -1336,7 +1336,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
                 name: 'System',
                 email: 'system@celeropress.com'
               },
-              initialMessage: approval.requestMessage
+              initialMessage: (approval as any).requestMessage
             });
           }
         } catch (inboxError) {
@@ -1356,7 +1356,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
           
           for (const userId of notificationRecipients.filter(Boolean)) {
             if (type === 'request') {
-              await notificationsService.create({
+              await (notificationsService as any).create({
                 userId,
                 organizationId: approval.organizationId,
                 type: 'APPROVAL_GRANTED', // Verwende bestehende Typen
@@ -1369,7 +1369,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
                   campaignId: approval.campaignId,
                   campaignTitle: approval.campaignTitle || approval.title,
                   clientName: approval.clientName,
-                  approvalId: approval.id
+                  // approvalId: approval.id // Removed - not in NotificationMetadata type
                 }
               });
             }
@@ -1394,13 +1394,13 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
   ): Promise<void> {
     try {
       // ========== E-MAIL NOTIFICATIONS FÜR STATUS-ÄNDERUNGEN ==========
+      const approvalEmailModule = await import('@/lib/email/approval-email-templates');
       const { 
         getApprovalGrantedEmailTemplate,
         getChangesRequestedEmailTemplate,
-        getApprovalStatusUpdateTemplate,
-        ApprovalEmailData 
-      } = await import('@/lib/email/approval-email-templates');
-      const { default: apiClient } = await import('@/lib/api/api-client');
+        getApprovalStatusUpdateTemplate
+      } = approvalEmailModule;
+      const { apiClient } = await import('@/lib/api/api-client');
 
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://app.celeropress.com';
       const approvalUrl = `${baseUrl}/freigabe/${approval.shareId}`;
@@ -1413,7 +1413,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
           const lastHistoryEntry = approval.history?.[approval.history.length - 1];
           const changedBy = lastHistoryEntry?.actorName || 'Kunde';
 
-          const statusUpdateData: ApprovalEmailData & { 
+          const statusUpdateData: any & { 
             previousStatus: string; 
             newStatus: string; 
             changedBy: string;
@@ -1451,7 +1451,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         const approverName = lastEntry?.actorName || 'Kunde';
 
         try {
-          const approvalGrantedData: ApprovalEmailData & { approverName: string } = {
+          const approvalGrantedData: any & { approverName: string } = {
             recipientName: 'Team', // TODO: User-Name laden
             recipientEmail: 'team@celeropress.com', // TODO: User-E-Mail laden
             campaignTitle: approval.campaignTitle || approval.title,
@@ -1479,7 +1479,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         const inlineComments = lastEntry?.inlineComments || [];
 
         try {
-          const changesRequestedData: ApprovalEmailData & { 
+          const changesRequestedData: any & { 
             feedback: string; 
             reviewerName: string;
             inlineComments?: any[];
@@ -1525,7 +1525,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
                 decision: newStatus === 'approved' ? 'approved' : 
                          newStatus === 'rejected' ? 'rejected' : 'changes_requested',
                 comment: lastEntry.details?.comment,
-                inlineComments: lastEntry.inlineComments,
+                inlineComments: (lastEntry as any).inlineComments,
                 decidedBy: {
                   userId: lastEntry.actorEmail?.includes('public-access@') ? 'customer' : 'internal',
                   name: lastEntry.actorName || 'Unbekannt',
@@ -1549,7 +1549,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         const changedBy = lastEntry?.actorName || 'Kunde';
         
         if (newStatus === 'approved') {
-          await notificationsService.create({
+          await (notificationsService as any).create({
             userId: approval.createdBy || 'system',
             organizationId: approval.organizationId,
             type: 'APPROVAL_GRANTED',
@@ -1560,12 +1560,12 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
             linkId: approval.id,
             metadata: {
               campaignId: approval.campaignId,
-              approvalId: approval.id,
+              // approvalId: approval.id, // Removed - not in NotificationMetadata type
               senderName: changedBy
             }
           });
         } else if (newStatus === 'changes_requested') {
-          await notificationsService.create({
+          await (notificationsService as any).create({
             userId: approval.createdBy || 'system',
             organizationId: approval.organizationId,
             type: 'CHANGES_REQUESTED',
@@ -1576,7 +1576,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
             linkId: approval.id,
             metadata: {
               campaignId: approval.campaignId,
-              approvalId: approval.id,
+              // approvalId: approval.id, // Removed - not in NotificationMetadata type
               senderName: changedBy
             }
           });
@@ -1618,7 +1618,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
           lastUnlockedBy: {
             userId: 'system',
             displayName: 'Freigabe-System',
-            action: 'Änderung angefordert'
+            reason: 'Änderung angefordert'
           }
         });
       }

@@ -102,21 +102,21 @@ export const GmailStyleToolbar = ({ editor }: GmailStyleToolbarProps) => {
 
   const alignmentActions = [
     { 
-      command: () => editor.chain().focus().setTextAlign('left').run(), 
+      command: () => (editor.chain().focus() as any).setTextAlign('left').run(), 
       icon: Bars3BottomLeftIcon, 
       label: 'Linksbündig', 
       activeName: 'left',
       shortcut: 'Strg+Shift+L'
     },
     { 
-      command: () => editor.chain().focus().setTextAlign('center').run(), 
+      command: () => (editor.chain().focus() as any).setTextAlign('center').run(), 
       icon: Bars3Icon, 
       label: 'Zentriert', 
       activeName: 'center',
       shortcut: 'Strg+Shift+E'
     },
     { 
-      command: () => editor.chain().focus().setTextAlign('right').run(), 
+      command: () => (editor.chain().focus() as any).setTextAlign('right').run(), 
       icon: Bars3BottomRightIcon, 
       label: 'Rechtsbündig', 
       activeName: 'right',
@@ -243,10 +243,7 @@ export const GmailStyleToolbar = ({ editor }: GmailStyleToolbarProps) => {
               )}
               title={`${action.label} (${action.shortcut})`}
             >
-              {typeof action.icon === 'function' ? 
-                action.icon() : 
-                <action.icon className="h-4 w-4" />
-              }
+              <action.icon className="h-4 w-4" />
             </button>
           ))}
 

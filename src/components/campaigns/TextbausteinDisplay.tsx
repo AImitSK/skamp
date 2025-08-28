@@ -178,7 +178,7 @@ export function TextbausteinDisplay({
                     {/* Typ-Badge */}
                     {baustein.type && !showSimplified && (
                       <Badge 
-                        color={baustein.type === 'boilerplate' ? 'primary' : 'zinc'} 
+                        color={baustein.type === 'boilerplate' ? 'blue' : 'zinc'} 
                         className="text-xs"
                       >
                         {baustein.type === 'boilerplate' ? 'Standard' : 'Custom'}

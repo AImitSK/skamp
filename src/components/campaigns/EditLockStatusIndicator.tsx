@@ -172,7 +172,7 @@ export function EditLockStatusIndicator({
           config.color === 'yellow' && "text-yellow-500",
           config.color === 'blue' && "text-blue-500",
           config.color === 'green' && "text-green-500",
-          config.color === 'gray' && "text-gray-500"
+          config.color === 'zinc' && "text-gray-500"
         )} />
       )}
       
@@ -184,7 +184,7 @@ export function EditLockStatusIndicator({
           config.color === 'yellow' && "text-yellow-700",
           config.color === 'blue' && "text-blue-700",
           config.color === 'green' && "text-green-700",
-          config.color === 'gray' && "text-gray-700"
+          config.color === 'zinc' && "text-gray-700"
         )}>
           {config.label}
         </span>

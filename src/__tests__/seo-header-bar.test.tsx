@@ -195,7 +195,7 @@ describe('PRSEOHeaderBar', () => {
       // Simuliere Callback für auto-detection
       let detectionCallback: ((result: any) => void) | null = null;
       
-      mockSeoService.detectKeywordsDebounced.mockImplementation((content, sessionId, callback) => {
+      mockSeoService.detectKeywordsDebounced.mockImplementation(async (_content, _sessionId, callback) => {
         detectionCallback = callback;
       });
 
@@ -203,7 +203,7 @@ describe('PRSEOHeaderBar', () => {
 
       // Simuliere Auto-Detection Ergebnis
       if (detectionCallback) {
-        detectionCallback({
+        (detectionCallback as any)({
           keywords: ['Innovation', 'Automatisierung', 'Digitalisierung'],
           confidence: 0.8,
           detectedAt: new Date(),
@@ -221,7 +221,7 @@ describe('PRSEOHeaderBar', () => {
       const onKeywordsChange = jest.fn();
       let detectionCallback: ((result: any) => void) | null = null;
       
-      mockSeoService.detectKeywordsDebounced.mockImplementation((content, sessionId, callback) => {
+      mockSeoService.detectKeywordsDebounced.mockImplementation(async (_content, _sessionId, callback) => {
         detectionCallback = callback;
       });
 
@@ -229,7 +229,7 @@ describe('PRSEOHeaderBar', () => {
 
       // Simuliere Auto-Detection
       if (detectionCallback) {
-        detectionCallback({
+        (detectionCallback as any)({
           keywords: ['Innovation'],
           confidence: 0.8,
           detectedAt: new Date(),
@@ -309,7 +309,7 @@ describe('PRSEOHeaderBar', () => {
     test('zeigt Analysiere-Status während Detection', async () => {
       let detectionCallback: ((result: any) => void) | null = null;
       
-      mockSeoService.detectKeywordsDebounced.mockImplementation((content, sessionId, callback) => {
+      mockSeoService.detectKeywordsDebounced.mockImplementation(async (_content, _sessionId, callback) => {
         detectionCallback = callback;
         // Simuliere verzögerte Antwort
       });
@@ -323,7 +323,7 @@ describe('PRSEOHeaderBar', () => {
 
       // Callback aufrufen um Status zu beenden
       if (detectionCallback) {
-        detectionCallback({
+        (detectionCallback as any)({
           keywords: [],
           confidence: 0,
           detectedAt: new Date(),

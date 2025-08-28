@@ -2,7 +2,53 @@
 
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { TemplateCache } from '@/lib/pdf/template-cache';
-import { PDFTemplate, SYSTEM_TEMPLATE_IDS } from '@/types/pdf-template';
+import { PDFTemplate } from '@/types/pdf-template';
+
+// Mock Template für Tests
+const mockTemplate: PDFTemplate = {
+  id: 'mock-template-1',
+  name: 'Mock Template',
+  description: 'Test template for cache testing',
+  version: '1.0.0',
+  layout: {
+    type: 'standard',
+    headerHeight: 80,
+    footerHeight: 60,
+    margins: { top: 20, right: 20, bottom: 20, left: 20 },
+    columns: 1,
+    pageFormat: 'A4'
+  },
+  typography: {
+    primaryFont: 'Inter',
+    secondaryFont: 'Inter',
+    baseFontSize: 14,
+    lineHeight: 1.5,
+    headingScale: [32, 24, 20, 16]
+  },
+  colorScheme: {
+    primary: '#000000',
+    secondary: '#666666',
+    accent: '#0066cc',
+    background: '#ffffff',
+    text: '#333333',
+    border: '#cccccc'
+  },
+  components: {
+    header: { backgroundColor: '#ffffff', textColor: '#333333' },
+    footer: { backgroundColor: '#f5f5f5', textColor: '#666666' },
+    logo: { backgroundColor: 'transparent' },
+    title: { textColor: '#000000', padding: 20 },
+    content: { backgroundColor: '#ffffff', padding: 20 },
+    sidebar: { backgroundColor: '#f9f9f9' },
+    keyVisual: { backgroundColor: 'transparent' },
+    boilerplate: { backgroundColor: '#f5f5f5', padding: 15 }
+  },
+  isSystem: false,
+  isActive: true,
+  createdAt: new Date(),
+  createdBy: 'test-user',
+  organizationId: 'test-org'
+};
 
 // Mock setTimeout und setInterval für Timer-Tests
 const mockTimers = () => {
@@ -111,7 +157,7 @@ describe('TemplateCache', () => {
       cache.getTemplate(key);
       
       const analysis = cache.analyze();
-      const templateEntry = analysis.templateCache.entries.find(e => e.key === key);
+      const templateEntry = analysis.templateCache.entries.find((e: any) => e.key === key);
       
       expect(templateEntry?.accessCount).toBe(3);
     });

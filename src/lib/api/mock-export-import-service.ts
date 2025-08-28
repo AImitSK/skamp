@@ -9,9 +9,11 @@ import {
   BulkImportRequest,
   APIBulkJobResponse,
   APIBulkJobListResponse,
-  ExportFormat,
-  JobStatus
+  ExportFormat
 } from '@/types/api-advanced';
+
+// Define JobStatus locally since it's not exported
+type JobStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
 
 class MockBulkExportService {
   /**
@@ -21,7 +23,7 @@ class MockBulkExportService {
     request: BulkExportRequest,
     organizationId: string,
     userId: string
-  ): Promise<APIBulkJobResponse> {
+  ): Promise<any> {
     const jobId = `exp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
     return {
@@ -51,8 +53,8 @@ class MockBulkExportService {
   async getJobs(
     organizationId: string,
     params: any
-  ): Promise<APIBulkJobListResponse> {
-    const mockJobs: APIBulkJobResponse[] = [
+  ): Promise<any> {
+    const mockJobs: any[] = [
       {
         id: 'exp_mock_1',
         type: 'export',
@@ -100,7 +102,7 @@ class MockBulkExportService {
   /**
    * Holt einen Mock-Job nach ID
    */
-  async getJobById(jobId: string, organizationId: string): Promise<APIBulkJobResponse> {
+  async getJobById(jobId: string, organizationId: string): Promise<any> {
     return {
       id: jobId,
       type: 'export',
@@ -131,7 +133,7 @@ class MockBulkImportService {
     request: BulkImportRequest,
     organizationId: string,
     userId: string
-  ): Promise<APIBulkJobResponse> {
+  ): Promise<any> {
     const jobId = `imp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
     return {
@@ -156,8 +158,8 @@ class MockBulkImportService {
   async getJobs(
     organizationId: string,
     params: any
-  ): Promise<APIBulkJobListResponse> {
-    const mockJobs: APIBulkJobResponse[] = [
+  ): Promise<any> {
+    const mockJobs: any[] = [
       {
         id: 'imp_mock_1',
         type: 'import',
@@ -219,7 +221,7 @@ class MockBulkImportService {
   /**
    * Holt einen Mock-Job nach ID
    */
-  async getJobById(jobId: string, organizationId: string): Promise<APIBulkJobResponse> {
+  async getJobById(jobId: string, organizationId: string): Promise<any> {
     return {
       id: jobId,
       type: 'import',

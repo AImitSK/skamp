@@ -1,6 +1,6 @@
 // src/app/api/sendgrid/send-approval-email/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { apiAuthGuard } from '@/lib/api/api-auth-service';
+import { APIMiddleware } from '@/lib/api/api-middleware';
 
 interface SendApprovalEmailRequest {
   to: string;
@@ -9,15 +9,10 @@ interface SendApprovalEmailRequest {
   text: string;
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    // Auth Guard - Überprüft Authentifizierung
-    const authResult = await apiAuthGuard(request);
-    if (!authResult.isAuthenticated) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { to, subject, html, text } = await request.json() as SendApprovalEmailRequest;
+export const POST = APIMiddleware.withAuth(
+  async (request: NextRequest, context) => {
+    try {
+      const { to, subject, html, text } = await request.json() as SendApprovalEmailRequest;
 
     // Validierung
     if (!to || !subject || !html) {
@@ -89,7 +84,7 @@ export async function POST(request: NextRequest) {
       message: 'Approval-E-Mail erfolgreich gesendet'
     });
 
-  } catch (error: any) {
+    } catch (error: any) {
     console.error('Fehler beim Senden der Approval-E-Mail:', error);
     
     // SendGrid-spezifische Fehlerbehandlung
@@ -110,5 +105,7 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 }
     );
-  }
-}
+    }
+  },
+  ['publications:write'] // Required permissions
+);

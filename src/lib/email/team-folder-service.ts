@@ -35,7 +35,7 @@ import { Timestamp } from 'firebase/firestore';
 // TEAM FOLDER SERVICE
 // ============================================================================
 
-export class TeamFolderService extends BaseService<TeamFolder> {
+export class TeamFolderService extends BaseService<any> {
   constructor() {
     super('team_folders');
   }
@@ -83,7 +83,7 @@ export class TeamFolderService extends BaseService<TeamFolder> {
 
     for (const folderData of systemFolders) {
       try {
-        await this.create(folderData, context);
+        await this.create(folderData as any, context);
       } catch (error) {
       }
     }
@@ -111,7 +111,7 @@ export class TeamFolderService extends BaseService<TeamFolder> {
       autoAssignRules: []
     };
 
-    return await this.create(folderData, { organizationId, userId: createdBy });
+    return await this.create(folderData as any, { organizationId, userId: createdBy });
   }
 
   // ========================================
@@ -170,7 +170,7 @@ export class TeamFolderService extends BaseService<TeamFolder> {
       autoAssignRules: folderData.autoAssignRules || []
     };
 
-    return await this.create(subFolderData, { organizationId, userId });
+    return await this.create(subFolderData as any, { organizationId, userId });
   }
 
   /**
@@ -275,7 +275,7 @@ export class TeamFolderService extends BaseService<TeamFolder> {
       });
 
       return Array.from(allDocs.values())
-        .filter(folder => !folder.deletedAt); // Soft delete filtering
+        .filter(folder => !(folder as any).deletedAt); // Soft delete filtering
     } catch (error) {
       return [];
     }
@@ -314,7 +314,7 @@ export class TeamFolderService extends BaseService<TeamFolder> {
     }
 
     // EmailThreadFolder erstellen
-    const threadFolderData: Omit<EmailThreadFolder, 'id'> = {
+    const threadFolderData = {
       threadId,
       folderId: targetFolderId,
       folderPath: targetFolder.path,
@@ -322,8 +322,11 @@ export class TeamFolderService extends BaseService<TeamFolder> {
       assignedAt: serverTimestamp() as any,
       isOriginalLocation: targetFolder.isSystem && targetFolder.name.includes('Allgemeine'),
       isPrimaryLocation: isPrimary,
-      organizationId
-    };
+      organizationId,
+      createdAt: serverTimestamp() as any,
+      updatedAt: serverTimestamp() as any,
+      userId
+    } as any;
 
     // In email_thread_folders Collection speichern
     const threadFolderRef = collection(db, 'email_thread_folders');
@@ -341,7 +344,7 @@ export class TeamFolderService extends BaseService<TeamFolder> {
       folder.isSystem ||
       folder.ownerId === userId ||
       folder.isShared ||
-      (folder.sharedWithUserIds && folder.sharedWithUserIds.includes(userId))
+      ((folder as any).sharedWithUserIds && (folder as any).sharedWithUserIds.includes(userId))
     );
   }
 
@@ -587,6 +590,8 @@ export class TeamFolderService extends BaseService<TeamFolder> {
     }>
   ): Promise<BatchOperationResult> {
     const results: BatchOperationResult = {
+      success: 0,
+      failed: 0,
       errors: []
     };
 
@@ -607,7 +612,7 @@ export class TeamFolderService extends BaseService<TeamFolder> {
             color: folderData.color || "#6B7280"
           };
           
-          await this.create(data, { organizationId, userId });
+          await this.create(data as any, { organizationId, userId });
         }
         
         results.success++;
@@ -627,7 +632,7 @@ export class TeamFolderService extends BaseService<TeamFolder> {
 // EMAIL THREAD FOLDER SERVICE
 // ============================================================================
 
-export class EmailThreadFolderService extends BaseService<EmailThreadFolder> {
+export class EmailThreadFolderService extends BaseService<any> {
   constructor() {
     super('email_thread_folders');
   }

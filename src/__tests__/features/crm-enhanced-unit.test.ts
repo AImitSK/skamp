@@ -81,7 +81,7 @@ describe('CRM Enhanced Constants', () => {
     const { COMPANY_TABS } = require('@/lib/constants/crm-constants');
     
     const expectedTabIds = ['general', 'legal', 'international', 'financial', 'corporate', 'media'];
-    const actualTabIds = COMPANY_TABS.map(tab => tab.id);
+    const actualTabIds = COMPANY_TABS.map((tab: any) => tab.id);
     
     expect(actualTabIds).toEqual(expectedTabIds);
   });
@@ -90,7 +90,7 @@ describe('CRM Enhanced Constants', () => {
     const { CONTACT_TABS } = require('@/lib/constants/crm-constants');
     
     const expectedTabIds = ['general', 'communication', 'media', 'professional', 'gdpr', 'personal'];
-    const actualTabIds = CONTACT_TABS.map(tab => tab.id);
+    const actualTabIds = CONTACT_TABS.map((tab: any) => tab.id);
     
     expect(actualTabIds).toEqual(expectedTabIds);
   });
@@ -98,7 +98,7 @@ describe('CRM Enhanced Constants', () => {
   it('sollte Media Tab nur für bestimmte Company Types sichtbar sein', () => {
     const { COMPANY_TABS } = require('@/lib/constants/crm-constants');
     
-    const mediaTab = COMPANY_TABS.find(tab => tab.id === 'media');
+    const mediaTab = COMPANY_TABS.find((tab: any) => tab.id === 'media');
     expect(mediaTab).toBeDefined();
     expect(mediaTab.visible).toBeDefined();
     
@@ -112,7 +112,7 @@ describe('CRM Enhanced Constants', () => {
   it('sollte Media Tab nur für Journalisten sichtbar sein (Contacts)', () => {
     const { CONTACT_TABS } = require('@/lib/constants/crm-constants');
     
-    const mediaTab = CONTACT_TABS.find(tab => tab.id === 'media');
+    const mediaTab = CONTACT_TABS.find((tab: any) => tab.id === 'media');
     expect(mediaTab).toBeDefined();
     expect(mediaTab.visible).toBeDefined();
     

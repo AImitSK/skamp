@@ -73,7 +73,7 @@ ${currentTitle ? `Aktuelle Headline: "${currentTitle}"\n\n` : ''}Inhalt der Pres
       // Parse Headlines aus der Antwort - AGGRESSIVES HTML-Cleaning
       const headlineLines = generatedText
         .split('\n')
-        .map(line => {
+        .map((line: string) => {
           // Entferne ALLE HTML-Tags komplett
           let cleaned = line.replace(/<[^>]*>/g, '');
           // Entferne Markdown-Formatierung
@@ -86,7 +86,7 @@ ${currentTitle ? `Aktuelle Headline: "${currentTitle}"\n\n` : ''}Inhalt der Pres
           cleaned = cleaned.replace(/^["“”\-\s]*|["“”\s]*$/g, '');
           return cleaned.trim();
         })
-        .filter(line => line.length > 0 && line.length >= 20 && line.length <= 80) // Nur sinnvolle Längen
+        .filter((line: string) => line.length > 0 && line.length >= 20 && line.length <= 80) // Nur sinnvolle Längen
         .slice(0, 3); // Maximal 3 Headlines
       
       if (headlineLines.length > 0) {

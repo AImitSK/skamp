@@ -75,11 +75,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { 
           error: {
-            code: error.code,
+            code: (error as any).errorCode,
             message: error.message
           }
         },
-        { status: getStatusCodeForError(error.code) }
+        { status: getStatusCodeForError((error as any).errorCode) }
       );
     }
 
@@ -170,11 +170,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { 
           error: {
-            code: error.code,
+            code: (error as any).errorCode,
             message: error.message
           }
         },
-        { status: getStatusCodeForError(error.code) }
+        { status: getStatusCodeForError((error as any).errorCode) }
       );
     }
 

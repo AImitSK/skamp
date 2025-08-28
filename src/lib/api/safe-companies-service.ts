@@ -70,7 +70,7 @@ export class SafeCompaniesService {
             updatedAt: legacyData.updatedAt,
             // Map other legacy fields as needed
             ...legacyData
-          } as CompanyEnhanced);
+          } as unknown as CompanyEnhanced);
         }
       });
       
@@ -174,7 +174,7 @@ export class SafeCompaniesService {
           createdAt: legacyData.createdAt,
           updatedAt: legacyData.updatedAt,
           ...legacyData
-        } as CompanyEnhanced;
+        } as unknown as CompanyEnhanced;
       }
 
       console.log('Company not found');

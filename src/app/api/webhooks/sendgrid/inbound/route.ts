@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     const emailData: IncomingEmailData = {
       // Headers - mit Fallback wenn headers undefined
       messageId: parsedEmail.headers ? extractMessageId(parsedEmail.headers) : generateMessageId(),
-      inReplyTo: parsedEmail.headers ? extractHeader(parsedEmail.headers, 'In-Reply-To') : null,
+      inReplyTo: parsedEmail.headers ? extractHeader(parsedEmail.headers, 'In-Reply-To') || undefined : undefined,
       references: parsedEmail.headers ? (extractHeader(parsedEmail.headers, 'References')?.split(/\s+/) || []) : [],
       
       // Addresses

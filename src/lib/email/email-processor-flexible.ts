@@ -146,7 +146,6 @@ export async function flexibleEmailProcessor(
       
       // Attachments
       attachments: emailData.attachments || [],
-      hasAttachments: (emailData.attachments?.length || 0) > 0,
       
       // Spam-Info
       spamScore: emailData.spamScore,

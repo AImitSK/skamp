@@ -97,7 +97,7 @@ export interface InlineComment {
   };
 }
 
-class InboxService extends BaseService<InboxThread> {
+class InboxService extends BaseService<any> {
   private messagesCollection = 'inbox_messages';
 
   constructor() {
@@ -212,7 +212,7 @@ class InboxService extends BaseService<InboxThread> {
       const thread = await this.getById(data.threadId, data.organizationId);
       if (!thread) throw new Error('Thread nicht gefunden');
 
-      const isReadStatus = thread.participants.reduce((acc, p) => {
+      const isReadStatus = thread.participants.reduce((acc: any, p: any) => {
         acc[p.userId] = p.userId === data.senderId; // Sender hat automatisch gelesen
         return acc;
       }, {} as Record<string, boolean>);
@@ -237,7 +237,7 @@ class InboxService extends BaseService<InboxThread> {
 
       // Thread-Update (lastMessageAt, unreadCount)
       const unreadUpdate: Record<string, number> = {};
-      thread.participants.forEach(p => {
+      thread.participants.forEach((p: any) => {
         if (p.userId !== data.senderId) {
           unreadUpdate[p.userId] = (thread.unreadCount[p.userId] || 0) + 1;
         }
@@ -348,7 +348,7 @@ class InboxService extends BaseService<InboxThread> {
       };
 
       // Update participant lastReadAt
-      const updatedParticipants = thread.participants.map(p => 
+      const updatedParticipants = thread.participants.map((p: any) => 
         p.userId === userId 
           ? { ...p, lastReadAt: serverTimestamp() as Timestamp }
           : p

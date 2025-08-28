@@ -6,6 +6,7 @@ import { EmailDraft, TestEmailRequest, SendTestEmailResponse } from '@/types/ema
 import { Timestamp } from 'firebase/firestore';
 import { apiClient } from '@/lib/api/api-client';
 import { notificationsService } from '@/lib/firebase/notifications-service';
+import { emailLogger } from '@/utils/emailLogger';
 
 export interface EmailSendResult {
   success: boolean;

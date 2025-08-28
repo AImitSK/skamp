@@ -200,13 +200,12 @@ export function PDFVersionHistory({
               {showActions && (
                 <div className="flex items-center gap-2">
                   <Button
-                    size="sm"
                     plain
-                    onClick={(e) => {
+                    onClick={(e: React.MouseEvent) => {
                       e.stopPropagation();
                       window.open(version.downloadUrl, '_blank');
                     }}
-                    className="!text-gray-600 hover:!text-gray-900"
+                    className="!text-gray-600 hover:!text-gray-900 text-sm"
                   >
                     <DocumentArrowDownIcon className="h-4 w-4" />
                     Download

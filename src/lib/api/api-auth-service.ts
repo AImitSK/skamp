@@ -82,7 +82,7 @@ export class APIAuthService {
       keyPreview,
       organizationId: params.organizationId,
       userId: params.createdBy,
-      permissions: params.permissions,
+      permissions: params.permissions as any,
       isActive: true,
       
       rateLimit: {
@@ -97,8 +97,8 @@ export class APIAuthService {
         requestsToday: 0
       },
       
-      allowedIPs: params.allowedIPs || null,
-      expiresAt: expiresAt ? Timestamp.fromDate(expiresAt) : null,
+      allowedIPs: params.allowedIPs || undefined,
+      expiresAt: expiresAt ? Timestamp.fromDate(expiresAt) : undefined,
       
       createdAt: serverTimestamp() as Timestamp,
       updatedAt: serverTimestamp() as Timestamp,
@@ -163,7 +163,7 @@ export class APIAuthService {
     // Prüfe ob Firestore verfügbar ist
     if (!db || typeof db === 'object' && Object.keys(db).length === 0) {
       console.error('ERROR: Firestore not properly initialized');
-      throw new APIError(500, API_ERROR_CODES.INTERNAL_ERROR, 'Database connection error');
+      throw new APIError(500, API_ERROR_CODES.DATABASE_ERROR, 'Database connection error');
     }
     
     let snapshot;
@@ -181,7 +181,7 @@ export class APIAuthService {
       console.log('Firestore query result - size:', snapshot.size);
     } catch (firestoreError: any) {
       console.error('Firestore query error:', firestoreError);
-      throw new APIError(500, API_ERROR_CODES.INTERNAL_ERROR, 'Database query failed');
+      throw new APIError(500, API_ERROR_CODES.DATABASE_ERROR, 'Database query failed');
     }
     
     if (snapshot.empty) {

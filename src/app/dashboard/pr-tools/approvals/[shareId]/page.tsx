@@ -42,6 +42,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import clsx from "clsx";
 
 // Media Gallery Component
@@ -412,7 +413,7 @@ function PDFHistoryModal({
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      <Button size="sm" plain>
+                      <Button plain>
                         <DocumentIcon className="h-4 w-4 mr-1" />
                         Öffnen
                       </Button>

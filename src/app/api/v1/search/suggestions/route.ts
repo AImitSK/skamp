@@ -36,7 +36,7 @@ export const GET = APIMiddleware.withAuth(
             limit: Math.ceil(limit / 2),
             sortBy: 'updatedAt',
             sortOrder: 'desc'
-          }
+          } as any
         );
         
         contactResults.contacts.forEach(contact => {
@@ -61,7 +61,7 @@ export const GET = APIMiddleware.withAuth(
             limit: Math.ceil(limit / 2),
             sortBy: 'updatedAt',
             sortOrder: 'desc'
-          }
+          } as any
         );
         
         companyResults.companies.forEach(company => {

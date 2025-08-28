@@ -79,7 +79,7 @@ export interface EditLockData {
 export interface EditLockConfig {
   label: string;
   description: string;
-  color: 'yellow' | 'blue' | 'green' | 'red' | 'gray';
+  color: 'yellow' | 'blue' | 'green' | 'red' | 'zinc';
   icon: string; // Icon-Name für Heroicons
   canRequestUnlock: boolean;
   severity: 'low' | 'medium' | 'high' | 'critical';
@@ -105,7 +105,7 @@ export const EDIT_LOCK_CONFIG: Record<EditLockReason, EditLockConfig> = {
   system_processing: {
     label: 'System verarbeitet',
     description: 'Das System verarbeitet diese Kampagne',
-    color: 'gray',
+    color: 'zinc',
     icon: 'CogIcon',
     canRequestUnlock: false,
     severity: 'medium'
