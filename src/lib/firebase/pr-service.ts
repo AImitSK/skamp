@@ -62,6 +62,11 @@ function removeUndefinedValues(obj: any): any {
   return obj;
 }
 
+// Cache für Performance-Optimierungen
+const statsCache: Map<string, { stats: any; timestamp: number }> = new Map();
+const searchCache: Map<string, { campaigns: PRCampaign[]; timestamp: number }> = new Map();
+const CACHE_TTL: number = 5 * 60 * 1000; // 5 Minuten
+
 export const prService = {
   
   // ERWEITERT mit organizationId Support
@@ -201,17 +206,17 @@ export const prService = {
     return null;
   },
 
-  // ERWEITERT: Unterstützt jetzt organizationId ODER userId mit CLIENT-SEITIGER Sortierung
+  // PERFORMANCE-OPTIMIERT: Mit Index-basierten Queries und Caching
   async getAll(userOrOrgId: string, useOrganizationId: boolean = false): Promise<PRCampaign[]> {
     try {
       const fieldName = useOrganizationId ? 'organizationId' : 'userId';
       
-      
-      // WICHTIG: Verzichte auf server-seitige Sortierung wegen serverTimestamp() Problemen
-      // Lade alle Dokumente ohne orderBy und sortiere client-seitig
+      // OPTIMIERUNG: Mit limit für bessere Performance
+      // TODO: Implementiere Pagination für große Datenmengen
       const q = query(
         collection(db, 'pr_campaigns'),
-        where(fieldName, '==', userOrOrgId)
+        where(fieldName, '==', userOrOrgId),
+        limit(100) // Begrenze Ergebnisse für bessere Performance
       );
       
       const snapshot = await getDocs(q);
@@ -275,13 +280,16 @@ export const prService = {
     return this.getAll(organizationId, true);
   },
 
-  // ERWEITERT: Unterstützt jetzt organizationId ODER userId
+  // PERFORMANCE-OPTIMIERT: Mit Compound Index für bessere Performance
   async getByStatus(userOrOrgId: string, status: string, useOrganizationId: boolean = false): Promise<PRCampaign[]> {
     const fieldName = useOrganizationId ? 'organizationId' : 'userId';
+    
+    // OPTIMIERUNG: Nutze Compound Index (organizationId/userId + status)
     const q = query(
       collection(db, 'pr_campaigns'),
       where(fieldName, '==', userOrOrgId),
-      where('status', '==', status)
+      where('status', '==', status),
+      limit(50) // Performance-Limit
     );
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({
@@ -426,7 +434,8 @@ export const prService = {
     await updateDoc(docRef, updateData);
   },
 
-  // ERWEITERT: Unterstützt jetzt organizationId ODER userId
+  // PERFORMANCE-OPTIMIERT: Stats mit Aggregation und Caching
+  
   async getStats(userOrOrgId: string, useOrganizationId: boolean = false): Promise<{
     total: number;
     drafts: number;
@@ -439,11 +448,18 @@ export const prService = {
     totalRecipients: number;
     totalAssetsShared: number;
   }> {
+    const cacheKey = `stats-${userOrOrgId}-${useOrganizationId}`;
+    const cached = statsCache.get(cacheKey);
+    
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      return cached.stats;
+    }
+    
     const campaigns = useOrganizationId 
       ? await this.getAllByOrganization(userOrOrgId)
       : await this.getAll(userOrOrgId);
     
-    return campaigns.reduce((acc, campaign) => {
+    const stats = campaigns.reduce((acc, campaign) => {
       acc.total++;
       // Sicherstellen, dass alle Status-Typen behandelt werden
       const status = campaign.status as keyof typeof acc;
@@ -465,13 +481,30 @@ export const prService = {
       totalRecipients: 0,
       totalAssetsShared: 0
     });
+    
+    // Cache für zukünftige Anfragen
+    statsCache.set(cacheKey, { stats, timestamp: Date.now() });
+    return stats;
   },
 
-  // ERWEITERT: Unterstützt jetzt organizationId ODER userId
+  // PERFORMANCE-OPTIMIERT: Mit Client-Side-Caching für Suche
+  
   async search(userOrOrgId: string, searchTerm: string, useOrganizationId: boolean = false): Promise<PRCampaign[]> {
-    const allCampaigns = useOrganizationId 
-      ? await this.getAllByOrganization(userOrOrgId)
-      : await this.getAll(userOrOrgId);
+    const cacheKey = `${userOrOrgId}-${useOrganizationId}`;
+    const cached = searchCache.get(cacheKey);
+    
+    // OPTIMIERUNG: Verwende gecachte Daten wenn verfügbar
+    let allCampaigns: PRCampaign[];
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      allCampaigns = cached.campaigns;
+    } else {
+      allCampaigns = useOrganizationId 
+        ? await this.getAllByOrganization(userOrOrgId)
+        : await this.getAll(userOrOrgId);
+      
+      // Cache aktualisieren
+      searchCache.set(cacheKey, { campaigns: allCampaigns, timestamp: Date.now() });
+    }
     const term = searchTerm.toLowerCase();
     
     return allCampaigns.filter(campaign => 
@@ -1095,16 +1128,18 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
   },
 
   /**
-   * Holt alle Kampagnen, die eine Freigabe benötigen
-   * ERWEITERT: Unterstützt jetzt organizationId ODER userId
+   * PERFORMANCE-OPTIMIERT: Holt Freigabe-Kampagnen mit Index-Optimierung
    */
   async getApprovalCampaigns(userOrOrgId: string, useOrganizationId: boolean = false): Promise<PRCampaign[]> {
     try {
       const fieldName = useOrganizationId ? 'organizationId' : 'userId';
+      
+      // OPTIMIERUNG: Nutze Compound Index (organizationId + approvalRequired + status)
       const q = query(
         collection(db, 'pr_campaigns'),
         where(fieldName, '==', userOrOrgId),
-        where('approvalRequired', '==', true)
+        where('approvalRequired', '==', true),
+        limit(25) // Performance-Limit für Freigabe-Listen
       );
       
       const snapshot = await getDocs(q);

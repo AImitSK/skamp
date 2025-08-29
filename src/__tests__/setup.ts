@@ -59,6 +59,10 @@ global.ResizeObserver = jest.fn().mockImplementation(() => ({
   disconnect: jest.fn(),
 }));
 
+// Fix for React 18 Testing Library createRoot issue in JSDOM
+// This is a known issue with React 18 + JSDOM + Testing Library
+// For now, we'll handle this in individual test files if needed
+
 // Mock Firebase completely for tests
 jest.mock('firebase/app', () => ({
   initializeApp: jest.fn(() => ({ name: '[DEFAULT]' })),

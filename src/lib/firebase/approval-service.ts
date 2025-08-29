@@ -36,14 +36,31 @@ import { teamMemberService } from './organization-service';
 import { nanoid } from 'nanoid';
 
 // ========================================
-// Approval Service mit Multi-Tenancy
+// PERFORMANCE-OPTIMIERTER Approval Service mit Multi-Tenancy
 // ========================================
 
 class ApprovalService extends BaseService<ApprovalEnhanced> {
+  // PERFORMANCE: Query-Cache für bessere Performance
+  private queryCache = new Map<string, { data: any; timestamp: number }>();
+  private readonly CACHE_TTL = 3 * 60 * 1000; // 3 Minuten Cache
+  
   constructor() {
     super('approvals');
   }
 
+  // PERFORMANCE: Cache-Management
+  private getCachedQuery(key: string): any | null {
+    const cached = this.queryCache.get(key);
+    if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
+      return cached.data;
+    }
+    return null;
+  }
+  
+  private setCachedQuery(key: string, data: any): void {
+    this.queryCache.set(key, { data, timestamp: Date.now() });
+  }
+  
   // Helper method to remove undefined values recursively
   private removeUndefinedValues(obj: any): any {
     if (obj === null || obj === undefined) {
@@ -448,15 +465,22 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
   }
 
   /**
-   * Lädt Freigabe by Share ID (für öffentlichen Zugriff)
+   * PERFORMANCE-OPTIMIERT: Lädt Freigabe by Share ID mit Caching
    */
   async getByShareId(shareId: string): Promise<ApprovalEnhanced | null> {
     try {
+      // PERFORMANCE: Prüfe Cache zuerst
+      const cacheKey = `shareId-${shareId}`;
+      const cached = this.getCachedQuery(cacheKey);
+      if (cached) {
+        return cached;
+      }
       
+      // OPTIMIERUNG: Nutze Index für shareId-Queries
       const q = query(
         collection(db, this.collectionName),
         where('shareId', '==', shareId),
-        limit(1)
+        limit(1) // Performance-Optimierung
       );
 
       const snapshot = await getDocs(q);
@@ -468,23 +492,26 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       const doc = snapshot.docs[0];
       const data = doc.data();
       
-      
-      // Stelle sicher, dass history ein Array ist
+      // Daten-Normalisierung
       if (data.history && !Array.isArray(data.history)) {
         data.history = [];
       }
-      
-      // Stelle sicher, dass recipients ein Array ist
       if (data.recipients && !Array.isArray(data.recipients)) {
         data.recipients = [];
       }
-      
-      // Stelle sicher, dass attachedAssets ein Array ist
       if (data.attachedAssets && !Array.isArray(data.attachedAssets)) {
         data.attachedAssets = [];
       }
       
-      return { id: doc.id, ...data } as ApprovalEnhanced;
+      const result = {
+        ...data,
+        id: doc.id
+      } as ApprovalEnhanced;
+      
+      // PERFORMANCE: Cache das Ergebnis
+      this.setCachedQuery(cacheKey, result);
+      
+      return result;
     } catch (error) {
       return null;
     }

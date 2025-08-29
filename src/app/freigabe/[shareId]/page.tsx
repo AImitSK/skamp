@@ -9,10 +9,14 @@ import { approvalService } from "@/lib/firebase/approval-service";
 import { mediaService } from "@/lib/firebase/media-service";
 import { brandingService } from "@/lib/firebase/branding-service";
 import { pdfVersionsService } from "@/lib/firebase/pdf-versions-service";
+import { notificationsService } from "@/lib/firebase/notifications-service";
+import { inboxService } from "@/lib/firebase/inbox-service";
+import { useToggleState } from "@/hooks/use-toggle-state";
 import { PRCampaign, CampaignAssetAttachment } from "@/types/pr";
 import { MediaAsset, MediaFolder } from "@/types/media";
 import { BrandingSettings } from "@/types/branding";
-import { PDFVersion } from "@/lib/firebase/pdf-versions-service";
+import { PDFVersion as ServicePDFVersion } from "@/lib/firebase/pdf-versions-service";
+import { PDFVersion } from "@/types/customer-review";
 import { 
   PDFVersionOverview, 
   PDFHistoryModal 
@@ -46,6 +50,42 @@ import {
   MapPinIcon
 } from "@heroicons/react/24/outline";
 import { CampaignPreviewRenderer } from "@/components/campaigns/CampaignPreviewRenderer";
+// OPTIMIERUNG: Lazy-Loading für Toggle-Komponenten
+import dynamic from 'next/dynamic';
+import { Suspense } from 'react';
+
+// Dynamische Imports mit Loading-States
+const MediaToggleBox = dynamic(
+  () => import("@/components/customer-review/toggle").then(mod => ({ default: mod.MediaToggleBox })),
+  { 
+    loading: () => <div className="animate-pulse bg-gray-200 rounded-lg h-32"></div>,
+    ssr: false
+  }
+);
+
+const PDFHistoryToggleBox = dynamic(
+  () => import("@/components/customer-review/toggle").then(mod => ({ default: mod.PDFHistoryToggleBox })),
+  { 
+    loading: () => <div className="animate-pulse bg-gray-200 rounded-lg h-32"></div>,
+    ssr: false
+  }
+);
+
+const CommunicationToggleBox = dynamic(
+  () => import("@/components/customer-review/toggle").then(mod => ({ default: mod.CommunicationToggleBox })),
+  { 
+    loading: () => <div className="animate-pulse bg-gray-200 rounded-lg h-32"></div>,
+    ssr: false
+  }
+);
+
+const DecisionToggleBox = dynamic(
+  () => import("@/components/customer-review/toggle").then(mod => ({ default: mod.DecisionToggleBox })),
+  { 
+    loading: () => <div className="animate-pulse bg-gray-200 rounded-lg h-32"></div>,
+    ssr: false
+  }
+);
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Heading } from "@/components/ui/heading";
@@ -287,6 +327,13 @@ export default function ApprovalPage() {
   const params = useParams();
   const shareId = params.shareId as string;
   
+  // OPTIMIERUNG: Memoized Toggle-State-Management
+  const toggleInitialState = useMemo(() => ({
+    'decision': true // Entscheidung standardmäßig geöffnet
+  }), []);
+  
+  const { toggleStates, toggleBox, isOpen } = useToggleState(toggleInitialState);
+  
   const [campaign, setCampaign] = useState<PRCampaign | null>(null);
   const [brandingSettings, setBrandingSettings] = useState<BrandingSettings | null>(null);
   const [loading, setLoading] = useState(true);
@@ -297,8 +344,8 @@ export default function ApprovalPage() {
   const [actionCompleted, setActionCompleted] = useState(false);
   
   // NEU: PDF-Integration State
-  const [pdfVersions, setPdfVersions] = useState<PDFVersion[]>([]);
-  const [currentPdfVersion, setCurrentPdfVersion] = useState<PDFVersion | null>(null);
+  const [pdfVersions, setPdfVersions] = useState<ServicePDFVersion[]>([]);
+  const [currentPdfVersion, setCurrentPdfVersion] = useState<ServicePDFVersion | null>(null);
   const [showPdfHistory, setShowPdfHistory] = useState(false);
   const [customerMessage, setCustomerMessage] = useState<string>('');
 
@@ -308,7 +355,7 @@ export default function ApprovalPage() {
     }
   }, [shareId]);
 
-  const loadCampaign = async () => {
+  const loadCampaign = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -360,11 +407,6 @@ export default function ApprovalPage() {
       campaignData.approvalData = approvalData as any;
 
       // 🐛 TEMP DEBUG: Prüfe Content-Properties
-      console.log('📝 Content verfügbar:', {
-        finalContentHtml: (campaignData as any).finalContentHtml?.length || 0,
-        contentHtml: campaignData.contentHtml?.length || 0,  
-        mainContent: campaignData.mainContent?.length || 0
-      });
 
 
       // PDF-Versionen laden (vereinfachter 1-stufiger Workflow)
@@ -384,21 +426,16 @@ export default function ApprovalPage() {
           
           setCurrentPdfVersion(currentPdfVersion);
           
-          console.log('PDF-Versionen geladen (1-stufiger Workflow):', { 
-            count: pdfVersions.length, 
-            current: currentPdfVersion?.version,
-            status: currentPdfVersion?.status
-          });
           
           // VALIDIERUNG: PDF MUSS vorhanden sein!
           if (!currentPdfVersion) {
-            console.error('🚨 KRITISCHER FEHLER: Keine PDF-Version gefunden!');
+            // Keine PDF-Version verfügbar
             setError('Systemfehler: PDF-Version nicht gefunden. Bitte Support kontaktieren.');
             return;
           }
           
         } catch (pdfError) {
-          console.error('Fehler beim Laden der PDF-Versionen:', pdfError);
+          // Fehler beim Laden der PDF-Versionen - nicht kritisch
           setError('PDF-Versionen konnten nicht geladen werden.');
           return;
         }
@@ -407,7 +444,6 @@ export default function ApprovalPage() {
       // Customer Approval Message aus Approval-Service (vereinfacht)
       if ((approval as any).customerContact) {
         setCustomerMessage((approval as any).customerContact);
-        console.log('Customer Approval Message geladen (vereinfacht)');
       }
 
       // Markiere als "viewed" wenn noch pending (vereinfachter Service-Call)
@@ -435,7 +471,7 @@ export default function ApprovalPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [shareId]);
 
   const handleApprove = async () => {
     if (!campaign) return;
@@ -458,11 +494,22 @@ export default function ApprovalPage() {
             currentPdfVersion.id!, 
             'approved'
           );
-          console.log('PDF-Status auf approved aktualisiert (1-stufiger Workflow)');
         } catch (pdfError) {
           // Fehler beim PDF-Status Update
           // Nicht kritisch - fahre fort
         }
+      }
+
+      // Email-Benachrichtigung an internen User senden
+      try {
+        await notificationsService.notifyApprovalGranted(
+          campaign,
+          'Kunde', // Customer-Name
+          campaign.userId,
+          campaign.organizationId
+        );
+      } catch (notificationError) {
+        // Notification-Fehler nicht kritisch
       }
       
       // Aktualisiere lokalen State
@@ -515,11 +562,36 @@ export default function ApprovalPage() {
             currentPdfVersion.id!, 
             'rejected'
           );
-          console.log('PDF-Status auf rejected aktualisiert (1-stufiger Workflow)');
         } catch (pdfError) {
           // Fehler beim PDF-Status Update
           // Nicht kritisch - fahre fort
         }
+      }
+
+      // Email-Benachrichtigung und Inbox-Thread erstellen
+      try {
+        // Notification an internen User
+        await notificationsService.notifyChangesRequested(
+          campaign,
+          'Kunde', // Customer-Name
+          campaign.userId
+        );
+
+        // Inbox-Thread für Communication
+        await inboxService.createApprovalThread({
+          organizationId: campaign.organizationId || '',
+          approvalId: shareId,
+          campaignTitle: campaign.title || 'Pressemitteilung',
+          clientName: campaign.clientName || 'Kunde',
+          createdBy: {
+            userId: 'customer',
+            name: 'Kunde',
+            email: 'kunde@example.com'
+          },
+          initialMessage: feedbackText.trim()
+        });
+      } catch (communicationError) {
+        // Communication-Fehler nicht kritisch
       }
       
       // Aktualisiere lokalen State
@@ -712,7 +784,7 @@ export default function ApprovalPage() {
                       <div className={`relative max-w-[75%] ${isAgency ? 'mr-2' : 'ml-2'}`}>
                         {/* Sprechblase */}
                         <div className={`
-                          rounded-lg px-4 py-3 relative shadow-sm
+                          rounded-lg px-4 py-3 relative border border-gray-200
                           ${isAgency 
                             ? 'bg-[#005fab] text-white' 
                             : 'bg-white text-gray-800 border border-gray-200'}
@@ -756,117 +828,163 @@ export default function ApprovalPage() {
             campaignTitle={campaign.title}
             contentHtml={
               // mainContent ist der vollständige Content (2018 Zeichen)
-              campaign.mainContent || (campaign as any).finalContentHtml || campaign.contentHtml || '<p>Kein Inhalt verfügbar</p>'
+              (campaign as any).finalContentHtml || campaign.mainContent || campaign.contentHtml || '<p>Kein Inhalt verfügbar</p>'
             }
             keyVisual={campaign.keyVisual}
             clientName={campaign.clientName}
             createdAt={campaign.createdAt}
             attachedAssets={campaign.attachedAssets}
-            textbausteine={[]}
+            textbausteine={campaign.boilerplateSections || []}
             keywords={campaign.keywords || []}
             isCustomerView={true}
             showSimplified={false}
             className="mb-6"
           />
 
-          {/* MODERNISIERTE PDF-INTEGRATION - Phase 2 */}
-          {currentPdfVersion ? (
-            <div className="mb-6">
-              <CustomerPDFViewer 
-                version={currentPdfVersion}
-                campaignTitle={campaign.title}
-                onHistoryToggle={() => setShowPdfHistory(true)}
-                totalVersions={pdfVersions.length}
-              />
-            </div>
-          ) : (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
-              <div className="flex items-center gap-3">
-                <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
-                <div>
-                  <h3 className="font-medium text-red-900">Systemfehler</h3>
-                  <p className="text-sm text-red-700 mt-1">
-                    Keine PDF-Version gefunden. Dies sollte nicht passieren - 
-                    bei Kundenfreigaben wird automatisch eine PDF-Version erstellt.
-                  </p>
-                  <p className="text-xs text-red-600 mt-2">
-                    Bitte kontaktieren Sie den Support mit folgender Information: 
-                    Campaign ID: {campaign?.id}, ShareId: {shareId}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* NEU: Media Gallery */}
-          {campaign.attachedAssets && (
-            <MediaGallery 
-              attachments={campaign.attachedAssets} 
-              loading={loading}
-            />
-          )}
-
-          {/* MODERNISIERTE PDF-APPROVAL-ACTIONS - Phase 2 */}
-          {!isApproved && !actionCompleted && currentPdfVersion && (
-            <PDFApprovalActions
-              version={currentPdfVersion}
-              currentStatus={currentStatus}
-              onApprove={handleApprove}
-              onRequestChanges={async (feedback) => {
-                setFeedbackText(feedback);
-                await handleRequestChanges();
+          {/* OPTIMIERTE TOGGLE-STRUKTUR mit Lazy Loading */}
+          <div className="space-y-4">
+            <Suspense fallback={<div className="animate-pulse bg-gray-200 rounded-lg h-64"></div>}>
+            {/* Toggle 1: Angehängte Medien */}
+            <MediaToggleBox
+              id="attached-media"
+              title="📎 Angehängte Medien"
+              isExpanded={isOpen('attached-media')}
+              onToggle={toggleBox}
+              organizationId={campaign.organizationId || ''}
+              mediaItems={campaign.attachedAssets?.map(asset => ({
+                id: asset.id,
+                filename: asset.metadata?.fileName || `Asset-${asset.id}`,
+                name: asset.metadata?.fileName || `Asset-${asset.id}`,
+                mimeType: asset.metadata?.fileType || (asset.type === 'asset' ? 'image/jpeg' : 'application/octet-stream'),
+                size: 0,
+                url: asset.metadata?.thumbnailUrl || '',
+                thumbnailUrl: asset.metadata?.thumbnailUrl || '',
+                uploadedAt: new Date(),
+                uploadedBy: { id: '', name: '', email: '' },
+                organizationId: campaign.organizationId || '',
+                metadata: {}
+              })) || []}
+              onMediaSelect={(mediaId) => {
+                // Fullscreen-Viewer öffnen
+                const media = campaign.attachedAssets?.find(asset => asset.id === mediaId);
+                if (media && media.metadata?.thumbnailUrl) {
+                  window.open(media.metadata.thumbnailUrl, '_blank');
+                }
               }}
-              disabled={submitting}
-              className="mb-6"
+              className="mb-4"
             />
-          )}
 
-          {/* FALLBACK: Legacy Actions für Fälle ohne PDF */}
-          {!isApproved && !actionCompleted && !currentPdfVersion && (
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Ihre Aktion</h3>
-              
-              {showFeedbackForm ? (
-                <CustomerFeedbackForm
-                  onSubmit={async (feedback) => {
-                    setFeedbackText(feedback);
-                    await handleRequestChanges();
-                  }}
-                  onCancel={() => {
-                    setShowFeedbackForm(false);
-                    setFeedbackText('');
-                  }}
-                  disabled={submitting}
+            {/* Toggle 2: PDF-Historie */}
+            <PDFHistoryToggleBox
+              id="pdf-history"
+              title="📄 PDF-Historie"
+              isExpanded={isOpen('pdf-history')}
+              onToggle={toggleBox}
+              organizationId={campaign.organizationId || ''}
+              pdfVersions={pdfVersions?.map(version => ({
+                ...version,
+                id: version.id || `version-${version.version}`,
+                version: String(version.version),
+                status: version.status as 'draft' | 'pending_customer' | 'approved' | 'rejected' | undefined,
+                metadata: version.metadata || {},
+                pdfUrl: version.downloadUrl || '',
+                isCurrent: version.version === (currentPdfVersion?.version || 1),
+                createdAt: version.createdAt instanceof Date 
+                  ? version.createdAt 
+                  : new Date((version.createdAt as any)?.seconds * 1000 || Date.now()),
+                createdBy: version.createdBy || { id: '', name: 'Unbekannt', email: '' },
+                fileSize: version.fileSize || 0,
+                campaignId: campaign.id,
+                organizationId: campaign.organizationId || ''
+              } as PDFVersion)) || []}
+              onVersionSelect={(versionId) => {
+                const version = pdfVersions?.find(v => v.id === versionId);
+                if (version && version.downloadUrl) {
+                  window.open(version.downloadUrl, '_blank');
+                }
+              }}
+              className="mb-4"
+            />
+
+            {/* Toggle 3: Kommunikation */}
+            <CommunicationToggleBox
+              id="communication"
+              title="💬 Kommunikation"
+              isExpanded={isOpen('communication')}
+              onToggle={toggleBox}
+              organizationId={campaign.organizationId || ''}
+              communications={campaign.approvalData?.feedbackHistory?.map((feedback, index) => ({
+                id: `feedback-${index}`,
+                type: 'feedback' as const,
+                content: feedback.comment,
+                message: feedback.comment,
+                sender: {
+                  id: 'unknown',
+                  name: feedback.author,
+                  email: '',
+                  role: feedback.author === 'Kunde' ? 'customer' as const : 'agency' as const
+                },
+                senderName: feedback.author,
+                createdAt: feedback.requestedAt?.toDate ? feedback.requestedAt.toDate() : new Date(),
+                isRead: true,
+                campaignId: shareId,
+                organizationId: campaign.organizationId || ''
+              })) || []}
+              latestMessage={(() => {
+                const feedbackHistory = campaign.approvalData?.feedbackHistory;
+                if (!feedbackHistory || feedbackHistory.length === 0) return undefined;
+                
+                const latest = feedbackHistory[feedbackHistory.length - 1];
+                return {
+                  id: 'latest',
+                  type: 'feedback' as const,
+                  content: latest.comment,
+                  message: latest.comment,
+                  sender: {
+                    id: 'unknown',
+                    name: latest.author,
+                    email: '',
+                    role: latest.author === 'Kunde' ? 'customer' as const : 'agency' as const
+                  },
+                  senderName: latest.author,
+                  createdAt: latest.requestedAt?.toDate ? latest.requestedAt.toDate() : new Date(),
+                  isRead: true,
+                  campaignId: shareId,
+                  organizationId: campaign.organizationId || ''
+                };
+              })()}
+              onReply={(communication) => {
+                setShowFeedbackForm(true);
+              }}
+              className="mb-4"
+            />
+
+            </Suspense>
+            
+            {/* Toggle 4: Ihre Entscheidung - Kritisch, daher nicht lazy */}
+            {!isApproved && !actionCompleted && (
+              <Suspense fallback={<div className="animate-pulse bg-gray-200 rounded-lg h-48"></div>}>
+                <DecisionToggleBox
+                id="decision"
+                title="✓ Ihre Entscheidung"
+                isExpanded={isOpen('decision')}
+                onToggle={toggleBox}
+                organizationId={campaign.organizationId || ''}
+                onApprove={handleApprove}
+                onReject={async () => {
+                  // Reject-Implementierung falls gewünscht
+                }}
+                onRequestChanges={async (changesText) => {
+                  setFeedbackText(changesText);
+                  await handleRequestChanges();
+                }}
+                disabled={submitting}
+                  className="mb-4"
                 />
-              ) : (
-                <div className="space-y-4">
-                  <p className="text-gray-600">
-                    Bitte prüfen Sie die Pressemitteilung{campaign.attachedAssets && campaign.attachedAssets.length > 0 ? ' und die angehängten Medien' : ''} sorgfältig. 
-                    Sie können entweder die Freigabe erteilen oder Änderungen anfordern.
-                  </p>
-                  
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <Button
-                      onClick={handleApprove}
-                      className="flex-1 bg-[#005fab] hover:bg-[#004a8c] text-white"
-                      disabled={submitting}
-                    >
-                      <CheckIcon className="h-5 w-5 mr-2" />
-                      {submitting ? 'Wird verarbeitet...' : 'Freigabe erteilen'}
-                    </Button>
-                    <Button
-                      onClick={() => setShowFeedbackForm(true)}
-                      className="flex-1 !bg-white !border !border-gray-300 !text-gray-700 hover:!bg-gray-100"
-                      disabled={submitting}
-                    >
-                      <PencilSquareIcon className="h-5 w-5 mr-2" />
-                      Änderungen anfordern
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+              </Suspense>
+            )}
+          </div>
+
 
           {/* Info Box */}
           <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">

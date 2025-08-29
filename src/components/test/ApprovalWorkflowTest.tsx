@@ -267,7 +267,7 @@ export function ApprovalWorkflowTest({ organizationId, userId }: ApprovalWorkflo
                         <Text className="text-gray-600">{entry.actorName}</Text>
                         {entry.details?.comment && (
                           <Text className="text-gray-500 italic">
-                            "{entry.details.comment.substring(0, 50)}..."
+                            &quot;{entry.details.comment.substring(0, 50)}...&quot;
                           </Text>
                         )}
                       </div>
