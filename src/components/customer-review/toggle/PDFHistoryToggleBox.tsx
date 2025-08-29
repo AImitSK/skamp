@@ -189,16 +189,8 @@ function PDFHistoryToggleBoxComponent({
                           </span>
                         </div>
                         
-                        <div className="mt-1 text-sm text-gray-600 space-y-1">
+                        <div className="mt-1 text-sm text-gray-600">
                           <div>Erstellt: {formatDate(pdfVersion.createdAt)}</div>
-                          {pdfVersion.fileSize && (
-                            <div>Größe: {formatFileSize(pdfVersion.fileSize)}</div>
-                          )}
-                          {pdfVersion.metadata && (
-                            <div>
-                              {pdfVersion.metadata.pageCount} Seiten • {pdfVersion.metadata.wordCount} Wörter
-                            </div>
-                          )}
                         </div>
 
                         {/* Änderungen/Kommentar */}
@@ -210,16 +202,8 @@ function PDFHistoryToggleBoxComponent({
                       </div>
                     </div>
 
-                    {/* Action-Buttons */}
-                    <div className="flex-shrink-0 ml-4 flex space-x-2">
-                      <button
-                        onClick={() => handleView(pdfVersion)}
-                        className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-150"
-                        data-testid={`pdf-view-${pdfVersion.id}`}
-                      >
-                        <DocumentTextIcon className="h-4 w-4 mr-1.5" />
-                        Ansehen
-                      </button>
+                    {/* Action-Button */}
+                    <div className="flex-shrink-0 ml-4">
                       <button
                         onClick={() => handleDownload(pdfVersion)}
                         className="inline-flex items-center px-3 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 transition-colors duration-150"

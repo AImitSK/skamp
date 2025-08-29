@@ -176,13 +176,6 @@ export const CampaignPreviewRenderer = memo(function CampaignPreviewRenderer({
               }
             `}</style>
             
-            {/* Datum - nur wenn contentHtml kein Datum enthält */}
-            {isCustomerView && !contentHtml?.includes(formattedDate) && formattedDate && (
-              <p className="text-sm text-gray-600 mt-8 pt-4 border-t border-gray-200">
-                {formattedDate}
-              </p>
-            )}
-            
             {/* Textbausteine für Customer-View */}
             {isCustomerView && textbausteine && textbausteine.length > 0 && (
               <div className="mt-8 pt-6 border-t border-gray-200">
@@ -191,6 +184,13 @@ export const CampaignPreviewRenderer = memo(function CampaignPreviewRenderer({
                   isCustomerView={true}
                 />
               </div>
+            )}
+            
+            {/* Datum - nur wenn contentHtml kein Datum enthält */}
+            {isCustomerView && !contentHtml?.includes(formattedDate) && formattedDate && (
+              <p className="text-sm text-gray-600 mt-8 pt-4 border-t border-gray-200">
+                {formattedDate}
+              </p>
             )}
           </div>
         </div>

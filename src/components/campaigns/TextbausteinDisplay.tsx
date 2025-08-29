@@ -58,7 +58,7 @@ export function TextbausteinDisplay({
     return (
       <div className={clsx("space-y-6", className)}>
         {textbausteine.map((baustein, index) => (
-          <div key={index} className="border-t border-gray-200 pt-6 first:border-t-0 first:pt-0">
+          <div key={index}>
             <h3 className="font-semibold text-gray-900 mb-3">
               {baustein.title || baustein.name || baustein.customTitle || 
                (baustein.type === 'boilerplate' ? 'Standard-Textbaustein' :
@@ -66,14 +66,36 @@ export function TextbausteinDisplay({
                 baustein.type === 'footer' ? 'Footer' :
                 `Textbaustein ${index + 1}`)}
             </h3>
-            {(baustein.content || baustein.text) && (
-              <div 
-                className="prose max-w-none text-gray-700 text-sm leading-relaxed"
-                dangerouslySetInnerHTML={{ 
-                  __html: baustein.content || baustein.text 
-                }}
-              />
-            )}
+            {(() => {
+              // Versuche verschiedene mögliche Content-Properties
+              const content = baustein.content || baustein.text || baustein.body || baustein.html || baustein.description;
+              
+              if (content) {
+                return (
+                  <div 
+                    className="prose max-w-none text-gray-700 text-sm leading-relaxed"
+                    dangerouslySetInnerHTML={{ 
+                      __html: content 
+                    }}
+                  />
+                );
+              }
+              
+              // Fallback: Zeige verfügbare Properties zur Debug-Zwecken
+              return (
+                <div className="text-gray-500 text-sm italic">
+                  {process.env.NODE_ENV === 'development' && (
+                    <details>
+                      <summary>Debug: Textbaustein-Daten</summary>
+                      <pre className="text-xs mt-2 p-2 bg-gray-100 rounded overflow-auto">
+                        {JSON.stringify(baustein, null, 2)}
+                      </pre>
+                    </details>
+                  )}
+                  <p>Textbaustein-Inhalt wird geladen...</p>
+                </div>
+              );
+            })()}
           </div>
         ))}
       </div>
