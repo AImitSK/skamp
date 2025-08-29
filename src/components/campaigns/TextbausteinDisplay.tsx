@@ -49,6 +49,7 @@ export function TextbausteinDisplay({
     
     // Prüfe ob bereits geladene Boilerplates oder nur IDs
     const hasContent = textbausteine.some(item => item.content || item.name);
+    
     if (hasContent) {
       // Bereits geladene Daten
       setLoadedBoilerplates(textbausteine);

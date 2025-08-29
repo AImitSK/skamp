@@ -681,9 +681,14 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
 
       await updateDoc(doc(db, this.collectionName, approval.id), updates);
 
-      // Benachrichtigungen senden
+      // Benachrichtigungen senden (non-blocking)
       if (newStatus !== approval.status) {
-        await this.sendStatusChangeNotification(approval, newStatus);
+        try {
+          await this.sendStatusChangeNotification(approval, newStatus);
+        } catch (emailError) {
+          console.error('Email notifications failed, but approval status updated successfully:', emailError);
+          // Don't throw - approval was successful even if emails fail
+        }
       }
     } catch (error) {
       throw error;
@@ -748,9 +753,14 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       await updateDoc(doc(db, this.collectionName, approval.id), updates);
       
 
-      // Benachrichtigungen senden
+      // Benachrichtigungen senden (non-blocking)
       if (newStatus !== approval.status) {
-        await this.sendStatusChangeNotification(approval, newStatus);
+        try {
+          await this.sendStatusChangeNotification(approval, newStatus);
+        } catch (emailError) {
+          console.error('Email notifications failed, but approval status updated successfully:', emailError);
+          // Don't throw - approval was successful even if emails fail
+        }
       }
     } catch (error) {
       throw error;
