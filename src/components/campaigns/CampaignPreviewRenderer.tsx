@@ -182,10 +182,18 @@ export const CampaignPreviewRenderer = memo(function CampaignPreviewRenderer({
                 {formattedDate}
               </p>
             )}
+            
+            {/* Textbausteine für Customer-View */}
+            {isCustomerView && textbausteine && textbausteine.length > 0 && (
+              <div className="mt-8 pt-6 border-t border-gray-200">
+                <TextbausteinDisplay 
+                  textbausteine={textbausteine}
+                  isCustomerView={true}
+                />
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Textbausteine-Sektion für Customer-View deaktiviert - Textbausteine sind bereits im Content integriert */}
 
         {/* Metadaten für Agency-View */}
         {!isCustomerView && !hideMetadata && (

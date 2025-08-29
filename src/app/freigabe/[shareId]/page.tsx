@@ -698,20 +698,12 @@ export default function ApprovalPage() {
                 {campaign.title}
               </Heading>
               
-              <Text className="text-sm sm:text-base text-gray-600">{statusInfo.description}</Text>
-              
-              <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500">
-                <div className="flex items-center gap-1">
-                  <CalendarIcon className="h-4 w-4 flex-shrink-0" />
-                  <span>Erstellt am {formatDate(campaign.createdAt)}</span>
+              {campaign.approvalData?.approvedAt && (
+                <div className="mt-3 flex items-center gap-1 text-green-600 text-sm">
+                  <CheckCircleIcon className="h-4 w-4 flex-shrink-0" />
+                  <span>Freigegeben am {formatDate(campaign.approvalData.approvedAt)}</span>
                 </div>
-                {campaign.approvalData?.approvedAt && (
-                  <div className="flex items-center gap-1 text-green-600">
-                    <CheckCircleIcon className="h-4 w-4 flex-shrink-0" />
-                    <span>Freigegeben am {formatDate(campaign.approvalData.approvedAt)}</span>
-                  </div>
-                )}
-              </div>
+              )}
             </div>
             
             {/* Logo oder Fallback */}
@@ -768,55 +760,6 @@ export default function ApprovalPage() {
             </div>
           )}
 
-          {/* Feedback History im WhatsApp-Stil */}
-          {campaign.approvalData?.feedbackHistory && campaign.approvalData.feedbackHistory.length > 0 && (
-            <div className="mb-6">
-              <h3 className="text-sm font-medium text-gray-900 mb-3 flex items-center gap-2">
-                <ChatBubbleLeftRightIcon className="h-4 w-4" />
-                Bisheriges Feedback
-              </h3>
-              <div className="bg-gray-100 rounded-lg p-4 space-y-3 max-h-96 overflow-y-auto">
-                {[...campaign.approvalData.feedbackHistory].reverse().map((feedback, index) => {
-                  const isAgency = feedback.author === 'Ihre Nachricht' || feedback.author === 'Agentur' || feedback.author === 'System';
-                  
-                  return (
-                    <div key={index} className={`flex ${isAgency ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`relative max-w-[75%] ${isAgency ? 'mr-2' : 'ml-2'}`}>
-                        {/* Sprechblase */}
-                        <div className={`
-                          rounded-lg px-4 py-3 relative border border-gray-200
-                          ${isAgency 
-                            ? 'bg-[#005fab] text-white' 
-                            : 'bg-white text-gray-800 border border-gray-200'}
-                        `}>
-                          {/* Sprechblasen-Spitze */}
-                          <div className={`
-                            absolute top-4 w-0 h-0
-                            ${isAgency 
-                              ? 'right-[-8px] border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent border-l-[8px] border-l-[#005fab]' 
-                              : 'left-[-8px] border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent border-r-[8px] border-r-white'}
-                          `}></div>
-                          
-                          {/* Author */}
-                          <div className={`text-xs font-semibold mb-1 ${isAgency ? 'text-blue-100' : 'text-gray-600'}`}>
-                            {feedback.author}
-                          </div>
-                          
-                          {/* Nachricht */}
-                          <p className="text-sm break-words leading-relaxed">{feedback.comment}</p>
-                          
-                          {/* Zeitstempel */}
-                          <div className={`text-xs mt-2 ${isAgency ? 'text-blue-100 opacity-80' : 'text-gray-400'}`}>
-                            {formatDate(feedback.requestedAt)}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
 
           {/* NEU: Customer Approval Message */}
           {customerMessage && (
