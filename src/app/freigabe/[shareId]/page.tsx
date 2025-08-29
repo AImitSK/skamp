@@ -779,6 +779,7 @@ export default function ApprovalPage() {
             attachedAssets={campaign.attachedAssets}
             textbausteine={campaign.boilerplateSections || []}
             keywords={campaign.keywords || []}
+            organizationId={campaign.organizationId}
             isCustomerView={true}
             showSimplified={false}
             className="mb-6"
@@ -856,28 +857,44 @@ export default function ApprovalPage() {
               isExpanded={isOpen('communication')}
               onToggle={toggleBox}
               organizationId={campaign.organizationId || ''}
-              communications={campaign.approvalData?.feedbackHistory?.map((feedback, index) => ({
-                id: `feedback-${index}`,
-                type: 'feedback' as const,
-                content: feedback.comment,
-                message: feedback.comment,
-                sender: {
-                  id: 'unknown',
-                  name: feedback.author,
-                  email: '',
-                  role: feedback.author === 'Kunde' ? 'customer' as const : 'agency' as const
-                },
-                senderName: feedback.author,
-                createdAt: feedback.requestedAt?.toDate ? feedback.requestedAt.toDate() : new Date(),
-                isRead: true,
-                campaignId: shareId,
-                organizationId: campaign.organizationId || ''
-              })) || []}
+              communications={campaign.approvalData?.feedbackHistory?.map((feedback, index) => {
+                const isCustomer = feedback.author === 'Kunde';
+                // TODO: Add recipientEmail, userName and createdBy to PRCampaign type
+                const tempCampaign = campaign as any; // Temporary type assertion for deployment
+                const senderName = isCustomer 
+                  ? (tempCampaign.recipientEmail || 'Kunde') // Kunde: Email-Empfänger aus Step 3
+                  : (tempCampaign.userName || tempCampaign.createdBy?.name || 'Teammitglied'); // Agentur: Zuständiges Teammitglied
+                
+                return {
+                  id: `feedback-${index}`,
+                  type: 'feedback' as const,
+                  content: feedback.comment,
+                  message: feedback.comment,
+                  sender: {
+                    id: 'unknown',
+                    name: senderName,
+                    email: '',
+                    role: isCustomer ? 'customer' as const : 'agency' as const
+                  },
+                  senderName: senderName,
+                  createdAt: feedback.requestedAt?.toDate ? feedback.requestedAt.toDate() : new Date(),
+                  isRead: true,
+                  campaignId: shareId,
+                  organizationId: campaign.organizationId || ''
+                };
+              }) || []}
               latestMessage={(() => {
                 const feedbackHistory = campaign.approvalData?.feedbackHistory;
                 if (!feedbackHistory || feedbackHistory.length === 0) return undefined;
                 
                 const latest = feedbackHistory[feedbackHistory.length - 1];
+                const isCustomer = latest.author === 'Kunde';
+                // TODO: Add recipientEmail, userName and createdBy to PRCampaign type
+                const tempCampaign = campaign as any; // Temporary type assertion for deployment
+                const senderName = isCustomer 
+                  ? (tempCampaign.recipientEmail || 'Kunde') // Kunde: Email-Empfänger aus Step 3
+                  : (tempCampaign.userName || tempCampaign.createdBy?.name || 'Teammitglied'); // Agentur: Zuständiges Teammitglied
+                
                 return {
                   id: 'latest',
                   type: 'feedback' as const,
@@ -885,11 +902,11 @@ export default function ApprovalPage() {
                   message: latest.comment,
                   sender: {
                     id: 'unknown',
-                    name: latest.author,
+                    name: senderName,
                     email: '',
-                    role: latest.author === 'Kunde' ? 'customer' as const : 'agency' as const
+                    role: isCustomer ? 'customer' as const : 'agency' as const
                   },
-                  senderName: latest.author,
+                  senderName: senderName,
                   createdAt: latest.requestedAt?.toDate ? latest.requestedAt.toDate() : new Date(),
                   isRead: true,
                   campaignId: shareId,

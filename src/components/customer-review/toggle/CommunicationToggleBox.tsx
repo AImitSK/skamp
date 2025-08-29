@@ -79,16 +79,21 @@ function CommunicationToggleBoxComponent({
     }
   };
 
-  // PERFORMANCE: Memoized subtitle Berechnung
+  // PERFORMANCE: Memoized subtitle Berechnung - nur Agentur-Nachrichten
   const subtitle = useMemo(() => {
-    if (latestMessage) {
-      return `Letzte Nachricht: ${formatTimeAgo(latestMessage.createdAt)}`;
+    // Finde die letzte Agentur-Nachricht
+    const latestAgencyMessage = communications
+      .filter(comm => comm.sender?.role === 'agency')
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+    
+    if (latestAgencyMessage) {
+      return `Letzte Nachricht: ${formatTimeAgo(latestAgencyMessage.createdAt)}`;
     }
     if (communications.length > 0) {
       return `${communications.length} Nachrichten`;
     }
     return undefined;
-  }, [latestMessage, communications.length]);
+  }, [communications]);
   
   // PERFORMANCE: Virtualisierung für lange Listen
   const displayedCommunications = useMemo(() => 
@@ -219,14 +224,6 @@ function CommunicationToggleBoxComponent({
                           </div>
                         )}
 
-                        {/* Antworten-Button */}
-                        <button
-                          onClick={() => handleReply(communication)}
-                          className="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors duration-150"
-                          data-testid={`reply-${communication.id}`}
-                        >
-                          Antworten
-                        </button>
                       </div>
                     </div>
                   </div>

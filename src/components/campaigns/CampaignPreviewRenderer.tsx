@@ -25,6 +25,7 @@ interface CampaignPreviewRendererProps {
   attachedAssets?: CampaignAssetAttachment[];
   textbausteine?: any[];
   keywords?: string[];
+  organizationId?: string; // Für das Laden der Textbausteine
   
   // Customer-spezifische Props
   isCustomerView?: boolean;
@@ -42,6 +43,7 @@ export const CampaignPreviewRenderer = memo(function CampaignPreviewRenderer({
   attachedAssets = [],
   textbausteine = [],
   keywords = [],
+  organizationId,
   isCustomerView = false,
   hideMetadata = false,
   showSimplified = false,
@@ -181,6 +183,7 @@ export const CampaignPreviewRenderer = memo(function CampaignPreviewRenderer({
               <div className="mt-8 pt-6 border-t border-gray-200">
                 <TextbausteinDisplay 
                   textbausteine={textbausteine}
+                  organizationId={organizationId}
                   isCustomerView={true}
                 />
               </div>

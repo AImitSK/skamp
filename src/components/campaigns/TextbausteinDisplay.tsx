@@ -1,7 +1,7 @@
 // src/components/campaigns/TextbausteinDisplay.tsx - Wiederverwendbare Textbaustein-Darstellung
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   DocumentTextIcon,
   ChevronDownIcon,
@@ -11,10 +11,13 @@ import {
 } from "@heroicons/react/24/outline";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { boilerplatesService } from "@/lib/firebase/boilerplate-service";
+import { Boilerplate } from "@/types/crm-enhanced";
 import clsx from "clsx";
 
 interface TextbausteinDisplayProps {
-  textbausteine: any[];
+  textbausteine: any[]; // IDs oder bereits geladene Textbausteine
+  organizationId?: string; // Für das Laden der Textbausteine
   isReadOnly?: boolean;
   isCustomerView?: boolean;
   showSimplified?: boolean;
@@ -24,6 +27,7 @@ interface TextbausteinDisplayProps {
 
 export function TextbausteinDisplay({
   textbausteine,
+  organizationId,
   isReadOnly = false,
   isCustomerView = false,
   showSimplified = false,
@@ -33,9 +37,57 @@ export function TextbausteinDisplay({
   
   const [isExpanded, setIsExpanded] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
+  const [loadedBoilerplates, setLoadedBoilerplates] = useState<Boilerplate[]>([]);
+  const [loading, setLoading] = useState(false);
+  
+  // Lade Textbausteine wenn IDs übergeben wurden
+  useEffect(() => {
+    if (!textbausteine || textbausteine.length === 0) {
+      setLoadedBoilerplates([]);
+      return;
+    }
+    
+    // Prüfe ob bereits geladene Boilerplates oder nur IDs
+    const hasContent = textbausteine.some(item => item.content || item.name);
+    if (hasContent) {
+      // Bereits geladene Daten
+      setLoadedBoilerplates(textbausteine);
+      return;
+    }
+    
+    // Lade Boilerplates anhand der IDs
+    if (organizationId) {
+      setLoading(true);
+      const boilerplateIds = textbausteine.filter(item => typeof item === 'string' || item.id);
+      const ids = boilerplateIds.map(item => typeof item === 'string' ? item : item.id);
+      
+      boilerplatesService.getByIds(ids)
+        .then(setLoadedBoilerplates)
+        .catch(error => {
+          console.error('Fehler beim Laden der Textbausteine:', error);
+          setLoadedBoilerplates([]);
+        })
+        .finally(() => setLoading(false));
+    }
+  }, [textbausteine, organizationId]);
   
   if (!textbausteine || textbausteine.length === 0) {
     return null;
+  }
+  
+  if (loading) {
+    return (
+      <div className={clsx("space-y-6", className)}>
+        <div className="animate-pulse space-y-4">
+          {[1, 2].map(i => (
+            <div key={i}>
+              <div className="h-4 bg-gray-200 rounded mb-2"></div>
+              <div className="h-16 bg-gray-200 rounded"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   const toggleExpanded = () => setIsExpanded(!isExpanded);
@@ -57,45 +109,19 @@ export function TextbausteinDisplay({
   if (isCustomerView) {
     return (
       <div className={clsx("space-y-6", className)}>
-        {textbausteine.map((baustein, index) => (
-          <div key={index}>
+        {loadedBoilerplates.map((boilerplate, index) => (
+          <div key={boilerplate.id || index}>
             <h3 className="font-semibold text-gray-900 mb-3">
-              {baustein.title || baustein.name || baustein.customTitle || 
-               (baustein.type === 'boilerplate' ? 'Standard-Textbaustein' :
-                baustein.type === 'header' ? 'Header' :
-                baustein.type === 'footer' ? 'Footer' :
-                `Textbaustein ${index + 1}`)}
+              {boilerplate.name || `Textbaustein ${index + 1}`}
             </h3>
-            {(() => {
-              // Versuche verschiedene mögliche Content-Properties
-              const content = baustein.content || baustein.text || baustein.body || baustein.html || baustein.description;
-              
-              if (content) {
-                return (
-                  <div 
-                    className="prose max-w-none text-gray-700 text-sm leading-relaxed"
-                    dangerouslySetInnerHTML={{ 
-                      __html: content 
-                    }}
-                  />
-                );
-              }
-              
-              // Fallback: Zeige verfügbare Properties zur Debug-Zwecken
-              return (
-                <div className="text-gray-500 text-sm italic">
-                  {process.env.NODE_ENV === 'development' && (
-                    <details>
-                      <summary>Debug: Textbaustein-Daten</summary>
-                      <pre className="text-xs mt-2 p-2 bg-gray-100 rounded overflow-auto">
-                        {JSON.stringify(baustein, null, 2)}
-                      </pre>
-                    </details>
-                  )}
-                  <p>Textbaustein-Inhalt wird geladen...</p>
-                </div>
-              );
-            })()}
+            {boilerplate.content && (
+              <div 
+                className="prose max-w-none text-gray-700 text-sm leading-relaxed"
+                dangerouslySetInnerHTML={{ 
+                  __html: boilerplate.content 
+                }}
+              />
+            )}
           </div>
         ))}
       </div>
