@@ -219,22 +219,6 @@ export const CampaignPreviewRenderer = memo(function CampaignPreviewRenderer({
           </div>
         )}
 
-        {/* Customer-Info für Attachment-Hinweis */}
-        {isCustomerView && attachedAssets.length > 0 && (
-          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex">
-              <InformationCircleIcon className="h-5 w-5 text-blue-400 mr-3 flex-shrink-0" />
-              <div className="text-sm text-blue-800">
-                <p className="font-medium mb-1">📎 Angehängte Medien</p>
-                <p>
-                  Zu dieser Pressemitteilung gehören {attachedAssets.length} angehängte Medien, 
-                  die Sie separat in der Medien-Galerie einsehen können. Diese werden nach 
-                  Ihrer Freigabe mit der Mitteilung versendet.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

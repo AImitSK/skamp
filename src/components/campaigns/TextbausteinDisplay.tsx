@@ -53,6 +53,33 @@ export function TextbausteinDisplay({
   const displayedTextbausteine = isExpanded ? textbausteine : textbausteine.slice(0, maxDisplay);
   const hasMore = textbausteine.length > maxDisplay;
 
+  // Für Customer-View: Einfache Ausgabe der Textbausteine direkt im Text
+  if (isCustomerView) {
+    return (
+      <div className={clsx("space-y-6", className)}>
+        {textbausteine.map((baustein, index) => (
+          <div key={index} className="border-t border-gray-200 pt-6 first:border-t-0 first:pt-0">
+            <h3 className="font-semibold text-gray-900 mb-3">
+              {baustein.title || baustein.name || baustein.customTitle || 
+               (baustein.type === 'boilerplate' ? 'Standard-Textbaustein' :
+                baustein.type === 'header' ? 'Header' :
+                baustein.type === 'footer' ? 'Footer' :
+                `Textbaustein ${index + 1}`)}
+            </h3>
+            {(baustein.content || baustein.text) && (
+              <div 
+                className="prose max-w-none text-gray-700 text-sm leading-relaxed"
+                dangerouslySetInnerHTML={{ 
+                  __html: baustein.content || baustein.text 
+                }}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className={clsx(
       "bg-white rounded-lg border border-gray-200",
@@ -63,15 +90,13 @@ export function TextbausteinDisplay({
         <div className="flex items-center justify-between">
           <h3 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center gap-2">
             <DocumentTextIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
-            <span className="truncate">
-              {isCustomerView ? "Verwendete Textbausteine" : "Textbausteine"}
-            </span>
+            <span className="truncate">Textbausteine</span>
             <Badge color="blue" className="text-xs ml-2 flex-shrink-0">
               {textbausteine.length}
             </Badge>
           </h3>
           
-          {hasMore && !isCustomerView && (
+          {hasMore && (
             <Button
               onClick={toggleExpanded}
               className="text-gray-500 hover:text-gray-700"
@@ -94,43 +119,6 @@ export function TextbausteinDisplay({
       </div>
 
       <div className="p-4 sm:p-6">
-        {/* Customer-View Hinweis - vereinfacht */}
-        {isCustomerView && (
-          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-            <div className="flex items-start gap-3">
-              <div className="bg-green-100 rounded-full p-2 flex-shrink-0">
-                <DocumentTextIcon className="h-4 w-4 text-green-600" />
-              </div>
-              <div>
-                <h4 className="font-medium text-green-900 text-sm mb-1">
-                  Professionelle Textbausteine verwendet
-                </h4>
-                <p className="text-sm text-green-800 mb-3">
-                  {textbausteine.length} bewährte PR-Textbausteine sorgen für eine 
-                  konsistente und professionelle Darstellung Ihrer Pressemitteilung.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {textbausteine.map((baustein, index) => (
-                    <div key={index} className="bg-white px-3 py-1 rounded-full border border-green-200">
-                      <span className="text-xs text-green-700 font-medium">
-                        {baustein.type === 'boilerplate' ? 'Standard-Textbaustein' :
-                         baustein.type === 'header' ? 'Header' :
-                         baustein.type === 'footer' ? 'Footer' :
-                         baustein.position === 'header' ? 'Kopfbereich' :
-                         baustein.position === 'footer' ? 'Fußbereich' :
-                         `Element ${index + 1}`}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-xs text-green-600 mt-3">
-                  Diese Elemente sind bereits in Ihrer Pressemitteilung integriert und 
-                  sorgen für optimale Lesbarkeit und professionelle Wirkung.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Textbausteine Liste - nur für Agency-View wenn Content verfügbar */}
         {!isCustomerView && (

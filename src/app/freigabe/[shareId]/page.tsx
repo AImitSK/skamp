@@ -790,7 +790,7 @@ export default function ApprovalPage() {
             {/* Toggle 1: Angehängte Medien */}
             <MediaToggleBox
               id="attached-media"
-              title="📎 Angehängte Medien"
+              title="Angehängte Medien"
               isExpanded={isOpen('attached-media')}
               onToggle={toggleBox}
               organizationId={campaign.organizationId || ''}
@@ -820,7 +820,7 @@ export default function ApprovalPage() {
             {/* Toggle 2: PDF-Historie */}
             <PDFHistoryToggleBox
               id="pdf-history"
-              title="📄 PDF-Historie"
+              title="PDF-Historie"
               isExpanded={isOpen('pdf-history')}
               onToggle={toggleBox}
               organizationId={campaign.organizationId || ''}
@@ -852,7 +852,7 @@ export default function ApprovalPage() {
             {/* Toggle 3: Kommunikation */}
             <CommunicationToggleBox
               id="communication"
-              title="💬 Kommunikation"
+              title="Kommunikation"
               isExpanded={isOpen('communication')}
               onToggle={toggleBox}
               organizationId={campaign.organizationId || ''}
@@ -909,7 +909,7 @@ export default function ApprovalPage() {
               <Suspense fallback={<div className="animate-pulse bg-gray-200 rounded-lg h-48"></div>}>
                 <DecisionToggleBox
                 id="decision"
-                title="✓ Ihre Entscheidung"
+                title="Ihre Entscheidung"
                 isExpanded={isOpen('decision')}
                 onToggle={toggleBox}
                 organizationId={campaign.organizationId || ''}
