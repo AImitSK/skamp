@@ -42,27 +42,45 @@ export function TextbausteinDisplay({
   
   // Lade Textbausteine wenn IDs übergeben wurden
   useEffect(() => {
+    console.log('TextbausteinDisplay - Received:', textbausteine);
+    console.log('TextbausteinDisplay - OrganizationId:', organizationId);
+    
     if (!textbausteine || textbausteine.length === 0) {
+      console.log('TextbausteinDisplay - No data, setting empty');
       setLoadedBoilerplates([]);
       return;
     }
     
     // Prüfe ob bereits geladene Boilerplates oder nur IDs
     const hasContent = textbausteine.some(item => item.content || item.name);
+    console.log('TextbausteinDisplay - Has content:', hasContent);
     
     if (hasContent) {
       // Bereits geladene Daten
+      console.log('TextbausteinDisplay - Using existing data');
       setLoadedBoilerplates(textbausteine);
       return;
     }
     
-    // Lade Boilerplates anhand der IDs
+    // Lade Boilerplates anhand der IDs aus CampaignBoilerplateSection
     if (organizationId) {
       setLoading(true);
-      const boilerplateIds = textbausteine.filter(item => typeof item === 'string' || item.id);
-      const ids = boilerplateIds.map(item => typeof item === 'string' ? item : item.id);
       
-      boilerplatesService.getByIds(ids)
+      // Extrahiere boilerplateIds aus den CampaignBoilerplateSection Objekten
+      const boilerplateIds = textbausteine
+        .filter(section => section.boilerplateId) // Nur Sections mit boilerplateId
+        .map(section => section.boilerplateId);
+      
+      console.log('TextbausteinDisplay - Extracted IDs:', boilerplateIds);
+      
+      if (boilerplateIds.length === 0) {
+        console.log('TextbausteinDisplay - No boilerplate IDs found');
+        setLoadedBoilerplates([]);
+        setLoading(false);
+        return;
+      }
+      
+      boilerplatesService.getByIds(boilerplateIds)
         .then(setLoadedBoilerplates)
         .catch(error => {
           console.error('Fehler beim Laden der Textbausteine:', error);
