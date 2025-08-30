@@ -554,8 +554,26 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
     metadata?: { ipAddress?: string; userAgent?: string }
   ): Promise<void> {
     try {
+      console.log('👁️ markAsViewed called:', {
+        shareId,
+        recipientEmail: recipientEmail || 'NO_EMAIL_PROVIDED',
+        hasMetadata: !!metadata
+      });
+
       const approval = await this.getByShareId(shareId);
-      if (!approval || !approval.id) return;
+      if (!approval || !approval.id) {
+        console.log('❌ No approval found for shareId:', shareId);
+        return;
+      }
+
+      console.log('📋 Approval state:', {
+        currentStatus: approval.status,
+        recipients: approval.recipients?.map(r => ({
+          email: r.email,
+          status: r.status
+        })),
+        firstViewedAt: approval.analytics?.firstViewedAt
+      });
 
       // Update Analytics
       let wasFirstView = false;
@@ -585,9 +603,18 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
             i === recipientIndex ? true : r.status !== 'pending'
           );
           
+          console.log('🔍 First View Check:', {
+            recipientIndex,
+            recipientEmail,
+            allViewed,
+            currentStatus: approval.status,
+            willTriggerFirstView: allViewed && approval.status === 'pending'
+          });
+
           if (allViewed && approval.status === 'pending') {
             updates.status = 'in_review';
             wasFirstView = true;
+            console.log('✅ First View will be triggered');
           }
         }
       }
@@ -1331,9 +1358,22 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
     type: 'request' | 'reminder' | 'status_change' | 'approved' | 'changes_requested'
   ): Promise<void> {
     try {
-      // ❌ DEAKTIVIERT: Keine E-Mails bei Status-Changes an Kunden
+      // ========== DEBUG LOGGING ==========
+      console.log('🚀 sendNotifications called:', {
+        type,
+        approvalId: approval.id,
+        campaignTitle: approval.campaignTitle,
+        recipients: approval.recipients?.map(r => ({
+          email: r.email,
+          status: r.status
+        })),
+        currentStatus: approval.status
+      });
+
+      // ❌ PROBLEM: Diese Zeilen blockieren ALLES
       if (type === 'status_change') {
-        console.log('⚠️ Status-Change E-Mails an Kunden sind deaktiviert');
+        console.log('⚠️ BLOCKING: Status-Change E-Mails sind deaktiviert');
+        console.log('⚠️ Dies blockiert möglicherweise auch Kunden-E-Mails!');
         return;
       }
       
@@ -1388,10 +1428,14 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
               // Nutze das Standard Email-System für bessere Integration
               const replyToAddress = emailAddressService.generateReplyToAddress(organizationEmailAddress);
               
-              console.log('📧 Sending approval email via inbox system:', {
+              // ========== ERWEITERTE DEBUG LOGS ==========
+              console.log('📧 Attempting to send email:', {
+                type: approvalType,
                 to: recipient.email,
-                from: organizationEmailAddress.email,
-                replyTo: replyToAddress
+                from: organizationEmailAddress?.email || 'NO_ORG_EMAIL',
+                replyTo: replyToAddress || 'NO_REPLY_TO',
+                subject: `${approvalType === 'request' ? 'Freigabe-Anfrage' : approvalType === 'reminder' ? 'Erinnerung' : 'Status-Update'}`,
+                hasOrgEmail: !!organizationEmailAddress
               });
 
               await apiClient.post('/api/email/send', {
@@ -1420,6 +1464,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
                 emailAddressId: organizationEmailAddress.id
               });
 
+              console.log('✅ Email sent successfully to:', recipient.email);
               console.log(`✅ Approval email sent via inbox system to ${recipient.email} (${approvalType})`);
             } else {
               // Fallback: Nutze die Approval-Email Route
@@ -1557,10 +1602,23 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         const lastEntry = approval.history?.[approval.history.length - 1];
         const approverName = lastEntry?.actorName || 'Kunde';
 
+        // ========== DEBUG: Admin notification attempt ==========
+        console.log('🔍 DEBUG: Admin notification attempt:', {
+          status: newStatus,
+          organizationId: approval.organizationId,
+          approvalId: approval.id
+        });
+
         try {
           // Inbox-Integration für interne Updates
           const { inboxService } = await import('./inbox-service');
           const thread = await inboxService.getApprovalThread(approval.id!, approval.organizationId);
+          
+          console.log('🔍 DEBUG: Inbox thread lookup result:', {
+            hasInboxThread: !!thread,
+            threadId: thread?.id,
+            approvalId: approval.id
+          });
           
           if (thread) {
             await inboxService.addMessage({
@@ -1577,6 +1635,13 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
 
           // ❌ EXTERNE ADMIN-E-MAILS DEAKTIVIERT
           // Admin wird nur über Inbox-Nachricht (oben) benachrichtigt
+          console.log('📮 Admin email should be sent:', {
+            to: 'pr@sk-online-marketing.de',
+            from: 'pr@sk-online-marketing.de',
+            replyTo: 'pr-XXX-XXXX@inbox.sk-online-marketing.de',
+            subject: `Status: ${newStatus}`,
+            isCurrentlyDisabled: true // HINWEIS: Aktuell ist der Code auskommentiert!
+          });
           console.log(`✅ Inbox-Nachricht für Freigabe erstellt: "${approval.campaignTitle || approval.title}"`);
         } catch (error) {
           console.error('Approval-Granted Verarbeitung fehlgeschlagen:', error);
@@ -1589,10 +1654,23 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         const feedback = lastEntry?.details?.comment || 'Keine spezifischen Kommentare';
         const inlineComments = lastEntry?.inlineComments || [];
 
+        // ========== DEBUG: Admin notification attempt ==========
+        console.log('🔍 DEBUG: Admin notification attempt:', {
+          status: newStatus,
+          organizationId: approval.organizationId,
+          approvalId: approval.id
+        });
+
         try {
           // Inbox-Integration für interne Updates
           const { inboxService } = await import('./inbox-service');
           const thread = await inboxService.getApprovalThread(approval.id!, approval.organizationId);
+          
+          console.log('🔍 DEBUG: Inbox thread lookup result:', {
+            hasInboxThread: !!thread,
+            threadId: thread?.id,
+            approvalId: approval.id
+          });
           
           if (thread) {
             await inboxService.addMessage({

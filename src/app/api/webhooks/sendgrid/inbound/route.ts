@@ -117,6 +117,26 @@ export async function POST(request: NextRequest) {
     // Process the email through our flexible pipeline
     const result = await flexibleEmailProcessor(emailData);
     
+    // ========== ERWEITERTE DEBUG LOGS ==========
+    console.log('📨 Webhook processing result:', {
+      success: result.success,
+      emailId: result.emailId,
+      threadId: result.threadId,
+      organizationId: result.organizationId,
+      routingDecision: result.routingDecision,
+      error: result.error
+    });
+
+    // Speziell für Admin-E-Mails:
+    if (parsedEmail.to?.includes('pr@sk-online-marketing.de')) {
+      console.log('🚨 ADMIN EMAIL DETECTED:', {
+        from: parsedEmail.from,
+        to: parsedEmail.to,
+        subject: parsedEmail.subject,
+        hasReplyTo: !!(parsedEmail.headers as any)?.['reply-to']
+      });
+    }
+    
     if (result.success) {
       console.log('✅ Email processed successfully:', {
         emailId: result.emailId,
