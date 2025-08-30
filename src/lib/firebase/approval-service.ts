@@ -97,6 +97,11 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
     context: { organizationId: string; userId: string }
   ): Promise<string> {
     try {
+      // Array-Validierung für recipients
+      if (!Array.isArray(data.recipients)) {
+        throw new Error('Recipients muss ein Array sein');
+      }
+      
       // Generiere eindeutige Share ID
       const shareId = this.generateShareId();
       
@@ -1057,6 +1062,11 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
     context: { organizationId: string; userId: string }
   ): Promise<string> {
     try {
+      // Array-Validierung für recipients
+      if (!Array.isArray(recipients)) {
+        throw new Error('Recipients muss ein Array sein');
+      }
+      
       // PRCampaign hat kein content oder subject Feld, nur contentHtml
       const plainTextContent = this.stripHtml(campaign.contentHtml).substring(0, 500);
       

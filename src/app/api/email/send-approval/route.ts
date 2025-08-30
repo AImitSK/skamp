@@ -49,6 +49,14 @@ export async function POST(request: NextRequest) {
         );
       }
       
+      // Array-Validierung für recipients
+      if (!Array.isArray(data.recipients)) {
+        return NextResponse.json(
+          { error: 'Recipients muss ein Array sein' },
+          { status: 400 }
+        );
+      }
+
       console.log('📧 Sending approval email:', data.type, 'to', data.recipients.length, 'recipients');
 
       // Rate Limiting
