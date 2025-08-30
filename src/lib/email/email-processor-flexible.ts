@@ -112,9 +112,50 @@ export async function flexibleEmailProcessor(
 
     console.log('🧵 Thread matched:', { threadId: threadResult.threadId, isNew: threadResult.isNew });
 
+    // ========== DUPLIKAT-CHECK ==========
+    const messageId = emailData.messageId || generateMessageId();
+    console.log('🔍 Checking for duplicate email:', messageId);
+
+    // Suche nach existierender E-Mail mit dieser Message-ID
+    const existingEmailQuery = query(
+      collection(serverDb, 'email_messages'),
+      where('messageId', '==', messageId),
+      where('organizationId', '==', organizationId)
+    );
+
+    const existingSnapshot = await getDocs(existingEmailQuery);
+
+    if (!existingSnapshot.empty) {
+      const existingEmail = existingSnapshot.docs[0].data();
+      console.log('⚠️ Duplicate email detected:', {
+        messageId,
+        existingFolder: existingEmail.folder,
+        existingId: existingSnapshot.docs[0].id
+      });
+      
+      // Wenn im Trash, nicht neu erstellen
+      if (existingEmail.folder === 'trash') {
+        console.log('📧 Email is in trash, skipping recreation');
+      }
+      
+      return {
+        success: true,
+        emailId: existingSnapshot.docs[0].id,
+        threadId: existingEmail.threadId,
+        organizationId,
+        routingDecision: {
+          action: 'reject',
+          reason: `Duplicate email - already in ${existingEmail.folder}`,
+          targetFolder: existingEmail.folder
+        }
+      };
+    }
+
+    console.log('✅ No duplicate found, processing new email');
+
     // 3. E-Mail-Nachricht erstellen
     const emailMessage: Partial<EmailMessage> = {
-      messageId: emailData.messageId || generateMessageId(),
+      messageId: messageId, // Verwende die bereits geprüfte ID
       threadId: threadResult.threadId,
       organizationId,
       emailAccountId,
