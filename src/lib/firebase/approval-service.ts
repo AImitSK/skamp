@@ -285,6 +285,10 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       
       const docRef = await addDoc(collection(db, 'approvals'), cleanApprovalData);
       
+      // ✅ KUNDEN-E-MAILS VERSENDEN - Das war das fehlende Stück!
+      const approvalWithId = { ...cleanApprovalData, id: docRef.id } as ApprovalEnhanced;
+      await this.sendNotifications(approvalWithId, 'request');
+      
       return docRef.id;
     } catch (error) {
       throw error;
@@ -588,9 +592,26 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         updates['analytics.uniqueViews'] = increment(1);
       }
 
-      // Update Empfänger-Status wenn E-Mail bekannt
-      if (recipientEmail && approval.recipients) {
-        const recipientIndex = approval.recipients.findIndex(r => r.email === recipientEmail);
+      // Update Empfänger-Status 
+      if (approval.recipients && approval.recipients.length > 0) {
+        let recipientIndex = -1;
+        
+        // Zuerst: Suche exakte E-Mail-Adresse wenn vorhanden
+        if (recipientEmail) {
+          recipientIndex = approval.recipients.findIndex(r => r.email === recipientEmail);
+          console.log('🔍 Exact email match attempt:', { recipientEmail, found: recipientIndex >= 0 });
+        }
+        
+        // Fallback: Nimm den ersten pending recipient wenn keine E-Mail oder kein Match
+        if (recipientIndex < 0) {
+          recipientIndex = approval.recipients.findIndex(r => r.status === 'pending');
+          console.log('🔍 First pending recipient fallback:', { 
+            recipientIndex, 
+            recipientEmail: recipientIndex >= 0 ? approval.recipients[recipientIndex].email : 'none' 
+          });
+        }
+        
+        // Update recipient wenn gefunden
         if (recipientIndex >= 0 && approval.recipients[recipientIndex].status === 'pending') {
           const recipient = approval.recipients[recipientIndex];
           recipient.status = 'viewed';
@@ -605,7 +626,8 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
           
           console.log('🔍 First View Check:', {
             recipientIndex,
-            recipientEmail,
+            actualRecipientEmail: recipient.email,
+            providedRecipientEmail: recipientEmail || 'NO_EMAIL_PROVIDED',
             allViewed,
             currentStatus: approval.status,
             willTriggerFirstView: allViewed && approval.status === 'pending'
@@ -616,6 +638,8 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
             wasFirstView = true;
             console.log('✅ First View will be triggered');
           }
+        } else {
+          console.log('⚠️ No pending recipient found or recipient already viewed');
         }
       }
 

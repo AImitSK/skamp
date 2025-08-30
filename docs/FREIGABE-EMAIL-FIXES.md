@@ -512,3 +512,108 @@ Das Problem ist der fehlende E-Mail-Parameter beim Aufruf. Finde wo `markAsViewe
 
 **Nach Phase 3:**
 - ✅ Alle Probleme basierend auf echten Daten gelöst
+
+---
+
+## 📊 TESTERGEBNISSE (30.08.2025 - 12:46)
+
+### **Test-Durchführung:**
+```bash
+npm test -- --testPathPatterns="approval"
+npm test src/__tests__/features/approvals-service.test.ts
+```
+
+### **Ergebnisse:**
+- **✅ 14 Tests bestanden**
+- **❌ 6 Tests fehlgeschlagen**
+
+### **Spezifische Fehlschläge:**
+
+**1. `submitDecision` Tests (3 failed):**
+```
+Error: Sie sind nicht berechtigt, diese Freigabe zu bearbeiten
+```
+**Problem:** Recipient-Email in Tests stimmt nicht mit Mock-Daten überein
+
+**2. `requestChanges` Test (1 failed):**  
+```
+Error: Nicht berechtigt
+```
+**Problem:** Gleicher Recipient-Email Mismatch
+
+**3. `markAsViewed` Tests (2 failed):**
+```
+expect(mockUpdateDoc).toHaveBeenCalledWith(...)
+Number of calls: 0
+```
+**Problem:** Firebase updateDoc wird nicht aufgerufen
+
+### **Debug-Logs aus Tests zeigen:**
+```
+👁️ markAsViewed called: { shareId: 'test-share-123', recipientEmail: 'user@test.com', hasMetadata: false }
+📋 Approval state: { currentStatus: 'draft', recipients: [ { email: 'client@test.com', status: 'pending' } ], firstViewedAt: undefined }
+```
+
+**Kritische Erkenntnis:** 
+- `markAsViewed` wird mit `user@test.com` aufgerufen
+- Aber Recipients-Array enthält `client@test.com` 
+- **EMAIL MISMATCH = Keine Updates = Keine First-View-Detection!**
+
+---
+
+## 📋 LOG-ERGEBNISSE (30.08.2025 - 12:44-12:46)
+
+### **Vercel Production Logs:**
+
+**✅ Admin-E-Mails funktionieren:**
+```
+2025-08-30T12:44:46.443Z [info] 📧 Sending email via SendGrid: {
+  to: [ { email: 'pr@sk-online-marketing.de', name: 'PR-Team' } ],
+  from: { email: 'pr@sk-online-marketing.de', name: 'CeleroPress' },
+  replyTo: { email: 'pr-wVa3cJ7Y-skA3PpWv@inbox.sk-online-marketing.de' },
+  subject: 'Änderungen angefordert: ProAlpha gewinnt „Best B2B Software 2024"'
+}
+2025-08-30T12:44:46.651Z [info] ✅ Email sent successfully: { statusCode: 202 }
+```
+
+**✅ Inbox-System funktioniert:**  
+```
+2025-08-30T12:46:27.818Z [info] Email response suggestions generated successfully
+2025-08-30T12:46:26.950Z [info] Email analysis completed successfully
+```
+
+### **❌ Fehlende Logs (= Bestätigung der Probleme):**
+
+**Problem 1: Keine Kunden-E-Mails**
+- ❌ Kein `🚀 sendNotifications called` mit `type: 'request'`
+- ❌ Kein `📧 Attempting to send email` an Kunden-Email
+
+**Problem 2: Keine First-View Detection**  
+- ❌ Kein `👁️ markAsViewed called` in Production
+- ❌ Kein `🔍 First View Check`
+
+**Problem 3: Keine Incoming Emails in Inbox**
+- ❌ Kein `📨 Webhook processing result` 
+- ❌ Kein `🚨 ADMIN EMAIL DETECTED`
+
+### **Root-Cause Analysis:**
+
+**1. Kunden-E-Mails:** `sendNotifications()` wird vermutlich gar nicht aufgerufen
+**2. First-View:** Email-Parameter-Mismatch wie in Tests (verschiedene E-Mails)  
+**3. Inbox:** Admin-E-Mails werden versendet aber kommen nicht als incoming webhook an
+
+---
+
+## 🔧 PHASE 4: GEZIELTE FIXES BASIEREND AUF TEST- UND LOG-ANALYSE
+
+### **Fix 1: First-View Detection reparieren**
+**Problem:** `markAsViewed()` bekommt falsche E-Mail-Parameter
+**Lösung:** E-Mail-Parameter-Matching in `markAsViewed()` korrigieren
+
+### **Fix 2: Kunden-E-Mail-Versand debuggen**  
+**Problem:** `sendNotifications()` wird nicht aufgerufen
+**Lösung:** Workflow-Trigger für Kunden-E-Mails finden und reparieren
+
+### **Fix 3: Inbox-Routing für Admin-E-Mails**
+**Problem:** Admin-E-Mails werden versendet aber kommen nicht in Inbox an
+**Lösung:** SendGrid Webhook und E-Mail-Routing prüfen
