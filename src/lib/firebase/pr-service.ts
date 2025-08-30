@@ -1326,8 +1326,16 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
           
           // DIREKTES UPDATE statt updateApprovalForNewVersion verwenden
           // weil wir eigene History-Einträge hinzufügen wollen
+          // 🚀 WICHTIG: Recipients auch auf pending zurücksetzen für Re-Request E-Mail
+          const resetRecipients = existingApproval.recipients.map(recipient => ({
+            ...recipient,
+            status: 'pending' as const,
+            respondedAt: null
+          }));
+          
           await updateDoc(doc(db, 'approvals', existingApproval.id!), {
             status: 'pending',
+            recipients: resetRecipients,
             pdfVersionId,
             updatedAt: Timestamp.now(),
             history: arrayUnion(historyEntry)
