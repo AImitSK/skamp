@@ -1379,7 +1379,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
    */
   private async sendNotifications(
     approval: ApprovalEnhanced,
-    type: 'request' | 'reminder' | 'status_change' | 'approved' | 'changes_requested'
+    type: 'request' | 'reminder' | 'status_change' | 'approved' | 'changes_requested' | 're-request'
   ): Promise<void> {
     try {
       // ========== DEBUG LOGGING ==========
@@ -1436,12 +1436,14 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       for (const recipient of approval.recipients) {
         if (recipient.status === 'pending') {
           // Bestimme Approval-Type basierend auf dem type Parameter
-          let approvalType: 'request' | 'reminder' | 'status_update';
+          let approvalType: 'request' | 'reminder' | 'status_update' | 're-request';
           
           if (type === 'request') {
             approvalType = 'request';
           } else if (type === 'reminder') {
             approvalType = 'reminder';  
+          } else if (type === 're-request') {
+            approvalType = 're-request';
           } else {
             approvalType = 'status_update';
           }
@@ -1466,7 +1468,11 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
                 to: [{ email: recipient.email, name: recipient.name }],
                 from: { email: organizationEmailAddress.email, name: organizationEmailAddress.displayName || 'CeleroPress' },
                 replyTo: replyToAddress,
-                subject: `${approvalType === 'request' ? 'Freigabe-Anfrage' : approvalType === 'reminder' ? 'Erinnerung' : 'Status-Update'}: ${approval.campaignTitle || approval.title}`,
+                subject: `${
+                  approvalType === 'request' ? 'Freigabe-Anfrage' :
+                  approvalType === 're-request' ? 'Überarbeitete Pressemeldung zur Freigabe' :
+                  approvalType === 'reminder' ? 'Erinnerung' : 'Status-Update'
+                }: ${approval.campaignTitle || approval.title}`,
                 htmlContent: generateApprovalEmailHtml(approvalType, {
                   campaignTitle: approval.campaignTitle || approval.title,
                   clientName: approval.clientName,
@@ -1474,7 +1480,8 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
                   recipientName: recipient.name,
                   message: (approval as any).requestMessage || undefined,
                   adminName,
-                  adminEmail
+                  adminEmail,
+                  adminMessage: (approval as any).adminMessage || undefined
                 }),
                 textContent: generateApprovalEmailText(approvalType, {
                   campaignTitle: approval.campaignTitle || approval.title,
@@ -1483,7 +1490,8 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
                   recipientName: recipient.name,
                   message: (approval as any).requestMessage || undefined,
                   adminName,
-                  adminEmail
+                  adminEmail,
+                  adminMessage: (approval as any).adminMessage || undefined
                 }),
                 emailAddressId: organizationEmailAddress.id
               });
@@ -1834,17 +1842,26 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
     if (newStatus === 'changes_requested') {
       console.log('🔄 Admin hat Änderungen gemacht - sende Re-Request E-Mail an Kunden');
       
-      // Setze Status auf pending und sende neue Freigabe-Anfrage
+      // Hole die neuste Admin-Nachricht aus der History
+      const lastHistoryEntry = approval.history?.[approval.history.length - 1];
+      const adminMessage = lastHistoryEntry?.details?.comment || undefined;
+      const adminName = lastHistoryEntry?.actorName || 'Admin';
+      
+      // Setze Status auf pending und sende Re-Request E-Mail
       const updatedApproval = { 
         ...approval, 
         status: 'pending' as any, // Temporär auf pending für E-Mail-Versand
         recipients: approval.recipients?.map(r => ({ 
           ...r, 
           status: 'pending' as any 
-        })) || []
+        })) || [],
+        // Füge Admin-Nachricht hinzu für Template
+        adminMessage,
+        adminName
       };
       
-      await this.sendNotifications(updatedApproval, 'request');
+      // Verwende 're-request' Type für spezielles Template
+      await this.sendNotifications(updatedApproval, 're-request' as any);
     }
     
     // 🔓 KAMPAGNEN-LOCK MANAGEMENT
@@ -2012,7 +2029,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
 
 // Export Singleton Instance
 // Helper-Funktionen für Email-Templates
-function generateApprovalEmailHtml(type: 'request' | 'reminder' | 'status_update', data: {
+function generateApprovalEmailHtml(type: 'request' | 'reminder' | 'status_update' | 're-request', data: {
   campaignTitle: string;
   clientName: string;
   approvalUrl: string;
@@ -2020,6 +2037,7 @@ function generateApprovalEmailHtml(type: 'request' | 'reminder' | 'status_update
   message?: string;
   adminName?: string;
   adminEmail?: string;
+  adminMessage?: string; // Neue Admin-Nachricht bei Re-Request
 }): string {
   const baseStyle = `
     body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
@@ -2062,6 +2080,35 @@ function generateApprovalEmailHtml(type: 'request' | 'reminder' | 'status_update
         Benötigen Sie Hilfe? Antworten Sie einfach auf diese E-Mail.
       </p>
     `;
+  } else if (type === 're-request') {
+    content = `
+      <h2>🔄 Überarbeitete Pressemeldung zur erneuten Freigabe</h2>
+      <p>Hallo <strong>${data.recipientName}</strong>,</p>
+      <p>Die Pressemeldung wurde von <strong>${data.adminName || 'Ihrem PR-Team'}</strong> überarbeitet und wartet erneut auf Ihre Freigabe:</p>
+      <div style="background: #e8f4fd; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #007bff;">
+        <strong>Pressemeldung:</strong> "${data.campaignTitle}"<br>
+        <strong>Erstellt für:</strong> ${data.clientName}<br>
+        <strong>Überarbeitet von:</strong> ${data.adminName || 'PR-Team'} ${data.adminEmail ? `(${data.adminEmail})` : ''}<br>
+        <strong>Status:</strong> <span style="color: #007bff;">Überarbeitet - erneute Freigabe erforderlich</span>
+      </div>
+      ${data.adminMessage ? `
+        <div style="background: #f0f8f0; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #28a745;">
+          <strong>📝 Nachricht vom Admin:</strong><br>
+          <em>${data.adminMessage}</em>
+        </div>
+      ` : ''}
+      ${data.message ? `
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; margin: 15px 0;">
+          <strong>Ursprüngliche Nachricht:</strong><br>
+          <em>${data.message}</em>
+        </div>
+      ` : ''}
+      <p>Bitte prüfen Sie die überarbeitete Pressemeldung und geben Sie diese erneut frei.</p>
+      <a href="${data.approvalUrl}" class="button">🔍 Überarbeitete Pressemeldung jetzt prüfen</a>
+      <p style="color: #666; font-size: 12px; margin-top: 30px;">
+        Diese E-Mail wurde automatisch von CeleroPress generiert. Bei Fragen antworten Sie einfach auf diese E-Mail.
+      </p>
+    `;
   } else {
     content = `
       <h2>Status-Update</h2>
@@ -2086,7 +2133,7 @@ function generateApprovalEmailHtml(type: 'request' | 'reminder' | 'status_update
   `;
 }
 
-function generateApprovalEmailText(type: 'request' | 'reminder' | 'status_update', data: {
+function generateApprovalEmailText(type: 'request' | 'reminder' | 'status_update' | 're-request', data: {
   campaignTitle: string;
   clientName: string;  
   approvalUrl: string;
@@ -2094,6 +2141,7 @@ function generateApprovalEmailText(type: 'request' | 'reminder' | 'status_update
   message?: string;
   adminName?: string;
   adminEmail?: string;
+  adminMessage?: string;
 }): string {
   if (type === 'request') {
     return `
@@ -2137,22 +2185,40 @@ Benötigen Sie Hilfe? Antworten Sie einfach auf diese E-Mail.
 Beste Grüße,
 Ihr CeleroPress Team
     `.trim();
-  } else {
+  } else if (type === 're-request') {
     return `
-IHRE PRESSEMELDUNG WURDE AKTUALISIERT - CELEROPRESS
+ÜBERARBEITETE PRESSEMELDUNG ZUR ERNEUTEN FREIGABE - CELEROPRESS
 
 Hallo ${data.recipientName},
 
-Ihre Pressemeldung "${data.campaignTitle}" wurde von ${data.adminName || 'Ihrem PR-Team'} aktualisiert und wartet erneut auf Ihre Freigabe.
+die Pressemeldung wurde von ${data.adminName || 'Ihrem PR-Team'} überarbeitet und wartet erneut auf Ihre Freigabe:
 
 Pressemeldung: "${data.campaignTitle}"
 Erstellt für: ${data.clientName}
-Aktualisiert von: ${data.adminName || 'PR-Team'}
+Überarbeitet von: ${data.adminName || 'PR-Team'}
+Status: Überarbeitet - erneute Freigabe erforderlich
 
-Bitte prüfen Sie die überarbeitete Pressemeldung:
+${data.adminMessage ? `NACHRICHT VOM ADMIN:
+${data.adminMessage}
+
+` : ''}${data.message ? `URSPRÜNGLICHE NACHRICHT:
+${data.message}
+
+` : ''}Bitte prüfen Sie die überarbeitete Pressemeldung und geben Sie diese erneut frei:
 ${data.approvalUrl}
 
 Bei Fragen antworten Sie einfach auf diese E-Mail.
+
+Beste Grüße,
+Ihr CeleroPress Team
+    `.trim();
+  } else {
+    return `
+STATUS-UPDATE - CELEROPRESS
+
+Der Status der Kampagne "${data.campaignTitle}" hat sich geändert.
+
+Details ansehen: ${data.approvalUrl}
 
 Beste Grüße,
 Ihr CeleroPress Team
