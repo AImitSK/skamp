@@ -1838,31 +1838,8 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       console.error('Fehler bei Status-Change-Notification:', error);
     }
 
-    // ✅ RE-REQUEST E-MAILS AN KUNDEN nach Admin-Änderungen
-    if (newStatus === 'changes_requested') {
-      console.log('🔄 Admin hat Änderungen gemacht - sende Re-Request E-Mail an Kunden');
-      
-      // Hole die neuste Admin-Nachricht aus der History
-      const lastHistoryEntry = approval.history?.[approval.history.length - 1];
-      const adminMessage = lastHistoryEntry?.details?.comment || undefined;
-      const adminName = lastHistoryEntry?.actorName || 'Admin';
-      
-      // Setze Status auf pending und sende Re-Request E-Mail
-      const updatedApproval = { 
-        ...approval, 
-        status: 'pending' as any, // Temporär auf pending für E-Mail-Versand
-        recipients: approval.recipients?.map(r => ({ 
-          ...r, 
-          status: 'pending' as any 
-        })) || [],
-        // Füge Admin-Nachricht hinzu für Template
-        adminMessage,
-        adminName
-      };
-      
-      // Verwende 're-request' Type für spezielles Template
-      await this.sendNotifications(updatedApproval, 're-request' as any);
-    }
+    // ENTFERNT: Re-Request E-Mails werden jetzt nur noch vom Admin Campaign Edit ausgelöst
+    // Nicht mehr von Kunden-Änderungsanforderungen
     
     // 🔓 KAMPAGNEN-LOCK MANAGEMENT
     if (approval.campaignId) {
