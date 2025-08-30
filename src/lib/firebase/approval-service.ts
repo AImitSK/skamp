@@ -1669,8 +1669,20 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         });
       }
       
-      // Bei anderen Status-Änderungen könnten weitere Lock-Regeln hinzugefügt werden
-      // z.B. bei approved: Lock setzen wenn Kampagne nicht mehr bearbeitet werden soll
+      // Bei approved: Lock ebenfalls lösen (Kampagne kann zur Bearbeitung freigegeben werden)
+      if (approvalStatus === 'approved') {
+        await prService.update(campaignId, {
+          editLocked: false,
+          editLockedReason: undefined,
+          lockedBy: undefined,
+          unlockedAt: serverTimestamp() as Timestamp,
+          lastUnlockedBy: {
+            userId: 'system',
+            displayName: 'Freigabe-System',
+            reason: 'Freigabe erteilt'
+          }
+        });
+      }
       
     } catch (error) {
       // Fehler beim Lock-Update sollte den Hauptprozess nicht stoppen
