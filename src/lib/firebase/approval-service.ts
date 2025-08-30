@@ -1301,9 +1301,9 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
     type: 'request' | 'reminder' | 'status_change'
   ): Promise<void> {
     try {
-      // ========== FUNKTIONIERENDER E-MAIL-SERVICE ==========
-      // Nutze den existierenden funktionierenden EmailService aus dem PR-System
-      const { emailService } = await import('@/lib/email/email-service');
+      // ========== PROFESSIONELLE APPROVAL-EMAIL API ==========
+      // Nutze die neue spezialisierte Approval-Email Route
+      const { apiClient } = await import('@/lib/api/api-client');
 
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://app.celeropress.com';
       const approvalUrl = `${baseUrl}/freigabe/${approval.shareId}`;
@@ -1311,82 +1311,39 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       // Sende E-Mails an ausstehende Empfänger
       for (const recipient of approval.recipients) {
         if (recipient.status === 'pending') {
-          // Erstelle Fake-Contact für EmailService
-          const fakeContact = {
-            id: 'temp-id',
-            userId: approval.createdBy || 'system',
-            firstName: recipient.name.split(' ')[0] || 'Kunde',
-            lastName: recipient.name.split(' ').slice(1).join(' ') || '',
-            email: recipient.email,
-            companyName: approval.clientName || 'Unbekannt',
-            companyId: approval.clientId || '',
-            createdAt: new Date() as any,
-            updatedAt: new Date() as any
-          };
-
-          // Erstelle Email-Content basierend auf Typ
-          let emailContent: any;
-          let senderInfo = {
-            name: 'CeleroPress Team',
-            title: 'Freigabe-Service',
-            company: 'CeleroPress',
-            phone: '+49 (0) 30 12345678',
-            email: 'freigaben@celeropress.com'
-          };
-
+          // Bestimme Approval-Type basierend auf dem type Parameter
+          let approvalType: 'request' | 'reminder' | 'status_update';
+          
           if (type === 'request') {
-            emailContent = {
-              subject: `Freigabe-Anfrage: ${approval.campaignTitle || approval.title}`,
-              greeting: `Sehr geehrte/r ${recipient.name},`,
-              introduction: `wir bitten Sie um die Freigabe der Pressemitteilung "${approval.campaignTitle || approval.title}".`,
-              pressReleaseHtml: `<p>Bitte prüfen Sie die Pressemitteilung über folgenden Link: <a href="${approvalUrl}">${approvalUrl}</a></p>`,
-              closing: 'Vielen Dank für Ihre Zeit.',
-              signature: `${senderInfo.name}\n${senderInfo.title}\n${senderInfo.company}`
-            };
+            approvalType = 'request';
           } else if (type === 'reminder') {
-            emailContent = {
-              subject: `Erinnerung: Freigabe für "${approval.campaignTitle || approval.title}"`,
-              greeting: `Sehr geehrte/r ${recipient.name},`,
-              introduction: `dies ist eine freundliche Erinnerung an die ausstehende Freigabe für "${approval.campaignTitle || approval.title}".`,
-              pressReleaseHtml: `<p>Bitte prüfen Sie die Pressemitteilung über folgenden Link: <a href="${approvalUrl}">${approvalUrl}</a></p>`,
-              closing: 'Vielen Dank für Ihre Zeit.',
-              signature: `${senderInfo.name}\n${senderInfo.title}\n${senderInfo.company}`
-            };
+            approvalType = 'reminder';  
           } else {
-            continue; // Status-Change wird separat behandelt
+            approvalType = 'status_update';
           }
 
-          // E-Mail über funktionierenden EmailService versenden
+          // E-Mail über die professionelle Approval-Email Route versenden
           try {
-            const fakePreview = emailService.generatePreview(
-              fakeContact,
-              emailContent,
-              senderInfo,
-              undefined, // mediaShareUrl
-              undefined  // keyVisual
-            );
-
-            // Direkt die API Route nutzen, die funktioniert
-            const { apiClient } = await import('@/lib/api/api-client');
-            await apiClient.post('/api/sendgrid/send-pr-campaign', {
-              recipients: [{
-                email: recipient.email,
-                name: recipient.name,
-                firstName: fakeContact.firstName,
-                lastName: fakeContact.lastName,
-                companyName: fakeContact.companyName
-              }],
-              campaignEmail: emailContent,
-              senderInfo: senderInfo,
-              mediaShareUrl: undefined,
-              keyVisual: undefined
+            await apiClient.post('/api/sendgrid/send-approval-email', {
+              to: recipient.email,
+              subject: `${approvalType === 'request' ? 'Freigabe-Anfrage' : approvalType === 'reminder' ? 'Erinnerung' : 'Status-Update'}: ${approval.campaignTitle || approval.title}`,
+              approvalType: approvalType,
+              approvalData: {
+                campaignTitle: approval.campaignTitle || approval.title,
+                clientName: approval.clientName,
+                approvalUrl: approvalUrl,
+                recipientName: recipient.name,
+                message: (approval as any).requestMessage || undefined
+              }
             });
+
+            console.log(`✅ Approval email sent to ${recipient.email} (${approvalType})`);
 
             // Update Benachrichtigung-Counter
             recipient.notificationsSent = (recipient.notificationsSent || 0) + 1;
           } catch (emailError) {
-            console.error('E-Mail-Versand fehlgeschlagen:', emailError);
-            // Versuche fallback - logge den Fehler aber blockiere den Prozess nicht
+            console.error('Approval-E-Mail-Versand fehlgeschlagen:', emailError);
+            // Logge Fehler aber blockiere nicht den Hauptprozess
           }
         }
       }
@@ -1501,34 +1458,18 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
           };
 
           try {
-            // Nutze funktionierenden Email-Service für Status-Updates
-            const emailContent = {
+            // Nutze die professionelle Approval-Email Route für Status-Updates
+            await apiClient.post('/api/sendgrid/send-approval-email', {
+              to: 'team@celeropress.com', // TODO: User-E-Mail laden
               subject: `Status-Update: ${approval.campaignTitle || approval.title}`,
-              greeting: `Sehr geehrtes Team,`,
-              introduction: `die Freigabe für "${approval.campaignTitle || approval.title}" hat einen neuen Status: ${newStatus}`,
-              pressReleaseHtml: `<p>Geändert von: ${changedBy}</p><p>Dashboard: <a href="${dashboardUrl}">${dashboardUrl}</a></p>`,
-              closing: 'Automatische Benachrichtigung',
-              signature: 'CeleroPress Freigabe-System'
-            };
-
-            await apiClient.post('/api/sendgrid/send-pr-campaign', {
-              recipients: [{
-                email: 'team@celeropress.com', // TODO: User-E-Mail laden
-                name: 'Team',
-                firstName: 'Team',
-                lastName: '',
-                companyName: 'CeleroPress'
-              }],
-              campaignEmail: emailContent,
-              senderInfo: {
-                name: 'CeleroPress System',
-                title: 'Automatische Benachrichtigung',
-                company: 'CeleroPress',
-                phone: '',
-                email: 'system@celeropress.com'
-              },
-              mediaShareUrl: undefined,
-              keyVisual: undefined
+              approvalType: 'status_update',
+              approvalData: {
+                campaignTitle: approval.campaignTitle || approval.title,
+                clientName: approval.clientName,
+                approvalUrl: dashboardUrl,
+                recipientName: 'Team',
+                changedBy: changedBy
+              }
             });
           } catch (emailError) {
             console.error('Status-Update E-Mail fehlgeschlagen:', emailError);
@@ -1552,34 +1493,18 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
             approverName
           };
 
-          // Nutze funktionierenden Email-Service für Approval-Granted
-          const emailContent = {
+          // Nutze die professionelle Approval-Email Route für Approval-Granted
+          await apiClient.post('/api/sendgrid/send-approval-email', {
+            to: 'team@celeropress.com', // TODO: User-E-Mail laden
             subject: `✅ Freigabe erhalten: ${approval.campaignTitle || approval.title}`,
-            greeting: `Sehr geehrtes Team,`,
-            introduction: `gute Nachrichten! Die Freigabe für "${approval.campaignTitle || approval.title}" wurde erteilt.`,
-            pressReleaseHtml: `<p>Freigabe erteilt von: ${approverName}</p><p>Dashboard: <a href="${dashboardUrl}">${dashboardUrl}</a></p>`,
-            closing: 'Die Kampagne kann nun versendet werden.',
-            signature: 'CeleroPress Freigabe-System'
-          };
-
-          await apiClient.post('/api/sendgrid/send-pr-campaign', {
-            recipients: [{
-              email: 'team@celeropress.com', // TODO: User-E-Mail laden
-              name: 'Team',
-              firstName: 'Team',
-              lastName: '',
-              companyName: 'CeleroPress'
-            }],
-            campaignEmail: emailContent,
-            senderInfo: {
-              name: 'CeleroPress System',
-              title: 'Freigabe-Benachrichtigung',
-              company: 'CeleroPress',
-              phone: '',
-              email: 'system@celeropress.com'
-            },
-            mediaShareUrl: undefined,
-            keyVisual: undefined
+            approvalType: 'approved',
+            approvalData: {
+              campaignTitle: approval.campaignTitle || approval.title,
+              clientName: approval.clientName,
+              approvalUrl: dashboardUrl,
+              recipientName: 'Team',
+              changedBy: approverName
+            }
           });
         } catch (emailError) {
           console.error('Approval-Granted E-Mail fehlgeschlagen:', emailError);
@@ -1608,34 +1533,19 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
             inlineComments
           };
 
-          // Nutze funktionierenden Email-Service für Changes-Requested
-          const emailContent = {
+          // Nutze die professionelle Approval-Email Route für Changes-Requested
+          await apiClient.post('/api/sendgrid/send-approval-email', {
+            to: 'team@celeropress.com', // TODO: User-E-Mail laden
             subject: `🔄 Änderungen angefordert: ${approval.campaignTitle || approval.title}`,
-            greeting: `Sehr geehrtes Team,`,
-            introduction: `für "${approval.campaignTitle || approval.title}" wurden Änderungen angefordert.`,
-            pressReleaseHtml: `<p><strong>Feedback von:</strong> ${reviewerName}</p><p><strong>Kommentar:</strong> ${feedback}</p><p>Dashboard: <a href="${dashboardUrl}">${dashboardUrl}</a></p>`,
-            closing: 'Bitte überarbeiten Sie die Kampagne entsprechend.',
-            signature: 'CeleroPress Freigabe-System'
-          };
-
-          await apiClient.post('/api/sendgrid/send-pr-campaign', {
-            recipients: [{
-              email: 'team@celeropress.com', // TODO: User-E-Mail laden
-              name: 'Team',
-              firstName: 'Team',
-              lastName: '',
-              companyName: 'CeleroPress'
-            }],
-            campaignEmail: emailContent,
-            senderInfo: {
-              name: 'CeleroPress System',
-              title: 'Änderungs-Benachrichtigung',
-              company: 'CeleroPress',
-              phone: '',
-              email: 'system@celeropress.com'
-            },
-            mediaShareUrl: undefined,
-            keyVisual: undefined
+            approvalType: 'changes_requested',
+            approvalData: {
+              campaignTitle: approval.campaignTitle || approval.title,
+              clientName: approval.clientName,
+              approvalUrl: dashboardUrl,
+              recipientName: 'Team',
+              changedBy: reviewerName,
+              feedback: feedback
+            }
           });
         } catch (emailError) {
           console.error('Changes-Requested E-Mail fehlgeschlagen:', emailError);

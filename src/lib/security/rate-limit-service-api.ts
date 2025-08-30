@@ -10,7 +10,7 @@ export interface RateLimitConfig {
 
 export interface RateLimitEntry {
   userId: string;
-  type: 'test' | 'campaign' | 'recipients';
+  type: 'test' | 'campaign' | 'recipients' | 'approval';
   count: number;
   windowStart: Date;
   windowEnd: Date;
@@ -24,7 +24,7 @@ export interface EmailActivityLog {
   id?: string;
   userId: string;
   organizationId: string;
-  type: 'test' | 'campaign' | 'scheduled';
+  type: 'test' | 'campaign' | 'scheduled' | 'approval';
   campaignId?: string;
   campaignTitle?: string;
   recipientCount: number;
@@ -42,6 +42,12 @@ export const DEFAULT_RATE_LIMITS: RateLimitConfig = {
   campaignsPerDay: parseInt(process.env.NEXT_PUBLIC_RATE_LIMIT_CAMPAIGNS || '50'),
   recipientsPerCampaign: parseInt(process.env.NEXT_PUBLIC_MAX_RECIPIENTS_PER_CAMPAIGN || '500'),
   recipientsPerDay: parseInt(process.env.NEXT_PUBLIC_RATE_LIMIT_RECIPIENTS_PER_DAY || '5000')
+};
+
+// Approval-spezifische Rate Limits
+export const APPROVAL_RATE_LIMITS = {
+  approvalsPerHour: parseInt(process.env.NEXT_PUBLIC_RATE_LIMIT_APPROVALS || '20'),
+  approvalEmailsPerHour: parseInt(process.env.NEXT_PUBLIC_RATE_LIMIT_APPROVAL_EMAILS || '30')
 };
 
 // Firestore REST API Helper
@@ -169,7 +175,7 @@ export const rateLimitServiceAPI = {
    */
   async checkRateLimit(
     userId: string,
-    type: 'test' | 'campaign',
+    type: 'test' | 'campaign' | 'approval',
     additionalCount: number = 1,
     token?: string
   ): Promise<{ allowed: boolean; remaining: number; resetAt: Date; reason?: string }> {
@@ -185,6 +191,11 @@ export const rateLimitServiceAPI = {
       windowStart = new Date(now.getTime() - 60 * 60 * 1000);
       windowEnd = new Date(now.getTime() + 60 * 60 * 1000);
       limit = DEFAULT_RATE_LIMITS.testEmailsPerHour;
+    } else if (type === 'approval') {
+      // 1-Stunden-Fenster für Approval-Emails
+      windowStart = new Date(now.getTime() - 60 * 60 * 1000);
+      windowEnd = new Date(now.getTime() + 60 * 60 * 1000);
+      limit = APPROVAL_RATE_LIMITS.approvalEmailsPerHour;
     } else {
       // 24-Stunden-Fenster für Kampagnen
       const dayStart = new Date(now);
@@ -257,7 +268,7 @@ export const rateLimitServiceAPI = {
         allowed: !wouldExceed,
         remaining: wouldExceed ? 0 : remaining - additionalCount,
         resetAt: windowEnd,
-        reason: wouldExceed ? `Limit von ${limit} ${type === 'test' ? 'Test-E-Mails pro Stunde' : 'Kampagnen pro Tag'} überschritten` : undefined
+        reason: wouldExceed ? `Limit von ${limit} ${type === 'test' ? 'Test-E-Mails pro Stunde' : type === 'approval' ? 'Freigabe-E-Mails pro Stunde' : 'Kampagnen pro Tag'} überschritten` : undefined
       };
 
     } catch (error) {
@@ -272,7 +283,7 @@ export const rateLimitServiceAPI = {
    */
   async recordAction(
     userId: string,
-    type: 'test' | 'campaign',
+    type: 'test' | 'campaign' | 'approval',
     count: number = 1,
     metadata?: any,
     token?: string
