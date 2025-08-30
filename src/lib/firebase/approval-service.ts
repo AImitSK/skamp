@@ -1370,10 +1370,10 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         currentStatus: approval.status
       });
 
-      // ❌ PROBLEM: Diese Zeilen blockieren ALLES
-      if (type === 'status_change') {
-        console.log('⚠️ BLOCKING: Status-Change E-Mails sind deaktiviert');
-        console.log('⚠️ Dies blockiert möglicherweise auch Kunden-E-Mails!');
+      // ✅ KORRIGIERT: Nur echte Status-Changes blockieren, nicht initiale Requests
+      if (type === 'status_change' && approval.status !== 'pending') {
+        console.log('⚠️ Blocking non-initial status change emails to customer');
+        console.log('✅ Initial requests (pending status) are allowed through');
         return;
       }
       
@@ -1633,15 +1633,40 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
             });
           }
 
-          // ❌ EXTERNE ADMIN-E-MAILS DEAKTIVIERT
-          // Admin wird nur über Inbox-Nachricht (oben) benachrichtigt
-          console.log('📮 Admin email should be sent:', {
-            to: 'pr@sk-online-marketing.de',
-            from: 'pr@sk-online-marketing.de',
-            replyTo: 'pr-XXX-XXXX@inbox.sk-online-marketing.de',
-            subject: `Status: ${newStatus}`,
-            isCurrentlyDisabled: true // HINWEIS: Aktuell ist der Code auskommentiert!
-          });
+          // ✅ EXTERNE ADMIN-E-MAILS WIEDERHERGESTELLT - Diese müssen für Inbox-Routing gesendet werden
+          const { emailAddressService } = await import('@/lib/email/email-address-service');
+          const organizationEmailAddress = await emailAddressService.getDefaultForOrganizationServer(approval.organizationId);
+          
+          if (organizationEmailAddress) {
+            const replyToAddress = emailAddressService.generateReplyToAddress(organizationEmailAddress);
+            
+            console.log('📮 Sending admin notification email:', {
+              to: organizationEmailAddress.email,
+              from: organizationEmailAddress.email,
+              replyTo: replyToAddress,
+              subject: `Freigabe erhalten: ${approval.campaignTitle || approval.title}`
+            });
+
+            await apiClient.post('/api/email/send', {
+              to: [{ email: organizationEmailAddress.email, name: 'PR-Team' }],
+              from: { email: organizationEmailAddress.email, name: 'CeleroPress' },
+              replyTo: replyToAddress,
+              subject: `Freigabe erhalten: ${approval.campaignTitle || approval.title}`,
+              htmlContent: `
+                <h2>✅ Freigabe erhalten</h2>
+                <p><strong>Kampagne:</strong> ${approval.campaignTitle || approval.title}</p>
+                <p><strong>Kunde:</strong> ${approval.clientName || 'Unbekannt'}</p>
+                <p><strong>Freigegeben von:</strong> ${approverName}</p>
+                <p><strong>Status:</strong> Freigegeben</p>
+                
+                <p>Die Kampagne kann nun versendet werden.</p>
+                
+                <p><a href="${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/pr-tools/campaigns/${approval.campaignId}">Kampagne anzeigen</a></p>
+              `,
+              emailAddressId: organizationEmailAddress.id
+            });
+          }
+          
           console.log(`✅ Inbox-Nachricht für Freigabe erstellt: "${approval.campaignTitle || approval.title}"`);
         } catch (error) {
           console.error('Approval-Granted Verarbeitung fehlgeschlagen:', error);
@@ -1685,8 +1710,44 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
             });
           }
 
-          // ❌ EXTERNE ADMIN-E-MAILS DEAKTIVIERT
-          // Admin wird nur über Inbox-Nachricht (oben) benachrichtigt
+          // ✅ EXTERNE ADMIN-E-MAILS WIEDERHERGESTELLT - Diese müssen für Inbox-Routing gesendet werden
+          const { emailAddressService } = await import('@/lib/email/email-address-service');
+          const organizationEmailAddress = await emailAddressService.getDefaultForOrganizationServer(approval.organizationId);
+          
+          if (organizationEmailAddress) {
+            const replyToAddress = emailAddressService.generateReplyToAddress(organizationEmailAddress);
+            
+            console.log('📮 Sending admin notification email (changes requested):', {
+              to: organizationEmailAddress.email,
+              from: organizationEmailAddress.email,
+              replyTo: replyToAddress,
+              subject: `Änderungen angefordert: ${approval.campaignTitle || approval.title}`
+            });
+
+            await apiClient.post('/api/email/send', {
+              to: [{ email: organizationEmailAddress.email, name: 'PR-Team' }],
+              from: { email: organizationEmailAddress.email, name: 'CeleroPress' },
+              replyTo: replyToAddress,
+              subject: `Änderungen angefordert: ${approval.campaignTitle || approval.title}`,
+              htmlContent: `
+                <h2>🔄 Änderungen angefordert</h2>
+                <p><strong>Kampagne:</strong> ${approval.campaignTitle || approval.title}</p>
+                <p><strong>Kunde:</strong> ${approval.clientName || 'Unbekannt'}</p>
+                <p><strong>Änderungen von:</strong> ${reviewerName}</p>
+                
+                <h3>Feedback:</h3>
+                <p>${feedback}</p>
+                
+                ${inlineComments && inlineComments.length > 0 ? `<p><strong>Inline-Kommentare:</strong> ${inlineComments.length}</p>` : ''}
+                
+                <p>Die Kampagne kann nun bearbeitet werden.</p>
+                
+                <p><a href="${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/pr-tools/campaigns/${approval.campaignId}">Kampagne bearbeiten</a></p>
+              `,
+              emailAddressId: organizationEmailAddress.id
+            });
+          }
+          
           console.log(`✅ Inbox-Nachricht für Änderungsanforderung erstellt: "${approval.campaignTitle || approval.title}"`);
         } catch (error) {
           console.error('Changes-Requested Verarbeitung fehlgeschlagen:', error);
