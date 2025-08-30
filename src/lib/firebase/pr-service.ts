@@ -1333,6 +1333,19 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
             history: arrayUnion(historyEntry)
           });
           
+          // 🚀 WICHTIG: Re-Request E-Mail senden nach Admin-Änderungen
+          // Da wir den Status bereits auf 'pending' gesetzt haben, müssen wir die Approval neu laden
+          const updatedApproval = await approvalService.getById(existingApproval.id!, context.organizationId);
+          if (updatedApproval) {
+            const adminMessage = customerApprovalData.customerApprovalMessage || 'Die Pressemeldung wurde überarbeitet und wartet erneut auf Ihre Freigabe.';
+            const approvalWithMessage = { 
+              ...updatedApproval, 
+              adminMessage,
+              adminName: 'Admin'
+            };
+            await approvalService.sendNotifications(approvalWithMessage, 're-request' as any);
+          }
+          
           workflowId = existingApproval.id!;
           shareId = existingApproval.shareId;
           

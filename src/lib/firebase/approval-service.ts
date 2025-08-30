@@ -1377,7 +1377,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
   /**
    * Sendet Benachrichtigungen mit E-Mail & Notification Integration
    */
-  private async sendNotifications(
+  async sendNotifications(
     approval: ApprovalEnhanced,
     type: 'request' | 'reminder' | 'status_change' | 'approved' | 'changes_requested' | 're-request'
   ): Promise<void> {
@@ -1987,8 +1987,14 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       }
 
       // E-Mail-Benachrichtigung an Kunden senden (Re-Request)
-      const updatedApproval = { ...approval, ...updates, recipients: resetRecipients };
-      await this.sendNotifications(updatedApproval, 'request');
+      const updatedApproval = { 
+        ...approval, 
+        ...updates, 
+        recipients: resetRecipients,
+        adminMessage,
+        adminName: 'Admin'
+      };
+      await this.sendNotifications(updatedApproval, 're-request' as any);
 
       console.log(`✅ Approval ${approvalId} reaktiviert und Re-Request E-Mail gesendet`);
 
