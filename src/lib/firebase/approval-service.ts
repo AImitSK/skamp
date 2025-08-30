@@ -450,7 +450,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       if (!approval) throw new Error('Freigabe nicht gefunden');
       
       // Reset Empfänger-Status für neue Runde
-      const resetRecipients = approval.recipients.map(r => ({
+      const resetRecipients = (approval.recipients || []).map(r => ({
         ...r,
         status: 'pending' as const,
         decidedAt: undefined,
@@ -1926,7 +1926,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       };
 
       // Recipients zurücksetzen
-      const resetRecipients = approval.recipients.map(recipient => ({
+      const resetRecipients = (approval.recipients || []).map(recipient => ({
         ...recipient,
         status: 'pending' as const,
         respondedAt: null

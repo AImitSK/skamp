@@ -864,10 +864,10 @@ export default function ApprovalPage() {
             <div className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
               <h3 className="text-sm font-medium text-gray-900 mb-3 flex items-center gap-2">
                 <UserIcon className="h-4 w-4" />
-                Freigabe-Status ({approval.recipients.filter(r => r.status === 'approved').length} von {approval.recipients.length})
+                Freigabe-Status ({(approval.recipients || []).filter(r => r.status === 'approved').length} von {(approval.recipients || []).length})
               </h3>
               <div className="space-y-2">
-                {approval.recipients.map((recipient) => (
+                {(approval.recipients || []).map((recipient) => (
                   <RecipientStatus
                     key={recipient.id}
                     recipient={recipient}
