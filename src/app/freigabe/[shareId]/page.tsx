@@ -121,20 +121,61 @@ const approvalStatusConfig = {
   }
 };
 
-// NEU: Customer Message Banner Component
-function CustomerMessageBanner({ message }: { message: string }) {
-  if (!message) return null;
+// NEU: Customer Message Banner Component - zeigt letzte Agentur-Nachricht
+function CustomerMessageBanner({ 
+  feedbackHistory,
+  campaign 
+}: { 
+  feedbackHistory: any[],
+  campaign: any
+}) {
+  if (!feedbackHistory || feedbackHistory.length === 0) return null;
+  
+  // Finde die letzte Nachricht von der Agentur
+  const agencyMessages = feedbackHistory.filter(msg => 
+    msg.author !== 'Kunde' && msg.author !== 'Customer'
+  );
+  
+  if (agencyMessages.length === 0) return null;
+  
+  const latestAgencyMessage = agencyMessages[agencyMessages.length - 1];
+  
+  // Bestimme den korrekten Absender-Namen
+  const senderName = campaign.userName || campaign.createdBy?.name || 'Teammitglied';
+  
+  // Formatiere Zeitstempel
+  const formatTimeAgo = (date: any) => {
+    if (!date) return 'gerade eben';
+    const dateObj = date?.toDate ? date.toDate() : new Date(date);
+    const now = new Date();
+    const diffInMinutes = Math.floor((now.getTime() - dateObj.getTime()) / (1000 * 60));
+    
+    if (diffInMinutes < 1) return 'gerade eben';
+    if (diffInMinutes < 60) return `vor ${diffInMinutes} Min.`;
+    if (diffInMinutes < 1440) return `vor ${Math.floor(diffInMinutes / 60)} Std.`;
+    return `vor ${Math.floor(diffInMinutes / 1440)} Tag(en)`;
+  };
   
   return (
-    <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-6">
+    <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-6">
       <div className="flex">
-        <InformationCircleIcon className="h-5 w-5 text-blue-400 mr-3 flex-shrink-0 mt-0.5" />
-        <div>
-          <h3 className="font-medium text-blue-900 mb-2">Nachricht zur Freigabe</h3>
-          <div 
-            className="text-blue-800 whitespace-pre-wrap"
-            dangerouslySetInnerHTML={{ __html: message }}
-          />
+        <div className="text-2xl mr-3 flex-shrink-0">💬</div>
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-2">
+            <h3 className="font-medium text-green-900">Neueste Nachricht</h3>
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+              Feedback
+            </span>
+            <span className="text-sm text-green-700">
+              {formatTimeAgo(latestAgencyMessage.requestedAt)}
+            </span>
+          </div>
+          <div className="text-sm text-green-800 mb-2">
+            <strong>Von:</strong> {senderName}
+          </div>
+          <div className="text-green-900 whitespace-pre-wrap">
+            {latestAgencyMessage.comment}
+          </div>
         </div>
       </div>
     </div>
@@ -541,8 +582,11 @@ export default function ApprovalPage() {
     }
   };
 
-  const handleRequestChanges = async () => {
-    if (!campaign || !feedbackText.trim()) return;
+  const handleRequestChanges = async (changesText?: string) => {
+    // Verwende übergebenen Text oder fallback auf feedbackText
+    const textToSubmit = changesText || feedbackText;
+    
+    if (!campaign || !textToSubmit.trim()) return;
 
     try {
       setSubmitting(true);
@@ -551,7 +595,7 @@ export default function ApprovalPage() {
       await approvalService.requestChangesPublic(
         shareId,
         'customer@freigabe.system', // Placeholder E-Mail
-        feedbackText.trim(),
+        textToSubmit.trim(),
         'Kunde'
       );
       
@@ -761,10 +805,11 @@ export default function ApprovalPage() {
           )}
 
 
-          {/* NEU: Customer Approval Message */}
-          {customerMessage && (
-            <CustomerMessageBanner message={customerMessage} />
-          )}
+          {/* NEU: Customer Approval Message - zeigt letzte Agentur-Nachricht */}
+          <CustomerMessageBanner 
+            feedbackHistory={campaign.approvalData?.feedbackHistory}
+            campaign={campaign}
+          />
 
           {/* MODERNISIERTE CAMPAIGN-PREVIEW - Phase 3 */}
           <CampaignPreviewRenderer
@@ -936,7 +981,7 @@ export default function ApprovalPage() {
                 }}
                 onRequestChanges={async (changesText) => {
                   setFeedbackText(changesText);
-                  await handleRequestChanges();
+                  await handleRequestChanges(changesText); // Text direkt übergeben
                 }}
                 disabled={submitting}
                   className="mb-4"

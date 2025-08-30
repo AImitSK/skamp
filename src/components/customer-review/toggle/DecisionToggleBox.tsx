@@ -41,23 +41,6 @@ function DecisionToggleBoxComponent({
     }
   }, [onApprove, disabled, isSubmitting]);
 
-  const handleReject = useCallback(async () => {
-    if (disabled || isSubmitting) return;
-    
-    const confirmed = window.confirm(
-      'Sind Sie sicher, dass Sie diese Pressemitteilung ablehnen möchten? ' +
-      'Diese Aktion kann nicht rückgängig gemacht werden.'
-    );
-    
-    if (!confirmed) return;
-    
-    setIsSubmitting(true);
-    try {
-      await onReject?.();
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [onReject, disabled, isSubmitting]);
 
   const handleRequestChanges = useCallback(() => {
     if (disabled) return;
@@ -119,44 +102,23 @@ function DecisionToggleBoxComponent({
               {isSubmitting ? 'Freigabe wird erteilt...' : approveButtonText}
             </button>
 
-            {/* Sekundäre Aktionen */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Änderungen anfordern */}
-              <button
-                onClick={handleRequestChanges}
-                disabled={disabled || isSubmitting}
-                className={`
-                  flex items-center justify-center px-4 py-3 border border-gray-300
-                  text-sm font-medium rounded-lg transition-colors duration-150
-                  ${disabled || isSubmitting
-                    ? 'bg-gray-50 text-gray-400 cursor-not-allowed'
-                    : 'bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
-                  }
-                `}
-                data-testid="request-changes-button"
-              >
-                <PencilIcon className="h-5 w-5 mr-2" />
-                {requestChangesButtonText}
-              </button>
-
-              {/* Ablehnen */}
-              <button
-                onClick={handleReject}
-                disabled={disabled || isSubmitting}
-                className={`
-                  flex items-center justify-center px-4 py-3 border border-red-300
-                  text-sm font-medium rounded-lg transition-colors duration-150
-                  ${disabled || isSubmitting
-                    ? 'bg-gray-50 text-gray-400 cursor-not-allowed'
-                    : 'bg-red-50 text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2'
-                  }
-                `}
-                data-testid="reject-button"
-              >
-                <XMarkIcon className="h-5 w-5 mr-2" />
-                {rejectButtonText}
-              </button>
-            </div>
+            {/* Änderungen anfordern - als einzelner Button */}
+            <button
+              onClick={handleRequestChanges}
+              disabled={disabled || isSubmitting}
+              className={`
+                w-full flex items-center justify-center px-4 py-3 border border-gray-300
+                text-sm font-medium rounded-lg transition-colors duration-150
+                ${disabled || isSubmitting
+                  ? 'bg-gray-50 text-gray-400 cursor-not-allowed'
+                  : 'bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+                }
+              `}
+              data-testid="request-changes-button"
+            >
+              <PencilIcon className="h-5 w-5 mr-2" />
+              {requestChangesButtonText}
+            </button>
           </div>
         )}
 
