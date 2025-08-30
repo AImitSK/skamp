@@ -23,15 +23,23 @@ function ToggleBoxComponent({
   isExpanded,
   onToggle,
 }: ToggleBoxProps) {
-  const [isOpen, setIsOpen] = useState(isExpanded ?? defaultOpen);
+  // FIX: Verwende kontrollierten State wenn isExpanded definiert ist
+  const [localIsOpen, setLocalIsOpen] = useState(defaultOpen);
+  
+  // Bestimme ob Komponente kontrolliert oder unkontrolliert ist
+  const isControlled = isExpanded !== undefined;
+  const isOpen = isControlled ? isExpanded : localIsOpen;
 
   const handleToggle = useCallback(() => {
     if (disabled) return;
     
-    const newState = !isOpen;
-    setIsOpen(newState);
+    if (!isControlled) {
+      setLocalIsOpen(!localIsOpen);
+    }
+    
+    // Rufe immer onToggle auf für externe State-Verwaltung
     onToggle?.(id);
-  }, [isOpen, disabled, onToggle, id]);
+  }, [disabled, isControlled, localIsOpen, onToggle, id]);
 
   const ChevronIcon = isOpen ? ChevronUpIcon : ChevronDownIcon;
 
@@ -116,16 +124,7 @@ function ToggleBoxComponent({
   );
 }
 
-// PERFORMANCE: Memoized Export mit Custom Equality Check
-export const ToggleBox = memo(ToggleBoxComponent, (prevProps, nextProps) => {
-  // Custom comparison für optimale Performance
-  return (
-    prevProps.id === nextProps.id &&
-    prevProps.title === nextProps.title &&
-    prevProps.isExpanded === nextProps.isExpanded &&
-    prevProps.disabled === nextProps.disabled &&
-    prevProps.count === nextProps.count
-  );
-});
+// TEMPORÄR DEAKTIVIERT: Memo-Optimierung entfernt für bessere State-Synchronisation
+export const ToggleBox = ToggleBoxComponent;
 
 export default ToggleBox;
