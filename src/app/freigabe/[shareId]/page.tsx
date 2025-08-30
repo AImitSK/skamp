@@ -807,7 +807,7 @@ export default function ApprovalPage() {
 
           {/* NEU: Customer Approval Message - zeigt letzte Agentur-Nachricht */}
           <CustomerMessageBanner 
-            feedbackHistory={campaign.approvalData?.feedbackHistory}
+            feedbackHistory={campaign.approvalData?.feedbackHistory || []}
             campaign={campaign}
           />
 
@@ -966,8 +966,8 @@ export default function ApprovalPage() {
 
             </Suspense>
             
-            {/* Toggle 4: Ihre Entscheidung - Immer anzeigen wenn nicht bereits freigegeben */}
-            {!isApproved && (
+            {/* Toggle 4: Ihre Entscheidung - Nur anzeigen wenn noch keine Aktion erfolgt */}
+            {!isApproved && !actionCompleted && (
               <Suspense fallback={<div className="animate-pulse bg-gray-200 rounded-lg h-48"></div>}>
                 <DecisionToggleBox
                 id="decision"
