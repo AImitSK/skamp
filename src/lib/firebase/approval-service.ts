@@ -558,6 +558,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       if (!approval || !approval.id) return;
 
       // Update Analytics
+      let wasFirstView = false;
       const updates: any = {
         'analytics.lastViewedAt': serverTimestamp(),
         'analytics.totalViews': increment(1)
@@ -586,6 +587,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
           
           if (allViewed && approval.status === 'pending') {
             updates.status = 'in_review';
+            wasFirstView = true;
           }
         }
       }
@@ -610,6 +612,29 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       updates.history = arrayUnion(historyEntry);
 
       await updateDoc(doc(db, this.collectionName, approval.id), updates);
+      
+      // 👀 FIRST VIEW BENACHRICHTIGUNG (nur Dashboard, keine E-Mail)
+      if (wasFirstView) {
+        try {
+          const { notificationsService } = await import('./notifications-service');
+          await (notificationsService as any).create({
+            userId: approval.createdBy || 'system',
+            organizationId: approval.organizationId,
+            type: 'OVERDUE_APPROVAL', // Verwende bestehenden Typ als Platzhalter
+            title: '👀 Kampagne angesehen',
+            message: `${recipientEmail || 'Kunde'} hat "${approval.campaignTitle || approval.title}" das erste Mal angesehen.`,
+            linkUrl: `/dashboard/pr-tools/approvals/${approval.shareId}`,
+            linkType: 'approval',
+            linkId: approval.id,
+            metadata: {
+              campaignId: approval.campaignId,
+              senderName: recipientEmail || 'Kunde'
+            }
+          });
+        } catch (notificationError) {
+          console.error('First-View Notification fehlgeschlagen:', notificationError);
+        }
+      }
     } catch (error) {
     }
   }
@@ -1299,9 +1324,15 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
    */
   private async sendNotifications(
     approval: ApprovalEnhanced,
-    type: 'request' | 'reminder' | 'status_change'
+    type: 'request' | 'reminder' | 'status_change' | 'approved' | 'changes_requested'
   ): Promise<void> {
     try {
+      // ❌ DEAKTIVIERT: Keine E-Mails bei Status-Changes an Kunden
+      if (type === 'status_change') {
+        console.log('⚠️ Status-Change E-Mails an Kunden sind deaktiviert');
+        return;
+      }
+      
       // ========== INBOX-SYSTEM INTEGRATION FÜR APPROVAL-EMAILS ==========
       // Nutze das bestehende Email-System mit automatischer Inbox-Verteilung
       const { apiClient } = await import('@/lib/api/api-client');
@@ -1446,7 +1477,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
 
       // ========== NOTIFICATIONS-SERVICE INTEGRATION ==========
       // Interne Benachrichtigungen an Team-Mitglieder
-      if (type === 'request' || type === 'status_change') {
+      if (type === 'request') {
         try {
           const { notificationsService } = await import('./notifications-service');
           
@@ -1678,7 +1709,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       try {
         const { notificationsService } = await import('./notifications-service');
         
-        // Interne Benachrichtigungen für Status-Änderungen
+        // Interne Dashboard-Benachrichtigungen für Status-Änderungen
         const lastEntry = approval.history?.[approval.history.length - 1];
         const changedBy = lastEntry?.actorName || 'Kunde';
         
@@ -1687,14 +1718,13 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
             userId: approval.createdBy || 'system',
             organizationId: approval.organizationId,
             type: 'APPROVAL_GRANTED',
-            title: '✅ Freigabe erhalten',
-            message: `${changedBy} hat "${approval.campaignTitle || approval.title}" freigegeben.`,
+            title: '✅ Freigabe erteilt',
+            message: `Kunde hat die Freigabe für "${approval.campaignTitle || approval.title}" erteilt.`,
             linkUrl: `/dashboard/pr-tools/approvals/${approval.shareId}`,
             linkType: 'approval',
             linkId: approval.id,
             metadata: {
               campaignId: approval.campaignId,
-              // approvalId: approval.id, // Removed - not in NotificationMetadata type
               senderName: changedBy
             }
           });
@@ -1703,18 +1733,18 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
             userId: approval.createdBy || 'system',
             organizationId: approval.organizationId,
             type: 'CHANGES_REQUESTED',
-            title: '🔄 Änderungen angefordert',
-            message: `${changedBy} hat Änderungen zu "${approval.campaignTitle || approval.title}" angefordert.`,
+            title: '📝 Änderungen erbeten',
+            message: `Kunde bittet um Änderungen für "${approval.campaignTitle || approval.title}".`,
             linkUrl: `/dashboard/pr-tools/approvals/${approval.shareId}`,
             linkType: 'approval',
             linkId: approval.id,
             metadata: {
               campaignId: approval.campaignId,
-              // approvalId: approval.id, // Removed - not in NotificationMetadata type
               senderName: changedBy
             }
           });
         }
+        // 👀 FIRST VIEW wird bereits in markAsViewed() behandelt - keine doppelte Benachrichtigung
       } catch (notificationError) {
         console.error('Status-Change Notification fehlgeschlagen:', notificationError);
       }
@@ -1723,8 +1753,9 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       console.error('Fehler bei Status-Change-Notification:', error);
     }
 
-    // Allgemeine Notifications senden (für Backward-Compatibility)
-    await this.sendNotifications(approval, 'status_change');
+    // ❌ KUNDEN-EMAILS ENTFERNT - Customer bekommt keine Status-Change-E-Mails
+    // Kunden erhalten nur bei Initial Request und Re-Request E-Mails mit Freigabe-Links
+    // await this.sendNotifications(approval, 'status_change'); // DEAKTIVIERT
     
     // 🔓 KAMPAGNEN-LOCK MANAGEMENT
     if (approval.campaignId) {

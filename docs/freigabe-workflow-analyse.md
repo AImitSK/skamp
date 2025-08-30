@@ -294,6 +294,199 @@ Die neue E-Mail-API funktioniert, aber die E-Mails gehen an hardcoded Adressen.
 ### 4. **First-View Tracking** (Prio 4 - Optional)
 - Nur Benachrichtigungen, keine E-Mails nötig
 
+---
+
+## 🚨 KRITISCHE LIVE-ANALYSE (30.08.2025)
+
+### Analysierte Live-Probleme
+
+**Testvorgang:** Kampagne "Fiffi 2001: SK Online Marketing lanciert neuen Hochleistungs-Staubsauger für Großhändler"
+- ❌ Changes Requested (09:02:22)  
+- ✅ Approved (09:03:37)
+
+### Problem 1: ❌ KUNDEN-EMAILS KOMMEN NICHT AN
+**Status:** **KRITISCH - Kunde erhält keine E-Mails**
+
+**Vercel Logs Analyse:**
+```
+2025-08-30T09:02:22.662Z [info] 📧 Sending email via SendGrid: {
+  to: [{ email: 's.kuehne@sk-online-marketing.de', name: 'Stefan Kühne' }],
+  from: { email: 'pr@sk-online-marketing.de', name: 'CeleroPress' },
+  subject: 'Status-Update: Fiffi 2001: SK Online Marketing...'
+}
+2025-08-30T09:02:22.668Z [info] ✅ Email sent successfully
+```
+
+**Problem:** E-Mail wird als "Status-Update" an Kunden gesendet statt als "Freigabe-Anfrage"
+- ❌ **Falscher Email-Typ:** `status_update` statt `request`
+- ❌ **Falscher Empfänger:** Internal Status-Update geht an Kunden
+- ❌ **Kunde erhält generische Status-Updates** statt actionable Freigabe-Links
+
+**Empfangene E-Mail (Customer Side):**
+```
+Status-Update
+Der Status der Kampagne "Fiffi 2001..." hat sich geändert.
+
+Details ansehen  ← KEIN FREIGABE-LINK!
+Beste Grüße, Ihr CeleroPress Team
+```
+
+---
+
+### Problem 2: ❌ INBOX-SYSTEM ERHÄLT FALSCHE E-MAILS  
+**Status:** **KRITISCH - Inbox-Zuordnung fehlerhaft**
+
+**Vercel Logs:**
+```
+2025-08-30T09:02:21.943Z [info] 📧 Sending email via SendGrid: {
+  to: [{ email: 'pr@sk-online-marketing.de', name: 'PR-Team' }],
+  subject: '🔄 Änderungen angefordert: Fiffi 2001...',
+  replyTo: { email: 'pr-wVa3cJ7Y-skA3PpWv@inbox.sk-online-marketing.de' }
+}
+```
+
+**Problem:** Admin/PR-Team E-Mails haben Reply-To ins Inbox-System
+- ❌ **Falsche Zuordnung:** Admin-Notifications haben Customer-Reply-To
+- ❌ **Inbox-Verwirrung:** Admin antwortet auf Customer-Thread
+- ❌ **Thread-Chaos:** Customer-Threads und Admin-Threads vermischen sich
+
+---
+
+### Problem 3: ❌ E-MAIL-TYP-VERWIRRUNG
+**Status:** **KRITISCH - Wrong Email Template Logic**
+
+**Analyse der gesendeten E-Mails:**
+```
+09:02:22 - Email Type: "status_update" → AN: s.kuehne@... (CUSTOMER)
+09:03:37 - Email Type: "status_update" → AN: s.kuehne@... (CUSTOMER)
+```
+
+**Problem:** Alle E-Mails haben denselben Typ "status_update"
+- ❌ **Fehlende Differenzierung:** Keine `request`, `approved`, `changes_requested` Templates
+- ❌ **Generische Inhalte:** Kunde bekommt nur "Status hat sich geändert"
+- ❌ **Fehlende Call-to-Actions:** Kein Freigabe-Link, kein spezifischer Kontext
+
+---
+
+### 🔍 ROOT CAUSE ANALYSIS
+
+**Hauptproblem in `approval-service.ts`:**
+```typescript
+// FEHLERHAFT: sendStatusChangeNotification() 
+await sendNotifications(approval, 'status_update'); // ❌ IMMER status_update
+
+// KORREKT sollte sein:
+await sendNotifications(approval, 'changes_requested'); // ✅ Spezifischer Typ  
+await sendNotifications(approval, 'approved'); // ✅ Spezifischer Typ
+```
+
+**E-Mail-Routing-Problem:**
+```typescript
+// FEHLERHAFT: Status-Updates gehen an Customer
+to: 's.kuehne@sk-online-marketing.de' // ❌ Customer bekommt Admin-Notifications
+
+// KORREKT sollte sein:
+// 1. Customer Request: Freigabe-E-Mail mit Link
+// 2. Admin Notification: Interne Benachrichtigung über Inbox-System
+```
+
+---
+
+## 📧 KORRIGIERTES SOLL-SYSTEM (FINAL)
+
+### 🎯 EMPFÄNGER-MATRIX
+
+#### **KUNDE (s.kuehne@sk-online-marketing.de)**
+Bekommt **nur E-Mails** - **keine Benachrichtigungen im System**
+
+| Aktion | E-Mail Typ | Inhalt | Call-to-Action |
+|--------|-----------|---------|----------------|
+| ✅ **Initial Request** | `request` | "Bitte prüfen Sie Ihre Kampagne" | **→ Freigabe-Link** |
+| ✅ **Re-Request** (nach Admin-Änderungen) | `request` | "Überarbeitete Kampagne erneut prüfen" | **→ Freigabe-Link** |
+| ❌ **Status Changes** | KEINE | - | - |
+
+#### **PR-TEAM/ADMIN (Dashboard → Inbox)**  
+Bekommt **3 Arten von Benachrichtigungen** + **2 Arten von Inbox-E-Mails**
+
+| Aktion | Dashboard-Benachrichtigung | Inbox-E-Mail | Priorität |
+|--------|---------------------------|-------------|-----------|
+| ✅ **Customer: Approved** | ✅ "Freigabe erteilt" | ✅ Landet in Inbox | HOCH |
+| ✅ **Customer: Changes Requested** | ✅ "Änderungen erbeten" | ✅ Landet in Inbox | HOCH |  
+| ✅ **Customer: First View** | ✅ "Kampagne angesehen" | ❌ KEINE Inbox-E-Mail | NIEDRIG |
+
+### 📱 BENACHRICHTUNGS-SYSTEM (Dashboard)
+
+#### **Dashboard → Benachrichtigungen (3 Typen):**
+```
+Dashboard → Notifications
+├── ✅ Freigabe erteilt (Kampagne: "Fiffi 2001...")     [+ Inbox-E-Mail]
+├── 📝 Änderungen erbeten (Kampagne: "Fiffi 2001...")   [+ Inbox-E-Mail]  
+└── 👀 Kampagne angesehen (Kampagne: "Fiffi 2001...")   [KEINE Inbox-E-Mail]
+```
+
+#### **Dashboard → Inbox (nur 2 Typen):**
+```
+Dashboard → Inbox → E-Mails  
+├── ✅ Freigabe erhalten: "Fiffi 2001..."
+└── 🔄 Änderungen angefordert: "Fiffi 2001..."
+```
+
+---
+
+## 🛠️ IMPLEMENTIERUNGS-FIXES
+
+### Fix 1: E-Mail-Typ-Differenzierung reparieren
+**Datei:** `src/lib/firebase/approval-service.ts`
+```typescript
+// ERSETZE:
+await sendNotifications(approval, 'status_update');
+
+// MIT:  
+await sendNotifications(approval, 'changes_requested'); // Bei Changes
+await sendNotifications(approval, 'approved'); // Bei Approval
+await sendNotifications(approval, 'request'); // Bei Re-Request
+```
+
+### Fix 2: Customer vs Admin E-Mail-Trennung
+```typescript
+// CUSTOMER E-MAILS: Mit Freigabe-Link (nur bei request/re-request)
+await sendNotifications(approval, 'request'); // Nur an Customer mit Link
+
+// ADMIN NOTIFICATIONS: 
+// 1. Dashboard-Benachrichtigung (immer)
+// 2. Inbox-E-Mail (nur bei approved/changes_requested, NICHT bei first_view)
+await inboxService.addApprovalDecisionMessage({
+  threadId: thread.id,
+  decision: 'changes_requested', // oder 'approved'
+  comment: details?.comment
+});
+```
+
+### Fix 3: First View = Nur Dashboard-Benachrichtigung
+```typescript
+// FIRST VIEW: Nur Dashboard-Notification, KEINE Inbox-E-Mail
+if (newStatus === 'in_review') {
+  // Nur Dashboard-Benachrichtigung
+  await notificationService.addNotification({
+    type: 'approval_first_view',
+    message: 'Kampagne angesehen'
+  });
+  
+  // KEINE Inbox-E-Mail für First View
+}
+
+// APPROVED/CHANGES: Dashboard + Inbox  
+if (newStatus === 'approved' || newStatus === 'changes_requested') {
+  // 1. Dashboard-Benachrichtigung
+  await notificationService.addNotification({ ... });
+  
+  // 2. Inbox-E-Mail
+  await inboxService.addApprovalDecisionMessage({ ... });
+}
+```
+
+---
+
 ## 📁 Relevante Dateien
 
 ### Freigabe-System  
