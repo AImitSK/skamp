@@ -1292,10 +1292,12 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
         const { approvalService } = await import('./approval-service');
         
         // Prüfe ob bereits eine Freigabe für diese Kampagne existiert
+        console.log('🔍 DEBUG: Suche existierende Approval für Campaign:', campaignId);
         const existingApproval = await approvalService.getApprovalByCampaignId(
           campaignId,
           context.organizationId
         );
+        console.log('🔍 DEBUG: Gefundene existierende Approval:', existingApproval ? 'JA' : 'NEIN', existingApproval?.id);
         
         let workflowId: string;
         let shareId: string;
@@ -1326,8 +1328,8 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
           
           // DIREKTES UPDATE statt updateApprovalForNewVersion verwenden
           // weil wir eigene History-Einträge hinzufügen wollen
-          // 🚀 WICHTIG: Recipients auch auf pending zurücksetzen für Re-Request E-Mail
-          const resetRecipients = existingApproval.recipients.map(recipient => ({
+          // Recipients auch auf pending zurücksetzen für Re-Request E-Mail
+          const resetRecipients = (existingApproval.recipients || []).map(recipient => ({
             ...recipient,
             status: 'pending' as const,
             respondedAt: null
