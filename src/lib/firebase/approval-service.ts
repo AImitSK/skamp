@@ -1312,10 +1312,22 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
 
       // Lade Organization Email-Adresse für professionelle Kommunikation
       let organizationEmailAddress;
+      let adminName = 'PR-Team';
+      let adminEmail = '';
+      
       try {
         organizationEmailAddress = await emailAddressService.getDefaultForOrganizationServer(approval.organizationId);
         if (!organizationEmailAddress) {
           console.warn('⚠️ Keine Organization Email-Adresse gefunden, verwende Fallback');
+        }
+        
+        // Admin-Informationen aus dem Approval-Objekt verwenden
+        if (approval.createdBy) {
+          // Verwende einfach die Organization Email-Adresse als Admin-Info
+          if (organizationEmailAddress) {
+            adminName = organizationEmailAddress.displayName || 'PR-Team';
+            adminEmail = organizationEmailAddress.email;
+          }
         }
       } catch (emailError) {
         console.error('❌ Fehler beim Laden der Organization Email-Adresse:', emailError);
@@ -1357,14 +1369,18 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
                   clientName: approval.clientName,
                   approvalUrl: approvalUrl,
                   recipientName: recipient.name,
-                  message: (approval as any).requestMessage || undefined
+                  message: (approval as any).requestMessage || undefined,
+                  adminName,
+                  adminEmail
                 }),
                 textContent: generateApprovalEmailText(approvalType, {
                   campaignTitle: approval.campaignTitle || approval.title,
                   clientName: approval.clientName,
                   approvalUrl: approvalUrl,
                   recipientName: recipient.name,
-                  message: (approval as any).requestMessage || undefined
+                  message: (approval as any).requestMessage || undefined,
+                  adminName,
+                  adminEmail
                 }),
                 emailAddressId: organizationEmailAddress.id
               });
@@ -1381,7 +1397,9 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
                   clientName: approval.clientName,
                   approvalUrl: approvalUrl,
                   recipientName: recipient.name,
-                  message: (approval as any).requestMessage || undefined
+                  message: (approval as any).requestMessage || undefined,
+                  adminName,
+                  adminEmail
                 }
               });
 
@@ -1505,10 +1523,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         const approverName = lastEntry?.actorName || 'Kunde';
 
         try {
-          // Interne Benachrichtigung über Inbox-System (statt hardcoded E-Mail)
-          console.log(`✅ Freigabe erhalten von ${approverName} für "${approval.campaignTitle || approval.title}" - wird über Inbox-System verarbeitet`);
-          
-          // Direkte Inbox-Integration für interne Updates
+          // Inbox-Integration für interne Updates
           const { inboxService } = await import('./inbox-service');
           const thread = await inboxService.getApprovalThread(approval.id!, approval.organizationId);
           
@@ -1524,8 +1539,41 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
               messageType: 'status_change'
             });
           }
+
+          // Admin-E-Mail für Freigabe-Bestätigung
+          const { emailAddressService } = await import('@/lib/email/email-address-service');
+          const organizationEmailAddress = await emailAddressService.getDefaultForOrganizationServer(approval.organizationId);
+          
+          if (organizationEmailAddress) {
+            const replyToAddress = emailAddressService.generateReplyToAddress(organizationEmailAddress);
+            const dashboardUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.celeropress.com'}/dashboard/pr-tools/campaigns/${approval.campaignId}`;
+            
+            await apiClient.post('/api/email/send', {
+              to: [{ email: organizationEmailAddress.email, name: 'PR-Team' }],
+              from: { email: organizationEmailAddress.email, name: 'CeleroPress System' },
+              replyTo: replyToAddress,
+              subject: `✅ Freigabe erhalten: ${approval.campaignTitle || approval.title}`,
+              htmlContent: generateAdminEmailHtml('approved', {
+                campaignTitle: approval.campaignTitle || approval.title,
+                clientName: approval.clientName,
+                dashboardUrl,
+                customerName: approverName,
+                customerEmail: approval.recipients[0]?.email || 'unknown'
+              }),
+              textContent: generateAdminEmailText('approved', {
+                campaignTitle: approval.campaignTitle || approval.title,
+                clientName: approval.clientName,
+                dashboardUrl,
+                customerName: approverName,
+                customerEmail: approval.recipients[0]?.email || 'unknown'
+              }),
+              emailAddressId: organizationEmailAddress.id
+            });
+            
+            console.log(`📧 Admin-E-Mail gesendet: Freigabe erhalten für "${approval.campaignTitle || approval.title}"`);
+          }
         } catch (error) {
-          console.error('Approval-Granted Inbox-Update fehlgeschlagen:', error);
+          console.error('Approval-Granted Verarbeitung fehlgeschlagen:', error);
         }
 
       } else if (newStatus === 'changes_requested') {
@@ -1536,10 +1584,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         const inlineComments = lastEntry?.inlineComments || [];
 
         try {
-          // Interne Benachrichtigung über Inbox-System (statt hardcoded E-Mail)
-          console.log(`🔄 Änderungen angefordert von ${reviewerName} für "${approval.campaignTitle || approval.title}" - wird über Inbox-System verarbeitet`);
-          
-          // Direkte Inbox-Integration für interne Updates
+          // Inbox-Integration für interne Updates
           const { inboxService } = await import('./inbox-service');
           const thread = await inboxService.getApprovalThread(approval.id!, approval.organizationId);
           
@@ -1555,8 +1600,43 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
               messageType: 'status_change'
             });
           }
+
+          // Admin-E-Mail für Änderungsanforderung
+          const { emailAddressService } = await import('@/lib/email/email-address-service');
+          const organizationEmailAddress = await emailAddressService.getDefaultForOrganizationServer(approval.organizationId);
+          
+          if (organizationEmailAddress) {
+            const replyToAddress = emailAddressService.generateReplyToAddress(organizationEmailAddress);
+            const dashboardUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.celeropress.com'}/dashboard/pr-tools/campaigns/${approval.campaignId}`;
+            
+            await apiClient.post('/api/email/send', {
+              to: [{ email: organizationEmailAddress.email, name: 'PR-Team' }],
+              from: { email: organizationEmailAddress.email, name: 'CeleroPress System' },
+              replyTo: replyToAddress,
+              subject: `🔄 Änderungen angefordert: ${approval.campaignTitle || approval.title}`,
+              htmlContent: generateAdminEmailHtml('changes_requested', {
+                campaignTitle: approval.campaignTitle || approval.title,
+                clientName: approval.clientName,
+                dashboardUrl,
+                customerName: reviewerName,
+                customerEmail: approval.recipients[0]?.email || 'unknown',
+                feedback
+              }),
+              textContent: generateAdminEmailText('changes_requested', {
+                campaignTitle: approval.campaignTitle || approval.title,
+                clientName: approval.clientName,
+                dashboardUrl,
+                customerName: reviewerName,
+                customerEmail: approval.recipients[0]?.email || 'unknown',
+                feedback
+              }),
+              emailAddressId: organizationEmailAddress.id
+            });
+            
+            console.log(`📧 Admin-E-Mail gesendet: Änderungen angefordert für "${approval.campaignTitle || approval.title}"`);
+          }
         } catch (error) {
-          console.error('Changes-Requested Inbox-Update fehlgeschlagen:', error);
+          console.error('Changes-Requested Verarbeitung fehlgeschlagen:', error);
         }
       }
 
@@ -1817,29 +1897,49 @@ function generateApprovalEmailHtml(type: 'request' | 'reminder' | 'status_update
   approvalUrl: string;
   recipientName: string;
   message?: string;
+  adminName?: string;
+  adminEmail?: string;
 }): string {
   const baseStyle = `
     body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
     .container { max-width: 600px; margin: 0 auto; padding: 20px; }
     .header { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-    .button { background: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block; margin: 20px 0; }
+    .button { background: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block; margin: 20px 0; font-weight: bold; }
   `;
 
   let content = '';
   if (type === 'request') {
     content = `
-      <h2>Freigabe-Anfrage</h2>
-      <p>Sehr geehrte/r ${data.recipientName},</p>
-      <p>wir bitten Sie um die Freigabe der Kampagne "${data.campaignTitle}" für ${data.clientName}.</p>
-      ${data.message ? `<p><em>${data.message}</em></p>` : ''}
-      <a href="${data.approvalUrl}" class="button">Zur Freigabe</a>
+      <h2>🔔 Neue Freigabe-Anfrage von CeleroPress</h2>
+      <p>Hallo <strong>${data.recipientName}</strong>,</p>
+      <p>für Sie wurde eine neue Pressemeldung von <strong>${data.adminName || 'Ihrem PR-Team'}</strong> erstellt und wartet auf Ihre Freigabe:</p>
+      <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; margin: 15px 0;">
+        <strong>Pressemeldung:</strong> "${data.campaignTitle}"<br>
+        <strong>Erstellt für:</strong> ${data.clientName}<br>
+        <strong>Erstellt von:</strong> ${data.adminName || 'PR-Team'} ${data.adminEmail ? `(${data.adminEmail})` : ''}
+      </div>
+      ${data.message ? `<p><strong>Nachricht vom Team:</strong><br><em>${data.message}</em></p>` : ''}
+      <p>Bitte prüfen Sie die Pressemeldung und geben Sie diese frei oder fordern Sie Änderungen an.</p>
+      <a href="${data.approvalUrl}" class="button">🔍 Pressemeldung jetzt prüfen und freigeben</a>
+      <p style="color: #666; font-size: 12px; margin-top: 30px;">
+        Diese E-Mail wurde automatisch von CeleroPress generiert. Bei Fragen antworten Sie einfach auf diese E-Mail.
+      </p>
     `;
   } else if (type === 'reminder') {
     content = `
-      <h2>Erinnerung: Freigabe erforderlich</h2>
-      <p>Sehr geehrte/r ${data.recipientName},</p>
-      <p>dies ist eine freundliche Erinnerung an die ausstehende Freigabe für "${data.campaignTitle}".</p>
-      <a href="${data.approvalUrl}" class="button">Jetzt prüfen</a>
+      <h2>⏰ Erinnerung: Freigabe-Anfrage von CeleroPress</h2>
+      <p>Hallo <strong>${data.recipientName}</strong>,</p>
+      <p>dies ist eine freundliche Erinnerung an die noch ausstehende Freigabe für Ihre Pressemeldung:</p>
+      <div style="background: #fff3cd; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #ffc107;">
+        <strong>Pressemeldung:</strong> "${data.campaignTitle}"<br>
+        <strong>Erstellt für:</strong> ${data.clientName}<br>
+        <strong>Status:</strong> Wartet auf Ihre Freigabe
+      </div>
+      <p>Bitte nehmen Sie sich einen Moment Zeit, um die Pressemeldung zu prüfen.</p>
+      <a href="${data.approvalUrl}" class="button">🔍 Pressemeldung jetzt prüfen</a>
+      <p style="color: #666; font-size: 12px; margin-top: 30px;">
+        Benötigen Sie Hilfe? Antworten Sie einfach auf diese E-Mail.
+      </p>
     `;
   } else {
     content = `
@@ -1871,45 +1971,218 @@ function generateApprovalEmailText(type: 'request' | 'reminder' | 'status_update
   approvalUrl: string;
   recipientName: string;
   message?: string;
+  adminName?: string;
+  adminEmail?: string;
 }): string {
   if (type === 'request') {
     return `
-Freigabe-Anfrage: ${data.campaignTitle}
+NEUE FREIGABE-ANFRAGE VON CELEROPRESS
 
-Sehr geehrte/r ${data.recipientName},
+Hallo ${data.recipientName},
 
-wir bitten Sie um die Freigabe der Kampagne "${data.campaignTitle}" für ${data.clientName}.
+für Sie wurde eine neue Pressemeldung von ${data.adminName || 'Ihrem PR-Team'} erstellt und wartet auf Ihre Freigabe:
 
-${data.message ? `${data.message}\n` : ''}
+Pressemeldung: "${data.campaignTitle}"
+Erstellt für: ${data.clientName}
+Erstellt von: ${data.adminName || 'PR-Team'} ${data.adminEmail ? `(${data.adminEmail})` : ''}
 
-Bitte prüfen Sie die Kampagne: ${data.approvalUrl}
+${data.message ? `Nachricht vom Team:\n"${data.message}"\n` : ''}
+
+Bitte prüfen Sie die Pressemeldung und geben Sie diese frei oder fordern Sie Änderungen an:
+${data.approvalUrl}
+
+Bei Fragen antworten Sie einfach auf diese E-Mail.
 
 Beste Grüße,
 Ihr CeleroPress Team
     `.trim();
   } else if (type === 'reminder') {
     return `
-Erinnerung: Freigabe erforderlich
+ERINNERUNG: FREIGABE-ANFRAGE VON CELEROPRESS
 
-Sehr geehrte/r ${data.recipientName},
+Hallo ${data.recipientName},
 
-dies ist eine freundliche Erinnerung an die ausstehende Freigabe für "${data.campaignTitle}".
+dies ist eine freundliche Erinnerung an die noch ausstehende Freigabe für Ihre Pressemeldung:
 
-Jetzt prüfen: ${data.approvalUrl}
+Pressemeldung: "${data.campaignTitle}"
+Erstellt für: ${data.clientName}
+Status: Wartet auf Ihre Freigabe
+
+Bitte nehmen Sie sich einen Moment Zeit, um die Pressemeldung zu prüfen:
+${data.approvalUrl}
+
+Benötigen Sie Hilfe? Antworten Sie einfach auf diese E-Mail.
 
 Beste Grüße,
 Ihr CeleroPress Team
     `.trim();
   } else {
     return `
-Status-Update: ${data.campaignTitle}
+IHRE PRESSEMELDUNG WURDE AKTUALISIERT - CELEROPRESS
 
-Der Status der Kampagne "${data.campaignTitle}" hat sich geändert.
+Hallo ${data.recipientName},
 
-Details ansehen: ${data.approvalUrl}
+Ihre Pressemeldung "${data.campaignTitle}" wurde von ${data.adminName || 'Ihrem PR-Team'} aktualisiert und wartet erneut auf Ihre Freigabe.
+
+Pressemeldung: "${data.campaignTitle}"
+Erstellt für: ${data.clientName}
+Aktualisiert von: ${data.adminName || 'PR-Team'}
+
+Bitte prüfen Sie die überarbeitete Pressemeldung:
+${data.approvalUrl}
+
+Bei Fragen antworten Sie einfach auf diese E-Mail.
 
 Beste Grüße,
 Ihr CeleroPress Team
+    `.trim();
+  }
+}
+
+// Admin-Email-Templates für interne Benachrichtigungen
+function generateAdminEmailHtml(type: 'status_change' | 'approved' | 'changes_requested', data: {
+  campaignTitle: string;
+  clientName: string;
+  dashboardUrl: string;
+  customerName: string;
+  customerEmail: string;
+  newStatus?: string;
+  feedback?: string;
+  adminName?: string;
+}): string {
+  const baseStyle = `
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+    .button { background: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block; margin: 20px 0; font-weight: bold; }
+    .alert { padding: 15px; border-radius: 6px; margin: 15px 0; }
+    .alert-success { background: #d4edda; border-left: 4px solid #28a745; }
+    .alert-warning { background: #fff3cd; border-left: 4px solid #ffc107; }
+  `;
+
+  let content = '';
+  if (type === 'approved') {
+    content = `
+      <h2>✅ Freigabe erhalten - ${data.campaignTitle}</h2>
+      <p>Hallo Team,</p>
+      <div class="alert alert-success">
+        <strong>Gute Nachrichten!</strong> Die Pressemeldung wurde vom Kunden freigegeben.
+      </div>
+      <p><strong>Details:</strong></p>
+      <ul>
+        <li><strong>Pressemeldung:</strong> "${data.campaignTitle}"</li>
+        <li><strong>Kunde:</strong> ${data.clientName}</li>
+        <li><strong>Freigegeben von:</strong> ${data.customerName} (${data.customerEmail})</li>
+      </ul>
+      <p>Die Pressemeldung kann nun versendet werden.</p>
+      <a href="${data.dashboardUrl}" class="button">📊 Zur Kampagnen-Detailseite</a>
+    `;
+  } else if (type === 'changes_requested') {
+    content = `
+      <h2>🔄 Änderungen angefordert - ${data.campaignTitle}</h2>
+      <p>Hallo Team,</p>
+      <div class="alert alert-warning">
+        <strong>Änderungen erforderlich:</strong> Der Kunde hat Anpassungen zur Pressemeldung angefordert.
+      </div>
+      <p><strong>Details:</strong></p>
+      <ul>
+        <li><strong>Pressemeldung:</strong> "${data.campaignTitle}"</li>
+        <li><strong>Kunde:</strong> ${data.clientName}</li>
+        <li><strong>Änderung angefordert von:</strong> ${data.customerName} (${data.customerEmail})</li>
+      </ul>
+      ${data.feedback ? `<p><strong>Kunden-Feedback:</strong><br><em>"${data.feedback}"</em></p>` : ''}
+      <p>Bitte nehmen Sie die gewünschten Änderungen vor und senden Sie die Pressemeldung erneut zur Freigabe.</p>
+      <a href="${data.dashboardUrl}" class="button">🔧 Kampagne bearbeiten</a>
+    `;
+  } else {
+    content = `
+      <h2>📢 Statusänderung - ${data.campaignTitle}</h2>
+      <p>Hallo Team,</p>
+      <p>Die Pressemeldung "${data.campaignTitle}" für ${data.clientName} hat einen neuen Status: <strong>${data.newStatus}</strong></p>
+      <a href="${data.dashboardUrl}" class="button">📊 Zur Kampagnen-Detailseite</a>
+    `;
+  }
+
+  return `
+    <html>
+      <head><style>${baseStyle}</style></head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <strong>CeleroPress Admin-Benachrichtigung</strong>
+          </div>
+          ${content}
+          <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+          <p style="color: #666; font-size: 12px;">
+            Dies ist eine automatische Admin-Benachrichtigung von CeleroPress.
+          </p>
+        </div>
+      </body>
+    </html>
+  `.trim();
+}
+
+function generateAdminEmailText(type: 'status_change' | 'approved' | 'changes_requested', data: {
+  campaignTitle: string;
+  clientName: string;
+  dashboardUrl: string;
+  customerName: string;
+  customerEmail: string;
+  newStatus?: string;
+  feedback?: string;
+  adminName?: string;
+}): string {
+  if (type === 'approved') {
+    return `
+FREIGABE ERHALTEN - ${data.campaignTitle}
+
+Hallo Team,
+
+Gute Nachrichten! Die Pressemeldung wurde vom Kunden freigegeben.
+
+Details:
+- Pressemeldung: "${data.campaignTitle}"
+- Kunde: ${data.clientName}
+- Freigegeben von: ${data.customerName} (${data.customerEmail})
+
+Die Pressemeldung kann nun versendet werden.
+
+Zur Kampagnen-Detailseite: ${data.dashboardUrl}
+
+CeleroPress Admin-Benachrichtigung
+    `.trim();
+  } else if (type === 'changes_requested') {
+    return `
+ÄNDERUNGEN ANGEFORDERT - ${data.campaignTitle}
+
+Hallo Team,
+
+Der Kunde hat Anpassungen zur Pressemeldung angefordert.
+
+Details:
+- Pressemeldung: "${data.campaignTitle}"
+- Kunde: ${data.clientName}
+- Änderung angefordert von: ${data.customerName} (${data.customerEmail})
+
+${data.feedback ? `Kunden-Feedback: "${data.feedback}"` : ''}
+
+Bitte nehmen Sie die gewünschten Änderungen vor und senden Sie die Pressemeldung erneut zur Freigabe.
+
+Kampagne bearbeiten: ${data.dashboardUrl}
+
+CeleroPress Admin-Benachrichtigung
+    `.trim();
+  } else {
+    return `
+STATUSÄNDERUNG - ${data.campaignTitle}
+
+Hallo Team,
+
+Die Pressemeldung "${data.campaignTitle}" für ${data.clientName} hat einen neuen Status: ${data.newStatus}
+
+Zur Kampagnen-Detailseite: ${data.dashboardUrl}
+
+CeleroPress Admin-Benachrichtigung
     `.trim();
   }
 }

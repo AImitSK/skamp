@@ -28,6 +28,8 @@ interface SendApprovalEmailRequest {
     message?: string;
     feedback?: string;
     changedBy?: string;
+    adminName?: string;
+    adminEmail?: string;
   };
 }
 
@@ -305,7 +307,7 @@ function generateApprovalEmailTemplate(
     .button {
       display: inline-block;
       padding: 12px 30px;
-      background-color: #667eea;
+      background-color: #28a745;
       color: white;
       text-decoration: none;
       border-radius: 6px;
@@ -339,12 +341,17 @@ function generateApprovalEmailTemplate(
               <h1>🔍 Freigabe-Anfrage</h1>
             </div>
             <div class="content">
-              <p>Sehr geehrte/r ${data.recipientName},</p>
-              <p>wir bitten Sie um die Freigabe der Pressemitteilung "<strong>${data.campaignTitle}</strong>" für ${data.clientName}.</p>
-              ${data.message ? `<p><em>${data.message}</em></p>` : ''}
-              <p>Bitte prüfen Sie die Pressemitteilung und erteilen Sie Ihre Freigabe:</p>
+              <p>Hallo <strong>${data.recipientName}</strong>,</p>
+              <p>für Sie wurde eine neue Pressemeldung von <strong>${data.adminName || 'Ihrem PR-Team'}</strong> erstellt und wartet auf Ihre Freigabe:</p>
+              <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; margin: 15px 0;">
+                <strong>Pressemeldung:</strong> "${data.campaignTitle}"<br>
+                <strong>Erstellt für:</strong> ${data.clientName}<br>
+                <strong>Erstellt von:</strong> ${data.adminName || 'PR-Team'} ${data.adminEmail ? `(${data.adminEmail})` : ''}
+              </div>
+              ${data.message ? `<p><strong>Nachricht vom Team:</strong><br><em>${data.message}</em></p>` : ''}
+              <p>Bitte prüfen Sie die Pressemeldung und geben Sie diese frei oder fordern Sie Änderungen an.</p>
               <div style="text-align: center;">
-                <a href="${data.approvalUrl}" class="button">Zur Freigabe</a>
+                <a href="${data.approvalUrl}" class="button">🔍 Pressemeldung jetzt prüfen und freigeben</a>
               </div>
             </div>
             <div class="footer">
@@ -355,15 +362,22 @@ function generateApprovalEmailTemplate(
         </html>
       `;
       textContent = `
-Freigabe-Anfrage: ${data.campaignTitle}
+NEUE FREIGABE-ANFRAGE VON CELEROPRESS
 
-Sehr geehrte/r ${data.recipientName},
+Hallo ${data.recipientName},
 
-wir bitten Sie um die Freigabe der Pressemitteilung "${data.campaignTitle}" für ${data.clientName}.
+für Sie wurde eine neue Pressemeldung von ${data.adminName || 'Ihrem PR-Team'} erstellt und wartet auf Ihre Freigabe:
 
-${data.message ? `${data.message}\n\n` : ''}
+Pressemeldung: "${data.campaignTitle}"
+Erstellt für: ${data.clientName}
+Erstellt von: ${data.adminName || 'PR-Team'} ${data.adminEmail ? `(${data.adminEmail})` : ''}
 
-Bitte prüfen Sie die Pressemitteilung: ${data.approvalUrl}
+${data.message ? `Nachricht vom Team:\n"${data.message}"\n\n` : ''}
+
+Bitte prüfen Sie die Pressemeldung und geben Sie diese frei oder fordern Sie Änderungen an:
+${data.approvalUrl}
+
+Bei Fragen antworten Sie einfach auf diese E-Mail.
 
 ---
 Diese Benachrichtigung wurde automatisch von CeleroPress gesendet.
