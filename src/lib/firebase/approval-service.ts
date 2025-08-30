@@ -615,6 +615,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       
       // 👀 FIRST VIEW BENACHRICHTIGUNG (nur Dashboard, keine E-Mail)
       if (wasFirstView) {
+        console.log('📝 Sending First View Notification for:', approval.campaignTitle);
         try {
           const { notificationsService } = await import('./notifications-service');
           await (notificationsService as any).create({
@@ -631,9 +632,12 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
               senderName: recipientEmail || 'Kunde'
             }
           });
+          console.log('✅ First View Notification sent successfully');
         } catch (notificationError) {
-          console.error('First-View Notification fehlgeschlagen:', notificationError);
+          console.error('❌ First-View Notification fehlgeschlagen:', notificationError);
         }
+      } else {
+        console.log('⚠️ First View Notification NOT triggered. wasFirstView=', wasFirstView, 'approval.status=', approval.status);
       }
     } catch (error) {
     }
@@ -1571,38 +1575,9 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
             });
           }
 
-          // Admin-E-Mail für Freigabe-Bestätigung
-          const { emailAddressService } = await import('@/lib/email/email-address-service');
-          const organizationEmailAddress = await emailAddressService.getDefaultForOrganizationServer(approval.organizationId);
-          
-          if (organizationEmailAddress) {
-            const replyToAddress = emailAddressService.generateReplyToAddress(organizationEmailAddress);
-            const dashboardUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.celeropress.com'}/dashboard/pr-tools/campaigns/${approval.campaignId}`;
-            
-            await apiClient.post('/api/email/send', {
-              to: [{ email: organizationEmailAddress.email, name: 'PR-Team' }],
-              from: { email: organizationEmailAddress.email, name: 'CeleroPress System' },
-              replyTo: replyToAddress,
-              subject: `✅ Freigabe erhalten: ${approval.campaignTitle || approval.title}`,
-              htmlContent: generateAdminEmailHtml('approved', {
-                campaignTitle: approval.campaignTitle || approval.title,
-                clientName: approval.clientName,
-                dashboardUrl,
-                customerName: approverName,
-                customerEmail: approval.recipients[0]?.email || 'unknown'
-              }),
-              textContent: generateAdminEmailText('approved', {
-                campaignTitle: approval.campaignTitle || approval.title,
-                clientName: approval.clientName,
-                dashboardUrl,
-                customerName: approverName,
-                customerEmail: approval.recipients[0]?.email || 'unknown'
-              }),
-              emailAddressId: organizationEmailAddress.id
-            });
-            
-            console.log(`📧 Admin-E-Mail gesendet: Freigabe erhalten für "${approval.campaignTitle || approval.title}"`);
-          }
+          // ❌ EXTERNE ADMIN-E-MAILS DEAKTIVIERT
+          // Admin wird nur über Inbox-Nachricht (oben) benachrichtigt
+          console.log(`✅ Inbox-Nachricht für Freigabe erstellt: "${approval.campaignTitle || approval.title}"`);
         } catch (error) {
           console.error('Approval-Granted Verarbeitung fehlgeschlagen:', error);
         }
@@ -1632,78 +1607,17 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
             });
           }
 
-          // Admin-E-Mail für Änderungsanforderung
-          const { emailAddressService } = await import('@/lib/email/email-address-service');
-          const organizationEmailAddress = await emailAddressService.getDefaultForOrganizationServer(approval.organizationId);
-          
-          if (organizationEmailAddress) {
-            const replyToAddress = emailAddressService.generateReplyToAddress(organizationEmailAddress);
-            const dashboardUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.celeropress.com'}/dashboard/pr-tools/campaigns/${approval.campaignId}`;
-            
-            await apiClient.post('/api/email/send', {
-              to: [{ email: organizationEmailAddress.email, name: 'PR-Team' }],
-              from: { email: organizationEmailAddress.email, name: 'CeleroPress System' },
-              replyTo: replyToAddress,
-              subject: `🔄 Änderungen angefordert: ${approval.campaignTitle || approval.title}`,
-              htmlContent: generateAdminEmailHtml('changes_requested', {
-                campaignTitle: approval.campaignTitle || approval.title,
-                clientName: approval.clientName,
-                dashboardUrl,
-                customerName: reviewerName,
-                customerEmail: approval.recipients[0]?.email || 'unknown',
-                feedback
-              }),
-              textContent: generateAdminEmailText('changes_requested', {
-                campaignTitle: approval.campaignTitle || approval.title,
-                clientName: approval.clientName,
-                dashboardUrl,
-                customerName: reviewerName,
-                customerEmail: approval.recipients[0]?.email || 'unknown',
-                feedback
-              }),
-              emailAddressId: organizationEmailAddress.id
-            });
-            
-            console.log(`📧 Admin-E-Mail gesendet: Änderungen angefordert für "${approval.campaignTitle || approval.title}"`);
-          }
+          // ❌ EXTERNE ADMIN-E-MAILS DEAKTIVIERT
+          // Admin wird nur über Inbox-Nachricht (oben) benachrichtigt
+          console.log(`✅ Inbox-Nachricht für Änderungsanforderung erstellt: "${approval.campaignTitle || approval.title}"`);
         } catch (error) {
           console.error('Changes-Requested Verarbeitung fehlgeschlagen:', error);
         }
       }
 
-      // ========== INBOX-SERVICE INTEGRATION ==========
-      if (approval.id) {
-        try {
-          const { inboxService } = await import('./inbox-service');
-          const lastEntry = approval.history?.[approval.history.length - 1];
-          
-          if (lastEntry && (newStatus === 'approved' || newStatus === 'rejected' || newStatus === 'changes_requested')) {
-            // Finde existierenden Thread
-            const thread = await inboxService.getApprovalThread(approval.id, approval.organizationId);
-            
-            if (thread) {
-              // Füge Approval-Decision-Message hinzu
-              await inboxService.addApprovalDecisionMessage({
-                threadId: thread.id,
-                organizationId: approval.organizationId,
-                approvalId: approval.id,
-                decision: newStatus === 'approved' ? 'approved' : 
-                         newStatus === 'rejected' ? 'rejected' : 'changes_requested',
-                comment: lastEntry.details?.comment,
-                inlineComments: (lastEntry as any).inlineComments,
-                decidedBy: {
-                  userId: lastEntry.actorEmail?.includes('public-access@') ? 'customer' : 'internal',
-                  name: lastEntry.actorName || 'Unbekannt',
-                  email: lastEntry.actorEmail || '',
-                  type: lastEntry.actorEmail?.includes('public-access@') ? 'customer' : 'internal'
-                }
-              });
-            }
-          }
-        } catch (inboxError) {
-          console.error('Inbox-Message-Hinzufügung fehlgeschlagen:', inboxError);
-        }
-      }
+      // ❌ DOPPELTER INBOX-BLOCK ENTFERNT
+      // Inbox-Nachrichten werden bereits in den spezifischen if-Blöcken oben erstellt
+      console.log('✅ Status-Change-Verarbeitung abgeschlossen');
 
       // ========== NOTIFICATIONS-SERVICE INTEGRATION ==========
       try {
