@@ -180,7 +180,7 @@ export const CampaignPreviewRenderer = memo(function CampaignPreviewRenderer({
             
             {/* Textbausteine für Customer-View */}
             {isCustomerView && textbausteine && textbausteine.length > 0 && (
-              <div className="mt-8 pt-6 border-t border-gray-200">
+              <div className="mt-8">
                 <TextbausteinDisplay 
                   textbausteine={textbausteine}
                   organizationId={organizationId}

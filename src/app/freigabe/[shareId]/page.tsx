@@ -921,8 +921,8 @@ export default function ApprovalPage() {
 
             </Suspense>
             
-            {/* Toggle 4: Ihre Entscheidung - Kritisch, daher nicht lazy */}
-            {!isApproved && !actionCompleted && (
+            {/* Toggle 4: Ihre Entscheidung - Immer anzeigen wenn nicht bereits freigegeben */}
+            {!isApproved && (
               <Suspense fallback={<div className="animate-pulse bg-gray-200 rounded-lg h-48"></div>}>
                 <DecisionToggleBox
                 id="decision"
