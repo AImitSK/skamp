@@ -1699,6 +1699,81 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
   }
 
   /**
+   * Reaktiviert eine Freigabe nach Änderungen (Re-Request)
+   * Wird aufgerufen wenn Admin Änderungen gemacht hat und erneute Freigabe anfordert
+   */
+  async reactivateApprovalAfterChanges(
+    approvalId: string,
+    context: { organizationId: string; userId: string },
+    adminMessage?: string
+  ): Promise<void> {
+    try {
+      const approval = await this.getById(approvalId, context.organizationId);
+      if (!approval) {
+        throw new Error('Freigabe nicht gefunden');
+      }
+
+      if (approval.status !== 'changes_requested') {
+        throw new Error('Freigabe kann nur nach Änderungsanforderungen reaktiviert werden');
+      }
+
+      // Reset zu pending Status und setze alle Recipients zurück
+      const updates: any = {
+        status: 'pending',
+        updatedAt: serverTimestamp()
+      };
+
+      // Recipients zurücksetzen
+      const resetRecipients = approval.recipients.map(recipient => ({
+        ...recipient,
+        status: 'pending' as const,
+        respondedAt: null
+      }));
+      updates.recipients = resetRecipients;
+
+      // Historie-Eintrag
+      const historyEntry: ApprovalHistoryEntry = {
+        id: nanoid(),
+        timestamp: Timestamp.now(),
+        action: 'resubmitted',
+        actorName: 'Admin',
+        actorEmail: 'admin@system',
+        details: {
+          previousStatus: approval.status,
+          newStatus: 'pending',
+          comment: adminMessage || 'Änderungen wurden vorgenommen - erneute Freigabe erforderlich'
+        }
+      };
+
+      updates.history = arrayUnion(historyEntry);
+
+      // Update Approval
+      if (!approval.id) {
+        throw new Error('Approval ID ist erforderlich');
+      }
+      await updateDoc(doc(db, this.collectionName, approval.id), updates);
+
+      // Campaign Status zurück auf in_review setzen
+      if (approval.campaignId) {
+        const { prService } = await import('./pr-service');
+        await prService.update(approval.campaignId, {
+          status: 'in_review'
+        });
+      }
+
+      // E-Mail-Benachrichtigung an Kunden senden (Re-Request)
+      const updatedApproval = { ...approval, ...updates, recipients: resetRecipients };
+      await this.sendNotifications(updatedApproval, 'request');
+
+      console.log(`✅ Approval ${approvalId} reaktiviert und Re-Request E-Mail gesendet`);
+
+    } catch (error) {
+      console.error('❌ Fehler bei Approval-Reaktivierung:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Plant automatische Erinnerungen
    */
   async scheduleReminders(
