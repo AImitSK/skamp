@@ -18,6 +18,7 @@ import {
 } from 'firebase/firestore';
 import { db } from './client-init';
 import { BaseService, QueryOptions, FilterOptions } from './service-base';
+import { PRCampaignStatus } from '@/types/pr';
 import {
   ApprovalEnhanced,
   ApprovalStatus,
@@ -1654,9 +1655,14 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
     try {
       const { prService } = await import('./pr-service');
       
-      // Bei changes_requested: Lock lösen (Kampagne wird bearbeitbar)
+      // Map Approval-Status zu Campaign-Status
+      let campaignStatus: PRCampaignStatus | undefined;
+      
       if (approvalStatus === 'changes_requested') {
+        campaignStatus = 'changes_requested';
+        // Lock lösen (Kampagne wird bearbeitbar)
         await prService.update(campaignId, {
+          status: campaignStatus,
           editLocked: false,
           editLockedReason: undefined,
           lockedBy: undefined,
@@ -1667,12 +1673,27 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
             reason: 'Änderung angefordert'
           }
         });
+      } else if (approvalStatus === 'approved') {
+        campaignStatus = 'approved';
+        await prService.update(campaignId, {
+          status: campaignStatus
+        });
+      } else if (approvalStatus === 'in_review') {
+        campaignStatus = 'in_review';
+        await prService.update(campaignId, {
+          status: campaignStatus
+        });
+      } else if (approvalStatus === 'pending') {
+        campaignStatus = 'in_review'; // Pending wird als "in_review" dargestellt
+        await prService.update(campaignId, {
+          status: campaignStatus
+        });
       }
       
-      // Bei anderen Status-Änderungen könnten weitere Lock-Regeln hinzugefügt werden
-      // z.B. bei approved: Lock setzen wenn Kampagne nicht mehr bearbeitet werden soll
+      console.log(`✅ Campaign-Status synchronisiert: ${approvalStatus} → ${campaignStatus}`);
       
     } catch (error) {
+      console.error('❌ Fehler beim Campaign-Status-Update:', error);
       // Fehler beim Lock-Update sollte den Hauptprozess nicht stoppen
     }
   }
