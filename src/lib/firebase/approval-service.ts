@@ -1830,9 +1830,22 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       console.error('Fehler bei Status-Change-Notification:', error);
     }
 
-    // ❌ KUNDEN-EMAILS ENTFERNT - Customer bekommt keine Status-Change-E-Mails
-    // Kunden erhalten nur bei Initial Request und Re-Request E-Mails mit Freigabe-Links
-    // await this.sendNotifications(approval, 'status_change'); // DEAKTIVIERT
+    // ✅ RE-REQUEST E-MAILS AN KUNDEN nach Admin-Änderungen
+    if (newStatus === 'changes_requested') {
+      console.log('🔄 Admin hat Änderungen gemacht - sende Re-Request E-Mail an Kunden');
+      
+      // Setze Status auf pending und sende neue Freigabe-Anfrage
+      const updatedApproval = { 
+        ...approval, 
+        status: 'pending' as any, // Temporär auf pending für E-Mail-Versand
+        recipients: approval.recipients?.map(r => ({ 
+          ...r, 
+          status: 'pending' as any 
+        })) || []
+      };
+      
+      await this.sendNotifications(updatedApproval, 'request');
+    }
     
     // 🔓 KAMPAGNEN-LOCK MANAGEMENT
     if (approval.campaignId) {

@@ -606,14 +606,131 @@ Number of calls: 0
 
 ## 🔧 PHASE 4: GEZIELTE FIXES BASIEREND AUF TEST- UND LOG-ANALYSE
 
-### **Fix 1: First-View Detection reparieren**
-**Problem:** `markAsViewed()` bekommt falsche E-Mail-Parameter
-**Lösung:** E-Mail-Parameter-Matching in `markAsViewed()` korrigieren
+### **✅ Fix 1: First-View Detection repariert (30.08.2025 - 13:00)**
+**Problem:** `markAsViewed()` bekommt falsche E-Mail-Parameter (`user@test.com` vs `client@test.com`)
+**Root-Cause:** Freigabe-Seite ruft `markAsViewed(shareId)` OHNE E-Mail-Parameter auf
+**Lösung implementiert:**
+- Robustes E-Mail-Matching in `markAsViewed()` eingebaut
+- **Fallback:** Wenn keine E-Mail oder kein Match → ersten pending recipient nehmen  
+- Erweiterte Debug-Logs: `🔍 Exact email match attempt` und `🔍 First pending recipient fallback`
+- **Datei:** `src/lib/firebase/approval-service.ts:591-640`
 
-### **Fix 2: Kunden-E-Mail-Versand debuggen**  
-**Problem:** `sendNotifications()` wird nicht aufgerufen
-**Lösung:** Workflow-Trigger für Kunden-E-Mails finden und reparieren
+**Erwartung:** First-View Detection funktioniert jetzt auch ohne E-Mail-Parameter
 
-### **Fix 3: Inbox-Routing für Admin-E-Mails**
-**Problem:** Admin-E-Mails werden versendet aber kommen nicht in Inbox an
-**Lösung:** SendGrid Webhook und E-Mail-Routing prüfen
+### **✅ Fix 2: Kunden-E-Mail-Versand repariert (30.08.2025 - 13:05)**  
+**Problem:** `sendNotifications()` wird nicht aufgerufen - Kunden bekommen keine E-Mails
+**Root-Cause:** `createCustomerApproval()` sendet keine E-Mails (im Gegensatz zu `create()`)
+**Lösung implementiert:**
+- `sendNotifications(approvalWithId, 'request')` in `createCustomerApproval()` hinzugefügt
+- E-Mail-Versand nach Firestore-Speicherung aber vor Return
+- **Datei:** `src/lib/firebase/approval-service.ts:288-290`
+
+**Erwartung:** Kunden bekommen jetzt Freigabe-E-Mails bei neuen Approvals
+
+### **❌ Fix 3: Inbox-Routing für Admin-E-Mails (NOCH NICHT GELÖST)**
+**Problem:** Admin-E-Mails werden versendet aber **kommen NICHT in der Inbox an**
+**Status:** 
+- ✅ E-Mail wird versendet (SendGrid Status 202)
+- ✅ Reply-To Header korrekt (`pr-wVa3cJ7Y-skA3PpWv@inbox.sk-online-marketing.de`)
+- ❌ **Antworten auf diese E-Mails kommen NICHT als Webhook an**
+- ❌ **Keine `📨 Webhook processing result` Logs bei Antworten**
+
+**Vermutete Ursachen:**
+1. SendGrid Inbound Parse Webhook ist nicht für `pr-wVa3cJ7Y-skA3PpWv@inbox.sk-online-marketing.de` konfiguriert
+2. Reply-To Adressen werden anders geroutet als direkte E-Mails
+3. Webhook-Konfiguration Problem
+
+**Status:** **KRITISCHES PROBLEM - MUSS NOCH GELÖST WERDEN**
+
+---
+
+## 📊 TEST-ERGEBNISSE NACH FIX 1+2 DEPLOY (30.08.2025 - 13:15)
+
+### **✅ ERFOLG:**
+- **Kunden-E-Mail funktioniert!** Erste Freigabe-E-Mail wurde versendet ✅
+
+### **❌ VERBLEIBENDE PROBLEME:**
+
+**Problem A: Keine Erste-Öffnung-Benachrichtigung**
+- Fix 1 funktioniert noch nicht
+- First-View Detection triggert nicht
+- `markAsViewed()` macht noch keine Updates
+
+**Problem B: Keine internen E-Mails** 
+- Admin bekommt keine Status-Change-Benachrichtigungen
+- SendStatusChangeNotification funktioniert nicht
+
+**Problem C: Keine E-Mails an Kunden nach Admin-Änderung**
+- Re-Request E-Mails funktionieren nicht
+- Kunden werden nicht über Status-Änderungen benachrichtigt
+
+**Problem D: Gelöschte E-Mails sind wieder da**
+- Fix 1 (Duplikat-Check) funktioniert nicht
+- E-Mail-Löschung wird durch Webhook-Retries umgangen
+
+---
+
+## 🔍 DETAILLIERTE LOG-ANALYSE (30.08.2025 - 13:06-13:09)
+
+### **✅ WAS FUNKTIONIERT:**
+1. **Kunden-E-Mail:** `s.kuehne@sk-online-marketing.de` bekommt Freigabe-Anfrage ✅
+   ```
+   13:06:07 - 📧 Sending email via SendGrid (Freigabe-Anfrage)
+   13:06:07 - ✅ Email sent successfully (statusCode: 202)
+   ```
+
+2. **Admin-E-Mails:** Status-Change E-Mails werden versendet ✅  
+   ```
+   13:07:03 - 📧 Änderungen angefordert (an PR-Team)  
+   13:08:45 - 📧 Freigabe erhalten (an PR-Team)
+   ```
+
+3. **Inbox-System:** Gemini analysiert E-Mails und erstellt Antworten ✅
+   ```
+   13:09:17 - Email analysis completed successfully
+   13:09:22 - Email response suggestions generated successfully
+   ```
+
+### **❌ WAS FEHLT (Fehlende Debug-Logs):**
+
+**Problem A: Keine `markAsViewed()` Logs**
+- **Erwartete Logs:** `👁️ markAsViewed called`, `🔍 First View Check`
+- **Tatsächlich:** **FEHLEN KOMPLETT**
+- **Bedeutung:** `markAsViewed()` wird **gar nicht aufgerufen**
+
+**Problem B: Admin-E-Mails kommen nicht in Inbox**
+- **Status:** E-Mails werden versendet (13:07, 13:08) 
+- **Problem:** Keine `📨 Webhook processing result` für Antworten
+- **Bedeutung:** Reply-To Routing funktioniert nicht
+
+**Problem C: Keine Re-Request E-Mails an Kunden**
+- **Erwartete Logs:** `🚀 sendNotifications called` mit `type: request` nach Status-Änderung
+- **Tatsächlich:** **FEHLEN KOMPLETT** 
+- **Bedeutung:** Kunden bekommen keine Re-Request E-Mails
+
+**Problem D: Duplikat-Check greift nicht**
+- **Erwartete Logs:** `🔍 Checking for duplicate email`, `⚠️ Duplicate email detected`
+- **Tatsächlich:** **FEHLEN KOMPLETT**
+- **Bedeutung:** Duplikat-Check wird nicht ausgelöst
+
+---
+
+## 🔍 ROOT-CAUSE ANALYSE DER 3 KRITISCHEN PROBLEME
+
+### **1. Warum wird `markAsViewed()` nicht aufgerufen?**
+**Root-Cause:** `markAsViewed()` wird nur bei `approval.status === 'pending'` aufgerufen
+**Problem:** Nach Status-Changes (Änderungen → Freigabe) ist Status NICHT mehr 'pending'
+**Lösung:** Bedingung erweitern oder markAsViewed() bei jedem Aufruf ausführen
+**Datei:** `src/app/freigabe/[shareId]/page.tsx:491`
+
+### **2. Warum werden keine Re-Request E-Mails gesendet?**
+**Root-Cause:** `reactivateApprovalAfterChanges()` wird **nirgendwo aufgerufen**
+**Problem:** Die Funktion existiert aber wird nie getriggert
+**Lösung:** Aufruf in Admin-Interface einbauen oder automatisch nach Changes triggern
+**Datei:** Funktion existiert in `approval-service.ts:1900` aber fehlt Trigger
+
+### **3. Warum greift der Duplikat-Check nicht?**
+**Root-Cause:** Keine `📨 Webhook processing result` Logs = SendGrid Webhook wird nicht getriggert
+**Problem:** Gelöschte E-Mails werden nicht durch Webhooks neu erstellt
+**Vermutung:** Frontend-Bug oder anderer Sync-Mechanismus erstellt E-Mails neu
+**Lösung:** Quelle der E-Mail-Wiederherstellung finden (nicht Webhook-basiert)

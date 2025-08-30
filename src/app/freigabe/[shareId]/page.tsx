@@ -487,10 +487,10 @@ export default function ApprovalPage() {
         setCustomerMessage((approval as any).customerContact);
       }
 
-      // Markiere als "viewed" wenn noch pending (vereinfachter Service-Call)
-      if (approval.status === 'pending') {
+      // Markiere als "viewed" bei allen aktiven Status (nicht nur pending)
+      if (approval.status === 'pending' || approval.status === 'in_review' || approval.status === 'changes_requested') {
         await approvalService.markAsViewed(shareId);
-        // Status bleibt pending bis zur endgültigen Entscheidung
+        console.log('🔍 markAsViewed called for status:', approval.status);
       }
 
       setCampaign(campaignData);
