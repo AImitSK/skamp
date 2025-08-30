@@ -30,15 +30,6 @@ function DecisionToggleBoxComponent({
   const [changesText, setChangesText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // DEBUG: Log state changes
-  console.log('DEBUG: DecisionToggleBox render', { 
-    id, 
-    showChangesForm, 
-    changesText: changesText.length, 
-    isSubmitting, 
-    disabled,
-    isExpanded
-  });
 
   const handleApprove = useCallback(async () => {
     if (disabled || isSubmitting) return;
@@ -53,21 +44,16 @@ function DecisionToggleBoxComponent({
 
 
   const handleRequestChanges = useCallback(() => {
-    console.log('DEBUG: handleRequestChanges clicked, disabled:', disabled);
     if (disabled) return;
-    console.log('DEBUG: Setting showChangesForm to true');
     setShowChangesForm(true);
   }, [disabled]);
 
   const handleSubmitChanges = useCallback(async () => {
-    console.log('DEBUG: handleSubmitChanges clicked', { disabled, isSubmitting, changesText: changesText.trim() });
     if (disabled || isSubmitting || !changesText.trim()) return;
     
     setIsSubmitting(true);
     try {
-      console.log('DEBUG: Calling onRequestChanges with:', changesText.trim());
       await onRequestChanges?.(changesText.trim());
-      console.log('DEBUG: onRequestChanges completed, resetting form');
       setShowChangesForm(false);
       setChangesText('');
     } finally {
@@ -76,7 +62,6 @@ function DecisionToggleBoxComponent({
   }, [onRequestChanges, changesText, disabled, isSubmitting]);
 
   const handleCancelChanges = useCallback(() => {
-    console.log('DEBUG: handleCancelChanges clicked');
     setShowChangesForm(false);
     setChangesText('');
   }, []);
