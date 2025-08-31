@@ -1348,29 +1348,23 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
           });
           
           // 🚀 WICHTIG: Re-Request E-Mail senden nach Admin-Änderungen
-          // Da wir den Status bereits auf 'pending' gesetzt haben, müssen wir die Approval neu laden
-          const updatedApproval = await approvalService.getById(existingApproval.id!, context.organizationId);
-          console.log('🔍 DEBUG: Updated Approval für Re-Request:', {
-            found: !!updatedApproval,
-            id: updatedApproval?.id,
-            status: updatedApproval?.status,
-            recipients: updatedApproval?.recipients?.length || 0,
-            recipientStatuses: updatedApproval?.recipients?.map(r => r.status)
-          });
+          // VEREINFACHT: Nutze existingApproval direkt mit den resetRecipients
+          const adminMessage = customerApprovalData.customerApprovalMessage || 'Die Pressemeldung wurde überarbeitet und wartet erneut auf Ihre Freigabe.';
           
-          if (updatedApproval) {
-            const adminMessage = customerApprovalData.customerApprovalMessage || 'Die Pressemeldung wurde überarbeitet und wartet erneut auf Ihre Freigabe.';
-            const approvalWithMessage = { 
-              ...updatedApproval, 
-              adminMessage,
-              adminName: 'Admin'
-            };
-            console.log('🚀 DEBUG: Calling sendNotifications for re-request');
-            await approvalService.sendNotifications(approvalWithMessage, 're-request' as any);
-            console.log('✅ DEBUG: Re-Request E-Mail sollte gesendet worden sein');
-          } else {
-            console.log('❌ DEBUG: Keine updatedApproval gefunden - KEINE Re-Request E-Mail!');
-          }
+          // Erstelle Approval-Objekt für Re-Request mit den upgedateten Recipients
+          const approvalForReRequest = { 
+            ...existingApproval,
+            status: 'pending' as const,
+            recipients: resetRecipients,
+            adminMessage,
+            adminName: 'Admin',
+            campaignTitle: campaignData.title || existingApproval.campaignTitle || existingApproval.title,
+            pdfVersionId
+          };
+          
+          console.log('🚀 DEBUG: Sende Re-Request E-Mail direkt mit resetRecipients:', resetRecipients.length);
+          await approvalService.sendNotifications(approvalForReRequest, 're-request' as any);
+          console.log('✅ DEBUG: Re-Request E-Mail sollte gesendet worden sein');
           
           workflowId = existingApproval.id!;
           shareId = existingApproval.shareId;
