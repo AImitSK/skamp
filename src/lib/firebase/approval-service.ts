@@ -1682,15 +1682,15 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
           if (organizationEmailAddress) {
             const replyToAddress = emailAddressService.generateReplyToAddress(organizationEmailAddress);
             
-            console.log('📮 Sending admin notification email:', {
-              to: 's.kuehne@sk-online-marketing.de',
+            console.log('📮 Sending admin notification email to INBOX:', {
+              to: replyToAddress,
               from: organizationEmailAddress.email,
               replyTo: replyToAddress,
               subject: `Freigabe erhalten: ${approval.campaignTitle || approval.title}`
             });
 
             await apiClient.post('/api/email/send', {
-              to: [{ email: 's.kuehne@sk-online-marketing.de', name: 'CeleroPress Admin' }],
+              to: [{ email: replyToAddress, name: 'CeleroPress Team' }],
               from: { email: organizationEmailAddress.email, name: 'CeleroPress' },
               replyTo: replyToAddress,
               subject: `Freigabe erhalten: ${approval.campaignTitle || approval.title}`,
@@ -1759,15 +1759,15 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
           if (organizationEmailAddress) {
             const replyToAddress = emailAddressService.generateReplyToAddress(organizationEmailAddress);
             
-            console.log('📮 Sending admin notification email (changes requested):', {
-              to: 's.kuehne@sk-online-marketing.de',
+            console.log('📮 Sending admin notification email to INBOX (changes requested):', {
+              to: replyToAddress,
               from: organizationEmailAddress.email,
               replyTo: replyToAddress,
               subject: `Änderungen angefordert: ${approval.campaignTitle || approval.title}`
             });
 
             await apiClient.post('/api/email/send', {
-              to: [{ email: 's.kuehne@sk-online-marketing.de', name: 'CeleroPress Admin' }],
+              to: [{ email: replyToAddress, name: 'CeleroPress Team' }],
               from: { email: organizationEmailAddress.email, name: 'CeleroPress' },
               replyTo: replyToAddress,
               subject: `Änderungen angefordert: ${approval.campaignTitle || approval.title}`,
