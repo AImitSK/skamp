@@ -505,13 +505,13 @@ class NotificationsService {
     viewerName: string,
     userId: string
   ): Promise<void> {
-    if (!await this.isNotificationEnabled(userId, 'APPROVAL_GRANTED')) return;
+    if (!await this.isNotificationEnabled(userId, 'FIRST_VIEW')) return;
     
     const notification: CreateNotificationInput = {
       userId,
-      type: 'APPROVAL_GRANTED',
+      type: 'FIRST_VIEW',
       title: 'Kampagne angesehen',
-      message: this.formatMessage('APPROVAL_GRANTED', {
+      message: this.formatMessage('FIRST_VIEW', {
         senderName: viewerName,
         campaignTitle: campaign.title || campaign.name
       }),

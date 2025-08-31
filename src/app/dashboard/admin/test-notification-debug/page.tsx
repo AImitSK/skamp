@@ -143,7 +143,7 @@ export default function NotificationDebugPage() {
         user.uid
       );
       
-      setTestResult('✅ FIRST_VIEW notification created');
+      setTestResult('✅ FIRST_VIEW notification created (with correct message)');
       
       // Reload notifications
       setTimeout(loadAllNotifications, 1000);
