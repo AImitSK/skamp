@@ -595,6 +595,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       if (!approval.analytics.firstViewedAt) {
         updates['analytics.firstViewedAt'] = serverTimestamp();
         updates['analytics.uniqueViews'] = increment(1);
+        wasFirstView = true;
       }
 
       // Update Empfänger-Status 
