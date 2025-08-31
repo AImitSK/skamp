@@ -333,6 +333,18 @@ class NotificationServiceEnhanced {
   }
 
   /**
+   * Create custom notification (PUBLIC)
+   * For external services like approval-service to create notifications
+   */
+  async createCustomNotification(notification: Omit<NotificationData, 'id' | 'createdAt'> & { createdAt?: Timestamp }): Promise<string> {
+    const notificationWithTimestamp = {
+      ...notification,
+      createdAt: notification.createdAt || serverTimestamp() as Timestamp
+    };
+    return this.createNotification(notificationWithTimestamp);
+  }
+
+  /**
    * Create notification in database
    */
   private async createNotification(notification: Omit<NotificationData, 'id'>): Promise<string> {
