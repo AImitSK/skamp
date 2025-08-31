@@ -62,6 +62,8 @@ class NotificationsService {
         id: docRef.id,
         isRead: false,
         createdAt: serverTimestamp() as Timestamp,
+        // ADD: toUserId für Navigation-Glocke Kompatibilität
+        toUserId: notification.userId,
       };
       
       await setDoc(docRef, notificationData);
