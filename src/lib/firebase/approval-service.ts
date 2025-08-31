@@ -674,8 +674,38 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       if (wasFirstView) {
         console.log('📝 Sending First View Notification for:', approval.campaignTitle);
         try {
-          // FIX: Bessere User-ID-Ermittlung - nutze userId falls verfügbar
-          const targetUserId = approval.userId || approval.createdBy;
+          // FIX: Echte User-ID aus Campaign holen falls approval.userId/createdBy fehlt
+          let targetUserId = approval.userId || approval.createdBy;
+          
+          // Fallback: Lade Campaign und hole userId von dort
+          if (!targetUserId || targetUserId === 'system') {
+            try {
+              console.log('🔍 Loading campaign for userId fallback. CampaignId:', approval.campaignId);
+              const { prService } = await import('./pr-service');
+              const campaign = await prService.getById(approval.campaignId);
+              console.log('🔍 Campaign loaded:', {
+                campaignId: approval.campaignId,
+                campaign: campaign ? 'EXISTS' : 'NULL',
+                campaignUserId: campaign?.userId,
+                campaignCreatedBy: campaign?.createdBy
+              });
+              
+              if (campaign?.userId && campaign.userId !== 'system') {
+                targetUserId = campaign.userId;
+                console.log('🔄 Using campaign.userId as fallback:', targetUserId);
+              } else if (campaign?.createdBy && campaign.createdBy !== 'system') {
+                targetUserId = campaign.createdBy;
+                console.log('🔄 Using campaign.createdBy as fallback:', targetUserId);
+              } else {
+                console.warn('⚠️ Campaign has no valid userId/createdBy:', {
+                  campaignUserId: campaign?.userId,
+                  campaignCreatedBy: campaign?.createdBy
+                });
+              }
+            } catch (campaignError) {
+              console.error('❌ Failed to load campaign for userId fallback:', campaignError);
+            }
+          }
           console.log('🎯 First-View Notification target:', { 
             userId: approval.userId,
             createdBy: approval.createdBy, 
