@@ -496,6 +496,38 @@ class NotificationsService {
   }
 
   /**
+   * Notify when campaign is viewed for the first time
+   */
+  async notifyFirstView(
+    campaign: any,
+    viewerName: string,
+    userId: string
+  ): Promise<void> {
+    if (!await this.isNotificationEnabled(userId, 'APPROVAL_GRANTED')) return;
+    
+    const notification: CreateNotificationInput = {
+      userId,
+      type: 'APPROVAL_GRANTED',
+      title: 'Kampagne angesehen',
+      message: this.formatMessage('APPROVAL_GRANTED', {
+        senderName: viewerName,
+        campaignTitle: campaign.title || campaign.name
+      }),
+      linkUrl: `/dashboard/pr-kampagnen/${campaign.id}`,
+      linkType: 'campaign',
+      linkId: campaign.id,
+      isRead: false,
+      metadata: {
+        campaignId: campaign.id,
+        campaignTitle: campaign.title || campaign.name,
+        senderName: viewerName
+      }
+    };
+    
+    await this.create(notification);
+  }
+
+  /**
    * Notify when email campaign is sent successfully
    */
   async notifyEmailSent(

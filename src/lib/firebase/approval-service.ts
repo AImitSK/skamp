@@ -670,146 +670,36 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
 
       await updateDoc(doc(db, this.collectionName, approval.id), updates);
       
-      // 👀 FIRST VIEW BENACHRICHTIGUNG (beide Systeme)
+      // 👀 FIRST VIEW BENACHRICHTIGUNG (funktionierendes Pattern)
       if (wasFirstView) {
         console.log('📝 Sending First View Notification for:', approval.campaignTitle);
         try {
-          // FIX: Echte User-ID aus Campaign holen falls approval.userId/createdBy fehlt
-          let targetUserId = approval.userId || approval.createdBy;
+          // Lade Campaign für notifyFirstView (wie bei Changes-Requested)
+          const { prService } = await import('./pr-service');
+          const campaign = await prService.getById(approval.campaignId);
           
-          // Fallback: Lade Campaign und hole userId von dort
-          if (!targetUserId || targetUserId === 'system') {
-            try {
-              console.log('🔍 Loading campaign for userId fallback. CampaignId:', approval.campaignId);
-              const { prService } = await import('./pr-service');
-              const campaign = await prService.getById(approval.campaignId);
-              console.log('🔍 Campaign loaded:', {
-                campaignId: approval.campaignId,
-                campaign: campaign ? 'EXISTS' : 'NULL',
-                campaignUserId: campaign?.userId,
-                campaignCreatedBy: campaign?.createdBy
-              });
-              
-              if (campaign?.userId && campaign.userId !== 'system') {
-                targetUserId = campaign.userId;
-                console.log('🔄 Using campaign.userId as fallback:', targetUserId);
-              } else if (campaign?.createdBy && campaign.createdBy !== 'system') {
-                targetUserId = campaign.createdBy;
-                console.log('🔄 Using campaign.createdBy as fallback:', targetUserId);
-              } else {
-                console.warn('⚠️ Campaign has no valid userId/createdBy:', {
-                  campaignUserId: campaign?.userId,
-                  campaignCreatedBy: campaign?.createdBy
-                });
-              }
-            } catch (campaignError) {
-              console.error('❌ Failed to load campaign for userId fallback:', campaignError);
-            }
-          }
-          console.log('🎯 First-View Notification target:', { 
-            userId: approval.userId,
-            createdBy: approval.createdBy, 
-            targetUserId,
-            approvalId: approval.id,
-            wasFirstView,
-            approvalStatus: approval.status
-          });
-          
-          // DEBUG: Immer versuchen, auch wenn targetUserId problematisch ist
-          console.log('🚨 FORCE DEBUG: Attempting notification creation...');
-          
-          if (targetUserId && targetUserId !== 'system') {
-            // 1. NOTIFICATIONS-SEITE: Bestehende Notification beibehalten
-            console.log('🔥 Creating notification for notifications-service...');
+          if (campaign && campaign.userId && campaign.userId !== 'system') {
+            console.log('✅ Using campaign data for First-View notification:', {
+              campaignId: approval.campaignId,
+              campaignUserId: campaign.userId,
+              campaignTitle: campaign.title
+            });
+            
+            // Nutze das funktionierende notifyFirstView Pattern
             const { notificationsService } = await import('./notifications-service');
+            await notificationsService.notifyFirstView(
+              campaign,
+              recipientEmail || 'Kunde',
+              campaign.userId
+            );
             
-            const notificationData = {
-              userId: targetUserId,
-              organizationId: approval.organizationId,
-              type: 'APPROVAL_GRANTED',
-              title: '👀 Kampagne angesehen',
-              message: `${recipientEmail || 'Kunde'} hat "${approval.campaignTitle || approval.title}" das erste Mal angesehen.`,
-              linkUrl: `/dashboard/pr-tools/approvals/${approval.shareId}`,
-              linkType: 'approval',
-              linkId: approval.id,
-              metadata: {
-                campaignId: approval.campaignId,
-                senderName: recipientEmail || 'Kunde'
-              }
-            };
-            
-            console.log('🔥 Notification data:', notificationData);
-            
-            try {
-              await (notificationsService as any).create(notificationData);
-              console.log('✅ Standard notification created successfully');
-            } catch (notifError) {
-              console.error('❌ Standard notification failed:', notifError);
-            }
-
-            // 2. NAVIGATION-GLOCKE: Zusätzliche Notification für Enhanced Service
-            try {
-              console.log('🔥 Creating notification for enhanced-service...');
-              const { notificationService } = await import('../email/notification-service-enhanced');
-              
-              const enhancedData = {
-                type: 'status_change', // Map zu kompatiblem Typ
-                title: '👀 Erste Ansicht',
-                message: `${recipientEmail || 'Kunde'} hat "${approval.campaignTitle || approval.title}" das erste Mal angesehen.`,
-                threadId: `approval-${approval.id}`, // Fake thread ID für Approval
-                fromUserId: 'system',
-                fromUserName: 'System',
-                toUserId: targetUserId,
-                organizationId: approval.organizationId || '',
-                priority: 'normal',
-                isRead: false,
-                metadata: {
-                  approvalId: approval.id,
-                  campaignId: approval.campaignId,
-                  senderName: recipientEmail || 'Kunde',
-                  linkUrl: `/dashboard/pr-tools/approvals/${approval.shareId}`
-                }
-              };
-              
-              console.log('🔥 Enhanced notification data:', enhancedData);
-              
-              await notificationService.createCustomNotification(enhancedData);
-              console.log('✅ Enhanced notification service notification sent');
-            } catch (enhancedError) {
-              console.error('❌ Enhanced notification service failed:', enhancedError);
-              // Nicht kritisch - Dashboard notification funktioniert noch
-            }
-
-            console.log('✅ First View Notifications sent successfully to user:', targetUserId);
+            console.log('✅ First View Notification sent successfully via notifyFirstView');
           } else {
-            console.warn('⚠️ Skipping First-View Notification - no valid userId found');
-            console.warn('🚨 FORCE DEBUG: targetUserId was:', targetUserId);
-            
-            // TEMP DEBUG: Versuche trotzdem mit 'system' für Test-Zwecke
-            if (targetUserId === 'system') {
-              console.log('🚨 FORCE DEBUG: Attempting with system user for debugging...');
-              try {
-                const { notificationsService } = await import('./notifications-service');
-                await (notificationsService as any).create({
-                  userId: 'system',
-                  organizationId: approval.organizationId || 'debug-org',
-                  type: 'APPROVAL_GRANTED',
-                  title: '👀 Kampagne angesehen (DEBUG)',
-                  message: `DEBUG: First view detected but no valid userId found. Approval: ${approval.campaignTitle}`,
-                  linkUrl: `/dashboard/pr-tools/approvals/${approval.shareId}`,
-                  linkType: 'approval',
-                  linkId: approval.id,
-                  metadata: {
-                    campaignId: approval.campaignId,
-                    senderName: recipientEmail || 'Kunde',
-                    debug: true
-                  }
-                });
-                console.log('🚨 FORCE DEBUG: System notification created');
-              } catch (debugError) {
-                console.error('🚨 FORCE DEBUG: Even system notification failed:', debugError);
-              }
-            }
+            console.warn('⚠️ Campaign not found or no valid userId:', {
+              campaign: !!campaign,
+              campaignUserId: campaign?.userId,
+              campaignId: approval.campaignId
+            });
           }
         } catch (notificationError) {
           console.error('❌ First-View Notification fehlgeschlagen:', notificationError);
