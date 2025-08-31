@@ -674,11 +674,20 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         console.log('📝 Sending First View Notification for:', approval.campaignTitle);
         try {
           const { notificationsService } = await import('./notifications-service');
-          await (notificationsService as any).create({
-            userId: approval.createdBy || 'system',
-            organizationId: approval.organizationId,
-            type: 'OVERDUE_APPROVAL', // Verwende bestehenden Typ als Platzhalter
-            title: '👀 Kampagne angesehen',
+          // Stelle sicher, dass wir eine echte User-ID haben, nicht "system"
+          const targetUserId = approval.createdBy || 'system';
+          console.log('🎯 First-View Notification target:', { 
+            createdBy: approval.createdBy, 
+            targetUserId,
+            approvalId: approval.id 
+          });
+          
+          if (targetUserId !== 'system') {
+            await (notificationsService as any).create({
+              userId: targetUserId,
+              organizationId: approval.organizationId,
+              type: 'APPROVAL_GRANTED', // Verwende funktionierenden Typ statt OVERDUE_APPROVAL
+              title: '👀 Kampagne angesehen',
             message: `${recipientEmail || 'Kunde'} hat "${approval.campaignTitle || approval.title}" das erste Mal angesehen.`,
             linkUrl: `/dashboard/pr-tools/approvals/${approval.shareId}`,
             linkType: 'approval',
@@ -688,7 +697,10 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
               senderName: recipientEmail || 'Kunde'
             }
           });
-          console.log('✅ First View Notification sent successfully');
+          console.log('✅ First View Notification sent successfully to user:', targetUserId);
+          } else {
+            console.warn('⚠️ Skipping First-View Notification - no valid userId found');
+          }
         } catch (notificationError) {
           console.error('❌ First-View Notification fehlgeschlagen:', notificationError);
         }
