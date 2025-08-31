@@ -106,7 +106,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       const shareId = this.generateShareId();
       
       // Initialisiere Empfänger-Status
-      const recipients = data.recipients.map((r, index) => ({
+      const recipients = (data.recipients && Array.isArray(data.recipients) ? data.recipients : []).map((r, index) => ({
         ...r,
         id: nanoid(10),
         status: 'pending' as const,
@@ -1079,7 +1079,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         clientName: campaign.clientName || 'Unbekannt',
         // clientEmail ist optional, also nur setzen wenn vorhanden
         ...(campaign.clientId ? {} : {}), // Placeholder für zukünftige clientEmail
-        recipients: recipients.map((r, index) => ({
+        recipients: (recipients && Array.isArray(recipients) ? recipients : []).map((r, index) => ({
           ...r,
           id: nanoid(10),
           status: 'pending' as const,
@@ -1936,11 +1936,14 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       };
 
       // Recipients zurücksetzen
-      const resetRecipients = (approval.recipients || []).map(recipient => ({
-        ...recipient,
-        status: 'pending' as const,
-        respondedAt: null
-      }));
+      let resetRecipients: any[] = [];
+      if (approval.recipients && Array.isArray(approval.recipients)) {
+        resetRecipients = approval.recipients.map(recipient => ({
+          ...recipient,
+          status: 'pending' as const,
+          respondedAt: null
+        }));
+      }
       updates.recipients = resetRecipients;
 
       // Historie-Eintrag
