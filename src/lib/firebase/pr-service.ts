@@ -1330,14 +1330,29 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
           // DIREKTES UPDATE statt updateApprovalForNewVersion verwenden
           // weil wir eigene History-Einträge hinzufügen wollen
           // Recipients auch auf pending zurücksetzen für Re-Request E-Mail
+          
           let resetRecipients: any[] = [];
-          if (existingApproval.recipients && Array.isArray(existingApproval.recipients)) {
+          if (existingApproval.recipients && Array.isArray(existingApproval.recipients) && existingApproval.recipients.length > 0) {
             resetRecipients = existingApproval.recipients.map(recipient => ({
               ...recipient,
               status: 'pending' as const,
               respondedAt: null
             }));
+          } else {
+            // FALLBACK: Wenn keine Recipients da sind, nutze customerContact
+            if (customerApprovalData.customerContact) {
+              resetRecipients = [{
+                id: nanoid(),
+                email: customerApprovalData.customerContact.email,
+                name: customerApprovalData.customerContact.name,
+                role: 'approver' as const,
+                status: 'pending' as const,
+                isRequired: true,
+                notificationsSent: 0
+              }];
+            }
           }
+          
           
           await updateDoc(doc(db, 'approvals', existingApproval.id!), {
             status: 'pending',
