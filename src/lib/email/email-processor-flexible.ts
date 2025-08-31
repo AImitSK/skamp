@@ -94,7 +94,7 @@ export async function flexibleEmailProcessor(
     // 2. Thread-Matching durchführen
     const threadResult = await threadMatcher.findOrCreateThread({
       messageId: emailData.messageId || generateMessageId(),
-      inReplyTo: emailData.inReplyTo,
+      ...(emailData.inReplyTo && { inReplyTo: emailData.inReplyTo }),
       references: emailData.references || [],
       subject: emailData.subject,
       from: emailData.from,
@@ -172,7 +172,7 @@ export async function flexibleEmailProcessor(
       snippet: generateSnippet(emailData.textContent || emailData.htmlContent || ''),
       
       // Threading
-      inReplyTo: emailData.inReplyTo,
+      ...(emailData.inReplyTo && { inReplyTo: emailData.inReplyTo }),
       references: emailData.references || [],
       
       // Metadaten
