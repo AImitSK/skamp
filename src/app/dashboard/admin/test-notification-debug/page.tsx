@@ -48,14 +48,12 @@ export default function NotificationDebugPage() {
         query(
           collection(db, 'notifications'),
           where('userId', '==', user.uid),
-          orderBy('createdAt', 'desc'),
           limit(20)
         ),
-        // Enhanced service (toUserId)
+        // Enhanced service (toUserId)  
         query(
           collection(db, 'notifications'),
           where('toUserId', '==', user.uid),
-          orderBy('createdAt', 'desc'),
           limit(20)
         )
       ];
