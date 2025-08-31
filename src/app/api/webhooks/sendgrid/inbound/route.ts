@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Speziell für Admin-E-Mails:
-    if (parsedEmail.to?.includes('pr@sk-online-marketing.de')) {
+    if (parsedEmail.to?.includes('s.kuehne@sk-online-marketing.de')) {
       console.log('🚨 ADMIN EMAIL DETECTED:', {
         from: parsedEmail.from,
         to: parsedEmail.to,

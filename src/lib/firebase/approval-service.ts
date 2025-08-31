@@ -1683,14 +1683,14 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
             const replyToAddress = emailAddressService.generateReplyToAddress(organizationEmailAddress);
             
             console.log('📮 Sending admin notification email:', {
-              to: organizationEmailAddress.email,
+              to: 's.kuehne@sk-online-marketing.de',
               from: organizationEmailAddress.email,
               replyTo: replyToAddress,
               subject: `Freigabe erhalten: ${approval.campaignTitle || approval.title}`
             });
 
             await apiClient.post('/api/email/send', {
-              to: [{ email: organizationEmailAddress.email, name: 'PR-Team' }],
+              to: [{ email: 's.kuehne@sk-online-marketing.de', name: 'CeleroPress Admin' }],
               from: { email: organizationEmailAddress.email, name: 'CeleroPress' },
               replyTo: replyToAddress,
               subject: `Freigabe erhalten: ${approval.campaignTitle || approval.title}`,
@@ -1760,14 +1760,14 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
             const replyToAddress = emailAddressService.generateReplyToAddress(organizationEmailAddress);
             
             console.log('📮 Sending admin notification email (changes requested):', {
-              to: organizationEmailAddress.email,
+              to: 's.kuehne@sk-online-marketing.de',
               from: organizationEmailAddress.email,
               replyTo: replyToAddress,
               subject: `Änderungen angefordert: ${approval.campaignTitle || approval.title}`
             });
 
             await apiClient.post('/api/email/send', {
-              to: [{ email: organizationEmailAddress.email, name: 'PR-Team' }],
+              to: [{ email: 's.kuehne@sk-online-marketing.de', name: 'CeleroPress Admin' }],
               from: { email: organizationEmailAddress.email, name: 'CeleroPress' },
               replyTo: replyToAddress,
               subject: `Änderungen angefordert: ${approval.campaignTitle || approval.title}`,
