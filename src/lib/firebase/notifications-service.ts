@@ -413,7 +413,8 @@ class NotificationsService {
       case 'CHANGES_REQUESTED':
         return settings.changesRequested;
       case 'FIRST_VIEW':
-        return settings.firstView;
+        // Default to true if undefined (for backwards compatibility)
+        return settings.firstView !== undefined ? settings.firstView : true;
       case 'OVERDUE_APPROVAL':
         return settings.overdueApprovals;
       case 'EMAIL_SENT_SUCCESS':
