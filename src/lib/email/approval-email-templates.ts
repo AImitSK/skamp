@@ -143,12 +143,12 @@ function generateEmailFooter(data: ApprovalEmailData): string {
  */
 function getBaseEmailStyles(): string {
   return `
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: white; }
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
     .container { max-width: 600px; margin: 0 auto; background-color: white; }
     .content { background-color: white; padding: 30px; }
-    .info-box { background: white; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #007bff; }
-    .admin-message-box { background: white; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #28a745; }
-    .original-message-box { background: white; padding: 15px; border-radius: 6px; margin: 15px 0; border: 1px solid #e5e5e5; }
+    .info-box { background: #e8f4fd; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #007bff; }
+    .admin-message-box { background: #f0f8f0; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #28a745; }
+    .original-message-box { background: #f8f9fa; padding: 15px; border-radius: 6px; margin: 15px 0; }
     .button { 
       display: inline-block; 
       padding: 12px 30px; 
@@ -342,7 +342,7 @@ export function getApprovalGrantedEmailTemplate(data: ApprovalEmailData & { appr
   <title>${subject}</title>
   <style>
     ${baseStyles}
-    .success-box { background-color: white; border-left: 4px solid #4caf50; padding: 15px; margin: 20px 0; }
+    .success-box { background-color: #e8f5e9; border-left: 4px solid #4caf50; padding: 15px; margin: 20px 0; }
   </style>
 </head>
 <body>
@@ -401,7 +401,7 @@ export function getChangesRequestedEmailTemplate(data: ApprovalEmailData & { fee
       <strong>Inline-Kommentare:</strong>
       <div style="margin-top: 10px;">
         ${data.inlineComments.map(comment => `
-          <div style="background-color: white; border-left: 3px solid #ff9800; padding: 10px; margin: 5px 0; border: 1px solid #e5e5e5;">
+          <div style="background-color: #f8f9fa; border-left: 3px solid #ff9800; padding: 10px; margin: 5px 0;">
             <em>"${comment.quote}"</em><br>
             <span style="color: #333;">→ ${comment.text}</span>
           </div>
@@ -426,7 +426,7 @@ ${data.inlineComments.map(comment => `"${comment.quote}" → ${comment.text}`).j
   <title>${subject}</title>
   <style>
     ${baseStyles}
-    .feedback-box { background-color: white; border-left: 4px solid #ff9800; padding: 15px; margin: 20px 0; }
+    .feedback-box { background-color: #fff3cd; border-left: 4px solid #ff9800; padding: 15px; margin: 20px 0; }
   </style>
 </head>
 <body>
@@ -517,7 +517,7 @@ export function getApprovalStatusUpdateTemplate(data: ApprovalEmailData & {
   <title>${subject}</title>
   <style>
     ${baseStyles}
-    .status-update { background-color: white; border-left: 4px solid #2196f3; padding: 15px; margin: 20px 0; }
+    .status-update { background-color: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; margin: 20px 0; }
   </style>
 </head>
 <body>
@@ -597,11 +597,10 @@ export function getApprovalDeadlineReminderTemplate(data: ApprovalEmailData & {
   <style>
     ${baseStyles}
     .deadline-box { 
-      background-color: white; 
+      background-color: ${urgencyLevel === 'urgent' ? '#ffebee' : '#fff3cd'}; 
       border-left: 4px solid ${urgencyLevel === 'urgent' ? '#f44336' : '#ff9800'}; 
       padding: 15px; 
       margin: 20px 0; 
-      border: 1px solid #e5e5e5;
     }
   </style>
 </head>
