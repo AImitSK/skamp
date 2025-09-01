@@ -584,18 +584,33 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         firstViewedAt: approval.analytics?.firstViewedAt
       });
 
-      // Update Analytics
+      // Update Analytics - mit Safe Navigation
       let wasFirstView = false;
-      const updates: any = {
-        'analytics.lastViewedAt': serverTimestamp(),
-        'analytics.totalViews': increment(1)
-      };
-
-      // Wenn erstmalig angesehen
-      if (!approval.analytics.firstViewedAt) {
-        updates['analytics.firstViewedAt'] = serverTimestamp();
-        updates['analytics.uniqueViews'] = increment(1);
+      const updates: any = {};
+      
+      // Stelle sicher dass analytics existiert
+      if (!approval.analytics) {
+        // Initialisiere analytics wenn nicht vorhanden
+        updates.analytics = {
+          totalViews: 1,
+          uniqueViews: 1,
+          firstViewedAt: serverTimestamp(),
+          lastViewedAt: serverTimestamp()
+        };
         wasFirstView = true;
+        console.log('📊 Analytics initialized for first view');
+      } else {
+        // Analytics existiert, normale Updates
+        updates['analytics.lastViewedAt'] = serverTimestamp();
+        updates['analytics.totalViews'] = increment(1);
+        
+        // Wenn erstmalig angesehen (mit Safe Navigation)
+        if (!approval.analytics?.firstViewedAt) {
+          updates['analytics.firstViewedAt'] = serverTimestamp();
+          updates['analytics.uniqueViews'] = increment(1);
+          wasFirstView = true;
+          console.log('✅ First view detected - analytics.firstViewedAt will be set');
+        }
       }
 
       // Update Empfänger-Status 

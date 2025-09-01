@@ -61,9 +61,7 @@ class NotificationsService {
         ...notification,
         id: docRef.id,
         isRead: false,
-        createdAt: serverTimestamp() as Timestamp,
-        // ADD: toUserId für Navigation-Glocke Kompatibilität
-        toUserId: notification.userId,
+        createdAt: serverTimestamp() as Timestamp
       };
       
       await setDoc(docRef, notificationData);
@@ -366,6 +364,7 @@ class NotificationsService {
     switch (type) {
       case 'APPROVAL_GRANTED':
       case 'CHANGES_REQUESTED':
+      case 'FIRST_VIEW':
         return metadata?.campaignId && metadata?.senderName;
       
       case 'EMAIL_SENT_SUCCESS':
@@ -394,6 +393,8 @@ class NotificationsService {
         return settings.approvalGranted;
       case 'CHANGES_REQUESTED':
         return settings.changesRequested;
+      case 'FIRST_VIEW':
+        return settings.firstView;
       case 'OVERDUE_APPROVAL':
         return settings.overdueApprovals;
       case 'EMAIL_SENT_SUCCESS':

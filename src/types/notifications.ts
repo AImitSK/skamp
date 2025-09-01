@@ -5,6 +5,7 @@ import { Timestamp } from "firebase/firestore";
 export type NotificationType = 
   | 'APPROVAL_GRANTED'
   | 'CHANGES_REQUESTED'
+  | 'FIRST_VIEW'
   | 'OVERDUE_APPROVAL'
   | 'EMAIL_SENT_SUCCESS'
   | 'EMAIL_BOUNCED'
@@ -49,6 +50,7 @@ export interface NotificationSettings {
   // Freigaben
   approvalGranted: boolean;
   changesRequested: boolean;
+  firstView: boolean;
   overdueApprovals: boolean;
   overdueApprovalDays: number;
   // Schedule Mails
@@ -73,6 +75,7 @@ export const DEFAULT_NOTIFICATION_SETTINGS: Omit<NotificationSettings, 'id' | 'u
   // Freigaben
   approvalGranted: true,
   changesRequested: true,
+  firstView: true,
   overdueApprovals: true,
   overdueApprovalDays: 3, // Default: 3 Tage
   // Schedule Mails
@@ -90,6 +93,7 @@ export const DEFAULT_NOTIFICATION_SETTINGS: Omit<NotificationSettings, 'id' | 'u
 export const NOTIFICATION_TEMPLATES = {
   APPROVAL_GRANTED: '{senderName} hat die Freigabe für "{campaignTitle}" erteilt.',
   CHANGES_REQUESTED: '{senderName} bittet um Änderungen für "{campaignTitle}".',
+  FIRST_VIEW: '{senderName} hat die Kampagne "{campaignTitle}" zum ersten Mal angesehen.',
   OVERDUE_APPROVAL: 'Die Freigabe-Anfrage für "{campaignTitle}" ist seit {daysOverdue} Tagen überfällig.',
   EMAIL_SENT_SUCCESS: 'Deine Kampagne "{campaignTitle}" wurde erfolgreich an {recipientCount} Kontakte versendet.',
   EMAIL_BOUNCED: 'Bei der Kampagne "{campaignTitle}" gab es einen Bounce von {bouncedEmail}.',
@@ -103,6 +107,7 @@ export const NOTIFICATION_TEMPLATES = {
 export const NOTIFICATION_ICONS = {
   APPROVAL_GRANTED: 'CheckCircleIcon',
   CHANGES_REQUESTED: 'ExclamationCircleIcon',
+  FIRST_VIEW: 'EyeIcon',
   OVERDUE_APPROVAL: 'ClockIcon',
   EMAIL_SENT_SUCCESS: 'EnvelopeIcon',
   EMAIL_BOUNCED: 'ExclamationTriangleIcon',
@@ -116,6 +121,7 @@ export const NOTIFICATION_ICONS = {
 export const NOTIFICATION_COLORS = {
   APPROVAL_GRANTED: 'text-green-600 bg-green-50',
   CHANGES_REQUESTED: 'text-yellow-600 bg-yellow-50',
+  FIRST_VIEW: 'text-blue-600 bg-blue-50',
   OVERDUE_APPROVAL: 'text-red-600 bg-red-50',
   EMAIL_SENT_SUCCESS: 'text-blue-600 bg-blue-50',
   EMAIL_BOUNCED: 'text-orange-600 bg-orange-50',
