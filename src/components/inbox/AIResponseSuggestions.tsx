@@ -78,12 +78,8 @@ export function AIResponseSuggestions({
     }
   };
 
-  // Auto-generate when component mounts
-  useEffect(() => {
-    if (email && !suggestions.length) {
-      generateSuggestions();
-    }
-  }, [email]);
+  // Removed auto-generation - now only generates when user explicitly requests it
+  // This saves tokens by not generating suggestions until actually needed
 
   const handleUseSuggestion = (suggestion: EmailResponseSuggestion) => {
     if (onUseSuggestion) {
@@ -122,20 +118,38 @@ export function AIResponseSuggestions({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <SparklesIcon className="h-5 w-5 text-green-600" />
-            <span className="text-sm font-medium text-green-700">KI-Antworten</span>
+            <span className="text-sm font-medium text-green-700">
+              {suggestions.length > 0 ? 'KI-Antworten' : 'KI-Antworten generieren'}
+            </span>
             {suggestions.length > 0 && (
               <Badge color="green" className="text-xs">
                 {suggestions.length} Vorschläge
               </Badge>
             )}
+            {loading && (
+              <Badge color="amber" className="text-xs">
+                Wird generiert...
+              </Badge>
+            )}
           </div>
           <Button
             plain
-            onClick={() => setIsCollapsed(false)}
+            onClick={() => {
+              setIsCollapsed(false);
+              // Generate suggestions when expanding if not already generated
+              if (!suggestions.length && !loading) {
+                generateSuggestions();
+              }
+            }}
             className="p-1"
-            title="Antwort-Vorschläge anzeigen"
+            title={suggestions.length > 0 ? "Antwort-Vorschläge anzeigen" : "KI-Antworten generieren"}
+            disabled={loading}
           >
-            <EyeIcon className="h-4 w-4 text-green-600" />
+            {loading ? (
+              <ArrowPathIcon className="h-4 w-4 text-green-600 animate-spin" />
+            ) : (
+              <EyeIcon className="h-4 w-4 text-green-600" />
+            )}
           </Button>
         </div>
       </div>
