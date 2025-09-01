@@ -183,6 +183,20 @@ function parseFormData(formData: FormData): ParsedEmail | null {
     // Debug log all fields
     console.log('📝 Form fields:', Object.keys(email));
     
+    // Debug log content BEFORE MIME processing
+    console.log('📄 Email content BEFORE MIME processing:', {
+      hasText: !!email.text,
+      textLength: email.text?.length || 0,
+      hasHtml: !!email.html,
+      htmlLength: email.html?.length || 0,
+      textPreview: email.text?.substring(0, 200) || 'NO TEXT CONTENT',
+      htmlPreview: email.html?.substring(0, 200) || 'NO HTML CONTENT',
+      textHasMIME: email.text?.includes('Content-Type:') || false,
+      htmlHasMIME: email.html?.includes('Content-Type:') || false,
+      textHasBoundary: email.text?.includes('boundary=') || false,
+      htmlHasBoundary: email.html?.includes('boundary=') || false
+    });
+    
     // WICHTIG: SendGrid sendet den E-Mail-Inhalt manchmal im 'email' Feld
     // als komplette RFC822 E-Mail. Wir müssen das parsen.
     if (email.email && !email.text && !email.html) {
@@ -206,6 +220,10 @@ function parseFormData(formData: FormData): ParsedEmail | null {
       if (parsedContent) {
         email.text = parsedContent.text || email.text;
         email.html = parsedContent.html || email.html;
+        console.log('📧 After parsing text field:', {
+          textLength: email.text?.length || 0,
+          htmlLength: email.html?.length || 0
+        });
       }
     } else if (email.html && email.html.includes('Content-Type:') && email.html.includes('boundary=')) {
       console.log('📧 Detected MIME multipart in html field, parsing...');
@@ -213,17 +231,21 @@ function parseFormData(formData: FormData): ParsedEmail | null {
       if (parsedContent) {
         email.text = parsedContent.text || email.text;
         email.html = parsedContent.html || email.html;
+        console.log('📧 After parsing html field:', {
+          textLength: email.text?.length || 0,
+          htmlLength: email.html?.length || 0
+        });
       }
     }
     
-    // Debug log content
-    console.log('📄 Email content:', {
+    // Debug log content AFTER MIME processing
+    console.log('📄 Email content AFTER MIME processing:', {
       hasText: !!email.text,
       textLength: email.text?.length || 0,
       hasHtml: !!email.html,
       htmlLength: email.html?.length || 0,
-      textPreview: email.text?.substring(0, 100) || 'NO TEXT CONTENT',
-      htmlPreview: email.html?.substring(0, 100) || 'NO HTML CONTENT'
+      textPreview: email.text?.substring(0, 200) || 'NO TEXT CONTENT',
+      htmlPreview: email.html?.substring(0, 200) || 'NO HTML CONTENT'
     });
     
     // Validate required fields
