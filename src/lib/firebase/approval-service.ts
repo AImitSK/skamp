@@ -1463,31 +1463,28 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
                 to: [{ email: recipient.email, name: recipient.name }],
                 from: { email: organizationEmailAddress.email, name: organizationEmailAddress.displayName || 'CeleroPress' },
                 replyTo: replyToAddress,
-                subject: `${
-                  approvalType === 'request' ? 'Freigabe-Anfrage' :
-                  approvalType === 're-request' ? 'Überarbeitete Pressemeldung zur Freigabe' :
-                  approvalType === 'reminder' ? 'Erinnerung' : 'Status-Update'
-                }: ${approval.campaignTitle || approval.title}`,
-                htmlContent: generateApprovalEmailHtml(approvalType, {
-                  campaignTitle: approval.campaignTitle || approval.title,
-                  clientName: approval.clientName,
-                  approvalUrl: approvalUrl,
-                  recipientName: recipient.name,
-                  message: (approval as any).requestMessage || undefined,
-                  adminName,
-                  adminEmail,
-                  adminMessage: (approval as any).adminMessage || undefined
-                }),
-                textContent: generateApprovalEmailText(approvalType, {
-                  campaignTitle: approval.campaignTitle || approval.title,
-                  clientName: approval.clientName,
-                  approvalUrl: approvalUrl,
-                  recipientName: recipient.name,
-                  message: (approval as any).requestMessage || undefined,
-                  adminName,
-                  adminEmail,
-                  adminMessage: (approval as any).adminMessage || undefined
-                }),
+                // Verwende neue Template-Handler-Funktion mit Fallback-Sicherheit
+                ...(() => {
+                  const templateContent = getEmailTemplateContent(approvalType, {
+                    campaignTitle: approval.campaignTitle || approval.title,
+                    clientName: approval.clientName,
+                    approvalUrl: approvalUrl,
+                    recipientName: recipient.name,
+                    message: (approval as any).requestMessage || undefined,
+                    adminName,
+                    adminEmail,
+                    adminMessage: (approval as any).adminMessage || undefined,
+                    agencyName: 'CeleroPress', // TODO: Add organizationName support
+                    agencyLogoUrl: undefined, // TODO: Add logo support from organization
+                    organizationId: approval.organizationId // Für zukünftige Branding-Integration
+                  });
+                  
+                  return {
+                    subject: templateContent.subject,
+                    htmlContent: templateContent.html,
+                    textContent: templateContent.text
+                  };
+                })(),
                 emailAddressId: organizationEmailAddress.id
               });
 
@@ -2008,8 +2005,100 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
   }
 }
 
-// Export Singleton Instance
-// Helper-Funktionen für Email-Templates
+// ========== NEUE TEMPLATE-HANDLER MIT FALLBACK-SICHERHEIT ==========
+
+/**
+ * Moderne Template-Handler-Funktion mit Fallback auf Legacy-Templates
+ * Migration-sicher: Verwendet neue zentrale Templates mit automatischem Fallback
+ */
+function getEmailTemplateContent(
+  type: 'request' | 'reminder' | 'status_update' | 're-request',
+  data: {
+    campaignTitle: string;
+    clientName: string;
+    approvalUrl: string;
+    recipientName: string;
+    message?: string;
+    adminName?: string;
+    adminEmail?: string;
+    adminMessage?: string;
+    agencyName?: string;
+    agencyLogoUrl?: string;
+    organizationId?: string;
+  }
+): { subject: string; html: string; text: string } {
+  try {
+    // Import der neuen Template-Funktionen (dynamisch für Fallback-Sicherheit)
+    const {
+      getApprovalRequestEmailTemplate,
+      getApprovalReminderEmailTemplate,
+      getApprovalStatusUpdateTemplate,
+      getApprovalReRequestEmailTemplate
+    } = require('@/lib/email/approval-email-templates');
+
+    // Konvertiere Datenstruktur für neue Templates mit Branding-Support
+    const templateData = {
+      recipientName: data.recipientName,
+      recipientEmail: '', // Wird nicht in Templates verwendet
+      campaignTitle: data.campaignTitle,
+      clientName: data.clientName,
+      approvalUrl: data.approvalUrl,
+      message: data.message,
+      agencyName: data.agencyName || 'CeleroPress',
+      agencyLogoUrl: data.agencyLogoUrl,
+      adminName: data.adminName,
+      adminEmail: data.adminEmail,
+      adminMessage: data.adminMessage,
+      // NEU: Branding-Settings laden (async würde Template-System komplizieren, daher erstmal ohne)
+      brandingSettings: undefined // TODO: Branding-Integration für Templates
+    };
+
+    // Verwende das entsprechende neue Template
+    switch (type) {
+      case 'request':
+        return getApprovalRequestEmailTemplate(templateData);
+      
+      case 'reminder':
+        return getApprovalReminderEmailTemplate(templateData);
+      
+      case 're-request':
+        return getApprovalReRequestEmailTemplate(templateData);
+      
+      case 'status_update':
+        return getApprovalStatusUpdateTemplate({
+          ...templateData,
+          previousStatus: 'unknown',
+          newStatus: 'updated',
+          changedBy: data.adminName || 'System',
+          dashboardUrl: data.approvalUrl
+        });
+      
+      default:
+        throw new Error(`Unknown template type: ${type}`);
+    }
+  } catch (error) {
+    console.warn('⚠️ New template failed, falling back to legacy templates:', error);
+    
+    // FALLBACK: Verwende die alten Inline-Templates
+    return {
+      subject: `${
+        type === 'request' ? 'Freigabe-Anfrage' :
+        type === 're-request' ? 'Überarbeitete Pressemeldung zur Freigabe' :
+        type === 'reminder' ? 'Erinnerung' : 'Status-Update'
+      }: ${data.campaignTitle}`,
+      html: generateApprovalEmailHtml(type, data),
+      text: generateApprovalEmailText(type, data)
+    };
+  }
+}
+
+// Export Singleton Instance  
+// ========== LEGACY TEMPLATE FUNCTIONS - DEPRECATED ==========
+// TODO: Diese Funktionen können entfernt werden, sobald getEmailTemplateContent vollständig getestet ist
+
+/**
+ * @deprecated Use getEmailTemplateContent instead - kept for fallback safety
+ */
 function generateApprovalEmailHtml(type: 'request' | 'reminder' | 'status_update' | 're-request', data: {
   campaignTitle: string;
   clientName: string;
@@ -2114,6 +2203,9 @@ function generateApprovalEmailHtml(type: 'request' | 'reminder' | 'status_update
   `;
 }
 
+/**
+ * @deprecated Use getEmailTemplateContent instead - kept for fallback safety
+ */
 function generateApprovalEmailText(type: 'request' | 'reminder' | 'status_update' | 're-request', data: {
   campaignTitle: string;
   clientName: string;  
