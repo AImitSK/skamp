@@ -282,10 +282,77 @@ function parseRFC822Email(emailData: string): { text?: string; html?: string; he
     console.log('📄 Body found:', body.length, 'chars');
     console.log('📋 Headers preview:', headers.substring(0, 300));
     
-    // Suche nach Content-Type und Boundary in den Headers
+    // Prüfe zuerst, ob Body mit einer Boundary beginnt (SendGrid multipart)
+    const bodyStartsWithBoundary = body.match(/^--([a-f0-9]{10,})/);
+    
+    if (bodyStartsWithBoundary) {
+      console.log('🎯 Body starts with boundary! This is direct multipart content');
+      const boundary = bodyStartsWithBoundary[1];
+      console.log('🔍 Extracted boundary from body start:', boundary);
+      
+      // Parse als multipart ohne Header-Check
+      const boundaryRegex = new RegExp(`--${boundary.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:--)?`, 'g');
+      const parts = body.split(boundaryRegex);
+      
+      console.log('🧩 Found', parts.length, 'parts from body boundary');
+      
+      let textContent = '';
+      let htmlContent = '';
+      
+      // Durchsuche alle Parts
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        if (!part.trim()) continue;
+        
+        console.log(`🔍 Processing part ${i}, length:`, part.length);
+        
+        // Finde Content-Type in diesem Part
+        const partContentTypeMatch = part.match(/Content-Type:\s*([^;\s\r\n]+)/i);
+        if (!partContentTypeMatch) {
+          console.log(`⚠️ No content-type found in part ${i}`);
+          continue;
+        }
+        
+        const partType = partContentTypeMatch[1].toLowerCase();
+        console.log(`📋 Part ${i} content-type:`, partType);
+        
+        // Extrahiere Body nach Header-Ende (doppelte Zeilenumbrüche)
+        const partBodyMatch = part.match(/\r?\n\r?\n([\s\S]*)/);
+        const partBody = partBodyMatch ? partBodyMatch[1].trim() : '';
+        
+        if (!partBody) {
+          console.log(`⚠️ No body found in part ${i}`);
+          continue;
+        }
+        
+        if (partType === 'text/plain' && !textContent) {
+          console.log(`📝 Extracting text from part ${i}`);
+          textContent = decodeQuotedPrintable(partBody);
+          console.log('📝 Decoded text length:', textContent.length);
+        } else if (partType === 'text/html' && !htmlContent) {
+          console.log(`🌐 Extracting HTML from part ${i}`);
+          htmlContent = decodeQuotedPrintable(partBody);
+          console.log('🌐 Decoded HTML length:', htmlContent.length);
+        }
+      }
+      
+      console.log('✅ Final extraction result:', {
+        textLength: textContent.length,
+        htmlLength: htmlContent.length,
+        textPreview: textContent.substring(0, 100)
+      });
+      
+      return {
+        text: textContent || undefined,
+        html: htmlContent || undefined,
+        headers
+      };
+    }
+    
+    // Fallback: Suche nach Content-Type in den äußeren Headers
     const contentTypeMatch = headers.match(/Content-Type:\s*([^;\s]+)/i);
     const contentType = contentTypeMatch ? contentTypeMatch[1].toLowerCase().trim() : 'text/plain';
-    console.log('📋 Content-Type found:', contentTypeMatch ? contentTypeMatch[1] : 'NOT FOUND');
+    console.log('📋 Content-Type found in headers:', contentTypeMatch ? contentTypeMatch[1] : 'NOT FOUND');
     console.log('📋 Processed Content-Type:', contentType);
     
     if (!contentType.includes('multipart')) {
@@ -293,73 +360,9 @@ function parseRFC822Email(emailData: string): { text?: string; html?: string; he
       return { text: body, headers };
     }
     
-    // Extrahiere Boundary aus Headers
-    const boundaryMatch = headers.match(/boundary=["']?([^"'\s\r\n]+)["']?/i);
-    if (!boundaryMatch) {
-      console.log('⚠️ No boundary found in headers');
-      return { text: body, headers };
-    }
-    
-    const boundary = boundaryMatch[1];
-    console.log('🔍 Using boundary:', boundary);
-    
-    // Splitte den Body anhand der Boundary
-    const boundaryRegex = new RegExp(`--${boundary.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:--)?`, 'g');
-    const parts = body.split(boundaryRegex);
-    
-    console.log('🧩 Found', parts.length, 'parts');
-    
-    let textContent = '';
-    let htmlContent = '';
-    
-    // Durchsuche alle Parts
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i];
-      if (!part.trim()) continue;
-      
-      console.log(`🔍 Processing part ${i}, length:`, part.length);
-      
-      // Finde Content-Type in diesem Part
-      const partContentTypeMatch = part.match(/Content-Type:\s*([^;\s\r\n]+)/i);
-      if (!partContentTypeMatch) {
-        console.log(`⚠️ No content-type found in part ${i}`);
-        continue;
-      }
-      
-      const partType = partContentTypeMatch[1].toLowerCase();
-      console.log(`📋 Part ${i} content-type:`, partType);
-      
-      // Extrahiere Body nach Header-Ende (doppelte Zeilenumbrüche)
-      const partBodyMatch = part.match(/\r?\n\r?\n([\s\S]*)/);
-      const partBody = partBodyMatch ? partBodyMatch[1].trim() : '';
-      
-      if (!partBody) {
-        console.log(`⚠️ No body found in part ${i}`);
-        continue;
-      }
-      
-      if (partType === 'text/plain' && !textContent) {
-        console.log(`📝 Extracting text from part ${i}`);
-        textContent = decodeQuotedPrintable(partBody);
-        console.log('📝 Decoded text length:', textContent.length);
-      } else if (partType === 'text/html' && !htmlContent) {
-        console.log(`🌐 Extracting HTML from part ${i}`);
-        htmlContent = decodeQuotedPrintable(partBody);
-        console.log('🌐 Decoded HTML length:', htmlContent.length);
-      }
-    }
-    
-    console.log('✅ Final extraction result:', {
-      textLength: textContent.length,
-      htmlLength: htmlContent.length,
-      textPreview: textContent.substring(0, 100)
-    });
-    
-    return {
-      text: textContent || undefined,
-      html: htmlContent || undefined,
-      headers
-    };
+    // Fallback: Standard multipart processing (sollte nicht erreicht werden)
+    console.log('⚠️ Fallback to standard multipart processing');
+    return { text: body, headers };
     
   } catch (error) {
     console.error('❌ Error parsing RFC822 email:', error);
