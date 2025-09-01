@@ -35,6 +35,12 @@ import {
 import { PRCampaign } from '@/types/pr';
 import { teamMemberService } from './organization-service';
 import { nanoid } from 'nanoid';
+import {
+  getApprovalRequestEmailTemplate,
+  getApprovalReminderEmailTemplate,
+  getApprovalStatusUpdateTemplate,
+  getApprovalReRequestEmailTemplate
+} from '@/lib/email/approval-email-templates';
 
 // ========================================
 // PERFORMANCE-OPTIMIERTER Approval Service mit Multi-Tenancy
@@ -2028,13 +2034,7 @@ function getEmailTemplateContent(
   }
 ): { subject: string; html: string; text: string } {
   try {
-    // Import der neuen Template-Funktionen (dynamisch für Fallback-Sicherheit)
-    const {
-      getApprovalRequestEmailTemplate,
-      getApprovalReminderEmailTemplate,
-      getApprovalStatusUpdateTemplate,
-      getApprovalReRequestEmailTemplate
-    } = require('@/lib/email/approval-email-templates');
+    // Verwende die bereits importierten Template-Funktionen
 
     // Konvertiere Datenstruktur für neue Templates mit Branding-Support
     const templateData = {
