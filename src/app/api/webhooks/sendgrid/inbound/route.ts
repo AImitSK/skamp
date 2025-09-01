@@ -329,20 +329,27 @@ function parseRFC822Email(emailData: string): { text?: string; html?: string; he
         html: htmlContent || undefined,
         headers
       };
-    } else if (contentType === 'text/html') {
-      // Nur HTML
-      return {
-        html: body,
-        text: body.replace(/<[^>]*>/g, ''), // Simple HTML strip
-        headers
-      };
-    } else {
-      // Plain text oder unbekannt
-      return {
-        text: body,
-        headers
-      };
+    
+    // Nicht-multipart Inhalte
+    if (headers) {
+      const contentTypeMatch = headers.match(/Content-Type:\s*([^;\s]+)/i);
+      const contentType = contentTypeMatch ? contentTypeMatch[1].toLowerCase() : 'text/plain';
+      
+      if (contentType === 'text/html') {
+        // Nur HTML
+        return {
+          html: body,
+          text: body.replace(/<[^>]*>/g, ''), // Simple HTML strip
+          headers
+        };
+      }
     }
+    
+    // Plain text oder unbekannt
+    return {
+      text: body,
+      headers
+    };
   } catch (error) {
     console.error('Error parsing RFC822 email:', error);
     return null;
