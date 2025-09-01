@@ -25,6 +25,7 @@ interface NotificationItemProps {
 const iconMap = {
   APPROVAL_GRANTED: CheckCircleIcon,
   CHANGES_REQUESTED: ExclamationCircleIcon,
+  FIRST_VIEW: EyeIcon,
   OVERDUE_APPROVAL: ClockIcon,
   EMAIL_SENT_SUCCESS: EnvelopeIcon,
   EMAIL_BOUNCED: ExclamationTriangleIcon,

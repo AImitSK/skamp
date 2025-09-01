@@ -63,6 +63,8 @@ export function NotificationsDropdown({ className }: NotificationsDropdownProps)
         return '✅';
       case 'CHANGES_REQUESTED':
         return '📝';
+      case 'FIRST_VIEW':
+        return '👀';
       case 'OVERDUE_APPROVAL':
         return '⏰';
       case 'EMAIL_SENT_SUCCESS':
