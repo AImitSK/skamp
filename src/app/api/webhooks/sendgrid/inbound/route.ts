@@ -198,6 +198,24 @@ function parseFormData(formData: FormData): ParsedEmail | null {
       }
     }
     
+    // NEU: Prüfe ob text oder html bereits MIME-Multipart Format enthalten
+    // Dies passiert wenn SendGrid den Content direkt als multipart sendet
+    if (email.text && email.text.includes('Content-Type:') && email.text.includes('boundary=')) {
+      console.log('📧 Detected MIME multipart in text field, parsing...');
+      const parsedContent = parseRFC822Email(email.text);
+      if (parsedContent) {
+        email.text = parsedContent.text || email.text;
+        email.html = parsedContent.html || email.html;
+      }
+    } else if (email.html && email.html.includes('Content-Type:') && email.html.includes('boundary=')) {
+      console.log('📧 Detected MIME multipart in html field, parsing...');
+      const parsedContent = parseRFC822Email(email.html);
+      if (parsedContent) {
+        email.text = parsedContent.text || email.text;
+        email.html = parsedContent.html || email.html;
+      }
+    }
+    
     // Debug log content
     console.log('📄 Email content:', {
       hasText: !!email.text,
@@ -226,55 +244,82 @@ function parseFormData(formData: FormData): ParsedEmail | null {
  */
 function parseRFC822Email(emailData: string): { text?: string; html?: string; headers?: string } | null {
   try {
-    // Einfacher Parser für RFC822 E-Mails
-    // Teile Header und Body
-    const parts = emailData.split(/\r?\n\r?\n/);
-    if (parts.length < 2) {
-      console.log('⚠️ No body found in email data');
-      return null;
+    // Prüfe ob es bereits MIME-Multipart Content ist (beginnt mit boundary)
+    const isDirectMultipart = emailData.match(/^--([a-zA-Z0-9]+)/);
+    
+    let headers = '';
+    let body = emailData;
+    
+    if (!isDirectMultipart) {
+      // Standard RFC822 Format - teile Header und Body
+      const parts = emailData.split(/\r?\n\r?\n/);
+      if (parts.length < 2) {
+        console.log('⚠️ No body found in email data');
+        return null;
+      }
+      headers = parts[0];
+      body = parts.slice(1).join('\n\n');
+    } else {
+      // Direkt multipart content - extrahiere boundary aus erstem Teil
+      console.log('📧 Direct multipart content detected');
     }
     
-    const headers = parts[0];
-    const body = parts.slice(1).join('\n\n');
-    
     // Prüfe ob es eine multipart E-Mail ist
-    const contentTypeMatch = headers.match(/Content-Type:\s*([^;\s]+)/i);
-    const contentType = contentTypeMatch ? contentTypeMatch[1].toLowerCase() : 'text/plain';
-    
-    console.log('📋 Content-Type:', contentType);
-    
-    if (contentType.includes('multipart')) {
-      // Multipart E-Mail - extrahiere Boundary
-      const boundaryMatch = headers.match(/boundary=["']?([^"'\s]+)["']?/i);
-      if (!boundaryMatch) {
-        console.log('⚠️ No boundary found in multipart email');
+    let boundaryMatch;
+    if (headers) {
+      const contentTypeMatch = headers.match(/Content-Type:\s*([^;\s]+)/i);
+      const contentType = contentTypeMatch ? contentTypeMatch[1].toLowerCase() : 'text/plain';
+      console.log('📋 Content-Type:', contentType);
+      
+      if (!contentType.includes('multipart')) {
+        // Nicht multipart - gib einfachen Text zurück
         return { text: body, headers };
       }
       
-      const boundary = boundaryMatch[1];
-      const parts = body.split(new RegExp(`--${boundary}(?:--)?`));
+      boundaryMatch = headers.match(/boundary=["']?([^"'\s]+)["']?/i);
+    } else {
+      // Extrahiere Boundary direkt aus dem Content
+      boundaryMatch = body.match(/--([a-f0-9]+)/);
+    }
+    
+    if (!boundaryMatch) {
+      console.log('⚠️ No boundary found in multipart email');
+      return { text: body, headers };
+    }
+    
+    const boundary = boundaryMatch[1];
+    console.log('🔍 Using boundary:', boundary);
+    
+    // Splitte Parts mit korrekter Boundary-Erkennung
+    const parts = body.split(new RegExp(`--${boundary}(?:--)?`, 'g'));
+    
+    let textContent = '';
+    let htmlContent = '';
+    
+    // Durchsuche alle Parts
+    for (const part of parts) {
+      if (!part.trim()) continue;
       
-      let textContent = '';
-      let htmlContent = '';
+      // Finde Content-Type in diesem Part
+      const partContentTypeMatch = part.match(/Content-Type:\s*([^;\s\r\n]+)/i);
+      if (!partContentTypeMatch) continue;
       
-      // Durchsuche alle Parts
-      for (const part of parts) {
-        if (!part.trim()) continue;
-        
-        const partContentTypeMatch = part.match(/Content-Type:\s*([^;\s]+)/i);
-        if (!partContentTypeMatch) continue;
-        
-        const partType = partContentTypeMatch[1].toLowerCase();
-        const partBody = part.split(/\r?\n\r?\n/).slice(1).join('\n\n').trim();
-        
-        if (partType === 'text/plain' && !textContent) {
-          textContent = partBody;
-        } else if (partType === 'text/html' && !htmlContent) {
-          htmlContent = partBody;
-        }
+      const partType = partContentTypeMatch[1].toLowerCase();
+      
+      // Extrahiere Body nach doppelten Zeilenumbrüchen
+      const partBodyMatch = part.match(/\r?\n\r?\n([\s\S]*)/);
+      const partBody = partBodyMatch ? partBodyMatch[1].trim() : '';
+      
+      if (partType === 'text/plain' && !textContent && partBody) {
+        // Entferne quoted-printable Encoding
+        textContent = decodeQuotedPrintable(partBody);
+      } else if (partType === 'text/html' && !htmlContent && partBody) {
+        // Entferne quoted-printable Encoding
+        htmlContent = decodeQuotedPrintable(partBody);
       }
-      
-      console.log('✅ Extracted from multipart:', {
+    }
+    
+    console.log('✅ Extracted from multipart:', {
         textLength: textContent.length,
         htmlLength: htmlContent.length
       });
@@ -301,6 +346,26 @@ function parseRFC822Email(emailData: string): { text?: string; html?: string; he
   } catch (error) {
     console.error('Error parsing RFC822 email:', error);
     return null;
+  }
+}
+
+/**
+ * Decode quoted-printable encoding commonly used in MIME emails
+ */
+function decodeQuotedPrintable(input: string): string {
+  if (!input) return input;
+  
+  try {
+    return input
+      // Decode =XX hex sequences
+      .replace(/=([0-9A-Fa-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+      // Remove soft line breaks (= at end of line)
+      .replace(/=\r?\n/g, '')
+      // Clean up any remaining encoded chars
+      .replace(/=3D/g, '=');
+  } catch (error) {
+    console.warn('Failed to decode quoted-printable:', error);
+    return input;
   }
 }
 
