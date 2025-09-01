@@ -266,115 +266,102 @@ function parseFormData(formData: FormData): ParsedEmail | null {
  */
 function parseRFC822Email(emailData: string): { text?: string; html?: string; headers?: string } | null {
   try {
-    // Prüfe ob es bereits MIME-Multipart Content ist (beginnt mit boundary)
-    const isDirectMultipart = emailData.match(/^--([a-zA-Z0-9]+)/);
+    console.log('🔍 Parsing RFC822 email, data length:', emailData.length);
     
-    let headers = '';
-    let body = emailData;
-    
-    if (!isDirectMultipart) {
-      // Standard RFC822 Format - teile Header und Body
-      const parts = emailData.split(/\r?\n\r?\n/);
-      if (parts.length < 2) {
-        console.log('⚠️ No body found in email data');
-        return null;
-      }
-      headers = parts[0];
-      body = parts.slice(1).join('\n\n');
-    } else {
-      // Direkt multipart content - extrahiere boundary aus erstem Teil
-      console.log('📧 Direct multipart content detected');
+    // Standard RFC822 Format - teile Header und Body
+    const headerBodySplit = emailData.split(/\r?\n\r?\n/);
+    if (headerBodySplit.length < 2) {
+      console.log('⚠️ No header/body separation found');
+      return { text: emailData };
     }
     
-    // Prüfe ob es eine multipart E-Mail ist
-    let boundaryMatch;
-    if (headers) {
-      const contentTypeMatch = headers.match(/Content-Type:\s*([^;\s]+)/i);
-      const contentType = contentTypeMatch ? contentTypeMatch[1].toLowerCase() : 'text/plain';
-      console.log('📋 Content-Type:', contentType);
-      
-      if (!contentType.includes('multipart')) {
-        // Nicht multipart - gib einfachen Text zurück
-        return { text: body, headers };
-      }
-      
-      boundaryMatch = headers.match(/boundary=["']?([^"'\s]+)["']?/i);
-    } else {
-      // Extrahiere Boundary direkt aus dem Content
-      boundaryMatch = body.match(/--([a-f0-9]+)/);
+    const headers = headerBodySplit[0];
+    const body = headerBodySplit.slice(1).join('\n\n');
+    
+    console.log('📋 Headers found:', headers.length, 'chars');
+    console.log('📄 Body found:', body.length, 'chars');
+    
+    // Suche nach Content-Type und Boundary in den Headers
+    const contentTypeMatch = headers.match(/Content-Type:\s*([^;\r\n]+)/i);
+    const contentType = contentTypeMatch ? contentTypeMatch[1].toLowerCase().trim() : 'text/plain';
+    console.log('📋 Content-Type:', contentType);
+    
+    if (!contentType.includes('multipart')) {
+      console.log('📄 Not multipart, returning as plain text');
+      return { text: body, headers };
     }
     
+    // Extrahiere Boundary aus Headers
+    const boundaryMatch = headers.match(/boundary=["']?([^"'\s\r\n]+)["']?/i);
     if (!boundaryMatch) {
-      console.log('⚠️ No boundary found in multipart email');
+      console.log('⚠️ No boundary found in headers');
       return { text: body, headers };
     }
     
     const boundary = boundaryMatch[1];
     console.log('🔍 Using boundary:', boundary);
     
-    // Splitte Parts mit korrekter Boundary-Erkennung
-    const parts = body.split(new RegExp(`--${boundary}(?:--)?`, 'g'));
+    // Splitte den Body anhand der Boundary
+    const boundaryRegex = new RegExp(`--${boundary.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:--)?`, 'g');
+    const parts = body.split(boundaryRegex);
+    
+    console.log('🧩 Found', parts.length, 'parts');
     
     let textContent = '';
     let htmlContent = '';
     
     // Durchsuche alle Parts
-    for (const part of parts) {
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
       if (!part.trim()) continue;
+      
+      console.log(`🔍 Processing part ${i}, length:`, part.length);
       
       // Finde Content-Type in diesem Part
       const partContentTypeMatch = part.match(/Content-Type:\s*([^;\s\r\n]+)/i);
-      if (!partContentTypeMatch) continue;
+      if (!partContentTypeMatch) {
+        console.log(`⚠️ No content-type found in part ${i}`);
+        continue;
+      }
       
       const partType = partContentTypeMatch[1].toLowerCase();
+      console.log(`📋 Part ${i} content-type:`, partType);
       
-      // Extrahiere Body nach doppelten Zeilenumbrüchen
+      // Extrahiere Body nach Header-Ende (doppelte Zeilenumbrüche)
       const partBodyMatch = part.match(/\r?\n\r?\n([\s\S]*)/);
       const partBody = partBodyMatch ? partBodyMatch[1].trim() : '';
       
-      if (partType === 'text/plain' && !textContent && partBody) {
-        // Entferne quoted-printable Encoding
+      if (!partBody) {
+        console.log(`⚠️ No body found in part ${i}`);
+        continue;
+      }
+      
+      if (partType === 'text/plain' && !textContent) {
+        console.log(`📝 Extracting text from part ${i}`);
         textContent = decodeQuotedPrintable(partBody);
-      } else if (partType === 'text/html' && !htmlContent && partBody) {
-        // Entferne quoted-printable Encoding
+        console.log('📝 Decoded text length:', textContent.length);
+      } else if (partType === 'text/html' && !htmlContent) {
+        console.log(`🌐 Extracting HTML from part ${i}`);
         htmlContent = decodeQuotedPrintable(partBody);
+        console.log('🌐 Decoded HTML length:', htmlContent.length);
       }
     }
     
-    console.log('✅ Extracted from multipart:', {
-        textLength: textContent.length,
-        htmlLength: htmlContent.length
-      });
-      
-      return {
-        text: textContent || undefined,
-        html: htmlContent || undefined,
-        headers
-      };
+    console.log('✅ Final extraction result:', {
+      textLength: textContent.length,
+      htmlLength: htmlContent.length,
+      textPreview: textContent.substring(0, 100)
+    });
     
-    // Nicht-multipart Inhalte
-    if (headers) {
-      const contentTypeMatch = headers.match(/Content-Type:\s*([^;\s]+)/i);
-      const contentType = contentTypeMatch ? contentTypeMatch[1].toLowerCase() : 'text/plain';
-      
-      if (contentType === 'text/html') {
-        // Nur HTML
-        return {
-          html: body,
-          text: body.replace(/<[^>]*>/g, ''), // Simple HTML strip
-          headers
-        };
-      }
-    }
-    
-    // Plain text oder unbekannt
     return {
-      text: body,
+      text: textContent || undefined,
+      html: htmlContent || undefined,
       headers
     };
+    
   } catch (error) {
-    console.error('Error parsing RFC822 email:', error);
-    return null;
+    console.error('❌ Error parsing RFC822 email:', error);
+    return { text: emailData };
   }
 }
 
