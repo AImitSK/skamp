@@ -45,14 +45,26 @@ class NotificationsService {
    * This is the ONLY way notifications should be created
    */
   async create(notification: CreateNotificationInput): Promise<string> {
+    console.log('📝 NotificationService.create called with:', notification);
+    
     try {
       // Additional validation before creating
       if (!notification.userId || !notification.type || !notification.title || !notification.message) {
+        console.error('❌ Missing required fields:', {
+          userId: !!notification.userId,
+          type: !!notification.type,
+          title: !!notification.title,
+          message: !!notification.message
+        });
         throw new Error('Missing required fields');
       }
 
       // Validate notification context
-      if (!this.validateNotificationContext(notification.type, notification.metadata)) {
+      const isValidContext = this.validateNotificationContext(notification.type, notification.metadata);
+      console.log('📝 Context validation result:', isValidContext, 'for type:', notification.type);
+      
+      if (!isValidContext) {
+        console.error('❌ Invalid context for notification type:', notification.type, 'metadata:', notification.metadata);
         throw new Error(`Invalid context for notification type: ${notification.type}`);
       }
 
@@ -64,12 +76,19 @@ class NotificationsService {
         createdAt: serverTimestamp() as Timestamp
       };
       
+      console.log('📝 Writing to Firebase:', {
+        collection: NOTIFICATIONS_COLLECTION,
+        docId: docRef.id,
+        data: notificationData
+      });
+      
       await setDoc(docRef, notificationData);
       
-      // Log for monitoring
+      console.log('✅ Notification written successfully to Firebase with ID:', docRef.id);
       
       return docRef.id;
     } catch (error) {
+      console.error('❌ Failed to create notification:', error);
       throw error;
     }
   }
@@ -506,7 +525,19 @@ class NotificationsService {
     viewerName: string,
     userId: string
   ): Promise<void> {
-    if (!await this.isNotificationEnabled(userId, 'FIRST_VIEW')) return;
+    console.log('🔔 notifyFirstView called with:', { 
+      campaignId: campaign.id, 
+      viewerName, 
+      userId 
+    });
+    
+    const isEnabled = await this.isNotificationEnabled(userId, 'FIRST_VIEW');
+    console.log('🔔 FIRST_VIEW notification enabled?', isEnabled);
+    
+    if (!isEnabled) {
+      console.warn('⚠️ FIRST_VIEW notifications disabled for user:', userId);
+      return;
+    }
     
     const notification: CreateNotificationInput = {
       userId,
@@ -527,7 +558,15 @@ class NotificationsService {
       }
     };
     
-    await this.create(notification);
+    console.log('🔔 Creating FIRST_VIEW notification:', notification);
+    
+    try {
+      await this.create(notification);
+      console.log('✅ FIRST_VIEW notification created successfully');
+    } catch (error) {
+      console.error('❌ Failed to create FIRST_VIEW notification:', error);
+      throw error;
+    }
   }
 
   /**
