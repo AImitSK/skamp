@@ -651,10 +651,11 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
             providedRecipientEmail: recipientEmail || 'NO_EMAIL_PROVIDED',
             allViewed,
             currentStatus: approval.status,
-            willTriggerFirstView: allViewed && (approval.status === 'pending' || approval.status === 'changes_requested')
+            willTriggerFirstView: allViewed && approval.status === 'pending'
           });
 
-          if (allViewed && (approval.status === 'pending' || approval.status === 'changes_requested')) {
+          // Status nur von 'pending' auf 'in_review' ändern, NICHT von 'changes_requested'!
+          if (allViewed && approval.status === 'pending') {
             updates.status = 'in_review';
             wasFirstView = true;
             console.log('✅ First View will be triggered for status:', approval.status);
