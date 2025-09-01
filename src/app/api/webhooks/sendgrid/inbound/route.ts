@@ -280,11 +280,13 @@ function parseRFC822Email(emailData: string): { text?: string; html?: string; he
     
     console.log('📋 Headers found:', headers.length, 'chars');
     console.log('📄 Body found:', body.length, 'chars');
+    console.log('📋 Headers preview:', headers.substring(0, 300));
     
     // Suche nach Content-Type und Boundary in den Headers
-    const contentTypeMatch = headers.match(/Content-Type:\s*([^;\r\n]+)/i);
+    const contentTypeMatch = headers.match(/Content-Type:\s*([^;\s]+)/i);
     const contentType = contentTypeMatch ? contentTypeMatch[1].toLowerCase().trim() : 'text/plain';
-    console.log('📋 Content-Type:', contentType);
+    console.log('📋 Content-Type found:', contentTypeMatch ? contentTypeMatch[1] : 'NOT FOUND');
+    console.log('📋 Processed Content-Type:', contentType);
     
     if (!contentType.includes('multipart')) {
       console.log('📄 Not multipart, returning as plain text');
