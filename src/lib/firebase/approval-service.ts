@@ -563,11 +563,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
     metadata?: { ipAddress?: string; userAgent?: string }
   ): Promise<void> {
     try {
-      console.log('👁️ markAsViewed called:', {
-        shareId,
-        recipientEmail: recipientEmail || 'NO_EMAIL_PROVIDED',
-        hasMetadata: !!metadata
-      });
 
       const approval = await this.getByShareId(shareId);
       if (!approval || !approval.id) {
@@ -575,14 +570,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         return;
       }
 
-      console.log('📋 Approval state:', {
-        currentStatus: approval.status,
-        recipients: approval.recipients?.map(r => ({
-          email: r.email,
-          status: r.status
-        })),
-        firstViewedAt: approval.analytics?.firstViewedAt
-      });
 
       // Update Analytics - mit Safe Navigation
       let wasFirstView = false;
@@ -598,7 +585,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
           lastViewedAt: serverTimestamp()
         };
         wasFirstView = true;
-        console.log('📊 Analytics initialized for first view');
       } else {
         // Analytics existiert, normale Updates
         updates['analytics.lastViewedAt'] = serverTimestamp();
@@ -609,7 +595,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
           updates['analytics.firstViewedAt'] = serverTimestamp();
           updates['analytics.uniqueViews'] = increment(1);
           wasFirstView = true;
-          console.log('✅ First view detected - analytics.firstViewedAt will be set');
         }
       }
 
@@ -620,16 +605,11 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         // Zuerst: Suche exakte E-Mail-Adresse wenn vorhanden
         if (recipientEmail) {
           recipientIndex = approval.recipients.findIndex(r => r.email === recipientEmail);
-          console.log('🔍 Exact email match attempt:', { recipientEmail, found: recipientIndex >= 0 });
         }
         
         // Fallback: Nimm den ersten pending recipient wenn keine E-Mail oder kein Match
         if (recipientIndex < 0) {
           recipientIndex = approval.recipients.findIndex(r => r.status === 'pending');
-          console.log('🔍 First pending recipient fallback:', { 
-            recipientIndex, 
-            recipientEmail: recipientIndex >= 0 ? approval.recipients[recipientIndex].email : 'none' 
-          });
         }
         
         // Update recipient wenn gefunden
@@ -645,23 +625,13 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
             i === recipientIndex ? true : r.status !== 'pending'
           );
           
-          console.log('🔍 First View Check:', {
-            recipientIndex,
-            actualRecipientEmail: recipient.email,
-            providedRecipientEmail: recipientEmail || 'NO_EMAIL_PROVIDED',
-            allViewed,
-            currentStatus: approval.status,
-            willTriggerFirstView: allViewed && approval.status === 'pending'
-          });
 
           // Status nur von 'pending' auf 'in_review' ändern, NICHT von 'changes_requested'!
           if (allViewed && approval.status === 'pending') {
             updates.status = 'in_review';
             wasFirstView = true;
-            console.log('✅ First View will be triggered for status:', approval.status);
           }
         } else {
-          console.log('⚠️ No pending recipient found or recipient already viewed');
         }
       }
 
@@ -688,18 +658,12 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       
       // 👀 FIRST VIEW BENACHRICHTIGUNG (funktionierendes Pattern)
       if (wasFirstView) {
-        console.log('📝 Sending First View Notification for:', approval.campaignTitle);
         try {
           // Lade Campaign für notifyFirstView (wie bei Changes-Requested)
           const { prService } = await import('./pr-service');
           const campaign = await prService.getById(approval.campaignId);
           
           if (campaign && campaign.userId && campaign.userId !== 'system') {
-            console.log('✅ Using campaign data for First-View notification:', {
-              campaignId: approval.campaignId,
-              campaignUserId: campaign.userId,
-              campaignTitle: campaign.title
-            });
             
             // Nutze das funktionierende notifyFirstView Pattern
             const { notificationsService } = await import('./notifications-service');
@@ -709,19 +673,11 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
               campaign.userId
             );
             
-            console.log('✅ First View Notification sent successfully via notifyFirstView');
           } else {
-            console.warn('⚠️ Campaign not found or no valid userId:', {
-              campaign: !!campaign,
-              campaignUserId: campaign?.userId,
-              campaignId: approval.campaignId
-            });
           }
         } catch (notificationError) {
-          console.error('❌ First-View Notification fehlgeschlagen:', notificationError);
         }
       } else {
-        console.log('⚠️ First View Notification NOT triggered. wasFirstView=', wasFirstView, 'approval.status=', approval.status);
       }
     } catch (error) {
     }

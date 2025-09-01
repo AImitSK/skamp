@@ -490,7 +490,6 @@ export default function ApprovalPage() {
       // Markiere als "viewed" bei allen aktiven Status (nicht nur pending)
       if (approval.status === 'pending' || approval.status === 'in_review' || approval.status === 'changes_requested') {
         await approvalService.markAsViewed(shareId);
-        console.log('🔍 markAsViewed called for status:', approval.status);
       }
 
       setCampaign(campaignData);
