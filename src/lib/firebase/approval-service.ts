@@ -34,6 +34,7 @@ import {
 } from '@/types/approvals';
 import { PRCampaign } from '@/types/pr';
 import { teamMemberService } from './organization-service';
+import { brandingService } from './branding-service';
 import { nanoid } from 'nanoid';
 import {
   getApprovalRequestEmailTemplate,
@@ -1455,6 +1456,25 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
               // Nutze das Standard Email-System für bessere Integration
               const replyToAddress = emailAddressService.generateReplyToAddress(organizationEmailAddress);
               
+              // ========== BRANDING-DATEN LADEN ==========
+              // Lade Branding-Einstellungen wie auf der Freigabe-Seite
+              let brandingSettings = null;
+              let agencyName = 'CeleroPress';
+              let agencyLogoUrl = undefined;
+              
+              try {
+                if (approval.organizationId) {
+                  brandingSettings = await brandingService.getBrandingSettings(approval.organizationId);
+                  if (brandingSettings) {
+                    agencyName = brandingSettings.companyName || 'CeleroPress';
+                    agencyLogoUrl = brandingSettings.logoUrl;
+                  }
+                }
+              } catch (brandingError) {
+                console.warn('⚠️ Failed to load branding settings:', brandingError);
+                // Fallback zu CeleroPress - kein kritischer Fehler
+              }
+
               // ========== ERWEITERTE DEBUG LOGS ==========
               console.log('📧 Attempting to send email:', {
                 type: approvalType,
@@ -1462,35 +1482,43 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
                 from: organizationEmailAddress?.email || 'NO_ORG_EMAIL',
                 replyTo: replyToAddress || 'NO_REPLY_TO',
                 subject: `${approvalType === 'request' ? 'Freigabe-Anfrage' : approvalType === 'reminder' ? 'Erinnerung' : 'Status-Update'}`,
-                hasOrgEmail: !!organizationEmailAddress
+                hasOrgEmail: !!organizationEmailAddress,
+                brandingLoaded: !!brandingSettings,
+                agencyName,
+                hasLogo: !!agencyLogoUrl
+              });
+
+              // Generiere Template-Content mit geladenen Branding-Daten
+              const templateContent = getEmailTemplateContent(approvalType, {
+                campaignTitle: approval.campaignTitle || approval.title,
+                clientName: approval.clientName,
+                approvalUrl: approvalUrl,
+                recipientName: recipient.name,
+                message: (approval as any).requestMessage || undefined,
+                adminName,
+                adminEmail,
+                adminMessage: (approval as any).adminMessage || undefined,
+                agencyName,
+                agencyLogoUrl,
+                organizationId: approval.organizationId,
+                brandingSettings: brandingSettings ? {
+                  companyName: brandingSettings.companyName,
+                  logoUrl: brandingSettings.logoUrl,
+                  address: brandingSettings.address,
+                  phone: brandingSettings.phone,
+                  email: brandingSettings.email,
+                  website: brandingSettings.website,
+                  showCopyright: brandingSettings.showCopyright
+                } : undefined
               });
 
               await apiClient.post('/api/email/send', {
                 to: [{ email: recipient.email, name: recipient.name }],
-                from: { email: organizationEmailAddress.email, name: organizationEmailAddress.displayName || 'CeleroPress' },
+                from: { email: organizationEmailAddress.email, name: organizationEmailAddress.displayName || agencyName },
                 replyTo: replyToAddress,
-                // Verwende neue Template-Handler-Funktion mit Fallback-Sicherheit
-                ...(() => {
-                  const templateContent = getEmailTemplateContent(approvalType, {
-                    campaignTitle: approval.campaignTitle || approval.title,
-                    clientName: approval.clientName,
-                    approvalUrl: approvalUrl,
-                    recipientName: recipient.name,
-                    message: (approval as any).requestMessage || undefined,
-                    adminName,
-                    adminEmail,
-                    adminMessage: (approval as any).adminMessage || undefined,
-                    agencyName: 'CeleroPress', // TODO: Add organizationName support
-                    agencyLogoUrl: undefined, // TODO: Add logo support from organization
-                    organizationId: approval.organizationId // Für zukünftige Branding-Integration
-                  });
-                  
-                  return {
-                    subject: templateContent.subject,
-                    htmlContent: templateContent.html,
-                    textContent: templateContent.text
-                  };
-                })(),
+                subject: templateContent.subject,
+                htmlContent: templateContent.html,
+                textContent: templateContent.text,
                 emailAddressId: organizationEmailAddress.id
               });
 
@@ -2031,6 +2059,19 @@ function getEmailTemplateContent(
     agencyName?: string;
     agencyLogoUrl?: string;
     organizationId?: string;
+    brandingSettings?: {
+      companyName?: string;
+      logoUrl?: string;
+      address?: {
+        street?: string;
+        postalCode?: string;
+        city?: string;
+      };
+      phone?: string;
+      email?: string;
+      website?: string;
+      showCopyright?: boolean;
+    };
   }
 ): { subject: string; html: string; text: string } {
   try {
@@ -2049,8 +2090,8 @@ function getEmailTemplateContent(
       adminName: data.adminName,
       adminEmail: data.adminEmail,
       adminMessage: data.adminMessage,
-      // NEU: Branding-Settings laden (async würde Template-System komplizieren, daher erstmal ohne)
-      brandingSettings: undefined // TODO: Branding-Integration für Templates
+      // ✅ BRANDING-INTEGRATION: Verwende geladene Branding-Settings
+      brandingSettings: data.brandingSettings
     };
 
     // Verwende das entsprechende neue Template
