@@ -36,25 +36,36 @@ export interface ApprovalEmailData {
 // ========== LAYOUT-FUNKTIONEN ==========
 
 /**
- * Generiert Header-HTML mit Logo oder CeleroPress-Fallback
+ * Generiert Header-HTML mit Logo oder Firmenname-Fallback
  * Folgt der gleichen Logik wie die Freigabe-Seite (Zeile 752-766)
  */
-function generateEmailHeader(data: ApprovalEmailData, headerColor: string = '#005fab'): string {
-  const hasCustomBranding = data.brandingSettings?.logoUrl || data.agencyLogoUrl;
+function generateEmailHeader(data: ApprovalEmailData, headerColor: string = '#6b7280'): string {
+  // Prüfe auf jede Art von Branding-Information, nicht nur Logo
+  const hasCustomBranding = data.brandingSettings?.logoUrl || data.agencyLogoUrl || 
+                           data.brandingSettings?.companyName || data.agencyName;
   
   if (hasCustomBranding) {
     const logoUrl = data.brandingSettings?.logoUrl || data.agencyLogoUrl;
     const companyName = data.brandingSettings?.companyName || data.agencyName || 'CeleroPress';
     
-    return `
-      <div class="header" style="background-color: ${headerColor}; color: white; padding: 20px; text-align: center;">
-        <img src="${logoUrl}" alt="${companyName}" style="max-height: 50px; margin-bottom: 10px;">
-        <h1 style="margin: 0; font-size: 24px; font-weight: bold;">`;
+    if (logoUrl) {
+      // Mit Logo
+      return `
+        <div class="header" style="background-color: ${headerColor}; color: white; padding: 20px; text-align: center;">
+          <img src="${logoUrl}" alt="${companyName}" style="max-height: 50px; margin-bottom: 10px;">
+          <h1 style="margin: 0; font-size: 24px; font-weight: bold;">`;
+    } else {
+      // Ohne Logo, aber mit Firmenname
+      return `
+        <div class="header" style="background-color: ${headerColor}; color: white; padding: 20px; text-align: center;">
+          <div style="font-size: 18px; font-weight: bold; margin-bottom: 10px; color: white;">${companyName}</div>
+          <h1 style="margin: 0; font-size: 24px; font-weight: bold;">`;
+    }
   } else {
-    // Fallback: CeleroPress Standard-Layout wie in Navigation (logo_skamp.svg)
+    // Echte Fallback-Situation: Keine Branding-Daten vorhanden
     return `
       <div class="header" style="background-color: ${headerColor}; color: white; padding: 20px; text-align: center;">
-        <img src="/logo_skamp.svg" alt="CeleroPress Logo" style="max-height: 50px; margin-bottom: 10px;">
+        <div style="font-size: 18px; font-weight: bold; margin-bottom: 10px; color: white;">CeleroPress</div>
         <h1 style="margin: 0; font-size: 24px; font-weight: bold;">`;
   }
 }
@@ -64,17 +75,22 @@ function generateEmailHeader(data: ApprovalEmailData, headerColor: string = '#00
  * Folgt der gleichen Logik wie die Freigabe-Seite (Zeile 1009-1083)
  */
 function generateEmailFooter(data: ApprovalEmailData): string {
-  if (data.brandingSettings) {
+  // Prüfe auf jede Art von Branding-Information (nicht nur brandingSettings)
+  const hasCustomBranding = data.brandingSettings || data.agencyName;
+  
+  if (hasCustomBranding) {
     const branding = data.brandingSettings;
     
     // Firmeninfo-Bereiche sammeln
     const companyInfo = [];
     
-    if (branding.companyName) {
-      companyInfo.push(`<strong>${branding.companyName}</strong>`);
+    // Verwende Branding-Daten oder Agency-Fallbacks
+    const companyName = branding?.companyName || data.agencyName;
+    if (companyName) {
+      companyInfo.push(`<strong>${companyName}</strong>`);
     }
     
-    if (branding.address && (branding.address.street || branding.address.postalCode || branding.address.city)) {
+    if (branding?.address && (branding.address.street || branding.address.postalCode || branding.address.city)) {
       const addressParts = [
         branding.address.street,
         branding.address.postalCode && branding.address.city 
@@ -85,30 +101,35 @@ function generateEmailFooter(data: ApprovalEmailData): string {
       companyInfo.push(`📍 ${addressParts.join(', ')}`);
     }
     
-    if (branding.phone) {
+    if (branding?.phone) {
       companyInfo.push(`📞 ${branding.phone}`);
     }
     
-    if (branding.email) {
+    if (branding?.email) {
       companyInfo.push(`📧 ${branding.email}`);
     }
     
-    if (branding.website) {
+    if (branding?.website) {
       const cleanWebsite = branding.website.replace(/^https?:\/\/(www\.)?/, '');
       companyInfo.push(`🌐 <a href="${branding.website}" style="color: #005fab; text-decoration: none;">${cleanWebsite}</a>`);
     }
     
-    const copyrightLine = branding.showCopyright 
-      ? `<p style="margin: 10px 0 0 0; font-size: 12px; color: #999;">Copyright © ${new Date().getFullYear()} ${branding.companyName || 'CeleroPress'}. Alle Rechte vorbehalten.</p>`
+    const copyrightLine = branding?.showCopyright 
+      ? `<p style="margin: 10px 0 0 0; font-size: 12px; color: #999;">Copyright © ${new Date().getFullYear()} ${companyName || 'CeleroPress'}. Alle Rechte vorbehalten.</p>`
       : '';
+    
+    // Wenn keine Details vorhanden sind, zeige wenigstens den Firmennamen
+    const footerContent = companyInfo.length > 0 
+      ? companyInfo.join(' | ')
+      : `Bereitgestellt über ${companyName || 'CeleroPress'}`;
     
     return `
       <div class="footer" style="margin-top: 30px; padding: 20px; border-top: 1px solid #eee; text-align: center; color: #666; font-size: 14px;">
-        <p style="margin: 0; line-height: 1.5;">${companyInfo.join(' | ')}</p>
+        <p style="margin: 0; line-height: 1.5;">${footerContent}</p>
         ${copyrightLine}
       </div>`;
   } else {
-    // Fallback: CeleroPress Standard-Footer
+    // Fallback: CeleroPress Standard-Footer nur wenn wirklich keine Branding-Daten da sind
     return `
       <div class="footer" style="margin-top: 30px; padding: 20px; border-top: 1px solid #eee; text-align: center; color: #666; font-size: 12px;">
         <p style="margin: 0;">Bereitgestellt über CeleroPress</p>
@@ -132,7 +153,7 @@ function getBaseEmailStyles(): string {
       display: inline-block; 
       padding: 12px 30px; 
       background-color: #007bff; 
-      color: white; 
+      color: white !important; 
       text-decoration: none; 
       border-radius: 5px; 
       margin: 20px 0;
@@ -149,6 +170,11 @@ function getBaseEmailStyles(): string {
 export function getApprovalRequestEmailTemplate(data: ApprovalEmailData) {
   const subject = `Neue Pressemitteilung zur Freigabe: ${data.campaignTitle}`;
   
+  // Verwende das neue Layout-System für Konsistenz
+  const headerHtml = generateEmailHeader(data);
+  const footerHtml = generateEmailFooter(data);
+  const baseStyles = getBaseEmailStyles();
+  
   const html = `
 <!DOCTYPE html>
 <html>
@@ -157,34 +183,38 @@ export function getApprovalRequestEmailTemplate(data: ApprovalEmailData) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${subject}</title>
   <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background-color: #005fab; color: white; padding: 20px; text-align: center; }
-    .content { background-color: #f9f9f9; padding: 30px; border-radius: 5px; margin-top: 20px; }
-    .button { display: inline-block; padding: 12px 30px; background-color: #005fab; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px; }
-    .footer { margin-top: 30px; text-align: center; color: #666; font-size: 12px; }
+    ${baseStyles}
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      ${data.agencyLogoUrl ? `<img src="${data.agencyLogoUrl}" alt="${data.agencyName}" style="max-height: 50px; margin-bottom: 10px;">` : ''}
-      <h1>Freigabe erforderlich</h1>
+    ${headerHtml}
+      Freigabe erforderlich
+    </h1>
     </div>
     
     <div class="content">
-      <p>Sehr geehrte/r ${data.recipientName},</p>
+      <p>Hallo <strong>${data.recipientName}</strong>,</p>
       
       <p>eine neue Pressemitteilung wartet auf Ihre Freigabe:</p>
       
-      <h2>${data.campaignTitle}</h2>
+      <div class="info-box">
+        <strong>Pressemitteilung:</strong> "${data.campaignTitle}"<br>
+        <strong>Erstellt für:</strong> ${data.clientName}<br>
+        <strong>Status:</strong> <span style="color: #005fab;">Wartet auf Ihre Freigabe</span>
+      </div>
       
-      ${data.message ? `<p><em>${data.message}</em></p>` : ''}
+      ${data.message ? `
+        <div class="original-message-box">
+          <strong>Nachricht:</strong><br>
+          <em>${data.message}</em>
+        </div>
+      ` : ''}
       
       <p>Bitte prüfen Sie die Pressemitteilung und erteilen Sie Ihre Freigabe oder fordern Sie Änderungen an.</p>
       
       <div style="text-align: center;">
-        <a href="${data.approvalUrl}" class="button">Zur Freigabe</a>
+        <a href="${data.approvalUrl}" class="button">🔍 Zur Freigabe</a>
       </div>
       
       <p style="margin-top: 30px; font-size: 14px; color: #666;">
@@ -193,10 +223,7 @@ export function getApprovalRequestEmailTemplate(data: ApprovalEmailData) {
       </p>
     </div>
     
-    <div class="footer">
-      <p>Diese E-Mail wurde automatisch generiert. Bitte antworten Sie nicht auf diese E-Mail.</p>
-      ${data.agencyName ? `<p>&copy; ${new Date().getFullYear()} ${data.agencyName}. Alle Rechte vorbehalten.</p>` : ''}
-    </div>
+    ${footerHtml}
   </div>
 </body>
 </html>
@@ -225,7 +252,12 @@ ${data.agencyName ? `\n© ${new Date().getFullYear()} ${data.agencyName}. Alle R
 }
 
 export function getApprovalReminderEmailTemplate(data: ApprovalEmailData) {
-  const subject = `Erinnerung: Freigabe ausstehend für "${data.campaignTitle}"`;
+  const subject = `⏰ Erinnerung: Freigabe ausstehend für "${data.campaignTitle}"`;
+  
+  // Verwende das neue Layout-System für Konsistenz
+  const headerHtml = generateEmailHeader(data);
+  const footerHtml = generateEmailFooter(data);
+  const baseStyles = getBaseEmailStyles();
   
   const html = `
 <!DOCTYPE html>
@@ -235,37 +267,40 @@ export function getApprovalReminderEmailTemplate(data: ApprovalEmailData) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${subject}</title>
   <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background-color: #ff9800; color: white; padding: 20px; text-align: center; }
-    .content { background-color: #f9f9f9; padding: 30px; border-radius: 5px; margin-top: 20px; }
-    .button { display: inline-block; padding: 12px 30px; background-color: #005fab; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px; }
-    .footer { margin-top: 30px; text-align: center; color: #666; font-size: 12px; }
+    ${baseStyles}
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      <h1>Erinnerung: Freigabe ausstehend</h1>
+    ${headerHtml}
+      ⏰ Erinnerung: Freigabe ausstehend
+    </h1>
     </div>
     
     <div class="content">
-      <p>Sehr geehrte/r ${data.recipientName},</p>
+      <p>Hallo <strong>${data.recipientName}</strong>,</p>
       
       <p>dies ist eine freundliche Erinnerung, dass die folgende Pressemitteilung noch auf Ihre Freigabe wartet:</p>
       
-      <h2>${data.campaignTitle}</h2>
+      <div class="info-box">
+        <strong>Pressemitteilung:</strong> "${data.campaignTitle}"<br>
+        <strong>Erstellt für:</strong> ${data.clientName}<br>
+        <strong>Status:</strong> <span style="color: #ff9800;">Wartet auf Ihre Freigabe</span>
+      </div>
       
       <p>Bitte nehmen Sie sich einen Moment Zeit, um die Pressemitteilung zu prüfen.</p>
       
       <div style="text-align: center;">
-        <a href="${data.approvalUrl}" class="button">Jetzt prüfen</a>
+        <a href="${data.approvalUrl}" class="button">⏰ Jetzt prüfen</a>
       </div>
+      
+      <p style="margin-top: 30px; font-size: 14px; color: #666;">
+        Falls der Button nicht funktioniert, kopieren Sie bitte diesen Link in Ihren Browser:<br>
+        <a href="${data.approvalUrl}" style="color: #ff9800;">${data.approvalUrl}</a>
+      </p>
     </div>
     
-    <div class="footer">
-      <p>Diese E-Mail wurde automatisch generiert.</p>
-    </div>
+    ${footerHtml}
   </div>
 </body>
 </html>
@@ -293,6 +328,11 @@ Diese E-Mail wurde automatisch generiert.
 export function getApprovalGrantedEmailTemplate(data: ApprovalEmailData & { approverName: string }) {
   const subject = `✅ Freigabe erteilt: ${data.campaignTitle}`;
   
+  // Verwende das neue Layout-System für Konsistenz
+  const headerHtml = generateEmailHeader(data);
+  const footerHtml = generateEmailFooter(data);
+  const baseStyles = getBaseEmailStyles();
+  
   const html = `
 <!DOCTYPE html>
 <html>
@@ -301,18 +341,15 @@ export function getApprovalGrantedEmailTemplate(data: ApprovalEmailData & { appr
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${subject}</title>
   <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background-color: #4caf50; color: white; padding: 20px; text-align: center; }
-    .content { background-color: #f9f9f9; padding: 30px; border-radius: 5px; margin-top: 20px; }
+    ${baseStyles}
     .success-box { background-color: #e8f5e9; border-left: 4px solid #4caf50; padding: 15px; margin: 20px 0; }
-    .footer { margin-top: 30px; text-align: center; color: #666; font-size: 12px; }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      <h1>✅ Freigabe erteilt</h1>
+    ${headerHtml}
+      ✅ Freigabe erteilt
+    </h1>
     </div>
     
     <div class="content">
@@ -327,9 +364,7 @@ export function getApprovalGrantedEmailTemplate(data: ApprovalEmailData & { appr
       <p>Freigegeben am: ${new Date().toLocaleString('de-DE')}</p>
     </div>
     
-    <div class="footer">
-      <p>Diese E-Mail wurde automatisch generiert.</p>
-    </div>
+    ${footerHtml}
   </div>
 </body>
 </html>
@@ -354,6 +389,11 @@ Diese E-Mail wurde automatisch generiert.
 
 export function getChangesRequestedEmailTemplate(data: ApprovalEmailData & { feedback: string; reviewerName: string; inlineComments?: any[] }) {
   const subject = `🔄 Änderungen angefordert: ${data.campaignTitle}`;
+  
+  // Verwende das neue Layout-System für Konsistenz
+  const headerHtml = generateEmailHeader(data);
+  const footerHtml = generateEmailFooter(data);
+  const baseStyles = getBaseEmailStyles();
   
   // Inline-Kommentare für HTML aufbereiten
   const inlineCommentsHtml = data.inlineComments && data.inlineComments.length > 0 ? `
@@ -385,19 +425,15 @@ ${data.inlineComments.map(comment => `"${comment.quote}" → ${comment.text}`).j
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${subject}</title>
   <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background-color: #ff9800; color: white; padding: 20px; text-align: center; }
-    .content { background-color: #f9f9f9; padding: 30px; border-radius: 5px; margin-top: 20px; }
+    ${baseStyles}
     .feedback-box { background-color: #fff3cd; border-left: 4px solid #ff9800; padding: 15px; margin: 20px 0; }
-    .button { display: inline-block; padding: 12px 30px; background-color: #005fab; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px; }
-    .footer { margin-top: 30px; text-align: center; color: #666; font-size: 12px; }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      <h1>🔄 Änderungen angefordert</h1>
+    ${headerHtml}
+      🔄 Änderungen angefordert
+    </h1>
     </div>
     
     <div class="content">
@@ -419,10 +455,7 @@ ${data.inlineComments.map(comment => `"${comment.quote}" → ${comment.text}`).j
       <p>Angefordert am: ${new Date().toLocaleString('de-DE')}</p>
     </div>
     
-    <div class="footer">
-      <p>Diese E-Mail wurde automatisch generiert.</p>
-      <p>Falls der Button nicht funktioniert: <a href="${data.approvalUrl}">${data.approvalUrl}</a></p>
-    </div>
+    ${footerHtml}
   </div>
 </body>
 </html>
@@ -462,6 +495,11 @@ export function getApprovalStatusUpdateTemplate(data: ApprovalEmailData & {
 }) {
   const subject = `Status-Update: ${data.campaignTitle} - ${data.newStatus}`;
   
+  // Verwende das neue Layout-System für Konsistenz
+  const headerHtml = generateEmailHeader(data);
+  const footerHtml = generateEmailFooter(data);
+  const baseStyles = getBaseEmailStyles();
+  
   const statusLabels: Record<string, string> = {
     'pending': 'Ausstehend',
     'approved': 'Freigegeben', 
@@ -478,19 +516,15 @@ export function getApprovalStatusUpdateTemplate(data: ApprovalEmailData & {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${subject}</title>
   <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background-color: #667eea; color: white; padding: 20px; text-align: center; }
-    .content { background-color: #f9f9f9; padding: 30px; border-radius: 5px; margin-top: 20px; }
+    ${baseStyles}
     .status-update { background-color: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; margin: 20px 0; }
-    .button { display: inline-block; padding: 12px 30px; background-color: #667eea; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px; }
-    .footer { margin-top: 30px; text-align: center; color: #666; font-size: 12px; }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      <h1>📋 Status-Update</h1>
+    ${headerHtml}
+      📋 Status-Update
+    </h1>
     </div>
     
     <div class="content">
@@ -511,9 +545,7 @@ export function getApprovalStatusUpdateTemplate(data: ApprovalEmailData & {
       <p>Geändert am: ${new Date().toLocaleString('de-DE')}</p>
     </div>
     
-    <div class="footer">
-      <p>Diese E-Mail wurde automatisch generiert.</p>
-    </div>
+    ${footerHtml}
   </div>
 </body>
 </html>
@@ -550,6 +582,11 @@ export function getApprovalDeadlineReminderTemplate(data: ApprovalEmailData & {
   const subject = `⏰ Deadline-Erinnerung: ${data.campaignTitle}`;
   const urgencyLevel = data.hoursRemaining < 24 ? 'urgent' : 'normal';
   
+  // Verwende das neue Layout-System für Konsistenz  
+  const headerHtml = generateEmailHeader(data);
+  const footerHtml = generateEmailFooter(data);
+  const baseStyles = getBaseEmailStyles();
+  
   const html = `
 <!DOCTYPE html>
 <html>
@@ -558,19 +595,20 @@ export function getApprovalDeadlineReminderTemplate(data: ApprovalEmailData & {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${subject}</title>
   <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background-color: ${urgencyLevel === 'urgent' ? '#f44336' : '#ff9800'}; color: white; padding: 20px; text-align: center; }
-    .content { background-color: #f9f9f9; padding: 30px; border-radius: 5px; margin-top: 20px; }
-    .deadline-box { background-color: ${urgencyLevel === 'urgent' ? '#ffebee' : '#fff3cd'}; border-left: 4px solid ${urgencyLevel === 'urgent' ? '#f44336' : '#ff9800'}; padding: 15px; margin: 20px 0; }
-    .button { display: inline-block; padding: 12px 30px; background-color: #005fab; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px; }
-    .footer { margin-top: 30px; text-align: center; color: #666; font-size: 12px; }
+    ${baseStyles}
+    .deadline-box { 
+      background-color: ${urgencyLevel === 'urgent' ? '#ffebee' : '#fff3cd'}; 
+      border-left: 4px solid ${urgencyLevel === 'urgent' ? '#f44336' : '#ff9800'}; 
+      padding: 15px; 
+      margin: 20px 0; 
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      <h1>⏰ ${urgencyLevel === 'urgent' ? 'DRINGENDE' : ''} Deadline-Erinnerung</h1>
+    ${headerHtml}
+      ⏰ ${urgencyLevel === 'urgent' ? 'DRINGENDE' : ''} Deadline-Erinnerung
+    </h1>
     </div>
     
     <div class="content">
@@ -593,9 +631,7 @@ export function getApprovalDeadlineReminderTemplate(data: ApprovalEmailData & {
       </div>
     </div>
     
-    <div class="footer">
-      <p>Diese E-Mail wurde automatisch generiert.</p>
-    </div>
+    ${footerHtml}
   </div>
 </body>
 </html>
@@ -636,7 +672,7 @@ export function getApprovalReRequestEmailTemplate(data: ApprovalEmailData & {
   const subject = `🔄 Überarbeitete Pressemeldung zur erneuten Freigabe: ${data.campaignTitle}`;
   
   // Verwende das neue Layout-System
-  const headerHtml = generateEmailHeader(data, '#007bff');
+  const headerHtml = generateEmailHeader(data);
   const footerHtml = generateEmailFooter(data);
   const baseStyles = getBaseEmailStyles();
   
