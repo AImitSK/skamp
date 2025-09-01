@@ -67,9 +67,6 @@ export async function POST(request: NextRequest) {
       to: parsedEmail.to,
       subject: parsedEmail.subject
     });
-
-    // Debug log headers
-    console.log('📋 Headers present:', !!parsedEmail.headers);
     
     // Extract email addresses
     const fromAddress = parseEmailAddress(parsedEmail.from);
@@ -117,25 +114,6 @@ export async function POST(request: NextRequest) {
     // Process the email through our flexible pipeline
     const result = await flexibleEmailProcessor(emailData);
     
-    // ========== ERWEITERTE DEBUG LOGS ==========
-    console.log('📨 Webhook processing result:', {
-      success: result.success,
-      emailId: result.emailId,
-      threadId: result.threadId,
-      organizationId: result.organizationId,
-      routingDecision: result.routingDecision,
-      error: result.error
-    });
-
-    // Speziell für Admin-E-Mails:
-    if (parsedEmail.to?.includes('s.kuehne@sk-online-marketing.de')) {
-      console.log('🚨 ADMIN EMAIL DETECTED:', {
-        from: parsedEmail.from,
-        to: parsedEmail.to,
-        subject: parsedEmail.subject,
-        hasReplyTo: !!(parsedEmail.headers as any)?.['reply-to']
-      });
-    }
     
     if (result.success) {
       console.log('✅ Email processed successfully:', {
@@ -180,22 +158,6 @@ function parseFormData(formData: FormData): ParsedEmail | null {
       }
     }
     
-    // Debug log all fields
-    console.log('📝 Form fields:', Object.keys(email));
-    
-    // Debug log content BEFORE MIME processing
-    console.log('📄 Email content BEFORE MIME processing:', {
-      hasText: !!email.text,
-      textLength: email.text?.length || 0,
-      hasHtml: !!email.html,
-      htmlLength: email.html?.length || 0,
-      textPreview: email.text?.substring(0, 200) || 'NO TEXT CONTENT',
-      htmlPreview: email.html?.substring(0, 200) || 'NO HTML CONTENT',
-      textHasMIME: email.text?.includes('Content-Type:') || false,
-      htmlHasMIME: email.html?.includes('Content-Type:') || false,
-      textHasBoundary: email.text?.includes('boundary=') || false,
-      htmlHasBoundary: email.html?.includes('boundary=') || false
-    });
     
     // WICHTIG: SendGrid sendet den E-Mail-Inhalt manchmal im 'email' Feld
     // als komplette RFC822 E-Mail. Wir müssen das parsen.
@@ -215,38 +177,18 @@ function parseFormData(formData: FormData): ParsedEmail | null {
     // NEU: Prüfe ob text oder html bereits MIME-Multipart Format enthalten
     // Dies passiert wenn SendGrid den Content direkt als multipart sendet
     if (email.text && email.text.includes('Content-Type:') && email.text.includes('boundary=')) {
-      console.log('📧 Detected MIME multipart in text field, parsing...');
       const parsedContent = parseRFC822Email(email.text);
       if (parsedContent) {
         email.text = parsedContent.text || email.text;
         email.html = parsedContent.html || email.html;
-        console.log('📧 After parsing text field:', {
-          textLength: email.text?.length || 0,
-          htmlLength: email.html?.length || 0
-        });
       }
     } else if (email.html && email.html.includes('Content-Type:') && email.html.includes('boundary=')) {
-      console.log('📧 Detected MIME multipart in html field, parsing...');
       const parsedContent = parseRFC822Email(email.html);
       if (parsedContent) {
         email.text = parsedContent.text || email.text;
         email.html = parsedContent.html || email.html;
-        console.log('📧 After parsing html field:', {
-          textLength: email.text?.length || 0,
-          htmlLength: email.html?.length || 0
-        });
       }
     }
-    
-    // Debug log content AFTER MIME processing
-    console.log('📄 Email content AFTER MIME processing:', {
-      hasText: !!email.text,
-      textLength: email.text?.length || 0,
-      hasHtml: !!email.html,
-      htmlLength: email.html?.length || 0,
-      textPreview: email.text?.substring(0, 200) || 'NO TEXT CONTENT',
-      htmlPreview: email.html?.substring(0, 200) || 'NO HTML CONTENT'
-    });
     
     // Validate required fields
     if (!email.from || !email.to) {
@@ -266,35 +208,24 @@ function parseFormData(formData: FormData): ParsedEmail | null {
  */
 function parseRFC822Email(emailData: string): { text?: string; html?: string; headers?: string } | null {
   try {
-    console.log('🔍 Parsing RFC822 email, data length:', emailData.length);
-    
     // Standard RFC822 Format - teile Header und Body
     const headerBodySplit = emailData.split(/\r?\n\r?\n/);
     if (headerBodySplit.length < 2) {
-      console.log('⚠️ No header/body separation found');
       return { text: emailData };
     }
     
     const headers = headerBodySplit[0];
     const body = headerBodySplit.slice(1).join('\n\n');
     
-    console.log('📋 Headers found:', headers.length, 'chars');
-    console.log('📄 Body found:', body.length, 'chars');
-    console.log('📋 Headers preview:', headers.substring(0, 300));
-    
     // Prüfe zuerst, ob Body mit einer Boundary beginnt (SendGrid multipart)
     const bodyStartsWithBoundary = body.match(/^--([a-f0-9]{10,})/);
     
     if (bodyStartsWithBoundary) {
-      console.log('🎯 Body starts with boundary! This is direct multipart content');
       const boundary = bodyStartsWithBoundary[1];
-      console.log('🔍 Extracted boundary from body start:', boundary);
       
       // Parse als multipart ohne Header-Check
       const boundaryRegex = new RegExp(`--${boundary.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:--)?`, 'g');
       const parts = body.split(boundaryRegex);
-      
-      console.log('🧩 Found', parts.length, 'parts from body boundary');
       
       let textContent = '';
       let htmlContent = '';
@@ -304,43 +235,28 @@ function parseRFC822Email(emailData: string): { text?: string; html?: string; he
         const part = parts[i];
         if (!part.trim()) continue;
         
-        console.log(`🔍 Processing part ${i}, length:`, part.length);
-        
         // Finde Content-Type in diesem Part
         const partContentTypeMatch = part.match(/Content-Type:\s*([^;\s\r\n]+)/i);
         if (!partContentTypeMatch) {
-          console.log(`⚠️ No content-type found in part ${i}`);
           continue;
         }
         
         const partType = partContentTypeMatch[1].toLowerCase();
-        console.log(`📋 Part ${i} content-type:`, partType);
         
         // Extrahiere Body nach Header-Ende (doppelte Zeilenumbrüche)
         const partBodyMatch = part.match(/\r?\n\r?\n([\s\S]*)/);
         const partBody = partBodyMatch ? partBodyMatch[1].trim() : '';
         
         if (!partBody) {
-          console.log(`⚠️ No body found in part ${i}`);
           continue;
         }
         
         if (partType === 'text/plain' && !textContent) {
-          console.log(`📝 Extracting text from part ${i}`);
           textContent = decodeQuotedPrintable(partBody);
-          console.log('📝 Decoded text length:', textContent.length);
         } else if (partType === 'text/html' && !htmlContent) {
-          console.log(`🌐 Extracting HTML from part ${i}`);
           htmlContent = decodeQuotedPrintable(partBody);
-          console.log('🌐 Decoded HTML length:', htmlContent.length);
         }
       }
-      
-      console.log('✅ Final extraction result:', {
-        textLength: textContent.length,
-        htmlLength: htmlContent.length,
-        textPreview: textContent.substring(0, 100)
-      });
       
       return {
         text: textContent || undefined,
@@ -352,16 +268,12 @@ function parseRFC822Email(emailData: string): { text?: string; html?: string; he
     // Fallback: Suche nach Content-Type in den äußeren Headers
     const contentTypeMatch = headers.match(/Content-Type:\s*([^;\s]+)/i);
     const contentType = contentTypeMatch ? contentTypeMatch[1].toLowerCase().trim() : 'text/plain';
-    console.log('📋 Content-Type found in headers:', contentTypeMatch ? contentTypeMatch[1] : 'NOT FOUND');
-    console.log('📋 Processed Content-Type:', contentType);
     
     if (!contentType.includes('multipart')) {
-      console.log('📄 Not multipart, returning as plain text');
       return { text: body, headers };
     }
     
-    // Fallback: Standard multipart processing (sollte nicht erreicht werden)
-    console.log('⚠️ Fallback to standard multipart processing');
+    // Fallback: Standard multipart processing
     return { text: body, headers };
     
   } catch (error) {

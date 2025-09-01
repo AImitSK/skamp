@@ -653,6 +653,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       });
 
       updates.history = arrayUnion(historyEntry);
+      updates.updatedAt = serverTimestamp();
 
       await updateDoc(doc(db, this.collectionName, approval.id), updates);
       
