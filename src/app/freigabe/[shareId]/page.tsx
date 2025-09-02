@@ -475,7 +475,8 @@ export default function ApprovalPage() {
           return {
             comment: h.details?.comment || '',
             requestedAt: h.timestamp,
-            author: authorName
+            author: authorName,
+            action: h.action  // WICHTIG: action-Feld übertragen!
           };
         }) || [],
         approvedAt: approvalData.approvedAt,
@@ -983,16 +984,18 @@ export default function ApprovalPage() {
                 return bTime - aTime;
               }).map((feedback, index) => {
                 // KORREKTE Erkennung basierend auf action-Feld
-                const isCustomer = (feedback as any).action === 'changes_requested';
+                const isCustomer = feedback.action === 'changes_requested';
                 
                 // Namen und Avatar basierend auf isCustomer
                 let senderName, senderAvatar;
                 if (isCustomer) {
-                  senderName = customerContact?.name || 'Kunde';
-                  senderAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=10b981&color=fff&size=32`; // Grün für Kunde
+                  // KUNDE: Grüner Avatar
+                  senderName = customerContact?.name || feedback.author || 'Kunde';
+                  senderAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=10b981&color=fff&size=32`;
                 } else {
-                  senderName = teamMember?.displayName || feedback.author;
-                  senderAvatar = teamMember?.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`; // Blau für Team
+                  // TEAM: Blauer Avatar oder echtes Foto
+                  senderName = teamMember?.displayName || feedback.author || 'Teammitglied';
+                  senderAvatar = teamMember?.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`;
                 }
                 
                 return {
@@ -1027,16 +1030,18 @@ export default function ApprovalPage() {
                 
                 const latest = sortedHistory[0]; // Erste = neueste
                 // KORREKTE Erkennung basierend auf action-Feld
-                const isCustomer = (latest as any).action === 'changes_requested';
+                const isCustomer = latest.action === 'changes_requested';
                 
                 // Namen und Avatar basierend auf isCustomer
                 let senderName, senderAvatar;
                 if (isCustomer) {
-                  senderName = customerContact?.name || 'Kunde';
-                  senderAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=10b981&color=fff&size=32`; // Grün für Kunde
+                  // KUNDE: Grüner Avatar
+                  senderName = customerContact?.name || latest.author || 'Kunde';
+                  senderAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=10b981&color=fff&size=32`;
                 } else {
-                  senderName = teamMember?.displayName || latest.author;
-                  senderAvatar = teamMember?.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`; // Blau für Team
+                  // TEAM: Blauer Avatar oder echtes Foto
+                  senderName = teamMember?.displayName || latest.author || 'Teammitglied';
+                  senderAvatar = teamMember?.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`;
                 }
                 
                 return {
