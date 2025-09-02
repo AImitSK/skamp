@@ -1023,8 +1023,8 @@ export default function ApprovalPage() {
                 
                 // Sortierte Liste - neueste zuerst für latestMessage
                 const sortedHistory = feedbackHistory.sort((a, b) => {
-                  const aTime = a.requestedAt ? (a.requestedAt instanceof Date ? a.requestedAt.getTime() : new Date(a.requestedAt as any).getTime()) : 0;
-                  const bTime = b.requestedAt ? (b.requestedAt instanceof Date ? b.requestedAt.getTime() : new Date(b.requestedAt as any).getTime()) : 0;
+                  const aTime = a.requestedAt?.toDate ? a.requestedAt.toDate().getTime() : (a.requestedAt instanceof Date ? a.requestedAt.getTime() : new Date(a.requestedAt).getTime());
+                  const bTime = b.requestedAt?.toDate ? b.requestedAt.toDate().getTime() : (b.requestedAt instanceof Date ? b.requestedAt.getTime() : new Date(b.requestedAt).getTime());
                   return bTime - aTime; // Neueste zuerst für latestMessage
                 });
                 
