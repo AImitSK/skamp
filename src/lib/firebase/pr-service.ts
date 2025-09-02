@@ -1306,13 +1306,29 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
         if (existingApproval) {
           // UPDATE bestehende Freigabe mit neuer PDF-Version
           
+          // Lade echte Team-Daten
+          let teamMemberData = undefined;
+          try {
+            const { teamMemberService } = await import('./team-service-enhanced');
+            const teamMember = await teamMemberService.getByUserAndOrg(context.userId, context.organizationId);
+            if (teamMember) {
+              teamMemberData = {
+                name: teamMember.displayName,
+                email: teamMember.email,
+                photoUrl: teamMember.photoUrl
+              };
+            }
+          } catch (error) {
+            console.error('Fehler beim Laden der Team-Daten:', error);
+          }
+          
           // Füge neue Nachricht zur History hinzu, wenn vorhanden
           const historyEntry = customerApprovalData.customerApprovalMessage ? {
             id: nanoid(),
             timestamp: Timestamp.now(),
             action: 'commented' as const,
-            actorName: 'Ihre Nachricht',
-            actorEmail: 'agentur@celeropress.com',
+            actorName: teamMemberData?.name || 'Teammitglied',
+            actorEmail: teamMemberData?.email || 'team@celeropress.com',
             details: {
               comment: customerApprovalData.customerApprovalMessage
             }
@@ -1320,8 +1336,8 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
             id: nanoid(),
             timestamp: Timestamp.now(),
             action: 'resubmitted' as const,
-            actorName: 'System',
-            actorEmail: 'system@celeropress.com',
+            actorName: teamMemberData?.name || 'System',
+            actorEmail: teamMemberData?.email || 'system@celeropress.com',
             details: {
               comment: 'Neue Version nach Änderungsanforderung erstellt'
             }
@@ -1407,9 +1423,18 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
             campaignId,
             context.organizationId,
             customerApprovalData.customerContact,
-            customerApprovalData.customerApprovalMessage,
+            undefined, // Keine Nachricht beim Erstellen
             teamMemberData
           );
+          
+          // Füge Team-Nachricht hinzu, falls vorhanden
+          if (customerApprovalData.customerApprovalMessage && teamMemberData) {
+            await approvalService.addTeamMessage(
+              workflowId,
+              customerApprovalData.customerApprovalMessage,
+              teamMemberData
+            );
+          }
           
           // Hole ShareId der neu erstellten Freigabe
           const newApproval = await approvalService.getById(workflowId, context.organizationId);
@@ -1560,9 +1585,18 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
           campaignId,
           context.organizationId,
           customerApprovalData.customerContact,
-          customerApprovalData.customerApprovalMessage || '',
+          undefined, // Keine Nachricht beim Erstellen
           teamMemberData
         );
+        
+        // Füge Team-Nachricht hinzu, falls vorhanden
+        if (customerApprovalData.customerApprovalMessage && teamMemberData) {
+          await approvalService.addTeamMessage(
+            workflowId,
+            customerApprovalData.customerApprovalMessage,
+            teamMemberData
+          );
+        }
 
         // 2b. Hole die shareId für den Customer-Link
         const approval = await approvalService.getById(workflowId, context.organizationId);

@@ -136,12 +136,9 @@ function CustomerMessageBanner({
 }) {
   if (!feedbackHistory || feedbackHistory.length === 0) return null;
   
-  // Finde die letzte Nachricht von der Agentur (alles was NICHT vom Kunden ist)
+  // Finde die letzte Nachricht von der Agentur (basierend auf action-Feld)
   const agencyMessages = feedbackHistory.filter(msg => 
-    msg.author !== 'Kunde' && 
-    msg.author !== 'Customer' && 
-    msg.author !== customerContact?.name &&
-    !(teamMember && msg.author === customerContact?.name) // Sicherheitscheck
+    msg.action === 'commented' // Team-Nachrichten haben action: 'commented'
   );
   
   if (agencyMessages.length === 0) return null;
@@ -716,7 +713,8 @@ export default function ApprovalPage() {
       const newFeedback = {
         comment: feedbackText.trim(),
         requestedAt: new Date() as any,
-        author: customerContact?.name || 'Kunde'
+        author: customerContact?.name || 'Kunde',
+        action: 'changes_requested'  // Für korrekte Kunde-Erkennung
       };
 
       setCampaign({
@@ -980,12 +978,12 @@ export default function ApprovalPage() {
               organizationId={campaign.organizationId || ''}
               communications={campaign.approvalData?.feedbackHistory?.sort((a, b) => {
                 // Sortiere nach timestamp - neueste zuerst
-                const aTime = a.requestedAt ? new Date(a.requestedAt).getTime() : new Date(a.timestamp?.toDate ? a.timestamp.toDate() : a.timestamp).getTime();
-                const bTime = b.requestedAt ? new Date(b.requestedAt).getTime() : new Date(b.timestamp?.toDate ? b.timestamp.toDate() : b.timestamp).getTime();
+                const aTime = a.requestedAt ? (a.requestedAt instanceof Date ? a.requestedAt.getTime() : new Date(a.requestedAt as any).getTime()) : 0;
+                const bTime = b.requestedAt ? (b.requestedAt instanceof Date ? b.requestedAt.getTime() : new Date(b.requestedAt as any).getTime()) : 0;
                 return bTime - aTime;
               }).map((feedback, index) => {
                 // KORREKTE Erkennung basierend auf action-Feld
-                const isCustomer = feedback.action === 'changes_requested';
+                const isCustomer = (feedback as any).action === 'changes_requested';
                 
                 // Namen und Avatar basierend auf isCustomer
                 let senderName, senderAvatar;
@@ -1022,14 +1020,14 @@ export default function ApprovalPage() {
                 
                 // Sortierte Liste - neueste zuerst
                 const sortedHistory = feedbackHistory.sort((a, b) => {
-                  const aTime = a.requestedAt ? new Date(a.requestedAt).getTime() : new Date(a.timestamp?.toDate ? a.timestamp.toDate() : a.timestamp).getTime();
-                  const bTime = b.requestedAt ? new Date(b.requestedAt).getTime() : new Date(b.timestamp?.toDate ? b.timestamp.toDate() : b.timestamp).getTime();
+                  const aTime = a.requestedAt ? (a.requestedAt instanceof Date ? a.requestedAt.getTime() : new Date(a.requestedAt as any).getTime()) : 0;
+                  const bTime = b.requestedAt ? (b.requestedAt instanceof Date ? b.requestedAt.getTime() : new Date(b.requestedAt as any).getTime()) : 0;
                   return bTime - aTime;
                 });
                 
                 const latest = sortedHistory[0]; // Erste = neueste
                 // KORREKTE Erkennung basierend auf action-Feld
-                const isCustomer = latest.action === 'changes_requested';
+                const isCustomer = (latest as any).action === 'changes_requested';
                 
                 // Namen und Avatar basierend auf isCustomer
                 let senderName, senderAvatar;

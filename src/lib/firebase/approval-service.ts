@@ -267,16 +267,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
           stages: ['customer'],
           isMultiStage: false
         },
-        history: customerMessage ? [{
-          id: nanoid(),
-          timestamp: Timestamp.now(),
-          action: 'commented',  // Ändere zu 'commented' damit es als Feedback erkannt wird
-          actorName: teamMemberData?.name || 'Teammitglied',
-          actorEmail: teamMemberData?.email || 'team@celeropress.com',
-          details: {
-            comment: customerMessage
-          }
-        }] : [],
+        history: [], // Leere History beim Erstellen - Nachrichten werden über addTeamMessage() hinzugefügt
         analytics: {
           totalViews: 0,
           uniqueViews: 0
@@ -304,6 +295,35 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       
       return docRef.id;
     } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Fügt eine Team-Nachricht zu einer bestehenden Freigabe hinzu
+   */
+  async addTeamMessage(
+    approvalId: string,
+    message: string,
+    teamMemberData: { name: string; email: string; photoUrl?: string }
+  ): Promise<void> {
+    try {
+      const historyEntry = {
+        id: nanoid(),
+        timestamp: Timestamp.now(),
+        action: 'commented' as const,
+        actorName: teamMemberData.name,
+        actorEmail: teamMemberData.email,
+        details: {
+          comment: message
+        }
+      };
+
+      await updateDoc(doc(db, 'approvals', approvalId), {
+        history: arrayUnion(historyEntry)
+      });
+    } catch (error) {
+      console.error('Fehler beim Hinzufügen der Team-Nachricht:', error);
       throw error;
     }
   }
