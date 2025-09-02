@@ -953,8 +953,7 @@ export default function ApprovalPage() {
               onToggle={toggleBox}
               organizationId={campaign.organizationId || ''}
               communications={campaign.approvalData?.feedbackHistory?.map((feedback, index) => {
-                const isCustomer = feedback.author === 'Kunde' || feedback.author === customerContact?.name || 
-                                 (approval.recipients?.[0]?.name && feedback.author === approval.recipients[0].name);
+                const isCustomer = feedback.author === 'Kunde' || feedback.author === customerContact?.name;
                 // TODO: Add recipientEmail, userName and createdBy to PRCampaign type
                 const tempCampaign = campaign as any; // Temporary type assertion for deployment
                 const senderName = isCustomer 
@@ -990,8 +989,7 @@ export default function ApprovalPage() {
                 if (!feedbackHistory || feedbackHistory.length === 0) return undefined;
                 
                 const latest = feedbackHistory[feedbackHistory.length - 1];
-                const isCustomer = latest.author === 'Kunde' || latest.author === customerContact?.name || 
-                                 (approval.recipients?.[0]?.name && latest.author === approval.recipients[0].name);
+                const isCustomer = latest.author === 'Kunde' || latest.author === customerContact?.name;
                 // TODO: Add recipientEmail, userName and createdBy to PRCampaign type
                 const tempCampaign = campaign as any; // Temporary type assertion for deployment
                 const senderName = isCustomer 
