@@ -635,7 +635,7 @@ export default function PRCampaignsPage() {
                           src={adminAvatar}
                           alt={campaignAdmin?.displayName || 'Admin'}
                           className="w-8 h-8 rounded-full"
-                          title={campaignAdmin?.displayName || 'Admin'}
+                          title={campaignAdmin?.displayName || user?.displayName || user?.email || 'Admin'}
                         />
                       </div>
 

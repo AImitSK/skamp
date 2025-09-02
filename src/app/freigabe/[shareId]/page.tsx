@@ -8,6 +8,7 @@ import { prService } from "@/lib/firebase/pr-service";
 import { approvalService } from "@/lib/firebase/approval-service";
 import { mediaService } from "@/lib/firebase/media-service";
 import { brandingService } from "@/lib/firebase/branding-service";
+import { teamMemberService } from "@/lib/firebase/team-service-enhanced";
 import { pdfVersionsService } from "@/lib/firebase/pdf-versions-service";
 import { notificationsService } from "@/lib/firebase/notifications-service";
 import { inboxService } from "@/lib/firebase/inbox-service";
@@ -124,10 +125,12 @@ const approvalStatusConfig = {
 // NEU: Customer Message Banner Component - zeigt letzte Agentur-Nachricht
 function CustomerMessageBanner({ 
   feedbackHistory,
-  campaign 
+  campaign,
+  teamMember 
 }: { 
   feedbackHistory: any[],
-  campaign: any
+  campaign: any,
+  teamMember: any
 }) {
   if (!feedbackHistory || feedbackHistory.length === 0) return null;
   
@@ -141,7 +144,7 @@ function CustomerMessageBanner({
   const latestAgencyMessage = agencyMessages[agencyMessages.length - 1];
   
   // Bestimme den korrekten Absender-Namen
-  const senderName = campaign.userName || campaign.createdBy?.name || 'Teammitglied';
+  const senderName = teamMember?.displayName || campaign.userName || campaign.createdBy?.name || 'Teammitglied';
   
   // Formatiere Zeitstempel
   const formatTimeAgo = (date: any) => {
@@ -389,6 +392,8 @@ export default function ApprovalPage() {
   const [currentPdfVersion, setCurrentPdfVersion] = useState<ServicePDFVersion | null>(null);
   const [showPdfHistory, setShowPdfHistory] = useState(false);
   const [customerMessage, setCustomerMessage] = useState<string>('');
+  const [teamMember, setTeamMember] = useState<any>(null);
+  const [customerContact, setCustomerContact] = useState<any>(null);
 
   useEffect(() => {
     if (shareId) {
@@ -433,7 +438,7 @@ export default function ApprovalPage() {
         feedbackHistory: approval.history?.filter(h => h.details?.comment).map(h => ({
           comment: h.details?.comment || '',
           requestedAt: h.timestamp,
-          author: h.actorName || 'Kunde'
+          author: h.actorName || customerContact?.name || 'Kunde'
         })) || [],
         approvedAt: approval.approvedAt,
         customerApprovalRequired: true,
@@ -482,9 +487,14 @@ export default function ApprovalPage() {
         }
       }
 
+      // Customer Contact Daten laden (aus approvalData)
+      if (campaignData.approvalData && (campaignData.approvalData as any).customerContact) {
+        setCustomerContact((campaignData.approvalData as any).customerContact);
+      }
+      
       // Customer Approval Message aus Approval-Service (vereinfacht)
-      if ((approval as any).customerContact) {
-        setCustomerMessage((approval as any).customerContact);
+      if ((approval as any).customerMessage) {
+        setCustomerMessage((approval as any).customerMessage);
       }
 
       // Markiere als "viewed" bei allen aktiven Status (nicht nur pending)
@@ -493,6 +503,19 @@ export default function ApprovalPage() {
       }
 
       setCampaign(campaignData);
+
+      // Lade TeamMember-Daten für den zuständigen Mitarbeiter
+      if (campaignData.organizationId && campaignData.userId) {
+        try {
+          const members = await teamMemberService.getByOrganization(campaignData.organizationId);
+          const member = members.find(m => m.userId === campaignData.userId);
+          if (member) {
+            setTeamMember(member);
+          }
+        } catch (teamError) {
+          // Fehler beim Laden der TeamMember-Daten - nicht kritisch
+        }
+      }
 
       // Lade Branding-Einstellungen
       if (campaignData.organizationId) {
@@ -524,7 +547,7 @@ export default function ApprovalPage() {
         shareId,
         'approved',
         undefined, // Kein Kommentar bei Freigabe
-        'Kunde'
+        customerContact?.name || 'Kunde'
       );
       
       // PDF-Version Status aktualisieren (vereinfachter Workflow)
@@ -544,7 +567,7 @@ export default function ApprovalPage() {
       try {
         await notificationsService.notifyApprovalGranted(
           campaign,
-          'Kunde', // Customer-Name
+          customerContact?.name || 'Kunde', // Customer-Name
           campaign.userId,
           campaign.organizationId
         );
@@ -593,9 +616,9 @@ export default function ApprovalPage() {
       // NEU: Direkte Approval-Service Nutzung (vereinfachter Workflow)
       await approvalService.requestChangesPublic(
         shareId,
-        'customer@freigabe.system', // Placeholder E-Mail
+        customerContact?.email || 'customer@freigabe.system', // Customer E-Mail
         textToSubmit.trim(),
-        'Kunde'
+        customerContact?.name || 'Kunde'
       );
       
       // PDF-Version Status aktualisieren (vereinfachter Workflow)
@@ -616,7 +639,7 @@ export default function ApprovalPage() {
         // Notification an internen User
         await notificationsService.notifyChangesRequested(
           campaign,
-          'Kunde', // Customer-Name
+          customerContact?.name || 'Kunde', // Customer-Name
           campaign.userId
         );
 
@@ -628,8 +651,8 @@ export default function ApprovalPage() {
           clientName: campaign.clientName || 'Kunde',
           createdBy: {
             userId: 'customer',
-            name: 'Kunde',
-            email: 'kunde@example.com'
+            name: customerContact?.name || 'Kunde',
+            email: customerContact?.email || 'kunde@example.com'
           },
           initialMessage: feedbackText.trim()
         });
@@ -641,7 +664,7 @@ export default function ApprovalPage() {
       const newFeedback = {
         comment: feedbackText.trim(),
         requestedAt: new Date() as any,
-        author: 'Kunde'
+        author: customerContact?.name || 'Kunde'
       };
 
       setCampaign({
@@ -808,6 +831,7 @@ export default function ApprovalPage() {
           <CustomerMessageBanner 
             feedbackHistory={campaign.approvalData?.feedbackHistory || []}
             campaign={campaign}
+            teamMember={teamMember}
           />
 
           {/* MODERNISIERTE CAMPAIGN-PREVIEW - Phase 3 */}
@@ -902,12 +926,17 @@ export default function ApprovalPage() {
               onToggle={toggleBox}
               organizationId={campaign.organizationId || ''}
               communications={campaign.approvalData?.feedbackHistory?.map((feedback, index) => {
-                const isCustomer = feedback.author === 'Kunde';
+                const isCustomer = feedback.author === 'Kunde' || feedback.author === customerContact?.name;
                 // TODO: Add recipientEmail, userName and createdBy to PRCampaign type
                 const tempCampaign = campaign as any; // Temporary type assertion for deployment
                 const senderName = isCustomer 
-                  ? (tempCampaign.recipientEmail || 'Kunde') // Kunde: Email-Empfänger aus Step 3
-                  : (tempCampaign.userName || tempCampaign.createdBy?.name || 'Teammitglied'); // Agentur: Zuständiges Teammitglied
+                  ? (customerContact?.name || tempCampaign.recipientEmail || 'Kunde') // Kunde: Name aus customerContact
+                  : (teamMember?.displayName || tempCampaign.userName || tempCampaign.createdBy?.name || 'Teammitglied'); // Agentur: Zuständiges Teammitglied
+                
+                // Avatar-URL generieren
+                const senderAvatar = isCustomer
+                  ? `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=10b981&color=fff&size=32` // Grün für Kunde
+                  : teamMember?.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`; // Blau für Team
                 
                 return {
                   id: `feedback-${index}`,
@@ -921,6 +950,7 @@ export default function ApprovalPage() {
                     role: isCustomer ? 'customer' as const : 'agency' as const
                   },
                   senderName: senderName,
+                  senderAvatar: senderAvatar,
                   createdAt: feedback.requestedAt?.toDate ? feedback.requestedAt.toDate() : new Date(),
                   isRead: true,
                   campaignId: shareId,
@@ -932,12 +962,17 @@ export default function ApprovalPage() {
                 if (!feedbackHistory || feedbackHistory.length === 0) return undefined;
                 
                 const latest = feedbackHistory[feedbackHistory.length - 1];
-                const isCustomer = latest.author === 'Kunde';
+                const isCustomer = latest.author === 'Kunde' || latest.author === customerContact?.name;
                 // TODO: Add recipientEmail, userName and createdBy to PRCampaign type
                 const tempCampaign = campaign as any; // Temporary type assertion for deployment
                 const senderName = isCustomer 
-                  ? (tempCampaign.recipientEmail || 'Kunde') // Kunde: Email-Empfänger aus Step 3
-                  : (tempCampaign.userName || tempCampaign.createdBy?.name || 'Teammitglied'); // Agentur: Zuständiges Teammitglied
+                  ? (customerContact?.name || tempCampaign.recipientEmail || 'Kunde') // Kunde: Name aus customerContact
+                  : (teamMember?.displayName || tempCampaign.userName || tempCampaign.createdBy?.name || 'Teammitglied'); // Agentur: Zuständiges Teammitglied
+                
+                // Avatar-URL generieren (gleiche Logik wie oben)
+                const senderAvatar = isCustomer
+                  ? `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=10b981&color=fff&size=32` // Grün für Kunde
+                  : teamMember?.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`; // Blau für Team
                 
                 return {
                   id: 'latest',
@@ -951,6 +986,7 @@ export default function ApprovalPage() {
                     role: isCustomer ? 'customer' as const : 'agency' as const
                   },
                   senderName: senderName,
+                  senderAvatar: senderAvatar,
                   createdAt: latest.requestedAt?.toDate ? latest.requestedAt.toDate() : new Date(),
                   isRead: true,
                   campaignId: shareId,
