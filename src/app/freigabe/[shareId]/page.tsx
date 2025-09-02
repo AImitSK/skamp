@@ -970,17 +970,16 @@ export default function ApprovalPage() {
               onToggle={toggleBox}
               organizationId={campaign.organizationId || ''}
               communications={campaign.approvalData?.feedbackHistory?.map((feedback, index) => {
-                const isCustomer = feedback.author === 'Kunde' || feedback.author === customerContact?.name;
-                // TODO: Add recipientEmail, userName and createdBy to PRCampaign type
-                const tempCampaign = campaign as any; // Temporary type assertion for deployment
+                // EINFACHE Kundenerkennung: Alles was NICHT vom Teammitglied ist, ist vom Kunden
+                const isCustomer = feedback.author !== teamMember?.displayName && 
+                                 feedback.author !== (campaign as any).userName && 
+                                 feedback.author !== (campaign as any).createdBy?.name &&
+                                 !feedback.author.includes('@'); // E-Mail-Adressen sind auch Team
                 
-                // VORSICHTIG: Nur "Kunde" durch echten Namen ersetzen
-                let senderName;
-                if (isCustomer) {
-                  senderName = feedback.author === 'Kunde' ? (customerContact?.name || 'Kunde') : feedback.author;
-                } else {
-                  senderName = teamMember?.displayName || tempCampaign.userName || tempCampaign.createdBy?.name || feedback.author;
-                }
+                // Namen setzen
+                const senderName = isCustomer 
+                  ? (customerContact?.name || 'Kunde') // Kunde: Immer Kundenname
+                  : (teamMember?.displayName || (campaign as any).userName || (campaign as any).createdBy?.name || 'Teammitglied'); // Team: Teammitglied-Name
                 
                 // Avatar-URL generieren
                 const senderAvatar = isCustomer
@@ -1011,17 +1010,16 @@ export default function ApprovalPage() {
                 if (!feedbackHistory || feedbackHistory.length === 0) return undefined;
                 
                 const latest = feedbackHistory[feedbackHistory.length - 1];
-                const isCustomer = latest.author === 'Kunde' || latest.author === customerContact?.name;
-                // TODO: Add recipientEmail, userName and createdBy to PRCampaign type
-                const tempCampaign = campaign as any; // Temporary type assertion for deployment
+                // EINFACHE Kundenerkennung: Alles was NICHT vom Teammitglied ist, ist vom Kunden
+                const isCustomer = latest.author !== teamMember?.displayName && 
+                                 latest.author !== (campaign as any).userName && 
+                                 latest.author !== (campaign as any).createdBy?.name &&
+                                 !latest.author.includes('@'); // E-Mail-Adressen sind auch Team
                 
-                // VORSICHTIG: Nur "Kunde" durch echten Namen ersetzen
-                let senderName;
-                if (isCustomer) {
-                  senderName = latest.author === 'Kunde' ? (customerContact?.name || 'Kunde') : latest.author;
-                } else {
-                  senderName = teamMember?.displayName || tempCampaign.userName || tempCampaign.createdBy?.name || latest.author;
-                }
+                // Namen setzen
+                const senderName = isCustomer 
+                  ? (customerContact?.name || 'Kunde') // Kunde: Immer Kundenname
+                  : (teamMember?.displayName || (campaign as any).userName || (campaign as any).createdBy?.name || 'Teammitglied'); // Team: Teammitglied-Name
                 
                 // Avatar-URL generieren (gleiche Logik wie oben)
                 const senderAvatar = isCustomer
