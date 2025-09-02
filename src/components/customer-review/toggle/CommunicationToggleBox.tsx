@@ -87,15 +87,14 @@ function CommunicationToggleBoxComponent({
     }
   };
 
-  // PERFORMANCE: Memoized subtitle Berechnung - nur Agentur-Nachrichten
+  // PERFORMANCE: Memoized subtitle Berechnung - ALLE Nachrichten
   const subtitle = useMemo(() => {
-    // Finde die letzte Agentur-Nachricht
-    const latestAgencyMessage = communications
-      .filter(comm => comm.sender?.role === 'agency')
+    // Finde die allerletzte Nachricht (egal ob Team oder Kunde)
+    const latestMessage = communications
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
     
-    if (latestAgencyMessage) {
-      return `Letzte Nachricht: ${formatTimeAgo(latestAgencyMessage.createdAt)}`;
+    if (latestMessage) {
+      return `Letzte Nachricht: ${formatTimeAgo(latestMessage.createdAt)}`;
     }
     if (communications.length > 0) {
       return `${communications.length} Nachrichten`;
