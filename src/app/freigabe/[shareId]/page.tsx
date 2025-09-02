@@ -126,11 +126,13 @@ const approvalStatusConfig = {
 function CustomerMessageBanner({ 
   feedbackHistory,
   campaign,
-  teamMember 
+  teamMember,
+  customerContact
 }: { 
   feedbackHistory: any[],
   campaign: any,
-  teamMember: any
+  teamMember: any,
+  customerContact: any
 }) {
   if (!feedbackHistory || feedbackHistory.length === 0) return null;
   
@@ -879,6 +881,7 @@ export default function ApprovalPage() {
             feedbackHistory={campaign.approvalData?.feedbackHistory || []}
             campaign={campaign}
             teamMember={teamMember}
+            customerContact={customerContact}
           />
 
           {/* MODERNISIERTE CAMPAIGN-PREVIEW - Phase 3 */}
