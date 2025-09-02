@@ -134,9 +134,12 @@ function CustomerMessageBanner({
 }) {
   if (!feedbackHistory || feedbackHistory.length === 0) return null;
   
-  // Finde die letzte Nachricht von der Agentur
+  // Finde die letzte Nachricht von der Agentur (alles was NICHT vom Kunden ist)
   const agencyMessages = feedbackHistory.filter(msg => 
-    msg.author !== 'Kunde' && msg.author !== 'Customer'
+    msg.author !== 'Kunde' && 
+    msg.author !== 'Customer' && 
+    msg.author !== customerContact?.name &&
+    !(teamMember && msg.author === customerContact?.name) // Sicherheitscheck
   );
   
   if (agencyMessages.length === 0) return null;
@@ -970,22 +973,20 @@ export default function ApprovalPage() {
               onToggle={toggleBox}
               organizationId={campaign.organizationId || ''}
               communications={campaign.approvalData?.feedbackHistory?.map((feedback, index) => {
-                const isCustomer = feedback.author === 'Kunde' || feedback.author === customerContact?.name;
-                // TODO: Add recipientEmail, userName and createdBy to PRCampaign type
-                const tempCampaign = campaign as any; // Temporary type assertion for deployment
+                // EINFACHE Erkennung basierend auf Email-Adressen in der feedbackHistory
+                const isCustomer = feedback.author === 'Kunde' || 
+                                 feedback.author === customerContact?.name ||
+                                 (approval && approval.recipients?.[0]?.name && feedback.author === approval.recipients[0].name);
                 
-                // VORSICHTIG: Nur "Kunde" durch echten Namen ersetzen
-                let senderName;
+                // Namen und Avatar basierend auf isCustomer
+                let senderName, senderAvatar;
                 if (isCustomer) {
-                  senderName = feedback.author === 'Kunde' ? (customerContact?.name || 'Kunde') : feedback.author;
+                  senderName = customerContact?.name || 'Kunde';
+                  senderAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=10b981&color=fff&size=32`; // Grün für Kunde
                 } else {
-                  senderName = teamMember?.displayName || tempCampaign.userName || tempCampaign.createdBy?.name || feedback.author;
+                  senderName = teamMember?.displayName || feedback.author;
+                  senderAvatar = teamMember?.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`; // Blau für Team
                 }
-                
-                // Avatar-URL generieren
-                const senderAvatar = isCustomer
-                  ? `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=10b981&color=fff&size=32` // Grün für Kunde
-                  : teamMember?.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`; // Blau für Team
                 
                 return {
                   id: `feedback-${index}`,
@@ -1011,22 +1012,20 @@ export default function ApprovalPage() {
                 if (!feedbackHistory || feedbackHistory.length === 0) return undefined;
                 
                 const latest = feedbackHistory[feedbackHistory.length - 1];
-                const isCustomer = latest.author === 'Kunde' || latest.author === customerContact?.name;
-                // TODO: Add recipientEmail, userName and createdBy to PRCampaign type
-                const tempCampaign = campaign as any; // Temporary type assertion for deployment
+                // EINFACHE Erkennung basierend auf Email-Adressen in der feedbackHistory
+                const isCustomer = latest.author === 'Kunde' || 
+                                 latest.author === customerContact?.name ||
+                                 (approval && approval.recipients?.[0]?.name && latest.author === approval.recipients[0].name);
                 
-                // VORSICHTIG: Nur "Kunde" durch echten Namen ersetzen
-                let senderName;
+                // Namen und Avatar basierend auf isCustomer
+                let senderName, senderAvatar;
                 if (isCustomer) {
-                  senderName = latest.author === 'Kunde' ? (customerContact?.name || 'Kunde') : latest.author;
+                  senderName = customerContact?.name || 'Kunde';
+                  senderAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=10b981&color=fff&size=32`; // Grün für Kunde
                 } else {
-                  senderName = teamMember?.displayName || tempCampaign.userName || tempCampaign.createdBy?.name || latest.author;
+                  senderName = teamMember?.displayName || latest.author;
+                  senderAvatar = teamMember?.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`; // Blau für Team
                 }
-                
-                // Avatar-URL generieren (gleiche Logik wie oben)
-                const senderAvatar = isCustomer
-                  ? `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=10b981&color=fff&size=32` // Grün für Kunde
-                  : teamMember?.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`; // Blau für Team
                 
                 return {
                   id: 'latest',
