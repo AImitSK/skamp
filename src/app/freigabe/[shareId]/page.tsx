@@ -436,22 +436,18 @@ export default function ApprovalPage() {
                 approval.status === 'changes_requested' ? 'commented' :
                 approval.status === 'pending' ? 'pending' : 'viewed',
         feedbackHistory: approval.history?.filter(h => h.details?.comment).map(h => {
-          // Bestimme ob es der Kunde oder das Team ist
-          const isCustomerMessage = h.actorName === 'Kunde' || 
-                                   h.actorEmail?.includes('customer') || 
-                                   h.actorEmail?.includes('freigabe.system');
+          // Verwende den Namen aus recipients für Kunden, sonst actorName
+          let authorName = h.actorName || 'Teammitglied';
           
-          // Verwende den Namen aus recipients oder customerContact für konsistente Anzeige
-          let authorName = h.actorName || 'Unbekannt';
-          if (isCustomerMessage && approval.recipients?.[0]?.name) {
-            // Kunde: Verwende den Namen aus recipients
-            authorName = approval.recipients[0].name;
-          } else if (isCustomerMessage && customerContact?.name) {
-            // Kunde: Fallback zu customerContact
-            authorName = customerContact.name;
-          } else if (!isCustomerMessage) {
-            // Team: Behalte den originalen actorName (wird später durch teamMember.displayName ersetzt)
-            authorName = h.actorName || 'Teammitglied';
+          // NUR für Kundennachrichten: Ersetze "Kunde" durch den echten Namen
+          if (h.actorName === 'Kunde' || h.actorEmail?.includes('customer') || h.actorEmail?.includes('freigabe.system')) {
+            if (approval.recipients?.[0]?.name) {
+              authorName = approval.recipients[0].name;
+            } else if (customerContact?.name) {
+              authorName = customerContact.name;
+            } else {
+              authorName = 'Kunde';
+            }
           }
           
           return {
@@ -957,15 +953,13 @@ export default function ApprovalPage() {
               onToggle={toggleBox}
               organizationId={campaign.organizationId || ''}
               communications={campaign.approvalData?.feedbackHistory?.map((feedback, index) => {
-                // Bestimme ob es der Kunde oder das Team ist
-                const isCustomer = feedback.author !== 'Teammitglied' && 
-                                 feedback.author !== teamMember?.displayName &&
-                                 !feedback.author.includes('@');
-                
-                // Verwende teamMember.displayName für Team-Nachrichten, sonst den author aus feedbackHistory
-                const senderName = !isCustomer && teamMember?.displayName ? 
-                                 teamMember.displayName : 
-                                 feedback.author;
+                const isCustomer = feedback.author === 'Kunde' || feedback.author === customerContact?.name || 
+                                 (approval.recipients?.[0]?.name && feedback.author === approval.recipients[0].name);
+                // TODO: Add recipientEmail, userName and createdBy to PRCampaign type
+                const tempCampaign = campaign as any; // Temporary type assertion for deployment
+                const senderName = isCustomer 
+                  ? feedback.author // Verwende bereits normalisierten Kundennamen
+                  : (teamMember?.displayName || tempCampaign.userName || tempCampaign.createdBy?.name || feedback.author); // Agentur: Zuständiges Teammitglied
                 
                 // Avatar-URL generieren
                 const senderAvatar = isCustomer
@@ -996,15 +990,13 @@ export default function ApprovalPage() {
                 if (!feedbackHistory || feedbackHistory.length === 0) return undefined;
                 
                 const latest = feedbackHistory[feedbackHistory.length - 1];
-                // Bestimme ob es der Kunde oder das Team ist
-                const isCustomer = latest.author !== 'Teammitglied' && 
-                                 latest.author !== teamMember?.displayName &&
-                                 !latest.author.includes('@');
-                
-                // Verwende teamMember.displayName für Team-Nachrichten, sonst den author aus feedbackHistory
-                const senderName = !isCustomer && teamMember?.displayName ? 
-                                 teamMember.displayName : 
-                                 latest.author;
+                const isCustomer = latest.author === 'Kunde' || latest.author === customerContact?.name || 
+                                 (approval.recipients?.[0]?.name && latest.author === approval.recipients[0].name);
+                // TODO: Add recipientEmail, userName and createdBy to PRCampaign type
+                const tempCampaign = campaign as any; // Temporary type assertion for deployment
+                const senderName = isCustomer 
+                  ? latest.author // Verwende bereits normalisierten Kundennamen
+                  : (teamMember?.displayName || tempCampaign.userName || tempCampaign.createdBy?.name || latest.author); // Agentur: Zuständiges Teammitglied
                 
                 // Avatar-URL generieren (gleiche Logik wie oben)
                 const senderAvatar = isCustomer
