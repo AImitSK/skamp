@@ -150,19 +150,36 @@ function CustomerMessageBanner({
   const formatTimeAgo = (date: any) => {
     if (!date) return 'gerade eben';
     const dateObj = date?.toDate ? date.toDate() : new Date(date);
+    
+    // Validierung: Prüfe ob Datum gültig ist
+    if (!dateObj || isNaN(dateObj.getTime())) {
+      return 'unbekannt';
+    }
+    
     const now = new Date();
     const diffInMinutes = Math.floor((now.getTime() - dateObj.getTime()) / (1000 * 60));
     
+    // Zusätzliche Validierung für negative Zeiten
+    if (diffInMinutes < 0) return 'gerade eben';
     if (diffInMinutes < 1) return 'gerade eben';
     if (diffInMinutes < 60) return `vor ${diffInMinutes} Min.`;
     if (diffInMinutes < 1440) return `vor ${Math.floor(diffInMinutes / 60)} Std.`;
     return `vor ${Math.floor(diffInMinutes / 1440)} Tag(en)`;
   };
   
+  // Avatar-URL generieren
+  const senderAvatar = teamMember?.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`; // Blau für Team
+  
   return (
     <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-6">
       <div className="flex">
-        <div className="text-2xl mr-3 flex-shrink-0">💬</div>
+        <div className="mr-3 flex-shrink-0">
+          <img
+            src={senderAvatar}
+            alt={senderName}
+            className="h-8 w-8 rounded-full"
+          />
+        </div>
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
             <h3 className="font-medium text-green-900">Neueste Nachricht</h3>
