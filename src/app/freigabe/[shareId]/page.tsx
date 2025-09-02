@@ -956,9 +956,14 @@ export default function ApprovalPage() {
                 const isCustomer = feedback.author === 'Kunde' || feedback.author === customerContact?.name;
                 // TODO: Add recipientEmail, userName and createdBy to PRCampaign type
                 const tempCampaign = campaign as any; // Temporary type assertion for deployment
-                const senderName = isCustomer 
-                  ? feedback.author // Verwende bereits normalisierten Kundennamen
-                  : (teamMember?.displayName || tempCampaign.userName || tempCampaign.createdBy?.name || feedback.author); // Agentur: Zuständiges Teammitglied
+                
+                // VORSICHTIG: Nur "Kunde" durch echten Namen ersetzen
+                let senderName;
+                if (isCustomer) {
+                  senderName = feedback.author === 'Kunde' ? (customerContact?.name || 'Kunde') : feedback.author;
+                } else {
+                  senderName = teamMember?.displayName || tempCampaign.userName || tempCampaign.createdBy?.name || feedback.author;
+                }
                 
                 // Avatar-URL generieren
                 const senderAvatar = isCustomer
@@ -992,9 +997,14 @@ export default function ApprovalPage() {
                 const isCustomer = latest.author === 'Kunde' || latest.author === customerContact?.name;
                 // TODO: Add recipientEmail, userName and createdBy to PRCampaign type
                 const tempCampaign = campaign as any; // Temporary type assertion for deployment
-                const senderName = isCustomer 
-                  ? latest.author // Verwende bereits normalisierten Kundennamen
-                  : (teamMember?.displayName || tempCampaign.userName || tempCampaign.createdBy?.name || latest.author); // Agentur: Zuständiges Teammitglied
+                
+                // VORSICHTIG: Nur "Kunde" durch echten Namen ersetzen
+                let senderName;
+                if (isCustomer) {
+                  senderName = latest.author === 'Kunde' ? (customerContact?.name || 'Kunde') : latest.author;
+                } else {
+                  senderName = teamMember?.displayName || tempCampaign.userName || tempCampaign.createdBy?.name || latest.author;
+                }
                 
                 // Avatar-URL generieren (gleiche Logik wie oben)
                 const senderAvatar = isCustomer
