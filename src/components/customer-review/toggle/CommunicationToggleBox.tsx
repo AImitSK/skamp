@@ -130,9 +130,18 @@ function CommunicationToggleBoxComponent({
           {latestMessage && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <div className="flex items-start space-x-3">
-                <span className="text-2xl mt-0.5" role="img" aria-label={getTypeLabel(latestMessage.type)}>
-                  {getTypeIcon(latestMessage.type)}
-                </span>
+                {/* Avatar statt Icon */}
+                <div className="flex-shrink-0">
+                  {latestMessage.senderAvatar ? (
+                    <img
+                      src={latestMessage.senderAvatar}
+                      alt={latestMessage.senderName || latestMessage.sender?.name}
+                      className="h-8 w-8 rounded-full"
+                    />
+                  ) : (
+                    <UserCircleIcon className="h-8 w-8 text-gray-400" />
+                  )}
+                </div>
                 <div className="flex-grow min-w-0">
                   <div className="flex items-center space-x-2 mb-2">
                     <span className="font-medium text-green-900">
