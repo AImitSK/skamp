@@ -1011,7 +1011,7 @@ export default function ApprovalPage() {
                   },
                   senderName: senderName,
                   senderAvatar: senderAvatar,
-                  createdAt: feedback.requestedAt instanceof Date ? feedback.requestedAt : new Date(feedback.requestedAt as any),
+                  createdAt: feedback.requestedAt?.toDate ? feedback.requestedAt.toDate() : (feedback.requestedAt instanceof Date ? feedback.requestedAt : new Date()),
                   isRead: true,
                   campaignId: shareId,
                   organizationId: campaign.organizationId || ''
@@ -1057,7 +1057,7 @@ export default function ApprovalPage() {
                   },
                   senderName: senderName,
                   senderAvatar: senderAvatar,
-                  createdAt: latest.requestedAt instanceof Date ? latest.requestedAt : new Date(latest.requestedAt as any),
+                  createdAt: latest.requestedAt?.toDate ? latest.requestedAt.toDate() : (latest.requestedAt instanceof Date ? latest.requestedAt : new Date()),
                   isRead: true,
                   campaignId: shareId,
                   organizationId: campaign.organizationId || ''
