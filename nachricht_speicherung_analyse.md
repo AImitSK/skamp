@@ -26,9 +26,10 @@ await approvalService.submitDecisionPublic(
 ```
 
 ### Im approval-service.ts wird daraus:
-- `actorName: authorName || 'Kunde'` (Zeile 933)
-- `actorEmail: recipientEmail || 'public-access@freigabe.system'` (Zeile 934)
-- `timestamp: Timestamp.now()` (Zeile 931)
+- `action: 'changes_requested'` (Zeile 933) - **KUNDE-KENNZEICHEN**
+- `actorName: authorName || 'Kunde'` (Zeile 934)
+- `actorEmail: recipientEmail || 'public-access@freigabe.system'` (Zeile 935)
+- `timestamp: Timestamp.now()` (Zeile 932)
 
 ## 2. TEAM (Step 3 Edit-Seite)
 
@@ -47,23 +48,29 @@ const approvalData = {
 ```
 
 ### Im approval-service.ts wird daraus:
-- `actorName: 'Ihre Nachricht'` (Zeile 273) - FEST CODIERT!
-- `actorEmail: 'agentur@celeropress.com'` (Zeile 274) - FEST CODIERT!
-- `timestamp: Timestamp.now()` (Zeile 271)
+- `action: 'commented'` (Zeile 273) - **TEAM-KENNZEICHEN**
+- `actorName: teamMemberData?.name || 'Teammitglied'` (Zeile 274) - BEHOBEN ✅
+- `actorEmail: teamMemberData?.email || 'team@celeropress.com'` (Zeile 275) - BEHOBEN ✅
+- `timestamp: Timestamp.now()` (Zeile 272)
 
-## PROBLEM IDENTIFIZIERT:
+## ERKENNTNISSE:
 
-### Kunde:
-- ✅ Name: Kommt aus `customerContact?.name` 
-- ✅ Email: Kommt aus `customerContact?.email`
-- ✅ Zeit: Wird korrekt gesetzt
+### Unterscheidung KUNDE vs TEAM:
+- **KUNDE**: `action: 'changes_requested'`
+- **TEAM**: `action: 'commented'`
+- ❌ NICHT über Namen oder Email unterscheiden (beide können gleich sein!)
+- ✅ Über `action`-Feld in der feedbackHistory unterscheiden
 
-### Team: 
-- ❌ Name: Fest kodiert als "Ihre Nachricht" statt dem echten Teammitglied-Namen
-- ❌ Email: Fest kodiert als "agentur@celeropress.com" 
-- ✅ Zeit: Wird korrekt gesetzt
+### Zeit-Problem:
+- feedbackHistory wird nicht chronologisch sortiert angezeigt
+- Neueste Nachrichten sollten zuletzt/oben stehen
+- Aktuell: 12:52 → 12:50 → 12:52 (falsche Reihenfolge)
 
 ## LÖSUNG:
-Bei Step 3 müssen wir beim Erstellen der Approval den echten Teammitglied-Namen und dessen Email übergeben, statt die fest kodierten Werte zu verwenden.
+1. In CommunicationToggleBox: `feedback.action === 'changes_requested'` für Kunde-Erkennung
+2. feedbackHistory nach timestamp sortieren
+3. Team-Namen/Email bereits behoben
 
-Die Stelle ist in `/src/lib/firebase/approval-service.ts` Zeile 271-276 in der `createFromCampaignWithMessage` Funktion.
+### Stellen zu ändern:
+- `/src/app/freigabe/[shareId]/page.tsx` Zeilen 986-990 und 1025-1027 (isCustomer-Logik)
+- Sort-Logic für feedbackHistory hinzufügen

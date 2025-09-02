@@ -978,11 +978,14 @@ export default function ApprovalPage() {
               isExpanded={isOpen('communication')}
               onToggle={toggleBox}
               organizationId={campaign.organizationId || ''}
-              communications={campaign.approvalData?.feedbackHistory?.map((feedback, index) => {
-                // EINFACHE Erkennung basierend auf Email-Adressen in der feedbackHistory
-                const isCustomer = feedback.author === 'Kunde' || 
-                                 feedback.author === customerContact?.name ||
-                                 (approval && approval.recipients?.[0]?.name && feedback.author === approval.recipients[0].name);
+              communications={campaign.approvalData?.feedbackHistory?.sort((a, b) => {
+                // Sortiere nach timestamp - neueste zuerst
+                const aTime = a.requestedAt ? new Date(a.requestedAt).getTime() : new Date(a.timestamp?.toDate ? a.timestamp.toDate() : a.timestamp).getTime();
+                const bTime = b.requestedAt ? new Date(b.requestedAt).getTime() : new Date(b.timestamp?.toDate ? b.timestamp.toDate() : b.timestamp).getTime();
+                return bTime - aTime;
+              }).map((feedback, index) => {
+                // KORREKTE Erkennung basierend auf action-Feld
+                const isCustomer = feedback.action === 'changes_requested';
                 
                 // Namen und Avatar basierend auf isCustomer
                 let senderName, senderAvatar;
@@ -1017,11 +1020,16 @@ export default function ApprovalPage() {
                 const feedbackHistory = campaign.approvalData?.feedbackHistory;
                 if (!feedbackHistory || feedbackHistory.length === 0) return undefined;
                 
-                const latest = feedbackHistory[feedbackHistory.length - 1];
-                // EINFACHE Erkennung basierend auf Email-Adressen in der feedbackHistory
-                const isCustomer = latest.author === 'Kunde' || 
-                                 latest.author === customerContact?.name ||
-                                 (approval && approval.recipients?.[0]?.name && latest.author === approval.recipients[0].name);
+                // Sortierte Liste - neueste zuerst
+                const sortedHistory = feedbackHistory.sort((a, b) => {
+                  const aTime = a.requestedAt ? new Date(a.requestedAt).getTime() : new Date(a.timestamp?.toDate ? a.timestamp.toDate() : a.timestamp).getTime();
+                  const bTime = b.requestedAt ? new Date(b.requestedAt).getTime() : new Date(b.timestamp?.toDate ? b.timestamp.toDate() : b.timestamp).getTime();
+                  return bTime - aTime;
+                });
+                
+                const latest = sortedHistory[0]; // Erste = neueste
+                // KORREKTE Erkennung basierend auf action-Feld
+                const isCustomer = latest.action === 'changes_requested';
                 
                 // Namen und Avatar basierend auf isCustomer
                 let senderName, senderAvatar;
