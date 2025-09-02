@@ -75,7 +75,7 @@ class UserService {
   }
 
   /**
-   * Aktualisiert Benutzerprofil (Firebase Auth + Firestore)
+   * Aktualisiert Benutzerprofil (Firebase Auth + Firestore + TeamMembers)
    */
   async updateProfile(
     user: User, 
@@ -102,6 +102,38 @@ class UserService {
       }
 
       await setDoc(userRef, firestoreUpdateData, { merge: true });
+
+      // 3. Update team_members Collection für alle Organisationen des Users
+      if (updateData.displayName !== undefined) {
+        try {
+          // Importiere teamMemberService
+          const { teamMemberService } = await import('./team-service-enhanced');
+          const { collection, query, where, getDocs, updateDoc } = await import('firebase/firestore');
+          
+          // Finde alle team_members Einträge für diesen User
+          const teamMembersQuery = query(
+            collection(db, 'team_members'),
+            where('userId', '==', user.uid)
+          );
+          
+          const querySnapshot = await getDocs(teamMembersQuery);
+          
+          // Update jeden gefundenen team_member Eintrag
+          const updatePromises = querySnapshot.docs.map(docSnapshot => {
+            return updateDoc(docSnapshot.ref, {
+              displayName: updateData.displayName,
+              updatedAt: serverTimestamp()
+            });
+          });
+          
+          await Promise.all(updatePromises);
+          
+          console.log(`Updated ${updatePromises.length} team_member entries with new displayName`);
+        } catch (teamUpdateError) {
+          // Fehler beim Update der team_members nicht kritisch
+          console.error('Fehler beim Update der team_members:', teamUpdateError);
+        }
+      }
     } catch (error) {
       console.error('Fehler beim Aktualisieren des Profils:', error);
       throw new Error('Profil konnte nicht aktualisiert werden');

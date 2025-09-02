@@ -487,9 +487,20 @@ export default function ApprovalPage() {
         }
       }
 
-      // Customer Contact Daten laden (aus approvalData)
+      // Customer Contact Daten laden (aus approvalData oder approval)
       if (campaignData.approvalData && (campaignData.approvalData as any).customerContact) {
         setCustomerContact((campaignData.approvalData as any).customerContact);
+      } else if ((approval as any).customerContact) {
+        // Fallback: Direkt aus approval laden
+        setCustomerContact((approval as any).customerContact);
+      } else if ((approval as any).recipients && (approval as any).recipients.length > 0) {
+        // Fallback: Ersten Empfänger als customerContact verwenden
+        const firstRecipient = (approval as any).recipients[0];
+        setCustomerContact({
+          name: firstRecipient.name || 'Kunde',
+          email: firstRecipient.email || '',
+          role: firstRecipient.role || ''
+        });
       }
       
       // Customer Approval Message aus Approval-Service (vereinfacht)
