@@ -416,6 +416,7 @@ export default function ApprovalPage() {
   const [customerMessage, setCustomerMessage] = useState<string>('');
   const [teamMember, setTeamMember] = useState<any>(null);
   const [customerContact, setCustomerContact] = useState<any>(null);
+  const [approval, setApproval] = useState<any>(null);
 
   useEffect(() => {
     if (shareId) {
@@ -429,15 +430,17 @@ export default function ApprovalPage() {
       setError(null);
 
       // NEU: Direkte Approval-Service Nutzung (vereinfachter 1-stufiger Workflow)
-      const approval = await approvalService.getByShareId(shareId);
+      const approvalData = await approvalService.getByShareId(shareId);
       
-      if (!approval) {
+      if (!approvalData) {
         setError('Freigabe-Link nicht gefunden oder nicht mehr gültig.');
         return;
       }
       
+      setApproval(approvalData);
+      
       // Lade zugehörige Campaign über approvalService
-      const campaignData = await prService.getById(approval.campaignId);
+      const campaignData = await prService.getById(approvalData.campaignId);
       
       if (!campaignData) {
         setError('Zugehörige Kampagne nicht gefunden.');
@@ -451,20 +454,20 @@ export default function ApprovalPage() {
       }
       
       // Vereinfachte Approval-Daten (1-stufiger Workflow)
-      const approvalData = {
-        shareId: approval.shareId,
-        status: approval.status === 'approved' ? 'approved' : 
-                approval.status === 'rejected' ? 'commented' :
-                approval.status === 'changes_requested' ? 'commented' :
-                approval.status === 'pending' ? 'pending' : 'viewed',
-        feedbackHistory: approval.history?.filter(h => h.details?.comment).map(h => {
+      const approvalDataForCampaign = {
+        shareId: approvalData.shareId,
+        status: approvalData.status === 'approved' ? 'approved' : 
+                approvalData.status === 'rejected' ? 'commented' :
+                approvalData.status === 'changes_requested' ? 'commented' :
+                approvalData.status === 'pending' ? 'pending' : 'viewed',
+        feedbackHistory: approvalData.history?.filter(h => h.details?.comment).map(h => {
           // Verwende den Namen aus recipients für Kunden, sonst actorName
           let authorName = h.actorName || 'Teammitglied';
           
           // NUR für Kundennachrichten: Ersetze "Kunde" durch den echten Namen
           if (h.actorName === 'Kunde' || h.actorEmail?.includes('customer') || h.actorEmail?.includes('freigabe.system')) {
-            if (approval.recipients?.[0]?.name) {
-              authorName = approval.recipients[0].name;
+            if (approvalData.recipients?.[0]?.name) {
+              authorName = approvalData.recipients[0].name;
             } else if (customerContact?.name) {
               authorName = customerContact.name;
             } else {
@@ -478,25 +481,25 @@ export default function ApprovalPage() {
             author: authorName
           };
         }) || [],
-        approvedAt: approval.approvedAt,
+        approvedAt: approvalData.approvedAt,
         customerApprovalRequired: true,
         teamApprovalRequired: false,
         teamApprovers: [],
         currentStage: 'customer' as const,
-        workflowStartedAt: approval.requestedAt,
-        workflowId: approval.id
+        workflowStartedAt: approvalData.requestedAt,
+        workflowId: approvalData.id
       };
       
       // Merge Campaign mit vereinfachten Approval-Daten
-      campaignData.approvalData = approvalData as any;
+      campaignData.approvalData = approvalDataForCampaign as any;
 
       // 🐛 TEMP DEBUG: Prüfe Content-Properties
 
 
       // PDF-Versionen laden (vereinfachter 1-stufiger Workflow)
-      if (approval.campaignId) {
+      if (approvalData.campaignId) {
         try {
-          const pdfVersions = await pdfVersionsService.getVersionHistory(approval.campaignId);
+          const pdfVersions = await pdfVersionsService.getVersionHistory(approvalData.campaignId);
           
           setPdfVersions(pdfVersions);
           
@@ -528,12 +531,12 @@ export default function ApprovalPage() {
       // Customer Contact Daten laden (aus approvalData oder approval)
       if (campaignData.approvalData && (campaignData.approvalData as any).customerContact) {
         setCustomerContact((campaignData.approvalData as any).customerContact);
-      } else if ((approval as any).customerContact) {
+      } else if ((approvalData as any).customerContact) {
         // Fallback: Direkt aus approval laden
-        setCustomerContact((approval as any).customerContact);
-      } else if ((approval as any).recipients && (approval as any).recipients.length > 0) {
+        setCustomerContact((approvalData as any).customerContact);
+      } else if ((approvalData as any).recipients && (approvalData as any).recipients.length > 0) {
         // Fallback: Ersten Empfänger als customerContact verwenden
-        const firstRecipient = (approval as any).recipients[0];
+        const firstRecipient = (approvalData as any).recipients[0];
         setCustomerContact({
           name: firstRecipient.name || 'Kunde',
           email: firstRecipient.email || '',
@@ -542,12 +545,12 @@ export default function ApprovalPage() {
       }
       
       // Customer Approval Message aus Approval-Service (vereinfacht)
-      if ((approval as any).customerMessage) {
-        setCustomerMessage((approval as any).customerMessage);
+      if ((approvalData as any).customerMessage) {
+        setCustomerMessage((approvalData as any).customerMessage);
       }
 
       // Markiere als "viewed" bei allen aktiven Status (nicht nur pending)
-      if (approval.status === 'pending' || approval.status === 'in_review' || approval.status === 'changes_requested') {
+      if (approvalData.status === 'pending' || approvalData.status === 'in_review' || approvalData.status === 'changes_requested') {
         await approvalService.markAsViewed(shareId);
       }
 
