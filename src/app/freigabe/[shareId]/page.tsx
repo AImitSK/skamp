@@ -981,7 +981,7 @@ export default function ApprovalPage() {
                 // Sortiere nach timestamp - neueste zuerst
                 const aTime = a.requestedAt ? (a.requestedAt instanceof Date ? a.requestedAt.getTime() : new Date(a.requestedAt as any).getTime()) : 0;
                 const bTime = b.requestedAt ? (b.requestedAt instanceof Date ? b.requestedAt.getTime() : new Date(b.requestedAt as any).getTime()) : 0;
-                return bTime - aTime;
+                return aTime - bTime; // Umgekehrt: Älteste zuerst, neueste unten
               }).map((feedback, index) => {
                 // KORREKTE Erkennung basierend auf action-Feld
                 const isCustomer = feedback.action === 'changes_requested';
@@ -1001,8 +1001,8 @@ export default function ApprovalPage() {
                 return {
                   id: `feedback-${index}`,
                   type: 'feedback' as const,
-                  content: feedback.comment,
-                  message: feedback.comment,
+                  content: feedback.comment || '',
+                  message: feedback.comment || '',
                   sender: {
                     id: 'unknown',
                     name: senderName,
@@ -1021,11 +1021,11 @@ export default function ApprovalPage() {
                 const feedbackHistory = campaign.approvalData?.feedbackHistory;
                 if (!feedbackHistory || feedbackHistory.length === 0) return undefined;
                 
-                // Sortierte Liste - neueste zuerst
+                // Sortierte Liste - neueste zuerst für latestMessage
                 const sortedHistory = feedbackHistory.sort((a, b) => {
                   const aTime = a.requestedAt ? (a.requestedAt instanceof Date ? a.requestedAt.getTime() : new Date(a.requestedAt as any).getTime()) : 0;
                   const bTime = b.requestedAt ? (b.requestedAt instanceof Date ? b.requestedAt.getTime() : new Date(b.requestedAt as any).getTime()) : 0;
-                  return bTime - aTime;
+                  return bTime - aTime; // Neueste zuerst für latestMessage
                 });
                 
                 const latest = sortedHistory[0]; // Erste = neueste
@@ -1047,8 +1047,8 @@ export default function ApprovalPage() {
                 return {
                   id: 'latest',
                   type: 'feedback' as const,
-                  content: latest.comment,
-                  message: latest.comment,
+                  content: latest.comment || '',
+                  message: latest.comment || '',
                   sender: {
                     id: 'unknown',
                     name: senderName,
