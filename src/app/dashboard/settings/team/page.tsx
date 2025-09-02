@@ -122,9 +122,30 @@ export default function TeamSettingsPage() {
       const members = await teamMemberService.getByOrganization(organizationId);
       
       // Stelle sicher, dass Owner immer als aktiv angezeigt wird
-      const processedMembers = members.map(member => ({
-        ...member,
-        status: member.role === 'owner' ? 'active' : member.status
+      // und synchronisiere displayName für den aktuellen User
+      const processedMembers = await Promise.all(members.map(async (member) => {
+        let updatedMember = {
+          ...member,
+          status: member.role === 'owner' ? 'active' : member.status
+        };
+        
+        // Synchronisiere displayName für den aktuellen User
+        if (user && member.userId === user.uid && member.displayName !== user.displayName) {
+          console.log('📝 Synchronizing displayName for current user');
+          try {
+            // Update team_member document mit aktuellem displayName
+            await teamMemberService.update(
+              member.id!,
+              { displayName: user.displayName || user.email || '' },
+              { organizationId, userId: user.uid }
+            );
+            updatedMember.displayName = user.displayName || user.email || '';
+          } catch (syncError) {
+            console.error('Error syncing displayName:', syncError);
+          }
+        }
+        
+        return updatedMember;
       }));
       
       setTeamMembers(processedMembers);

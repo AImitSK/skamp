@@ -435,11 +435,28 @@ export default function ApprovalPage() {
                 approval.status === 'rejected' ? 'commented' :
                 approval.status === 'changes_requested' ? 'commented' :
                 approval.status === 'pending' ? 'pending' : 'viewed',
-        feedbackHistory: approval.history?.filter(h => h.details?.comment).map(h => ({
-          comment: h.details?.comment || '',
-          requestedAt: h.timestamp,
-          author: h.actorName || customerContact?.name || 'Kunde'
-        })) || [],
+        feedbackHistory: approval.history?.filter(h => h.details?.comment).map(h => {
+          // Bestimme ob es der Kunde oder das Team ist
+          const isCustomerMessage = h.actorName === 'Kunde' || 
+                                   h.actorEmail?.includes('customer') || 
+                                   h.actorEmail?.includes('freigabe.system');
+          
+          // Verwende den Namen aus recipients oder customerContact für konsistente Anzeige
+          let authorName = h.actorName || 'Unbekannt';
+          if (isCustomerMessage && approval.recipients?.[0]?.name) {
+            authorName = approval.recipients[0].name;
+          } else if (isCustomerMessage && customerContact?.name) {
+            authorName = customerContact.name;
+          } else if (!isCustomerMessage && h.actorName && h.actorName !== 'Teammitglied') {
+            authorName = h.actorName;
+          }
+          
+          return {
+            comment: h.details?.comment || '',
+            requestedAt: h.timestamp,
+            author: authorName
+          };
+        }) || [],
         approvedAt: approval.approvedAt,
         customerApprovalRequired: true,
         teamApprovalRequired: false,
@@ -937,12 +954,12 @@ export default function ApprovalPage() {
               onToggle={toggleBox}
               organizationId={campaign.organizationId || ''}
               communications={campaign.approvalData?.feedbackHistory?.map((feedback, index) => {
-                const isCustomer = feedback.author === 'Kunde' || feedback.author === customerContact?.name;
-                // TODO: Add recipientEmail, userName and createdBy to PRCampaign type
-                const tempCampaign = campaign as any; // Temporary type assertion for deployment
-                const senderName = isCustomer 
-                  ? (customerContact?.name || tempCampaign.recipientEmail || 'Kunde') // Kunde: Name aus customerContact
-                  : (teamMember?.displayName || tempCampaign.userName || tempCampaign.createdBy?.name || 'Teammitglied'); // Agentur: Zuständiges Teammitglied
+                // Der author wurde bereits in der feedbackHistory normalisiert
+                const isCustomer = !feedback.author.includes('@') && 
+                                 feedback.author !== 'Teammitglied' && 
+                                 feedback.author !== teamMember?.displayName;
+                
+                const senderName = feedback.author; // Verwende den bereits normalisierten Namen
                 
                 // Avatar-URL generieren
                 const senderAvatar = isCustomer
@@ -973,12 +990,12 @@ export default function ApprovalPage() {
                 if (!feedbackHistory || feedbackHistory.length === 0) return undefined;
                 
                 const latest = feedbackHistory[feedbackHistory.length - 1];
-                const isCustomer = latest.author === 'Kunde' || latest.author === customerContact?.name;
-                // TODO: Add recipientEmail, userName and createdBy to PRCampaign type
-                const tempCampaign = campaign as any; // Temporary type assertion for deployment
-                const senderName = isCustomer 
-                  ? (customerContact?.name || tempCampaign.recipientEmail || 'Kunde') // Kunde: Name aus customerContact
-                  : (teamMember?.displayName || tempCampaign.userName || tempCampaign.createdBy?.name || 'Teammitglied'); // Agentur: Zuständiges Teammitglied
+                // Der author wurde bereits in der feedbackHistory normalisiert
+                const isCustomer = !latest.author.includes('@') && 
+                                 latest.author !== 'Teammitglied' && 
+                                 latest.author !== teamMember?.displayName;
+                
+                const senderName = latest.author; // Verwende den bereits normalisierten Namen
                 
                 // Avatar-URL generieren (gleiche Logik wie oben)
                 const senderAvatar = isCustomer
