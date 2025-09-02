@@ -444,11 +444,14 @@ export default function ApprovalPage() {
           // Verwende den Namen aus recipients oder customerContact für konsistente Anzeige
           let authorName = h.actorName || 'Unbekannt';
           if (isCustomerMessage && approval.recipients?.[0]?.name) {
+            // Kunde: Verwende den Namen aus recipients
             authorName = approval.recipients[0].name;
           } else if (isCustomerMessage && customerContact?.name) {
+            // Kunde: Fallback zu customerContact
             authorName = customerContact.name;
-          } else if (!isCustomerMessage && h.actorName && h.actorName !== 'Teammitglied') {
-            authorName = h.actorName;
+          } else if (!isCustomerMessage) {
+            // Team: Behalte den originalen actorName (wird später durch teamMember.displayName ersetzt)
+            authorName = h.actorName || 'Teammitglied';
           }
           
           return {
@@ -954,12 +957,15 @@ export default function ApprovalPage() {
               onToggle={toggleBox}
               organizationId={campaign.organizationId || ''}
               communications={campaign.approvalData?.feedbackHistory?.map((feedback, index) => {
-                // Der author wurde bereits in der feedbackHistory normalisiert
-                const isCustomer = !feedback.author.includes('@') && 
-                                 feedback.author !== 'Teammitglied' && 
-                                 feedback.author !== teamMember?.displayName;
+                // Bestimme ob es der Kunde oder das Team ist
+                const isCustomer = feedback.author !== 'Teammitglied' && 
+                                 feedback.author !== teamMember?.displayName &&
+                                 !feedback.author.includes('@');
                 
-                const senderName = feedback.author; // Verwende den bereits normalisierten Namen
+                // Verwende teamMember.displayName für Team-Nachrichten, sonst den author aus feedbackHistory
+                const senderName = !isCustomer && teamMember?.displayName ? 
+                                 teamMember.displayName : 
+                                 feedback.author;
                 
                 // Avatar-URL generieren
                 const senderAvatar = isCustomer
@@ -990,12 +996,15 @@ export default function ApprovalPage() {
                 if (!feedbackHistory || feedbackHistory.length === 0) return undefined;
                 
                 const latest = feedbackHistory[feedbackHistory.length - 1];
-                // Der author wurde bereits in der feedbackHistory normalisiert
-                const isCustomer = !latest.author.includes('@') && 
-                                 latest.author !== 'Teammitglied' && 
-                                 latest.author !== teamMember?.displayName;
+                // Bestimme ob es der Kunde oder das Team ist
+                const isCustomer = latest.author !== 'Teammitglied' && 
+                                 latest.author !== teamMember?.displayName &&
+                                 !latest.author.includes('@');
                 
-                const senderName = latest.author; // Verwende den bereits normalisierten Namen
+                // Verwende teamMember.displayName für Team-Nachrichten, sonst den author aus feedbackHistory
+                const senderName = !isCustomer && teamMember?.displayName ? 
+                                 teamMember.displayName : 
+                                 latest.author;
                 
                 // Avatar-URL generieren (gleiche Logik wie oben)
                 const senderAvatar = isCustomer
