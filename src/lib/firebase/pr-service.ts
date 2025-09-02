@@ -1387,11 +1387,28 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
         } else {
           // ERSTELLE neue Customer-Approval (nur beim ersten Mal)
           
+          // Lade Teammitglied-Daten für korrekte Speicherung
+          let teamMemberData = undefined;
+          try {
+            const { teamMemberService } = await import('./team-service-enhanced');
+            const teamMember = await teamMemberService.getByUserAndOrg(context.userId, context.organizationId);
+            if (teamMember) {
+              teamMemberData = {
+                name: teamMember.displayName,
+                email: teamMember.email,
+                photoUrl: teamMember.photoUrl
+              };
+            }
+          } catch (error) {
+            // Ignoriere Fehler beim Laden der Teammitglied-Daten
+          }
+
           workflowId = await approvalService.createCustomerApproval(
             campaignId,
             context.organizationId,
             customerApprovalData.customerContact,
-            customerApprovalData.customerApprovalMessage
+            customerApprovalData.customerApprovalMessage,
+            teamMemberData
           );
           
           // Hole ShareId der neu erstellten Freigabe
@@ -1523,11 +1540,28 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
         const { pdfVersionsService } = await import('./pdf-versions-service');
         
         // 2a. Erstelle vereinfachten Customer-Workflow
+        // Lade Teammitglied-Daten für korrekte Speicherung
+        let teamMemberData = undefined;
+        try {
+          const { teamMemberService } = await import('./team-service-enhanced');
+          const teamMember = await teamMemberService.getByUserAndOrg(context.userId, context.organizationId);
+          if (teamMember) {
+            teamMemberData = {
+              name: teamMember.displayName,
+              email: teamMember.email,
+              photoUrl: teamMember.photoUrl
+            };
+          }
+        } catch (error) {
+          // Ignoriere Fehler beim Laden der Teammitglied-Daten
+        }
+
         const workflowId = await approvalService.createCustomerApproval(
           campaignId,
           context.organizationId,
           customerApprovalData.customerContact,
-          customerApprovalData.customerApprovalMessage || ''
+          customerApprovalData.customerApprovalMessage || '',
+          teamMemberData
         );
 
         // 2b. Hole die shareId für den Customer-Link

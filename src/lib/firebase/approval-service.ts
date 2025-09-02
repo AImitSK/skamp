@@ -197,7 +197,8 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
     campaignId: string,
     organizationId: string,
     customerContact?: any,
-    customerMessage?: string
+    customerMessage?: string,
+    teamMemberData?: { name: string; email: string; photoUrl?: string }
   ): Promise<string> {
     try {
 
@@ -270,8 +271,8 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
           id: nanoid(),
           timestamp: Timestamp.now(),
           action: 'commented',  // Ändere zu 'commented' damit es als Feedback erkannt wird
-          actorName: 'Ihre Nachricht',
-          actorEmail: 'agentur@celeropress.com',
+          actorName: teamMemberData?.name || 'Teammitglied',
+          actorEmail: teamMemberData?.email || 'team@celeropress.com',
           details: {
             comment: customerMessage
           }
