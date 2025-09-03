@@ -241,6 +241,8 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       const shareId = this.generateShareId();
       
       // Vereinfachte Customer-Only Datenstruktur
+      console.log('🔍 DEBUG: contactData vor recipients erstellen:', contactData);
+      
       const approvalData = {
         campaignId,
         organizationId,
