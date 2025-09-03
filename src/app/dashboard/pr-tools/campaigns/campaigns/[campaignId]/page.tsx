@@ -540,81 +540,6 @@ export default function CampaignDetailPage() {
       </div>
 
       <div className="space-y-6">
-        {/* First Box: Content without headers */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-6">
-          {/* Key Visual */}
-          {campaign.keyVisual && (
-            <div className="aspect-[16/9] rounded-lg overflow-hidden border border-gray-200">
-              <img 
-                src={campaign.keyVisual.url} 
-                alt="Key Visual" 
-                className="w-full h-full object-cover"
-              />
-            </div>
-          )}
-
-
-
-
-          {/* Textbausteine/Boilerplate Sections */}
-          {campaign.boilerplateSections && campaign.boilerplateSections.length > 0 && (
-            <div className="space-y-4">
-              {campaign.boilerplateSections.map((section, index) => {
-                // Find the loaded boilerplate for this section
-                const boilerplate = section.boilerplateId 
-                  ? loadedBoilerplates.find(bp => bp.id === section.boilerplateId)
-                  : null;
-                
-                // Use boilerplate content if available, otherwise use section content
-                const content = boilerplate?.content || section.content;
-                const headline = boilerplate?.name || (section as any).headline;
-                
-                if (!content) return null;
-                
-                return (
-                  <div key={index} className="border-l-4 border-gray-300 pl-4">
-                    {boilerplate && (
-                      <div className="mb-2">
-                        <Badge 
-                          color={boilerplate.isGlobal ? "blue" : "green"} 
-                          className="text-xs"
-                        >
-                          {boilerplate.isGlobal ? "Global" : boilerplate.clientName || "Kunde"}
-                        </Badge>
-                      </div>
-                    )}
-                    <div className="prose prose-sm max-w-none text-gray-700">
-                      <div dangerouslySetInnerHTML={{ __html: content }} />
-                    </div>
-                    {section.metadata && section.type === 'quote' && (
-                      <div className="italic text-gray-600 mt-2">
-                        — {section.metadata.person}, {section.metadata.role}
-                        {section.metadata.company && `, ${section.metadata.company}`}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* PR Keywords */}
-          {campaign.keywords && campaign.keywords.length > 0 && (
-            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <h3 className="text-sm font-semibold text-blue-900 mb-2">PR-SEO Keywords</h3>
-              <div className="flex flex-wrap gap-2">
-                {campaign.keywords.map((keyword, index) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-blue-100 text-blue-800 border border-blue-200"
-                  >
-                    {keyword}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
 
         {/* PDF-Versionen und Chat-Historie */}
         {campaign.id && currentOrganization && (
@@ -808,8 +733,7 @@ export default function CampaignDetailPage() {
                     
                     // Finde Teammitglied für echtes Avatar
                     const teamMember = teamMembers.find(member => 
-                      member.displayName === senderName ||
-                      `${member.firstName} ${member.lastName}`.trim() === senderName
+                      member.displayName === senderName
                     );
 
                     const senderAvatar = isCustomer
@@ -856,8 +780,7 @@ export default function CampaignDetailPage() {
                 
                 // Finde Teammitglied für echtes Avatar
                 const teamMember = teamMembers.find(member => 
-                  member.displayName === senderName ||
-                  `${member.firstName} ${member.lastName}`.trim() === senderName
+                  member.displayName === senderName
                 );
 
                 const senderAvatar = isCustomer
