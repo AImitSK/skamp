@@ -973,7 +973,14 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
 
       updates.history = arrayUnion(historyEntry);
 
+      console.log('🔍 DEBUG: requestChangesPublic - updates object vor updateDoc:', updates);
+      console.log('🔍 DEBUG: requestChangesPublic - approval.recipients vor update:', approval.recipients);
+
       await updateDoc(doc(db, this.collectionName, approval.id), updates);
+
+      // Prüfe was nach dem Update passiert ist
+      const updatedApproval = await this.getByShareId(shareId);
+      console.log('🔍 DEBUG: requestChangesPublic - approval.recipients nach update:', updatedApproval?.recipients);
       
       // Benachrichtigung senden
       await this.sendStatusChangeNotification(approval, 'changes_requested');
