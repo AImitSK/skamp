@@ -288,6 +288,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
 
       // Entferne undefined Werte bevor Firestore-Speicherung
       const cleanApprovalData = this.removeUndefinedValues(approvalData);
+      console.log('🔍 DEBUG: cleanApprovalData.recipients nach removeUndefinedValues:', cleanApprovalData.recipients);
       
       
       const docRef = await addDoc(collection(db, 'approvals'), cleanApprovalData);
