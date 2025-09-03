@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import EmailSendModal from "@/components/pr/EmailSendModal";
+import { FeedbackChatView } from "@/components/freigabe/FeedbackChatView";
+import { teamMemberService } from '@/lib/firebase/team-service-enhanced';
 import {
   ArrowLeftIcon,
   BuildingOfficeIcon,
@@ -195,60 +197,140 @@ function InfoCard({
   );
 }
 
-// Feedback History Modal
-function FeedbackHistoryModal({ 
+// Chat History Modal - Neuer FeedbackChatView
+function ChatHistoryModal({ 
   isOpen, 
   onClose, 
-  campaign 
+  campaign,
+  organizationId
 }: { 
   isOpen: boolean; 
   onClose: () => void; 
   campaign: PRCampaign;
+  organizationId: string;
 }) {
-  if (!isOpen || !campaign.approvalData?.feedbackHistory) return null;
+  const [teamMembers, setTeamMembers] = useState<any[]>([]);
+
+  // Lade TeamMember-Daten beim Öffnen des Modals
+  useEffect(() => {
+    if (isOpen && organizationId && teamMembers.length === 0) {
+      const loadTeamMembers = async () => {
+        try {
+          const members = await teamMemberService.getByOrganization(organizationId);
+          setTeamMembers(members);
+        } catch (error) {
+          console.error('Fehler beim Laden der TeamMember-Daten:', error);
+        }
+      };
+      loadTeamMembers();
+    }
+  }, [isOpen, organizationId, teamMembers.length]);
+
+  if (!isOpen) return null;
 
   return (
-    <Dialog open={isOpen} onClose={onClose} size="2xl">
-      <DialogTitle>Feedback-Historie</DialogTitle>
+    <Dialog open={isOpen} onClose={onClose} size="4xl">
+      <DialogTitle>Chat-Verlauf</DialogTitle>
       <DialogBody>
-        {campaign.approvalData.feedbackHistory.length === 0 ? (
-          <Text className="text-center py-8">Noch kein Feedback vorhanden</Text>
-        ) : (
-          <div className="space-y-4">
-            {campaign.approvalData.feedbackHistory.map((feedback, index) => (
-              <div 
-                key={index} 
-                className={`p-4 rounded-lg ${
-                  feedback.author === 'System' 
-                    ? "bg-gray-50 border border-gray-200" 
-                    : feedback.author === 'Kunde'
-                    ? "bg-blue-50 border border-blue-200"
-                    : "bg-orange-50 border border-orange-200"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <span className={`font-medium flex items-center gap-2 ${
-                    feedback.author === 'System' ? "text-gray-700" : 
-                    feedback.author === 'Kunde' ? "text-blue-900" : "text-orange-900"
-                  }`}>
-                    {feedback.author === 'Kunde' && <ChatBubbleLeftRightIcon className="h-4 w-4" />}
-                    {feedback.author === 'System' && <InformationCircleIcon className="h-4 w-4" />}
-                    {feedback.author}
-                  </span>
-                  <span className="text-sm text-gray-500">
-                    {formatDate(feedback.requestedAt)}
-                  </span>
-                </div>
-                <p className={`text-sm whitespace-pre-wrap ${
-                  feedback.author === 'System' ? "text-gray-600 italic" : 
-                  feedback.author === 'Kunde' ? "text-blue-800" : "text-orange-800"
-                }`}>
-                  {feedback.comment}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
+        <FeedbackChatView
+          communications={(() => {
+            // Konvertiere feedbackHistory zu CommunicationItem Format
+            if (!campaign.approvalData?.feedbackHistory || campaign.approvalData.feedbackHistory.length === 0) {
+              return [];
+            }
+
+            return campaign.approvalData.feedbackHistory
+              .sort((a, b) => {
+                const aTime = a.requestedAt?.toDate ? a.requestedAt.toDate().getTime() : (a.requestedAt instanceof Date ? a.requestedAt.getTime() : new Date(a.requestedAt).getTime());
+                const bTime = b.requestedAt?.toDate ? b.requestedAt.toDate().getTime() : (b.requestedAt instanceof Date ? b.requestedAt.getTime() : new Date(b.requestedAt).getTime());
+                return aTime - bTime; // Älteste zuerst
+              })
+              .map((feedback, index) => {
+                const isCustomer = feedback.action === 'changes_requested' || feedback.author === 'Kunde';
+                const senderName = isCustomer 
+                  ? (feedback.author || 'Kunde')
+                  : (feedback.author || 'Teammitglied');
+                
+                const senderAvatar = isCustomer
+                  ? `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=10b981&color=fff&size=32`
+                  : (() => {
+                      // Suche das Teammitglied für echtes Avatar
+                      const member = teamMembers.find(m => 
+                        m.displayName === senderName || 
+                        `${m.firstName} ${m.lastName}`.trim() === senderName
+                      );
+                      return member?.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`;
+                    })();
+
+                return {
+                  id: `feedback-${index}`,
+                  type: 'feedback' as const,
+                  content: feedback.comment || '',
+                  message: feedback.comment || '',
+                  sender: {
+                    id: 'unknown',
+                    name: senderName,
+                    email: '',
+                    role: isCustomer ? 'customer' as const : 'agency' as const
+                  },
+                  senderName: senderName,
+                  senderAvatar: senderAvatar,
+                  createdAt: feedback.requestedAt?.toDate ? feedback.requestedAt.toDate() : (feedback.requestedAt instanceof Date ? feedback.requestedAt : new Date(feedback.requestedAt)),
+                  isRead: true,
+                  campaignId: campaign.id || '',
+                  organizationId: organizationId
+                };
+              });
+          })()}
+          latestMessage={(() => {
+            // Finde die neueste Nachricht für das Latest-Banner
+            if (!campaign.approvalData?.feedbackHistory || campaign.approvalData.feedbackHistory.length === 0) {
+              return undefined;
+            }
+
+            const sortedFeedback = campaign.approvalData.feedbackHistory.sort((a, b) => {
+              const aTime = a.requestedAt?.toDate ? a.requestedAt.toDate().getTime() : (a.requestedAt instanceof Date ? a.requestedAt.getTime() : new Date(a.requestedAt).getTime());
+              const bTime = b.requestedAt?.toDate ? b.requestedAt.toDate().getTime() : (b.requestedAt instanceof Date ? b.requestedAt.getTime() : new Date(b.requestedAt).getTime());
+              return bTime - aTime; // Neueste zuerst
+            });
+            
+            const latest = sortedFeedback[0];
+            const isCustomer = latest.action === 'changes_requested' || latest.author === 'Kunde';
+            const senderName = isCustomer 
+              ? (latest.author || 'Kunde')
+              : (latest.author || 'Teammitglied');
+            
+            const senderAvatar = isCustomer
+              ? `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=10b981&color=fff&size=32`
+              : (() => {
+                  // Suche das Teammitglied für echtes Avatar
+                  const member = teamMembers.find(m => 
+                    m.displayName === senderName || 
+                    `${m.firstName} ${m.lastName}`.trim() === senderName
+                  );
+                  return member?.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`;
+                })();
+
+            return {
+              id: 'latest',
+              type: 'feedback' as const,
+              content: latest.comment || '',
+              message: latest.comment || '',
+              sender: {
+                id: 'unknown',
+                name: senderName,
+                email: '',
+                role: isCustomer ? 'customer' as const : 'agency' as const
+              },
+              senderName: senderName,
+              senderAvatar: senderAvatar,
+              createdAt: latest.requestedAt?.toDate ? latest.requestedAt.toDate() : (latest.requestedAt instanceof Date ? latest.requestedAt : new Date(latest.requestedAt)),
+              isRead: true,
+              campaignId: campaign.id || '',
+              organizationId: organizationId
+            };
+          })()}
+        />
       </DialogBody>
       <DialogActions>
         <Button plain onClick={onClose}>Schließen</Button>
@@ -465,7 +547,7 @@ export default function CampaignDetailPage() {
                     className="mt-2 text-sm text-[#005fab] hover:text-[#004a8c] flex items-center gap-1"
                   >
                     <ChatBubbleLeftRightIcon className="h-4 w-4" />
-                    {campaign.approvalData.feedbackHistory.length} Feedback-Einträge
+                    Chat-Verlauf anzeigen
                   </button>
                 )}
               </div>
@@ -502,13 +584,6 @@ export default function CampaignDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left column */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Content */}
-            <InfoCard title="Inhalt der Pressemitteilung" icon={DocumentTextIcon}>
-              <div 
-                className="prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: campaign.contentHtml }}
-              />
-            </InfoCard>
 
             {/* Attached Assets */}
             {campaign.attachedAssets && campaign.attachedAssets.length > 0 && (
@@ -637,11 +712,12 @@ export default function CampaignDetailPage() {
         />
       )}
 
-      {/* Feedback History Modal */}
-      <FeedbackHistoryModal
+      {/* Chat History Modal */}
+      <ChatHistoryModal
         isOpen={showFeedbackHistory}
         onClose={() => setShowFeedbackHistory(false)}
         campaign={campaign}
+        organizationId={campaign.organizationId || ''}
       />
 
       {/* Confirm Dialog */}
