@@ -122,24 +122,55 @@ const approvalStatusConfig = {
   }
 };
 
-// NEU: Customer Message Banner Component - zeigt Admin-Nachricht aus Step 3
+// NEU: Customer Message Banner Component - zeigt letzte Agentur-Nachricht
 function CustomerMessageBanner({ 
-  customerMessage,
+  feedbackHistory,
+  campaign,
   teamMember,
-  campaign
+  customerContact
 }: { 
-  customerMessage: string,
+  feedbackHistory: any[],
+  campaign: any,
   teamMember: any,
-  campaign: any
+  customerContact: any
 }) {
-  // Nur anzeigen wenn eine Nachricht vom Admin eingegeben wurde
-  if (!customerMessage || customerMessage.trim() === '') return null;
+  if (!feedbackHistory || feedbackHistory.length === 0) return null;
+  
+  // Finde die letzte Nachricht von der Agentur (basierend auf action-Feld)
+  const agencyMessages = feedbackHistory.filter(msg => 
+    msg.action === 'commented' // Team-Nachrichten haben action: 'commented'
+  );
+  
+  if (agencyMessages.length === 0) return null;
+  
+  const latestAgencyMessage = agencyMessages[agencyMessages.length - 1];
   
   // Bestimme den korrekten Absender-Namen
-  const senderName = teamMember?.displayName || campaign.userName || campaign.createdBy?.name || 'Ihr Ansprechpartner';
+  const senderName = teamMember?.displayName || campaign.userName || campaign.createdBy?.name || 'Teammitglied';
   
-  // Avatar-URL generieren - Blau für Team
-  const senderAvatar = teamMember?.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`;
+  // Formatiere Zeitstempel
+  const formatTimeAgo = (date: any) => {
+    if (!date) return 'gerade eben';
+    const dateObj = date?.toDate ? date.toDate() : new Date(date);
+    
+    // Validierung: Prüfe ob Datum gültig ist
+    if (!dateObj || isNaN(dateObj.getTime())) {
+      return 'unbekannt';
+    }
+    
+    const now = new Date();
+    const diffInMinutes = Math.floor((now.getTime() - dateObj.getTime()) / (1000 * 60));
+    
+    // Zusätzliche Validierung für negative Zeiten
+    if (diffInMinutes < 0) return 'gerade eben';
+    if (diffInMinutes < 1) return 'gerade eben';
+    if (diffInMinutes < 60) return `vor ${diffInMinutes} Min.`;
+    if (diffInMinutes < 1440) return `vor ${Math.floor(diffInMinutes / 60)} Std.`;
+    return `vor ${Math.floor(diffInMinutes / 1440)} Tag(en)`;
+  };
+  
+  // Avatar-URL generieren
+  const senderAvatar = teamMember?.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`; // Blau für Team
   
   return (
     <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-6">
@@ -153,16 +184,19 @@ function CustomerMessageBanner({
         </div>
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
-            <h3 className="font-medium text-green-900">Aktuelle Meldung</h3>
+            <h3 className="font-medium text-green-900">Neueste Nachricht</h3>
             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-              Nachricht vom Team
+              Feedback
+            </span>
+            <span className="text-sm text-green-700">
+              {formatTimeAgo(latestAgencyMessage.requestedAt)}
             </span>
           </div>
           <div className="text-sm text-green-800 mb-2">
             <strong>Von:</strong> {senderName}
           </div>
           <div className="text-green-900 whitespace-pre-wrap">
-            {customerMessage}
+            {latestAgencyMessage.comment}
           </div>
         </div>
       </div>
@@ -844,11 +878,12 @@ export default function ApprovalPage() {
           )}
 
 
-          {/* NEU: Customer Approval Message - zeigt Admin-Nachricht aus Step 3 */}
+          {/* NEU: Customer Approval Message - zeigt letzte Agentur-Nachricht */}
           <CustomerMessageBanner 
-            customerMessage={customerMessage}
+            feedbackHistory={campaign.approvalData?.feedbackHistory || []}
             campaign={campaign}
             teamMember={teamMember}
+            customerContact={customerContact}
           />
 
           {/* MODERNISIERTE CAMPAIGN-PREVIEW - Phase 3 */}
