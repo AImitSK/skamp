@@ -8,6 +8,7 @@ import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { CustomerContactSelector } from './CustomerContactSelector';
 import { FeedbackChatView } from '../freigabe/FeedbackChatView';
+import { teamMemberService } from '@/lib/firebase/team-service-enhanced';
 import { 
   ClockIcon,
   CheckCircleIcon,
@@ -45,11 +46,28 @@ export function ApprovalSettings({
   
   const [localData, setLocalData] = useState<SimplifiedApprovalData>(value);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<any[]>([]);
 
   // Sync local state with props
   useEffect(() => {
     setLocalData(value);
   }, [value]);
+
+  // Lade TeamMember-Daten beim Öffnen des Modals
+  useEffect(() => {
+    if (showHistoryModal && organizationId && teamMembers.length === 0) {
+      const loadTeamMembers = async () => {
+        try {
+          const members = await teamMemberService.getByOrganization(organizationId);
+          setTeamMembers(members);
+          console.log('🔍 DEBUG: TeamMembers geladen:', members);
+        } catch (error) {
+          console.error('Fehler beim Laden der TeamMember-Daten:', error);
+        }
+      };
+      loadTeamMembers();
+    }
+  }, [showHistoryModal, organizationId, teamMembers.length]);
 
   const handleDataChange = (updates: Partial<SimplifiedApprovalData>) => {
     const newData = { ...localData, ...updates };
@@ -192,6 +210,7 @@ export function ApprovalSettings({
                   console.log('🔍 DEBUG: ApprovalSettings Modal - currentApproval.history:', currentApproval?.history);
                   console.log('🔍 DEBUG: ApprovalSettings Modal - previousFeedback:', previousFeedback);
                   console.log('🔍 DEBUG: ApprovalSettings Modal - organizationId:', organizationId);
+                  console.log('🔍 DEBUG: ApprovalSettings Modal - teamMembers:', teamMembers);
                   
                   // DEBUG: Schaue in die Feedback-Details
                   if (previousFeedback && previousFeedback.length > 0) {
@@ -223,7 +242,14 @@ export function ApprovalSettings({
                         
                         const senderAvatar = isCustomer
                           ? `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=10b981&color=fff&size=32`
-                          : `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`;
+                          : (() => {
+                              // Suche das Teammitglied für echtes Avatar
+                              const member = teamMembers.find(m => 
+                                m.displayName === senderName || 
+                                `${m.firstName} ${m.lastName}`.trim() === senderName
+                              );
+                              return member?.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`;
+                            })();
 
                         return {
                           id: `legacy-${index}`,
@@ -306,7 +332,14 @@ export function ApprovalSettings({
                     
                     const senderAvatar = isCustomer
                       ? `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=10b981&color=fff&size=32`
-                      : `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`;
+                      : (() => {
+                          // Suche das Teammitglied für echtes Avatar
+                          const member = teamMembers.find(m => 
+                            m.displayName === senderName || 
+                            `${m.firstName} ${m.lastName}`.trim() === senderName
+                          );
+                          return member?.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`;
+                        })();
 
                     return {
                       id: 'legacy-latest',
