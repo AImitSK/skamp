@@ -446,15 +446,9 @@ export default function ApprovalPage() {
         }
       }
 
-      // Customer Contact Daten laden (aus approvalData oder approval)
-      if (campaignData.approvalData && (campaignData.approvalData as any).customerContact) {
-        setCustomerContact((campaignData.approvalData as any).customerContact);
-      } else if ((approvalData as any).customerContact) {
-        // Fallback: Direkt aus approval laden
-        setCustomerContact((approvalData as any).customerContact);
-      } else if ((approvalData as any).recipients && (approvalData as any).recipients.length > 0) {
-        // Fallback: Ersten Empfänger als customerContact verwenden
-        const firstRecipient = (approvalData as any).recipients[0];
+      // Customer Contact Daten laden - PRIMÄR aus approvalData.recipients (das ist die richtige Quelle!)
+      if (approvalData.recipients && approvalData.recipients.length > 0) {
+        const firstRecipient = approvalData.recipients[0];
         setCustomerContact({
           name: firstRecipient.name || 'Kunde',
           email: firstRecipient.email || '',
