@@ -193,6 +193,15 @@ export function ApprovalSettings({
                   console.log('🔍 DEBUG: ApprovalSettings Modal - previousFeedback:', previousFeedback);
                   console.log('🔍 DEBUG: ApprovalSettings Modal - organizationId:', organizationId);
                   
+                  // DEBUG: Schaue in die Feedback-Details
+                  if (previousFeedback && previousFeedback.length > 0) {
+                    previousFeedback.forEach((feedback, i) => {
+                      console.log(`🔍 DEBUG: previousFeedback[${i}]:`, feedback);
+                      console.log(`🔍 DEBUG: feedback[${i}] author:`, feedback.author);
+                      console.log(`🔍 DEBUG: feedback[${i}] action:`, feedback.action);
+                    });
+                  }
+                  
                   // Konvertiere currentApproval.history zu CommunicationItem Format
                   // FALLBACK: Wenn currentApproval undefined ist, nutze previousFeedback
                   if (!currentApproval?.history) {
