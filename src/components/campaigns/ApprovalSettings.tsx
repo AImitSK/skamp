@@ -215,9 +215,10 @@ export function ApprovalSettings({
                         return aTime - bTime; // Älteste zuerst
                       })
                       .map((feedback, index) => {
-                        const isCustomer = feedback.action === 'changes_requested';
+                        // Da action undefined ist, erkenne Kunde anhand des Namens
+                        const isCustomer = feedback.author === clientName || feedback.author?.includes('Kühneee');
                         const senderName = isCustomer 
-                          ? (clientName || feedback.author || 'Kunde')
+                          ? (feedback.author || clientName || 'Kunde')
                           : (feedback.author || 'Teammitglied');
                         
                         const senderAvatar = isCustomer
@@ -298,9 +299,9 @@ export function ApprovalSettings({
                     });
                     
                     const latest = sortedFeedback[0];
-                    const isCustomer = latest.action === 'changes_requested';
+                    const isCustomer = latest.author === clientName || latest.author?.includes('Kühneee');
                     const senderName = isCustomer 
-                      ? (clientName || latest.author || 'Kunde')
+                      ? (latest.author || clientName || 'Kunde')
                       : (latest.author || 'Teammitglied');
                     
                     const senderAvatar = isCustomer
