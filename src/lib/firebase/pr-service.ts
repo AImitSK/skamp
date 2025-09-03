@@ -1419,6 +1419,8 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
             // Ignoriere Fehler beim Laden der Teammitglied-Daten
           }
 
+          console.log('🔍 DEBUG: prService.create - customerApprovalData.customerContact:', customerApprovalData.customerContact);
+          
           workflowId = await approvalService.createCustomerApproval(
             campaignId,
             context.organizationId,
