@@ -66,7 +66,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
   }
   
   private setCachedQuery(key: string, data: any): void {
-    console.log('🔍 DEBUG: setCachedQuery called with key:', key, 'recipients:', data?.recipients);
     this.queryCache.set(key, { data, timestamp: Date.now() });
   }
   
@@ -242,7 +241,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       const shareId = this.generateShareId();
       
       // Vereinfachte Customer-Only Datenstruktur
-      console.log('🔍 DEBUG: contactData vor recipients erstellen:', contactData);
       
       const approvalData = {
         campaignId,
@@ -289,7 +287,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
 
       // Entferne undefined Werte bevor Firestore-Speicherung
       const cleanApprovalData = this.removeUndefinedValues(approvalData);
-      console.log('🔍 DEBUG: cleanApprovalData.recipients nach removeUndefinedValues:', cleanApprovalData.recipients);
       
       
       const docRef = await addDoc(collection(db, 'approvals'), cleanApprovalData);
@@ -516,7 +513,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       const cacheKey = `shareId-${shareId}`;
       const cached = this.getCachedQuery(cacheKey);
       if (cached) {
-        console.log('🔍 DEBUG: getByShareId - returning CACHED data, recipients:', cached.recipients);
         // TEMP FIX: Cache deaktivieren um recipients-Problem zu beheben
         // return cached;
       }
@@ -541,17 +537,11 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       if (data.history && !Array.isArray(data.history)) {
         data.history = [];
       }
-      console.log('🔍 DEBUG: getByShareId - data.recipients aus DB:', data.recipients, typeof data.recipients);
       if (data.recipients && !Array.isArray(data.recipients)) {
         // Firebase gibt manchmal Arrays als Objekte zurück - konvertieren wir zurück
-        console.log('🔧 DEBUG: recipients ist Objekt, konvertiere zu Array');
         data.recipients = Object.values(data.recipients);
-        console.log('✅ DEBUG: recipients konvertiert, Länge:', data.recipients.length);
       } else if (!data.recipients) {
-        console.log('🚨 DEBUG: recipients sind undefined/null, werden zu leerem Array!');
         data.recipients = [];
-      } else {
-        console.log('🔍 DEBUG: recipients bleiben erhalten:', data.recipients.length);
       }
       if (data.attachedAssets && !Array.isArray(data.attachedAssets)) {
         data.attachedAssets = [];
@@ -956,8 +946,6 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         throw new Error('Freigabe nicht gefunden');
       }
 
-      console.log('🔍 DEBUG: requestChangesPublic START - approval.recipients:', approval.recipients);
-
       // Für öffentlichen Zugriff: Update ohne Empfänger-Validierung
       const updates: any = {
         status: 'changes_requested',
@@ -983,14 +971,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
 
       updates.history = arrayUnion(historyEntry);
 
-      console.log('🔍 DEBUG: requestChangesPublic - updates object vor updateDoc:', updates);
-      console.log('🔍 DEBUG: requestChangesPublic - approval.recipients vor update:', approval.recipients);
-
       await updateDoc(doc(db, this.collectionName, approval.id), updates);
-
-      // Prüfe was nach dem Update passiert ist
-      const updatedApproval = await this.getByShareId(shareId);
-      console.log('🔍 DEBUG: requestChangesPublic - approval.recipients nach update:', updatedApproval?.recipients);
       
       // Benachrichtigung senden
       await this.sendStatusChangeNotification(approval, 'changes_requested');

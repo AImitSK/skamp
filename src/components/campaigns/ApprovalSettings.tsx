@@ -60,7 +60,6 @@ export function ApprovalSettings({
         try {
           const members = await teamMemberService.getByOrganization(organizationId);
           setTeamMembers(members);
-          console.log('🔍 DEBUG: TeamMembers geladen:', members);
         } catch (error) {
           console.error('Fehler beim Laden der TeamMember-Daten:', error);
         }
@@ -205,22 +204,6 @@ export function ApprovalSettings({
             <div className="p-4">
               <FeedbackChatView
                 communications={(() => {
-                  // DEBUG: Schaue was in currentApproval steht
-                  console.log('🔍 DEBUG: ApprovalSettings Modal - currentApproval:', currentApproval);
-                  console.log('🔍 DEBUG: ApprovalSettings Modal - currentApproval.history:', currentApproval?.history);
-                  console.log('🔍 DEBUG: ApprovalSettings Modal - previousFeedback:', previousFeedback);
-                  console.log('🔍 DEBUG: ApprovalSettings Modal - organizationId:', organizationId);
-                  console.log('🔍 DEBUG: ApprovalSettings Modal - teamMembers:', teamMembers);
-                  
-                  // DEBUG: Schaue in die Feedback-Details
-                  if (previousFeedback && previousFeedback.length > 0) {
-                    previousFeedback.forEach((feedback, i) => {
-                      console.log(`🔍 DEBUG: previousFeedback[${i}]:`, feedback);
-                      console.log(`🔍 DEBUG: feedback[${i}] author:`, feedback.author);
-                      console.log(`🔍 DEBUG: feedback[${i}] action:`, feedback.action);
-                    });
-                  }
-                  
                   // Konvertiere currentApproval.history zu CommunicationItem Format
                   // FALLBACK: Wenn currentApproval undefined ist, nutze previousFeedback
                   if (!currentApproval?.history) {
