@@ -515,6 +515,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       const cacheKey = `shareId-${shareId}`;
       const cached = this.getCachedQuery(cacheKey);
       if (cached) {
+        console.log('🔍 DEBUG: getByShareId - returning CACHED data, recipients:', cached.recipients);
         return cached;
       }
       
