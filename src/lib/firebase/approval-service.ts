@@ -66,6 +66,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
   }
   
   private setCachedQuery(key: string, data: any): void {
+    console.log('🔍 DEBUG: setCachedQuery called with key:', key, 'recipients:', data?.recipients);
     this.queryCache.set(key, { data, timestamp: Date.now() });
   }
   
