@@ -543,8 +543,10 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       }
       console.log('🔍 DEBUG: getByShareId - data.recipients aus DB:', data.recipients, typeof data.recipients);
       if (data.recipients && !Array.isArray(data.recipients)) {
-        console.log('🚨 DEBUG: recipients sind kein Array, werden überschrieben!');
-        data.recipients = [];
+        // Firebase gibt manchmal Arrays als Objekte zurück - konvertieren wir zurück
+        console.log('🔧 DEBUG: recipients ist Objekt, konvertiere zu Array');
+        data.recipients = Object.values(data.recipients);
+        console.log('✅ DEBUG: recipients konvertiert, Länge:', data.recipients.length);
       } else if (!data.recipients) {
         console.log('🚨 DEBUG: recipients sind undefined/null, werden zu leerem Array!');
         data.recipients = [];
