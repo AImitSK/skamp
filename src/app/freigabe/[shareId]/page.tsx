@@ -835,9 +835,11 @@ export default function ApprovalPage() {
                 senderName = customerContact?.name || latest.author || 'Kunde';
                 senderAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=10b981&color=fff&size=32`;
               } else {
-                // TEAM: Blauer Avatar oder echtes Foto
-                senderName = teamMember?.displayName || latest.author || 'Teammitglied';
-                senderAvatar = teamMember?.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`;
+                // TEAM: Blauer Avatar - verwende den gespeicherten author Namen
+                senderName = latest.author || 'Teammitglied';
+                // Versuche echtes Foto zu finden, wenn der aktuelle Admin derselbe ist
+                const hasRealPhoto = teamMember?.displayName === senderName && teamMember?.photoUrl;
+                senderAvatar = hasRealPhoto ? teamMember.photoUrl : `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`;
               }
               
               return {
@@ -968,9 +970,11 @@ export default function ApprovalPage() {
                   senderName = customerContact?.name || feedback.author || 'Kunde';
                   senderAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=10b981&color=fff&size=32`;
                 } else {
-                  // TEAM: Blauer Avatar oder echtes Foto
-                  senderName = teamMember?.displayName || feedback.author || 'Teammitglied';
-                  senderAvatar = teamMember?.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`;
+                  // TEAM: Blauer Avatar - verwende den gespeicherten author Namen
+                  senderName = feedback.author || 'Teammitglied';
+                  // Versuche echtes Foto zu finden, wenn der aktuelle Admin derselbe ist
+                  const hasRealPhoto = teamMember?.displayName === senderName && teamMember?.photoUrl;
+                  senderAvatar = hasRealPhoto ? teamMember.photoUrl : `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`;
                 }
                 
                 return {
@@ -1014,9 +1018,11 @@ export default function ApprovalPage() {
                   senderName = customerContact?.name || latest.author || 'Kunde';
                   senderAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=10b981&color=fff&size=32`;
                 } else {
-                  // TEAM: Blauer Avatar oder echtes Foto
-                  senderName = teamMember?.displayName || latest.author || 'Teammitglied';
-                  senderAvatar = teamMember?.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`;
+                  // TEAM: Blauer Avatar - verwende den gespeicherten author Namen
+                  senderName = latest.author || 'Teammitglied';
+                  // Versuche echtes Foto zu finden, wenn der aktuelle Admin derselbe ist
+                  const hasRealPhoto = teamMember?.displayName === senderName && teamMember?.photoUrl;
+                  senderAvatar = hasRealPhoto ? teamMember.photoUrl : `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`;
                 }
                 
                 return {
