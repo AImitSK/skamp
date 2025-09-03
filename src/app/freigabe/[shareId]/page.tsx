@@ -446,29 +446,29 @@ export default function ApprovalPage() {
         }
       }
 
-      // Customer Contact Daten laden - PRIMÄR aus approvalData.recipients (das ist die richtige Quelle!)
-      console.log('🔍 DEBUG: approvalData COMPLETE:', JSON.stringify(approvalData, null, 2));
-      console.log('🔍 DEBUG: approvalData.recipients:', approvalData.recipients);
-      console.log('🔍 DEBUG: recipients length:', approvalData.recipients?.length);
+      // Customer Contact Daten laden - Aus clientName/clientEmail (das ist die richtige Quelle!)
+      console.log('🔍 DEBUG: approvalData.clientName:', approvalData.clientName);
+      console.log('🔍 DEBUG: approvalData.clientEmail:', approvalData.clientEmail);
       
-      if (approvalData.recipients && approvalData.recipients.length > 0) {
-        const firstRecipient = approvalData.recipients[0];
-        console.log('🔍 DEBUG: firstRecipient:', firstRecipient);
-        console.log('🔍 DEBUG: firstRecipient.name:', firstRecipient.name);
-        
+      if (approvalData.clientName) {
         setCustomerContact({
-          name: firstRecipient.name || 'Kunde',
-          email: firstRecipient.email || '',
-          role: firstRecipient.role || ''
+          name: approvalData.clientName,
+          email: approvalData.clientEmail || '',
+          role: 'client'
         });
         
         console.log('🔍 DEBUG: customerContact set to:', {
-          name: firstRecipient.name || 'Kunde',
-          email: firstRecipient.email || '',
-          role: firstRecipient.role || ''
+          name: approvalData.clientName,
+          email: approvalData.clientEmail || '',
+          role: 'client'
         });
       } else {
-        console.log('🔍 DEBUG: Keine recipients gefunden!');
+        console.log('🔍 DEBUG: Kein clientName gefunden!');
+        setCustomerContact({
+          name: 'Kunde',
+          email: '',
+          role: ''
+        });
       }
       
       // Customer Approval Message aus Approval-Service (vereinfacht)
