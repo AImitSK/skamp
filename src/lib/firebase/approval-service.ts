@@ -946,6 +946,8 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
         throw new Error('Freigabe nicht gefunden');
       }
 
+      console.log('🔍 DEBUG: requestChangesPublic START - approval.recipients:', approval.recipients);
+
       // Für öffentlichen Zugriff: Update ohne Empfänger-Validierung
       const updates: any = {
         status: 'changes_requested',
