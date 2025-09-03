@@ -193,7 +193,47 @@ export function ApprovalSettings({
                   console.log('🔍 DEBUG: ApprovalSettings Modal - previousFeedback:', previousFeedback);
                   
                   // Konvertiere currentApproval.history zu CommunicationItem Format
-                  if (!currentApproval?.history) return [];
+                  // FALLBACK: Wenn currentApproval undefined ist, nutze previousFeedback
+                  if (!currentApproval?.history) {
+                    if (!previousFeedback || previousFeedback.length === 0) return [];
+                    
+                    // Konvertiere previousFeedback zu CommunicationItem Format
+                    return previousFeedback
+                      .sort((a, b) => {
+                        const aTime = a.requestedAt?.toDate ? a.requestedAt.toDate().getTime() : (a.requestedAt instanceof Date ? a.requestedAt.getTime() : new Date(a.requestedAt).getTime());
+                        const bTime = b.requestedAt?.toDate ? b.requestedAt.toDate().getTime() : (b.requestedAt instanceof Date ? b.requestedAt.getTime() : new Date(b.requestedAt).getTime());
+                        return aTime - bTime; // Älteste zuerst
+                      })
+                      .map((feedback, index) => {
+                        const isCustomer = feedback.action === 'changes_requested';
+                        const senderName = isCustomer 
+                          ? (clientName || feedback.author || 'Kunde')
+                          : (feedback.author || 'Teammitglied');
+                        
+                        const senderAvatar = isCustomer
+                          ? `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=10b981&color=fff&size=32`
+                          : `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`;
+
+                        return {
+                          id: `legacy-${index}`,
+                          type: 'feedback' as const,
+                          content: feedback.comment || '',
+                          message: feedback.comment || '',
+                          sender: {
+                            id: 'unknown',
+                            name: senderName,
+                            email: '',
+                            role: isCustomer ? 'customer' as const : 'agency' as const
+                          },
+                          senderName: senderName,
+                          senderAvatar: senderAvatar,
+                          createdAt: feedback.requestedAt?.toDate ? feedback.requestedAt.toDate() : (feedback.requestedAt instanceof Date ? feedback.requestedAt : new Date(feedback.requestedAt)),
+                          isRead: true,
+                          campaignId: '',
+                          organizationId: organizationId || ''
+                        };
+                      });
+                  }
                   
                   return currentApproval.history
                     .filter(h => h.details?.comment) // Nur Einträge mit Kommentaren
@@ -236,7 +276,46 @@ export function ApprovalSettings({
                 })()}
                 latestMessage={(() => {
                   // Finde die neueste Nachricht für das Latest-Banner
-                  if (!currentApproval?.history) return undefined;
+                  // FALLBACK: Wenn currentApproval undefined ist, nutze previousFeedback
+                  if (!currentApproval?.history) {
+                    if (!previousFeedback || previousFeedback.length === 0) return undefined;
+                    
+                    // Finde neueste Nachricht aus previousFeedback
+                    const sortedFeedback = previousFeedback.sort((a, b) => {
+                      const aTime = a.requestedAt?.toDate ? a.requestedAt.toDate().getTime() : (a.requestedAt instanceof Date ? a.requestedAt.getTime() : new Date(a.requestedAt).getTime());
+                      const bTime = b.requestedAt?.toDate ? b.requestedAt.toDate().getTime() : (b.requestedAt instanceof Date ? b.requestedAt.getTime() : new Date(b.requestedAt).getTime());
+                      return bTime - aTime; // Neueste zuerst
+                    });
+                    
+                    const latest = sortedFeedback[0];
+                    const isCustomer = latest.action === 'changes_requested';
+                    const senderName = isCustomer 
+                      ? (clientName || latest.author || 'Kunde')
+                      : (latest.author || 'Teammitglied');
+                    
+                    const senderAvatar = isCustomer
+                      ? `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=10b981&color=fff&size=32`
+                      : `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`;
+
+                    return {
+                      id: 'legacy-latest',
+                      type: 'feedback' as const,
+                      content: latest.comment || '',
+                      message: latest.comment || '',
+                      sender: {
+                        id: 'unknown',
+                        name: senderName,
+                        email: '',
+                        role: isCustomer ? 'customer' as const : 'agency' as const
+                      },
+                      senderName: senderName,
+                      senderAvatar: senderAvatar,
+                      createdAt: latest.requestedAt?.toDate ? latest.requestedAt.toDate() : (latest.requestedAt instanceof Date ? latest.requestedAt : new Date(latest.requestedAt)),
+                      isRead: true,
+                      campaignId: '',
+                      organizationId: organizationId || ''
+                    };
+                  }
                   
                   const feedbackEntries = currentApproval.history
                     .filter(h => h.details?.comment)
