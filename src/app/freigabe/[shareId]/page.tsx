@@ -449,6 +449,11 @@ export default function ApprovalPage() {
       // Customer Contact Daten laden - Aus clientName/clientEmail (das ist die richtige Quelle!)
       console.log('🔍 DEBUG: approvalData.clientName:', approvalData.clientName);
       console.log('🔍 DEBUG: approvalData.clientEmail:', approvalData.clientEmail);
+      console.log('🔍 DEBUG: Suche nach Personennamen in approvalData...');
+      console.log('🔍 DEBUG: approvalData.customerContact:', approvalData.customerContact);
+      console.log('🔍 DEBUG: approvalData.contactName:', approvalData.contactName);
+      console.log('🔍 DEBUG: approvalData.contactPerson:', approvalData.contactPerson);
+      console.log('🔍 DEBUG: approvalData.recipientName:', approvalData.recipientName);
       
       if (approvalData.clientName) {
         setCustomerContact({
