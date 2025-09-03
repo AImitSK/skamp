@@ -191,6 +191,7 @@ export function ApprovalSettings({
                   console.log('🔍 DEBUG: ApprovalSettings Modal - currentApproval:', currentApproval);
                   console.log('🔍 DEBUG: ApprovalSettings Modal - currentApproval.history:', currentApproval?.history);
                   console.log('🔍 DEBUG: ApprovalSettings Modal - previousFeedback:', previousFeedback);
+                  console.log('🔍 DEBUG: ApprovalSettings Modal - organizationId:', organizationId);
                   
                   // Konvertiere currentApproval.history zu CommunicationItem Format
                   // FALLBACK: Wenn currentApproval undefined ist, nutze previousFeedback
