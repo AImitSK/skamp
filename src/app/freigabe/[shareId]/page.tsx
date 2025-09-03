@@ -447,13 +447,28 @@ export default function ApprovalPage() {
       }
 
       // Customer Contact Daten laden - PRIMÄR aus approvalData.recipients (das ist die richtige Quelle!)
+      console.log('🔍 DEBUG: approvalData:', approvalData);
+      console.log('🔍 DEBUG: approvalData.recipients:', approvalData.recipients);
+      console.log('🔍 DEBUG: recipients length:', approvalData.recipients?.length);
+      
       if (approvalData.recipients && approvalData.recipients.length > 0) {
         const firstRecipient = approvalData.recipients[0];
+        console.log('🔍 DEBUG: firstRecipient:', firstRecipient);
+        console.log('🔍 DEBUG: firstRecipient.name:', firstRecipient.name);
+        
         setCustomerContact({
           name: firstRecipient.name || 'Kunde',
           email: firstRecipient.email || '',
           role: firstRecipient.role || ''
         });
+        
+        console.log('🔍 DEBUG: customerContact set to:', {
+          name: firstRecipient.name || 'Kunde',
+          email: firstRecipient.email || '',
+          role: firstRecipient.role || ''
+        });
+      } else {
+        console.log('🔍 DEBUG: Keine recipients gefunden!');
       }
       
       // Customer Approval Message aus Approval-Service (vereinfacht)
