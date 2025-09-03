@@ -447,7 +447,7 @@ export default function ApprovalPage() {
       }
 
       // Customer Contact Daten laden - PRIMÄR aus approvalData.recipients (das ist die richtige Quelle!)
-      console.log('🔍 DEBUG: approvalData:', approvalData);
+      console.log('🔍 DEBUG: approvalData COMPLETE:', JSON.stringify(approvalData, null, 2));
       console.log('🔍 DEBUG: approvalData.recipients:', approvalData.recipients);
       console.log('🔍 DEBUG: recipients length:', approvalData.recipients?.length);
       
