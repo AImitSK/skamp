@@ -187,6 +187,11 @@ export function ApprovalSettings({
             <div className="p-4">
               <FeedbackChatView
                 communications={(() => {
+                  // DEBUG: Schaue was in currentApproval steht
+                  console.log('🔍 DEBUG: ApprovalSettings Modal - currentApproval:', currentApproval);
+                  console.log('🔍 DEBUG: ApprovalSettings Modal - currentApproval.history:', currentApproval?.history);
+                  console.log('🔍 DEBUG: ApprovalSettings Modal - previousFeedback:', previousFeedback);
+                  
                   // Konvertiere currentApproval.history zu CommunicationItem Format
                   if (!currentApproval?.history) return [];
                   
