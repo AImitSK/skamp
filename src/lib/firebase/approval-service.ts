@@ -541,8 +541,15 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       if (data.history && !Array.isArray(data.history)) {
         data.history = [];
       }
+      console.log('🔍 DEBUG: getByShareId - data.recipients aus DB:', data.recipients, typeof data.recipients);
       if (data.recipients && !Array.isArray(data.recipients)) {
+        console.log('🚨 DEBUG: recipients sind kein Array, werden überschrieben!');
         data.recipients = [];
+      } else if (!data.recipients) {
+        console.log('🚨 DEBUG: recipients sind undefined/null, werden zu leerem Array!');
+        data.recipients = [];
+      } else {
+        console.log('🔍 DEBUG: recipients bleiben erhalten:', data.recipients.length);
       }
       if (data.attachedAssets && !Array.isArray(data.attachedAssets)) {
         data.attachedAssets = [];
