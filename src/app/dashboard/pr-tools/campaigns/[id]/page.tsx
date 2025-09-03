@@ -241,12 +241,12 @@ function ChatHistoryModal({
 
             return campaign.approvalData.feedbackHistory
               .sort((a, b) => {
-                const aTime = a.requestedAt?.toDate ? a.requestedAt.toDate().getTime() : (a.requestedAt instanceof Date ? a.requestedAt.getTime() : new Date(a.requestedAt).getTime());
-                const bTime = b.requestedAt?.toDate ? b.requestedAt.toDate().getTime() : (b.requestedAt instanceof Date ? b.requestedAt.getTime() : new Date(b.requestedAt).getTime());
+                const aTime = a.requestedAt?.toDate ? a.requestedAt.toDate().getTime() : (a.requestedAt instanceof Date ? a.requestedAt.getTime() : new Date(a.requestedAt as any).getTime());
+                const bTime = b.requestedAt?.toDate ? b.requestedAt.toDate().getTime() : (b.requestedAt instanceof Date ? b.requestedAt.getTime() : new Date(b.requestedAt as any).getTime());
                 return aTime - bTime; // Älteste zuerst
               })
               .map((feedback, index) => {
-                const isCustomer = feedback.action === 'changes_requested' || feedback.author === 'Kunde';
+                const isCustomer = feedback.author === 'Kunde';
                 const senderName = isCustomer 
                   ? (feedback.author || 'Kunde')
                   : (feedback.author || 'Teammitglied');
@@ -275,7 +275,7 @@ function ChatHistoryModal({
                   },
                   senderName: senderName,
                   senderAvatar: senderAvatar,
-                  createdAt: feedback.requestedAt?.toDate ? feedback.requestedAt.toDate() : (feedback.requestedAt instanceof Date ? feedback.requestedAt : new Date(feedback.requestedAt)),
+                  createdAt: feedback.requestedAt?.toDate ? feedback.requestedAt.toDate() : (feedback.requestedAt instanceof Date ? feedback.requestedAt : new Date(feedback.requestedAt as any)),
                   isRead: true,
                   campaignId: campaign.id || '',
                   organizationId: organizationId
@@ -289,13 +289,13 @@ function ChatHistoryModal({
             }
 
             const sortedFeedback = campaign.approvalData.feedbackHistory.sort((a, b) => {
-              const aTime = a.requestedAt?.toDate ? a.requestedAt.toDate().getTime() : (a.requestedAt instanceof Date ? a.requestedAt.getTime() : new Date(a.requestedAt).getTime());
-              const bTime = b.requestedAt?.toDate ? b.requestedAt.toDate().getTime() : (b.requestedAt instanceof Date ? b.requestedAt.getTime() : new Date(b.requestedAt).getTime());
+              const aTime = a.requestedAt?.toDate ? a.requestedAt.toDate().getTime() : (a.requestedAt instanceof Date ? a.requestedAt.getTime() : new Date(a.requestedAt as any).getTime());
+              const bTime = b.requestedAt?.toDate ? b.requestedAt.toDate().getTime() : (b.requestedAt instanceof Date ? b.requestedAt.getTime() : new Date(b.requestedAt as any).getTime());
               return bTime - aTime; // Neueste zuerst
             });
             
             const latest = sortedFeedback[0];
-            const isCustomer = latest.action === 'changes_requested' || latest.author === 'Kunde';
+            const isCustomer = latest.author === 'Kunde';
             const senderName = isCustomer 
               ? (latest.author || 'Kunde')
               : (latest.author || 'Teammitglied');
@@ -324,7 +324,7 @@ function ChatHistoryModal({
               },
               senderName: senderName,
               senderAvatar: senderAvatar,
-              createdAt: latest.requestedAt?.toDate ? latest.requestedAt.toDate() : (latest.requestedAt instanceof Date ? latest.requestedAt : new Date(latest.requestedAt)),
+              createdAt: latest.requestedAt?.toDate ? latest.requestedAt.toDate() : (latest.requestedAt instanceof Date ? latest.requestedAt : new Date(latest.requestedAt as any)),
               isRead: true,
               campaignId: campaign.id || '',
               organizationId: organizationId
