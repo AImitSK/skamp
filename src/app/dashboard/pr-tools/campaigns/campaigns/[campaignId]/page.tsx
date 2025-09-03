@@ -50,7 +50,7 @@ import {
 import { prService } from "@/lib/firebase/pr-service";
 import { listsService } from "@/lib/firebase/lists-service";
 import { PDFVersionHistory } from "@/components/campaigns/PDFVersionHistory";
-import { ApprovalHistoryModal } from "@/components/campaigns/ApprovalHistoryModal";
+import { FeedbackChatView } from "@/components/freigabe/FeedbackChatView";
 import { companiesEnhancedService } from "@/lib/firebase/crm-service-enhanced";
 import { mediaService } from "@/lib/firebase/media-service";
 import { boilerplatesService } from "@/lib/firebase/boilerplate-service";
@@ -553,15 +553,6 @@ export default function CampaignDetailPage() {
             </div>
           )}
 
-          {/* Editor Content */}
-          {campaign.mainContent && (
-            <div className="prose prose-sm max-w-none">
-              <div 
-                dangerouslySetInnerHTML={{ __html: campaign.mainContent }} 
-                className="bg-gray-50 rounded-lg p-4 border border-gray-200"
-              />
-            </div>
-          )}
 
 
 
@@ -791,16 +782,113 @@ export default function CampaignDetailPage() {
         </DialogActions>
       </Dialog>
 
-      {/* Chat-Historie Modal */}
-      {showHistoryModal && campaign && (
-        <ApprovalHistoryModal
-          approval={campaign.approvalData as any}
-          legacyFeedback={campaign.approvalData?.feedbackHistory || []}
-          campaignTitle={campaign.title}
-          clientName={(company as any)?.companyName || campaign.clientName || ''}
-          isOpen={showHistoryModal}
-          onClose={() => setShowHistoryModal(false)}
-        />
+      {/* Chat-Historie Modal - Neuer FeedbackChatView */}
+      {showHistoryModal && campaign && currentOrganization && (
+        <Dialog open={showHistoryModal} onClose={() => setShowHistoryModal(false)} size="4xl">
+          <DialogTitle>Chat-Verlauf</DialogTitle>
+          <DialogBody>
+            <FeedbackChatView
+              communications={(() => {
+                // Konvertiere feedbackHistory zu CommunicationItem Format  
+                if (!campaign.approvalData?.feedbackHistory || campaign.approvalData.feedbackHistory.length === 0) {
+                  return [];
+                }
+
+                return campaign.approvalData.feedbackHistory
+                  .sort((a, b) => {
+                    const aTime = a.requestedAt?.toDate ? a.requestedAt.toDate().getTime() : (a.requestedAt instanceof Date ? a.requestedAt.getTime() : new Date(a.requestedAt as any).getTime());
+                    const bTime = b.requestedAt?.toDate ? b.requestedAt.toDate().getTime() : (b.requestedAt instanceof Date ? b.requestedAt.getTime() : new Date(b.requestedAt as any).getTime());
+                    return aTime - bTime; // Älteste zuerst
+                  })
+                  .map((feedback, index) => {
+                    const isCustomer = feedback.author === 'Kunde';
+                    const senderName = isCustomer 
+                      ? (feedback.author || 'Kunde')
+                      : (feedback.author || 'Teammitglied');
+                    
+                    // Finde Teammitglied für echtes Avatar
+                    const teamMember = teamMembers.find(member => 
+                      member.displayName === senderName ||
+                      `${member.firstName} ${member.lastName}`.trim() === senderName
+                    );
+
+                    const senderAvatar = isCustomer
+                      ? `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=10b981&color=fff&size=32`
+                      : (teamMember?.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`);
+
+                    return {
+                      id: `feedback-${index}`,
+                      type: 'feedback' as const,
+                      content: feedback.comment || '',
+                      message: feedback.comment || '',
+                      sender: {
+                        id: 'unknown',
+                        name: senderName,
+                        email: '',
+                        role: isCustomer ? 'customer' as const : 'agency' as const
+                      },
+                      senderName: senderName,
+                      senderAvatar: senderAvatar,
+                      createdAt: feedback.requestedAt?.toDate ? feedback.requestedAt.toDate() : (feedback.requestedAt instanceof Date ? feedback.requestedAt : new Date(feedback.requestedAt as any)),
+                      isRead: true,
+                      campaignId: campaign.id || '',
+                      organizationId: currentOrganization.id
+                    };
+                  });
+              })()}
+              latestMessage={(() => {
+                // Finde die neueste Nachricht für das Latest-Banner
+                if (!campaign.approvalData?.feedbackHistory || campaign.approvalData.feedbackHistory.length === 0) {
+                  return undefined;
+                }
+
+                const sortedFeedback = campaign.approvalData.feedbackHistory.sort((a, b) => {
+                  const aTime = a.requestedAt?.toDate ? a.requestedAt.toDate().getTime() : (a.requestedAt instanceof Date ? a.requestedAt.getTime() : new Date(a.requestedAt as any).getTime());
+                  const bTime = b.requestedAt?.toDate ? b.requestedAt.toDate().getTime() : (b.requestedAt instanceof Date ? b.requestedAt.getTime() : new Date(b.requestedAt as any).getTime());
+                  return bTime - aTime; // Neueste zuerst
+                });
+                
+                const latest = sortedFeedback[0];
+                const isCustomer = latest.author === 'Kunde';
+                const senderName = isCustomer 
+                  ? (latest.author || 'Kunde')
+                  : (latest.author || 'Teammitglied');
+                
+                // Finde Teammitglied für echtes Avatar
+                const teamMember = teamMembers.find(member => 
+                  member.displayName === senderName ||
+                  `${member.firstName} ${member.lastName}`.trim() === senderName
+                );
+
+                const senderAvatar = isCustomer
+                  ? `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=10b981&color=fff&size=32`
+                  : (teamMember?.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`);
+
+                return {
+                  id: 'latest',
+                  type: 'feedback' as const,
+                  content: latest.comment || '',
+                  message: latest.comment || '',
+                  sender: {
+                    id: 'unknown',
+                    name: senderName,
+                    email: '',
+                    role: isCustomer ? 'customer' as const : 'agency' as const
+                  },
+                  senderName: senderName,
+                  senderAvatar: senderAvatar,
+                  createdAt: latest.requestedAt?.toDate ? latest.requestedAt.toDate() : (latest.requestedAt instanceof Date ? latest.requestedAt : new Date(latest.requestedAt as any)),
+                  isRead: true,
+                  campaignId: campaign.id || '',
+                  organizationId: currentOrganization.id
+                };
+              })()}
+            />
+          </DialogBody>
+          <DialogActions>
+            <Button plain onClick={() => setShowHistoryModal(false)}>Schließen</Button>
+          </DialogActions>
+        </Dialog>
       )}
     </div>
   );
