@@ -54,7 +54,12 @@
       "Read(/C:\\c\\Users\\skuehne\\Desktop\\Projekt/**)",
       "Read(/C:\\c\\Users\\skuehne\\Desktop\\Projekt/**)",
       "Bash(git log:*)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Read(c:\\Users\\skuehne\\Desktop\\Projekt\\skamp\\src\\app\\dashboard\\pr-tools\\campaigns\\campaigns\\new/**)",
+      "Read(c:\\Users\\skuehne\\Desktop\\Projekt\\skamp\\src\\app\\dashboard\\pr-tools\\campaigns\\campaigns\\new/**)",
+      "Read(c:\\Users\\skuehne\\Desktop\\Projekt\\skamp\\src\\app\\dashboard\\pr-tools\\campaigns\\campaigns\\edit\\[campaignId]/**)",
+      "Bash(git revert:*)",
+      "Read(c:\\Users\\skuehne\\Desktop\\Projekt\\skamp\\docs\\implementation-plans/**)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",

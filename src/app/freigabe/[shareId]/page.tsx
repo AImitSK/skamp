@@ -27,6 +27,7 @@ import PDFApprovalActions from '@/components/freigabe/PDFApprovalActions';
 import CustomerFeedbackForm from '@/components/freigabe/CustomerFeedbackForm';
 import { PDFStatusBadge } from '@/components/freigabe/PDFStatusIndicator';
 import { CustomerCommentSystem } from '@/components/freigabe/CustomerCommentSystem';
+import { LatestMessageBanner } from '@/components/freigabe/LatestMessageBanner';
 import { 
   CheckCircleIcon,
   ExclamationCircleIcon,
@@ -122,53 +123,6 @@ const approvalStatusConfig = {
   }
 };
 
-// NEU: Customer Message Banner Component - zeigt Admin-Nachricht aus Step 3
-function CustomerMessageBanner({ 
-  customerMessage,
-  teamMember,
-  campaign
-}: { 
-  customerMessage: string,
-  teamMember: any,
-  campaign: any
-}) {
-  // Simpel: Nur anzeigen wenn eine Nachricht da ist
-  if (!customerMessage || customerMessage.trim() === '') return null;
-  
-  // Bestimme den korrekten Absender-Namen
-  const senderName = teamMember?.displayName || campaign.userName || campaign.createdBy?.name || 'Ihr Ansprechpartner';
-  
-  // Avatar-URL generieren - Blau für Team
-  const senderAvatar = teamMember?.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`;
-  
-  return (
-    <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-6">
-      <div className="flex">
-        <div className="mr-3 flex-shrink-0">
-          <img
-            src={senderAvatar}
-            alt={senderName}
-            className="h-8 w-8 rounded-full"
-          />
-        </div>
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <h3 className="font-medium text-green-900">Aktuelle Meldung</h3>
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-              Nachricht vom Team
-            </span>
-          </div>
-          <div className="text-sm text-green-800 mb-2">
-            <strong>Von:</strong> {senderName}
-          </div>
-          <div className="text-green-900 whitespace-pre-wrap">
-            {customerMessage}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ENTFERNT: CustomerPDFVersionCard - ersetzt durch PDFVersionOverview
 
@@ -843,12 +797,56 @@ export default function ApprovalPage() {
             </div>
           )}
 
-
-          {/* NEU: Customer Approval Message - zeigt Admin-Nachricht aus Step 3 */}
-          <CustomerMessageBanner 
-            customerMessage={customerMessage}
-            campaign={campaign}
-            teamMember={teamMember}
+          {/* Latest Message Banner - identisch zur Toggle-Box */}
+          <LatestMessageBanner 
+            latestMessage={(() => {
+              const feedbackHistory = campaign.approvalData?.feedbackHistory;
+              if (!feedbackHistory || feedbackHistory.length === 0) return undefined;
+              
+              // Sortierte Liste - neueste zuerst für latestMessage
+              const sortedHistory = feedbackHistory.sort((a, b) => {
+                const aTime = a.requestedAt?.toDate ? a.requestedAt.toDate().getTime() : (a.requestedAt instanceof Date ? a.requestedAt.getTime() : new Date(a.requestedAt).getTime());
+                const bTime = b.requestedAt?.toDate ? b.requestedAt.toDate().getTime() : (b.requestedAt instanceof Date ? b.requestedAt.getTime() : new Date(b.requestedAt).getTime());
+                return bTime - aTime; // Neueste zuerst für latestMessage
+              });
+              
+              const latest = sortedHistory[0]; // Erste = neueste
+              if (!latest) return undefined;
+              
+              // KORREKTE Erkennung basierend auf action-Feld
+              const isCustomer = latest.action === 'changes_requested';
+              
+              // Namen und Avatar basierend auf isCustomer
+              let senderName, senderAvatar;
+              if (isCustomer) {
+                // KUNDE: Grüner Avatar
+                senderName = customerContact?.name || latest.author || 'Kunde';
+                senderAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=10b981&color=fff&size=32`;
+              } else {
+                // TEAM: Blauer Avatar oder echtes Foto
+                senderName = teamMember?.displayName || latest.author || 'Teammitglied';
+                senderAvatar = teamMember?.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=005fab&color=fff&size=32`;
+              }
+              
+              return {
+                id: 'latest',
+                type: 'feedback' as const,
+                content: latest.comment || '',
+                message: latest.comment || '',
+                sender: {
+                  id: 'unknown',
+                  name: senderName,
+                  email: '',
+                  role: isCustomer ? 'customer' as const : 'agency' as const
+                },
+                senderName: senderName,
+                senderAvatar: senderAvatar,
+                createdAt: latest.requestedAt?.toDate ? latest.requestedAt.toDate() : (latest.requestedAt instanceof Date ? latest.requestedAt : new Date()),
+                isRead: true,
+                campaignId: shareId,
+                organizationId: campaign.organizationId || ''
+              };
+            })()}
           />
 
           {/* MODERNISIERTE CAMPAIGN-PREVIEW - Phase 3 */}
