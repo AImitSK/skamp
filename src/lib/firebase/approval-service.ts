@@ -516,7 +516,8 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
       const cached = this.getCachedQuery(cacheKey);
       if (cached) {
         console.log('🔍 DEBUG: getByShareId - returning CACHED data, recipients:', cached.recipients);
-        return cached;
+        // TEMP FIX: Cache deaktivieren um recipients-Problem zu beheben
+        // return cached;
       }
       
       // OPTIMIERUNG: Nutze Index für shareId-Queries
