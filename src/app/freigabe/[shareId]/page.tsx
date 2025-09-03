@@ -446,33 +446,31 @@ export default function ApprovalPage() {
         }
       }
 
-      // Customer Contact Daten laden - Aus clientName/clientEmail (das ist die richtige Quelle!)
-      console.log('🔍 DEBUG: approvalData.clientName:', approvalData.clientName);
-      console.log('🔍 DEBUG: approvalData.clientEmail:', approvalData.clientEmail);
-      console.log('🔍 DEBUG: Suche nach Personennamen in approvalData...');
-      console.log('🔍 DEBUG: approvalData.customerContact:', approvalData.customerContact);
-      console.log('🔍 DEBUG: approvalData.contactName:', approvalData.contactName);
-      console.log('🔍 DEBUG: approvalData.contactPerson:', approvalData.contactPerson);
-      console.log('🔍 DEBUG: approvalData.recipientName:', approvalData.recipientName);
+      // Customer Contact Daten laden - KORRIGIERT: Aus recipients[0] (da steht der spezifische Name!)
+      console.log('🔍 DEBUG: approvalData.recipients:', approvalData.recipients);
       
-      if (approvalData.clientName) {
+      if (approvalData.recipients && approvalData.recipients.length > 0) {
+        const recipient = approvalData.recipients[0];
+        console.log('🔍 DEBUG: recipient[0]:', recipient);
+        
         setCustomerContact({
-          name: approvalData.clientName,
-          email: approvalData.clientEmail || '',
+          name: recipient.name || approvalData.clientName || 'Kunde',
+          email: recipient.email || approvalData.clientEmail || '',
           role: 'client'
         });
         
-        console.log('🔍 DEBUG: customerContact set to:', {
-          name: approvalData.clientName,
-          email: approvalData.clientEmail || '',
+        console.log('🔍 DEBUG: customerContact set from recipients to:', {
+          name: recipient.name || approvalData.clientName || 'Kunde',
+          email: recipient.email || approvalData.clientEmail || '',
           role: 'client'
         });
       } else {
-        console.log('🔍 DEBUG: Kein clientName gefunden!');
+        // Fallback zu clientName wenn keine recipients
+        console.log('🔍 DEBUG: Fallback zu clientName');
         setCustomerContact({
-          name: 'Kunde',
-          email: '',
-          role: ''
+          name: approvalData.clientName || 'Kunde',
+          email: approvalData.clientEmail || '',
+          role: 'client'
         });
       }
       
