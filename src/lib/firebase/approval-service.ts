@@ -200,6 +200,7 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
     customerMessage?: string,
     teamMemberData?: { name: string; email: string; photoUrl?: string }
   ): Promise<string> {
+    console.log('🔍 DEBUG: approvalService.createCustomerApproval - customerContact:', customerContact);
     try {
 
       // Lade Campaign-Daten für Title und Client-Info
