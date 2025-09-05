@@ -174,12 +174,12 @@ export default function ContactModalEnhanced({
     }
     
     loadTags();
-  }, [contact, companies, organizationId]); // Removed formData.companyId from dependencies!
+  }, [contact, companies, organizationId, loadTags]); // Removed formData.companyId from dependencies!
 
   // Load publications when component mounts or companyId changes
   useEffect(() => {
     loadPublications();
-  }, [formData.companyId, organizationId]);
+  }, [formData.companyId, organizationId, loadPublications]);
 
   const loadTags = async () => {
     if (!organizationId) return;

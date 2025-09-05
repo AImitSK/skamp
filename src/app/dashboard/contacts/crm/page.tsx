@@ -193,7 +193,7 @@ export default function ContactsPage() {
     if (user) {
       loadData();
     }
-  }, [user, currentOrganization]); 
+  }, [user, currentOrganization, loadData]); 
 
   const loadData = async () => {
     if (!user || !currentOrganization) return;

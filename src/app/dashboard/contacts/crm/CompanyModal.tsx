@@ -212,7 +212,7 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
     }
     loadTags();
     loadCompanies();
-  }, [company]);
+  }, [company, loadCompanies, loadLibraryData, loadTags]);
 
   const loadTags = async () => {
     if (!userId) return;

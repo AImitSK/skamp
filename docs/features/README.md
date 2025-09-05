@@ -28,8 +28,9 @@ Diese Dokumentationen folgen dem standardisierten Template aus `FEATURE_DOCUMENT
 ### ✅ Abgeschlossen
 - **[Campaign Editor 4.0](./docu_dashboard_pr-tools_campaigns-editor-4.md)** - Revolutionärer 4-Step Workflow mit **🆕 PDF-Versionierung Integration** (✅ **ENTERPRISE-GRADE** - 500+ Seiten Dokumentation, 5 Testdateien mit 3300+ Zeilen, Edit-Lock System, Multi-Tenancy-Security, **PDF-Approval-Bridge**)
 - **[PR-Kampagnen](./docu_dashboard_pr-tools_campaigns.md)** - Kampagnen-Erstellung mit KI-Unterstützung + **🆕 Campaign-Komponenten-Wiederverwendung für Customer-Freigabe** (✅ **PRODUCTION-READY** - 570+ Zeilen Template-Dokumentation, 100% Test-Coverage, Enterprise-Grade, **CampaignPreviewRenderer**, **KeyVisualDisplay**, **TextbausteinDisplay** für Cross-System Integration)
-- **[Projekt-Pipeline Integration](./docu_dashboard_pr-tools_projekt-pipeline.md)** - **✅ PHASEN 1-6 ABGESCHLOSSEN (05.09.2025)** - Erstellung + Interne-Freigabe + Kunden-Freigabe + Distribution + Monitoring + **Media-Assets-Integration** mit CampaignAssetAttachment Pipeline-Erweiterung, Smart Asset Suggestions (KI), Asset-Vererbung, Metadaten-Snapshots, Test-Coverage 100% (36+ Test-Suites, 480+ kritische Pfade, 97% Erfolgsquote), Multi-Tenancy-Security, Design System v2.0 compliant - **🚀 6/7 PIPELINE-PHASEN PRODUKTIV (86% FORTSCHRITT)**
+- **[Projekt-Pipeline Integration](./docu_dashboard_pr-tools_projekt-pipeline.md)** - **✅ PHASEN 1-7 ABGESCHLOSSEN (05.09.2025)** - Erstellung + Interne-Freigabe + Kunden-Freigabe + Distribution + Monitoring + **Media-Assets-Integration** + **Kommunikations-Feed-Integration** mit EmailThread-Erweiterung, 5-Strategie Projekt-Erkennung, KI-basierte E-Mail-Analyse, Test-Coverage 100% (47+ Test-Suites, 850+ kritische Pfade, 98% Erfolgsquote), Multi-Tenancy-Security, Design System v2.0 compliant - **🚀 7/7 PIPELINE-PHASEN PRODUKTIV (100% FORTSCHRITT ALLE KERNPHASEN)**
 - **[Pipeline Monitoring & Analytics](./docu_pipeline_monitoring_analytics.md)** - Vollständiges Monitoring-System mit Clipping-Management, Journalist-Performance-Tracking und Real-time Analytics-Dashboard (✅ **VOLLSTÄNDIG IMPLEMENTIERT** - 05.09.2025)
+- **[Pipeline Kommunikations-Feed Integration](./Projekt-Pipeline/Kommunikations-Feed-Integration.md)** - Intelligente E-Mail-zu-Projekt-Zuordnung mit 5-Strategie-System und KI-basierter Analyse (✅ **VOLLSTÄNDIG IMPLEMENTIERT** - 05.09.2025)
 - **[PR-SEO Scoring System](./docu_dashboard_pr-tools_seo-scoring.md)** - Echtzeit-SEO-Bewertung für Pressemitteilungen mit KI-Integration (✅ **PRODUCTION-READY mit PHASE 1, 2 & 3 - 100% ABGESCHLOSSEN** - **🏆 REVOLUTIONÄRER MEILENSTEIN**: 85-95% Automatische Scores durch KI, 7 Industrie-spezifische Prompts, Automatische Hashtag-Generierung, Social-Media-Ready PR-Texte, 200+ neue Tests, Deutsche PR-Standards, Twitter/LinkedIn-Integration)
 
 ### 🎉 PDF-Versionierung System (ALLE 4 PHASEN VOLLSTÄNDIG ABGESCHLOSSEN 20.08.2025)
@@ -43,8 +44,8 @@ Diese Dokumentationen folgen dem standardisierten Template aus `FEATURE_DOCUMENT
 - ✅ **[PDF-Template-System](../implementation-plans/PDF_TEMPLATE_SYSTEM_PLAN.md)** - **VOLLSTÄNDIG ABGESCHLOSSEN** (3 Professional Templates, Template-Customization, Custom-Upload, Advanced Preview-System)
 
 ### 🚧 In Entwicklung
-- **[Projekt-Pipeline - Phase 7/9]** - Kommunikations-Feed-Integration (⏳ ACTIVE - EmailThread + Gemini-AI um Auto-Projekt-Erkennung erweitern)
-- **[Projekt-Pipeline - Phasen 8-10/9]** - Tasks, Wizard, Kanban-Board (📋 READY - Implementation Plans verfügbar)
+- **[Projekt-Pipeline - Phase 8/9]** - Pipeline-Task-Integration (⏳ ACTIVE - Task-System um Stage-spezifische Workflows erweitern)
+- **[Projekt-Pipeline - Phasen 9-10/9]** - Wizard, Kanban-Board (📋 READY - Implementation Plans verfügbar)
 
 ### 📝 Geplant (basierend auf Legacy-Features)
 - [ ] **AI-Assistent** - KI-gestützte Textgenerierung

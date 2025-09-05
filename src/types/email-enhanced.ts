@@ -201,6 +201,55 @@ export interface EmailMessage extends BaseEntity {
   headers?: Record<string, string>;
   inReplyTo?: string;
   references?: string[];
+  
+  // ============================================
+  // PLAN 7/9: PROJEKT-INTEGRATION
+  // ============================================
+  
+  // NEU: Projekt-Zuordnung
+  projectId?: string;
+  projectStage?: import('./project').PipelineStage; // Pipeline-Phase zum Zeitpunkt des E-Mail-Empfangs
+  
+  // ERWEITERT: Mehr Verknüpfungen
+  approvalId?: string;          // Falls E-Mail aus Freigabe-Prozess
+  mediaAssetIds?: string[];     // Verknüpfte Media-Assets
+  
+  // NEU: Automatische Kategorisierung
+  autoCategory?: {
+    primary: 'inquiry' | 'feedback' | 'approval' | 'complaint' | 'media-request';
+    confidence: number;
+    suggestedActions: string[];
+    detectedEntities: Array<{
+      type: 'deadline' | 'person' | 'company' | 'phone' | 'url';
+      value: string;
+      confidence: number;
+    }>;
+  };
+}
+
+// ============================================
+// PLAN 7/9: PROJECT-AWARE EMAIL MESSAGE
+// ============================================
+export interface ProjectAwareEmailMessage extends EmailMessage {
+  // NEU: Projekt-Zuordnung
+  projectId?: string;
+  projectStage?: import('./project').PipelineStage; // Pipeline-Phase zum Zeitpunkt des E-Mail-Empfangs
+  
+  // ERWEITERT: Mehr Verknüpfungen
+  approvalId?: string;          // Falls E-Mail aus Freigabe-Prozess
+  mediaAssetIds?: string[];     // Verknüpfte Media-Assets
+  
+  // NEU: Automatische Kategorisierung
+  autoCategory?: {
+    primary: 'inquiry' | 'feedback' | 'approval' | 'complaint' | 'media-request';
+    confidence: number;
+    suggestedActions: string[];
+    detectedEntities: Array<{
+      type: 'deadline' | 'person' | 'company' | 'phone' | 'url';
+      value: string;
+      confidence: number;
+    }>;
+  };
 }
 
 // E-Mail Adress-Info
@@ -260,6 +309,59 @@ export interface EmailThread extends BaseEntity {
     suggestedActions?: string[];
     analyzedAt?: Timestamp;
     generatedBy?: 'gemini'; // Tracking welche KI verwendet wurde
+  };
+  
+  // ============================================
+  // PLAN 7/9: PROJEKT-INTEGRATION
+  // ============================================
+  
+  // NEU: Projekt-Verknüpfung
+  projectId?: string;
+  projectTitle?: string;        // Denormalisiert für Performance
+  projectStage?: import('./project').PipelineStage; // Aktueller Pipeline-Status
+  
+  // NEU: Projekt-Kontext
+  projectContext?: {
+    confidence: number;          // 0.0 - 1.0 Sicherheit der Zuordnung
+    detectionMethod: 'explicit' | 'reply-to' | 'header' | 'customer' | 'ai' | 'manual';
+    detectedAt: Timestamp;
+    detectedBy?: string;         // User ID bei manueller Zuordnung
+  };
+  
+  // ERWEITERT: Mehr Kontext-Typen
+  contextType?: 'campaign' | 'approval' | 'media' | 'internal' | 'customer-inquiry';
+  contextMetadata?: {
+    campaignTitle?: string;
+    approvalStatus?: string;
+    mediaAssetCount?: number;
+    customerName?: string;
+  };
+}
+
+// ============================================
+// PLAN 7/9: PROJECT-AWARE EMAIL THREAD
+// ============================================
+export interface ProjectAwareEmailThread extends EmailThread {
+  // NEU: Projekt-Verknüpfung
+  projectId?: string;
+  projectTitle?: string;        // Denormalisiert für Performance
+  projectStage?: import('./project').PipelineStage; // Aktueller Pipeline-Status
+  
+  // NEU: Projekt-Kontext
+  projectContext?: {
+    confidence: number;          // 0.0 - 1.0 Sicherheit der Zuordnung
+    detectionMethod: 'explicit' | 'reply-to' | 'header' | 'customer' | 'ai' | 'manual';
+    detectedAt: Timestamp;
+    detectedBy?: string;         // User ID bei manueller Zuordnung
+  };
+  
+  // ERWEITERT: Mehr Kontext-Typen
+  contextType?: 'campaign' | 'approval' | 'media' | 'internal' | 'customer-inquiry';
+  contextMetadata?: {
+    campaignTitle?: string;
+    approvalStatus?: string;
+    mediaAssetCount?: number;
+    customerName?: string;
   };
 }
 

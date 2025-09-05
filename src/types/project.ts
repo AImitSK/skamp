@@ -77,6 +77,39 @@ export interface Project {
     assetCount: number;
     lastModified: Timestamp;
   }>;
+  
+  // ========================================
+  // PLAN 7/9: KOMMUNIKATIONS-FEATURES
+  // ========================================
+  
+  // Kommunikations-Konfiguration
+  communicationConfig?: {
+    enableAutoProjectDetection: boolean;
+    confidenceThreshold: number; // Min. Konfidenz für automatische Zuordnung
+    notificationSettings: {
+      newEmailAlert: boolean;
+      urgentEmailAlert: boolean;
+      customerResponseAlert: boolean;
+    };
+    autoResponseRules: Array<{
+      trigger: string; // E-Mail-Typ der Rule triggert
+      template: string;
+      enabled: boolean;
+    }>;
+  };
+  
+  // Aggregierte Kommunikations-Daten (Performance-Optimierung)
+  communicationSummary?: {
+    totalEmails: number;
+    unreadEmails: number;
+    pendingApprovals: number;
+    lastActivity?: Timestamp;
+    mostActiveContact?: {
+      email: string;
+      name?: string;
+    };
+    avgResponseTime?: number; // in Stunden
+  };
 }
 
 export type ProjectStatus = 

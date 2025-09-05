@@ -766,6 +766,93 @@ Diese E-Mail wurde über CeleroPress versendet.
       throw error;
     }
   }
+
+  // ============================================
+  // PLAN 7/9: PROJEKT-BEWUSSTE E-MAIL-VERSENDUNG
+  // ============================================
+
+  /**
+   * Projekt-bewusste E-Mail-Versendung
+   */
+  async sendProjectEmail(emailData: {
+    to: string[];
+    subject: string;
+    content: string;
+    projectId: string;
+    contextType: 'campaign' | 'approval' | 'media' | 'general';
+    contextId: string;
+    organizationId: string;
+  }): Promise<string> {
+    
+    try {
+      // Projekt-spezifische Reply-To-Adresse generieren
+      const replyToAddress = this.generateProjectReplyTo({
+        organizationId: emailData.organizationId,
+        projectId: emailData.projectId,
+        contextType: emailData.contextType,
+        contextId: emailData.contextId
+      });
+      
+      // Projekt-Header hinzufügen
+      const headers = {
+        'X-CeleroPress-Project-ID': emailData.projectId,
+        'X-CeleroPress-Context-Type': emailData.contextType,
+        'X-CeleroPress-Context-ID': emailData.contextId,
+        'Reply-To': replyToAddress
+      };
+      
+      // Standard E-Mail-Versendung über API Route mit erweiterten Headern
+      const result = await apiClient.post<{ messageId: string }>('/api/email/send-project', {
+        to: emailData.to,
+        subject: emailData.subject,
+        content: emailData.content,
+        headers,
+        replyTo: replyToAddress,
+        organizationId: emailData.organizationId,
+        projectId: emailData.projectId,
+        contextType: emailData.contextType,
+        contextId: emailData.contextId
+      });
+      
+      return result.messageId;
+      
+    } catch (error) {
+      console.error('Project email sending failed:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Generiert projekt-spezifische Reply-To-Adresse
+   */
+  private generateProjectReplyTo(data: {
+    organizationId: string;
+    projectId: string;
+    contextType: string;
+    contextId: string;
+  }): string {
+    const domain = this.getInboxDomain(data.organizationId);
+    return `pr-${data.projectId}-${data.contextType}-${data.contextId}@inbox.${domain}`;
+  }
+  
+  /**
+   * Ermittelt Inbox-Domain für Organisation
+   */
+  private getInboxDomain(organizationId: string): string {
+    // TODO: Aus Organisation-Settings oder Default verwenden
+    return 'celeropress.de';
+  }
+}
+
+// ✅ PIPELINE-DISTRIBUTION-TYPES HINZUGEFÜGT (Plan 4/9)
+interface PipelineDistributionEvent {
+  projectId: string;
+  campaignId: string;
+  distributionId: string;
+  recipientCount: number;
+  timestamp: Timestamp;
+  metadata: Record<string, any>;
+  organizationId?: string; // Für Multi-Tenancy
 }
 
 // ✅ PIPELINE-DISTRIBUTION-TYPES HINZUGEFÜGT (Plan 4/9)

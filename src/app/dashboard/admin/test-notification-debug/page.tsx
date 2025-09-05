@@ -159,7 +159,7 @@ export default function NotificationDebugPage() {
     if (user && currentOrganization) {
       loadAllNotifications();
     }
-  }, [user, currentOrganization]);
+  }, [user, currentOrganization, loadAllNotifications]);
 
   const formatDate = (timestamp: any) => {
     if (!timestamp) return 'No date';

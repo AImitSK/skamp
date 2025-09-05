@@ -40,6 +40,34 @@ interface ThreadMatchResult {
   isNew?: boolean;
   confidence?: number;
   strategy?: 'headers' | 'subject' | 'ai-semantic' | 'new' | 'deferred';
+  // PLAN 7/9: Projekt-Context hinzugefügt
+  projectContext?: ProjectContext;
+}
+
+// ============================================
+// PLAN 7/9: PROJEKT-CONTEXT INTERFACES
+// ============================================
+interface ProjectContext {
+  projectId: string;
+  projectTitle?: string;
+  contextType: 'campaign' | 'approval' | 'media' | 'general' | 'ai-detected';
+  contextId: string;
+  confidence: number;
+  detectionMethod?: string;
+  evidence?: string;
+}
+
+interface IncomingEmailData {
+  messageId: string;
+  inReplyTo?: string | null;
+  references?: string[];
+  subject: string;
+  from: EmailAddressInfo;
+  to: EmailAddressInfo[];
+  organizationId: string;
+  headers?: Record<string, string>;
+  textContent?: string;
+  campaignId?: string;
 }
 
 // Erweitere EmailThread Interface für zusätzliche Felder
@@ -60,8 +88,10 @@ export class FlexibleThreadMatcherService {
    * Findet oder erstellt einen Thread für eine eingehende E-Mail
    * Server-Side: Gibt nur Thread-ID zurück (erstellt keinen Thread in Firestore)
    * Client-Side: Erstellt vollständigen Thread in Firestore
+   * 
+   * PLAN 7/9: ERWEITERT um Projekt-Erkennung
    */
-  async findOrCreateThread(criteria: ThreadMatchingCriteria): Promise<ThreadMatchResult> {
+  async findOrCreateThread(criteria: ThreadMatchingCriteria | IncomingEmailData): Promise<ThreadMatchResult> {
     try {
 
       // Server-Side: Vereinfachtes Matching ohne Firestore-Zugriff
@@ -99,14 +129,27 @@ export class FlexibleThreadMatcherService {
 
   /**
    * Client-Side Thread Matching (Original-Logik)
+   * PLAN 7/9: ERWEITERT um Projekt-Erkennung
    */
-  private async clientSideThreadMatching(criteria: ThreadMatchingCriteria): Promise<ThreadMatchResult> {
+  private async clientSideThreadMatching(criteria: ThreadMatchingCriteria | IncomingEmailData): Promise<ThreadMatchResult> {
+    let projectContext: ProjectContext | undefined;
+    
+    // PLAN 7/9: Projekt-Erkennung für IncomingEmailData
+    if ('headers' in criteria && 'textContent' in criteria) {
+      const detectedContext = await this.detectProjectContext(criteria as IncomingEmailData);
+      projectContext = detectedContext || undefined;
+    }
+
     // 1. Header-basiertes Matching (höchste Priorität)
     if (criteria.inReplyTo || (criteria.references && criteria.references.length > 0)) {
       const headerMatch = await this.matchByHeaders(criteria);
       if (headerMatch.success && headerMatch.thread) {
         await this.updateThreadActivity(headerMatch.thread.id!, criteria);
-        return headerMatch;
+        // Projekt-Kontext anreichern falls gefunden
+        if (projectContext && projectContext.confidence > 0.5) {
+          await this.enrichThreadWithProject(headerMatch.thread.id!, projectContext);
+        }
+        return { ...headerMatch, projectContext };
       }
     }
 
@@ -114,30 +157,40 @@ export class FlexibleThreadMatcherService {
     const subjectMatch = await this.matchBySubject(criteria);
     if (subjectMatch.success && subjectMatch.thread) {
       await this.updateThreadActivity(subjectMatch.thread.id!, criteria);
-      return subjectMatch;
+      // Projekt-Kontext anreichern falls gefunden
+      if (projectContext && projectContext.confidence > 0.5) {
+        await this.enrichThreadWithProject(subjectMatch.thread.id!, projectContext);
+      }
+      return { ...subjectMatch, projectContext };
     }
 
     // 3. Prüfe ob es bereits einen "deferred" Thread mit dieser ID gibt
     const deferredThreadId = this.generateThreadId(criteria);
     const existingThread = await this.checkDeferredThread(deferredThreadId, criteria);
     if (existingThread) {
+      // Projekt-Kontext anreichern falls gefunden
+      if (projectContext && projectContext.confidence > 0.5) {
+        await this.enrichThreadWithProject(existingThread.id!, projectContext);
+      }
       return {
         success: true,
         thread: existingThread,
         isNew: false,
         confidence: 100,
-        strategy: 'deferred'
+        strategy: 'deferred',
+        projectContext
       };
     }
 
     // 4. Neuen Thread erstellen
-    const newThread = await this.createThread(criteria, deferredThreadId);
+    const newThread = await this.createThread(criteria, deferredThreadId, projectContext);
     return {
       success: true,
       thread: newThread,
       isNew: true,
       confidence: 100,
-      strategy: 'new'
+      strategy: 'new',
+      projectContext
     };
   }
 
@@ -326,10 +379,12 @@ export class FlexibleThreadMatcherService {
   /**
    * Erstellt einen neuen Thread
    * FIX: Stelle sicher, dass alle Felder definierte Werte haben
+   * PLAN 7/9: ERWEITERT um Projekt-Kontext
    */
   private async createThread(
-    criteria: ThreadMatchingCriteria,
-    threadId?: string
+    criteria: ThreadMatchingCriteria | IncomingEmailData,
+    threadId?: string,
+    projectContext?: ProjectContext
   ): Promise<EmailThread> {
     try {
       // Sammle alle Teilnehmer
@@ -356,7 +411,19 @@ export class FlexibleThreadMatcherService {
         priority: 'normal',
         
         // Wenn es ein deferred Thread war, markieren
-        wasDeferred: !!threadId
+        wasDeferred: !!threadId,
+        
+        // PLAN 7/9: Projekt-Kontext hinzufügen falls vorhanden
+        ...(projectContext && {
+          projectId: projectContext.projectId,
+          projectTitle: projectContext.projectTitle,
+          contextType: projectContext.contextType as any,
+          projectContext: {
+            confidence: projectContext.confidence,
+            detectionMethod: projectContext.detectionMethod as any || 'ai',
+            detectedAt: serverTimestamp() as Timestamp
+          }
+        })
       };
 
       // Debug: Log die Daten vor der Bereinigung
@@ -857,6 +924,305 @@ export class FlexibleThreadMatcherService {
       });
     } catch (error) {
       // Don't throw - this is just for logging
+    }
+  }
+
+  // ============================================
+  // PLAN 7/9: PROJEKT-ERKENNUNGS-METHODEN
+  // ============================================
+
+  /**
+   * Erkennt Projekt-Kontext aus einer eingehenden E-Mail
+   */
+  private async detectProjectContext(emailData: IncomingEmailData): Promise<ProjectContext | null> {
+    try {
+      // 1. Reply-To-Adresse analysieren (höchste Priorität)
+      const replyToProject = this.parseReplyToForProject(emailData.from.email);
+      if (replyToProject) return replyToProject;
+      
+      // 2. E-Mail-Headers prüfen
+      const headerProject = this.parseHeadersForProject(emailData.headers);
+      if (headerProject) return headerProject;
+      
+      // 3. Campaign-ID aus bestehender Thread-Zuordnung
+      if (emailData.campaignId) {
+        const campaignProject = await this.findProjectByCampaign(emailData.campaignId);
+        if (campaignProject) return campaignProject;
+      }
+      
+      // 4. Absender-E-Mail → Kunde → Aktive Projekte
+      const senderProject = await this.findProjectByCustomerEmail(emailData.from.email);
+      if (senderProject) return senderProject;
+      
+      // 5. KI-basierte Content-Analyse (falls Text verfügbar)
+      if (emailData.textContent) {
+        const aiProject = await this.detectProjectByContent(emailData);
+        if (aiProject) return aiProject;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Project detection failed:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Parse Reply-To für Projekt-Marker
+   */
+  private parseReplyToForProject(email: string): ProjectContext | null {
+    // Pattern: pr-PROJECT_ID-CONTEXT_TYPE-CONTEXT_ID@domain.com
+    const match = email.match(/^pr-([^-]+)-([^-]+)-([^@]+)@/);
+    if (match) {
+      const [, projectId, contextType, contextId] = match;
+      return {
+        projectId,
+        contextType: contextType as any,
+        contextId,
+        confidence: 1.0,
+        detectionMethod: 'reply-to',
+        evidence: `Reply-To pattern: ${email}`
+      };
+    }
+    return null;
+  }
+
+  /**
+   * Parse E-Mail Headers für Projekt-Informationen
+   */
+  private parseHeadersForProject(headers?: Record<string, string>): ProjectContext | null {
+    if (!headers) return null;
+    
+    const projectId = headers['X-CeleroPress-Project-ID'];
+    const contextType = headers['X-CeleroPress-Context-Type'];
+    const contextId = headers['X-CeleroPress-Context-ID'];
+    
+    if (projectId && contextType && contextId) {
+      return {
+        projectId,
+        contextType: contextType as any,
+        contextId,
+        confidence: 1.0,
+        detectionMethod: 'header',
+        evidence: 'Custom headers present'
+      };
+    }
+    
+    return null;
+  }
+
+  /**
+   * Finde Projekt über Campaign-ID
+   */
+  private async findProjectByCampaign(campaignId: string): Promise<ProjectContext | null> {
+    if (this.isServerSide) return null;
+    
+    try {
+      // Suche nach Kampagne um Projekt-ID zu finden
+      const campaignQuery = query(
+        collection(db, 'pr_campaigns'),
+        where('id', '==', campaignId)
+      );
+      
+      const snapshot = await getDocs(campaignQuery);
+      if (!snapshot.empty) {
+        const campaign = snapshot.docs[0].data();
+        if (campaign.projectId) {
+          return {
+            projectId: campaign.projectId,
+            contextType: 'campaign',
+            contextId: campaignId,
+            confidence: 0.9,
+            detectionMethod: 'campaign-link',
+            evidence: `Campaign ${campaignId} linked to project`
+          };
+        }
+      }
+    } catch (error) {
+      console.error('Campaign lookup failed:', error);
+    }
+    
+    return null;
+  }
+
+  /**
+   * Finde Projekt über Kunden-E-Mail
+   */
+  private async findProjectByCustomerEmail(email: string): Promise<ProjectContext | null> {
+    if (this.isServerSide) return null;
+    
+    try {
+      // Suche nach aktiven Projekten des Kunden
+      const projectQuery = query(
+        collection(db, 'projects'),
+        where('customer.email', '==', email),
+        where('status', '==', 'active')
+      );
+      
+      const snapshot = await getDocs(projectQuery);
+      if (!snapshot.empty) {
+        const project = snapshot.docs[0].data();
+        return {
+          projectId: snapshot.docs[0].id,
+          projectTitle: project.title,
+          contextType: 'general',
+          contextId: 'customer-email',
+          confidence: 0.7,
+          detectionMethod: 'customer',
+          evidence: `Customer email ${email} matches active project`
+        };
+      }
+    } catch (error) {
+      console.error('Customer project lookup failed:', error);
+    }
+    
+    return null;
+  }
+
+  /**
+   * KI-basierte Projekt-Erkennung über Content
+   */
+  private async detectProjectByContent(emailData: IncomingEmailData): Promise<ProjectContext | null> {
+    if (this.isServerSide) return null;
+    
+    try {
+      // Hole aktive Projekte für die Organisation
+      const activeProjects = await this.getActiveProjectsForOrganization(emailData.organizationId);
+      
+      if (activeProjects.length === 0) {
+        return null; // Keine Projekte vorhanden
+      }
+      
+      // Dynamischen Import für GeminiService verwenden
+      const { geminiService } = await import('@/lib/ai/gemini-service');
+      
+      // KI-Analyse durchführen
+      const analysis = await geminiService.analyzeEmailForProject({
+        subject: emailData.subject,
+        content: emailData.textContent,
+        fromEmail: emailData.from.email,
+        organizationId: emailData.organizationId,
+        activeProjects: activeProjects.map(p => ({
+          id: p.id,
+          title: p.title,
+          clientName: p.customer?.name,
+          stage: p.currentStage
+        }))
+      });
+      
+      // Nur verwenden wenn Konfidenz hoch genug ist
+      if (analysis.projectId && analysis.confidence > 0.6) {
+        return {
+          projectId: analysis.projectId,
+          projectTitle: analysis.projectTitle || undefined,
+          contextType: analysis.contextType as any,
+          contextId: 'ai-analysis',
+          confidence: analysis.confidence,
+          detectionMethod: 'ai',
+          evidence: `KI-Analyse: ${analysis.reasoning}`
+        };
+      }
+      
+      return null;
+      
+    } catch (error) {
+      console.error('AI-based project detection failed:', error);
+      return null;
+    }
+  }
+  
+  /**
+   * Holt aktive Projekte für eine Organisation
+   */
+  private async getActiveProjectsForOrganization(organizationId: string): Promise<any[]> {
+    try {
+      const projectsQuery = query(
+        collection(db, 'projects'),
+        where('organizationId', '==', organizationId),
+        where('status', '==', 'active'),
+        limit(20) // Begrenzt auf 20 Projekte für Performance
+      );
+      
+      const snapshot = await getDocs(projectsQuery);
+      const projects: any[] = [];
+      
+      snapshot.forEach(doc => {
+        projects.push({ ...doc.data(), id: doc.id });
+      });
+      
+      return projects;
+      
+    } catch (error) {
+      console.error('Failed to get active projects:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Reichert Thread mit Projekt-Informationen an
+   */
+  async enrichThreadWithProject(threadId: string, projectContext: ProjectContext): Promise<void> {
+    if (this.isServerSide) return;
+    
+    try {
+      await updateDoc(doc(db, this.collectionName, threadId), {
+        projectId: projectContext.projectId,
+        projectTitle: projectContext.projectTitle,
+        contextType: projectContext.contextType,
+        projectContext: {
+          confidence: projectContext.confidence,
+          detectionMethod: projectContext.detectionMethod,
+          detectedAt: serverTimestamp(),
+          evidence: projectContext.evidence
+        },
+        updatedAt: serverTimestamp()
+      });
+    } catch (error) {
+      console.error('Thread enrichment failed:', error);
+    }
+  }
+
+  /**
+   * Verknüpft E-Mail manuell mit Projekt
+   */
+  async linkEmailToProject(
+    threadId: string,
+    projectId: string,
+    method: 'manual' | 'automatic',
+    confidence: number = 1.0,
+    userId?: string
+  ): Promise<void> {
+    if (this.isServerSide) return;
+
+    try {
+      // Hole Projekt-Details
+      const projectDoc = await getDoc(doc(db, 'projects', projectId));
+      if (!projectDoc.exists()) {
+        throw new Error('Projekt nicht gefunden');
+      }
+      
+      const project = projectDoc.data();
+      
+      // Thread aktualisieren
+      await updateDoc(doc(db, this.collectionName, threadId), {
+        projectId,
+        projectTitle: project.title,
+        projectStage: project.currentStage,
+        projectContext: {
+          confidence,
+          detectionMethod: method,
+          detectedAt: serverTimestamp(),
+          detectedBy: userId
+        },
+        updatedAt: serverTimestamp()
+      });
+      
+      // TODO: Projekt-Kommunikations-Summary aktualisieren
+      // await this.updateProjectCommunicationSummary(projectId);
+      
+    } catch (error) {
+      console.error('Manual project linking failed:', error);
+      throw error;
     }
   }
 }

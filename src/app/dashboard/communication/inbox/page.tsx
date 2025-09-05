@@ -319,7 +319,7 @@ export default function InboxPage() {
     return () => {
       newUnsubscribes.forEach(unsubscribe => unsubscribe());
     };
-  }, [user, organizationId, selectedFolderType, selectedTeamMemberId, hasEmailAddresses, resolvingThreads]);
+  }, [user, organizationId, selectedFolderType, selectedTeamMemberId, hasEmailAddresses, resolvingThreads, setupRealtimeListeners, unsubscribes]);
 
   const setupRealtimeListeners = (unsubscribes: Unsubscribe[]) => {
     setLoading(true);
