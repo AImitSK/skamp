@@ -1403,6 +1403,209 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
     }
   }
 
+  // ========================================
+  // Pipeline-Integration Methoden (Plan 3/9)
+  // ========================================
+  
+  /**
+   * Erstellt eine Pipeline-spezifische Freigabe mit Projekt-Kontext
+   */
+  async createPipelineApproval(
+    approvalData: Omit<ApprovalEnhanced, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'shareId' | 'history' | 'analytics' | 'notifications' | 'version'>,
+    context: { organizationId: string; userId: string }
+  ): Promise<string> {
+    try {
+      // Erweitere Approval-Daten um Pipeline-spezifische Features
+      const pipelineApprovalData = {
+        ...approvalData,
+        pipelineApproval: {
+          isRequired: true,
+          blocksStageTransition: true,
+          autoTransitionOnApproval: true,
+          stageRequirements: approvalData.pipelineApproval?.stageRequirements || [],
+          completionActions: approvalData.pipelineApproval?.completionActions || []
+        }
+      };
+      
+      return await this.create(pipelineApprovalData, context);
+    } catch (error) {
+      throw new Error('Fehler beim Erstellen der Pipeline-Freigabe');
+    }
+  }
+  
+  /**
+   * Holt Pipeline-Approval nach Projekt-ID
+   */
+  async getByProjectId(
+    projectId: string,
+    context: { organizationId: string; userId?: string }
+  ): Promise<ApprovalEnhanced | null> {
+    try {
+      const cacheKey = `project-approval-${projectId}-${context.organizationId}`;
+      const cached = this.getCachedQuery(cacheKey);
+      if (cached) return cached;
+      
+      const q = query(
+        collection(db, this.collectionName),
+        where('projectId', '==', projectId),
+        where('organizationId', '==', context.organizationId),
+        where('pipelineStage', '==', 'approval'),
+        orderBy('createdAt', 'desc'),
+        limit(1)
+      );
+
+      const snapshot = await getDocs(q);
+      if (snapshot.empty) {
+        this.setCachedQuery(cacheKey, null);
+        return null;
+      }
+
+      const docSnap = snapshot.docs[0];
+      const approval = {
+        id: docSnap.id,
+        ...docSnap.data()
+      } as ApprovalEnhanced;
+      
+      this.setCachedQuery(cacheKey, approval);
+      return approval;
+    } catch (error) {
+      return null;
+    }
+  }
+  
+  /**
+   * Pipeline-Completion-Handler für genehmigte Freigaben
+   */
+  async handlePipelineApprovalCompletion(
+    approvalId: string,
+    context: { organizationId: string; userId: string }
+  ): Promise<void> {
+    try {
+      const approval = await this.getById(approvalId, context.organizationId);
+      
+      if (!approval || approval.status !== 'approved' || !approval.pipelineApproval) {
+        return;
+      }
+
+      // Pipeline-Completion-Actions ausführen
+      for (const action of approval.pipelineApproval.completionActions || []) {
+        try {
+          switch (action.type) {
+            case 'transition_stage':
+              // Import project service dynamisch um circular dependencies zu vermeiden
+              const { projectService } = await import('./project-service');
+              
+              if (approval.projectId) {
+                await projectService.update(
+                  approval.projectId,
+                  {
+                    currentStage: action.target as any,
+                    updatedAt: Timestamp.now()
+                  },
+                  context
+                );
+                
+                // Füge Historie-Eintrag hinzu
+                const historyEntry = {
+                  id: nanoid(),
+                  timestamp: Timestamp.now(),
+                  action: 'pipeline_transitioned' as ApprovalAction,
+                  userId: context.userId,
+                  actorName: 'Pipeline-System',
+                  details: {
+                    comment: `Projekt-Phase automatisch auf "${action.target}" gesetzt nach Genehmigung`,
+                    transitionReason: action.data.reason || 'approval_completed',
+                    approvalId
+                  }
+                };
+                
+                await updateDoc(doc(db, this.collectionName, approvalId), {
+                  history: arrayUnion(historyEntry)
+                });
+              }
+              break;
+              
+            case 'send_notification':
+              // Hole Team-Member für Benachrichtigung
+              const teamMember = await teamMemberService.getById(action.target, context.organizationId);
+              if (teamMember) {
+                // Sende Benachrichtigung
+                const { notificationsService } = await import('./notifications-service');
+                await notificationsService.createNotification({
+                  userId: action.target,
+                  organizationId: context.organizationId,
+                  type: 'project_approval_completed',
+                  title: 'Projekt-Freigabe abgeschlossen',
+                  message: `Projekt "${approval.projectTitle}" wurde vom Kunden freigegeben und zur nächsten Phase weitergeleitet.`,
+                  actionUrl: `/dashboard/projects/${approval.projectId}`,
+                  priority: 'normal'
+                });
+              }
+              break;
+              
+            case 'update_project':
+              if (approval.projectId) {
+                const { projectService } = await import('./project-service');
+                await projectService.update(
+                  approval.projectId,
+                  action.data,
+                  context
+                );
+              }
+              break;
+          }
+        } catch (actionError) {
+          // Log Fehler aber verhindere nicht das gesamte Completion
+          console.error(`Fehler bei Pipeline-Action ${action.type}:`, actionError);
+        }
+      }
+    } catch (error) {
+      console.error('Fehler beim Pipeline-Approval-Completion:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Erweitert bestehende create-Methode um Pipeline-Handling
+   */
+  async createWithPipelineIntegration(
+    approvalData: Omit<ApprovalEnhanced, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'shareId' | 'history' | 'analytics' | 'notifications' | 'version'>,
+    context: { organizationId: string; userId: string }
+  ): Promise<ApprovalEnhanced> {
+    try {
+      // Erstelle Standard-Approval
+      const approvalId = await this.create(approvalData, context);
+      
+      // Wenn Pipeline-Integration aktiviert, aktualisiere Projekt-Status
+      if (approvalData.projectId && approvalData.pipelineStage) {
+        const { projectService } = await import('./project-service');
+        
+        try {
+          await projectService.update(
+            approvalData.projectId,
+            {
+              currentStage: approvalData.pipelineStage as any
+            },
+            context
+          );
+        } catch (projectUpdateError) {
+          // Log Fehler aber verhindere nicht die Approval-Erstellung
+          console.error('Fehler beim Projekt-Status-Update:', projectUpdateError);
+        }
+      }
+      
+      // Hole und gib vollständige Approval zurück
+      const approval = await this.getById(approvalId, context.organizationId);
+      if (!approval) {
+        throw new Error('Approval konnte nach Erstellung nicht gefunden werden');
+      }
+      
+      return approval;
+    } catch (error) {
+      throw new Error('Fehler beim Erstellen der Pipeline-integrierten Freigabe');
+    }
+  }
+
   /**
    * Sendet Benachrichtigungen mit E-Mail & Notification Integration
    */

@@ -23,6 +23,7 @@ import { ModernCustomerSelector } from "@/components/pr/ModernCustomerSelector";
 import CampaignRecipientManager from "@/components/pr/campaign/CampaignRecipientManager";
 import { ApprovalSettings } from "@/components/campaigns/ApprovalSettings";
 import { CampaignPreviewStep } from "@/components/campaigns/CampaignPreviewStep";
+import { ProjectSelector } from "@/components/projects/ProjectSelector";
 // VEREINFACHT: Nur noch SimplifiedApprovalData
 interface SimplifiedApprovalData {
   customerApprovalRequired: boolean;
@@ -57,6 +58,7 @@ import { prService } from "@/lib/firebase/pr-service";
 import { DistributionList } from "@/types/lists";
 import { CampaignAssetAttachment, EditLockData, EditLockUtils, PRCampaign, EDIT_LOCK_CONFIG } from "@/types/pr";
 import SimpleBoilerplateLoader, { BoilerplateSection } from "@/components/pr/campaign/SimpleBoilerplateLoader";
+import { Project } from "@/types/project";
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { serverTimestamp } from 'firebase/firestore';
 import { pdfVersionsService, PDFVersion } from '@/lib/firebase/pdf-versions-service';
@@ -140,6 +142,10 @@ export default function NewPRCampaignPage() {
   // 🆕 Template-State-Management
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>(undefined);
   const [selectedTemplateName, setSelectedTemplateName] = useState<string>('');
+
+  // ✅ PROJEKT-INTEGRATION STATE
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   // Debug Logging für State-Änderungen
   useEffect(() => {
@@ -447,7 +453,37 @@ export default function NewPRCampaignPage() {
           recipientCount: listRecipientCount + manualRecipients.length,
           manualRecipients: manualRecipients,
           keywords: keywords,
-          status: 'draft' as const
+          status: 'draft' as const,
+          
+          // ✅ PROJEKT-INTEGRATION FELDER
+          projectId: selectedProjectId || undefined,
+          projectTitle: selectedProject?.title || undefined,
+          pipelineStage: selectedProject ? 'creation' : undefined,
+          
+          // ✅ Plan 2/9: Interne PDF-Konfiguration für Projekt-verknüpfte Kampagnen
+          ...(selectedProjectId && {
+            internalPDFs: {
+              enabled: true,
+              autoGenerate: true,
+              storageFolder: `projects/${selectedProjectId}/internal-pdfs`,
+              versionCount: 0
+            }
+          }),
+          
+          // Auto-populate aus Projekt wenn vorhanden
+          ...(selectedProject && {
+            budgetTracking: {
+              allocated: selectedProject.budget,
+              spent: 0,
+              currency: selectedProject.currency || 'EUR'
+            },
+            milestones: selectedProject.milestones?.map(m => ({
+              id: m.id,
+              title: m.title,
+              dueDate: m.dueDate,
+              completed: false
+            })) || []
+          })
         },
         {
           customerApprovalRequired: approvalData.customerApprovalRequired,
@@ -464,11 +500,54 @@ export default function NewPRCampaignPage() {
       // STORE WORKFLOW RESULT
       setApprovalWorkflowResult(result);
       
+      // ✅ PROJEKT-INTEGRATION: Update Projekt nach erfolgreichem Speichern
+      if (selectedProjectId && selectedProject && result.campaignId) {
+        try {
+          const { projectService } = await import('@/lib/firebase/project-service');
+          await projectService.addLinkedCampaign(
+            selectedProjectId,
+            result.campaignId,
+            { organizationId: currentOrganization!.id, userId: user!.uid }
+          );
+          
+          // ✅ Plan 2/9: Automatische Pipeline-PDF-Generierung für Projekt-verknüpfte Kampagnen
+          try {
+            const { pdfVersionsService } = await import('@/lib/firebase/pdf-versions-service');
+            await pdfVersionsService.handleCampaignSave(
+              result.campaignId,
+              {
+                ...result,
+                projectId: selectedProjectId,
+                internalPDFs: {
+                  enabled: true,
+                  autoGenerate: true,
+                  storageFolder: `projects/${selectedProjectId}/internal-pdfs`,
+                  versionCount: 0
+                },
+                title: campaignTitle,
+                mainContent: editorContent,
+                contentHtml: pressReleaseContent,
+                clientName: selectedCompanyName
+              },
+              { organizationId: currentOrganization!.id, userId: user!.uid }
+            );
+          } catch (pdfError) {
+            console.warn('Automatische PDF-Generierung fehlgeschlagen:', pdfError);
+            // Nicht blockierend - Kampagne und Projekt-Verknüpfung waren erfolgreich
+          }
+        } catch (error) {
+          console.error('Fehler beim Verknüpfen der Kampagne mit dem Projekt:', error);
+          // Nicht blockierend - Kampagne wurde bereits erfolgreich gespeichert
+        }
+      }
+      
       // SUCCESS MESSAGE MIT CUSTOMER-WORKFLOW INFO
       if (result.workflowId && result.pdfVersionId) {
         setSuccessMessage(
           `Kampagne gespeichert & Kundenfreigabe angefordert! PDF-Version erstellt und Kunde wurde benachrichtigt.`
         );
+      } else if (selectedProject) {
+        setSuccessMessage(`Kampagne erfolgreich gespeichert und mit Projekt "${selectedProject.title}" verknüpft!`);
       } else {
         setSuccessMessage('Kampagne erfolgreich gespeichert!');
       }
@@ -955,6 +1034,27 @@ export default function NewPRCampaignPage() {
                 </div>
               </div>
 
+              {/* ✅ PROJEKT-INTEGRATION */}
+              <div className="mb-8">
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <ProjectSelector
+                    selectedProjectId={selectedProjectId}
+                    onProjectSelect={(projectId, project) => {
+                      setSelectedProjectId(projectId);
+                      setSelectedProject(project);
+                      
+                      // Auto-populate Kampagnen-Felder mit Projekt-Daten
+                      if (project.customer && project.customer.id) {
+                        setSelectedCompanyId(project.customer.id);
+                        setSelectedCompanyName(project.customer.name);
+                      }
+                    }}
+                    organizationId={currentOrganization!.id}
+                    clientId={selectedCompanyId}
+                  />
+                </div>
+              </div>
+
               {/* Pressemeldung */}
               <div className="mb-8 mt-8">
                 <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -1153,6 +1253,31 @@ export default function NewPRCampaignPage() {
                   clientId={selectedCompanyId}
                   clientName={selectedCompanyName}
                 />
+                
+                {/* ✅ PIPELINE-APPROVAL HINWEIS (Plan 3/9) */}
+                {selectedProject && (
+                  <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <InformationCircleIcon className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <Text className="text-sm font-medium text-blue-900">
+                          Pipeline-Integration aktiv
+                        </Text>
+                        <Text className="text-sm text-blue-700 mt-1">
+                          Diese Kampagne ist mit dem Projekt <strong>"{selectedProject.title}"</strong> verknüpft. 
+                          Wenn Kunden-Freigabe aktiviert ist, wird die Freigabe automatisch in die Projekt-Pipeline 
+                          integriert und blockiert den Übergang zur Distribution-Phase bis zur Genehmigung.
+                        </Text>
+                        {approvalData.customerApprovalRequired && (
+                          <div className="mt-2 flex items-center gap-2 text-xs text-blue-600">
+                            <CheckCircleIcon className="h-4 w-4" />
+                            Projekt-Pipeline-Freigabe wird aktiviert
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
               
               {/* PDF-WORKFLOW STATUS PREVIEW */}

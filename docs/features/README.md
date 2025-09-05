@@ -28,6 +28,7 @@ Diese Dokumentationen folgen dem standardisierten Template aus `FEATURE_DOCUMENT
 ### ✅ Abgeschlossen
 - **[Campaign Editor 4.0](./docu_dashboard_pr-tools_campaigns-editor-4.md)** - Revolutionärer 4-Step Workflow mit **🆕 PDF-Versionierung Integration** (✅ **ENTERPRISE-GRADE** - 500+ Seiten Dokumentation, 5 Testdateien mit 3300+ Zeilen, Edit-Lock System, Multi-Tenancy-Security, **PDF-Approval-Bridge**)
 - **[PR-Kampagnen](./docu_dashboard_pr-tools_campaigns.md)** - Kampagnen-Erstellung mit KI-Unterstützung + **🆕 Campaign-Komponenten-Wiederverwendung für Customer-Freigabe** (✅ **PRODUCTION-READY** - 570+ Zeilen Template-Dokumentation, 100% Test-Coverage, Enterprise-Grade, **CampaignPreviewRenderer**, **KeyVisualDisplay**, **TextbausteinDisplay** für Cross-System Integration)
+- **[Projekt-Pipeline Integration](./docu_dashboard_pr-tools_projekt-pipeline.md)** - **✅ PHASEN 1+2 ABGESCHLOSSEN (05.09.2025)** - Erstellung + Interne-Freigabe-Phase mit PDF-Pipeline-Integration, ProjectSelector, ProjectLinkBanner & PipelinePDFViewer Komponenten, 100% Test-Coverage (9 Test-Suites, 20+ kritische Pfade), Multi-Tenancy-Security, Design System v2.0 compliant - **🚀 GRUNDSTEIN FÜR 7-PHASEN KANBAN-PIPELINE**
 - **[PR-SEO Scoring System](./docu_dashboard_pr-tools_seo-scoring.md)** - Echtzeit-SEO-Bewertung für Pressemitteilungen mit KI-Integration (✅ **PRODUCTION-READY mit PHASE 1, 2 & 3 - 100% ABGESCHLOSSEN** - **🏆 REVOLUTIONÄRER MEILENSTEIN**: 85-95% Automatische Scores durch KI, 7 Industrie-spezifische Prompts, Automatische Hashtag-Generierung, Social-Media-Ready PR-Texte, 200+ neue Tests, Deutsche PR-Standards, Twitter/LinkedIn-Integration)
 
 ### 🎉 PDF-Versionierung System (ALLE 4 PHASEN VOLLSTÄNDIG ABGESCHLOSSEN 20.08.2025)
@@ -39,6 +40,10 @@ Diese Dokumentationen folgen dem standardisierten Template aus `FEATURE_DOCUMENT
 - ✅ **[Customer Approval Page Integration](../implementation-plans/CUSTOMER_APPROVAL_PAGE_INTEGRATION_PLAN.md)** - **VOLLSTÄNDIG ABGESCHLOSSEN** (PDF-Downloads in Kunden-Freigabe, Enhanced UX, Message-Integration)
 - ✅ **[Admin-Übersicht PDF-Integration](../implementation-plans/APPROVALS_OVERVIEW_PDF_INTEGRATION_PLAN.md)** - **VOLLSTÄNDIG ABGESCHLOSSEN** (PDF-Status Display, Enhanced Search & Filtering, Direct-PDF-Access, Admin-Dashboard Stats)
 - ✅ **[PDF-Template-System](../implementation-plans/PDF_TEMPLATE_SYSTEM_PLAN.md)** - **VOLLSTÄNDIG ABGESCHLOSSEN** (3 Professional Templates, Template-Customization, Custom-Upload, Advanced Preview-System)
+
+### 🚧 In Entwicklung
+- **[Projekt-Pipeline - Phase 4/9]** - Distribution Integration (⏳ ACTIVE - EmailComposer + emailService um Pipeline-Distribution erweitern)
+- **[Projekt-Pipeline - Phasen 5-10/9]** - Monitoring, Media-Assets, Kommunikation, Tasks, Wizard, Kanban-Board (📋 READY - Implementation Plans verfügbar)
 
 ### 📝 Geplant (basierend auf Legacy-Features)
 - [ ] **AI-Assistent** - KI-gestützte Textgenerierung

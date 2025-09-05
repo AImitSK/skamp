@@ -1,6 +1,7 @@
 // src/types/approvals.ts
 import { Timestamp } from 'firebase/firestore';
 import { BaseEntity } from './international';
+import type { PipelineStage } from './project';
 
 // ========================================
 // Approval Enhanced mit Multi-Tenancy
@@ -114,6 +115,20 @@ export interface ApprovalEnhanced extends BaseEntity {
     requestedAt: any;
     author?: string;
   }>;
+  
+  // ✅ PIPELINE-INTEGRATION FELDER (Plan 3/9)
+  projectId?: string;           // Verknüpfung zum Projekt
+  projectTitle?: string;        // Denormalisiert für Performance
+  pipelineStage?: PipelineStage; // Aktueller Pipeline-Status
+  
+  // Pipeline-spezifische Approval-Features
+  pipelineApproval?: {
+    isRequired: boolean;        // Ist Freigabe für Pipeline-Fortschritt erforderlich?
+    blocksStageTransition: boolean; // Verhindert Weitergang zu nächster Phase?
+    autoTransitionOnApproval: boolean; // Auto-Übergang zu Distribution?
+    stageRequirements?: string[]; // Anforderungen vor dieser Phase
+    completionActions?: PipelineCompletionAction[]; // Aktionen nach Freigabe
+  };
 }
 
 // ========================================
@@ -211,7 +226,8 @@ export type ApprovalAction =
   | 'completed'
   | 'resubmitted'
   | 'downloaded'
-  | 'forwarded';
+  | 'forwarded'
+  | 'pipeline_transitioned';
 
 export interface ReminderSchedule {
   enabled: boolean;
@@ -390,6 +406,16 @@ export const PRIORITY_OPTIONS = [
   { value: 'high', label: 'Hoch', color: 'orange' },
   { value: 'urgent', label: 'Dringend', color: 'red' }
 ] as const;
+
+// ========================================
+// Pipeline-Integration Types (Plan 3/9)
+// ========================================
+
+export interface PipelineCompletionAction {
+  type: 'transition_stage' | 'create_task' | 'send_notification' | 'update_project';
+  target: string;
+  data: Record<string, any>;
+}
 
 // ========================================
 // Migration Helpers

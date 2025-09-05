@@ -67,6 +67,8 @@ import { pdfVersionsService, PDFVersion } from '@/lib/firebase/pdf-versions-serv
 import EditLockBanner from '@/components/campaigns/EditLockBanner';
 import EditLockStatusIndicator from '@/components/campaigns/EditLockStatusIndicator';
 import { CampaignPreviewStep } from '@/components/campaigns/CampaignPreviewStep';
+import { ProjectLinkBanner } from '@/components/campaigns/ProjectLinkBanner';
+import { PipelinePDFViewer } from '@/components/campaigns/PipelinePDFViewer';
 // PRSEOHeaderBar now integrated in CampaignContentComposer
 
 
@@ -389,6 +391,11 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
     pdfVersionId?: string;
     shareableLinks?: { team?: string; customer?: string };
   } | null>(null);
+  
+  // ✅ PIPELINE-APPROVAL STATE (Plan 3/9)
+  const [projectApproval, setProjectApproval] = useState<any | null>(null);
+  const [approvalLoading, setApprovalLoading] = useState(false);
+  const [pipelineApprovalStatus, setPipelineApprovalStatus] = useState<'none' | 'pending' | 'approved' | 'rejected'>('none');
 
 
   // Entferne die problematische useEffect dependency
@@ -397,6 +404,13 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
       loadDataNow();
     }
   }, [user, currentOrganization, campaignId]);
+
+  // ✅ PIPELINE-APPROVAL LOADING (Plan 3/9)
+  useEffect(() => {
+    if (existingCampaign?.projectId && currentOrganization) {
+      loadProjectApproval();
+    }
+  }, [existingCampaign?.projectId, currentOrganization]);
 
   // Auto-Scroll zu Fehlermeldungen
   useEffect(() => {
@@ -434,6 +448,142 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
     } catch (error) {
     } finally {
       setLoadingEditLock(false);
+    }
+  };
+
+  // ✅ PIPELINE-APPROVAL FUNKTIONEN (Plan 3/9)
+  
+  const loadProjectApproval = async () => {
+    if (!existingCampaign?.projectId || !currentOrganization || !user) return;
+    
+    setApprovalLoading(true);
+    try {
+      const { approvalService } = await import('@/lib/firebase/approval-service');
+      
+      const approval = await approvalService.getByProjectId(
+        existingCampaign.projectId,
+        { organizationId: currentOrganization.id, userId: user.uid }
+      );
+      
+      setProjectApproval(approval);
+      
+      if (approval) {
+        // Update Pipeline-Status basierend auf Approval-Status
+        if (approval.status === 'approved') {
+          setPipelineApprovalStatus('approved');
+        } else if (approval.status === 'rejected') {
+          setPipelineApprovalStatus('rejected');
+        } else if (approval.status === 'pending' || approval.status === 'in_review') {
+          setPipelineApprovalStatus('pending');
+        } else {
+          setPipelineApprovalStatus('none');
+        }
+      } else {
+        setPipelineApprovalStatus('none');
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden der Projekt-Freigabe:', error);
+      setPipelineApprovalStatus('none');
+    } finally {
+      setApprovalLoading(false);
+    }
+  };
+
+  const handleCreateProjectApproval = async () => {
+    if (!existingCampaign?.projectId || !currentOrganization || !user) return;
+    
+    setApprovalLoading(true);
+    try {
+      const { approvalService } = await import('@/lib/firebase/approval-service');
+      
+      const approvalData = {
+        title: `Projekt-Freigabe: ${existingCampaign.title}`,
+        description: 'Kunden-Freigabe für Projekt-Pipeline',
+        campaignId: existingCampaign.id!,
+        campaignTitle: existingCampaign.title,
+        
+        clientId: existingCampaign.clientId!,
+        clientName: existingCampaign.clientName!,
+        clientEmail: existingCampaign.clientName ? `${existingCampaign.clientName}@example.com` : '',
+        
+        // Content für Freigabe
+        content: {
+          html: existingCampaign.contentHtml || '',
+          plainText: existingCampaign.contentHtml?.replace(/<[^>]*>/g, '') || '',
+          subject: `Freigabe erforderlich: ${existingCampaign.title}`
+        },
+        
+        attachedAssets: existingCampaign.attachedAssets?.map(asset => ({
+          assetId: asset.assetId || asset.folderId || '',
+          type: asset.type as 'file' | 'folder',
+          name: asset.metadata?.fileName || asset.metadata?.folderName || 'Unbekannt',
+          metadata: asset.metadata
+        })) || [],
+        
+        // Standard-Approval-Settings
+        status: 'draft' as const,
+        workflow: 'simple' as const,
+        options: {
+          requireAllApprovals: true,
+          allowPartialApproval: false,
+          autoSendAfterApproval: false,
+          allowComments: true,
+          allowInlineComments: true
+        },
+        
+        // Recipients werden durch UI gefüllt
+        recipients: [],
+        shareSettings: {
+          requirePassword: false,
+          requireEmailVerification: false,
+          accessLog: true
+        },
+        
+        // ✅ Pipeline-Integration
+        projectId: existingCampaign.projectId,
+        projectTitle: existingCampaign.projectTitle,
+        pipelineStage: 'approval' as const,
+        
+        pipelineApproval: {
+          isRequired: true,
+          blocksStageTransition: true,
+          autoTransitionOnApproval: true,
+          stageRequirements: ['internal_approval_completed'],
+          completionActions: [{
+            type: 'transition_stage',
+            target: 'distribution',
+            data: { reason: 'customer_approved' }
+          }]
+        },
+        
+        requestedAt: new Date() as any,
+        priority: 'medium' as const
+      };
+
+      const approval = await approvalService.createPipelineApproval(approvalData, {
+        organizationId: currentOrganization.id,
+        userId: user.uid
+      });
+      
+      // Lade die neu erstellte Approval
+      await loadProjectApproval();
+      
+    } catch (error) {
+      console.error('Fehler beim Erstellen der Projekt-Freigabe:', error);
+    } finally {
+      setApprovalLoading(false);
+    }
+  };
+
+  const getApprovalStatusText = (status: string): string => {
+    switch (status) {
+      case 'draft': return 'Entwurf';
+      case 'pending': return 'Ausstehend';
+      case 'in_review': return 'In Prüfung';
+      case 'approved': return 'Freigegeben';
+      case 'rejected': return 'Abgelehnt';
+      case 'changes_requested': return 'Änderungen angefordert';
+      default: return 'Unbekannt';
     }
   };
 
@@ -660,6 +810,28 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
       
       // STORE WORKFLOW RESULT
       setApprovalWorkflowResult(result);
+      
+      // ✅ Plan 2/9: Automatische Pipeline-PDF-Generierung für Projekt-verknüpfte Kampagnen
+      if (existingCampaign?.projectId && existingCampaign.internalPDFs?.enabled) {
+        try {
+          const { pdfVersionsService } = await import('@/lib/firebase/pdf-versions-service');
+          await pdfVersionsService.handleCampaignSave(
+            campaignId,
+            {
+              ...existingCampaign,
+              title: campaignTitle,
+              mainContent: editorContent,
+              contentHtml: pressReleaseContent,
+              clientName: selectedCompanyName,
+              internalPDFs: existingCampaign.internalPDFs
+            },
+            { organizationId: currentOrganization!.id, userId: user!.uid }
+          );
+        } catch (pdfError) {
+          console.warn('Automatische PDF-Generierung fehlgeschlagen:', pdfError);
+          // Nicht blockierend - Campaign-Update war erfolgreich
+        }
+      }
       
       // SUCCESS MESSAGE MIT CUSTOMER-WORKFLOW INFO
       if (result.workflowId && result.pdfVersionId) {
@@ -1028,6 +1200,103 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
           className="mb-6"
           showDetails={true}
         />
+      )}
+      
+      {/* ✅ PROJECT-LINK BANNER */}
+      {!loading && existingCampaign && (
+        <ProjectLinkBanner 
+          campaign={existingCampaign} 
+          onProjectUpdate={() => {
+            // Optional: Projekt-Status refresh wenn nötig
+            window.location.reload();
+          }} 
+        />
+      )}
+      
+      {/* ✅ PIPELINE-APPROVAL BANNER (Plan 3/9) */}
+      {!loading && existingCampaign?.projectId && existingCampaign.pipelineStage === 'approval' && (
+        <div className="mb-6 border border-orange-200 rounded-lg bg-orange-50">
+          <div className="p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <CheckCircleIcon className="h-5 w-5 text-orange-600" />
+              <Text className="font-semibold text-orange-900">
+                Kunden-Freigabe erforderlich
+              </Text>
+              {projectApproval && (
+                <Badge color="orange">
+                  {getApprovalStatusText(projectApproval.status)}
+                </Badge>
+              )}
+              {approvalLoading && (
+                <div className="animate-spin h-4 w-4 border-2 border-orange-600 border-t-transparent rounded-full"></div>
+              )}
+            </div>
+            
+            {!projectApproval ? (
+              <div className="space-y-3">
+                <Text className="text-sm text-orange-700">
+                  Diese Kampagne ist Teil eines Projekts und benötigt eine Kunden-Freigabe 
+                  bevor sie zur Distribution weitergeleitet werden kann.
+                </Text>
+                <Button onClick={handleCreateProjectApproval} disabled={approvalLoading}>
+                  {approvalLoading ? 'Erstelle Freigabe...' : 'Freigabe erstellen'}
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Text className="text-sm text-orange-700">
+                      Status: <strong>{getApprovalStatusText(projectApproval.status)}</strong>
+                    </Text>
+                    {projectApproval.recipients?.length > 0 && (
+                      <Text className="text-xs text-orange-600">
+                        {projectApproval.recipients.filter((r: any) => r.status === 'approved').length}/
+                        {projectApproval.recipients.length} Empfänger haben freigegeben
+                      </Text>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      size="sm" 
+                      plain 
+                      onClick={() => window.open(`/dashboard/approvals/${projectApproval.id}`)}
+                    >
+                      Freigabe öffnen
+                    </Button>
+                    {projectApproval.shareId && (
+                      <Button 
+                        size="sm" 
+                        plain 
+                        onClick={() => window.open(`/freigabe/${projectApproval.shareId}`)}
+                      >
+                        <LinkIcon className="h-4 w-4 mr-1" />
+                        Kunden-Link
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                
+                {projectApproval.status === 'approved' && 
+                 projectApproval.pipelineApproval?.autoTransitionOnApproval && (
+                  <div className="mt-3 p-2 bg-green-100 border border-green-200 rounded">
+                    <Text className="text-xs text-green-700">
+                      ✓ Freigabe erhalten. Projekt wird automatisch zur Distribution weitergeleitet.
+                    </Text>
+                  </div>
+                )}
+                
+                {projectApproval.status === 'rejected' && (
+                  <div className="mt-3 p-2 bg-red-100 border border-red-200 rounded">
+                    <Text className="text-xs text-red-700">
+                      ✗ Freigabe abgelehnt. Bitte überarbeiten Sie die Kampagne basierend auf dem Kunden-Feedback.
+                    </Text>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       )}
       
       {/* Loading Edit-Lock Status */}
@@ -1522,6 +1791,19 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                 </div>
               )}
             </div>
+            
+            {/* ✅ Plan 2/9: Pipeline-PDF-Viewer für Projekt-verknüpfte Kampagnen */}
+            {existingCampaign?.projectId && currentOrganization && (
+              <div className="mt-8">
+                <PipelinePDFViewer
+                  campaign={existingCampaign}
+                  organizationId={currentOrganization.id}
+                  onPDFGenerated={(pdfUrl) => {
+                    console.log('Pipeline-PDF generiert:', pdfUrl);
+                  }}
+                />
+              </div>
+            )}
             
           </div>
         )}

@@ -1483,6 +1483,58 @@ async getCampaignByShareId(shareId: string): Promise<PRCampaign | null> {
     }
   },
 
+  // ✅ PIPELINE-INTEGRATION METHODEN
+  
+  /**
+   * Holt alle Kampagnen eines Projekts
+   */
+  async getByProjectId(
+    projectId: string,
+    context: { organizationId: string }
+  ): Promise<PRCampaign[]> {
+    try {
+      const q = query(
+        collection(db, 'pr_campaigns'),
+        where('projectId', '==', projectId),
+        where('organizationId', '==', context.organizationId),
+        orderBy('createdAt', 'desc')
+      );
+      
+      const snapshot = await getDocs(q);
+      const campaigns = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as PRCampaign));
+      
+      return campaigns;
+    } catch (error) {
+      return [];
+    }
+  },
+
+  /**
+   * Aktualisiert Pipeline-Status einer Kampagne
+   */
+  async updatePipelineStage(
+    campaignId: string,
+    stage: string,
+    context: { organizationId: string }
+  ): Promise<void> {
+    try {
+      // Sicherheitsprüfung
+      const campaign = await this.getById(campaignId);
+      if (!campaign || campaign.organizationId !== context.organizationId) {
+        throw new Error('Kampagne nicht gefunden oder keine Berechtigung');
+      }
+      
+      await this.update(campaignId, {
+        pipelineStage: stage as any
+      });
+    } catch (error) {
+      throw error;
+    }
+  },
+
   /**
    * VEREINFACHTER CUSTOMER-ONLY APPROVAL WORKFLOW
    * 

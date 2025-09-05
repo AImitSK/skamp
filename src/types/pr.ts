@@ -1,6 +1,7 @@
 // src/types/pr.ts - VOLLSTÄNDIG mit Multi-List Support, Freigabe-Workflow, Boilerplate-Integration und Multi-Tenancy
 import { Timestamp } from 'firebase/firestore';
 import type { EnhancedApprovalData } from './approvals-enhanced';
+import type { PipelineStage } from './project';
 
 // ERWEITERT: Neue Status für den Freigabe-Workflow hinzugefügt
 export type PRCampaignStatus =
@@ -142,6 +143,35 @@ export interface PRCampaign {
   title: string;
   contentHtml: string; // Der finale, zusammengesetzte HTML-Content
   status: PRCampaignStatus;
+  
+  // ✅ PIPELINE-INTEGRATION FIELDS
+  projectId?: string;           // Verknüpfung zum Projekt  
+  projectTitle?: string;        // Denormalisiert für Performance
+  pipelineStage?: PipelineStage; // Aktueller Pipeline-Status
+  
+  // ✅ INTERNE PDF-VERWALTUNG (Plan 2/9)
+  internalPDFs?: {
+    enabled: boolean;           // Soll interne PDF-Generierung aktiviert sein?
+    autoGenerate: boolean;      // Bei Speicherung automatisch PDF erstellen?
+    storageFolder: string;      // Pfad im Projekt-Ordner
+    lastGenerated?: Timestamp;  // Letzte PDF-Generierung
+    versionCount: number;       // Anzahl generierte Versionen
+  };
+  
+  // Erweiterte Pipeline-Features:
+  taskDependencies?: string[];  // Abhängigkeiten zu anderen Tasks
+  timeTracking?: {              // Zeiterfassung pro Phase
+    startedAt?: Timestamp;
+    totalMinutes?: number;
+    sessions?: TimeSession[];
+  };
+  budgetTracking?: {            // Budget-Verwendung  
+    allocated?: number;
+    spent?: number;
+    currency?: string;
+  };
+  milestones?: ProjectMilestone[]; // Meilenstein-Tracking
+  deliverables?: CampaignDeliverable[]; // Liefergegenstände
   
   // 🆕 PDF-TEMPLATE INTEGRATION
   templateId?: string; // ID des gewählten PDF-Templates
@@ -509,4 +539,30 @@ export function createDefaultPRCampaign(userId: string, organizationId?: string)
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now()
   };
+}
+
+// ✅ PIPELINE-INTEGRATION TYPES
+// PipelineStage wird jetzt aus project.ts importiert
+
+export interface TimeSession {
+  startedAt: Timestamp;
+  endedAt: Timestamp;
+  userId: string;
+  activity: string;
+}
+
+export interface ProjectMilestone {
+  id: string;
+  title: string;
+  dueDate: Timestamp;
+  completed: boolean;
+  completedAt?: Timestamp;
+}
+
+export interface CampaignDeliverable {
+  id: string;
+  type: 'press_release' | 'media_kit' | 'asset_pack' | 'distribution_report';
+  status: 'pending' | 'in_progress' | 'completed' | 'approved';
+  url?: string;
+  createdAt: Timestamp;
 }

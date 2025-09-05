@@ -122,6 +122,86 @@ class PDFVersionsService {
   }
 
   /**
+   * ✅ Plan 2/9: Erstellt eine interne Pipeline-PDF für Projekt-Management
+   */
+  async generatePipelinePDF(
+    campaignId: string,
+    campaignData: any, // PRCampaign
+    context: { organizationId: string; userId: string }
+  ): Promise<string> {
+    try {
+      // Verwende bestehende PDF-Generierung mit internen Pfad-Einstellungen
+      const pdfUrl = await this.generateRealPDF({
+        title: campaignData.title,
+        mainContent: campaignData.mainContent || campaignData.contentHtml,
+        boilerplateSections: campaignData.boilerplateSections || [],
+        keyVisual: campaignData.keyVisual,
+        clientName: campaignData.clientName || 'Unbekannter Kunde',
+        templateId: campaignData.templateId
+      }, 
+      `pipeline_${campaignData.title.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.pdf`,
+      context.organizationId,
+      context.userId
+      );
+
+      // Campaign mit interner PDF-Info aktualisieren
+      if (campaignData.projectId && campaignData.internalPDFs?.enabled) {
+        await this.updateInternalPDFStatus(campaignId, context);
+      }
+
+      return pdfUrl.pdfUrl;
+    } catch (error) {
+      throw new Error(`Interne PDF-Generierung fehlgeschlagen: ${error}`);
+    }
+  }
+
+  /**
+   * ✅ Plan 2/9: Aktualisiert interne PDF-Status
+   */
+  async updateInternalPDFStatus(
+    campaignId: string,
+    context: { organizationId: string; userId: string }
+  ): Promise<void> {
+    try {
+      const { updateDoc, doc, increment } = await import('firebase/firestore');
+      const { db } = await import('./client-init');
+      
+      const campaignRef = doc(db, 'pr_campaigns', campaignId);
+      
+      await updateDoc(campaignRef, {
+        'internalPDFs.lastGenerated': serverTimestamp(),
+        'internalPDFs.versionCount': increment(1),
+        updatedAt: serverTimestamp()
+      });
+    } catch (error) {
+      throw new Error(`Interne PDF-Status-Update fehlgeschlagen: ${error}`);
+    }
+  }
+
+  /**
+   * ✅ Plan 2/9: Auto-Generate Logic für Projekt-verknüpfte Kampagnen
+   */
+  async handleCampaignSave(
+    campaignId: string, 
+    campaignData: any, // PRCampaign
+    context: { organizationId: string; userId: string }
+  ): Promise<void> {
+    try {
+      // Nur wenn Projekt verknüpft und auto-generate aktiviert
+      if (campaignData.projectId && 
+          campaignData.internalPDFs?.enabled && 
+          campaignData.internalPDFs?.autoGenerate) {
+        
+        // Generiere interne Pipeline-PDF
+        await this.generatePipelinePDF(campaignId, campaignData, context);
+      }
+    } catch (error) {
+      // Nicht-blockierender Fehler - Campaign-Save soll erfolgreich bleiben
+      console.warn('Auto-PDF-Generation fehlgeschlagen:', error);
+    }
+  }
+
+  /**
    * Erstellt eine neue PDF-Version
    */
   async createPDFVersion(
