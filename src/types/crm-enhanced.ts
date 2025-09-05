@@ -303,6 +303,91 @@ export interface ContactEnhanced extends BaseEntity {
 }
 
 // ========================================
+// PLAN 5/9: MONITORING-IMPLEMENTIERUNG
+// ========================================
+
+// Erweiterte ContactEnhanced für Journalist-Tracking
+export interface JournalistContact extends ContactEnhanced {
+  // Monitoring-spezifische Felder
+  clippingHistory?: Array<{
+    clippingId: string;
+    title: string;
+    outlet: string;
+    publishDate: Timestamp;
+    reachValue: number;
+    sentimentScore: number;
+    mediaValue: number;
+    url?: string;
+  }>;
+  responseRate?: number; // 0-100
+  averageReach?: number;
+  preferredTopics?: string[];
+  lastClippingDate?: Timestamp;
+  totalClippings?: number;
+  averageSentiment?: number; // -1 bis 1
+  
+  // Pipeline-Integration
+  projectContributions?: Array<{
+    projectId: string;
+    projectTitle: string;
+    clippingCount: number;
+    totalReach: number;
+    averageSentiment: number;
+    mediaValue: number;
+    lastContribution?: Timestamp;
+  }>;
+  
+  // Performance-Metriken
+  performanceMetrics?: {
+    // Quantitative Metriken
+    totalArticles: number;
+    totalReach: number;
+    averageReachPerArticle: number;
+    totalMediaValue: number;
+    
+    // Qualitative Metriken
+    sentimentDistribution: {
+      positive: number;
+      neutral: number;
+      negative: number;
+    };
+    
+    // Zeitbasierte Metriken
+    monthlyArticleCount: Array<{
+      month: string; // YYYY-MM
+      count: number;
+      reach: number;
+    }>;
+    
+    // Top-Themen
+    topTopics: Array<{
+      topic: string;
+      count: number;
+      averageSentiment: number;
+    }>;
+    
+    // Engagement-Rate
+    engagementRate?: number; // Social Media Engagement falls verfügbar
+    
+    // Response-Zeit
+    averageResponseTime?: number; // Stunden bis zur Antwort
+  };
+  
+  // Journalist-spezifische Einstellungen
+  journalistPreferences?: {
+    preferredContactTime?: {
+      timezone: string;
+      bestDays: string[];
+      bestHours: { from: string; to: string };
+    };
+    preferredStoryTypes?: Array<'breaking_news' | 'feature' | 'interview' | 'exclusive' | 'press_release'>;
+    minimumLeadTime?: number; // Tage im Voraus
+    exclusivityPreference?: boolean; // Bevorzugt exklusive Geschichten
+    followUpPreference?: 'aggressive' | 'moderate' | 'minimal';
+  };
+}
+
+// ========================================
 // Helper Types für Enhanced Entities
 // ========================================
 

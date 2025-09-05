@@ -1001,6 +1001,295 @@ class TagEnhancedService extends BaseService<TagEnhanced> {
 // Export Service Instanzen
 // ========================================
 
+// ========================================
+// PLAN 5/9: MONITORING-IMPLEMENTIERUNG
+// ========================================
+
+// Erweiterte ContactEnhancedService für Journalist-Tracking
+class ContactEnhancedServiceExtended extends ContactEnhancedService {
+  /**
+   * Aktualisiert Journalist-Metriken basierend auf einem neuen Clipping
+   */
+  async updateJournalistMetrics(
+    contactId: string,
+    clipping: any, // MediaClipping from types/media
+    context: { organizationId: string; userId: string }
+  ): Promise<void> {
+    try {
+      const contact = await this.getById(contactId, context.organizationId);
+      if (!contact || !contact.mediaProfile?.isJournalist) {
+        throw new Error('Journalist-Kontakt nicht gefunden');
+      }
+
+      // Aktuelle Performance-Metriken holen oder initialisieren
+      const currentMetrics = (contact as any).performanceMetrics || {
+        totalArticles: 0,
+        totalReach: 0,
+        averageReachPerArticle: 0,
+        totalMediaValue: 0,
+        sentimentDistribution: { positive: 0, neutral: 0, negative: 0 },
+        monthlyArticleCount: [],
+        topTopics: [],
+        engagementRate: 0,
+        averageResponseTime: 0
+      };
+
+      // Clipping-History erweitern
+      const clippingEntry = {
+        clippingId: clipping.id,
+        title: clipping.title,
+        outlet: clipping.outlet,
+        publishDate: clipping.publishDate,
+        reachValue: clipping.reachValue,
+        sentimentScore: clipping.sentimentScore,
+        mediaValue: clipping.mediaValue,
+        url: clipping.url
+      };
+
+      const clippingHistory = (contact as any).clippingHistory || [];
+      clippingHistory.push(clippingEntry);
+
+      // Metriken aktualisieren
+      currentMetrics.totalArticles += 1;
+      currentMetrics.totalReach += clipping.reachValue || 0;
+      currentMetrics.averageReachPerArticle = currentMetrics.totalReach / currentMetrics.totalArticles;
+      currentMetrics.totalMediaValue += clipping.mediaValue || 0;
+
+      // Sentiment-Verteilung aktualisieren
+      if (clipping.sentimentScore > 0.1) {
+        currentMetrics.sentimentDistribution.positive += 1;
+      } else if (clipping.sentimentScore < -0.1) {
+        currentMetrics.sentimentDistribution.negative += 1;
+      } else {
+        currentMetrics.sentimentDistribution.neutral += 1;
+      }
+
+      // Monatliche Statistiken aktualisieren
+      const month = new Date(clipping.publishDate.seconds * 1000).toISOString().substring(0, 7); // YYYY-MM
+      const monthlyIndex = currentMetrics.monthlyArticleCount.findIndex((m: any) => m.month === month);
+      if (monthlyIndex >= 0) {
+        currentMetrics.monthlyArticleCount[monthlyIndex].count += 1;
+        currentMetrics.monthlyArticleCount[monthlyIndex].reach += clipping.reachValue || 0;
+      } else {
+        currentMetrics.monthlyArticleCount.push({
+          month,
+          count: 1,
+          reach: clipping.reachValue || 0
+        });
+      }
+
+      // Projekt-Beiträge aktualisieren
+      let projectContributions = (contact as any).projectContributions || [];
+      const projectIndex = projectContributions.findIndex((p: any) => p.projectId === clipping.projectId);
+      
+      if (projectIndex >= 0) {
+        projectContributions[projectIndex].clippingCount += 1;
+        projectContributions[projectIndex].totalReach += clipping.reachValue || 0;
+        projectContributions[projectIndex].mediaValue += clipping.mediaValue || 0;
+        projectContributions[projectIndex].lastContribution = clipping.publishDate;
+        
+        // Durchschnitts-Sentiment neu berechnen
+        const totalSentiment = (projectContributions[projectIndex].averageSentiment * (projectContributions[projectIndex].clippingCount - 1)) + clipping.sentimentScore;
+        projectContributions[projectIndex].averageSentiment = totalSentiment / projectContributions[projectIndex].clippingCount;
+      } else if (clipping.projectId) {
+        // Lade Projekt-Details für Namen
+        const { projectService } = await import('./project-service');
+        const project = await projectService.getById(clipping.projectId, { organizationId: context.organizationId });
+        
+        projectContributions.push({
+          projectId: clipping.projectId,
+          projectTitle: project?.title || 'Unbekanntes Projekt',
+          clippingCount: 1,
+          totalReach: clipping.reachValue || 0,
+          averageSentiment: clipping.sentimentScore || 0,
+          mediaValue: clipping.mediaValue || 0,
+          lastContribution: clipping.publishDate
+        });
+      }
+
+      // Kontakt-Updates
+      const updates: any = {
+        clippingHistory,
+        performanceMetrics: currentMetrics,
+        projectContributions,
+        totalClippings: (contact as any).totalClippings ? (contact as any).totalClippings + 1 : 1,
+        averageReach: currentMetrics.averageReachPerArticle,
+        lastClippingDate: clipping.publishDate,
+        averageSentiment: this.calculateAverageSentiment(clippingHistory)
+      };
+
+      await this.update(contactId, updates, context);
+    } catch (error) {
+      console.error('Fehler beim Update der Journalist-Metriken:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Holt Performance-Daten für einen Journalisten
+   */
+  async getJournalistPerformance(
+    contactId: string,
+    organizationId: string
+  ): Promise<any> { // JournalistMetrics
+    try {
+      const contact = await this.getById(contactId, organizationId);
+      if (!contact || !contact.mediaProfile?.isJournalist) {
+        throw new Error('Journalist-Kontakt nicht gefunden');
+      }
+
+      const performanceMetrics = (contact as any).performanceMetrics;
+      const clippingHistory = (contact as any).clippingHistory || [];
+      
+      return {
+        contactId,
+        totalArticles: performanceMetrics?.totalArticles || 0,
+        totalReach: performanceMetrics?.totalReach || 0,
+        averageReachPerArticle: performanceMetrics?.averageReachPerArticle || 0,
+        totalMediaValue: performanceMetrics?.totalMediaValue || 0,
+        sentimentDistribution: performanceMetrics?.sentimentDistribution || { positive: 0, neutral: 0, negative: 0 },
+        monthlyPerformance: performanceMetrics?.monthlyArticleCount || [],
+        topTopics: performanceMetrics?.topTopics || [],
+        recentClippings: clippingHistory.slice(-5), // Letzte 5 Clippings
+        responseRate: (contact as any).responseRate || 0,
+        averageResponseTime: performanceMetrics?.averageResponseTime || 0,
+        projectContributions: (contact as any).projectContributions || []
+      };
+    } catch (error) {
+      console.error('Fehler beim Laden der Journalist-Performance:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Holt Top-Performing Journalisten
+   */
+  async getTopPerformingJournalists(
+    organizationId: string,
+    timeframe = 365,
+    limit = 10
+  ): Promise<any[]> { // JournalistContact[]
+    try {
+      // Lade alle Journalisten
+      const journalists = await this.searchEnhanced(organizationId, {
+        isJournalist: true
+      });
+
+      // Filtere nach Timeframe und sortiere nach Performance
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - timeframe);
+
+      const performingJournalists = journalists
+        .filter(j => {
+          const lastClippingDate = (j as any).lastClippingDate;
+          return lastClippingDate && new Date(lastClippingDate.seconds * 1000) >= cutoffDate;
+        })
+        .map(j => ({
+          ...j,
+          performanceScore: this.calculatePerformanceScore(j as any)
+        }))
+        .sort((a, b) => b.performanceScore - a.performanceScore)
+        .slice(0, limit);
+
+      return performingJournalists;
+    } catch (error) {
+      console.error('Fehler beim Laden der Top-Journalisten:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Berechnet durchschnittliches Sentiment aus Clipping-History
+   */
+  private calculateAverageSentiment(clippingHistory: any[]): number {
+    if (clippingHistory.length === 0) return 0;
+    
+    const totalSentiment = clippingHistory.reduce((sum, c) => sum + (c.sentimentScore || 0), 0);
+    return totalSentiment / clippingHistory.length;
+  }
+
+  /**
+   * Berechnet Performance-Score für Ranking
+   */
+  private calculatePerformanceScore(journalist: any): number {
+    const metrics = journalist.performanceMetrics || {};
+    const reachWeight = 0.4;
+    const sentimentWeight = 0.3;
+    const frequencyWeight = 0.2;
+    const engagementWeight = 0.1;
+
+    // Normalisierte Werte (0-100)
+    const normalizedReach = Math.min((metrics.averageReachPerArticle || 0) / 10000, 1) * 100;
+    const normalizedSentiment = ((journalist.averageSentiment || 0) + 1) * 50; // -1 bis 1 -> 0 bis 100
+    const normalizedFrequency = Math.min((metrics.totalArticles || 0) / 50, 1) * 100;
+    const normalizedEngagement = Math.min((metrics.engagementRate || 0), 1) * 100;
+
+    return (
+      normalizedReach * reachWeight +
+      normalizedSentiment * sentimentWeight +
+      normalizedFrequency * frequencyWeight +
+      normalizedEngagement * engagementWeight
+    );
+  }
+
+  /**
+   * Sucht Journalisten mit spezifischen Kriterien
+   */
+  async searchJournalistsForProject(
+    organizationId: string,
+    criteria: {
+      topics?: string[];
+      minReach?: number;
+      sentimentThreshold?: number;
+      outlets?: string[];
+      responseRateMin?: number;
+    }
+  ): Promise<any[]> { // JournalistContact[]
+    try {
+      let journalists = await this.searchEnhanced(organizationId, {
+        isJournalist: true
+      });
+
+      // Filter nach Kriterien
+      if (criteria.topics?.length) {
+        journalists = journalists.filter(j => 
+          j.mediaProfile?.beats?.some(beat => criteria.topics!.includes(beat)) ||
+          (j as any).preferredTopics?.some((topic: string) => criteria.topics!.includes(topic))
+        );
+      }
+
+      if (criteria.minReach) {
+        journalists = journalists.filter(j => (j as any).averageReach >= criteria.minReach!);
+      }
+
+      if (criteria.sentimentThreshold !== undefined) {
+        journalists = journalists.filter(j => (j as any).averageSentiment >= criteria.sentimentThreshold!);
+      }
+
+      if (criteria.outlets?.length) {
+        journalists = journalists.filter(j => 
+          j.mediaProfile?.publicationIds?.length // Placeholder - würde mit Publication-Service gemappt
+        );
+      }
+
+      if (criteria.responseRateMin) {
+        journalists = journalists.filter(j => (j as any).responseRate >= criteria.responseRateMin!);
+      }
+
+      // Sortiere nach Performance-Score
+      return journalists
+        .map(j => ({
+          ...j,
+          performanceScore: this.calculatePerformanceScore(j as any)
+        }))
+        .sort((a, b) => b.performanceScore - a.performanceScore);
+    } catch (error) {
+      console.error('Fehler bei Journalist-Suche:', error);
+      return [];
+    }
+  }
+}
+
 export const companiesEnhancedService = new CompanyEnhancedService();
-export const contactsEnhancedService = new ContactEnhancedService();
+export const contactsEnhancedService = new ContactEnhancedServiceExtended();
 export const tagsEnhancedService = new TagEnhancedService();

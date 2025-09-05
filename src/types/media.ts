@@ -214,3 +214,136 @@ export interface AssetPackage {
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 }
+
+// ========================================
+// PLAN 5/9: MONITORING-IMPLEMENTIERUNG
+// ========================================
+
+// Erweiterte MediaAsset für Clipping-System
+export interface ClippingAsset extends MediaAsset {
+  type: 'clipping';
+  outlet: string;
+  publishDate: Timestamp;
+  reachValue: number;
+  sentimentScore: number;
+  url?: string;
+  
+  // Pipeline-spezifische Felder
+  projectId?: string;
+  campaignId?: string;
+  distributionId?: string;
+  monitoringPhaseId?: string;
+}
+
+export interface MonitoringData {
+  clippings: MediaClipping[];
+  mentions: SocialMention[];
+  reachData: ReachMetrics;
+  sentimentAnalysis: SentimentData;
+}
+
+export interface MediaClipping {
+  id: string;
+  title: string;
+  outlet: string;
+  publishDate: Timestamp;
+  url?: string;
+  screenshot?: string;
+  content?: string;
+  reachValue: number;
+  sentimentScore: number;
+  mediaValue: number;
+  tags: string[];
+  
+  // Multi-Tenancy
+  organizationId: string;
+  createdBy: string;
+  
+  // Pipeline-Kontext
+  projectId?: string;
+  campaignId?: string;
+  
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface SocialMention {
+  id: string;
+  platform: 'twitter' | 'linkedin' | 'facebook' | 'instagram' | 'youtube' | 'tiktok' | 'other';
+  author: string;
+  content: string;
+  url: string;
+  publishDate: Timestamp;
+  
+  // Metriken
+  likes?: number;
+  shares?: number;
+  comments?: number;
+  reach?: number;
+  sentimentScore: number;
+  
+  // Kontext
+  organizationId: string;
+  projectId?: string;
+  
+  createdAt: Timestamp;
+}
+
+export interface ReachMetrics {
+  totalReach: number;
+  printReach: number;
+  onlineReach: number;
+  socialReach: number;
+  broadcastReach: number;
+  
+  // Zeitverteilung
+  dailyReach: { date: string; reach: number }[];
+  weeklyReach: { week: string; reach: number }[];
+  monthlyReach: { month: string; reach: number }[];
+}
+
+export interface SentimentData {
+  averageScore: number; // -1 bis 1
+  distribution: {
+    positive: number;
+    neutral: number;
+    negative: number;
+  };
+  
+  // Sentiment über Zeit
+  timeline: {
+    date: string;
+    score: number;
+    count: number;
+  }[];
+}
+
+export interface ClippingMetrics {
+  reachValue: number;
+  sentimentScore: number;
+  mediaValue: number;
+  engagementScore?: number;
+  
+  // Berechnete Felder
+  costPerReach?: number;
+  earnedMediaValue?: number;
+}
+
+// Neue Share Link Typen für Monitoring
+export type MonitoringShareLinkType = ShareLinkType | 'monitoring_report' | 'clipping_package';
+
+export interface MonitoringShareLink extends Omit<ShareLink, 'type'> {
+  type: MonitoringShareLinkType;
+  
+  // Monitoring-spezifische Felder
+  reportData?: {
+    projectId: string;
+    reportType: 'summary' | 'detailed' | 'timeline' | 'clippings_only';
+    includeCharts: boolean;
+    includeClippings: boolean;
+    timeRange: {
+      from: Timestamp;
+      to: Timestamp;
+    };
+  };
+}

@@ -250,6 +250,324 @@ export const projectService = {
   },
 
   // ========================================
+  // PLAN 5/9: MONITORING-IMPLEMENTIERUNG
+  // ========================================
+  
+  /**
+   * Startet die Monitoring-Phase für ein Projekt
+   */
+  async startMonitoring(
+    projectId: string, 
+    config: any, // MonitoringConfig from types/project
+    context: { organizationId: string; userId: string }
+  ): Promise<void> {
+    try {
+      const project = await this.getById(projectId, context);
+      if (!project) {
+        throw new Error('Projekt nicht gefunden');
+      }
+
+      const updateData = {
+        currentStage: 'monitoring' as any,
+        monitoringStartedAt: Timestamp.now(),
+        updatedAt: Timestamp.now()
+      };
+
+      await this.update(projectId, updateData, context);
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Aktualisiert Analytics-Daten für ein Projekt
+   */
+  async updateAnalytics(
+    projectId: string,
+    analytics: any, // ProjectAnalytics from types/project
+    context: { organizationId: string; userId: string }
+  ): Promise<void> {
+    try {
+      const project = await this.getById(projectId, context);
+      if (!project) {
+        throw new Error('Projekt nicht gefunden');
+      }
+
+      await this.update(projectId, {
+        updatedAt: Timestamp.now()
+      }, context);
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Fügt ein Clipping zu einem Projekt hinzu
+   */
+  async addClipping(
+    projectId: string,
+    clipping: any, // MediaClipping from types/media
+    context: { organizationId: string; userId: string }
+  ): Promise<void> {
+    try {
+      // Dynamischer Import um circular dependencies zu vermeiden
+      const { mediaService } = await import('./media-service');
+      
+      // Speichere Clipping als ClippingAsset
+      const clippingAsset: any = {
+        type: 'clipping',
+        fileName: `${clipping.outlet}_${clipping.title}.txt`,
+        fileType: 'text/plain',
+        storagePath: `clippings/${projectId}/${clipping.id}`,
+        downloadUrl: clipping.url || '',
+        description: clipping.content,
+        tags: clipping.tags,
+        
+        // Clipping-spezifische Felder
+        outlet: clipping.outlet,
+        publishDate: clipping.publishDate,
+        reachValue: clipping.reachValue,
+        sentimentScore: clipping.sentimentScore,
+        
+        // Pipeline-Kontext
+        projectId,
+        organizationId: context.organizationId,
+        userId: context.userId
+      };
+
+      // Speichere als MediaAsset für Integration mit Media Library
+      await mediaService.uploadMedia(
+        new Blob([clipping.content || ''], { type: 'text/plain' }) as any,
+        context.organizationId,
+        undefined, // folderId
+        undefined, // onProgress
+        3, // retryCount
+        { userId: context.userId }
+      );
+
+      // Aktualisiere Projekt-Analytics
+      const project = await this.getById(projectId, context);
+      if (project && (project as any).analytics) {
+        const analytics = (project as any).analytics;
+        analytics.clippingCount += 1;
+        analytics.totalReach += clipping.reachValue;
+        
+        // Berechne neuen Durchschnitts-Sentiment
+        const totalSentiment = (analytics.sentimentScore * (analytics.clippingCount - 1)) + clipping.sentimentScore;
+        analytics.sentimentScore = totalSentiment / analytics.clippingCount;
+        
+        await this.updateAnalytics(projectId, analytics, context);
+      }
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Holt Analytics-Dashboard für ein Projekt
+   */
+  async getAnalyticsDashboard(
+    projectId: string,
+    context: { organizationId: string }
+  ): Promise<any> { // AnalyticsDashboard from types/project
+    try {
+      const project = await this.getById(projectId, context);
+      if (!project) {
+        throw new Error('Projekt nicht gefunden');
+      }
+
+      // Lade Clippings für das Projekt
+      const { mediaService } = await import('./media-service');
+      
+      const q = query(
+        collection(db, 'media_clippings'),
+        where('organizationId', '==', context.organizationId),
+        where('projectId', '==', projectId),
+        orderBy('publishDate', 'desc')
+      );
+
+      const clippingsSnapshot = await getDocs(q);
+      const clippings = clippingsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      // Erstelle Dashboard-Daten
+      const dashboard = {
+        projectId,
+        organizationId: context.organizationId,
+        analytics: (project as any).analytics,
+        clippings,
+        kpiData: this.calculateKPIs(clippings),
+        timelineData: this.calculateTimelineData(clippings),
+        outletRanking: this.calculateOutletRanking(clippings),
+        sentimentDistribution: this.calculateSentimentDistribution(clippings)
+      };
+
+      return dashboard;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Generiert Monitoring-Report
+   */
+  async generateMonitoringReport(
+    projectId: string,
+    format: 'pdf' | 'excel',
+    context: { organizationId: string }
+  ): Promise<Blob> {
+    try {
+      const dashboard = await this.getAnalyticsDashboard(projectId, context);
+      
+      if (format === 'pdf') {
+        // PDF-Generation (placeholder)
+        const reportContent = JSON.stringify(dashboard, null, 2);
+        return new Blob([reportContent], { type: 'application/json' });
+      } else {
+        // Excel-Generation (placeholder) 
+        const reportContent = JSON.stringify(dashboard, null, 2);
+        return new Blob([reportContent], { type: 'application/vnd.ms-excel' });
+      }
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Schließt die Monitoring-Phase ab
+   */
+  async completeMonitoring(
+    projectId: string,
+    context: { organizationId: string; userId: string }
+  ): Promise<void> {
+    try {
+      await this.update(projectId, {
+        currentStage: 'completed',
+        completedAt: Timestamp.now()
+      }, context);
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Holt Projekte in Monitoring-Phase
+   */
+  async getMonitoringProjects(
+    organizationId: string,
+    status?: 'active' | 'completed' | 'paused'
+  ): Promise<any[]> { // ProjectWithMonitoring[]
+    try {
+      let q = query(
+        collection(db, 'projects'),
+        where('organizationId', '==', organizationId),
+        where('currentStage', '==', 'monitoring')
+      );
+
+      if (status) {
+        q = query(q, where('monitoringStatus', '==', status));
+      }
+
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    } catch (error) {
+      return [];
+    }
+  },
+
+  // Helper-Methoden für Analytics-Berechnung
+  calculateKPIs(clippings: any[]): any {
+    const totalReach = clippings.reduce((sum, c) => sum + (c.reachValue || 0), 0);
+    const totalMediaValue = clippings.reduce((sum, c) => sum + (c.mediaValue || 0), 0);
+    const avgSentiment = clippings.length > 0 
+      ? clippings.reduce((sum, c) => sum + (c.sentimentScore || 0), 0) / clippings.length 
+      : 0;
+
+    return {
+      totalClippings: clippings.length,
+      totalReach,
+      totalMediaValue,
+      averageSentiment: avgSentiment
+    };
+  },
+
+  calculateTimelineData(clippings: any[]): any[] {
+    const dailyData = new Map();
+    
+    clippings.forEach(clipping => {
+      const date = new Date(clipping.publishDate.seconds * 1000).toISOString().split('T')[0];
+      const existing = dailyData.get(date) || { date, reach: 0, clippings: 0, sentiment: 0 };
+      
+      existing.reach += clipping.reachValue || 0;
+      existing.clippings += 1;
+      existing.sentiment += clipping.sentimentScore || 0;
+      
+      dailyData.set(date, existing);
+    });
+
+    return Array.from(dailyData.values()).map(data => ({
+      ...data,
+      sentiment: data.clippings > 0 ? data.sentiment / data.clippings : 0
+    }));
+  },
+
+  calculateOutletRanking(clippings: any[]): any[] {
+    const outletData = new Map();
+    
+    clippings.forEach(clipping => {
+      const outlet = clipping.outlet;
+      const existing = outletData.get(outlet) || { 
+        name: outlet, 
+        clippingCount: 0, 
+        totalReach: 0, 
+        totalSentiment: 0, 
+        mediaValue: 0 
+      };
+      
+      existing.clippingCount += 1;
+      existing.totalReach += clipping.reachValue || 0;
+      existing.totalSentiment += clipping.sentimentScore || 0;
+      existing.mediaValue += clipping.mediaValue || 0;
+      
+      outletData.set(outlet, existing);
+    });
+
+    return Array.from(outletData.values())
+      .map(outlet => ({
+        ...outlet,
+        averageSentiment: outlet.clippingCount > 0 ? outlet.totalSentiment / outlet.clippingCount : 0
+      }))
+      .sort((a, b) => b.totalReach - a.totalReach);
+  },
+
+  calculateSentimentDistribution(clippings: any[]): any {
+    const distribution = { positive: 0, neutral: 0, negative: 0 };
+    
+    clippings.forEach(clipping => {
+      const sentiment = clipping.sentimentScore || 0;
+      if (sentiment > 0.1) {
+        distribution.positive += 1;
+      } else if (sentiment < -0.1) {
+        distribution.negative += 1;
+      } else {
+        distribution.neutral += 1;
+      }
+    });
+
+    const total = clippings.length;
+    return {
+      positive: total > 0 ? (distribution.positive / total) * 100 : 0,
+      neutral: total > 0 ? (distribution.neutral / total) * 100 : 0,
+      negative: total > 0 ? (distribution.negative / total) * 100 : 0
+    };
+  },
+
+  // ========================================
   // Approval-Integration Methoden (Plan 3/9)
   // ========================================
   

@@ -147,7 +147,7 @@ export function CustomerCommentSystem({
                 </div>
                 {entry.details?.comment && (
                   <Text className="text-sm text-gray-700 italic">
-                    "{entry.details.comment}"
+                    &quot;{entry.details.comment}&quot;
                   </Text>
                 )}
                 {entry.inlineComments && entry.inlineComments.length > 0 && (
@@ -157,7 +157,7 @@ export function CustomerCommentSystem({
                     </Text>
                     {entry.inlineComments.map((comment: any, idx: number) => (
                       <div key={idx} className="text-xs bg-gray-50 p-2 rounded">
-                        <Text className="text-gray-600 italic">"{comment.quote}"</Text>
+                        <Text className="text-gray-600 italic">&quot;{comment.quote}&quot;</Text>
                         <Text className="text-gray-800 mt-1">→ {comment.text}</Text>
                       </div>
                     ))}
@@ -198,7 +198,7 @@ export function CustomerCommentSystem({
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <Text className="text-sm text-gray-600 italic mb-1">
-                      "{comment.quote}"
+                      &quot;{comment.quote}&quot;
                     </Text>
                     <Text className="text-sm text-gray-800">
                       → {comment.text}
@@ -270,7 +270,7 @@ export function CustomerCommentSystem({
         >
           <Text className="font-medium text-sm mb-2">Kommentar hinzufügen</Text>
           <Text className="text-xs text-gray-600 mb-2 italic">
-            "{selectedText}"
+            &quot;{selectedText}&quot;
           </Text>
           <Textarea
             value={newCommentText}
