@@ -160,6 +160,31 @@ export default function DashboardLayout({
     ],
   },
   {
+    name: "Projekte",
+    icon: BriefcaseIcon,
+    current: pathname.startsWith('/dashboard/projects'),
+    children: [
+      { 
+        name: "Projekt-Übersicht", 
+        href: "/dashboard/projects", 
+        icon: BriefcaseIcon,
+        description: "Alle Projekte und deren Pipeline-Status verwalten"
+      },
+      { 
+        name: "Kanban-Board", 
+        href: "/dashboard/projects/kanban", 
+        icon: TableCellsIcon,
+        description: "7-Phasen Pipeline-Board für alle Projekte"
+      },
+      { 
+        name: "Projekt erstellen", 
+        href: "/dashboard/projects/new", 
+        icon: DocumentTextIcon,
+        description: "Neues Projekt mit Pipeline-Integration erstellen"
+      },
+    ],
+  },
+  {
     name: "PR-Tools",
     icon: MegaphoneIcon,
     current: pathname.startsWith('/dashboard/pr-tools'),
