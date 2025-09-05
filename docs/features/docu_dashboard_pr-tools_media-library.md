@@ -68,6 +68,15 @@ Die Media-Library ist das zentrale Asset-Management-System für PR-Materialien. 
 7. **Asset-Details** - Metadaten, Beschreibungen, Tags
 8. **Grid/List-Ansichten** - Flexible Darstellung der Assets
 
+### ✅ NEU: Pipeline-Asset-Integration (Plan 6/9)
+9. **Pipeline-Asset-Management** - Assets können Projekten und Pipeline-Phasen zugeordnet werden
+10. **Smart Asset Suggestions** - KI-basiertes Scoring für relevante Assets basierend auf Projektkontext
+11. **Asset-Vererbung** - Projekt-Assets werden automatisch an alle Kampagnen vererbt
+12. **Metadaten-Snapshots** - Asset-Konsistenz durch Snapshot-System bei Pipeline-Verwendung
+13. **Project Asset Gallery** - Dedizierte Ansicht für projektbezogene Assets
+14. **Asset Pipeline Status** - Status-Tracking für Assets durch Pipeline-Phasen
+15. **Smart Asset Selector** - Intelligente Asset-Auswahl mit Kontext-Awareness
+
 ### Sharing-Workflow
 1. **Asset-Auswahl:** User wählt eine oder mehrere Dateien/Ordner aus
 2. **Share-Dialog:** Klick auf "Teilen" öffnet ShareModal
@@ -125,7 +134,18 @@ Die Media-Library ist das zentrale Asset-Management-System für PR-Materialien. 
 | mediaService.moveAsset() | Asset verschieben | void |
 | mediaService.deleteAsset() | Asset löschen | void |
 | mediaService.createShareLink() | Share-Link erstellen | string |
-| [UNKLAR: Weitere Share-spezifische Services?] | | |
+
+#### ✅ NEU: Pipeline-Asset-Service-Methoden (Plan 6/9)
+| Service-Funktion | Zweck | Response |
+|-----------------|-------|----------|
+| mediaService.createProjectAssetAttachment() | Pipeline-Asset-Attachment erstellen | CampaignAssetAttachment |
+| mediaService.getProjectAssets() | Projekt-Assets laden | CampaignAssetAttachment[] |
+| mediaService.getAssetsByStage() | Stage-spezifische Assets laden | CampaignAssetAttachment[] |
+| mediaService.updateAssetPipelineStatus() | Pipeline-Status aktualisieren | void |
+| mediaService.createAssetSnapshot() | Asset-Metadaten-Snapshot | void |
+| mediaService.getSmartAssetSuggestions() | KI-basierte Asset-Vorschläge | CampaignAssetAttachment[] |
+| mediaService.inheritProjectAssets() | Asset-Vererbung von Projekt | CampaignAssetAttachment[] |
+| mediaService.validateAssetForStage() | Asset-Validierung für Pipeline-Phase | ValidationResult |
 
 ### Datenmodelle
 ```typescript
@@ -144,6 +164,31 @@ interface MediaAsset extends BaseEntity {
   };
   uploadedBy: string;
   // ... weitere Felder
+}
+
+// ✅ NEU: Pipeline-Asset-Attachment (Plan 6/9)
+interface CampaignAssetAttachment extends MediaAsset {
+  // Pipeline-spezifische Felder
+  projectId?: string;
+  stageId?: string;
+  isProjectWide?: boolean;
+  
+  // Erweiterte Metadaten
+  pipelineMetadata?: {
+    addedAt: Timestamp;
+    addedBy: string;
+    stageHistory: Array<{
+      stage: string;
+      timestamp: Timestamp;
+      action: 'added' | 'removed' | 'modified';
+    }>;
+    smartScore?: number;
+    suggestedByAI?: boolean;
+  };
+  
+  // Asset-Status in Pipeline
+  pipelineStatus?: 'active' | 'archived' | 'pending_approval' | 'approved';
+  validationStatus?: 'valid' | 'invalid' | 'pending';
 }
 
 interface MediaFolder extends BaseEntity {
@@ -175,13 +220,18 @@ Drag & Drop → Event Handler → moveAsset() → Database Update → Folder Ref
   - Organization Context für Multi-Tenancy
   - Auth Context für Benutzer-Permissions
   - Firebase Storage für Asset-Speicherung
+  - **NEU:** Project Service für Pipeline-Integration
+  - **NEU:** Gemini AI für Smart Asset Suggestions
 - **Wird genutzt von:** 
   - PR-Kampagnen (Asset-Auswahl für Anhänge)
   - E-Mail-Templates (Medien-Einbindung)
   - Freigabe-Workflows (Asset-Sharing)
+  - **NEU:** Projekt-Pipeline (Asset-Management in allen 7 Phasen)
+  - **NEU:** Campaign-Asset-Attachments (Pipeline-spezifische Assets)
 - **Gemeinsame Komponenten:** 
   - UI-Komponenten (Button, Input, Modal, Dropdown)
   - Alert-System und useAlert Hook
+  - **NEU:** ProjectAssetGallery, AssetPipelineStatus, SmartAssetSelector
 
 ## ✅ Alle Probleme behoben - VOLLSTÄNDIG FERTIG
 - [x] **KRITISCH:** 35+ Console-Statements entfernt (Code-Cleaning abgeschlossen)
@@ -277,8 +327,19 @@ Drag & Drop → Event Handler → moveAsset() → Database Update → Folder Ref
   9. Erfolg: Kompletter Asset-Management-Workflow ohne Datenverlust
 
 ---
-**Bearbeitet am:** 2025-08-08  
-**Status:** ✅ **VOLLSTÄNDIG FERTIG** - Code-Cleaning, Design Patterns, Tests und Dokumentation abgeschlossen
+**Bearbeitet am:** 2025-09-05  
+**Status:** ✅ **PIPELINE-INTEGRIERT** - Vollständige Pipeline-Asset-Integration nach Plan 6/9 implementiert
+
+### ✅ Pipeline-Integration Changelog (Plan 6/9 - 05.09.2025)
+- ✅ CampaignAssetAttachment um Pipeline-spezifische Felder erweitert
+- ✅ MediaService um 8 neue Pipeline-Asset-Methoden erweitert
+- ✅ ProjectService um 7 neue Asset-Management-Methoden erweitert
+- ✅ 3 neue UI-Komponenten: ProjectAssetGallery, AssetPipelineStatus, SmartAssetSelector
+- ✅ Smart Asset Suggestions mit KI-basiertem Scoring-System
+- ✅ Asset-Pipeline-Integration mit Metadaten-Snapshot-System
+- ✅ Asset-Vererbung zwischen Projekt-Kampagnen
+- ✅ Multi-Tenancy-Sicherheit durchgängig implementiert
+- ✅ ZERO Breaking Changes - bestehende Media-Workflows funktionieren unverändert
 
 ## 📈 **Finale Zusammenfassung**
 
@@ -291,4 +352,4 @@ Drag & Drop → Event Handler → moveAsset() → Database Update → Folder Ref
 - [x] **Sharing-Route verifiziert** - Funktionale `/share/[shareId]` Route bestätigt
 
 **🎯 Production-Ready Status:**
-Das Media-Library & Sharing System ist vollständig dokumentiert, code-gecleanet und getestet. Alle kritischen Funktionen sind implementiert und funktional.
+Das Media-Library & Sharing System ist vollständig dokumentiert, code-gecleanet und getestet. Mit der Pipeline-Asset-Integration (Plan 6/9) sind jetzt auch erweiterte Asset-Management-Features für die Projekt-Pipeline verfügbar. Alle kritischen Funktionen inklusive Smart Asset Suggestions und Asset-Vererbung sind implementiert und funktional.

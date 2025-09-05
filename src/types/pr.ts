@@ -149,6 +149,34 @@ export interface PRCampaign {
   projectTitle?: string;        // Denormalisiert für Performance
   pipelineStage?: PipelineStage; // Aktueller Pipeline-Status
   
+  // Pipeline-spezifische Asset-Features
+  assetHistory?: Array<{
+    action: 'added' | 'removed' | 'modified' | 'shared';
+    assetId: string;
+    fileName: string;
+    timestamp: Timestamp;
+    userId: string;
+    userName: string;
+    phase: string;
+    reason?: string;
+  }>;
+  
+  // Asset-Vererbung von Projekt
+  inheritProjectAssets?: boolean;
+  projectAssetFilter?: {
+    includeTypes?: string[]; // ['image', 'pdf']
+    excludeFolders?: string[];
+    onlyVerified?: boolean;
+  };
+  
+  // Asset-Validierung
+  assetValidation?: {
+    lastChecked?: Timestamp;
+    missingAssets?: string[]; // Asset-IDs die nicht mehr verfügbar sind
+    outdatedSnapshots?: string[]; // Attachments mit veralteten Metadaten
+    validationStatus: 'valid' | 'needs_review' | 'invalid';
+  };
+
   // ✅ DISTRIBUTION-FELDER (Plan 4/9)
   distributionConfig?: {
     isScheduled: boolean;           // Geplanter Versand?
@@ -501,12 +529,12 @@ export const EditLockUtils = {
 };
 
 export interface CampaignAssetAttachment {
-  id: string;
-  type: 'asset' | 'folder';
-  assetId?: string;
-  folderId?: string;
+  id: string;                    // Eigene ID (nicht Asset-ID!)
+  type: 'asset' | 'folder';      // Asset oder ganzer Ordner
+  assetId?: string;              // Referenz zum MediaAsset (optional)
+  folderId?: string;             // Referenz zum MediaFolder (optional)
   
-  // Snapshot der Metadaten zum Zeitpunkt der Zuordnung
+  // BESTEHENDE Metadaten-Snapshot Struktur
   metadata: {
     fileName?: string;
     folderName?: string;
@@ -514,7 +542,7 @@ export interface CampaignAssetAttachment {
     description?: string;
     thumbnailUrl?: string;
     
-    // Zukünftige Metadaten-Erweiterungen
+    // NEUE Pipeline-spezifische Felder
     copyright?: string;
     author?: string;
     license?: string;
@@ -525,9 +553,20 @@ export interface CampaignAssetAttachment {
       allowSocial?: boolean;
       restrictions?: string;
     };
+    
+    // Pipeline-Tracking
+    attachedAt?: Timestamp;
+    attachedInPhase?: 'ideas_planning' | 'creation' | 'internal_approval' | 'customer_approval' | 'distribution' | 'monitoring';
+    lastVerified?: Timestamp;
+    needsRefresh?: boolean;
   };
   
-  // Tracking
+  // Pipeline-Integration
+  projectId?: string;
+  stageId?: string;
+  isProjectWide?: boolean; // Asset für ganzes Projekt verfügbar
+  
+  // Tracking (Legacy-Kompatibilität)
   attachedAt: Timestamp;
   attachedBy: string;
 }
@@ -614,4 +653,58 @@ export interface DistributionError {
   recipient: string;
   error: string;
   timestamp: Timestamp;
+}
+
+// ========================================
+// PLAN 6/9: MEDIA-ASSETS-INTEGRATION
+// ========================================
+
+// Resolved Asset für Asset-Auflösung
+export interface ResolvedAsset {
+  attachment: CampaignAssetAttachment;
+  asset?: any; // MediaAsset
+  isAvailable: boolean;
+  hasChanged: boolean;
+  needsRefresh: boolean;
+  downloadUrl?: string;
+  error?: string;
+}
+
+// Asset-Validation Result
+export interface AssetValidationResult {
+  isValid: boolean;
+  missingAssets: string[];
+  outdatedSnapshots: string[];
+  validationErrors: string[];
+  lastValidated: Timestamp;
+}
+
+// Asset Summary für Projekte
+export interface AssetSummary {
+  totalAssets: number;
+  assetsByType: Record<string, number>;
+  assetsByPhase: Record<string, number>;
+  storageUsed: number;
+  recentAssets: CampaignAssetAttachment[];
+  topAssets: Array<{ assetId: string; fileName: string; usage: number }>;
+}
+
+// Asset-Permissions für Sharing
+export interface AssetPermissions {
+  canView: boolean;
+  canDownload: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  canShare: boolean;
+}
+
+// Asset-Usage Data
+export interface AssetUsageData {
+  assetId: string;
+  projectId: string;
+  campaignIds: string[];
+  totalUsage: number;
+  lastUsed: Timestamp;
+  usagesByPhase: Record<string, number>;
+  sharedWithProjects: string[];
 }

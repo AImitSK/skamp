@@ -46,6 +46,37 @@ export interface Project {
   
   // Team
   assignedTo?: string[];
+  
+  // ========================================
+  // PLAN 6/9: MEDIA-ASSETS-INTEGRATION
+  // ========================================
+  
+  // Projekt-weite Asset-Integration
+  mediaConfig?: {
+    allowAssetSharing: boolean; // Assets zwischen Kampagnen teilen
+    assetLibraryId?: string;    // Projekt-spezifische Asset-Library
+    defaultFolder?: string;     // Standard-Ordner für neue Assets
+    assetNamingPattern?: string; // Naming-Convention
+    assetRetentionDays?: number; // Asset-Aufbewahrung
+  };
+  
+  // Aggregierte Asset-Daten (Performance-Optimierung)
+  assetSummary?: {
+    totalAssets: number;
+    assetsByType: Record<string, number>; // {'image': 15, 'pdf': 3}
+    lastAssetAdded?: Timestamp;
+    storageUsed: number; // in Bytes
+    topAssets: Array<{ assetId: string; fileName: string; usage: number }>;
+  };
+  
+  // Asset-Library Verknüpfung
+  sharedAssets?: any[]; // CampaignAssetAttachment[]
+  assetFolders?: Array<{
+    folderId: string;
+    folderName: string;
+    assetCount: number;
+    lastModified: Timestamp;
+  }>;
 }
 
 export type ProjectStatus = 
@@ -242,4 +273,22 @@ export interface AnalyticsDashboard {
   
   createdAt: Timestamp;
   updatedAt: Timestamp;
+}
+
+// ========================================
+// PLAN 6/9: MEDIA-ASSETS-INTEGRATION
+// ========================================
+
+// Project Asset Validation für Asset-Management
+export interface ProjectAssetValidation {
+  projectId: string;
+  totalAssets: number;
+  validAssets: number;
+  missingAssets: number;
+  outdatedAssets: number;
+  validationDetails: Array<{
+    campaignId: string;
+    campaignTitle: string;
+    assetIssues: any; // AssetValidationResult from pr.ts
+  }>;
 }

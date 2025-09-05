@@ -568,6 +568,294 @@ export const projectService = {
   },
 
   // ========================================
+  // PLAN 6/9: ASSET-INTEGRATION
+  // ========================================
+  
+  /**
+   * Aktualisiert Projekt Asset Summary
+   */
+  async updateProjectAssetSummary(
+    projectId: string,
+    context: { organizationId: string; userId: string }
+  ): Promise<void> {
+    try {
+      // Dynamischer Import um circular dependencies zu vermeiden
+      const { mediaService } = await import('./media-service');
+      
+      const assetSummary = await mediaService.getProjectAssetSummary(projectId, context);
+      
+      await this.update(projectId, {
+        assetSummary
+      }, context);
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Holt Projekt-weite geteilte Assets
+   */
+  async getProjectSharedAssets(
+    projectId: string,
+    context: { organizationId: string }
+  ): Promise<any[]> { // CampaignAssetAttachment[]
+    try {
+      const project = await this.getById(projectId, context);
+      if (!project) {
+        throw new Error('Projekt nicht gefunden');
+      }
+
+      return (project as any).sharedAssets || [];
+    } catch (error) {
+      return [];
+    }
+  },
+
+  /**
+   * Fügt geteiltes Asset zu Projekt hinzu
+   */
+  async addSharedAssetToProject(
+    projectId: string,
+    assetAttachment: any, // CampaignAssetAttachment
+    context: { organizationId: string; userId: string }
+  ): Promise<void> {
+    try {
+      const project = await this.getById(projectId, context);
+      if (!project) {
+        throw new Error('Projekt nicht gefunden');
+      }
+
+      const currentSharedAssets = (project as any).sharedAssets || [];
+      
+      // Prüfe ob Asset bereits geteilt ist
+      const exists = currentSharedAssets.some((existing: any) => 
+        existing.assetId === assetAttachment.assetId
+      );
+      
+      if (!exists) {
+        const updatedSharedAssets = [...currentSharedAssets, assetAttachment];
+        
+        await this.update(projectId, {
+          sharedAssets: updatedSharedAssets
+        }, context);
+        
+        // Asset-History tracken
+        await this.trackAssetAction(projectId, {
+          action: 'shared',
+          assetId: assetAttachment.assetId || assetAttachment.id,
+          fileName: assetAttachment.metadata.fileName || 'Unbekannt',
+          timestamp: Timestamp.now(),
+          userId: context.userId,
+          userName: 'System User', // TODO: Get real user name
+          phase: 'project_shared',
+          reason: 'Asset wurde projekt-weit geteilt'
+        }, context);
+      }
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Entfernt geteiltes Asset von Projekt
+   */
+  async removeSharedAssetFromProject(
+    projectId: string,
+    attachmentId: string,
+    context: { organizationId: string; userId: string }
+  ): Promise<void> {
+    try {
+      const project = await this.getById(projectId, context);
+      if (!project) {
+        throw new Error('Projekt nicht gefunden');
+      }
+
+      const currentSharedAssets = (project as any).sharedAssets || [];
+      const updatedSharedAssets = currentSharedAssets.filter(
+        (asset: any) => asset.id !== attachmentId
+      );
+      
+      const removedAsset = currentSharedAssets.find(
+        (asset: any) => asset.id === attachmentId
+      );
+      
+      await this.update(projectId, {
+        sharedAssets: updatedSharedAssets
+      }, context);
+      
+      // Asset-History tracken
+      if (removedAsset) {
+        await this.trackAssetAction(projectId, {
+          action: 'removed',
+          assetId: removedAsset.assetId || removedAsset.id,
+          fileName: removedAsset.metadata.fileName || 'Unbekannt',
+          timestamp: Timestamp.now(),
+          userId: context.userId,
+          userName: 'System User',
+          phase: 'project_shared',
+          reason: 'Asset-Sharing wurde entfernt'
+        }, context);
+      }
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Validiert alle Assets eines Projekts
+   */
+  async validateProjectAssets(
+    projectId: string,
+    context: { organizationId: string }
+  ): Promise<any> { // ProjectAssetValidation
+    try {
+      // Dynamischer Import um circular dependencies zu vermeiden
+      const { prService } = await import('./pr-service');
+      const { mediaService } = await import('./media-service');
+      
+      // Lade alle Kampagnen des Projekts
+      const campaigns = await prService.getByProjectId(projectId, { organizationId: context.organizationId });
+      
+      let totalAssets = 0;
+      let validAssets = 0;
+      let missingAssets = 0;
+      let outdatedAssets = 0;
+      
+      const validationDetails: any[] = [];
+      
+      for (const campaign of campaigns) {
+        if (campaign.attachedAssets && campaign.attachedAssets.length > 0) {
+          const validationResult = await mediaService.validateAssetAttachments(
+            campaign.attachedAssets,
+            context
+          );
+          
+          totalAssets += campaign.attachedAssets.length;
+          
+          if (validationResult.isValid) {
+            validAssets += campaign.attachedAssets.length;
+          } else {
+            missingAssets += validationResult.missingAssets.length;
+            outdatedAssets += validationResult.outdatedSnapshots.length;
+          }
+          
+          validationDetails.push({
+            campaignId: campaign.id!,
+            campaignTitle: campaign.title,
+            assetIssues: validationResult
+          });
+        }
+      }
+      
+      return {
+        projectId,
+        totalAssets,
+        validAssets,
+        missingAssets,
+        outdatedAssets,
+        validationDetails
+      };
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Trackt Asset-Aktionen für Projekt-History
+   */
+  async trackAssetAction(
+    projectId: string,
+    action: {
+      action: 'added' | 'removed' | 'modified' | 'shared';
+      assetId: string;
+      fileName: string;
+      timestamp: Timestamp;
+      userId: string;
+      userName: string;
+      phase: string;
+      reason?: string;
+    },
+    context: { organizationId: string; userId: string }
+  ): Promise<void> {
+    try {
+      // Dynamischer Import um circular dependencies zu vermeiden
+      const { prService } = await import('./pr-service');
+      
+      // Lade alle Kampagnen des Projekts
+      const campaigns = await prService.getByProjectId(projectId, { organizationId: context.organizationId });
+      
+      // Füge Action zu allen relevanten Kampagnen hinzu
+      for (const campaign of campaigns) {
+        if (campaign.attachedAssets?.some((asset: any) => asset.assetId === action.assetId)) {
+          const currentHistory = campaign.assetHistory || [];
+          const updatedHistory = [...currentHistory, action];
+          
+          await prService.update(campaign.id!, {
+            assetHistory: updatedHistory
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Fehler beim Tracken der Asset-Action:', error);
+      // Nicht kritisch - kein throw
+    }
+  },
+
+  /**
+   * Holt Asset-Folders für ein Projekt
+   */
+  async getProjectAssetFolders(
+    projectId: string,
+    context: { organizationId: string }
+  ): Promise<any[]> {
+    try {
+      const project = await this.getById(projectId, context);
+      if (!project) {
+        return [];
+      }
+
+      return (project as any).assetFolders || [];
+    } catch (error) {
+      return [];
+    }
+  },
+
+  /**
+   * Synchronisiert Asset-Folders für Projekt
+   */
+  async syncProjectAssetFolders(
+    projectId: string,
+    context: { organizationId: string; userId: string }
+  ): Promise<void> {
+    try {
+      // Dynamischer Import um circular dependencies zu vermeiden
+      const { mediaService } = await import('./media-service');
+      
+      // Hole alle Ordner der Organisation
+      const allFolders = await mediaService.getAllFoldersForOrganization(context.organizationId);
+      
+      // Berechne Asset-Counts für jeden Ordner
+      const assetFolders = await Promise.all(
+        allFolders.map(async (folder) => ({
+          folderId: folder.id!,
+          folderName: folder.name,
+          assetCount: await mediaService.getFolderFileCount(folder.id!),
+          lastModified: folder.updatedAt || folder.createdAt || Timestamp.now()
+        }))
+      );
+      
+      // Update nur Ordner mit Assets
+      const foldersWithAssets = assetFolders.filter(folder => folder.assetCount > 0);
+      
+      await this.update(projectId, {
+        assetFolders: foldersWithAssets
+      }, context);
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // ========================================
   // Approval-Integration Methoden (Plan 3/9)
   // ========================================
   
