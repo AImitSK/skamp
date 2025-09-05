@@ -106,6 +106,7 @@ describe('Notifications Service Integration Tests', () => {
     userId: mockUserId,
     approvalGranted: true,
     changesRequested: true,
+    firstView: true,
     overdueApprovals: true,
     overdueApprovalDays: 7,
     emailSentSuccess: false,

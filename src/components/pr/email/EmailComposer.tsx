@@ -280,9 +280,18 @@ interface EmailComposerProps {
   campaign: PRCampaign;
   onClose: () => void;
   onSent?: () => void;
+  // ✅ PIPELINE-PROPS HINZUGEFÜGT (Plan 4/9)
+  projectMode?: boolean;        // Pipeline-Modus aktiviert?
+  onPipelineComplete?: (campaignId: string) => void;  // Pipeline-Callback
 }
 
-export default function EmailComposer({ campaign, onClose, onSent }: EmailComposerProps) {
+export default function EmailComposer({ 
+  campaign, 
+  onClose, 
+  onSent,
+  projectMode = false,
+  onPipelineComplete 
+}: EmailComposerProps) {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const [state, dispatch] = useReducer(
@@ -293,6 +302,10 @@ export default function EmailComposer({ campaign, onClose, onSent }: EmailCompos
 
   // Auto-Save mit Debouncing
   const [autoSaveTimer, setAutoSaveTimer] = useState<NodeJS.Timeout | null>(null);
+  
+  // ✅ PIPELINE-STATE HINZUGEFÜGT (Plan 4/9)
+  const [pipelineDistribution, setPipelineDistribution] = useState<boolean>(false);
+  const [autoTransitionAfterSend, setAutoTransitionAfterSend] = useState<boolean>(false);
 
   // Navigation zwischen Steps
   const navigateToStep = useCallback((step: ComposerStep) => {
@@ -399,7 +412,7 @@ export default function EmailComposer({ campaign, onClose, onSent }: EmailCompos
     return () => {
       if (timer) clearTimeout(timer);
     };
-  }, [state.draft]);
+  }, [state.draft]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ANGEPASST: Lade existierenden Draft beim Mount mit direktem Service
   useEffect(() => {
@@ -429,6 +442,55 @@ export default function EmailComposer({ campaign, onClose, onSent }: EmailCompos
       loadDraft();
     }
   }, [campaign.id, user]);
+
+  // ✅ PIPELINE-INITIALISIERUNG HINZUGEFÜGT (Plan 4/9)
+  useEffect(() => {
+    if (projectMode && campaign.projectId && campaign.pipelineStage === 'distribution') {
+      setPipelineDistribution(true);
+      setAutoTransitionAfterSend(true);
+      
+      // Pre-populate mit Projekt-Daten wenn vorhanden
+      if (campaign.distributionConfig) {
+        dispatch({ 
+          type: 'UPDATE_METADATA', 
+          metadata: {
+            ...state.draft.metadata,
+            subject: campaign.distributionConfig.emailSubject || state.draft.metadata.subject,
+            preheader: campaign.distributionConfig.emailPreheader || state.draft.metadata.preheader || ''
+          }
+        });
+
+        if (campaign.distributionConfig.distributionLists.length > 0) {
+          dispatch({
+            type: 'UPDATE_RECIPIENTS',
+            recipients: {
+              ...state.draft.recipients,
+              listIds: campaign.distributionConfig.distributionLists,
+              listNames: campaign.distributionConfig.distributionLists.map(id => `Liste ${id}`), // Fallback
+              totalCount: campaign.distributionConfig.manualRecipients.length
+            }
+          });
+        }
+
+        if (campaign.distributionConfig.manualRecipients.length > 0) {
+          // Konvertiere Distribution Recipients zu Manual Recipients
+          campaign.distributionConfig.manualRecipients.forEach(recipient => {
+            dispatch({
+              type: 'ADD_MANUAL_RECIPIENT',
+              recipient: {
+                id: `${recipient.email}-${Date.now()}`,
+                firstName: recipient.firstName || '',
+                lastName: recipient.lastName || '',
+                email: recipient.email,
+                companyName: recipient.companyName || '',
+                isValid: true
+              }
+            });
+          });
+        }
+      }
+    }
+  }, [projectMode, campaign, state.draft.metadata, state.draft.recipients]);
 
   // Step-spezifische Props
   const step1Props = {
@@ -464,7 +526,11 @@ export default function EmailComposer({ campaign, onClose, onSent }: EmailCompos
       dispatch({ type: 'UPDATE_SCHEDULING', scheduling }),
     validation: state.validation.step3,
     campaign,
-    onSent
+    onSent,
+    // ✅ PIPELINE-PROPS HINZUGEFÜGT (Plan 4/9)
+    pipelineMode: pipelineDistribution,
+    autoTransitionAfterSend,
+    onPipelineComplete
   };
 
   if (state.isLoading) {
@@ -492,6 +558,43 @@ export default function EmailComposer({ campaign, onClose, onSent }: EmailCompos
           onStepClick={navigateToStep}
         />
       </div>
+
+      {/* ✅ PIPELINE-STATUS-BANNER HINZUGEFÜGT (Plan 4/9) */}
+      {pipelineDistribution && (
+        <div className="mx-6 mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <svg className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+            </svg>
+            <p className="font-medium text-blue-900">
+              Pipeline-Distribution für Projekt &ldquo;{campaign.projectTitle}&rdquo;
+            </p>
+          </div>
+          <p className="text-sm text-blue-700">
+            Nach erfolgreichem Versand wird das Projekt automatisch zur Monitoring-Phase weitergeleitet.
+          </p>
+          
+          {campaign.distributionStatus && (
+            <div className="mt-2 flex items-center gap-2">
+              <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${
+                campaign.distributionStatus.status === 'sent' ? 'bg-green-50 text-green-700 ring-green-600/20' :
+                campaign.distributionStatus.status === 'failed' ? 'bg-red-50 text-red-700 ring-red-600/20' :
+                campaign.distributionStatus.status === 'sending' ? 'bg-blue-50 text-blue-700 ring-blue-600/20' : 
+                'bg-gray-50 text-gray-700 ring-gray-600/20'
+              }`}>
+                {campaign.distributionStatus.status === 'sent' ? 'Versendet' :
+                 campaign.distributionStatus.status === 'failed' ? 'Fehler' :
+                 campaign.distributionStatus.status === 'sending' ? 'Versende...' : 'Ausstehend'}
+              </span>
+              {campaign.distributionStatus.sentAt && (
+                <span className="text-xs text-blue-600">
+                  {new Date(campaign.distributionStatus.sentAt.toDate()).toLocaleString('de-DE')}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Step Content */}
       <div className="flex-1 overflow-y-auto">

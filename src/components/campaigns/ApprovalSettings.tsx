@@ -256,13 +256,13 @@ export function ApprovalSettings({
                   }
                   
                   return currentApproval.history
-                    .filter(h => h.details?.comment) // Nur Einträge mit Kommentaren
-                    .sort((a, b) => {
+                    .filter((h: any) => h.details?.comment) // Nur Einträge mit Kommentaren
+                    .sort((a: any, b: any) => {
                       const aTime = a.timestamp?.seconds ? a.timestamp.seconds * 1000 : new Date(a.timestamp).getTime();
                       const bTime = b.timestamp?.seconds ? b.timestamp.seconds * 1000 : new Date(b.timestamp).getTime();
                       return aTime - bTime; // Älteste zuerst
                     })
-                    .map((historyEntry, index) => {
+                    .map((historyEntry: any, index: number) => {
                       const isCustomer = historyEntry.action === 'changes_requested';
                       const senderName = isCustomer 
                         ? (currentApproval.recipients?.[0]?.name || historyEntry.actorName || 'Kunde')
@@ -345,8 +345,8 @@ export function ApprovalSettings({
                   }
                   
                   const feedbackEntries = currentApproval.history
-                    .filter(h => h.details?.comment)
-                    .sort((a, b) => {
+                    .filter((h: any) => h.details?.comment)
+                    .sort((a: any, b: any) => {
                       const aTime = a.timestamp?.seconds ? a.timestamp.seconds * 1000 : new Date(a.timestamp).getTime();
                       const bTime = b.timestamp?.seconds ? b.timestamp.seconds * 1000 : new Date(b.timestamp).getTime();
                       return bTime - aTime; // Neueste zuerst

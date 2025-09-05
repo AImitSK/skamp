@@ -10,9 +10,18 @@ interface EmailSendModalProps {
   campaign: PRCampaign;
   onClose: () => void;
   onSent: () => void;
+  // ✅ PIPELINE-PROPS HINZUGEFÜGT (Plan 4/9)
+  projectMode?: boolean;
+  onPipelineComplete?: (campaignId: string) => void;
 }
 
-export default function EmailSendModal({ campaign, onClose, onSent }: EmailSendModalProps) {
+export default function EmailSendModal({ 
+  campaign, 
+  onClose, 
+  onSent, 
+  projectMode = false,
+  onPipelineComplete 
+}: EmailSendModalProps) {
   return (
     <Dialog open={true} onClose={onClose} size="5xl">
       <div className="h-[90vh] flex flex-col overflow-hidden">
@@ -20,6 +29,8 @@ export default function EmailSendModal({ campaign, onClose, onSent }: EmailSendM
           campaign={campaign}
           onClose={onClose}
           onSent={onSent}
+          projectMode={projectMode}
+          onPipelineComplete={onPipelineComplete}
         />
       </div>
     </Dialog>

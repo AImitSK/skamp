@@ -36,6 +36,10 @@ interface Step3PreviewProps {
   validation: StepValidation['step3'];
   campaign: PRCampaign;
   onSent?: () => void;
+  // ✅ PIPELINE-PROPS HINZUGEFÜGT (Plan 4/9)
+  pipelineMode?: boolean;
+  autoTransitionAfterSend?: boolean;
+  onPipelineComplete?: (campaignId: string) => void;
 }
 
 type PreviewMode = 'desktop' | 'mobile';
@@ -90,7 +94,10 @@ export default function Step3Preview({
   onSchedulingChange,
   validation,
   campaign,
-  onSent
+  onSent,
+  pipelineMode = false,
+  autoTransitionAfterSend = false,
+  onPipelineComplete
 }: Step3PreviewProps) {
   const [previewMode, setPreviewMode] = useState<PreviewMode>('desktop');
   const [testEmail, setTestEmail] = useState('');
@@ -354,12 +361,66 @@ export default function Step3Preview({
           // WICHTIG: Update Campaign Status auf "sent" NACH erfolgreichem Versand
           await updateCampaignStatus('sent', {
             sentAt: serverTimestamp(),
-            actualRecipientCount: result.success
+            actualRecipientCount: result.success,
+            // ✅ PIPELINE-DISTRIBUTION-STATUS HINZUFÜGEN (Plan 4/9)
+            ...(pipelineMode && campaign.projectId && {
+              distributionStatus: {
+                status: 'sent' as const,
+                sentAt: serverTimestamp(),
+                recipientCount: totalRecipients,
+                successCount: result.success,
+                failureCount: totalRecipients - result.success,
+                distributionId: `dist_${Date.now()}`
+              }
+            })
           });
+
+          // ✅ PIPELINE AUTO-TRANSITION (Plan 4/9)
+          if (pipelineMode && campaign.projectId && autoTransitionAfterSend && result.success > 0) {
+            try {
+              // Importiere projektService dynamisch um Circular Dependency zu vermeiden
+              const { projectService } = await import('@/lib/firebase/project-service');
+              
+              await projectService.updateStage(
+                campaign.projectId,
+                'monitoring',
+                {
+                  transitionReason: 'distribution_completed',
+                  transitionBy: 'user', // Kann später mit echter userId erweitert werden
+                  transitionAt: serverTimestamp(),
+                  distributionData: {
+                    recipientCount: result.success,
+                    distributionId: `dist_${Date.now()}`
+                  }
+                },
+                { organizationId: campaign.organizationId!, userId: 'user' }
+              );
+
+              // Pipeline-Complete Callback aufrufen
+              if (onPipelineComplete) {
+                onPipelineComplete(campaign.id!);
+              }
+
+              emailLogger.info('Pipeline auto-transition to monitoring completed', {
+                campaignId: campaign.id,
+                projectId: campaign.projectId,
+                recipientCount: result.success
+              });
+            } catch (pipelineError) {
+              emailLogger.error('Pipeline auto-transition failed', {
+                campaignId: campaign.id,
+                projectId: campaign.projectId,
+                error: pipelineError
+              });
+              // Pipeline-Fehler sollen den E-Mail-Versand nicht beeinträchtigen
+            }
+          }
           
           setAlert({ 
             type: 'success', 
-            message: `E-Mail wurde erfolgreich an ${result.success} Empfänger gesendet!` 
+            message: pipelineMode && autoTransitionAfterSend && result.success > 0
+              ? `E-Mail wurde erfolgreich an ${result.success} Empfänger gesendet! Projekt wurde zur Monitoring-Phase weitergeleitet.`
+              : `E-Mail wurde erfolgreich an ${result.success} Empfänger gesendet!`
           });
           setShowConfirmDialog(false);
           if (onSent) {

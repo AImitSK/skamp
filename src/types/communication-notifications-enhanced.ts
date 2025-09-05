@@ -307,6 +307,17 @@ export const NOTIFICATION_TEMPLATES: Record<NotificationType, NotificationTempla
       clientName: 'ACME GmbH'
     }
   },
+  FIRST_VIEW: {
+    type: 'FIRST_VIEW',
+    titleTemplate: 'Erstansicht',
+    messageTemplate: '{clientName} hat "{campaignTitle}" zum ersten Mal angesehen.',
+    requiredFields: ['clientName', 'campaignTitle'],
+    optionalFields: [],
+    sampleMetadata: {
+      clientName: 'ACME GmbH',
+      campaignTitle: 'Produktlaunch 2024'
+    }
+  },
   CHANGES_REQUESTED: {
     type: 'CHANGES_REQUESTED',
     titleTemplate: 'Änderungen angefordert',
@@ -469,6 +480,7 @@ export function createDefaultSettings(): NotificationSettings {
     // Freigaben
     approvalGranted: true,
     changesRequested: true,
+    firstView: true,
     overdueApprovals: true,
     overdueApprovalDays: 3,
     // E-Mail

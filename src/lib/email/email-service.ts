@@ -92,7 +92,9 @@ export class EmailService {
     },
     contacts: Contact[],
     mediaShareUrl?: string,
-    keyVisual?: { url: string; cropData?: any }
+    keyVisual?: { url: string; cropData?: any },
+    // ✅ PIPELINE-OPTIONS HINZUGEFÜGT (Plan 4/9)
+    options?: { pipelineMode?: boolean; projectId?: string }
   ): Promise<EmailSendResult> {
     
     // Kontakte zu Empfängern konvertieren
@@ -157,6 +159,26 @@ export class EmailService {
         }
       } catch (notificationError) {
         // Fehler bei Benachrichtigung sollte den Hauptprozess nicht stoppen
+      }
+    }
+
+    // ✅ PIPELINE-TRACKING HINZUGEFÜGT (Plan 4/9)
+    if (options?.pipelineMode && options.projectId) {
+      try {
+        await this.createPipelineDistributionEvent({
+          projectId: options.projectId,
+          campaignId: campaign.id!,
+          distributionId: `dist_${Date.now()}`,
+          recipientCount: result.summary.success,
+          timestamp: Timestamp.now(),
+          metadata: {
+            emailContent: emailContent.subject,
+            senderInfo: senderInfo.name
+          }
+        });
+      } catch (pipelineError) {
+        // Pipeline-Event-Erstellung soll den E-Mail-Versand nicht blockieren
+        console.warn('Pipeline-Event creation failed:', pipelineError);
       }
     }
 
@@ -679,6 +701,89 @@ Diese E-Mail wurde über CeleroPress versendet.
       .replace(/\n\s*\n/g, '\n\n')
       .trim();
   }
+
+  // ✅ PIPELINE-DISTRIBUTION-METHODEN HINZUGEFÜGT (Plan 4/9)
+  
+  /**
+   * Pipeline-Distribution-Event für Analytics
+   */
+  async createPipelineDistributionEvent(eventData: PipelineDistributionEvent): Promise<void> {
+    try {
+      // Event in bestehende Analytics/Events Collection speichern
+      const { addDoc, collection } = await import('firebase/firestore');
+      const { db } = await import('@/lib/firebase/client-init');
+      
+      await addDoc(collection(db, 'pipeline_events'), {
+        type: 'distribution',
+        ...eventData,
+        createdAt: Timestamp.now()
+      });
+    } catch (error) {
+      console.error('Failed to create pipeline distribution event:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Pipeline-Distribution-Statistiken abrufen
+   */
+  async getPipelineDistributionStats(
+    projectId: string,
+    context: { organizationId: string }
+  ): Promise<PipelineDistributionStats> {
+    try {
+      const { query, collection, where, onSnapshot } = await import('firebase/firestore');
+      const { db } = await import('@/lib/firebase/client-init');
+      
+      const q = query(
+        collection(db, 'pipeline_events'),
+        where('projectId', '==', projectId),
+        where('type', '==', 'distribution'),
+        where('organizationId', '==', context.organizationId)
+      );
+
+      return new Promise((resolve, reject) => {
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+          const events = snapshot.docs.map(doc => doc.data());
+          
+          const stats: PipelineDistributionStats = {
+            totalCampaigns: events.length,
+            totalRecipients: events.reduce((sum, e: any) => sum + (e.recipientCount || 0), 0),
+            distributionDates: events.map((e: any) => e.timestamp),
+            successRate: events.length > 0 ? 
+              events.reduce((sum, e: any) => sum + (e.recipientCount || 0), 0) / events.length : 0
+          };
+          
+          unsubscribe();
+          resolve(stats);
+        }, (error) => {
+          unsubscribe();
+          reject(error);
+        });
+      });
+    } catch (error) {
+      console.error('Failed to get pipeline distribution stats:', error);
+      throw error;
+    }
+  }
+}
+
+// ✅ PIPELINE-DISTRIBUTION-TYPES HINZUGEFÜGT (Plan 4/9)
+interface PipelineDistributionEvent {
+  projectId: string;
+  campaignId: string;
+  distributionId: string;
+  recipientCount: number;
+  timestamp: Timestamp;
+  metadata: Record<string, any>;
+  organizationId?: string; // Für Multi-Tenancy
+}
+
+interface PipelineDistributionStats {
+  totalCampaigns: number;
+  totalRecipients: number;
+  distributionDates: Timestamp[];
+  successRate: number;
 }
 
 // Singleton instance

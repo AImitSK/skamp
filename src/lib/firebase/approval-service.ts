@@ -1526,19 +1526,19 @@ class ApprovalService extends BaseService<ApprovalEnhanced> {
               break;
               
             case 'send_notification':
-              // Hole Team-Member für Benachrichtigung
-              const teamMember = await teamMemberService.getById(action.target, context.organizationId);
+              // Hole Team-Member für Benachrichtigung - verwende getByUserAndOrg da getById nur mit memberId funktioniert
+              const teamMember = await teamMemberService.getByUserAndOrg(action.target, context.organizationId);
               if (teamMember) {
                 // Sende Benachrichtigung
                 const { notificationsService } = await import('./notifications-service');
-                await notificationsService.createNotification({
+                await notificationsService.create({
                   userId: action.target,
                   organizationId: context.organizationId,
-                  type: 'project_approval_completed',
+                  type: 'APPROVAL_GRANTED',
                   title: 'Projekt-Freigabe abgeschlossen',
                   message: `Projekt "${approval.projectTitle}" wurde vom Kunden freigegeben und zur nächsten Phase weitergeleitet.`,
-                  actionUrl: `/dashboard/projects/${approval.projectId}`,
-                  priority: 'normal'
+                  linkUrl: `/dashboard/projects/${approval.projectId}`,
+                  isRead: false
                 });
               }
               break;

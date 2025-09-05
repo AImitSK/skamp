@@ -826,7 +826,7 @@ export default function ApprovalPage() {
               if (!latest) return undefined;
               
               // KORREKTE Erkennung basierend auf action-Feld
-              const isCustomer = latest.action === 'changes_requested';
+              const isCustomer = (latest as any).action === 'changes_requested';
               
               // Namen und Avatar basierend auf isCustomer
               let senderName, senderAvatar;
@@ -959,7 +959,7 @@ export default function ApprovalPage() {
                 return aTime - bTime; // Umgekehrt: Älteste zuerst, neueste unten
               }).map((feedback, index) => {
                 // KORREKTE Erkennung basierend auf action-Feld
-                const isCustomer = feedback.action === 'changes_requested';
+                const isCustomer = (feedback as any).action === 'changes_requested';
                 
                 // Namen und Avatar basierend auf isCustomer
                 let senderName, senderAvatar;
@@ -1005,7 +1005,7 @@ export default function ApprovalPage() {
                 
                 const latest = sortedHistory[0]; // Erste = neueste
                 // KORREKTE Erkennung basierend auf action-Feld
-                const isCustomer = latest.action === 'changes_requested';
+                const isCustomer = (latest as any).action === 'changes_requested';
                 
                 // Namen und Avatar basierend auf isCustomer
                 let senderName, senderAvatar;

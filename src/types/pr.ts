@@ -149,6 +149,33 @@ export interface PRCampaign {
   projectTitle?: string;        // Denormalisiert für Performance
   pipelineStage?: PipelineStage; // Aktueller Pipeline-Status
   
+  // ✅ DISTRIBUTION-FELDER (Plan 4/9)
+  distributionConfig?: {
+    isScheduled: boolean;           // Geplanter Versand?
+    scheduledAt?: Timestamp;        // Versand-Zeitpunkt
+    distributionLists: string[];    // Ausgewählte Verteilerlisten
+    manualRecipients: DistributionRecipient[];  // Manuelle Empfänger
+    senderConfig: SenderConfiguration;          // Absender-Konfiguration
+    emailSubject: string;           // E-Mail-Betreff
+    emailPreheader?: string;        // E-Mail-Vorschautext
+    personalizedContent?: boolean;  // Personalisierung aktiv?
+    variables: Record<string, string>;  // Template-Variablen
+    testRecipients?: string[];      // Test-Empfänger
+  };
+  
+  // Distribution-Status & Tracking
+  distributionStatus?: {
+    status: 'pending' | 'scheduled' | 'sending' | 'sent' | 'failed' | 'cancelled';
+    sentAt?: Timestamp;
+    recipientCount: number;
+    successCount: number;
+    failureCount: number;
+    openRate?: number;
+    clickRate?: number;
+    distributionId?: string;        // ID des Versand-Jobs
+    errors?: DistributionError[];
+  };
+  
   // ✅ INTERNE PDF-VERWALTUNG (Plan 2/9)
   internalPDFs?: {
     enabled: boolean;           // Soll interne PDF-Generierung aktiviert sein?
@@ -565,4 +592,26 @@ export interface CampaignDeliverable {
   status: 'pending' | 'in_progress' | 'completed' | 'approved';
   url?: string;
   createdAt: Timestamp;
+}
+
+// ✅ DISTRIBUTION-TYPES (Plan 4/9)
+export interface DistributionRecipient {
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  companyName?: string;
+  notes?: string;
+}
+
+export interface SenderConfiguration {
+  contactId?: string;   // Aus Kontakten wählen
+  email: string;
+  name: string;
+  replyTo?: string;
+}
+
+export interface DistributionError {
+  recipient: string;
+  error: string;
+  timestamp: Timestamp;
 }
