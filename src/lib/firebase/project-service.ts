@@ -1602,6 +1602,8 @@ export const projectService = {
     step: number
   ): Promise<ValidationResult> {
     const errors: Record<string, string> = {};
+    
+    // Validierungs-Debug entfernt - TODO: Bei Bedarf erweiterte Logging-Lösung implementieren
 
     try {
       switch (step) {
@@ -1649,10 +1651,12 @@ export const projectService = {
           errors.general = 'Unbekannter Validierungsschritt';
       }
 
-      return {
+      const result = {
         isValid: Object.keys(errors).length === 0,
         errors
       };
+      
+      return result;
     } catch (error: any) {
       return {
         isValid: false,

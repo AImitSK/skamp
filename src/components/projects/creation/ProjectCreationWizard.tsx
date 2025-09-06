@@ -103,7 +103,7 @@ export function ProjectCreationWizard({
       const options = await projectService.getProjectCreationOptions(organizationId);
       setCreationOptions(options);
     } catch (error) {
-      console.error('Fehler beim Laden der Optionen:', error);
+      // TODO: Fehlerbehandlung für Optionen-Laden implementieren
     } finally {
       setIsLoading(false);
     }
@@ -136,8 +136,7 @@ export function ProjectCreationWizard({
     const validation = await validateCurrentStep();
     
     if (!validation.isValid) {
-      // Zeige Validierungsfehler an
-      console.error('Validierungsfehler:', validation.errors);
+      // Zeige Validierungsfehler an - TODO: Benutzerfreundliche Fehleranzeige implementieren
       return;
     }
 
@@ -183,7 +182,7 @@ export function ProjectCreationWizard({
         onSuccess(result);
       }
     } catch (error) {
-      console.error('Fehler bei Projekt-Erstellung:', error);
+      // TODO: Fehlerbehandlung für Projekt-Erstellung implementieren
     } finally {
       setIsLoading(false);
     }
