@@ -136,7 +136,10 @@ export function ProjectCreationWizard({
     const validation = await validateCurrentStep();
     
     if (!validation.isValid) {
-      // Zeige Validierungsfehler an - TODO: Benutzerfreundliche Fehleranzeige implementieren
+      // Zeige Validierungsfehler an
+      console.error('WIZARD Validierungsfehler:', JSON.stringify(validation.errors, null, 2));
+      console.error('WIZARD Current step:', currentStep);
+      console.error('WIZARD Current data:', JSON.stringify(wizardData, null, 2));
       return;
     }
 

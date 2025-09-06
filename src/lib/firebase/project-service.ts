@@ -1603,7 +1603,12 @@ export const projectService = {
   ): Promise<ValidationResult> {
     const errors: Record<string, string> = {};
     
-    // Validierungs-Debug entfernt - TODO: Bei Bedarf erweiterte Logging-Lösung implementieren
+    console.log(`=== PROJECT VALIDATION DEBUG ===`);
+    console.log(`Step: ${step}`);
+    console.log(`Data title: "${data.title}"`);
+    console.log(`Data clientId: "${data.clientId}"`);
+    console.log(`Data priority: "${data.priority}"`);
+    console.log(`Data assignedTeamMembers:`, data.assignedTeamMembers);
 
     try {
       switch (step) {
@@ -1655,6 +1660,9 @@ export const projectService = {
         isValid: Object.keys(errors).length === 0,
         errors
       };
+      
+      console.log(`Validation result:`, result);
+      console.log(`=== END PROJECT VALIDATION DEBUG ===`);
       
       return result;
     } catch (error: any) {
