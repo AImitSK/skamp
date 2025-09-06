@@ -431,8 +431,10 @@ export default function ProjectDetailPage() {
                     <Subheading className="mb-4">Task-Abhängigkeiten</Subheading>
                     <TaskDependenciesVisualizer
                       projectId={project.id}
-                      organizationId={currentOrganization?.id || ''}
-                      currentStage={project.currentStage}
+                      tasks={[]} // Mock empty array for now
+                      onTaskUpdate={async (taskId, updates) => {
+                        console.log('Task update:', taskId, updates);
+                      }}
                     />
                   </div>
                   
@@ -441,10 +443,20 @@ export default function ProjectDetailPage() {
                     <Subheading className="mb-4">Workflow-Automatisierung</Subheading>
                     <WorkflowAutomationManager
                       projectId={project.id}
-                      organizationId={currentOrganization?.id || ''}
-                      currentStage={project.currentStage}
-                      onStageChange={(newStage) => console.log('Stage changed to:', newStage)}
-                      onWorkflowUpdate={() => console.log('Workflow updated')}
+                      currentConfig={{
+                        autoStageTransition: true,
+                        requireAllCriticalTasks: true,
+                        enableTaskDependencies: true,
+                        notifyOnStageTransition: true,
+                        customTransitionRules: []
+                      }}
+                      availableUsers={[
+                        { id: '1', name: 'Team Member 1', email: 'member1@example.com' },
+                        { id: '2', name: 'Team Member 2', email: 'member2@example.com' }
+                      ]}
+                      onConfigUpdate={async (config) => {
+                        console.log('Config updated:', config);
+                      }}
                     />
                   </div>
                   
