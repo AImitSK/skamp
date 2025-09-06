@@ -1363,7 +1363,7 @@ export const projectService = {
         creationContext: {
           createdViaWizard: true,
           templateId: wizardData.templateId,
-          templateName: undefined, // Wird später gesetzt
+          templateName: null, // Wird später beim Template-Laden gesetzt
           wizardVersion: '1.0.0',
           stepsCompleted: wizardData.completedSteps.map(s => s.toString()),
           initialConfiguration: {
