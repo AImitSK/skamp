@@ -49,7 +49,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
   
   // Drop Zone Style basierend auf Drag State
   const getDropZoneClass = () => {
-    let baseClass = `kanban-column min-h-[600px] ${stageColors.bg} ${stageColors.border} border-2 rounded-lg`;
+    let baseClass = `kanban-column h-fit ${stageColors.bg} ${stageColors.border} border-2 rounded-lg`;
     
     if (isOver && canDrop) {
       baseClass += ' border-green-400 bg-green-50 border-dashed';
@@ -109,7 +109,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
       </div>
 
       {/* Projects List */}
-      <div className="column-content p-3 space-y-3 overflow-y-auto max-h-[calc(600px-80px)]">
+      <div className="column-content p-3 space-y-3">
         {loading && projects.length === 0 ? (
           // Loading State
           <div className="space-y-3">

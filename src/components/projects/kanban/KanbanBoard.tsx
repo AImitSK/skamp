@@ -99,7 +99,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   // Board Content - Desktop/Tablet Layout
   const renderDesktopBoard = () => (
     <div className={`kanban-board-desktop ${responsiveConfig.padding}`}>
-      <div className={`flex ${responsiveConfig.gap} overflow-x-auto min-h-[600px] pb-4`}>
+      <div className={`flex ${responsiveConfig.gap} overflow-x-auto pb-4`}>
         {allStages.map(stage => {
           const stageProjects = projects[stage] || [];
           

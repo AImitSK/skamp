@@ -306,18 +306,20 @@ export default function ProjectsPage() {
 
       {/* Board View */}
       {!loading && !error && projects.length > 0 && viewMode === 'board' && currentOrganization && (
-        <BoardProvider organizationId={currentOrganization.id}>
-          <KanbanBoard
-            projects={groupProjectsByStage(projects)}
-            totalProjects={projects.length}
-            activeUsers={[]} // TODO: Get from real-time hook
-            filters={filters}
-            loading={loading}
-            onProjectMove={handleProjectMove}
-            onFiltersChange={handleFiltersChange}
-            onRefresh={loadProjects}
-          />
-        </BoardProvider>
+        <div className="mb-8">
+          <BoardProvider organizationId={currentOrganization.id}>
+            <KanbanBoard
+              projects={groupProjectsByStage(projects)}
+              totalProjects={projects.length}
+              activeUsers={[]} // TODO: Get from real-time hook
+              filters={filters}
+              loading={loading}
+              onProjectMove={handleProjectMove}
+              onFiltersChange={handleFiltersChange}
+              onRefresh={loadProjects}
+            />
+          </BoardProvider>
+        </div>
       )}
 
       {/* List View (existing Projects Grid) */}
