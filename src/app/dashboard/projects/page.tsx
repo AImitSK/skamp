@@ -62,8 +62,15 @@ export default function ProjectsPage() {
   const handleWizardSuccess = (result: ProjectCreationResult) => {
     console.log('Projekt erfolgreich erstellt:', result);
     
-    // Projekte neu laden
-    loadProjects();
+    // Neues Projekt direkt zum State hinzufügen (optimistische Update)
+    if (result.project) {
+      setProjects(prevProjects => [...prevProjects, result.project]);
+    }
+    
+    // Projekte neu laden mit Verzögerung (für Firebase Konsistenz)
+    setTimeout(() => {
+      loadProjects();
+    }, 1000);
     
     // Wizard schließen nach kurzer Verzögerung (für Success Animation)
     setTimeout(() => {
