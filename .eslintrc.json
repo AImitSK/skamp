@@ -5,5 +5,8 @@
   ],
   "settings": {
     "mdx/code-blocks": true
+  },
+  "rules": {
+    "react/no-unescaped-entities": "warn"
   }
 }

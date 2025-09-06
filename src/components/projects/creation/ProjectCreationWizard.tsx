@@ -171,7 +171,8 @@ export function ProjectCreationWizard({
 
       const result = await projectService.createProjectFromWizard(
         finalWizardData,
-        user.uid
+        user.uid,
+        organizationId
       );
 
       setCreationResult(result);
@@ -348,6 +349,7 @@ export function ProjectCreationWizard({
           wizardData={wizardData}
           onUpdate={updateWizardData}
           distributionLists={creationOptions?.availableDistributionLists || []}
+          availableAssets={creationOptions?.availableAssets || []}
         />
       )
     }

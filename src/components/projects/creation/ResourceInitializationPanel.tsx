@@ -16,26 +16,26 @@ interface DistributionList {
   contactCount: number;
 }
 
+interface Asset {
+  id: string;
+  name: string;
+  type: string;
+  size: string;
+}
+
 interface ResourceInitializationPanelProps {
   wizardData: ProjectCreationWizardData;
   onUpdate: (updates: Partial<ProjectCreationWizardData>) => void;
   distributionLists: DistributionList[];
+  availableAssets: Asset[];
 }
 
 export function ResourceInitializationPanel({ 
   wizardData, 
   onUpdate, 
-  distributionLists 
+  distributionLists,
+  availableAssets
 }: ResourceInitializationPanelProps) {
-
-  // Mock Asset-Daten - in der Praxis würde das von einem Service kommen
-  const mockAssets = [
-    { id: 'asset1', name: 'Firmenlogo.png', type: 'image', size: '45 KB' },
-    { id: 'asset2', name: 'Produktbild_01.jpg', type: 'image', size: '234 KB' },
-    { id: 'asset3', name: 'Pressefoto_CEO.jpg', type: 'image', size: '567 KB' },
-    { id: 'asset4', name: 'Infografik_Q2.pdf', type: 'document', size: '1.2 MB' },
-    { id: 'asset5', name: 'Pressemitteilung_Template.docx', type: 'document', size: '89 KB' }
-  ];
 
   const handleCampaignToggle = (enabled: boolean) => {
     onUpdate({ 
@@ -143,7 +143,12 @@ export function ResourceInitializationPanel({
 
         {/* Asset-Liste */}
         <div className="space-y-2 max-h-48 overflow-y-auto">
-          {mockAssets.map(asset => {
+          {availableAssets.length === 0 ? (
+            <div className="text-center py-4 text-sm text-gray-500">
+              Keine Assets verfügbar
+            </div>
+          ) : (
+            availableAssets.map(asset => {
             const isSelected = wizardData.initialAssets.includes(asset.id);
             
             return (
@@ -182,7 +187,7 @@ export function ResourceInitializationPanel({
                 </div>
               </div>
             );
-          })}
+          }))}
         </div>
 
         {wizardData.initialAssets.length > 0 && (

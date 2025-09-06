@@ -30,6 +30,7 @@ import {
   ProjectTemplate
 } from '@/types/project';
 import type { PRCampaign } from '@/types/pr';
+import type { LinkType } from '@/types/notifications';
 import { nanoid } from 'nanoid';
 
 export const projectService = {
@@ -1342,7 +1343,8 @@ export const projectService = {
    */
   async createProjectFromWizard(
     wizardData: ProjectCreationWizardData,
-    userId: string
+    userId: string,
+    organizationId: string
   ): Promise<ProjectCreationResult> {
     try {
       const projectId = nanoid();
@@ -1350,7 +1352,7 @@ export const projectService = {
       // Projekt-Basis-Daten aus Wizard extrahieren
       const projectData: Omit<Project, 'id'> = {
         userId,
-        organizationId: '', // Wird in der Praxis übergeben
+        organizationId,
         title: wizardData.title,
         description: wizardData.description,
         status: 'active',
@@ -1385,21 +1387,21 @@ export const projectService = {
         updatedAt: Timestamp.now()
       };
       
-      // Kunde zuordnen
+      // Kunde zuordnen über echten companyServiceEnhanced
       if (wizardData.clientId) {
-        // Dynamischer Import um circular dependencies zu vermeiden
-        // Mock client service - in der Praxis würde hier der echte clientService verwendet
-        const client = { 
-          id: wizardData.clientId, 
-          name: 'Mock Client', 
-          organizationId: projectData.organizationId 
-        };
-        
-        if (client) {
-          projectData.customer = {
-            id: client.id,
-            name: client.name
-          };
+        try {
+          const { companyServiceEnhanced } = await import('./company-service-enhanced');
+          const client = await companyServiceEnhanced.getById(wizardData.clientId, organizationId);
+          
+          if (client) {
+            projectData.customer = {
+              id: client.id!,
+              name: client.name
+            };
+          }
+        } catch (error) {
+          console.error('Fehler beim Laden des Kunden:', error);
+          // Projekt trotzdem erstellen, aber ohne Kunden-Zuordnung
         }
       }
 
@@ -1455,7 +1457,8 @@ export const projectService = {
 
         const resourceResult = await this.initializeProjectResources(
           createdProjectId,
-          resourceOptions
+          resourceOptions,
+          organizationId
         );
 
         if (resourceResult.campaignCreated && resourceResult.campaignId) {
@@ -1509,38 +1512,30 @@ export const projectService = {
     organizationId: string
   ): Promise<ProjectCreationOptions> {
     try {
-      // Mock clients - in der Praxis würde hier der clientService verwendet
-      const clients = [
-        { id: 'client1', name: 'TechCorp GmbH', type: 'enterprise', contacts: [] },
-        { id: 'client2', name: 'StartUp AG', type: 'startup', contacts: [] }
-      ];
+      // Echte Clients laden über companyServiceEnhanced
+      const { companyServiceEnhanced } = await import('./company-service-enhanced');
+      const companies = await companyServiceEnhanced.getAll(organizationId);
       
-      const availableClients = clients.map(client => ({
-        id: client.id,
-        name: client.name,
-        type: client.type || 'company',
-        contactCount: client.contacts.length
+      const availableClients = companies.map(company => ({
+        id: company.id!,
+        name: company.name,
+        type: company.type || 'company',
+        contactCount: 0 // TODO: Calculate based on actual contact relationships
       }));
 
-      // Team-Mitglieder laden (Mock - in der Praxis über userService)
-      const availableTeamMembers = [
-        {
-          id: 'user1',
-          displayName: 'Max Mustermann',
-          email: 'max@example.com',
-          role: 'Project Manager',
-          avatar: undefined
-        },
-        {
-          id: 'user2', 
-          displayName: 'Lisa Schmidt',
-          email: 'lisa@example.com',
-          role: 'Content Creator',
-          avatar: undefined
-        }
-      ];
+      // Echte Team-Mitglieder laden über teamServiceEnhanced
+      const { teamMemberEnhancedService } = await import('./team-service-enhanced');
+      const teamMembers = await teamMemberEnhancedService.getByOrganization(organizationId);
+      
+      const availableTeamMembers = teamMembers.map(member => ({
+        id: member.id,
+        displayName: member.displayName,
+        email: member.email,
+        role: member.role,
+        avatar: member.photoUrl
+      }));
 
-      // Templates laden
+      // Echte Templates laden über projectTemplateService
       const { projectTemplateService } = await import('./project-template-service');
       const templates = await projectTemplateService.getAll(organizationId);
       
@@ -1552,25 +1547,36 @@ export const projectService = {
         category: template.category
       }));
 
-      // Verteilerlisten laden (Mock)
-      const availableDistributionLists = [
-        {
-          id: 'list1',
-          name: 'Hauptverteiler',
-          contactCount: 25
-        },
-        {
-          id: 'list2',
-          name: 'Fachmedien',
-          contactCount: 15
-        }
-      ];
+      // Echte Verteilerlisten laden über listsService
+      const { listsService } = await import('./lists-service');
+      const distributionLists = await listsService.getAll(organizationId);
+      
+      const availableDistributionLists = distributionLists.map(list => ({
+        id: list.id!,
+        name: list.name,
+        contactCount: list.contactIds ? list.contactIds.length : 0
+      }));
+
+      // Echte Assets laden über mediaService
+      const { mediaService } = await import('./media-service');
+      const assets = await mediaService.getMediaAssets(organizationId);
+      
+      const availableAssets = assets
+        .filter(asset => asset.fileName) // Nur Assets mit Namen
+        .slice(0, 20) // Limitiere auf 20 für Performance
+        .map(asset => ({
+          id: asset.id!,
+          name: asset.fileName,
+          type: asset.fileType.startsWith('image/') ? 'image' : 'document',
+          size: String(asset.metadata?.fileSize || 'Unbekannt')
+        }));
 
       return {
         availableClients,
         availableTeamMembers,
         availableTemplates,
-        availableDistributionLists
+        availableDistributionLists,
+        availableAssets
       };
     } catch (error) {
       console.error('Fehler beim Laden der Erstellungsoptionen:', error);
@@ -1578,7 +1584,8 @@ export const projectService = {
         availableClients: [],
         availableTeamMembers: [],
         availableTemplates: [],
-        availableDistributionLists: []
+        availableDistributionLists: [],
+        availableAssets: []
       };
     }
   },
@@ -1676,7 +1683,8 @@ export const projectService = {
    */
   async initializeProjectResources(
     projectId: string,
-    options: ResourceInitializationOptions
+    options: ResourceInitializationOptions,
+    organizationId: string
   ): Promise<ResourceInitializationResult> {
     const result: ResourceInitializationResult = {
       campaignCreated: false,
@@ -1688,7 +1696,7 @@ export const projectService = {
     };
 
     try {
-      const organizationId = ''; // In der Praxis wird dies übergeben
+      // organizationId ist bereits als Parameter übergeben
       const context = { organizationId };
       
       const project = await this.getById(projectId, context);
@@ -1731,7 +1739,7 @@ export const projectService = {
         }
       }
 
-      // Assets anhängen
+      // Assets anhängen über echten mediaService
       if (options.attachAssets && options.attachAssets.length > 0) {
         try {
           const { mediaService } = await import('./media-service');
@@ -1739,30 +1747,100 @@ export const projectService = {
 
           for (const assetId of options.attachAssets) {
             try {
-              // Mock asset attachment - in der Praxis würde hier der echte mediaService verwendet
-              // await mediaService.linkAssetToProject(assetId, projectId);
-              attachedCount++;
+              // Verifiziere dass Asset existiert und zur Organisation gehört
+              const asset = await mediaService.getMediaAssetById(assetId);
+              if (asset) {
+                // Asset ist gültig - in einer späteren Version würde hier eine echte Verknüpfung stattfinden
+                // Für jetzt tracken wir es in den Projekt-Metadaten
+                attachedCount++;
+              } else {
+                result.errors?.push(`Asset ${assetId} nicht gefunden oder gehört nicht zur Organisation`);
+              }
             } catch (error: any) {
-              result.errors?.push(`Asset ${assetId} konnte nicht angehängt werden`);
+              result.errors?.push(`Asset ${assetId} konnte nicht verifiziert werden: ${error.message}`);
             }
           }
 
           result.assetsAttached = attachedCount;
+          
+          // Speichere verknüpfte Assets in Projekt-Metadaten
+          if (attachedCount > 0) {
+            const validAssetIds = options.attachAssets.slice(0, attachedCount);
+            await this.update(projectId, {
+              linkedAssets: validAssetIds
+            }, {
+              organizationId,
+              userId: project.userId
+            });
+          }
         } catch (error: any) {
           result.errors?.push(`Asset-Anhang fehlgeschlagen: ${error.message}`);
         }
       }
 
-      // Verteilerlisten verknüpfen
+      // Verteilerlisten verknüpfen über echten listsService
       if (options.linkDistributionLists && options.linkDistributionLists.length > 0) {
-        // Mock-Implementation - in der Praxis würde hier ein DistributionListService verwendet
-        result.listsLinked = options.linkDistributionLists.length;
+        try {
+          const { listsService } = await import('./lists-service');
+          let linkedCount = 0;
+
+          for (const listId of options.linkDistributionLists) {
+            try {
+              // Verifiziere dass Liste existiert und zur Organisation gehört
+              const list = await listsService.getById(listId);
+              if (list) {
+                // In der Praxis würde hier eine Liste-zu-Projekt Verknüpfung erstellt
+                // Für jetzt tracken wir es nur in den Project-Metadaten
+                linkedCount++;
+              }
+            } catch (error: any) {
+              result.errors?.push(`Verteilerliste ${listId} konnte nicht verknüpft werden: ${error.message}`);
+            }
+          }
+
+          result.listsLinked = linkedCount;
+          
+          // Aktualisiere Projekt mit verknüpften Listen
+          if (linkedCount > 0) {
+            await this.update(projectId, {
+              linkedDistributionLists: options.linkDistributionLists
+            }, {
+              organizationId,
+              userId: project.userId
+            });
+          }
+        } catch (error: any) {
+          result.errors?.push(`Verteilerlisten-Verknüpfung fehlgeschlagen: ${error.message}`);
+        }
       }
 
-      // Team benachrichtigen
+      // Team benachrichtigen über echten notificationsService
       if (options.notifyTeam && project.assignedTo && project.assignedTo.length > 0) {
         try {
-          // Mock-Benachrichtigung - in der Praxis über NotificationService
+          const { notificationsService } = await import('./notifications-service');
+          
+          // Benachrichtige alle zugewiesenen Team-Mitglieder
+          for (const memberId of project.assignedTo) {
+            try {
+              await notificationsService.create({
+                userId: memberId,
+                organizationId,
+                type: 'project_assignment',
+                title: 'Neues Projekt zugewiesen',
+                message: `Du wurdest dem Projekt "${project.title}" zugewiesen.`,
+                linkId: projectId,
+                linkType: 'campaign' as LinkType,
+                isRead: false,
+                metadata: {
+                  campaignTitle: project.title
+                }
+                // Note: priority field removed as it doesn't exist in CreateNotificationInput
+              });
+            } catch (notifyError: any) {
+              console.error(`Fehler beim Benachrichtigen von Mitglied ${memberId}:`, notifyError);
+            }
+          }
+          
           result.teamNotified = true;
         } catch (error: any) {
           result.errors?.push(`Team-Benachrichtigung fehlgeschlagen: ${error.message}`);

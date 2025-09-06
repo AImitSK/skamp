@@ -42,6 +42,10 @@ export interface Project {
   // Verknüpfte Kampagnen
   linkedCampaigns?: string[];
   
+  // Verknüpfte Ressourcen
+  linkedAssets?: string[];
+  linkedDistributionLists?: string[];
+  
   // Meilensteine
   milestones?: ProjectMilestone[];
   
@@ -513,6 +517,13 @@ export interface ProjectCreationOptions {
     id: string;
     name: string;
     contactCount: number;
+  }>;
+  
+  availableAssets: Array<{
+    id: string;
+    name: string;
+    type: string;
+    size: string;
   }>;
 }
 

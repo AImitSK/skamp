@@ -172,13 +172,13 @@ export default function DashboardLayout({
       },
       { 
         name: "Kanban-Board", 
-        href: "/dashboard/projects/kanban", 
+        href: "/dashboard/projects", 
         icon: TableCellsIcon,
         description: "7-Phasen Pipeline-Board für alle Projekte"
       },
       { 
         name: "Projekt erstellen", 
-        href: "/dashboard/projects/new", 
+        href: "/dashboard/projects", 
         icon: DocumentTextIcon,
         description: "Neues Projekt mit Pipeline-Integration erstellen"
       },

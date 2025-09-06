@@ -1264,7 +1264,7 @@ export default function NewPRCampaignPage() {
                           Pipeline-Integration aktiv
                         </Text>
                         <Text className="text-sm text-blue-700 mt-1">
-                          Diese Kampagne ist mit dem Projekt <strong>"{selectedProject.title}"</strong> verknüpft. 
+                          Diese Kampagne ist mit dem Projekt <strong>&quot;{selectedProject.title}&quot;</strong> verknüpft. 
                           Wenn Kunden-Freigabe aktiviert ist, wird die Freigabe automatisch in die Projekt-Pipeline 
                           integriert und blockiert den Übergang zur Distribution-Phase bis zur Genehmigung.
                         </Text>

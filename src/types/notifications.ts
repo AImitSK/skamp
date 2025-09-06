@@ -12,7 +12,8 @@ export type NotificationType =
   | 'TASK_OVERDUE'
   | 'MEDIA_FIRST_ACCESS'
   | 'MEDIA_DOWNLOADED'
-  | 'MEDIA_LINK_EXPIRED';
+  | 'MEDIA_LINK_EXPIRED'
+  | 'project_assignment';
 
 export type LinkType = 'campaign' | 'approval' | 'media' | 'task';
 
