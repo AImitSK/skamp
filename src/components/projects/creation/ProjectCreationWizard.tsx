@@ -8,7 +8,9 @@ import {
   Cog6ToothIcon,
   CheckCircleIcon,
   ArrowRightIcon,
-  ArrowLeftIcon
+  ArrowLeftIcon,
+  ExclamationTriangleIcon,
+  InformationCircleIcon
 } from '@heroicons/react/24/outline';
 import { 
   ProjectCreationWizardData, 
@@ -19,12 +21,68 @@ import {
 } from '@/types/project';
 import { projectService } from '@/lib/firebase/project-service';
 import { useAuth } from '@/context/AuthContext';
+import { Text } from '@/components/ui/text';
 import { ClientSelector } from './ClientSelector';
 import { TeamMemberMultiSelect } from './TeamMemberMultiSelect';
 import { ProjectTemplateSelector } from './ProjectTemplateSelector';
 import { ResourceInitializationPanel } from './ResourceInitializationPanel';
 import { CreationSuccessDashboard } from './CreationSuccessDashboard';
 import { nanoid } from 'nanoid';
+
+// Alert Component
+function Alert({ 
+  type = 'error', 
+  title, 
+  message,
+  onDismiss
+}: { 
+  type?: 'error' | 'warning' | 'info';
+  title?: string;
+  message: string;
+  onDismiss?: () => void;
+}) {
+  const styles = {
+    error: 'bg-red-50 text-red-700',
+    warning: 'bg-yellow-50 text-yellow-700',
+    info: 'bg-blue-50 text-blue-700'
+  };
+
+  const icons = {
+    error: ExclamationTriangleIcon,
+    warning: ExclamationTriangleIcon,
+    info: InformationCircleIcon
+  };
+
+  const Icon = icons[type];
+
+  return (
+    <div className={`rounded-md p-4 ${styles[type].split(' ')[0]}`}>
+      <div className="flex">
+        <div className="shrink-0">
+          <Icon aria-hidden="true" className={`size-5 ${type === 'error' ? 'text-red-400' : type === 'warning' ? 'text-yellow-400' : 'text-blue-400'}`} />
+        </div>
+        <div className="ml-3 flex-1">
+          {title && <Text className={`font-medium ${styles[type].split(' ')[1]}`}>{title}</Text>}
+          <Text className={`text-sm ${title ? 'mt-1' : ''} ${styles[type].split(' ')[1]}`}>{message}</Text>
+        </div>
+        {onDismiss && (
+          <div className="ml-auto pl-3">
+            <button
+              type="button"
+              className={`inline-flex rounded-md p-1.5 ${styles[type].split(' ')[1]} hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 focus:ring-offset-red-50`}
+              onClick={onDismiss}
+            >
+              <span className="sr-only">Schließen</span>
+              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 interface ProjectCreationWizardProps {
   isOpen: boolean;
@@ -53,6 +111,7 @@ export function ProjectCreationWizard({
   const [isLoading, setIsLoading] = useState(false);
   const [creationOptions, setCreationOptions] = useState<ProjectCreationOptions | null>(null);
   const [creationResult, setCreationResult] = useState<ProjectCreationResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
   
   // Wizard-Daten State
   const [wizardData, setWizardData] = useState<ProjectCreationWizardData>({
@@ -164,6 +223,10 @@ export function ProjectCreationWizard({
 
     try {
       setIsLoading(true);
+      setError(null); // Reset error state
+      
+      console.log('=== PROJECT CREATION DEBUG ===');
+      console.log('Creating project with data:', JSON.stringify(wizardData, null, 2));
       
       const finalWizardData = {
         ...wizardData,
@@ -176,6 +239,8 @@ export function ProjectCreationWizard({
         user.uid,
         organizationId
       );
+      
+      console.log('Project creation result:', result);
 
       setCreationResult(result);
       
@@ -183,11 +248,20 @@ export function ProjectCreationWizard({
         completeStep(4);
         setCurrentStep(5); // Success-Schritt
         onSuccess(result);
+      } else {
+        // Handle creation failure
+        const errorMessage = result.error || 'Projekt konnte nicht erstellt werden. Bitte versuchen Sie es erneut.';
+        setError(errorMessage);
+        console.error('Project creation failed:', result);
       }
-    } catch (error) {
-      // TODO: Fehlerbehandlung für Projekt-Erstellung implementieren
+    } catch (error: any) {
+      // Handle unexpected errors
+      const errorMessage = error.message || 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.';
+      setError(errorMessage);
+      console.error('Project creation error:', error);
     } finally {
       setIsLoading(false);
+      console.log('=== END PROJECT CREATION DEBUG ===');
     }
   };
 
@@ -395,6 +469,18 @@ export function ProjectCreationWizard({
             </button>
           </div>
         </div>
+
+        {/* Error Alert */}
+        {error && (
+          <div className="px-6 py-4">
+            <Alert
+              type="error"
+              title="Fehler bei der Projekt-Erstellung"
+              message={error}
+              onDismiss={() => setError(null)}
+            />
+          </div>
+        )}
 
         {/* Progress Indicator */}
         <div className="px-6 py-4 border-b border-gray-200">
