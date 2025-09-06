@@ -5,8 +5,6 @@ import React, { useState, useMemo } from 'react';
 import {
   MagnifyingGlassIcon,
   FunnelIcon,
-  Squares2X2Icon,
-  ListBulletIcon,
   ArrowPathIcon,
   UserGroupIcon,
   AdjustmentsHorizontalIcon
@@ -33,8 +31,6 @@ export interface BoardHeaderProps {
   onRefresh?: () => void;
   showFilters: boolean;
   onToggleFilters: () => void;
-  viewMode: 'board' | 'list' | 'calendar';
-  onViewModeChange: (mode: 'board' | 'list' | 'calendar') => void;
   boardSettings?: BoardSettings;
   onBoardSettingsChange?: (settings: BoardSettings) => void;
 }
@@ -71,8 +67,6 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
   onRefresh,
   showFilters,
   onToggleFilters,
-  viewMode,
-  onViewModeChange,
   boardSettings,
   onBoardSettingsChange
 }) => {
@@ -226,36 +220,6 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
               </span>
             )}
           </button>
-
-          {/* View Mode Switcher */}
-          <div className="flex items-center border border-gray-300 rounded-lg">
-            <button
-              onClick={() => onViewModeChange('board')}
-              className={`
-                p-2 text-sm font-medium rounded-l-lg transition-colors
-                ${viewMode === 'board'
-                  ? 'bg-blue-500 text-white'
-                  : 'text-gray-700 hover:bg-gray-50'
-                }
-              `}
-              title="Board-Ansicht"
-            >
-              <Squares2X2Icon className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => onViewModeChange('list')}
-              className={`
-                p-2 text-sm font-medium border-l border-gray-300 rounded-r-lg transition-colors
-                ${viewMode === 'list'
-                  ? 'bg-blue-500 text-white'
-                  : 'text-gray-700 hover:bg-gray-50'
-                }
-              `}
-              title="Listen-Ansicht"
-            >
-              <ListBulletIcon className="h-4 w-4" />
-            </button>
-          </div>
 
           {/* Refresh Button */}
           <button

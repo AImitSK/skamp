@@ -159,8 +159,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           onRefresh={onRefresh}
           showFilters={showFilters}
           onToggleFilters={() => setShowFilters(!showFilters)}
-          viewMode="board"
-          onViewModeChange={() => {}}
         />
 
         {/* Filter Panel */}
