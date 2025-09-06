@@ -162,27 +162,9 @@ export default function DashboardLayout({
   {
     name: "Projekte",
     icon: BriefcaseIcon,
+    href: "/dashboard/projects",
     current: pathname.startsWith('/dashboard/projects'),
-    children: [
-      { 
-        name: "Projekt-Übersicht", 
-        href: "/dashboard/projects", 
-        icon: BriefcaseIcon,
-        description: "Alle Projekte und deren Pipeline-Status verwalten"
-      },
-      { 
-        name: "Kanban-Board", 
-        href: "/dashboard/projects", 
-        icon: TableCellsIcon,
-        description: "7-Phasen Pipeline-Board für alle Projekte"
-      },
-      { 
-        name: "Projekt erstellen", 
-        href: "/dashboard/projects", 
-        icon: DocumentTextIcon,
-        description: "Neues Projekt mit Pipeline-Integration erstellen"
-      },
-    ],
+    description: "Projekt-Management mit Kanban-Board und Pipeline-Tracking"
   },
   {
     name: "PR-Tools",
@@ -488,30 +470,43 @@ export default function DashboardLayout({
               {/* Desktop Navigation */}
               <NavbarSection className="hidden lg:flex ml-4 items-center gap-x-6">
                 {navigationItems.map((item) => (
-                  <Dropdown key={item.name}>
-                      <DropdownButton as={NavbarItem} className={clsx('!border-transparent', item.current && 'bg-zinc-100 dark:bg-zinc-800/50 rounded-md')}>                      <span>{item.name}</span>
-                      <ChevronDownIcon className="size-4" />
-                    </DropdownButton>
-                    <DropdownMenu>
-                      {item.children.map((child) => (
-                        <DropdownItem 
-                          href={child.href} 
-                          key={child.name} 
-                          icon={child.icon}
-                          description={child.description}
-                        >
-                          <span className="flex items-center gap-2">
-                            {child.name}
-                            {(child.notificationCount ?? 0) > 0 && (
-                               <span className="inline-flex items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
-                                 {(child.notificationCount ?? 0) > 99 ? '99+' : (child.notificationCount ?? 0)}
-                               </span>
-                            )}
-                          </span>
-                        </DropdownItem>
-                      ))}
-                    </DropdownMenu>
-                  </Dropdown>
+                  item.children ? (
+                    <Dropdown key={item.name}>
+                        <DropdownButton as={NavbarItem} className={clsx('!border-transparent', item.current && 'bg-zinc-100 dark:bg-zinc-800/50 rounded-md')}>                        <span>{item.name}</span>
+                        <ChevronDownIcon className="size-4" />
+                      </DropdownButton>
+                      <DropdownMenu>
+                        {item.children.map((child) => (
+                          <DropdownItem 
+                            href={child.href} 
+                            key={child.name} 
+                            icon={child.icon}
+                            description={child.description}
+                          >
+                            <span className="flex items-center gap-2">
+                              {child.name}
+                              {(child.notificationCount ?? 0) > 0 && (
+                                 <span className="inline-flex items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
+                                   {(child.notificationCount ?? 0) > 99 ? '99+' : (child.notificationCount ?? 0)}
+                                 </span>
+                              )}
+                            </span>
+                          </DropdownItem>
+                        ))}
+                      </DropdownMenu>
+                    </Dropdown>
+                  ) : (
+                    <a 
+                      key={item.name}
+                      href={item.href}
+                      className={clsx(
+                        'text-sm font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white px-3 py-2 rounded-md transition-colors',
+                        item.current && 'bg-zinc-100 dark:bg-zinc-800/50 text-zinc-900 dark:text-white'
+                      )}
+                    >
+                      {item.name}
+                    </a>
+                  )
                 ))}
               </NavbarSection>
               
@@ -642,7 +637,7 @@ export default function DashboardLayout({
                       </DropdownMenu>
                     </Dropdown>
                   ) : (
-                    <SidebarItem key={item.name}>
+                    <SidebarItem key={item.name} href={item.href} current={item.current}>
                       <item.icon className="size-5" />
                       <SidebarLabel>{item.name}</SidebarLabel>
                     </SidebarItem>

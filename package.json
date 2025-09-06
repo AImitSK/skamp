@@ -55,6 +55,7 @@
     "framer-motion": "^12.18.1",
     "i18n-iso-countries": "^7.14.0",
     "mustache": "^4.2.0",
+    "nanoid": "^5.1.5",
     "next": "^15.4.4",
     "papaparse": "^5.5.3",
     "puppeteer": "^24.16.2",
