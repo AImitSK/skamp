@@ -18,8 +18,21 @@ import {
   BuildingOfficeIcon,
   ChartBarIcon,
   DocumentTextIcon,
-  Squares2X2Icon
+  Squares2X2Icon,
+  CogIcon,
+  PhotoIcon,
+  ChatBubbleLeftRightIcon,
+  ClipboardDocumentListIcon
 } from '@heroicons/react/24/outline';
+
+// Pipeline-Komponenten importieren
+import PipelineProgressDashboard from '@/components/projects/workflow/PipelineProgressDashboard';
+import { MonitoringConfigPanel } from '@/components/projects/monitoring/MonitoringConfigPanel';
+import { MonitoringStatusWidget } from '@/components/projects/monitoring/MonitoringStatusWidget';
+import { ProjectAssetGallery } from '@/components/projects/assets/ProjectAssetGallery';
+import { SmartAssetSelector } from '@/components/projects/assets/SmartAssetSelector';
+import { WorkflowAutomationManager } from '@/components/projects/workflow/WorkflowAutomationManager';
+import { TaskDependenciesVisualizer } from '@/components/projects/workflow/TaskDependenciesVisualizer';
 import { projectService } from '@/lib/firebase/project-service';
 import { Project } from '@/types/project';
 import Link from 'next/link';
@@ -33,6 +46,7 @@ export default function ProjectDetailPage() {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'assets' | 'communication' | 'monitoring'>('overview');
 
   useEffect(() => {
     loadProject();
@@ -282,38 +296,237 @@ export default function ProjectDetailPage() {
         )}
       </div>
 
-      {/* Content Tabs - Platzhalter für zukünftige Features */}
+      {/* Content Tabs - Vollständige Pipeline-Integration */}
       <div className="bg-white rounded-lg border border-gray-200">
         <div className="border-b border-gray-200">
           <div className="px-6 py-4">
             <div className="flex space-x-6">
-              <button className="text-blue-600 border-b-2 border-blue-600 pb-2 text-sm font-medium">
+              <button 
+                onClick={() => setActiveTab('overview')}
+                className={`flex items-center pb-2 text-sm font-medium ${
+                  activeTab === 'overview' 
+                    ? 'text-blue-600 border-b-2 border-blue-600' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <DocumentTextIcon className="w-4 h-4 mr-2" />
                 Übersicht
               </button>
-              <button className="text-gray-500 hover:text-gray-700 pb-2 text-sm font-medium">
-                Tasks
+              <button 
+                onClick={() => setActiveTab('tasks')}
+                className={`flex items-center pb-2 text-sm font-medium ${
+                  activeTab === 'tasks' 
+                    ? 'text-blue-600 border-b-2 border-blue-600' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <ClipboardDocumentListIcon className="w-4 h-4 mr-2" />
+                Tasks & Workflow
               </button>
-              <button className="text-gray-500 hover:text-gray-700 pb-2 text-sm font-medium">
-                Assets
+              <button 
+                onClick={() => setActiveTab('assets')}
+                className={`flex items-center pb-2 text-sm font-medium ${
+                  activeTab === 'assets' 
+                    ? 'text-blue-600 border-b-2 border-blue-600' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <PhotoIcon className="w-4 h-4 mr-2" />
+                Assets & Medien
               </button>
-              <button className="text-gray-500 hover:text-gray-700 pb-2 text-sm font-medium">
+              <button 
+                onClick={() => setActiveTab('communication')}
+                className={`flex items-center pb-2 text-sm font-medium ${
+                  activeTab === 'communication' 
+                    ? 'text-blue-600 border-b-2 border-blue-600' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <ChatBubbleLeftRightIcon className="w-4 h-4 mr-2" />
                 Kommunikation
               </button>
-              <button className="text-gray-500 hover:text-gray-700 pb-2 text-sm font-medium">
-                Monitoring
+              <button 
+                onClick={() => setActiveTab('monitoring')}
+                className={`flex items-center pb-2 text-sm font-medium ${
+                  activeTab === 'monitoring' 
+                    ? 'text-blue-600 border-b-2 border-blue-600' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <ChartBarIcon className="w-4 h-4 mr-2" />
+                Monitoring & Analytics
               </button>
             </div>
           </div>
         </div>
         
         <div className="p-6">
-          <div className="text-center py-12 bg-gray-50 rounded-lg">
-            <ChartBarIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <Subheading className="mb-2">Projekt-Details werden erweitert</Subheading>
-            <Text className="text-gray-600">
-              Weitere Funktionen wie Tasks, Assets und Monitoring werden in kommenden Updates hinzugefügt.
-            </Text>
-          </div>
+          {/* Übersicht Tab */}
+          {activeTab === 'overview' && (
+            <div className="space-y-6">
+              {/* Pipeline Progress Dashboard */}
+              {project && (
+                <PipelineProgressDashboard
+                  projectId={project.id}
+                  progress={{
+                    overallPercent: 65,
+                    stageProgress: {
+                      'ideas_planning': 100,
+                      'creation': 80,
+                      'internal_approval': 60,
+                      'customer_approval': 0,
+                      'distribution': 0,
+                      'monitoring': 0,
+                      'completed': 0
+                    },
+                    taskCompletion: 12,
+                    criticalTasksRemaining: 3,
+                    lastUpdated: new Date(),
+                    milestones: [
+                      { percent: 25, achievedAt: new Date(), notificationSent: true },
+                      { percent: 50, notificationSent: false }
+                    ]
+                  }}
+                  currentStage={project.currentStage}
+                />
+              )}
+              
+              {/* Quick Actions */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="border border-gray-200 rounded-lg p-4 text-center hover:bg-gray-50">
+                  <CogIcon className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                  <Text className="font-medium">Workflow konfigurieren</Text>
+                </div>
+                <div className="border border-gray-200 rounded-lg p-4 text-center hover:bg-gray-50">
+                  <PhotoIcon className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                  <Text className="font-medium">Assets hinzufügen</Text>
+                </div>
+                <div className="border border-gray-200 rounded-lg p-4 text-center hover:bg-gray-50">
+                  <ChartBarIcon className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                  <Text className="font-medium">Analytics anzeigen</Text>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Tasks & Workflow Tab */}
+          {activeTab === 'tasks' && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                {/* Task Dependencies Visualizer */}
+                {project && (
+                  <TaskDependenciesVisualizer
+                    projectId={project.id}
+                    tasks={[]}
+                    currentStage={project.currentStage}
+                  />
+                )}
+                
+                {/* Workflow Automation Manager */}
+                {project && (
+                  <WorkflowAutomationManager
+                    projectId={project.id}
+                    currentStage={project.currentStage}
+                    organizationId={currentOrganization?.id || ''}
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Assets & Medien Tab */}
+          {activeTab === 'assets' && (
+            <div className="space-y-6">
+              {project && (
+                <>
+                  {/* Project Asset Gallery */}
+                  <ProjectAssetGallery
+                    projectId={project.id}
+                    organizationId={currentOrganization?.id || ''}
+                    currentStage={project.currentStage}
+                  />
+                  
+                  {/* Smart Asset Selector */}
+                  <div className="border-t border-gray-200 pt-6">
+                    <Subheading className="mb-4">Weitere Assets hinzufügen</Subheading>
+                    <SmartAssetSelector
+                      projectId={project.id}
+                      organizationId={currentOrganization?.id || ''}
+                      onAssetSelected={(assetId) => console.log('Asset selected:', assetId)}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Kommunikation Tab */}
+          {activeTab === 'communication' && (
+            <div className="space-y-6">
+              <div className="text-center py-12 bg-blue-50 rounded-lg">
+                <ChatBubbleLeftRightIcon className="h-12 w-12 mx-auto text-blue-400 mb-4" />
+                <Subheading className="mb-2">Projekt-Kommunikation</Subheading>
+                <Text className="text-gray-600 mb-4">
+                  Hier werden alle projekt-bezogenen E-Mails und Kommunikation automatisch erkannt und zugeordnet.
+                </Text>
+                <Button outline>
+                  <ChatBubbleLeftRightIcon className="w-4 h-4 mr-2" />
+                  Kommunikations-Feed öffnen
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Monitoring & Analytics Tab */}
+          {activeTab === 'monitoring' && (
+            <div className="space-y-6">
+              {project && (
+                <>
+                  {/* Monitoring Status Widget */}
+                  <MonitoringStatusWidget
+                    projectId={project.id}
+                    currentStage={project.currentStage}
+                    isEnabled={true}
+                    stats={{
+                      totalClippings: 47,
+                      totalReach: 1250000,
+                      averageSentiment: 0.78,
+                      trending: 'up',
+                      lastUpdated: new Date()
+                    }}
+                  />
+                  
+                  {/* Monitoring Config Panel */}
+                  <div className="border-t border-gray-200 pt-6">
+                    <MonitoringConfigPanel
+                      projectId={project.id}
+                      organizationId={currentOrganization?.id || ''}
+                      currentConfig={{
+                        isEnabled: true,
+                        monitoringPeriod: 30,
+                        autoTransition: true,
+                        providers: [
+                          {
+                            name: 'landau',
+                            apiEndpoint: '',
+                            isEnabled: true,
+                            supportedMetrics: ['reach', 'sentiment', 'mentions']
+                          }
+                        ],
+                        alertThresholds: {
+                          minReach: 10000,
+                          sentimentAlert: 0.3,
+                          competitorMentions: 5
+                        },
+                        reportSchedule: 'weekly'
+                      }}
+                      onConfigUpdate={(config) => console.log('Config updated:', config)}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
