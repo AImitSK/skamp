@@ -80,7 +80,7 @@ describe('Plan 3/9: ProjectService Pipeline Extensions', () => {
     title: 'Pipeline Test Project',
     description: 'Test project for pipeline approval integration',
     status: 'active',
-    currentStage: 'approval',
+    currentStage: 'customer_approval',
     customer: {
       id: 'client-123',
       name: 'Test Client GmbH',
@@ -103,35 +103,59 @@ describe('Plan 3/9: ProjectService Pipeline Extensions', () => {
     clientId: 'client-123',
     clientName: 'Test Client GmbH',
     status: 'approved',
-    type: 'customer_only',
     shareId: 'share-123-abc',
+    content: {
+      html: '<p>Test content</p>',
+      plainText: 'Test content',
+      subject: 'Test Subject'
+    },
+    options: {
+      requireAllApprovals: false,
+      allowPartialApproval: true,
+      autoSendAfterApproval: false,
+      allowComments: true,
+      allowInlineComments: true
+    },
+    shareSettings: {
+      requirePassword: false,
+      requireEmailVerification: false,
+      accessLog: true
+    },
     recipients: [
       {
         id: 'recipient-1',
-        type: 'customer',
         email: 'client@testcompany.com',
         name: 'Client Contact',
+        role: 'approver',
         status: 'approved',
         decision: 'approved',
         decidedAt: Timestamp.now(),
         notificationsSent: 1,
         order: 0,
+        isRequired: true
       },
     ],
-    workflow: {
-      currentStage: 'customer',
-      stages: ['customer'],
-      isMultiStage: false,
-    },
+    workflow: 'simple',
     history: [],
     analytics: {
       totalViews: 5,
       uniqueViews: 2,
     },
+    requestedAt: Timestamp.now(),
     approvedAt: Timestamp.now(),
+    notifications: {
+      requested: {
+        sent: true,
+        sentAt: Timestamp.now(),
+        method: 'email'
+      }
+    },
+    version: 1,
+    priority: 'medium',
+    createdBy: 'test-user-456',
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
-  } as ApprovalEnhanced;
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -342,7 +366,7 @@ describe('Plan 3/9: ProjectService Pipeline Extensions', () => {
     it('sollte andere Stage-Übergänge ohne Approval-Prüfung erlauben', async () => {
       await projectService.updateStage(
         'project-123',
-        'review',
+        'internal_approval',
         { reviewStartedAt: Timestamp.now() },
         mockContext
       );
@@ -350,7 +374,7 @@ describe('Plan 3/9: ProjectService Pipeline Extensions', () => {
       expect(mockUpdateDoc).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
-          currentStage: 'review',
+          currentStage: 'internal_approval',
           reviewStartedAt: expect.anything(),
         })
       );
@@ -386,7 +410,7 @@ describe('Plan 3/9: ProjectService Pipeline Extensions', () => {
 
       await projectService.updateStage(
         'project-123',
-        'review',
+        'internal_approval',
         transitionData,
         mockContext
       );
@@ -394,7 +418,7 @@ describe('Plan 3/9: ProjectService Pipeline Extensions', () => {
       expect(mockUpdateDoc).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
-          currentStage: 'review',
+          currentStage: 'internal_approval',
           ...transitionData,
           stageUpdatedAt: expect.anything(),
           stageUpdatedBy: 'test-user-456',
@@ -403,13 +427,13 @@ describe('Plan 3/9: ProjectService Pipeline Extensions', () => {
     });
 
     it('sollte leere Transition-Daten handhaben', async () => {
-      await projectService.updateStage('project-123', 'approval', {}, mockContext);
+      await projectService.updateStage('project-123', 'customer_approval', {}, mockContext);
 
       expect(mockUpdateDoc).toHaveBeenCalledTimes(1); // Only basic update
       expect(mockUpdateDoc).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
-          currentStage: 'approval',
+          currentStage: 'customer_approval',
           updatedAt: expect.anything(),
         })
       );
@@ -434,7 +458,7 @@ describe('Plan 3/9: ProjectService Pipeline Extensions', () => {
         exists: () => true,
         data: () => mockProject,
       };
-      mockGetDoc.mkResolvedValue(mockDocSnapshot as any);
+      mockGetDoc.mockResolvedValue(mockDocSnapshot as any);
     });
 
     it('sollte Pipeline-Status mit Approval-Check zurückgeben', async () => {
@@ -447,7 +471,7 @@ describe('Plan 3/9: ProjectService Pipeline Extensions', () => {
       const result = await projectService.getProjectPipelineStatus('project-123', mockContext);
 
       expect(result).toEqual({
-        currentStage: 'approval',
+        currentStage: 'customer_approval',
         approvalStatus: 'approved',
         canProgress: true,
         nextStage: 'distribution',
@@ -461,7 +485,7 @@ describe('Plan 3/9: ProjectService Pipeline Extensions', () => {
       // Test project trying to go to distribution
       const distributionProject = {
         ...mockProject,
-        currentStage: 'approval' as PipelineStage,
+        currentStage: 'customer_approval' as PipelineStage,
       };
 
       mockGetDoc.mockResolvedValue({
@@ -473,7 +497,7 @@ describe('Plan 3/9: ProjectService Pipeline Extensions', () => {
       const result = await projectService.getProjectPipelineStatus('project-123', mockContext);
 
       expect(result).toEqual({
-        currentStage: 'approval',
+        currentStage: 'customer_approval',
         approvalStatus: null,
         canProgress: false,
         nextStage: 'distribution',
@@ -499,9 +523,9 @@ describe('Plan 3/9: ProjectService Pipeline Extensions', () => {
 
     it('sollte Stage-Reihenfolge korrekt bestimmen', async () => {
       const stages: { current: PipelineStage; expected: PipelineStage | undefined }[] = [
-        { current: 'creation', expected: 'review' },
-        { current: 'review', expected: 'approval' },
-        { current: 'approval', expected: 'distribution' },
+        { current: 'creation', expected: 'internal_approval' },
+        { current: 'internal_approval', expected: 'customer_approval' },
+        { current: 'customer_approval', expected: 'distribution' },
         { current: 'distribution', expected: 'completed' },
         { current: 'completed', expected: undefined },
       ];
@@ -565,7 +589,7 @@ describe('Plan 3/9: ProjectService Pipeline Extensions', () => {
 
       const approvalProject = {
         ...mockProject,
-        currentStage: 'approval' as PipelineStage,
+        currentStage: 'customer_approval' as PipelineStage,
       };
 
       mockGetDoc.mockResolvedValue({
@@ -577,7 +601,7 @@ describe('Plan 3/9: ProjectService Pipeline Extensions', () => {
       const result = await projectService.getProjectPipelineStatus('project-123', mockContext);
 
       // Should still return project status even if approval check fails
-      expect(result.currentStage).toBe('approval');
+      expect(result.currentStage).toBe('customer_approval');
       expect(result.nextStage).toBe('distribution');
       // Approval status should be indeterminate due to error
     });
@@ -624,7 +648,11 @@ describe('Plan 3/9: ProjectService Pipeline Extensions', () => {
       mockGetDoc.mockImplementation(() => Promise.resolve({
         exists: () => true,
         data: () => mockProject,
-      }));
+        metadata: {},
+        get: () => null,
+        id: 'project-123',
+        ref: {}
+      } as any));
 
       const results = await Promise.all(
         projects.map(projectId =>
@@ -634,7 +662,7 @@ describe('Plan 3/9: ProjectService Pipeline Extensions', () => {
 
       expect(results).toHaveLength(3);
       results.forEach(result => {
-        expect(result.currentStage).toBe('approval');
+        expect(result.currentStage).toBe('customer_approval');
       });
     });
 
@@ -690,7 +718,7 @@ describe('Plan 3/9: ProjectService Pipeline Extensions', () => {
     it('sollte Concurrent Stage-Updates synchronisieren', async () => {
       const concurrentUpdates = [
         projectService.updateStage('project-123', 'review', {}, mockContext),
-        projectService.updateStage('project-123', 'approval', {}, mockContext),
+        projectService.updateStage('project-123', 'customer_approval', {}, mockContext),
       ];
 
       mockGetDoc.mockResolvedValue({

@@ -1,7 +1,7 @@
 // src/app/dashboard/communication/inbox/page.tsx
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { Heading } from '@/components/ui/heading';
@@ -321,7 +321,7 @@ export default function InboxPage() {
     };
   }, [user, organizationId, selectedFolderType, selectedTeamMemberId, hasEmailAddresses, resolvingThreads, setupRealtimeListeners, unsubscribes]);
 
-  const setupRealtimeListeners = (unsubscribes: Unsubscribe[]) => {
+  const setupRealtimeListeners = useCallback((unsubscribes: Unsubscribe[]) => {
     setLoading(true);
     setError(null);
 
@@ -338,7 +338,7 @@ export default function InboxPage() {
         setupError: error.message
       }));
     }
-  };
+  }, [selectedFolderType, selectedTeamMemberId, hasEmailAddresses, resolvingThreads]);
 
 
   const setupTeamFolderListeners = (unsubscribes: Unsubscribe[]) => {

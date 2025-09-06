@@ -480,7 +480,7 @@ describe('Plan 4/9: Edge-Cases und Fehler-Szenarien Tests', () => {
         });
 
         expect(result.success).toBe(false);
-        expect(result.error).toContain('ungültige E-Mail' || 'invalid email');
+        expect(result.error && (result.error.includes('ungültige E-Mail') || result.error.includes('invalid email'))).toBe(true);
       }
     });
 
@@ -496,7 +496,7 @@ describe('Plan 4/9: Edge-Cases und Fehler-Szenarien Tests', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain('Vergangenheit' || 'future');
+      expect(result.error && (result.error.includes('Vergangenheit') || result.error.includes('future'))).toBe(true);
     });
 
     it('sollte sehr große E-Mail-Inhalte handhaben', () => {

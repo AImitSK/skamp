@@ -1,7 +1,7 @@
 // src/app/dashboard/contacts/crm/CompanyModal.tsx
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Dialog, DialogTitle, DialogBody, DialogActions } from "@/components/ui/dialog";
 import { Field, Label, FieldGroup } from "@/components/ui/fieldset";
 import { Input } from "@/components/ui/input";
@@ -183,6 +183,56 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
   const [linkedAdvertisements, setLinkedAdvertisements] = useState<Advertisement[]>([]);
   const [loadingLibraryData, setLoadingLibraryData] = useState(false);
 
+  const loadTags = useCallback(async () => {
+    if (!userId) return;
+    try {
+      const userTags = await tagsEnhancedService.getAll(userId);
+      setTags(userTags.map(tag => ({
+        ...tag,
+        userId: userId
+      })));
+    } catch (error) {
+      // Silent error handling
+    }
+  }, [userId]);
+
+  const loadCompanies = useCallback(async () => {
+    if (!userId) return;
+    try {
+      const userCompanies = await companiesEnhancedService.getAll(userId);
+      setCompanies(userCompanies.filter(c => c.id !== company?.id));
+    } catch (error) {
+      // Silent error handling
+    }
+  }, [userId, company?.id]);
+
+  const loadLibraryData = useCallback(async (companyId: string) => {
+    if (!userId) return;
+    
+    setLoadingLibraryData(true);
+    try {
+      // Load publications
+      const publications = await publicationService.getByPublisherId(companyId, userId);
+      setLinkedPublications(publications);
+
+      // Load advertisements (filter by publications of this company)
+      if (publications.length > 0) {
+        const publicationIds = publications.map(p => p.id!).filter(Boolean);
+        const allAds = await advertisementService.getAll(userId);
+        const companyAds = allAds.filter(ad => 
+          ad.publicationIds.some(pubId => publicationIds.includes(pubId))
+        );
+        setLinkedAdvertisements(companyAds);
+      } else {
+        setLinkedAdvertisements([]);
+      }
+    } catch (error) {
+      // Error loading library data - operation tracked internally
+    } finally {
+      setLoadingLibraryData(false);
+    }
+  }, [userId]);
+
   useEffect(() => {
     if (company) {
       // Directly use enhanced company data
@@ -213,56 +263,6 @@ export default function CompanyModal({ company, onClose, onSave, userId, organiz
     loadTags();
     loadCompanies();
   }, [company, loadCompanies, loadLibraryData, loadTags]);
-
-  const loadTags = async () => {
-    if (!userId) return;
-    try {
-      const userTags = await tagsEnhancedService.getAll(userId);
-      setTags(userTags.map(tag => ({
-        ...tag,
-        userId: userId
-      })));
-    } catch (error) {
-      // Silent error handling
-    }
-  };
-
-  const loadCompanies = async () => {
-    if (!userId) return;
-    try {
-      const userCompanies = await companiesEnhancedService.getAll(userId);
-      setCompanies(userCompanies.filter(c => c.id !== company?.id));
-    } catch (error) {
-      // Silent error handling
-    }
-  };
-
-  const loadLibraryData = async (companyId: string) => {
-    if (!userId) return;
-    
-    setLoadingLibraryData(true);
-    try {
-      // Load publications
-      const publications = await publicationService.getByPublisherId(companyId, userId);
-      setLinkedPublications(publications);
-
-      // Load advertisements (filter by publications of this company)
-      if (publications.length > 0) {
-        const publicationIds = publications.map(p => p.id!).filter(Boolean);
-        const allAds = await advertisementService.getAll(userId);
-        const companyAds = allAds.filter(ad => 
-          ad.publicationIds.some(pubId => publicationIds.includes(pubId))
-        );
-        setLinkedAdvertisements(companyAds);
-      } else {
-        setLinkedAdvertisements([]);
-      }
-    } catch (error) {
-      // Error loading library data - operation tracked internally
-    } finally {
-      setLoadingLibraryData(false);
-    }
-  };
 
   const handleCreateTag = async (name: string, color: TagColor): Promise<string> => {
     try {

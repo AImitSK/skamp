@@ -47,6 +47,7 @@ const mockDoc = doc as jest.MockedFunction<typeof doc>;
 
 describe('Plan 3/9: Security und Multi-Tenancy Tests', () => {
   const LEGITIMATE_ORG = 'legitimate-org-123';
+  const LEGITIMATE_USER = 'legitimate-user-456';
   const MALICIOUS_ORG = 'malicious-org-456';
   const ADMIN_USER = 'admin-user-123';
   const REGULAR_USER = 'regular-user-456';
@@ -69,7 +70,7 @@ describe('Plan 3/9: Security und Multi-Tenancy Tests', () => {
     title: 'Legitimate Project',
     description: 'A legitimate project for security testing',
     status: 'active',
-    currentStage: 'approval',
+    currentStage: 'customer_approval',
     customer: {
       id: 'legitimate-client-123',
       name: 'Legitimate Client Corp',
@@ -86,7 +87,7 @@ describe('Plan 3/9: Security und Multi-Tenancy Tests', () => {
     title: 'Cross Tenant Project',
     description: 'Project from different organization',
     status: 'active',
-    currentStage: 'review',
+    currentStage: 'internal_approval',
     customer: {
       id: 'malicious-client-456',
       name: 'Malicious Client Corp',
@@ -106,26 +107,50 @@ describe('Plan 3/9: Security und Multi-Tenancy Tests', () => {
     clientId: 'legitimate-client-123',
     clientName: 'Legitimate Client Corp',
     status: 'pending',
-    type: 'customer_only',
     shareId: 'secure-share-123',
+    content: {
+      html: '<p>Security test content</p>',
+      plainText: 'Security test content',
+      subject: 'Security Test'
+    },
+    options: {
+      requireAllApprovals: false,
+      allowPartialApproval: true,
+      autoSendAfterApproval: false,
+      allowComments: true,
+      allowInlineComments: true
+    },
+    shareSettings: {
+      requirePassword: false,
+      requireEmailVerification: false,
+      accessLog: true
+    },
     recipients: [
       {
         id: 'legitimate-recipient',
-        type: 'customer',
         email: 'client@legitimate.com',
         name: 'Legitimate Client',
+        role: 'approver',
         status: 'pending',
+        isRequired: true,
         notificationsSent: 1,
         order: 0,
       },
     ],
-    workflow: {
-      currentStage: 'customer',
-      stages: ['customer'],
-      isMultiStage: false,
-    },
+    workflow: 'simple',
     history: [],
     analytics: { totalViews: 0, uniqueViews: 0 },
+    requestedAt: Timestamp.now(),
+    notifications: {
+      requested: {
+        sent: true,
+        sentAt: Timestamp.now(),
+        method: 'email'
+      }
+    },
+    version: 1,
+    priority: 'medium',
+    createdBy: LEGITIMATE_USER,
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
   };
@@ -499,7 +524,7 @@ describe('Plan 3/9: Security und Multi-Tenancy Tests', () => {
       
       // Mock token validation
       const validateClientToken = (token: string, expectedClient: string) => {
-        const validTokens = {
+        const validTokens: Record<string, string> = {
           'legitimate-token-abc123': 'client@legitimate.com',
         };
         
@@ -638,15 +663,16 @@ describe('Plan 3/9: Security und Multi-Tenancy Tests', () => {
         ...legitimateApproval,
         recipients: [{
           id: 'gdpr-recipient',
-          type: 'customer',
           email: 'gdpr@client.com',
           name: 'GDPR Test Client',
+          role: 'approver',
+          status: 'pending',
+          isRequired: true,
           personalData: {
             fullName: 'GDPR Test Client Full Name',
             phoneNumber: '+49 123 456789',
             address: '123 Privacy Street, GDPR City',
           },
-          status: 'pending',
           notificationsSent: 1,
           order: 0,
         }],

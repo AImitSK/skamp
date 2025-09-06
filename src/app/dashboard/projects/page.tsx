@@ -13,11 +13,18 @@ import {
   EllipsisVerticalIcon,
   CalendarDaysIcon,
   UserGroupIcon,
-  FolderIcon
+  FolderIcon,
+  Squares2X2Icon,
+  ListBulletIcon,
+  ViewColumnsIcon
 } from '@heroicons/react/24/outline';
 import { ProjectCreationWizard } from '@/components/projects/creation/ProjectCreationWizard';
 import { projectService } from '@/lib/firebase/project-service';
-import { Project, ProjectCreationResult } from '@/types/project';
+import { Project, ProjectCreationResult, PipelineStage } from '@/types/project';
+import { BoardFilters, kanbanBoardService } from '@/lib/kanban/kanban-board-service';
+import { KanbanBoard } from '@/components/projects/kanban/KanbanBoard';
+import { BoardProvider } from '@/components/projects/kanban/BoardProvider';
+import { useBoardRealtime } from '@/hooks/useBoardRealtime';
 
 export default function ProjectsPage() {
   const { user } = useAuth();
@@ -27,6 +34,8 @@ export default function ProjectsPage() {
   const [loading, setLoading] = useState(true);
   const [showWizard, setShowWizard] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'board' | 'list' | 'calendar'>('board');
+  const [filters, setFilters] = useState<BoardFilters>({});
 
   useEffect(() => {
     loadProjects();
@@ -60,6 +69,72 @@ export default function ProjectsPage() {
     setTimeout(() => {
       setShowWizard(false);
     }, 2000);
+  };
+
+  // Group projects by pipeline stage for board view
+  const groupProjectsByStage = (projectList: Project[]) => {
+    const stages: PipelineStage[] = [
+      'ideas_planning',
+      'creation',
+      'internal_approval',
+      'customer_approval',
+      'distribution',
+      'monitoring',
+      'completed'
+    ];
+
+    return stages.reduce((acc, stage) => {
+      acc[stage] = projectList.filter(project => project.currentStage === stage);
+      return acc;
+    }, {} as Record<PipelineStage, Project[]>);
+  };
+
+  // Handle project move in board view
+  const handleProjectMove = async (projectId: string, targetStage: PipelineStage) => {
+    if (!user || !currentOrganization?.id) return;
+
+    try {
+      // Find current stage
+      let currentStage: PipelineStage | null = null;
+      for (const project of projects) {
+        if (project.id === projectId) {
+          currentStage = project.currentStage;
+          break;
+        }
+      }
+
+      if (!currentStage) {
+        throw new Error('Projekt nicht gefunden');
+      }
+
+      // Move project
+      const result = await kanbanBoardService.moveProject(
+        projectId,
+        currentStage,
+        targetStage,
+        user.uid,
+        currentOrganization.id
+      );
+
+      if (result.success) {
+        // Refresh projects
+        loadProjects();
+      } else {
+        console.error('Move failed:', result.errors);
+      }
+    } catch (error: any) {
+      console.error('Move error:', error);
+    }
+  };
+
+  // Handle filter changes
+  const handleFiltersChange = (newFilters: BoardFilters) => {
+    setFilters(newFilters);
+  };
+
+  // Handle view mode change
+  const handleViewModeChange = (mode: 'board' | 'list' | 'calendar') => {
+    setViewMode(mode);
   };
 
   const getProjectStatusColor = (status: string) => {
@@ -125,13 +200,45 @@ export default function ProjectsPage() {
             </Text>
           </div>
           
-          <Button 
-            onClick={() => setShowWizard(true)}
-            className="flex items-center space-x-2"
-          >
-            <PlusIcon className="w-4 h-4" />
-            <span>Neues Projekt</span>
-          </Button>
+          <div className="flex items-center space-x-4">
+            {/* View Mode Toggle */}
+            <div className="flex items-center border border-gray-300 rounded-lg">
+              <button
+                onClick={() => handleViewModeChange('board')}
+                className={`
+                  px-3 py-2 text-sm font-medium rounded-l-lg transition-colors
+                  ${viewMode === 'board'
+                    ? 'bg-blue-500 text-white'
+                    : 'text-gray-700 hover:bg-gray-50'
+                  }
+                `}
+                title="Board-Ansicht"
+              >
+                <Squares2X2Icon className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => handleViewModeChange('list')}
+                className={`
+                  px-3 py-2 text-sm font-medium border-l border-gray-300 rounded-r-lg transition-colors
+                  ${viewMode === 'list'
+                    ? 'bg-blue-500 text-white'
+                    : 'text-gray-700 hover:bg-gray-50'
+                  }
+                `}
+                title="Listen-Ansicht"
+              >
+                <ListBulletIcon className="h-4 w-4" />
+              </button>
+            </div>
+
+            <Button 
+              onClick={() => setShowWizard(true)}
+              className="flex items-center space-x-2"
+            >
+              <PlusIcon className="w-4 h-4" />
+              <span>Neues Projekt</span>
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -189,8 +296,24 @@ export default function ProjectsPage() {
         </div>
       )}
 
-      {/* Projects Grid */}
-      {!loading && !error && projects.length > 0 && (
+      {/* Board View */}
+      {!loading && !error && projects.length > 0 && viewMode === 'board' && currentOrganization && (
+        <BoardProvider organizationId={currentOrganization.id}>
+          <KanbanBoard
+            projects={groupProjectsByStage(projects)}
+            totalProjects={projects.length}
+            activeUsers={[]} // TODO: Get from real-time hook
+            filters={filters}
+            loading={loading}
+            onProjectMove={handleProjectMove}
+            onFiltersChange={handleFiltersChange}
+            onRefresh={loadProjects}
+          />
+        </BoardProvider>
+      )}
+
+      {/* List View (existing Projects Grid) */}
+      {!loading && !error && projects.length > 0 && viewMode === 'list' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((project) => (
             <div

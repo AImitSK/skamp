@@ -189,13 +189,7 @@ export default function ContactsPage() {
     window.history.pushState({}, '', newUrl);
   };
 
-  useEffect(() => {
-    if (user) {
-      loadData();
-    }
-  }, [user, currentOrganization, loadData]); 
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!user || !currentOrganization) return;
     setLoading(true);
     try {
@@ -213,7 +207,13 @@ const [companiesData, contactsData, tagsData] = await Promise.all([
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, currentOrganization]);
+
+  useEffect(() => {
+    if (user) {
+      loadData();
+    }
+  }, [user, currentOrganization, loadData]);
 
   // Memoized Filter Options
   const tagOptions = useMemo(() => {

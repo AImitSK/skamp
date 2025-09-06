@@ -116,7 +116,7 @@ describe('Plan 4/9: Multi-Tenancy-Sicherheit Tests', () => {
 
       expect(mockPrService.getAllByOrganization).toHaveBeenCalledWith(tenantA.organizationId);
       expect(campaigns).toHaveLength(2);
-      expect(campaigns.every(c => c.organizationId === tenantA.organizationId)).toBe(true);
+      expect(campaigns.every((c: any) => c.organizationId === tenantA.organizationId)).toBe(true);
     });
 
     it('sollte Cross-Tenant-Zugriff verhindern', async () => {

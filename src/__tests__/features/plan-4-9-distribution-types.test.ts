@@ -4,8 +4,22 @@
 // Mock Firebase First
 jest.mock('firebase/firestore', () => ({
   Timestamp: {
-    now: () => ({ seconds: Date.now() / 1000 }),
-    fromDate: (date: Date) => ({ seconds: date.getTime() / 1000 })
+    now: () => ({ 
+      seconds: Date.now() / 1000, 
+      nanoseconds: 0,
+      toDate: () => new Date(),
+      toMillis: () => Date.now(),
+      isEqual: () => false,
+      toJSON: () => ({ seconds: Date.now() / 1000, nanoseconds: 0 })
+    }),
+    fromDate: (date: Date) => ({ 
+      seconds: date.getTime() / 1000, 
+      nanoseconds: 0,
+      toDate: () => date,
+      toMillis: () => date.getTime(),
+      isEqual: () => false,
+      toJSON: () => ({ seconds: date.getTime() / 1000, nanoseconds: 0 })
+    })
   }
 }));
 
@@ -19,8 +33,22 @@ import {
 
 // Use mocked Timestamp
 const Timestamp = {
-  now: () => ({ seconds: Date.now() / 1000 }),
-  fromDate: (date: Date) => ({ seconds: date.getTime() / 1000 })
+  now: () => ({ 
+    seconds: Date.now() / 1000, 
+    nanoseconds: 0,
+    toDate: () => new Date(),
+    toMillis: () => Date.now(),
+    isEqual: () => false,
+    toJSON: () => ({ seconds: Date.now() / 1000, nanoseconds: 0 })
+  }),
+  fromDate: (date: Date) => ({ 
+    seconds: date.getTime() / 1000, 
+    nanoseconds: 0,
+    toDate: () => date,
+    toMillis: () => date.getTime(),
+    isEqual: () => false,
+    toJSON: () => ({ seconds: date.getTime() / 1000, nanoseconds: 0 })
+  })
 };
 
 describe('Plan 4/9: PRCampaign Distribution Interface Tests', () => {
@@ -40,8 +68,8 @@ describe('Plan 4/9: PRCampaign Distribution Interface Tests', () => {
         distributionListName: 'Default List',
         recipientCount: 0,
         approvalRequired: false,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
+        createdAt: Timestamp.now() as any,
+        updatedAt: Timestamp.now() as any,
         distributionConfig: {
           isScheduled: false,
           scheduledAt: undefined,
@@ -83,7 +111,7 @@ describe('Plan 4/9: PRCampaign Distribution Interface Tests', () => {
     });
 
     it('sollte eine geplante distributionConfig erstellen können', () => {
-      const scheduledDate = Timestamp.fromDate(new Date('2025-02-15T10:00:00Z'));
+      const scheduledDate = Timestamp.fromDate(new Date('2025-02-15T10:00:00Z')) as any;
       const campaign: PRCampaign = {
         id: 'scheduled-campaign',
         userId: mockUserId,
@@ -95,8 +123,8 @@ describe('Plan 4/9: PRCampaign Distribution Interface Tests', () => {
         distributionListName: 'List 1',
         recipientCount: 150,
         approvalRequired: false,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
+        createdAt: Timestamp.now() as any,
+        updatedAt: Timestamp.now() as any,
         distributionConfig: {
           isScheduled: true,
           scheduledAt: scheduledDate,
@@ -135,8 +163,8 @@ describe('Plan 4/9: PRCampaign Distribution Interface Tests', () => {
         distributionListName: '',
         recipientCount: 0,
         approvalRequired: false,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
+        createdAt: Timestamp.now() as any,
+        updatedAt: Timestamp.now() as any,
         distributionConfig: {
           isScheduled: false,
           distributionLists: [],
@@ -189,8 +217,8 @@ describe('Plan 4/9: PRCampaign Distribution Interface Tests', () => {
         distributionListName: 'Test List',
         recipientCount: 100,
         approvalRequired: false,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
+        createdAt: Timestamp.now() as any,
+        updatedAt: Timestamp.now() as any,
         distributionStatus: {
           status: 'sending',
           recipientCount: 100,
@@ -230,7 +258,7 @@ describe('Plan 4/9: PRCampaign Distribution Interface Tests', () => {
             error: 'Invalid email address',
             timestamp: sentAt
           }
-        ] as DistributionError[]
+        ] as any as DistributionError[]
       };
 
       expect(distributionStatus.status).toBe('sent');
@@ -256,7 +284,7 @@ describe('Plan 4/9: PRCampaign Distribution Interface Tests', () => {
             error: 'SMTP server connection failed',
             timestamp: failureTimestamp
           }
-        ] as DistributionError[]
+        ] as any as DistributionError[]
       };
 
       expect(distributionStatus.status).toBe('failed');
@@ -278,8 +306,8 @@ describe('Plan 4/9: PRCampaign Distribution Interface Tests', () => {
         distributionListName: 'Pipeline List',
         recipientCount: 50,
         approvalRequired: false,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
+        createdAt: Timestamp.now() as any,
+        updatedAt: Timestamp.now() as any,
         // Pipeline-Integration Felder
         projectId: 'project-789',
         projectTitle: 'Q1 Marketing Project',
@@ -342,8 +370,8 @@ describe('Plan 4/9: PRCampaign Distribution Interface Tests', () => {
         distributionListName: 'Tenant List',
         recipientCount: 75,
         approvalRequired: false,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
+        createdAt: Timestamp.now() as any,
+        updatedAt: Timestamp.now() as any,
         distributionConfig: {
           isScheduled: false,
           distributionLists: ['tenant-list-1', 'tenant-list-2'],
@@ -379,8 +407,8 @@ describe('Plan 4/9: PRCampaign Distribution Interface Tests', () => {
         distributionListName: 'List A',
         recipientCount: 50,
         approvalRequired: false,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
+        createdAt: Timestamp.now() as any,
+        updatedAt: Timestamp.now() as any,
         distributionConfig: {
           isScheduled: false,
           distributionLists: ['tenant-a-list-1'],
@@ -406,8 +434,8 @@ describe('Plan 4/9: PRCampaign Distribution Interface Tests', () => {
         distributionListName: 'List B',
         recipientCount: 75,
         approvalRequired: false,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
+        createdAt: Timestamp.now() as any,
+        updatedAt: Timestamp.now() as any,
         distributionConfig: {
           isScheduled: false,
           distributionLists: ['tenant-b-list-1'],
@@ -437,7 +465,7 @@ describe('Plan 4/9: PRCampaign Distribution Interface Tests', () => {
       const error: DistributionError = {
         recipient: 'failed@example.com',
         error: 'Mailbox full',
-        timestamp: Timestamp.now()
+        timestamp: Timestamp.now() as any
       };
 
       expect(error.recipient).toBe('failed@example.com');
@@ -450,17 +478,17 @@ describe('Plan 4/9: PRCampaign Distribution Interface Tests', () => {
         {
           recipient: 'bounce1@example.com',
           error: 'Hard bounce',
-          timestamp: Timestamp.now()
+          timestamp: Timestamp.now() as any as any
         },
         {
           recipient: 'bounce2@example.com',
           error: 'Soft bounce - temporary failure',
-          timestamp: Timestamp.now()
+          timestamp: Timestamp.now() as any as any
         },
         {
           recipient: 'invalid@',
           error: 'Invalid email format',
-          timestamp: Timestamp.now()
+          timestamp: Timestamp.now() as any as any
         }
       ];
 
@@ -484,8 +512,8 @@ describe('Plan 4/9: PRCampaign Distribution Interface Tests', () => {
         distributionListName: 'Default',
         recipientCount: 0,
         approvalRequired: false,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now()
+        createdAt: Timestamp.now() as any,
+        updatedAt: Timestamp.now() as any
         // Keine distributionConfig
       };
 

@@ -59,14 +59,14 @@ describe('ContactsEnhanced Service Journalist-Tracking (Plan 5/9)', () => {
     organizationId: testContext.organizationId,
     createdBy: testContext.userId,
     updatedBy: testContext.userId,
-    name: 'Jane Reporter',
+    name: { first: 'Jane', last: 'Reporter' },
     email: 'jane@techjournal.com',
     phone: '+49 123 456789',
     company: 'Tech Journal',
     position: 'Senior Tech Reporter',
     mediaProfile: {
       isJournalist: true,
-      outlet: 'Tech Journal',
+      // outlet: 'Tech Journal', // TODO: Fix outlet property type
       beats: ['technology', 'startups', 'ai'],
       publicationIds: ['pub-1', 'pub-2'],
       socialMediaHandles: {

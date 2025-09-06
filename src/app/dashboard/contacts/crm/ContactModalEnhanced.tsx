@@ -181,7 +181,7 @@ export default function ContactModalEnhanced({
     loadPublications();
   }, [formData.companyId, organizationId, loadPublications]);
 
-  const loadTags = async () => {
+  const loadTags = useCallback(async () => {
     if (!organizationId) return;
     try {
       const orgTags = await tagsEnhancedService.getAllAsLegacyTags(organizationId);
@@ -189,7 +189,7 @@ export default function ContactModalEnhanced({
     } catch (error) {
       // Error loading tags - operation tracked internally
     }
-  };
+  }, [organizationId]);
 
   const loadPublications = useCallback(async () => {
     if (!organizationId) return;
