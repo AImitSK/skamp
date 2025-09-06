@@ -717,8 +717,7 @@ describe('Step3Preview Pipeline Stage-Transitions Tests', () => {
         <Step3Preview
           draft={baseDraft}
           scheduling={{
-            isScheduled: true,
-            scheduledDate: new Date('2025-02-15T10:00:00Z'),
+            sendAt: new Date('2025-02-15T10:00:00Z'),
             timezone: 'Europe/Berlin'
           }}
           onSchedulingChange={mockOnSchedulingChange}

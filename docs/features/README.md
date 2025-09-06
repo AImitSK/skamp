@@ -43,9 +43,11 @@ Diese Dokumentationen folgen dem standardisierten Template aus `FEATURE_DOCUMENT
 - ✅ **[Admin-Übersicht PDF-Integration](../implementation-plans/APPROVALS_OVERVIEW_PDF_INTEGRATION_PLAN.md)** - **VOLLSTÄNDIG ABGESCHLOSSEN** (PDF-Status Display, Enhanced Search & Filtering, Direct-PDF-Access, Admin-Dashboard Stats)
 - ✅ **[PDF-Template-System](../implementation-plans/PDF_TEMPLATE_SYSTEM_PLAN.md)** - **VOLLSTÄNDIG ABGESCHLOSSEN** (3 Professional Templates, Template-Customization, Custom-Upload, Advanced Preview-System)
 
-### 🚧 In Entwicklung
-- **[Projekt-Pipeline - Phase 8/9]** - Pipeline-Task-Integration (⏳ ACTIVE - Task-System um Stage-spezifische Workflows erweitern)
-- **[Projekt-Pipeline - Phasen 9-10/9]** - Wizard, Kanban-Board (📋 READY - Implementation Plans verfügbar)
+- **[Pipeline Task Workflow Integration](./docu_pipeline_task_workflow_integration.md)** - **✅ PHASE 8/9 ABGESCHLOSSEN (06.09.2025)** - Vollständiges Task-Workflow-System mit automatisierten Stage-Übergängen, Task-Dependencies, Critical Path Tracking, Template-System und Real-time Synchronisation (✅ **VOLLSTÄNDIG IMPLEMENTIERT** - 06.09.2025)
+- **[Projekt-Anlage-Wizard](./docu_projekt_anlage_wizard.md)** - **✅ PLAN 9/9 COMPLETED (06.09.2025)** - 4-stufiger Wizard mit Template-System, Auto-Save, Resource-Initialisierung und Success-Dashboard - **STANDARD-5-SCHRITT-WORKFLOW ERFOLGREICH ABGESCHLOSSEN** (✅ **VOLLSTÄNDIG IMPLEMENTIERT** - 06.09.2025)
+
+### 🚧 In Entwicklung  
+- **[Projekt-Pipeline - Phase 10/9]** - Kanban-Board UI (📋 READY - Implementation Plan verfügbar)
 
 ### 📝 Geplant (basierend auf Legacy-Features)
 - [ ] **AI-Assistent** - KI-gestützte Textgenerierung
@@ -115,8 +117,8 @@ Alle ursprünglichen Feature-Beschreibungen sind in `/docs/legacy-features/` ver
 
 ---
 
-**Letzte Aktualisierung:** 2025-09-05  
-**Dokumentierte Features:** 20/20+ Core-Features ✅ + **🎉 PDF-Versionierung System (ALLE 4 PHASEN VOLLSTÄNDIG ABGESCHLOSSEN)** + **🎉 Customer-Freigabe-Modernisierung ALLE 5 PHASEN ABGESCHLOSSEN** + **🎆 Pipeline-Asset-Integration ABGESCHLOSSEN (Plan 6/9)** (Campaign Editor 4.0 ✅, CRM Enhanced ✅, Verteilerlisten ✅, Library Publications ✅, Freigaben-Center ✅ **+PDF-Integration Phase 0+1+2+3+4**, **Customer-Freigabe-Modernisierung VOLLSTÄNDIG ✅**, Textbausteine ✅, Domain-Authentifizierung ✅, E-Mail-Einstellungen ✅, Team-Verwaltung ✅, Branding-Einstellungen ✅, Communication Inbox ✅, Calendar & Task Management ✅, Dashboard Übersicht ✅, PR-Kampagnen ✅, **PR-SEO Scoring System ✅ (PHASE 1, 2 & 3 KOMPLETT - KI-INTEGRATION)**, Developer Portal ✅, **Media-Library ✅ Pipeline-Asset-Integration**, Admin-Bereich 🚧, Notification-Einstellungen 🚧)  
+**Letzte Aktualisierung:** 2025-09-06  
+**Dokumentierte Features:** 22/22+ Core-Features ✅ + **🎉 PDF-Versionierung System (ALLE 4 PHASEN VOLLSTÄNDIG ABGESCHLOSSEN)** + **🎉 Customer-Freigabe-Modernisierung ALLE 5 PHASEN ABGESCHLOSSEN** + **🎆 Pipeline-Task-Workflow-Integration ABGESCHLOSSEN (Plan 8/9)** + **🎆 Projekt-Anlage-Wizard ABGESCHLOSSEN (Plan 9/9)** (Campaign Editor 4.0 ✅, CRM Enhanced ✅, Verteilerlisten ✅, Library Publications ✅, Freigaben-Center ✅ **+PDF-Integration Phase 0+1+2+3+4**, **Customer-Freigabe-Modernisierung VOLLSTÄNDIG ✅**, Textbausteine ✅, Domain-Authentifizierung ✅, E-Mail-Einstellungen ✅, Team-Verwaltung ✅, Branding-Einstellungen ✅, Communication Inbox ✅, Calendar & Task Management ✅, Dashboard Übersicht ✅, PR-Kampagnen ✅, **PR-SEO Scoring System ✅ (PHASE 1, 2 & 3 KOMPLETT - KI-INTEGRATION)**, Developer Portal ✅, **Media-Library ✅ Pipeline-Asset-Integration**, **Pipeline Task Workflow Integration ✅**, **Projekt-Anlage-Wizard ✅**, Admin-Bereich 🚧, Notification-Einstellungen 🚧)  
 **Template-Version:** 5.5 🚀 (Customer-Freigabe-Modernisierung ALLE 5 PHASEN VOLLSTÄNDIG ABGESCHLOSSEN - Service-Migration + PDF-Integration + Campaign-Integration + Multi-Service Integration + UI/UX-Modernisierung & Performance-Optimierung, 100% Gesamtfortschritt)  
 **PDF-System Status:** 🎉 **100% VOLLSTÄNDIG ABGESCHLOSSEN** (Alle 4 Phasen deployed, 8/8 Implementation Plans completed, Enterprise-Grade Production-Ready)  
 **Customer-Freigabe Status:** 🎉 **ALLE 5 PHASEN VOLLSTÄNDIG ABGESCHLOSSEN (27.08.2025)** 🚀 **PROJEKT ABGESCHLOSSEN** (Service-Migration + PDF-Integration + Campaign-Integration + Multi-Service Integration + UI/UX-Modernisierung & Performance-Optimierung komplett, 100% Gesamtfortschritt, Production-Ready)  

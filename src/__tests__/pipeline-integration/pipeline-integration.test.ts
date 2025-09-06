@@ -6,17 +6,17 @@ import '@testing-library/jest-dom';
 
 // Firebase Firestore Mocks
 const mockFirestoreOps = {
-  addDoc: jest.fn(),
-  getDoc: jest.fn(),
-  getDocs: jest.fn(),
-  updateDoc: jest.fn(),
-  deleteDoc: jest.fn(),
-  doc: jest.fn(),
-  collection: jest.fn(),
-  query: jest.fn(),
-  where: jest.fn(),
-  orderBy: jest.fn(),
-  limit: jest.fn(),
+  addDoc: jest.fn() as jest.MockedFunction<any>,
+  getDoc: jest.fn() as jest.MockedFunction<any>,
+  getDocs: jest.fn() as jest.MockedFunction<any>,
+  updateDoc: jest.fn() as jest.MockedFunction<any>,
+  deleteDoc: jest.fn() as jest.MockedFunction<any>,
+  doc: jest.fn() as jest.MockedFunction<any>,
+  collection: jest.fn() as jest.MockedFunction<any>,
+  query: jest.fn() as jest.MockedFunction<any>,
+  where: jest.fn() as jest.MockedFunction<any>,
+  orderBy: jest.fn() as jest.MockedFunction<any>,
+  limit: jest.fn() as jest.MockedFunction<any>,
   serverTimestamp: jest.fn(),
   Timestamp: { now: jest.fn(() => ({ seconds: 1234567890, nanoseconds: 0 })) }
 };

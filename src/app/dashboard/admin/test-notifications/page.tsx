@@ -174,7 +174,8 @@ export default function TestNotificationsPage() {
       TASK_OVERDUE: "Task überfällig",
       MEDIA_FIRST_ACCESS: "Media-Zugriff",
       MEDIA_DOWNLOADED: "Media Download",
-      MEDIA_LINK_EXPIRED: "Link abgelaufen"
+      MEDIA_LINK_EXPIRED: "Link abgelaufen",
+      FIRST_VIEW: "Erste Ansicht"
     };
     return titles[type];
   };

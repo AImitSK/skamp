@@ -39,12 +39,16 @@ describe('PipelinePDFViewer - Plan 2/9: Pipeline-PDF-Viewer Tests', () => {
   const baseCampaign: PRCampaign = {
     id: 'campaign-123',
     title: 'Test Kampagne für Pipeline',
-    mainContent: '<p>Hauptinhalt der Kampagne</p>',
+    contentHtml: '<p>Hauptinhalt der Kampagne</p>',
     organizationId: mockOrganizationId,
     userId: 'user-456',
     status: 'draft',
     projectId: 'project-789',
     pipelineStage: 'creation',
+    distributionListId: '',
+    distributionListName: '',
+    recipientCount: 0,
+    approvalRequired: false,
     internalPDFs: {
       enabled: true,
       versionCount: 2,
@@ -79,7 +83,7 @@ describe('PipelinePDFViewer - Plan 2/9: Pipeline-PDF-Viewer Tests', () => {
     });
 
     it('sollte Review-Stadium korrekt anzeigen', () => {
-      const campaign = { ...baseCampaign, pipelineStage: 'review' as const };
+      const campaign = { ...baseCampaign, pipelineStage: 'internal_approval' as const };
       
       render(
         <PipelinePDFViewer 
@@ -98,7 +102,7 @@ describe('PipelinePDFViewer - Plan 2/9: Pipeline-PDF-Viewer Tests', () => {
     });
 
     it('sollte Approval-Stadium korrekt anzeigen', () => {
-      const campaign = { ...baseCampaign, pipelineStage: 'approval' as const };
+      const campaign = { ...baseCampaign, pipelineStage: 'customer_approval' as const };
       
       render(
         <PipelinePDFViewer 

@@ -30,7 +30,7 @@ describe('Plan 3/9: 100% Coverage Validation Tests', () => {
     title: 'Coverage Test Project',
     description: 'Project for testing 100% coverage',
     status: 'active',
-    currentStage: 'approval',
+    currentStage: 'customer_approval',
     customer: {
       id: 'coverage-client-123',
       name: 'Coverage Test Client',
@@ -49,7 +49,7 @@ describe('Plan 3/9: 100% Coverage Validation Tests', () => {
     status: 'draft',
     projectId: 'coverage-project-123',
     projectTitle: 'Coverage Test Project',
-    pipelineStage: 'approval',
+    pipelineStage: 'customer_approval',
     distributionListId: 'coverage-list-123',
     distributionListName: 'Coverage Test List',
     recipientCount: 25,
@@ -170,7 +170,7 @@ describe('Plan 3/9: 100% Coverage Validation Tests', () => {
           analytics: { totalViews: 0, uniqueViews: 0 },
           createdAt: Timestamp.now(),
           updatedAt: Timestamp.now(),
-        } as ApprovalEnhanced;
+        } as any;
 
         mockApprovalService.getApprovalByCampaignId.mockResolvedValue(mockApproval);
 
@@ -219,7 +219,7 @@ describe('Plan 3/9: 100% Coverage Validation Tests', () => {
           analytics: { totalViews: 0, uniqueViews: 0 },
           createdAt: Timestamp.now(),
           updatedAt: Timestamp.now(),
-        } as ApprovalEnhanced;
+        } as any;
 
         mockApprovalService.getApprovalByCampaignId.mockResolvedValue(crossTenantApproval);
 
@@ -257,7 +257,7 @@ describe('Plan 3/9: 100% Coverage Validation Tests', () => {
           analytics: { totalViews: 3, uniqueViews: 1 },
           createdAt: Timestamp.now(),
           updatedAt: Timestamp.now(),
-        } as ApprovalEnhanced;
+        } as any;
 
         mockApprovalService.getApprovalByCampaignId.mockResolvedValue(approvedApproval);
         mockProjectService.updateStage.mockResolvedValue(undefined);
@@ -295,7 +295,7 @@ describe('Plan 3/9: 100% Coverage Validation Tests', () => {
           analytics: { totalViews: 1, uniqueViews: 1 },
           createdAt: Timestamp.now(),
           updatedAt: Timestamp.now(),
-        } as ApprovalEnhanced;
+        } as any;
 
         mockApprovalService.getApprovalByCampaignId.mockResolvedValue(rejectedApproval);
 
@@ -393,7 +393,7 @@ describe('Plan 3/9: 100% Coverage Validation Tests', () => {
           analytics: { totalViews: 0, uniqueViews: 0 },
           createdAt: Timestamp.now(),
           updatedAt: Timestamp.now(),
-        } as ApprovalEnhanced;
+        } as any;
 
         mockApprovalService.getApprovalByCampaignId.mockResolvedValue(pendingApproval);
         mockProjectService.updateStage.mockRejectedValue(
@@ -427,7 +427,7 @@ describe('Plan 3/9: 100% Coverage Validation Tests', () => {
       });
 
       it('sollte alle Pipeline-Stages abdecken', async () => {
-        const stages: PipelineStage[] = ['creation', 'review', 'approval', 'distribution', 'completed'];
+        const stages: PipelineStage[] = ['creation', 'customer_approval', 'distribution', 'completed'];
         
         mockProjectService.updateStage.mockResolvedValue(undefined);
 
@@ -435,21 +435,21 @@ describe('Plan 3/9: 100% Coverage Validation Tests', () => {
           await projectService.updateStage('coverage-project-123', stage, {}, testContext);
         }
 
-        expect(mockProjectService.updateStage).toHaveBeenCalledTimes(5);
+        expect(mockProjectService.updateStage).toHaveBeenCalledTimes(4);
       });
     });
 
     describe('getProjectPipelineStatus - Alle Codepfade', () => {
       it('sollte vollständigen Pipeline-Status abdecken', async () => {
         const completeStatus = {
-          currentStage: 'approval' as PipelineStage,
+          currentStage: 'customer_approval' as PipelineStage,
           approvalStatus: 'pending' as ApprovalStatus,
           canProgress: false,
           nextStage: 'distribution' as PipelineStage,
           blockedReason: 'Kunden-Freigabe ausstehend',
         };
 
-        mockProjectService.getProjectPipelineStatus.mockResolvedValue(completeStatus);
+        mockProjectService.getProjectPipelineStatus.mockResolvedValue(completeStatus as any);
 
         const result = await projectService.getProjectPipelineStatus('coverage-project-123', testContext);
 
@@ -475,13 +475,13 @@ describe('Plan 3/9: 100% Coverage Validation Tests', () => {
 
         for (const approvalStatus of statusVariants) {
           const status = {
-            currentStage: 'approval' as PipelineStage,
+            currentStage: 'customer_approval' as PipelineStage,
             approvalStatus,
             canProgress: approvalStatus === 'approved',
             nextStage: 'distribution' as PipelineStage,
           };
 
-          mockProjectService.getProjectPipelineStatus.mockResolvedValue(status);
+          mockProjectService.getProjectPipelineStatus.mockResolvedValue(status as any);
 
           const result = await projectService.getProjectPipelineStatus('status-test-project', testContext);
           expect(result.approvalStatus).toBe(approvalStatus);
@@ -533,7 +533,7 @@ describe('Plan 3/9: 100% Coverage Validation Tests', () => {
       // Simulate concurrent operations
       const concurrentOperations = [
         projectService.updateStage('concurrent-project', 'review', {}, testContext),
-        projectService.updateStage('concurrent-project', 'approval', {}, testContext),
+        projectService.updateStage('concurrent-project', 'customer_approval', {}, testContext),
         projectService.getProjectPipelineStatus('concurrent-project', testContext),
       ];
 
@@ -541,7 +541,7 @@ describe('Plan 3/9: 100% Coverage Validation Tests', () => {
       mockProjectService.getProjectPipelineStatus.mockResolvedValue({
         currentStage: 'review',
         canProgress: true,
-        nextStage: 'approval',
+        nextStage: 'customer_approval',
       } as any);
 
       const results = await Promise.allSettled(concurrentOperations);
@@ -653,7 +653,7 @@ describe('Plan 3/9: 100% Coverage Validation Tests', () => {
 
       mockApprovalService.createCustomerApproval.mockResolvedValue('perf-approval');
       mockProjectService.getProjectPipelineStatus.mockResolvedValue({
-        currentStage: 'approval',
+        currentStage: 'customer_approval',
         canProgress: true,
         nextStage: 'distribution',
       } as any);
@@ -747,7 +747,7 @@ describe('Plan 3/9: 100% Coverage Validation Tests', () => {
         }
 
         mockProjectService.getProjectPipelineStatus.mockResolvedValue({
-          currentStage: 'approval',
+          currentStage: 'customer_approval',
           canProgress: testCase.shouldAllowProgress,
           approvalStatus: testCase.hasApproval ? (testCase.isApproved ? 'approved' : 'pending') : null,
         } as any);

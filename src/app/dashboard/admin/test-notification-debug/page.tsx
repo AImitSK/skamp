@@ -182,7 +182,7 @@ export default function NotificationDebugPage() {
             <Button 
               onClick={testChangesRequested}
               disabled={loading}
-              color="blue"
+              color="primary"
             >
               🧪 Test CHANGES_REQUESTED
             </Button>
@@ -190,7 +190,7 @@ export default function NotificationDebugPage() {
             <Button 
               onClick={testFirstView}
               disabled={loading}
-              color="green"  
+              color="secondary"  
             >
               🧪 Test FIRST_VIEW
             </Button>

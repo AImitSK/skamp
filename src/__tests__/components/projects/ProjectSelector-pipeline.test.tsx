@@ -45,7 +45,7 @@ describe('ProjectSelector - Plan 2/9: Pipeline Project-Selector Tests', () => {
     organizationId: mockOrganizationId,
     userId: 'creator-2',
     status: 'active',
-    currentStage: 'review',
+    currentStage: 'internal_approval',
     customer: {
       id: mockClientId,
       name: 'Alpha Client GmbH'
@@ -61,7 +61,7 @@ describe('ProjectSelector - Plan 2/9: Pipeline Project-Selector Tests', () => {
     organizationId: mockOrganizationId,
     userId: 'creator-3',
     status: 'active',
-    currentStage: 'approval',
+    currentStage: 'customer_approval',
     // customer: undefined, // Kein Kunde
     linkedCampaigns: [],
     createdAt: Timestamp.now(),
@@ -77,8 +77,7 @@ describe('ProjectSelector - Plan 2/9: Pipeline Project-Selector Tests', () => {
     currentStage: 'creation',
     customer: {
       id: 'different-client-789',
-      name: 'Beta Client AG',
-      email: 'info@beta-client.com'
+      name: 'Beta Client AG'
     },
     linkedCampaigns: [],
     createdAt: Timestamp.now(),

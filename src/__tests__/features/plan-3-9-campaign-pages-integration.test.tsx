@@ -83,7 +83,7 @@ describe('Plan 3/9: Campaign Pages Pipeline Integration', () => {
     title: 'Pipeline Integration Project',
     description: 'Test project for pipeline approval integration',
     status: 'active',
-    currentStage: 'approval',
+    currentStage: 'customer_approval',
     customer: {
       id: 'client-123',
       name: 'Test Client GmbH',
@@ -105,7 +105,7 @@ describe('Plan 3/9: Campaign Pages Pipeline Integration', () => {
     status: 'draft',
     projectId: 'project-123',
     projectTitle: 'Pipeline Integration Project',
-    pipelineStage: 'approval',
+    pipelineStage: 'customer_approval',
     distributionListId: 'list-123',
     distributionListName: 'Test List',
     recipientCount: 50,
@@ -191,8 +191,8 @@ describe('Plan 3/9: Campaign Pages Pipeline Integration', () => {
     it('sollte Pipeline-Stage-Badges korrekt anzeigen', () => {
       const stages: { stage: PipelineStage; label: string; color: string }[] = [
         { stage: 'creation', label: 'Erstellung', color: 'blue' },
-        { stage: 'review', label: 'Review', color: 'amber' },
-        { stage: 'approval', label: 'Freigabe', color: 'orange' },
+        { stage: 'internal_approval', label: 'Review', color: 'amber' },
+        { stage: 'customer_approval', label: 'Freigabe', color: 'orange' },
         { stage: 'distribution', label: 'Verteilung', color: 'green' },
         { stage: 'completed', label: 'Abgeschlossen', color: 'zinc' },
       ];
@@ -202,7 +202,7 @@ describe('Plan 3/9: Campaign Pages Pipeline Integration', () => {
         
         const { rerender } = render(
           <ProjectLinkBanner 
-            campaign={stageCamera}
+            campaign={stageCampaign}
             onProjectUpdate={jest.fn()}
           />
         );

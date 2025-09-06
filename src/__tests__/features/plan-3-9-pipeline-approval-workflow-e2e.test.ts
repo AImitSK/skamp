@@ -31,7 +31,7 @@ describe('Plan 3/9: Pipeline-Approval Workflow End-to-End Tests', () => {
     title: 'E2E Test Project',
     description: 'End-to-end test project for pipeline approval workflow',
     status: 'active',
-    currentStage: 'approval',
+    currentStage: 'customer_approval',
     customer: {
       id: 'client-123',
       name: 'E2E Test Client GmbH',
@@ -52,7 +52,7 @@ describe('Plan 3/9: Pipeline-Approval Workflow End-to-End Tests', () => {
     status: 'draft',
     projectId: 'project-123',
     projectTitle: 'E2E Test Project',
-    pipelineStage: 'approval',
+    pipelineStage: 'customer_approval',
     distributionListId: 'list-123',
     distributionListName: 'E2E Test List',
     recipientCount: 100,
@@ -106,7 +106,7 @@ describe('Plan 3/9: Pipeline-Approval Workflow End-to-End Tests', () => {
       );
 
       // Step 3: Approval-Completion Simulation
-      const completedApproval: ApprovalEnhanced = {
+      const completedApproval = {
         id: approvalId,
         organizationId: 'test-org-123',
         projectId: 'project-123',
@@ -135,7 +135,7 @@ describe('Plan 3/9: Pipeline-Approval Workflow End-to-End Tests', () => {
         analytics: { totalViews: 3, uniqueViews: 1 },
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
-      } as ApprovalEnhanced;
+      } as any;
 
       mockApprovalService.getApprovalByCampaignId.mockResolvedValue(completedApproval);
 
@@ -181,7 +181,7 @@ describe('Plan 3/9: Pipeline-Approval Workflow End-to-End Tests', () => {
       mockProjectService.getById.mockResolvedValue(brandedProject as any);
       mockPRService.getById.mockResolvedValue(mockCampaign);
 
-      const mockApproval: ApprovalEnhanced = {
+      const mockApproval = {
         id: 'branded-approval-123',
         organizationId: 'test-org-123',
         projectId: 'project-123',
@@ -195,7 +195,7 @@ describe('Plan 3/9: Pipeline-Approval Workflow End-to-End Tests', () => {
         analytics: { totalViews: 0, uniqueViews: 0 },
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
-      } as ApprovalEnhanced;
+      } as any;
 
       mockApprovalService.createCustomerApproval.mockResolvedValue('branded-approval-123');
 
@@ -220,7 +220,7 @@ describe('Plan 3/9: Pipeline-Approval Workflow End-to-End Tests', () => {
 
     it('sollte Auto-Stage-Übergang nach Genehmigung durchführen', async () => {
       // Simulate the full approval and auto-transition workflow
-      const pendingApproval: ApprovalEnhanced = {
+      const pendingApproval = {
         id: 'auto-transition-approval',
         organizationId: 'test-org-123',
         projectId: 'project-123',
@@ -242,7 +242,7 @@ describe('Plan 3/9: Pipeline-Approval Workflow End-to-End Tests', () => {
         analytics: { totalViews: 0, uniqueViews: 0 },
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
-      } as ApprovalEnhanced;
+      } as any;
 
       mockApprovalService.getByShareId.mockResolvedValue(pendingApproval);
       mockApprovalService.submitDecision.mockImplementation(async (shareId, email, decision) => {
@@ -298,7 +298,7 @@ describe('Plan 3/9: Pipeline-Approval Workflow End-to-End Tests', () => {
         analytics: { totalViews: 1, uniqueViews: 1 },
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
-      } as ApprovalEnhanced;
+      } as any;
 
       mockApprovalService.getApprovalByCampaignId.mockResolvedValue(approvedApproval);
       
@@ -404,7 +404,7 @@ describe('Plan 3/9: Pipeline-Approval Workflow End-to-End Tests', () => {
         status: 'pending',
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
-      } as ApprovalEnhanced;
+      } as any;
 
       mockProjectService.getById.mockResolvedValue(multiStageProject);
       mockApprovalService.getApprovalByCampaignId.mockResolvedValue(multiStageApproval);
@@ -434,7 +434,7 @@ describe('Plan 3/9: Pipeline-Approval Workflow End-to-End Tests', () => {
         history: [],
         analytics: { totalViews: 5, uniqueViews: 2 },
         updatedAt: Timestamp.now(),
-      } as ApprovalEnhanced;
+      } as any;
 
       mockProjectService.getById.mockResolvedValue(timedProject);
       mockApprovalService.getApprovalByCampaignId.mockResolvedValue(timedApproval);
@@ -442,7 +442,7 @@ describe('Plan 3/9: Pipeline-Approval Workflow End-to-End Tests', () => {
       const pipelineStatus = await projectService.getProjectPipelineStatus('project-123', mockContext);
 
       expect(pipelineStatus).toEqual({
-        currentStage: 'approval',
+        currentStage: 'customer_approval',
         approvalStatus: 'pending',
         canProgress: false,
         nextStage: 'distribution',
@@ -617,7 +617,7 @@ describe('Plan 3/9: Pipeline-Approval Workflow End-to-End Tests', () => {
 
       mockProjectService.getById.mockResolvedValue(mockProject);
       mockProjectService.getProjectPipelineStatus.mockResolvedValue({
-        currentStage: 'approval',
+        currentStage: 'customer_approval',
         canProgress: true,
         nextStage: 'distribution',
       });

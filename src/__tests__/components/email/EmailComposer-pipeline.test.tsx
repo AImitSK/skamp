@@ -252,7 +252,7 @@ describe('EmailComposer Pipeline-Integration Tests', () => {
           distributionStatus: {
             status,
             recipientCount: 100,
-            successCount: status === 'sent' ? 100 : 0,
+            successCount: status === 'sending' ? 100 : 0,
             failureCount: status === 'failed' ? 100 : 0,
             distributionId: `dist_${status}_123`
           }
@@ -626,7 +626,7 @@ describe('EmailComposer Pipeline-Integration Tests', () => {
         ...baseCampaign,
         projectId: 'project-wrong-stage',
         projectTitle: 'Wrong Stage Project',
-        pipelineStage: 'planning' // Nicht 'distribution'
+        pipelineStage: 'ideas_planning' // Nicht 'distribution'
       };
 
       render(

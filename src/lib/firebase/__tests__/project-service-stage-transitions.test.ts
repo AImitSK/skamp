@@ -557,7 +557,7 @@ describe('projectService - Stage Transitions Tests', () => {
       );
 
       // Verifiziere dass das Datum in der Zukunft liegt
-      const updateCall = mockTaskService.update.mock.calls.find(call => call[0] === 'test-task');
+      const updateCall = mockTaskService.update.mock.calls.find((call: any) => call[0] === 'test-task');
       const dueDate = updateCall[1].dueDate.toDate();
       expect(dueDate.getTime()).toBeGreaterThan(beforeScheduling.getTime());
     });

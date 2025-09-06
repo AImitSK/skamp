@@ -1214,7 +1214,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
       )}
       
       {/* ✅ PIPELINE-APPROVAL BANNER (Plan 3/9) */}
-      {!loading && existingCampaign?.projectId && existingCampaign.pipelineStage === 'approval' && (
+      {!loading && existingCampaign?.projectId && existingCampaign.pipelineStage === 'customer_approval' && (
         <div className="mb-6 border border-orange-200 rounded-lg bg-orange-50">
           <div className="p-4">
             <div className="flex items-center gap-2 mb-3">
@@ -1258,7 +1258,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                   </div>
                   <div className="flex items-center gap-2">
                     <Button 
-                      size="sm" 
                       plain 
                       onClick={() => window.open(`/dashboard/approvals/${projectApproval.id}`)}
                     >
@@ -1266,7 +1265,6 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
                     </Button>
                     {projectApproval.shareId && (
                       <Button 
-                        size="sm" 
                         plain 
                         onClick={() => window.open(`/freigabe/${projectApproval.shareId}`)}
                       >

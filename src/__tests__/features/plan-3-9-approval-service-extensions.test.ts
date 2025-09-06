@@ -99,7 +99,7 @@ describe('Plan 3/9: ApprovalService Pipeline Extensions', () => {
     title: 'Test Project',
     description: 'Test project for pipeline integration',
     status: 'active',
-    currentStage: 'approval',
+    currentStage: 'customer_approval',
     customer: {
       id: 'client-123',
       name: 'Test Client GmbH',
@@ -117,24 +117,24 @@ describe('Plan 3/9: ApprovalService Pipeline Extensions', () => {
     projectTitle: 'Test Project',
     clientId: 'client-123',
     clientName: 'Test Client GmbH',
-    type: 'customer_only',
+    // type: 'customer_only', // Removed invalid property
     status: 'pending',
     recipients: [
       {
         id: 'recipient-1',
-        type: 'customer',
+        // type: 'customer', // This property doesn't exist in ApprovalRecipient
         email: 'client@testcompany.com',
         name: 'Client Contact',
         status: 'pending',
         notificationsSent: 0,
         order: 0,
-      },
+      } as any,
     ],
     workflow: {
       currentStage: 'customer',
       stages: ['customer'],
       isMultiStage: false,
-    },
+    } as any,
   };
 
   beforeEach(() => {
@@ -530,7 +530,7 @@ describe('Plan 3/9: ApprovalService Pipeline Extensions', () => {
 
       mockProjectService.getById.mockResolvedValue(mockProject);
       mockProjectService.getProjectPipelineStatus.mockResolvedValue({
-        currentStage: 'approval',
+        currentStage: 'customer_approval',
         approvalStatus: null,
         canProgress: true,
         nextStage: 'distribution',

@@ -4,16 +4,19 @@ import type { ProjectMilestone } from './pr';
 
 // ✅ Pipeline-Stage direkt hier definieren für bessere Type-Sicherheit
 export type PipelineStage = 
-  | 'ideas_planning'      // Ideen & Planung (NEU Plan 8/9)
-  | 'planning'           // Legacy Planning (für Tests)
+  | 'ideas_planning'      // Ideen & Planung
   | 'creation'           // Erstellung-Phase
-  | 'review'             // Review-Phase (für Tests)
-  | 'approval'           // Legacy Approval (für Tests)
-  | 'internal_approval'  // Interne Freigabe (NEU Plan 8/9)
-  | 'customer_approval'  // Kunden-Freigabe (NEU Plan 8/9)
+  | 'internal_approval'  // Interne Freigabe
+  | 'customer_approval'  // Kunden-Freigabe
   | 'distribution'       // Verteilung-Phase
-  | 'monitoring'         // Monitoring-Phase (Plan 5/9)
+  | 'monitoring'         // Monitoring-Phase
   | 'completed';         // Abgeschlossen
+
+// Legacy Stage-Namen für Rückwärtskompatibilität in Tests
+export type LegacyPipelineStage = 
+  | 'planning'           // Legacy: maps to 'ideas_planning'
+  | 'review'             // Legacy: maps to 'internal_approval'  
+  | 'approval'           // Legacy: maps to 'customer_approval'
 
 export interface Project {
   id?: string;
@@ -141,6 +144,43 @@ export interface Project {
     integrityIssues?: string[];         // Aktuelle Integritäts-Probleme
   };
   
+  // ========================================
+  // PLAN 9/9: PROJEKT-ANLAGE-WIZARD
+  // ========================================
+  
+  // Creation-Kontext für Wizard-erstellte Projekte
+  creationContext?: {
+    createdViaWizard: boolean;
+    templateId?: string;
+    templateName?: string;
+    wizardVersion: string;
+    stepsCompleted: string[];
+    initialConfiguration: {
+      autoCreateCampaign: boolean;
+      autoAssignAssets: boolean;
+      autoCreateTasks: boolean;
+      selectedTemplate?: string;
+    };
+  };
+  
+  // Setup-Status für Wizard-Nachverfolgung
+  setupStatus?: {
+    campaignLinked: boolean;
+    assetsAttached: boolean;
+    tasksCreated: boolean;
+    teamNotified: boolean;
+    initialReviewComplete: boolean;
+  };
+  
+  // Template-basierte Konfiguration
+  templateConfig?: {
+    appliedTemplateId: string;
+    templateVersion: string;
+    customizations: Record<string, any>;
+    inheritedTasks: string[];
+    inheritedDeadlines: string[];
+  };
+
   // ========================================
   // PLAN 7/9: KOMMUNIKATIONS-FEATURES
   // ========================================
@@ -387,4 +427,196 @@ export interface ProjectAssetValidation {
     campaignTitle: string;
     assetIssues: any; // AssetValidationResult from pr.ts
   }>;
+}
+
+// ========================================
+// PLAN 9/9: WIZARD-SPECIFIC INTERFACES
+// ========================================
+
+export type ProjectPriority = 'low' | 'medium' | 'high' | 'urgent';
+export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+
+// Wizard Data Interface
+export interface ProjectCreationWizardData {
+  // Step 1: Basis-Informationen
+  title: string;
+  description?: string;
+  clientId: string;
+  priority: ProjectPriority;
+  color?: string;
+  tags: string[];
+  
+  // Step 2: Team & Verantwortung
+  assignedTeamMembers: string[];
+  projectManager?: string;
+  
+  // Step 3: Template & Setup
+  templateId?: string;
+  customTasks?: Omit<ProjectTask, 'id'>[];
+  startDate?: Date;
+  
+  // Step 4: Sofortige Aktionen
+  createCampaignImmediately: boolean;
+  campaignTitle?: string;
+  initialAssets: string[];
+  distributionLists: string[];
+  
+  // Wizard-Meta
+  completedSteps: number[];
+  currentStep: number;
+}
+
+// Project Creation Result
+export interface ProjectCreationResult {
+  success: boolean;
+  projectId: string;
+  project: Project;
+  
+  // Optional erstellte Ressourcen
+  campaignId?: string;
+  campaign?: any; // PRCampaign
+  tasksCreated: string[];
+  assetsAttached: number;
+  
+  // Feedback
+  warnings: string[];
+  infos: string[];
+  nextSteps: string[];
+}
+
+// Project Creation Options für Wizard
+export interface ProjectCreationOptions {
+  availableClients: Array<{
+    id: string;
+    name: string;
+    type: string;
+    contactCount: number;
+  }>;
+  
+  availableTeamMembers: Array<{
+    id: string;
+    displayName: string;
+    email: string;
+    role: string;
+    avatar?: string;
+  }>;
+  
+  availableTemplates: Array<{
+    id: string;
+    name: string;
+    description: string;
+    taskCount: number;
+    category: string;
+  }>;
+  
+  availableDistributionLists: Array<{
+    id: string;
+    name: string;
+    contactCount: number;
+  }>;
+}
+
+// Validation Result
+export interface ValidationResult {
+  isValid: boolean;
+  errors: Record<string, string>;
+}
+
+// Resource Initialization
+export interface ResourceInitializationOptions {
+  createCampaign: boolean;
+  campaignTitle?: string;
+  attachAssets: string[];
+  linkDistributionLists: string[];
+  createTasks: boolean;
+  notifyTeam: boolean;
+}
+
+export interface ResourceInitializationResult {
+  campaignCreated: boolean;
+  campaignId?: string;
+  assetsAttached: number;
+  listsLinked: number;
+  tasksGenerated: number;
+  teamNotified: boolean;
+  errors?: string[];
+}
+
+// Project Task Interface für Template System
+export interface ProjectTask {
+  id: string;
+  title: string;
+  description?: string;
+  category: string;
+  stage: PipelineStage;
+  priority: TaskPriority;
+  assignedTo?: string;
+  dueDate?: Date;
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  requiredForStageCompletion: boolean;
+  dependencies?: string[]; // Task IDs
+  estimatedHours?: number;
+  actualHours?: number;
+  tags?: string[];
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+// Project Template Interface
+export interface ProjectTemplate {
+  id: string;
+  name: string;
+  description: string;
+  category: 'standard' | 'custom' | 'industry';
+  
+  // Template-Konfiguration
+  defaultTasks: Array<{
+    title: string;
+    category: string;
+    stage: PipelineStage;
+    priority: TaskPriority;
+    daysAfterStart: number;
+    assignmentRule?: 'project_manager' | 'team_lead' | 'auto';
+    requiredForStageCompletion: boolean;
+  }>;
+  
+  defaultDeadlines: Array<{
+    title: string;
+    stage: PipelineStage;
+    daysAfterStart: number;
+    type: 'milestone' | 'deadline' | 'reminder';
+  }>;
+  
+  defaultConfiguration: {
+    autoCreateCampaign: boolean;
+    defaultPriority: ProjectPriority;
+    recommendedTeamSize: number;
+    estimatedDuration: number; // in days
+  };
+  
+  // Metadaten
+  usageCount: number;
+  organizationId?: string; // null für Standard-Templates
+  createdBy?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+// Template Application Result
+export interface TemplateApplicationResult {
+  success: boolean;
+  tasksCreated: string[];
+  deadlinesCreated: string[];
+  configurationApplied: Record<string, any>;
+  errors?: string[];
+}
+
+// Template Creation Data
+export interface CreateTemplateData {
+  name: string;
+  description: string;
+  category: 'custom' | 'industry';
+  defaultTasks: ProjectTemplate['defaultTasks'];
+  defaultDeadlines: ProjectTemplate['defaultDeadlines'];
+  defaultConfiguration: ProjectTemplate['defaultConfiguration'];
 }

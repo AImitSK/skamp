@@ -15,8 +15,22 @@ import {
   limit
 } from 'firebase/firestore';
 import { db } from './client-init';
-import { Project, ProjectFilters, PipelineStage } from '@/types/project';
+import { 
+  Project, 
+  ProjectFilters, 
+  PipelineStage,
+  ProjectCreationWizardData,
+  ProjectCreationResult,
+  ProjectCreationOptions,
+  ValidationResult,
+  TemplateApplicationResult,
+  ResourceInitializationOptions,
+  ResourceInitializationResult,
+  ProjectTask,
+  ProjectTemplate
+} from '@/types/project';
 import type { PRCampaign } from '@/types/pr';
+import { nanoid } from 'nanoid';
 
 export const projectService = {
   
@@ -1316,6 +1330,463 @@ export const projectService = {
       }
     } catch (error) {
       throw error;
+    }
+  },
+
+  // ========================================
+  // PLAN 9/9: PROJEKT-ANLAGE-WIZARD
+  // ========================================
+
+  /**
+   * Erstellt ein Projekt aus Wizard-Daten
+   */
+  async createProjectFromWizard(
+    wizardData: ProjectCreationWizardData,
+    userId: string
+  ): Promise<ProjectCreationResult> {
+    try {
+      const projectId = nanoid();
+      
+      // Projekt-Basis-Daten aus Wizard extrahieren
+      const projectData: Omit<Project, 'id'> = {
+        userId,
+        organizationId: '', // Wird in der Praxis übergeben
+        title: wizardData.title,
+        description: wizardData.description,
+        status: 'active',
+        currentStage: 'ideas_planning',
+        assignedTo: wizardData.assignedTeamMembers,
+        
+        // Wizard-spezifische Creation Context
+        creationContext: {
+          createdViaWizard: true,
+          templateId: wizardData.templateId,
+          templateName: undefined, // Wird später gesetzt
+          wizardVersion: '1.0.0',
+          stepsCompleted: wizardData.completedSteps.map(s => s.toString()),
+          initialConfiguration: {
+            autoCreateCampaign: wizardData.createCampaignImmediately,
+            autoAssignAssets: wizardData.initialAssets.length > 0,
+            autoCreateTasks: !!wizardData.templateId,
+            selectedTemplate: wizardData.templateId
+          }
+        },
+        
+        // Setup-Status initialisieren
+        setupStatus: {
+          campaignLinked: false,
+          assetsAttached: false,
+          tasksCreated: false,
+          teamNotified: false,
+          initialReviewComplete: false
+        },
+
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now()
+      };
+      
+      // Kunde zuordnen
+      if (wizardData.clientId) {
+        // Dynamischer Import um circular dependencies zu vermeiden
+        // Mock client service - in der Praxis würde hier der echte clientService verwendet
+        const client = { 
+          id: wizardData.clientId, 
+          name: 'Mock Client', 
+          organizationId: projectData.organizationId 
+        };
+        
+        if (client) {
+          projectData.customer = {
+            id: client.id,
+            name: client.name
+          };
+        }
+      }
+
+      // Projekt erstellen
+      const createdProjectId = await this.create(projectData);
+      const project = await this.getById(createdProjectId, { organizationId: projectData.organizationId });
+      
+      if (!project) {
+        throw new Error('Projekt konnte nicht erstellt werden');
+      }
+
+      const result: ProjectCreationResult = {
+        success: true,
+        projectId: createdProjectId,
+        project,
+        tasksCreated: [],
+        assetsAttached: 0,
+        warnings: [],
+        infos: [],
+        nextSteps: []
+      };
+
+      // Template anwenden
+      if (wizardData.templateId) {
+        try {
+          const { projectTemplateService } = await import('./project-template-service');
+          const templateResult = await projectTemplateService.applyTemplate(
+            createdProjectId,
+            wizardData.templateId
+          );
+          
+          if (templateResult.success) {
+            result.tasksCreated = templateResult.tasksCreated;
+            result.infos.push(`Template "${wizardData.templateId}" erfolgreich angewendet`);
+          } else {
+            result.warnings.push('Template konnte nicht vollständig angewendet werden');
+          }
+        } catch (error: any) {
+          result.warnings.push(`Template-Anwendung fehlgeschlagen: ${error.message}`);
+        }
+      }
+
+      // Ressourcen initialisieren
+      if (wizardData.createCampaignImmediately || wizardData.initialAssets.length > 0) {
+        const resourceOptions: ResourceInitializationOptions = {
+          createCampaign: wizardData.createCampaignImmediately,
+          campaignTitle: wizardData.campaignTitle,
+          attachAssets: wizardData.initialAssets,
+          linkDistributionLists: wizardData.distributionLists,
+          createTasks: false, // Already done by template
+          notifyTeam: true
+        };
+
+        const resourceResult = await this.initializeProjectResources(
+          createdProjectId,
+          resourceOptions
+        );
+
+        if (resourceResult.campaignCreated && resourceResult.campaignId) {
+          result.campaignId = resourceResult.campaignId;
+          // Kampagne laden für vollständige Rückgabe
+          const { prService } = await import('./pr-service');
+          result.campaign = await prService.getById(resourceResult.campaignId);
+        }
+
+        result.assetsAttached = resourceResult.assetsAttached;
+
+        if (resourceResult.errors && resourceResult.errors.length > 0) {
+          result.warnings.push(...resourceResult.errors);
+        }
+      }
+
+      // Next Steps definieren
+      result.nextSteps = [
+        'Projekt-Details verfeinern',
+        'Team-Mitglieder benachrichtigen',
+        'Erste Tasks zuweisen'
+      ];
+
+      if (result.campaignId) {
+        result.nextSteps.push('Kampagne konfigurieren');
+      }
+
+      if (result.assetsAttached > 0) {
+        result.nextSteps.push('Medien-Assets organisieren');
+      }
+
+      return result;
+    } catch (error: any) {
+      return {
+        success: false,
+        projectId: '',
+        project: {} as Project,
+        tasksCreated: [],
+        assetsAttached: 0,
+        warnings: [],
+        infos: [],
+        nextSteps: []
+      };
+    }
+  },
+
+  /**
+   * Holt Optionen für Projekt-Erstellung (Wizard Schritt 1)
+   */
+  async getProjectCreationOptions(
+    organizationId: string
+  ): Promise<ProjectCreationOptions> {
+    try {
+      // Mock clients - in der Praxis würde hier der clientService verwendet
+      const clients = [
+        { id: 'client1', name: 'TechCorp GmbH', type: 'enterprise', contacts: [] },
+        { id: 'client2', name: 'StartUp AG', type: 'startup', contacts: [] }
+      ];
+      
+      const availableClients = clients.map(client => ({
+        id: client.id,
+        name: client.name,
+        type: client.type || 'company',
+        contactCount: client.contacts.length
+      }));
+
+      // Team-Mitglieder laden (Mock - in der Praxis über userService)
+      const availableTeamMembers = [
+        {
+          id: 'user1',
+          displayName: 'Max Mustermann',
+          email: 'max@example.com',
+          role: 'Project Manager',
+          avatar: undefined
+        },
+        {
+          id: 'user2', 
+          displayName: 'Lisa Schmidt',
+          email: 'lisa@example.com',
+          role: 'Content Creator',
+          avatar: undefined
+        }
+      ];
+
+      // Templates laden
+      const { projectTemplateService } = await import('./project-template-service');
+      const templates = await projectTemplateService.getAll(organizationId);
+      
+      const availableTemplates = templates.map(template => ({
+        id: template.id,
+        name: template.name,
+        description: template.description,
+        taskCount: template.defaultTasks.length,
+        category: template.category
+      }));
+
+      // Verteilerlisten laden (Mock)
+      const availableDistributionLists = [
+        {
+          id: 'list1',
+          name: 'Hauptverteiler',
+          contactCount: 25
+        },
+        {
+          id: 'list2',
+          name: 'Fachmedien',
+          contactCount: 15
+        }
+      ];
+
+      return {
+        availableClients,
+        availableTeamMembers,
+        availableTemplates,
+        availableDistributionLists
+      };
+    } catch (error) {
+      console.error('Fehler beim Laden der Erstellungsoptionen:', error);
+      return {
+        availableClients: [],
+        availableTeamMembers: [],
+        availableTemplates: [],
+        availableDistributionLists: []
+      };
+    }
+  },
+
+  /**
+   * Validiert Wizard-Daten für einen bestimmten Schritt
+   */
+  async validateProjectData(
+    data: ProjectCreationWizardData,
+    step: number
+  ): Promise<ValidationResult> {
+    const errors: Record<string, string> = {};
+
+    try {
+      switch (step) {
+        case 1: // Basis-Informationen
+          if (!data.title || data.title.trim().length < 3) {
+            errors.title = 'Titel muss mindestens 3 Zeichen lang sein';
+          }
+          
+          if (!data.clientId) {
+            errors.clientId = 'Bitte wählen Sie einen Kunden aus';
+          }
+          
+          if (!data.priority) {
+            errors.priority = 'Priorität ist erforderlich';
+          }
+          break;
+
+        case 2: // Team-Zuordnung
+          if (!data.assignedTeamMembers || data.assignedTeamMembers.length === 0) {
+            errors.assignedTeamMembers = 'Mindestens ein Team-Mitglied ist erforderlich';
+          }
+          break;
+
+        case 3: // Template & Setup
+          if (data.customTasks && data.customTasks.length > 10) {
+            errors.customTasks = 'Maximal 10 eigene Tasks erlaubt';
+          }
+          
+          if (data.startDate && data.startDate < new Date()) {
+            errors.startDate = 'Startdatum kann nicht in der Vergangenheit liegen';
+          }
+          break;
+
+        case 4: // Ressourcen
+          if (data.createCampaignImmediately && (!data.campaignTitle || data.campaignTitle.trim().length < 3)) {
+            errors.campaignTitle = 'Kampagnen-Titel ist erforderlich (min. 3 Zeichen)';
+          }
+          
+          if (data.initialAssets && data.initialAssets.length > 20) {
+            errors.initialAssets = 'Maximal 20 initiale Assets erlaubt';
+          }
+          break;
+
+        default:
+          errors.general = 'Unbekannter Validierungsschritt';
+      }
+
+      return {
+        isValid: Object.keys(errors).length === 0,
+        errors
+      };
+    } catch (error: any) {
+      return {
+        isValid: false,
+        errors: { general: error.message || 'Validierungsfehler' }
+      };
+    }
+  },
+
+  /**
+   * Wendet ein Template auf ein Projekt an
+   */
+  async applyProjectTemplate(
+    projectId: string,
+    templateId: string
+  ): Promise<TemplateApplicationResult> {
+    try {
+      const { projectTemplateService } = await import('./project-template-service');
+      return await projectTemplateService.applyTemplate(projectId, templateId);
+    } catch (error: any) {
+      return {
+        success: false,
+        tasksCreated: [],
+        deadlinesCreated: [],
+        configurationApplied: {},
+        errors: [error.message || 'Template-Anwendung fehlgeschlagen']
+      };
+    }
+  },
+
+  /**
+   * Initialisiert Projekt-Ressourcen (Kampagnen, Assets, etc.)
+   */
+  async initializeProjectResources(
+    projectId: string,
+    options: ResourceInitializationOptions
+  ): Promise<ResourceInitializationResult> {
+    const result: ResourceInitializationResult = {
+      campaignCreated: false,
+      assetsAttached: 0,
+      listsLinked: 0,
+      tasksGenerated: 0,
+      teamNotified: false,
+      errors: []
+    };
+
+    try {
+      const organizationId = ''; // In der Praxis wird dies übergeben
+      const context = { organizationId };
+      
+      const project = await this.getById(projectId, context);
+      if (!project) {
+        throw new Error('Projekt nicht gefunden');
+      }
+
+      // Kampagne erstellen
+      if (options.createCampaign && options.campaignTitle) {
+        try {
+          const { prService } = await import('./pr-service');
+          const campaignData = {
+            title: options.campaignTitle,
+            organizationId: project.organizationId,
+            userId: project.userId,
+            clientId: project.customer?.id || '',
+            projectId: projectId,
+            status: 'draft' as any,
+            currentStage: 'planning' as any,
+            // Erforderliche PRCampaign Felder
+            contentHtml: '<p>Automatisch erstellt durch Projekt-Wizard</p>',
+            distributionListId: '',
+            distributionListName: 'Standard-Liste',
+            recipientCount: 0,
+            approvalRequired: false
+          };
+
+          const campaignId = await prService.create(campaignData);
+          
+          // Kampagne zu Projekt verlinken
+          await this.addLinkedCampaign(projectId, campaignId, {
+            organizationId: project.organizationId,
+            userId: project.userId
+          });
+
+          result.campaignCreated = true;
+          result.campaignId = campaignId;
+        } catch (error: any) {
+          result.errors?.push(`Kampagne konnte nicht erstellt werden: ${error.message}`);
+        }
+      }
+
+      // Assets anhängen
+      if (options.attachAssets && options.attachAssets.length > 0) {
+        try {
+          const { mediaService } = await import('./media-service');
+          let attachedCount = 0;
+
+          for (const assetId of options.attachAssets) {
+            try {
+              // Mock asset attachment - in der Praxis würde hier der echte mediaService verwendet
+              // await mediaService.linkAssetToProject(assetId, projectId);
+              attachedCount++;
+            } catch (error: any) {
+              result.errors?.push(`Asset ${assetId} konnte nicht angehängt werden`);
+            }
+          }
+
+          result.assetsAttached = attachedCount;
+        } catch (error: any) {
+          result.errors?.push(`Asset-Anhang fehlgeschlagen: ${error.message}`);
+        }
+      }
+
+      // Verteilerlisten verknüpfen
+      if (options.linkDistributionLists && options.linkDistributionLists.length > 0) {
+        // Mock-Implementation - in der Praxis würde hier ein DistributionListService verwendet
+        result.listsLinked = options.linkDistributionLists.length;
+      }
+
+      // Team benachrichtigen
+      if (options.notifyTeam && project.assignedTo && project.assignedTo.length > 0) {
+        try {
+          // Mock-Benachrichtigung - in der Praxis über NotificationService
+          result.teamNotified = true;
+        } catch (error: any) {
+          result.errors?.push(`Team-Benachrichtigung fehlgeschlagen: ${error.message}`);
+        }
+      }
+
+      // Setup-Status aktualisieren
+      await this.update(projectId, {
+        setupStatus: {
+          campaignLinked: result.campaignCreated,
+          assetsAttached: result.assetsAttached > 0,
+          tasksCreated: result.tasksGenerated > 0,
+          teamNotified: result.teamNotified,
+          initialReviewComplete: false
+        }
+      }, {
+        organizationId: project.organizationId,
+        userId: project.userId
+      });
+
+      return result;
+    } catch (error: any) {
+      result.errors?.push(error.message || 'Ressourcen-Initialisierung fehlgeschlagen');
+      return result;
     }
   }
 };

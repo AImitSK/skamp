@@ -817,8 +817,8 @@ export default function ApprovalPage() {
               
               // Sortierte Liste - neueste zuerst für latestMessage
               const sortedHistory = feedbackHistory.sort((a, b) => {
-                const aTime = a.requestedAt?.toDate ? a.requestedAt.toDate().getTime() : (a.requestedAt instanceof Date ? a.requestedAt.getTime() : new Date(a.requestedAt).getTime());
-                const bTime = b.requestedAt?.toDate ? b.requestedAt.toDate().getTime() : (b.requestedAt instanceof Date ? b.requestedAt.getTime() : new Date(b.requestedAt).getTime());
+                const aTime = a.requestedAt?.toDate ? a.requestedAt.toDate().getTime() : (a.requestedAt instanceof Date ? a.requestedAt.getTime() : a.requestedAt.toMillis());
+                const bTime = b.requestedAt?.toDate ? b.requestedAt.toDate().getTime() : (b.requestedAt instanceof Date ? b.requestedAt.getTime() : b.requestedAt.toMillis());
                 return bTime - aTime; // Neueste zuerst für latestMessage
               });
               
@@ -998,8 +998,8 @@ export default function ApprovalPage() {
                 
                 // Sortierte Liste - neueste zuerst für latestMessage
                 const sortedHistory = feedbackHistory.sort((a, b) => {
-                  const aTime = a.requestedAt?.toDate ? a.requestedAt.toDate().getTime() : (a.requestedAt instanceof Date ? a.requestedAt.getTime() : new Date(a.requestedAt).getTime());
-                  const bTime = b.requestedAt?.toDate ? b.requestedAt.toDate().getTime() : (b.requestedAt instanceof Date ? b.requestedAt.getTime() : new Date(b.requestedAt).getTime());
+                  const aTime = a.requestedAt?.toDate ? a.requestedAt.toDate().getTime() : (a.requestedAt instanceof Date ? a.requestedAt.getTime() : a.requestedAt.toMillis());
+                  const bTime = b.requestedAt?.toDate ? b.requestedAt.toDate().getTime() : (b.requestedAt instanceof Date ? b.requestedAt.getTime() : b.requestedAt.toMillis());
                   return bTime - aTime; // Neueste zuerst für latestMessage
                 });
                 

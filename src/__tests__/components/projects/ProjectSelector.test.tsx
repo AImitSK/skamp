@@ -5,7 +5,7 @@ import { jest } from '@jest/globals';
 import '@testing-library/jest-dom';
 
 // Mock ProjectService
-const mockProjectServiceGetAll = jest.fn();
+const mockProjectServiceGetAll = jest.fn() as jest.MockedFunction<() => Promise<any[]>>;
 
 jest.mock('@/lib/firebase/project-service', () => ({
   projectService: {
@@ -60,16 +60,8 @@ describe('ProjectSelector Component', () => {
       id: 'client-1',
       name: 'ACME Corp'
     },
-    budget: {
-      allocated: 10000,
-      spent: 2500,
-      currency: 'EUR'
-    },
-    timeline: {
-      startDate: new Date('2024-01-01'),
-      endDate: new Date('2024-06-30'),
-      milestones: []
-    },
+    budget: 10000,
+    currency: 'EUR',
     linkedCampaigns: [],
     createdAt: { seconds: 1234567890, nanoseconds: 0 } as any,
     updatedAt: { seconds: 1234567890, nanoseconds: 0 } as any
@@ -80,9 +72,8 @@ describe('ProjectSelector Component', () => {
     id: 'project-2',
     title: 'Website Relaunch',
     customer: {
-      name: 'Tech Solutions GmbH',
-      contactPerson: 'Maria Schmidt',
-      email: 'maria@techsolutions.de'
+      id: 'client-tech-solutions',
+      name: 'Tech Solutions GmbH'
     }
   };
 
@@ -227,9 +218,8 @@ describe('ProjectSelector Component', () => {
       const projectWithEmptyCustomerName = {
         ...mockProject1,
         customer: {
-          name: '',
-          contactPerson: 'John Doe',
-          email: 'john@example.com'
+          id: 'client-empty',
+          name: ''
         }
       };
       mockProjectServiceGetAll.mockResolvedValue([projectWithEmptyCustomerName]);
@@ -394,7 +384,7 @@ describe('ProjectSelector Component', () => {
         ...mockProject1,
         id: `project-${index}`,
         title: `Projekt ${index}`,
-        customer: { name: `Kunde ${index}`, contactPerson: 'Test', email: 'test@example.com' }
+        customer: { id: `client-${index}`, name: `Kunde ${index}` }
       }));
 
       mockProjectServiceGetAll.mockResolvedValue(manyProjects);
@@ -438,7 +428,7 @@ describe('ProjectSelector Component', () => {
       const projectWithLongTitle = {
         ...mockProject1,
         title: 'A'.repeat(200), // 200 Zeichen langer Titel
-        customer: { name: 'B'.repeat(100), contactPerson: 'Test', email: 'test@example.com' } // 100 Zeichen langer Kundenname
+        customer: { id: 'client-long', name: 'B'.repeat(100) } // 100 Zeichen langer Kundenname
       };
       mockProjectServiceGetAll.mockResolvedValue([projectWithLongTitle]);
 
@@ -454,7 +444,7 @@ describe('ProjectSelector Component', () => {
       const projectWithSpecialChars = {
         ...mockProject1,
         title: 'Projekt <>&"\'`',
-        customer: { name: 'Kunde <>&"\'`', contactPerson: 'Test', email: 'test@example.com' }
+        customer: { id: 'client-special', name: 'Kunde <>&"\'`' }
       };
       mockProjectServiceGetAll.mockResolvedValue([projectWithSpecialChars]);
 

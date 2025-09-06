@@ -574,7 +574,7 @@ describe('PipelineWorkflowService Tests', () => {
       };
 
       let snapshotCallback: any;
-      mockFirestore.onSnapshot.mockImplementation((query, callback) => {
+      mockFirestore.onSnapshot.mockImplementation((query: any, callback: any) => {
         snapshotCallback = callback;
         return jest.fn(); // unsubscribe function
       });

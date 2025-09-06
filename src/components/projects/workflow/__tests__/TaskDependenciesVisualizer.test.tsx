@@ -509,8 +509,8 @@ describe('TaskDependenciesVisualizer', () => {
         {
           id: 'new-task',
           title: 'New Task',
-          status: 'pending',
-          priority: 'low',
+          status: 'pending' as const,
+          priority: 'low' as const,
           userId: 'user-1',
           organizationId: 'org-1'
         }

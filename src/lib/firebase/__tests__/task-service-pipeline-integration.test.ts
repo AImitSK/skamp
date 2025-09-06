@@ -313,7 +313,7 @@ describe('taskService - Pipeline Integration Tests', () => {
 
       const mockTaskIds = ['created-task-1', 'created-task-2'];
       let callCount = 0;
-      jest.spyOn(taskService, 'create').mockImplementation(async (taskData) => {
+      jest.spyOn(taskService, 'create').mockImplementation(async (taskData: any) => {
         expect(taskData.title).toBe(templates[callCount].title);
         expect(taskData.priority).toBe(templates[callCount].priority);
         expect(taskData.linkedProjectId).toBe(testProjectId);

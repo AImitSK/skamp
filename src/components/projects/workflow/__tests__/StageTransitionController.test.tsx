@@ -476,8 +476,8 @@ describe('StageTransitionController', () => {
       const user = userEvent.setup();
       let resolveFn: () => void;
       
-      mockProps.onStageTransition.mockImplementation(() => 
-        new Promise(resolve => { resolveFn = resolve; })
+      mockProps.onStageTransition.mockImplementation((_stage) => 
+        new Promise<void>(resolve => { resolveFn = resolve; })
       );
 
       const { unmount } = render(<StageTransitionController {...mockProps} />);
