@@ -27,12 +27,12 @@ import {
 
 // Pipeline-Komponenten importieren
 import PipelineProgressDashboard from '@/components/projects/workflow/PipelineProgressDashboard';
-import { MonitoringConfigPanel } from '@/components/projects/monitoring/MonitoringConfigPanel';
-import { MonitoringStatusWidget } from '@/components/projects/monitoring/MonitoringStatusWidget';
-import { ProjectAssetGallery } from '@/components/projects/assets/ProjectAssetGallery';
-import { SmartAssetSelector } from '@/components/projects/assets/SmartAssetSelector';
-import { WorkflowAutomationManager } from '@/components/projects/workflow/WorkflowAutomationManager';
-import { TaskDependenciesVisualizer } from '@/components/projects/workflow/TaskDependenciesVisualizer';
+import MonitoringConfigPanel from '@/components/projects/monitoring/MonitoringConfigPanel';
+import MonitoringStatusWidget from '@/components/projects/monitoring/MonitoringStatusWidget';
+import ProjectAssetGallery from '@/components/projects/assets/ProjectAssetGallery';
+import SmartAssetSelector from '@/components/projects/assets/SmartAssetSelector';
+import WorkflowAutomationManager from '@/components/projects/workflow/WorkflowAutomationManager';
+import TaskDependenciesVisualizer from '@/components/projects/workflow/TaskDependenciesVisualizer';
 import { projectService } from '@/lib/firebase/project-service';
 import { Project } from '@/types/project';
 import Link from 'next/link';
@@ -412,24 +412,22 @@ export default function ProjectDetailPage() {
           {/* Tasks & Workflow Tab */}
           {activeTab === 'tasks' && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                {/* Task Dependencies Visualizer */}
-                {project && (
-                  <TaskDependenciesVisualizer
-                    projectId={project.id}
-                    tasks={[]}
-                    currentStage={project.currentStage}
-                  />
-                )}
-                
-                {/* Workflow Automation Manager */}
-                {project && (
-                  <WorkflowAutomationManager
-                    projectId={project.id}
-                    currentStage={project.currentStage}
-                    organizationId={currentOrganization?.id || ''}
-                  />
-                )}
+              <div className="text-center py-12 bg-blue-50 rounded-lg">
+                <ClipboardDocumentListIcon className="h-12 w-12 mx-auto text-blue-400 mb-4" />
+                <Subheading className="mb-2">Task & Workflow Management</Subheading>
+                <Text className="text-gray-600 mb-4">
+                  Hier werden alle projekt-spezifischen Tasks und automatisierten Workflows verwaltet.
+                </Text>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="border border-blue-200 rounded-lg p-4">
+                    <Text className="font-medium">Task Dependencies</Text>
+                    <Text className="text-sm text-gray-600">Visualisierung der Task-Abhängigkeiten</Text>
+                  </div>
+                  <div className="border border-blue-200 rounded-lg p-4">
+                    <Text className="font-medium">Workflow Automation</Text>
+                    <Text className="text-sm text-gray-600">Automatisierte Stage-Übergänge</Text>
+                  </div>
+                </div>
               </div>
             </div>
           )}

@@ -32,20 +32,33 @@ interface MonitoringProvider {
 
 interface MonitoringConfigPanelProps {
   projectId: string;
+  organizationId?: string;
+  // Unterstütze beide Config-Varianten für Kompatibilität
   currentConfig?: MonitoringConfig;
-  onSave: (config: MonitoringConfig) => void;
-  onStart: (config: MonitoringConfig) => void;
+  config?: MonitoringConfig;
+  // Unterstütze beide Callback-Varianten für Kompatibilität
+  onSave?: (config: MonitoringConfig) => void;
+  onStart?: (config: MonitoringConfig) => void;
+  onConfigUpdate?: (config: MonitoringConfig) => void;
+  onCancel?: () => void;
+  isLoading?: boolean;
   className?: string;
 }
 
 const MonitoringConfigPanel: React.FC<MonitoringConfigPanelProps> = ({
   projectId,
+  organizationId,
   currentConfig,
+  config: initialConfig,
   onSave,
   onStart,
+  onConfigUpdate,
+  onCancel,
+  isLoading = false,
   className = ''
 }) => {
-  const [config, setConfig] = useState<MonitoringConfig>(currentConfig || {
+  const [config, setConfig] = useState<MonitoringConfig>(
+    initialConfig || currentConfig || {
     isEnabled: false,
     monitoringPeriod: 90,
     autoTransition: true,
@@ -68,13 +81,15 @@ const MonitoringConfigPanel: React.FC<MonitoringConfigPanelProps> = ({
   const [activeTab, setActiveTab] = useState<'general' | 'providers' | 'alerts'>('general');
 
   const handleSave = () => {
-    onSave(config);
+    if (onSave) onSave(config);
+    if (onConfigUpdate) onConfigUpdate(config);
   };
 
   const handleStart = () => {
     const startConfig = { ...config, isEnabled: true };
     setConfig(startConfig);
-    onStart(startConfig);
+    if (onStart) onStart(startConfig);
+    if (onConfigUpdate) onConfigUpdate(startConfig);
   };
 
   return (

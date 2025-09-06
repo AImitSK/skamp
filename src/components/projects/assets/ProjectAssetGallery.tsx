@@ -19,7 +19,11 @@ import { projectService } from '@/lib/firebase/project-service';
 import { mediaService } from '@/lib/firebase/media-service';
 
 interface ProjectAssetGalleryProps {
-  project: Project;
+  // Unterstütze beide Varianten für Kompatibilität
+  project?: Project;
+  projectId?: string;
+  organizationId?: string;
+  currentStage?: string;
   onAssetSelect?: (asset: CampaignAssetAttachment) => void;
   onAssetsChange?: () => void;
 }
@@ -37,6 +41,9 @@ interface AssetFilters {
 
 export default function ProjectAssetGallery({
   project,
+  projectId,
+  organizationId,
+  currentStage,
   onAssetSelect,
   onAssetsChange
 }: ProjectAssetGalleryProps) {
@@ -56,21 +63,28 @@ export default function ProjectAssetGallery({
   const [showFilters, setShowFilters] = useState(false);
   const [bulkActions, setBulkActions] = useState(false);
 
+  // Kompatibilitätsschicht: erstelle ein mock project-Objekt falls nur projectId vorhanden
+  const activeProject = project || (projectId ? {
+    id: projectId,
+    currentStage: currentStage || 'creation',
+    organizationId: organizationId || ''
+  } as Project : null);
+
   // Lade Assets
   useEffect(() => {
-    if (project.id && user?.uid) {
+    if (activeProject?.id && user?.uid) {
       loadProjectAssets();
     }
-  }, [project.id, user?.uid]);
+  }, [activeProject?.id, user?.uid]);
 
   const loadProjectAssets = async () => {
-    if (!project.id || !user?.uid) return;
+    if (!activeProject?.id || !user?.uid) return;
     
     try {
       setLoading(true);
       
       // Lade geteilte Assets
-      const shared = await projectService.getProjectSharedAssets(project.id, {
+      const shared = await projectService.getProjectSharedAssets(activeProject.id, {
         organizationId: user.uid
       });
       setSharedAssets(shared);
@@ -101,7 +115,7 @@ export default function ProjectAssetGallery({
 
   // Asset-Refresh
   const refreshAssets = async () => {
-    if (!project.id || !user?.uid) return;
+    if (!activeProject?.id || !user?.uid) return;
     
     try {
       setRefreshing(true);
@@ -131,12 +145,12 @@ export default function ProjectAssetGallery({
 
   // Asset-Sharing
   const shareAssetToProject = async (assetId: string) => {
-    if (!project.id || !user?.uid) return;
+    if (!activeProject?.id || !user?.uid) return;
     
     try {
       await mediaService.shareAssetToProject(
         assetId,
-        project.id,
+        activeProject.id,
         { canView: true, canDownload: true, canEdit: false, canDelete: false, canShare: true },
         { organizationId: user.uid, userId: user.uid }
       );

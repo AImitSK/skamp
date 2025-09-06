@@ -21,12 +21,17 @@ import { mediaService } from '@/lib/firebase/media-service';
 import { projectService } from '@/lib/firebase/project-service';
 
 interface SmartAssetSelectorProps {
+  // Unterstütze beide Interfaces für Kompatibilität
   project?: Project;
+  projectId?: string;
+  organizationId?: string;
   currentPhase?: string;
   existingAttachments?: CampaignAssetAttachment[];
-  onSelect: (assets: MediaAsset[], folders: MediaFolder[]) => void;
-  onCancel: () => void;
-  isOpen: boolean;
+  // Callbacks - verschiedene Varianten
+  onSelect?: (assets: MediaAsset[], folders: MediaFolder[]) => void;
+  onAssetSelected?: (assetId: string) => void;
+  onCancel?: () => void;
+  isOpen?: boolean;
   multiSelect?: boolean;
   filterTypes?: string[]; // z.B. ['image/*', 'application/pdf']
 }
@@ -51,11 +56,14 @@ interface SmartFilters {
 
 export default function SmartAssetSelector({
   project,
+  projectId,
+  organizationId,
   currentPhase,
   existingAttachments = [],
   onSelect,
+  onAssetSelected,
   onCancel,
-  isOpen,
+  isOpen = true,
   multiSelect = true,
   filterTypes = []
 }: SmartAssetSelectorProps) {

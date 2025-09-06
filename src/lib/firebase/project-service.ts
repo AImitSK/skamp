@@ -1407,7 +1407,7 @@ export const projectService = {
         creationContext: {
           createdViaWizard: true,
           templateId: wizardData.templateId,
-          templateName: null, // Firebase-kompatibel: null statt undefined
+          // templateName wird später beim Template-Laden gesetzt (optional)
           wizardVersion: '1.0.0',
           stepsCompleted: wizardData.completedSteps.map(s => s.toString()),
           initialConfiguration: {
