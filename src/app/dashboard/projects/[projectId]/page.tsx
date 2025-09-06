@@ -22,7 +22,8 @@ import {
   CogIcon,
   PhotoIcon,
   ChatBubbleLeftRightIcon,
-  ClipboardDocumentListIcon
+  ClipboardDocumentListIcon,
+  FolderIcon
 } from '@heroicons/react/24/outline';
 
 // Pipeline-Komponenten importieren
@@ -30,9 +31,10 @@ import PipelineProgressDashboard from '@/components/projects/workflow/PipelinePr
 import MonitoringConfigPanel from '@/components/projects/monitoring/MonitoringConfigPanel';
 import MonitoringStatusWidget from '@/components/projects/monitoring/MonitoringStatusWidget';
 import ProjectAssetGallery from '@/components/projects/assets/ProjectAssetGallery';
-import SmartAssetSelector from '@/components/projects/assets/SmartAssetSelector';
+import AssetPipelineStatus from '@/components/projects/assets/AssetPipelineStatus';
 import WorkflowAutomationManager from '@/components/projects/workflow/WorkflowAutomationManager';
 import TaskDependenciesVisualizer from '@/components/projects/workflow/TaskDependenciesVisualizer';
+import { CommunicationModal } from '@/components/projects/communication/CommunicationModal';
 import { projectService } from '@/lib/firebase/project-service';
 import { Project } from '@/types/project';
 import Link from 'next/link';
@@ -47,6 +49,7 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'assets' | 'communication' | 'monitoring'>('overview');
+  const [showCommunicationModal, setShowCommunicationModal] = useState(false);
 
   useEffect(() => {
     loadProject();
@@ -116,6 +119,15 @@ export default function ProjectDetailPage() {
       month: '2-digit',
       year: 'numeric'
     });
+  };
+
+  // Handle Communication Feed
+  const handleOpenCommunicationFeed = () => {
+    setShowCommunicationModal(true);
+  };
+
+  const handleCloseCommunicationFeed = () => {
+    setShowCommunicationModal(false);
   };
 
   if (loading) {
@@ -412,23 +424,46 @@ export default function ProjectDetailPage() {
           {/* Tasks & Workflow Tab */}
           {activeTab === 'tasks' && (
             <div className="space-y-6">
-              <div className="text-center py-12 bg-blue-50 rounded-lg">
-                <ClipboardDocumentListIcon className="h-12 w-12 mx-auto text-blue-400 mb-4" />
-                <Subheading className="mb-2">Task & Workflow Management</Subheading>
-                <Text className="text-gray-600 mb-4">
-                  Hier werden alle projekt-spezifischen Tasks und automatisierten Workflows verwaltet.
-                </Text>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="border border-blue-200 rounded-lg p-4">
-                    <Text className="font-medium">Task Dependencies</Text>
-                    <Text className="text-sm text-gray-600">Visualisierung der Task-Abhängigkeiten</Text>
+              {project && (
+                <>
+                  {/* Task Dependencies Visualizer */}
+                  <div>
+                    <Subheading className="mb-4">Task-Abhängigkeiten</Subheading>
+                    <TaskDependenciesVisualizer
+                      projectId={project.id}
+                      organizationId={currentOrganization?.id || ''}
+                      currentStage={project.currentStage}
+                    />
                   </div>
-                  <div className="border border-blue-200 rounded-lg p-4">
-                    <Text className="font-medium">Workflow Automation</Text>
-                    <Text className="text-sm text-gray-600">Automatisierte Stage-Übergänge</Text>
+                  
+                  {/* Workflow Automation Manager */}
+                  <div className="border-t border-gray-200 pt-6">
+                    <Subheading className="mb-4">Workflow-Automatisierung</Subheading>
+                    <WorkflowAutomationManager
+                      projectId={project.id}
+                      organizationId={currentOrganization?.id || ''}
+                      currentStage={project.currentStage}
+                      onStageChange={(newStage) => console.log('Stage changed to:', newStage)}
+                      onWorkflowUpdate={() => console.log('Workflow updated')}
+                    />
                   </div>
-                </div>
-              </div>
+                  
+                  {/* Quick Actions */}
+                  <div className="border-t border-gray-200 pt-6 text-center">
+                    <Subheading className="mb-4">Task-Verwaltung</Subheading>
+                    <div className="flex justify-center space-x-4">
+                      <Button outline onClick={() => console.log('Neue Task erstellen')}>
+                        <ClipboardDocumentListIcon className="w-4 h-4 mr-2" />
+                        Neue Task
+                      </Button>
+                      <Button outline onClick={() => console.log('Workflow bearbeiten')}>
+                        <CogIcon className="w-4 h-4 mr-2" />
+                        Workflow bearbeiten
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
@@ -444,14 +479,27 @@ export default function ProjectDetailPage() {
                     currentStage={project.currentStage}
                   />
                   
-                  {/* Smart Asset Selector */}
+                  {/* Asset Pipeline Status */}
                   <div className="border-t border-gray-200 pt-6">
-                    <Subheading className="mb-4">Weitere Assets hinzufügen</Subheading>
-                    <SmartAssetSelector
-                      projectId={project.id}
-                      organizationId={currentOrganization?.id || ''}
-                      onAssetSelected={(assetId) => console.log('Asset selected:', assetId)}
+                    <AssetPipelineStatus
+                      project={project}
+                      onValidationUpdate={(result) => console.log('Validation updated:', result)}
                     />
+                  </div>
+                  
+                  {/* Actions */}
+                  <div className="border-t border-gray-200 pt-6 text-center">
+                    <Subheading className="mb-4">Asset-Verwaltung</Subheading>
+                    <div className="flex justify-center space-x-4">
+                      <Button outline onClick={() => console.log('Asset hinzufügen')}>
+                        <PhotoIcon className="w-4 h-4 mr-2" />
+                        Neue Assets hinzufügen
+                      </Button>
+                      <Button outline onClick={() => console.log('Asset-Bibliothek öffnen')}>
+                        <FolderIcon className="w-4 h-4 mr-2" />
+                        Asset-Bibliothek
+                      </Button>
+                    </div>
                   </div>
                 </>
               )}
@@ -467,7 +515,7 @@ export default function ProjectDetailPage() {
                 <Text className="text-gray-600 mb-4">
                   Hier werden alle projekt-bezogenen E-Mails und Kommunikation automatisch erkannt und zugeordnet.
                 </Text>
-                <Button outline>
+                <Button outline onClick={handleOpenCommunicationFeed}>
                   <ChatBubbleLeftRightIcon className="w-4 h-4 mr-2" />
                   Kommunikations-Feed öffnen
                 </Button>
@@ -527,6 +575,16 @@ export default function ProjectDetailPage() {
           )}
         </div>
       </div>
+      
+      {/* Communication Modal */}
+      {showCommunicationModal && (
+        <CommunicationModal
+          isOpen={showCommunicationModal}
+          onClose={handleCloseCommunicationFeed}
+          projectId={projectId}
+          projectTitle={project.title}
+        />
+      )}
     </div>
   );
 }
