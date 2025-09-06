@@ -1516,11 +1516,15 @@ export const projectService = {
       const { companyServiceEnhanced } = await import('./company-service-enhanced');
       const companies = await companyServiceEnhanced.getAll(organizationId);
       
+      // Echte Kontakte laden über contactsEnhancedService
+      const { contactsEnhancedService } = await import('./crm-service-enhanced');
+      const allContacts = await contactsEnhancedService.getAll(organizationId);
+      
       const availableClients = companies.map(company => ({
         id: company.id!,
         name: company.name,
         type: company.type || 'company',
-        contactCount: 0 // TODO: Calculate based on actual contact relationships
+        contactCount: allContacts.filter(contact => contact.companyId === company.id).length
       }));
 
       // Echte Team-Mitglieder laden über teamServiceEnhanced
