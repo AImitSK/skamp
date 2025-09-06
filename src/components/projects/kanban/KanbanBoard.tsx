@@ -98,8 +98,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
   // Board Content - Desktop/Tablet Layout
   const renderDesktopBoard = () => (
-    <div className={`kanban-board-desktop ${responsiveConfig.padding}`}>
-      <div className={`flex ${responsiveConfig.gap} overflow-x-auto pb-4`}>
+    <div className={`kanban-board-desktop ${responsiveConfig.padding} h-full`}>
+      <div className={`flex ${responsiveConfig.gap} overflow-x-auto pb-4 h-full`}>
         {allStages.map(stage => {
           const stageProjects = projects[stage] || [];
           
@@ -149,7 +149,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
   return (
     <DndProvider backend={dndBackend} options={dndBackendOptions}>
-      <div className="kanban-board-container min-h-screen bg-gray-50">
+      <div className="kanban-board-container bg-gray-50 flex flex-col h-full">
         {/* Board Header */}
         <BoardHeader
           totalProjects={totalProjects}
@@ -185,11 +185,13 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
         )}
 
         {/* Board Content */}
-        {!loading && (
-          <>
-            {isMobile ? renderMobileBoard() : renderDesktopBoard()}
-          </>
-        )}
+        <div className="flex-1 overflow-hidden">
+          {!loading && (
+            <>
+              {isMobile ? renderMobileBoard() : renderDesktopBoard()}
+            </>
+          )}
+        </div>
 
         {/* Empty State */}
         {!loading && totalProjects === 0 && (

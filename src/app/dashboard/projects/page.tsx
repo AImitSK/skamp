@@ -306,7 +306,7 @@ export default function ProjectsPage() {
 
       {/* Board View */}
       {!loading && !error && projects.length > 0 && viewMode === 'board' && currentOrganization && (
-        <div className="mb-8">
+        <div className="mb-8 h-[70vh]">
           <BoardProvider organizationId={currentOrganization.id}>
             <KanbanBoard
               projects={groupProjectsByStage(projects)}

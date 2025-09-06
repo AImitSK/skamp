@@ -5,6 +5,7 @@ import React, { useState, useMemo } from 'react';
 import {
   MagnifyingGlassIcon,
   FunnelIcon,
+  Squares2X2Icon,
   ArrowPathIcon,
   UserGroupIcon,
   AdjustmentsHorizontalIcon
