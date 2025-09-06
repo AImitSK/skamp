@@ -61,6 +61,10 @@ describe('ProjectLinkBanner Component', () => {
     pipelineStage: 'creation' as PipelineStage,
     status: 'draft',
     contentHtml: 'Test Content',
+    distributionListId: 'list-123',
+    distributionListName: 'Test Liste',
+    recipientCount: 10,
+    approvalRequired: false,
     createdAt: { seconds: 1234567890, nanoseconds: 0 } as any,
     updatedAt: { seconds: 1234567890, nanoseconds: 0 } as any
   };

@@ -4,12 +4,16 @@ import type { ProjectMilestone } from './pr';
 
 // ✅ Pipeline-Stage direkt hier definieren für bessere Type-Sicherheit
 export type PipelineStage = 
-  | 'creation'     // Erstellung-Phase
-  | 'review'       // Review-Phase
-  | 'approval'     // Freigabe-Phase
-  | 'distribution' // Verteilung-Phase
-  | 'monitoring'   // Monitoring-Phase (NEU Plan 5/9)
-  | 'completed';   // Abgeschlossen
+  | 'ideas_planning'      // Ideen & Planung (NEU Plan 8/9)
+  | 'planning'           // Legacy Planning (für Tests)
+  | 'creation'           // Erstellung-Phase
+  | 'review'             // Review-Phase (für Tests)
+  | 'approval'           // Legacy Approval (für Tests)
+  | 'internal_approval'  // Interne Freigabe (NEU Plan 8/9)
+  | 'customer_approval'  // Kunden-Freigabe (NEU Plan 8/9)
+  | 'distribution'       // Verteilung-Phase
+  | 'monitoring'         // Monitoring-Phase (Plan 5/9)
+  | 'completed';         // Abgeschlossen
 
 export interface Project {
   id?: string;
@@ -77,6 +81,65 @@ export interface Project {
     assetCount: number;
     lastModified: Timestamp;
   }>;
+  
+  // ========================================
+  // PLAN 8/9: PIPELINE-TASK-INTEGRATION
+  // ========================================
+  
+  // Pipeline-Workflow-Konfiguration
+  workflowConfig?: {
+    autoStageTransition: boolean;       // Automatische Stage-Übergänge
+    requireAllCriticalTasks: boolean;   // Alle kritischen Tasks für Übergang erforderlich
+    enableTaskDependencies: boolean;   // Task-Abhängigkeiten aktiviert
+    notifyOnStageTransition: boolean;   // Benachrichtigungen bei Übergängen
+    
+    // Custom Workflow Rules
+    customTransitionRules?: Array<{
+      fromStage: PipelineStage;
+      toStage: PipelineStage;
+      requiresApproval: boolean;
+      approvers: string[];
+      customChecks?: string[];          // Custom validation functions
+    }>;
+  };
+  
+  // Fortschritts-Tracking
+  progress?: {
+    overallPercent: number;
+    stageProgress: Record<PipelineStage, number>;
+    taskCompletion: number;             // % abgeschlossene Tasks
+    criticalTasksRemaining: number;
+    lastUpdated: Timestamp;
+    
+    // Milestone Tracking
+    milestones: Array<{
+      percent: number;
+      achievedAt?: Timestamp;
+      notificationSent: boolean;
+    }>;
+  };
+  
+  // Workflow-Status
+  workflowState?: {
+    currentTransition?: {
+      fromStage: PipelineStage;
+      toStage: PipelineStage;
+      startedAt: Timestamp;
+      blockedBy: string[];              // Task IDs die Übergang blockieren
+      status: 'in_progress' | 'blocked' | 'waiting_approval';
+    };
+    
+    stageHistory: Array<{
+      stage: PipelineStage;
+      enteredAt: Timestamp;
+      completedAt?: Timestamp;
+      triggeredBy: 'manual' | 'automatic' | 'task_completion';
+      triggerUser?: string;
+    }>;
+    
+    lastIntegrityCheck?: Timestamp;
+    integrityIssues?: string[];         // Aktuelle Integritäts-Probleme
+  };
   
   // ========================================
   // PLAN 7/9: KOMMUNIKATIONS-FEATURES

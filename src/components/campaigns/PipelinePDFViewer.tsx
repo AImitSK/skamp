@@ -61,14 +61,14 @@ export const PipelinePDFViewer = ({
           icon: DocumentTextIcon,
           description: 'Entwurfs-PDFs für interne Abstimmung'
         };
-      case 'review':
+      case 'internal_approval':
         return {
           label: 'Review',
           color: 'amber' as const,
           icon: ClockIcon,
           description: 'Review-PDFs für Team-Freigabe'
         };
-      case 'approval':
+      case 'customer_approval':
         return {
           label: 'Freigabe',
           color: 'green' as const,

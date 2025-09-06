@@ -1,7 +1,8 @@
 // src/types/tasks.ts
 import { Timestamp } from 'firebase/firestore';
+import type { PipelineStage } from './project';
 
-export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
+export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled' | 'blocked';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 
 export interface Task {
@@ -29,6 +30,7 @@ export interface Task {
   linkedCampaignId?: string;
   linkedClientId?: string;
   linkedContactId?: string;
+  linkedProjectId?: string;
   
   // Checkliste
   checklist?: ChecklistItem[];
@@ -47,4 +49,41 @@ export interface ChecklistItem {
   text: string;
   completed: boolean;
   completedAt?: Timestamp;
+}
+
+// ========================================
+// PLAN 8/9: PIPELINE-TASK-INTEGRATION
+// ========================================
+
+// Pipeline-erweiterte Task Interface
+export interface PipelineAwareTask extends Task {
+  // NEU: Pipeline-spezifische Felder
+  pipelineStage?: PipelineStage;
+  requiredForStageCompletion?: boolean; // Kritische Tasks für Stage-Übergang
+  stageTransitionTrigger?: boolean;     // Task löst Stage-Übergang aus
+  templateCategory?: string;            // Template-Kategorie für automatische Erstellung
+  
+  // ERWEITERT: Abhängigkeiten
+  dependsOnTaskIds?: string[];          // Task-IDs von denen diese Task abhängt
+  dependsOnStageCompletion?: PipelineStage[]; // Stages die abgeschlossen sein müssen
+  blocksStageTransition?: boolean;      // Verhindert Stage-Übergang wenn nicht erledigt
+  
+  // NEU: Automatisierung
+  autoCompleteOnStageChange?: boolean;  // Auto-complete bei Stage-Wechsel
+  autoCreateOnStageEntry?: boolean;     // Auto-create bei Stage-Eintritt
+  
+  // NEU: Stage-Kontext
+  stageContext?: {
+    createdOnStageEntry: boolean;       // Automatisch bei Stage-Eintritt erstellt
+    inheritedFromTemplate: string;      // Template-ID falls auto-generiert
+    stageProgressWeight: number;        // Gewichtung für Stage-Progress (1-5)
+    criticalPath: boolean;              // Liegt auf kritischem Pfad
+  };
+  
+  // ERWEITERT: Deadline-Management
+  deadlineRules?: {
+    relativeToPipelineStage: boolean;   // Deadline relativ zu Stage-Start
+    daysAfterStageEntry: number;        // Tage nach Stage-Beginn
+    cascadeDelay: boolean;              // Verzögerung weiterleiten
+  };
 }

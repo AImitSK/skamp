@@ -32,8 +32,7 @@ describe('ProjectSelector - Plan 2/9: Pipeline Project-Selector Tests', () => {
     currentStage: 'creation',
     customer: {
       id: mockClientId,
-      name: 'Alpha Client GmbH',
-      email: 'contact@alpha-client.de'
+      name: 'Alpha Client GmbH'
     },
     linkedCampaigns: [],
     createdAt: Timestamp.now(),
@@ -49,8 +48,7 @@ describe('ProjectSelector - Plan 2/9: Pipeline Project-Selector Tests', () => {
     currentStage: 'review',
     customer: {
       id: mockClientId,
-      name: 'Alpha Client GmbH',
-      email: 'contact@alpha-client.de'
+      name: 'Alpha Client GmbH'
     },
     linkedCampaigns: [],
     createdAt: Timestamp.now(),

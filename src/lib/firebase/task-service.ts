@@ -14,7 +14,11 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db } from './client-init';
-import { Task } from '@/types/tasks';
+import { Task, PipelineAwareTask, TaskPriority } from '@/types/tasks';
+
+// Export PipelineAwareTask für Tests
+export type { PipelineAwareTask };
+import type { PipelineStage } from '@/types/project';
 import { notificationsService } from './notifications-service';
 
 export const taskService = {
@@ -329,5 +333,244 @@ export const taskService = {
       // Error checking overdue tasks
       throw error;
     }
+  },
+
+  // ========================================
+  // PLAN 8/9: PIPELINE-TASK-INTEGRATION
+  // ========================================
+
+  /**
+   * Holt alle Tasks für ein Projekt und eine Stage
+   */
+  async getByProjectStage(
+    organizationId: string, 
+    projectId: string, 
+    stage: PipelineStage
+  ): Promise<PipelineAwareTask[]> {
+    const q = query(
+      collection(db, 'tasks'),
+      where('organizationId', '==', organizationId),
+      where('linkedProjectId', '==', projectId),
+      where('pipelineStage', '==', stage)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as PipelineAwareTask));
+  },
+
+  /**
+   * Holt alle Tasks für ein Projekt
+   */
+  async getByProjectId(
+    organizationId: string, 
+    projectId: string
+  ): Promise<PipelineAwareTask[]> {
+    const q = query(
+      collection(db, 'tasks'),
+      where('organizationId', '==', organizationId),
+      where('linkedProjectId', '==', projectId)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as PipelineAwareTask));
+  },
+
+  /**
+   * Holt kritische Tasks für eine Stage
+   */
+  async getCriticalTasksForStage(
+    organizationId: string, 
+    projectId: string, 
+    stage: PipelineStage
+  ): Promise<PipelineAwareTask[]> {
+    const q = query(
+      collection(db, 'tasks'),
+      where('organizationId', '==', organizationId),
+      where('linkedProjectId', '==', projectId),
+      where('pipelineStage', '==', stage),
+      where('requiredForStageCompletion', '==', true)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as PipelineAwareTask));
+  },
+
+  /**
+   * Prüft Stage-Completion-Anforderungen
+   */
+  async checkStageCompletionRequirements(
+    projectId: string,
+    stage: PipelineStage
+  ): Promise<StageCompletionCheck> {
+    const task = await this.getByProjectId('', projectId); // organizationId wird in der Praxis übergeben
+    const stageTasks = task.filter(t => t.pipelineStage === stage);
+    const criticalTasks = stageTasks.filter(t => t.requiredForStageCompletion);
+    const completedCriticalTasks = criticalTasks.filter(t => t.status === 'completed');
+    const blockingTasks = stageTasks.filter(t => t.blocksStageTransition && t.status !== 'completed');
+    
+    const completionPercentage = criticalTasks.length > 0 
+      ? (completedCriticalTasks.length / criticalTasks.length) * 100 
+      : 100;
+    
+    return {
+      canComplete: criticalTasks.length === completedCriticalTasks.length && blockingTasks.length === 0,
+      missingCriticalTasks: criticalTasks.filter(t => t.status !== 'completed').map(t => t.id!),
+      blockingTasks: blockingTasks.map(t => t.id!),
+      completionPercentage,
+      readyForTransition: completionPercentage === 100 && blockingTasks.length === 0
+    };
+  },
+
+  /**
+   * Erstellt Tasks aus Templates
+   */
+  async createTasksFromTemplates(
+    projectId: string,
+    stage: PipelineStage,
+    templates: TaskTemplate[]
+  ): Promise<string[]> {
+    const createdTaskIds: string[] = [];
+    
+    for (const template of templates) {
+      const taskData = {
+        userId: '', // wird in der Praxis übergeben
+        organizationId: '', // wird in der Praxis übergeben
+        title: template.title,
+        priority: template.priority,
+        linkedProjectId: projectId,
+        pipelineStage: stage,
+        requiredForStageCompletion: template.requiredForStageCompletion,
+        templateCategory: template.category,
+        status: 'pending' as const,
+        stageContext: {
+          createdOnStageEntry: true,
+          inheritedFromTemplate: template.id,
+          stageProgressWeight: 3,
+          criticalPath: template.requiredForStageCompletion
+        },
+        deadlineRules: template.daysAfterStageEntry ? {
+          relativeToPipelineStage: true,
+          daysAfterStageEntry: template.daysAfterStageEntry,
+          cascadeDelay: false
+        } : undefined
+      };
+      
+      const taskId = await this.create(taskData);
+      createdTaskIds.push(taskId);
+    }
+    
+    return createdTaskIds;
+  },
+
+  /**
+   * Behandelt Task-Completion mit Pipeline-Logik
+   */
+  async handleTaskCompletion(taskId: string): Promise<TaskCompletionResult> {
+    const task = await this.getById(taskId) as PipelineAwareTask;
+    if (!task) {
+      throw new Error('Task nicht gefunden');
+    }
+
+    // Markiere als abgeschlossen
+    await this.markAsCompleted(taskId);
+    
+    // Finde abhängige Tasks
+    const projectTasks = await this.getByProjectId(task.organizationId, task.linkedProjectId!);
+    const dependentTasks = projectTasks.filter(t =>
+      t.dependsOnTaskIds?.includes(taskId) && t.status === 'blocked'
+    );
+    
+    const unblockedTaskIds: string[] = [];
+    
+    // Entsperre abhängige Tasks
+    for (const dependentTask of dependentTasks) {
+      const allDependenciesMet = dependentTask.dependsOnTaskIds?.every(depTaskId => {
+        const depTask = projectTasks.find(t => t.id === depTaskId);
+        return depTask?.status === 'completed';
+      }) ?? true;
+      
+      if (allDependenciesMet) {
+        await this.update(dependentTask.id!, { status: 'pending' });
+        unblockedTaskIds.push(dependentTask.id!);
+      }
+    }
+    
+    return {
+      taskId,
+      unblockedDependentTasks: unblockedTaskIds,
+      createdFollowUpTasks: [] // TODO: Follow-up Task Logic
+    };
+  },
+
+  /**
+   * Aktualisiert Task-Abhängigkeiten
+   */
+  async updateTaskDependencies(taskId: string): Promise<void> {
+    // Implementation der Dependency-Update-Logik
+    await this.handleTaskCompletion(taskId);
+  },
+
+  /**
+   * Validiert Task-Integrität für ein Projekt
+   */
+  async validateTaskIntegrity(projectId: string): Promise<TaskIntegrityReport> {
+    // TODO: Implementierung der Integritäts-Validierung
+    return {
+      projectId,
+      totalTasks: 0,
+      validTasks: 0,
+      issues: [],
+      lastChecked: Timestamp.now()
+    };
   }
 };
+
+// ========================================
+// PIPELINE-TASK-INTEGRATION INTERFACES
+// ========================================
+
+export interface StageCompletionCheck {
+  canComplete: boolean;
+  missingCriticalTasks: string[];
+  blockingTasks: string[];
+  completionPercentage: number;
+  readyForTransition: boolean;
+}
+
+export interface TaskCompletionResult {
+  taskId: string;
+  unblockedDependentTasks: string[];
+  triggeredStageTransition?: {
+    fromStage: PipelineStage;
+    toStage: PipelineStage;
+  };
+  createdFollowUpTasks: string[];
+}
+
+export interface TaskTemplate {
+  id: string;
+  title: string;
+  category: string;
+  stage: PipelineStage;
+  priority: TaskPriority;
+  requiredForStageCompletion: boolean;
+  daysAfterStageEntry: number;
+  assignmentRules?: {
+    assignTo: 'project_lead' | 'team_member' | 'role_based';
+    role?: string;
+  };
+}
+
+export interface TaskIntegrityReport {
+  projectId: string;
+  totalTasks: number;
+  validTasks: number;
+  issues: string[];
+  lastChecked: Timestamp;
+}

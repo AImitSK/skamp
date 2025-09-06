@@ -3,6 +3,9 @@ import { Timestamp } from 'firebase/firestore';
 import type { EnhancedApprovalData } from './approvals-enhanced';
 import type { PipelineStage } from './project';
 
+// Re-export PipelineStage für externe Nutzung
+export type { PipelineStage } from './project';
+
 // ERWEITERT: Neue Status für den Freigabe-Workflow hinzugefügt
 export type PRCampaignStatus =
   | 'draft'

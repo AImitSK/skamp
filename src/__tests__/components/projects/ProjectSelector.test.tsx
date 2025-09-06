@@ -57,9 +57,8 @@ describe('ProjectSelector Component', () => {
     status: 'active' as ProjectStatus,
     currentStage: 'creation' as PipelineStage,
     customer: {
-      name: 'ACME Corp',
-      contactPerson: 'John Doe',
-      email: 'john@acme.com'
+      id: 'client-1',
+      name: 'ACME Corp'
     },
     budget: {
       allocated: 10000,

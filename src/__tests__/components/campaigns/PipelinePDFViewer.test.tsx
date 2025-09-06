@@ -49,7 +49,8 @@ describe('PipelinePDFViewer - Plan 2/9: Pipeline-PDF-Viewer Tests', () => {
       enabled: true,
       versionCount: 2,
       lastGenerated: Timestamp.fromDate(new Date('2025-01-15T10:30:00Z')),
-      autoGenerate: true
+      autoGenerate: true,
+      storageFolder: 'internal-pdfs/campaign-123'
     },
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now()
@@ -336,7 +337,7 @@ describe('PipelinePDFViewer - Plan 2/9: Pipeline-PDF-Viewer Tests', () => {
     it('sollte "Noch keine PDF" Nachricht anzeigen wenn keine PDF vorhanden', () => {
       const campaignNoPDFs = { 
         ...baseCampaign, 
-        internalPDFs: { enabled: true, versionCount: 0, autoGenerate: false }
+        internalPDFs: { enabled: true, versionCount: 0, autoGenerate: false, storageFolder: 'internal-pdfs/campaign-123' }
       };
 
       render(
@@ -466,7 +467,7 @@ describe('PipelinePDFViewer - Plan 2/9: Pipeline-PDF-Viewer Tests', () => {
     it('sollte NICHT rendern wenn internalPDFs deaktiviert', () => {
       const campaignPDFsDisabled = { 
         ...baseCampaign, 
-        internalPDFs: { enabled: false, versionCount: 0, autoGenerate: false }
+        internalPDFs: { enabled: false, versionCount: 0, autoGenerate: false, storageFolder: 'internal-pdfs/campaign-123' }
       };
 
       const { container } = render(

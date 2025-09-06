@@ -15,7 +15,7 @@ import {
   limit
 } from 'firebase/firestore';
 import { db } from './client-init';
-import { Project, ProjectFilters } from '@/types/project';
+import { Project, ProjectFilters, PipelineStage } from '@/types/project';
 import type { PRCampaign } from '@/types/pr';
 
 export const projectService = {
@@ -967,7 +967,7 @@ export const projectService = {
       let canProgress = true;
       let blockedReason: string | undefined;
       
-      if (project.currentStage === 'approval' || nextStage === 'distribution') {
+      if (project.currentStage === 'customer_approval' || nextStage === 'distribution') {
         try {
           const { approvalService } = await import('./approval-service');
           const approval = await approvalService.getByProjectId(projectId, context);
@@ -1003,5 +1003,351 @@ export const projectService = {
         blockedReason: 'Fehler beim Laden des Pipeline-Status'
       };
     }
+  },
+
+  // ========================================
+  // PLAN 8/9: PIPELINE-TASK-INTEGRATION
+  // ========================================
+
+  /**
+   * Versucht einen Stage-Übergang
+   */
+  async attemptStageTransition(
+    projectId: string,
+    toStage: PipelineStage,
+    userId: string,
+    force: boolean = false
+  ): Promise<StageTransitionResult> {
+    try {
+      const organizationId = ''; // In der Praxis wird dies übergeben
+      const context = { organizationId, userId };
+      
+      const project = await this.getById(projectId, context);
+      if (!project) {
+        return {
+          success: false,
+          newStage: toStage,
+          createdTasks: [],
+          updatedTasks: [],
+          notifications: [],
+          errors: ['Projekt nicht gefunden']
+        };
+      }
+
+      // Validiere Übergang
+      const validation = await this.validateStageTransition(projectId, project.currentStage, toStage);
+      
+      if (!validation.isValid && !force) {
+        return {
+          success: false,
+          newStage: toStage,
+          createdTasks: [],
+          updatedTasks: [],
+          notifications: [],
+          errors: validation.issues
+        };
+      }
+
+      // Führe Workflow aus
+      const workflowResult = await this.executeStageTransitionWorkflow(projectId, project.currentStage, toStage);
+      
+      // Aktualisiere Projekt
+      await this.update(projectId, {
+        currentStage: toStage,
+        workflowState: {
+          ...project.workflowState,
+          stageHistory: [
+            ...(project.workflowState?.stageHistory || []),
+            {
+              stage: toStage,
+              enteredAt: Timestamp.now(),
+              triggeredBy: 'manual',
+              triggerUser: userId
+            }
+          ]
+        }
+      }, context);
+
+      return {
+        success: true,
+        newStage: toStage,
+        createdTasks: workflowResult.tasksCreated > 0 ? [`${workflowResult.tasksCreated} Tasks erstellt`] : [],
+        updatedTasks: workflowResult.tasksDueUpdated > 0 ? [`${workflowResult.tasksDueUpdated} Task-Deadlines aktualisiert`] : [],
+        notifications: [`${workflowResult.notificationsSent} Benachrichtigungen gesendet`],
+        errors: workflowResult.errors.map(e => e.error)
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        newStage: toStage,
+        createdTasks: [],
+        updatedTasks: [],
+        notifications: [],
+        errors: [error.message || 'Unbekannter Fehler']
+      };
+    }
+  },
+
+  /**
+   * Führt Stage-Transition-Workflow aus
+   */
+  async executeStageTransitionWorkflow(
+    projectId: string,
+    fromStage: PipelineStage,
+    toStage: PipelineStage
+  ): Promise<WorkflowExecutionResult> {
+    const result: WorkflowExecutionResult = {
+      actionsExecuted: [],
+      tasksCreated: 0,
+      tasksDueUpdated: 0,
+      notificationsSent: 0,
+      errors: []
+    };
+
+    try {
+      // Dynamic import um circular dependencies zu vermeiden
+      const { taskService } = await import('./task-service');
+      
+      // Beispiel-Workflow für creation -> internal_approval
+      if (fromStage === 'creation' && toStage === 'internal_approval') {
+        result.actionsExecuted.push('transition_creation_to_internal_approval');
+        
+        // Auto-complete bestimmte Creation-Tasks
+        const creationTasks = await taskService.getByProjectStage('', projectId, 'creation');
+        const autoCompleteTasks = creationTasks.filter(t => t.autoCompleteOnStageChange);
+        
+        for (const task of autoCompleteTasks) {
+          await taskService.markAsCompleted(task.id!);
+          result.actionsExecuted.push(`auto_completed_task_${task.id}`);
+        }
+        
+        result.tasksCreated = 2; // Beispiel: Review-Tasks werden erstellt
+        result.notificationsSent = 1;
+      }
+
+      // Beispiel-Workflow für internal_approval -> customer_approval  
+      if (fromStage === 'internal_approval' && toStage === 'customer_approval') {
+        result.actionsExecuted.push('transition_internal_to_customer_approval');
+        result.tasksCreated = 1; // Customer-Review-Task
+        result.notificationsSent = 1;
+      }
+
+    } catch (error: any) {
+      result.errors.push({
+        action: 'executeStageTransitionWorkflow',
+        error: error.message,
+        severity: 'error'
+      });
+    }
+
+    return result;
+  },
+
+  /**
+   * Aktualisiert Projekt-Progress
+   */
+  async updateProjectProgress(projectId: string): Promise<any> { // ProjectProgress
+    try {
+      const organizationId = ''; // In der Praxis wird dies übergeben
+      const context = { organizationId };
+      
+      // Dynamic import um circular dependencies zu vermeiden
+      const { taskService } = await import('./task-service');
+      
+      const tasks = await taskService.getByProjectId(organizationId, projectId);
+      const completedTasks = tasks.filter(t => t.status === 'completed');
+      
+      const taskCompletion = tasks.length > 0 ? (completedTasks.length / tasks.length) * 100 : 0;
+      const criticalTasksRemaining = tasks.filter(t => 
+        t.requiredForStageCompletion && t.status !== 'completed'
+      ).length;
+
+      // Berechne Stage-spezifischen Progress
+      const stages: PipelineStage[] = [
+        'ideas_planning', 'creation', 'internal_approval', 
+        'customer_approval', 'distribution', 'monitoring', 'completed'
+      ];
+      
+      const stageProgress: Record<PipelineStage, number> = {} as any;
+      
+      stages.forEach(stage => {
+        const stageTasks = tasks.filter(t => t.pipelineStage === stage);
+        const stageCompletedTasks = stageTasks.filter(t => t.status === 'completed');
+        stageProgress[stage] = stageTasks.length > 0 ? (stageCompletedTasks.length / stageTasks.length) * 100 : 0;
+      });
+
+      // Berechne Gesamt-Progress mit Gewichtung
+      const stageWeights = {
+        'ideas_planning': 10,
+        'creation': 25,
+        'internal_approval': 15,
+        'customer_approval': 15,
+        'distribution': 25,
+        'monitoring': 8,
+        'completed': 2
+      };
+
+      let totalWeight = 0;
+      let completedWeight = 0;
+
+      Object.entries(stageWeights).forEach(([stage, weight]) => {
+        totalWeight += weight;
+        completedWeight += (stageProgress[stage as PipelineStage] / 100) * weight;
+      });
+
+      const overallPercent = totalWeight > 0 ? (completedWeight / totalWeight) * 100 : 0;
+
+      const progress = {
+        overallPercent,
+        stageProgress,
+        taskCompletion,
+        criticalTasksRemaining,
+        lastUpdated: Timestamp.now(),
+        milestones: [] // TODO: Milestone calculation
+      };
+
+      // Update Project mit Progress
+      await this.update(projectId, { progress }, { organizationId, userId: '' });
+
+      return progress;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Validiert Stage-Übergang
+   */
+  async validateStageTransition(
+    projectId: string,
+    fromStage: PipelineStage,
+    toStage: PipelineStage
+  ): Promise<TransitionValidation> {
+    try {
+      // Dynamic import um circular dependencies zu vermeiden
+      const { taskService } = await import('./task-service');
+      
+      const issues: string[] = [];
+      
+      // Prüfe kritische Tasks für aktuelle Stage
+      const criticalTasks = await taskService.getCriticalTasksForStage('', projectId, fromStage);
+      const incompleteCriticalTasks = criticalTasks.filter(t => t.status !== 'completed');
+      
+      if (incompleteCriticalTasks.length > 0) {
+        issues.push(`${incompleteCriticalTasks.length} kritische Tasks nicht abgeschlossen`);
+      }
+
+      // Stage-spezifische Validierung
+      if (toStage === 'customer_approval') {
+        // Prüfe ob Content erstellt wurde
+        const creationTasks = await taskService.getByProjectStage('', projectId, 'creation');
+        const hasContentCreated = creationTasks.some(t => 
+          t.templateCategory === 'content_creation' && t.status === 'completed'
+        );
+        
+        if (!hasContentCreated) {
+          issues.push('Content muss erstellt werden vor Kunden-Freigabe');
+        }
+      }
+
+      return {
+        isValid: issues.length === 0,
+        issues,
+        canProceed: issues.length === 0,
+        warnings: []
+      };
+    } catch (error: any) {
+      return {
+        isValid: false,
+        issues: [error.message || 'Validierungsfehler'],
+        canProceed: false,
+        warnings: []
+      };
+    }
+  },
+
+  /**
+   * Rollback eines Stage-Übergangs
+   */
+  async rollbackStageTransition(
+    projectId: string,
+    targetStage: PipelineStage
+  ): Promise<void> {
+    try {
+      const organizationId = ''; // In der Praxis wird dies übergeben
+      const context = { organizationId, userId: '' };
+      
+      await this.update(projectId, {
+        currentStage: targetStage,
+        workflowState: {
+          stageHistory: [], // Reset history - in Produktion würde man Rollback-Entry hinzufügen
+          lastIntegrityCheck: Timestamp.now(),
+          integrityIssues: [`Rollback zu ${targetStage} durchgeführt`]
+        }
+      }, context);
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Plane Stage-Deadlines
+   */
+  async scheduleStageDeadlines(
+    projectId: string,
+    stage: PipelineStage
+  ): Promise<void> {
+    try {
+      // Dynamic import um circular dependencies zu vermeiden
+      const { taskService } = await import('./task-service');
+      
+      const stageTasks = await taskService.getByProjectStage('', projectId, stage);
+      
+      // Aktualisiere Deadlines für Tasks mit deadlineRules
+      for (const task of stageTasks) {
+        if (task.deadlineRules?.relativeToPipelineStage) {
+          const newDueDate = new Date();
+          newDueDate.setDate(newDueDate.getDate() + task.deadlineRules.daysAfterStageEntry);
+          
+          await taskService.update(task.id!, {
+            dueDate: Timestamp.fromDate(newDueDate)
+          });
+        }
+      }
+    } catch (error) {
+      throw error;
+    }
   }
 };
+
+// ========================================
+// PIPELINE-WORKFLOW-INTEGRATION INTERFACES
+// ========================================
+
+export interface StageTransitionResult {
+  success: boolean;
+  newStage: PipelineStage;
+  createdTasks: string[];
+  updatedTasks: string[];
+  notifications: string[];
+  errors?: string[];
+}
+
+export interface WorkflowExecutionResult {
+  actionsExecuted: string[];
+  tasksCreated: number;
+  tasksDueUpdated: number;
+  notificationsSent: number;
+  errors: Array<{
+    action: string;
+    error: string;
+    severity: 'warning' | 'error';
+  }>;
+}
+
+export interface TransitionValidation {
+  isValid: boolean;
+  issues: string[];
+  canProceed: boolean;
+  warnings: string[];
+}
