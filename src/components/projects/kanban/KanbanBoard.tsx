@@ -2,10 +2,10 @@
 'use client';
 
 import React, { useMemo } from 'react';
-// React-DnD Imports - diese Packages müssen installiert werden
-// import { DndProvider } from 'react-dnd';
-// import { HTML5Backend } from 'react-dnd-html5-backend';
-// import { TouchBackend } from 'react-dnd-touch-backend';
+// React-DnD Imports
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import { TouchBackend } from 'react-dnd-touch-backend';
 import { useState, useEffect } from 'react';
 
 import { Project, PipelineStage } from '@/types/project';
@@ -92,9 +92,9 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   // Mobile Detection
   const isMobile = responsiveConfig.layout === 'accordion';
   
-  // TODO: React-DnD Backend Setup (nach Package-Installation)
-  // const dndBackend = isMobile ? TouchBackend : HTML5Backend;
-  // const dndBackendOptions = isMobile ? { enableMouseEvents: true, delayTouchStart: 200 } : {};
+  // React-DnD Backend Setup
+  const dndBackend = isMobile ? TouchBackend : HTML5Backend;
+  const dndBackendOptions = isMobile ? { enableMouseEvents: true, delayTouchStart: 200 } : {};
 
   // Board Content - Desktop/Tablet Layout
   const renderDesktopBoard = () => (
@@ -147,8 +147,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const [showFilters, setShowFilters] = React.useState(false);
 
   return (
-    // TODO: DndProvider wrapper nach React-DnD Installation
-    // <DndProvider backend={dndBackend} options={dndBackendOptions}>
+    <DndProvider backend={dndBackend} options={dndBackendOptions}>
       <div className="kanban-board-container min-h-screen bg-gray-50">
         {/* Board Header */}
         <BoardHeader
@@ -217,7 +216,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           </div>
         )}
       </div>
-    // </DndProvider>
+    </DndProvider>
   );
 };
 

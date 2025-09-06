@@ -1,9 +1,8 @@
 // src/hooks/useDragAndDrop.ts - Drag & Drop Hook für Plan 10/9
-// TODO: React-DnD Installation erforderlich
-// import { useDrag, useDrop } from 'react-dnd';
+import { useDrag, useDrop } from 'react-dnd';
 import { useCallback } from 'react';
 import { Project, PipelineStage } from '@/types/project';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext';
 
 // ========================================
 // DRAG & DROP INTERFACES
@@ -35,27 +34,41 @@ export const useDragAndDrop = (
 
   // Drag Source - für draggable Projekt-Karten
   const useDraggableProject = (project: Project) => {
-    // TODO: React-DnD Implementation nach Package-Installation
-    // const [{ isDragging }, drag] = useDrag<DragItem, void, DragCollectedProps>({...});
+    const [{ isDragging }, drag] = useDrag<DragItem, void, DragCollectedProps>({
+      type: 'PROJECT',
+      item: {
+        id: project.id,
+        currentStage: project.currentStage,
+        title: project.title
+      },
+      canDrag: () => canMoveProject(project),
+      collect: (monitor) => ({
+        isDragging: monitor.isDragging()
+      })
+    });
     
-    // Placeholder Implementation
-    return { 
-      isDragging: false, 
-      drag: (ref: any) => ref 
-    };
+    return { isDragging, drag };
   };
 
   // Drop Target - für Stage-Spalten
   const useDropZone = (targetStage: PipelineStage) => {
-    // TODO: React-DnD Implementation nach Package-Installation
-    // const [{ isOver, canDrop }, drop] = useDrop<DragItem, void, DropCollectedProps>({...});
+    const [{ isOver, canDrop }, drop] = useDrop<DragItem, void, DropCollectedProps>({
+      accept: 'PROJECT',
+      drop: (item: DragItem) => {
+        if (validateStageTransition(item.currentStage, targetStage)) {
+          onProjectMove(item.id, targetStage);
+        }
+      },
+      canDrop: (item: DragItem) => {
+        return validateStageTransition(item.currentStage, targetStage);
+      },
+      collect: (monitor) => ({
+        isOver: monitor.isOver(),
+        canDrop: monitor.canDrop()
+      })
+    });
     
-    // Placeholder Implementation
-    return { 
-      isOver: false, 
-      canDrop: true, 
-      drop: (ref: any) => ref 
-    };
+    return { isOver, canDrop, drop };
   };
 
   // Business Logic für Drag-Berechtigung
