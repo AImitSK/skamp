@@ -112,6 +112,7 @@ export function ProjectCreationWizard({
   const [creationOptions, setCreationOptions] = useState<ProjectCreationOptions | null>(null);
   const [creationResult, setCreationResult] = useState<ProjectCreationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   
   // Wizard-Daten State
   const [wizardData, setWizardData] = useState<ProjectCreationWizardData>({
@@ -199,8 +200,14 @@ export function ProjectCreationWizard({
       console.error('WIZARD Validierungsfehler:', JSON.stringify(validation.errors, null, 2));
       console.error('WIZARD Current step:', currentStep);
       console.error('WIZARD Current data:', JSON.stringify(wizardData, null, 2));
+      
+      // Set validation errors for UI display
+      setValidationErrors(validation.errors);
       return;
     }
+    
+    // Clear validation errors on successful validation
+    setValidationErrors({});
 
     completeStep(currentStep);
     
@@ -241,6 +248,9 @@ export function ProjectCreationWizard({
       );
       
       console.log('Project creation result:', result);
+      console.log('Result success:', result.success);
+      console.log('Result error:', result.error);
+      console.log('Result full details:', JSON.stringify(result, null, 2));
 
       setCreationResult(result);
       
@@ -250,9 +260,10 @@ export function ProjectCreationWizard({
         onSuccess(result);
       } else {
         // Handle creation failure
-        const errorMessage = result.error || 'Projekt konnte nicht erstellt werden. Bitte versuchen Sie es erneut.';
+        const errorDetails = result.error || result.message || 'Unbekannter Fehler';
+        const errorMessage = `Projekt konnte nicht erstellt werden: ${errorDetails}`;
         setError(errorMessage);
-        console.error('Project creation failed:', result);
+        console.error('Project creation failed - Full result:', JSON.stringify(result, null, 2));
       }
     } catch (error: any) {
       // Handle unexpected errors
@@ -478,6 +489,18 @@ export function ProjectCreationWizard({
               title="Fehler bei der Projekt-Erstellung"
               message={error}
               onDismiss={() => setError(null)}
+            />
+          </div>
+        )}
+
+        {/* Validation Errors Alert */}
+        {Object.keys(validationErrors).length > 0 && (
+          <div className="px-6 py-4">
+            <Alert
+              type="warning"
+              title="Bitte korrigieren Sie die folgenden Fehler:"
+              message={Object.values(validationErrors).join(', ')}
+              onDismiss={() => setValidationErrors({})}
             />
           </div>
         )}

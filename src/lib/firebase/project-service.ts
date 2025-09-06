@@ -1492,6 +1492,12 @@ export const projectService = {
 
       return result;
     } catch (error: any) {
+      console.error('=== PROJECT CREATION ERROR ===');
+      console.error('Error details:', error);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      console.error('=== END PROJECT CREATION ERROR ===');
+      
       return {
         success: false,
         projectId: '',
@@ -1500,7 +1506,8 @@ export const projectService = {
         assetsAttached: 0,
         warnings: [],
         infos: [],
-        nextSteps: []
+        nextSteps: [],
+        error: error.message || 'Unbekannter Fehler bei der Projekt-Erstellung'
       };
     }
   },

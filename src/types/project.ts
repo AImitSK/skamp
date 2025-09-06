@@ -486,6 +486,9 @@ export interface ProjectCreationResult {
   warnings: string[];
   infos: string[];
   nextSteps: string[];
+  
+  // Error handling
+  error?: string;
 }
 
 // Project Creation Options für Wizard
