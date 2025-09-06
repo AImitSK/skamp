@@ -114,6 +114,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 projects={stageProjects}
                 onProjectMove={onProjectMove}
                 onProjectSelect={onProjectSelect}
+                onProjectAdded={onRefresh}
                 useDraggableProject={useDraggableProject}
                 useDropZone={useDropZone}
                 getStageName={getStageName}

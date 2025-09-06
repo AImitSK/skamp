@@ -1,14 +1,16 @@
 // src/components/projects/kanban/ProjectCard.tsx - Projekt-Karte für Plan 10/9
 'use client';
 
-import React, { memo } from 'react';
+import React, { memo, useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   ClockIcon,
   UserIcon,
   ExclamationTriangleIcon,
   EllipsisHorizontalIcon
 } from '@heroicons/react/24/outline';
-import { Project, ProjectPriority } from '@/types/project';
+import { Project, ProjectPriority, PipelineStage } from '@/types/project';
+import { ProjectQuickActionsMenu } from './ProjectQuickActionsMenu';
 // TODO: date-fns Installation erforderlich
 // import { formatDistanceToNow } from 'date-fns';
 // import { de } from 'date-fns/locale';
@@ -20,6 +22,7 @@ import { Project, ProjectPriority } from '@/types/project';
 export interface ProjectCardProps {
   project: Project;
   onSelect?: (projectId: string) => void;
+  onProjectMove?: (projectId: string, targetStage: PipelineStage) => Promise<void>;
   useDraggableProject: (project: Project) => any;
 }
 
@@ -71,8 +74,12 @@ const getStatusColor = (status: string): string => {
 export const ProjectCard: React.FC<ProjectCardProps> = memo(({
   project,
   onSelect,
+  onProjectMove,
   useDraggableProject
 }) => {
+  const router = useRouter();
+  const [showQuickActions, setShowQuickActions] = useState(false);
+  const quickActionButtonRef = useRef<HTMLButtonElement>(null);
   // Drag Hook
   const { isDragging, drag } = useDraggableProject(project);
   
@@ -91,19 +98,50 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
     new Date(project.dueDate.seconds * 1000) < new Date() && 
     project.status !== 'completed';
 
-  // Handle Card Click
+  // Handle Card Click - Navigate to Project Details
   const handleCardClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (onSelect && project.id) {
-      onSelect(project.id);
+    if (project.id) {
+      router.push(`/dashboard/projects/${project.id}`);
     }
   };
 
-  // Handle Quick Actions
+  // Handle Quick Actions - Show Menu
   const handleQuickAction = (e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log('Quick actions for project:', project.id);
-    // TODO: Implementiere ProjectQuickActionsMenu
+    setShowQuickActions(!showQuickActions);
+  };
+
+  // Quick Actions Handlers
+  const handleViewProject = (projectId: string) => {
+    router.push(`/dashboard/projects/${projectId}`);
+  };
+
+  const handleEditProject = (projectId: string) => {
+    router.push(`/dashboard/projects/${projectId}?tab=settings`);
+  };
+
+  const handleDeleteProject = async (projectId: string) => {
+    if (confirm('Projekt wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) {
+      // TODO: Implement delete functionality
+      console.log('Delete project:', projectId);
+    }
+  };
+
+  const handleCloneProject = (projectId: string) => {
+    // TODO: Implement clone functionality
+    console.log('Clone project:', projectId);
+  };
+
+  const handleShareProject = (projectId: string) => {
+    // TODO: Implement share functionality
+    console.log('Share project:', projectId);
+  };
+
+  const handleMoveToStage = async (projectId: string, stage: PipelineStage) => {
+    if (onProjectMove) {
+      await onProjectMove(projectId, stage);
+    }
   };
 
   return (
@@ -130,13 +168,29 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
         </div>
         
         {/* Quick Actions */}
-        <button
-          onClick={handleQuickAction}
-          className="p-1 text-gray-400 hover:text-gray-600 rounded"
-          title="Mehr Optionen"
-        >
-          <EllipsisHorizontalIcon className="h-4 w-4" />
-        </button>
+        <div className="relative">
+          <button
+            ref={quickActionButtonRef}
+            onClick={handleQuickAction}
+            className="p-1 text-gray-400 hover:text-gray-600 rounded"
+            title="Mehr Optionen"
+          >
+            <EllipsisHorizontalIcon className="h-4 w-4" />
+          </button>
+          
+          <ProjectQuickActionsMenu
+            project={project}
+            isOpen={showQuickActions}
+            onClose={() => setShowQuickActions(false)}
+            onView={handleViewProject}
+            onEdit={handleEditProject}
+            onDelete={handleDeleteProject}
+            onClone={handleCloneProject}
+            onShare={handleShareProject}
+            onMoveToStage={handleMoveToStage}
+            triggerRef={quickActionButtonRef}
+          />
+        </div>
       </div>
 
       {/* Progress Bar */}

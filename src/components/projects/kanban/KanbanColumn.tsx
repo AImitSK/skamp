@@ -1,12 +1,13 @@
 // src/components/projects/kanban/KanbanColumn.tsx - Kanban Spalte für Plan 10/9
 'use client';
 
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { Project, PipelineStage } from '@/types/project';
 import { getStageColor, getStageConfig } from './kanban-constants';
 import { ProjectCard } from './ProjectCard';
 import { VirtualizedProjectList } from './VirtualizedProjectList';
+import { QuickProjectDialog } from './QuickProjectDialog';
 
 // ========================================
 // INTERFACES
@@ -17,6 +18,7 @@ export interface KanbanColumnProps {
   projects: Project[];
   onProjectMove: (projectId: string, targetStage: PipelineStage) => Promise<void>;
   onProjectSelect?: (projectId: string) => void;
+  onProjectAdded?: () => void;
   useDraggableProject: (project: Project) => any;
   useDropZone: (stage: PipelineStage) => any;
   getStageName: (stage: PipelineStage) => string;
@@ -32,11 +34,13 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
   projects,
   onProjectMove,
   onProjectSelect,
+  onProjectAdded,
   useDraggableProject,
   useDropZone,
   getStageName,
   loading
 }) => {
+  const [showQuickDialog, setShowQuickDialog] = useState(false);
   const stageConfig = getStageConfig(stage);
   const stageColors = getStageColor(stage);
   
@@ -56,10 +60,17 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
     return baseClass;
   };
 
-  // Add Project Handler (Placeholder)
+  // Add Project Handler
   const handleAddProject = () => {
-    console.log(`Add project to ${stage}`);
-    // TODO: Implementiere Add-Project-Dialog
+    setShowQuickDialog(true);
+  };
+
+  // Handle successful project creation
+  const handleProjectCreated = (projectId: string) => {
+    console.log(`Projekt ${projectId} erfolgreich in ${stage} erstellt`);
+    if (onProjectAdded) {
+      onProjectAdded();
+    }
   };
 
   return (
@@ -123,6 +134,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
             projects={projects}
             height={Math.min(500, projects.length * 120 + 20)} // Dynamic height with max
             onProjectSelect={onProjectSelect}
+            onProjectMove={onProjectMove}
             useDraggableProject={useDraggableProject}
             loading={loading}
           />
@@ -160,6 +172,14 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
           )}
         </div>
       </div>
+
+      {/* Quick Project Dialog */}
+      <QuickProjectDialog
+        isOpen={showQuickDialog}
+        onClose={() => setShowQuickDialog(false)}
+        onSuccess={handleProjectCreated}
+        targetStage={stage}
+      />
     </div>
   );
 }, (prevProps, nextProps) => {

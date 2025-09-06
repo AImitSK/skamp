@@ -13,6 +13,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 import { BoardFilters } from '@/lib/kanban/kanban-board-service';
+import { BoardSettingsModal, BoardSettings } from './BoardSettingsModal';
 // Falls useDebounce Hook existiert, importieren - sonst eigene Implementation unten
 
 // ========================================
@@ -34,6 +35,8 @@ export interface BoardHeaderProps {
   onToggleFilters: () => void;
   viewMode: 'board' | 'list' | 'calendar';
   onViewModeChange: (mode: 'board' | 'list' | 'calendar') => void;
+  boardSettings?: BoardSettings;
+  onBoardSettingsChange?: (settings: BoardSettings) => void;
 }
 
 // ========================================
@@ -69,8 +72,11 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
   showFilters,
   onToggleFilters,
   viewMode,
-  onViewModeChange
+  onViewModeChange,
+  boardSettings,
+  onBoardSettingsChange
 }) => {
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   // Search State
   const [searchValue, setSearchValue] = useState(filters.search || '');
   const debouncedSearch = useDebounceSearch(searchValue, 300);
@@ -262,6 +268,7 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
 
           {/* Settings Button */}
           <button
+            onClick={() => setShowSettingsModal(true)}
             className="p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
             title="Board-Einstellungen"
           >
@@ -331,6 +338,16 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
             </button>
           )}
         </div>
+      )}
+
+      {/* Board Settings Modal */}
+      {boardSettings && onBoardSettingsChange && (
+        <BoardSettingsModal
+          isOpen={showSettingsModal}
+          onClose={() => setShowSettingsModal(false)}
+          settings={boardSettings}
+          onSettingsChange={onBoardSettingsChange}
+        />
       )}
     </div>
   );
