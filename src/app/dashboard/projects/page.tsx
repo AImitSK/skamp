@@ -25,6 +25,7 @@ import { BoardFilters, kanbanBoardService } from '@/lib/kanban/kanban-board-serv
 import { KanbanBoard } from '@/components/projects/kanban/KanbanBoard';
 import { BoardProvider } from '@/components/projects/kanban/BoardProvider';
 import { useBoardRealtime } from '@/hooks/useBoardRealtime';
+import Link from 'next/link';
 
 export default function ProjectsPage() {
   const { user } = useAuth();
@@ -425,9 +426,11 @@ export default function ProjectsPage() {
               {/* Project Actions */}
               <div className="px-6 py-3 bg-gray-50 border-t border-gray-200 rounded-b-lg">
                 <div className="flex items-center justify-between">
-                  <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
-                    Details anzeigen
-                  </button>
+                  <Link href={`/dashboard/projects/${project.id}`}>
+                    <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                      Details anzeigen
+                    </button>
+                  </Link>
                   
                   <div className="text-xs text-gray-500">
                     Aktualisiert: {formatDate(project.updatedAt)}

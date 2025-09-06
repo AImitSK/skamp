@@ -46,7 +46,10 @@ export const projectService = {
         updatedAt: Timestamp.now()
       };
       
-      const docRef = await addDoc(collection(db, 'projects'), dataToSave);
+      // Firebase-kompatible Bereinigung von undefined-Werten
+      const cleanedData = this.cleanUndefinedValues(dataToSave);
+      
+      const docRef = await addDoc(collection(db, 'projects'), cleanedData);
       return docRef.id;
     } catch (error) {
       throw error;
@@ -1359,6 +1362,29 @@ export const projectService = {
   /**
    * Erstellt ein Projekt aus Wizard-Daten
    */
+  // Hilfsfunktion: Entfernt undefined-Werte rekursiv (Firebase-kompatibel)
+  cleanUndefinedValues(obj: any): any {
+    if (obj === null || obj === undefined) {
+      return null;
+    }
+    
+    if (Array.isArray(obj)) {
+      return obj.map(item => this.cleanUndefinedValues(item));
+    }
+    
+    if (typeof obj === 'object') {
+      const cleaned: any = {};
+      for (const [key, value] of Object.entries(obj)) {
+        if (value !== undefined) {
+          cleaned[key] = this.cleanUndefinedValues(value);
+        }
+      }
+      return cleaned;
+    }
+    
+    return obj;
+  },
+
   async createProjectFromWizard(
     wizardData: ProjectCreationWizardData,
     userId: string,
@@ -1381,7 +1407,7 @@ export const projectService = {
         creationContext: {
           createdViaWizard: true,
           templateId: wizardData.templateId,
-          templateName: undefined, // Wird später beim Template-Laden gesetzt
+          // templateName wird später beim Template-Laden gesetzt (Firebase-kompatibel)
           wizardVersion: '1.0.0',
           stepsCompleted: wizardData.completedSteps.map(s => s.toString()),
           initialConfiguration: {
