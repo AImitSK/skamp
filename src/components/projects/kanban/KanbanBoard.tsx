@@ -111,11 +111,13 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       <div className={`flex gap-4 h-full w-full overflow-x-auto`}>
         {allStages.map((stage, index) => {
           const stageProjects = projects[stage] || [];
+          const isFirstColumn = index === 0;
+          const isLastColumn = index === allStages.length - 1;
           
           return (
             <div
               key={stage}
-              className="flex-1 min-w-[240px]"
+              className={`flex-1 min-w-[240px] ${isFirstColumn ? 'ml-4' : ''} ${isLastColumn ? 'mr-4' : ''}`}
             >
               <KanbanColumn
                 stage={stage}

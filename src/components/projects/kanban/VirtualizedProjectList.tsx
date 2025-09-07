@@ -49,7 +49,7 @@ const ListItem: React.FC<ListItemProps> = memo(({ index, style, data }) => {
   }
 
   return (
-    <div style={style} className="px-3">
+    <div style={style}>
       <div className="pb-3">
         <ProjectCard
           project={project}
@@ -103,7 +103,7 @@ export const VirtualizedProjectList: React.FC<VirtualizedProjectListProps> = mem
   // Loading state
   if (loading) {
     return (
-      <div className="space-y-3 px-3">
+      <div className="space-y-4">
         {Array.from({ length: 5 }).map((_, index) => (
           <div key={index} className="animate-pulse">
             <div className="bg-gray-200 rounded-lg h-24"></div>
@@ -129,7 +129,7 @@ export const VirtualizedProjectList: React.FC<VirtualizedProjectListProps> = mem
   // Small list - render normally for better performance
   if (!shouldVirtualize) {
     return (
-      <div className="space-y-3 px-3">
+      <div className="space-y-4">
         {projects.map(project => (
           <ProjectCard
             key={project.id}
@@ -146,7 +146,7 @@ export const VirtualizedProjectList: React.FC<VirtualizedProjectListProps> = mem
   // Large list - use virtualization (nach react-window Installation)
   // TODO: React-Window Implementation
   return (
-    <div className="space-y-3 px-3 max-h-96 overflow-y-auto">
+    <div className="space-y-4 max-h-96 overflow-y-auto">
       {projects.map(project => (
         <ProjectCard
           key={project.id}
