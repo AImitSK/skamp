@@ -96,7 +96,7 @@ export const RESPONSIVE_CONFIG = {
     breakpoint: Infinity, // ≥ 1200px
     layout: 'full',
     columns: 7,
-    cardWidth: 'flex-1',
+    cardWidth: 'flex-1 min-w-[240px]',
     padding: 'p-0',
     gap: 'gap-4'
   }
