@@ -393,7 +393,6 @@ export default function ProjectsPage() {
         onSuccess={handleWizardSuccess}
         organizationId={currentOrganization.id}
       />
-      </div>
-    </>
+    </div>
   );
 }
