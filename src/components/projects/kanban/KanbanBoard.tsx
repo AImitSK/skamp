@@ -107,15 +107,17 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
   // Board Content - Desktop/Tablet Layout
   const renderDesktopBoard = () => (
-    <div className={`kanban-board-desktop ${responsiveConfig.padding} h-full w-full px-4`}>
-      <div className={`flex ${responsiveConfig.gap} h-full w-full ${responsiveConfig.cardWidth.includes('flex-1') ? 'overflow-x-auto pb-4' : 'overflow-x-auto pb-4'}`}>
-        {allStages.map(stage => {
+    <div className={`kanban-board-desktop ${responsiveConfig.padding} h-full w-full`}>
+      <div className={`flex ${responsiveConfig.gap} h-full w-full ${responsiveConfig.cardWidth.includes('flex-1') ? 'overflow-x-auto' : 'overflow-x-auto'}`}>
+        {allStages.map((stage, index) => {
           const stageProjects = projects[stage] || [];
+          const isFirst = index === 0;
+          const isLast = index === allStages.length - 1;
           
           return (
             <div
               key={stage}
-              className={responsiveConfig.cardWidth.includes('flex-1') ? responsiveConfig.cardWidth : 'flex-shrink-0'}
+              className={`${responsiveConfig.cardWidth.includes('flex-1') ? responsiveConfig.cardWidth : 'flex-shrink-0'} ${isFirst ? 'pl-4' : ''} ${isLast ? 'pr-4' : ''}`}
               style={!responsiveConfig.cardWidth.includes('flex-1') ? { width: responsiveConfig.cardWidth } : undefined}
             >
               <KanbanColumn
