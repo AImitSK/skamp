@@ -236,12 +236,6 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
         </div>
       )}
 
-      {/* Project Description */}
-      {project.description && (
-        <p className="text-xs text-gray-600 mb-3 line-clamp-2">
-          {project.description}
-        </p>
-      )}
 
       {/* Tags */}
       {projectTags.length > 0 && (
@@ -270,16 +264,17 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
           {project.assignedTo && project.assignedTo.length > 0 && (
             <div className="flex -space-x-2">
               {project.assignedTo.slice(0, 3).map((userId: string) => {
+                console.log('Looking for user:', userId, 'in teamMembers:', teamMembers.map(m => ({id: m.userId, name: m.displayName})));
                 const member = teamMembers.find(m => m.userId === userId);
-                if (!member) {
-                  // Fallback for unknown member
+                if (!member || loadingTeam) {
+                  // Fallback for unknown member or still loading
                   return (
                     <div
                       key={userId}
                       className="w-7 h-7 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 text-xs font-medium ring-2 ring-white"
-                      title="Unbekanntes Mitglied"
+                      title={loadingTeam ? "Lädt Mitgliederdaten..." : "Unbekanntes Mitglied"}
                     >
-                      ?
+                      {loadingTeam ? "..." : "?"}
                     </div>
                   );
                 }
