@@ -27,6 +27,42 @@ import { BoardProvider } from '@/components/projects/kanban/BoardProvider';
 import { useBoardRealtime } from '@/hooks/useBoardRealtime';
 import Link from 'next/link';
 
+// Kanban Layout Wrapper Komponente
+const KanbanLayoutWrapper = ({ children }: { children: React.ReactNode }) => {
+  React.useEffect(() => {
+    // Verstecke Sidebar nur für Kanban-View
+    const sidebar = document.querySelector('[data-slot="sidebar"]');
+    const mainContent = document.querySelector('[data-slot="main"]');
+    
+    if (sidebar && mainContent) {
+      sidebar.classList.add('hidden');
+      mainContent.classList.remove('lg:pl-64', 'xl:pl-80');
+      mainContent.classList.add('lg:pl-0');
+      
+      mainContent.classList.remove('p-4', 'sm:p-6', 'lg:p-8');
+      mainContent.classList.add('p-0');
+    }
+    
+    // Cleanup beim Wechsel zurück zu Listen-View
+    return () => {
+      if (sidebar && mainContent) {
+        sidebar.classList.remove('hidden');
+        mainContent.classList.add('lg:pl-64', 'xl:pl-80');
+        mainContent.classList.remove('lg:pl-0');
+        
+        mainContent.classList.add('p-4', 'sm:p-6', 'lg:p-8');
+        mainContent.classList.remove('p-0');
+      }
+    };
+  }, []);
+
+  return (
+    <div className="absolute inset-0 top-14">
+      {children}
+    </div>
+  );
+};
+
 export default function ProjectsPage() {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
@@ -196,27 +232,134 @@ export default function ProjectsPage() {
     );
   }
 
-  return (
-    <div className="w-full h-[calc(100vh-3.5rem)] bg-white flex flex-col">
-      {/* Board View with integrated toolbar */}
-      {!loading && !error && projects.length > 0 && viewMode === 'board' && currentOrganization && (
-        <BoardProvider organizationId={currentOrganization.id}>
-          <KanbanBoard
-            projects={groupProjectsByStage(projects)}
-            totalProjects={projects.length}
-            activeUsers={[]} // TODO: Get from real-time hook
-            filters={filters}
-            loading={loading}
-            onProjectMove={handleProjectMove}
-            onFiltersChange={handleFiltersChange}
-            onRefresh={loadProjects}
-            viewMode={viewMode}
-            onViewModeChange={handleViewModeChange}
-            onNewProject={() => setShowWizard(true)}
-            onMoreOptions={() => console.log('More options')}
+  // Kanban Full-Width Layout
+  if (viewMode === 'board') {
+    return (
+      <KanbanLayoutWrapper>
+        <div className="w-full h-[calc(100vh-3.5rem)] bg-white flex flex-col">
+          {/* Board View with integrated toolbar */}
+          {!loading && !error && projects.length > 0 && currentOrganization && (
+            <BoardProvider organizationId={currentOrganization.id}>
+              <KanbanBoard
+                projects={groupProjectsByStage(projects)}
+                totalProjects={projects.length}
+                activeUsers={[]} // TODO: Get from real-time hook
+                filters={filters}
+                loading={loading}
+                onProjectMove={handleProjectMove}
+                onFiltersChange={handleFiltersChange}
+                onRefresh={loadProjects}
+                viewMode={viewMode}
+                onViewModeChange={handleViewModeChange}
+                onNewProject={() => setShowWizard(true)}
+                onMoreOptions={() => console.log('More options')}
+              />
+            </BoardProvider>
+          )}
+
+          {/* Error State */}
+          {error && (
+            <div className="p-6 text-center">
+              <div className="rounded-lg bg-red-50 border border-red-200 p-4 inline-block">
+                <h3 className="text-sm font-medium text-red-800 mb-2">Fehler beim Laden</h3>
+                <p className="text-sm text-red-700 mb-3">{error}</p>
+                <button
+                  onClick={loadProjects}
+                  className="text-sm text-red-800 hover:text-red-900 underline"
+                >
+                  Erneut versuchen
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Loading State */}
+          {loading && (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
+                <p className="text-gray-600">Projekte werden geladen...</p>
+              </div>
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!loading && !error && projects.length === 0 && (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <FolderIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Keine Projekte</h3>
+                <p className="text-gray-500 mb-6">
+                  Erstellen Sie Ihr erstes Projekt mit dem Projekt-Anlage-Wizard.
+                </p>
+                <Button onClick={() => setShowWizard(true)} className="flex items-center space-x-2">
+                  <RocketLaunchIcon className="w-4 h-4" />
+                  <span>Erstes Projekt erstellen</span>
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Project Creation Wizard */}
+          <ProjectCreationWizard
+            isOpen={showWizard}
+            onClose={() => setShowWizard(false)}
+            onSuccess={handleWizardSuccess}
+            organizationId={currentOrganization.id}
           />
-        </BoardProvider>
-      )}
+        </div>
+      </KanbanLayoutWrapper>
+    );
+  }
+
+  // Listen-Ansicht mit normalem Layout
+  return (
+    <>
+      {/* Page Header */}
+      <div className="pb-5 border-b border-gray-200 mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <Heading>Projekte</Heading>
+            <Subheading>Verwalten Sie Ihre PR-Projekte und Kampagnen</Subheading>
+          </div>
+          <div className="flex items-center space-x-3">
+            {/* View Mode Toggle */}
+            <div className="flex items-center border border-gray-300 rounded-lg">
+              <button
+                onClick={() => handleViewModeChange('board')}
+                className={`
+                  px-3 py-2 text-sm font-medium rounded-l-lg transition-colors
+                  ${viewMode === 'board'
+                    ? 'bg-primary text-white'
+                    : 'text-gray-700 hover:bg-gray-50'
+                  }
+                `}
+                title="Board-Ansicht"
+              >
+                <Squares2X2Icon className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => handleViewModeChange('list')}
+                className={`
+                  px-3 py-2 text-sm font-medium border-l border-gray-300 rounded-r-lg transition-colors
+                  ${viewMode === 'list'
+                    ? 'bg-primary text-white'
+                    : 'text-gray-700 hover:bg-gray-50'
+                  }
+                `}
+                title="Listen-Ansicht"
+              >
+                <ListBulletIcon className="h-4 w-4" />
+              </button>
+            </div>
+            
+            <Button onClick={() => setShowWizard(true)} className="flex items-center space-x-2">
+              <PlusIcon className="w-4 h-4" />
+              <span>Neues Projekt</span>
+            </Button>
+          </div>
+        </div>
+      </div>
 
       {/* Error State */}
       {error && (
@@ -391,6 +534,6 @@ export default function ProjectsPage() {
         onSuccess={handleWizardSuccess}
         organizationId={currentOrganization.id}
       />
-    </div>
+    </>
   );
 }
