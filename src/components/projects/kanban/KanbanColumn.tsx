@@ -49,7 +49,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
   
   // Drop Zone Style basierend auf Drag State
   const getDropZoneClass = () => {
-    let baseClass = `kanban-column min-h-[500px] ${stageColors.bg} ${stageColors.border} border-2 rounded-lg`;
+    let baseClass = `kanban-column h-full ${stageColors.bg} ${stageColors.border} border-2 rounded-lg`;
     
     if (isOver && canDrop) {
       baseClass += ' border-green-400 bg-green-50 border-dashed';

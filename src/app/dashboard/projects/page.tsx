@@ -306,7 +306,7 @@ export default function ProjectsPage() {
 
       {/* Board View */}
       {!loading && !error && projects.length > 0 && viewMode === 'board' && currentOrganization && (
-        <div className="mb-8 h-[70vh]">
+        <div className="h-[70vh] w-full">
           <BoardProvider organizationId={currentOrganization.id}>
             <KanbanBoard
               projects={groupProjectsByStage(projects)}
@@ -444,36 +444,6 @@ export default function ProjectsPage() {
         </div>
       )}
 
-      {/* Project Stats */}
-      {!loading && !error && projects.length > 0 && (
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white p-4 border border-gray-200 rounded-lg">
-            <div className="text-2xl font-bold text-gray-900">{projects.length}</div>
-            <div className="text-sm text-gray-600">Gesamt</div>
-          </div>
-          
-          <div className="bg-white p-4 border border-gray-200 rounded-lg">
-            <div className="text-2xl font-bold text-green-600">
-              {projects.filter(p => p.status === 'active').length}
-            </div>
-            <div className="text-sm text-gray-600">Aktiv</div>
-          </div>
-          
-          <div className="bg-white p-4 border border-gray-200 rounded-lg">
-            <div className="text-2xl font-bold text-blue-600">
-              {projects.filter(p => p.status === 'completed').length}
-            </div>
-            <div className="text-sm text-gray-600">Abgeschlossen</div>
-          </div>
-          
-          <div className="bg-white p-4 border border-gray-200 rounded-lg">
-            <div className="text-2xl font-bold text-purple-600">
-              {projects.filter(p => p.creationContext?.createdViaWizard).length}
-            </div>
-            <div className="text-sm text-gray-600">Via Wizard</div>
-          </div>
-        </div>
-      )}
 
       {/* Project Creation Wizard */}
       <ProjectCreationWizard

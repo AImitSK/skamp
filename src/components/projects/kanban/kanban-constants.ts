@@ -22,44 +22,44 @@ export const STAGE_COLORS: Record<PipelineStage, {
     count: 'bg-blue-200 text-blue-800'
   },
   'creation': {
-    bg: 'bg-purple-50',
-    border: 'border-purple-200',
-    text: 'text-purple-700',
-    accent: 'bg-purple-100',
-    header: 'bg-purple-100',
-    count: 'bg-purple-200 text-purple-800'
+    bg: 'bg-blue-50',
+    border: 'border-blue-200',
+    text: 'text-blue-700',
+    accent: 'bg-blue-100',
+    header: 'bg-blue-100',
+    count: 'bg-blue-200 text-blue-800'
   },
   'internal_approval': {
-    bg: 'bg-orange-50',
-    border: 'border-orange-200',
-    text: 'text-orange-700',
-    accent: 'bg-orange-100',
-    header: 'bg-orange-100',
-    count: 'bg-orange-200 text-orange-800'
+    bg: 'bg-blue-50',
+    border: 'border-blue-200',
+    text: 'text-blue-700',
+    accent: 'bg-blue-100',
+    header: 'bg-blue-100',
+    count: 'bg-blue-200 text-blue-800'
   },
   'customer_approval': {
-    bg: 'bg-yellow-50',
-    border: 'border-yellow-200',
-    text: 'text-yellow-700',
-    accent: 'bg-yellow-100',
-    header: 'bg-yellow-100',
-    count: 'bg-yellow-200 text-yellow-800'
+    bg: 'bg-blue-50',
+    border: 'border-blue-200',
+    text: 'text-blue-700',
+    accent: 'bg-blue-100',
+    header: 'bg-blue-100',
+    count: 'bg-blue-200 text-blue-800'
   },
   'distribution': {
-    bg: 'bg-green-50',
-    border: 'border-green-200',
-    text: 'text-green-700',
-    accent: 'bg-green-100',
-    header: 'bg-green-100',
-    count: 'bg-green-200 text-green-800'
+    bg: 'bg-blue-50',
+    border: 'border-blue-200',
+    text: 'text-blue-700',
+    accent: 'bg-blue-100',
+    header: 'bg-blue-100',
+    count: 'bg-blue-200 text-blue-800'
   },
   'monitoring': {
-    bg: 'bg-indigo-50',
-    border: 'border-indigo-200',
-    text: 'text-indigo-700',
-    accent: 'bg-indigo-100',
-    header: 'bg-indigo-100',
-    count: 'bg-indigo-200 text-indigo-800'
+    bg: 'bg-blue-50',
+    border: 'border-blue-200',
+    text: 'text-blue-700',
+    accent: 'bg-blue-100',
+    header: 'bg-blue-100',
+    count: 'bg-blue-200 text-blue-800'
   },
   'completed': {
     bg: 'bg-gray-50',
@@ -88,16 +88,16 @@ export const RESPONSIVE_CONFIG = {
     breakpoint: 1200, // 768px - 1199px
     layout: 'compact',
     columns: 3,
-    cardWidth: '300px',
+    cardWidth: '320px',
     padding: 'p-4',
-    gap: 'gap-3'
+    gap: 'gap-4'
   },
   desktop: {
     breakpoint: Infinity, // ≥ 1200px
     layout: 'full',
     columns: 7,
-    cardWidth: '280px',
-    padding: 'p-4',
+    cardWidth: 'flex-1',
+    padding: 'p-0',
     gap: 'gap-4'
   }
 };
