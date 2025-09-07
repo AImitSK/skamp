@@ -261,8 +261,6 @@ export default function ProjectsPage() {
         </div>
       )}
 
-      <div>
-
       {/* List View (existing Projects Grid) */}
       {!loading && !error && projects.length > 0 && viewMode === 'list' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
