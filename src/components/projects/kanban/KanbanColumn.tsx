@@ -112,7 +112,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
       <div className="column-content py-4 px-4 space-y-4 flex-1">
         {loading && projects.length === 0 ? (
           // Loading State
-          <div className="space-y-3">
+          <div className="space-y-4">
             {[1, 2, 3].map(i => (
               <div key={i} className="animate-pulse">
                 <div className="bg-gray-200 rounded-lg h-24"></div>
