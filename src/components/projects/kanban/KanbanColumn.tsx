@@ -79,7 +79,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
       className={`${getDropZoneClass()} flex flex-col`}
     >
       {/* Column Header */}
-      <div className={`column-header p-4 ${stageColors.header} rounded-t-lg border-b ${stageColors.border}`}>
+      <div className={`column-header p-2 ${stageColors.header} rounded-t-lg border-b ${stageColors.border}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <h3 className={`font-semibold ${stageColors.text}`}>
@@ -109,7 +109,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
       </div>
 
       {/* Projects List */}
-      <div className="column-content p-3 space-y-3 flex-1">
+      <div className="column-content p-2 space-y-3 flex-1">
         {loading && projects.length === 0 ? (
           // Loading State
           <div className="space-y-3">
@@ -160,7 +160,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
       )}
 
       {/* Column Footer - Quick Stats */}
-      <div className={`column-footer px-4 py-2 border-t ${stageColors.border} ${stageColors.bg} rounded-b-lg`}>
+      <div className={`column-footer p-2 border-t ${stageColors.border} ${stageColors.bg} rounded-b-lg`}>
         <div className="flex justify-between text-xs text-gray-600">
           <span>
             {projects.length === 1 ? '1 Projekt' : `${projects.length} Projekte`}
