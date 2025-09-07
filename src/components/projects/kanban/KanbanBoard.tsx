@@ -44,6 +44,11 @@ export interface KanbanBoardProps {
   onFiltersChange: (filters: BoardFilters) => void;
   onProjectSelect?: (projectId: string) => void;
   onRefresh?: () => void;
+  // New props for extended toolbar
+  viewMode?: 'board' | 'list' | 'calendar';
+  onViewModeChange?: (mode: 'board' | 'list' | 'calendar') => void;
+  onNewProject?: () => void;
+  onMoreOptions?: () => void;
 }
 
 // ========================================
@@ -59,7 +64,11 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   onProjectMove,
   onFiltersChange,
   onProjectSelect,
-  onRefresh
+  onRefresh,
+  viewMode = 'board',
+  onViewModeChange,
+  onNewProject,
+  onMoreOptions
 }) => {
   // Window Size für Responsive Design
   const [windowSize, setWindowSize] = useState({ width: 1200, height: 800 });
@@ -159,6 +168,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           onRefresh={onRefresh}
           showFilters={showFilters}
           onToggleFilters={() => setShowFilters(!showFilters)}
+          viewMode={viewMode}
+          onViewModeChange={onViewModeChange}
+          onNewProject={onNewProject}
+          onMoreOptions={onMoreOptions}
         />
 
         {/* Filter Panel */}

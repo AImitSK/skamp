@@ -197,178 +197,67 @@ export default function ProjectsPage() {
   }
 
   return (
-    <>
-      {/* Compact Toolbar */}
-      <div className="mb-4">
-        <div className="flex items-center justify-end space-x-2">
-          {/* Search */}
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Projekte suchen..."
-              className="w-64 pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-              value={filters.search || ''}
-              onChange={(e) => handleFiltersChange({...filters, search: e.target.value})}
-            />
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-          </div>
-
-          {/* View Mode Toggle */}
-          <div className="flex items-center border border-gray-300 rounded-lg">
-            <button
-              onClick={() => handleViewModeChange('board')}
-              className={`
-                px-3 py-2 text-sm font-medium rounded-l-lg transition-colors
-                ${viewMode === 'board'
-                  ? 'bg-blue-500 text-white'
-                  : 'text-gray-700 hover:bg-gray-50'
-                }
-              `}
-              title="Board-Ansicht"
-            >
-              <Squares2X2Icon className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => handleViewModeChange('list')}
-              className={`
-                px-3 py-2 text-sm font-medium border-l border-gray-300 rounded-r-lg transition-colors
-                ${viewMode === 'list'
-                  ? 'bg-blue-500 text-white'
-                  : 'text-gray-700 hover:bg-gray-50'
-                }
-              `}
-              title="Listen-Ansicht"
-            >
-              <ListBulletIcon className="h-4 w-4" />
-            </button>
-          </div>
-
-          {/* Filter Button */}
-          <button
-            className="px-3 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            title="Filter"
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
-            </svg>
-          </button>
-
-          {/* Refresh Button */}
-          <button
-            onClick={loadProjects}
-            className="px-3 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            title="Aktualisieren"
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-          </button>
-
-          {/* Settings Button */}
-          <button
-            className="px-3 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            title="Einstellungen"
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-          </button>
-
-          {/* New Project Button */}
-          <Button 
-            onClick={() => setShowWizard(true)}
-            className="flex items-center space-x-2"
-          >
-            <PlusIcon className="w-4 h-4" />
-            <span>Neues Projekt</span>
-          </Button>
-
-          {/* Three Dots Menu */}
-          <button
-            className="px-3 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            title="Weitere Optionen"
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-            </svg>
-          </button>
-        </div>
-      </div>
+    <div className="w-full h-[calc(100vh-3.5rem)] bg-white flex flex-col">
+      {/* Board View with integrated toolbar */}
+      {!loading && !error && projects.length > 0 && viewMode === 'board' && currentOrganization && (
+        <BoardProvider organizationId={currentOrganization.id}>
+          <KanbanBoard
+            projects={groupProjectsByStage(projects)}
+            totalProjects={projects.length}
+            activeUsers={[]} // TODO: Get from real-time hook
+            filters={filters}
+            loading={loading}
+            onProjectMove={handleProjectMove}
+            onFiltersChange={handleFiltersChange}
+            onRefresh={loadProjects}
+            viewMode={viewMode}
+            onViewModeChange={handleViewModeChange}
+            onNewProject={() => setShowWizard(true)}
+            onMoreOptions={() => console.log('More options')}
+          />
+        </BoardProvider>
+      )}
 
       {/* Error State */}
       {error && (
-        <div className="mb-6 rounded-lg bg-red-50 border border-red-200 p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">
-                Fehler beim Laden
-              </h3>
-              <div className="mt-2 text-sm text-red-700">
-                <p>{error}</p>
-              </div>
-              <div className="mt-3">
-                <button
-                  onClick={loadProjects}
-                  className="text-sm text-red-800 hover:text-red-900 underline"
-                >
-                  Erneut versuchen
-                </button>
-              </div>
-            </div>
+        <div className="p-6 text-center">
+          <div className="rounded-lg bg-red-50 border border-red-200 p-4 inline-block">
+            <h3 className="text-sm font-medium text-red-800 mb-2">Fehler beim Laden</h3>
+            <p className="text-sm text-red-700 mb-3">{error}</p>
+            <button
+              onClick={loadProjects}
+              className="text-sm text-red-800 hover:text-red-900 underline"
+            >
+              Erneut versuchen
+            </button>
           </div>
         </div>
       )}
 
       {/* Loading State */}
       {loading && (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <Text className="ml-3">Projekte werden geladen...</Text>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
+            <p className="text-gray-600">Projekte werden geladen...</p>
+          </div>
         </div>
       )}
 
       {/* Empty State */}
       {!loading && !error && projects.length === 0 && (
-        <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-          <FolderIcon className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-semibold text-gray-900">Keine Projekte</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Erstellen Sie Ihr erstes Projekt mit dem Projekt-Anlage-Wizard.
-          </p>
-          <div className="mt-6">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <FolderIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Keine Projekte</h3>
+            <p className="text-gray-500 mb-6">
+              Erstellen Sie Ihr erstes Projekt mit dem Projekt-Anlage-Wizard.
+            </p>
             <Button onClick={() => setShowWizard(true)} className="flex items-center space-x-2">
               <RocketLaunchIcon className="w-4 h-4" />
               <span>Erstes Projekt erstellen</span>
             </Button>
           </div>
-        </div>
-      )}
-    
-      {/* Board View - breaks out of container for full width */}
-      {!loading && !error && projects.length > 0 && viewMode === 'board' && currentOrganization && (
-        <div className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] h-[75vh] px-4 overflow-hidden">
-          <BoardProvider organizationId={currentOrganization.id}>
-            <KanbanBoard
-              projects={groupProjectsByStage(projects)}
-              totalProjects={projects.length}
-              activeUsers={[]} // TODO: Get from real-time hook
-              filters={filters}
-              loading={loading}
-              onProjectMove={handleProjectMove}
-              onFiltersChange={handleFiltersChange}
-              onRefresh={loadProjects}
-            />
-          </BoardProvider>
         </div>
       )}
 

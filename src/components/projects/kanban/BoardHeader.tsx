@@ -8,8 +8,11 @@ import {
   Squares2X2Icon,
   ArrowPathIcon,
   UserGroupIcon,
-  AdjustmentsHorizontalIcon
+  AdjustmentsHorizontalIcon,
+  PlusIcon,
+  ListBulletIcon
 } from '@heroicons/react/24/outline';
+import { Button } from '@/components/ui/button';
 
 import { BoardFilters } from '@/lib/kanban/kanban-board-service';
 import { BoardSettingsModal, BoardSettings } from './BoardSettingsModal';
@@ -34,6 +37,11 @@ export interface BoardHeaderProps {
   onToggleFilters: () => void;
   boardSettings?: BoardSettings;
   onBoardSettingsChange?: (settings: BoardSettings) => void;
+  // New props for extended toolbar
+  viewMode?: 'board' | 'list';
+  onViewModeChange?: (mode: 'board' | 'list') => void;
+  onNewProject?: () => void;
+  onMoreOptions?: () => void;
 }
 
 // ========================================
@@ -69,7 +77,11 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
   showFilters,
   onToggleFilters,
   boardSettings,
-  onBoardSettingsChange
+  onBoardSettingsChange,
+  viewMode = 'board',
+  onViewModeChange,
+  onNewProject,
+  onMoreOptions
 }) => {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   // Search State
@@ -178,20 +190,20 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
           )}
         </div>
 
-        {/* Right Side - Search & Actions */}
-        <div className="flex items-center space-x-4">
-          {/* Search Bar */}
+        {/* Right Side - New Toolbar */}
+        <div className="flex items-center space-x-2">
+          {/* Search */}
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <MagnifyingGlassIcon className="h-4 w-4 text-gray-400" />
-            </div>
             <input
               type="text"
               placeholder="Projekte suchen..."
-              className="block w-64 pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-64 pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
               value={searchValue}
               onChange={handleSearchChange}
             />
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <MagnifyingGlassIcon className="h-4 w-4 text-gray-400" />
+            </div>
             {searchValue && (
               <button
                 onClick={clearSearch}
@@ -202,21 +214,51 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
             )}
           </div>
 
+          {/* View Mode Toggle */}
+          {onViewModeChange && (
+            <div className="flex items-center border border-gray-300 rounded-lg">
+              <button
+                onClick={() => onViewModeChange('board')}
+                className={`
+                  px-3 py-2 text-sm font-medium rounded-l-lg transition-colors
+                  ${viewMode === 'board'
+                    ? 'bg-blue-500 text-white'
+                    : 'text-gray-700 hover:bg-gray-50'
+                  }
+                `}
+                title="Board-Ansicht"
+              >
+                <Squares2X2Icon className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => onViewModeChange('list')}
+                className={`
+                  px-3 py-2 text-sm font-medium border-l border-gray-300 rounded-r-lg transition-colors
+                  ${viewMode === 'list'
+                    ? 'bg-blue-500 text-white'
+                    : 'text-gray-700 hover:bg-gray-50'
+                  }
+                `}
+                title="Listen-Ansicht"
+              >
+                <ListBulletIcon className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+
           {/* Filter Button */}
           <button
             onClick={onToggleFilters}
-            className={`
-              flex items-center space-x-2 px-3 py-2 text-sm font-medium rounded-lg border transition-colors
-              ${showFilters
+            className={`px-3 py-2 text-sm font-medium border rounded-lg transition-colors ${
+              showFilters
                 ? 'border-blue-500 bg-blue-50 text-blue-700'
-                : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-              }
-            `}
+                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+            title="Filter"
           >
             <FunnelIcon className="h-4 w-4" />
-            <span>Filter</span>
             {activeFilterCount > 0 && (
-              <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+              <span className="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
                 {activeFilterCount}
               </span>
             )}
@@ -225,7 +267,7 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
           {/* Refresh Button */}
           <button
             onClick={handleRefresh}
-            className="p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            className="px-3 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             title="Aktualisieren"
           >
             <ArrowPathIcon className="h-4 w-4" />
@@ -234,11 +276,35 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
           {/* Settings Button */}
           <button
             onClick={() => setShowSettingsModal(true)}
-            className="p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-            title="Board-Einstellungen"
+            className="px-3 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            title="Einstellungen"
           >
             <AdjustmentsHorizontalIcon className="h-4 w-4" />
           </button>
+
+          {/* New Project Button */}
+          {onNewProject && (
+            <Button 
+              onClick={onNewProject}
+              className="flex items-center space-x-2"
+            >
+              <PlusIcon className="w-4 h-4" />
+              <span>Neues Projekt</span>
+            </Button>
+          )}
+
+          {/* Three Dots Menu - NO BORDER */}
+          {onMoreOptions && (
+            <button
+              onClick={onMoreOptions}
+              className="px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+              title="Weitere Optionen"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
 
