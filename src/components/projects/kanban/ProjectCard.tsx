@@ -266,14 +266,23 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
               {project.assignedTo.slice(0, 3).map((userId: string) => {
                 console.log('=== AVATAR DEBUG ===');
                 console.log('Looking for assignedTo userId:', userId);
-                console.log('Available teamMembers:', teamMembers.map(m => ({
-                  userId: m.userId,
-                  id: m.id,
-                  email: m.email,
-                  displayName: m.displayName
-                })));
+                console.log('LoadingTeam state:', loadingTeam);
+                console.log('TeamMembers length:', teamMembers.length);
+                if (teamMembers.length > 0) {
+                  console.log('Available teamMembers:', teamMembers.map(m => ({
+                    userId: m.userId,
+                    id: m.id,
+                    email: m.email,
+                    displayName: m.displayName,
+                    photoUrl: m.photoUrl
+                  })));
+                }
                 console.log('=== END AVATAR DEBUG ===');
-                const member = teamMembers.find(m => m.userId === userId);
+                
+                // Zusätzlicher Check: Versuche match mit id statt userId
+                const memberByUserId = teamMembers.find(m => m.userId === userId);
+                const memberById = teamMembers.find(m => m.id === userId);
+                const member = memberByUserId || memberById;
                 if (!member || loadingTeam) {
                   // Fallback for unknown member or still loading
                   return (
