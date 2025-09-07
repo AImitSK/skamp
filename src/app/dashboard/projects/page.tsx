@@ -198,55 +198,105 @@ export default function ProjectsPage() {
 
   return (
     <>
-      {/* Header Section - stays in container */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <Heading>Projekte</Heading>
-            <Text className="mt-2">
-              Verwalten Sie Ihre PR-Projekte und Kampagnen zentral
-            </Text>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            {/* View Mode Toggle */}
-            <div className="flex items-center border border-gray-300 rounded-lg">
-              <button
-                onClick={() => handleViewModeChange('board')}
-                className={`
-                  px-3 py-2 text-sm font-medium rounded-l-lg transition-colors
-                  ${viewMode === 'board'
-                    ? 'bg-blue-500 text-white'
-                    : 'text-gray-700 hover:bg-gray-50'
-                  }
-                `}
-                title="Board-Ansicht"
-              >
-                <Squares2X2Icon className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => handleViewModeChange('list')}
-                className={`
-                  px-3 py-2 text-sm font-medium border-l border-gray-300 rounded-r-lg transition-colors
-                  ${viewMode === 'list'
-                    ? 'bg-blue-500 text-white'
-                    : 'text-gray-700 hover:bg-gray-50'
-                  }
-                `}
-                title="Listen-Ansicht"
-              >
-                <ListBulletIcon className="h-4 w-4" />
-              </button>
+      {/* Compact Toolbar */}
+      <div className="mb-4">
+        <div className="flex items-center justify-end space-x-2">
+          {/* Search */}
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Projekte suchen..."
+              className="w-64 pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+              value={filters.search || ''}
+              onChange={(e) => handleFiltersChange({...filters, search: e.target.value})}
+            />
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
             </div>
-
-            <Button 
-              onClick={() => setShowWizard(true)}
-              className="flex items-center space-x-2"
-            >
-              <PlusIcon className="w-4 h-4" />
-              <span>Neues Projekt</span>
-            </Button>
           </div>
+
+          {/* View Mode Toggle */}
+          <div className="flex items-center border border-gray-300 rounded-lg">
+            <button
+              onClick={() => handleViewModeChange('board')}
+              className={`
+                px-3 py-2 text-sm font-medium rounded-l-lg transition-colors
+                ${viewMode === 'board'
+                  ? 'bg-blue-500 text-white'
+                  : 'text-gray-700 hover:bg-gray-50'
+                }
+              `}
+              title="Board-Ansicht"
+            >
+              <Squares2X2Icon className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => handleViewModeChange('list')}
+              className={`
+                px-3 py-2 text-sm font-medium border-l border-gray-300 rounded-r-lg transition-colors
+                ${viewMode === 'list'
+                  ? 'bg-blue-500 text-white'
+                  : 'text-gray-700 hover:bg-gray-50'
+                }
+              `}
+              title="Listen-Ansicht"
+            >
+              <ListBulletIcon className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Filter Button */}
+          <button
+            className="px-3 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            title="Filter"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
+            </svg>
+          </button>
+
+          {/* Refresh Button */}
+          <button
+            onClick={loadProjects}
+            className="px-3 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            title="Aktualisieren"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
+
+          {/* Settings Button */}
+          <button
+            className="px-3 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            title="Einstellungen"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </button>
+
+          {/* New Project Button */}
+          <Button 
+            onClick={() => setShowWizard(true)}
+            className="flex items-center space-x-2"
+          >
+            <PlusIcon className="w-4 h-4" />
+            <span>Neues Projekt</span>
+          </Button>
+
+          {/* Three Dots Menu */}
+          <button
+            className="px-3 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            title="Weitere Optionen"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -306,7 +356,7 @@ export default function ProjectsPage() {
     
       {/* Board View - breaks out of container for full width */}
       {!loading && !error && projects.length > 0 && viewMode === 'board' && currentOrganization && (
-        <div className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] h-[70vh] px-4">
+        <div className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] h-[75vh] px-4 overflow-hidden">
           <BoardProvider organizationId={currentOrganization.id}>
             <KanbanBoard
               projects={groupProjectsByStage(projects)}
