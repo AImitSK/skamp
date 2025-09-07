@@ -197,7 +197,7 @@ export default function ProjectsPage() {
   }
 
   return (
-    <div className="flex flex-col">
+    <>
       {/* Header Section - stays in container */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
@@ -303,27 +303,26 @@ export default function ProjectsPage() {
           </div>
         </div>
       )}
-    </div>
+    
+      {/* Board View - breaks out of container for full width */}
+      {!loading && !error && projects.length > 0 && viewMode === 'board' && currentOrganization && (
+        <div className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] h-[70vh] px-4">
+          <BoardProvider organizationId={currentOrganization.id}>
+            <KanbanBoard
+              projects={groupProjectsByStage(projects)}
+              totalProjects={projects.length}
+              activeUsers={[]} // TODO: Get from real-time hook
+              filters={filters}
+              loading={loading}
+              onProjectMove={handleProjectMove}
+              onFiltersChange={handleFiltersChange}
+              onRefresh={loadProjects}
+            />
+          </BoardProvider>
+        </div>
+      )}
 
-    {/* Board View - breaks out of container for full width */}
-    {!loading && !error && projects.length > 0 && viewMode === 'board' && currentOrganization && (
-      <div className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] h-[70vh] px-4">
-        <BoardProvider organizationId={currentOrganization.id}>
-          <KanbanBoard
-            projects={groupProjectsByStage(projects)}
-            totalProjects={projects.length}
-            activeUsers={[]} // TODO: Get from real-time hook
-            filters={filters}
-            loading={loading}
-            onProjectMove={handleProjectMove}
-            onFiltersChange={handleFiltersChange}
-            onRefresh={loadProjects}
-          />
-        </BoardProvider>
-      </div>
-    )}
-
-    <div>
+      <div>
 
       {/* List View (existing Projects Grid) */}
       {!loading && !error && projects.length > 0 && viewMode === 'list' && (
@@ -455,6 +454,7 @@ export default function ProjectsPage() {
         onSuccess={handleWizardSuccess}
         organizationId={currentOrganization.id}
       />
-    </div>
+      </div>
+    </>
   );
 }
