@@ -1,7 +1,7 @@
 // src/components/projects/kanban/ProjectCard.tsx - Projekt-Karte für Plan 10/9
 'use client';
 
-import React, { memo, useState, useRef } from 'react';
+import React, { memo, useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   ClockIcon,
@@ -11,6 +11,10 @@ import {
 } from '@heroicons/react/24/outline';
 import { Project, ProjectPriority, PipelineStage } from '@/types/project';
 import { ProjectQuickActionsMenu } from './ProjectQuickActionsMenu';
+import { Avatar } from '@/components/ui/avatar';
+import { teamMemberService } from '@/lib/firebase/organization-service';
+import { TeamMember } from '@/types/international';
+import { useOrganization } from '@/context/OrganizationContext';
 // TODO: date-fns Installation erforderlich
 // import { formatDistanceToNow } from 'date-fns';
 // import { de } from 'date-fns/locale';
@@ -78,7 +82,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
   useDraggableProject
 }) => {
   const router = useRouter();
+  const { currentOrganization } = useOrganization();
   const [showQuickActions, setShowQuickActions] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [loadingTeam, setLoadingTeam] = useState(true);
   const quickActionButtonRef = useRef<HTMLButtonElement>(null);
   // Drag Hook
   const { isDragging, drag } = useDraggableProject(project);
@@ -97,6 +104,26 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
   const isOverdue = project.dueDate && 
     new Date(project.dueDate.seconds * 1000) < new Date() && 
     project.status !== 'completed';
+
+  // Load Team Members
+  useEffect(() => {
+    const loadTeamMembers = async () => {
+      if (!currentOrganization?.id) return;
+      
+      try {
+        setLoadingTeam(true);
+        const members = await teamMemberService.getByOrganization(currentOrganization.id);
+        const activeMembers = members.filter(m => m.status === 'active');
+        setTeamMembers(activeMembers);
+      } catch (error) {
+        console.error('Error loading team members:', error);
+      } finally {
+        setLoadingTeam(false);
+      }
+    };
+
+    loadTeamMembers();
+  }, [currentOrganization?.id]);
 
   // Handle Card Click - Navigate to Project Details
   const handleCardClick = (e: React.MouseEvent) => {
@@ -238,14 +265,48 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
       {/* Card Footer */}
       <div className="card-footer flex items-center justify-between">
         {/* Left Side - Team & Status */}
-        <div className="flex items-center space-x-2">
-          {/* Assigned Team Members */}
+        <div className="flex items-center space-x-3">
+          {/* Assigned Team Members with Avatars */}
           {project.assignedTo && project.assignedTo.length > 0 && (
-            <div className="flex items-center space-x-1">
-              <UserIcon className="h-3 w-3 text-gray-400" />
-              <span className="text-xs text-gray-600">
-                {project.assignedTo.length}
-              </span>
+            <div className="flex -space-x-2">
+              {project.assignedTo.slice(0, 3).map((userId: string) => {
+                const member = teamMembers.find(m => m.userId === userId);
+                if (!member) {
+                  // Fallback for unknown member
+                  return (
+                    <div
+                      key={userId}
+                      className="w-7 h-7 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 text-xs font-medium ring-2 ring-white"
+                      title="Unbekanntes Mitglied"
+                    >
+                      ?
+                    </div>
+                  );
+                }
+                
+                // Generate initials as fallback
+                const initials = member.displayName
+                  .split(' ')
+                  .map(n => n[0])
+                  .join('')
+                  .toUpperCase()
+                  .slice(0, 2);
+                
+                return (
+                  <Avatar
+                    key={userId}
+                    className="size-7 ring-2 ring-white"
+                    src={member.photoUrl}
+                    initials={initials}
+                    title={member.displayName}
+                  />
+                );
+              })}
+              {project.assignedTo.length > 3 && (
+                <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs font-medium ring-2 ring-white">
+                  +{project.assignedTo.length - 3}
+                </div>
+              )}
             </div>
           )}
           
