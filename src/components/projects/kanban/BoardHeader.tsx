@@ -146,7 +146,7 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
   };
 
   return (
-    <div className="board-header bg-white border-b border-gray-200 px-6 py-4">
+    <div className="board-header bg-white px-6 py-4">
       <div className="flex items-center justify-between">
         {/* Left Side - Title & Stats */}
         <div className="flex items-center space-x-4">

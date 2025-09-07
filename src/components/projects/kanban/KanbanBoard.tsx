@@ -158,7 +158,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
   return (
     <DndProvider backend={dndBackend} options={dndBackendOptions}>
-      <div className="kanban-board-container bg-gray-50 flex flex-col h-full">
+      <div className="kanban-board-container bg-white flex flex-col h-full">
         {/* Board Header */}
         <BoardHeader
           totalProjects={totalProjects}
