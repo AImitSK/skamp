@@ -117,7 +117,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           return (
             <div
               key={stage}
-              className={`flex-1 min-w-[240px] ${isFirstColumn ? 'ml-4' : ''} ${isLastColumn ? 'mr-4' : ''}`}
+              className={`flex-1 min-w-[280px] ${isFirstColumn ? 'ml-4' : ''} ${isLastColumn ? 'mr-4' : ''}`}
             >
               <KanbanColumn
                 stage={stage}
