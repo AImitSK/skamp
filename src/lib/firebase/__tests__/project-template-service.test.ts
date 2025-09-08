@@ -841,12 +841,11 @@ describe('ProjectTemplateService', () => {
         usageCount: 5,
         defaultTasks: [],
         defaultDeadlines: [],
-        configuration: {
+        defaultConfiguration: {
           autoCreateCampaign: false,
           defaultPriority: 'medium' as const,
-          autoAssignManager: false,
-          requiredApprovals: 0,
-          customFields: []
+          recommendedTeamSize: 3,
+          estimatedDuration: 30
         },
         createdBy: 'user123',
         createdAt: Timestamp.now(),

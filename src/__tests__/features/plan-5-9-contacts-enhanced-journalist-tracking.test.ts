@@ -59,20 +59,17 @@ describe('ContactsEnhanced Service Journalist-Tracking (Plan 5/9)', () => {
     organizationId: testContext.organizationId,
     createdBy: testContext.userId,
     updatedBy: testContext.userId,
-    name: { first: 'Jane', last: 'Reporter' },
-    email: 'jane@techjournal.com',
-    phone: '+49 123 456789',
-    company: 'Tech Journal',
+    name: { firstName: 'Jane', lastName: 'Reporter' },
+    emails: [{ type: 'business', email: 'jane@techjournal.com', isPrimary: true }],
+    phones: [{ type: 'business', number: '+49 123 456789', isPrimary: true }],
+    companyId: 'tech-journal-123',
+    companyName: 'Tech Journal',
     position: 'Senior Tech Reporter',
     mediaProfile: {
       isJournalist: true,
       // outlet: 'Tech Journal', // TODO: Fix outlet property type
       beats: ['technology', 'startups', 'ai'],
-      publicationIds: ['pub-1', 'pub-2'],
-      socialMediaHandles: {
-        twitter: '@janereporter',
-        linkedin: 'jane-reporter'
-      }
+      publicationIds: ['pub-1', 'pub-2']
     },
     clippingHistory: [
       {

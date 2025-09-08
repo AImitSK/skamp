@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { CrmDataProvider } from "@/context/CrmDataContext";
 import { OrganizationProvider } from "@/context/OrganizationContext";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase/client-init";
 import { StackedLayout } from "@/components/stacked-layout";
@@ -350,9 +351,11 @@ export default function DashboardLayout({
       <Headless.DialogPanel className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-zinc-900/10 dark:bg-zinc-900">
         <div className="flex items-center justify-between">
           <a href="/dashboard" className="-m-1.5 p-1.5">
-            <img
+            <Image
               src="/logo_skamp.svg"
               alt="CeleroPress Logo"
+              width={32}
+              height={32}
               className="h-8 w-auto"
             />
           </a>
@@ -460,9 +463,11 @@ export default function DashboardLayout({
             <Navbar>
               {/* Logo */}
               <a href="/dashboard" className="flex-shrink-0">
-                <img
+                <Image
                   src="/logo_skamp.svg"
                   alt="CeleroPress Logo"
+                  width={40}
+                  height={40}
                   className="h-10 w-auto max-w-[100px]"
                 />
               </a>
@@ -596,9 +601,11 @@ export default function DashboardLayout({
             <Sidebar>
               <SidebarHeader>
                 <a href="/dashboard">
-                  <img
+                  <Image
                     src="/logo_skamp.svg"
                     alt="CeleroPress Logo"
+                    width={40}
+                    height={40}
                     className="h-10 w-auto max-w-[150px]"
                   />
                 </a>

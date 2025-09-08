@@ -195,6 +195,14 @@ describe('Project Wizard Types - Interface Compliance Tests', () => {
             name: 'Hauptverteiler',
             contactCount: 25
           }
+        ],
+        availableAssets: [
+          {
+            id: 'asset1',
+            name: 'test-image.jpg',
+            type: 'image',
+            size: '1.2 MB'
+          }
         ]
       };
 
@@ -209,7 +217,8 @@ describe('Project Wizard Types - Interface Compliance Tests', () => {
         availableClients: [],
         availableTeamMembers: [],
         availableTemplates: [],
-        availableDistributionLists: []
+        availableDistributionLists: [],
+        availableAssets: []
       };
 
       expect(emptyOptions.availableClients).toHaveLength(0);

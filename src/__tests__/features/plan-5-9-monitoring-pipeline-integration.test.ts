@@ -707,7 +707,7 @@ describe('Monitoring Pipeline-Integration (Plan 5/9)', () => {
         await projectService.updateAnalytics('project-123', { totalReach: 100000 }, testContext);
       } catch (error) {
         // In realer Implementierung würde hier Monitoring pausiert
-        expect(error.message).toBe('Critical database error');
+        expect((error as Error).message).toBe('Critical database error');
       }
 
       // Assert - Monitoring-Status sollte auf 'paused' gesetzt werden
@@ -762,7 +762,7 @@ describe('Monitoring Pipeline-Integration (Plan 5/9)', () => {
 
     it('sollte Memory-Leaks bei kontinuierlichen Updates vermeiden', async () => {
       // Arrange
-      let memoryUsageBefore: NodeJS.MemoryUsage;
+      let memoryUsageBefore: NodeJS.MemoryUsage | undefined;
       
       if (process.memoryUsage) {
         memoryUsageBefore = process.memoryUsage();

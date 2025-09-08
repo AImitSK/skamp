@@ -207,6 +207,7 @@ const [companiesData, contactsData, tagsData] = await Promise.all([
     } finally {
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, currentOrganization]);
 
   useEffect(() => {

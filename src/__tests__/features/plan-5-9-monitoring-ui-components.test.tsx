@@ -803,6 +803,7 @@ describe('Monitoring-UI-Komponenten (Plan 5/9)', () => {
       // Act
       render(
         <MonitoringConfigPanel
+          projectId="test-project-123"
           config={mockDefaultConfig}
           onSave={jest.fn()}
           onCancel={jest.fn()}
@@ -821,6 +822,7 @@ describe('Monitoring-UI-Komponenten (Plan 5/9)', () => {
       // Act
       render(
         <MonitoringConfigPanel
+          projectId="test-project-123"
           config={mockDefaultConfig}
           onSave={jest.fn()}
           onCancel={jest.fn()}
@@ -879,6 +881,7 @@ describe('Monitoring-UI-Komponenten (Plan 5/9)', () => {
       // Act
       render(
         <MonitoringConfigPanel
+          projectId="test-project-123"
           config={mockDefaultConfig}
           onSave={jest.fn()}
           onCancel={jest.fn()}
@@ -907,6 +910,7 @@ describe('Monitoring-UI-Komponenten (Plan 5/9)', () => {
       // Act
       render(
         <MonitoringConfigPanel
+          projectId="test-project-123"
           config={mockDefaultConfig}
           onSave={jest.fn()}
           onCancel={jest.fn()}
@@ -957,6 +961,7 @@ describe('Monitoring-UI-Komponenten (Plan 5/9)', () => {
       // Act
       render(
         <MonitoringConfigPanel
+          projectId="test-project-123"
           config={configWithProviders}
           onSave={jest.fn()}
           onCancel={jest.fn()}

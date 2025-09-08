@@ -403,6 +403,17 @@ export const NOTIFICATION_TEMPLATES: Record<NotificationType, NotificationTempla
     sampleMetadata: {
       assetName: 'Pressemitteilung_Q1.docx'
     }
+  },
+  project_assignment: {
+    type: 'project_assignment',
+    titleTemplate: 'Projekt-Zuweisung',
+    messageTemplate: 'Du wurdest dem Projekt "{projectTitle}" zugewiesen.',
+    requiredFields: ['projectTitle'],
+    optionalFields: ['senderName'],
+    sampleMetadata: {
+      projectTitle: 'Q1 Marketing Campaign',
+      senderName: 'Max Mustermann'
+    }
   }
 };
 

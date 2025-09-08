@@ -202,14 +202,14 @@ describe('MediaService Clipping-Management (Plan 5/9)', () => {
     it('sollte Projekt-Clippings erfolgreich laden', async () => {
       // Arrange
       const mockClippings = [
-        { id: 'clip-1', ...mockClippingData, outlet: 'TechCrunch' },
-        { id: 'clip-2', ...mockClippingData, outlet: 'Wired' },
-        { id: 'clip-3', ...mockClippingData, outlet: 'The Verge' }
+        { ...mockClippingData, outlet: 'TechCrunch' },
+        { ...mockClippingData, outlet: 'Wired' },
+        { ...mockClippingData, outlet: 'The Verge' }
       ];
 
       mockGetDocs.mockResolvedValueOnce({
-        docs: mockClippings.map(clip => ({
-          id: clip.id,
+        docs: mockClippings.map((clip, index) => ({
+          id: `clip-${index + 1}`,
           data: () => ({ ...clip, createdBy: testContext.userId })
         }))
       });
@@ -279,7 +279,6 @@ describe('MediaService Clipping-Management (Plan 5/9)', () => {
     it('sollte userId-Compatibility korrekt handhaben', async () => {
       // Arrange
       const clippingWithoutCreatedBy = {
-        id: 'clip-legacy',
         ...mockClippingData,
         organizationId: testContext.organizationId
         // Kein createdBy Feld (Legacy-Daten)

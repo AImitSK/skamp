@@ -37,7 +37,7 @@ export const useDragAndDrop = (
     const [{ isDragging }, drag] = useDrag<DragItem, void, DragCollectedProps>({
       type: 'PROJECT',
       item: {
-        id: project.id,
+        id: project.id || '',
         currentStage: project.currentStage,
         title: project.title
       },

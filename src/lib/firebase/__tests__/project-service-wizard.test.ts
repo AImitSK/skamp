@@ -123,7 +123,7 @@ describe('ProjectService - Wizard Methods', () => {
       jest.spyOn(projectService, 'getById').mockResolvedValue(mockProject);
       jest.spyOn(projectService, 'initializeProjectResources').mockResolvedValue(mockResourceResult);
 
-      const result = await projectService.createProjectFromWizard(mockWizardData, mockUserId);
+      const result = await projectService.createProjectFromWizard(mockWizardData, mockUserId, mockOrganizationId);
 
       expect(result.success).toBe(true);
       expect(result.projectId).toBe('project123');
@@ -157,7 +157,7 @@ describe('ProjectService - Wizard Methods', () => {
       jest.spyOn(projectService, 'create').mockResolvedValue('project123');
       jest.spyOn(projectService, 'getById').mockResolvedValue(mockProject);
 
-      const result = await projectService.createProjectFromWizard(wizardDataWithoutTemplate, mockUserId);
+      const result = await projectService.createProjectFromWizard(wizardDataWithoutTemplate, mockUserId, mockOrganizationId);
 
       expect(result.success).toBe(true);
       expect(result.projectId).toBe('project123');
@@ -191,7 +191,7 @@ describe('ProjectService - Wizard Methods', () => {
       jest.spyOn(projectService, 'create').mockResolvedValue('project123');
       jest.spyOn(projectService, 'getById').mockResolvedValue(mockProject);
 
-      const result = await projectService.createProjectFromWizard(mockWizardData, mockUserId);
+      const result = await projectService.createProjectFromWizard(mockWizardData, mockUserId, mockOrganizationId);
 
       expect(result.success).toBe(true);
       expect(result.warnings).toContain('Template konnte nicht vollständig angewendet werden');
@@ -231,7 +231,7 @@ describe('ProjectService - Wizard Methods', () => {
       jest.spyOn(projectService, 'getById').mockResolvedValue(mockProject);
       jest.spyOn(projectService, 'initializeProjectResources').mockResolvedValue(mockResourceResult);
 
-      const result = await projectService.createProjectFromWizard(mockWizardData, mockUserId);
+      const result = await projectService.createProjectFromWizard(mockWizardData, mockUserId, mockOrganizationId);
 
       expect(result.success).toBe(true);
       expect(result.warnings).toContain('Kampagne konnte nicht erstellt werden');
@@ -262,7 +262,7 @@ describe('ProjectService - Wizard Methods', () => {
       jest.spyOn(projectService, 'getById').mockResolvedValue(mockProject);
       jest.spyOn(projectService, 'initializeProjectResources').mockResolvedValue(mockResourceResult);
 
-      const result = await projectService.createProjectFromWizard(mockWizardData, mockUserId);
+      const result = await projectService.createProjectFromWizard(mockWizardData, mockUserId, mockOrganizationId);
 
       expect(result.nextSteps).toContain('Projekt-Details verfeinern');
       expect(result.nextSteps).toContain('Kampagne konfigurieren');
@@ -272,7 +272,7 @@ describe('ProjectService - Wizard Methods', () => {
     it('sollte bei kritischem Fehler Failure-Result zurückgeben', async () => {
       jest.spyOn(projectService, 'create').mockRejectedValue(new Error('Database error'));
 
-      const result = await projectService.createProjectFromWizard(mockWizardData, mockUserId);
+      const result = await projectService.createProjectFromWizard(mockWizardData, mockUserId, mockOrganizationId);
 
       expect(result.success).toBe(false);
       expect(result.projectId).toBe('');
@@ -311,7 +311,7 @@ describe('ProjectService - Wizard Methods', () => {
       });
       jest.spyOn(projectService, 'getById').mockResolvedValue(mockProject);
 
-      await projectService.createProjectFromWizard(mockWizardData, mockUserId);
+      await projectService.createProjectFromWizard(mockWizardData, mockUserId, mockOrganizationId);
 
       expect(projectService.create).toHaveBeenCalled();
     });
@@ -880,7 +880,7 @@ describe('ProjectService - Wizard Methods', () => {
       
       jest.spyOn(projectService, 'getById').mockResolvedValue({} as Project);
 
-      await projectService.createProjectFromWizard(wizardData, mockUserId);
+      await projectService.createProjectFromWizard(wizardData, mockUserId, mockOrganizationId);
 
       expect(createSpy).toHaveBeenCalled();
     });

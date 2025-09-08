@@ -338,7 +338,7 @@ export default function InboxPage() {
         setupError: error.message
       }));
     }
-  }, [selectedFolderType, selectedTeamMemberId, hasEmailAddresses, resolvingThreads]);
+  }, [selectedFolderType, selectedTeamMemberId, hasEmailAddresses, resolvingThreads, setupTeamFolderListeners]);
 
 
   const setupTeamFolderListeners = (unsubscribes: Unsubscribe[]) => {
