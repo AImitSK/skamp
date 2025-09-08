@@ -87,28 +87,6 @@ export default function ProjectDetailPage() {
     }
   };
 
-  const handleCreateDocument = async (templateId: string, title: string) => {
-    if (!project || !currentOrganization?.id || !user) return;
-    
-    try {
-      setDocumentsLoading(true);
-      await strategyDocumentService.createFromTemplate(
-        templateId,
-        project.id,
-        title,
-        user.uid,
-        user.displayName || 'Unbekannter User',
-        { organizationId: currentOrganization.id }
-      );
-      
-      await loadStrategyDocuments();
-      setShowDocumentModal(false);
-    } catch (error) {
-      console.error('Fehler beim Erstellen des Strategiedokuments:', error);
-    } finally {
-      setDocumentsLoading(false);
-    }
-  };
 
   const getDocumentStatusColor = (status: string) => {
     switch (status) {
@@ -304,7 +282,8 @@ export default function ProjectDetailPage() {
         organizationId: currentOrganization.id
       });
 
-      // Zur Editor-Seite navigieren
+      // Liste aktualisieren und zur Editor-Seite navigieren
+      await loadStrategyDocuments();
       router.push(`/dashboard/strategy-documents/${documentId}`);
     } catch (error) {
       console.error('Fehler beim Erstellen des Strategiedokuments:', error);
