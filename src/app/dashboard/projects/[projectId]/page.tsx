@@ -226,6 +226,94 @@ export default function ProjectDetailPage() {
     setShowCommunicationModal(false);
   };
 
+  const handleCreateDocument = async (templateType: string, title: string) => {
+    if (!currentOrganization?.id || !user?.uid || !project?.id) return;
+
+    try {
+      setDocumentsLoading(true);
+      
+      // Template content basierend auf Typ
+      let content = '';
+      switch (templateType) {
+        case 'briefing-template':
+          content = `
+            <h1>Projekt-Briefing</h1>
+            <h2>Ausgangssituation</h2>
+            <p>[Beschreibung der aktuellen Situation]</p>
+            
+            <h2>Ziele</h2>
+            <ul>
+              <li>Hauptziel</li>
+              <li>Nebenziele</li>
+            </ul>
+            
+            <h2>Zielgruppen</h2>
+            <p>[Primäre und sekundäre Zielgruppen]</p>
+            
+            <h2>Kernbotschaften</h2>
+            <p>[Hauptbotschaften]</p>
+          `;
+          break;
+        case 'strategy-template':
+          content = `
+            <h1>Kommunikationsstrategie</h1>
+            <h2>Strategische Ausrichtung</h2>
+            <p>[Grundlegende Strategie]</p>
+            
+            <h2>Kanäle & Medien</h2>
+            <ul>
+              <li>Print-Medien</li>
+              <li>Online-Medien</li>
+              <li>Social Media</li>
+            </ul>
+            
+            <h2>Timeline & Meilensteine</h2>
+            <p>[Zeitplan]</p>
+          `;
+          break;
+        case 'analysis-template':
+          content = `
+            <h1>Marktanalyse</h1>
+            <h2>Marktumfeld</h2>
+            <p>[Marktanalyse]</p>
+            
+            <h2>Wettbewerber</h2>
+            <p>[Competitor-Analyse]</p>
+            
+            <h2>Chancen & Risiken</h2>
+            <ul>
+              <li>Chancen</li>
+              <li>Risiken</li>
+            </ul>
+          `;
+          break;
+        default:
+          content = '<p>Neues Strategiedokument</p>';
+      }
+
+      // Dokument erstellen
+      const documentId = await strategyDocumentService.create({
+        projectId: project.id,
+        title,
+        type: templateType.includes('briefing') ? 'briefing' : 
+              templateType.includes('strategy') ? 'strategy' : 'analysis',
+        content,
+        status: 'draft',
+        author: user.uid,
+        version: 1,
+        organizationId: currentOrganization.id
+      });
+
+      // Zur Editor-Seite navigieren
+      router.push(`/dashboard/strategy-documents/${documentId}`);
+    } catch (error) {
+      console.error('Fehler beim Erstellen des Strategiedokuments:', error);
+      alert('Fehler beim Erstellen des Dokuments. Bitte versuchen Sie es erneut.');
+    } finally {
+      setDocumentsLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -802,7 +890,7 @@ export default function ProjectDetailPage() {
                       outline 
                       disabled={project.currentStage !== 'ideas_planning' || documentsLoading}
                       className="w-full"
-                      onClick={() => setShowDocumentModal(true)}
+                      onClick={() => handleCreateDocument('briefing-template', `${project.title} - Briefing`)}
                     >
                       <DocumentTextIcon className="w-4 h-4 mr-2" />
                       Neues Dokument erstellen
