@@ -19,7 +19,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 import { strategyDocumentService, StrategyDocument } from '@/lib/firebase/strategy-document-service';
-import { StrategyDocumentEditor } from '@/components/strategy/StrategyDocumentEditor';
+import StrategyDocumentEditor from '@/components/strategy/StrategyDocumentEditor';
 
 export default function StrategyDocumentPage() {
   const params = useParams();
@@ -63,15 +63,15 @@ export default function StrategyDocumentPage() {
     }
   };
 
-  const handleSave = async (content: string, versionNotes?: string) => {
+  const handleSave = async (content: string, title: string) => {
     if (!document || !currentOrganization?.id || !user) return;
 
     try {
       setSaving(true);
       await strategyDocumentService.update(
         document.id,
-        { content },
-        versionNotes || 'Automatische Speicherung',
+        { content, title },
+        'Automatische Speicherung',
         { organizationId: currentOrganization.id, userId: user.uid }
       );
       
@@ -270,9 +270,9 @@ export default function StrategyDocumentPage() {
       <div className="bg-white rounded-lg border border-gray-200">
         <StrategyDocumentEditor
           document={document}
-          isReadOnly={isReadOnly}
           onSave={handleSave}
-          saving={saving}
+          onCancel={() => router.push(`/dashboard/projects/${document?.projectId}`)}
+          isLoading={saving}
         />
       </div>
     </div>

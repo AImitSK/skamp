@@ -777,7 +777,7 @@ export default function ProjectDetailPage() {
                             <Button
                               size="sm"
                               outline
-                              onClick={() => window.open(`/dashboard/strategy-documents/${doc.id}`, '_blank')}
+                              onClick={() => router.push(`/dashboard/strategy-documents/${doc.id}`)}
                             >
                               {project.currentStage === 'ideas_planning' ? 'Bearbeiten' : 'Ansehen'}
                             </Button>
