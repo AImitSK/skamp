@@ -323,12 +323,29 @@ Das Problem muss in einem dieser **spezifischen Inbox-Module** liegen:
 
 **⚠️ CONCLUSION**: Das Problem liegt **NICHT in den Imports**, sondern in der **komplexen useEffect/Hook-LOGIK** der originalen Inbox!
 
-#### 📋 NÄCHSTER SCHRITT - HOOK-LOGIK ISOLATION:
-**METHODE**: Schrittweise die originale useEffect/Hook-Logik hinzufügen:
-1. **useState** Definitionen
-2. **useEffect** für Firebase Listeners  
-3. **useCallback** Dependencies (bereits teilweise gefixt)
-4. **Komplexe State Management** Logik
+#### 🎯 **EXAKTE ROOT CAUSE IDENTIFIZIERT** (08.01.2025):
+
+**TRIGGER**: `selectedFolderType` Toggle Button (`general` ↔ `team`)
+**ERROR**: `ReferenceError: Cannot access 'eh' before initialization`
+**LOCATION**: useEffect Firebase Listeners Re-Initialization
+
+#### 📋 HOOK-LOGIK ISOLATION RESULTS:
+1. ✅ **useState Definitionen**: Funktioniert einwandfrei
+2. ✅ **useEffect Firebase Listeners**: Funktioniert beim ersten Load
+3. ❌ **useEffect Re-Initialization**: **FEHLER BEI selectedFolderType CHANGE!**
+
+#### 🔍 **PROBLEM-ANALYSE**:
+
+**Was passiert beim Toggle**:
+1. User klickt "Toggle Folder: general"
+2. `setSelectedFolderType('team')` wird ausgeführt
+3. useEffect Dependencies ändern sich: `[user, organizationId, selectedFolderType, selectedTeamMemberId]`
+4. useEffect Cleanup-Funktion läuft (unsubscribe alte listeners)
+5. useEffect Re-Initialization läuft (setup neue listeners)
+6. **JavaScript-Initialisierungsfehler tritt auf während Re-Initialization**
+
+#### ⚡ **ROOT CAUSE**: 
+**useEffect Re-Initialization Race Condition** beim `selectedFolderType` Change - Problem liegt in der Cleanup/Setup-Sequenz der Firebase Listeners!
 
 ---
 

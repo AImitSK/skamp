@@ -78,15 +78,18 @@ export default function InboxHookLogicPhase1Page() {
   const [unsubscribes, setUnsubscribes] = useState<Unsubscribe[]>([]);
 
   // Test State
-  const [message, setMessage] = useState('Hook-Logik Phase 2: useEffect Firebase Listeners Test');
+  const [message, setMessage] = useState('RACE CONDITION FIX: useEffect Firebase Listeners mit isActive Flag');
 
-  // HOOK-LOGIK PHASE 2: Kritischer useEffect mit Firebase Listeners
+  // HOOK-LOGIK PHASE 2: Kritischer useEffect mit Firebase Listeners - FIXED
   useEffect(() => {
+    console.log('🔄 useEffect triggered with deps:', { user: !!user, organizationId, selectedFolderType, selectedTeamMemberId });
+    
     if (!user || !organizationId) {
       setLoading(false);
       return;
     }
 
+    let isActive = true; // Flag to prevent race conditions
     setLoading(true);
     setError(null);
 
@@ -110,6 +113,8 @@ export default function InboxHookLogicPhase1Page() {
       const threadsUnsubscribe = onSnapshot(
         threadsQuery,
         async (snapshot) => {
+          if (!isActive) return; // Prevent race condition updates
+          
           let threadsData: EmailThread[] = [];
           
           snapshot.forEach((doc) => {
@@ -128,20 +133,23 @@ export default function InboxHookLogicPhase1Page() {
             );
           }
           
-          setThreads(threadsData);
-          
-          setDebugInfo((prev: DebugInfo) => ({
-            ...prev,
-            threadCount: threadsData.length,
-            threads: threadsData
-          }));
+          if (isActive) {
+            setThreads(threadsData);
+            setDebugInfo((prev: DebugInfo) => ({
+              ...prev,
+              threadCount: threadsData.length,
+              threads: threadsData
+            }));
+          }
         },
         (error) => {
-          setError('Fehler beim Laden der E-Mail-Threads');
-          setDebugInfo((prev: DebugInfo) => ({
-            ...prev,
-            threadError: error.message
-          }));
+          if (isActive) {
+            setError('Fehler beim Laden der E-Mail-Threads');
+            setDebugInfo((prev: DebugInfo) => ({
+              ...prev,
+              threadError: error.message
+            }));
+          }
         }
       );
       
@@ -159,6 +167,8 @@ export default function InboxHookLogicPhase1Page() {
       const messagesUnsubscribe = onSnapshot(
         messagesQuery,
         async (snapshot) => {
+          if (!isActive) return; // Prevent race condition updates
+          
           let messagesData: EmailMessage[] = [];
           
           snapshot.forEach((doc) => {
@@ -178,22 +188,25 @@ export default function InboxHookLogicPhase1Page() {
             });
           }
           
-          setEmails(messagesData);
-          setLoading(false);
-          
-          setDebugInfo((prev: DebugInfo) => ({
-            ...prev,
-            messageCount: messagesData.length,
-            messages: messagesData
-          }));
+          if (isActive) {
+            setEmails(messagesData);
+            setLoading(false);
+            setDebugInfo((prev: DebugInfo) => ({
+              ...prev,
+              messageCount: messagesData.length,
+              messages: messagesData
+            }));
+          }
         },
         (error) => {
-          setError('Fehler beim Laden der E-Mails');
-          setLoading(false);
-          setDebugInfo((prev: DebugInfo) => ({
-            ...prev,
-            messageError: error.message
-          }));
+          if (isActive) {
+            setError('Fehler beim Laden der E-Mails');
+            setLoading(false);
+            setDebugInfo((prev: DebugInfo) => ({
+              ...prev,
+              messageError: error.message
+            }));
+          }
         }
       );
       
@@ -212,6 +225,7 @@ export default function InboxHookLogicPhase1Page() {
     // Cleanup function
     return () => {
       console.log('🧹 Cleaning up Firebase listeners');
+      isActive = false; // Prevent any pending updates
       newUnsubscribes.forEach(unsubscribe => {
         try {
           unsubscribe();
