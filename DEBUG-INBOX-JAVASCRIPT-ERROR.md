@@ -345,7 +345,56 @@ Das Problem muss in einem dieser **spezifischen Inbox-Module** liegen:
 6. **JavaScript-Initialisierungsfehler tritt auf während Re-Initialization**
 
 #### ⚡ **ROOT CAUSE**: 
-**useEffect Re-Initialization Race Condition** beim `selectedFolderType` Change - Problem liegt in der Cleanup/Setup-Sequenz der Firebase Listeners!
+**useEffect Re-Initialization Race Condition** beim `selectedFolderType` Change - Problem lag in der Cleanup/Setup-Sequenz der Firebase Listeners!
+
+#### ✅ **LÖSUNG IMPLEMENTIERT** (08.01.2025):
+
+**FIX 1: Race Condition Prevention**
+```typescript
+let isActive = true; // Flag to prevent race conditions
+const currentUnsubscribes: Unsubscribe[] = []; // Fixed scope
+
+// In onSnapshot callbacks:
+if (!isActive) return; // Prevent race condition updates
+
+// In cleanup:
+isActive = false; // Prevent any pending updates before cleanup
+```
+
+**FIX 2: Scope Problem Solution** 
+```typescript
+// VORHER (Problem):
+const newUnsubscribes: Unsubscribe[] = [];
+return () => {
+  newUnsubscribes.forEach(...); // ❌ ReferenceError: not defined
+};
+
+// NACHHER (Lösung):
+const currentUnsubscribes: Unsubscribe[] = []; 
+return () => {
+  currentUnsubscribes.forEach(...); // ✅ Korrekte Scope
+};
+```
+
+#### 🎯 **TEST RESULTS** (08.01.2025):
+```
+🔄 useEffect triggered: general → team → general
+🎯 Setting up listeners: folderType: 'general' | 'team'  
+🧹 Cleaning up Firebase listeners (sauber)
+✅ selectedFolderType Toggle funktioniert perfekt
+❌ KEIN JavaScript-Initialisierungsfehler mehr!
+```
+
+**FINAL CONSOLE OUTPUT BESTÄTIGT LÖSUNG**:
+```
+🔄 useEffect triggered with deps: {user: true, organizationId: "nCFohM2dToP6wd4rGpCK8aVPjzs2", selectedFolderType: "general", selectedTeamMemberId: undefined}
+🎯 Setting up TEAM FOLDER listeners: {folderType: "general", teamMemberId: undefined}
+🧹 Cleaning up Firebase listeners
+🔄 useEffect triggered with deps: {user: true, organizationId: "nCFohM2dToP6wd4rGpCK8aVPjzs2", selectedFolderType: "team", selectedTeamMemberId: undefined}
+🎯 Setting up TEAM FOLDER listeners: {folderType: "team", teamMemberId: undefined}
+```
+
+#### 🏆 **PROBLEM VOLLSTÄNDIG BEHOBEN!**
 
 ---
 

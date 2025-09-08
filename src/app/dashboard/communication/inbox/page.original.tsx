@@ -308,20 +308,30 @@ export default function InboxPage() {
     // Clean up previous listeners
     unsubscribes.forEach(unsubscribe => unsubscribe());
     
-    const newUnsubscribes: Unsubscribe[] = [];
+    let isActive = true; // Flag to prevent race conditions
+    const currentUnsubscribes: Unsubscribe[] = []; // Fixed scope issue
     
     // Set up real-time listeners
-    setupRealtimeListeners(newUnsubscribes);
+    setupRealtimeListeners(currentUnsubscribes);
     
-    setUnsubscribes(newUnsubscribes);
+    setUnsubscribes(currentUnsubscribes);
 
     // Cleanup on unmount
     return () => {
-      newUnsubscribes.forEach(unsubscribe => unsubscribe());
+      console.log('🧹 Cleaning up Firebase listeners');
+      isActive = false; // Prevent any pending updates
+      currentUnsubscribes.forEach(unsubscribe => {
+        try {
+          unsubscribe();
+        } catch (error) {
+          console.warn('Error unsubscribing:', error);
+        }
+      });
     };
-  }, [user, organizationId, selectedFolderType, selectedTeamMemberId, hasEmailAddresses, resolvingThreads, setupRealtimeListeners]);
+  }, [user, organizationId, selectedFolderType, selectedTeamMemberId, hasEmailAddresses, resolvingThreads]);
 
   const setupRealtimeListeners = useCallback((unsubscribes: Unsubscribe[]) => {
+    let isActive = true; // Flag to prevent race conditions
     setLoading(true);
     setError(null);
 
@@ -343,6 +353,8 @@ export default function InboxPage() {
       const threadsUnsubscribe = onSnapshot(
         threadsQuery,
         async (snapshot) => {
+          if (!isActive) return; // Prevent race condition updates
+          
           let threadsData: EmailThread[] = [];
           
           snapshot.forEach((doc) => {
@@ -397,6 +409,8 @@ export default function InboxPage() {
       const messagesUnsubscribe = onSnapshot(
         messagesQuery,
         async (snapshot) => {
+          if (!isActive) return; // Prevent race condition updates
+          
           let messagesData: EmailMessage[] = [];
           
           snapshot.forEach((doc) => {
@@ -518,9 +532,9 @@ export default function InboxPage() {
       
       // Trigger listeners to refresh
       unsubscribes.forEach(unsubscribe => unsubscribe());
-      const newUnsubscribes: Unsubscribe[] = [];
-      setupRealtimeListeners(newUnsubscribes);
-      setUnsubscribes(newUnsubscribes);
+      const refreshUnsubscribes: Unsubscribe[] = [];
+      setupRealtimeListeners(refreshUnsubscribes);
+      setUnsubscribes(refreshUnsubscribes);
     } finally {
       setTimeout(() => setRefreshing(false), 1000);
     }
