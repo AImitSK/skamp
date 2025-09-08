@@ -80,7 +80,8 @@
       "Read(c:\\Users\\StefanKühne\\Desktop\\Projekte\\skamp\\src\\components\\campaigns/**)",
       "Read(c:\\Users\\StefanKühne\\Desktop\\Projekte\\skamp\\src/**)",
       "Read(c:\\Users\\StefanKühne\\Desktop\\Projekte\\skamp\\src\\lib\\firebase/**)",
-      "Read(c:\\Users\\StefanKühne\\Desktop\\Projekte\\skamp\\src\\lib\\firebase/**)"
+      "Read(c:\\Users\\StefanKühne\\Desktop\\Projekte\\skamp\\src\\lib\\firebase/**)",
+      "Bash(npx madge:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",

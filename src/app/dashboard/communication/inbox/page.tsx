@@ -319,18 +319,125 @@ export default function InboxPage() {
     return () => {
       newUnsubscribes.forEach(unsubscribe => unsubscribe());
     };
-  }, [user, organizationId, selectedFolderType, selectedTeamMemberId, hasEmailAddresses, resolvingThreads, setupRealtimeListeners, unsubscribes]);
+  }, [user, organizationId, selectedFolderType, selectedTeamMemberId, hasEmailAddresses, resolvingThreads, setupRealtimeListeners]);
 
   const setupRealtimeListeners = useCallback((unsubscribes: Unsubscribe[]) => {
     setLoading(true);
     setError(null);
 
     try {
-      // Team-Ordner Mode
-      setupTeamFolderListeners(unsubscribes);
+      // Team-Ordner Mode - inline implementation to avoid circular dependency
+      console.log('🎯 Setting up TEAM FOLDER listeners:', {
+        folderType: selectedFolderType,
+        teamMemberId: selectedTeamMemberId
+      });
+
+      // 1. Basis-Query für Threads
+      let threadsQuery = query(
+        collection(db, 'email_threads'),
+        where('organizationId', '==', organizationId),
+        orderBy('lastMessageAt', 'desc'),
+        limit(100)
+      );
+
+      const threadsUnsubscribe = onSnapshot(
+        threadsQuery,
+        async (snapshot) => {
+          let threadsData: EmailThread[] = [];
+          
+          snapshot.forEach((doc) => {
+            threadsData.push({ ...doc.data(), id: doc.id } as EmailThread);
+          });
+
+          // Für "general" folder: Filtere alle Threads ohne Team-Zuweisung
+          // UND schließe gesendete E-Mail Threads aus (sent_ prefix)
+          if (selectedFolderType === 'general') {
+            threadsData = threadsData.filter(thread => {
+              const assignedTo = (thread as any).assignedToUserId || (thread as any).assignedTo;
+              return !assignedTo && !(thread.id && thread.id.startsWith('sent_'));
+            });
+          } else {
+            // Auch in anderen Ordnern gesendete Threads ausschließen
+            threadsData = threadsData.filter(thread => 
+              !(thread.id && thread.id.startsWith('sent_'))
+            );
+          }
+          
+          setThreads(threadsData);
+          
+          // Update unread counts
+          await updateTeamUnreadCounts(threadsData);
+          
+          setDebugInfo((prev: DebugInfo) => ({
+            ...prev,
+            threadCount: threadsData.length,
+            threads: threadsData
+          }));
+        },
+        (error) => {
+          setError('Fehler beim Laden der E-Mail-Threads');
+          setDebugInfo((prev: DebugInfo) => ({
+            ...prev,
+            threadError: error.message
+          }));
+        }
+      );
+      
+      unsubscribes.push(threadsUnsubscribe);
+
+      // 2. Listen to messages
+      let messagesQuery = query(
+        collection(db, 'email_messages'),
+        where('organizationId', '==', organizationId),
+        where('folder', '==', 'inbox'),
+        orderBy('receivedAt', 'desc'),
+        limit(100)
+      );
+
+      const messagesUnsubscribe = onSnapshot(
+        messagesQuery,
+        async (snapshot) => {
+          let messagesData: EmailMessage[] = [];
+          
+          snapshot.forEach((doc) => {
+            messagesData.push({ ...doc.data(), id: doc.id } as EmailMessage);
+          });
+
+          // Client-seitige Filterung für Team-Ordner
+          if (selectedFolderType === 'general') {
+            messagesData = messagesData.filter(msg => {
+              const assignedTo = (msg as any).assignedToUserId || (msg as any).assignedTo;
+              return !assignedTo;
+            });
+          } else if (selectedFolderType === 'team' && selectedTeamMemberId) {
+            messagesData = messagesData.filter(msg => {
+              const assignedTo = (msg as any).assignedToUserId || (msg as any).assignedTo;
+              return assignedTo === selectedTeamMemberId;
+            });
+          }
+          
+          setEmails(messagesData);
+          setLoading(false);
+          
+          setDebugInfo((prev: DebugInfo) => ({
+            ...prev,
+            messageCount: messagesData.length,
+            messages: messagesData
+          }));
+        },
+        (error) => {
+          setError('Fehler beim Laden der E-Mails');
+          setLoading(false);
+          setDebugInfo((prev: DebugInfo) => ({
+            ...prev,
+            messageError: error.message
+          }));
+        }
+      );
+      
+      unsubscribes.push(messagesUnsubscribe);
 
     } catch (error: any) {
-
       setError('Fehler beim Einrichten der Echtzeit-Updates');
       setLoading(false);
       setDebugInfo((prev: DebugInfo) => ({
@@ -338,136 +445,9 @@ export default function InboxPage() {
         setupError: error.message
       }));
     }
-  }, [selectedFolderType, selectedTeamMemberId, hasEmailAddresses, resolvingThreads, setupTeamFolderListeners]);
+  }, [selectedFolderType, selectedTeamMemberId, organizationId, hasEmailAddresses, resolvingThreads]);
 
 
-  const setupTeamFolderListeners = (unsubscribes: Unsubscribe[]) => {
-    console.log('🎯 Setting up TEAM FOLDER listeners:', {
-      folderType: selectedFolderType,
-      teamMemberId: selectedTeamMemberId
-    });
-
-    // 1. Basis-Query für Threads
-    let threadsQuery = query(
-      collection(db, 'email_threads'),
-      where('organizationId', '==', organizationId),
-      orderBy('lastMessageAt', 'desc'),
-      limit(100)
-    );
-
-    // HINWEIS: Für Team-Ordner verwenden wir die Basis-Query und filtern client-seitig,
-    // da assignedToUserId noch nicht in allen bestehenden Threads vorhanden ist
-
-    const threadsUnsubscribe = onSnapshot(
-      threadsQuery,
-      async (snapshot) => {
-
-        let threadsData: EmailThread[] = [];
-        
-        snapshot.forEach((doc) => {
-          threadsData.push({ ...doc.data(), id: doc.id } as EmailThread);
-        });
-
-        // Für "general" folder: Filtere alle Threads ohne Team-Zuweisung
-        // UND schließe gesendete E-Mail Threads aus (sent_ prefix)
-        if (selectedFolderType === 'general') {
-          threadsData = threadsData.filter(thread => {
-            const assignedTo = (thread as any).assignedToUserId || (thread as any).assignedTo;
-            return !assignedTo && !(thread.id && thread.id.startsWith('sent_'));
-          });
-        } else {
-          // Auch in anderen Ordnern gesendete Threads ausschließen
-          threadsData = threadsData.filter(thread => 
-            !(thread.id && thread.id.startsWith('sent_'))
-          );
-        }
-        
-
-        setThreads(threadsData);
-        
-        // Update unread counts
-        await updateTeamUnreadCounts(threadsData);
-        
-        setDebugInfo((prev: DebugInfo) => ({
-          ...prev,
-          threadCount: threadsData.length,
-          threads: threadsData
-        }));
-      },
-      (error) => {
-
-        setError('Fehler beim Laden der E-Mail-Threads');
-        setDebugInfo((prev: DebugInfo) => ({
-          ...prev,
-          threadError: error.message
-        }));
-      }
-    );
-    
-    unsubscribes.push(threadsUnsubscribe);
-
-    // 2. Listen to messages
-    let messagesQuery = query(
-      collection(db, 'email_messages'),
-      where('organizationId', '==', organizationId),
-      where('folder', '==', 'inbox'), // Nur Inbox-Nachrichten für Kunden/Kampagnen
-      orderBy('receivedAt', 'desc'),
-      limit(100)
-    );
-
-    // HINWEIS: Für Team-Ordner verwenden wir die Basis-Query und filtern client-seitig,
-    // da assignedToUserId noch nicht in allen bestehenden Messages vorhanden ist
-
-    const messagesUnsubscribe = onSnapshot(
-      messagesQuery,
-      async (snapshot) => {
-
-        let messagesData: EmailMessage[] = [];
-        
-        snapshot.forEach((doc) => {
-          messagesData.push({ ...doc.data(), id: doc.id } as EmailMessage);
-        });
-
-        // Client-seitige Filterung für Team-Ordner
-        if (selectedFolderType === 'general') {
-          // Allgemeine Anfragen: Nachrichten ohne Team-Zuweisung
-          messagesData = messagesData.filter(msg => {
-            const assignedTo = (msg as any).assignedToUserId || (msg as any).assignedTo;
-            return !assignedTo;
-          });
-        } else if (selectedFolderType === 'team' && selectedTeamMemberId) {
-          // Team-Ordner: Nur Nachrichten für dieses Team-Mitglied
-          messagesData = messagesData.filter(msg => {
-            const assignedTo = (msg as any).assignedToUserId || (msg as any).assignedTo;
-            return assignedTo === selectedTeamMemberId;
-          });
-        }
-
-        // Keine automatische Zuordnung mehr nötig im Team-System
-        // E-Mails werden manuell über die UI zugewiesen
-        
-        setEmails(messagesData);
-        setLoading(false);
-        
-        setDebugInfo((prev: DebugInfo) => ({
-          ...prev,
-          messageCount: messagesData.length,
-          messages: messagesData
-        }));
-      },
-      (error) => {
-
-        setError('Fehler beim Laden der E-Mails');
-        setLoading(false);
-        setDebugInfo((prev: DebugInfo) => ({
-          ...prev,
-          messageError: error.message
-        }));
-      }
-    );
-    
-    unsubscribes.push(messagesUnsubscribe);
-  };
 
   const updateUnreadCounts = async (threadsData: EmailThread[]) => {
     // Calculate unread counts from threads
