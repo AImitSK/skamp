@@ -18,7 +18,6 @@ import {
 import { projectService } from '@/lib/firebase/project-service';
 import { Project, ProjectPriority, PipelineStage } from '@/types/project';
 import Link from 'next/link';
-import { toast } from 'react-hot-toast';
 import { teamMemberService } from '@/lib/firebase/organization-service';
 import { TeamMember } from '@/types/international';
 
@@ -34,6 +33,8 @@ export default function ProjectEditPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
   // Form states
   const [formData, setFormData] = useState({
@@ -135,11 +136,14 @@ export default function ProjectEditPage() {
         organizationId: currentOrganization.id
       });
 
-      toast.success('Projekt erfolgreich aktualisiert');
-      router.push(`/dashboard/projects/${projectId}`);
+      setSuccessMessage('Projekt erfolgreich aktualisiert');
+      setTimeout(() => {
+        router.push(`/dashboard/projects/${projectId}`);
+      }, 1500);
     } catch (error) {
       console.error('Error updating project:', error);
-      toast.error('Fehler beim Speichern des Projekts');
+      setErrorMessage('Fehler beim Speichern des Projekts');
+      setTimeout(() => setErrorMessage(null), 5000);
     } finally {
       setSaving(false);
     }
@@ -215,6 +219,18 @@ export default function ProjectEditPage() {
           Bearbeiten Sie die Projektdetails und Einstellungen
         </Text>
       </div>
+
+      {/* Success/Error Messages */}
+      {successMessage && (
+        <div className="mb-4 p-4 bg-green-50 border border-green-200 text-green-800 rounded-lg">
+          {successMessage}
+        </div>
+      )}
+      {errorMessage && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-800 rounded-lg">
+          {errorMessage}
+        </div>
+      )}
 
       {/* Edit Form */}
       <form onSubmit={handleSubmit} className="space-y-6 bg-white rounded-lg border border-gray-200 p-6">
