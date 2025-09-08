@@ -1,12 +1,15 @@
-// DEBUGGING STEP 1: CONTEXT IMPORTS TEST
+// DEBUGGING STEP 2: BASIC UI COMPONENTS TEST
 "use client";
 
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
+import { Heading } from '@/components/ui/heading';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
-export default function InboxStep1Page() {
-  const [message, setMessage] = useState('Step 1: Context Imports Test');
+export default function InboxStep2Page() {
+  const [message, setMessage] = useState('Step 2: Basic UI Components Test');
   
   // Test Context hooks
   const { user } = useAuth();
@@ -14,18 +17,34 @@ export default function InboxStep1Page() {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold">Inbox Debug - Step 1</h1>
-      <p>{message}</p>
-      <div className="mt-2 text-sm text-gray-600">
-        <p>User: {user?.email || 'Not logged in'}</p>
-        <p>Organization: {currentOrganization?.name || 'None'}</p>
+      <Heading level={1}>Inbox Debug - Step 2</Heading>
+      <p className="mt-2">{message}</p>
+      
+      <div className="mt-4 space-y-2">
+        <div className="flex items-center gap-2">
+          <Badge color="green">User:</Badge>
+          <span className="text-sm">{user?.email || 'Not logged in'}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge color="blue">Organization:</Badge>
+          <span className="text-sm">{currentOrganization?.name || 'None'}</span>
+        </div>
       </div>
-      <button 
-        onClick={() => setMessage('Step 1 Context Test - Button clicked!')}
-        className="bg-blue-500 text-white px-4 py-2 rounded mt-4"
-      >
-        Test Context Button
-      </button>
+
+      <div className="mt-6 flex gap-3">
+        <Button 
+          onClick={() => setMessage('Step 2 UI Components - Button clicked!')}
+          color="dark/zinc"
+        >
+          Test UI Button
+        </Button>
+        <Button 
+          onClick={() => setMessage('Secondary button clicked!')}
+          plain
+        >
+          Secondary Button
+        </Button>
+      </div>
     </div>
   );
 }
