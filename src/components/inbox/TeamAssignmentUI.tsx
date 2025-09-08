@@ -10,7 +10,7 @@ import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/componen
 import { Avatar } from '@/components/ui/avatar';
 import { useAuth } from '@/context/AuthContext';
 import { teamMemberService } from '@/lib/firebase/organization-service';
-import { threadMatcherService } from '@/lib/email/thread-matcher-service-flexible';
+import { threadMatcherService } from '@/lib/email/thread-matcher-service';
 import clsx from 'clsx';
 import { 
   UserGroupIcon,

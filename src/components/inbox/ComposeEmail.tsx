@@ -10,7 +10,7 @@ import { RichTextEditor } from '@/components/RichTextEditor';
 import { EmailMessage } from '@/types/inbox-enhanced';
 import { emailAddressService } from '@/lib/email/email-address-service';
 import { emailMessageService } from '@/lib/email/email-message-service';
-import { threadMatcherService } from '@/lib/email/thread-matcher-service-flexible';
+import { threadMatcherService } from '@/lib/email/thread-matcher-service';
 import { emailSignatureService } from '@/lib/email/email-signature-service';
 import { XMarkIcon, PaperAirplaneIcon, PaperClipIcon } from '@heroicons/react/24/outline';
 import { Select } from '@/components/ui/select';
