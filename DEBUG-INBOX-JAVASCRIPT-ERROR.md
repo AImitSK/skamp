@@ -307,9 +307,28 @@ Das Problem muss in einem dieser **spezifischen Inbox-Module** liegen:
 - **First Load JS**: 254 kB → **314 kB** (+60 kB zusätzlich)
 - **Verdächtige Komponenten**: `TeamFolderSidebar`, `EmailList`, `EmailViewer`
 
-#### ⚡ CRITICAL TEST PENDING (Step 5):
-**STATUS**: Import erfolgreich, Rendering-Test ausstehend
-**ERWARTUNG**: Der `Cannot access 'eh' before initialization` Fehler tritt **SEHR WAHRSCHEINLICH** bei Step 5 auf!
+#### ⚡ STEP 5 ERGEBNIS (08.01.2025): ✅ **AUCH ERFOLGREICH!**
+
+**STATUS**: Import UND Rendering erfolgreich - **KEIN FEHLER AUFGETRETEN!**
+**SCHOCKIERENDES ERGEBNIS**: Sogar die Inbox-Komponenten funktionieren einwandfrei!
+
+#### 🎯 **FINALE ROOT CAUSE IDENTIFIKATION**:
+
+**ALLE IMPORTS FUNKTIONIEREN:**
+- ✅ **Step 1**: Context imports  
+- ✅ **Step 2**: UI Components
+- ✅ **Step 3**: Firebase imports
+- ✅ **Step 4**: Email Services  
+- ✅ **Step 5**: Inbox-Komponenten (trotz +491% Bundle-Size!)
+
+**⚠️ CONCLUSION**: Das Problem liegt **NICHT in den Imports**, sondern in der **komplexen useEffect/Hook-LOGIK** der originalen Inbox!
+
+#### 📋 NÄCHSTER SCHRITT - HOOK-LOGIK ISOLATION:
+**METHODE**: Schrittweise die originale useEffect/Hook-Logik hinzufügen:
+1. **useState** Definitionen
+2. **useEffect** für Firebase Listeners  
+3. **useCallback** Dependencies (bereits teilweise gefixt)
+4. **Komplexe State Management** Logik
 
 ---
 

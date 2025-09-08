@@ -15,20 +15,70 @@ import { emailAddressService } from '@/lib/email/email-address-service';
 import { TeamFolderSidebar } from '@/components/inbox/TeamFolderSidebar';
 import { EmailList } from '@/components/inbox/EmailList';
 import { EmailViewer } from '@/components/inbox/EmailViewer';
+import { EmailThread, EmailMessage } from '@/types/email';
+import { Unsubscribe } from 'firebase/firestore';
 
-export default function InboxStep5Page() {
-  const [message, setMessage] = useState('Step 5: Inbox Components Test');
-  const [componentTestResults, setComponentTestResults] = useState({
-    sidebar: 'Not tested',
-    emailList: 'Not tested', 
-    emailViewer: 'Not tested',
-    rendering: 'Not tested'
-  });
-  const [showComponents, setShowComponents] = useState(false);
-  
-  // Test Context hooks
+// Debug Info Type
+interface DebugInfo {
+  emailAddresses?: any[];
+  hasEmailAddresses?: boolean;
+  emailAddressError?: any;
+  listenersSetup?: boolean;
+  organizationId?: string;
+  selectedFolderType?: string;
+  selectedTeamMemberId?: string;
+  threadCount?: number;
+  threads?: EmailThread[];
+  threadError?: string;
+  messageCount?: number;
+  messages?: EmailMessage[];
+  messageError?: string;
+  setupError?: string;
+  deferredThreadsResolved?: number;
+  teamMembers?: any[];
+  teamError?: string;
+}
+
+export default function InboxHookLogicPhase1Page() {
+  // Context hooks
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
+  const organizationId = currentOrganization?.id || '';
+
+  // HOOK-LOGIK PHASE 1: Alle useState Definitionen aus Original
+  const [selectedThread, setSelectedThread] = useState<EmailThread | null>(null);
+  const [selectedEmail, setSelectedEmail] = useState<EmailMessage | null>(null);
+  const [showCompose, setShowCompose] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [threads, setThreads] = useState<EmailThread[]>([]);
+  const [emails, setEmails] = useState<EmailMessage[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [composeMode, setComposeMode] = useState<'new' | 'reply' | 'forward'>('new');
+  const [replyToEmail, setReplyToEmail] = useState<EmailMessage | null>(null);
+  const [hasEmailAddresses, setHasEmailAddresses] = useState(false);
+  const [emailAddresses, setEmailAddresses] = useState<any[]>([]);
+  const [showDebug, setShowDebug] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [resolvingThreads, setResolvingThreads] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [organizationSidebarCollapsed, setOrganizationSidebarCollapsed] = useState(false);
+  
+  // Team-Ordner State
+  const [selectedFolderType, setSelectedFolderType] = useState<'general' | 'team'>('general');
+  const [selectedTeamMemberId, setSelectedTeamMemberId] = useState<string | undefined>();
+  const [teamMembers, setTeamMembers] = useState<any[]>([]);
+  const [loadingTeam, setLoadingTeam] = useState(true);
+  
+  const [debugInfo, setDebugInfo] = useState<DebugInfo>({});
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({
+    inbox: 0, sent: 0, drafts: 0, spam: 0, trash: 0, general: 0
+  });
+  const [unsubscribes, setUnsubscribes] = useState<Unsubscribe[]>([]);
+
+  // Test State
+  const [message, setMessage] = useState('Hook-Logik Phase 1: useState Definitionen Test');
 
   // Test Inbox Components Import
   const testComponentImports = () => {
@@ -74,7 +124,7 @@ export default function InboxStep5Page() {
 
   return (
     <div className="p-4">
-      <Heading level={1}>Inbox Debug - Step 5</Heading>
+      <Heading level={1}>Hook-Logik Phase 1</Heading>
       <p className="mt-2">{message}</p>
       
       <div className="mt-4 space-y-2">
@@ -90,69 +140,51 @@ export default function InboxStep5Page() {
 
       <div className="mt-4 space-y-1">
         <div className="flex items-center gap-2">
-          <Badge color="purple">TeamFolderSidebar:</Badge>
-          <span className="text-xs">{componentTestResults.sidebar}</span>
+          <Badge color="purple">useState Count:</Badge>
+          <span className="text-xs">20+ state variables imported</span>
         </div>
         <div className="flex items-center gap-2">
-          <Badge color="orange">EmailList:</Badge>
-          <span className="text-xs">{componentTestResults.emailList}</span>
+          <Badge color="orange">Loading State:</Badge>
+          <span className="text-xs">{loading ? 'Loading' : 'Ready'}</span>
         </div>
         <div className="flex items-center gap-2">
-          <Badge color="red">EmailViewer:</Badge>
-          <span className="text-xs">{componentTestResults.emailViewer}</span>
+          <Badge color="red">Threads:</Badge>
+          <span className="text-xs">{threads.length} threads</span>
         </div>
         <div className="flex items-center gap-2">
-          <Badge color="cyan">Rendering:</Badge>
-          <span className="text-xs">{componentTestResults.rendering}</span>
+          <Badge color="cyan">Emails:</Badge>
+          <span className="text-xs">{emails.length} emails</span>
         </div>
       </div>
 
       <div className="mt-6 flex gap-3">
         <Button 
-          onClick={testComponentImports}
+          onClick={() => setLoading(!loading)}
           color="dark/zinc"
         >
-          Test Imports
+          Toggle Loading
         </Button>
         <Button 
-          onClick={testComponentRendering}
-          color="red"
-        >
-          ⚠️ Render Components
-        </Button>
-        <Button 
-          onClick={() => setMessage('Step 5 - Basic button clicked!')}
+          onClick={() => setMessage('Phase 1 useState Test - Button clicked!')}
           plain
         >
-          Basic Test
+          Test useState
         </Button>
       </div>
 
-      {showComponents && (
-        <div className="mt-8 p-4 border-2 border-red-500 rounded">
-          <h2 className="text-lg font-bold text-red-600 mb-4">⚠️ DANGER ZONE - COMPONENT RENDERING</h2>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="border p-2">
-              <h3 className="font-semibold">TeamFolderSidebar Test</h3>
-              <div className="h-20 bg-gray-100 flex items-center justify-center text-sm">
-                Sidebar Placeholder
-              </div>
-            </div>
-            <div className="border p-2">
-              <h3 className="font-semibold">EmailList Test</h3>
-              <div className="h-20 bg-gray-100 flex items-center justify-center text-sm">
-                EmailList Placeholder  
-              </div>
-            </div>
-            <div className="border p-2">
-              <h3 className="font-semibold">EmailViewer Test</h3>
-              <div className="h-20 bg-gray-100 flex items-center justify-center text-sm">
-                EmailViewer Placeholder
-              </div>
-            </div>
-          </div>
+      <div className="mt-8 p-4 border rounded bg-gray-50">
+        <h2 className="font-semibold mb-2">useState Hook Status</h2>
+        <div className="text-sm space-y-1">
+          <p>✅ selectedThread: {selectedThread ? 'Set' : 'null'}</p>
+          <p>✅ selectedEmail: {selectedEmail ? 'Set' : 'null'}</p>
+          <p>✅ loading: {loading.toString()}</p>
+          <p>✅ error: {error || 'null'}</p>
+          <p>✅ threads: {threads.length} items</p>
+          <p>✅ emails: {emails.length} items</p>
+          <p>✅ teamMembers: {teamMembers.length} items</p>
+          <p>✅ unreadCounts: {Object.keys(unreadCounts).length} categories</p>
         </div>
-      )}
+      </div>
     </div>
   );
 }
