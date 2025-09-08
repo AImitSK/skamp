@@ -229,8 +229,55 @@ const setupRealtimeListeners = useCallback((unsubscribes: Unsubscribe[]) => {
 
 ---
 
-#### ⏭️ NÄCHSTER SCHRITT - PRODUCTION-TEST:
-**Erwartetes Ergebnis**: `ReferenceError: Cannot access 'eh' before initialization` sollte behoben sein
+#### 🚨 FEHLER PERSISTIERT WEITERHIN - DEEPER ANALYSIS ERFORDERLICH (08.01.2025)
+
+**PRODUCTION-TEST ERGEBNIS**: ❌ **FEHLER TRITT WEITERHIN AUF**
+
+```
+page-08feb0a65417eb4e.js:1 Uncaught ReferenceError: Cannot access 'eh' before initialization
+    at eV (page-08feb0a65417eb4e.js:1:98734)
+    at l9 (4bd1b696-9909f507f95988b8.js:1:51107)
+    [... same stack trace ...]
+```
+
+**BEOBACHTUNG**: Bundle-Hash geändert sich (`page-b9b42fd5ad73253d.js` → `page-08feb0a65417eb4e.js`), aber identische Fehlerstelle
+
+#### 🔍 NEUE HYPOTHESEN - TIEFERE ROOT CAUSE ANALYSE:
+
+1. **Export/Import Ordering Issues**: 
+   - ES6 Module Hoisting Problem in minified Code
+   - Variable `eh` könnte ein Export sein, der vor der Initialisierung referenziert wird
+
+2. **Next.js Build-Zeit Optimierung Fehler**:
+   - Tree-shaking oder Code-splitting Problem
+   - Webpack Bundle-Chunking Fehler
+
+3. **Firebase Services Initialization Race Condition**:
+   - Firebase Client SDK Initialization Race zwischen verschiedenen Services
+   - Async Loading Problem bei Firebase Services
+
+4. **Weitere Hook Dependencies**:
+   - Andere useCallback/useEffect circular dependencies noch nicht identifiziert
+   - State Management Race Conditions
+
+#### 🧪 DEBUGGING ISOLATION TEST (08.01.2025)
+
+**METHODE**: Komplette Inbox durch Minimal-Version ersetzt
+- Original: `42 kB` Bundle-Size (453 kB First Load)
+- Minimal: `413 B` Bundle-Size (101 kB First Load) → **99% Größenreduktion**
+
+**MINIMAL-INBOX CODE**:
+```typescript
+// Nur React useState, keine Services, keine Contexts
+export default function MinimalInboxPage() {
+  const [message, setMessage] = useState('Minimal Inbox Test');
+  return <div>/* Basic HTML + Button */</div>;
+}
+```
+
+**CRITICAL TEST**: Tritt `Cannot access 'eh' before initialization` mit Minimal-Version auf?
+- ✅ JA → Problem liegt außerhalb der Inbox (anderes Modul)
+- ❌ NEIN → Problem liegt in der Inbox-Implementierung
 
 ---
 
