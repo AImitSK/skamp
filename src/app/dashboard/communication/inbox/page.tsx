@@ -78,7 +78,149 @@ export default function InboxHookLogicPhase1Page() {
   const [unsubscribes, setUnsubscribes] = useState<Unsubscribe[]>([]);
 
   // Test State
-  const [message, setMessage] = useState('Hook-Logik Phase 1: useState Definitionen Test');
+  const [message, setMessage] = useState('Hook-Logik Phase 2: useEffect Firebase Listeners Test');
+
+  // HOOK-LOGIK PHASE 2: Kritischer useEffect mit Firebase Listeners
+  useEffect(() => {
+    if (!user || !organizationId) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Team-Ordner Mode - inline implementation to avoid circular dependency
+      console.log('🎯 Setting up TEAM FOLDER listeners:', {
+        folderType: selectedFolderType,
+        teamMemberId: selectedTeamMemberId
+      });
+
+      // 1. Basis-Query für Threads
+      let threadsQuery = query(
+        collection(db, 'email_threads'),
+        where('organizationId', '==', organizationId),
+        orderBy('lastMessageAt', 'desc'),
+        limit(100)
+      );
+
+      const newUnsubscribes: Unsubscribe[] = [];
+
+      const threadsUnsubscribe = onSnapshot(
+        threadsQuery,
+        async (snapshot) => {
+          let threadsData: EmailThread[] = [];
+          
+          snapshot.forEach((doc) => {
+            threadsData.push({ ...doc.data(), id: doc.id } as EmailThread);
+          });
+
+          // Für "general" folder: Filtere alle Threads ohne Team-Zuweisung
+          if (selectedFolderType === 'general') {
+            threadsData = threadsData.filter(thread => {
+              const assignedTo = (thread as any).assignedToUserId || (thread as any).assignedTo;
+              return !assignedTo && !(thread.id && thread.id.startsWith('sent_'));
+            });
+          } else {
+            threadsData = threadsData.filter(thread => 
+              !(thread.id && thread.id.startsWith('sent_'))
+            );
+          }
+          
+          setThreads(threadsData);
+          
+          setDebugInfo((prev: DebugInfo) => ({
+            ...prev,
+            threadCount: threadsData.length,
+            threads: threadsData
+          }));
+        },
+        (error) => {
+          setError('Fehler beim Laden der E-Mail-Threads');
+          setDebugInfo((prev: DebugInfo) => ({
+            ...prev,
+            threadError: error.message
+          }));
+        }
+      );
+      
+      newUnsubscribes.push(threadsUnsubscribe);
+
+      // 2. Listen to messages
+      let messagesQuery = query(
+        collection(db, 'email_messages'),
+        where('organizationId', '==', organizationId),
+        where('folder', '==', 'inbox'),
+        orderBy('receivedAt', 'desc'),
+        limit(100)
+      );
+
+      const messagesUnsubscribe = onSnapshot(
+        messagesQuery,
+        async (snapshot) => {
+          let messagesData: EmailMessage[] = [];
+          
+          snapshot.forEach((doc) => {
+            messagesData.push({ ...doc.data(), id: doc.id } as EmailMessage);
+          });
+
+          // Client-seitige Filterung für Team-Ordner
+          if (selectedFolderType === 'general') {
+            messagesData = messagesData.filter(msg => {
+              const assignedTo = (msg as any).assignedToUserId || (msg as any).assignedTo;
+              return !assignedTo;
+            });
+          } else if (selectedFolderType === 'team' && selectedTeamMemberId) {
+            messagesData = messagesData.filter(msg => {
+              const assignedTo = (msg as any).assignedToUserId || (msg as any).assignedTo;
+              return assignedTo === selectedTeamMemberId;
+            });
+          }
+          
+          setEmails(messagesData);
+          setLoading(false);
+          
+          setDebugInfo((prev: DebugInfo) => ({
+            ...prev,
+            messageCount: messagesData.length,
+            messages: messagesData
+          }));
+        },
+        (error) => {
+          setError('Fehler beim Laden der E-Mails');
+          setLoading(false);
+          setDebugInfo((prev: DebugInfo) => ({
+            ...prev,
+            messageError: error.message
+          }));
+        }
+      );
+      
+      newUnsubscribes.push(messagesUnsubscribe);
+      setUnsubscribes(newUnsubscribes);
+
+    } catch (error: any) {
+      setError('Fehler beim Einrichten der Echtzeit-Updates');
+      setLoading(false);
+      setDebugInfo((prev: DebugInfo) => ({
+        ...prev,
+        setupError: error.message
+      }));
+    }
+
+    // Cleanup function
+    return () => {
+      console.log('🧹 Cleaning up Firebase listeners');
+      newUnsubscribes.forEach(unsubscribe => {
+        try {
+          unsubscribe();
+        } catch (error) {
+          console.warn('Error unsubscribing:', error);
+        }
+      });
+    };
+  }, [user, organizationId, selectedFolderType, selectedTeamMemberId]);
 
   // Test Inbox Components Import
   const testComponentImports = () => {
@@ -124,7 +266,7 @@ export default function InboxHookLogicPhase1Page() {
 
   return (
     <div className="p-4">
-      <Heading level={1}>Hook-Logik Phase 1</Heading>
+      <Heading level={1}>Hook-Logik Phase 2</Heading>
       <p className="mt-2">{message}</p>
       
       <div className="mt-4 space-y-2">
@@ -140,49 +282,58 @@ export default function InboxHookLogicPhase1Page() {
 
       <div className="mt-4 space-y-1">
         <div className="flex items-center gap-2">
-          <Badge color="purple">useState Count:</Badge>
-          <span className="text-xs">20+ state variables imported</span>
+          <Badge color="purple">useEffect:</Badge>
+          <span className="text-xs">Firebase Listeners aktiv</span>
         </div>
         <div className="flex items-center gap-2">
-          <Badge color="orange">Loading State:</Badge>
-          <span className="text-xs">{loading ? 'Loading' : 'Ready'}</span>
+          <Badge color="orange">Loading:</Badge>
+          <span className="text-xs">{loading ? 'Loading...' : 'Ready'}</span>
         </div>
         <div className="flex items-center gap-2">
           <Badge color="red">Threads:</Badge>
-          <span className="text-xs">{threads.length} threads</span>
+          <span className="text-xs">{threads.length} threads loaded</span>
         </div>
         <div className="flex items-center gap-2">
           <Badge color="cyan">Emails:</Badge>
-          <span className="text-xs">{emails.length} emails</span>
+          <span className="text-xs">{emails.length} emails loaded</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge color="yellow">Error:</Badge>
+          <span className="text-xs">{error || 'None'}</span>
         </div>
       </div>
 
       <div className="mt-6 flex gap-3">
         <Button 
-          onClick={() => setLoading(!loading)}
+          onClick={() => setSelectedFolderType(selectedFolderType === 'general' ? 'team' : 'general')}
           color="dark/zinc"
         >
-          Toggle Loading
+          Toggle Folder: {selectedFolderType}
         </Button>
         <Button 
-          onClick={() => setMessage('Phase 1 useState Test - Button clicked!')}
+          onClick={() => setMessage('Phase 2 useEffect Test - Button clicked!')}
           plain
         >
-          Test useState
+          Test useEffect
         </Button>
       </div>
 
+      {error && (
+        <div className="mt-4 p-3 bg-red-100 border border-red-400 rounded">
+          <p className="text-red-700 font-semibold">Error occurred:</p>
+          <p className="text-red-600 text-sm">{error}</p>
+        </div>
+      )}
+
       <div className="mt-8 p-4 border rounded bg-gray-50">
-        <h2 className="font-semibold mb-2">useState Hook Status</h2>
+        <h2 className="font-semibold mb-2">Firebase Listeners Status</h2>
         <div className="text-sm space-y-1">
-          <p>✅ selectedThread: {selectedThread ? 'Set' : 'null'}</p>
-          <p>✅ selectedEmail: {selectedEmail ? 'Set' : 'null'}</p>
-          <p>✅ loading: {loading.toString()}</p>
-          <p>✅ error: {error || 'null'}</p>
-          <p>✅ threads: {threads.length} items</p>
-          <p>✅ emails: {emails.length} items</p>
-          <p>✅ teamMembers: {teamMembers.length} items</p>
-          <p>✅ unreadCounts: {Object.keys(unreadCounts).length} categories</p>
+          <p>✅ useEffect: {user && organizationId ? 'Active' : 'Waiting for auth'}</p>
+          <p>✅ Firebase Queries: 2 listeners (threads + messages)</p>
+          <p>✅ Threads Query: email_threads collection</p>
+          <p>✅ Messages Query: email_messages collection</p>
+          <p>✅ Cleanup: Automatic unsubscribe on unmount</p>
+          <p>✅ Dependencies: [user, organizationId, selectedFolderType, selectedTeamMemberId]</p>
         </div>
       </div>
     </div>
