@@ -348,7 +348,7 @@ ${replyToEmail.htmlContent || `<p>${replyToEmail.textContent}</p>`}`;
           references: mode === 'reply' && replyToEmail ? [replyToEmail.messageId] : []
         });
         
-        threadId = threadResult.threadId || threadResult.thread?.id;
+        threadId = threadResult.thread?.id || '';
         console.log('📨 Thread created/found for reply:', threadId);
       } else if (mode === 'new') {
         // For new emails, generate a unique threadId but don't create a thread in Firestore

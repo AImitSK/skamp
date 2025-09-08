@@ -102,7 +102,7 @@ export async function flexibleEmailProcessor(
       organizationId
     });
 
-    if (!threadResult.success || !threadResult.threadId) {
+    if (!threadResult.success || !threadResult.thread?.id) {
       console.error('❌ Thread matching failed:', threadResult);
       return {
         success: false,
@@ -110,7 +110,7 @@ export async function flexibleEmailProcessor(
       };
     }
 
-    console.log('🧵 Thread matched:', { threadId: threadResult.threadId, isNew: threadResult.isNew });
+    console.log('🧵 Thread matched:', { threadId: threadResult.thread.id, isNew: threadResult.isNew });
 
     // ========== DUPLIKAT-CHECK ==========
     const messageId = emailData.messageId || generateMessageId();
@@ -156,7 +156,7 @@ export async function flexibleEmailProcessor(
     // 3. E-Mail-Nachricht erstellen
     const emailMessage: Partial<EmailMessage> = {
       messageId: messageId, // Verwende die bereits geprüfte ID
-      threadId: threadResult.threadId,
+      threadId: threadResult.thread.id,
       organizationId,
       emailAccountId,
       userId: 'system', // Wird später durch Assignment geändert
@@ -201,7 +201,7 @@ export async function flexibleEmailProcessor(
     return {
       success: true,
       emailId: savedMessage.id,
-      threadId: threadResult.threadId,
+      threadId: threadResult.thread.id,
       organizationId,
       routingDecision: {
         action: 'inbox',

@@ -24,7 +24,21 @@ const mockTimestamp = Timestamp.now();
 const mockUser = {
   uid: 'user-1',
   email: 'test@example.com',
-  name: 'Test User'
+  displayName: 'Test User',
+  emailVerified: true,
+  isAnonymous: false,
+  metadata: {},
+  providerData: [],
+  refreshToken: '',
+  tenantId: null,
+  delete: jest.fn(),
+  getIdToken: jest.fn(),
+  getIdTokenResult: jest.fn(),
+  reload: jest.fn(),
+  toJSON: jest.fn(),
+  providerId: '',
+  phoneNumber: null,
+  photoURL: null
 };
 
 const mockProject: Project = {
@@ -62,8 +76,14 @@ describe('useDragAndDrop', () => {
     mockUseAuth.mockReturnValue({
       user: mockUser,
       loading: false,
-      signOut: jest.fn(),
-      updateProfile: jest.fn()
+      logout: jest.fn(),
+      register: jest.fn(),
+      login: jest.fn(),
+      uploadProfileImage: jest.fn(),
+      deleteProfileImage: jest.fn(),
+      getAvatarUrl: jest.fn(() => null),
+      getInitials: jest.fn(() => 'TU'),
+      updateUserProfile: jest.fn()
     });
   });
 
@@ -166,8 +186,15 @@ describe('useDragAndDrop', () => {
       mockUseAuth.mockReturnValue({
         user: null,
         loading: false,
-        signOut: jest.fn(),
-        updateProfile: jest.fn()
+        logout: jest.fn(),
+        register: jest.fn(),
+        login: jest.fn(),
+        logout: jest.fn(),
+        uploadProfileImage: jest.fn(),
+        deleteProfileImage: jest.fn(),
+        getAvatarUrl: jest.fn(() => null),
+        getInitials: jest.fn(() => 'TU'),
+        updateUserProfile: jest.fn()
       });
       const { result } = renderHook(() => useDragAndDrop(mockOnProjectMove));
 
@@ -494,8 +521,15 @@ describe('useDragAndDrop', () => {
       mockUseAuth.mockReturnValue({
         user: null,
         loading: false,
-        signOut: jest.fn(),
-        updateProfile: jest.fn()
+        logout: jest.fn(),
+        register: jest.fn(),
+        login: jest.fn(),
+        logout: jest.fn(),
+        uploadProfileImage: jest.fn(),
+        deleteProfileImage: jest.fn(),
+        getAvatarUrl: jest.fn(() => null),
+        getInitials: jest.fn(() => 'TU'),
+        updateUserProfile: jest.fn()
       });
 
       const { result } = renderHook(() => useDragAndDrop(mockOnProjectMove));
@@ -549,8 +583,15 @@ describe('useDragAndDrop', () => {
       mockUseAuth.mockReturnValue({
         user: null,
         loading: false,
-        signOut: jest.fn(),
-        updateProfile: jest.fn()
+        logout: jest.fn(),
+        register: jest.fn(),
+        login: jest.fn(),
+        logout: jest.fn(),
+        uploadProfileImage: jest.fn(),
+        deleteProfileImage: jest.fn(),
+        getAvatarUrl: jest.fn(() => null),
+        getInitials: jest.fn(() => 'TU'),
+        updateUserProfile: jest.fn()
       });
 
       const { result, rerender } = renderHook(() => useDragAndDrop(mockOnProjectMove));
@@ -562,8 +603,15 @@ describe('useDragAndDrop', () => {
       mockUseAuth.mockReturnValue({
         user: mockUser,
         loading: false,
-        signOut: jest.fn(),
-        updateProfile: jest.fn()
+        logout: jest.fn(),
+        register: jest.fn(),
+        login: jest.fn(),
+        logout: jest.fn(),
+        uploadProfileImage: jest.fn(),
+        deleteProfileImage: jest.fn(),
+        getAvatarUrl: jest.fn(() => null),
+        getInitials: jest.fn(() => 'TU'),
+        updateUserProfile: jest.fn()
       });
       
       rerender();

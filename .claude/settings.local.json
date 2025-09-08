@@ -81,7 +81,8 @@
       "Read(c:\\Users\\StefanKühne\\Desktop\\Projekte\\skamp\\src/**)",
       "Read(c:\\Users\\StefanKühne\\Desktop\\Projekte\\skamp\\src\\lib\\firebase/**)",
       "Read(c:\\Users\\StefanKühne\\Desktop\\Projekte\\skamp\\src\\lib\\firebase/**)",
-      "Bash(npx madge:*)"
+      "Bash(npx madge:*)",
+      "Bash(dir \"c:\\Users\\skuehne\\Desktop\\Projekt\\skamp\\src\\components\\projects\")"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",

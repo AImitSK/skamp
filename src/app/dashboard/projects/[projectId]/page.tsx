@@ -23,7 +23,8 @@ import {
   PhotoIcon,
   ChatBubbleLeftRightIcon,
   ClipboardDocumentListIcon,
-  FolderIcon
+  FolderIcon,
+  LightBulbIcon
 } from '@heroicons/react/24/outline';
 
 // Pipeline-Komponenten importieren
@@ -37,6 +38,7 @@ import TaskDependenciesVisualizer from '@/components/projects/workflow/TaskDepen
 import { CommunicationModal } from '@/components/projects/communication/CommunicationModal';
 import { projectService } from '@/lib/firebase/project-service';
 import { Project } from '@/types/project';
+import { strategyDocumentService, StrategyDocument } from '@/lib/firebase/strategy-document-service';
 import Link from 'next/link';
 
 export default function ProjectDetailPage() {
@@ -48,12 +50,105 @@ export default function ProjectDetailPage() {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'assets' | 'communication' | 'monitoring'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'assets' | 'communication' | 'monitoring' | 'planning'>('overview');
   const [showCommunicationModal, setShowCommunicationModal] = useState(false);
+  const [projectFolders, setProjectFolders] = useState<any>(null);
+  const [foldersLoading, setFoldersLoading] = useState(false);
+  const [strategyDocuments, setStrategyDocuments] = useState<StrategyDocument[]>([]);
+  const [documentsLoading, setDocumentsLoading] = useState(false);
+  const [showDocumentModal, setShowDocumentModal] = useState(false);
 
   useEffect(() => {
     loadProject();
   }, [projectId, currentOrganization?.id]);
+
+  // Lade Projekt-Ordnerstruktur und Dokumente wenn Planning-Tab aktiviert wird
+  useEffect(() => {
+    if (activeTab === 'planning' && project && currentOrganization?.id) {
+      loadProjectFolders();
+      loadStrategyDocuments();
+    }
+  }, [activeTab, project, currentOrganization?.id]);
+
+  const loadStrategyDocuments = async () => {
+    if (!project || !currentOrganization?.id) return;
+    
+    setDocumentsLoading(true);
+    try {
+      const documents = await strategyDocumentService.getByProjectId(project.id, {
+        organizationId: currentOrganization.id
+      });
+      setStrategyDocuments(documents);
+    } catch (error) {
+      console.error('Fehler beim Laden der Strategiedokumente:', error);
+    } finally {
+      setDocumentsLoading(false);
+    }
+  };
+
+  const handleCreateDocument = async (templateId: string, title: string) => {
+    if (!project || !currentOrganization?.id || !user) return;
+    
+    try {
+      setDocumentsLoading(true);
+      await strategyDocumentService.createFromTemplate(
+        templateId,
+        project.id,
+        title,
+        user.uid,
+        user.displayName || 'Unbekannter User',
+        { organizationId: currentOrganization.id }
+      );
+      
+      await loadStrategyDocuments();
+      setShowDocumentModal(false);
+    } catch (error) {
+      console.error('Fehler beim Erstellen des Strategiedokuments:', error);
+    } finally {
+      setDocumentsLoading(false);
+    }
+  };
+
+  const getDocumentStatusColor = (status: string) => {
+    switch (status) {
+      case 'draft': return 'yellow';
+      case 'review': return 'blue';
+      case 'approved': return 'green';
+      case 'archived': return 'gray';
+      default: return 'gray';
+    }
+  };
+
+  const getDocumentStatusLabel = (status: string) => {
+    switch (status) {
+      case 'draft': return 'Entwurf';
+      case 'review': return 'In Prüfung';
+      case 'approved': return 'Freigegeben';
+      case 'archived': return 'Archiviert';
+      default: return status;
+    }
+  };
+
+  const loadProjectFolders = async () => {
+    if (!project || !currentOrganization?.id) return;
+    
+    setFoldersLoading(true);
+    try {
+      const folderStructure = await projectService.getProjectFolderStructure(project.id, {
+        organizationId: currentOrganization.id
+      });
+      setProjectFolders(folderStructure);
+    } catch (error) {
+      console.error('Fehler beim Laden der Projekt-Ordner:', error);
+    } finally {
+      setFoldersLoading(false);
+    }
+  };
+
+  const handleOpenFolder = (folderId: string) => {
+    // Navigation zur Media Library mit spezifischem Ordner
+    window.open(`/dashboard/pr-tools/media-library?folder=${folderId}`, '_blank');
+  };
 
   const loadProject = async () => {
     if (!projectId || !currentOrganization?.id) return;
@@ -368,6 +463,20 @@ export default function ProjectDetailPage() {
                 <ChartBarIcon className="w-4 h-4 mr-2" />
                 Monitoring & Analytics
               </button>
+              <button 
+                onClick={() => setActiveTab('planning')}
+                className={`flex items-center pb-2 text-sm font-medium ${
+                  activeTab === 'planning' 
+                    ? 'text-blue-600 border-b-2 border-blue-600' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <LightBulbIcon className="w-4 h-4 mr-2" />
+                Planung & Strategie
+                {project.currentStage === 'ideas_planning' && (
+                  <Badge className="ml-2" color="green">Aktiv</Badge>
+                )}
+              </button>
             </div>
           </div>
         </div>
@@ -583,6 +692,351 @@ export default function ProjectDetailPage() {
                   </div>
                 </>
               )}
+            </div>
+          )}
+
+          {/* Planung & Strategie Tab */}
+          {activeTab === 'planning' && (
+            <div className="space-y-6">
+              {/* Phase-Status Header */}
+              <div className={`p-4 rounded-lg border ${
+                project.currentStage === 'ideas_planning' 
+                  ? 'bg-green-50 border-green-200' 
+                  : 'bg-gray-50 border-gray-200'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Subheading className="text-gray-900">
+                      {project.currentStage === 'ideas_planning' 
+                        ? 'Aktive Planungsphase' 
+                        : 'Planungsphase abgeschlossen'
+                      }
+                    </Subheading>
+                    <Text className="text-gray-600 mt-1">
+                      {project.currentStage === 'ideas_planning' 
+                        ? 'Das Projekt befindet sich derzeit in der Ideen- und Planungsphase. Alle Bereiche können bearbeitet werden.'
+                        : 'Die Planungsphase ist abgeschlossen. Dokumente können nur eingesehen werden.'
+                      }
+                    </Text>
+                  </div>
+                  <Badge color={project.currentStage === 'ideas_planning' ? 'green' : 'gray'}>
+                    {project.currentStage === 'ideas_planning' ? 'Bearbeitbar' : 'Nur Lesen'}
+                  </Badge>
+                </div>
+              </div>
+              
+              {/* 4 Hauptbereiche */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Strategiedokumente */}
+                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                  <div className="flex items-center mb-4">
+                    <DocumentTextIcon className="h-5 w-5 text-blue-500 mr-2" />
+                    <Subheading>Strategiedokumente</Subheading>
+                    {documentsLoading && (
+                      <div className="ml-2 animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                    )}
+                  </div>
+                  <Text className="text-gray-600 mb-4">
+                    Erstellen und verwalten Sie Projektbriefings, Strategiepapiere und Analysedokumente.
+                  </Text>
+                  
+                  {strategyDocuments.length > 0 ? (
+                    <div className="space-y-3">
+                      {strategyDocuments.map((doc) => (
+                        <div key={doc.id} className="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-3">
+                              <DocumentTextIcon className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                              <div className="min-w-0 flex-1">
+                                <Text className="text-sm font-medium text-gray-900 truncate">
+                                  {doc.title}
+                                </Text>
+                                <div className="flex items-center space-x-2 mt-1">
+                                  <Text className="text-xs text-gray-500">
+                                    {doc.type === 'briefing' ? 'Briefing' :
+                                     doc.type === 'strategy' ? 'Strategie' :
+                                     doc.type === 'analysis' ? 'Analyse' : 'Notizen'}
+                                  </Text>
+                                  <span className="text-gray-300">•</span>
+                                  <Text className="text-xs text-gray-500">
+                                    v{doc.version} von {doc.authorName}
+                                  </Text>
+                                  <span className="text-gray-300">•</span>
+                                  <Text className="text-xs text-gray-500">
+                                    {doc.updatedAt.toDate().toLocaleDateString('de-DE')}
+                                  </Text>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Badge color={getDocumentStatusColor(doc.status)}>
+                              {getDocumentStatusLabel(doc.status)}
+                            </Badge>
+                            <Button
+                              size="sm"
+                              outline
+                              onClick={() => window.open(`/dashboard/strategy-documents/${doc.id}`, '_blank')}
+                            >
+                              {project.currentStage === 'ideas_planning' ? 'Bearbeiten' : 'Ansehen'}
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6">
+                      <DocumentTextIcon className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                      <Text className="text-sm text-gray-500 mb-1">
+                        Noch keine Strategiedokumente erstellt
+                      </Text>
+                      <Text className="text-xs text-gray-400">
+                        Beginnen Sie mit einem Briefing oder einer Strategieanalyse
+                      </Text>
+                    </div>
+                  )}
+                  
+                  <div className="mt-4">
+                    <Button 
+                      outline 
+                      disabled={project.currentStage !== 'ideas_planning' || documentsLoading}
+                      className="w-full"
+                      onClick={() => setShowDocumentModal(true)}
+                    >
+                      <DocumentTextIcon className="w-4 h-4 mr-2" />
+                      Neues Dokument erstellen
+                    </Button>
+                  </div>
+                  
+                  {/* Quick Templates */}
+                  {project.currentStage === 'ideas_planning' && strategyDocuments.length === 0 && (
+                    <div className="mt-3 pt-3 border-t border-gray-200">
+                      <Text className="text-xs text-gray-600 mb-2">Schnellstart:</Text>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => handleCreateDocument('briefing-template', 'Projekt-Briefing')}
+                          className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                          disabled={documentsLoading}
+                        >
+                          Briefing
+                        </button>
+                        <button
+                          onClick={() => handleCreateDocument('strategy-template', 'Kommunikationsstrategie')}
+                          className="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors"
+                          disabled={documentsLoading}
+                        >
+                          Strategie
+                        </button>
+                        <button
+                          onClick={() => handleCreateDocument('analysis-template', 'Marktanalyse')}
+                          className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
+                          disabled={documentsLoading}
+                        >
+                          Analyse
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Projekt-Ordner */}
+                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                  <div className="flex items-center mb-4">
+                    <FolderIcon className="h-5 w-5 text-purple-500 mr-2" />
+                    <Subheading>Projekt-Ordner</Subheading>
+                    {foldersLoading && (
+                      <div className="ml-2 animate-spin h-4 w-4 border-2 border-purple-500 border-t-transparent rounded-full"></div>
+                    )}
+                  </div>
+                  <Text className="text-gray-600 mb-4">
+                    Organisierte Ordnerstruktur für alle projektbezogenen Dateien und Assets.
+                  </Text>
+                  
+                  {projectFolders ? (
+                    <div className="space-y-3">
+                      {/* Hauptordner */}
+                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <FolderIcon className="h-5 w-5 text-purple-600 mr-2" />
+                            <div>
+                              <Text className="text-sm font-medium text-purple-900">
+                                {projectFolders.mainFolder?.name || 'Hauptordner'}
+                              </Text>
+                              <Text className="text-xs text-purple-600">
+                                {projectFolders.statistics.totalFiles} Dateien gesamt
+                              </Text>
+                            </div>
+                          </div>
+                          <Button
+                            outline
+                            size="sm"
+                            onClick={() => handleOpenFolder(projectFolders.mainFolder?.id)}
+                          >
+                            Öffnen
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      {/* Unterordner */}
+                      <div className="space-y-2">
+                        {projectFolders.subfolders.map((folder: any, index: number) => {
+                          const fileCount = projectFolders.statistics.folderSizes[folder.id] || 0;
+                          const colors = [
+                            { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-900', icon: 'text-blue-600' },
+                            { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-900', icon: 'text-purple-600' },
+                            { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-900', icon: 'text-green-600' },
+                            { bg: 'bg-yellow-50', border: 'border-yellow-200', text: 'text-yellow-900', icon: 'text-yellow-600' },
+                            { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-900', icon: 'text-red-600' }
+                          ];
+                          const color = colors[index % colors.length];
+                          
+                          return (
+                            <div key={folder.id} className={`${color.bg} ${color.border} border rounded-lg p-2`}>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center">
+                                  <FolderIcon className={`h-4 w-4 ${color.icon} mr-2`} />
+                                  <div>
+                                    <Text className={`text-sm font-medium ${color.text}`}>
+                                      {folder.name}
+                                    </Text>
+                                    <Text className="text-xs text-gray-500">
+                                      {fileCount} {fileCount === 1 ? 'Datei' : 'Dateien'}
+                                    </Text>
+                                  </div>
+                                </div>
+                                <Button
+                                  outline
+                                  size="sm"
+                                  onClick={() => handleOpenFolder(folder.id)}
+                                >
+                                  <FolderIcon className="w-3 h-3 mr-1" />
+                                  Öffnen
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      
+                      {/* Statistiken */}
+                      {projectFolders.statistics.lastActivity && (
+                        <div className="text-xs text-gray-500 mt-3">
+                          Letzte Aktivität: {projectFolders.statistics.lastActivity.toDate().toLocaleDateString('de-DE', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    // Fallback für Projekte ohne automatische Ordnerstruktur
+                    <div className="space-y-2">
+                      <div className="text-center py-4">
+                        <FolderIcon className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                        <Text className="text-sm text-gray-500">
+                          Keine automatische Ordnerstruktur gefunden
+                        </Text>
+                        <Text className="text-xs text-gray-400">
+                          Nur neue Projekte haben automatische Ordner
+                        </Text>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="mt-4">
+                    <Button
+                      outline
+                      className="w-full"
+                      onClick={() => window.open('/dashboard/pr-tools/media-library', '_blank')}
+                    >
+                      <FolderIcon className="w-4 h-4 mr-2" />
+                      Media-Bibliothek öffnen
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Team-Kommunikation */}
+                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                  <div className="flex items-center mb-4">
+                    <ChatBubbleLeftRightIcon className="h-5 w-5 text-green-500 mr-2" />
+                    <Subheading>Team-Kommunikation</Subheading>
+                  </div>
+                  <Text className="text-gray-600 mb-4">
+                    Projektspezifische Kommunikation mit @-Mentions und Datei-Upload.
+                  </Text>
+                  <div className="space-y-3">
+                    <div className="flex items-start space-x-3">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <Text className="text-xs font-medium text-blue-600">MB</Text>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <Text className="text-sm font-medium">Maria Bauer</Text>
+                        <Text className="text-xs text-gray-500">vor 2 Stunden</Text>
+                        <Text className="text-sm text-gray-700 mt-1">
+                          Kann das Briefing bis morgen finalisiert werden?
+                        </Text>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <Button 
+                      outline 
+                      className="w-full"
+                      onClick={handleOpenCommunicationFeed}
+                    >
+                      <ChatBubbleLeftRightIcon className="w-4 h-4 mr-2" />
+                      Chat öffnen
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Planungs-Checkliste */}
+                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                  <div className="flex items-center mb-4">
+                    <ClipboardDocumentListIcon className="h-5 w-5 text-orange-500 mr-2" />
+                    <Subheading>Planungs-Checkliste</Subheading>
+                  </div>
+                  <Text className="text-gray-600 mb-4">
+                    Standard-Aufgaben für eine vollständige Projektplanung.
+                  </Text>
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-3">
+                      <input type="checkbox" checked className="rounded text-green-600" />
+                      <Text className="text-sm">Projekt-Briefing erstellt</Text>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <input type="checkbox" className="rounded text-green-600" />
+                      <Text className="text-sm">Zielgruppen definiert</Text>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <input type="checkbox" className="rounded text-green-600" />
+                      <Text className="text-sm">Budget und Timeline festgelegt</Text>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <input type="checkbox" className="rounded text-green-600" />
+                      <Text className="text-sm">Team-Rollen zugewiesen</Text>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <input type="checkbox" className="rounded text-green-600" />
+                      <Text className="text-sm">Strategiedokument finalisiert</Text>
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <Button 
+                      outline 
+                      disabled={project.currentStage !== 'ideas_planning'}
+                      className="w-full"
+                    >
+                      <ClipboardDocumentListIcon className="w-4 h-4 mr-2" />
+                      Checkliste verwalten
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>

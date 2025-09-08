@@ -50,6 +50,18 @@ export const projectService = {
       const cleanedData = this.cleanUndefinedValues(dataToSave);
       
       const docRef = await addDoc(collection(db, 'projects'), cleanedData);
+      
+      // Automatische Ordner-Erstellung für das neue Projekt
+      try {
+        await this.createProjectFolderStructure(docRef.id, projectData.organizationId, {
+          organizationId: projectData.organizationId,
+          userId: projectData.userId
+        });
+      } catch (folderError) {
+        console.error('Fehler bei automatischer Ordner-Erstellung:', folderError);
+        // Projekt-Erstellung nicht scheitern lassen wegen Ordner-Fehler
+      }
+      
       return docRef.id;
     } catch (error) {
       throw error;
@@ -1932,6 +1944,278 @@ export const projectService = {
     } catch (error: any) {
       result.errors?.push(error.message || 'Ressourcen-Initialisierung fehlgeschlagen');
       return result;
+    }
+  },
+
+  /**
+   * PLAN 11/11: Automatische Projekt-Ordner-Erstellung
+   * Erstellt automatisch eine strukturierte Ordner-Hierarchie für ein neues Projekt
+   */
+  async createProjectFolderStructure(
+    projectId: string, 
+    organizationId: string,
+    context: { organizationId: string; userId: string }
+  ): Promise<void> {
+    try {
+      // Projekt laden um Titel zu erhalten
+      const project = await this.getById(projectId, context);
+      if (!project) {
+        throw new Error('Projekt nicht gefunden für Ordner-Erstellung');
+      }
+
+      // Dynamischer Import um circular dependencies zu vermeiden
+      const { mediaService } = await import('./media-service');
+      
+      // Hauptordner erstellen
+      const mainFolderId = await mediaService.createFolder({
+        userId: context.userId,
+        name: `Projekt: ${project.title}`,
+        parentFolderId: undefined, // Root-Ordner
+        description: `Automatisch erstellter Ordner für Projekt "${project.title}"`
+      }, context);
+      
+      // Unterordner-Struktur definieren (5 Standard-Ordner)
+      const subfolders = [
+        {
+          name: 'Strategiedokumente',
+          description: 'Projektbriefings, Strategiepapiere und Analysedokumente',
+          color: '#3B82F6' // Blau
+        },
+        {
+          name: 'Bildideen & Inspiration',
+          description: 'Mood Boards, Referenz-Bilder und kreative Inspiration',
+          color: '#8B5CF6' // Lila
+        },
+        {
+          name: 'Recherche & Briefings',
+          description: 'Marktanalysen, Kundenbriefings und Hintergrundinformationen',
+          color: '#10B981' // Grün
+        },
+        {
+          name: 'Entwürfe & Notizen',
+          description: 'Erste Entwürfe, Skizzen und interne Arbeitsnotizen',
+          color: '#F59E0B' // Gelb/Orange
+        },
+        {
+          name: 'Externe Dokumente',
+          description: 'Kundendokumente, Freigaben und externe Materialien',
+          color: '#EF4444' // Rot
+        }
+      ];
+      
+      // Alle Unterordner erstellen
+      const createdSubfolderIds: string[] = [];
+      
+      for (const subfolder of subfolders) {
+        try {
+          const subfolderId = await mediaService.createFolder({
+            userId: context.userId,
+            name: subfolder.name,
+            parentFolderId: mainFolderId,
+            description: subfolder.description,
+            color: subfolder.color
+          }, context);
+          
+          createdSubfolderIds.push(subfolderId);
+        } catch (subfolderError) {
+          console.error(`Fehler beim Erstellen des Unterordners "${subfolder.name}":`, subfolderError);
+          // Weitermachen mit nächstem Ordner
+        }
+      }
+      
+      // Projekt mit Ordner-Informationen über assetFolders aktualisieren
+      const folderStructure = subfolders.map((sf, index) => ({
+        folderId: createdSubfolderIds[index] || mainFolderId,
+        folderName: sf.name,
+        assetCount: 0,
+        lastModified: Timestamp.now()
+      }));
+
+      // Hauptordner hinzufügen
+      folderStructure.unshift({
+        folderId: mainFolderId,
+        folderName: project.title,
+        assetCount: 0,
+        lastModified: Timestamp.now()
+      });
+
+      await this.update(projectId, {
+        assetFolders: folderStructure
+      }, context);
+      
+      console.log(`✅ Projekt-Ordnerstruktur erstellt für Projekt ${projectId}:`, {
+        mainFolder: mainFolderId,
+        subfolders: createdSubfolderIds.length,
+        projectTitle: project.title
+      });
+      
+    } catch (error: any) {
+      console.error('❌ Fehler bei automatischer Projekt-Ordner-Erstellung:', error);
+      throw new Error(`Projekt-Ordner konnten nicht erstellt werden: ${error.message}`);
+    }
+  },
+
+  /**
+   * PLAN 11/11: Holt Projekt-Ordner-Struktur
+   * Lädt die automatisch erstellten Ordner für ein Projekt
+   */
+  async getProjectFolderStructure(
+    projectId: string,
+    context: { organizationId: string }
+  ): Promise<{
+    mainFolder: any; // MediaFolder
+    subfolders: any[]; // MediaFolder[]
+    statistics: {
+      totalFiles: number;
+      lastActivity: Timestamp | null;
+      folderSizes: Record<string, number>;
+    };
+  } | null> {
+    try {
+      const project = await this.getById(projectId, context);
+      if (!project || !project.assetFolders || project.assetFolders.length === 0) {
+        return null;
+      }
+
+      // Dynamischer Import um circular dependencies zu vermeiden
+      const { mediaService } = await import('./media-service');
+      
+      // Ordner laden basierend auf assetFolders
+      const folders = await Promise.all(
+        project.assetFolders.map(async (folderInfo) => {
+          try {
+            return await mediaService.getFolder(folderInfo.folderId);
+          } catch (error) {
+            console.error(`Fehler beim Laden des Ordners ${folderInfo.folderId}:`, error);
+            return null;
+          }
+        })
+      );
+      
+      const validFolders = folders.filter(Boolean);
+      if (validFolders.length === 0) {
+        return null;
+      }
+      
+      // Hauptordner ist der erste oder der mit dem Projektnamen
+      const mainFolder = validFolders[0];
+      const subfolders = validFolders.slice(1);
+      
+      // Statistiken berechnen
+      const folderSizes: Record<string, number> = {};
+      let totalFiles = 0;
+      let lastActivity: Timestamp | null = null;
+      
+      // Dateien in jedem Ordner zählen
+      for (const folder of validFolders) {
+        if (folder && folder.id) {
+          try {
+            const fileCount = await mediaService.getFolderFileCount(folder.id);
+            folderSizes[folder.id] = fileCount;
+            totalFiles += fileCount;
+            
+            // Letzte Aktivität tracking
+            if (folder.updatedAt && (!lastActivity || folder.updatedAt.toMillis() > lastActivity.toMillis())) {
+              lastActivity = folder.updatedAt;
+            }
+          } catch (error) {
+            console.error(`Fehler beim Zählen der Dateien in Ordner ${folder.id}:`, error);
+            folderSizes[folder.id] = 0;
+          }
+        }
+      }
+      
+      return {
+        mainFolder,
+        subfolders: subfolders,
+        statistics: {
+          totalFiles,
+          lastActivity,
+          folderSizes
+        }
+      };
+      
+    } catch (error: any) {
+      console.error('Fehler beim Laden der Projekt-Ordner-Struktur:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * PLAN 11/11: Upload-Assistent für Projekt-Ordner
+   * Ermöglicht Upload in spezifische Unterordner
+   */
+  async uploadToProjectFolder(
+    projectId: string,
+    subfolderId: string,
+    files: File[],
+    context: { organizationId: string; userId: string }
+  ): Promise<{
+    successfulUploads: string[]; // Asset-IDs
+    failedUploads: { fileName: string; error: string }[];
+    targetFolder: any; // MediaFolder
+  }> {
+    try {
+      const project = await this.getById(projectId, context);
+      if (!project || !project.assetFolders || project.assetFolders.length === 0) {
+        throw new Error('Projekt-Ordnerstruktur nicht gefunden');
+      }
+
+      // Validiere dass Ordner zu diesem Projekt gehört
+      const validFolder = project.assetFolders.find(folder => folder.folderId === subfolderId);
+      if (!validFolder) {
+        throw new Error('Ordner gehört nicht zu diesem Projekt');
+      }
+
+      // Dynamischer Import um circular dependencies zu vermeiden
+      const { mediaService } = await import('./media-service');
+      
+      // Zielordner laden
+      const targetFolder = await mediaService.getFolder(subfolderId);
+      if (!targetFolder) {
+        throw new Error('Zielordner nicht gefunden');
+      }
+
+      // Dateien hochladen
+      const successfulUploads: string[] = [];
+      const failedUploads: { fileName: string; error: string }[] = [];
+
+      for (const file of files) {
+        try {
+          const uploadedAsset = await mediaService.uploadMedia(
+            file,
+            context.organizationId,
+            subfolderId, // Direkt in Unterordner hochladen
+            undefined, // onProgress
+            3, // retryCount
+            context
+          );
+          
+          successfulUploads.push(uploadedAsset.id || 'unknown-id');
+        } catch (uploadError: any) {
+          failedUploads.push({
+            fileName: file.name,
+            error: uploadError.message || 'Upload fehlgeschlagen'
+          });
+        }
+      }
+
+      // Projekt-Asset-Summary aktualisieren (falls verfügbar)
+      try {
+        await this.updateProjectAssetSummary(projectId, context);
+      } catch (error) {
+        console.error('Fehler beim Aktualisieren der Asset-Summary:', error);
+        // Nicht kritisch - Upload ist erfolgreich
+      }
+
+      return {
+        successfulUploads,
+        failedUploads,
+        targetFolder
+      };
+
+    } catch (error: any) {
+      throw new Error(`Upload in Projekt-Ordner fehlgeschlagen: ${error.message}`);
     }
   }
 };

@@ -566,7 +566,7 @@ export default function InboxPage() {
         references: []
       });
 
-      if (!testThread.success || !testThread.threadId) {
+      if (!testThread.success || !testThread.thread?.id) {
         throw new Error('Failed to create test thread');
       }
 
@@ -582,7 +582,7 @@ export default function InboxPage() {
       // Create test email message
       const testMessageData: Partial<EmailMessage> = {
         messageId: `test-${Date.now()}@celeropress.de`,
-        threadId: testThread.threadId,
+        threadId: testThread.thread?.id,
         from: { email: 'test@example.com', name: 'Test Sender' },
         to: [{ email: defaultAddress.email, name: defaultAddress.displayName }],
         subject: `Test E-Mail - ${new Date().toLocaleString('de-DE')}`,

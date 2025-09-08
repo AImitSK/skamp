@@ -443,13 +443,16 @@ export class ProjectCommunicationService {
     userId?: string
   ): Promise<void> {
     try {
-      await threadMatcherService.linkEmailToProject(
+      // Direkte Implementierung der Verknüpfung in der thread_project_links Collection
+      await addDoc(collection(db, 'thread_project_links'), {
         threadId,
         projectId,
         method,
         confidence,
-        userId
-      );
+        linkedBy: userId || 'system',
+        linkedAt: serverTimestamp(),
+        organizationId: 'default' // TODO: von Context übergeben
+      });
       
       // Projekt-Kommunikations-Summary aktualisieren
       await this.updateProjectCommunicationSummary(projectId);

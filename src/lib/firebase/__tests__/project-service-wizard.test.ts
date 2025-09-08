@@ -698,7 +698,7 @@ describe('ProjectService - Wizard Methods', () => {
       jest.spyOn(projectService, 'update').mockResolvedValue();
       (prService.create as jest.Mock).mockResolvedValue('campaign123');
 
-      const result = await projectService.initializeProjectResources('project123', options);
+      const result = await projectService.initializeProjectResources('project123', options, mockOrganizationId);
 
       expect(result.campaignCreated).toBe(true);
       expect(result.campaignId).toBe('campaign123');
@@ -730,7 +730,7 @@ describe('ProjectService - Wizard Methods', () => {
       jest.spyOn(projectService, 'getById').mockResolvedValue(mockProject);
       jest.spyOn(projectService, 'update').mockResolvedValue();
 
-      const result = await projectService.initializeProjectResources('project123', options);
+      const result = await projectService.initializeProjectResources('project123', options, mockOrganizationId);
 
       expect(result.assetsAttached).toBe(3);
       expect(result.campaignCreated).toBe(false);
@@ -748,7 +748,7 @@ describe('ProjectService - Wizard Methods', () => {
       jest.spyOn(projectService, 'getById').mockResolvedValue(mockProject);
       jest.spyOn(projectService, 'update').mockResolvedValue();
 
-      const result = await projectService.initializeProjectResources('project123', options);
+      const result = await projectService.initializeProjectResources('project123', options, mockOrganizationId);
 
       expect(result.listsLinked).toBe(2);
     });
@@ -765,7 +765,7 @@ describe('ProjectService - Wizard Methods', () => {
       jest.spyOn(projectService, 'getById').mockResolvedValue(mockProject);
       jest.spyOn(projectService, 'update').mockResolvedValue();
 
-      const result = await projectService.initializeProjectResources('project123', options);
+      const result = await projectService.initializeProjectResources('project123', options, mockOrganizationId);
 
       expect(result.teamNotified).toBe(true);
     });
@@ -785,7 +785,7 @@ describe('ProjectService - Wizard Methods', () => {
       const updateSpy = jest.spyOn(projectService, 'update').mockResolvedValue();
       (prService.create as jest.Mock).mockResolvedValue('campaign123');
 
-      await projectService.initializeProjectResources('project123', options);
+      await projectService.initializeProjectResources('project123', options, mockOrganizationId);
 
       expect(updateSpy).toHaveBeenCalledWith(
         'project123',
@@ -815,7 +815,7 @@ describe('ProjectService - Wizard Methods', () => {
       jest.spyOn(projectService, 'getById').mockResolvedValue(mockProject);
       (prService.create as jest.Mock).mockRejectedValue(new Error('Database error'));
 
-      const result = await projectService.initializeProjectResources('project123', options);
+      const result = await projectService.initializeProjectResources('project123', options, mockOrganizationId);
 
       expect(result.campaignCreated).toBe(false);
       expect(result.campaignId).toBeUndefined();
@@ -833,7 +833,7 @@ describe('ProjectService - Wizard Methods', () => {
 
       jest.spyOn(projectService, 'getById').mockResolvedValue(null);
 
-      const result = await projectService.initializeProjectResources('invalid-project', options);
+      const result = await projectService.initializeProjectResources('invalid-project', options, mockOrganizationId);
 
       expect(result.errors).toContain('Projekt nicht gefunden');
     });
@@ -851,7 +851,7 @@ describe('ProjectService - Wizard Methods', () => {
       jest.spyOn(projectService, 'update').mockResolvedValue();
 
       // Mock partieller Erfolg: 2 von 3 Assets erfolgreich
-      const result = await projectService.initializeProjectResources('project123', options);
+      const result = await projectService.initializeProjectResources('project123', options, mockOrganizationId);
 
       expect(result.assetsAttached).toBe(3); // Mock implementiert erfolgreiche Anhänge
     });
@@ -915,7 +915,7 @@ describe('ProjectService - Wizard Methods', () => {
       jest.spyOn(projectService, 'getById').mockResolvedValue(mockProject);
       (prService.create as jest.Mock).mockResolvedValue('campaign123');
 
-      await projectService.initializeProjectResources('project123', options);
+      await projectService.initializeProjectResources('project123', options, mockOrganizationId);
 
       expect(prService.create).toHaveBeenCalledWith(
         expect.objectContaining({
