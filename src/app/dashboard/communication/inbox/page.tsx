@@ -78,9 +78,9 @@ export default function InboxHookLogicPhase1Page() {
   const [unsubscribes, setUnsubscribes] = useState<Unsubscribe[]>([]);
 
   // Test State
-  const [message, setMessage] = useState('RACE CONDITION FIX: useEffect Firebase Listeners mit isActive Flag');
+  const [message, setMessage] = useState('SCOPE FIXED: currentUnsubscribes statt newUnsubscribes');
 
-  // HOOK-LOGIK PHASE 2: Kritischer useEffect mit Firebase Listeners - FIXED
+  // HOOK-LOGIK PHASE 2: Kritischer useEffect mit Firebase Listeners - SCOPE FIXED
   useEffect(() => {
     console.log('🔄 useEffect triggered with deps:', { user: !!user, organizationId, selectedFolderType, selectedTeamMemberId });
     
@@ -90,6 +90,7 @@ export default function InboxHookLogicPhase1Page() {
     }
 
     let isActive = true; // Flag to prevent race conditions
+    const currentUnsubscribes: Unsubscribe[] = []; // Fixed scope issue
     setLoading(true);
     setError(null);
 
@@ -107,8 +108,6 @@ export default function InboxHookLogicPhase1Page() {
         orderBy('lastMessageAt', 'desc'),
         limit(100)
       );
-
-      const newUnsubscribes: Unsubscribe[] = [];
 
       const threadsUnsubscribe = onSnapshot(
         threadsQuery,
@@ -153,7 +152,7 @@ export default function InboxHookLogicPhase1Page() {
         }
       );
       
-      newUnsubscribes.push(threadsUnsubscribe);
+      currentUnsubscribes.push(threadsUnsubscribe);
 
       // 2. Listen to messages
       let messagesQuery = query(
@@ -210,8 +209,8 @@ export default function InboxHookLogicPhase1Page() {
         }
       );
       
-      newUnsubscribes.push(messagesUnsubscribe);
-      setUnsubscribes(newUnsubscribes);
+      currentUnsubscribes.push(messagesUnsubscribe);
+      setUnsubscribes(currentUnsubscribes);
 
     } catch (error: any) {
       setError('Fehler beim Einrichten der Echtzeit-Updates');
@@ -226,7 +225,7 @@ export default function InboxHookLogicPhase1Page() {
     return () => {
       console.log('🧹 Cleaning up Firebase listeners');
       isActive = false; // Prevent any pending updates
-      newUnsubscribes.forEach(unsubscribe => {
+      currentUnsubscribes.forEach(unsubscribe => {
         try {
           unsubscribe();
         } catch (error) {
