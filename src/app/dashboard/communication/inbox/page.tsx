@@ -1,4 +1,4 @@
-// DEBUGGING STEP 4: EMAIL SERVICES TEST  
+// DEBUGGING STEP 5: INBOX COMPONENTS TEST (MOST DANGEROUS!)
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -12,65 +12,69 @@ import { collection, query, where, orderBy, limit, onSnapshot } from 'firebase/f
 import { emailMessageService } from '@/lib/email/email-message-service';
 import { threadMatcherService } from '@/lib/email/thread-matcher-service';
 import { emailAddressService } from '@/lib/email/email-address-service';
+import { TeamFolderSidebar } from '@/components/inbox/TeamFolderSidebar';
+import { EmailList } from '@/components/inbox/EmailList';
+import { EmailViewer } from '@/components/inbox/EmailViewer';
 
-export default function InboxStep4Page() {
-  const [message, setMessage] = useState('Step 4: Email Services Test');
-  const [serviceTestResults, setServiceTestResults] = useState({
-    firebase: 'Not tested',
-    emailMessage: 'Not tested', 
-    threadMatcher: 'Not tested',
-    emailAddress: 'Not tested'
+export default function InboxStep5Page() {
+  const [message, setMessage] = useState('Step 5: Inbox Components Test');
+  const [componentTestResults, setComponentTestResults] = useState({
+    sidebar: 'Not tested',
+    emailList: 'Not tested', 
+    emailViewer: 'Not tested',
+    rendering: 'Not tested'
   });
+  const [showComponents, setShowComponents] = useState(false);
   
   // Test Context hooks
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
 
-  // Test Firebase connection
-  const testFirebaseConnection = () => {
+  // Test Inbox Components Import
+  const testComponentImports = () => {
     try {
-      if (!currentOrganization?.id) {
-        setServiceTestResults(prev => ({ ...prev, firebase: 'No organization' }));
-        return;
-      }
+      const sidebarExists = !!TeamFolderSidebar;
+      const emailListExists = !!EmailList;  
+      const emailViewerExists = !!EmailViewer;
 
-      const testQuery = query(
-        collection(db, 'email_messages'),
-        where('organizationId', '==', currentOrganization.id),
-        orderBy('receivedAt', 'desc'),
-        limit(5)
-      );
+      setComponentTestResults(prev => ({
+        ...prev,
+        sidebar: sidebarExists ? '✅ Import OK' : '❌ Import failed',
+        emailList: emailListExists ? '✅ Import OK' : '❌ Import failed', 
+        emailViewer: emailViewerExists ? '✅ Import OK' : '❌ Import failed'
+      }));
 
-      setServiceTestResults(prev => ({ ...prev, firebase: '✅ Success' }));
+      setMessage('Step 5 - All component imports tested!');
     } catch (error: any) {
-      setServiceTestResults(prev => ({ ...prev, firebase: `❌ ${error.message}` }));
+      setComponentTestResults(prev => ({
+        ...prev,
+        rendering: `❌ Error: ${error.message}`
+      }));
+      setMessage(`Step 5 - Component import error: ${error.message}`);
     }
   };
 
-  // Test Email Services
-  const testEmailServices = () => {
+  // Test Component Rendering (DANGEROUS!)
+  const testComponentRendering = () => {
     try {
-      // Test service imports existence
-      const emailServiceExists = !!emailMessageService;
-      const threadServiceExists = !!threadMatcherService;  
-      const addressServiceExists = !!emailAddressService;
-
-      setServiceTestResults(prev => ({
+      setShowComponents(true);
+      setComponentTestResults(prev => ({
         ...prev,
-        emailMessage: emailServiceExists ? '✅ Import OK' : '❌ Import failed',
-        threadMatcher: threadServiceExists ? '✅ Import OK' : '❌ Import failed', 
-        emailAddress: addressServiceExists ? '✅ Import OK' : '❌ Import failed'
+        rendering: '✅ Components rendered'
       }));
-
-      setMessage('Step 4 Email Services - All imports tested!');
+      setMessage('Step 5 - Components rendered successfully!');
     } catch (error: any) {
-      setMessage(`Step 4 Email Services - Error: ${error.message}`);
+      setComponentTestResults(prev => ({
+        ...prev,
+        rendering: `❌ Render Error: ${error.message}`
+      }));
+      setMessage(`Step 5 - Render error: ${error.message}`);
     }
   };
 
   return (
     <div className="p-4">
-      <Heading level={1}>Inbox Debug - Step 4</Heading>
+      <Heading level={1}>Inbox Debug - Step 5</Heading>
       <p className="mt-2">{message}</p>
       
       <div className="mt-4 space-y-2">
@@ -86,43 +90,69 @@ export default function InboxStep4Page() {
 
       <div className="mt-4 space-y-1">
         <div className="flex items-center gap-2">
-          <Badge color="purple">Firebase:</Badge>
-          <span className="text-xs">{serviceTestResults.firebase}</span>
+          <Badge color="purple">TeamFolderSidebar:</Badge>
+          <span className="text-xs">{componentTestResults.sidebar}</span>
         </div>
         <div className="flex items-center gap-2">
-          <Badge color="orange">EmailMessage:</Badge>
-          <span className="text-xs">{serviceTestResults.emailMessage}</span>
+          <Badge color="orange">EmailList:</Badge>
+          <span className="text-xs">{componentTestResults.emailList}</span>
         </div>
         <div className="flex items-center gap-2">
-          <Badge color="red">ThreadMatcher:</Badge>
-          <span className="text-xs">{serviceTestResults.threadMatcher}</span>
+          <Badge color="red">EmailViewer:</Badge>
+          <span className="text-xs">{componentTestResults.emailViewer}</span>
         </div>
         <div className="flex items-center gap-2">
-          <Badge color="cyan">EmailAddress:</Badge>
-          <span className="text-xs">{serviceTestResults.emailAddress}</span>
+          <Badge color="cyan">Rendering:</Badge>
+          <span className="text-xs">{componentTestResults.rendering}</span>
         </div>
       </div>
 
       <div className="mt-6 flex gap-3">
         <Button 
-          onClick={testFirebaseConnection}
+          onClick={testComponentImports}
           color="dark/zinc"
         >
-          Test Firebase
+          Test Imports
         </Button>
         <Button 
-          onClick={testEmailServices}
-          color="dark/zinc"
+          onClick={testComponentRendering}
+          color="red"
         >
-          Test Email Services
+          ⚠️ Render Components
         </Button>
         <Button 
-          onClick={() => setMessage('Step 4 - Basic button clicked!')}
+          onClick={() => setMessage('Step 5 - Basic button clicked!')}
           plain
         >
           Basic Test
         </Button>
       </div>
+
+      {showComponents && (
+        <div className="mt-8 p-4 border-2 border-red-500 rounded">
+          <h2 className="text-lg font-bold text-red-600 mb-4">⚠️ DANGER ZONE - COMPONENT RENDERING</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="border p-2">
+              <h3 className="font-semibold">TeamFolderSidebar Test</h3>
+              <div className="h-20 bg-gray-100 flex items-center justify-center text-sm">
+                Sidebar Placeholder
+              </div>
+            </div>
+            <div className="border p-2">
+              <h3 className="font-semibold">EmailList Test</h3>
+              <div className="h-20 bg-gray-100 flex items-center justify-center text-sm">
+                EmailList Placeholder  
+              </div>
+            </div>
+            <div className="border p-2">
+              <h3 className="font-semibold">EmailViewer Test</h3>
+              <div className="h-20 bg-gray-100 flex items-center justify-center text-sm">
+                EmailViewer Placeholder
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

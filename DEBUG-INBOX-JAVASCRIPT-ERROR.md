@@ -292,15 +292,24 @@ Das Problem muss in einem dieser **spezifischen Inbox-Module** liegen:
 4. `@/lib/firebase/*` Services (team-service-enhanced, etc.)
 5. Firebase Firestore Imports (`collection`, `query`, `onSnapshot`, etc.)
 
-#### 📋 NÄCHSTE SCHRITTE - SYSTEMATIC MODULE ISOLATION:
+#### 📋 SYSTEMATIC MODULE ISOLATION RESULTS (08.01.2025):
 
 **METHODE**: Schrittweise Imports zur minimalen Inbox hinzufügen bis Fehler auftritt
 
-1. **Step 1**: Context imports (AuthContext, OrganizationContext)
-2. **Step 2**: Basic UI components (Button, Heading, etc.) 
-3. **Step 3**: Firebase imports (db, collection, query)
-4. **Step 4**: Email services (emailMessageService, threadMatcherService)
-5. **Step 5**: Inbox components (TeamFolderSidebar, EmailList, etc.)
+1. **Step 1 - Context imports**: ✅ **ERFOLGREICH** (413 B → 586 B)
+2. **Step 2 - Basic UI components**: ✅ **ERFOLGREICH** (586 B → 1.98 kB) 
+3. **Step 3 - Firebase imports**: ✅ **ERFOLGREICH** (1.98 kB → 2.2 kB)
+4. **Step 4 - Email services**: ✅ **ERFOLGREICH** (2.2 kB → 5.26 kB)
+5. **Step 5 - Inbox components**: ⏳ **TESTING** (5.26 kB → **31.1 kB** +491% EXPLOSION!)
+
+#### 🚨 STEP 5 BUNDLE-SIZE EXPLOSION DETECTED:
+- **Bundle-Größe**: 5.26 kB → **31.1 kB** (+491% Sprung!)
+- **First Load JS**: 254 kB → **314 kB** (+60 kB zusätzlich)
+- **Verdächtige Komponenten**: `TeamFolderSidebar`, `EmailList`, `EmailViewer`
+
+#### ⚡ CRITICAL TEST PENDING (Step 5):
+**STATUS**: Import erfolgreich, Rendering-Test ausstehend
+**ERWARTUNG**: Der `Cannot access 'eh' before initialization` Fehler tritt **SEHR WAHRSCHEINLICH** bei Step 5 auf!
 
 ---
 
