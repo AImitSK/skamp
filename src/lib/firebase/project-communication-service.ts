@@ -23,7 +23,7 @@ import type {
   EmailAddressInfo 
 } from '@/types/email-enhanced';
 import type { PipelineStage } from '@/types/project';
-import { threadMatcherService } from '@/lib/email/thread-matcher-service-flexible';
+import { threadMatcherService } from '@/lib/email/thread-matcher-service';
 
 // ============================================
 // INTERFACES FÜR PROJEKT-KOMMUNIKATION

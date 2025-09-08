@@ -1,7 +1,7 @@
 // src/lib/email/email-processor-flexible.ts
 import { EmailAddressInfo, EmailAttachment, EmailMessage } from '@/types/email-enhanced';
 import { EmailMessageService } from '@/lib/email/email-message-service';
-import { FlexibleThreadMatcherService } from '@/lib/email/thread-matcher-service-flexible';
+import { threadMatcherService } from '@/lib/email/thread-matcher-service';
 import { nanoid } from 'nanoid';
 import { serverDb } from '@/lib/firebase/server-init';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -73,7 +73,7 @@ export async function flexibleEmailProcessor(
 
     // Services initialisieren
     const emailMessageService = new EmailMessageService();
-    const threadMatcher = new FlexibleThreadMatcherService(true); // Server-side processing
+    // Use the stable thread matcher service
 
     // 1. Organisation über empfangende E-Mail-Adresse ermitteln
     const { organizationId, emailAccountId } = await resolveOrganization(emailData.to);
@@ -92,7 +92,7 @@ export async function flexibleEmailProcessor(
     console.log('📍 Organization resolved:', { organizationId, emailAccountId });
 
     // 2. Thread-Matching durchführen
-    const threadResult = await threadMatcher.findOrCreateThread({
+    const threadResult = await threadMatcherService.findOrCreateThread({
       messageId: emailData.messageId || generateMessageId(),
       ...(emailData.inReplyTo && { inReplyTo: emailData.inReplyTo }),
       references: emailData.references || [],
