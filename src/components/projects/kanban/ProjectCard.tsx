@@ -13,6 +13,7 @@ import { Project, ProjectPriority, PipelineStage } from '@/types/project';
 import { ProjectQuickActionsMenu } from './ProjectQuickActionsMenu';
 import { Avatar } from '@/components/ui/avatar';
 import { teamMemberService } from '@/lib/firebase/organization-service';
+import { projectService } from '@/lib/firebase/project-service';
 import { TeamMember } from '@/types/international';
 import { useOrganization } from '@/context/OrganizationContext';
 // TODO: date-fns Installation erforderlich
@@ -145,13 +146,28 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
   };
 
   const handleEditProject = (projectId: string) => {
-    router.push(`/dashboard/projects/${projectId}?tab=settings`);
+    router.push(`/dashboard/projects/${projectId}/edit`);
   };
 
   const handleDeleteProject = async (projectId: string) => {
     if (confirm('Projekt wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) {
-      // TODO: Implement delete functionality
-      console.log('Delete project:', projectId);
+      try {
+        if (!currentOrganization?.id) {
+          console.error('Keine Organisation gefunden');
+          return;
+        }
+        
+        // Projekt löschen
+        await projectService.delete(projectId, {
+          organizationId: currentOrganization.id
+        });
+        
+        // Seite neu laden um die Änderung zu reflektieren
+        window.location.reload();
+      } catch (error) {
+        console.error('Fehler beim Löschen des Projekts:', error);
+        alert('Fehler beim Löschen des Projekts. Bitte versuchen Sie es erneut.');
+      }
     }
   };
 
