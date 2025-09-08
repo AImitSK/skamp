@@ -14,7 +14,7 @@ import { ComposeEmail } from '@/components/inbox/ComposeEmail';
 import { NotificationBell } from '@/components/inbox/NotificationBell';
 import { EmailMessage, EmailThread } from '@/types/inbox-enhanced';
 import { emailMessageService } from '@/lib/email/email-message-service';
-import { threadMatcherService } from '@/lib/email/thread-matcher-service-flexible';
+import { threadMatcherService } from '@/lib/email/thread-matcher-service';
 import { emailAddressService } from '@/lib/email/email-address-service';
 import { getCustomerCampaignMatcher } from '@/lib/email/customer-campaign-matcher';
 import { teamMemberService } from '@/lib/firebase/team-service-enhanced';
