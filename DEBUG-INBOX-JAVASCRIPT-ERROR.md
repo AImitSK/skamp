@@ -275,9 +275,32 @@ export default function MinimalInboxPage() {
 }
 ```
 
-**CRITICAL TEST**: Tritt `Cannot access 'eh' before initialization` mit Minimal-Version auf?
-- ✅ JA → Problem liegt außerhalb der Inbox (anderes Modul)
-- ❌ NEIN → Problem liegt in der Inbox-Implementierung
+**CRITICAL TEST ERGEBNIS (08.01.2025)**: ❌ **FEHLER TRITT NICHT AUF**
+
+**BESTÄTIGT**: Problem liegt in der originalen Inbox-Implementierung
+- Minimale Inbox: ✅ Funktioniert perfekt (Button clicked!)  
+- Original Inbox: ❌ `Cannot access 'eh' before initialization`
+
+#### 🎯 ROOT CAUSE EINGEGRENZT:
+
+Das Problem muss in einem dieser **spezifischen Inbox-Module** liegen:
+
+**VERDÄCHTIGE IMPORTS/SERVICES (Original Inbox)**:
+1. `@/context/AuthContext` / `@/context/OrganizationContext`
+2. `@/components/inbox/*` Komponenten (TeamFolderSidebar, EmailList, etc.)
+3. `@/lib/email/*` Services (thread-matcher-service, email-message-service)
+4. `@/lib/firebase/*` Services (team-service-enhanced, etc.)
+5. Firebase Firestore Imports (`collection`, `query`, `onSnapshot`, etc.)
+
+#### 📋 NÄCHSTE SCHRITTE - SYSTEMATIC MODULE ISOLATION:
+
+**METHODE**: Schrittweise Imports zur minimalen Inbox hinzufügen bis Fehler auftritt
+
+1. **Step 1**: Context imports (AuthContext, OrganizationContext)
+2. **Step 2**: Basic UI components (Button, Heading, etc.) 
+3. **Step 3**: Firebase imports (db, collection, query)
+4. **Step 4**: Email services (emailMessageService, threadMatcherService)
+5. **Step 5**: Inbox components (TeamFolderSidebar, EmailList, etc.)
 
 ---
 
