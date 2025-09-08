@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { Heading, Subheading } from '@/components/ui/heading';
@@ -43,6 +43,7 @@ import Link from 'next/link';
 
 export default function ProjectDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const projectId = params.projectId as string;
@@ -274,7 +275,7 @@ export default function ProjectDetailPage() {
             <Badge color={getProjectStatusColor(project.status)}>
               {getProjectStatusLabel(project.status)}
             </Badge>
-            <Button>
+            <Button onClick={() => router.push(`/dashboard/projects/${projectId}/edit`)}>
               <PencilSquareIcon className="w-4 h-4 mr-2" />
               Bearbeiten
             </Button>
