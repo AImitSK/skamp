@@ -31,7 +31,9 @@ export function ClientSelector({ clients, selectedClientId, onSelect }: ClientSe
     return b.contactCount - a.contactCount;
   });
 
-  const handleClientSelect = (clientId: string) => {
+  const handleClientSelect = (e: React.MouseEvent, clientId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
     onSelect(clientId);
   };
 
@@ -58,8 +60,9 @@ export function ClientSelector({ clients, selectedClientId, onSelect }: ClientSe
           <div className="flex flex-wrap gap-2">
             {sortedClients.slice(0, 3).map((client) => (
               <button
+                type="button"
                 key={`recent-${client.id}`}
-                onClick={() => handleClientSelect(client.id)}
+                onClick={(e) => handleClientSelect(e, client.id)}
                 className={`px-3 py-1 text-xs font-medium rounded-full border ${
                   selectedClientId === client.id
                     ? 'bg-blue-100 border-blue-300 text-blue-800'
@@ -85,7 +88,7 @@ export function ClientSelector({ clients, selectedClientId, onSelect }: ClientSe
           sortedClients.map((client) => (
             <div
               key={client.id}
-              onClick={() => handleClientSelect(client.id)}
+              onClick={(e) => handleClientSelect(e, client.id)}
               className={`p-3 border rounded-md cursor-pointer transition-colors ${
                 selectedClientId === client.id
                   ? 'border-blue-500 bg-blue-50'
