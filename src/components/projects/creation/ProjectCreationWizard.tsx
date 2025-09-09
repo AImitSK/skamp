@@ -146,6 +146,16 @@ export function ProjectCreationWizard({
     }
   }, [isOpen, user?.uid]);
 
+  // Auto-select current user when user becomes available
+  useEffect(() => {
+    if (user?.uid && isOpen && formData.assignedTeamMembers.length === 0) {
+      updateFormData({
+        assignedTeamMembers: [user.uid],
+        projectManager: user.uid
+      });
+    }
+  }, [user?.uid, isOpen]);
+
   const loadCreationOptions = async () => {
     try {
       setIsLoading(true);
