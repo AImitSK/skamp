@@ -89,14 +89,15 @@ export default function ProjectsPage() {
   const [filters, setFilters] = useState<BoardFilters>({});
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loadingTeam, setLoadingTeam] = useState(true);
-  const [filterMode, setFilterMode] = useState<'active' | 'archived'>('active');
+  const [showActive, setShowActive] = useState(true);
+  const [showArchived, setShowArchived] = useState(false);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const filterDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadProjects();
     loadTeamMembers();
-  }, [currentOrganization?.id, viewMode, filterMode]);
+  }, [currentOrganization?.id, viewMode, showActive, showArchived]);
 
   // Close filter dropdown on click outside
   useEffect(() => {
@@ -121,19 +122,29 @@ export default function ProjectsPage() {
     try {
       setLoading(true);
       setError(null);
-      // Für Kanban-Ansicht alle Projekte außer archivierte laden
-      // Für Tabellenansicht je nach filterMode
-      const projectList = await projectService.getAll({
-        organizationId: currentOrganization.id,
-        filters: filterMode === 'archived' ? {
-          status: 'archived'  // Nur archivierte Projekte
-        } : undefined  // Alle Projekte (außer gefilterte werden später ausgeschlossen)
+      
+      // Lade alle Projekte
+      const allProjectList = await projectService.getAll({
+        organizationId: currentOrganization.id
       });
       
-      // Client-seitiges Filtern für archivierte Projekte wenn nicht explizit gewünscht
-      const filteredProjects = filterMode === 'archived'
-        ? projectList
-        : projectList.filter(project => project.status !== 'archived');
+      // Client-seitiges Filtern basierend auf den Checkboxen
+      let filteredProjects = [];
+      
+      if (showActive && showArchived) {
+        // Beide anzeigen
+        filteredProjects = allProjectList;
+      } else if (showActive) {
+        // Nur aktive (nicht-archivierte) anzeigen
+        filteredProjects = allProjectList.filter(project => project.status !== 'archived');
+      } else if (showArchived) {
+        // Nur archivierte anzeigen
+        filteredProjects = allProjectList.filter(project => project.status === 'archived');
+      } else {
+        // Keins angewählt - leer
+        filteredProjects = [];
+      }
+      
       setProjects(filteredProjects);
     } catch (error: any) {
       console.error('Fehler beim Laden der Projekte:', error);
@@ -420,18 +431,30 @@ export default function ProjectsPage() {
                 <button
                   onClick={() => setShowFilterDropdown(!showFilterDropdown)}
                   className={`
-                    px-3 py-2 text-sm font-medium border rounded-lg transition-colors flex items-center
-                    ${filterMode === 'archived'
+                    px-3 py-2 text-sm font-medium border rounded-lg transition-colors flex items-center whitespace-nowrap
+                    ${(showActive && showArchived) || (!showActive && !showArchived)
+                      ? 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                      : showArchived
                       ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                      : 'border-green-500 bg-green-50 text-green-700'
                     }
                   `}
                   title="Status-Filter"
                 >
                   <FunnelIcon className="h-4 w-4" />
-                  {filterMode === 'archived' && (
+                  {(showActive && showArchived) && (
+                    <span className="ml-2 bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">
+                      2
+                    </span>
+                  )}
+                  {showArchived && !showActive && (
                     <span className="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                      1
+                      A
+                    </span>
+                  )}
+                  {showActive && !showArchived && (
+                    <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                      A
                     </span>
                   )}
                 </button>
@@ -448,28 +471,26 @@ export default function ProjectsPage() {
                       <label className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer">
                         <input
                           type="checkbox"
-                          checked={filterMode === 'active'}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setFilterMode('active');
-                            }
-                          }}
+                          checked={showActive}
+                          onChange={(e) => setShowActive(e.target.checked)}
                           className="form-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded mr-3"
                         />
                         <span>Aktiv</span>
+                        {showActive && (
+                          <CheckIcon className="h-4 w-4 text-green-600 ml-auto" />
+                        )}
                       </label>
                       <label className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer">
                         <input
                           type="checkbox"
-                          checked={filterMode === 'archived'}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setFilterMode('archived');
-                            }
-                          }}
+                          checked={showArchived}
+                          onChange={(e) => setShowArchived(e.target.checked)}
                           className="form-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded mr-3"
                         />
                         <span>Archiv</span>
+                        {showArchived && (
+                          <CheckIcon className="h-4 w-4 text-blue-600 ml-auto" />
+                        )}
                       </label>
                     </div>
                   </div>
@@ -531,8 +552,8 @@ export default function ProjectsPage() {
       {/* Table View */}
       {!loading && !error && viewMode === 'list' && (
         <div className="space-y-4">
-          {/* Archiv Info-Banner wenn Filter aktiv */}
-          {filterMode === 'archived' && (
+          {/* Archiv Info-Banner wenn nur Archiv-Filter aktiv */}
+          {showArchived && !showActive && (
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
               <div className="flex items-center">
                 <FunnelIcon className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2" />
@@ -776,7 +797,7 @@ export default function ProjectsPage() {
           )}
           
           {/* Empty State für Tabellenansicht */}
-          {projects.length === 0 && filterMode === 'active' && (
+          {projects.length === 0 && showActive && !showArchived && (
             <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm p-8 text-center">
               <RocketLaunchIcon className="mx-auto h-12 w-12 text-zinc-400 dark:text-zinc-600" />
               <h3 className="mt-2 text-sm font-medium text-zinc-900 dark:text-white">
@@ -788,7 +809,7 @@ export default function ProjectsPage() {
             </div>
           )}
           
-          {projects.length === 0 && filterMode === 'archived' && (
+          {projects.length === 0 && showArchived && !showActive && (
             <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm p-8 text-center">
               <FolderIcon className="mx-auto h-12 w-12 text-zinc-400 dark:text-zinc-600" />
               <h3 className="mt-2 text-sm font-medium text-zinc-900 dark:text-white">
@@ -796,6 +817,30 @@ export default function ProjectsPage() {
               </h3>
               <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
                 Archivierte Projekte werden hier angezeigt.
+              </p>
+            </div>
+          )}
+          
+          {projects.length === 0 && (!showActive && !showArchived) && (
+            <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm p-8 text-center">
+              <FunnelIcon className="mx-auto h-12 w-12 text-zinc-400 dark:text-zinc-600" />
+              <h3 className="mt-2 text-sm font-medium text-zinc-900 dark:text-white">
+                Keine Filter ausgewählt
+              </h3>
+              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                Wähle "Aktiv" oder "Archiv" im Filter-Menü aus.
+              </p>
+            </div>
+          )}
+          
+          {projects.length === 0 && (showActive && showArchived) && (
+            <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm p-8 text-center">
+              <FolderIcon className="mx-auto h-12 w-12 text-zinc-400 dark:text-zinc-600" />
+              <h3 className="mt-2 text-sm font-medium text-zinc-900 dark:text-white">
+                Keine Projekte vorhanden
+              </h3>
+              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                Erstelle dein erstes Projekt mit dem Wizard.
               </p>
             </div>
           )}
