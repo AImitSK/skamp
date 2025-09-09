@@ -112,14 +112,24 @@ export function TeamMemberMultiSelect({
             </span>
             <div className="space-x-2">
               <button
-                onClick={handleSelectAll}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleSelectAll();
+                }}
                 className="text-sm text-blue-600 hover:text-blue-800"
               >
                 Alle auswählen
               </button>
               <span className="text-gray-300">|</span>
               <button
-                onClick={handleDeselectAll}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleDeselectAll();
+                }}
                 className="text-sm text-gray-600 hover:text-gray-800"
               >
                 Alle abwählen
@@ -164,7 +174,11 @@ export function TeamMemberMultiSelect({
                         <input
                           type="checkbox"
                           checked={isSelected}
-                          onChange={() => handleMemberToggle(member.id)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            handleMemberToggle(member.id);
+                          }}
+                          onClick={(e) => e.stopPropagation()}
                           className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                         />
 
