@@ -99,19 +99,20 @@ export default function ProjectsPage() {
     try {
       setLoading(true);
       setError(null);
-      // Für Kanban-Ansicht nur aktive Projekte laden
+      // Für Kanban-Ansicht alle Projekte außer archivierte laden
       // Für Tabellenansicht je nach showArchived Filter
       const projectList = await projectService.getAll({
         organizationId: currentOrganization.id,
-        filters: viewMode === 'board' ? {
-          status: 'active'  // Kanban zeigt nur aktive Projekte
-        } : showArchived ? {
-          status: 'archived'  // Tabellenansicht mit Archiv-Filter
-        } : {
-          status: 'active'  // Tabellenansicht ohne Archiv-Filter
-        }
+        filters: showArchived ? {
+          status: 'archived'  // Nur archivierte Projekte
+        } : undefined  // Alle Projekte (außer gefilterte werden später ausgeschlossen)
       });
-      setProjects(projectList);
+      
+      // Client-seitiges Filtern für archivierte Projekte wenn nicht explizit gewünscht
+      const filteredProjects = showArchived 
+        ? projectList
+        : projectList.filter(project => project.status !== 'archived');
+      setProjects(filteredProjects);
     } catch (error: any) {
       console.error('Fehler beim Laden der Projekte:', error);
       setError('Projekte konnten nicht geladen werden');
