@@ -152,6 +152,12 @@ export function TeamMemberMultiSelect({
                 {/* Mitglieder in der Rolle */}
                 <div className="space-y-2">
                   {members.map(member => {
+                    console.log('🔍 TeamMember Debug:', {
+                      memberData: member,
+                      selectedMembers: selectedMembers,
+                      isSelectedById: selectedMembers.includes(member.id),
+                      isSelectedByEmail: selectedMembers.includes(member.email)
+                    });
                     const isSelected = selectedMembers.includes(member.id);
 
                     return (
