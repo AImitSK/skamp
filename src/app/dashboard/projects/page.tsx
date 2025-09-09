@@ -187,7 +187,9 @@ export default function ProjectsPage() {
     ];
 
     return stages.reduce((acc, stage) => {
-      acc[stage] = projectList.filter(project => project.currentStage === stage);
+      acc[stage] = projectList.filter(project => 
+        project.currentStage === stage && project.status !== 'archived'
+      );
       return acc;
     }, {} as Record<PipelineStage, Project[]>);
   };
