@@ -48,21 +48,10 @@ class CompanyServiceEnhanced {
    */
   async getAll(organizationId: string): Promise<CompanyEnhanced[]> {
     try {
-      console.log('=== COMPANY SERVICE DEBUG ===');
-      console.log('enhancedCollectionName:', this.enhancedCollectionName);
-      console.log('organizationId:', organizationId);
-      
-      // Debug DB instance
-      console.log('DB instance debug:');
-      console.log('- DB type:', typeof db);
-      console.log('- DB truthy:', !!db);
-      console.log('- DB constructor:', db?.constructor?.name);
-      console.log('- DB is Firestore instance:', db && typeof db === 'object');
       
       const results: CompanyEnhanced[] = [];
 
       // Get enhanced companies
-      console.log('Querying enhanced companies...');
       const enhancedQuery = query(
         collection(db, this.enhancedCollectionName),
         where('organizationId', '==', organizationId)
@@ -75,7 +64,6 @@ class CompanyServiceEnhanced {
       });
 
       // Get legacy companies and migrate them
-      console.log('Querying legacy companies...');
       const legacyQuery = query(
         collection(db, this.collectionName),
         where('userId', '==', organizationId) // Legacy uses userId

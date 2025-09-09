@@ -304,6 +304,11 @@ export function ProjectCreationWizard({
           </div>
         )}
 
+        {/* DEBUG INFO */}
+        <div className="px-6 py-2 bg-yellow-100 text-xs">
+          <strong>🔍 Debug:</strong> User: {user?.uid || 'none'}, Team: [{formData.assignedTeamMembers.join(', ')}], Manager: {formData.projectManager || 'none'}
+        </div>
+
         {/* Form */}
         <form 
           onSubmit={handleCreateProject} 
