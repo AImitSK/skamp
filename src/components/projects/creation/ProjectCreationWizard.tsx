@@ -116,13 +116,6 @@ export function ProjectCreationWizard({
 
   // Lade Creation Options beim Öffnen und reset bei Close
   useEffect(() => {
-    console.log('🚀 Debug - Open Effect:', {
-      isOpen,
-      userUid: user?.uid,
-      willSetTeam: user?.uid ? [user.uid] : [],
-      willSetManager: user?.uid || ''
-    });
-    
     if (isOpen) {
       // Reset creation result when opening
       setCreationResult(null);
@@ -153,23 +146,6 @@ export function ProjectCreationWizard({
     }
   }, [isOpen, user?.uid]);
 
-  // Auto-select current user when user becomes available
-  useEffect(() => {
-    console.log('🔍 Debug - User Effect:', {
-      userUid: user?.uid,
-      isOpen,
-      currentTeamMembers: formData.assignedTeamMembers,
-      currentManager: formData.projectManager
-    });
-    
-    if (user?.uid && isOpen && formData.assignedTeamMembers.length === 0) {
-      console.log('✅ Auto-selecting user:', user.uid);
-      updateFormData({
-        assignedTeamMembers: [user.uid],
-        projectManager: user.uid
-      });
-    }
-  }, [user?.uid, isOpen]);
 
   const loadCreationOptions = async () => {
     try {
