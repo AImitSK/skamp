@@ -297,20 +297,6 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
           {project.assignedTo && project.assignedTo.length > 0 && (
             <div className="flex -space-x-2">
               {project.assignedTo.slice(0, 3).map((userId: string) => {
-                console.log('=== AVATAR DEBUG ===');
-                console.log('Looking for assignedTo userId:', userId);
-                console.log('LoadingTeam state:', loadingTeam);
-                console.log('TeamMembers length:', teamMembers.length);
-                if (teamMembers.length > 0) {
-                  console.log('Available teamMembers:', teamMembers.map(m => ({
-                    userId: m.userId,
-                    id: m.id,
-                    email: m.email,
-                    displayName: m.displayName,
-                    photoUrl: m.photoUrl
-                  })));
-                }
-                console.log('=== END AVATAR DEBUG ===');
                 
                 // Zusätzlicher Check: Versuche match mit id statt userId
                 const memberByUserId = teamMembers.find(m => m.userId === userId);

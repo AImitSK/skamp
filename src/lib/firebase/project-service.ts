@@ -103,9 +103,6 @@ export const projectService = {
     filters?: ProjectFilters 
   }): Promise<Project[]> {
     try {
-      console.log('=== PROJECT SERVICE GET ALL DEBUG ===');
-      console.log('OrganizationId:', context.organizationId);
-      console.log('Filters:', context.filters);
       
       let q = query(
         collection(db, 'projects'),
@@ -117,32 +114,22 @@ export const projectService = {
       // Zusätzliche Filter anwenden
       if (context.filters?.status) {
         q = query(q, where('status', '==', context.filters.status));
-        console.log('Applied status filter:', context.filters.status);
       }
       
       if (context.filters?.currentStage) {
         q = query(q, where('currentStage', '==', context.filters.currentStage));
-        console.log('Applied stage filter:', context.filters.currentStage);
       }
       
-      console.log('Executing Firebase query...');
       const snapshot = await getDocs(q);
-      console.log('Query result:', snapshot.size, 'documents found');
       
       const projects = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       } as Project));
       
-      console.log('Projects loaded:', projects.length);
-      console.log('Project titles:', projects.map(p => p.title));
-      console.log('=== END PROJECT SERVICE GET ALL DEBUG ===');
       
       return projects;
     } catch (error) {
-      console.error('=== PROJECT SERVICE GET ALL ERROR ===');
-      console.error('Error details:', error);
-      console.error('=== END PROJECT SERVICE GET ALL ERROR ===');
       return [];
     }
   },
