@@ -5,8 +5,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   PencilIcon,
   TrashIcon,
-  DocumentDuplicateIcon,
-  ShareIcon,
   EyeIcon,
   ArrowsRightLeftIcon,
   ChatBubbleLeftIcon,
@@ -236,28 +234,6 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
         )}
       </div>
 
-      {/* Utility Actions */}
-      <div className="py-1 border-t border-gray-100">
-        {onClone && (
-          <button
-            onClick={(e) => handleAction(e, () => onClone(project.id!))}
-            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
-          >
-            <DocumentDuplicateIcon className="h-4 w-4" />
-            <span>Duplizieren</span>
-          </button>
-        )}
-
-        {onShare && (
-          <button
-            onClick={(e) => handleAction(e, () => onShare(project.id!))}
-            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
-          >
-            <ShareIcon className="h-4 w-4" />
-            <span>Teilen</span>
-          </button>
-        )}
-      </div>
 
       {/* Danger Zone */}
       {onDelete && (
@@ -272,36 +248,6 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
         </div>
       )}
 
-      {/* Project Status Info */}
-      <div className="px-4 py-2 border-t border-gray-100 bg-gray-50">
-        <div className="text-xs text-gray-500 space-y-1">
-          <div className="flex justify-between">
-            <span>Status:</span>
-            <span className="font-medium">
-              {project.status === 'active' ? 'Aktiv' :
-               project.status === 'on_hold' ? 'Pausiert' :
-               project.status === 'completed' ? 'Fertig' :
-               project.status === 'cancelled' ? 'Abgebrochen' : project.status}
-            </span>
-          </div>
-          
-          {project.assignedTo && project.assignedTo.length > 0 && (
-            <div className="flex justify-between">
-              <span>Team:</span>
-              <span className="font-medium">{project.assignedTo.length} Mitglieder</span>
-            </div>
-          )}
-          
-          {project.dueDate && (
-            <div className="flex justify-between">
-              <span>Fällig:</span>
-              <span className="font-medium">
-                {new Date(project.dueDate.seconds * 1000).toLocaleDateString('de-DE')}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   );
 };
