@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
 import { Heading, Subheading } from '@/components/ui/heading';
@@ -19,6 +20,7 @@ import {
   ViewColumnsIcon
 } from '@heroicons/react/24/outline';
 import { ProjectCreationWizard } from '@/components/projects/creation/ProjectCreationWizard';
+import { ProjectQuickActionsMenu } from '@/components/projects/kanban/ProjectQuickActionsMenu';
 import { projectService } from '@/lib/firebase/project-service';
 import { Project, ProjectCreationResult, PipelineStage } from '@/types/project';
 import { BoardFilters, kanbanBoardService } from '@/lib/kanban/kanban-board-service';
@@ -66,6 +68,7 @@ const KanbanLayoutWrapper = ({ children }: { children: React.ReactNode }) => {
 export default function ProjectsPage() {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
+  const router = useRouter();
   
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,6 +76,7 @@ export default function ProjectsPage() {
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'board' | 'list' | 'calendar'>('board');
   const [filters, setFilters] = useState<BoardFilters>({});
+  const [showQuickActions, setShowQuickActions] = useState<string | null>(null);
 
   useEffect(() => {
     loadProjects();
@@ -404,125 +408,187 @@ export default function ProjectsPage() {
         </div>
       )}
 
-      {/* List View (existing Projects Grid) */}
+      {/* Table View */}
       {!loading && !error && projects.length > 0 && viewMode === 'list' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project) => (
-            <div
-              key={project.id}
-              className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow"
-            >
-              {/* Project Header */}
-              <div className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-gray-900 truncate">
-                      {project.title}
-                    </h3>
-                    {project.description && (
-                      <p className="mt-1 text-sm text-gray-600 line-clamp-2">
-                        {project.description}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div className="flex items-center space-x-2 ml-4">
-                    <button className="p-1 text-gray-400 hover:text-gray-600">
-                      <EllipsisVerticalIcon className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Project Meta */}
-                <div className="mt-4 flex items-center justify-between">
-                  <Badge color={getProjectStatusColor(project.status)}>
-                    {getProjectStatusLabel(project.status)}
-                  </Badge>
-                  
-                  <div className="text-xs text-gray-500">
-                    {getCurrentStageLabel(project.currentStage)}
-                  </div>
-                </div>
-
-                {/* Customer */}
-                {project.customer && (
-                  <div className="mt-3 text-sm text-gray-600">
-                    <span className="font-medium">Kunde:</span> {project.customer.name}
-                  </div>
-                )}
-
-                {/* Dates */}
-                <div className="mt-4 flex items-center justify-between text-xs text-gray-500">
-                  <div className="flex items-center">
-                    <CalendarDaysIcon className="w-3 h-3 mr-1" />
-                    Erstellt: {formatDate(project.createdAt)}
-                  </div>
-                  
-                  {project.dueDate && (
-                    <div>
-                      Fällig: {formatDate(project.dueDate)}
-                    </div>
-                  )}
-                </div>
-
-                {/* Team */}
-                {project.assignedTo && project.assignedTo.length > 0 && (
-                  <div className="mt-3 flex items-center text-xs text-gray-500">
-                    <UserGroupIcon className="w-3 h-3 mr-1" />
-                    {project.assignedTo.length} Team-Mitglied{project.assignedTo.length > 1 ? 'er' : ''}
-                  </div>
-                )}
-
-                {/* Wizard Creation Context */}
-                {project.creationContext?.createdViaWizard && (
-                  <div className="mt-3 flex items-center text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                    <RocketLaunchIcon className="w-3 h-3 mr-1" />
-                    Erstellt mit Wizard
-                    {project.creationContext.templateName && (
-                      <span className="ml-2 text-blue-500">
-                        ({project.creationContext.templateName})
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                {/* Setup Status für Wizard-erstellte Projekte */}
-                {project.setupStatus && (
-                  <div className="mt-3 text-xs">
-                    <div className="flex flex-wrap gap-1">
-                      {project.setupStatus.campaignLinked && (
-                        <Badge color="green" className="text-xs">Kampagne</Badge>
-                      )}
-                      {project.setupStatus.assetsAttached && (
-                        <Badge color="blue" className="text-xs">Assets</Badge>
-                      )}
-                      {project.setupStatus.tasksCreated && (
-                        <Badge color="purple" className="text-xs">Tasks</Badge>
-                      )}
-                      {project.setupStatus.teamNotified && (
-                        <Badge color="orange" className="text-xs">Team benachrichtigt</Badge>
-                      )}
-                    </div>
-                  </div>
-                )}
+        <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm overflow-hidden">
+          {/* Table Header */}
+          <div className="px-8 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
+            <div className="flex items-center">
+              <div className="flex-1 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                Projekt
               </div>
-
-              {/* Project Actions */}
-              <div className="px-6 py-3 bg-gray-50 border-t border-gray-200 rounded-b-lg">
-                <div className="flex items-center justify-between">
-                  <Link href={`/dashboard/projects/${project.id}`}>
-                    <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
-                      Details anzeigen
-                    </button>
-                  </Link>
-                  
-                  <div className="text-xs text-gray-500">
-                    Aktualisiert: {formatDate(project.updatedAt)}
-                  </div>
-                </div>
+              <div className="w-32 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                Status
               </div>
+              <div className="w-40 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                Projektphase
+              </div>
+              <div className="w-32 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                Team
+              </div>
+              <div className="w-48 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                Kunde
+              </div>
+              <div className="w-24 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                Priorität
+              </div>
+              <div className="w-32 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                Aktualisiert
+              </div>
+              <div className="w-12"></div>
             </div>
-          ))}
+          </div>
+
+          {/* Table Body */}
+          <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
+            {projects.map((project) => {
+              const projectPriority = (project as any).priority as string;
+              
+              return (
+                <div key={project.id} className="px-8 py-5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+                  <div className="flex items-center">
+                    {/* Projekt Title */}
+                    <div className="flex-1 px-4 min-w-0">
+                      <Link 
+                        href={`/dashboard/projects/${project.id}`} 
+                        className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-primary block truncate"
+                        title={project.title}
+                      >
+                        {project.title}
+                      </Link>
+                      {project.description && (
+                        <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 truncate">
+                          {project.description}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Status */}
+                    <div className="w-32 px-4">
+                      <Badge color={getProjectStatusColor(project.status)}>
+                        {getProjectStatusLabel(project.status)}
+                      </Badge>
+                    </div>
+
+                    {/* Projektphase */}
+                    <div className="w-40 px-4">
+                      <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${
+                        project.currentStage === 'ideas_planning' ? 'bg-primary-50 text-primary-700 ring-primary-600/20' :
+                        project.currentStage === 'creation' ? 'bg-yellow-50 text-yellow-700 ring-yellow-600/20' :
+                        project.currentStage === 'internal_approval' ? 'bg-orange-50 text-orange-700 ring-orange-600/20' :
+                        project.currentStage === 'customer_approval' ? 'bg-purple-50 text-purple-700 ring-purple-600/20' :
+                        project.currentStage === 'distribution' ? 'bg-blue-50 text-blue-700 ring-blue-600/20' :
+                        project.currentStage === 'monitoring' ? 'bg-green-50 text-green-700 ring-green-600/20' :
+                        project.currentStage === 'completed' ? 'bg-gray-50 text-gray-700 ring-gray-600/20' :
+                        'bg-gray-50 text-gray-700 ring-gray-600/20'
+                      }`}>
+                        {getCurrentStageLabel(project.currentStage)}
+                      </span>
+                    </div>
+
+                    {/* Team Avatare */}
+                    <div className="w-32 px-4">
+                      {project.assignedTo && project.assignedTo.length > 0 ? (
+                        <div className="flex -space-x-2">
+                          {project.assignedTo.slice(0, 3).map((userId: string, index: number) => (
+                            <div
+                              key={userId}
+                              className="w-7 h-7 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 text-xs font-medium ring-2 ring-white"
+                              title={`Team-Mitglied ${index + 1}`}
+                            >
+                              {userId.substring(0, 2).toUpperCase()}
+                            </div>
+                          ))}
+                          {project.assignedTo.length > 3 && (
+                            <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs font-medium ring-2 ring-white">
+                              +{project.assignedTo.length - 3}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-500">Kein Team</span>
+                      )}
+                    </div>
+
+                    {/* Kunde */}
+                    <div className="w-48 px-4">
+                      <div className="text-sm text-zinc-900 dark:text-white truncate">
+                        {project.customer?.name || '-'}
+                      </div>
+                    </div>
+
+                    {/* Priorität */}
+                    <div className="w-24 px-4">
+                      {projectPriority && (
+                        <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${
+                          projectPriority === 'urgent' ? 'bg-red-50 text-red-700 ring-red-600/20' :
+                          projectPriority === 'high' ? 'bg-orange-50 text-orange-700 ring-orange-600/20' :
+                          projectPriority === 'medium' ? 'bg-yellow-50 text-yellow-700 ring-yellow-600/20' :
+                          projectPriority === 'low' ? 'bg-green-50 text-green-700 ring-green-600/20' :
+                          'bg-gray-50 text-gray-700 ring-gray-600/20'
+                        }`}>
+                          {projectPriority === 'urgent' ? 'Dringend' :
+                           projectPriority === 'high' ? 'Hoch' :
+                           projectPriority === 'medium' ? 'Mittel' :
+                           projectPriority === 'low' ? 'Niedrig' : '-'}
+                        </span>
+                      )}
+                      {!projectPriority && (
+                        <span className="text-xs text-gray-500">-</span>
+                      )}
+                    </div>
+
+                    {/* Aktualisiert */}
+                    <div className="w-32 px-4">
+                      <div className="text-xs text-zinc-600 dark:text-zinc-400">
+                        {formatDate(project.updatedAt)}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="w-12 flex items-center justify-center">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowQuickActions(project.id);
+                        }}
+                        className="p-1 text-gray-400 hover:text-gray-600 rounded"
+                      >
+                        <EllipsisVerticalIcon className="w-4 h-4" />
+                      </button>
+                      
+                      {/* Quick Actions Menu */}
+                      {showQuickActions === project.id && (
+                        <ProjectQuickActionsMenu
+                          project={project}
+                          isOpen={true}
+                          onClose={() => setShowQuickActions(null)}
+                          onView={(id) => router.push(`/dashboard/projects/${id}`)}
+                          onEdit={(id) => router.push(`/dashboard/projects/${id}/edit`)}
+                          onDelete={async (id) => {
+                            if (confirm('Projekt wirklich löschen?')) {
+                              try {
+                                await projectService.delete(id, {
+                                  organizationId: currentOrganization.id
+                                });
+                                loadProjects();
+                              } catch (error) {
+                                console.error('Fehler beim Löschen:', error);
+                              }
+                            }
+                          }}
+                          onMoveToStage={async (id, stage) => {
+                            // Stage-Wechsel Logik
+                            await handleProjectMove(id, stage);
+                          }}
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
