@@ -81,7 +81,7 @@ export default function ProjectEditPage() {
         <div className="text-center">
           <Text className="text-red-600 mb-4">{error || 'Projekt nicht gefunden'}</Text>
           <Link href="/dashboard/projects">
-            <Button variant="secondary">
+            <Button color="secondary">
               <ArrowLeftIcon className="h-4 w-4 mr-2" />
               Zurück zur Übersicht
             </Button>
