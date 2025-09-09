@@ -14,7 +14,6 @@ import {
   UserGroupIcon,
   CalendarDaysIcon,
   ClockIcon,
-  TagIcon,
   BuildingOfficeIcon,
   ChartBarIcon,
   DocumentTextIcon,
@@ -49,6 +48,7 @@ export default function ProjectDetailPage() {
   const { currentOrganization } = useOrganization();
   const projectId = params.projectId as string;
   
+  // Alle React Hooks müssen vor bedingten Returns stehen
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -73,8 +73,17 @@ export default function ProjectDetailPage() {
     }
   }, [activeTab, project, currentOrganization?.id]);
 
+  // Bedingte Rückgabe nach allen Hooks
+  if (!projectId) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Text className="text-red-600">Projekt-ID nicht gefunden</Text>
+      </div>
+    );
+  }
+
   const loadStrategyDocuments = async () => {
-    if (!project || !currentOrganization?.id) return;
+    if (!project?.id || !currentOrganization?.id) return;
     
     setDocumentsLoading(true);
     try {
@@ -95,8 +104,8 @@ export default function ProjectDetailPage() {
       case 'draft': return 'yellow';
       case 'review': return 'blue';
       case 'approved': return 'green';
-      case 'archived': return 'gray';
-      default: return 'gray';
+      case 'archived': return 'zinc';
+      default: return 'zinc';
     }
   };
 
@@ -111,7 +120,7 @@ export default function ProjectDetailPage() {
   };
 
   const loadProjectFolders = async () => {
-    if (!project || !currentOrganization?.id) return;
+    if (!project?.id || !currentOrganization?.id) return;
     
     setFoldersLoading(true);
     try {
@@ -283,13 +292,16 @@ export default function ProjectDetailPage() {
       const documentId = await strategyDocumentService.create({
         projectId: project.id,
         title,
-        type: templateType.includes('briefing') ? 'briefing' : 
-              templateType.includes('strategy') ? 'strategy' : 'analysis',
+        type: templateType.includes('briefing') ? 'briefing' as const : 
+              templateType.includes('strategy') ? 'strategy' as const : 'analysis' as const,
         content,
-        status: 'draft',
+        status: 'draft' as const,
         author: user.uid,
-        version: 1,
+        authorName: user.displayName || user.email || 'Unbekannter Autor',
         organizationId: currentOrganization.id
+      }, {
+        organizationId: currentOrganization.id,
+        userId: user.uid
       });
 
       // Liste aktualisieren und zur Editor-Seite navigieren
@@ -566,7 +578,7 @@ export default function ProjectDetailPage() {
               {/* Pipeline Progress Dashboard */}
               {project && (
                 <PipelineProgressDashboard
-                  projectId={project.id}
+                  projectId={project?.id || ''}
                   progress={{
                     overallPercent: 65,
                     stageProgress: {
@@ -617,7 +629,7 @@ export default function ProjectDetailPage() {
                   <div>
                     <Subheading className="mb-4">Task-Abhängigkeiten</Subheading>
                     <TaskDependenciesVisualizer
-                      projectId={project.id}
+                      projectId={project?.id || ''}
                       tasks={[]} // Mock empty array for now
                       onTaskUpdate={async (taskId, updates) => {
                         console.log('Task update:', taskId, updates);
@@ -629,7 +641,7 @@ export default function ProjectDetailPage() {
                   <div className="border-t border-gray-200 pt-6">
                     <Subheading className="mb-4">Workflow-Automatisierung</Subheading>
                     <WorkflowAutomationManager
-                      projectId={project.id}
+                      projectId={project?.id || ''}
                       currentConfig={{
                         autoStageTransition: true,
                         requireAllCriticalTasks: true,
@@ -651,11 +663,11 @@ export default function ProjectDetailPage() {
                   <div className="border-t border-gray-200 pt-6 text-center">
                     <Subheading className="mb-4">Task-Verwaltung</Subheading>
                     <div className="flex justify-center space-x-4">
-                      <Button outline onClick={() => console.log('Neue Task erstellen')}>
+                      <Button plain onClick={() => console.log('Neue Task erstellen')}>
                         <ClipboardDocumentListIcon className="w-4 h-4 mr-2" />
                         Neue Task
                       </Button>
-                      <Button outline onClick={() => console.log('Workflow bearbeiten')}>
+                      <Button plain onClick={() => console.log('Workflow bearbeiten')}>
                         <CogIcon className="w-4 h-4 mr-2" />
                         Workflow bearbeiten
                       </Button>
@@ -673,7 +685,7 @@ export default function ProjectDetailPage() {
                 <>
                   {/* Project Asset Gallery */}
                   <ProjectAssetGallery
-                    projectId={project.id}
+                    projectId={project?.id || ''}
                     organizationId={currentOrganization?.id || ''}
                     currentStage={project.currentStage}
                   />
@@ -690,11 +702,11 @@ export default function ProjectDetailPage() {
                   <div className="border-t border-gray-200 pt-6 text-center">
                     <Subheading className="mb-4">Asset-Verwaltung</Subheading>
                     <div className="flex justify-center space-x-4">
-                      <Button outline onClick={() => console.log('Asset hinzufügen')}>
+                      <Button plain onClick={() => console.log('Asset hinzufügen')}>
                         <PhotoIcon className="w-4 h-4 mr-2" />
                         Neue Assets hinzufügen
                       </Button>
-                      <Button outline onClick={() => console.log('Asset-Bibliothek öffnen')}>
+                      <Button plain onClick={() => console.log('Asset-Bibliothek öffnen')}>
                         <FolderIcon className="w-4 h-4 mr-2" />
                         Asset-Bibliothek
                       </Button>
@@ -714,7 +726,7 @@ export default function ProjectDetailPage() {
                 <Text className="text-gray-600 mb-4">
                   Hier werden alle projekt-bezogenen E-Mails und Kommunikation automatisch erkannt und zugeordnet.
                 </Text>
-                <Button outline onClick={handleOpenCommunicationFeed}>
+                <Button plain onClick={handleOpenCommunicationFeed}>
                   <ChatBubbleLeftRightIcon className="w-4 h-4 mr-2" />
                   Kommunikations-Feed öffnen
                 </Button>
@@ -729,7 +741,7 @@ export default function ProjectDetailPage() {
                 <>
                   {/* Monitoring Status Widget */}
                   <MonitoringStatusWidget
-                    projectId={project.id}
+                    projectId={project?.id || ''}
                     currentStage={project.currentStage}
                     isEnabled={true}
                     stats={{
@@ -744,7 +756,7 @@ export default function ProjectDetailPage() {
                   {/* Monitoring Config Panel */}
                   <div className="border-t border-gray-200 pt-6">
                     <MonitoringConfigPanel
-                      projectId={project.id}
+                      projectId={project?.id || ''}
                       organizationId={currentOrganization?.id || ''}
                       currentConfig={{
                         isEnabled: true,
@@ -797,7 +809,7 @@ export default function ProjectDetailPage() {
                       }
                     </Text>
                   </div>
-                  <Badge color={project.currentStage === 'ideas_planning' ? 'green' : 'gray'}>
+                  <Badge color={project.currentStage === 'ideas_planning' ? 'green' : 'zinc'}>
                     {project.currentStage === 'ideas_planning' ? 'Bearbeitbar' : 'Nur Lesen'}
                   </Badge>
                 </div>
@@ -852,8 +864,7 @@ export default function ProjectDetailPage() {
                               {getDocumentStatusLabel(doc.status)}
                             </Badge>
                             <Button
-                              size="sm"
-                              outline
+                              plain
                               onClick={() => router.push(`/dashboard/strategy-documents/${doc.id}`)}
                             >
                               {project.currentStage === 'ideas_planning' ? 'Bearbeiten' : 'Ansehen'}
@@ -876,7 +887,7 @@ export default function ProjectDetailPage() {
                   
                   <div className="mt-4">
                     <Button 
-                      outline 
+                      plain 
                       disabled={project.currentStage !== 'ideas_planning' || documentsLoading}
                       className="w-full"
                       onClick={() => handleCreateDocument('briefing-template', `${project.title} - Briefing`)}
@@ -947,9 +958,8 @@ export default function ProjectDetailPage() {
                             </div>
                           </div>
                           <Button
-                            outline
-                            size="sm"
-                            onClick={() => handleOpenFolder(projectFolders.mainFolder?.id)}
+                            plain
+                            onClick={() => handleOpenFolder(projectFolders.mainFolder?.id || '')}
                           >
                             Öffnen
                           </Button>
@@ -984,8 +994,7 @@ export default function ProjectDetailPage() {
                                   </div>
                                 </div>
                                 <Button
-                                  outline
-                                  size="sm"
+                                  plain
                                   onClick={() => handleOpenFolder(folder.id)}
                                 >
                                   <FolderIcon className="w-3 h-3 mr-1" />
@@ -1027,7 +1036,7 @@ export default function ProjectDetailPage() {
                   
                   <div className="mt-4">
                     <Button
-                      outline
+                      plain
                       className="w-full"
                       onClick={() => window.open('/dashboard/pr-tools/media-library', '_blank')}
                     >
@@ -1062,7 +1071,7 @@ export default function ProjectDetailPage() {
                   </div>
                   <div className="mt-4">
                     <Button 
-                      outline 
+                      plain 
                       className="w-full"
                       onClick={handleOpenCommunicationFeed}
                     >
@@ -1105,7 +1114,7 @@ export default function ProjectDetailPage() {
                   </div>
                   <div className="mt-4">
                     <Button 
-                      outline 
+                      plain 
                       disabled={project.currentStage !== 'ideas_planning'}
                       className="w-full"
                     >
@@ -1136,8 +1145,8 @@ export default function ProjectDetailPage() {
         <CommunicationModal
           isOpen={showCommunicationModal}
           onClose={handleCloseCommunicationFeed}
-          projectId={projectId}
-          projectTitle={project.title}
+          projectId={project?.id || ''}
+          projectTitle={project?.title || ''}
         />
       )}
     </div>
