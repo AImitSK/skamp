@@ -120,7 +120,7 @@ export function ProjectCreationWizard({
       loadCreationOptions();
       loadTags();
     }
-  }, [isOpen, creationOptions, loadTags]);
+  }, [isOpen, creationOptions]);
 
   const loadCreationOptions = async () => {
     try {
@@ -157,7 +157,7 @@ export function ProjectCreationWizard({
     
     await loadTags();
     return tagId;
-  }, [user?.uid, loadTags]);
+  }, [user?.uid]);
 
   const updateFormData = (updates: Partial<typeof formData>) => {
     setFormData(prev => ({ 
