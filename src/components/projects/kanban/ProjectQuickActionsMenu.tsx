@@ -57,7 +57,6 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
   triggerRef
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
-  const [showMoveSubmenu, setShowMoveSubmenu] = useState(false);
 
   // Close menu on click outside
   useEffect(() => {
@@ -98,11 +97,18 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
     };
   }, [isOpen, onClose]);
 
-  // Get valid target stages (excluding current)
-  const getValidMoveStages = (): PipelineStage[] => {
+  // Get next and previous stages
+  const getAdjacentStages = () => {
     const allStages = getAllStages();
-    return allStages.filter(stage => stage !== project.currentStage);
+    const currentIndex = allStages.indexOf(project.currentStage);
+    
+    return {
+      previousStage: currentIndex > 0 ? allStages[currentIndex - 1] : null,
+      nextStage: currentIndex < allStages.length - 1 ? allStages[currentIndex + 1] : null
+    };
   };
+
+  const { previousStage, nextStage } = getAdjacentStages();
 
   // Handle action and close menu
   const handleAction = (e: React.MouseEvent, action: () => void) => {
@@ -154,40 +160,28 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
         )}
       </div>
 
-      {/* Move to Stage */}
-      {onMoveToStage && (
+      {/* Phase Navigation */}
+      {onMoveToStage && (previousStage || nextStage) && (
         <div className="py-1 border-t border-gray-100">
-          <div
-            className="relative"
-            onMouseEnter={() => setShowMoveSubmenu(true)}
-            onMouseLeave={() => setShowMoveSubmenu(false)}
-          >
-            <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <ArrowsRightLeftIcon className="h-4 w-4" />
-                <span>Verschieben nach</span>
-              </div>
-              <span className="text-xs text-gray-400">›</span>
+          {previousStage && (
+            <button
+              onClick={(e) => handleAction(e, () => onMoveToStage(project.id!, previousStage))}
+              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+            >
+              <ArrowsRightLeftIcon className="h-4 w-4" />
+              <span>← Vorherige Phase ({getStageConfig(previousStage).name})</span>
             </button>
-
-            {/* Move Submenu */}
-            {showMoveSubmenu && (
-              <div className="absolute left-full top-0 ml-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-1">
-                {getValidMoveStages().map(stage => {
-                  const stageConfig = getStageConfig(stage);
-                  return (
-                    <button
-                      key={stage}
-                      onClick={(e) => handleAction(e, () => onMoveToStage(project.id!, stage))}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      {stageConfig.name}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          )}
+          
+          {nextStage && (
+            <button
+              onClick={(e) => handleAction(e, () => onMoveToStage(project.id!, nextStage))}
+              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+            >
+              <ArrowsRightLeftIcon className="h-4 w-4" />
+              <span>→ Nächste Phase ({getStageConfig(nextStage).name})</span>
+            </button>
+          )}
         </div>
       )}
 
