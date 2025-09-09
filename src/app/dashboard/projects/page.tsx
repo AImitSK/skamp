@@ -328,6 +328,13 @@ export default function ProjectsPage() {
             </div>
           )}
 
+          {/* Project Creation Wizard */}
+          <ProjectCreationWizard
+            isOpen={showWizard}
+            onClose={() => setShowWizard(false)}
+            onSuccess={handleWizardSuccess}
+            organizationId={currentOrganization.id}
+          />
         </div>
       </KanbanLayoutWrapper>
     );
