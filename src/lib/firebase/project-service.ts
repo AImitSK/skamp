@@ -1903,7 +1903,7 @@ export const projectService = {
                 // Note: priority field removed as it doesn't exist in CreateNotificationInput
               });
             } catch (notifyError: any) {
-              console.error(`Fehler beim Benachrichtigen von Mitglied ${memberId}:`, notifyError);
+              // Silent fail - notification errors don't block project creation
             }
           }
           
@@ -2030,11 +2030,6 @@ export const projectService = {
         assetFolders: folderStructure
       }, context);
       
-      console.log(`✅ Projekt-Ordnerstruktur erstellt für Projekt ${projectId}:`, {
-        mainFolder: mainFolderId,
-        subfolders: createdSubfolderIds.length,
-        projectTitle: project.title
-      });
       
     } catch (error: any) {
       console.error('❌ Fehler bei automatischer Projekt-Ordner-Erstellung:', error);
