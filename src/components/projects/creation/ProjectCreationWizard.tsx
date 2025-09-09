@@ -265,7 +265,19 @@ export function ProjectCreationWizard({
         )}
 
         {/* Form */}
-        <form onSubmit={handleCreateProject} className="px-6 py-6">
+        <form 
+          onSubmit={handleCreateProject} 
+          onKeyDown={(e) => {
+            // Prevent form submission on Enter key except for:
+            // - Submit button
+            // - Textarea (for line breaks)
+            if (e.key === 'Enter' && 
+                e.target.tagName !== 'BUTTON' && 
+                e.target.tagName !== 'TEXTAREA') {
+              e.preventDefault();
+            }
+          }}
+          className="px-6 py-6">
           <div className="space-y-6">
             {/* Projekt-Titel */}
             <div>
