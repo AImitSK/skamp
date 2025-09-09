@@ -8,6 +8,8 @@ import { Heading, Subheading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Avatar } from '@/components/ui/avatar';
+import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from '@/components/ui/dropdown';
 import { 
   PlusIcon,
   RocketLaunchIcon,
@@ -18,12 +20,16 @@ import {
   Squares2X2Icon,
   ListBulletIcon,
   ViewColumnsIcon,
-  BuildingOfficeIcon
+  BuildingOfficeIcon,
+  EyeIcon,
+  PencilIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline';
 import { ProjectCreationWizard } from '@/components/projects/creation/ProjectCreationWizard';
-import { ProjectQuickActionsMenu } from '@/components/projects/kanban/ProjectQuickActionsMenu';
 import { projectService } from '@/lib/firebase/project-service';
+import { teamMemberService } from '@/lib/firebase/organization-service';
 import { Project, ProjectCreationResult, PipelineStage } from '@/types/project';
+import { TeamMember } from '@/types/international';
 import { BoardFilters, kanbanBoardService } from '@/lib/kanban/kanban-board-service';
 import { KanbanBoard } from '@/components/projects/kanban/KanbanBoard';
 import { BoardProvider } from '@/components/projects/kanban/BoardProvider';
@@ -77,10 +83,12 @@ export default function ProjectsPage() {
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'board' | 'list' | 'calendar'>('board');
   const [filters, setFilters] = useState<BoardFilters>({});
-  const [showQuickActions, setShowQuickActions] = useState<string | null>(null);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [loadingTeam, setLoadingTeam] = useState(true);
 
   useEffect(() => {
     loadProjects();
+    loadTeamMembers();
   }, [currentOrganization?.id]);
 
   const loadProjects = async () => {
@@ -98,6 +106,21 @@ export default function ProjectsPage() {
       setError('Projekte konnten nicht geladen werden');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadTeamMembers = async () => {
+    if (!currentOrganization?.id) return;
+    
+    try {
+      setLoadingTeam(true);
+      const members = await teamMemberService.getByOrganization(currentOrganization.id);
+      const activeMembers = members.filter(m => m.status === 'active');
+      setTeamMembers(activeMembers);
+    } catch (error) {
+      console.error('Error loading team members:', error);
+    } finally {
+      setLoadingTeam(false);
     }
   };
 
@@ -482,17 +505,40 @@ export default function ProjectsPage() {
                     <div className="w-40 px-4">
                       {project.assignedTo && project.assignedTo.length > 0 ? (
                         <div className="flex -space-x-2">
-                          {project.assignedTo.slice(0, 3).map((userId: string, index: number) => {
-                            // Generiere Avatar URL basierend auf userId
-                            const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(userId)}&background=005fab&color=fff&size=28`;
+                          {project.assignedTo.slice(0, 3).map((userId: string) => {
+                            // Finde Team-Mitglied wie in Kanban-Ansicht
+                            const memberByUserId = teamMembers.find(m => m.userId === userId);
+                            const memberById = teamMembers.find(m => m.id === userId);
+                            const member = memberByUserId || memberById;
+                            
+                            if (!member || loadingTeam) {
+                              // Fallback für unbekannte Member
+                              return (
+                                <div
+                                  key={userId}
+                                  className="w-7 h-7 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 text-xs font-medium ring-2 ring-white"
+                                  title={loadingTeam ? "Lädt Mitgliederdaten..." : "Unbekanntes Mitglied"}
+                                >
+                                  {loadingTeam ? "..." : "?"}
+                                </div>
+                              );
+                            }
+                            
+                            // Generate initials as fallback
+                            const initials = member.displayName
+                              .split(' ')
+                              .map(n => n[0])
+                              .join('')
+                              .toUpperCase()
+                              .slice(0, 2);
                             
                             return (
-                              <img
+                              <Avatar
                                 key={userId}
-                                src={avatarUrl}
-                                alt={`Team-Mitglied ${index + 1}`}
-                                className="w-7 h-7 rounded-full ring-2 ring-white"
-                                title={`Team-Mitglied: ${userId}`}
+                                className="size-7 ring-2 ring-white"
+                                src={member.photoUrl}
+                                initials={initials}
+                                title={member.displayName}
                               />
                             );
                           })}
@@ -535,30 +581,26 @@ export default function ProjectsPage() {
                     </div>
 
                     {/* Actions */}
-                    <div className="w-12 flex items-center justify-center relative">
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowQuickActions(showQuickActions === project.id ? null : project.id);
-                        }}
-                        className="p-1 text-gray-400 hover:text-gray-600 rounded"
-                      >
-                        <EllipsisVerticalIcon className="w-4 h-4" />
-                      </button>
-                      
-                      {/* Quick Actions Menu */}
-                      {showQuickActions === project.id && (
-                        <div className="absolute right-0 top-8 z-50">
-                          <ProjectQuickActionsMenu
-                            project={project}
-                            isOpen={true}
-                            onClose={() => setShowQuickActions(null)}
-                            onView={(id) => router.push(`/dashboard/projects/${id}`)}
-                            onEdit={(id) => router.push(`/dashboard/projects/${id}/edit`)}
-                            onDelete={async (id) => {
-                              if (confirm('Projekt wirklich löschen?')) {
+                    <div className="w-12 flex justify-end">
+                      <Dropdown>
+                        <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2">
+                          <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                        </DropdownButton>
+                        <DropdownMenu anchor="bottom end">
+                          <DropdownItem href={`/dashboard/projects/${project.id}`}>
+                            <EyeIcon className="h-4 w-4" />
+                            Projekt anzeigen
+                          </DropdownItem>
+                          <DropdownItem href={`/dashboard/projects/${project.id}/edit`}>
+                            <PencilIcon className="h-4 w-4" />
+                            Bearbeiten
+                          </DropdownItem>
+                          <DropdownDivider />
+                          <DropdownItem 
+                            onClick={async () => {
+                              if (confirm('Projekt wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) {
                                 try {
-                                  await projectService.delete(id, {
+                                  await projectService.delete(project.id!, {
                                     organizationId: currentOrganization.id
                                   });
                                   loadProjects();
@@ -567,12 +609,12 @@ export default function ProjectsPage() {
                                 }
                               }
                             }}
-                            onMoveToStage={async (id, stage) => {
-                              await handleProjectMove(id, stage);
-                            }}
-                          />
-                        </div>
-                      )}
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                            <span className="text-red-600">Löschen</span>
+                          </DropdownItem>
+                        </DropdownMenu>
+                      </Dropdown>
                     </div>
                   </div>
                 </div>
