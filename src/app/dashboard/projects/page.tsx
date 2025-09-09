@@ -30,6 +30,7 @@ import {
   CheckIcon
 } from '@heroicons/react/24/outline';
 import { ProjectCreationWizard } from '@/components/projects/creation/ProjectCreationWizard';
+import { ProjectEditWizard } from '@/components/projects/edit/ProjectEditWizard';
 import { projectService } from '@/lib/firebase/project-service';
 import { teamMemberService } from '@/lib/firebase/organization-service';
 import { Project, ProjectCreationResult, PipelineStage } from '@/types/project';
@@ -84,6 +85,8 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [showWizard, setShowWizard] = useState(false);
+  const [showEditWizard, setShowEditWizard] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'board' | 'list' | 'calendar'>('board');
   const [filters, setFilters] = useState<BoardFilters>({});
@@ -183,6 +186,23 @@ export default function ProjectsPage() {
     }, 1000);
     
     // Wizard bleibt offen - User kann Erfolgsmeldung manuell schließen
+  };
+
+  const handleEditProject = (project: Project) => {
+    setEditingProject(project);
+    setShowEditWizard(true);
+  };
+
+  const handleEditSuccess = (updatedProject: Project) => {
+    // Update project in state
+    setProjects(prevProjects => 
+      prevProjects.map(p => p.id === updatedProject.id ? updatedProject : p)
+    );
+    
+    // Reload projects for consistency
+    setTimeout(() => {
+      loadProjects();
+    }, 500);
   };
 
   // Group projects by pipeline stage for board view
@@ -379,6 +399,20 @@ export default function ProjectsPage() {
             onSuccess={handleWizardSuccess}
             organizationId={currentOrganization.id}
           />
+
+          {/* Project Edit Wizard */}
+          {editingProject && (
+            <ProjectEditWizard
+              isOpen={showEditWizard}
+              onClose={() => {
+                setShowEditWizard(false);
+                setEditingProject(null);
+              }}
+              onSuccess={handleEditSuccess}
+              project={editingProject}
+              organizationId={currentOrganization.id}
+            />
+          )}
         </div>
       </KanbanLayoutWrapper>
     );
@@ -727,7 +761,7 @@ export default function ProjectsPage() {
                             <EyeIcon className="h-4 w-4" />
                             Projekt anzeigen
                           </DropdownItem>
-                          <DropdownItem href={`/dashboard/projects/${project.id}/edit`}>
+                          <DropdownItem onClick={() => handleEditProject(project)}>
                             <PencilIcon className="h-4 w-4" />
                             Bearbeiten
                           </DropdownItem>
@@ -855,6 +889,20 @@ export default function ProjectsPage() {
         onSuccess={handleWizardSuccess}
         organizationId={currentOrganization.id}
       />
+
+      {/* Project Edit Wizard */}
+      {editingProject && (
+        <ProjectEditWizard
+          isOpen={showEditWizard}
+          onClose={() => {
+            setShowEditWizard(false);
+            setEditingProject(null);
+          }}
+          onSuccess={handleEditSuccess}
+          project={editingProject}
+          organizationId={currentOrganization.id}
+        />
+      )}
     </>
   );
 }

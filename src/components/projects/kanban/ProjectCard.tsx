@@ -13,6 +13,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Project, ProjectPriority, PipelineStage } from '@/types/project';
 import { ProjectQuickActionsMenu } from './ProjectQuickActionsMenu';
+import { ProjectEditWizard } from '@/components/projects/edit/ProjectEditWizard';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { teamMemberService } from '@/lib/firebase/organization-service';
@@ -90,6 +91,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
   const router = useRouter();
   const { currentOrganization } = useOrganization();
   const [showQuickActions, setShowQuickActions] = useState(false);
+  const [showEditWizard, setShowEditWizard] = useState(false);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loadingTeam, setLoadingTeam] = useState(true);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -154,8 +156,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
   };
 
   const handleEditProject = (projectId: string) => {
-    // Navigate to project edit page
-    router.push(`/dashboard/projects/${projectId}/edit`);
+    // Open edit wizard modal instead of navigating
+    setShowEditWizard(true);
   };
 
   const handleDeleteProject = async (projectId: string) => {
@@ -223,6 +225,18 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
     } catch (error) {
       console.error('Fehler beim Archivieren:', error);
     }
+  };
+
+  const handleEditSuccess = (updatedProject: Project) => {
+    // Trigger project update callback if available
+    if (onProjectAdded) {
+      onProjectAdded(); // This will trigger a refresh in the parent component
+    }
+    
+    // Alternative: reload page to ensure consistency
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
   };
 
   return (
@@ -485,6 +499,17 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Project Edit Wizard */}
+      {currentOrganization && (
+        <ProjectEditWizard
+          isOpen={showEditWizard}
+          onClose={() => setShowEditWizard(false)}
+          onSuccess={handleEditSuccess}
+          project={project}
+          organizationId={currentOrganization.id}
+        />
       )}
     </div>
   );

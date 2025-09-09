@@ -38,6 +38,7 @@ import TaskDependenciesVisualizer from '@/components/projects/workflow/TaskDepen
 import { CommunicationModal } from '@/components/projects/communication/CommunicationModal';
 import { projectService } from '@/lib/firebase/project-service';
 import { Project } from '@/types/project';
+import { ProjectEditWizard } from '@/components/projects/edit/ProjectEditWizard';
 import { strategyDocumentService, StrategyDocument } from '@/lib/firebase/strategy-document-service';
 import Link from 'next/link';
 
@@ -51,6 +52,7 @@ export default function ProjectDetailPage() {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showEditWizard, setShowEditWizard] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'assets' | 'communication' | 'monitoring' | 'planning'>('overview');
   const [showCommunicationModal, setShowCommunicationModal] = useState(false);
   const [projectFolders, setProjectFolders] = useState<any>(null);
@@ -150,6 +152,14 @@ export default function ProjectDetailPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEditSuccess = (updatedProject: Project) => {
+    setProject(updatedProject);
+    // Reload for consistency
+    setTimeout(() => {
+      loadProject();
+    }, 500);
   };
 
   const getProjectStatusColor = (status: string) => {
@@ -342,7 +352,7 @@ export default function ProjectDetailPage() {
             <Badge color={getProjectStatusColor(project.status)}>
               {getProjectStatusLabel(project.status)}
             </Badge>
-            <Button onClick={() => router.push(`/dashboard/projects/${projectId}/edit`)}>
+            <Button onClick={() => setShowEditWizard(true)}>
               <PencilSquareIcon className="w-4 h-4 mr-2" />
               Bearbeiten
             </Button>
@@ -1110,6 +1120,17 @@ export default function ProjectDetailPage() {
         </div>
       </div>
       
+      {/* Project Edit Wizard */}
+      {project && currentOrganization && (
+        <ProjectEditWizard
+          isOpen={showEditWizard}
+          onClose={() => setShowEditWizard(false)}
+          onSuccess={handleEditSuccess}
+          project={project}
+          organizationId={currentOrganization.id}
+        />
+      )}
+
       {/* Communication Modal */}
       {showCommunicationModal && (
         <CommunicationModal
