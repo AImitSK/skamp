@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   RocketLaunchIcon,
   ExclamationTriangleIcon,
@@ -85,7 +85,6 @@ interface ProjectCreationWizardProps {
   organizationId: string;
 }
 
-
 export function ProjectCreationWizard({ 
   isOpen, 
   onClose, 
@@ -127,7 +126,6 @@ export function ProjectCreationWizard({
       setIsLoading(false);
     }
   };
-
 
   const updateFormData = (updates: Partial<typeof formData>) => {
     setFormData(prev => ({ 
@@ -197,7 +195,6 @@ export function ProjectCreationWizard({
       setIsLoading(false);
     }
   };
-
 
   if (!isOpen) return null;
 
@@ -308,7 +305,6 @@ export function ProjectCreationWizard({
                 <option value="urgent">Dringend</option>
               </select>
             </div>
-
 
             {/* Team-Mitglieder */}
             <div>
