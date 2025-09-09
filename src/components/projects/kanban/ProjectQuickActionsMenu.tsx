@@ -107,7 +107,9 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
   };
 
   // Handle action and close menu
-  const handleAction = (action: () => void) => {
+  const handleAction = (e: React.MouseEvent, action: () => void) => {
+    e.stopPropagation();
+    e.preventDefault();
     action();
     onClose();
   };
@@ -135,7 +137,7 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
       <div className="py-1">
         {onView && (
           <button
-            onClick={() => handleAction(() => onView(project.id!))}
+            onClick={(e) => handleAction(e, () => onView(project.id!))}
             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
           >
             <EyeIcon className="h-4 w-4" />
@@ -145,7 +147,7 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
 
         {onEdit && (
           <button
-            onClick={() => handleAction(() => onEdit(project.id!))}
+            onClick={(e) => handleAction(e, () => onEdit(project.id!))}
             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
           >
             <PencilIcon className="h-4 w-4" />
@@ -178,7 +180,7 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
                   return (
                     <button
                       key={stage}
-                      onClick={() => handleAction(() => onMoveToStage(project.id!, stage))}
+                      onClick={(e) => handleAction(e, () => onMoveToStage(project.id!, stage))}
                       className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
                       {stageConfig.name}
@@ -195,7 +197,7 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
       <div className="py-1 border-t border-gray-100">
         {onAddComment && (
           <button
-            onClick={() => handleAction(() => onAddComment(project.id!))}
+            onClick={(e) => handleAction(e, () => onAddComment(project.id!))}
             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
           >
             <ChatBubbleLeftIcon className="h-4 w-4" />
@@ -205,7 +207,7 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
 
         {onViewReports && (
           <button
-            onClick={() => handleAction(() => onViewReports(project.id!))}
+            onClick={(e) => handleAction(e, () => onViewReports(project.id!))}
             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
           >
             <DocumentTextIcon className="h-4 w-4" />
@@ -215,7 +217,7 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
 
         {onScheduleMeeting && (
           <button
-            onClick={() => handleAction(() => onScheduleMeeting(project.id!))}
+            onClick={(e) => handleAction(e, () => onScheduleMeeting(project.id!))}
             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
           >
             <CalendarIcon className="h-4 w-4" />
@@ -225,7 +227,7 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
 
         {onInviteTeam && (
           <button
-            onClick={() => handleAction(() => onInviteTeam(project.id!))}
+            onClick={(e) => handleAction(e, () => onInviteTeam(project.id!))}
             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
           >
             <UserPlusIcon className="h-4 w-4" />
@@ -238,7 +240,7 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
       <div className="py-1 border-t border-gray-100">
         {onClone && (
           <button
-            onClick={() => handleAction(() => onClone(project.id!))}
+            onClick={(e) => handleAction(e, () => onClone(project.id!))}
             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
           >
             <DocumentDuplicateIcon className="h-4 w-4" />
@@ -248,7 +250,7 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
 
         {onShare && (
           <button
-            onClick={() => handleAction(() => onShare(project.id!))}
+            onClick={(e) => handleAction(e, () => onShare(project.id!))}
             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
           >
             <ShareIcon className="h-4 w-4" />
@@ -261,7 +263,7 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
       {onDelete && (
         <div className="py-1 border-t border-gray-100">
           <button
-            onClick={() => handleAction(() => onDelete(project.id!))}
+            onClick={(e) => handleAction(e, () => onDelete(project.id!))}
             className="w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50 flex items-center space-x-2"
           >
             <TrashIcon className="h-4 w-4" />
