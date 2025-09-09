@@ -208,12 +208,9 @@ export const MobileKanbanAccordion: React.FC<MobileKanbanAccordionProps> = ({
                 {/* Section Footer */}
                 {section.projects.length > 0 && (
                   <div className={`mt-4 pt-3 border-t ${stageColors.border} text-xs ${stageColors.text} opacity-75`}>
-                    <div className="flex justify-between">
+                    <div className="text-center">
                       <span>
                         {section.projects.length === 1 ? '1 Projekt' : `${section.projects.length} Projekte`}
-                      </span>
-                      <span>
-                        {section.projects.filter(p => (p as any).priority === 'urgent').length} dringend
                       </span>
                     </div>
                   </div>

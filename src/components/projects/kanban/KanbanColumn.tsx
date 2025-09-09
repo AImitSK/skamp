@@ -161,15 +161,10 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
 
       {/* Column Footer - Quick Stats */}
       <div className={`column-footer py-4 px-4 border-t ${stageColors.border} ${stageColors.bg} rounded-b-lg`}>
-        <div className="flex justify-between text-xs text-gray-600">
+        <div className="text-xs text-gray-600 text-center">
           <span>
             {projects.length === 1 ? '1 Projekt' : `${projects.length} Projekte`}
           </span>
-          {projects.length > 0 && (
-            <span>
-              {projects.filter(p => (p as any).priority === 'urgent').length} urgent
-            </span>
-          )}
         </div>
       </div>
 
