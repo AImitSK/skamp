@@ -108,12 +108,28 @@ export function ProjectCreationWizard({
     createCampaignImmediately: false
   });
 
-  // Lade Creation Options beim Öffnen
+  // Lade Creation Options beim Öffnen und reset bei Close
   useEffect(() => {
-    if (isOpen && !creationOptions) {
-      loadCreationOptions();
+    if (isOpen) {
+      // Reset creation result when opening
+      setCreationResult(null);
+      setError(null);
+      
+      // Reset form data when opening
+      setFormData({
+        title: '',
+        description: '',
+        clientId: '',
+        priority: 'medium' as ProjectPriority,
+        assignedTeamMembers: [],
+        createCampaignImmediately: false
+      });
+      
+      if (!creationOptions) {
+        loadCreationOptions();
+      }
     }
-  }, [isOpen, creationOptions]);
+  }, [isOpen]);
 
   const loadCreationOptions = async () => {
     try {
@@ -179,10 +195,10 @@ export function ProjectCreationWizard({
         organizationId
       );
 
-      setCreationResult(result);
-      
       if (result.success) {
+        setCreationResult(result);
         onSuccess(result);
+        // Don't auto-close - let user close manually
       } else {
         const errorDetails = result.error || result.message || 'Unbekannter Fehler';
         setError(`Projekt konnte nicht erstellt werden: ${errorDetails}`);
@@ -205,7 +221,10 @@ export function ProjectCreationWizard({
         <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
           <CreationSuccessDashboard
             result={creationResult}
-            onClose={onClose}
+            onClose={() => {
+              setCreationResult(null);
+              onClose();
+            }}
             onGoToProject={(projectId) => {
               window.location.href = `/dashboard/projects/${projectId}`;
             }}
