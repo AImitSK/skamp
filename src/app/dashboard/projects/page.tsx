@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useOrganization } from '@/context/OrganizationContext';
@@ -25,7 +25,9 @@ import {
   PencilIcon,
   TrashIcon,
   ArchiveBoxIcon,
-  FunnelIcon
+  FunnelIcon,
+  ChevronDownIcon,
+  CheckIcon
 } from '@heroicons/react/24/outline';
 import { ProjectCreationWizard } from '@/components/projects/creation/ProjectCreationWizard';
 import { projectService } from '@/lib/firebase/project-service';
@@ -87,12 +89,31 @@ export default function ProjectsPage() {
   const [filters, setFilters] = useState<BoardFilters>({});
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loadingTeam, setLoadingTeam] = useState(true);
-  const [showArchived, setShowArchived] = useState(false);
+  const [filterMode, setFilterMode] = useState<'active' | 'archived'>('active');
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const filterDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadProjects();
     loadTeamMembers();
-  }, [currentOrganization?.id, viewMode, showArchived]);
+  }, [currentOrganization?.id, viewMode, filterMode]);
+
+  // Close filter dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target as Node)) {
+        setShowFilterDropdown(false);
+      }
+    };
+
+    if (showFilterDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showFilterDropdown]);
 
   const loadProjects = async () => {
     if (!currentOrganization?.id) return;
@@ -104,13 +125,13 @@ export default function ProjectsPage() {
       // Für Tabellenansicht je nach showArchived Filter
       const projectList = await projectService.getAll({
         organizationId: currentOrganization.id,
-        filters: showArchived ? {
+        filters: filterMode === 'archived' ? {
           status: 'archived'  // Nur archivierte Projekte
         } : undefined  // Alle Projekte (außer gefilterte werden später ausgeschlossen)
       });
       
       // Client-seitiges Filtern für archivierte Projekte wenn nicht explizit gewünscht
-      const filteredProjects = showArchived 
+      const filteredProjects = filterMode === 'archived'
         ? projectList
         : projectList.filter(project => project.status !== 'archived');
       setProjects(filteredProjects);
@@ -393,24 +414,65 @@ export default function ProjectsPage() {
 
             {/* Filter Button - nur in Listenansicht */}
             {viewMode === 'list' && (
-              <button
-                onClick={() => setShowArchived(!showArchived)}
-                className={`
-                  px-3 py-2 text-sm font-medium border rounded-lg transition-colors flex items-center
-                  ${showArchived
-                    ? 'border-blue-500 bg-blue-50 text-blue-700'
-                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                  }
-                `}
-                title="Archiv-Filter"
-              >
-                <FunnelIcon className="h-4 w-4" />
-                {showArchived && (
-                  <span className="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                    1
-                  </span>
+              <div className="relative" ref={filterDropdownRef}>
+                <button
+                  onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+                  className={`
+                    px-3 py-2 text-sm font-medium border rounded-lg transition-colors flex items-center
+                    ${filterMode === 'archived'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }
+                  `}
+                  title="Status-Filter"
+                >
+                  <FunnelIcon className="h-4 w-4" />
+                  {filterMode === 'archived' && (
+                    <span className="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                      1
+                    </span>
+                  )}
+                </button>
+
+                {/* Filter Dropdown Menu */}
+                {showFilterDropdown && (
+                  <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1">
+                    <div className="px-4 py-2 border-b border-gray-100">
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status Filter
+                      </p>
+                    </div>
+                    <div className="py-1">
+                      <label className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={filterMode === 'active'}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFilterMode('active');
+                            }
+                          }}
+                          className="form-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded mr-3"
+                        />
+                        <span>Aktiv</span>
+                      </label>
+                      <label className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={filterMode === 'archived'}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFilterMode('archived');
+                            }
+                          }}
+                          className="form-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded mr-3"
+                        />
+                        <span>Archiv</span>
+                      </label>
+                    </div>
+                  </div>
                 )}
-              </button>
+              </div>
             )}
             
             <Button onClick={() => setShowWizard(true)} className="flex items-center space-x-2">
@@ -447,8 +509,8 @@ export default function ProjectsPage() {
         </div>
       )}
 
-      {/* Empty State */}
-      {!loading && !error && projects.length === 0 && (
+      {/* Empty State - nur anzeigen wenn nicht in Kanban- oder List-Modus */}
+      {!loading && !error && projects.length === 0 && viewMode !== 'board' && viewMode !== 'list' && (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <FolderIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
@@ -468,7 +530,7 @@ export default function ProjectsPage() {
       {!loading && !error && viewMode === 'list' && (
         <div className="space-y-4">
           {/* Archiv Info-Banner wenn Filter aktiv */}
-          {showArchived && (
+          {filterMode === 'archived' && (
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
               <div className="flex items-center">
                 <FunnelIcon className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2" />

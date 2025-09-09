@@ -267,7 +267,7 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
           {/* Filter Button */}
           <button
             onClick={onToggleFilters}
-            className={`px-3 py-2 text-sm font-medium border rounded-lg transition-colors ${
+            className={`px-3 py-2 text-sm font-medium border rounded-lg transition-colors flex items-center whitespace-nowrap ${
               showFilters
                 ? 'border-blue-500 bg-blue-50 text-blue-700'
                 : 'border-gray-300 text-gray-700 hover:bg-gray-50'
