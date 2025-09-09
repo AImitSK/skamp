@@ -215,14 +215,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
         userId: currentOrganization.ownerId
       });
       
-      // Das Projekt sollte aus der Kanban-Ansicht verschwinden
-      // da archivierte Projekte nur in der Tabellenansicht angezeigt werden
       console.log('Projekt archiviert:', projectId);
       
-      // Trigger reload der Projektliste
-      if (onProjectAdded) {
-        onProjectAdded();
-      }
+      // Seite neu laden um die Änderung zu reflektieren (wie beim Löschen)
+      window.location.reload();
       
     } catch (error) {
       console.error('Fehler beim Archivieren:', error);
