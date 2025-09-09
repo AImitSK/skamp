@@ -116,6 +116,13 @@ export function ProjectCreationWizard({
 
   // Lade Creation Options beim Öffnen und reset bei Close
   useEffect(() => {
+    console.log('🚀 Debug - Open Effect:', {
+      isOpen,
+      userUid: user?.uid,
+      willSetTeam: user?.uid ? [user.uid] : [],
+      willSetManager: user?.uid || ''
+    });
+    
     if (isOpen) {
       // Reset creation result when opening
       setCreationResult(null);
@@ -148,7 +155,15 @@ export function ProjectCreationWizard({
 
   // Auto-select current user when user becomes available
   useEffect(() => {
+    console.log('🔍 Debug - User Effect:', {
+      userUid: user?.uid,
+      isOpen,
+      currentTeamMembers: formData.assignedTeamMembers,
+      currentManager: formData.projectManager
+    });
+    
     if (user?.uid && isOpen && formData.assignedTeamMembers.length === 0) {
+      console.log('✅ Auto-selecting user:', user.uid);
       updateFormData({
         assignedTeamMembers: [user.uid],
         projectManager: user.uid
@@ -162,7 +177,6 @@ export function ProjectCreationWizard({
       const options = await projectService.getProjectCreationOptions(organizationId);
       setCreationOptions(options);
     } catch (error) {
-      console.error('Fehler beim Laden der Creation Options:', error);
     } finally {
       setIsLoading(false);
     }
@@ -174,7 +188,6 @@ export function ProjectCreationWizard({
       const userTags = await tagsService.getAll(user.uid);
       setTags(userTags);
     } catch (error) {
-      console.error('Fehler beim Laden der Tags:', error);
     }
   };
 
@@ -191,7 +204,6 @@ export function ProjectCreationWizard({
       await loadTags();
       return tagId;
     } catch (error) {
-      console.error('Fehler beim Erstellen des Tags:', error);
       throw error;
     }
   };
@@ -259,7 +271,6 @@ export function ProjectCreationWizard({
     } catch (error: any) {
       const errorMessage = error.message || 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.';
       setError(errorMessage);
-      console.error('Project creation error:', error);
     } finally {
       setIsLoading(false);
     }
