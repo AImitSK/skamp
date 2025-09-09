@@ -52,7 +52,7 @@ const ListItem: React.FC<ListItemProps> = memo(({ index, style, data }) => {
 
   return (
     <div style={style}>
-      <div className="pb-3">
+      <div className="pb-1.5">
         <ProjectCard
           project={project}
           onSelect={onProjectSelect}
@@ -108,7 +108,7 @@ export const VirtualizedProjectList: React.FC<VirtualizedProjectListProps> = mem
   // Loading state
   if (loading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-2">
         {Array.from({ length: 5 }).map((_, index) => (
           <div key={index} className="animate-pulse">
             <div className="bg-gray-200 rounded-lg h-24"></div>
@@ -134,7 +134,7 @@ export const VirtualizedProjectList: React.FC<VirtualizedProjectListProps> = mem
   // Small list - render normally for better performance
   if (!shouldVirtualize) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-2">
         {projects.map(project => (
           <ProjectCard
             key={project.id}
