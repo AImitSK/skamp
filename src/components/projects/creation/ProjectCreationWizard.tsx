@@ -121,13 +121,17 @@ export function ProjectCreationWizard({
       setCreationResult(null);
       setError(null);
       
-      // Reset form data when opening
+      // Reset form data when opening - find composite ID for project manager
+      const userMember = user?.uid && creationOptions?.availableTeamMembers?.find(member => 
+        member.id.includes(user.uid)
+      );
+      
       setFormData({
         title: '',
         description: '',
         clientId: '',
         priority: 'medium' as ProjectPriority,
-        projectManager: user?.uid || '',
+        projectManager: userMember?.id || '',
         assignedTeamMembers: user?.uid ? [user.uid] : [],
         createCampaignImmediately: false
       });
@@ -304,10 +308,6 @@ export function ProjectCreationWizard({
           </div>
         )}
 
-        {/* DEBUG INFO */}
-        <div className="px-6 py-2 bg-yellow-100 text-xs">
-          <strong>🔍 Debug:</strong> User: {user?.uid || 'none'}, Team: [{formData.assignedTeamMembers.join(', ')}], Manager: {formData.projectManager || 'none'}
-        </div>
 
         {/* Form */}
         <form 
@@ -409,11 +409,19 @@ export function ProjectCreationWizard({
                   
                   // Auto-select current user as project manager if they are in the team
                   if (user?.uid && members.includes(user.uid) && !formData.projectManager) {
-                    updateFormData({ projectManager: user.uid });
+                    // Find the user's composite ID from available team members
+                    const userMember = creationOptions?.availableTeamMembers?.find(member => 
+                      member.id.includes(user.uid)
+                    );
+                    if (userMember) {
+                      updateFormData({ projectManager: userMember.id });
+                    }
                   }
                   
                   // Clear project manager if they are no longer in the team
-                  if (formData.projectManager && !members.includes(formData.projectManager)) {
+                  if (formData.projectManager && !members.some(selectedId => 
+                    formData.projectManager === selectedId || formData.projectManager.includes(selectedId)
+                  )) {
                     updateFormData({ projectManager: '' });
                   }
                 }}
@@ -431,11 +439,13 @@ export function ProjectCreationWizard({
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                   >
                     {creationOptions?.availableTeamMembers
-                      ?.filter(member => formData.assignedTeamMembers.includes(member.id))
+                      ?.filter(member => formData.assignedTeamMembers.some(selectedId => 
+                        member.id === selectedId || member.id.includes(selectedId)
+                      ))
                       .map((member) => (
                         <option key={member.id} value={member.id}>
                           {member.displayName} ({member.role})
-                          {member.id === user?.uid ? ' (Sie)' : ''}
+                          {user?.uid && member.id.includes(user.uid) ? ' (Sie)' : ''}
                         </option>
                       ))
                     }
