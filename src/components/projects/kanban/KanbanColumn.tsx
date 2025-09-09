@@ -1,13 +1,11 @@
 // src/components/projects/kanban/KanbanColumn.tsx - Kanban Spalte für Plan 10/9
 'use client';
 
-import React, { memo, useState } from 'react';
-import { PlusIcon } from '@heroicons/react/24/outline';
+import React, { memo } from 'react';
 import { Project, PipelineStage } from '@/types/project';
 import { getStageColor, getStageConfig } from './kanban-constants';
 import { ProjectCard } from './ProjectCard';
 import { VirtualizedProjectList } from './VirtualizedProjectList';
-import { QuickProjectDialog } from './QuickProjectDialog';
 
 // ========================================
 // INTERFACES
@@ -40,7 +38,6 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
   getStageName,
   loading
 }) => {
-  const [showQuickDialog, setShowQuickDialog] = useState(false);
   const stageConfig = getStageConfig(stage);
   const stageColors = getStageColor(stage);
   
@@ -60,12 +57,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
     return baseClass;
   };
 
-  // Add Project Handler
-  const handleAddProject = () => {
-    setShowQuickDialog(true);
-  };
-
-  // Handle successful project creation
+  // Handle successful project creation (unused but kept for potential future use)
   const handleProjectCreated = (projectId: string) => {
     console.log(`Projekt ${projectId} erfolgreich in ${stage} erstellt`);
     if (onProjectAdded) {
@@ -92,14 +84,6 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
             </span>
           </div>
           
-          {/* Add Project Button */}
-          <button
-            onClick={handleAddProject}
-            className={`p-1 rounded hover:${stageColors.accent} ${stageColors.text} transition-colors`}
-            title={`Projekt zu ${getStageName(stage)} hinzufügen`}
-          >
-            <PlusIcon className="h-4 w-4" />
-          </button>
         </div>
         
         {/* Stage Description */}
@@ -168,13 +152,6 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
         </div>
       </div>
 
-      {/* Quick Project Dialog */}
-      <QuickProjectDialog
-        isOpen={showQuickDialog}
-        onClose={() => setShowQuickDialog(false)}
-        onSuccess={handleProjectCreated}
-        targetStage={stage}
-      />
     </div>
   );
 }, (prevProps, nextProps) => {
