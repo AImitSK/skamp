@@ -15,15 +15,12 @@ import {
   ProjectPriority 
 } from '@/types/project';
 import { projectService } from '@/lib/firebase/project-service';
-import { tagsEnhancedService } from '@/lib/firebase/crm-service-enhanced';
 import { useAuth } from '@/context/AuthContext';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
-import { TagInput } from '@/components/ui/tag-input';
 import { ClientSelector } from './ClientSelector';
 import { TeamMemberMultiSelect } from './TeamMemberMultiSelect';
 import { CreationSuccessDashboard } from './CreationSuccessDashboard';
-import { Tag, TagColor } from '@/types/crm';
 import { nanoid } from 'nanoid';
 
 // Alert Component
@@ -101,8 +98,6 @@ export function ProjectCreationWizard({
   const [creationOptions, setCreationOptions] = useState<ProjectCreationOptions | null>(null);
   const [creationResult, setCreationResult] = useState<ProjectCreationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [tags, setTags] = useState<Tag[]>([]);
-  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   
   // Vereinfachte Wizard-Daten
   const [formData, setFormData] = useState({
@@ -114,11 +109,10 @@ export function ProjectCreationWizard({
     createCampaignImmediately: false
   });
 
-  // Lade Creation Options und Tags beim Öffnen
+  // Lade Creation Options beim Öffnen
   useEffect(() => {
     if (isOpen && !creationOptions) {
       loadCreationOptions();
-      loadTags();
     }
   }, [isOpen, creationOptions]);
 
@@ -134,30 +128,6 @@ export function ProjectCreationWizard({
     }
   };
 
-  const loadTags = useCallback(async () => {
-    if (!user?.uid) return;
-    try {
-      const userTags = await tagsEnhancedService.getAll(user.uid);
-      setTags(userTags.map(tag => ({
-        ...tag,
-        id: tag.id!
-      })));
-    } catch (error) {
-      console.error('Fehler beim Laden der Tags:', error);
-    }
-  }, [user?.uid]);
-
-  const handleCreateTag = useCallback(async (name: string, color: TagColor): Promise<string> => {
-    if (!user?.uid) throw new Error('Benutzer nicht angemeldet');
-    
-    const tagId = await tagsEnhancedService.create(
-      { name, color },
-      user.uid
-    );
-    
-    await loadTags();
-    return tagId;
-  }, [user?.uid]);
 
   const updateFormData = (updates: Partial<typeof formData>) => {
     setFormData(prev => ({ 
@@ -191,7 +161,7 @@ export function ProjectCreationWizard({
         clientId: formData.clientId,
         priority: formData.priority,
         color: '#005fab',
-        tags: selectedTagIds,
+        tags: [],
         assignedTeamMembers: formData.assignedTeamMembers,
         projectManager: undefined,
         templateId: undefined,
@@ -339,18 +309,6 @@ export function ProjectCreationWizard({
               </select>
             </div>
 
-            {/* Tags */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tags
-              </label>
-              <TagInput
-                selectedTagIds={selectedTagIds}
-                availableTags={tags}
-                onChange={setSelectedTagIds}
-                onCreateTag={handleCreateTag}
-              />
-            </div>
 
             {/* Team-Mitglieder */}
             <div>
