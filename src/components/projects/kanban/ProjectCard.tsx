@@ -146,6 +146,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
   };
 
   const handleEditProject = (projectId: string) => {
+    // Navigate to project edit page
     router.push(`/dashboard/projects/${projectId}/edit`);
   };
 
