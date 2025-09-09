@@ -109,6 +109,7 @@ export function ProjectCreationWizard({
     description: '',
     clientId: '',
     priority: 'medium' as ProjectPriority,
+    projectManager: '',
     assignedTeamMembers: [] as string[],
     createCampaignImmediately: false
   });
@@ -126,6 +127,7 @@ export function ProjectCreationWizard({
         description: '',
         clientId: '',
         priority: 'medium' as ProjectPriority,
+        projectManager: '',
         assignedTeamMembers: [],
         createCampaignImmediately: false
       });
@@ -218,7 +220,7 @@ export function ProjectCreationWizard({
         color: '#005fab',
         tags: selectedTagIds,
         assignedTeamMembers: formData.assignedTeamMembers,
-        projectManager: undefined,
+        projectManager: formData.projectManager || undefined,
         templateId: undefined,
         customTasks: [],
         startDate: undefined,
@@ -375,6 +377,25 @@ export function ProjectCreationWizard({
                 <option value="medium">Mittel</option>
                 <option value="high">Hoch</option>
                 <option value="urgent">Dringend</option>
+              </select>
+            </div>
+
+            {/* Projekt-Manager */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Projekt-Manager / Besitzer
+              </label>
+              <select
+                value={formData.projectManager}
+                onChange={(e) => updateFormData({ projectManager: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+              >
+                <option value="">Kein Projekt-Manager zugewiesen</option>
+                {creationOptions?.availableTeamMembers?.map((member) => (
+                  <option key={member.id} value={member.id}>
+                    {member.displayName} ({member.role})
+                  </option>
+                ))}
               </select>
             </div>
 

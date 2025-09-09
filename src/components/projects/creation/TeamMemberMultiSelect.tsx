@@ -49,11 +49,6 @@ export function TeamMemberMultiSelect({
   // Verfügbare Rollen extrahieren
   const availableRoles = Array.from(new Set(teamMembers.map(m => m.role)));
 
-  // Availability-Status (Mock)
-  const getAvailabilityStatus = (memberId: string): 'available' | 'busy' | 'away' => {
-    // Mock-Logic - in der Praxis würde das von einem Service kommen
-    return ['available', 'busy', 'away'][Math.floor(Math.random() * 3)] as any;
-  };
 
   const handleMemberToggle = (memberId: string) => {
     const newSelection = selectedMembers.includes(memberId)
@@ -158,7 +153,6 @@ export function TeamMemberMultiSelect({
                 <div className="space-y-2">
                   {members.map(member => {
                     const isSelected = selectedMembers.includes(member.id);
-                    const availability = getAvailabilityStatus(member.id);
 
                     return (
                       <div
@@ -199,30 +193,9 @@ export function TeamMemberMultiSelect({
 
                         {/* Mitglied Info */}
                         <div className="ml-3 flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <p className="text-sm font-medium text-gray-900 truncate">
-                              {member.displayName}
-                            </p>
-                            
-                            {/* Availability Status */}
-                            <div className="flex items-center ml-2">
-                              <div className={`w-2 h-2 rounded-full ${
-                                availability === 'available' 
-                                  ? 'bg-green-400'
-                                  : availability === 'busy'
-                                  ? 'bg-red-400'
-                                  : 'bg-yellow-400'
-                              }`} />
-                              <span className="ml-1 text-xs text-gray-500">
-                                {availability === 'available' 
-                                  ? 'Verfügbar'
-                                  : availability === 'busy'
-                                  ? 'Beschäftigt'
-                                  : 'Abwesend'
-                                }
-                              </span>
-                            </div>
-                          </div>
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {member.displayName}
+                          </p>
                           <p className="text-sm text-gray-500 truncate">
                             {member.email}
                           </p>

@@ -137,10 +137,7 @@ export default function ProjectsPage() {
       loadProjects();
     }, 1000);
     
-    // Wizard schließen nach kurzer Verzögerung (für Success Animation)
-    setTimeout(() => {
-      setShowWizard(false);
-    }, 2000);
+    // Wizard bleibt offen - User kann Erfolgsmeldung manuell schließen
   };
 
   // Group projects by pipeline stage for board view
