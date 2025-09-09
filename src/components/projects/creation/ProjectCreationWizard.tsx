@@ -15,12 +15,15 @@ import {
   ProjectPriority 
 } from '@/types/project';
 import { projectService } from '@/lib/firebase/project-service';
+import { tagsService } from '@/lib/firebase/tags-service';
 import { useAuth } from '@/context/AuthContext';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
+import { TagInput } from '@/components/ui/tag-input';
 import { ClientSelector } from './ClientSelector';
 import { TeamMemberMultiSelect } from './TeamMemberMultiSelect';
 import { CreationSuccessDashboard } from './CreationSuccessDashboard';
+import { Tag, TagColor } from '@/types/crm';
 import { nanoid } from 'nanoid';
 
 // Alert Component
@@ -97,6 +100,8 @@ export function ProjectCreationWizard({
   const [creationOptions, setCreationOptions] = useState<ProjectCreationOptions | null>(null);
   const [creationResult, setCreationResult] = useState<ProjectCreationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   
   // Vereinfachte Wizard-Daten
   const [formData, setFormData] = useState({
@@ -125,11 +130,19 @@ export function ProjectCreationWizard({
         createCampaignImmediately: false
       });
       
+      // Reset tags
+      setSelectedTagIds([]);
+      
       if (!creationOptions) {
         loadCreationOptions();
       }
+      
+      // Load tags
+      if (user?.uid) {
+        loadTags();
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, user?.uid]);
 
   const loadCreationOptions = async () => {
     try {
@@ -140,6 +153,34 @@ export function ProjectCreationWizard({
       console.error('Fehler beim Laden der Creation Options:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadTags = async () => {
+    if (!user?.uid) return;
+    try {
+      const userTags = await tagsService.getAll(user.uid);
+      setTags(userTags);
+    } catch (error) {
+      console.error('Fehler beim Laden der Tags:', error);
+    }
+  };
+
+  const handleCreateTag = async (name: string, color: TagColor): Promise<string> => {
+    if (!user?.uid) throw new Error('Benutzer nicht angemeldet');
+    
+    try {
+      const tagId = await tagsService.create(
+        { name, color },
+        user.uid
+      );
+      
+      // Reload tags after creation
+      await loadTags();
+      return tagId;
+    } catch (error) {
+      console.error('Fehler beim Erstellen des Tags:', error);
+      throw error;
     }
   };
 
@@ -175,7 +216,7 @@ export function ProjectCreationWizard({
         clientId: formData.clientId,
         priority: formData.priority,
         color: '#005fab',
-        tags: [],
+        tags: selectedTagIds,
         assignedTeamMembers: formData.assignedTeamMembers,
         projectManager: undefined,
         templateId: undefined,
@@ -335,6 +376,19 @@ export function ProjectCreationWizard({
                 <option value="high">Hoch</option>
                 <option value="urgent">Dringend</option>
               </select>
+            </div>
+
+            {/* Tags */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tags
+              </label>
+              <TagInput
+                selectedTagIds={selectedTagIds}
+                availableTags={tags}
+                onChange={setSelectedTagIds}
+                onCreateTag={handleCreateTag}
+              />
             </div>
 
             {/* Team-Mitglieder */}

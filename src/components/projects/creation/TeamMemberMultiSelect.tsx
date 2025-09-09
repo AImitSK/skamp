@@ -236,37 +236,6 @@ export function TeamMemberMultiSelect({
           </div>
         )}
       </div>
-
-      {/* Role-Assignment-Suggestions */}
-      {selectedMembers.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-          <h5 className="text-sm font-medium text-blue-800 mb-2">
-            Empfohlene Rollenzuweisungen:
-          </h5>
-          <div className="text-sm text-blue-700 space-y-1">
-            {selectedMembers.map(memberId => {
-              const member = teamMembers.find(m => m.id === memberId);
-              if (!member) return null;
-              
-              // Mock-Empfehlungen basierend auf Rolle
-              const suggestion = member.role === 'Project Manager' 
-                ? 'Als Projekt-Leitung einsetzen'
-                : member.role === 'Content Creator'
-                ? 'Für Content-Erstellung verantwortlich'
-                : member.role === 'Designer'
-                ? 'Für visuelles Design zuständig'
-                : 'Allgemeine Projekt-Unterstützung';
-
-              return (
-                <div key={memberId} className="flex justify-between">
-                  <span>{member.displayName}:</span>
-                  <span className="font-medium">{suggestion}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

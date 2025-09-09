@@ -18,7 +18,6 @@ interface ClientSelectorProps {
 
 export function ClientSelector({ clients, selectedClientId, onSelect }: ClientSelectorProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [showNewClientForm, setShowNewClientForm] = useState(false);
 
   // Filter Kunden basierend auf Suchbegriff
   const filteredClients = clients.filter(client =>
@@ -35,28 +34,6 @@ export function ClientSelector({ clients, selectedClientId, onSelect }: ClientSe
   const handleClientSelect = (clientId: string) => {
     onSelect(clientId);
   };
-
-  if (showNewClientForm) {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-medium text-gray-900">Neuen Kunden anlegen</h3>
-          <button
-            onClick={() => setShowNewClientForm(false)}
-            className="text-sm text-gray-500 hover:text-gray-700"
-          >
-            Zurück zur Auswahl
-          </button>
-        </div>
-        
-        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-          <p className="text-sm text-yellow-800">
-            Diese Funktion ist noch nicht implementiert. Bitte wählen Sie einen bestehenden Kunden aus der Liste.
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-4">
@@ -159,15 +136,6 @@ export function ClientSelector({ clients, selectedClientId, onSelect }: ClientSe
           ))
         )}
       </div>
-
-      {/* Neuen Kunden anlegen Button */}
-      <button
-        onClick={() => setShowNewClientForm(true)}
-        className="w-full flex items-center justify-center px-4 py-2 border-2 border-dashed border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:border-gray-400 hover:text-gray-800 transition-colors"
-      >
-        <PlusIcon className="w-4 h-4 mr-2" />
-        Neuen Kunden anlegen
-      </button>
     </div>
   );
 }
