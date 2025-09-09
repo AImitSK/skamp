@@ -51,9 +51,18 @@ export function TeamMemberMultiSelect({
 
 
   const handleMemberToggle = (memberId: string) => {
-    const newSelection = selectedMembers.includes(memberId)
-      ? selectedMembers.filter(id => id !== memberId)
-      : [...selectedMembers, memberId];
+    // Extract the pure user ID from composite ID (e.g., "user_user" -> "user")
+    const pureUserId = memberId.includes('_') 
+      ? memberId.split('_')[0] 
+      : memberId;
+    
+    // Check if this user is already selected (by pure ID)
+    const isCurrentlySelected = selectedMembers.includes(pureUserId) || 
+                               selectedMembers.some(id => memberId.includes(id));
+    
+    const newSelection = isCurrentlySelected
+      ? selectedMembers.filter(id => id !== pureUserId && !memberId.includes(id))
+      : [...selectedMembers.filter(id => !memberId.includes(id)), pureUserId];
     
     onSelectionChange(newSelection);
   };
@@ -152,13 +161,10 @@ export function TeamMemberMultiSelect({
                 {/* Mitglieder in der Rolle */}
                 <div className="space-y-2">
                   {members.map(member => {
-                    console.log('🔍 TeamMember Debug:', {
-                      memberData: member,
-                      selectedMembers: selectedMembers,
-                      isSelectedById: selectedMembers.includes(member.id),
-                      isSelectedByEmail: selectedMembers.includes(member.email)
-                    });
-                    const isSelected = selectedMembers.includes(member.id);
+                    // Check both exact match and if member.id contains the selectedMember (for composite IDs)
+                    const isSelected = selectedMembers.some(selectedId => 
+                      member.id === selectedId || member.id.includes(selectedId)
+                    );
 
                     return (
                       <div
