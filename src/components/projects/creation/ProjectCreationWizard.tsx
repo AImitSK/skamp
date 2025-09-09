@@ -127,8 +127,8 @@ export function ProjectCreationWizard({
         description: '',
         clientId: '',
         priority: 'medium' as ProjectPriority,
-        projectManager: '',
-        assignedTeamMembers: [],
+        projectManager: user?.uid || '',
+        assignedTeamMembers: user?.uid ? [user.uid] : [],
         createCampaignImmediately: false
       });
       
