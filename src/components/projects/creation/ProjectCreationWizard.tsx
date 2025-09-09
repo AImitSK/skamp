@@ -380,24 +380,6 @@ export function ProjectCreationWizard({
               </select>
             </div>
 
-            {/* Projekt-Manager */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Projekt-Manager / Besitzer
-              </label>
-              <select
-                value={formData.projectManager}
-                onChange={(e) => updateFormData({ projectManager: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-              >
-                <option value="">Kein Projekt-Manager zugewiesen</option>
-                {creationOptions?.availableTeamMembers?.map((member) => (
-                  <option key={member.id} value={member.id}>
-                    {member.displayName} ({member.role})
-                  </option>
-                ))}
-              </select>
-            </div>
 
             {/* Tags */}
             <div>
@@ -420,8 +402,44 @@ export function ProjectCreationWizard({
               <TeamMemberMultiSelect
                 teamMembers={creationOptions?.availableTeamMembers || []}
                 selectedMembers={formData.assignedTeamMembers}
-                onSelectionChange={(members) => updateFormData({ assignedTeamMembers: members })}
+                onSelectionChange={(members) => {
+                  updateFormData({ assignedTeamMembers: members });
+                  
+                  // Auto-select current user as project manager if they are in the team
+                  if (user?.uid && members.includes(user.uid) && !formData.projectManager) {
+                    updateFormData({ projectManager: user.uid });
+                  }
+                  
+                  // Clear project manager if they are no longer in the team
+                  if (formData.projectManager && !members.includes(formData.projectManager)) {
+                    updateFormData({ projectManager: '' });
+                  }
+                }}
               />
+              
+              {/* Projekt-Manager aus ausgewählten Team-Mitgliedern */}
+              {formData.assignedTeamMembers.length > 0 && (
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Projekt-Manager / Besitzer
+                  </label>
+                  <select
+                    value={formData.projectManager}
+                    onChange={(e) => updateFormData({ projectManager: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                  >
+                    {creationOptions?.availableTeamMembers
+                      ?.filter(member => formData.assignedTeamMembers.includes(member.id))
+                      .map((member) => (
+                        <option key={member.id} value={member.id}>
+                          {member.displayName} ({member.role})
+                          {member.id === user?.uid ? ' (Sie)' : ''}
+                        </option>
+                      ))
+                    }
+                  </select>
+                </div>
+              )}
             </div>
 
             {/* PR-Kampagne erstellen */}
