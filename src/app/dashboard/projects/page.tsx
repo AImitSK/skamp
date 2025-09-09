@@ -17,7 +17,8 @@ import {
   FolderIcon,
   Squares2X2Icon,
   ListBulletIcon,
-  ViewColumnsIcon
+  ViewColumnsIcon,
+  BuildingOfficeIcon
 } from '@heroicons/react/24/outline';
 import { ProjectCreationWizard } from '@/components/projects/creation/ProjectCreationWizard';
 import { ProjectQuickActionsMenu } from '@/components/projects/kanban/ProjectQuickActionsMenu';
@@ -423,11 +424,8 @@ export default function ProjectsPage() {
               <div className="w-40 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                 Projektphase
               </div>
-              <div className="w-32 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+              <div className="w-40 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                 Team
-              </div>
-              <div className="w-48 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                Kunde
               </div>
               <div className="w-24 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                 Priorität
@@ -447,7 +445,7 @@ export default function ProjectsPage() {
               return (
                 <div key={project.id} className="px-8 py-5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
                   <div className="flex items-center">
-                    {/* Projekt Title */}
+                    {/* Projekt Title mit Kunde */}
                     <div className="flex-1 px-4 min-w-0">
                       <Link 
                         href={`/dashboard/projects/${project.id}`} 
@@ -456,9 +454,12 @@ export default function ProjectsPage() {
                       >
                         {project.title}
                       </Link>
-                      {project.description && (
-                        <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 truncate">
-                          {project.description}
+                      {project.customer && (
+                        <div className="flex items-center gap-2 mt-1">
+                          <BuildingOfficeIcon className="h-4 w-4 text-zinc-400 flex-shrink-0" />
+                          <span className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
+                            {project.customer.name}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -470,35 +471,31 @@ export default function ProjectsPage() {
                       </Badge>
                     </div>
 
-                    {/* Projektphase */}
+                    {/* Projektphase als Text */}
                     <div className="w-40 px-4">
-                      <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${
-                        project.currentStage === 'ideas_planning' ? 'bg-primary-50 text-primary-700 ring-primary-600/20' :
-                        project.currentStage === 'creation' ? 'bg-yellow-50 text-yellow-700 ring-yellow-600/20' :
-                        project.currentStage === 'internal_approval' ? 'bg-orange-50 text-orange-700 ring-orange-600/20' :
-                        project.currentStage === 'customer_approval' ? 'bg-purple-50 text-purple-700 ring-purple-600/20' :
-                        project.currentStage === 'distribution' ? 'bg-blue-50 text-blue-700 ring-blue-600/20' :
-                        project.currentStage === 'monitoring' ? 'bg-green-50 text-green-700 ring-green-600/20' :
-                        project.currentStage === 'completed' ? 'bg-gray-50 text-gray-700 ring-gray-600/20' :
-                        'bg-gray-50 text-gray-700 ring-gray-600/20'
-                      }`}>
+                      <div className="text-sm text-zinc-900 dark:text-white">
                         {getCurrentStageLabel(project.currentStage)}
-                      </span>
+                      </div>
                     </div>
 
                     {/* Team Avatare */}
-                    <div className="w-32 px-4">
+                    <div className="w-40 px-4">
                       {project.assignedTo && project.assignedTo.length > 0 ? (
                         <div className="flex -space-x-2">
-                          {project.assignedTo.slice(0, 3).map((userId: string, index: number) => (
-                            <div
-                              key={userId}
-                              className="w-7 h-7 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 text-xs font-medium ring-2 ring-white"
-                              title={`Team-Mitglied ${index + 1}`}
-                            >
-                              {userId.substring(0, 2).toUpperCase()}
-                            </div>
-                          ))}
+                          {project.assignedTo.slice(0, 3).map((userId: string, index: number) => {
+                            // Generiere Avatar URL basierend auf userId
+                            const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(userId)}&background=005fab&color=fff&size=28`;
+                            
+                            return (
+                              <img
+                                key={userId}
+                                src={avatarUrl}
+                                alt={`Team-Mitglied ${index + 1}`}
+                                className="w-7 h-7 rounded-full ring-2 ring-white"
+                                title={`Team-Mitglied: ${userId}`}
+                              />
+                            );
+                          })}
                           {project.assignedTo.length > 3 && (
                             <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs font-medium ring-2 ring-white">
                               +{project.assignedTo.length - 3}
@@ -510,16 +507,9 @@ export default function ProjectsPage() {
                       )}
                     </div>
 
-                    {/* Kunde */}
-                    <div className="w-48 px-4">
-                      <div className="text-sm text-zinc-900 dark:text-white truncate">
-                        {project.customer?.name || '-'}
-                      </div>
-                    </div>
-
                     {/* Priorität */}
                     <div className="w-24 px-4">
-                      {projectPriority && (
+                      {projectPriority ? (
                         <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${
                           projectPriority === 'urgent' ? 'bg-red-50 text-red-700 ring-red-600/20' :
                           projectPriority === 'high' ? 'bg-orange-50 text-orange-700 ring-orange-600/20' :
@@ -532,8 +522,7 @@ export default function ProjectsPage() {
                            projectPriority === 'medium' ? 'Mittel' :
                            projectPriority === 'low' ? 'Niedrig' : '-'}
                         </span>
-                      )}
-                      {!projectPriority && (
+                      ) : (
                         <span className="text-xs text-gray-500">-</span>
                       )}
                     </div>
@@ -546,11 +535,11 @@ export default function ProjectsPage() {
                     </div>
 
                     {/* Actions */}
-                    <div className="w-12 flex items-center justify-center">
+                    <div className="w-12 flex items-center justify-center relative">
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
-                          setShowQuickActions(project.id);
+                          setShowQuickActions(showQuickActions === project.id ? null : project.id);
                         }}
                         className="p-1 text-gray-400 hover:text-gray-600 rounded"
                       >
@@ -559,29 +548,30 @@ export default function ProjectsPage() {
                       
                       {/* Quick Actions Menu */}
                       {showQuickActions === project.id && (
-                        <ProjectQuickActionsMenu
-                          project={project}
-                          isOpen={true}
-                          onClose={() => setShowQuickActions(null)}
-                          onView={(id) => router.push(`/dashboard/projects/${id}`)}
-                          onEdit={(id) => router.push(`/dashboard/projects/${id}/edit`)}
-                          onDelete={async (id) => {
-                            if (confirm('Projekt wirklich löschen?')) {
-                              try {
-                                await projectService.delete(id, {
-                                  organizationId: currentOrganization.id
-                                });
-                                loadProjects();
-                              } catch (error) {
-                                console.error('Fehler beim Löschen:', error);
+                        <div className="absolute right-0 top-8 z-50">
+                          <ProjectQuickActionsMenu
+                            project={project}
+                            isOpen={true}
+                            onClose={() => setShowQuickActions(null)}
+                            onView={(id) => router.push(`/dashboard/projects/${id}`)}
+                            onEdit={(id) => router.push(`/dashboard/projects/${id}/edit`)}
+                            onDelete={async (id) => {
+                              if (confirm('Projekt wirklich löschen?')) {
+                                try {
+                                  await projectService.delete(id, {
+                                    organizationId: currentOrganization.id
+                                  });
+                                  loadProjects();
+                                } catch (error) {
+                                  console.error('Fehler beim Löschen:', error);
+                                }
                               }
-                            }
-                          }}
-                          onMoveToStage={async (id, stage) => {
-                            // Stage-Wechsel Logik
-                            await handleProjectMove(id, stage);
-                          }}
-                        />
+                            }}
+                            onMoveToStage={async (id, stage) => {
+                              await handleProjectMove(id, stage);
+                            }}
+                          />
+                        </div>
                       )}
                     </div>
                   </div>
