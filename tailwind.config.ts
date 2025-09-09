@@ -13,6 +13,16 @@ const config: Config = {
         primary: {
           DEFAULT: '#005fab',
           hover: '#004a8c', // Eine dunklere Variante für den Hover-Effekt
+          50: '#e6f2fa',   // Sehr helles CI-Blau für Hintergründe
+          100: '#cce5f5',  // Helles CI-Blau für Akzente
+          200: '#99cbeb',  // Light CI-Blau für Borders
+          300: '#66b1e1',  // Medium-Light CI-Blau
+          400: '#3397d7',  // Medium CI-Blau
+          500: '#0080cd',  // Etwas heller als primary
+          600: '#005fab',  // Primary CI-Blau
+          700: '#004a8c',  // Primary hover
+          800: '#003969',  // Dunkel
+          900: '#002846',  // Sehr dunkel
         },
       },
     },

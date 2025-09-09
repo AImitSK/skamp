@@ -14,52 +14,52 @@ export const STAGE_COLORS: Record<PipelineStage, {
   count: string;
 }> = {
   'ideas_planning': {
-    bg: 'bg-blue-50',
-    border: 'border-blue-200',
-    text: 'text-blue-700',
-    accent: 'bg-blue-100',
-    header: 'bg-blue-100',
-    count: 'bg-blue-200 text-blue-800'
+    bg: 'bg-primary-50',
+    border: 'border-primary-200',
+    text: 'text-primary-700',
+    accent: 'bg-primary-100',
+    header: 'bg-primary-100',
+    count: 'bg-primary-200 text-primary-800'
   },
   'creation': {
-    bg: 'bg-blue-50',
-    border: 'border-blue-200',
-    text: 'text-blue-700',
-    accent: 'bg-blue-100',
-    header: 'bg-blue-100',
-    count: 'bg-blue-200 text-blue-800'
+    bg: 'bg-primary-50',
+    border: 'border-primary-200',
+    text: 'text-primary-700',
+    accent: 'bg-primary-100',
+    header: 'bg-primary-100',
+    count: 'bg-primary-200 text-primary-800'
   },
   'internal_approval': {
-    bg: 'bg-blue-50',
-    border: 'border-blue-200',
-    text: 'text-blue-700',
-    accent: 'bg-blue-100',
-    header: 'bg-blue-100',
-    count: 'bg-blue-200 text-blue-800'
+    bg: 'bg-primary-50',
+    border: 'border-primary-200',
+    text: 'text-primary-700',
+    accent: 'bg-primary-100',
+    header: 'bg-primary-100',
+    count: 'bg-primary-200 text-primary-800'
   },
   'customer_approval': {
-    bg: 'bg-blue-50',
-    border: 'border-blue-200',
-    text: 'text-blue-700',
-    accent: 'bg-blue-100',
-    header: 'bg-blue-100',
-    count: 'bg-blue-200 text-blue-800'
+    bg: 'bg-primary-50',
+    border: 'border-primary-200',
+    text: 'text-primary-700',
+    accent: 'bg-primary-100',
+    header: 'bg-primary-100',
+    count: 'bg-primary-200 text-primary-800'
   },
   'distribution': {
-    bg: 'bg-blue-50',
-    border: 'border-blue-200',
-    text: 'text-blue-700',
-    accent: 'bg-blue-100',
-    header: 'bg-blue-100',
-    count: 'bg-blue-200 text-blue-800'
+    bg: 'bg-primary-50',
+    border: 'border-primary-200',
+    text: 'text-primary-700',
+    accent: 'bg-primary-100',
+    header: 'bg-primary-100',
+    count: 'bg-primary-200 text-primary-800'
   },
   'monitoring': {
-    bg: 'bg-blue-50',
-    border: 'border-blue-200',
-    text: 'text-blue-700',
-    accent: 'bg-blue-100',
-    header: 'bg-blue-100',
-    count: 'bg-blue-200 text-blue-800'
+    bg: 'bg-primary-50',
+    border: 'border-primary-200',
+    text: 'text-primary-700',
+    accent: 'bg-primary-100',
+    header: 'bg-primary-100',
+    count: 'bg-primary-200 text-primary-800'
   },
   'completed': {
     bg: 'bg-gray-50',
