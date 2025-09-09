@@ -7,11 +7,14 @@ import {
   ClockIcon,
   UserIcon,
   ExclamationTriangleIcon,
-  EllipsisHorizontalIcon
+  EllipsisHorizontalIcon,
+  TrashIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 import { Project, ProjectPriority, PipelineStage } from '@/types/project';
 import { ProjectQuickActionsMenu } from './ProjectQuickActionsMenu';
 import { Avatar } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import { teamMemberService } from '@/lib/firebase/organization-service';
 import { projectService } from '@/lib/firebase/project-service';
 import { TeamMember } from '@/types/international';
@@ -87,6 +90,9 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loadingTeam, setLoadingTeam] = useState(true);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const quickActionButtonRef = useRef<HTMLButtonElement>(null);
   // Drag Hook
   const { isDragging, drag } = useDraggableProject(project);
@@ -151,24 +157,34 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
   };
 
   const handleDeleteProject = async (projectId: string) => {
-    if (confirm('Projekt wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) {
-      try {
-        if (!currentOrganization?.id) {
-          console.error('Keine Organisation gefunden');
-          return;
-        }
-        
-        // Projekt löschen
-        await projectService.delete(projectId, {
-          organizationId: currentOrganization.id
-        });
-        
-        // Seite neu laden um die Änderung zu reflektieren
-        window.location.reload();
-      } catch (error) {
-        console.error('Fehler beim Löschen des Projekts:', error);
-        alert('Fehler beim Löschen des Projekts. Bitte versuchen Sie es erneut.');
-      }
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!currentOrganization?.id) {
+      setDeleteError('Keine Organisation gefunden');
+      return;
+    }
+    
+    setIsDeleting(true);
+    setDeleteError(null);
+    
+    try {
+      // Projekt löschen
+      await projectService.delete(project.id, {
+        organizationId: currentOrganization.id
+      });
+      
+      // Dialog schließen
+      setShowDeleteDialog(false);
+      
+      // Seite neu laden um die Änderung zu reflektieren
+      window.location.reload();
+    } catch (error) {
+      console.error('Fehler beim Löschen des Projekts:', error);
+      setDeleteError('Fehler beim Löschen des Projekts. Bitte versuchen Sie es erneut.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -392,6 +408,74 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
       {progress?.criticalTasksRemaining > 0 && (
         <div className="mt-2 p-2 bg-orange-50 border border-orange-200 rounded text-xs text-orange-800">
           🔥 {progress.criticalTasksRemaining} kritische Tasks offen
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+            {/* Dialog Header */}
+            <div className="flex items-start mb-4">
+              <div className="flex-shrink-0">
+                <div className="flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                  <TrashIcon className="h-6 w-6 text-red-600" />
+                </div>
+              </div>
+              <div className="ml-4 flex-1">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Projekt löschen
+                </h3>
+                <p className="mt-2 text-sm text-gray-500">
+                  Möchten Sie das Projekt <strong>{project.title}</strong> wirklich löschen? 
+                  Diese Aktion kann nicht rückgängig gemacht werden.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowDeleteDialog(false)}
+                className="ml-4 text-gray-400 hover:text-gray-600"
+              >
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Error Message */}
+            {deleteError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-sm text-red-800">{deleteError}</p>
+              </div>
+            )}
+
+            {/* Dialog Actions */}
+            <div className="flex justify-end space-x-3">
+              <Button
+                type="button"
+                color="secondary"
+                onClick={() => setShowDeleteDialog(false)}
+                disabled={isDeleting}
+              >
+                Abbrechen
+              </Button>
+              <Button
+                type="button"
+                color="danger"
+                onClick={confirmDelete}
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <>
+                    <span className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
+                    Lösche...
+                  </>
+                ) : (
+                  <>
+                    <TrashIcon className="h-4 w-4 mr-2" />
+                    Löschen
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </div>
