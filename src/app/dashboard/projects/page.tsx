@@ -122,7 +122,7 @@ export default function ProjectsPage() {
       setLoading(true);
       setError(null);
       // Für Kanban-Ansicht alle Projekte außer archivierte laden
-      // Für Tabellenansicht je nach showArchived Filter
+      // Für Tabellenansicht je nach filterMode
       const projectList = await projectService.getAll({
         organizationId: currentOrganization.id,
         filters: filterMode === 'archived' ? {
@@ -774,7 +774,7 @@ export default function ProjectsPage() {
           )}
           
           {/* Empty State für Tabellenansicht */}
-          {projects.length === 0 && !showArchived && (
+          {projects.length === 0 && filterMode === 'active' && (
             <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm p-8 text-center">
               <RocketLaunchIcon className="mx-auto h-12 w-12 text-zinc-400 dark:text-zinc-600" />
               <h3 className="mt-2 text-sm font-medium text-zinc-900 dark:text-white">
@@ -786,7 +786,7 @@ export default function ProjectsPage() {
             </div>
           )}
           
-          {projects.length === 0 && showArchived && (
+          {projects.length === 0 && filterMode === 'archived' && (
             <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm p-8 text-center">
               <FolderIcon className="mx-auto h-12 w-12 text-zinc-400 dark:text-zinc-600" />
               <h3 className="mt-2 text-sm font-medium text-zinc-900 dark:text-white">
