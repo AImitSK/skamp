@@ -31,6 +31,7 @@ export interface ProjectCardProps {
   project: Project;
   onSelect?: (projectId: string) => void;
   onProjectMove?: (projectId: string, targetStage: PipelineStage) => Promise<void>;
+  onProjectAdded?: () => void;
   useDraggableProject: (project: Project) => any;
 }
 
@@ -83,6 +84,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
   project,
   onSelect,
   onProjectMove,
+  onProjectAdded,
   useDraggableProject
 }) => {
   const router = useRouter();
@@ -216,6 +218,11 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
       // Das Projekt sollte aus der Kanban-Ansicht verschwinden
       // da archivierte Projekte nur in der Tabellenansicht angezeigt werden
       console.log('Projekt archiviert:', projectId);
+      
+      // Trigger reload der Projektliste
+      if (onProjectAdded) {
+        onProjectAdded();
+      }
       
     } catch (error) {
       console.error('Fehler beim Archivieren:', error);

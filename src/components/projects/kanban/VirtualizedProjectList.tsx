@@ -17,6 +17,7 @@ export interface VirtualizedProjectListProps {
   height: number;
   onProjectSelect?: (projectId: string) => void;
   onProjectMove?: (projectId: string, targetStage: any) => Promise<void>;
+  onProjectAdded?: () => void;
   useDraggableProject: (project: Project) => any;
   loading?: boolean;
 }
@@ -28,6 +29,7 @@ interface ListItemProps {
     projects: Project[];
     onProjectSelect?: (projectId: string) => void;
     onProjectMove?: (projectId: string, targetStage: any) => Promise<void>;
+    onProjectAdded?: () => void;
     useDraggableProject: (project: Project) => any;
   };
 }
@@ -37,7 +39,7 @@ interface ListItemProps {
 // ========================================
 
 const ListItem: React.FC<ListItemProps> = memo(({ index, style, data }) => {
-  const { projects, onProjectSelect, onProjectMove, useDraggableProject } = data;
+  const { projects, onProjectSelect, onProjectMove, onProjectAdded, useDraggableProject } = data;
   const project = projects[index];
 
   if (!project) {
@@ -55,6 +57,7 @@ const ListItem: React.FC<ListItemProps> = memo(({ index, style, data }) => {
           project={project}
           onSelect={onProjectSelect}
           onProjectMove={onProjectMove}
+          onProjectAdded={onProjectAdded}
           useDraggableProject={useDraggableProject}
         />
       </div>
@@ -86,6 +89,7 @@ export const VirtualizedProjectList: React.FC<VirtualizedProjectListProps> = mem
   height,
   onProjectSelect,
   onProjectMove,
+  onProjectAdded,
   useDraggableProject,
   loading = false
 }) => {
@@ -94,8 +98,9 @@ export const VirtualizedProjectList: React.FC<VirtualizedProjectListProps> = mem
     projects,
     onProjectSelect,
     onProjectMove,
+    onProjectAdded,
     useDraggableProject
-  }), [projects, onProjectSelect, onProjectMove, useDraggableProject]);
+  }), [projects, onProjectSelect, onProjectMove, onProjectAdded, useDraggableProject]);
 
   // Performance threshold - virtualize only for large lists
   const shouldVirtualize = projects.length >= PERFORMANCE_CONFIG.virtualScrolling.threshold;

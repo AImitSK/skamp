@@ -24,7 +24,8 @@ import {
   EyeIcon,
   PencilIcon,
   TrashIcon,
-  ArchiveBoxIcon
+  ArchiveBoxIcon,
+  FunnelIcon
 } from '@heroicons/react/24/outline';
 import { ProjectCreationWizard } from '@/components/projects/creation/ProjectCreationWizard';
 import { projectService } from '@/lib/firebase/project-service';
@@ -389,6 +390,28 @@ export default function ProjectsPage() {
                 <ListBulletIcon className="h-4 w-4" />
               </button>
             </div>
+
+            {/* Filter Button - nur in Listenansicht */}
+            {viewMode === 'list' && (
+              <button
+                onClick={() => setShowArchived(!showArchived)}
+                className={`
+                  px-3 py-2 text-sm font-medium border rounded-lg transition-colors flex items-center
+                  ${showArchived
+                    ? 'border-blue-500 bg-blue-50 text-blue-700'
+                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }
+                `}
+                title="Archiv-Filter"
+              >
+                <FunnelIcon className="h-4 w-4" />
+                {showArchived && (
+                  <span className="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                    1
+                  </span>
+                )}
+              </button>
+            )}
             
             <Button onClick={() => setShowWizard(true)} className="flex items-center space-x-2">
               <PlusIcon className="w-4 h-4" />
@@ -444,35 +467,22 @@ export default function ProjectsPage() {
       {/* Table View */}
       {!loading && !error && viewMode === 'list' && (
         <div className="space-y-4">
-          {/* Filter Controls für Tabellenansicht */}
-          <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <h3 className="text-sm font-medium text-zinc-900 dark:text-white whitespace-nowrap">
-                  Projekte ({projects.length})
-                </h3>
-                <div className="flex items-center space-x-2">
-                  <label className="inline-flex items-center whitespace-nowrap">
-                    <input
-                      type="checkbox"
-                      checked={showArchived}
-                      onChange={(e) => setShowArchived(e.target.checked)}
-                      className="form-checkbox h-4 w-4 text-primary border-gray-300 rounded"
-                    />
-                    <span className="ml-2 text-sm text-zinc-700 dark:text-zinc-300">
-                      Archivierte Projekte anzeigen
-                    </span>
-                  </label>
+          {/* Archiv Info-Banner wenn Filter aktiv */}
+          {showArchived && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <div className="flex items-center">
+                <FunnelIcon className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2" />
+                <div>
+                  <h3 className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                    Archivansicht aktiv
+                  </h3>
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    Archivierte Projekte können über das 3-Punkte-Menü reaktiviert werden.
+                  </p>
                 </div>
               </div>
-              
-              {showArchived && (
-                <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Archivansicht - Projekte können über 3-Punkte-Menü reaktiviert werden
-                </div>
-              )}
             </div>
-          </div>
+          )}
 
           {projects.length > 0 && (
             <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm overflow-hidden">

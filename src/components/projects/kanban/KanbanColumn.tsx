@@ -119,6 +119,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = memo(({
             height={Math.min(500, projects.length * 120 + 20)} // Dynamic height with max
             onProjectSelect={onProjectSelect}
             onProjectMove={onProjectMove}
+            onProjectAdded={onProjectAdded}
             useDraggableProject={useDraggableProject}
             loading={loading}
           />
