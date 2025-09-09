@@ -204,6 +204,24 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
     }
   };
 
+  const handleArchiveProject = async (projectId: string) => {
+    if (!currentOrganization?.id) return;
+
+    try {
+      await projectService.archive(projectId, {
+        organizationId: currentOrganization.id,
+        userId: currentOrganization.ownerId
+      });
+      
+      // Das Projekt sollte aus der Kanban-Ansicht verschwinden
+      // da archivierte Projekte nur in der Tabellenansicht angezeigt werden
+      console.log('Projekt archiviert:', projectId);
+      
+    } catch (error) {
+      console.error('Fehler beim Archivieren:', error);
+    }
+  };
+
   return (
     <div
       ref={drag}
@@ -248,6 +266,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
             onClone={handleCloneProject}
             onShare={handleShareProject}
             onMoveToStage={handleMoveToStage}
+            onArchive={handleArchiveProject}
             triggerRef={quickActionButtonRef}
           />
         </div>

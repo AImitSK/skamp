@@ -160,6 +160,38 @@ export const projectService = {
   },
 
   /**
+   * Archiviert ein Projekt
+   */
+  async archive(
+    projectId: string,
+    context: { organizationId: string; userId: string }
+  ): Promise<void> {
+    try {
+      await this.update(projectId, {
+        status: 'archived'
+      }, context);
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
+   * Aktiviert ein archiviertes Projekt wieder
+   */
+  async unarchive(
+    projectId: string,
+    context: { organizationId: string; userId: string }
+  ): Promise<void> {
+    try {
+      await this.update(projectId, {
+        status: 'active'
+      }, context);
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  /**
    * Fügt eine Kampagne zu einem Projekt hinzu
    */
   async addLinkedCampaign(

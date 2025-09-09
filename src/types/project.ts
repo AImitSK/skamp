@@ -223,7 +223,8 @@ export type ProjectStatus =
   | 'active'
   | 'on_hold' 
   | 'completed'
-  | 'cancelled';
+  | 'cancelled'
+  | 'archived';
 
 export interface ProjectFilters {
   status?: ProjectStatus;

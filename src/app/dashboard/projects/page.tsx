@@ -23,7 +23,8 @@ import {
   BuildingOfficeIcon,
   EyeIcon,
   PencilIcon,
-  TrashIcon
+  TrashIcon,
+  ArchiveBoxIcon
 } from '@heroicons/react/24/outline';
 import { ProjectCreationWizard } from '@/components/projects/creation/ProjectCreationWizard';
 import { projectService } from '@/lib/firebase/project-service';
@@ -85,11 +86,12 @@ export default function ProjectsPage() {
   const [filters, setFilters] = useState<BoardFilters>({});
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loadingTeam, setLoadingTeam] = useState(true);
+  const [showArchived, setShowArchived] = useState(false);
 
   useEffect(() => {
     loadProjects();
     loadTeamMembers();
-  }, [currentOrganization?.id]);
+  }, [currentOrganization?.id, viewMode, showArchived]);
 
   const loadProjects = async () => {
     if (!currentOrganization?.id) return;
@@ -97,8 +99,17 @@ export default function ProjectsPage() {
     try {
       setLoading(true);
       setError(null);
+      // Für Kanban-Ansicht nur aktive Projekte laden
+      // Für Tabellenansicht je nach showArchived Filter
       const projectList = await projectService.getAll({
-        organizationId: currentOrganization.id
+        organizationId: currentOrganization.id,
+        filters: viewMode === 'board' ? {
+          status: 'active'  // Kanban zeigt nur aktive Projekte
+        } : showArchived ? {
+          status: 'archived'  // Tabellenansicht mit Archiv-Filter
+        } : {
+          status: 'active'  // Tabellenansicht ohne Archiv-Filter
+        }
       });
       setProjects(projectList);
     } catch (error: any) {
@@ -430,8 +441,40 @@ export default function ProjectsPage() {
       )}
 
       {/* Table View */}
-      {!loading && !error && projects.length > 0 && viewMode === 'list' && (
-        <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm overflow-hidden">
+      {!loading && !error && viewMode === 'list' && (
+        <div className="space-y-4">
+          {/* Filter Controls für Tabellenansicht */}
+          <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <h3 className="text-sm font-medium text-zinc-900 dark:text-white whitespace-nowrap">
+                  Projekte ({projects.length})
+                </h3>
+                <div className="flex items-center space-x-2">
+                  <label className="inline-flex items-center whitespace-nowrap">
+                    <input
+                      type="checkbox"
+                      checked={showArchived}
+                      onChange={(e) => setShowArchived(e.target.checked)}
+                      className="form-checkbox h-4 w-4 text-primary border-gray-300 rounded"
+                    />
+                    <span className="ml-2 text-sm text-zinc-700 dark:text-zinc-300">
+                      Archivierte Projekte anzeigen
+                    </span>
+                  </label>
+                </div>
+              </div>
+              
+              {showArchived && (
+                <div className="text-xs text-zinc-500 dark:text-zinc-400">
+                  Archivansicht - Projekte können über 3-Punkte-Menü reaktiviert werden
+                </div>
+              )}
+            </div>
+          </div>
+
+          {projects.length > 0 && (
+            <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm overflow-hidden">
           {/* Table Header */}
           <div className="px-8 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
             <div className="flex items-center">
@@ -593,6 +636,42 @@ export default function ProjectsPage() {
                             Bearbeiten
                           </DropdownItem>
                           <DropdownDivider />
+                          {project.status === 'archived' ? (
+                            <DropdownItem 
+                              onClick={async () => {
+                                try {
+                                  await projectService.unarchive(project.id!, {
+                                    organizationId: currentOrganization.id,
+                                    userId: currentOrganization.ownerId
+                                  });
+                                  loadProjects();
+                                } catch (error) {
+                                  console.error('Fehler beim Reaktivieren:', error);
+                                }
+                              }}
+                            >
+                              <ArchiveBoxIcon className="h-4 w-4" />
+                              Reaktivieren
+                            </DropdownItem>
+                          ) : (
+                            <DropdownItem 
+                              onClick={async () => {
+                                try {
+                                  await projectService.archive(project.id!, {
+                                    organizationId: currentOrganization.id,
+                                    userId: currentOrganization.ownerId
+                                  });
+                                  loadProjects();
+                                } catch (error) {
+                                  console.error('Fehler beim Archivieren:', error);
+                                }
+                              }}
+                            >
+                              <ArchiveBoxIcon className="h-4 w-4" />
+                              Archivieren
+                            </DropdownItem>
+                          )}
+                          <DropdownDivider />
                           <DropdownItem 
                             onClick={async () => {
                               if (confirm('Projekt wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) {
@@ -618,6 +697,33 @@ export default function ProjectsPage() {
               );
             })}
           </div>
+            </div>
+          )}
+          
+          {/* Empty State für Tabellenansicht */}
+          {projects.length === 0 && !showArchived && (
+            <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm p-8 text-center">
+              <RocketLaunchIcon className="mx-auto h-12 w-12 text-zinc-400 dark:text-zinc-600" />
+              <h3 className="mt-2 text-sm font-medium text-zinc-900 dark:text-white">
+                Keine aktiven Projekte
+              </h3>
+              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                Erstelle dein erstes Projekt oder aktiviere den Archiv-Filter.
+              </p>
+            </div>
+          )}
+          
+          {projects.length === 0 && showArchived && (
+            <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm p-8 text-center">
+              <FolderIcon className="mx-auto h-12 w-12 text-zinc-400 dark:text-zinc-600" />
+              <h3 className="mt-2 text-sm font-medium text-zinc-900 dark:text-white">
+                Keine archivierten Projekte
+              </h3>
+              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                Archivierte Projekte werden hier angezeigt.
+              </p>
+            </div>
+          )}
         </div>
       )}
 

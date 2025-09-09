@@ -10,7 +10,8 @@ import {
   ChatBubbleLeftIcon,
   DocumentTextIcon,
   CalendarIcon,
-  UserPlusIcon
+  UserPlusIcon,
+  ArchiveBoxIcon
 } from '@heroicons/react/24/outline';
 import { Project, PipelineStage } from '@/types/project';
 import { getStageConfig, getAllStages } from './kanban-constants';
@@ -33,6 +34,7 @@ export interface ProjectQuickActionsMenuProps {
   onViewReports?: (projectId: string) => void;
   onScheduleMeeting?: (projectId: string) => void;
   onInviteTeam?: (projectId: string) => void;
+  onArchive?: (projectId: string) => void;
   triggerRef?: React.RefObject<HTMLElement>;
 }
 
@@ -54,6 +56,7 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
   onViewReports,
   onScheduleMeeting,
   onInviteTeam,
+  onArchive,
   triggerRef
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
@@ -228,6 +231,18 @@ export const ProjectQuickActionsMenu: React.FC<ProjectQuickActionsMenuProps> = (
         )}
       </div>
 
+      {/* Archive Action */}
+      {onArchive && project.status !== 'archived' && (
+        <div className="py-1 border-t border-gray-100">
+          <button
+            onClick={(e) => handleAction(e, () => onArchive(project.id!))}
+            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+          >
+            <ArchiveBoxIcon className="h-4 w-4" />
+            <span>Archivieren</span>
+          </button>
+        </div>
+      )}
 
       {/* Danger Zone */}
       {onDelete && (
