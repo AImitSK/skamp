@@ -139,6 +139,7 @@ function ProjectUploadModal({
       await Promise.all(uploadPromises);
       
       showAlert('success', `${selectedFiles.length} ${selectedFiles.length === 1 ? 'Datei wurde' : 'Dateien wurden'} erfolgreich hochgeladen.`);
+      setSelectedFiles([]); // Upload-Liste zurücksetzen
       setTimeout(() => {
         onUploadSuccess();
         onClose();
@@ -298,8 +299,34 @@ export default function ProjectFoldersView({
       setCurrentFolders(projectFolders.subfolders);
       setCurrentAssets([]);
       setBreadcrumbs([]);
+      // Lade die Anzahl der Dateien für jeden Ordner
+      loadFolderCounts();
     }
   }, [projectFolders]);
+
+  const [folderCounts, setFolderCounts] = useState<{[key: string]: number}>({});
+
+  const loadFolderCounts = async () => {
+    if (!projectFolders?.subfolders) return;
+    
+    try {
+      const counts: {[key: string]: number} = {};
+      await Promise.all(
+        projectFolders.subfolders.map(async (folder: any) => {
+          try {
+            const assets = await mediaService.getMediaAssets(organizationId, folder.id);
+            counts[folder.id] = assets.length;
+          } catch (error) {
+            console.error(`Fehler beim Laden der Assets für Ordner ${folder.id}:`, error);
+            counts[folder.id] = 0;
+          }
+        })
+      );
+      setFolderCounts(counts);
+    } catch (error) {
+      console.error('Fehler beim Laden der Ordner-Anzahlen:', error);
+    }
+  };
 
   const loadFolderContent = async (folderId?: string) => {
     setLoading(true);
@@ -349,6 +376,27 @@ export default function ProjectFoldersView({
       loadFolderContent(selectedFolderId);
     } else {
       onRefresh();
+      loadFolderCounts(); // Update folder counts after upload
+    }
+  };
+
+  const handleDeleteAsset = async (assetId: string, fileName: string) => {
+    if (!confirm(`Möchten Sie die Datei "${fileName}" wirklich löschen?`)) {
+      return;
+    }
+
+    try {
+      await mediaService.deleteAsset(assetId, { organizationId });
+      // Refresh current view
+      if (selectedFolderId) {
+        loadFolderContent(selectedFolderId);
+      } else {
+        onRefresh();
+        loadFolderCounts(); // Update folder counts after deletion
+      }
+    } catch (error) {
+      console.error('Fehler beim Löschen der Datei:', error);
+      alert('Fehler beim Löschen der Datei. Bitte versuchen Sie es erneut.');
     }
   };
 
@@ -407,9 +455,6 @@ export default function ProjectFoldersView({
         </Button>
       </div>
 
-      <Text className="text-gray-600 mb-4">
-        Dateien und Ordner in diesem Projekt. Uploads werden automatisch dem Projektkunden zugeordnet.
-      </Text>
 
       {/* Breadcrumbs */}
       {breadcrumbs.length > 0 && (
@@ -433,7 +478,7 @@ export default function ProjectFoldersView({
       <div className="space-y-3">
         {/* Ordner anzeigen */}
         {currentFolders.map((folder: any, index: number) => {
-          const fileCount = projectFolders.statistics?.folderSizes?.[folder.id] || 0;
+          const fileCount = folderCounts[folder.id] ?? 0;
           const colors = [
             { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-900', icon: 'text-blue-600' },
             { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-900', icon: 'text-purple-600' },
@@ -462,36 +507,48 @@ export default function ProjectFoldersView({
           );
         })}
 
-        {/* Assets anzeigen */}
-        {currentAssets.map((asset: any) => (
-          <div key={asset.id} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                {getFileIcon(asset)}
-                <div>
-                  <Text className="font-medium text-gray-900">
-                    {asset.fileName}
-                  </Text>
-                  <div className="flex items-center space-x-2 mt-1">
-                    <Text className="text-xs text-gray-500">
-                      {formatFileSize((asset.metadata as any)?.fileSize)}
+        {/* Assets anzeigen - mit Scrollbar */}
+        <div className="max-h-96 overflow-y-auto space-y-2">
+          {currentAssets.map((asset: any) => (
+            <div key={asset.id} className="bg-gray-50 border border-gray-200 rounded-lg p-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2 min-w-0 flex-1">
+                  {getFileIcon(asset)}
+                  <div className="min-w-0 flex-1">
+                    <Text className="text-sm font-medium text-gray-900 truncate">
+                      {asset.fileName}
                     </Text>
-                    <span className="text-gray-300">•</span>
-                    <Text className="text-xs text-gray-500">
-                      {asset.createdAt?.toDate?.()?.toLocaleDateString('de-DE') || 'Unbekannt'}
-                    </Text>
+                    <div className="flex items-center space-x-1 mt-0.5">
+                      <Text className="text-xs text-gray-500">
+                        {formatFileSize(asset.size || asset.metadata?.size || asset.fileSize)}
+                      </Text>
+                      <span className="text-gray-300 text-xs">•</span>
+                      <Text className="text-xs text-gray-500">
+                        {asset.createdAt?.toDate?.()?.toLocaleDateString('de-DE') || 'Unbekannt'}
+                      </Text>
+                    </div>
                   </div>
                 </div>
+                <div className="flex items-center space-x-1 ml-2">
+                  <Button
+                    plain
+                    onClick={() => window.open(asset.downloadUrl, '_blank')}
+                    className="text-xs px-2 py-1"
+                  >
+                    Ansehen
+                  </Button>
+                  <Button
+                    plain
+                    onClick={() => handleDeleteAsset(asset.id, asset.fileName)}
+                    className="text-xs px-2 py-1 text-red-600 hover:text-red-700"
+                  >
+                    Löschen
+                  </Button>
+                </div>
               </div>
-              <Button
-                plain
-                onClick={() => window.open(asset.downloadUrl, '_blank')}
-              >
-                Ansehen
-              </Button>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
 
         {/* Empty State */}
         {currentFolders.length === 0 && currentAssets.length === 0 && !loading && (
