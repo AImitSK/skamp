@@ -872,7 +872,7 @@ export default function ProjectFoldersView({
   const handleEditDocument = (asset: any) => {
     const document: InternalDocument = {
       ...asset,
-      contentRef: asset.contentRef || asset.id // Fallback für bestehende Assets
+      contentRef: asset.contentRef // Keine Fallback-Logik - muss exakt stimmen
     };
     setEditingDocument(document);
     setShowDocumentEditor(true);
@@ -901,14 +901,61 @@ export default function ProjectFoldersView({
   const handleAssetClick = (asset: any) => {
     // Check if it's a document type that should open in editor
     const isEditableDocument = asset.fileType === 'celero-doc' || 
-                              asset.fileName?.endsWith('.celero-doc') ||
-                              asset.fileName?.endsWith('.docx');
+                              asset.fileName?.endsWith('.celero-doc');
     
     if (isEditableDocument) {
       handleEditDocument(asset);
     } else {
-      // Open normally for other file types
+      // Open normally for other file types (including .docx)
       window.open(asset.downloadUrl, '_blank');
+    }
+  };
+  
+  // Download document as HTML or text
+  const handleDownloadDocument = async (asset: any) => {
+    try {
+      if (asset.contentRef) {
+        // Load document content
+        const content = await documentContentService.loadDocument(asset.contentRef);
+        if (content) {
+          // Create HTML file
+          const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>${asset.fileName.replace('.celero-doc', '')}</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        h1, h2, h3 { color: #333; }
+        p { line-height: 1.6; }
+    </style>
+</head>
+<body>
+    ${content.content}
+</body>
+</html>`;
+          
+          // Create download
+          const blob = new Blob([htmlContent], { type: 'text/html' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${asset.fileName.replace('.celero-doc', '')}.html`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        } else {
+          alert('Dokument-Inhalt konnte nicht geladen werden.');
+        }
+      } else {
+        // Regular download for non-celero documents
+        window.open(asset.downloadUrl, '_blank');
+      }
+    } catch (error) {
+      console.error('Fehler beim Download:', error);
+      alert('Fehler beim Download des Dokuments.');
     }
   };
 
@@ -1130,7 +1177,7 @@ export default function ProjectFoldersView({
                       <EllipsisVerticalIcon className="h-4 w-4 text-gray-500" />
                     </DropdownButton>
                     <DropdownMenu anchor="bottom end">
-                      {asset.fileType === 'celero-doc' || asset.fileName?.endsWith('.celero-doc') || asset.fileName?.endsWith('.docx') ? (
+                      {asset.fileType === 'celero-doc' || asset.fileName?.endsWith('.celero-doc') ? (
                         <DropdownItem onClick={() => handleEditDocument(asset)}>
                           Bearbeiten
                         </DropdownItem>
@@ -1139,6 +1186,9 @@ export default function ProjectFoldersView({
                           Ansehen
                         </DropdownItem>
                       )}
+                      <DropdownItem onClick={() => handleDownloadDocument(asset)}>
+                        Download
+                      </DropdownItem>
                       <DropdownItem onClick={() => handleMoveAsset(asset)}>
                         Verschieben
                       </DropdownItem>
