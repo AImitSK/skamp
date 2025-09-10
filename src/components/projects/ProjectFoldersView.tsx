@@ -126,9 +126,17 @@ function MoveAssetModal({
   currentFolderId?: string;
   organizationId: string;
 }) {
-  const [selectedFolderId, setSelectedFolderId] = useState(currentFolderId || '');
+  const [selectedFolderId, setSelectedFolderId] = useState('');
   const [moving, setMoving] = useState(false);
   const [alert, setAlert] = useState<{ type: 'error'; message: string } | null>(null);
+  
+  // Modal zurücksetzen wenn geöffnet/geschlossen wird
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedFolderId(''); // Immer zurücksetzen, keine Vorauswahl
+      setAlert(null);
+    }
+  }, [isOpen]);
 
   const showAlert = (message: string) => {
     setAlert({ type: 'error', message });
@@ -175,7 +183,7 @@ function MoveAssetModal({
             value={selectedFolderId}
             onChange={(e) => setSelectedFolderId(e.target.value)}
           >
-            <option value="">-- Root (Hauptordner) --</option>
+            <option value="">-- Keinen Ordner ausgewählt --</option>
             {availableFolders.map((folder) => (
               <option key={folder.id} value={folder.id}>
                 {folder.displayName || folder.name}
@@ -565,14 +573,17 @@ export default function ProjectFoldersView({
     try {
       const allFoldersFlat: any[] = [];
       
-      // Rekursive Funktion um alle Unterordner zu sammeln
+      // Rekursive Funktion um alle Unterordner zu sammeln (aber nicht die Hauptordner selbst)
       const collectFolders = async (folders: any[], level = 0) => {
         for (const folder of folders) {
-          allFoldersFlat.push({
-            ...folder,
-            level,
-            displayName: '  '.repeat(level) + folder.name
-          });
+          // Nur Unterordner hinzufügen, nicht die Hauptordner (Medien, Dokumente, Pressemeldungen)
+          if (level > 0) {
+            allFoldersFlat.push({
+              ...folder,
+              level,
+              displayName: '  '.repeat(level - 1) + folder.name
+            });
+          }
           
           // Lade Unterordner falls vorhanden
           try {
@@ -586,7 +597,7 @@ export default function ProjectFoldersView({
         }
       };
       
-      await collectFolders(projectFolders.subfolders);
+      await collectFolders(projectFolders.subfolders, 0);
       setAllFolders(allFoldersFlat);
     } catch (error) {
       console.error('Fehler beim Laden aller Ordner:', error);
@@ -693,15 +704,23 @@ export default function ProjectFoldersView({
   };
 
   const handleMoveSuccess = () => {
-    // Refresh current view
+    // Refresh current view nach dem Verschieben
     if (selectedFolderId) {
       loadFolderContent(selectedFolderId);
     } else {
-      onRefresh();
+      // Zurück zur Hauptansicht und alles neu laden
+      setCurrentFolders(projectFolders?.subfolders || []);
+      setCurrentAssets([]);
+      setBreadcrumbs([]);
     }
+    
+    // Parent-Daten und Ordner-Counts aktualisieren
+    onRefresh();
     setTimeout(() => {
       loadFolderCounts();
+      loadAllFolders(); // Auch alle Ordner neu laden für das Modal
     }, 500);
+    
     showAlert('success', 'Datei wurde erfolgreich verschoben.');
   };
 
