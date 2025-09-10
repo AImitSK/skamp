@@ -116,14 +116,18 @@ export default function DocumentEditorModal({
 
   // Lade existierendes Dokument
   useEffect(() => {
-    if (document?.contentRef && isOpen) {
+    if (document?.contentRef && isOpen && editor) {
+      console.log('useEffect: Loading document with editor ready');
       loadDocument();
-    } else if (isOpen && !document) {
+    } else if (isOpen && !document && editor) {
       // Neues Dokument
+      console.log('useEffect: Setting up new document');
       setTitle('Neues Dokument');
-      editor?.commands.setContent('<p>Beginnen Sie hier mit Ihrem Dokument...</p>');
+      editor.commands.setContent('<p>Beginnen Sie hier mit Ihrem Dokument...</p>');
+    } else if (isOpen) {
+      console.log('useEffect: Modal open but editor not ready yet', { editor: !!editor, document: !!document });
     }
-  }, [document, isOpen]);
+  }, [document, isOpen, editor]);
 
   const loadDocument = async () => {
     if (!document?.contentRef || !user?.uid) return;
@@ -143,7 +147,22 @@ export default function DocumentEditorModal({
       if (content) {
         setDocumentContent(content);
         setTitle(document.fileName.replace('.celero-doc', ''));
-        editor?.commands.setContent(content.content);
+        
+        // Stelle sicher, dass Editor bereit ist und setze Content
+        if (editor) {
+          console.log('Setting editor content:', content.content);
+          editor.commands.setContent(content.content);
+          // Double-check: Warten und erneut setzen falls nötig
+          setTimeout(() => {
+            if (editor && editor.isEmpty) {
+              console.log('Editor still empty, retrying setContent...');
+              editor.commands.setContent(content.content);
+            }
+          }, 100);
+        } else {
+          console.warn('Editor not ready when trying to set content');
+        }
+        
         console.log('Document loaded successfully, content length:', content.content.length);
         
         // Versuche Dokument zu sperren (optional)
