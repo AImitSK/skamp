@@ -39,6 +39,7 @@ import { projectService } from '@/lib/firebase/project-service';
 import { Project } from '@/types/project';
 import { ProjectEditWizard } from '@/components/projects/edit/ProjectEditWizard';
 import { strategyDocumentService, StrategyDocument } from '@/lib/firebase/strategy-document-service';
+import ProjectFoldersView from '@/components/projects/ProjectFoldersView';
 import Link from 'next/link';
 
 export default function ProjectDetailPage() {
@@ -135,10 +136,6 @@ export default function ProjectDetailPage() {
     }
   };
 
-  const handleOpenFolder = (folderId: string) => {
-    // Navigation zur Media Library mit spezifischem Ordner
-    window.open(`/dashboard/pr-tools/media-library?folder=${folderId}`, '_blank');
-  };
 
   const loadProject = async () => {
     if (!projectId || !currentOrganization?.id) return;
@@ -928,123 +925,15 @@ export default function ProjectDetailPage() {
                   )}
                 </div>
 
-                {/* Projekt-Ordner */}
-                <div className="bg-white border border-gray-200 rounded-lg p-6">
-                  <div className="flex items-center mb-4">
-                    <FolderIcon className="h-5 w-5 text-purple-500 mr-2" />
-                    <Subheading>Projekt-Ordner</Subheading>
-                    {foldersLoading && (
-                      <div className="ml-2 animate-spin h-4 w-4 border-2 border-purple-500 border-t-transparent rounded-full"></div>
-                    )}
-                  </div>
-                  <Text className="text-gray-600 mb-4">
-                    Organisierte Ordnerstruktur für alle projektbezogenen Dateien und Assets.
-                  </Text>
-                  
-                  {projectFolders ? (
-                    <div className="space-y-3">
-                      {/* Hauptordner */}
-                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <FolderIcon className="h-5 w-5 text-purple-600 mr-2" />
-                            <div>
-                              <Text className="text-sm font-medium text-purple-900">
-                                {projectFolders.mainFolder?.name || 'Hauptordner'}
-                              </Text>
-                              <Text className="text-xs text-purple-600">
-                                {projectFolders.statistics.totalFiles} Dateien gesamt
-                              </Text>
-                            </div>
-                          </div>
-                          <Button
-                            plain
-                            onClick={() => handleOpenFolder(projectFolders.mainFolder?.id || '')}
-                          >
-                            Öffnen
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      {/* Unterordner */}
-                      <div className="space-y-2">
-                        {projectFolders.subfolders.map((folder: any, index: number) => {
-                          const fileCount = projectFolders.statistics.folderSizes[folder.id] || 0;
-                          const colors = [
-                            { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-900', icon: 'text-blue-600' },
-                            { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-900', icon: 'text-purple-600' },
-                            { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-900', icon: 'text-green-600' },
-                            { bg: 'bg-yellow-50', border: 'border-yellow-200', text: 'text-yellow-900', icon: 'text-yellow-600' },
-                            { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-900', icon: 'text-red-600' }
-                          ];
-                          const color = colors[index % colors.length];
-                          
-                          return (
-                            <div key={folder.id} className={`${color.bg} ${color.border} border rounded-lg p-2`}>
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center">
-                                  <FolderIcon className={`h-4 w-4 ${color.icon} mr-2`} />
-                                  <div>
-                                    <Text className={`text-sm font-medium ${color.text}`}>
-                                      {folder.name}
-                                    </Text>
-                                    <Text className="text-xs text-gray-500">
-                                      {fileCount} {fileCount === 1 ? 'Datei' : 'Dateien'}
-                                    </Text>
-                                  </div>
-                                </div>
-                                <Button
-                                  plain
-                                  onClick={() => handleOpenFolder(folder.id)}
-                                >
-                                  <FolderIcon className="w-3 h-3 mr-1" />
-                                  Öffnen
-                                </Button>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                      
-                      {/* Statistiken */}
-                      {projectFolders.statistics.lastActivity && (
-                        <div className="text-xs text-gray-500 mt-3">
-                          Letzte Aktivität: {projectFolders.statistics.lastActivity.toDate().toLocaleDateString('de-DE', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    // Fallback für Projekte ohne automatische Ordnerstruktur
-                    <div className="space-y-2">
-                      <div className="text-center py-4">
-                        <FolderIcon className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-                        <Text className="text-sm text-gray-500">
-                          Keine automatische Ordnerstruktur gefunden
-                        </Text>
-                        <Text className="text-xs text-gray-400">
-                          Nur neue Projekte haben automatische Ordner
-                        </Text>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className="mt-4">
-                    <Button
-                      plain
-                      className="w-full"
-                      onClick={() => window.open('/dashboard/pr-tools/media-library', '_blank')}
-                    >
-                      <FolderIcon className="w-4 h-4 mr-2" />
-                      Media-Bibliothek öffnen
-                    </Button>
-                  </div>
-                </div>
+                {/* Projekt-Ordner - Neue Komponente */}
+                <ProjectFoldersView
+                  projectId={project.id!}
+                  organizationId={currentOrganization.id}
+                  projectFolders={projectFolders}
+                  foldersLoading={foldersLoading}
+                  onRefresh={loadProjectFolders}
+                  clientId={project.customer?.id || ''}
+                />
 
                 {/* Team-Kommunikation */}
                 <div className="bg-white border border-gray-200 rounded-lg p-6">
