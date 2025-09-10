@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { 
   FolderIcon, 
   CloudArrowUpIcon,
@@ -8,7 +9,9 @@ import {
   PhotoIcon,
   XMarkIcon,
   InformationCircleIcon,
-  EllipsisVerticalIcon
+  EllipsisVerticalIcon,
+  DocumentPlusIcon,
+  TableCellsIcon
 } from '@heroicons/react/24/outline';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -20,6 +23,14 @@ import { Field, Label } from '@/components/ui/fieldset';
 import { Select } from '@/components/ui/select';
 import { mediaService } from '@/lib/firebase/media-service';
 import { useAuth } from '@/context/AuthContext';
+import { documentContentService } from '@/lib/firebase/document-content-service';
+import type { InternalDocument } from '@/types/document-content';
+
+// Lazy load Document Editor Modal
+const DocumentEditorModal = dynamic(
+  () => import('./DocumentEditorModal'),
+  { ssr: false }
+);
 
 // Skeleton Loader Component
 function FolderSkeleton() {
@@ -634,6 +645,10 @@ export default function ProjectFoldersView({
     message: string;
     onConfirm: () => void;
   } | null>(null);
+  
+  // Document Editor States
+  const [showDocumentEditor, setShowDocumentEditor] = useState(false);
+  const [editingDocument, setEditingDocument] = useState<InternalDocument | null>(null);
 
   // Initial load - zeige die Unterordner des Hauptordners
   useEffect(() => {
@@ -847,6 +862,55 @@ export default function ProjectFoldersView({
       onConfirm: () => confirmDeleteAsset(assetId, fileName)
     });
   };
+  
+  // Document Editor Handlers
+  const handleCreateDocument = () => {
+    setEditingDocument(null);
+    setShowDocumentEditor(true);
+  };
+  
+  const handleEditDocument = (asset: any) => {
+    const document: InternalDocument = {
+      ...asset,
+      contentRef: asset.contentRef || asset.id // Fallback für bestehende Assets
+    };
+    setEditingDocument(document);
+    setShowDocumentEditor(true);
+  };
+  
+  const handleDocumentSave = () => {
+    // Refresh current view after document save
+    if (selectedFolderId) {
+      loadFolderContent(selectedFolderId);
+    } else {
+      onRefresh();
+    }
+    setShowDocumentEditor(false);
+    setEditingDocument(null);
+    
+    showAlert('success', 'Dokument wurde erfolgreich gespeichert.');
+  };
+  
+  // Check if we are in "Dokumente" folder
+  const isInDocumentsFolder = () => {
+    return breadcrumbs.some(b => b.name === 'Dokumente') || 
+           currentFolders.some(f => f.name === 'Dokumente');
+  };
+  
+  // Handle asset click - open documents in editor
+  const handleAssetClick = (asset: any) => {
+    // Check if it's a document type that should open in editor
+    const isEditableDocument = asset.fileType === 'celero-doc' || 
+                              asset.fileName?.endsWith('.celero-doc') ||
+                              asset.fileName?.endsWith('.docx');
+    
+    if (isEditableDocument) {
+      handleEditDocument(asset);
+    } else {
+      // Open normally for other file types
+      window.open(asset.downloadUrl, '_blank');
+    }
+  };
 
   const confirmDeleteAsset = async (assetId: string, fileName: string) => {
     setConfirmDialog(null);
@@ -941,6 +1005,30 @@ export default function ProjectFoldersView({
               Ordner erstellen
             </Button>
           )}
+          {/* Document Editor Buttons - nur im Dokumente-Ordner sichtbar */}
+          {isInDocumentsFolder() && (
+            <div className="flex items-center space-x-2">
+              <Button
+                plain
+                onClick={handleCreateDocument}
+                disabled={loading}
+                title="Neues Textdokument erstellen"
+              >
+                <DocumentPlusIcon className="w-4 h-4 mr-2" />
+                Text erstellen
+              </Button>
+              <Button
+                plain
+                onClick={() => {/* TODO: Tabellen-Editor */}}
+                disabled={loading}
+                title="Neue Tabelle erstellen"
+              >
+                <TableCellsIcon className="w-4 h-4 mr-2" />
+                Tabelle erstellen
+              </Button>
+            </div>
+          )}
+          
           <Button
             onClick={() => setShowUploadModal(true)}
             disabled={loading || (!selectedFolderId && breadcrumbs.length === 0)}
@@ -1024,7 +1112,7 @@ export default function ProjectFoldersView({
                   {getFileIcon(asset)}
                   <div className="min-w-0 flex-1 flex items-center">
                     <button
-                      onClick={() => window.open(asset.downloadUrl, '_blank')}
+                      onClick={() => handleAssetClick(asset)}
                       className="text-left hover:text-blue-600 transition-colors w-full"
                     >
                       <Text className="text-sm font-medium text-gray-900 truncate hover:text-blue-600">
@@ -1042,9 +1130,15 @@ export default function ProjectFoldersView({
                       <EllipsisVerticalIcon className="h-4 w-4 text-gray-500" />
                     </DropdownButton>
                     <DropdownMenu anchor="bottom end">
-                      <DropdownItem onClick={() => window.open(asset.downloadUrl, '_blank')}>
-                        Ansehen
-                      </DropdownItem>
+                      {asset.fileType === 'celero-doc' || asset.fileName?.endsWith('.celero-doc') || asset.fileName?.endsWith('.docx') ? (
+                        <DropdownItem onClick={() => handleEditDocument(asset)}>
+                          Bearbeiten
+                        </DropdownItem>
+                      ) : (
+                        <DropdownItem onClick={() => window.open(asset.downloadUrl, '_blank')}>
+                          Ansehen
+                        </DropdownItem>
+                      )}
                       <DropdownItem onClick={() => handleMoveAsset(asset)}>
                         Verschieben
                       </DropdownItem>
@@ -1107,6 +1201,22 @@ export default function ProjectFoldersView({
         organizationId={organizationId}
       />
 
+      {/* Document Editor Modal */}
+      {showDocumentEditor && (
+        <DocumentEditorModal
+          isOpen={showDocumentEditor}
+          onClose={() => {
+            setShowDocumentEditor(false);
+            setEditingDocument(null);
+          }}
+          onSave={handleDocumentSave}
+          document={editingDocument}
+          folderId={selectedFolderId || projectFolders?.id}
+          organizationId={organizationId}
+          projectId={projectId}
+        />
+      )}
+      
       {/* Confirm Dialog */}
       {confirmDialog && (
         <ConfirmDialog
