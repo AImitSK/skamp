@@ -917,37 +917,65 @@ export default function ProjectFoldersView({
     }
   };
   
-  // Download document as HTML or text
+  // Convert HTML to RTF
+  const convertHtmlToRtf = (html: string, title: string): string => {
+    // Remove HTML tags and convert basic formatting to RTF
+    let text = html
+      // Convert headings
+      .replace(/<h1[^>]*>(.*?)<\/h1>/gi, '\\par\\fs28\\b $1\\b0\\fs24\\par\\par')
+      .replace(/<h2[^>]*>(.*?)<\/h2>/gi, '\\par\\fs26\\b $1\\b0\\fs24\\par\\par')
+      .replace(/<h3[^>]*>(.*?)<\/h3>/gi, '\\par\\fs24\\b $1\\b0\\fs24\\par\\par')
+      // Convert bold and italic
+      .replace(/<strong[^>]*>(.*?)<\/strong>/gi, '\\b $1\\b0')
+      .replace(/<b[^>]*>(.*?)<\/b>/gi, '\\b $1\\b0')
+      .replace(/<em[^>]*>(.*?)<\/em>/gi, '\\i $1\\i0')
+      .replace(/<i[^>]*>(.*?)<\/i>/gi, '\\i $1\\i0')
+      // Convert underline
+      .replace(/<u[^>]*>(.*?)<\/u>/gi, '\\ul $1\\ul0')
+      // Convert paragraphs
+      .replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\\par\\par')
+      // Convert line breaks
+      .replace(/<br[^>]*>/gi, '\\par')
+      // Convert lists
+      .replace(/<ul[^>]*>/gi, '')
+      .replace(/<\/ul>/gi, '\\par')
+      .replace(/<li[^>]*>(.*?)<\/li>/gi, '\\bullet $1\\par')
+      // Remove any remaining HTML tags
+      .replace(/<[^>]*>/g, '')
+      // Decode HTML entities
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      // Clean up extra spaces and line breaks
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    // RTF header and formatting
+    const rtfContent = `{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Times New Roman;}}
+\\f0\\fs24 ${text}
+}`;
+
+    return rtfContent;
+  };
+
+  // Download document as RTF or other formats
   const handleDownloadDocument = async (asset: any) => {
     try {
       if (asset.contentRef) {
         // Load document content
         const content = await documentContentService.loadDocument(asset.contentRef);
         if (content) {
-          // Create HTML file
-          const htmlContent = `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>${asset.fileName.replace('.celero-doc', '')}</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-        h1, h2, h3 { color: #333; }
-        p { line-height: 1.6; }
-    </style>
-</head>
-<body>
-    ${content.content}
-</body>
-</html>`;
+          // Convert to RTF
+          const rtfContent = convertHtmlToRtf(content.content, asset.fileName.replace('.celero-doc', ''));
           
-          // Create download
-          const blob = new Blob([htmlContent], { type: 'text/html' });
+          // Create RTF download
+          const blob = new Blob([rtfContent], { type: 'application/rtf' });
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `${asset.fileName.replace('.celero-doc', '')}.html`;
+          a.download = `${asset.fileName.replace('.celero-doc', '')}.rtf`;
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
