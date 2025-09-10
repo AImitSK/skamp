@@ -7,13 +7,17 @@ import {
   DocumentTextIcon,
   PhotoIcon,
   XMarkIcon,
-  InformationCircleIcon
+  InformationCircleIcon,
+  EllipsisVerticalIcon
 } from '@heroicons/react/24/outline';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { Subheading } from '@/components/ui/heading';
 import { Badge } from '@/components/ui/badge';
+import { Dropdown, DropdownButton, DropdownMenu, DropdownItem, DropdownDivider } from '@/components/ui/dropdown';
+import { Field, Label } from '@/components/ui/fieldset';
+import { Select } from '@/components/ui/select';
 import { mediaService } from '@/lib/firebase/media-service';
 import { useAuth } from '@/context/AuthContext';
 
@@ -76,6 +80,97 @@ function ConfirmDialog({
         </Button>
         <Button onClick={onConfirm} className="bg-red-600 text-white hover:bg-red-700">
           Löschen
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+// Move Asset Modal Component
+function MoveAssetModal({
+  isOpen,
+  onClose,
+  onMoveSuccess,
+  asset,
+  availableFolders,
+  currentFolderId,
+  organizationId
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onMoveSuccess: () => void;
+  asset: any;
+  availableFolders: any[];
+  currentFolderId?: string;
+  organizationId: string;
+}) {
+  const [selectedFolderId, setSelectedFolderId] = useState(currentFolderId || '');
+  const [moving, setMoving] = useState(false);
+  const [alert, setAlert] = useState<{ type: 'error'; message: string } | null>(null);
+
+  const showAlert = (message: string) => {
+    setAlert({ type: 'error', message });
+    setTimeout(() => setAlert(null), 3000);
+  };
+
+  const handleMove = async () => {
+    if (!asset?.id) return;
+    
+    setMoving(true);
+    try {
+      await mediaService.updateAsset(asset.id, {
+        folderId: selectedFolderId || null
+      });
+      
+      onMoveSuccess();
+      onClose();
+    } catch (error) {
+      console.error('Fehler beim Verschieben der Datei:', error);
+      showAlert('Fehler beim Verschieben der Datei. Bitte versuchen Sie es erneut.');
+    } finally {
+      setMoving(false);
+    }
+  };
+
+  if (!isOpen || !asset) return null;
+
+  return (
+    <Dialog open={isOpen} onClose={onClose}>
+      <DialogTitle>Datei verschieben</DialogTitle>
+      <DialogBody className="space-y-4">
+        {alert && <Alert type={alert.type} message={alert.message} />}
+        
+        <div className="bg-gray-50 p-3 rounded-lg">
+          <div className="flex items-center space-x-2">
+            <DocumentTextIcon className="w-5 h-5 text-gray-500" />
+            <Text className="font-medium">{asset.fileName}</Text>
+          </div>
+        </div>
+        
+        <Field>
+          <Label>Zielordner auswählen</Label>
+          <Select
+            value={selectedFolderId}
+            onChange={(e) => setSelectedFolderId(e.target.value)}
+          >
+            <option value="">-- Root (Hauptordner) --</option>
+            {availableFolders.map((folder) => (
+              <option key={folder.id} value={folder.id}>
+                {folder.name}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      </DialogBody>
+      <DialogActions>
+        <Button plain onClick={onClose} disabled={moving}>
+          Abbrechen
+        </Button>
+        <Button
+          onClick={handleMove}
+          disabled={moving}
+        >
+          {moving ? 'Wird verschoben...' : 'Verschieben'}
         </Button>
       </DialogActions>
     </Dialog>
@@ -417,6 +512,8 @@ export default function ProjectFoldersView({
   const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
   const [breadcrumbs, setBreadcrumbs] = useState<Array<{id: string, name: string}>>([]);
   const [alert, setAlert] = useState<{ type: 'info' | 'error' | 'success'; message: string } | null>(null);
+  const [showMoveModal, setShowMoveModal] = useState(false);
+  const [assetToMove, setAssetToMove] = useState<any>(null);
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     title: string;
@@ -529,6 +626,24 @@ export default function ProjectFoldersView({
   const showAlert = (type: 'info' | 'error' | 'success', message: string) => {
     setAlert({ type, message });
     setTimeout(() => setAlert(null), 5000);
+  };
+
+  const handleMoveAsset = (asset: any) => {
+    setAssetToMove(asset);
+    setShowMoveModal(true);
+  };
+
+  const handleMoveSuccess = () => {
+    // Refresh current view
+    if (selectedFolderId) {
+      loadFolderContent(selectedFolderId);
+    } else {
+      onRefresh();
+    }
+    setTimeout(() => {
+      loadFolderCounts();
+    }, 500);
+    showAlert('success', 'Datei wurde erfolgreich verschoben.');
   };
 
   const handleDeleteAsset = (assetId: string, fileName: string) => {
@@ -714,21 +829,24 @@ export default function ProjectFoldersView({
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center space-x-1 ml-2">
-                  <Button
-                    plain
-                    onClick={() => window.open(asset.downloadUrl, '_blank')}
-                    className="text-xs px-2 py-1"
-                  >
-                    Ansehen
-                  </Button>
-                  <Button
-                    plain
-                    onClick={() => handleDeleteAsset(asset.id, asset.fileName)}
-                    className="text-xs px-2 py-1 text-red-600 hover:text-red-700"
-                  >
-                    Löschen
-                  </Button>
+                <div className="ml-2">
+                  <Dropdown>
+                    <DropdownButton plain className="p-1.5 hover:bg-gray-100 rounded-md">
+                      <EllipsisVerticalIcon className="h-4 w-4 text-gray-500" />
+                    </DropdownButton>
+                    <DropdownMenu anchor="bottom end">
+                      <DropdownItem onClick={() => window.open(asset.downloadUrl, '_blank')}>
+                        Ansehen
+                      </DropdownItem>
+                      <DropdownItem onClick={() => handleMoveAsset(asset)}>
+                        Verschieben
+                      </DropdownItem>
+                      <DropdownDivider />
+                      <DropdownItem onClick={() => handleDeleteAsset(asset.id, asset.fileName)}>
+                        <span className="text-red-600">Löschen</span>
+                      </DropdownItem>
+                    </DropdownMenu>
+                  </Dropdown>
                 </div>
               </div>
             </div>
@@ -769,6 +887,17 @@ export default function ProjectFoldersView({
         parentFolderId={selectedFolderId}
         organizationId={organizationId}
         clientId={clientId}
+      />
+      
+      {/* Move Asset Modal */}
+      <MoveAssetModal
+        isOpen={showMoveModal}
+        onClose={() => setShowMoveModal(false)}
+        onMoveSuccess={handleMoveSuccess}
+        asset={assetToMove}
+        availableFolders={projectFolders?.subfolders || []}
+        currentFolderId={selectedFolderId}
+        organizationId={organizationId}
       />
 
       {/* Confirm Dialog */}
