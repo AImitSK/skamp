@@ -641,14 +641,11 @@ export default function ProjectFoldersView({
       setCurrentFolders(projectFolders.subfolders);
       setCurrentAssets([]);
       setBreadcrumbs([]);
-      // Lade die Anzahl der Dateien für jeden Ordner
-      loadFolderCounts();
       // Lade alle Ordner für Verschieben-Modal
       loadAllFolders();
     }
   }, [projectFolders]);
 
-  const [folderCounts, setFolderCounts] = useState<{[key: string]: number}>({});
 
   const loadAllFolders = async () => {
     if (!projectFolders?.subfolders) return;
@@ -687,27 +684,6 @@ export default function ProjectFoldersView({
     }
   };
 
-  const loadFolderCounts = async () => {
-    if (!projectFolders?.subfolders) return;
-    
-    try {
-      const counts: {[key: string]: number} = {};
-      await Promise.all(
-        projectFolders.subfolders.map(async (folder: any) => {
-          try {
-            const assets = await mediaService.getMediaAssets(organizationId, folder.id);
-            counts[folder.id] = assets.length;
-          } catch (error) {
-            console.error(`Fehler beim Laden der Assets für Ordner ${folder.id}:`, error);
-            counts[folder.id] = 0;
-          }
-        })
-      );
-      setFolderCounts(counts);
-    } catch (error) {
-      console.error('Fehler beim Laden der Ordner-Anzahlen:', error);
-    }
-  };
 
   // Vereinfachtes Breadcrumb-System - wir bauen den Pfad während der Navigation auf
   const [navigationStack, setNavigationStack] = useState<{id: string, name: string}[]>([]);
@@ -791,9 +767,6 @@ export default function ProjectFoldersView({
     }
     // Always refresh parent data and folder counts
     onRefresh();
-    setTimeout(() => {
-      loadFolderCounts(); // Update folder counts after upload
-    }, 500);
   };
 
   const handleCreateFolderSuccess = () => {
@@ -802,9 +775,6 @@ export default function ProjectFoldersView({
       loadFolderContent(selectedFolderId);
     } else {
       onRefresh();
-      setTimeout(() => {
-        loadFolderCounts();
-      }, 500);
     }
     showAlert('success', 'Ordner wurde erfolgreich erstellt.');
   };
@@ -833,7 +803,6 @@ export default function ProjectFoldersView({
     // Parent-Daten und Ordner-Counts aktualisieren
     onRefresh();
     setTimeout(() => {
-      loadFolderCounts();
       loadAllFolders(); // Auch alle Ordner neu laden für das Modal
     }, 500);
     
@@ -871,9 +840,6 @@ export default function ProjectFoldersView({
       } else {
         onRefresh();
       }
-      setTimeout(() => {
-        loadFolderCounts(); // Update folder counts after deletion
-      }, 500);
     } catch (error) {
       console.error('Fehler beim Löschen der Datei:', error);
       showAlert('error', 'Fehler beim Löschen der Datei. Bitte versuchen Sie es erneut.');
@@ -984,7 +950,6 @@ export default function ProjectFoldersView({
       <div className="overflow-y-auto space-y-3" style={{ height: 'calc(100% - 80px)' }}>
         {/* Ordner anzeigen */}
         {currentFolders.map((folder: any, index: number) => {
-          const fileCount = folderCounts[folder.id] ?? 0;
           const colors = [
             { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-900', icon: 'text-blue-600' },
             { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-900', icon: 'text-purple-600' },
@@ -998,14 +963,9 @@ export default function ProjectFoldersView({
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <FolderIcon className={`h-5 w-5 ${color.icon} mr-3`} />
-                  <div>
-                    <Text className={`font-medium ${color.text}`}>
-                      {folder.name}
-                    </Text>
-                    <Text className="text-xs text-gray-500">
-                      {fileCount} {fileCount === 1 ? 'Datei' : 'Dateien'}
-                    </Text>
-                  </div>
+                  <Text className={`font-medium ${color.text}`}>
+                    {folder.name}
+                  </Text>
                 </div>
                 <div className="text-gray-400">→</div>
               </div>
@@ -1020,10 +980,10 @@ export default function ProjectFoldersView({
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3 min-w-0 flex-1">
                   {getFileIcon(asset)}
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 flex items-center">
                     <button
                       onClick={() => window.open(asset.downloadUrl, '_blank')}
-                      className="text-left hover:text-blue-600 transition-colors"
+                      className="text-left hover:text-blue-600 transition-colors w-full"
                     >
                       <Text className="text-sm font-medium text-gray-900 truncate hover:text-blue-600">
                         {asset.fileName}
