@@ -108,7 +108,7 @@ function ConfirmDialog({
   );
 }
 
-// Move Asset Modal Component
+// Move Asset Modal Component - FTP Style Navigation
 function MoveAssetModal({
   isOpen,
   onClose,
@@ -126,30 +126,71 @@ function MoveAssetModal({
   currentFolderId?: string;
   organizationId: string;
 }) {
-  const [selectedFolderId, setSelectedFolderId] = useState('');
+  const [currentPath, setCurrentPath] = useState<{id: string, name: string}[]>([]);
+  const [currentFolders, setCurrentFolders] = useState<any[]>([]);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [moving, setMoving] = useState(false);
   const [alert, setAlert] = useState<{ type: 'error'; message: string } | null>(null);
   
-  // Modal zurücksetzen wenn geöffnet/geschlossen wird
+  // Modal zurücksetzen und Hauptordner laden wenn geöffnet wird
   useEffect(() => {
     if (isOpen) {
-      setSelectedFolderId(''); // Immer zurücksetzen, keine Vorauswahl
+      setCurrentPath([]);
+      setSelectedFolderId(null);
       setAlert(null);
+      // Lade die 3 Hauptordner (Medien, Dokumente, Pressemeldungen)
+      setCurrentFolders(availableFolders || []);
     }
-  }, [isOpen]);
+  }, [isOpen, availableFolders]);
 
   const showAlert = (message: string) => {
     setAlert({ type: 'error', message });
     setTimeout(() => setAlert(null), 3000);
   };
 
+  const handleFolderClick = async (folder: any) => {
+    try {
+      // Navigiere in den Ordner hinein
+      const subfolders = await mediaService.getFolders(organizationId, folder.id);
+      setCurrentFolders(subfolders);
+      setCurrentPath([...currentPath, { id: folder.id, name: folder.name }]);
+      setSelectedFolderId(folder.id); // Aktueller Ordner ist ausgewählt
+    } catch (error) {
+      console.error('Fehler beim Laden des Ordners:', error);
+      showAlert('Fehler beim Laden des Ordners.');
+    }
+  };
+
+  const handleBackClick = async () => {
+    if (currentPath.length === 0) return;
+    
+    try {
+      if (currentPath.length === 1) {
+        // Zurück zu den Hauptordnern
+        setCurrentFolders(availableFolders || []);
+        setCurrentPath([]);
+        setSelectedFolderId(null);
+      } else {
+        // Zurück zum vorherigen Ordner
+        const parentFolder = currentPath[currentPath.length - 2];
+        const subfolders = await mediaService.getFolders(organizationId, parentFolder.id);
+        setCurrentFolders(subfolders);
+        setCurrentPath(currentPath.slice(0, -1));
+        setSelectedFolderId(parentFolder.id);
+      }
+    } catch (error) {
+      console.error('Fehler beim Zurücknavigieren:', error);
+      showAlert('Fehler beim Navigieren.');
+    }
+  };
+
   const handleMove = async () => {
-    if (!asset?.id) return;
+    if (!asset?.id || selectedFolderId === null) return;
     
     setMoving(true);
     try {
       await mediaService.updateAsset(asset.id, {
-        folderId: selectedFolderId || null
+        folderId: selectedFolderId
       });
       
       onMoveSuccess();
@@ -164,33 +205,75 @@ function MoveAssetModal({
 
   if (!isOpen || !asset) return null;
 
+  const getPathString = () => {
+    if (currentPath.length === 0) return 'Projekt-Ordner';
+    return 'Projekt-Ordner > ' + currentPath.map(p => p.name).join(' > ');
+  };
+
   return (
-    <Dialog open={isOpen} onClose={onClose}>
-      <DialogTitle>Datei verschieben</DialogTitle>
+    <Dialog open={isOpen} onClose={onClose} size="lg">
+      <DialogTitle>Datei verschieben - FTP Navigation</DialogTitle>
       <DialogBody className="space-y-4">
         {alert && <Alert type={alert.type} message={alert.message} />}
         
-        <div className="bg-gray-50 p-3 rounded-lg">
+        {/* Zu verschiebende Datei anzeigen */}
+        <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
           <div className="flex items-center space-x-2">
-            <DocumentTextIcon className="w-5 h-5 text-gray-500" />
-            <Text className="font-medium">{asset.fileName}</Text>
+            <DocumentTextIcon className="w-5 h-5 text-blue-600" />
+            <Text className="font-medium text-blue-900">{asset?.fileName}</Text>
           </div>
         </div>
         
-        <Field>
-          <Label>Zielordner auswählen</Label>
-          <Select
-            value={selectedFolderId}
-            onChange={(e) => setSelectedFolderId(e.target.value)}
-          >
-            <option value="">-- Keinen Ordner ausgewählt --</option>
-            {availableFolders.map((folder) => (
-              <option key={folder.id} value={folder.id}>
-                {folder.displayName || folder.name}
-              </option>
-            ))}
-          </Select>
-        </Field>
+        {/* Aktueller Pfad */}
+        <div className="bg-gray-50 p-3 rounded-lg">
+          <Text className="text-sm font-medium text-gray-700">Aktueller Pfad:</Text>
+          <Text className="text-sm text-gray-600">{getPathString()}</Text>
+        </div>
+        
+        {/* Ordner-Navigation */}
+        <div className="border rounded-lg max-h-64 overflow-y-auto">
+          {/* Zurück-Button */}
+          {currentPath.length > 0 && (
+            <div 
+              className="flex items-center space-x-3 p-3 hover:bg-gray-50 cursor-pointer border-b"
+              onClick={handleBackClick}
+            >
+              <FolderIcon className="w-5 h-5 text-gray-500" />
+              <Text className="text-sm font-medium text-gray-700">.. (Zurück)</Text>
+            </div>
+          )}
+          
+          {/* Ordner-Liste */}
+          {currentFolders.length === 0 ? (
+            <div className="p-6 text-center text-gray-500">
+              <Text className="text-sm">Keine Unterordner vorhanden</Text>
+              {selectedFolderId && (
+                <Text className="text-xs mt-1">Sie können hier verschieben</Text>
+              )}
+            </div>
+          ) : (
+            currentFolders.map((folder) => (
+              <div 
+                key={folder.id}
+                className="flex items-center space-x-3 p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
+                onClick={() => handleFolderClick(folder)}
+              >
+                <FolderIcon className="w-5 h-5 text-blue-500" />
+                <Text className="text-sm font-medium">{folder.name}</Text>
+                <div className="ml-auto text-gray-400">→</div>
+              </div>
+            ))
+          )}
+        </div>
+        
+        {/* Zielordner-Info */}
+        {selectedFolderId && (
+          <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
+            <Text className="text-sm font-medium text-green-800">
+              ✓ Verschieben nach: {getPathString()}
+            </Text>
+          </div>
+        )}
       </DialogBody>
       <DialogActions>
         <Button plain onClick={onClose} disabled={moving}>
@@ -198,9 +281,9 @@ function MoveAssetModal({
         </Button>
         <Button
           onClick={handleMove}
-          disabled={moving}
+          disabled={moving || selectedFolderId === null}
         >
-          {moving ? 'Wird verschoben...' : 'Verschieben'}
+          {moving ? 'Wird verschoben...' : 'Hier verschieben'}
         </Button>
       </DialogActions>
     </Dialog>
@@ -626,6 +709,9 @@ export default function ProjectFoldersView({
     }
   };
 
+  // Vereinfachtes Breadcrumb-System - wir bauen den Pfad während der Navigation auf
+  const [navigationStack, setNavigationStack] = useState<{id: string, name: string}[]>([]);
+
   const loadFolderContent = async (folderId?: string) => {
     setLoading(true);
     try {
@@ -638,9 +724,12 @@ export default function ProjectFoldersView({
         setCurrentFolders(folders);
         setCurrentAssets(assets);
         
-        // Update breadcrumbs
-        if (folderId && projectFolders) {
-          const folder = projectFolders.subfolders.find((f: any) => f.id === folderId);
+        // Nutze den navigationStack für Breadcrumbs (falls vorhanden)
+        if (navigationStack.length > 0 && navigationStack[navigationStack.length - 1].id === folderId) {
+          setBreadcrumbs(navigationStack);
+        } else {
+          // Fallback: Versuche den Ordner in den Hauptordnern zu finden
+          const folder = projectFolders?.subfolders?.find((f: any) => f.id === folderId);
           if (folder) {
             setBreadcrumbs([{ id: folder.id, name: folder.name }]);
           }
@@ -650,6 +739,7 @@ export default function ProjectFoldersView({
         setCurrentFolders(projectFolders?.subfolders || []);
         setCurrentAssets([]);
         setBreadcrumbs([]);
+        setNavigationStack([]); // Stack zurücksetzen
       }
     } catch (error) {
       console.error('Fehler beim Laden der Ordnerinhalte:', error);
@@ -659,13 +749,39 @@ export default function ProjectFoldersView({
   };
 
   const handleFolderClick = (folderId: string) => {
+    // Erweitere den navigationStack
+    const folder = currentFolders.find(f => f.id === folderId) || 
+                   projectFolders?.subfolders?.find((f: any) => f.id === folderId);
+    if (folder) {
+      const newStack = [...navigationStack, { id: folder.id, name: folder.name }];
+      setNavigationStack(newStack);
+    }
+    
     setSelectedFolderId(folderId);
     loadFolderContent(folderId);
   };
+  
 
   const handleBackClick = () => {
-    setSelectedFolderId(undefined);
-    loadFolderContent();
+    if (navigationStack.length > 0) {
+      // Entferne den letzten Ordner vom Stack
+      const newStack = navigationStack.slice(0, -1);
+      setNavigationStack(newStack);
+      
+      if (newStack.length > 0) {
+        // Gehe zum vorherigen Ordner im Stack
+        const previousFolder = newStack[newStack.length - 1];
+        setSelectedFolderId(previousFolder.id);
+        loadFolderContent(previousFolder.id);
+      } else {
+        // Zurück zur Hauptansicht
+        setSelectedFolderId(undefined);
+        loadFolderContent();
+      }
+    } else {
+      setSelectedFolderId(undefined);
+      loadFolderContent();
+    }
   };
 
   const handleUploadSuccess = () => {
@@ -984,7 +1100,7 @@ export default function ProjectFoldersView({
         onClose={() => setShowMoveModal(false)}
         onMoveSuccess={handleMoveSuccess}
         asset={assetToMove}
-        availableFolders={allFolders}
+        availableFolders={projectFolders?.subfolders || []}
         currentFolderId={selectedFolderId}
         organizationId={organizationId}
       />
