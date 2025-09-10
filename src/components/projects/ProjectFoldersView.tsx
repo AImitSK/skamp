@@ -751,6 +751,23 @@ export default function ProjectFoldersView({
   };
   
 
+  const handleGoToRoot = () => {
+    // Immer zur Hauptansicht zurückgehen (3 Hauptordner)
+    setSelectedFolderId(undefined);
+    setNavigationStack([]);
+    loadFolderContent();
+  };
+
+  const handleBreadcrumbClick = (clickedIndex: number) => {
+    // Navigiere zu der geklickten Breadcrumb-Ebene
+    const targetStack = navigationStack.slice(0, clickedIndex + 1);
+    const targetFolder = targetStack[targetStack.length - 1];
+    
+    setNavigationStack(targetStack);
+    setSelectedFolderId(targetFolder.id);
+    loadFolderContentWithStack(targetFolder.id, targetStack);
+  };
+
   const handleBackClick = () => {
     if (navigationStack.length > 0) {
       // Entferne den letzten Ordner vom Stack
@@ -945,17 +962,29 @@ export default function ProjectFoldersView({
       {breadcrumbs.length > 0 && (
         <div className="flex items-center space-x-2 mb-4 text-sm">
           <button
-            onClick={handleBackClick}
+            onClick={handleGoToRoot}
             className="text-blue-600 hover:text-blue-700 font-medium"
           >
             Projekt-Ordner
           </button>
-          {breadcrumbs.map((crumb, index) => (
-            <React.Fragment key={crumb.id}>
-              <Text className="text-gray-400">/</Text>
-              <Text className="text-gray-600 font-medium">{crumb.name}</Text>
-            </React.Fragment>
-          ))}
+          {breadcrumbs.map((crumb, index) => {
+            const isLast = index === breadcrumbs.length - 1;
+            return (
+              <React.Fragment key={crumb.id}>
+                <Text className="text-gray-400">/</Text>
+                {isLast ? (
+                  <Text className="text-gray-600 font-medium">{crumb.name}</Text>
+                ) : (
+                  <button
+                    onClick={() => handleBreadcrumbClick(index)}
+                    className="text-blue-600 hover:text-blue-700 font-medium"
+                  >
+                    {crumb.name}
+                  </button>
+                )}
+              </React.Fragment>
+            );
+          })}
         </div>
       )}
 
