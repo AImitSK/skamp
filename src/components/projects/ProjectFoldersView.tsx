@@ -608,7 +608,7 @@ export default function ProjectFoldersView({
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6">
+    <div className="bg-white border border-gray-200 rounded-lg p-6 w-full">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center">
           <FolderIcon className="h-5 w-5 text-purple-500 mr-2" />
@@ -676,7 +676,7 @@ export default function ProjectFoldersView({
           const color = colors[index % colors.length];
           
           return (
-            <div key={folder.id} className={`${color.bg} ${color.border} border rounded-lg p-3 cursor-pointer hover:shadow-sm transition-shadow`}
+            <div key={folder.id} className={`${color.bg} ${color.border} border rounded-lg p-4 cursor-pointer hover:shadow-sm transition-shadow`}
                  onClick={() => handleFolderClick(folder.id)}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
@@ -699,19 +699,17 @@ export default function ProjectFoldersView({
         {/* Assets anzeigen - mit Scrollbar */}
         <div className="max-h-96 overflow-y-auto space-y-2">
           {currentAssets.map((asset: any) => (
-            <div key={asset.id} className="bg-gray-50 border border-gray-200 rounded-lg p-2">
+            <div key={asset.id} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2 min-w-0 flex-1">
+                <div className="flex items-center space-x-3 min-w-0 flex-1">
                   {getFileIcon(asset)}
                   <div className="min-w-0 flex-1">
                     <Text className="text-sm font-medium text-gray-900 truncate">
                       {asset.fileName}
                     </Text>
-                    <div className="flex items-center space-x-1 mt-0.5">
-                      <Text className="text-xs text-gray-500">
-                        {asset.createdAt?.toDate?.()?.toLocaleDateString('de-DE') || 'Unbekannt'}
-                      </Text>
-                    </div>
+                    <Text className="text-xs text-gray-500 mt-0.5">
+                      {asset.createdAt?.toDate?.()?.toLocaleDateString('de-DE') || 'Unbekannt'}
+                    </Text>
                   </div>
                 </div>
                 <div className="flex items-center space-x-1 ml-2">
