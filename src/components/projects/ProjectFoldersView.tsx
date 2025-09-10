@@ -905,17 +905,20 @@ export default function ProjectFoldersView({
                 <div className="flex items-center space-x-3 min-w-0 flex-1">
                   {getFileIcon(asset)}
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-baseline space-x-2">
-                      <Text className="text-sm font-medium text-gray-900 truncate">
+                    <button
+                      onClick={() => window.open(asset.downloadUrl, '_blank')}
+                      className="text-left hover:text-blue-600 transition-colors"
+                    >
+                      <Text className="text-sm font-medium text-gray-900 truncate hover:text-blue-600">
                         {asset.fileName}
                       </Text>
-                      <Text className="text-xs text-gray-500 whitespace-nowrap">
-                        {asset.createdAt?.toDate?.()?.toLocaleDateString('de-DE') || 'Unbekannt'}
-                      </Text>
-                    </div>
+                    </button>
                   </div>
                 </div>
-                <div className="ml-2">
+                <div className="flex items-center space-x-2">
+                  <Text className="text-xs text-gray-500 whitespace-nowrap">
+                    {asset.createdAt?.toDate?.()?.toLocaleDateString('de-DE') || 'Unbekannt'}
+                  </Text>
                   <Dropdown>
                     <DropdownButton plain className="p-1.5 hover:bg-gray-100 rounded-md">
                       <EllipsisVerticalIcon className="h-4 w-4 text-gray-500" />
