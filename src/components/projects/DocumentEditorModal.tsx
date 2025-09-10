@@ -81,7 +81,7 @@ export default function DocumentEditorModal({
     content: '<p>Beginnen Sie hier mit Ihrem Dokument...</p>',
     editorProps: {
       attributes: {
-        class: 'prose prose-sm max-w-none focus:outline-none min-h-[400px] px-4 py-3'
+        class: 'prose prose-lg max-w-none focus:outline-none min-h-[400px] px-4 py-3 text-gray-900 leading-relaxed'
       }
     },
     onUpdate: ({ editor }) => {
@@ -427,7 +427,34 @@ export default function DocumentEditorModal({
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
             </div>
           ) : (
-            <EditorContent editor={editor} />
+            <div className="prose-custom">
+              <EditorContent editor={editor} />
+              <style jsx>{`
+                .prose-custom :global(.ProseMirror) {
+                  font-size: 16px !important;
+                  line-height: 1.7 !important;
+                  color: #111827 !important;
+                }
+                .prose-custom :global(.ProseMirror p) {
+                  margin-bottom: 1.2em !important;
+                  color: #111827 !important;
+                }
+                .prose-custom :global(.ProseMirror h1),
+                .prose-custom :global(.ProseMirror h2),
+                .prose-custom :global(.ProseMirror h3) {
+                  color: #111827 !important;
+                  font-weight: 600 !important;
+                }
+                .prose-custom :global(.ProseMirror ul),
+                .prose-custom :global(.ProseMirror ol) {
+                  color: #111827 !important;
+                }
+                .prose-custom :global(.ProseMirror li) {
+                  color: #111827 !important;
+                  margin-bottom: 0.5em !important;
+                }
+              `}</style>
+            </div>
           )}
         </div>
         

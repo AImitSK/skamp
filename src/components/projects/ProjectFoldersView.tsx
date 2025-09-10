@@ -955,9 +955,19 @@ export default function ProjectFoldersView({
         } else {
           alert('Dokument-Inhalt konnte nicht geladen werden.');
         }
+      } else if (asset.downloadUrl) {
+        // Regular download for non-celero documents (DOCX, PDF, etc.)
+        console.log('Downloading regular file:', asset.fileName, 'URL:', asset.downloadUrl);
+        const a = document.createElement('a');
+        a.href = asset.downloadUrl;
+        a.download = asset.fileName;
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
       } else {
-        // Regular download for non-celero documents
-        window.open(asset.downloadUrl, '_blank');
+        console.warn('No download method available for file:', asset);
+        alert('Diese Datei kann nicht heruntergeladen werden - keine downloadUrl verfügbar.');
       }
     } catch (error) {
       console.error('Fehler beim Download:', error);
