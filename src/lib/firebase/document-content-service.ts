@@ -178,14 +178,19 @@ class DocumentContentService {
       const docRef = doc(db, this.COLLECTION, documentId);
       const currentDoc = await this.loadDocument(documentId);
       
-      if (!currentDoc) return false;
+      if (!currentDoc) {
+        console.warn('Dokument zum Sperren nicht gefunden:', documentId);
+        return false; // Dokument existiert nicht
+      }
       
       // Prüfe ob bereits gesperrt
       if (currentDoc.isLocked && currentDoc.lockedBy !== userId) {
         // Prüfe ob Lock abgelaufen (älter als 5 Minuten)
-        const lockAge = Date.now() - currentDoc.lockedAt?.toMillis()!;
-        if (lockAge < 5 * 60 * 1000) {
-          return false; // Noch gesperrt von anderem User
+        if (currentDoc.lockedAt) {
+          const lockAge = Date.now() - currentDoc.lockedAt.toMillis();
+          if (lockAge < 5 * 60 * 1000) {
+            return false; // Noch gesperrt von anderem User
+          }
         }
       }
 
@@ -209,6 +214,14 @@ class DocumentContentService {
   async unlockDocument(documentId: string, userId: string): Promise<void> {
     try {
       const docRef = doc(db, this.COLLECTION, documentId);
+      
+      // Prüfe zuerst, ob das Dokument existiert
+      const docSnap = await getDoc(docRef);
+      if (!docSnap.exists()) {
+        console.warn('Dokument zum Entsperren nicht gefunden:', documentId);
+        return; // Stillfehler - kein throw, da das Entsperren nicht kritisch ist
+      }
+      
       await updateDoc(docRef, {
         isLocked: false,
         lockedBy: null,
@@ -217,6 +230,7 @@ class DocumentContentService {
       });
     } catch (error) {
       console.error('Fehler beim Entsperren des Dokuments:', error);
+      // Swallow error - unlocking should not break the UI
     }
   }
 
@@ -299,30 +313,45 @@ class DocumentContentService {
 
   /**
    * Erstellt Media Asset für internes Dokument
-   * TODO: Diese Funktion sollte in media-service.ts integriert werden
    */
   private async createMediaAsset(
     metadata: Partial<InternalDocument>,
     userId: string
   ): Promise<string> {
-    // Temporär: Direkt in mediaAssets Collection speichern
-    const assetData = {
-      ...metadata,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-      userId,
-      // Spezielle Flags für interne Dokumente
-      isInternalDocument: true,
-      downloadUrl: null, // Kein direkter Download-Link
-      storageRef: null // Keine Firebase Storage Referenz
-    };
+    try {
+      // Erstelle Asset-Daten entsprechend der Media Service Struktur
+      const assetData = {
+        fileName: metadata.fileName,
+        fileType: metadata.fileType || 'celero-doc',
+        fileSize: metadata.fileSize || 0,
+        organizationId: metadata.organizationId,
+        projectId: metadata.projectId,
+        folderId: metadata.folderId,
+        createdBy: userId,
+        updatedBy: userId,
+        
+        // Content-spezifische Felder
+        contentRef: metadata.contentRef,
+        isInternalDocument: true,
+        
+        // Kein echter Storage-Upload
+        downloadUrl: '', // Wird später durch Editor-URL ersetzt
+        storagePath: '', // Kein Storage-Path für interne Dokumente
+        
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
 
-    const assetRef = await addDoc(
-      collection(db, 'mediaAssets'),
-      assetData
-    );
+      const assetRef = await addDoc(
+        collection(db, 'media_assets'), // Richtige Collection verwenden
+        assetData
+      );
 
-    return assetRef.id;
+      return assetRef.id;
+    } catch (error) {
+      console.error('Fehler beim Erstellen des Media Assets:', error);
+      throw error;
+    }
   }
 }
 

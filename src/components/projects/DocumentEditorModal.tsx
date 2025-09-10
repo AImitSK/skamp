@@ -130,22 +130,32 @@ export default function DocumentEditorModal({
     
     setLoading(true);
     try {
-      // Versuche Dokument zu sperren
-      const locked = await documentContentService.lockDocument(
-        document.contentRef,
-        user.uid
-      );
-      setIsLocked(locked);
-
-      // Lade Content
+      // Lade Content zuerst
       const content = await documentContentService.loadDocument(document.contentRef);
       if (content) {
         setDocumentContent(content);
         setTitle(document.fileName.replace('.celero-doc', ''));
         editor?.commands.setContent(content.content);
+        
+        // Versuche Dokument zu sperren (optional)
+        const locked = await documentContentService.lockDocument(
+          document.contentRef,
+          user.uid
+        );
+        setIsLocked(locked);
+      } else {
+        console.warn('Dokument Content nicht gefunden, erstelle neues Dokument');
+        // Setze Default-Content für existierende "Dateien" ohne Content
+        setTitle(document.fileName.replace('.celero-doc', ''));
+        editor?.commands.setContent('<p>Beginnen Sie hier mit Ihrem Dokument...</p>');
+        setIsLocked(true); // Kann bearbeitet werden
       }
     } catch (error) {
       console.error('Fehler beim Laden des Dokuments:', error);
+      // Fallback: Leeres Dokument anzeigen
+      setTitle(document.fileName.replace('.celero-doc', ''));
+      editor?.commands.setContent('<p>Fehler beim Laden. Beginnen Sie hier...</p>');
+      setIsLocked(true);
     } finally {
       setLoading(false);
     }
@@ -195,9 +205,14 @@ export default function DocumentEditorModal({
 
   // Close Handler mit Cleanup
   const handleClose = async () => {
-    if (document?.contentRef && user?.uid) {
-      // Dokument entsperren
-      await documentContentService.unlockDocument(document.contentRef, user.uid);
+    if (document?.contentRef && user?.uid && isLocked) {
+      // Dokument entsperren (nur wenn es wirklich gesperrt war)
+      try {
+        await documentContentService.unlockDocument(document.contentRef, user.uid);
+      } catch (error) {
+        console.warn('Fehler beim Entsperren beim Schließen:', error);
+        // Continue with closing - don't block the UI
+      }
     }
     
     // Reset States
