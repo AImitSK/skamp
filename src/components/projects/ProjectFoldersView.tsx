@@ -897,8 +897,8 @@ export default function ProjectFoldersView({
           );
         })}
 
-        {/* Assets anzeigen - mit Scrollbar */}
-        <div className="max-h-96 overflow-y-auto space-y-2">
+        {/* Assets anzeigen */}
+        <div className="space-y-2">
           {currentAssets.map((asset: any) => (
             <div key={asset.id} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
               <div className="flex items-center justify-between">
