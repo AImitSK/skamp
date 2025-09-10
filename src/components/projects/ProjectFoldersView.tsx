@@ -292,6 +292,7 @@ export default function ProjectFoldersView({
   const [loading, setLoading] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [breadcrumbs, setBreadcrumbs] = useState<Array<{id: string, name: string}>>([]);
+  const [alert, setAlert] = useState<{ type: 'info' | 'error' | 'success'; message: string } | null>(null);
 
   // Initial load - zeige die Unterordner des Hauptordners
   useEffect(() => {
@@ -374,10 +375,17 @@ export default function ProjectFoldersView({
     // Refresh current view
     if (selectedFolderId) {
       loadFolderContent(selectedFolderId);
-    } else {
-      onRefresh();
-      loadFolderCounts(); // Update folder counts after upload
     }
+    // Always refresh parent data and folder counts
+    onRefresh();
+    setTimeout(() => {
+      loadFolderCounts(); // Update folder counts after upload
+    }, 500);
+  };
+
+  const showAlert = (type: 'info' | 'error' | 'success', message: string) => {
+    setAlert({ type, message });
+    setTimeout(() => setAlert(null), 5000);
   };
 
   const handleDeleteAsset = async (assetId: string, fileName: string) => {
@@ -386,17 +394,30 @@ export default function ProjectFoldersView({
     }
 
     try {
-      await mediaService.deleteAsset(assetId, { organizationId });
+      // Erst das Asset-Objekt laden, dann löschen
+      const assets = await mediaService.getMediaAssets(organizationId, selectedFolderId);
+      const assetToDelete = assets.find(asset => asset.id === assetId);
+      
+      if (!assetToDelete) {
+        showAlert('error', 'Datei konnte nicht gefunden werden.');
+        return;
+      }
+
+      await mediaService.deleteMediaAsset(assetToDelete);
+      showAlert('success', `Datei "${fileName}" wurde erfolgreich gelöscht.`);
+      
       // Refresh current view
       if (selectedFolderId) {
         loadFolderContent(selectedFolderId);
       } else {
         onRefresh();
-        loadFolderCounts(); // Update folder counts after deletion
       }
+      setTimeout(() => {
+        loadFolderCounts(); // Update folder counts after deletion
+      }, 500);
     } catch (error) {
       console.error('Fehler beim Löschen der Datei:', error);
-      alert('Fehler beim Löschen der Datei. Bitte versuchen Sie es erneut.');
+      showAlert('error', 'Fehler beim Löschen der Datei. Bitte versuchen Sie es erneut.');
     }
   };
 
@@ -448,13 +469,19 @@ export default function ProjectFoldersView({
         </div>
         <Button
           onClick={() => setShowUploadModal(true)}
-          disabled={loading}
+          disabled={loading || (!selectedFolderId && breadcrumbs.length === 0)}
         >
           <CloudArrowUpIcon className="w-4 h-4 mr-2" />
           Hochladen
         </Button>
       </div>
 
+      {/* Alert anzeigen */}
+      {alert && (
+        <div className="mb-4">
+          <Alert type={alert.type} message={alert.message} />
+        </div>
+      )}
 
       {/* Breadcrumbs */}
       {breadcrumbs.length > 0 && (
@@ -520,7 +547,14 @@ export default function ProjectFoldersView({
                     </Text>
                     <div className="flex items-center space-x-1 mt-0.5">
                       <Text className="text-xs text-gray-500">
-                        {formatFileSize(asset.size || asset.metadata?.size || asset.fileSize)}
+                        {formatFileSize(
+                          asset.fileSize || 
+                          asset.size || 
+                          asset.metadata?.size || 
+                          asset.metadata?.fileSize ||
+                          (asset.metadata as any)?.customMetadata?.size ||
+                          0
+                        )}
                       </Text>
                       <span className="text-gray-300 text-xs">•</span>
                       <Text className="text-xs text-gray-500">
