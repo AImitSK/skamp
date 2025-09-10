@@ -239,7 +239,7 @@ function MoveAssetModal({
               onClick={handleBackClick}
             >
               <FolderIcon className="w-5 h-5 text-gray-500" />
-              <Text className="text-sm font-medium text-gray-700">.. (Zurück)</Text>
+              <Text className="text-sm font-medium text-gray-700">..</Text>
             </div>
           )}
           
@@ -688,6 +688,26 @@ export default function ProjectFoldersView({
   // Vereinfachtes Breadcrumb-System - wir bauen den Pfad während der Navigation auf
   const [navigationStack, setNavigationStack] = useState<{id: string, name: string}[]>([]);
 
+  const loadFolderContentWithStack = async (folderId: string, stack: {id: string, name: string}[]) => {
+    setLoading(true);
+    try {
+      // Lade Inhalte des spezifischen Ordners
+      const [folders, assets] = await Promise.all([
+        mediaService.getFolders(organizationId, folderId),
+        mediaService.getMediaAssets(organizationId, folderId)
+      ]);
+      setCurrentFolders(folders);
+      setCurrentAssets(assets);
+      
+      // Breadcrumbs aus dem übergebenen Stack setzen
+      setBreadcrumbs([...stack]);
+    } catch (error) {
+      console.error('Fehler beim Laden der Ordnerinhalte:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const loadFolderContent = async (folderId?: string) => {
     setLoading(true);
     try {
@@ -700,16 +720,8 @@ export default function ProjectFoldersView({
         setCurrentFolders(folders);
         setCurrentAssets(assets);
         
-        // Nutze den navigationStack für Breadcrumbs (falls vorhanden)
-        if (navigationStack.length > 0 && navigationStack[navigationStack.length - 1].id === folderId) {
-          setBreadcrumbs(navigationStack);
-        } else {
-          // Fallback: Versuche den Ordner in den Hauptordnern zu finden
-          const folder = projectFolders?.subfolders?.find((f: any) => f.id === folderId);
-          if (folder) {
-            setBreadcrumbs([{ id: folder.id, name: folder.name }]);
-          }
-        }
+        // Breadcrumbs immer aus navigationStack setzen
+        setBreadcrumbs([...navigationStack]);
       } else {
         // Zurück zur Hauptansicht (Unterordner des Projektordners)
         setCurrentFolders(projectFolders?.subfolders || []);
@@ -725,16 +737,17 @@ export default function ProjectFoldersView({
   };
 
   const handleFolderClick = (folderId: string) => {
-    // Erweitere den navigationStack
+    // Erweitere den navigationStack BEVOR loadFolderContent aufgerufen wird
     const folder = currentFolders.find(f => f.id === folderId) || 
                    projectFolders?.subfolders?.find((f: any) => f.id === folderId);
     if (folder) {
       const newStack = [...navigationStack, { id: folder.id, name: folder.name }];
       setNavigationStack(newStack);
+      
+      // Setze selectedFolderId und lade Ordnerinhalt
+      setSelectedFolderId(folderId);
+      loadFolderContentWithStack(folderId, newStack);
     }
-    
-    setSelectedFolderId(folderId);
-    loadFolderContent(folderId);
   };
   
 
