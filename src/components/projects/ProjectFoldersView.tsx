@@ -48,6 +48,129 @@ function Alert({
   );
 }
 
+// Confirm Dialog Component
+function ConfirmDialog({
+  isOpen,
+  title,
+  message,
+  onConfirm,
+  onCancel
+}: {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <Dialog open={isOpen} onClose={onCancel}>
+      <DialogTitle>{title}</DialogTitle>
+      <DialogBody>
+        <Text>{message}</Text>
+      </DialogBody>
+      <DialogActions>
+        <Button plain onClick={onCancel}>
+          Abbrechen
+        </Button>
+        <Button onClick={onConfirm} className="bg-red-600 text-white hover:bg-red-700">
+          Löschen
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+// Create Folder Modal Component
+function CreateFolderModal({
+  isOpen,
+  onClose,
+  onCreateSuccess,
+  parentFolderId,
+  organizationId,
+  clientId
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onCreateSuccess: () => void;
+  parentFolderId?: string;
+  organizationId: string;
+  clientId: string;
+}) {
+  const { user } = useAuth();
+  const [folderName, setFolderName] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [alert, setAlert] = useState<{ type: 'error'; message: string } | null>(null);
+
+  const showAlert = (message: string) => {
+    setAlert({ type: 'error', message });
+    setTimeout(() => setAlert(null), 3000);
+  };
+
+  const handleCreate = async () => {
+    if (!folderName.trim() || !user?.uid) return;
+    
+    setCreating(true);
+    try {
+      await mediaService.createFolder({
+        userId: user.uid,
+        name: folderName.trim(),
+        parentFolderId,
+        description: `Unterordner erstellt von ${user.displayName || user.email}`,
+        ...(clientId && { clientId })
+      }, { organizationId, userId: user.uid });
+      
+      setFolderName('');
+      onCreateSuccess();
+      onClose();
+    } catch (error) {
+      console.error('Fehler beim Erstellen des Ordners:', error);
+      showAlert('Fehler beim Erstellen des Ordners. Bitte versuchen Sie es erneut.');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <Dialog open={isOpen} onClose={onClose}>
+      <DialogTitle>Neuen Ordner erstellen</DialogTitle>
+      <DialogBody className="space-y-4">
+        {alert && <Alert type={alert.type} message={alert.message} />}
+        
+        <div>
+          <label htmlFor="folderName" className="block text-sm font-medium text-gray-700 mb-2">
+            Ordnername
+          </label>
+          <input
+            id="folderName"
+            type="text"
+            value={folderName}
+            onChange={(e) => setFolderName(e.target.value)}
+            placeholder="Ordnername eingeben..."
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            disabled={creating}
+            maxLength={50}
+          />
+        </div>
+      </DialogBody>
+      <DialogActions>
+        <Button plain onClick={onClose} disabled={creating}>
+          Abbrechen
+        </Button>
+        <Button
+          onClick={handleCreate}
+          disabled={!folderName.trim() || creating}
+        >
+          {creating ? 'Wird erstellt...' : 'Ordner erstellen'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
 // Upload Modal Component
 function ProjectUploadModal({
   isOpen,
@@ -291,8 +414,15 @@ export default function ProjectFoldersView({
   const [currentAssets, setCurrentAssets] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
   const [breadcrumbs, setBreadcrumbs] = useState<Array<{id: string, name: string}>>([]);
   const [alert, setAlert] = useState<{ type: 'info' | 'error' | 'success'; message: string } | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  } | null>(null);
 
   // Initial load - zeige die Unterordner des Hauptordners
   useEffect(() => {
@@ -383,16 +513,36 @@ export default function ProjectFoldersView({
     }, 500);
   };
 
+  const handleCreateFolderSuccess = () => {
+    // Refresh current view after folder creation
+    if (selectedFolderId) {
+      loadFolderContent(selectedFolderId);
+    } else {
+      onRefresh();
+      setTimeout(() => {
+        loadFolderCounts();
+      }, 500);
+    }
+    showAlert('success', 'Ordner wurde erfolgreich erstellt.');
+  };
+
   const showAlert = (type: 'info' | 'error' | 'success', message: string) => {
     setAlert({ type, message });
     setTimeout(() => setAlert(null), 5000);
   };
 
-  const handleDeleteAsset = async (assetId: string, fileName: string) => {
-    if (!confirm(`Möchten Sie die Datei "${fileName}" wirklich löschen?`)) {
-      return;
-    }
+  const handleDeleteAsset = (assetId: string, fileName: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Datei löschen',
+      message: `Möchten Sie die Datei "${fileName}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`,
+      onConfirm: () => confirmDeleteAsset(assetId, fileName)
+    });
+  };
 
+  const confirmDeleteAsset = async (assetId: string, fileName: string) => {
+    setConfirmDialog(null);
+    
     try {
       // Erst das Asset-Objekt laden, dann löschen
       const assets = await mediaService.getMediaAssets(organizationId, selectedFolderId);
@@ -467,13 +617,25 @@ export default function ProjectFoldersView({
             <div className="ml-2 animate-spin h-4 w-4 border-2 border-purple-500 border-t-transparent rounded-full"></div>
           )}
         </div>
-        <Button
-          onClick={() => setShowUploadModal(true)}
-          disabled={loading || (!selectedFolderId && breadcrumbs.length === 0)}
-        >
-          <CloudArrowUpIcon className="w-4 h-4 mr-2" />
-          Hochladen
-        </Button>
+        <div className="flex items-center space-x-2">
+          {selectedFolderId && (
+            <Button
+              plain
+              onClick={() => setShowCreateFolderModal(true)}
+              disabled={loading}
+            >
+              <FolderIcon className="w-4 h-4 mr-2" />
+              Ordner erstellen
+            </Button>
+          )}
+          <Button
+            onClick={() => setShowUploadModal(true)}
+            disabled={loading || (!selectedFolderId && breadcrumbs.length === 0)}
+          >
+            <CloudArrowUpIcon className="w-4 h-4 mr-2" />
+            Hochladen
+          </Button>
+        </div>
       </div>
 
       {/* Alert anzeigen */}
@@ -547,17 +709,6 @@ export default function ProjectFoldersView({
                     </Text>
                     <div className="flex items-center space-x-1 mt-0.5">
                       <Text className="text-xs text-gray-500">
-                        {formatFileSize(
-                          asset.fileSize || 
-                          asset.size || 
-                          asset.metadata?.size || 
-                          asset.metadata?.fileSize ||
-                          (asset.metadata as any)?.customMetadata?.size ||
-                          0
-                        )}
-                      </Text>
-                      <span className="text-gray-300 text-xs">•</span>
-                      <Text className="text-xs text-gray-500">
                         {asset.createdAt?.toDate?.()?.toLocaleDateString('de-DE') || 'Unbekannt'}
                       </Text>
                     </div>
@@ -609,6 +760,27 @@ export default function ProjectFoldersView({
         clientId={clientId}
         organizationId={organizationId}
       />
+
+      {/* Create Folder Modal */}
+      <CreateFolderModal
+        isOpen={showCreateFolderModal}
+        onClose={() => setShowCreateFolderModal(false)}
+        onCreateSuccess={handleCreateFolderSuccess}
+        parentFolderId={selectedFolderId}
+        organizationId={organizationId}
+        clientId={clientId}
+      />
+
+      {/* Confirm Dialog */}
+      {confirmDialog && (
+        <ConfirmDialog
+          isOpen={confirmDialog.isOpen}
+          title={confirmDialog.title}
+          message={confirmDialog.message}
+          onConfirm={confirmDialog.onConfirm}
+          onCancel={() => setConfirmDialog(null)}
+        />
+      )}
     </div>
   );
 }
