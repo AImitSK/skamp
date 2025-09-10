@@ -212,7 +212,7 @@ function MoveAssetModal({
 
   return (
     <Dialog open={isOpen} onClose={onClose} size="lg">
-      <DialogTitle>Datei verschieben - FTP Navigation</DialogTitle>
+      <DialogTitle>Datei verschieben</DialogTitle>
       <DialogBody className="space-y-4">
         {alert && <Alert type={alert.type} message={alert.message} />}
         
