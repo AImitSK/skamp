@@ -106,11 +106,19 @@ class DocumentContentService {
    */
   async loadDocument(documentId: string): Promise<DocumentContent | null> {
     try {
+      console.log('documentContentService.loadDocument called with ID:', documentId);
+      console.log('Using collection:', this.COLLECTION);
+      
       const docRef = doc(db, this.COLLECTION, documentId);
       const docSnap = await getDoc(docRef);
       
+      console.log('Document exists:', docSnap.exists());
       if (docSnap.exists()) {
-        return { id: docSnap.id, ...docSnap.data() } as DocumentContent;
+        const data = docSnap.data();
+        console.log('Document data:', data);
+        return { id: docSnap.id, ...data } as DocumentContent;
+      } else {
+        console.warn('Document not found in collection', this.COLLECTION, 'with ID:', documentId);
       }
       
       return null;

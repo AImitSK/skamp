@@ -870,10 +870,15 @@ export default function ProjectFoldersView({
   };
   
   const handleEditDocument = (asset: any) => {
+    console.log('handleEditDocument called with asset:', asset);
+    console.log('asset.contentRef:', asset.contentRef);
+    
     const document: InternalDocument = {
       ...asset,
       contentRef: asset.contentRef // Keine Fallback-Logik - muss exakt stimmen
     };
+    
+    console.log('Prepared document for editor:', document);
     setEditingDocument(document);
     setShowDocumentEditor(true);
   };
@@ -897,13 +902,14 @@ export default function ProjectFoldersView({
            currentFolders.some(f => f.name === 'Dokumente');
   };
   
-  // Handle asset click - open documents in editor
+  // Handle asset click - open documents in editor (NOT download)
   const handleAssetClick = (asset: any) => {
     // Check if it's a document type that should open in editor
     const isEditableDocument = asset.fileType === 'celero-doc' || 
                               asset.fileName?.endsWith('.celero-doc');
     
     if (isEditableDocument) {
+      // Open in editor for viewing/editing
       handleEditDocument(asset);
     } else {
       // Open normally for other file types (including .docx)
@@ -1178,9 +1184,11 @@ export default function ProjectFoldersView({
                     </DropdownButton>
                     <DropdownMenu anchor="bottom end">
                       {asset.fileType === 'celero-doc' || asset.fileName?.endsWith('.celero-doc') ? (
-                        <DropdownItem onClick={() => handleEditDocument(asset)}>
-                          Bearbeiten
-                        </DropdownItem>
+                        <>
+                          <DropdownItem onClick={() => handleEditDocument(asset)}>
+                            Ansehen / Bearbeiten
+                          </DropdownItem>
+                        </>
                       ) : (
                         <DropdownItem onClick={() => window.open(asset.downloadUrl, '_blank')}>
                           Ansehen

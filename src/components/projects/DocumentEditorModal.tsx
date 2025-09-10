@@ -128,14 +128,23 @@ export default function DocumentEditorModal({
   const loadDocument = async () => {
     if (!document?.contentRef || !user?.uid) return;
     
+    console.log('loadDocument started with:', { 
+      contentRef: document?.contentRef, 
+      userId: user?.uid,
+      document: document 
+    });
+    
     setLoading(true);
     try {
       // Lade Content zuerst
       const content = await documentContentService.loadDocument(document.contentRef);
+      console.log('documentContentService.loadDocument result:', content);
+      
       if (content) {
         setDocumentContent(content);
         setTitle(document.fileName.replace('.celero-doc', ''));
         editor?.commands.setContent(content.content);
+        console.log('Document loaded successfully, content length:', content.content.length);
         
         // Versuche Dokument zu sperren (optional)
         const locked = await documentContentService.lockDocument(
@@ -144,7 +153,7 @@ export default function DocumentEditorModal({
         );
         setIsLocked(locked);
       } else {
-        console.warn('Dokument Content nicht gefunden, erstelle neues Dokument');
+        console.warn('Dokument Content nicht gefunden, erstelle neues Dokument für contentRef:', document.contentRef);
         // Setze Default-Content für existierende "Dateien" ohne Content
         setTitle(document.fileName.replace('.celero-doc', ''));
         editor?.commands.setContent('<p>Beginnen Sie hier mit Ihrem Dokument...</p>');
@@ -152,6 +161,7 @@ export default function DocumentEditorModal({
       }
     } catch (error) {
       console.error('Fehler beim Laden des Dokuments:', error);
+      console.error('Versuchte contentRef:', document.contentRef);
       // Fallback: Leeres Dokument anzeigen
       setTitle(document.fileName.replace('.celero-doc', ''));
       editor?.commands.setContent('<p>Fehler beim Laden. Beginnen Sie hier...</p>');
