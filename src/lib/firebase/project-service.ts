@@ -1976,7 +1976,7 @@ export const projectService = {
     context: { organizationId: string; userId: string }
   ): Promise<void> {
     try {
-      // Projekt laden um Titel zu erhalten
+      // Projekt laden um Titel und Client-Info zu erhalten
       const project = await this.getById(projectId, context);
       if (!project) {
         throw new Error('Projekt nicht gefunden für Ordner-Erstellung');
@@ -1984,45 +1984,85 @@ export const projectService = {
 
       // Dynamischer Import um circular dependencies zu vermeiden
       const { mediaService } = await import('./media-service');
+      const { companiesService } = await import('./crm-service');
       
-      // Hauptordner erstellen
+      // Kunde/Company laden für Ordner-Namen
+      let companyName = 'Unbekannt';
+      let clientId: string | undefined;
+      
+      if (project.customer?.id) {
+        clientId = project.customer.id;
+        try {
+          const company = await companiesService.getById(project.customer.id);
+          if (company) {
+            companyName = company.name;
+          }
+        } catch (error) {
+          console.error('Fehler beim Laden der Firma:', error);
+        }
+      }
+      
+      // Erst prüfen ob "Projekte" Hauptordner existiert, wenn nicht erstellen
+      let projectsRootFolderId: string | undefined;
+      
+      try {
+        // Alle Root-Ordner laden
+        const rootFolders = await mediaService.getFolders(organizationId, undefined);
+        const projectsFolder = rootFolders.find(f => f.name === 'Projekte');
+        
+        if (projectsFolder?.id) {
+          projectsRootFolderId = projectsFolder.id;
+        } else {
+          // "Projekte" Hauptordner erstellen wenn er nicht existiert
+          projectsRootFolderId = await mediaService.createFolder({
+            userId: context.userId,
+            name: 'Projekte',
+            parentFolderId: undefined, // Root-Ordner
+            description: 'Alle Projektordner',
+            color: '#005fab' // Corporate Blue
+          }, context);
+        }
+      } catch (error) {
+        console.warn('Konnte Projekte-Hauptordner nicht erstellen/finden, verwende Root:', error);
+        // Fallback: Direkt im Root anlegen
+        projectsRootFolderId = undefined;
+      }
+      
+      // Formatiertes Datum (YYYYMMDD)
+      const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
+      
+      // Projektordner-Name mit gewünschtem Format: P-{Datum}-{Company Name}-{Projekt Name}
+      const projectFolderName = `P-${dateStr}-${companyName}-${project.title}`;
+      
+      // Projektordner erstellen - als Unterordner von "Projekte" und MIT clientId wenn vorhanden
       const mainFolderId = await mediaService.createFolder({
         userId: context.userId,
-        name: `Projekt: ${project.title}`,
-        parentFolderId: undefined, // Root-Ordner
-        description: `Automatisch erstellter Ordner für Projekt "${project.title}"`
+        name: projectFolderName,
+        parentFolderId: projectsRootFolderId, // Unter "Projekte" Ordner
+        description: `Projektordner für "${project.title}" - ${companyName}`,
+        ...(clientId && { clientId }) // Kundenzuordnung hinzufügen wenn vorhanden
       }, context);
       
-      // Unterordner-Struktur definieren (5 Standard-Ordner)
+      // Unterordner-Struktur definieren (3 Standard-Ordner)
       const subfolders = [
         {
-          name: 'Strategiedokumente',
-          description: 'Projektbriefings, Strategiepapiere und Analysedokumente',
+          name: 'Medien',
+          description: 'Bilder, Videos und andere Medien-Assets für das Projekt',
           color: '#3B82F6' // Blau
         },
         {
-          name: 'Bildideen & Inspiration',
-          description: 'Mood Boards, Referenz-Bilder und kreative Inspiration',
-          color: '#8B5CF6' // Lila
-        },
-        {
-          name: 'Recherche & Briefings',
-          description: 'Marktanalysen, Kundenbriefings und Hintergrundinformationen',
+          name: 'Dokumente',
+          description: 'Projektdokumente, Briefings und Konzepte',
           color: '#10B981' // Grün
         },
         {
-          name: 'Entwürfe & Notizen',
-          description: 'Erste Entwürfe, Skizzen und interne Arbeitsnotizen',
-          color: '#F59E0B' // Gelb/Orange
-        },
-        {
-          name: 'Externe Dokumente',
-          description: 'Kundendokumente, Freigaben und externe Materialien',
-          color: '#EF4444' // Rot
+          name: 'Pressemeldungen',
+          description: 'Pressemitteilungen und PR-Texte',
+          color: '#8B5CF6' // Lila
         }
       ];
       
-      // Alle Unterordner erstellen
+      // Alle Unterordner erstellen - ebenfalls mit clientId
       const createdSubfolderIds: string[] = [];
       
       for (const subfolder of subfolders) {
@@ -2032,7 +2072,8 @@ export const projectService = {
             name: subfolder.name,
             parentFolderId: mainFolderId,
             description: subfolder.description,
-            color: subfolder.color
+            color: subfolder.color,
+            ...(clientId && { clientId }) // Kundenzuordnung auch für Unterordner
           }, context);
           
           createdSubfolderIds.push(subfolderId);

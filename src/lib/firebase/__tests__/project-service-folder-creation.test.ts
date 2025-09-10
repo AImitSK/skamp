@@ -274,18 +274,32 @@ describe('Project Service - Automatic Folder Creation (Plan 11/11)', () => {
   describe('createProjectFolderStructure', () => {
     
     test('sollte Ordner-Struktur für bestehendes Projekt erstellen', async () => {
-      // Mock für getById
-      const mockDocSnap = createMockDocSnapshot(mockProject);
+      // Mock für getById mit customer
+      const projectWithCustomer = {
+        ...mockProject,
+        customer: { id: 'company-123', name: 'Test Firma' }
+      };
+      const mockDocSnap = createMockDocSnapshot(projectWithCustomer);
       mockGetDoc.mockResolvedValueOnce(mockDocSnap as any);
+      
+      // Mock für companiesService
+      const mockCompaniesService = {
+        getById: jest.fn().mockResolvedValue({ id: 'company-123', name: 'Test Firma' })
+      };
+      jest.doMock('@/lib/firebase/crm-service', () => ({
+        companiesService: mockCompaniesService
+      }));
+      
+      // Mock für getFolders (prüft ob "Projekte" Ordner existiert)
+      mockMediaService.getFolders.mockResolvedValueOnce([]);
       
       // Mock für MediaService Folder Creation
       mockMediaService.createFolder
-        .mockResolvedValueOnce('main-folder-999')
+        .mockResolvedValueOnce('projects-root-folder') // "Projekte" Hauptordner
+        .mockResolvedValueOnce('main-folder-999') // Projektordner
         .mockResolvedValueOnce('subfolder-1')
         .mockResolvedValueOnce('subfolder-2')
-        .mockResolvedValueOnce('subfolder-3')
-        .mockResolvedValueOnce('subfolder-4')
-        .mockResolvedValueOnce('subfolder-5');
+        .mockResolvedValueOnce('subfolder-3');
       
       await projectService.createProjectFolderStructure(
         'project-123',
@@ -293,19 +307,32 @@ describe('Project Service - Automatic Folder Creation (Plan 11/11)', () => {
         testContext
       );
       
-      // Prüfe Hauptordner
+      // Prüfe "Projekte" Hauptordner
       expect(mockMediaService.createFolder).toHaveBeenCalledWith(
-        {
+        expect.objectContaining({
           userId: 'test-user-456',
-          name: 'Projekt: Test Projekt für Ordner',
+          name: 'Projekte',
           parentFolderId: undefined,
-          description: 'Automatisch erstellter Ordner für Projekt "Test Projekt für Ordner"'
-        },
+          description: 'Alle Projektordner',
+          color: '#005fab'
+        }),
         testContext
       );
       
-      // Prüfe alle 5 Unterordner
-      expect(mockMediaService.createFolder).toHaveBeenCalledTimes(6);
+      // Prüfe Projektordner mit korrektem Format: P-{Datum}-{Company}-{Projekt}
+      const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
+      expect(mockMediaService.createFolder).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'test-user-456',
+          name: expect.stringContaining(`P-${dateStr}-Test Firma-Test Projekt für Ordner`),
+          parentFolderId: 'projects-root-folder', // Jetzt unter "Projekte"
+          clientId: 'company-123'
+        }),
+        testContext
+      );
+      
+      // Prüfe dass 1 Hauptordner + 1 Projektordner + 3 Unterordner erstellt werden
+      expect(mockMediaService.createFolder).toHaveBeenCalledTimes(5);
     });
     
     test('sollte Fehler werfen wenn Projekt nicht gefunden', async () => {
@@ -320,6 +347,65 @@ describe('Project Service - Automatic Folder Creation (Plan 11/11)', () => {
       )).rejects.toThrow('Projekt nicht gefunden für Ordner-Erstellung');
       
       expect(mockMediaService.createFolder).not.toHaveBeenCalled();
+    });
+    
+    test('sollte existierenden Projekte-Ordner verwenden wenn vorhanden', async () => {
+      // Mock für getById mit customer
+      const projectWithCustomer = {
+        ...mockProject,
+        customer: { id: 'company-789', name: 'Existing Company' }
+      };
+      const mockDocSnap = createMockDocSnapshot(projectWithCustomer);
+      mockGetDoc.mockResolvedValueOnce(mockDocSnap as any);
+      
+      // Mock für companiesService
+      const mockCompaniesService = {
+        getById: jest.fn().mockResolvedValue({ id: 'company-789', name: 'Existing Company' })
+      };
+      jest.doMock('@/lib/firebase/crm-service', () => ({
+        companiesService: mockCompaniesService
+      }));
+      
+      // Mock für getFolders - "Projekte" Ordner existiert bereits
+      mockMediaService.getFolders.mockResolvedValueOnce([
+        { id: 'existing-projects-folder', name: 'Projekte', userId: 'test-user-456' }
+      ]);
+      
+      // Mock für MediaService Folder Creation (nur Projektordner + Unterordner)
+      mockMediaService.createFolder
+        .mockResolvedValueOnce('project-folder-123')
+        .mockResolvedValueOnce('subfolder-1')
+        .mockResolvedValueOnce('subfolder-2')
+        .mockResolvedValueOnce('subfolder-3');
+      
+      await projectService.createProjectFolderStructure(
+        'project-123',
+        'test-org-123',
+        testContext
+      );
+      
+      // Prüfe dass kein neuer "Projekte" Ordner erstellt wurde
+      expect(mockMediaService.createFolder).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Projekte',
+          parentFolderId: undefined
+        }),
+        testContext
+      );
+      
+      // Prüfe dass Projektordner unter existierendem "Projekte" Ordner erstellt wurde
+      const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
+      expect(mockMediaService.createFolder).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: expect.stringContaining(`P-${dateStr}-Existing Company-Test Projekt für Ordner`),
+          parentFolderId: 'existing-projects-folder',
+          clientId: 'company-789'
+        }),
+        testContext
+      );
+      
+      // Nur 1 Projektordner + 3 Unterordner (kein "Projekte" Hauptordner)
+      expect(mockMediaService.createFolder).toHaveBeenCalledTimes(4);
     });
     
     test('sollte Multi-Tenancy bei Projekt-Zugriff respektieren', async () => {
@@ -340,9 +426,21 @@ describe('Project Service - Automatic Folder Creation (Plan 11/11)', () => {
     });
     
     test('sollte alle Standard-Unterordner mit korrekten Eigenschaften erstellen', async () => {
-      // Mock für getById
-      const mockDocSnap = createMockDocSnapshot(mockProject);
+      // Mock für getById mit customer
+      const projectWithCustomer = {
+        ...mockProject,
+        customer: { id: 'company-456', name: 'Test Company' }
+      };
+      const mockDocSnap = createMockDocSnapshot(projectWithCustomer);
       mockGetDoc.mockResolvedValueOnce(mockDocSnap as any);
+      
+      // Mock für companiesService
+      const mockCompaniesService = {
+        getById: jest.fn().mockResolvedValue({ id: 'company-456', name: 'Test Company' })
+      };
+      jest.doMock('@/lib/firebase/crm-service', () => ({
+        companiesService: mockCompaniesService
+      }));
       
       // Mock für MediaService
       mockMediaService.createFolder.mockImplementation(async (folderData) => {
@@ -357,32 +455,22 @@ describe('Project Service - Automatic Folder Creation (Plan 11/11)', () => {
       
       const calls = mockMediaService.createFolder.mock.calls;
       
-      // Erwartete Unterordner-Daten
+      // Erwartete Unterordner-Daten (neue Struktur mit nur 3 Ordnern)
       const expectedSubfolders = [
         {
-          name: 'Strategiedokumente',
-          description: 'Projektbriefings, Strategiepapiere und Analysedokumente',
+          name: 'Medien',
+          description: 'Bilder, Videos und andere Medien-Assets für das Projekt',
           color: '#3B82F6'
         },
         {
-          name: 'Bildideen & Inspiration',
-          description: 'Mood Boards, Referenz-Bilder und kreative Inspiration',
-          color: '#8B5CF6'
-        },
-        {
-          name: 'Recherche & Briefings',
-          description: 'Marktanalysen, Kundenbriefings und Hintergrundinformationen',
+          name: 'Dokumente',
+          description: 'Projektdokumente, Briefings und Konzepte',
           color: '#10B981'
         },
         {
-          name: 'Entwürfe & Notizen',
-          description: 'Erste Entwürfe, Skizzen und interne Arbeitsnotizen',
-          color: '#F59E0B'
-        },
-        {
-          name: 'Externe Dokumente',
-          description: 'Kundendokumente, Freigaben und externe Materialien',
-          color: '#EF4444'
+          name: 'Pressemeldungen',
+          description: 'Pressemitteilungen und PR-Texte',
+          color: '#8B5CF6'
         }
       ];
       
@@ -412,12 +500,22 @@ describe('Project Service - Automatic Folder Creation (Plan 11/11)', () => {
       
       const projectWithLongTitle = {
         ...mockProject,
-        title: longTitle
+        title: longTitle,
+        customer: { id: 'company-999', name: 'LongName Inc' }
       };
       
       // Mock Setup
       const mockDocSnap = createMockDocSnapshot(projectWithLongTitle);
       mockGetDoc.mockResolvedValueOnce(mockDocSnap as any);
+      
+      // Mock für companiesService
+      const mockCompaniesService = {
+        getById: jest.fn().mockResolvedValue({ id: 'company-999', name: 'LongName Inc' })
+      };
+      jest.doMock('@/lib/firebase/crm-service', () => ({
+        companiesService: mockCompaniesService
+      }));
+      
       mockMediaService.createFolder.mockResolvedValue('folder-id');
       
       await projectService.createProjectFolderStructure(
@@ -426,11 +524,12 @@ describe('Project Service - Automatic Folder Creation (Plan 11/11)', () => {
         testContext
       );
       
-      // Hauptordner sollte den langen Titel enthalten
+      // Hauptordner sollte den langen Titel mit Format P-{Datum}-{Company}-{Titel} enthalten
+      const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
       expect(mockMediaService.createFolder).toHaveBeenCalledWith(
         expect.objectContaining({
-          name: `Projekt: ${longTitle}`,
-          description: `Automatisch erstellter Ordner für Projekt "${longTitle}"`
+          name: expect.stringContaining(`P-${dateStr}-LongName Inc-${longTitle}`),
+          clientId: 'company-999'
         }),
         testContext
       );
@@ -441,12 +540,22 @@ describe('Project Service - Automatic Folder Creation (Plan 11/11)', () => {
       
       const projectWithSpecialChars = {
         ...mockProject,
-        title: specialTitle
+        title: specialTitle,
+        customer: { id: 'company-888', name: 'Special & Co.' }
       };
       
       // Mock Setup
       const mockDocSnap = createMockDocSnapshot(projectWithSpecialChars);
       mockGetDoc.mockResolvedValueOnce(mockDocSnap as any);
+      
+      // Mock für companiesService
+      const mockCompaniesService = {
+        getById: jest.fn().mockResolvedValue({ id: 'company-888', name: 'Special & Co.' })
+      };
+      jest.doMock('@/lib/firebase/crm-service', () => ({
+        companiesService: mockCompaniesService
+      }));
+      
       mockMediaService.createFolder.mockResolvedValue('folder-id');
       
       await projectService.createProjectFolderStructure(
@@ -456,9 +565,11 @@ describe('Project Service - Automatic Folder Creation (Plan 11/11)', () => {
       );
       
       // Sonderzeichen sollten im Namen erhalten bleiben
+      const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
       expect(mockMediaService.createFolder).toHaveBeenCalledWith(
         expect.objectContaining({
-          name: `Projekt: ${specialTitle}`
+          name: expect.stringContaining(`P-${dateStr}-Special & Co.-${specialTitle}`),
+          clientId: 'company-888'
         }),
         testContext
       );

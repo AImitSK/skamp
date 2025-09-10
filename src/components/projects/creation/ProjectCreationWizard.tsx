@@ -131,7 +131,7 @@ export function ProjectCreationWizard({
         description: '',
         clientId: '',
         priority: 'medium' as ProjectPriority,
-        projectManager: userMember?.id || '',
+        projectManager: userMember ? userMember.id : '',
         assignedTeamMembers: user?.uid ? [user.uid] : [],
         createCampaignImmediately: false
       });
@@ -245,7 +245,7 @@ export function ProjectCreationWizard({
         onSuccess(result);
         // Don't auto-close - let user close manually
       } else {
-        const errorDetails = result.error || result.message || 'Unbekannter Fehler';
+        const errorDetails = result.error || (result as any).message || 'Unbekannter Fehler';
         setError(`Projekt konnte nicht erstellt werden: ${errorDetails}`);
       }
     } catch (error: any) {
@@ -316,9 +316,10 @@ export function ProjectCreationWizard({
             // Prevent form submission on Enter key except for:
             // - Submit button
             // - Textarea (for line breaks)
+            const target = e.target as HTMLElement;
             if (e.key === 'Enter' && 
-                e.target.tagName !== 'BUTTON' && 
-                e.target.tagName !== 'TEXTAREA') {
+                target.tagName !== 'BUTTON' && 
+                target.tagName !== 'TEXTAREA') {
               e.preventDefault();
             }
           }}
