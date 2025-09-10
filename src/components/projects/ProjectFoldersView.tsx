@@ -21,6 +21,28 @@ import { Select } from '@/components/ui/select';
 import { mediaService } from '@/lib/firebase/media-service';
 import { useAuth } from '@/context/AuthContext';
 
+// Skeleton Loader Component
+function FolderSkeleton() {
+  return (
+    <div className="animate-pulse space-y-3">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="h-5 w-5 bg-gray-300 rounded mr-3"></div>
+              <div>
+                <div className="h-4 bg-gray-300 rounded w-24 mb-1"></div>
+                <div className="h-3 bg-gray-200 rounded w-16"></div>
+              </div>
+            </div>
+            <div className="h-3 w-3 bg-gray-300 rounded"></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // Alert Component
 function Alert({ 
   type = 'info', 
@@ -156,7 +178,7 @@ function MoveAssetModal({
             <option value="">-- Root (Hauptordner) --</option>
             {availableFolders.map((folder) => (
               <option key={folder.id} value={folder.id}>
-                {folder.name}
+                {folder.displayName || folder.name}
               </option>
             ))}
           </Select>
@@ -514,6 +536,7 @@ export default function ProjectFoldersView({
   const [alert, setAlert] = useState<{ type: 'info' | 'error' | 'success'; message: string } | null>(null);
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [assetToMove, setAssetToMove] = useState<any>(null);
+  const [allFolders, setAllFolders] = useState<any[]>([]);
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     title: string;
@@ -529,10 +552,46 @@ export default function ProjectFoldersView({
       setBreadcrumbs([]);
       // Lade die Anzahl der Dateien für jeden Ordner
       loadFolderCounts();
+      // Lade alle Ordner für Verschieben-Modal
+      loadAllFolders();
     }
   }, [projectFolders]);
 
   const [folderCounts, setFolderCounts] = useState<{[key: string]: number}>({});
+
+  const loadAllFolders = async () => {
+    if (!projectFolders?.subfolders) return;
+    
+    try {
+      const allFoldersFlat: any[] = [];
+      
+      // Rekursive Funktion um alle Unterordner zu sammeln
+      const collectFolders = async (folders: any[], level = 0) => {
+        for (const folder of folders) {
+          allFoldersFlat.push({
+            ...folder,
+            level,
+            displayName: '  '.repeat(level) + folder.name
+          });
+          
+          // Lade Unterordner falls vorhanden
+          try {
+            const subfolders = await mediaService.getFolders(organizationId, folder.id);
+            if (subfolders.length > 0) {
+              await collectFolders(subfolders, level + 1);
+            }
+          } catch (error) {
+            console.error(`Fehler beim Laden der Unterordner für ${folder.id}:`, error);
+          }
+        }
+      };
+      
+      await collectFolders(projectFolders.subfolders);
+      setAllFolders(allFoldersFlat);
+    } catch (error) {
+      console.error('Fehler beim Laden aller Ordner:', error);
+    }
+  };
 
   const loadFolderCounts = async () => {
     if (!projectFolders?.subfolders) return;
@@ -703,9 +762,17 @@ export default function ProjectFoldersView({
 
   if (foldersLoading) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
-        <Text className="ml-3">Ordner werden geladen...</Text>
+      <div className="bg-white border border-gray-200 rounded-lg p-6 w-full" style={{ height: '420px' }}>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center">
+            <FolderIcon className="h-5 w-5 text-purple-500 mr-2" />
+            <Subheading>Projekt-Ordner</Subheading>
+            <div className="ml-2 animate-spin h-4 w-4 border-2 border-purple-500 border-t-transparent rounded-full"></div>
+          </div>
+        </div>
+        <div className="overflow-y-auto" style={{ height: 'calc(100% - 80px)' }}>
+          <FolderSkeleton />
+        </div>
       </div>
     );
   }
@@ -723,7 +790,7 @@ export default function ProjectFoldersView({
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6 w-full">
+    <div className="bg-white border border-gray-200 rounded-lg p-6 w-full" style={{ height: '420px' }}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center">
           <FolderIcon className="h-5 w-5 text-purple-500 mr-2" />
@@ -779,7 +846,7 @@ export default function ProjectFoldersView({
       )}
 
       {/* Content */}
-      <div className="space-y-3">
+      <div className="overflow-y-auto space-y-3" style={{ height: 'calc(100% - 80px)' }}>
         {/* Ordner anzeigen */}
         {currentFolders.map((folder: any, index: number) => {
           const fileCount = folderCounts[folder.id] ?? 0;
@@ -895,7 +962,7 @@ export default function ProjectFoldersView({
         onClose={() => setShowMoveModal(false)}
         onMoveSuccess={handleMoveSuccess}
         asset={assetToMove}
-        availableFolders={projectFolders?.subfolders || []}
+        availableFolders={allFolders}
         currentFolderId={selectedFolderId}
         organizationId={organizationId}
       />
