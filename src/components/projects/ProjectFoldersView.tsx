@@ -704,12 +704,14 @@ export default function ProjectFoldersView({
                 <div className="flex items-center space-x-3 min-w-0 flex-1">
                   {getFileIcon(asset)}
                   <div className="min-w-0 flex-1">
-                    <Text className="text-sm font-medium text-gray-900 truncate">
-                      {asset.fileName}
-                    </Text>
-                    <Text className="text-xs text-gray-500 mt-0.5">
-                      {asset.createdAt?.toDate?.()?.toLocaleDateString('de-DE') || 'Unbekannt'}
-                    </Text>
+                    <div className="flex items-baseline space-x-2">
+                      <Text className="text-sm font-medium text-gray-900 truncate">
+                        {asset.fileName}
+                      </Text>
+                      <Text className="text-xs text-gray-500 whitespace-nowrap">
+                        {asset.createdAt?.toDate?.()?.toLocaleDateString('de-DE') || 'Unbekannt'}
+                      </Text>
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center space-x-1 ml-2">

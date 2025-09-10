@@ -812,7 +812,19 @@ export default function ProjectDetailPage() {
                 </div>
               </div>
               
-              {/* 4 Hauptbereiche */}
+              {/* Projekt-Ordner - Volle Breite */}
+              <div className="mb-6">
+                <ProjectFoldersView
+                  projectId={project.id!}
+                  organizationId={currentOrganization.id}
+                  projectFolders={projectFolders}
+                  foldersLoading={foldersLoading}
+                  onRefresh={loadProjectFolders}
+                  clientId={project.customer?.id || ''}
+                />
+              </div>
+              
+              {/* 3 Hauptbereiche */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Strategiedokumente */}
                 <div className="bg-white border border-gray-200 rounded-lg p-6">
@@ -925,15 +937,6 @@ export default function ProjectDetailPage() {
                   )}
                 </div>
 
-                {/* Projekt-Ordner - Neue Komponente */}
-                <ProjectFoldersView
-                  projectId={project.id!}
-                  organizationId={currentOrganization.id}
-                  projectFolders={projectFolders}
-                  foldersLoading={foldersLoading}
-                  onRefresh={loadProjectFolders}
-                  clientId={project.customer?.id || ''}
-                />
 
                 {/* Team-Kommunikation */}
                 <div className="bg-white border border-gray-200 rounded-lg p-6">
