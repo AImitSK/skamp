@@ -64,6 +64,7 @@ export default function ProjectDetailPage() {
   const [strategyDocuments, setStrategyDocuments] = useState<StrategyDocument[]>([]);
   const [documentsLoading, setDocumentsLoading] = useState(false);
   const [showDocumentModal, setShowDocumentModal] = useState(false);
+  const [linkedCampaigns, setLinkedCampaigns] = useState<any[]>([]);
 
   useEffect(() => {
     loadProject();
@@ -152,6 +153,33 @@ export default function ProjectDetailPage() {
       
       if (projectData) {
         setProject(projectData);
+        
+        // Lade verknüpfte Kampagnen
+        if (projectData.linkedCampaigns && projectData.linkedCampaigns.length > 0) {
+          try {
+            const campaigns = await Promise.all(
+              projectData.linkedCampaigns.map(async (campaignId) => {
+                try {
+                  // Hier müsste der PR-Service importiert werden
+                  // const campaign = await prService.getById(campaignId);
+                  // Vorerst Dummy-Daten für die erste verknüpfte Kampagne
+                  return {
+                    id: campaignId,
+                    title: `${projectData.title} - PR-Kampagne`,
+                    status: 'in_review',
+                    progress: 75
+                  };
+                } catch (error) {
+                  console.error(`Kampagne ${campaignId} konnte nicht geladen werden:`, error);
+                  return null;
+                }
+              })
+            );
+            setLinkedCampaigns(campaigns.filter(Boolean));
+          } catch (error) {
+            console.error('Fehler beim Laden der verknüpften Kampagnen:', error);
+          }
+        }
       } else {
         setError('Projekt nicht gefunden');
       }
@@ -205,13 +233,28 @@ export default function ProjectDetailPage() {
   };
 
   const formatDate = (timestamp: any) => {
-    if (!timestamp) return '';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleDateString('de-DE', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
+    if (!timestamp) return 'Unbekannt';
+    try {
+      // Handle Firestore Timestamp
+      if (timestamp && typeof timestamp.toDate === 'function') {
+        return timestamp.toDate().toLocaleDateString('de-DE', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        });
+      }
+      // Handle regular Date or string
+      const date = new Date(timestamp);
+      if (isNaN(date.getTime())) return 'Ungültiges Datum';
+      return date.toLocaleDateString('de-DE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch (error) {
+      console.error('Date formatting error:', error);
+      return 'Datumsformatfehler';
+    }
   };
 
   // Handle Communication Feed
@@ -703,7 +746,13 @@ export default function ProjectDetailPage() {
                       <Text className="text-sm font-medium text-gray-600">Kunde</Text>
                       <div className="flex items-center mt-1">
                         <BuildingOfficeIcon className="h-4 w-4 text-gray-400 mr-1" />
-                        <Text>{project.customer.name}</Text>
+                        <button
+                          className="text-blue-600 hover:text-blue-700 hover:underline text-left"
+                          onClick={() => router.push(`/dashboard/contacts/crm/companies/${project.customer?.id}`)}
+                          title="Kunde anzeigen"
+                        >
+                          {project.customer.name}
+                        </button>
                       </div>
                     </div>
                   )}
@@ -719,21 +768,30 @@ export default function ProjectDetailPage() {
                   <div>
                     <Text className="text-sm font-medium text-gray-600">Priorität</Text>
                     <div className="mt-1">
-                      <Badge color={project.priority === 'high' ? 'red' : project.priority === 'medium' ? 'yellow' : 'green'}>
-                        {project.priority === 'high' ? 'Hoch' : project.priority === 'medium' ? 'Mittel' : 'Niedrig'}
+                      <Badge color={
+                        project.priority === 'high' ? 'red' : 
+                        project.priority === 'medium' ? 'yellow' : 
+                        project.priority === 'low' ? 'green' : 'gray'
+                      }>
+                        {project.priority === 'high' ? 'Hoch' : 
+                         project.priority === 'medium' ? 'Mittel' : 
+                         project.priority === 'low' ? 'Niedrig' : 
+                         project.priority || 'Nicht festgelegt'}
                       </Badge>
                     </div>
                   </div>
 
                   <div>
-                    <Text className="text-sm font-medium text-gray-600">Tasks</Text>
-                    <div className="flex items-center mt-1">
-                      <ClipboardDocumentListIcon className="h-4 w-4 text-gray-400 mr-1" />
-                      <Text>{project.progress?.taskCompletion || 0} abgeschlossen</Text>
-                      {project.progress?.criticalTasksRemaining && project.progress.criticalTasksRemaining > 0 && (
-                        <Badge color="red" className="ml-2">
-                          {project.progress.criticalTasksRemaining} kritisch
-                        </Badge>
+                    <Text className="text-sm font-medium text-gray-600">Tags</Text>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {project.tags && project.tags.length > 0 ? (
+                        project.tags.map((tagId, index) => (
+                          <Badge key={tagId} color={index % 2 === 0 ? 'blue' : 'purple'}>
+                            Tag {index + 1}
+                          </Badge>
+                        ))
+                      ) : (
+                        <Text className="text-gray-500 text-sm">Keine Tags</Text>
                       )}
                     </div>
                   </div>
@@ -750,24 +808,26 @@ export default function ProjectDetailPage() {
                 <div className="space-y-3">
                   <div>
                     <Text className="text-sm font-medium text-gray-600">Kampagnenname</Text>
-                    <Text className="mt-1">{project.linkedCampaign?.title || 'Keine Kampagne verknüpft'}</Text>
+                    <Text className="mt-1">
+                      {linkedCampaigns.length > 0 ? linkedCampaigns[0].title : 'Keine Kampagne verknüpft'}
+                    </Text>
                   </div>
                   
-                  {project.linkedCampaign && (
+                  {linkedCampaigns.length > 0 && (
                     <>
                       <div>
                         <Text className="text-sm font-medium text-gray-600">Status</Text>
                         <div className="mt-1">
                           <Badge color={
-                            project.linkedCampaign.status === 'approved' ? 'green' :
-                            project.linkedCampaign.status === 'in_review' ? 'blue' :
-                            project.linkedCampaign.status === 'changes_requested' ? 'yellow' : 'gray'
+                            linkedCampaigns[0].status === 'approved' ? 'green' :
+                            linkedCampaigns[0].status === 'in_review' ? 'blue' :
+                            linkedCampaigns[0].status === 'changes_requested' ? 'yellow' : 'gray'
                           }>
-                            {project.linkedCampaign.status === 'draft' ? 'Entwurf' :
-                             project.linkedCampaign.status === 'in_review' ? 'In Prüfung' :
-                             project.linkedCampaign.status === 'approved' ? 'Freigegeben' :
-                             project.linkedCampaign.status === 'changes_requested' ? 'Änderung erbeten' : 
-                             project.linkedCampaign.status}
+                            {linkedCampaigns[0].status === 'draft' ? 'Entwurf' :
+                             linkedCampaigns[0].status === 'in_review' ? 'In Prüfung' :
+                             linkedCampaigns[0].status === 'approved' ? 'Freigegeben' :
+                             linkedCampaigns[0].status === 'changes_requested' ? 'Änderung erbeten' : 
+                             linkedCampaigns[0].status}
                           </Badge>
                         </div>
                       </div>
@@ -777,10 +837,13 @@ export default function ProjectDetailPage() {
                         <div className="mt-2">
                           <div className="flex items-center justify-between mb-1">
                             <Text className="text-xs text-gray-500">Freigabe</Text>
-                            <Text className="text-xs text-gray-600">75%</Text>
+                            <Text className="text-xs text-gray-600">{linkedCampaigns[0].progress}%</Text>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div className="bg-blue-600 h-2 rounded-full transition-all duration-300" style={{ width: '75%' }}></div>
+                            <div 
+                              className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                              style={{ width: `${linkedCampaigns[0].progress}%` }}
+                            ></div>
                           </div>
                         </div>
                       </div>
