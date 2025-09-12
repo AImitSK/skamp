@@ -54,7 +54,7 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEditWizard, setShowEditWizard] = useState(false);
-  const [activeTab, setActiveTab] = useState<'planning' | 'overview' | 'tasks' | 'assets' | 'communication' | 'monitoring'>('planning');
+  const [activeTab, setActiveTab] = useState<'overview' | 'planning' | 'tasks' | 'communication' | 'monitoring'>('overview');
   const [showCommunicationModal, setShowCommunicationModal] = useState(false);
   const [projectFolders, setProjectFolders] = useState<any>(null);
   const [foldersLoading, setFoldersLoading] = useState(false);
@@ -379,17 +379,6 @@ export default function ProjectDetailPage() {
           <div className="px-6 py-4">
             <div className="flex space-x-6">
               <button 
-                onClick={() => setActiveTab('planning')}
-                className={`flex items-center pb-2 text-sm font-medium ${
-                  activeTab === 'planning' 
-                    ? 'text-blue-600 border-b-2 border-blue-600' 
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <LightBulbIcon className="w-4 h-4 mr-2" />
-                Planung & Strategie
-              </button>
-              <button 
                 onClick={() => setActiveTab('overview')}
                 className={`flex items-center pb-2 text-sm font-medium ${
                   activeTab === 'overview' 
@@ -401,6 +390,17 @@ export default function ProjectDetailPage() {
                 Übersicht
               </button>
               <button 
+                onClick={() => setActiveTab('planning')}
+                className={`flex items-center pb-2 text-sm font-medium ${
+                  activeTab === 'planning' 
+                    ? 'text-blue-600 border-b-2 border-blue-600' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <LightBulbIcon className="w-4 h-4 mr-2" />
+                Planung
+              </button>
+              <button 
                 onClick={() => setActiveTab('tasks')}
                 className={`flex items-center pb-2 text-sm font-medium ${
                   activeTab === 'tasks' 
@@ -409,18 +409,7 @@ export default function ProjectDetailPage() {
                 }`}
               >
                 <ClipboardDocumentListIcon className="w-4 h-4 mr-2" />
-                Tasks & Workflow
-              </button>
-              <button 
-                onClick={() => setActiveTab('assets')}
-                className={`flex items-center pb-2 text-sm font-medium ${
-                  activeTab === 'assets' 
-                    ? 'text-blue-600 border-b-2 border-blue-600' 
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <PhotoIcon className="w-4 h-4 mr-2" />
-                Assets & Medien
+                Tasks
               </button>
               <button 
                 onClick={() => setActiveTab('communication')}
@@ -442,7 +431,7 @@ export default function ProjectDetailPage() {
                 }`}
               >
                 <ChartBarIcon className="w-4 h-4 mr-2" />
-                Monitoring & Analytics
+                Analytics
               </button>
             </div>
           </div>
@@ -555,44 +544,6 @@ export default function ProjectDetailPage() {
             </div>
           )}
 
-          {/* Assets & Medien Tab */}
-          {activeTab === 'assets' && (
-            <div className="space-y-6">
-              {project && (
-                <>
-                  {/* Project Asset Gallery */}
-                  <ProjectAssetGallery
-                    projectId={project?.id || ''}
-                    organizationId={currentOrganization?.id || ''}
-                    currentStage={project.currentStage}
-                  />
-                  
-                  {/* Asset Pipeline Status */}
-                  <div className="border-t border-gray-200 pt-6">
-                    <AssetPipelineStatus
-                      project={project}
-                      onValidationUpdate={(result) => console.log('Validation updated:', result)}
-                    />
-                  </div>
-                  
-                  {/* Actions */}
-                  <div className="border-t border-gray-200 pt-6 text-center">
-                    <Subheading className="mb-4">Asset-Verwaltung</Subheading>
-                    <div className="flex justify-center space-x-4">
-                      <Button plain onClick={() => console.log('Asset hinzufügen')}>
-                        <PhotoIcon className="w-4 h-4 mr-2" />
-                        Neue Assets hinzufügen
-                      </Button>
-                      <Button plain onClick={() => console.log('Asset-Bibliothek öffnen')}>
-                        <FolderIcon className="w-4 h-4 mr-2" />
-                        Asset-Bibliothek
-                      </Button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
 
           {/* Kommunikation Tab */}
           {activeTab === 'communication' && (
