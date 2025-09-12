@@ -1048,7 +1048,7 @@ export default function ProjectFoldersView({
 
   if (foldersLoading) {
     return (
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 w-full" style={{ height: '420px' }}>
+      <div className="bg-white border border-gray-200 rounded-lg p-6 w-full" style={{ height: '420px' }}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
             <FolderIcon className="h-5 w-5 text-purple-500 mr-2" />
@@ -1076,7 +1076,7 @@ export default function ProjectFoldersView({
   }
 
   return (
-    <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 w-full" style={{ height: '420px' }}>
+    <div className="bg-white border border-gray-200 rounded-lg p-6 w-full" style={{ height: '420px' }}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center">
           <FolderIcon className="h-5 w-5 text-purple-500 mr-2" />
@@ -1092,20 +1092,20 @@ export default function ProjectFoldersView({
               onClick={() => setShowCreateFolderModal(true)}
               disabled={loading}
               title="Ordner erstellen"
-              className="p-2 hover:bg-gray-200 rounded-md"
+              className="p-2 bg-gray-100 hover:bg-gray-200 rounded-md"
             >
               <FolderIcon className="w-5 h-5" />
             </Button>
           )}
-          {/* Document Editor Buttons - nur im Dokumente-Ordner sichtbar */}
-          {isInDocumentsFolder() && (
+          {/* Document Editor Buttons - nur im Dokumente-Ordner UND nicht im Root sichtbar */}
+          {selectedFolderId && isInDocumentsFolder() && (
             <div className="flex items-center space-x-2">
               <Button
                 plain
                 onClick={handleCreateDocument}
                 disabled={loading}
                 title="Text erstellen"
-                className="p-2 hover:bg-gray-200 rounded-md"
+                className="p-2 bg-gray-100 hover:bg-gray-200 rounded-md"
               >
                 <DocumentPlusIcon className="w-5 h-5" />
               </Button>
@@ -1114,7 +1114,7 @@ export default function ProjectFoldersView({
                 onClick={() => {/* TODO: Tabellen-Editor */}}
                 disabled={loading}
                 title="Tabelle erstellen"
-                className="p-2 hover:bg-gray-200 rounded-md"
+                className="p-2 bg-gray-100 hover:bg-gray-200 rounded-md"
               >
                 <TableCellsIcon className="w-5 h-5" />
               </Button>
