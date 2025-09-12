@@ -1048,7 +1048,7 @@ export default function ProjectFoldersView({
 
   if (foldersLoading) {
     return (
-      <div className="bg-white border border-gray-200 rounded-lg p-6 w-full" style={{ height: '420px' }}>
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 w-full" style={{ height: '420px' }}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
             <FolderIcon className="h-5 w-5 text-purple-500 mr-2" />
@@ -1076,7 +1076,7 @@ export default function ProjectFoldersView({
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6 w-full" style={{ height: '420px' }}>
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 w-full" style={{ height: '420px' }}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center">
           <FolderIcon className="h-5 w-5 text-purple-500 mr-2" />
@@ -1091,9 +1091,10 @@ export default function ProjectFoldersView({
               plain
               onClick={() => setShowCreateFolderModal(true)}
               disabled={loading}
+              title="Ordner erstellen"
+              className="p-2 hover:bg-gray-200 rounded-md"
             >
-              <FolderIcon className="w-4 h-4 mr-2" />
-              Ordner erstellen
+              <FolderIcon className="w-5 h-5" />
             </Button>
           )}
           {/* Document Editor Buttons - nur im Dokumente-Ordner sichtbar */}
@@ -1103,19 +1104,19 @@ export default function ProjectFoldersView({
                 plain
                 onClick={handleCreateDocument}
                 disabled={loading}
-                title="Neues Textdokument erstellen"
+                title="Text erstellen"
+                className="p-2 hover:bg-gray-200 rounded-md"
               >
-                <DocumentPlusIcon className="w-4 h-4 mr-2" />
-                Text erstellen
+                <DocumentPlusIcon className="w-5 h-5" />
               </Button>
               <Button
                 plain
                 onClick={() => {/* TODO: Tabellen-Editor */}}
                 disabled={loading}
-                title="Neue Tabelle erstellen"
+                title="Tabelle erstellen"
+                className="p-2 hover:bg-gray-200 rounded-md"
               >
-                <TableCellsIcon className="w-4 h-4 mr-2" />
-                Tabelle erstellen
+                <TableCellsIcon className="w-5 h-5" />
               </Button>
             </div>
           )}
