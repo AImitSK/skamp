@@ -907,15 +907,43 @@ export default function ProjectDetailPage() {
                 <div>
                   {project.assignedTo && project.assignedTo.length > 0 ? (
                     <div className="flex -space-x-2">
-                      {project.assignedTo.slice(0, 4).map((memberId, index) => (
-                        <div 
-                          key={memberId}
-                          className="w-8 h-8 rounded-full bg-blue-500 ring-2 ring-white flex items-center justify-center text-white text-xs font-medium"
-                          title={`Team-Mitglied ${index + 1}`}
-                        >
-                          {String.fromCharCode(65 + index)}
-                        </div>
-                      ))}
+                      {project.assignedTo.slice(0, 4).map((userId, index) => {
+                        // Finde Team-Mitglied wie in Projektübersicht
+                        const memberByUserId = teamMembers.find(m => m.userId === userId);
+                        const memberById = teamMembers.find(m => m.id === userId);
+                        const member = memberByUserId || memberById;
+                        
+                        if (!member || loadingTeam) {
+                          // Fallback für unbekannte Member
+                          return (
+                            <div
+                              key={userId}
+                              className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 text-xs font-medium ring-2 ring-white"
+                              title={loadingTeam ? "Lädt Mitgliederdaten..." : "Unbekanntes Mitglied"}
+                            >
+                              {loadingTeam ? "..." : "?"}
+                            </div>
+                          );
+                        }
+                        
+                        // Generate initials as fallback
+                        const initials = member.displayName
+                          .split(' ')
+                          .map(n => n[0])
+                          .join('')
+                          .toUpperCase()
+                          .slice(0, 2);
+                        
+                        return (
+                          <Avatar
+                            key={userId}
+                            className="size-8 ring-2 ring-white"
+                            src={member.photoUrl}
+                            initials={initials}
+                            title={member.displayName}
+                          />
+                        );
+                      })}
                       {project.assignedTo.length > 4 && (
                         <div 
                           className="w-8 h-8 rounded-full bg-gray-300 ring-2 ring-white flex items-center justify-center text-gray-700 text-xs font-medium"
