@@ -23,7 +23,10 @@ import {
   ChatBubbleLeftRightIcon,
   ClipboardDocumentListIcon,
   FolderIcon,
-  LightBulbIcon
+  LightBulbIcon,
+  EyeIcon,
+  LinkIcon,
+  ArrowDownTrayIcon
 } from '@heroicons/react/24/outline';
 
 // Pipeline-Komponenten importieren
@@ -679,10 +682,10 @@ export default function ProjectDetailPage() {
 
         {/* Right Column - 1/3 width */}
         <div className="lg:col-span-1 space-y-6">
-          {/* Combined Info Box (Projektdetails + Team) */}
+          {/* Enhanced Project Info Box */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <div className="space-y-6">
-              {/* Project Details Section */}
+              {/* Projektdetails Section */}
               <div>
                 <div className="flex items-center mb-4">
                   <DocumentTextIcon className="h-5 w-5 text-gray-400 mr-2" />
@@ -713,47 +716,156 @@ export default function ProjectDetailPage() {
                     </div>
                   </div>
 
-                  {project.dueDate && (
-                    <div>
-                      <Text className="text-sm font-medium text-gray-600">Fälligkeitsdatum</Text>
-                      <div className="flex items-center mt-1">
-                        <ClockIcon className="h-4 w-4 text-gray-400 mr-1" />
-                        <Text>{formatDate(project.dueDate)}</Text>
-                      </div>
+                  <div>
+                    <Text className="text-sm font-medium text-gray-600">Priorität</Text>
+                    <div className="mt-1">
+                      <Badge color={project.priority === 'high' ? 'red' : project.priority === 'medium' ? 'yellow' : 'green'}>
+                        {project.priority === 'high' ? 'Hoch' : project.priority === 'medium' ? 'Mittel' : 'Niedrig'}
+                      </Badge>
                     </div>
+                  </div>
+
+                  <div>
+                    <Text className="text-sm font-medium text-gray-600">Tasks</Text>
+                    <div className="flex items-center mt-1">
+                      <ClipboardDocumentListIcon className="h-4 w-4 text-gray-400 mr-1" />
+                      <Text>{project.progress?.taskCompletion || 0} abgeschlossen</Text>
+                      {project.progress?.criticalTasksRemaining && project.progress.criticalTasksRemaining > 0 && (
+                        <Badge color="red" className="ml-2">
+                          {project.progress.criticalTasksRemaining} kritisch
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pressemeldung Section */}
+              <div className="border-t pt-6">
+                <div className="flex items-center mb-4">
+                  <DocumentTextIcon className="h-5 w-5 text-blue-500 mr-2" />
+                  <Subheading>Pressemeldung</Subheading>
+                </div>
+                
+                <div className="space-y-3">
+                  <div>
+                    <Text className="text-sm font-medium text-gray-600">Kampagnenname</Text>
+                    <Text className="mt-1">{project.linkedCampaign?.title || 'Keine Kampagne verknüpft'}</Text>
+                  </div>
+                  
+                  {project.linkedCampaign && (
+                    <>
+                      <div>
+                        <Text className="text-sm font-medium text-gray-600">Status</Text>
+                        <div className="mt-1">
+                          <Badge color={
+                            project.linkedCampaign.status === 'approved' ? 'green' :
+                            project.linkedCampaign.status === 'in_review' ? 'blue' :
+                            project.linkedCampaign.status === 'changes_requested' ? 'yellow' : 'gray'
+                          }>
+                            {project.linkedCampaign.status === 'draft' ? 'Entwurf' :
+                             project.linkedCampaign.status === 'in_review' ? 'In Prüfung' :
+                             project.linkedCampaign.status === 'approved' ? 'Freigegeben' :
+                             project.linkedCampaign.status === 'changes_requested' ? 'Änderung erbeten' : 
+                             project.linkedCampaign.status}
+                          </Badge>
+                        </div>
+                      </div>
+
+                      <div>
+                        <Text className="text-sm font-medium text-gray-600">Status Fortschritt</Text>
+                        <div className="mt-2">
+                          <div className="flex items-center justify-between mb-1">
+                            <Text className="text-xs text-gray-500">Freigabe</Text>
+                            <Text className="text-xs text-gray-600">75%</Text>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div className="bg-blue-600 h-2 rounded-full transition-all duration-300" style={{ width: '75%' }}></div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Campaign Actions */}
+                      <div className="pt-2 border-t">
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            className="inline-flex items-center px-3 py-1 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                            title="Freigabe-Seite öffnen"
+                          >
+                            <EyeIcon className="w-3 h-3 mr-1" />
+                            Freigabe-Seite
+                          </button>
+                          
+                          <button
+                            className="inline-flex items-center px-3 py-1 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                            title="Freigabe-Link kopieren"
+                          >
+                            <LinkIcon className="w-3 h-3 mr-1" />
+                            Link kopieren
+                          </button>
+                          
+                          <button
+                            className="inline-flex items-center px-3 py-1 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                            title="Aktuelles PDF herunterladen"
+                          >
+                            <ArrowDownTrayIcon className="w-3 h-3 mr-1" />
+                            PDF
+                          </button>
+                          
+                          <button
+                            className="inline-flex items-center px-3 py-1 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                            title="Feedback-Historie anzeigen"
+                          >
+                            <ChatBubbleLeftRightIcon className="w-3 h-3 mr-1" />
+                            Historie
+                          </button>
+                        </div>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
 
               {/* Team Section */}
               <div className="border-t pt-6">
-                <div className="flex items-center mb-4">
-                  <UserGroupIcon className="h-5 w-5 text-gray-400 mr-2" />
-                  <Subheading>Team</Subheading>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <UserGroupIcon className="h-5 w-5 text-gray-400 mr-2" />
+                    <Subheading>Team</Subheading>
+                  </div>
+                  <button
+                    className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                    title="Team verwalten"
+                  >
+                    Team verwalten
+                  </button>
                 </div>
                 
-                <div className="space-y-4">
+                <div>
                   {project.assignedTo && project.assignedTo.length > 0 ? (
-                    <div>
-                      <Text className="text-sm font-medium text-gray-600 mb-2">
-                        Zugewiesene Mitarbeiter ({project.assignedTo.length})
-                      </Text>
-                      <div className="space-y-2">
-                        {project.assignedTo.slice(0, 3).map((memberId) => (
-                          <div key={memberId} className="flex items-center">
-                            <div className="w-6 h-6 bg-gray-200 rounded-full mr-2"></div>
-                            <Text className="text-sm">Team-Mitglied</Text>
-                          </div>
-                        ))}
-                        {project.assignedTo.length > 3 && (
-                          <Text className="text-sm text-gray-500">
-                            +{project.assignedTo.length - 3} weitere
-                          </Text>
-                        )}
-                      </div>
+                    <div className="flex -space-x-2">
+                      {project.assignedTo.slice(0, 4).map((memberId, index) => (
+                        <div 
+                          key={memberId}
+                          className="w-8 h-8 rounded-full bg-blue-500 ring-2 ring-white flex items-center justify-center text-white text-xs font-medium"
+                          title={`Team-Mitglied ${index + 1}`}
+                        >
+                          {String.fromCharCode(65 + index)}
+                        </div>
+                      ))}
+                      {project.assignedTo.length > 4 && (
+                        <div 
+                          className="w-8 h-8 rounded-full bg-gray-300 ring-2 ring-white flex items-center justify-center text-gray-700 text-xs font-medium"
+                          title={`+${project.assignedTo.length - 4} weitere Mitglieder`}
+                        >
+                          +{project.assignedTo.length - 4}
+                        </div>
+                      )}
                     </div>
                   ) : (
-                    <Text className="text-gray-500">Keine Team-Mitglieder zugewiesen</Text>
+                    <div className="flex items-center text-gray-500">
+                      <Text className="text-sm">Kein Team zugewiesen</Text>
+                    </div>
                   )}
                 </div>
               </div>
