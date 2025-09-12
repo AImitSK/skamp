@@ -369,129 +369,12 @@ export default function ProjectDetailPage() {
         </div>
       </div>
 
-      {/* Project Info Cards */}
+      {/* Main Layout Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* Basic Info */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center mb-4">
-            <DocumentTextIcon className="h-5 w-5 text-gray-400 mr-2" />
-            <Subheading>Projektdetails</Subheading>
-          </div>
-          
-          <div className="space-y-4">
-            <div>
-              <Text className="text-sm font-medium text-gray-600">Aktuelle Phase</Text>
-              <Text className="mt-1">{getCurrentStageLabel(project.currentStage)}</Text>
-            </div>
-            
-            {project.customer && (
-              <div>
-                <Text className="text-sm font-medium text-gray-600">Kunde</Text>
-                <div className="flex items-center mt-1">
-                  <BuildingOfficeIcon className="h-4 w-4 text-gray-400 mr-1" />
-                  <Text>{project.customer.name}</Text>
-                </div>
-              </div>
-            )}
-            
-            <div>
-              <Text className="text-sm font-medium text-gray-600">Erstellt am</Text>
-              <div className="flex items-center mt-1">
-                <CalendarDaysIcon className="h-4 w-4 text-gray-400 mr-1" />
-                <Text>{formatDate(project.createdAt)}</Text>
-              </div>
-            </div>
-
-            {project.dueDate && (
-              <div>
-                <Text className="text-sm font-medium text-gray-600">Fälligkeitsdatum</Text>
-                <div className="flex items-center mt-1">
-                  <ClockIcon className="h-4 w-4 text-gray-400 mr-1" />
-                  <Text>{formatDate(project.dueDate)}</Text>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Team Info */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center mb-4">
-            <UserGroupIcon className="h-5 w-5 text-gray-400 mr-2" />
-            <Subheading>Team</Subheading>
-          </div>
-          
-          <div className="space-y-4">
-            {project.assignedTo && project.assignedTo.length > 0 ? (
-              <div>
-                <Text className="text-sm font-medium text-gray-600 mb-2">
-                  Zugewiesene Mitarbeiter ({project.assignedTo.length})
-                </Text>
-                <div className="space-y-2">
-                  {project.assignedTo.slice(0, 3).map((memberId) => (
-                    <div key={memberId} className="flex items-center">
-                      <div className="w-6 h-6 bg-gray-200 rounded-full mr-2"></div>
-                      <Text className="text-sm">Team-Mitglied</Text>
-                    </div>
-                  ))}
-                  {project.assignedTo.length > 3 && (
-                    <Text className="text-sm text-gray-500">
-                      +{project.assignedTo.length - 3} weitere
-                    </Text>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <Text className="text-gray-500">Keine Team-Mitglieder zugewiesen</Text>
-            )}
-          </div>
-        </div>
-
-        {/* Wizard Info */}
-        {project.creationContext?.createdViaWizard && (
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center mb-4">
-              <Squares2X2Icon className="h-5 w-5 text-gray-400 mr-2" />
-              <Subheading>Wizard-Erstellung</Subheading>
-            </div>
-            
-            <div className="space-y-4">
-              <div>
-                <Text className="text-sm font-medium text-gray-600">Template</Text>
-                <Text className="mt-1">{project.creationContext.templateId}</Text>
-              </div>
-              
-              <div>
-                <Text className="text-sm font-medium text-gray-600">Wizard-Version</Text>
-                <Text className="mt-1">{project.creationContext.wizardVersion}</Text>
-              </div>
-              
-              {project.setupStatus && (
-                <div>
-                  <Text className="text-sm font-medium text-gray-600 mb-2">Setup-Status</Text>
-                  <div className="flex flex-wrap gap-1">
-                    {project.setupStatus.campaignLinked && (
-                      <Badge color="green" className="text-xs">Kampagne</Badge>
-                    )}
-                    {project.setupStatus.assetsAttached && (
-                      <Badge color="blue" className="text-xs">Assets</Badge>
-                    )}
-                    {project.setupStatus.tasksCreated && (
-                      <Badge color="purple" className="text-xs">Tasks</Badge>
-                    )}
-                    {project.setupStatus.teamNotified && (
-                      <Badge color="orange" className="text-xs">Team benachrichtigt</Badge>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Content Tabs - Vollständige Pipeline-Integration */}
-      <div className="bg-white rounded-lg border border-gray-200">
+        {/* Left Column - 2/3 width */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Content Tabs Box */}
+          <div className="bg-white rounded-lg border border-gray-200">
         <div className="border-b border-gray-200">
           <div className="px-6 py-4">
             <div className="flex space-x-6">
@@ -782,121 +665,196 @@ export default function ProjectDetailPage() {
           {/* Planung & Strategie Tab */}
           {activeTab === 'planning' && (
             <div className="space-y-6">
-              {/* Grid Layout: 2/3 left, 1/3 right */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Left Column - 2/3 width */}
-                <div className="lg:col-span-2 space-y-6">
-                  {/* Projekt-Ordner - Top of left column */}
+              {/* Projekt-Ordner */}
+              <ProjectFoldersView
+                projectId={project.id!}
+                organizationId={currentOrganization.id}
+                projectFolders={projectFolders}
+                foldersLoading={foldersLoading}
+                onRefresh={loadProjectFolders}
+                clientId={project.customer?.id || ''}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+          
+          {/* Planungs-Checkliste Box */}
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <div className="flex items-center mb-4">
+              <ClipboardDocumentListIcon className="h-5 w-5 text-orange-500 mr-2" />
+              <Subheading>Planungs-Checkliste</Subheading>
+            </div>
+            <Text className="text-gray-600 mb-4">
+              Standard-Aufgaben für eine vollständige Projektplanung.
+            </Text>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="flex items-center space-x-3">
+                <input type="checkbox" checked className="rounded text-green-600" />
+                <Text className="text-sm">Projekt-Briefing erstellt</Text>
+              </div>
+              <div className="flex items-center space-x-3">
+                <input type="checkbox" className="rounded text-green-600" />
+                <Text className="text-sm">Zielgruppen definiert</Text>
+              </div>
+              <div className="flex items-center space-x-3">
+                <input type="checkbox" className="rounded text-green-600" />
+                <Text className="text-sm">Budget und Timeline festgelegt</Text>
+              </div>
+              <div className="flex items-center space-x-3">
+                <input type="checkbox" className="rounded text-green-600" />
+                <Text className="text-sm">Team-Rollen zugewiesen</Text>
+              </div>
+              <div className="flex items-center space-x-3">
+                <input type="checkbox" className="rounded text-green-600" />
+                <Text className="text-sm">Strategiedokument finalisiert</Text>
+              </div>
+              <div className="flex items-center space-x-3">
+                <input type="checkbox" className="rounded text-green-600" />
+                <Text className="text-sm">Ressourcen allokiert</Text>
+              </div>
+            </div>
+            <div className="mt-4">
+              <Button 
+                plain 
+                className="w-full"
+              >
+                <ClipboardDocumentListIcon className="w-4 h-4 mr-2" />
+                Checkliste verwalten
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column - 1/3 width */}
+        <div className="lg:col-span-1 space-y-6">
+          {/* Combined Info Box (Projektdetails + Team) */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="space-y-6">
+              {/* Project Details Section */}
+              <div>
+                <div className="flex items-center mb-4">
+                  <DocumentTextIcon className="h-5 w-5 text-gray-400 mr-2" />
+                  <Subheading>Projektdetails</Subheading>
+                </div>
+                
+                <div className="space-y-3">
                   <div>
-                    <ProjectFoldersView
-                      projectId={project.id!}
-                      organizationId={currentOrganization.id}
-                      projectFolders={projectFolders}
-                      foldersLoading={foldersLoading}
-                      onRefresh={loadProjectFolders}
-                      clientId={project.customer?.id || ''}
-                    />
+                    <Text className="text-sm font-medium text-gray-600">Aktuelle Phase</Text>
+                    <Text className="mt-1">{getCurrentStageLabel(project.currentStage)}</Text>
                   </div>
                   
-                  {/* Planungs-Checkliste - Bottom of left column */}
-                  <div className="bg-white border border-gray-200 rounded-lg p-6">
-                    <div className="flex items-center mb-4">
-                      <ClipboardDocumentListIcon className="h-5 w-5 text-orange-500 mr-2" />
-                      <Subheading>Planungs-Checkliste</Subheading>
-                    </div>
-                    <Text className="text-gray-600 mb-4">
-                      Standard-Aufgaben für eine vollständige Projektplanung.
-                    </Text>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div className="flex items-center space-x-3">
-                        <input type="checkbox" checked className="rounded text-green-600" />
-                        <Text className="text-sm">Projekt-Briefing erstellt</Text>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <input type="checkbox" className="rounded text-green-600" />
-                        <Text className="text-sm">Zielgruppen definiert</Text>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <input type="checkbox" className="rounded text-green-600" />
-                        <Text className="text-sm">Budget und Timeline festgelegt</Text>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <input type="checkbox" className="rounded text-green-600" />
-                        <Text className="text-sm">Team-Rollen zugewiesen</Text>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <input type="checkbox" className="rounded text-green-600" />
-                        <Text className="text-sm">Strategiedokument finalisiert</Text>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <input type="checkbox" className="rounded text-green-600" />
-                        <Text className="text-sm">Ressourcen allokiert</Text>
+                  {project.customer && (
+                    <div>
+                      <Text className="text-sm font-medium text-gray-600">Kunde</Text>
+                      <div className="flex items-center mt-1">
+                        <BuildingOfficeIcon className="h-4 w-4 text-gray-400 mr-1" />
+                        <Text>{project.customer.name}</Text>
                       </div>
                     </div>
-                    <div className="mt-4">
-                      <Button 
-                        plain 
-                        className="w-full"
-                      >
-                        <ClipboardDocumentListIcon className="w-4 h-4 mr-2" />
-                        Checkliste verwalten
-                      </Button>
+                  )}
+                  
+                  <div>
+                    <Text className="text-sm font-medium text-gray-600">Erstellt am</Text>
+                    <div className="flex items-center mt-1">
+                      <CalendarDaysIcon className="h-4 w-4 text-gray-400 mr-1" />
+                      <Text>{formatDate(project.createdAt)}</Text>
                     </div>
                   </div>
-                </div>
 
-                {/* Right Column - 1/3 width */}
-                <div className="lg:col-span-1">
-                  {/* Team-Kommunikation */}
-                  <div className="bg-white border border-gray-200 rounded-lg p-6">
-                    <div className="flex items-center mb-4">
-                      <ChatBubbleLeftRightIcon className="h-5 w-5 text-green-500 mr-2" />
-                      <Subheading>Team-Kommunikation</Subheading>
-                    </div>
-                    <Text className="text-gray-600 mb-4">
-                      Projektspezifische Kommunikation mit @-Mentions und Datei-Upload.
-                    </Text>
-                    <div className="space-y-3">
-                      <div className="flex items-start space-x-3">
-                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                          <Text className="text-xs font-medium text-blue-600">MB</Text>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <Text className="text-sm font-medium">Maria Bauer</Text>
-                          <Text className="text-xs text-gray-500">vor 2 Stunden</Text>
-                          <Text className="text-sm text-gray-700 mt-1">
-                            Kann das Briefing bis morgen finalisiert werden?
-                          </Text>
-                        </div>
-                      </div>
-                      <div className="flex items-start space-x-3">
-                        <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                          <Text className="text-xs font-medium text-green-600">TK</Text>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <Text className="text-sm font-medium">Thomas Klein</Text>
-                          <Text className="text-xs text-gray-500">vor 45 Minuten</Text>
-                          <Text className="text-sm text-gray-700 mt-1">
-                            Die Zielgruppenanalyse ist fertig. @MariaBauer kannst du bitte reviewen?
-                          </Text>
-                        </div>
+                  {project.dueDate && (
+                    <div>
+                      <Text className="text-sm font-medium text-gray-600">Fälligkeitsdatum</Text>
+                      <div className="flex items-center mt-1">
+                        <ClockIcon className="h-4 w-4 text-gray-400 mr-1" />
+                        <Text>{formatDate(project.dueDate)}</Text>
                       </div>
                     </div>
-                    <div className="mt-4">
-                      <Button 
-                        plain 
-                        className="w-full"
-                        onClick={handleOpenCommunicationFeed}
-                      >
-                        <ChatBubbleLeftRightIcon className="w-4 h-4 mr-2" />
-                        Chat öffnen
-                      </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Team Section */}
+              <div className="border-t pt-6">
+                <div className="flex items-center mb-4">
+                  <UserGroupIcon className="h-5 w-5 text-gray-400 mr-2" />
+                  <Subheading>Team</Subheading>
+                </div>
+                
+                <div className="space-y-4">
+                  {project.assignedTo && project.assignedTo.length > 0 ? (
+                    <div>
+                      <Text className="text-sm font-medium text-gray-600 mb-2">
+                        Zugewiesene Mitarbeiter ({project.assignedTo.length})
+                      </Text>
+                      <div className="space-y-2">
+                        {project.assignedTo.slice(0, 3).map((memberId) => (
+                          <div key={memberId} className="flex items-center">
+                            <div className="w-6 h-6 bg-gray-200 rounded-full mr-2"></div>
+                            <Text className="text-sm">Team-Mitglied</Text>
+                          </div>
+                        ))}
+                        {project.assignedTo.length > 3 && (
+                          <Text className="text-sm text-gray-500">
+                            +{project.assignedTo.length - 3} weitere
+                          </Text>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <Text className="text-gray-500">Keine Team-Mitglieder zugewiesen</Text>
+                  )}
                 </div>
               </div>
             </div>
-          )}
+          </div>
+
+          {/* Team-Kommunikation Box */}
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <div className="flex items-center mb-4">
+              <ChatBubbleLeftRightIcon className="h-5 w-5 text-green-500 mr-2" />
+              <Subheading>Team-Kommunikation</Subheading>
+            </div>
+            <Text className="text-gray-600 mb-4">
+              Projektspezifische Kommunikation mit @-Mentions und Datei-Upload.
+            </Text>
+            <div className="space-y-3">
+              <div className="flex items-start space-x-3">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <Text className="text-xs font-medium text-blue-600">MB</Text>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <Text className="text-sm font-medium">Maria Bauer</Text>
+                  <Text className="text-xs text-gray-500">vor 2 Stunden</Text>
+                  <Text className="text-sm text-gray-700 mt-1">
+                    Kann das Briefing bis morgen finalisiert werden?
+                  </Text>
+                </div>
+              </div>
+              <div className="flex items-start space-x-3">
+                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                  <Text className="text-xs font-medium text-green-600">TK</Text>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <Text className="text-sm font-medium">Thomas Klein</Text>
+                  <Text className="text-xs text-gray-500">vor 45 Minuten</Text>
+                  <Text className="text-sm text-gray-700 mt-1">
+                    Die Zielgruppenanalyse ist fertig. @MariaBauer kannst du bitte reviewen?
+                  </Text>
+                </div>
+              </div>
+            </div>
+            <div className="mt-4">
+              <Button 
+                plain 
+                className="w-full"
+                onClick={handleOpenCommunicationFeed}
+              >
+                <ChatBubbleLeftRightIcon className="w-4 h-4 mr-2" />
+                Chat öffnen
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
       
