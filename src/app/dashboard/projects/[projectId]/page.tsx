@@ -8,6 +8,7 @@ import { Heading, Subheading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Avatar } from '@/components/ui/avatar';
 import { 
   ArrowLeftIcon,
   PencilSquareIcon,
@@ -39,7 +40,9 @@ import WorkflowAutomationManager from '@/components/projects/workflow/WorkflowAu
 import TaskDependenciesVisualizer from '@/components/projects/workflow/TaskDependenciesVisualizer';
 import { CommunicationModal } from '@/components/projects/communication/CommunicationModal';
 import { projectService } from '@/lib/firebase/project-service';
+import { teamMemberService } from '@/lib/firebase/organization-service';
 import { Project } from '@/types/project';
+import { TeamMember } from '@/types/international';
 import { ProjectEditWizard } from '@/components/projects/edit/ProjectEditWizard';
 import { strategyDocumentService, StrategyDocument } from '@/lib/firebase/strategy-document-service';
 import ProjectFoldersView from '@/components/projects/ProjectFoldersView';
@@ -65,9 +68,12 @@ export default function ProjectDetailPage() {
   const [documentsLoading, setDocumentsLoading] = useState(false);
   const [showDocumentModal, setShowDocumentModal] = useState(false);
   const [linkedCampaigns, setLinkedCampaigns] = useState<any[]>([]);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [loadingTeam, setLoadingTeam] = useState(true);
 
   useEffect(() => {
     loadProject();
+    loadTeamMembers();
   }, [projectId, currentOrganization?.id]);
 
   // Lade Projekt-Ordnerstruktur und Dokumente wenn Planning-Tab aktiviert wird
@@ -188,6 +194,21 @@ export default function ProjectDetailPage() {
       setError('Projekt konnte nicht geladen werden');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadTeamMembers = async () => {
+    if (!currentOrganization?.id) return;
+    
+    try {
+      setLoadingTeam(true);
+      const members = await teamMemberService.getByOrganization(currentOrganization.id);
+      const activeMembers = members.filter(m => m.status === 'active');
+      setTeamMembers(activeMembers);
+    } catch (error) {
+      console.error('Error loading team members:', error);
+    } finally {
+      setLoadingTeam(false);
     }
   };
 
