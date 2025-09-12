@@ -1048,7 +1048,7 @@ export default function ProjectFoldersView({
 
   if (foldersLoading) {
     return (
-      <div className="bg-white border border-gray-200 rounded-lg p-6 w-full" style={{ height: '420px' }}>
+      <div className="bg-white border border-gray-200 rounded-lg p-6 w-full" style={{ height: '500px' }}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
             <FolderIcon className="h-5 w-5 text-purple-500 mr-2" />
@@ -1076,7 +1076,7 @@ export default function ProjectFoldersView({
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6 w-full" style={{ height: '420px' }}>
+    <div className="bg-white border border-gray-200 rounded-lg p-6 w-full" style={{ height: '500px' }}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center">
           <FolderIcon className="h-5 w-5 text-purple-500 mr-2" />
