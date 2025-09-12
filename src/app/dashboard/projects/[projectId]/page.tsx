@@ -54,7 +54,7 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEditWizard, setShowEditWizard] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'assets' | 'communication' | 'monitoring' | 'planning'>('overview');
+  const [activeTab, setActiveTab] = useState<'planning' | 'overview' | 'tasks' | 'assets' | 'communication' | 'monitoring'>('planning');
   const [showCommunicationModal, setShowCommunicationModal] = useState(false);
   const [projectFolders, setProjectFolders] = useState<any>(null);
   const [foldersLoading, setFoldersLoading] = useState(false);
@@ -496,6 +496,17 @@ export default function ProjectDetailPage() {
           <div className="px-6 py-4">
             <div className="flex space-x-6">
               <button 
+                onClick={() => setActiveTab('planning')}
+                className={`flex items-center pb-2 text-sm font-medium ${
+                  activeTab === 'planning' 
+                    ? 'text-blue-600 border-b-2 border-blue-600' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <LightBulbIcon className="w-4 h-4 mr-2" />
+                Planung & Strategie
+              </button>
+              <button 
                 onClick={() => setActiveTab('overview')}
                 className={`flex items-center pb-2 text-sm font-medium ${
                   activeTab === 'overview' 
@@ -549,20 +560,6 @@ export default function ProjectDetailPage() {
               >
                 <ChartBarIcon className="w-4 h-4 mr-2" />
                 Monitoring & Analytics
-              </button>
-              <button 
-                onClick={() => setActiveTab('planning')}
-                className={`flex items-center pb-2 text-sm font-medium ${
-                  activeTab === 'planning' 
-                    ? 'text-blue-600 border-b-2 border-blue-600' 
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <LightBulbIcon className="w-4 h-4 mr-2" />
-                Planung & Strategie
-                {project.currentStage === 'ideas_planning' && (
-                  <Badge className="ml-2" color="green">Aktiv</Badge>
-                )}
               </button>
             </div>
           </div>
@@ -785,32 +782,6 @@ export default function ProjectDetailPage() {
           {/* Planung & Strategie Tab */}
           {activeTab === 'planning' && (
             <div className="space-y-6">
-              {/* Phase-Status Header */}
-              <div className={`p-4 rounded-lg border ${
-                project.currentStage === 'ideas_planning' 
-                  ? 'bg-green-50 border-green-200' 
-                  : 'bg-gray-50 border-gray-200'
-              }`}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Subheading className="text-gray-900">
-                      {project.currentStage === 'ideas_planning' 
-                        ? 'Aktive Planungsphase' 
-                        : 'Planungsphase abgeschlossen'
-                      }
-                    </Subheading>
-                    <Text className="text-gray-600 mt-1">
-                      {project.currentStage === 'ideas_planning' 
-                        ? 'Das Projekt befindet sich derzeit in der Ideen- und Planungsphase. Alle Bereiche können bearbeitet werden.'
-                        : 'Die Planungsphase ist abgeschlossen. Dokumente können nur eingesehen werden.'
-                      }
-                    </Text>
-                  </div>
-                  <Badge color={project.currentStage === 'ideas_planning' ? 'green' : 'zinc'}>
-                    {project.currentStage === 'ideas_planning' ? 'Bearbeitbar' : 'Nur Lesen'}
-                  </Badge>
-                </div>
-              </div>
               
               {/* Projekt-Ordner - Volle Breite */}
               <div className="mb-6">
@@ -876,7 +847,7 @@ export default function ProjectDetailPage() {
                               plain
                               onClick={() => router.push(`/dashboard/strategy-documents/${doc.id}`)}
                             >
-                              {project.currentStage === 'ideas_planning' ? 'Bearbeiten' : 'Ansehen'}
+                              Bearbeiten
                             </Button>
                           </div>
                         </div>
@@ -897,7 +868,7 @@ export default function ProjectDetailPage() {
                   <div className="mt-4">
                     <Button 
                       plain 
-                      disabled={project.currentStage !== 'ideas_planning' || documentsLoading}
+                      disabled={documentsLoading}
                       className="w-full"
                       onClick={() => handleCreateDocument('briefing-template', `${project.title} - Briefing`)}
                     >
@@ -907,7 +878,7 @@ export default function ProjectDetailPage() {
                   </div>
                   
                   {/* Quick Templates */}
-                  {project.currentStage === 'ideas_planning' && strategyDocuments.length === 0 && (
+                  {strategyDocuments.length === 0 && (
                     <div className="mt-3 pt-3 border-t border-gray-200">
                       <Text className="text-xs text-gray-600 mb-2">Schnellstart:</Text>
                       <div className="flex flex-wrap gap-2">
@@ -1006,8 +977,7 @@ export default function ProjectDetailPage() {
                   </div>
                   <div className="mt-4">
                     <Button 
-                      plain 
-                      disabled={project.currentStage !== 'ideas_planning'}
+                      plain
                       className="w-full"
                     >
                       <ClipboardDocumentListIcon className="w-4 h-4 mr-2" />
