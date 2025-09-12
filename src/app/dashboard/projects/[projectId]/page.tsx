@@ -782,207 +782,116 @@ export default function ProjectDetailPage() {
           {/* Planung & Strategie Tab */}
           {activeTab === 'planning' && (
             <div className="space-y-6">
-              
-              {/* Projekt-Ordner - Volle Breite */}
-              <div className="mb-6">
-                <ProjectFoldersView
-                  projectId={project.id!}
-                  organizationId={currentOrganization.id}
-                  projectFolders={projectFolders}
-                  foldersLoading={foldersLoading}
-                  onRefresh={loadProjectFolders}
-                  clientId={project.customer?.id || ''}
-                />
-              </div>
-              
-              {/* 3 Hauptbereiche */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Strategiedokumente */}
-                <div className="bg-white border border-gray-200 rounded-lg p-6">
-                  <div className="flex items-center mb-4">
-                    <DocumentTextIcon className="h-5 w-5 text-blue-500 mr-2" />
-                    <Subheading>Strategiedokumente</Subheading>
-                    {documentsLoading && (
-                      <div className="ml-2 animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-                    )}
+              {/* Grid Layout: 2/3 left, 1/3 right */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Left Column - 2/3 width */}
+                <div className="lg:col-span-2 space-y-6">
+                  {/* Projekt-Ordner - Top of left column */}
+                  <div>
+                    <ProjectFoldersView
+                      projectId={project.id!}
+                      organizationId={currentOrganization.id}
+                      projectFolders={projectFolders}
+                      foldersLoading={foldersLoading}
+                      onRefresh={loadProjectFolders}
+                      clientId={project.customer?.id || ''}
+                    />
                   </div>
-                  <Text className="text-gray-600 mb-4">
-                    Erstellen und verwalten Sie Projektbriefings, Strategiepapiere und Analysedokumente.
-                  </Text>
                   
-                  {strategyDocuments.length > 0 ? (
+                  {/* Planungs-Checkliste - Bottom of left column */}
+                  <div className="bg-white border border-gray-200 rounded-lg p-6">
+                    <div className="flex items-center mb-4">
+                      <ClipboardDocumentListIcon className="h-5 w-5 text-orange-500 mr-2" />
+                      <Subheading>Planungs-Checkliste</Subheading>
+                    </div>
+                    <Text className="text-gray-600 mb-4">
+                      Standard-Aufgaben für eine vollständige Projektplanung.
+                    </Text>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="flex items-center space-x-3">
+                        <input type="checkbox" checked className="rounded text-green-600" />
+                        <Text className="text-sm">Projekt-Briefing erstellt</Text>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <input type="checkbox" className="rounded text-green-600" />
+                        <Text className="text-sm">Zielgruppen definiert</Text>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <input type="checkbox" className="rounded text-green-600" />
+                        <Text className="text-sm">Budget und Timeline festgelegt</Text>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <input type="checkbox" className="rounded text-green-600" />
+                        <Text className="text-sm">Team-Rollen zugewiesen</Text>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <input type="checkbox" className="rounded text-green-600" />
+                        <Text className="text-sm">Strategiedokument finalisiert</Text>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <input type="checkbox" className="rounded text-green-600" />
+                        <Text className="text-sm">Ressourcen allokiert</Text>
+                      </div>
+                    </div>
+                    <div className="mt-4">
+                      <Button 
+                        plain 
+                        className="w-full"
+                      >
+                        <ClipboardDocumentListIcon className="w-4 h-4 mr-2" />
+                        Checkliste verwalten
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column - 1/3 width */}
+                <div className="lg:col-span-1">
+                  {/* Team-Kommunikation */}
+                  <div className="bg-white border border-gray-200 rounded-lg p-6">
+                    <div className="flex items-center mb-4">
+                      <ChatBubbleLeftRightIcon className="h-5 w-5 text-green-500 mr-2" />
+                      <Subheading>Team-Kommunikation</Subheading>
+                    </div>
+                    <Text className="text-gray-600 mb-4">
+                      Projektspezifische Kommunikation mit @-Mentions und Datei-Upload.
+                    </Text>
                     <div className="space-y-3">
-                      {strategyDocuments.map((doc) => (
-                        <div key={doc.id} className="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center space-x-3">
-                              <DocumentTextIcon className="h-4 w-4 text-blue-500 flex-shrink-0" />
-                              <div className="min-w-0 flex-1">
-                                <Text className="text-sm font-medium text-gray-900 truncate">
-                                  {doc.title}
-                                </Text>
-                                <div className="flex items-center space-x-2 mt-1">
-                                  <Text className="text-xs text-gray-500">
-                                    {doc.type === 'briefing' ? 'Briefing' :
-                                     doc.type === 'strategy' ? 'Strategie' :
-                                     doc.type === 'analysis' ? 'Analyse' : 'Notizen'}
-                                  </Text>
-                                  <span className="text-gray-300">•</span>
-                                  <Text className="text-xs text-gray-500">
-                                    v{doc.version} von {doc.authorName}
-                                  </Text>
-                                  <span className="text-gray-300">•</span>
-                                  <Text className="text-xs text-gray-500">
-                                    {doc.updatedAt.toDate().toLocaleDateString('de-DE')}
-                                  </Text>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Badge color={getDocumentStatusColor(doc.status)}>
-                              {getDocumentStatusLabel(doc.status)}
-                            </Badge>
-                            <Button
-                              plain
-                              onClick={() => router.push(`/dashboard/strategy-documents/${doc.id}`)}
-                            >
-                              Bearbeiten
-                            </Button>
-                          </div>
+                      <div className="flex items-start space-x-3">
+                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                          <Text className="text-xs font-medium text-blue-600">MB</Text>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-6">
-                      <DocumentTextIcon className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-                      <Text className="text-sm text-gray-500 mb-1">
-                        Noch keine Strategiedokumente erstellt
-                      </Text>
-                      <Text className="text-xs text-gray-400">
-                        Beginnen Sie mit einem Briefing oder einer Strategieanalyse
-                      </Text>
-                    </div>
-                  )}
-                  
-                  <div className="mt-4">
-                    <Button 
-                      plain 
-                      disabled={documentsLoading}
-                      className="w-full"
-                      onClick={() => handleCreateDocument('briefing-template', `${project.title} - Briefing`)}
-                    >
-                      <DocumentTextIcon className="w-4 h-4 mr-2" />
-                      Neues Dokument erstellen
-                    </Button>
-                  </div>
-                  
-                  {/* Quick Templates */}
-                  {strategyDocuments.length === 0 && (
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                      <Text className="text-xs text-gray-600 mb-2">Schnellstart:</Text>
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          onClick={() => handleCreateDocument('briefing-template', 'Projekt-Briefing')}
-                          className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
-                          disabled={documentsLoading}
-                        >
-                          Briefing
-                        </button>
-                        <button
-                          onClick={() => handleCreateDocument('strategy-template', 'Kommunikationsstrategie')}
-                          className="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors"
-                          disabled={documentsLoading}
-                        >
-                          Strategie
-                        </button>
-                        <button
-                          onClick={() => handleCreateDocument('analysis-template', 'Marktanalyse')}
-                          className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
-                          disabled={documentsLoading}
-                        >
-                          Analyse
-                        </button>
+                        <div className="flex-1 min-w-0">
+                          <Text className="text-sm font-medium">Maria Bauer</Text>
+                          <Text className="text-xs text-gray-500">vor 2 Stunden</Text>
+                          <Text className="text-sm text-gray-700 mt-1">
+                            Kann das Briefing bis morgen finalisiert werden?
+                          </Text>
+                        </div>
+                      </div>
+                      <div className="flex items-start space-x-3">
+                        <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                          <Text className="text-xs font-medium text-green-600">TK</Text>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <Text className="text-sm font-medium">Thomas Klein</Text>
+                          <Text className="text-xs text-gray-500">vor 45 Minuten</Text>
+                          <Text className="text-sm text-gray-700 mt-1">
+                            Die Zielgruppenanalyse ist fertig. @MariaBauer kannst du bitte reviewen?
+                          </Text>
+                        </div>
                       </div>
                     </div>
-                  )}
-                </div>
-
-
-                {/* Team-Kommunikation */}
-                <div className="bg-white border border-gray-200 rounded-lg p-6">
-                  <div className="flex items-center mb-4">
-                    <ChatBubbleLeftRightIcon className="h-5 w-5 text-green-500 mr-2" />
-                    <Subheading>Team-Kommunikation</Subheading>
-                  </div>
-                  <Text className="text-gray-600 mb-4">
-                    Projektspezifische Kommunikation mit @-Mentions und Datei-Upload.
-                  </Text>
-                  <div className="space-y-3">
-                    <div className="flex items-start space-x-3">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                        <Text className="text-xs font-medium text-blue-600">MB</Text>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <Text className="text-sm font-medium">Maria Bauer</Text>
-                        <Text className="text-xs text-gray-500">vor 2 Stunden</Text>
-                        <Text className="text-sm text-gray-700 mt-1">
-                          Kann das Briefing bis morgen finalisiert werden?
-                        </Text>
-                      </div>
+                    <div className="mt-4">
+                      <Button 
+                        plain 
+                        className="w-full"
+                        onClick={handleOpenCommunicationFeed}
+                      >
+                        <ChatBubbleLeftRightIcon className="w-4 h-4 mr-2" />
+                        Chat öffnen
+                      </Button>
                     </div>
-                  </div>
-                  <div className="mt-4">
-                    <Button 
-                      plain 
-                      className="w-full"
-                      onClick={handleOpenCommunicationFeed}
-                    >
-                      <ChatBubbleLeftRightIcon className="w-4 h-4 mr-2" />
-                      Chat öffnen
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Planungs-Checkliste */}
-                <div className="bg-white border border-gray-200 rounded-lg p-6">
-                  <div className="flex items-center mb-4">
-                    <ClipboardDocumentListIcon className="h-5 w-5 text-orange-500 mr-2" />
-                    <Subheading>Planungs-Checkliste</Subheading>
-                  </div>
-                  <Text className="text-gray-600 mb-4">
-                    Standard-Aufgaben für eine vollständige Projektplanung.
-                  </Text>
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-3">
-                      <input type="checkbox" checked className="rounded text-green-600" />
-                      <Text className="text-sm">Projekt-Briefing erstellt</Text>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      <input type="checkbox" className="rounded text-green-600" />
-                      <Text className="text-sm">Zielgruppen definiert</Text>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      <input type="checkbox" className="rounded text-green-600" />
-                      <Text className="text-sm">Budget und Timeline festgelegt</Text>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      <input type="checkbox" className="rounded text-green-600" />
-                      <Text className="text-sm">Team-Rollen zugewiesen</Text>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      <input type="checkbox" className="rounded text-green-600" />
-                      <Text className="text-sm">Strategiedokument finalisiert</Text>
-                    </div>
-                  </div>
-                  <div className="mt-4">
-                    <Button 
-                      plain
-                      className="w-full"
-                    >
-                      <ClipboardDocumentListIcon className="w-4 h-4 mr-2" />
-                      Checkliste verwalten
-                    </Button>
                   </div>
                 </div>
               </div>
