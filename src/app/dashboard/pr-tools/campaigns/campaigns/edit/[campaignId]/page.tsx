@@ -69,6 +69,8 @@ import EditLockStatusIndicator from '@/components/campaigns/EditLockStatusIndica
 import { CampaignPreviewStep } from '@/components/campaigns/CampaignPreviewStep';
 import { ProjectLinkBanner } from '@/components/campaigns/ProjectLinkBanner';
 import { PipelinePDFViewer } from '@/components/campaigns/PipelinePDFViewer';
+import { ProjectSelector } from "@/components/projects/ProjectSelector";
+import { Project } from "@/types/project";
 // PRSEOHeaderBar now integrated in CampaignContentComposer
 
 
@@ -144,6 +146,10 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
   // 🆕 Template-State-Management
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>(undefined);
   const [selectedTemplateName, setSelectedTemplateName] = useState<string>('');
+
+  // ✅ PROJEKT-INTEGRATION STATE
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   // State für bisherigen Feedback-Verlauf
   const [previousFeedback, setPreviousFeedback] = useState<any[]>([]);
@@ -630,6 +636,7 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         setKeywords(campaign.keywords || []);
         setSelectedCompanyId(campaign.clientId || '');
         setSelectedCompanyName(campaign.clientName || '');
+        setSelectedProjectId(campaign.projectId || '');
         setSelectedListIds(campaign.distributionListIds || []);
         setSelectedListNames(campaign.distributionListNames || []);
         setListRecipientCount(campaign.recipientCount || 0);
@@ -1379,21 +1386,40 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
             })()}
             
             <FieldGroup>
-              {/* Absender */}
+              {/* Absender & Projekt */}
               <div className="mb-8">
                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Absender</h3>
-                  
-                  <div className="mb-3">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Absender & Projekt</h3>
+
+                  {/* Kunde */}
+                  <div className="mb-4">
                     <ModernCustomerSelector
                       value={selectedCompanyId}
                       onChange={(companyId, companyName) => {
                         setSelectedCompanyId(companyId);
                         setSelectedCompanyName(companyName);
+                        // Projekt zurücksetzen wenn Kunde geändert wird
+                        setSelectedProjectId('');
+                        setSelectedProject(null);
                       }}
                       required
                     />
                   </div>
+
+                  {/* Projekt - nur anzeigen wenn Kunde ausgewählt */}
+                  {selectedCompanyId && (
+                    <div className="pt-3 border-t border-gray-200">
+                      <ProjectSelector
+                        selectedProjectId={selectedProjectId}
+                        onProjectSelect={(projectId, project) => {
+                          setSelectedProjectId(projectId);
+                          setSelectedProject(project);
+                        }}
+                        organizationId={currentOrganization!.id}
+                        clientId={selectedCompanyId}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 

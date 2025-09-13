@@ -521,8 +521,8 @@ export default function PRCampaignsPage() {
             {/* Body */}
             <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
               {paginatedCampaigns.map((campaign) => {
-                // Placeholder-Daten für Demo
-                const projectName = "Hier steht der Projektname";
+                // Projektname aus Kampagne-Daten
+                const projectName = campaign.projectTitle || (campaign.projectId ? "Projekt verknüpft" : null);
                 
                 // Find the actual admin for this campaign (robust gegen leere teamMembers)
                 const campaignAdmin = teamMembers.find(member => member.userId === campaign.userId);
@@ -614,8 +614,20 @@ export default function PRCampaignsPage() {
                               <span className="text-sm text-zinc-900 dark:text-white">SK Online Marketing</span>
                             )}
                           </div>
-                          <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate" title={projectName}>
-                            {truncateProject(projectName)}
+                          <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
+                            {projectName && campaign.projectId ? (
+                              <Link
+                                href={`/dashboard/projects/${campaign.projectId}`}
+                                className="hover:text-[#005fab] hover:underline"
+                                title={projectName}
+                              >
+                                {truncateProject(projectName)}
+                              </Link>
+                            ) : projectName ? (
+                              <span title={projectName}>{truncateProject(projectName)}</span>
+                            ) : (
+                              <span className="italic text-zinc-400">Kein Projekt</span>
+                            )}
                           </div>
                         </div>
                       </div>

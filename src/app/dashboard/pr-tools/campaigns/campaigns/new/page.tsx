@@ -701,6 +701,8 @@ export default function NewPRCampaignPage() {
         },
         clientId: selectedCompanyId || undefined,
         clientName: selectedCompanyName || undefined,
+        projectId: selectedProjectId || undefined,
+        projectTitle: selectedProject?.title || undefined,
         keyVisual: keyVisual,
         attachedAssets: cleanedAttachedAssets,
         // Approval
@@ -1016,42 +1018,40 @@ export default function NewPRCampaignPage() {
         {currentStep === 1 && (
           <div className="bg-white rounded-lg border p-6">
             <FieldGroup>
-              {/* Absender */}
+              {/* Absender & Projekt */}
               <div className="mb-8">
                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Absender</h3>
-                  
-                  <div className="mb-3">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Absender & Projekt</h3>
+
+                  {/* Kunde */}
+                  <div className="mb-4">
                     <ModernCustomerSelector
                       value={selectedCompanyId}
                       onChange={(companyId, companyName) => {
                         setSelectedCompanyId(companyId);
                         setSelectedCompanyName(companyName);
+                        // Projekt zurücksetzen wenn Kunde geändert wird
+                        setSelectedProjectId('');
+                        setSelectedProject(null);
                       }}
                       required
                     />
                   </div>
-                </div>
-              </div>
 
-              {/* ✅ PROJEKT-INTEGRATION */}
-              <div className="mb-8">
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <ProjectSelector
-                    selectedProjectId={selectedProjectId}
-                    onProjectSelect={(projectId, project) => {
-                      setSelectedProjectId(projectId);
-                      setSelectedProject(project);
-                      
-                      // Auto-populate Kampagnen-Felder mit Projekt-Daten
-                      if (project.customer && project.customer.id) {
-                        setSelectedCompanyId(project.customer.id);
-                        setSelectedCompanyName(project.customer.name);
-                      }
-                    }}
-                    organizationId={currentOrganization!.id}
-                    clientId={selectedCompanyId}
-                  />
+                  {/* Projekt - nur anzeigen wenn Kunde ausgewählt */}
+                  {selectedCompanyId && (
+                    <div className="pt-3 border-t border-gray-200">
+                      <ProjectSelector
+                        selectedProjectId={selectedProjectId}
+                        onProjectSelect={(projectId, project) => {
+                          setSelectedProjectId(projectId);
+                          setSelectedProject(project);
+                        }}
+                        organizationId={currentOrganization!.id}
+                        clientId={selectedCompanyId}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 
