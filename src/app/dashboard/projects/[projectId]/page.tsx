@@ -28,8 +28,12 @@ import {
   EyeIcon,
   LinkIcon,
   ArrowDownTrayIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  EllipsisVerticalIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline';
+
+import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
 
 // Pipeline-Komponenten importieren
 import PipelineProgressDashboard from '@/components/projects/workflow/PipelineProgressDashboard';
@@ -339,6 +343,24 @@ export default function ProjectDetailPage() {
 
   const handleCloseCommunicationFeed = () => {
     setShowCommunicationModal(false);
+  };
+
+  const handleDeleteProject = async () => {
+    if (!project?.id || !currentOrganization?.id) return;
+
+    const confirmDelete = window.confirm(
+      `Möchten Sie das Projekt "${project.title}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`
+    );
+
+    if (confirmDelete) {
+      try {
+        await projectService.delete(project.id, { organizationId: currentOrganization.id });
+        router.push('/dashboard/projects');
+      } catch (error: any) {
+        console.error('Fehler beim Löschen:', error);
+        alert(`Fehler beim Löschen des Projekts: ${error.message || 'Unbekannter Fehler'}`);
+      }
+    }
   };
 
   const handleCreateDocument = async (templateType: string, title: string) => {
@@ -805,9 +827,31 @@ export default function ProjectDetailPage() {
             <div className="space-y-6">
               {/* Projektdetails Section */}
               <div>
-                <div className="flex items-center mb-4">
-                  <DocumentTextIcon className="h-5 w-5 text-gray-400 mr-2" />
-                  <Subheading>Projektdetails</Subheading>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <DocumentTextIcon className="h-5 w-5 text-gray-400 mr-2" />
+                    <Subheading>Projektdetails</Subheading>
+                  </div>
+                  <Dropdown>
+                    <DropdownButton className="p-1 text-gray-400 hover:text-gray-600">
+                      <EllipsisVerticalIcon className="h-5 w-5" />
+                    </DropdownButton>
+                    <DropdownMenu>
+                      <DropdownItem
+                        icon={PencilSquareIcon}
+                        onClick={() => setShowEditWizard(true)}
+                      >
+                        Projekt bearbeiten
+                      </DropdownItem>
+                      <DropdownItem
+                        icon={TrashIcon}
+                        onClick={() => handleDeleteProject()}
+                        className="text-red-600"
+                      >
+                        Projekt löschen
+                      </DropdownItem>
+                    </DropdownMenu>
+                  </Dropdown>
                 </div>
                 
                 <div className="space-y-3">
@@ -890,9 +934,42 @@ export default function ProjectDetailPage() {
 
               {/* Pressemeldung Section */}
               <div className="border-t pt-6">
-                <div className="flex items-center mb-4">
-                  <DocumentTextIcon className="h-5 w-5 text-blue-500 mr-2" />
-                  <Subheading>Pressemeldung</Subheading>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <DocumentTextIcon className="h-5 w-5 text-blue-500 mr-2" />
+                    <Subheading>Pressemeldung</Subheading>
+                  </div>
+                  <Dropdown>
+                    <DropdownButton className="p-1 text-gray-400 hover:text-gray-600">
+                      <EllipsisVerticalIcon className="h-5 w-5" />
+                    </DropdownButton>
+                    <DropdownMenu>
+                      <DropdownItem
+                        icon={PencilSquareIcon}
+                        onClick={() => {/* TODO: Campaign Edit */}}
+                      >
+                        Bearbeiten
+                      </DropdownItem>
+                      <DropdownItem
+                        icon={EyeIcon}
+                        onClick={() => {/* TODO: Freigabecenter */}}
+                      >
+                        Freigabecenter
+                      </DropdownItem>
+                      <DropdownItem
+                        icon={ArrowDownTrayIcon}
+                        onClick={() => {/* TODO: PDF Download */}}
+                      >
+                        Aktuelles PDF
+                      </DropdownItem>
+                      <DropdownItem
+                        icon={ClockIcon}
+                        onClick={() => {/* TODO: Feedback Historie */}}
+                      >
+                        Feedback Historie
+                      </DropdownItem>
+                    </DropdownMenu>
+                  </Dropdown>
                 </div>
 
                 <div className="space-y-3">
@@ -948,59 +1025,6 @@ export default function ProjectDetailPage() {
 
                   {/* Campaign Actions - immer anzeigen, aber disabled wenn keine Kampagne */}
                   <div className="pt-2 border-t">
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        className={`inline-flex items-center px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                          linkedCampaigns.length > 0
-                            ? 'text-gray-700 bg-gray-100 hover:bg-gray-200'
-                            : 'text-gray-400 bg-gray-50 cursor-not-allowed'
-                        }`}
-                        title="Freigabe-Seite öffnen"
-                        disabled={linkedCampaigns.length === 0}
-                      >
-                        <EyeIcon className="w-3 h-3 mr-1" />
-                        Freigabe-Seite
-                      </button>
-
-                      <button
-                        className={`inline-flex items-center px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                          linkedCampaigns.length > 0
-                            ? 'text-gray-700 bg-gray-100 hover:bg-gray-200'
-                            : 'text-gray-400 bg-gray-50 cursor-not-allowed'
-                        }`}
-                        title="Freigabe-Link kopieren"
-                        disabled={linkedCampaigns.length === 0}
-                      >
-                        <LinkIcon className="w-3 h-3 mr-1" />
-                        Link kopieren
-                      </button>
-
-                      <button
-                        className={`inline-flex items-center px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                          linkedCampaigns.length > 0
-                            ? 'text-gray-700 bg-gray-100 hover:bg-gray-200'
-                            : 'text-gray-400 bg-gray-50 cursor-not-allowed'
-                        }`}
-                        title="Aktuelles PDF herunterladen"
-                        disabled={linkedCampaigns.length === 0}
-                      >
-                        <ArrowDownTrayIcon className="w-3 h-3 mr-1" />
-                        PDF
-                      </button>
-
-                      <button
-                        className={`inline-flex items-center px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                          linkedCampaigns.length > 0
-                            ? 'text-gray-700 bg-gray-100 hover:bg-gray-200'
-                            : 'text-gray-400 bg-gray-50 cursor-not-allowed'
-                        }`}
-                        title="Feedback-Historie anzeigen"
-                        disabled={linkedCampaigns.length === 0}
-                      >
-                        <ChatBubbleLeftRightIcon className="w-3 h-3 mr-1" />
-                        Historie
-                      </button>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -1012,12 +1036,19 @@ export default function ProjectDetailPage() {
                     <UserGroupIcon className="h-5 w-5 text-gray-400 mr-2" />
                     <Subheading>Team</Subheading>
                   </div>
-                  <button
-                    className="text-xs text-blue-600 hover:text-blue-700 font-medium"
-                    title="Team verwalten"
-                  >
-                    Team verwalten
-                  </button>
+                  <Dropdown>
+                    <DropdownButton className="p-1 text-gray-400 hover:text-gray-600">
+                      <EllipsisVerticalIcon className="h-5 w-5" />
+                    </DropdownButton>
+                    <DropdownMenu>
+                      <DropdownItem
+                        icon={UserGroupIcon}
+                        onClick={() => {/* TODO: Team verwalten */}}
+                      >
+                        Team verwalten
+                      </DropdownItem>
+                    </DropdownMenu>
+                  </Dropdown>
                 </div>
                 
                 <div>
