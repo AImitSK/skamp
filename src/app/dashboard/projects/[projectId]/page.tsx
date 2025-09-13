@@ -9,7 +9,7 @@ import { Text } from '@/components/ui/text';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/ui/avatar';
-import { 
+import {
   ArrowLeftIcon,
   PencilSquareIcon,
   UserGroupIcon,
@@ -27,7 +27,8 @@ import {
   LightBulbIcon,
   EyeIcon,
   LinkIcon,
-  ArrowDownTrayIcon
+  ArrowDownTrayIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 
 // Pipeline-Komponenten importieren
@@ -759,7 +760,10 @@ export default function ProjectDetailPage() {
                 <div className="space-y-3">
                   <div>
                     <Text className="text-sm font-medium text-gray-600">Aktuelle Phase</Text>
-                    <Text className="mt-1">{getCurrentStageLabel(project.currentStage)}</Text>
+                    <div className="flex items-center mt-1">
+                      <ArrowPathIcon className="h-4 w-4 text-gray-400 mr-1" />
+                      <Text>{getCurrentStageLabel(project.currentStage)}</Text>
+                    </div>
                   </div>
                   
                   {project.customer && (
@@ -782,7 +786,7 @@ export default function ProjectDetailPage() {
                     <Text className="text-sm font-medium text-gray-600">Erstellt am</Text>
                     <div className="flex items-center mt-1">
                       <CalendarDaysIcon className="h-4 w-4 text-gray-400 mr-1" />
-                      <Text>{formatDate(project.createdAt)}</Text>
+                      <Text>{project.createdAt ? formatDate(project.createdAt) : '-'}</Text>
                     </div>
                   </div>
 
@@ -810,9 +814,9 @@ export default function ProjectDetailPage() {
                     <Text className="text-sm font-medium text-gray-600">Tags</Text>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {project.tags && project.tags.length > 0 ? (
-                        project.tags.map((tagId, index) => (
-                          <Badge key={tagId} color={index % 2 === 0 ? 'blue' : 'purple'}>
-                            Tag {index + 1}
+                        project.tags.map((tag, index) => (
+                          <Badge key={tag} color={index % 2 === 0 ? 'blue' : 'purple'}>
+                            {tag}
                           </Badge>
                         ))
                       ) : (
@@ -958,7 +962,8 @@ export default function ProjectDetailPage() {
                 <div>
                   {project.assignedTo && project.assignedTo.length > 0 ? (
                     <div className="flex -space-x-2">
-                      {project.assignedTo.slice(0, 4).map((userId, index) => {
+                      {/* Entferne Duplikate und zeige nur eindeutige User IDs */}
+                      {Array.from(new Set(project.assignedTo)).slice(0, 4).map((userId, index) => {
                         // Finde Team-Mitglied wie in Projektübersicht
                         const memberByUserId = teamMembers.find(m => m.userId === userId);
                         const memberById = teamMembers.find(m => m.id === userId);
@@ -995,12 +1000,12 @@ export default function ProjectDetailPage() {
                           />
                         );
                       })}
-                      {project.assignedTo.length > 4 && (
+                      {Array.from(new Set(project.assignedTo)).length > 4 && (
                         <div
                           className="w-8 h-8 rounded-full bg-gray-300 ring-2 ring-white flex items-center justify-center text-gray-700 text-xs font-medium"
-                          title={`+${project.assignedTo.length - 4} weitere Mitglieder`}
+                          title={`+${Array.from(new Set(project.assignedTo)).length - 4} weitere Mitglieder`}
                         >
-                          +{project.assignedTo.length - 4}
+                          +{Array.from(new Set(project.assignedTo)).length - 4}
                         </div>
                       )}
                     </div>
