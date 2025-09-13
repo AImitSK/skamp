@@ -30,7 +30,8 @@ import {
   ArrowDownTrayIcon,
   ArrowPathIcon,
   EllipsisVerticalIcon,
-  TrashIcon
+  TrashIcon,
+  PaperAirplaneIcon
 } from '@heroicons/react/24/outline';
 
 import { Dropdown, DropdownButton, DropdownMenu, DropdownItem } from '@/components/ui/dropdown';
@@ -833,21 +834,16 @@ export default function ProjectDetailPage() {
                     <Subheading>Projektdetails</Subheading>
                   </div>
                   <Dropdown>
-                    <DropdownButton className="p-1 text-gray-400 hover:text-gray-600">
-                      <EllipsisVerticalIcon className="h-5 w-5" />
+                    <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2">
+                      <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
                     </DropdownButton>
-                    <DropdownMenu>
-                      <DropdownItem
-                        icon={PencilSquareIcon}
-                        onClick={() => setShowEditWizard(true)}
-                      >
+                    <DropdownMenu anchor="bottom end">
+                      <DropdownItem onClick={() => setShowEditWizard(true)}>
+                        <PencilSquareIcon className="h-4 w-4" />
                         Projekt bearbeiten
                       </DropdownItem>
-                      <DropdownItem
-                        icon={TrashIcon}
-                        onClick={() => handleDeleteProject()}
-                        className="text-red-600"
-                      >
+                      <DropdownItem onClick={() => handleDeleteProject()}>
+                        <TrashIcon className="h-4 w-4" />
                         Projekt löschen
                       </DropdownItem>
                     </DropdownMenu>
@@ -940,32 +936,24 @@ export default function ProjectDetailPage() {
                     <Subheading>Pressemeldung</Subheading>
                   </div>
                   <Dropdown>
-                    <DropdownButton className="p-1 text-gray-400 hover:text-gray-600">
-                      <EllipsisVerticalIcon className="h-5 w-5" />
+                    <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2">
+                      <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
                     </DropdownButton>
-                    <DropdownMenu>
-                      <DropdownItem
-                        icon={PencilSquareIcon}
-                        onClick={() => {/* TODO: Campaign Edit */}}
-                      >
+                    <DropdownMenu anchor="bottom end">
+                      <DropdownItem onClick={() => {/* TODO: Campaign Edit */}}>
+                        <PencilSquareIcon className="h-4 w-4" />
                         Bearbeiten
                       </DropdownItem>
-                      <DropdownItem
-                        icon={EyeIcon}
-                        onClick={() => {/* TODO: Freigabecenter */}}
-                      >
+                      <DropdownItem onClick={() => {/* TODO: Freigabecenter */}}>
+                        <EyeIcon className="h-4 w-4" />
                         Freigabecenter
                       </DropdownItem>
-                      <DropdownItem
-                        icon={ArrowDownTrayIcon}
-                        onClick={() => {/* TODO: PDF Download */}}
-                      >
+                      <DropdownItem onClick={() => {/* TODO: PDF Download */}}>
+                        <ArrowDownTrayIcon className="h-4 w-4" />
                         Aktuelles PDF
                       </DropdownItem>
-                      <DropdownItem
-                        icon={ClockIcon}
-                        onClick={() => {/* TODO: Feedback Historie */}}
-                      >
+                      <DropdownItem onClick={() => {/* TODO: Feedback Historie */}}>
+                        <ClockIcon className="h-4 w-4" />
                         Feedback Historie
                       </DropdownItem>
                     </DropdownMenu>
@@ -974,10 +962,21 @@ export default function ProjectDetailPage() {
 
                 <div className="space-y-3">
                   <div>
-                    <Text className="text-sm font-medium text-gray-600">Kampagnenname</Text>
-                    <span className="mt-1 block text-base text-gray-900">
-                      {linkedCampaigns.length > 0 ? linkedCampaigns[0].title : '-'}
-                    </span>
+                    <Text className="text-sm font-medium text-gray-600">PR-Kampagne</Text>
+                    <div className="mt-1">
+                      {linkedCampaigns.length > 0 ? (
+                        <button
+                          className="flex items-center text-base text-blue-600 hover:text-blue-700 hover:underline"
+                          onClick={() => router.push(`/dashboard/pr-tools/campaigns/campaigns/${linkedCampaigns[0].id}`)}
+                          title="Kampagne öffnen"
+                        >
+                          <PaperAirplaneIcon className="h-4 w-4 mr-2" />
+                          {linkedCampaigns[0].title}
+                        </button>
+                      ) : (
+                        <span className="text-base text-gray-500">-</span>
+                      )}
+                    </div>
                   </div>
 
                   <div>
@@ -1037,14 +1036,12 @@ export default function ProjectDetailPage() {
                     <Subheading>Team</Subheading>
                   </div>
                   <Dropdown>
-                    <DropdownButton className="p-1 text-gray-400 hover:text-gray-600">
-                      <EllipsisVerticalIcon className="h-5 w-5" />
+                    <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2">
+                      <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
                     </DropdownButton>
-                    <DropdownMenu>
-                      <DropdownItem
-                        icon={UserGroupIcon}
-                        onClick={() => {/* TODO: Team verwalten */}}
-                      >
+                    <DropdownMenu anchor="bottom end">
+                      <DropdownItem onClick={() => {/* TODO: Team verwalten */}}>
+                        <UserGroupIcon className="h-4 w-4" />
                         Team verwalten
                       </DropdownItem>
                     </DropdownMenu>
