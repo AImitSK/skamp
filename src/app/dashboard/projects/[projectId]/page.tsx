@@ -851,11 +851,13 @@ export default function ProjectDetailPage() {
                         return project.priority;
                       })() ? (
                         <Badge color={
+                          project.priority === 'urgent' ? 'red' :
                           project.priority === 'high' ? 'red' :
                           project.priority === 'medium' ? 'yellow' :
                           project.priority === 'low' ? 'green' : 'gray'
                         }>
-                          {project.priority === 'high' ? 'Hoch' :
+                          {project.priority === 'urgent' ? 'Dringend' :
+                           project.priority === 'high' ? 'Hoch' :
                            project.priority === 'medium' ? 'Mittel' :
                            project.priority === 'low' ? 'Niedrig' :
                            project.priority}
