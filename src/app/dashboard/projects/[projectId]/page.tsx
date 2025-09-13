@@ -47,6 +47,8 @@ import { TeamMember } from '@/types/international';
 import { ProjectEditWizard } from '@/components/projects/edit/ProjectEditWizard';
 import { strategyDocumentService, StrategyDocument } from '@/lib/firebase/strategy-document-service';
 import ProjectFoldersView from '@/components/projects/ProjectFoldersView';
+import { tagsService } from '@/lib/firebase/tags-service';
+import { Tag } from '@/types/crm';
 import Link from 'next/link';
 
 export default function ProjectDetailPage() {
@@ -71,10 +73,13 @@ export default function ProjectDetailPage() {
   const [linkedCampaigns, setLinkedCampaigns] = useState<any[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loadingTeam, setLoadingTeam] = useState(true);
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [loadingTags, setLoadingTags] = useState(true);
 
   useEffect(() => {
     loadProject();
     loadTeamMembers();
+    loadTags();
   }, [projectId, currentOrganization?.id]);
 
   // Lade Projekt-Ordnerstruktur und Dokumente wenn Planning-Tab aktiviert wird
@@ -210,6 +215,20 @@ export default function ProjectDetailPage() {
       console.error('Error loading team members:', error);
     } finally {
       setLoadingTeam(false);
+    }
+  };
+
+  const loadTags = async () => {
+    if (!user?.uid) return;
+
+    try {
+      setLoadingTags(true);
+      const allTags = await tagsService.getAll(user.uid);
+      setTags(allTags);
+    } catch (error) {
+      console.error('Error loading tags:', error);
+    } finally {
+      setLoadingTags(false);
     }
   };
 
@@ -786,7 +805,34 @@ export default function ProjectDetailPage() {
                     <Text className="text-sm font-medium text-gray-600">Erstellt am</Text>
                     <div className="flex items-center mt-1">
                       <CalendarDaysIcon className="h-4 w-4 text-gray-400 mr-1" />
-                      <Text>{project.createdAt ? formatDate(project.createdAt) : '-'}</Text>
+                      <Text>
+                        {(() => {
+                          try {
+                            if (!project.createdAt) return '-';
+
+                            // Firestore Timestamp
+                            if (project.createdAt.toDate) {
+                              return formatDate(project.createdAt.toDate());
+                            }
+
+                            // Bereits ein Date-Objekt
+                            if (project.createdAt instanceof Date) {
+                              return formatDate(project.createdAt);
+                            }
+
+                            // String-Datum
+                            if (typeof project.createdAt === 'string') {
+                              return formatDate(new Date(project.createdAt));
+                            }
+
+                            // Fallback
+                            return '-';
+                          } catch (error) {
+                            console.error('Date formatting error:', error);
+                            return '-';
+                          }
+                        })()}
+                      </Text>
                     </div>
                   </div>
 
@@ -814,11 +860,14 @@ export default function ProjectDetailPage() {
                     <Text className="text-sm font-medium text-gray-600">Tags</Text>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {project.tags && project.tags.length > 0 ? (
-                        project.tags.map((tag, index) => (
-                          <Badge key={tag} color={index % 2 === 0 ? 'blue' : 'purple'}>
-                            {tag}
-                          </Badge>
-                        ))
+                        project.tags.map((tagId, index) => {
+                          const tagInfo = tags.find(t => t.id === tagId);
+                          return (
+                            <Badge key={tagId} color={tagInfo?.color || (index % 2 === 0 ? 'blue' : 'purple')}>
+                              {tagInfo?.name || tagId}
+                            </Badge>
+                          );
+                        })
                       ) : (
                         <Text className="text-gray-500 text-sm">-</Text>
                       )}
@@ -962,12 +1011,24 @@ export default function ProjectDetailPage() {
                 <div>
                   {project.assignedTo && project.assignedTo.length > 0 ? (
                     <div className="flex -space-x-2">
-                      {/* Entferne Duplikate und zeige nur eindeutige User IDs */}
-                      {Array.from(new Set(project.assignedTo)).slice(0, 4).map((userId, index) => {
-                        // Finde Team-Mitglied wie in Projektübersicht
-                        const memberByUserId = teamMembers.find(m => m.userId === userId);
-                        const memberById = teamMembers.find(m => m.id === userId);
-                        const member = memberByUserId || memberById;
+                      {/* Entferne Duplikate und zeige nur eindeutige Team-Members */}
+                      {(() => {
+                        const uniqueMembers = [];
+                        const seenMemberIds = new Set();
+
+                        for (const userId of project.assignedTo) {
+                          const member = teamMembers.find(m => m.userId === userId || m.id === userId);
+                          if (member && !seenMemberIds.has(member.id)) {
+                            uniqueMembers.push({ userId, member });
+                            seenMemberIds.add(member.id);
+                          } else if (!member) {
+                            // Unbekannter Member - auch hinzufügen
+                            uniqueMembers.push({ userId, member: null });
+                          }
+                        }
+
+                        return uniqueMembers;
+                      })().slice(0, 4).map(({ userId, member }, index) => {
 
                         if (!member || loadingTeam) {
                           // Fallback für unbekannte Member
@@ -1000,14 +1061,29 @@ export default function ProjectDetailPage() {
                           />
                         );
                       })}
-                      {Array.from(new Set(project.assignedTo)).length > 4 && (
-                        <div
-                          className="w-8 h-8 rounded-full bg-gray-300 ring-2 ring-white flex items-center justify-center text-gray-700 text-xs font-medium"
-                          title={`+${Array.from(new Set(project.assignedTo)).length - 4} weitere Mitglieder`}
-                        >
-                          +{Array.from(new Set(project.assignedTo)).length - 4}
-                        </div>
-                      )}
+                      {(() => {
+                        const uniqueMembers = [];
+                        const seenMemberIds = new Set();
+
+                        for (const userId of project.assignedTo) {
+                          const member = teamMembers.find(m => m.userId === userId || m.id === userId);
+                          if (member && !seenMemberIds.has(member.id)) {
+                            uniqueMembers.push({ userId, member });
+                            seenMemberIds.add(member.id);
+                          } else if (!member) {
+                            uniqueMembers.push({ userId, member: null });
+                          }
+                        }
+
+                        return uniqueMembers.length > 4 ? (
+                          <div
+                            className="w-8 h-8 rounded-full bg-gray-300 ring-2 ring-white flex items-center justify-center text-gray-700 text-xs font-medium"
+                            title={`+${uniqueMembers.length - 4} weitere Mitglieder`}
+                          >
+                            +{uniqueMembers.length - 4}
+                          </div>
+                        ) : null;
+                      })()}
                     </div>
                   ) : (
                     <div className="flex items-center text-gray-500">

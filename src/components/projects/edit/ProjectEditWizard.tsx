@@ -234,9 +234,8 @@ export function ProjectEditWizard({
       if (formData.priority) {
         (updateData as any).priority = formData.priority;
       }
-      if (selectedTagIds.length > 0) {
-        (updateData as any).tags = selectedTagIds;
-      }
+      // Tags immer setzen (auch leeres Array wenn keine Tags ausgewählt)
+      (updateData as any).tags = selectedTagIds;
       if (formData.dueDate) {
         updateData.dueDate = {
           seconds: new Date(formData.dueDate).getTime() / 1000,
