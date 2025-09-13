@@ -420,7 +420,7 @@ export default function ProjectDetailPage() {
             </Link>
             <div>
               <Heading>{project.title}</Heading>
-              <Text className="mt-1">{project.description || 'Keine Beschreibung verfügbar'}</Text>
+              <Text className="mt-1">{project.description || '-'}</Text>
             </div>
           </div>
           
@@ -789,16 +789,20 @@ export default function ProjectDetailPage() {
                   <div>
                     <Text className="text-sm font-medium text-gray-600">Priorität</Text>
                     <div className="mt-1">
-                      <Badge color={
-                        project.priority === 'high' ? 'red' : 
-                        project.priority === 'medium' ? 'yellow' : 
-                        project.priority === 'low' ? 'green' : 'gray'
-                      }>
-                        {project.priority === 'high' ? 'Hoch' : 
-                         project.priority === 'medium' ? 'Mittel' : 
-                         project.priority === 'low' ? 'Niedrig' : 
-                         project.priority || 'Nicht festgelegt'}
-                      </Badge>
+                      {project.priority ? (
+                        <Badge color={
+                          project.priority === 'high' ? 'red' :
+                          project.priority === 'medium' ? 'yellow' :
+                          project.priority === 'low' ? 'green' : 'gray'
+                        }>
+                          {project.priority === 'high' ? 'Hoch' :
+                           project.priority === 'medium' ? 'Mittel' :
+                           project.priority === 'low' ? 'Niedrig' :
+                           project.priority}
+                        </Badge>
+                      ) : (
+                        <Text className="text-gray-500">-</Text>
+                      )}
                     </div>
                   </div>
 
@@ -812,7 +816,7 @@ export default function ProjectDetailPage() {
                           </Badge>
                         ))
                       ) : (
-                        <Text className="text-gray-500 text-sm">Keine Tags</Text>
+                        <Text className="text-gray-500 text-sm">-</Text>
                       )}
                     </div>
                   </div>
@@ -825,88 +829,114 @@ export default function ProjectDetailPage() {
                   <DocumentTextIcon className="h-5 w-5 text-blue-500 mr-2" />
                   <Subheading>Pressemeldung</Subheading>
                 </div>
-                
+
                 <div className="space-y-3">
                   <div>
                     <Text className="text-sm font-medium text-gray-600">Kampagnenname</Text>
                     <Text className="mt-1">
-                      {linkedCampaigns.length > 0 ? linkedCampaigns[0].title : 'Keine Kampagne verknüpft'}
+                      {linkedCampaigns.length > 0 ? linkedCampaigns[0].title : '-'}
                     </Text>
                   </div>
-                  
-                  {linkedCampaigns.length > 0 && (
-                    <>
-                      <div>
-                        <Text className="text-sm font-medium text-gray-600">Status</Text>
-                        <div className="mt-1">
-                          <Badge color={
-                            linkedCampaigns[0].status === 'approved' ? 'green' :
-                            linkedCampaigns[0].status === 'in_review' ? 'blue' :
-                            linkedCampaigns[0].status === 'changes_requested' ? 'yellow' : 'gray'
-                          }>
-                            {linkedCampaigns[0].status === 'draft' ? 'Entwurf' :
-                             linkedCampaigns[0].status === 'in_review' ? 'In Prüfung' :
-                             linkedCampaigns[0].status === 'approved' ? 'Freigegeben' :
-                             linkedCampaigns[0].status === 'changes_requested' ? 'Änderung erbeten' : 
-                             linkedCampaigns[0].status}
-                          </Badge>
-                        </div>
-                      </div>
 
-                      <div>
-                        <Text className="text-sm font-medium text-gray-600">Status Fortschritt</Text>
-                        <div className="mt-2">
+                  <div>
+                    <Text className="text-sm font-medium text-gray-600">Status</Text>
+                    <div className="mt-1">
+                      {linkedCampaigns.length > 0 ? (
+                        <Badge color={
+                          linkedCampaigns[0].status === 'approved' ? 'green' :
+                          linkedCampaigns[0].status === 'in_review' ? 'blue' :
+                          linkedCampaigns[0].status === 'changes_requested' ? 'yellow' : 'gray'
+                        }>
+                          {linkedCampaigns[0].status === 'draft' ? 'Entwurf' :
+                           linkedCampaigns[0].status === 'in_review' ? 'In Prüfung' :
+                           linkedCampaigns[0].status === 'approved' ? 'Freigegeben' :
+                           linkedCampaigns[0].status === 'changes_requested' ? 'Änderung erbeten' :
+                           linkedCampaigns[0].status}
+                        </Badge>
+                      ) : (
+                        <Text className="text-gray-500">-</Text>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Text className="text-sm font-medium text-gray-600">Status Fortschritt</Text>
+                    <div className="mt-2">
+                      {linkedCampaigns.length > 0 ? (
+                        <>
                           <div className="flex items-center justify-between mb-1">
                             <Text className="text-xs text-gray-500">Freigabe</Text>
                             <Text className="text-xs text-gray-600">{linkedCampaigns[0].progress}%</Text>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div 
-                              className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                            <div
+                              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                               style={{ width: `${linkedCampaigns[0].progress}%` }}
                             ></div>
                           </div>
-                        </div>
-                      </div>
+                        </>
+                      ) : (
+                        <Text className="text-gray-500">-</Text>
+                      )}
+                    </div>
+                  </div>
 
-                      {/* Campaign Actions */}
-                      <div className="pt-2 border-t">
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            className="inline-flex items-center px-3 py-1 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
-                            title="Freigabe-Seite öffnen"
-                          >
-                            <EyeIcon className="w-3 h-3 mr-1" />
-                            Freigabe-Seite
-                          </button>
-                          
-                          <button
-                            className="inline-flex items-center px-3 py-1 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
-                            title="Freigabe-Link kopieren"
-                          >
-                            <LinkIcon className="w-3 h-3 mr-1" />
-                            Link kopieren
-                          </button>
-                          
-                          <button
-                            className="inline-flex items-center px-3 py-1 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
-                            title="Aktuelles PDF herunterladen"
-                          >
-                            <ArrowDownTrayIcon className="w-3 h-3 mr-1" />
-                            PDF
-                          </button>
-                          
-                          <button
-                            className="inline-flex items-center px-3 py-1 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
-                            title="Feedback-Historie anzeigen"
-                          >
-                            <ChatBubbleLeftRightIcon className="w-3 h-3 mr-1" />
-                            Historie
-                          </button>
-                        </div>
-                      </div>
-                    </>
-                  )}
+                  {/* Campaign Actions - immer anzeigen, aber disabled wenn keine Kampagne */}
+                  <div className="pt-2 border-t">
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        className={`inline-flex items-center px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                          linkedCampaigns.length > 0
+                            ? 'text-gray-700 bg-gray-100 hover:bg-gray-200'
+                            : 'text-gray-400 bg-gray-50 cursor-not-allowed'
+                        }`}
+                        title="Freigabe-Seite öffnen"
+                        disabled={linkedCampaigns.length === 0}
+                      >
+                        <EyeIcon className="w-3 h-3 mr-1" />
+                        Freigabe-Seite
+                      </button>
+
+                      <button
+                        className={`inline-flex items-center px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                          linkedCampaigns.length > 0
+                            ? 'text-gray-700 bg-gray-100 hover:bg-gray-200'
+                            : 'text-gray-400 bg-gray-50 cursor-not-allowed'
+                        }`}
+                        title="Freigabe-Link kopieren"
+                        disabled={linkedCampaigns.length === 0}
+                      >
+                        <LinkIcon className="w-3 h-3 mr-1" />
+                        Link kopieren
+                      </button>
+
+                      <button
+                        className={`inline-flex items-center px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                          linkedCampaigns.length > 0
+                            ? 'text-gray-700 bg-gray-100 hover:bg-gray-200'
+                            : 'text-gray-400 bg-gray-50 cursor-not-allowed'
+                        }`}
+                        title="Aktuelles PDF herunterladen"
+                        disabled={linkedCampaigns.length === 0}
+                      >
+                        <ArrowDownTrayIcon className="w-3 h-3 mr-1" />
+                        PDF
+                      </button>
+
+                      <button
+                        className={`inline-flex items-center px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                          linkedCampaigns.length > 0
+                            ? 'text-gray-700 bg-gray-100 hover:bg-gray-200'
+                            : 'text-gray-400 bg-gray-50 cursor-not-allowed'
+                        }`}
+                        title="Feedback-Historie anzeigen"
+                        disabled={linkedCampaigns.length === 0}
+                      >
+                        <ChatBubbleLeftRightIcon className="w-3 h-3 mr-1" />
+                        Historie
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -933,7 +963,7 @@ export default function ProjectDetailPage() {
                         const memberByUserId = teamMembers.find(m => m.userId === userId);
                         const memberById = teamMembers.find(m => m.id === userId);
                         const member = memberByUserId || memberById;
-                        
+
                         if (!member || loadingTeam) {
                           // Fallback für unbekannte Member
                           return (
@@ -946,7 +976,7 @@ export default function ProjectDetailPage() {
                             </div>
                           );
                         }
-                        
+
                         // Generate initials as fallback
                         const initials = member.displayName
                           .split(' ')
@@ -954,7 +984,7 @@ export default function ProjectDetailPage() {
                           .join('')
                           .toUpperCase()
                           .slice(0, 2);
-                        
+
                         return (
                           <Avatar
                             key={userId}
@@ -966,7 +996,7 @@ export default function ProjectDetailPage() {
                         );
                       })}
                       {project.assignedTo.length > 4 && (
-                        <div 
+                        <div
                           className="w-8 h-8 rounded-full bg-gray-300 ring-2 ring-white flex items-center justify-center text-gray-700 text-xs font-medium"
                           title={`+${project.assignedTo.length - 4} weitere Mitglieder`}
                         >
@@ -976,7 +1006,7 @@ export default function ProjectDetailPage() {
                     </div>
                   ) : (
                     <div className="flex items-center text-gray-500">
-                      <Text className="text-sm">Kein Team zugewiesen</Text>
+                      <Text className="text-sm">-</Text>
                     </div>
                   )}
                 </div>
