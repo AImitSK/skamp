@@ -675,11 +675,22 @@ export default function ProjectsPage() {
                     <div className="w-40 px-4">
                       {project.assignedTo && project.assignedTo.length > 0 ? (
                         <div className="flex -space-x-2">
-                          {project.assignedTo.slice(0, 3).map((userId: string) => {
-                            // Finde Team-Mitglied wie in Kanban-Ansicht
-                            const memberByUserId = teamMembers.find(m => m.userId === userId);
-                            const memberById = teamMembers.find(m => m.id === userId);
-                            const member = memberByUserId || memberById;
+                          {(() => {
+                            const uniqueMembers = [];
+                            const seenMemberIds = new Set();
+
+                            for (const userId of project.assignedTo) {
+                              const member = teamMembers.find(m => m.userId === userId || m.id === userId);
+                              if (member && !seenMemberIds.has(member.id)) {
+                                uniqueMembers.push({ userId, member });
+                                seenMemberIds.add(member.id);
+                              } else if (!member) {
+                                uniqueMembers.push({ userId, member: null });
+                              }
+                            }
+
+                            return uniqueMembers;
+                          })().slice(0, 3).map(({ userId, member }) => {
                             
                             if (!member || loadingTeam) {
                               // Fallback für unbekannte Member
@@ -712,11 +723,26 @@ export default function ProjectsPage() {
                               />
                             );
                           })}
-                          {project.assignedTo.length > 3 && (
-                            <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs font-medium ring-2 ring-white">
-                              +{project.assignedTo.length - 3}
-                            </div>
-                          )}
+                          {(() => {
+                            const uniqueMembers = [];
+                            const seenMemberIds = new Set();
+
+                            for (const userId of project.assignedTo) {
+                              const member = teamMembers.find(m => m.userId === userId || m.id === userId);
+                              if (member && !seenMemberIds.has(member.id)) {
+                                uniqueMembers.push({ userId, member });
+                                seenMemberIds.add(member.id);
+                              } else if (!member) {
+                                uniqueMembers.push({ userId, member: null });
+                              }
+                            }
+
+                            return uniqueMembers.length > 3 ? (
+                              <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs font-medium ring-2 ring-white">
+                                +{uniqueMembers.length - 3}
+                              </div>
+                            ) : null;
+                          })()}
                         </div>
                       ) : (
                         <span className="text-xs text-gray-500">Kein Team</span>

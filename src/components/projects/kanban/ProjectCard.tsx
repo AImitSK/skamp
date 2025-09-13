@@ -306,20 +306,23 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
       )}
 
 
-      {/* Tags */}
-      {projectTags.length > 0 && (
+      {/* Tags - nur anzeigen wenn sie nicht wie IDs aussehen */}
+      {projectTags.length > 0 && projectTags.some(tag => tag.length < 20 && !/^[a-zA-Z0-9]{20,}$/.test(tag)) && (
         <div className="flex flex-wrap gap-1 mb-3">
-          {projectTags.slice(0, 3).map((tag, index) => (
-            <span
-              key={index}
-              className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded"
-            >
-              {tag}
-            </span>
-          ))}
-          {projectTags.length > 3 && (
+          {projectTags
+            .filter(tag => tag.length < 20 && !/^[a-zA-Z0-9]{20,}$/.test(tag))
+            .slice(0, 3)
+            .map((tag, index) => (
+              <span
+                key={index}
+                className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded"
+              >
+                {tag}
+              </span>
+            ))}
+          {projectTags.filter(tag => tag.length < 20 && !/^[a-zA-Z0-9]{20,}$/.test(tag)).length > 3 && (
             <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">
-              +{projectTags.length - 3}
+              +{projectTags.filter(tag => tag.length < 20 && !/^[a-zA-Z0-9]{20,}$/.test(tag)).length - 3}
             </span>
           )}
         </div>
@@ -332,12 +335,22 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
           {/* Assigned Team Members with Avatars */}
           {project.assignedTo && project.assignedTo.length > 0 && (
             <div className="flex -space-x-2">
-              {project.assignedTo.slice(0, 3).map((userId: string) => {
-                
-                // Zusätzlicher Check: Versuche match mit id statt userId
-                const memberByUserId = teamMembers.find(m => m.userId === userId);
-                const memberById = teamMembers.find(m => m.id === userId);
-                const member = memberByUserId || memberById;
+              {(() => {
+                const uniqueMembers = [];
+                const seenMemberIds = new Set();
+
+                for (const userId of project.assignedTo) {
+                  const member = teamMembers.find(m => m.userId === userId || m.id === userId);
+                  if (member && !seenMemberIds.has(member.id)) {
+                    uniqueMembers.push({ userId, member });
+                    seenMemberIds.add(member.id);
+                  } else if (!member) {
+                    uniqueMembers.push({ userId, member: null });
+                  }
+                }
+
+                return uniqueMembers;
+              })().slice(0, 3).map(({ userId, member }) => {
                 if (!member || loadingTeam) {
                   // Fallback for unknown member or still loading
                   return (
@@ -369,11 +382,26 @@ export const ProjectCard: React.FC<ProjectCardProps> = memo(({
                   />
                 );
               })}
-              {project.assignedTo.length > 3 && (
-                <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs font-medium ring-2 ring-white">
-                  +{project.assignedTo.length - 3}
-                </div>
-              )}
+              {(() => {
+                const uniqueMembers = [];
+                const seenMemberIds = new Set();
+
+                for (const userId of project.assignedTo) {
+                  const member = teamMembers.find(m => m.userId === userId || m.id === userId);
+                  if (member && !seenMemberIds.has(member.id)) {
+                    uniqueMembers.push({ userId, member });
+                    seenMemberIds.add(member.id);
+                  } else if (!member) {
+                    uniqueMembers.push({ userId, member: null });
+                  }
+                }
+
+                return uniqueMembers.length > 3 ? (
+                  <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs font-medium ring-2 ring-white">
+                    +{uniqueMembers.length - 3}
+                  </div>
+                ) : null;
+              })()}
             </div>
           )}
           

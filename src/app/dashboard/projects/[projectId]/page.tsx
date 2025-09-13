@@ -260,6 +260,40 @@ export default function ProjectDetailPage() {
     }
   };
 
+  const formatProjectDate = (date: any): string => {
+    try {
+      if (!date) return '-';
+
+      // Firestore Timestamp mit toDate Methode
+      if (date && typeof date === 'object' && date.toDate) {
+        return formatDate(date.toDate());
+      }
+
+      // Firestore Timestamp mit seconds/nanoseconds
+      if (date && typeof date === 'object' && date.seconds) {
+        return formatDate(new Date(date.seconds * 1000));
+      }
+
+      // Bereits ein Date-Objekt
+      if (date instanceof Date) {
+        return formatDate(date);
+      }
+
+      // String-Datum
+      if (typeof date === 'string') {
+        const parsed = new Date(date);
+        if (!isNaN(parsed.getTime())) {
+          return formatDate(parsed);
+        }
+      }
+
+      return '-';
+    } catch (error) {
+      console.error('Date formatting error:', error);
+      return '-';
+    }
+  };
+
   const getCurrentStageLabel = (stage: string) => {
     switch (stage) {
       case 'ideas_planning': return 'Ideen & Planung';
@@ -805,41 +839,17 @@ export default function ProjectDetailPage() {
                     <Text className="text-sm font-medium text-gray-600">Erstellt am</Text>
                     <div className="flex items-center mt-1">
                       <CalendarDaysIcon className="h-4 w-4 text-gray-400 mr-1" />
-                      <Text>
-                        {(() => {
-                          try {
-                            if (!project.createdAt) return '-';
-
-                            // Firestore Timestamp
-                            if (project.createdAt.toDate) {
-                              return formatDate(project.createdAt.toDate());
-                            }
-
-                            // Bereits ein Date-Objekt
-                            if (project.createdAt instanceof Date) {
-                              return formatDate(project.createdAt);
-                            }
-
-                            // String-Datum
-                            if (typeof project.createdAt === 'string') {
-                              return formatDate(new Date(project.createdAt));
-                            }
-
-                            // Fallback
-                            return '-';
-                          } catch (error) {
-                            console.error('Date formatting error:', error);
-                            return '-';
-                          }
-                        })()}
-                      </Text>
+                      <Text>{formatProjectDate(project.createdAt)}</Text>
                     </div>
                   </div>
 
                   <div>
                     <Text className="text-sm font-medium text-gray-600">Priorität</Text>
                     <div className="mt-1">
-                      {project.priority ? (
+                      {(() => {
+                        console.log('Debug - Priorität:', project.priority, typeof project.priority);
+                        return project.priority;
+                      })() ? (
                         <Badge color={
                           project.priority === 'high' ? 'red' :
                           project.priority === 'medium' ? 'yellow' :
