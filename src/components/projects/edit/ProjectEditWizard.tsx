@@ -230,10 +230,8 @@ export function ProjectEditWizard({
         updatedBy: user.uid
       };
 
-      // Add optional fields
-      if (formData.priority) {
-        (updateData as any).priority = formData.priority;
-      }
+      // Add optional fields - Priority und Tags immer setzen
+      (updateData as any).priority = formData.priority || 'medium';
       // Tags immer setzen (auch leeres Array wenn keine Tags ausgewählt)
       (updateData as any).tags = selectedTagIds;
       if (formData.dueDate) {

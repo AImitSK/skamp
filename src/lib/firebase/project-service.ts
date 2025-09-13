@@ -1433,6 +1433,10 @@ export const projectService = {
         status: 'active',
         currentStage: 'ideas_planning',
         assignedTo: wizardData.assignedTeamMembers,
+
+        // Tags und Priority aus Wizard-Daten
+        tags: wizardData.tags || [],
+        priority: wizardData.priority || 'medium',
         
         // Wizard-spezifische Creation Context
         creationContext: {

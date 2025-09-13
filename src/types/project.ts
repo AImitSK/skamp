@@ -57,6 +57,10 @@ export interface Project {
   
   // Team
   assignedTo?: string[];
+
+  // Projekt-Kategorisierung und Priorisierung
+  tags?: string[];
+  priority?: ProjectPriority;
   
   // ========================================
   // PLAN 6/9: MEDIA-ASSETS-INTEGRATION
