@@ -54,6 +54,8 @@ import { strategyDocumentService, StrategyDocument } from '@/lib/firebase/strate
 import ProjectFoldersView from '@/components/projects/ProjectFoldersView';
 import { tagsService } from '@/lib/firebase/tags-service';
 import { Tag } from '@/types/crm';
+import { approvalService } from '@/lib/firebase/approval-service';
+import { ApprovalStatus } from '@/types/approvals';
 import Link from 'next/link';
 
 export default function ProjectDetailPage() {
@@ -80,12 +82,20 @@ export default function ProjectDetailPage() {
   const [loadingTeam, setLoadingTeam] = useState(true);
   const [tags, setTags] = useState<Tag[]>([]);
   const [loadingTags, setLoadingTags] = useState(true);
+  const [approvals, setApprovals] = useState<any[]>([]);
+  const [loadingApprovals, setLoadingApprovals] = useState(true);
 
   useEffect(() => {
     loadProject();
     loadTeamMembers();
     loadTags();
   }, [projectId, currentOrganization?.id]);
+
+  useEffect(() => {
+    if (linkedCampaigns.length > 0) {
+      loadApprovals();
+    }
+  }, [linkedCampaigns]);
 
   // Lade Projekt-Ordnerstruktur und Dokumente wenn Planning-Tab aktiviert wird
   useEffect(() => {
@@ -234,6 +244,40 @@ export default function ProjectDetailPage() {
       console.error('Error loading tags:', error);
     } finally {
       setLoadingTags(false);
+    }
+  };
+
+  const loadApprovals = async () => {
+    if (!currentOrganization?.id || linkedCampaigns.length === 0) return;
+
+    try {
+      setLoadingApprovals(true);
+      const campaignId = linkedCampaigns[0].id;
+      const approvalsList = await approvalService.getByCampaign(campaignId, currentOrganization.id);
+      setApprovals(approvalsList);
+    } catch (error) {
+      console.error('Error loading approvals:', error);
+    } finally {
+      setLoadingApprovals(false);
+    }
+  };
+
+  const getStatusProgress = (status: ApprovalStatus): number => {
+    switch (status) {
+      case 'pending':
+        return 20;
+      case 'in_review':
+        return 40;
+      case 'changes_requested':
+        return 60;
+      case 'approved':
+        return 100;
+      case 'completed':
+        return 100;
+      case 'cancelled':
+        return 0;
+      default:
+        return 0;
     }
   };
 
@@ -940,19 +984,37 @@ export default function ProjectDetailPage() {
                       <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
                     </DropdownButton>
                     <DropdownMenu anchor="bottom end">
-                      <DropdownItem onClick={() => {/* TODO: Campaign Edit */}}>
+                      <DropdownItem onClick={() => {
+                        if (linkedCampaigns.length > 0) {
+                          router.push(`/dashboard/pr-tools/campaigns/campaigns/edit/${linkedCampaigns[0].id}`);
+                        }
+                      }}>
                         <PencilSquareIcon className="h-4 w-4" />
                         Bearbeiten
                       </DropdownItem>
-                      <DropdownItem onClick={() => {/* TODO: Freigabecenter */}}>
+                      <DropdownItem onClick={() => {
+                        if (linkedCampaigns.length > 0) {
+                          router.push(`/dashboard/pr-tools/approvals?campaignId=${linkedCampaigns[0].id}`);
+                        }
+                      }}>
                         <EyeIcon className="h-4 w-4" />
                         Freigabecenter
                       </DropdownItem>
-                      <DropdownItem onClick={() => {/* TODO: PDF Download */}}>
+                      <DropdownItem onClick={() => {
+                        if (linkedCampaigns.length > 0) {
+                          // TODO: Load current PDF version and open it
+                          console.log('Open PDF for campaign:', linkedCampaigns[0].id);
+                        }
+                      }}>
                         <ArrowDownTrayIcon className="h-4 w-4" />
                         Aktuelles PDF
                       </DropdownItem>
-                      <DropdownItem onClick={() => {/* TODO: Feedback Historie */}}>
+                      <DropdownItem onClick={() => {
+                        if (linkedCampaigns.length > 0) {
+                          // TODO: Open feedback history modal
+                          console.log('Show feedback history for campaign:', linkedCampaigns[0].id);
+                        }
+                      }}>
                         <ClockIcon className="h-4 w-4" />
                         Feedback Historie
                       </DropdownItem>
@@ -970,7 +1032,7 @@ export default function ProjectDetailPage() {
                           onClick={() => router.push(`/dashboard/pr-tools/campaigns/campaigns/${linkedCampaigns[0].id}`)}
                           title="Kampagne öffnen"
                         >
-                          <PaperAirplaneIcon className="h-4 w-4 mr-2" />
+                          <PaperAirplaneIcon className="h-4 w-4 text-gray-400 mr-1" />
                           {linkedCampaigns[0].title}
                         </button>
                       ) : (
@@ -1003,21 +1065,29 @@ export default function ProjectDetailPage() {
                   <div>
                     <Text className="text-sm font-medium text-gray-600">Status Fortschritt</Text>
                     <div className="mt-2">
-                      {linkedCampaigns.length > 0 ? (
+                      {linkedCampaigns.length > 0 && !loadingApprovals ? (
                         <>
-                          <div className="flex items-center justify-between mb-1">
-                            <Text className="text-xs text-gray-500">Freigabe</Text>
-                            <Text className="text-xs text-gray-600">{linkedCampaigns[0].progress}%</Text>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div
-                              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                              style={{ width: `${linkedCampaigns[0].progress}%` }}
-                            ></div>
-                          </div>
+                          {approvals.length > 0 ? (
+                            <>
+                              <div className="flex items-center justify-between mb-1">
+                                <Text className="text-xs text-gray-500">Freigabe</Text>
+                                <Text className="text-xs text-gray-600">{getStatusProgress(approvals[0].status)}%</Text>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div
+                                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                                  style={{ width: `${getStatusProgress(approvals[0].status)}%` }}
+                                />
+                              </div>
+                            </>
+                          ) : (
+                            <span className="text-base text-gray-500">Keine Freigabe-Daten</span>
+                          )}
                         </>
+                      ) : loadingApprovals ? (
+                        <span className="text-base text-gray-500">Lädt...</span>
                       ) : (
-                        <Text className="text-gray-500">-</Text>
+                        <span className="text-base text-gray-500">-</span>
                       )}
                     </div>
                   </div>
