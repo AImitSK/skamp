@@ -815,7 +815,7 @@ export default function ProjectDetailPage() {
                     <Text className="text-sm font-medium text-gray-600">Aktuelle Phase</Text>
                     <div className="flex items-center mt-1">
                       <ArrowPathIcon className="h-4 w-4 text-gray-400 mr-1" />
-                      <Text>{getCurrentStageLabel(project.currentStage)}</Text>
+                      <span className="text-base text-gray-900">{getCurrentStageLabel(project.currentStage)}</span>
                     </div>
                   </div>
                   
@@ -825,7 +825,7 @@ export default function ProjectDetailPage() {
                       <div className="flex items-center mt-1">
                         <BuildingOfficeIcon className="h-4 w-4 text-gray-400 mr-1" />
                         <button
-                          className="text-blue-600 hover:text-blue-700 hover:underline text-left"
+                          className="text-blue-600 hover:text-blue-700 hover:underline text-left text-base"
                           onClick={() => router.push(`/dashboard/contacts/crm/companies/${project.customer?.id}`)}
                           title="Kunde anzeigen"
                         >
@@ -839,7 +839,7 @@ export default function ProjectDetailPage() {
                     <Text className="text-sm font-medium text-gray-600">Erstellt am</Text>
                     <div className="flex items-center mt-1">
                       <CalendarDaysIcon className="h-4 w-4 text-gray-400 mr-1" />
-                      <Text>{formatProjectDate(project.createdAt)}</Text>
+                      <span className="text-base text-gray-900">{formatProjectDate(project.createdAt)}</span>
                     </div>
                   </div>
 
@@ -861,7 +861,7 @@ export default function ProjectDetailPage() {
                            project.priority}
                         </Badge>
                       ) : (
-                        <Text className="text-gray-500">-</Text>
+                        <span className="text-base text-gray-500">-</span>
                       )}
                     </div>
                   </div>
@@ -879,7 +879,7 @@ export default function ProjectDetailPage() {
                           );
                         })
                       ) : (
-                        <Text className="text-gray-500 text-sm">-</Text>
+                        <span className="text-base text-gray-500">-</span>
                       )}
                     </div>
                   </div>
@@ -896,9 +896,9 @@ export default function ProjectDetailPage() {
                 <div className="space-y-3">
                   <div>
                     <Text className="text-sm font-medium text-gray-600">Kampagnenname</Text>
-                    <Text className="mt-1">
+                    <span className="mt-1 block text-base text-gray-900">
                       {linkedCampaigns.length > 0 ? linkedCampaigns[0].title : '-'}
-                    </Text>
+                    </span>
                   </div>
 
                   <div>
@@ -917,7 +917,7 @@ export default function ProjectDetailPage() {
                            linkedCampaigns[0].status}
                         </Badge>
                       ) : (
-                        <Text className="text-gray-500">-</Text>
+                        <span className="text-base text-gray-500">-</span>
                       )}
                     </div>
                   </div>
