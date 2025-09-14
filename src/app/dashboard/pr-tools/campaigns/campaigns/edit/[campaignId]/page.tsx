@@ -418,6 +418,27 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
     }
   }, [existingCampaign?.projectId, currentOrganization]);
 
+  // Lade das Projekt-Objekt wenn eine projectId vorhanden ist
+  useEffect(() => {
+    const loadProject = async () => {
+      if (selectedProjectId && currentOrganization?.id) {
+        try {
+          const { projectService } = await import('@/lib/firebase/project-service');
+          const project = await projectService.getById(selectedProjectId, {
+            organizationId: currentOrganization.id
+          });
+          if (project) {
+            setSelectedProject(project);
+          }
+        } catch (error) {
+          console.error('Fehler beim Laden des Projekts:', error);
+        }
+      }
+    };
+
+    loadProject();
+  }, [selectedProjectId, currentOrganization?.id]);
+
   // Auto-Scroll zu Fehlermeldungen
   useEffect(() => {
     if (validationErrors.length > 0) {
@@ -637,6 +658,12 @@ export default function EditPRCampaignPage({ params }: { params: { campaignId: s
         setSelectedCompanyId(campaign.clientId || '');
         setSelectedCompanyName(campaign.clientName || '');
         setSelectedProjectId(campaign.projectId || '');
+
+        // Debug-Log für Projekt-Zuordnung
+        if (campaign.projectId) {
+          console.log('Kampagne hat Projekt-ID:', campaign.projectId);
+          console.log('Kunde-ID:', campaign.clientId);
+        }
         setSelectedListIds(campaign.distributionListIds || []);
         setSelectedListNames(campaign.distributionListNames || []);
         setListRecipientCount(campaign.recipientCount || 0);

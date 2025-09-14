@@ -16,14 +16,20 @@ interface ProjectSelectorProps {
   clientId?: string; // ✅ Plan 2/9: Client-Filter Support
 }
 
-export const ProjectSelector = ({ 
-  selectedProjectId, 
-  onProjectSelect, 
+export const ProjectSelector = ({
+  selectedProjectId,
+  onProjectSelect,
   organizationId,
   clientId
 }: ProjectSelectorProps) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentSelectedId, setCurrentSelectedId] = useState(selectedProjectId);
+
+  // Sync internal state with prop
+  useEffect(() => {
+    setCurrentSelectedId(selectedProjectId);
+  }, [selectedProjectId]);
 
   useEffect(() => {
     loadActiveProjects();
@@ -65,9 +71,11 @@ export const ProjectSelector = ({
         </div>
       ) : (
         <select
-          value={selectedProjectId || ''}
+          value={currentSelectedId || ''}
           onChange={(e) => {
             const value = e.target.value;
+            setCurrentSelectedId(value);
+
             if (value) {
               const project = projects.find(p => p.id === value);
               if (project) {
@@ -89,7 +97,7 @@ export const ProjectSelector = ({
         </select>
       )}
       
-      {selectedProjectId && (
+      {currentSelectedId && (
         <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-start gap-2">
             <LinkIcon className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
