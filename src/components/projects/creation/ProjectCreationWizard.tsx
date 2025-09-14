@@ -234,6 +234,13 @@ export function ProjectCreationWizard({
         currentStep: 4
       };
 
+      console.log('DEBUG ProjectCreationWizard - About to create project with:', {
+        title: formData.title,
+        createCampaignImmediately: formData.createCampaignImmediately,
+        campaignTitle: wizardData.campaignTitle,
+        wizardData
+      });
+
       const result = await projectService.createProjectFromWizard(
         wizardData,
         user.uid,
