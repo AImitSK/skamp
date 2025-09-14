@@ -1057,12 +1057,12 @@ export default function ProjectDetailPage() {
                     <div className="mt-1">
                       {linkedCampaigns.length > 0 ? (
                         <button
-                          className="flex items-center text-base text-blue-600 hover:text-blue-700 hover:underline"
+                          className="flex items-center text-base text-blue-600 hover:text-blue-700 hover:underline max-w-full"
                           onClick={() => router.push(`/dashboard/pr-tools/campaigns/campaigns/${linkedCampaigns[0].id}`)}
-                          title="Kampagne öffnen"
+                          title={linkedCampaigns[0].title}
                         >
-                          <PaperAirplaneIcon className="h-4 w-4 text-gray-400 mr-1" />
-                          {linkedCampaigns[0].title}
+                          <PaperAirplaneIcon className="h-4 w-4 text-gray-400 mr-1 flex-shrink-0" />
+                          <span className="truncate">{linkedCampaigns[0].title}</span>
                         </button>
                       ) : (
                         <span className="text-base text-gray-500">-</span>
