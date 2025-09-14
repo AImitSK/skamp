@@ -109,6 +109,11 @@ export function ProjectEditWizard({
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [tags, setTags] = useState<Tag[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+
+  // ✅ KAMPAGNEN-INTEGRATION STATE
+  const [linkedCampaigns, setLinkedCampaigns] = useState<any[]>([]);
+  const [createNewCampaign, setCreateNewCampaign] = useState(false);
+  const [campaignTitle, setCampaignTitle] = useState('');
   
   // Form-Daten mit allen verfügbaren Feldern
   const [formData, setFormData] = useState({
@@ -149,7 +154,10 @@ export function ProjectEditWizard({
       
       // Set selected tag IDs
       setSelectedTagIds((project as any).tags || []);
-      
+
+      // ✅ KAMPAGNEN-INTEGRATION: Lade verknüpfte Kampagnen
+      loadLinkedCampaigns();
+
       if (!creationOptions) {
         loadCreationOptions();
       }
@@ -196,6 +204,64 @@ export function ProjectEditWizard({
       return tagId;
     } catch (error) {
       throw error;
+    }
+  };
+
+  // ✅ KAMPAGNEN-INTEGRATION: Lade verknüpfte Kampagnen
+  const loadLinkedCampaigns = async () => {
+    if (!project.id) return;
+
+    try {
+      const campaigns = await projectService.getLinkedCampaigns(project.id, {
+        organizationId: organizationId
+      });
+      setLinkedCampaigns(campaigns);
+    } catch (error) {
+      console.error('Fehler beim Laden der Kampagnen:', error);
+      setLinkedCampaigns([]);
+    }
+  };
+
+  // ✅ KAMPAGNEN-INTEGRATION: Erstelle neue Kampagne
+  const handleCreateCampaign = async () => {
+    if (!createNewCampaign || !campaignTitle.trim()) return;
+
+    try {
+      const { prService } = await import('@/lib/firebase/pr-service');
+      const campaignData = {
+        title: campaignTitle.trim(),
+        organizationId: organizationId,
+        userId: user!.uid,
+        clientId: formData.clientId || '',
+        projectId: project.id,
+        projectTitle: formData.title,
+        status: 'draft' as any,
+        contentHtml: '<p>Automatisch erstellt durch Projekt-Edit</p>',
+        distributionListId: '',
+        distributionListName: 'Standard-Liste',
+        recipientCount: 0,
+        approvalRequired: false
+      };
+
+      const campaignId = await prService.create(campaignData);
+
+      // Kampagne zu Projekt verlinken
+      await projectService.addLinkedCampaign(project.id, campaignId, {
+        organizationId: organizationId,
+        userId: user!.uid
+      });
+
+      // Reload campaigns
+      await loadLinkedCampaigns();
+
+      // Reset form
+      setCreateNewCampaign(false);
+      setCampaignTitle('');
+
+      setSuccessMessage(`Kampagne "${campaignTitle}" wurde erfolgreich erstellt und verknüpft.`);
+    } catch (error) {
+      console.error('Fehler beim Erstellen der Kampagne:', error);
+      setError('Fehler beim Erstellen der Kampagne.');
     }
   };
 
@@ -507,6 +573,107 @@ export function ProjectEditWizard({
                 )}
               </div>
             )}
+          </div>
+
+          {/* ✅ KAMPAGNEN-INTEGRATION SEKTION */}
+          <div className="border-t border-gray-200 pt-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Verknüpfte Kampagnen</h3>
+
+            {/* Bestehende Kampagnen anzeigen */}
+            {linkedCampaigns.length > 0 ? (
+              <div className="space-y-3 mb-6">
+                {linkedCampaigns.map((campaign) => (
+                  <div key={campaign.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex-1">
+                      <h4 className="text-sm font-medium text-gray-900">{campaign.title}</h4>
+                      <p className="text-xs text-gray-500">
+                        Status: {campaign.status === 'draft' ? 'Entwurf' :
+                                campaign.status === 'approved' ? 'Freigegeben' :
+                                campaign.status === 'sent' ? 'Versendet' : campaign.status}
+                        {campaign.createdAt && (
+                          <span className="ml-2">
+                            • Erstellt: {new Date(campaign.createdAt.seconds * 1000).toLocaleDateString('de-DE')}
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        type="button"
+                        color="secondary"
+                        size="sm"
+                        onClick={() => window.open(`/dashboard/pr-tools/campaigns/campaigns/${campaign.id}`, '_blank')}
+                      >
+                        Anzeigen
+                      </Button>
+                      <Button
+                        type="button"
+                        color="secondary"
+                        size="sm"
+                        onClick={() => window.open(`/dashboard/pr-tools/campaigns/campaigns/edit/${campaign.id}`, '_blank')}
+                      >
+                        Bearbeiten
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6 text-gray-500 mb-6">
+                <p className="text-sm">Keine Kampagnen mit diesem Projekt verknüpft.</p>
+              </div>
+            )}
+
+            {/* Neue Kampagne erstellen */}
+            <div className="border-t border-gray-100 pt-4">
+              <div className="flex items-start space-x-3 mb-4">
+                <input
+                  id="createNewCampaign"
+                  type="checkbox"
+                  checked={createNewCampaign}
+                  onChange={(e) => {
+                    setCreateNewCampaign(e.target.checked);
+                    if (!e.target.checked) {
+                      setCampaignTitle('');
+                    }
+                  }}
+                  className="mt-1 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                />
+                <div className="flex-1">
+                  <label htmlFor="createNewCampaign" className="text-sm font-medium text-gray-700 cursor-pointer">
+                    Neue PR-Kampagne erstellen
+                  </label>
+                  <Text className="text-sm text-gray-600 mt-1">
+                    Erstelle eine neue Kampagne und verknüpfe sie automatisch mit diesem Projekt.
+                  </Text>
+                </div>
+              </div>
+
+              {createNewCampaign && (
+                <div className="ml-7 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Kampagnen-Titel *
+                    </label>
+                    <input
+                      type="text"
+                      value={campaignTitle}
+                      onChange={(e) => setCampaignTitle(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                      placeholder={`${formData.title} - PR-Kampagne`}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleCreateCampaign}
+                    disabled={!campaignTitle.trim() || isSaving}
+                  >
+                    Kampagne erstellen
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Actions */}
