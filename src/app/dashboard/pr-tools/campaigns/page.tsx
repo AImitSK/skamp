@@ -507,10 +507,6 @@ export default function PRCampaignsPage() {
                 <div className="w-32 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Status
                 </div>
-                {/* ✅ PIPELINE-SPALTE HINZUGEFÜGT (Plan 4/9) */}
-                <div className="w-32 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                  Pipeline
-                </div>
                 <div className="w-20 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Admin
                 </div>
@@ -521,19 +517,6 @@ export default function PRCampaignsPage() {
             {/* Body */}
             <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
               {paginatedCampaigns.map((campaign) => {
-                // Debug: Prüfe beide neue Kampagnen
-                if (campaign.title.includes("Weit hinten") || campaign.title.includes("Fern der Länder")) {
-                  console.log('DEBUG KAMPAGNE:', {
-                    title: campaign.title,
-                    projectTitle: campaign.projectTitle,
-                    projectId: campaign.projectId,
-                    hasProjectTitle: !!campaign.projectTitle,
-                    hasProjectId: !!campaign.projectId,
-                    isOld: campaign.title.includes("Weit hinten"),
-                    isNew: campaign.title.includes("Fern der Länder"),
-                    fullCampaign: campaign
-                  });
-                }
 
                 // Projektname aus Kampagne-Daten
                 const projectName = campaign.projectTitle || (campaign.projectId ? "Projekt verknüpft" : null);
@@ -661,36 +644,6 @@ export default function PRCampaignsPage() {
                         </div>
                       </div>
 
-                      {/* ✅ PIPELINE-SPALTE HINZUGEFÜGT (Plan 4/9) */}
-                      <div className="w-32 px-4">
-                        {campaign.projectId ? (
-                          <div className="flex items-center gap-2">
-                            <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${
-                              campaign.pipelineStage === 'distribution' ? 'bg-blue-50 text-blue-700 ring-blue-600/20' :
-                              campaign.pipelineStage === 'monitoring' ? 'bg-green-50 text-green-700 ring-green-600/20' :
-                              campaign.pipelineStage === 'creation' ? 'bg-yellow-50 text-yellow-700 ring-yellow-600/20' :
-                              campaign.pipelineStage === 'internal_approval' ? 'bg-orange-50 text-orange-700 ring-orange-600/20' :
-                              campaign.pipelineStage === 'customer_approval' ? 'bg-purple-50 text-purple-700 ring-purple-600/20' :
-                              'bg-gray-50 text-gray-700 ring-gray-600/20'
-                            }`}>
-                              {campaign.pipelineStage === 'distribution' ? 'Distribution' :
-                               campaign.pipelineStage === 'monitoring' ? 'Monitoring' :
-                               campaign.pipelineStage === 'creation' ? 'Erstellung' :
-                               campaign.pipelineStage === 'internal_approval' ? 'Interne Freigabe' :
-                               campaign.pipelineStage === 'customer_approval' ? 'Kunden-Freigabe' :
-                               campaign.pipelineStage || 'Unbekannt'}
-                            </span>
-                            {campaign.distributionStatus && (
-                              <div className="text-xs text-gray-500">
-                                {campaign.distributionStatus.successCount || 0}/{campaign.distributionStatus.recipientCount || 0} versendet
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-gray-400 text-sm">-</span>
-                        )}
-                      </div>
-
                       {/* Admin Avatar */}
                       <div className="w-20 px-4 flex justify-center">
                         <img 
@@ -728,20 +681,6 @@ export default function PRCampaignsPage() {
                               <DropdownItem onClick={() => setShowSendModal(campaign)}>
                                 <PaperAirplaneIconOutline className="h-4 w-4" />
                                 Versenden
-                              </DropdownItem>
-                            )}
-                            {/* ✅ PIPELINE-ACTIONS HINZUGEFÜGT (Plan 4/9) */}
-                            {campaign.projectId && campaign.pipelineStage === 'distribution' && 
-                             (!campaign.distributionStatus || campaign.distributionStatus.status === 'pending') && (
-                              <DropdownItem onClick={() => setShowSendModal(campaign)}>
-                                <PaperAirplaneIconOutline className="h-4 w-4" />
-                                Pipeline-Distribution starten
-                              </DropdownItem>
-                            )}
-                            {campaign.projectId && campaign.pipelineStage === 'monitoring' && (
-                              <DropdownItem href={`/dashboard/projects/${campaign.projectId}`}>
-                                <ChartBarIconOutline className="h-4 w-4" />
-                                Zum Projekt
                               </DropdownItem>
                             )}
                             <DropdownDivider />
@@ -823,17 +762,10 @@ export default function PRCampaignsPage() {
           onClose={() => setShowSendModal(null)}
           onSent={() => {
             setShowSendModal(null);
-            const successMessage = showSendModal.projectId && showSendModal.pipelineStage === 'distribution'
-              ? `"${showSendModal.title}" wurde erfolgreich versendet. Das Projekt wurde zur Monitoring-Phase weitergeleitet.`
-              : `"${showSendModal.title}" wurde erfolgreich versendet.`;
-            showAlert('success', 'Kampagne versendet', successMessage);
+            showAlert('success', 'Kampagne versendet', `"${showSendModal.title}" wurde erfolgreich versendet.`);
             loadCampaigns();
           }}
           projectMode={!!showSendModal.projectId}
-          onPipelineComplete={(campaignId) => {
-            showAlert('success', 'Pipeline-Distribution abgeschlossen', 'Das Projekt wurde zur Monitoring-Phase weitergeleitet.');
-            loadCampaigns(); // Refresh der Liste
-          }}
         />
       )}
 

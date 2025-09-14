@@ -1827,15 +1827,7 @@ export const projectService = {
             approvalRequired: false
           };
 
-          console.log('DEBUG ProjectService - Creating campaign with data:', {
-            projectId,
-            projectTitle: project.title,
-            campaignData
-          });
-
           const campaignId = await prService.create(campaignData);
-
-          console.log('DEBUG ProjectService - Campaign created with ID:', campaignId);
           
           // Kampagne zu Projekt verlinken
           await this.addLinkedCampaign(projectId, campaignId, {
