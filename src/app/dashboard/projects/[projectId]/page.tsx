@@ -884,18 +884,18 @@ export default function ProjectDetailPage() {
         {/* Right Column - 1/3 width */}
         <div className="lg:col-span-1 space-y-6">
           {/* Enhanced Project Info Box */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="space-y-6">
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="space-y-0">
               {/* Projektdetails Section */}
               <div>
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between px-6 py-4 bg-gray-50">
                   <div className="flex items-center">
                     <DocumentTextIcon className="h-5 w-5 text-gray-400 mr-2" />
                     <Subheading>Projektdetails</Subheading>
                   </div>
                   <Dropdown>
-                    <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2">
-                      <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                    <DropdownButton plain className="p-1.5 hover:bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2">
+                      <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500" />
                     </DropdownButton>
                     <DropdownMenu anchor="bottom end">
                       <DropdownItem onClick={() => setShowEditWizard(true)}>
@@ -909,8 +909,8 @@ export default function ProjectDetailPage() {
                     </DropdownMenu>
                   </Dropdown>
                 </div>
-                
-                <div className="space-y-3">
+
+                <div className="space-y-3 px-6 py-4">
                   <div>
                     <Text className="text-sm font-medium text-gray-600">Aktuelle Phase</Text>
                     <div className="flex items-center mt-1">
@@ -990,15 +990,15 @@ export default function ProjectDetailPage() {
 
               {/* Pressemeldung Section - Nur anzeigen wenn Kampagne verknüpft */}
               {linkedCampaigns.length > 0 && (
-                <div className="border-t pt-6">
-                  <div className="flex items-center justify-between mb-4">
+                <div>
+                  <div className="flex items-center justify-between px-6 py-4 bg-gray-50">
                     <div className="flex items-center">
                       <DocumentTextIcon className="h-5 w-5 text-blue-500 mr-2" />
                       <Subheading>Pressemeldung</Subheading>
                     </div>
                     <Dropdown>
-                    <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2">
-                      <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                    <DropdownButton plain className="p-1.5 hover:bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2">
+                      <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500" />
                     </DropdownButton>
                     <DropdownMenu anchor="bottom end">
                       <DropdownItem onClick={() => {
@@ -1036,7 +1036,7 @@ export default function ProjectDetailPage() {
                   </Dropdown>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-3 px-6 py-4">
                   <div>
                     <Text className="text-sm font-medium text-gray-600">PR-Kampagne</Text>
                     <div className="mt-1">
@@ -1109,23 +1109,20 @@ export default function ProjectDetailPage() {
                     </div>
                   )}
 
-                  {/* Campaign Actions - immer anzeigen, aber disabled wenn keine Kampagne */}
-                  <div className="pt-2 border-t">
-                  </div>
                 </div>
               </div>
               )}
 
               {/* Team Section */}
-              <div className="border-t pt-6">
-                <div className="flex items-center justify-between mb-4">
+              <div>
+                <div className="flex items-center justify-between px-6 py-4 bg-gray-50">
                   <div className="flex items-center">
                     <UserGroupIcon className="h-5 w-5 text-gray-400 mr-2" />
                     <Subheading>Team</Subheading>
                   </div>
                   <Dropdown>
-                    <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2">
-                      <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                    <DropdownButton plain className="p-1.5 hover:bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2">
+                      <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500" />
                     </DropdownButton>
                     <DropdownMenu anchor="bottom end">
                       <DropdownItem onClick={() => {/* TODO: Team verwalten */}}>
@@ -1135,8 +1132,8 @@ export default function ProjectDetailPage() {
                     </DropdownMenu>
                   </Dropdown>
                 </div>
-                
-                <div>
+
+                <div className="px-6 py-4">
                   {project.assignedTo && project.assignedTo.length > 0 ? (
                     <div className="flex -space-x-2">
                       {/* Entferne Duplikate und zeige nur eindeutige Team-Members */}
