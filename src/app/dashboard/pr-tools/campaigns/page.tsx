@@ -615,16 +615,18 @@ export default function PRCampaignsPage() {
                             )}
                           </div>
                           <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
-                            {projectName && campaign.projectId ? (
-                              <Link
-                                href={`/dashboard/projects/${campaign.projectId}`}
-                                className="hover:text-[#005fab] hover:underline"
-                                title={projectName}
-                              >
-                                {truncateProject(projectName)}
-                              </Link>
-                            ) : projectName ? (
-                              <span title={projectName}>{truncateProject(projectName)}</span>
+                            {projectName ? (
+                              campaign.projectId ? (
+                                <Link
+                                  href={`/dashboard/projects/${campaign.projectId}`}
+                                  className="hover:text-[#005fab] hover:underline"
+                                  title={projectName}
+                                >
+                                  {truncateProject(projectName)}
+                                </Link>
+                              ) : (
+                                <span title={projectName}>{truncateProject(projectName)}</span>
+                              )
                             ) : (
                               <span className="italic text-zinc-400">Kein Projekt</span>
                             )}
