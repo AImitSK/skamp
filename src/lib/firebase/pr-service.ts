@@ -141,6 +141,13 @@ export const prService = {
       if (campaignData.clientName && campaignData.clientName !== '') {
         dataToSave.clientName = campaignData.clientName;
       }
+      // ✅ PROJEKT-INTEGRATION FELDER
+      if (campaignData.projectId && campaignData.projectId !== '') {
+        dataToSave.projectId = campaignData.projectId;
+      }
+      if (campaignData.projectTitle && campaignData.projectTitle !== '') {
+        dataToSave.projectTitle = campaignData.projectTitle;
+      }
       if (cleanedAttachedAssets.length > 0) {
         dataToSave.attachedAssets = cleanedAttachedAssets;
       }
