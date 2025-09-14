@@ -1816,6 +1816,7 @@ export const projectService = {
             userId: project.userId,
             clientId: project.customer?.id || '',
             projectId: projectId,
+            projectTitle: project.title,
             status: 'draft' as any,
             currentStage: 'planning' as any,
             // Erforderliche PRCampaign Felder
