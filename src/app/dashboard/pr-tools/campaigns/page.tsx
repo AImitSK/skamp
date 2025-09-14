@@ -501,13 +501,13 @@ export default function PRCampaignsPage() {
                 <div className="flex-1 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Kampagne
                 </div>
-                <div className="w-64 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                <div className="w-80 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Kunde / Projekt
                 </div>
-                <div className="w-32 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                <div className="w-40 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Status
                 </div>
-                <div className="w-20 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                <div className="w-24 px-4 text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                   Admin
                 </div>
                 <div className="w-12"></div>
@@ -595,7 +595,7 @@ export default function PRCampaignsPage() {
                       </div>
 
                       {/* Kunde mit Projekt */}
-                      <div className="w-64 px-4">
+                      <div className="w-80 px-4">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
                             <BuildingOfficeIcon className="h-4 w-4 text-zinc-400 flex-shrink-0" />
@@ -632,9 +632,9 @@ export default function PRCampaignsPage() {
                       </div>
 
                       {/* Status mit Datum */}
-                      <div className="w-32 px-4">
-                        <StatusBadge 
-                          status={campaign.status} 
+                      <div className="w-40 px-4">
+                        <StatusBadge
+                          status={campaign.status}
                           campaign={campaign}
                           showApprovalTooltip={false}
                           teamMembers={teamMembers}
@@ -645,7 +645,7 @@ export default function PRCampaignsPage() {
                       </div>
 
                       {/* Admin Avatar */}
-                      <div className="w-20 px-4 flex justify-center">
+                      <div className="w-24 px-4 flex justify-center">
                         <img 
                           src={adminAvatar}
                           alt={campaignAdmin?.displayName || 'Admin'}
