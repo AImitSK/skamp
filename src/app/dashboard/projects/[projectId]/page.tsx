@@ -55,7 +55,9 @@ import ProjectFoldersView from '@/components/projects/ProjectFoldersView';
 import { tagsService } from '@/lib/firebase/tags-service';
 import { Tag } from '@/types/crm';
 import { approvalService } from '@/lib/firebase/approval-service';
-import { ApprovalStatus } from '@/types/approvals';
+import { pdfVersionsService, PDFVersion } from '@/lib/firebase/pdf-versions-service';
+import { ApprovalHistoryModal } from '@/components/campaigns/ApprovalHistoryModal';
+import { ApprovalEnhanced } from '@/types/approvals';
 import Link from 'next/link';
 
 export default function ProjectDetailPage() {
@@ -82,20 +84,15 @@ export default function ProjectDetailPage() {
   const [loadingTeam, setLoadingTeam] = useState(true);
   const [tags, setTags] = useState<Tag[]>([]);
   const [loadingTags, setLoadingTags] = useState(true);
-  const [approvals, setApprovals] = useState<any[]>([]);
-  const [loadingApprovals, setLoadingApprovals] = useState(true);
+  const [currentPdfVersion, setCurrentPdfVersion] = useState<PDFVersion | null>(null);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [selectedApproval, setSelectedApproval] = useState<ApprovalEnhanced | null>(null);
 
   useEffect(() => {
     loadProject();
     loadTeamMembers();
     loadTags();
   }, [projectId, currentOrganization?.id]);
-
-  useEffect(() => {
-    if (linkedCampaigns.length > 0) {
-      loadApprovals();
-    }
-  }, [linkedCampaigns]);
 
   // Lade Projekt-Ordnerstruktur und Dokumente wenn Planning-Tab aktiviert wird
   useEffect(() => {
@@ -194,7 +191,8 @@ export default function ProjectDetailPage() {
                     id: campaignId,
                     title: `${projectData.title} - PR-Kampagne`,
                     status: 'in_review',
-                    progress: 75
+                    progress: 75,
+                    approvalRequired: true // Default: Freigabe erforderlich
                   };
                 } catch (error) {
                   console.error(`Kampagne ${campaignId} konnte nicht geladen werden:`, error);
@@ -203,6 +201,16 @@ export default function ProjectDetailPage() {
               })
             );
             setLinkedCampaigns(campaigns.filter(Boolean));
+
+            // Lade PDF-Version für die erste Kampagne
+            if (campaigns.length > 0 && campaigns[0]) {
+              try {
+                const pdfVersion = await pdfVersionsService.getCurrentVersion(campaigns[0].id);
+                setCurrentPdfVersion(pdfVersion);
+              } catch (error) {
+                console.error('Fehler beim Laden der PDF-Version:', error);
+              }
+            }
           } catch (error) {
             console.error('Fehler beim Laden der verknüpften Kampagnen:', error);
           }
@@ -247,39 +255,6 @@ export default function ProjectDetailPage() {
     }
   };
 
-  const loadApprovals = async () => {
-    if (!currentOrganization?.id || linkedCampaigns.length === 0) return;
-
-    try {
-      setLoadingApprovals(true);
-      const campaignId = linkedCampaigns[0].id;
-      const approvalsList = await approvalService.getByCampaign(campaignId, currentOrganization.id);
-      setApprovals(approvalsList);
-    } catch (error) {
-      console.error('Error loading approvals:', error);
-    } finally {
-      setLoadingApprovals(false);
-    }
-  };
-
-  const getStatusProgress = (status: ApprovalStatus): number => {
-    switch (status) {
-      case 'pending':
-        return 20;
-      case 'in_review':
-        return 40;
-      case 'changes_requested':
-        return 60;
-      case 'approved':
-        return 100;
-      case 'completed':
-        return 100;
-      case 'cancelled':
-        return 0;
-      default:
-        return 0;
-    }
-  };
 
   const handleEditSuccess = (updatedProject: Project) => {
     setProject(updatedProject);
@@ -287,6 +262,33 @@ export default function ProjectDetailPage() {
     setTimeout(() => {
       loadProject();
     }, 500);
+  };
+
+  const handleOpenPDF = () => {
+    if (currentPdfVersion?.downloadUrl) {
+      window.open(currentPdfVersion.downloadUrl, '_blank');
+    }
+  };
+
+  const handleViewFeedback = async () => {
+    if (!linkedCampaigns.length || !currentOrganization?.id) return;
+
+    try {
+      // Lade Approval-Daten für die Kampagne
+      const approvals = await approvalService.getByCampaign(linkedCampaigns[0].id, currentOrganization.id);
+      if (approvals && approvals.length > 0) {
+        const fullApproval = await approvalService.getById(approvals[0].id!, currentOrganization.id);
+        if (fullApproval) {
+          setSelectedApproval(fullApproval);
+          setShowFeedbackModal(true);
+        }
+      } else {
+        alert('Keine Freigabe-Daten für diese Kampagne vorhanden.');
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden der Feedback-Historie:', error);
+      alert('Fehler beim Laden der Feedback-Historie.');
+    }
   };
 
   const getProjectStatusColor = (status: string) => {
@@ -972,14 +974,15 @@ export default function ProjectDetailPage() {
                 </div>
               </div>
 
-              {/* Pressemeldung Section */}
-              <div className="border-t pt-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <DocumentTextIcon className="h-5 w-5 text-blue-500 mr-2" />
-                    <Subheading>Pressemeldung</Subheading>
-                  </div>
-                  <Dropdown>
+              {/* Pressemeldung Section - Nur anzeigen wenn Kampagne verknüpft */}
+              {linkedCampaigns.length > 0 && (
+                <div className="border-t pt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center">
+                      <DocumentTextIcon className="h-5 w-5 text-blue-500 mr-2" />
+                      <Subheading>Pressemeldung</Subheading>
+                    </div>
+                    <Dropdown>
                     <DropdownButton plain className="p-1.5 hover:bg-zinc-100 rounded-md dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-[#005fab] focus:ring-offset-2">
                       <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
                     </DropdownButton>
@@ -1000,23 +1003,20 @@ export default function ProjectDetailPage() {
                         <EyeIcon className="h-4 w-4" />
                         Freigabecenter
                       </DropdownItem>
-                      <DropdownItem onClick={() => {
-                        if (linkedCampaigns.length > 0) {
-                          // TODO: Load current PDF version and open it
-                          console.log('Open PDF for campaign:', linkedCampaigns[0].id);
-                        }
-                      }}>
+                      <DropdownItem
+                        onClick={handleOpenPDF}
+                        disabled={!currentPdfVersion || !linkedCampaigns[0]?.approvalRequired}
+                      >
                         <ArrowDownTrayIcon className="h-4 w-4" />
-                        Aktuelles PDF
+                        {!linkedCampaigns[0]?.approvalRequired ? 'Keine Kundenfreigabe erforderlich' :
+                         currentPdfVersion ? `Aktuelles PDF (V${currentPdfVersion.version})` : 'Kein PDF vorhanden'}
                       </DropdownItem>
-                      <DropdownItem onClick={() => {
-                        if (linkedCampaigns.length > 0) {
-                          // TODO: Open feedback history modal
-                          console.log('Show feedback history for campaign:', linkedCampaigns[0].id);
-                        }
-                      }}>
+                      <DropdownItem
+                        onClick={handleViewFeedback}
+                        disabled={linkedCampaigns.length === 0 || !linkedCampaigns[0]?.approvalRequired}
+                      >
                         <ClockIcon className="h-4 w-4" />
-                        Feedback Historie
+                        {!linkedCampaigns[0]?.approvalRequired ? 'Keine Kundenfreigabe erforderlich' : 'Feedback Historie'}
                       </DropdownItem>
                     </DropdownMenu>
                   </Dropdown>
@@ -1062,41 +1062,45 @@ export default function ProjectDetailPage() {
                     </div>
                   </div>
 
-                  <div>
-                    <Text className="text-sm font-medium text-gray-600">Status Fortschritt</Text>
-                    <div className="mt-2">
-                      {linkedCampaigns.length > 0 && !loadingApprovals ? (
-                        <>
-                          {approvals.length > 0 ? (
+                  {/* Status Fortschritt - nur anzeigen wenn Kundenfreigabe erforderlich */}
+                  {linkedCampaigns.length > 0 && linkedCampaigns[0].approvalRequired && (
+                    <div>
+                      <Text className="text-sm font-medium text-gray-600">Status Fortschritt</Text>
+                      <div className="mt-2">
+                        {/* Berechne Fortschritt direkt aus dem Kampagnenstatus */}
+                        {(() => {
+                          const campaignStatus = linkedCampaigns[0].status;
+                          const progress = campaignStatus === 'approved' ? 100 :
+                                          campaignStatus === 'in_review' ? 40 :
+                                          campaignStatus === 'changes_requested' ? 60 :
+                                          campaignStatus === 'pending' ? 20 :
+                                          campaignStatus === 'draft' ? 10 : 0;
+
+                          return (
                             <>
                               <div className="flex items-center justify-between mb-1">
                                 <Text className="text-xs text-gray-500">Freigabe</Text>
-                                <Text className="text-xs text-gray-600">{getStatusProgress(approvals[0].status)}%</Text>
+                                <Text className="text-xs text-gray-600">{progress}%</Text>
                               </div>
                               <div className="w-full bg-gray-200 rounded-full h-2">
                                 <div
                                   className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                                  style={{ width: `${getStatusProgress(approvals[0].status)}%` }}
+                                  style={{ width: `${progress}%` }}
                                 />
                               </div>
                             </>
-                          ) : (
-                            <span className="text-base text-gray-500">Keine Freigabe-Daten</span>
-                          )}
-                        </>
-                      ) : loadingApprovals ? (
-                        <span className="text-base text-gray-500">Lädt...</span>
-                      ) : (
-                        <span className="text-base text-gray-500">-</span>
-                      )}
+                          );
+                        })()}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Campaign Actions - immer anzeigen, aber disabled wenn keine Kampagne */}
                   <div className="pt-2 border-t">
                   </div>
                 </div>
               </div>
+              )}
 
               {/* Team Section */}
               <div className="border-t pt-6">
@@ -1272,6 +1276,18 @@ export default function ProjectDetailPage() {
           onClose={handleCloseCommunicationFeed}
           projectId={project?.id || ''}
           projectTitle={project?.title || ''}
+        />
+      )}
+
+      {/* Feedback History Modal */}
+      {showFeedbackModal && selectedApproval && (
+        <ApprovalHistoryModal
+          approval={selectedApproval}
+          isOpen={showFeedbackModal}
+          onClose={() => {
+            setShowFeedbackModal(false);
+            setSelectedApproval(null);
+          }}
         />
       )}
     </div>
