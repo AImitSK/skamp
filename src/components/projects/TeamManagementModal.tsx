@@ -87,7 +87,7 @@ export function TeamManagementModal({
   const loadTeamMembers = async () => {
     try {
       setLoading(true);
-      const members = await teamMemberService.getAll(organizationId);
+      const members = await teamMemberService.getByOrganization(organizationId);
       setAvailableTeamMembers(members);
     } catch (error) {
       console.error('Fehler beim Laden der Team-Mitglieder:', error);
