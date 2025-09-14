@@ -521,6 +521,18 @@ export default function PRCampaignsPage() {
             {/* Body */}
             <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
               {paginatedCampaigns.map((campaign) => {
+                // Debug: Prüfe neue Kampagne speziell
+                if (campaign.title.includes("Weit hinten")) {
+                  console.log('DEBUG NEUE KAMPAGNE:', {
+                    title: campaign.title,
+                    projectTitle: campaign.projectTitle,
+                    projectId: campaign.projectId,
+                    hasProjectTitle: !!campaign.projectTitle,
+                    hasProjectId: !!campaign.projectId,
+                    fullCampaign: campaign
+                  });
+                }
+
                 // Projektname aus Kampagne-Daten
                 const projectName = campaign.projectTitle || (campaign.projectId ? "Projekt verknüpft" : null);
                 
