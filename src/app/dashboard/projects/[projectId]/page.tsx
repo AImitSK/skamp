@@ -61,6 +61,7 @@ import { pdfVersionsService, PDFVersion } from '@/lib/firebase/pdf-versions-serv
 import { ApprovalHistoryModal } from '@/components/campaigns/ApprovalHistoryModal';
 import { ApprovalEnhanced } from '@/types/approvals';
 import { Dialog, DialogTitle, DialogBody, DialogActions } from '@/components/ui/dialog';
+import { TeamManagementModal } from '@/components/projects/TeamManagementModal';
 import Link from 'next/link';
 
 export default function ProjectDetailPage() {
@@ -90,6 +91,7 @@ export default function ProjectDetailPage() {
   const [currentPdfVersion, setCurrentPdfVersion] = useState<PDFVersion | null>(null);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [selectedApproval, setSelectedApproval] = useState<ApprovalEnhanced | null>(null);
+  const [showTeamModal, setShowTeamModal] = useState(false);
 
   // Dialog States
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -1138,10 +1140,7 @@ export default function ProjectDetailPage() {
                       <EllipsisVerticalIcon className="h-4 w-4 text-zinc-500" />
                     </DropdownButton>
                     <DropdownMenu anchor="bottom end">
-                      <DropdownItem onClick={() => {
-                        // Navigate to team management - could be part of project edit
-                        setShowEditWizard(true);
-                      }}>
+                      <DropdownItem onClick={() => setShowTeamModal(true)}>
                         <UserGroupIcon className="h-4 w-4" />
                         Team verwalten
                       </DropdownItem>
@@ -1477,6 +1476,21 @@ export default function ProjectDetailPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Team Management Modal */}
+      {project && (
+        <TeamManagementModal
+          isOpen={showTeamModal}
+          onClose={() => setShowTeamModal(false)}
+          project={project}
+          organizationId={currentOrganization?.id || ''}
+          onSuccess={(updatedProject) => {
+            setProject(updatedProject);
+            // Reload team members to refresh display
+            loadTeamMembers();
+          }}
+        />
+      )}
     </div>
   );
 }
