@@ -209,6 +209,8 @@ export default function ProjectDetailPage() {
                 setCurrentPdfVersion(pdfVersion);
               } catch (error) {
                 console.error('Fehler beim Laden der PDF-Version:', error);
+                // PDF-Fehler ist nicht kritisch - setze einfach null
+                setCurrentPdfVersion(null);
               }
             }
           } catch (error) {
@@ -267,6 +269,8 @@ export default function ProjectDetailPage() {
   const handleOpenPDF = () => {
     if (currentPdfVersion?.downloadUrl) {
       window.open(currentPdfVersion.downloadUrl, '_blank');
+    } else {
+      alert('Kein PDF verfügbar. Bitte erstellen Sie zuerst ein PDF in der Kampagne.');
     }
   };
 
@@ -274,13 +278,23 @@ export default function ProjectDetailPage() {
     if (!linkedCampaigns.length || !currentOrganization?.id) return;
 
     try {
-      // Lade Approval-Daten für die Kampagne
-      const approvals = await approvalService.getByCampaign(linkedCampaigns[0].id, currentOrganization.id);
+      // Lade Approval-Daten für die Kampagne mit searchEnhanced
+      const approvals = await approvalService.searchEnhanced(currentOrganization.id, {
+        search: linkedCampaigns[0].id // Suche nach der Campaign ID
+      });
+
       if (approvals && approvals.length > 0) {
-        const fullApproval = await approvalService.getById(approvals[0].id!, currentOrganization.id);
-        if (fullApproval) {
-          setSelectedApproval(fullApproval);
-          setShowFeedbackModal(true);
+        // Finde die Freigabe für diese spezifische Kampagne
+        const campaignApproval = approvals.find(a => a.campaignId === linkedCampaigns[0].id);
+
+        if (campaignApproval && campaignApproval.id) {
+          const fullApproval = await approvalService.getById(campaignApproval.id, currentOrganization.id);
+          if (fullApproval) {
+            setSelectedApproval(fullApproval);
+            setShowFeedbackModal(true);
+          }
+        } else {
+          alert('Keine Freigabe-Daten für diese Kampagne vorhanden.');
         }
       } else {
         alert('Keine Freigabe-Daten für diese Kampagne vorhanden.');
