@@ -521,14 +521,16 @@ export default function PRCampaignsPage() {
             {/* Body */}
             <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
               {paginatedCampaigns.map((campaign) => {
-                // Debug: Prüfe neue Kampagne speziell
-                if (campaign.title.includes("Weit hinten")) {
-                  console.log('DEBUG NEUE KAMPAGNE:', {
+                // Debug: Prüfe beide neue Kampagnen
+                if (campaign.title.includes("Weit hinten") || campaign.title.includes("Fern der Länder")) {
+                  console.log('DEBUG KAMPAGNE:', {
                     title: campaign.title,
                     projectTitle: campaign.projectTitle,
                     projectId: campaign.projectId,
                     hasProjectTitle: !!campaign.projectTitle,
                     hasProjectId: !!campaign.projectId,
+                    isOld: campaign.title.includes("Weit hinten"),
+                    isNew: campaign.title.includes("Fern der Länder"),
                     fullCampaign: campaign
                   });
                 }
