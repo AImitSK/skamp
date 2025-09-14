@@ -521,27 +521,8 @@ export default function PRCampaignsPage() {
             {/* Body */}
             <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
               {paginatedCampaigns.map((campaign) => {
-                // Debug: Was ist tatsächlich in den Kampagne-Daten?
-                console.log('DEBUG Campaign:', {
-                  id: campaign.id,
-                  title: campaign.title,
-                  projectTitle: campaign.projectTitle,
-                  projectId: campaign.projectId,
-                  hasProjectTitle: !!campaign.projectTitle,
-                  hasProjectId: !!campaign.projectId
-                });
-
                 // Projektname aus Kampagne-Daten
                 const projectName = campaign.projectTitle || (campaign.projectId ? "Projekt verknüpft" : null);
-
-                // Debug: Was wird als projectName berechnet?
-                console.log('DEBUG ProjectName Logic:', {
-                  campaignId: campaign.id,
-                  projectTitle: campaign.projectTitle,
-                  projectId: campaign.projectId,
-                  calculatedProjectName: projectName,
-                  willShowNoProject: !projectName
-                });
                 
                 // Find the actual admin for this campaign (robust gegen leere teamMembers)
                 const campaignAdmin = teamMembers.find(member => member.userId === campaign.userId);
