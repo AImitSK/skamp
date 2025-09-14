@@ -278,21 +278,17 @@ export default function ProjectDetailPage() {
     if (!linkedCampaigns.length || !currentOrganization?.id) return;
 
     try {
-      // Lade Approval-Daten für die Kampagne mit searchEnhanced
-      const approvals = await approvalService.searchEnhanced(currentOrganization.id, {
-        search: linkedCampaigns[0].id // Suche nach der Campaign ID
-      });
+      // Lade alle Approvals und filtere nach campaignId
+      const allApprovals = await approvalService.getAll(currentOrganization.id);
 
-      if (approvals && approvals.length > 0) {
-        // Finde die Freigabe für diese spezifische Kampagne
-        const campaignApproval = approvals.find(a => a.campaignId === linkedCampaigns[0].id);
+      // Finde die Freigabe für diese spezifische Kampagne
+      const campaignApproval = allApprovals.find(a => a.campaignId === linkedCampaigns[0].id);
 
-        if (campaignApproval && campaignApproval.id) {
-          const fullApproval = await approvalService.getById(campaignApproval.id, currentOrganization.id);
-          if (fullApproval) {
-            setSelectedApproval(fullApproval);
-            setShowFeedbackModal(true);
-          }
+      if (campaignApproval && campaignApproval.id) {
+        const fullApproval = await approvalService.getById(campaignApproval.id, currentOrganization.id);
+        if (fullApproval) {
+          setSelectedApproval(fullApproval);
+          setShowFeedbackModal(true);
         } else {
           alert('Keine Freigabe-Daten für diese Kampagne vorhanden.');
         }
@@ -1133,7 +1129,52 @@ export default function ProjectDetailPage() {
                   </Dropdown>
                 </div>
 
-                <div className="px-6 py-4">
+                <div className="px-6 py-4 space-y-4">
+                  {/* Projekt-Admin */}
+                  <div>
+                    <Text className="text-sm font-medium text-gray-600 mb-2">Projekt-Admin</Text>
+                    <div className="flex items-center space-x-3">
+                      {(() => {
+                        const adminMember = teamMembers.find(m => m.userId === project.userId || m.id === project.userId);
+
+                        if (adminMember) {
+                          const initials = adminMember.displayName
+                            .split(' ')
+                            .map(n => n[0])
+                            .join('')
+                            .toUpperCase()
+                            .slice(0, 2);
+
+                          return (
+                            <>
+                              <Avatar
+                                className="size-8"
+                                src={adminMember.photoUrl}
+                                initials={initials}
+                              />
+                              <div>
+                                <Text className="text-sm font-medium text-gray-900">{adminMember.displayName}</Text>
+                                <Text className="text-xs text-gray-500">{adminMember.email}</Text>
+                              </div>
+                            </>
+                          );
+                        } else {
+                          return (
+                            <>
+                              <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
+                                <Text className="text-xs font-medium text-gray-600">?</Text>
+                              </div>
+                              <Text className="text-sm text-gray-500">Nicht zugeordnet</Text>
+                            </>
+                          );
+                        }
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Team-Mitglieder */}
+                  <div>
+                    <Text className="text-sm font-medium text-gray-600 mb-2">Team-Mitglieder</Text>
                   {project.assignedTo && project.assignedTo.length > 0 ? (
                     <div className="flex -space-x-2">
                       {/* Entferne Duplikate und zeige nur eindeutige Team-Members */}
@@ -1212,9 +1253,10 @@ export default function ProjectDetailPage() {
                     </div>
                   ) : (
                     <div className="flex items-center text-gray-500">
-                      <Text className="text-sm">-</Text>
+                      <Text className="text-sm">Keine Team-Mitglieder zugewiesen</Text>
                     </div>
                   )}
+                  </div>
                 </div>
               </div>
             </div>
