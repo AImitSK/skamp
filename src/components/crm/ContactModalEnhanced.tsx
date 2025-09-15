@@ -285,7 +285,7 @@ export default function ContactModalEnhanced({
   const loadTags = async () => {
     if (!organizationId) return;
     try {
-      const userTags = await tagsService.getAll(organizationId);
+      const userTags = await tagsService.getAll(organizationId, userId);
       setTags(userTags);
     } catch (error) {
       // Silent error handling

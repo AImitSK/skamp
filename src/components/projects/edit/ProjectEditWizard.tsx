@@ -183,7 +183,7 @@ export function ProjectEditWizard({
   const loadTags = async () => {
     if (!organizationId) return;
     try {
-      const userTags = await tagsService.getAll(organizationId);
+      const userTags = await tagsService.getAll(organizationId, user?.uid);
       setTags(userTags);
     } catch (error) {
       console.error('Fehler beim Laden der Tags:', error);

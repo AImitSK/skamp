@@ -165,7 +165,7 @@ export function ProjectCreationWizard({
   const loadTags = async () => {
     if (!currentOrganization?.id) return;
     try {
-      const userTags = await tagsService.getAll(currentOrganization.id);
+      const userTags = await tagsService.getAll(currentOrganization.id, user?.uid);
       setTags(userTags);
     } catch (error) {
     }

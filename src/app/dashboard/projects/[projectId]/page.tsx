@@ -262,7 +262,8 @@ export default function ProjectDetailPage() {
 
     try {
       setLoadingTags(true);
-      const allTags = await tagsService.getAll(currentOrganization.id);
+      // Fallback auf user.uid für Rückwärtskompatibilität mit alten Tags
+      const allTags = await tagsService.getAll(currentOrganization.id, user?.uid);
       setTags(allTags);
     } catch (error) {
       console.error('Error loading tags:', error);
@@ -986,9 +987,13 @@ export default function ProjectDetailPage() {
                   <div>
                     <Text className="text-sm font-medium text-gray-600">Tags</Text>
                     <div className="flex flex-wrap gap-1 mt-1">
+                      {console.log('Debug - Project tags:', project.tags)}
+                      {console.log('Debug - Loaded tags from DB:', tags)}
+                      {console.log('Debug - Current Organization:', currentOrganization?.id)}
                       {project.tags && project.tags.length > 0 ? (
                         project.tags.map((tagId, index) => {
                           const tagInfo = tags.find(t => t.id === tagId);
+                          console.log(`Debug - Looking for tag ${tagId}, found:`, tagInfo);
                           return (
                             <Badge key={tagId} color={tagInfo?.color || (index % 2 === 0 ? 'blue' : 'purple')}>
                               {tagInfo?.name || tagId}
