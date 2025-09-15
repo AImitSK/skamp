@@ -806,6 +806,7 @@ export default function ProjectFoldersView({
   clientId,
   project
 }: ProjectFoldersViewProps) {
+  const { user } = useAuth();
   const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>();
   const [currentFolders, setCurrentFolders] = useState<any[]>([]);
   const [currentAssets, setCurrentAssets] = useState<any[]>([]);
