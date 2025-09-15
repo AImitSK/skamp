@@ -777,82 +777,243 @@ const uploadResult = await mediaService.smartUpload(file, {
 - **Asset-Verschiebeung**: Automatische Verschiebung aller Campaign-Assets bei Projekt-Zuordnung
 - **Rollback-Funktion**: "Aus Projekt entfernen" mit Asset-Rückverschiebung
 
-#### 3.4 PDF-Generierung Projekt-Integration (NEU)
+#### 3.4 PDF-Generierung Hybrid-Integration (KRITISCH - FREIGABE-KOMPATIBEL)
 **DATEIEN:**
-- `src/lib/firebase/pdf-versions-service.ts`
+- `src/lib/firebase/pdf-versions-service.ts` (HYBRID-UPGRADE)
+- `src/app/freigabe/[shareId]/page.tsx` (BEREITS KOMPATIBEL!)
 - PDF-Generierung-Komponenten
 
-**ÄNDERUNGEN:**
-```typescript
-// ALT: PDF in organizations/{orgId}/pdfs/
-const pdfPath = `organizations/${organizationId}/pdfs/${campaignId}_v${version}.pdf`;
+**🎯 CLEAN-SLATE-OPTIMIERTE PDF-INTEGRATION:**
 
-// NEU: PDF in Projekt-Pressemeldungen-Ordner
-const projectPressFolder = await projectService.getProjectPressFolder(projectId);
-const pdfPath = `${projectPressFolder}/Freigaben/${campaignTitle}_v${version}_${timestamp}.pdf`;
+Nach der Analyse der Freigabe-Seite ist das **PDF-System bereits Multi-Tenancy-konform**, braucht aber **Hybrid-Upload-Logic**:
+
+```typescript
+// AKTUELL - Multi-Tenancy korrekt, aber nicht Hybrid:
+const uploadedAsset = await mediaService.uploadMedia(
+  pdfFile,
+  organizationId,  // ✅ Multi-Tenancy OK
+  undefined,       // ❌ Kein Hybrid-Context
+  { userId: 'pdf-system' }
+);
+// Result: organizations/{orgId}/media/{timestamp}_{filename}
+
+// NEU - Hybrid-Smart-Upload:
+const uploadedAsset = await mediaService.smartUpload(pdfFile, {
+  organizationId,
+  userId: 'pdf-system',
+  projectId: campaign.projectId,  // Optional! Hybrid-Kern
+  campaignId: campaign.id,
+  category: 'press',
+  subCategory: 'finale-pdfs'
+});
+// Result MIT Projekt: organizations/{orgId}/media/Projekte/P-{project}/Pressemeldungen/Campaign-{id}/Finale-PDFs/
+// Result OHNE Projekt: organizations/{orgId}/media/Unzugeordnet/Campaigns/Campaign-{id}/PDFs/
 ```
 
-#### 3.5 Media-Library Projekt-Filter (NEU)
+**FREIGABE-SEITEN-KOMPATIBILITÄT:**
+✅ **Bereits kompatibel** - verwendet `pdfVersionsService.getVersionHistory()`
+✅ **Download-URLs** funktionieren automatisch mit neuen Pfaden  
+✅ **PDF-History-Komponenten** laden PDFs über `downloadUrl` (pfad-agnostisch)
+✅ **Customer-View** bleibt unverändert funktionsfähig
+
+**CLEAN-SLATE-VORTEIL für PDFs:**
+- ❌ **Eliminiert:** Legacy-PDF-Migration (alle alten PDFs werden gelöscht)
+- ❌ **Eliminiert:** Dual-Pfad-Support in History-Komponenten
+- ✅ **Vereinfacht:** Nur neue Hybrid-Pfade implementieren
+- ✅ **Sofortiger Benefit:** Perfekte Projekt-Organisation von Tag 1
+
+**IMPLEMENTATION:**
+```typescript
+// Erweiterte PDF-Versions-Service Hybrid-Integration:
+interface HybridPDFContext extends BaseUploadContext {
+  projectId?: string;        // Optional - Hybrid-Kern
+  campaignId: string;
+  generateForFreigabe: boolean;
+  pdfType: 'draft' | 'freigabe' | 'final';
+}
+
+async generatePdf(
+  campaignData: any, 
+  context: HybridPDFContext
+): Promise<PDFVersion> {
+  // ... PDF generieren ...
+  
+  // Smart Upload mit Hybrid-Context:
+  const uploadContext: HybridUploadContext = {
+    organizationId: context.organizationId,
+    userId: context.userId || 'pdf-system',
+    projectId: campaignData.projectId,  // Optional!
+    campaignId: campaignData.id,
+    category: 'press',
+    subCategory: context.pdfType === 'final' ? 'finale-pdfs' : 'freigaben'
+  };
+  
+  const uploadedAsset = await mediaService.smartUpload(
+    pdfFile, 
+    uploadContext
+  );
+  
+  return {
+    downloadUrl: uploadedAsset.downloadUrl,  // ✅ Freigabe-Seite kompatibel
+    storagePath: uploadedAsset.storagePath,  // Neuer Hybrid-Pfad
+    // ... weitere PDF-Version-Daten
+  };
+}
+```
+
+#### 3.5 Projekt-Ordner Upload-System (BEREITS HYBRID-READY! ✅)
+**DATEIEN:**
+- `src/components/projects/ProjectFoldersView.tsx` (Projekt-Ordner Box im Plugin Tab)
+
+**CURRENT SYSTEM ANALYSIS:**
+Das **Projekt-Ordner Upload-System** ist bereits **perfekt hybrid-kompatibel**:
+
+```typescript
+// AKTUELL - Bereits optimal implementiert:
+return await mediaService.uploadClientMedia(
+  file,
+  organizationId,      // ✅ Multi-Tenancy korrekt
+  clientId,           // ✅ Customer-Zuordnung aus Projekt
+  currentFolderId,    // ✅ Spezifischer Projekt-Unterordner  
+  progressCallback,
+  { userId: user.uid } // ✅ Upload-Tracking
+);
+
+// Result: Landet bereits in korrekter Projekt-Ordnerstruktur:
+// P-{date}-{company}-{title}/Medien/ oder
+// P-{date}-{company}-{title}/Dokumente/ oder  
+// P-{date}-{company}-{title}/Pressemeldungen/
+```
+
+**🎯 WARUM BEREITS PERFEKT:**
+- ✅ **Direkter Projekt-Context**: `projectId` und `clientId` immer verfügbar
+- ✅ **Ordner-spezifisch**: Upload direkt in Medien/, Dokumente/, Pressemeldungen/ Unterordner
+- ✅ **Multi-Tenancy-konform**: Verwendet `organizationId` korrekt
+- ✅ **Hybrid-Struktur-Ready**: Arbeitet bereits mit `P-{project}/` Ordnerstruktur
+
+**KEINE ÄNDERUNG ERFORDERLICH:**
+Das System funktioniert bereits mit der **Projekt-Ordnerstruktur**, die unser Hybrid-System als Basis verwendet. Nach dem Fix der Projekt-Ordner-Namen (P-{date}-{FIRMENNAME}-{title}) arbeitet das Upload-System automatisch mit der **korrekten Hybrid-Struktur**.
+
+**HYBRID-BENEFIT:**
+User können **direkt in die strukturierte Projekt-Ordnerstruktur** hochladen - genau das, was unser Hybrid-System als "organisierte Uploads" definiert!
+
+#### 3.6 Branding-Upload System (ORGANISATIONS-SPEZIFISCH)
+**DATEIEN:**
+- `src/app/dashboard/settings/branding/page.tsx`
+
+**CURRENT ANALYSIS:**
+```typescript
+// AKTUELL - Multi-Tenancy korrekt:
+const asset = await mediaService.uploadMedia(
+  file,
+  organizationId,  // ✅ Korrekt
+  undefined        // Root-Ordner
+);
+```
+
+**HYBRID-INTEGRATION:**
+```typescript
+// NEU - Branding-spezifische Struktur:
+const uploadContext: UnassignedUploadContext = {
+  organizationId,
+  userId,
+  category: 'branding',        // Neue spezielle Kategorie
+  identifier: 'org-logo'       // z.B. logo, signature, letterhead
+};
+
+const result = await mediaService.uploadAssetUnassigned(file, uploadContext);
+// Result: organizations/{orgId}/media/Unzugeordnet/Branding/{identifier}/
+```
+
+**BRANDING-STRUKTUR:**
+```
+📁 Unzugeordnet/
+├── 📁 Branding/
+│   ├── 📁 Logos/           ← Agentur-Logos
+│   ├── 📁 Signatures/      ← Email-Signaturen  
+│   ├── 📁 Letterheads/     ← Briefköpfe
+│   └── 📁 Brand-Assets/    ← Sonstige Brand-Elemente
+```
+
+#### 3.7 Media-Library Projekt-Filter (ERWEITERT)
 **DATEIEN:**
 - `src/app/dashboard/pr-tools/media-library/page.tsx`
 - `src/components/mediathek/MediaLibraryMain.tsx`
 
 **NEUE FEATURES:**
 - Projekt-basierte Filterung
-- Projekt-Ordner-Navigation
+- Projekt-Ordner-Navigation  
 - Bulk-Operations für Projekt-Dateien
 - "Alle Projekte" vs. "Aktuelles Projekt" View
+- **Branding-Assets-Sektion** (neue Kategorie)
 
-### PHASE 4: HYBRID MIGRATION & SMART-CLEANUP
+### PHASE 4: CLEAN-SLATE MIGRATION (ENTWICKLUNGS-OPTIMIERT) 🚀
 
-#### 4.1 Hybrid-System Migration
+**🎯 PRAGMATISCHE ENTWICKLUNGS-STRATEGIE:**
+Da wir uns in der **Entwicklungsphase** befinden, verwenden wir eine **Clean-Slate-Strategie** statt komplexer Migration!
+
+#### 4.1 Clean-Slate Database Reset
 **SCRIPTS:** 
-- `scripts/migrate-profile-assets.ts`
-- `scripts/migrate-legacy-uploads-to-projects.ts` (NEU - HYBRID-AWARE)
-- `scripts/analyze-orphaned-assets.ts` (NEU)
-- `scripts/smart-campaign-migration.ts` (NEU)
+- `scripts/dev-clean-slate-migration.ts` (EINFACH & SCHNELL)
+- `scripts/preserve-profile-images.ts` (SELEKTIVE BEIBEHALTUNG)
 
-1. **Smart Assets Migration mit Hybrid-Logic:**
-   - Existierende Profile-Assets → `Unzugeordnet/Profile/`
-   - Campaign-Assets → Project-zugeordnet ODER `Unzugeordnet/Campaigns/`
-   - Spontane Uploads → `Unzugeordnet/Spontane-Uploads/`
-   - Asset-Category-Metadaten + Context-Information hinzufügen
+**ENTWICKLUNGS-OPTIMIERTE MIGRATION:**
 
-2. **Hybrid Storage Migration:**
-   - Firebase Storage-Files in neue Hybrid-Struktur verschieben
-   - Context-aware Download-URLs aktualisieren
-   - Alte Storage-Pfade zu `Legacy/` Ordner verschieben (nicht löschen!)
+1. **💥 VOLLSTÄNDIGE BEREINIGUNG (Entwicklungs-Vorteil nutzen!):**
+   ```typescript
+   // Einfache Löschung statt komplexer Migration:
+   
+   // ❌ LÖSCHEN - Keine Migration nötig:
+   await deleteCollection('projects'); // Alle alten Projekte
+   await deleteCollection('campaigns'); // Alle Pressemeldungen  
+   await deleteCollection('media_assets'); // Alle Bilder/Medien
+   await deleteCollection('pdf_versions'); // Alle PDF-Versionen (NEU!)
+   await deleteStoragePath('organizations/{orgId}/media/'); // Storage komplett bereinigen
+   
+   // ✅ BEIBEHALTEN/MIGRIEREN:
+   await migrateProfileImages(); // Nur Profilbilder der Teammitglieder
+   await setupCleanHybridStructure(); // Fresh Hybrid-System
+   ```
 
-3. **Smart Legacy Upload Migration (REVOLUTIONÄR):**
-   - **Context-basierte Zuordnung** von Assets ohne Projekt:
-     - Campaign-Assets: Automatisch zu `Unzugeordnet/Campaigns/Campaign-{id}/`
-     - Zeitstempel-Heuristik: Upload-Zeit vs. Projekt-Erstellungsdatum-Matching
-     - Tag-basierte Zuordnung: Asset-Tags mit Projekt-Tags abgleichen
-     - User-Upload-Pattern: Historische Upload-Präferenzen analysieren
-   - **Smart Migration-Decision-Engine**:
-     ```typescript
-     interface MigrationDecision {
-       assetId: string;
-       suggestedProject: Project | null;
-       confidence: number; // 0-100%
-       migrationPath: 'project' | 'unassigned' | 'legacy';
-       reason: string; // Für Logging/Audit
-     }
-     ```
-   - **Fallback-Strategie**: Nicht zuordenbare Assets → `Legacy/Unbekannt/`
-   - **User-Bestätigung**: Migration-Vorschläge mit geringer Confidence zur Bestätigung
+2. **🔄 SELEKTIVE PROFILBILD-MIGRATION:**
+   ```typescript
+   // Einzige echte Migration - Profilbilder:
+   const profileImages = await getProfileImagesByOrganization(organizationId);
+   for (const image of profileImages) {
+     // ALT: organizations/{orgId}/profiles/{userId}/
+     // NEU: organizations/{orgId}/media/Unzugeordnet/Profile/{userId}/
+     await moveStorageFile(image.oldPath, image.newPath);
+     await updateFirestoreDocument(image);
+   }
+   ```
 
-4. **Projekt-Ordner Hybrid-Vervollständigung:**
-   - Automatische Unterordner-Erstellung für bestehende Projekte
-   - Hybrid-Standard-Struktur: `P-{project}/Medien/|Dokumente/|Pressemeldungen/`
-   - Campaign-spezifische Unterordner: `Campaign-{id}/` wo erforderlich
-   - Validierung der gesamten Hybrid-Hierarchie
+3. **🏗️ FRESH HYBRID-SYSTEM SETUP:**
+   - Neue Hybrid-Ordnerstruktur in Firebase Storage erstellen
+   - Basis-Ordner: `Projekte/`, `Unzugeordnet/`, `Legacy/` anlegen
+   - Firestore-Collections mit neuen Schemas initialisieren
+   - Multi-Tenancy-konforme Indexe erstellen
 
-5. **Unzugeordnet-Bereich Setup (NEU):**
-   - `Unzugeordnet/Campaigns/` Strukturierung für projektlose Campaigns
-   - `Unzugeordnet/Spontane-Uploads/` für Ad-hoc Medien
-   - `Unzugeordnet/Profile/` für Profile-Images
-   - `Unzugeordnet/KI-Sessions/` für zukünftige KI-Assistent Integration
+4. **📋 TESTING MIT FRISCHEN DATEN:**
+   - Neue Test-Projekte erstellen (mit korrekten Firmen-Namen!)
+   - Neue Test-Campaigns in beiden Modi: projekt-zugeordnet & unzugeordnet
+   - Upload-Tests für alle Hybrid-Szenarien
+   - **PDF-Generierung-Tests** mit neuen Hybrid-Pfaden
+   - **Freigabe-Seiten-Tests** mit Hybrid-PDFs
+   - Migration-Tests mit echten Profilbildern
+
+**MASSIVE ZEITERSPARNIS:**
+- ❌ **Eliminiert:** Komplexe Smart-Migration-Algorithmen (3-4 Wochen Entwicklung)
+- ❌ **Eliminiert:** Legacy-Asset-Analyse & Confidence-Scoring (2 Wochen)  
+- ❌ **Eliminiert:** Migration-Decision-Engine & User-Bestätigung (2 Wochen)
+- ❌ **Eliminiert:** Legacy-PDF-Migration & Dual-Pfad-Support (1 Woche)
+- ✅ **Reduziert auf:** Einfache Profilbild-Migration (1 Tag!)
+- ✅ **Bonus:** PDF-System sofort Hybrid-konform ohne Legacy-Ballast
+
+**ENTWICKLUNGS-BENEFITS:**
+- 🚀 **7x schneller:** 1 Tag statt 7+ Wochen Migration-Entwicklung
+- 🎯 **Fokus auf Features:** Zeit für neue Funktionen statt Legacy-Migration
+- 🔥 **Risiko-minimiert:** Keine komplexen Daten-Migrationen in Entwicklung
+- ✨ **Sauberer Start:** Perfekte Hybrid-Architektur von Tag 1
 
 #### 4.2 Legacy-Code Cleanup
 - `src/lib/services/profile-image-service.ts` löschen
@@ -936,17 +1097,17 @@ const pdfPath = `${projectPressFolder}/Freigaben/${campaignTitle}_v${version}_${
 - [ ] Media-Library Hybrid-Navigation (Projekte + Unzugeordnet)
 - [ ] Upload-Komponenten mit Smart-Path-Anzeige und Migration-Buttons
 
-### WOCHE 4: Smart Migration Development
-- [ ] **PHASE 4:** Smart Migration-Decision-Engine entwickeln
-- [ ] Hybrid Migration-Scripts für Legacy Upload Analysis
-- [ ] Context-basierte Asset-Zuordnung mit Confidence-Scoring
-- [ ] Test-Migration auf Staging mit Hybrid-Validation
+### WOCHE 4: Clean-Slate Migration (ENTWICKLUNGS-OPTIMIERT) 🚀
+- [ ] **PHASE 4:** Einfaches Clean-Slate Migration-Script entwickeln
+- [ ] Selektive Profilbild-Migration implementieren
+- [ ] Fresh Hybrid-System Setup automatisieren
+- [ ] Test-Daten-Reset auf Staging
 
-### WOCHE 5: Production Hybrid-Rollout
-- [ ] Feature-Flag Activation für Hybrid-System
-- [ ] Production Smart-Migration (schrittweise mit User-Confirmation)
-- [ ] Unzugeordnet-Bereich Setup und Validation
-- [ ] Vollständige Hybrid-System-Validation mit Migration-Analytics
+### WOCHE 5: Production Clean-Rollout
+- [ ] Koordinierte Clean-Slate Migration durchführen
+- [ ] Fresh Hybrid-System produktiv aktivieren
+- [ ] Profilbilder migrieren und validieren
+- [ ] Team-onboarding für neue Hybrid-Workflows
 
 ## 📋 DETAILLIERTE TASK-LISTE
 
@@ -1185,16 +1346,23 @@ const pdfPath = `${projectPressFolder}/Freigaben/${campaignTitle}_v${version}_${
 4. **Smart Migration** (Phase 4) - Production-kritisch + KI-gestützte Asset-Zuordnung
 5. **Testing & Validation** (Phase 5) - Kontinuierlich mit Hybrid-Scenario-Coverage
 
-**GESCHÄTZTE GESAMT-ZEIT:** 5-6 Wochen bei 1-2 Entwicklern (erweitert wegen Hybrid-Complexity)
-**RISIKO-LEVEL:** MITTEL-HOCH (durch Smart-Migration und Fallback-Strategien reduziert)
-**SUCCESS-PROBABILITY:** SEHR HOCH (durch Hybrid-Flexibilität und bewährte Projekt-Basis)
+**GESCHÄTZTE GESAMT-ZEIT:** 2-3 Wochen bei 1-2 Entwicklern (DRASTISCH reduziert durch Clean-Slate!)
+**RISIKO-LEVEL:** NIEDRIG (Clean-Slate eliminiert komplexe Migration-Risiken)
+**SUCCESS-PROBABILITY:** SEHR HOCH (Einfache Löschung + Fresh Start)
 
-**REVOLUTIONÄRER HYBRID-ANSATZ:** 
-Diese Migration ist ein **Paradigmenwechsel** von starren Strukturen zu **adaptiver Intelligenz**. Das System denkt mit:
-- **Automatische Context-Erkennung** für optimale Asset-Platzierung
-- **Nachträgliche Flexibilität** ohne Workflow-Unterbrechung  
-- **KI-gestützte Migration** für Legacy-Assets
-- **Projekt-zentrierte Organisation** OHNE Zwang zur Projekt-Erstellung
-- **Smart-Decision-Engine** für perfekte Asset-Zuordnung
+**REVOLUTIONÄRER HYBRID-ANSATZ mit ENTWICKLUNGS-PRAGMATISMUS:** 
+Diese Migration kombiniert **revolutionäre Architektur** mit **pragmatischer Entwicklungs-Effizienz**:
 
-Das Ergebnis: Ein Media-System das sich **an die Nutzer anpasst**, nicht umgekehrt - ein Quantensprung in der Benutzerfreundlichkeit bei gleichzeitig perfekter Multi-Tenancy-Architektur!
+🚀 **ARCHITEKTUR-REVOLUTION:**
+- **Hybrid-Flexibilität:** Projekt-Organisation OHNE Zwang zur Projekt-Erstellung
+- **Context-aware Upload-Router** für intelligente Asset-Platzierung
+- **Nachträgliche Migration-Möglichkeiten** ohne Workflow-Unterbrechung
+- **Multi-Tenancy-Perfektion** von Tag 1
+
+⚡ **ENTWICKLUNGS-EFFIZIENZ:**
+- **Clean-Slate-Strategie:** 7x schneller als komplexe Migration
+- **Fokus auf Features:** Mehr Zeit für echte Innovation
+- **Risiko-Minimierung:** Keine Legacy-Daten-Migrationen
+- **Perfect Start:** Saubere Hybrid-Architektur ohne Altlasten
+
+Das Ergebnis: Ein **perfektes Media-System** das sich an die Nutzer anpasst, entwickelt in **Rekordzeit** ohne Migration-Komplexität!
